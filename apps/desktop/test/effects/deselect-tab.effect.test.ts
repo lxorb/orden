@@ -39,7 +39,7 @@ Element.prototype.animate = () =>
 Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
 const { run } = await import('../../src/lib/canvas/src/actions')

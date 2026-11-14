@@ -1,7 +1,7 @@
 {
   "name": "explorer",
   "layer": "features",
-  "dependsOn": ["contracts", "markdown", "platform", "ui-controls", "ui-kit"],
+  "dependsOn": ["contracts", "markdown", "platform", "shortcuts", "ui-controls", "ui-kit"],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/drag-paths.ts",
@@ -13,7 +13,6 @@
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/roving.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/tree-order.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/when.ts",

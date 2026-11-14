@@ -104,7 +104,7 @@ import { basesOn, chatsOn, type KindName, passOn, settings, timeOn } from './set
 import { agentsUi } from './agents/src/api'
 import { agentDocs, touchedBy } from './agent-docs/src/api'
 import { agentMarks } from './agent-marks.svelte'
-import { shortcuts } from './shortcuts.svelte'
+import { shortcuts } from './shortcuts/src/api'
 import { toggleFill } from './tab-fill/src/api'
 import { fullscreen } from './fullscreen.svelte'
 import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'

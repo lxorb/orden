@@ -15,7 +15,7 @@
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
   import { menu } from '../../menu.svelte'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { crumbsOf, typedFolder } from './crumbs'
   import { dropInto, over } from './drag'
   import { sortMenu } from './menu'

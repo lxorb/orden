@@ -18,7 +18,7 @@ const {
   kindsHere,
 } = await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
-const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
+const { runnable, SHORTCUTS } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { account } = await import('./accounts/src/account.svelte')
 await import('./chats-client/src/api')

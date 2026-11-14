@@ -3,24 +3,26 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 const closed = vi.fn(() => Promise.resolve())
 let os = 'macos'
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('./platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/api')>()),
   isDesktop: true,
   isNative: true,
   platform: () => os,
   closeWindow: closed,
 }))
 
-const { SHORTCUTS } = await import('./shortcuts/registry')
+const { SHORTCUTS } = await import('./shortcuts/src/api')
 const { workspace } = await import('./workspace.svelte')
+await import('./tab-strip/src/api')
 const { appCommands } = await import('./commands')
 
 const context = { onpalette: () => undefined, onhistory: () => undefined }
 
-function press(id: string) {
+async function press(id: string) {
   const entry = SHORTCUTS.find((one) => one.id === id)
   if (!entry?.run) throw new Error(`${id} runs nothing`)
   entry.run(context as never)
+  await new Promise((done) => setTimeout(done))
 }
 
 function showing(tab: string | null) {
@@ -35,45 +37,45 @@ afterEach(() => {
 })
 
 describe('Cmd+W', () => {
-  test('closes the note that is open', () => {
+  test('closes the note that is open', async () => {
     const closing = showing('one')
-    press('app.close')
+    await press('app.close')
 
     expect(closing).toHaveBeenCalledOnce()
     expect(closed).not.toHaveBeenCalled()
   })
 
-  test('closes the window on a Mac once nothing is left in it', () => {
+  test('closes the window on a Mac once nothing is left in it', async () => {
     const closing = showing(null)
-    press('app.close')
+    await press('app.close')
 
     expect(closed).toHaveBeenCalledOnce()
     expect(closing).not.toHaveBeenCalled()
   })
 
-  test('but not while the tabs are only put down', () => {
+  test('but not while the tabs are only put down', async () => {
     showing(null)
     const was = workspace.tabs
     workspace.tabs = [{} as never]
-    press('app.close')
+    await press('app.close')
     workspace.tabs = was
 
     expect(closed).not.toHaveBeenCalled()
   })
 
-  test('and nowhere else, where one more press than notes would end the app', () => {
+  test('and nowhere else, where one more press than notes would end the app', async () => {
     os = 'windows'
     showing(null)
-    press('app.close')
+    await press('app.close')
 
     expect(closed).not.toHaveBeenCalled()
   })
 })
 
 describe('Close window', () => {
-  test('is Shift and the same key, and closes the window with a note in it', () => {
+  test('is Shift and the same key, and closes the window with a note in it', async () => {
     showing('one')
-    press('app.close-window')
+    await press('app.close-window')
 
     expect(SHORTCUTS.find((one) => one.id === 'app.close-window')?.key).toBe('Mod-Shift-w')
     expect(closed).toHaveBeenCalledOnce()

@@ -1,10 +1,10 @@
 import type { Carried } from './import/src/api'
 import { modes } from './modes.svelte'
-import { shortcuts } from './shortcuts.svelte'
+import { shortcutPresets, shortcuts } from './shortcuts/src/api'
 
 export async function carryOver(carried: Carried) {
   if (carried.keys) {
-    const { presetById } = await import('./shortcuts/presets')
+    const { presetById } = await shortcutPresets()
     const preset = presetById(carried.keys)
     if (preset && shortcuts.preset !== 'custom') shortcuts.choose(preset)
   }

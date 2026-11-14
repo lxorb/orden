@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import { intoSide } from './focus'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { type PanelSide, workspace } from './workspace.svelte'
 
   const {

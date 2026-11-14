@@ -38,7 +38,7 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
     toggleReading: () => undefined,
   },
 }))
-vi.mock('../../src/lib/shortcuts.svelte', () => ({
+vi.mock('../../src/lib/shortcuts/src/api', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) => id === 'edit.find' && event.key === 'f',
     tooltip: (label: string) => label,

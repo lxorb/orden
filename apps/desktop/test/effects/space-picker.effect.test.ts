@@ -12,7 +12,7 @@ const { spacePicker } = await import('../../src/lib/space-picker.svelte')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
 Element.prototype.scrollIntoView = () => undefined
 

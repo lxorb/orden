@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { INK_TOOLS } from '@orden/markdown/canvas'
 import { ABOUT, MARKS, PEN_ICONS, PEN_NAMES, PLACING, RUBBING, type ToolMark } from './glyphs'
-import { BY_ID } from '../../shortcuts/registry'
+import { BY_ID } from '../../shortcuts/src/registry'
 
 const TOOLS: ToolMark[] = [...ABOUT, ...RUBBING, ...PLACING]
 

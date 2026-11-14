@@ -85,8 +85,8 @@ describe('where it is asked for', () => {
   })
 
   test('its key, and the palette’s row, which says the key', () => {
-    expect(read('./shortcuts/registry.ts')).toMatch(
-      /id: 'app\.tasks',[\s\S]*?run: \(\) => void import\('\.\.\/todos-entry'\)/,
+    expect(read('./shortcuts/src/registry.ts')).toMatch(
+      /id: 'app\.tasks',[\s\S]*?run: \(\) => void import\('\.\.\/\.\.\/todos-entry'\)/,
     )
     expect(read('./commands.ts')).toMatch(
       /id: 'todos',[\s\S]*?hint: shortcuts\.hint\('app\.tasks'\),[\s\S]*?todos-entry/,

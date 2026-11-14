@@ -1,6 +1,6 @@
 import type { SettingField } from '@orden/contracts'
 import { asWarning, quitAsk } from '../../quitting/src/api'
-import { BY_ID } from '../../shortcuts/registry'
+import { BY_ID } from '../../shortcuts/src/api'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { bothName } from './two-ways'
 

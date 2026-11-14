@@ -11,6 +11,7 @@
     "markdown",
     "platform",
     "scan",
+    "shortcuts",
     "theme",
     "ui-controls",
     "ui-kit"
@@ -37,8 +38,6 @@
     "apps/desktop/src/lib/row-window.svelte.ts",
     "apps/desktop/src/lib/row-window.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
-    "apps/desktop/src/lib/shortcuts/registry.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/todos-entry.ts",

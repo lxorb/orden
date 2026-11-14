@@ -1,6 +1,6 @@
 import { DoubleTap, type Modifier, tapOf } from './double-tap'
-import { shortcuts } from './shortcuts.svelte'
-import { type AppContext, SHORTCUTS } from './shortcuts/registry'
+import { shortcuts } from './shortcuts/src/api'
+import { type AppContext, SHORTCUTS } from './shortcuts/src/api'
 import { fromPage } from './ui-kit/src/api'
 import { ran } from './usage/src/api'
 

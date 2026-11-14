@@ -15,7 +15,7 @@
   import TopStrips from './TopStrips.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './platform/src/api'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { startup } from './startup.svelte'
   import { viewport } from './ui-kit/src/api'
   import { WindowState } from './window-state.svelte'

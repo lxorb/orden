@@ -4,7 +4,7 @@
   import { onDestroy, untrack } from 'svelte'
   import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag } from '../../../drag-paths'
   import { EmojiPicker } from '../../../emoji/src/api'
-  import { shortcuts } from '../../../shortcuts.svelte'
+  import { shortcuts } from '../../../shortcuts/src/api'
   import { samePath } from '../../../platform/src/api'
   import { viewport } from '../../../ui-kit/src/api'
   import { type Tab, workspace } from '../../../workspace.svelte'

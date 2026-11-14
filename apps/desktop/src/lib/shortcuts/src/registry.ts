@@ -1,4 +1,4 @@
-import { privateWindows } from '../web-tab/src/api'
+import { runCommand } from '@orden/contracts'
 import {
   type BindingSpec,
   type EditorView,
@@ -7,23 +7,20 @@ import {
   standardBindings,
   tableBindings,
 } from '@orden/editor'
-import { type ExportId, EXPORT_KEYS, labelOf } from '../export-formats/src/api'
-import { revealPanel, stepRegionFocus } from '../focus'
-import { modes } from '../modes.svelte'
-import { searchFrom } from '../search.svelte'
-import { askQuickly, chatQuoting } from '../ai-chat/src/api'
-import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
-import { toggleScratchpad } from '../scratchpad/src/api'
-import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../settings.svelte'
-import { stepSpace } from '../space-actions'
-import { picks, tabOps } from '../tab-strip/src/api'
-import { closeWindow, invoke, isDesktop, platform } from '../platform/src/api'
-import type { Platform } from '../ui-kit/src/api'
-import { workspace } from '../workspace.svelte'
-import type { Toward } from '../workspace/pane-tree'
-import { type Around, closeAfterLabel } from '../workspace/closing-around'
+import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/api'
+import { revealPanel, stepRegionFocus } from '../../focus'
+import { modes } from '../../modes.svelte'
+import { searchFrom } from '../../search.svelte'
+import { showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
+import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../../settings.svelte'
+import { stepSpace } from '../../space-actions'
+import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
+import type { Platform } from '../../ui-kit/src/api'
+import { workspace } from '../../workspace.svelte'
+import type { Toward } from '../../workspace/pane-tree'
+import { type Around, closeAfterLabel } from '../../workspace/closing-around'
 import type { UsageVia } from '@orden/sync-core'
-import { ran } from '../usage/src/api'
+import { ran } from '../../usage/src/api'
 
 let askAgain: (() => boolean) | null = null
 
@@ -208,20 +205,18 @@ function fromEditor(spec: BindingSpec): Shortcut {
 }
 
 function runExport(id: ExportId) {
-  void import('../commands').then(({ exportCommands }) => {
+  void import('../../commands').then(({ exportCommands }) => {
     const command = exportCommands().find((one) => one.id === `export-${id}`)
     if (command && !command.disabled) command.run()
   })
 }
 
 function runPrint() {
-  void import('../commands').then(({ appCommands }) => {
+  void import('../../commands').then(({ appCommands }) => {
     const command = appCommands().find((one) => one.id === 'print')
     if (command && !command.disabled) command.run()
   })
 }
-
-const onMac = () => isDesktop && platform() === 'macos'
 
 const PANE_WAYS: readonly [Toward, string, () => string][] = [
   ['left', 'h', () => 'Pane to the left'],
@@ -265,7 +260,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-n',
     run: () => {
-      if (hiddenKinds.offers('private')) void privateWindows().then((one) => one.openPrivate())
+      if (hiddenKinds.offers('private')) void runCommand('app.new-private')
     },
     desktop: true,
   },
@@ -275,7 +270,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: null,
-    run: () => void import('../random-note').then(({ openRandomNote }) => openRandomNote()),
+    run: () => void import('../../random-note').then(({ openRandomNote }) => openRandomNote()),
   },
   {
     id: 'app.close',
@@ -283,14 +278,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-w',
-    run: () => {
-      const pick = picks.loaded
-      const many = pick?.chosen.of(workspace.panes.focusedId) ?? []
-      if (pick && many.length) void pick.closeChosen(many)
-      else if (workspace.activeTabId || workspace.tabs.length || !onMac())
-        void workspace.closeActive()
-      else void closeWindow()
-    },
+    run: () => void runCommand('app.close'),
   },
   {
     id: 'app.close-window',
@@ -401,7 +389,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: null,
-    run: () => void tabOps().then((ops) => ops.duplicateTab(workspace.activeTabId ?? '')),
+    run: () => void runCommand('app.duplicate-tab'),
   },
   {
     id: 'app.settings',
@@ -536,7 +524,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-Shift-ArrowRight',
-    run: () => void tabOps().then((ops) => ops.moveToOtherPane(workspace.activeTabId ?? '')),
+    run: () => void runCommand('pane.move-tab'),
   },
   {
     id: 'pane.focus-next',
@@ -553,7 +541,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: `Alt-${letter}`,
     mac: null,
-    run: () => void import('../pane-moves').then((one) => one.movePane(toward)),
+    run: () => void import('../../pane-moves').then((one) => one.movePane(toward)),
   })),
   {
     id: 'app.tab-overview',
@@ -686,7 +674,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: null,
     run: () =>
-      void import('../refresh').then(({ refreshHere }) => refreshHere()).catch(() => undefined),
+      void import('../../refresh').then(({ refreshHere }) => refreshHere()).catch(() => undefined),
   },
   {
     id: 'app.links',
@@ -705,7 +693,7 @@ const APP_ENTRIES: Shortcut[] = [
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-y',
-          run: () => void import('../todos-entry').then(({ showTodos }) => showTodos()),
+          run: () => void import('../../todos-entry').then(({ showTodos }) => showTodos()),
         } satisfies Shortcut,
         {
           id: 'app.chats',
@@ -732,7 +720,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: null,
           shown: () => timeOn(),
-          run: () => void import('../time/src/api').then(({ openTime }) => openTime()),
+          run: () => void runCommand('time.tab'),
         } satisfies Shortcut,
         {
           id: 'time.start',
@@ -741,7 +729,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: null,
           shown: () => timeOn(),
-          run: () => void import('../time/src/api').then(({ startTimer }) => startTimer()),
+          run: () => void runCommand('time.start'),
         } satisfies Shortcut,
         {
           id: 'time.stop',
@@ -750,7 +738,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: null,
           shown: () => timeOn(),
-          run: () => void import('../time/src/api').then(({ stopTimer }) => stopTimer()),
+          run: () => void runCommand('time.stop'),
         } satisfies Shortcut,
         {
           id: 'chat.jump-new',
@@ -801,9 +789,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Alt-k',
-    run: () => {
-      if (!__EVEN_PLUGIN__) void chatQuoting().then((one) => one.quoteSelection())
-    },
+    run: () => void runCommand('app.ask-selection'),
   },
   {
     id: 'app.quick-question',
@@ -811,7 +797,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod Mod',
-    run: () => askQuickly(),
+    run: () => void runCommand('app.quick-question'),
   },
   {
     id: 'app.reload',
@@ -827,7 +813,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-n',
-    run: () => toggleScratchpad(),
+    run: () => void runCommand('app.scratchpad'),
   },
   {
     id: 'app.scratchpad.alt',
@@ -836,7 +822,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-x',
     alias: true,
-    run: () => toggleScratchpad(),
+    run: () => void runCommand('app.scratchpad'),
   },
   {
     id: 'agents.stop',
@@ -845,12 +831,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Alt-Shift-k',
     mac: 'Mod-Ctrl-Alt-k',
-    run: () => {
-      if (!__EVEN_PLUGIN__)
-        void import('../agents/src/api')
-          .then((one) => one.agentsUi())
-          .then(({ stopAgents }) => stopAgents())
-    },
+    run: () => void runCommand('agents.stop'),
     desktop: true,
   },
   {
@@ -912,8 +893,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-e',
     desktop: true,
     run: () => {
-      if (!__EVEN_PLUGIN__ && hiddenKinds.offers('explorer'))
-        void import('../explorer/src/api').then((one) => one.openExplorer())
+      if (hiddenKinds.offers('explorer')) void runCommand('app.explorer')
     },
   },
   ...(__EVEN_PLUGIN__
@@ -926,7 +906,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: 'Mod-Alt-v',
           shown: () => passOn(),
-          run: () => void import('../pass-sync/src/api').then((one) => one.openPass()),
+          run: () => void runCommand('app.pass'),
         } satisfies Shortcut,
       ]),
   {
@@ -996,7 +976,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Shift-F11',
     mac: 'Mod-Ctrl-Shift-f',
-    run: () => void import('../tab-fill/src/api').then((one) => one.toggleFill()),
+    run: () => void import('../../tab-fill/src/api').then((one) => one.toggleFill()),
   },
   {
     id: 'app.zoom-in',
@@ -1353,10 +1333,10 @@ CANVAS_ENTRIES.push({
 })
 
 function toggleSpacePicker() {
-  void import('../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
+  void import('../../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }
 
-let cycling: typeof import('../tab-cycle.svelte') | null = null
+let cycling: typeof import('../../tab-cycle.svelte') | null = null
 
 function cycleTab(direction: number, mayUseOrder = false) {
   if (cycling) {
@@ -1364,7 +1344,7 @@ function cycleTab(direction: number, mayUseOrder = false) {
     return
   }
 
-  void import('../tab-cycle.svelte').then((one) => {
+  void import('../../tab-cycle.svelte').then((one) => {
     cycling = one
     one.cycleTab(direction, mayUseOrder)
   })

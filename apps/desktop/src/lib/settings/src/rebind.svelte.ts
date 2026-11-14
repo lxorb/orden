@@ -1,7 +1,7 @@
 import { type Modifier, writeTap } from '../../double-tap'
 import { readCombination } from '../../ui-kit/src/api'
-import { type Shortcut, shortcuts } from '../../shortcuts.svelte'
-import { BY_ID } from '../../shortcuts/registry'
+import { type Shortcut, shortcuts } from '../../shortcuts/src/api'
+import { BY_ID } from '../../shortcuts/src/api'
 
 export class Rebind {
   listening = $state<string | null>(null)

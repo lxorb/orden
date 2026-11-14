@@ -9,7 +9,7 @@
   import { showFeedback } from './surfaces.svelte'
   import { isNative, openExternal } from './platform/src/api'
   import { viewport } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { SCRATCHPAD_MARK } from './panel-marks'
   import { scratchFromDrawer, shown as pad } from './scratchpad/src/api'
 

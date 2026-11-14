@@ -8,6 +8,7 @@
     "platform",
     "save-place",
     "sharing",
+    "shortcuts",
     "tab-fill",
     "ui-kit"
   ],
@@ -27,8 +28,6 @@
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/select-all.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
-    "apps/desktop/src/lib/shortcuts/registry.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",

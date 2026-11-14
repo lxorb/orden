@@ -23,7 +23,7 @@
   import { middleOpens, tabAsk } from './new-tab'
   import { rooms } from './collab/src/api'
   import { roving } from './roving'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { viewport } from './ui-kit/src/api'
   import SharedMark from './SharedMark.svelte'
   import { privateMark, syncMark, soundMark, tabNameField, tabOverview } from './surfaces.svelte'

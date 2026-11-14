@@ -158,7 +158,7 @@ const { workspace } = await import('../../workspace.svelte')
 const { exportCommands } = await import('../../commands')
 const { appMenu } = await import('../../app-menu')
 const { isSubmenu } = await import('../../ui-kit/src/menu-item')
-const { SHORTCUTS } = await import('../../shortcuts/registry')
+const { SHORTCUTS } = await import('../../shortcuts/src/registry')
 
 function menuRows(): MenuItem[] {
   const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(

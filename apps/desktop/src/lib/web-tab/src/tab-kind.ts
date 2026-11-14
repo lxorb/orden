@@ -1,5 +1,5 @@
 import type { TabKindParts, TabMenuEntry } from '@orden/contracts'
-import { shortcuts } from '../../shortcuts.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
 import { copyText } from '../../ui-controls/src/api'
 import { workspace } from '../../workspace.svelte'
 import { muteSite } from './mute'

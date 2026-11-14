@@ -24,7 +24,7 @@ vi.stubGlobal('localStorage', {
   removeItem: () => undefined,
 })
 
-const { shortcuts } = await import('./shortcuts.svelte')
+const { shortcuts } = await import('./shortcuts/src/shortcuts.svelte')
 
 function press(key: string, held: { ctrl?: boolean; meta?: boolean; shift?: boolean } = {}) {
   let prevented = false

@@ -12,7 +12,7 @@
   import { modes } from '../../../modes.svelte'
   import { dur, fade } from '../../../platform/src/api'
   import { followHref, followNoteFrom } from '../../../open-link'
-  import { shortcuts } from '../../../shortcuts.svelte'
+  import { shortcuts } from '../../../shortcuts/src/api'
   import { insideSpace } from '../../../platform/src/api'
   import { workspace } from '../../../workspace.svelte'
   import { afterQuiet } from '../../../platform/src/api'

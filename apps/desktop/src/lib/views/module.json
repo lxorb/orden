@@ -15,7 +15,8 @@
     "tasks-model",
     "ui-controls",
     "ui-kit",
-    "rows"
+    "rows",
+    "shortcuts"
   ],
   "pending": [
     "apps/desktop/src/lib/automation/acts.ts",
@@ -33,7 +34,6 @@
     "apps/desktop/src/lib/row-window.svelte.ts",
     "apps/desktop/src/lib/row-window.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/swipe.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",

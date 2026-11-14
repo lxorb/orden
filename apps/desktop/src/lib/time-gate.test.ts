@@ -10,7 +10,7 @@ vi.stubGlobal('localStorage', {
 const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } =
   await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
-const { runnable } = await import('./shortcuts/registry')
+const { runnable } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 
 beforeEach(() => {

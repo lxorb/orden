@@ -24,7 +24,7 @@ vi.mock('./accounts/src/client', async (actual) => ({
 }))
 
 const opened = vi.hoisted(() => [] as unknown[])
-vi.mock('./explorer/src/open', () => ({
+vi.mock('./explorer/src/api', () => ({
   openExplorer: () => {
     opened.push('explorer')
     return Promise.resolve()
@@ -38,7 +38,8 @@ const { offeredKinds } = await import('./new-kinds')
 const { kindOfLetter } = await import('./new-kind-keys')
 const { kindsPane } = await import('./settings/src/kinds-pane')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
-const { BY_ID } = await import('./shortcuts/registry')
+const { BY_ID } = await import('./shortcuts/src/api')
+await import('./features')
 const { account } = await import('./accounts/src/account.svelte')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
 
@@ -76,6 +77,7 @@ const lettered = () => kindOfLetter(offeredKinds(), { key: 'f' })?.kind ?? null
 async function pressed() {
   BY_ID.get('app.explorer')?.run?.({ palette: () => undefined, fullscreen: () => undefined })
   await vi.dynamicImportSettled()
+  await new Promise((done) => setTimeout(done))
   return opened.length > 0
 }
 

@@ -36,7 +36,7 @@ const { chosen, gathered, pick, pickingOf, placeBlock, runOf } = await import('.
 const { moved, nearestSlot } = await import('./layout')
 const { tabMenu, tabMenuTitle } = await import('./menu')
 const { workspace } = await import('../../workspace.svelte')
-const { runEntry } = await import('../../shortcuts/registry')
+const { runEntry } = await import('../../shortcuts/src/registry')
 const { picks } = await import('./drag.svelte')
 
 picks.loaded = await import('./picking.svelte')

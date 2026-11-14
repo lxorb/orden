@@ -23,7 +23,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { roving } = await import('../../src/lib/roving')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
 function nothing() {
   return undefined

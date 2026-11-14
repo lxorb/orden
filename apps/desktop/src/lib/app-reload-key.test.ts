@@ -34,7 +34,7 @@ test.each([
     vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 (${agent})` })
     const reload = vi.fn()
     vi.stubGlobal('location', { reload })
-    const { shortcuts } = await import('./shortcuts.svelte')
+    const { shortcuts } = await import('./shortcuts/src/shortcuts.svelte')
 
     const event = press('r', held)
     expect(shortcuts.handle(event, {} as never)).toBe(true)

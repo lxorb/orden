@@ -6,7 +6,7 @@
   import { Avatar } from '../../../accounts-ui/src/api'
   import Bell from '../Bell.svelte'
   import { people } from '../../../accounts/src/api'
-  import { shortcuts } from '../../../shortcuts.svelte'
+  import { shortcuts } from '../../../shortcuts/src/api'
   import type { ChatPage } from './chat.svelte'
   import { Float, Glyph, type Box } from '../../../chat-kit/src/api'
   import ChatMark from './ChatMark.svelte'

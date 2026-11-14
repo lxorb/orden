@@ -1,4 +1,4 @@
-import { shortcuts } from '../../shortcuts.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
 import { type Dictates, voice } from './voice.svelte'
 import type { Field } from './spot'
 

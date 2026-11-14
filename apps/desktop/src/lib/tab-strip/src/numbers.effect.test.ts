@@ -11,7 +11,7 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: { touch: false },
 }))
-vi.mock('../../shortcuts.svelte', () => ({
+vi.mock('../../shortcuts/src/api', () => ({
   shortcuts: { keyFor: () => null, platform: 'win' },
 }))
 vi.mock('../../workspace.svelte', () => ({

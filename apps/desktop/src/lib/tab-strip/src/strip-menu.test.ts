@@ -18,7 +18,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { stripMenu } = await import('./strip-menu')
 const { workspace } = await import('../../workspace.svelte')
-const { shortcuts } = await import('../../shortcuts.svelte')
+const { shortcuts } = await import('../../shortcuts/src/shortcuts.svelte')
 type MenuItem = import('../../ui-kit/src/menu-item').MenuItem
 
 const PANE = 'right'

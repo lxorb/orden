@@ -8,7 +8,7 @@
   import { dur, fly } from './platform/src/api'
   import { SEARCH_MARK } from './panel-marks'
   import { arrive } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { Cross } from './ui-kit/src/api'
 
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>

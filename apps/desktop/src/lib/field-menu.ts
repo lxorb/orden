@@ -1,7 +1,7 @@
 import { copySelection, cutSelection } from './ui-controls/src/api'
 import { showCombination, DIVIDER, type MenuEntry, walkableRows } from './ui-kit/src/api'
 import { menu, type TextField } from './menu.svelte'
-import { shortcuts } from './shortcuts.svelte'
+import { shortcuts } from './shortcuts/src/api'
 import { walked } from './walk'
 
 export function showFieldMenu(event: MouseEvent, field: TextField): void {

@@ -24,7 +24,7 @@ import {
   joinPath,
 } from './platform/src/api'
 import { canWriteAt, protectEntries } from './sharing/src/api'
-import { shortcuts } from './shortcuts.svelte'
+import { shortcuts } from './shortcuts/src/api'
 import { showLabel } from './reveal'
 import { entryAt } from './tree-edits'
 import { viewport } from './ui-kit/src/api'

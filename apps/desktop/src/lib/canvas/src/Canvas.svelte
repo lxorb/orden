@@ -96,7 +96,7 @@
   import { rooms } from '../../collab/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
   import { pastesMarkup } from '../../trust'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { modes } from '../../modes.svelte'
   import { viewport } from '../../ui-kit/src/api'
   import { workspace, type Tab } from '../../workspace.svelte'

@@ -1,5 +1,5 @@
 import { mount, untrack } from 'svelte'
-import { shortcuts } from '../../shortcuts.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
 import { tabOverview } from '../../surfaces.svelte'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { takenOf, type Taken, viewport } from '../../ui-kit/src/api'
