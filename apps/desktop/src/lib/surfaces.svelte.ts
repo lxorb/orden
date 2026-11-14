@@ -64,10 +64,14 @@ export const todosBoard = held(() =>
     : import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
 )
 export const chatSurface = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatTab.svelte'),
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./chats-client/src/api').then((one) => one.loadChatTab()),
 )
 export const chatsPanel = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatsPanel.svelte'),
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
 )
 export const timePanel = held(() =>
   __EVEN_PLUGIN__

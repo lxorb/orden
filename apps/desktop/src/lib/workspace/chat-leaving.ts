@@ -14,15 +14,16 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const pointers = await pointersMoving(path)
   if (!pointers.length) return none
 
-  const [
-    { listChats, moveChat },
-    { chatName, readPointer },
-    { keepOwnPointer, lastMoved, movedHere, ownPointer },
-  ] = await Promise.all([
-    import('../chats/http'),
-    import('../chats/pointers'),
-    import('../chats/places'),
-  ])
+  const {
+    listChats,
+    moveChat,
+    chatName,
+    readPointer,
+    keepOwnPointer,
+    lastMoved,
+    movedHere,
+    ownPointer,
+  } = await (await import('../chats-client/src/api')).chatLeaving()
   const moved: string[] = []
   const owned: [string, string][] = []
   const home = sync.remoteIdFor(from.root)

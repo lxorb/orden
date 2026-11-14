@@ -253,9 +253,11 @@ function sendEntry(view: EditorView): MenuEntry[] {
   if (__EVEN_PLUGIN__ || !note || !account.accountToken || !chatsOn()) return []
   const run = () => {
     const range = view.state.selection.main
-    void import('./chats/send').then(({ sendSelection }) =>
-      sendSelection(note, view.state.doc.toString(), range.from, range.to),
-    )
+    void import('./chats-client/src/api')
+      .then((one) => one.chatSending())
+      .then(({ sendSelection }) =>
+        sendSelection(note, view.state.doc.toString(), range.from, range.to),
+      )
   }
   return [{ label: 'Send to chat', run }]
 }

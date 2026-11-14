@@ -3,9 +3,10 @@ import type { PreviewPorts } from './previews'
 import type { SharingPorts } from './sharing'
 import type { SyncPorts } from './sync-client'
 import type { ThemePorts } from './theme'
+import type { VoicePorts } from './voice'
 import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
 
-export type PortMap = PreviewPorts & SharingPorts & SyncPorts & ThemePorts & WebPorts
+export type PortMap = PreviewPorts & SharingPorts & SyncPorts & ThemePorts & VoicePorts & WebPorts
 
 export type PortName = keyof PortMap
 

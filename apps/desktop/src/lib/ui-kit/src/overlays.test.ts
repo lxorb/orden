@@ -326,8 +326,9 @@ describe('what hides a web page', () => {
     'lib/ai/vault/VaultApprove.svelte': 'another of your devices asking for your AI accounts',
     'lib/dictation/src/EngineChooser.svelte': "where dictation's voice may go, over its microphone",
     'lib/chat-kit/src/Float.svelte': "a chat's small layer: the emoji picker, the pins, the search",
-    'lib/chats/view/Lightbox.svelte': "a message's pictures, one at a time, over everything",
-    'lib/chats/view/MembersPanel.svelte':
+    'lib/chats-client/src/view/Lightbox.svelte':
+      "a message's pictures, one at a time, over everything",
+    'lib/chats-client/src/view/MembersPanel.svelte':
       "a chat's members as a sheet over the chat, on a narrow window",
     'lib/accounts-ui/src/ProfileCard.svelte': "a person's card, beside the face that was pressed",
     'lib/quick-add/QuickAddSheet.svelte': 'dialog',

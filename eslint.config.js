@@ -393,7 +393,7 @@ export default tseslint.config(
     ignores: [
       '**/*.test.ts',
       '**/test/**',
-      'apps/desktop/src/lib/chats/**',
+      'apps/desktop/src/lib/chats-client/**',
       'packages/chats/**',
       'services/sync/src/sync-server-chats/src/chats/**',
     ],

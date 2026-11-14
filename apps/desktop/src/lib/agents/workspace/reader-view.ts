@@ -81,7 +81,7 @@ export async function openOnline(call: Call): Promise<Tab | Why | null> {
 }
 
 export async function openChat(path: string): Promise<void> {
-  const { openChat: open } = await import('../../chats/view/open')
+  const { openChat: open } = await (await import('../../chats-client/src/api')).chatOpening()
   open(path, { activate: false })
 }
 

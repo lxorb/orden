@@ -2,7 +2,7 @@ import type { Who } from '@orden/chats'
 import { MOST_BODY } from '@orden/chats/limits'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller, READER } from '../../automation/caller'
-import { FixtureChats } from '../../chats/view/fixture.svelte'
+import { FixtureChats } from '../../chats-client/src/view/fixture.svelte'
 
 const ME: Who = 'user:me'
 const LUCILE: Who = 'user:lucile'
@@ -30,18 +30,21 @@ vi.mock('../../platform/src/tauri', async (original) => ({
 }))
 
 let store: FixtureChats
-vi.mock('../../chats/store.svelte', () => ({
-  get chats() {
-    return store
-  },
-}))
-
 const opened: { path: string; how: unknown }[] = []
-vi.mock('../../sharing/src/api', () => ({ isShared: () => false }))
-
-vi.mock('../../chats/view/open', () => ({
-  openChat: (path: string, how: unknown) => opened.push({ path, how }),
+vi.mock('../../chats-client/src/api', () => ({
+  chatStore: () =>
+    Promise.resolve({
+      get chats() {
+        return store
+      },
+    }),
+  chatOpening: () =>
+    Promise.resolve({
+      openChat: (path: string, how: unknown) => opened.push({ path, how }),
+    }),
 }))
+
+vi.mock('../../sharing/src/api', () => ({ isShared: () => false }))
 
 const verbs = await import('./chats')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../settings.svelte')

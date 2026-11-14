@@ -16,13 +16,13 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const ChatMark = (await import('../../src/lib/chats/view/ChatMark.svelte')).default
+const ChatMark = (await import('../../src/lib/chats-client/src/view/ChatMark.svelte')).default
 const FileMark = (await import('../../src/lib/FileMark.svelte')).default
 const { GLYPHS } = await import('../../src/lib/chat-kit/src/api')
 const { elsewhere } = await import('../../src/lib/marks-elsewhere.svelte')
 const TabMark = (await import('../../src/lib/TabMark.svelte')).default
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { openChat } = await import('../../src/lib/chats/view/open')
+const { openChat } = await import('../../src/lib/chats-client/src/view/open')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../src/lib/settings.svelte')
 const { setFileIcon } = await import('../../src/lib/file-icon')
 const { iconEntries } = await import('../../src/lib/menu.svelte')

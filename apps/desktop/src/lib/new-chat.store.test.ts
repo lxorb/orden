@@ -65,8 +65,8 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 }))
 
 const asked = vi.hoisted(() => ({ spaces: [] as string[], refused: false }))
-vi.mock('./chats/http', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./chats/http')>()),
+vi.mock('./chats-client/src/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./chats-client/src/http')>()),
   makeChat: (space: string) => {
     asked.spaces.push(space)
     if (asked.refused) return Promise.reject(new Error('403'))
@@ -81,8 +81,8 @@ vi.mock('./sharing/src/api', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-vi.mock('./chats/store.svelte', async () => {
-  const { makePointer } = await import('./chats/pointers')
+vi.mock('./chats-client/src/store.svelte', async () => {
+  const { makePointer } = await import('./chats-client/src/pointers')
   return {
     chats: {
       ready: true,
@@ -111,7 +111,7 @@ const { sync } = await import('./sync.svelte')
 const { account } = await import('./accounts/src/account.svelte')
 const { newKinds, offeredKinds } = await import('./new-kinds')
 const { busy } = await import('./ui-kit/src/busy.svelte')
-const { makeChat, openChat } = await import('./chats/view/open')
+const { makeChat, openChat } = await import('./chats-client/src/view/open')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('./settings.svelte')
 
 let opened: { path: string | null; name: string; pointer: boolean }[] = []

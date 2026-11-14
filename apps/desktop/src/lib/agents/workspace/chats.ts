@@ -2,7 +2,7 @@ import { may, type Message, type Who } from '@orden/chats'
 import { MOST_BODY } from '@orden/chats/limits'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
-import type { ChatEntry, Chats } from '../../chats/api'
+import type { ChatEntry, Chats } from '../../chats-client/src/api'
 import { chatsOn } from '../../settings.svelte'
 import { rootedAt } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
@@ -22,7 +22,7 @@ async function chatsStore(): Promise<Chats> {
       'chats are turned off; the reader turns them on in Settings, Experimental',
     )
   }
-  const { chats } = await import('../../chats/store.svelte')
+  const { chats } = await (await import('../../chats-client/src/api')).chatStore()
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }

@@ -1,0 +1,807 @@
+import {
+  type Event,
+  type FileRef,
+  type Message,
+  type Meta,
+  mentionsIn,
+  type Notify,
+  parseSearch,
+  type Post,
+  type Preview,
+  type SearchQuery,
+  matches,
+  ulid,
+  type Who,
+} from '@orden/chats'
+import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
+import { chatPokeOf } from '@orden/chats/wire'
+import { account } from '../../accounts/src/api'
+import { samePath, within, keep, storedText, isNative, joinPath } from '../../platform/src/api'
+import { sync } from '../../sync.svelte'
+import { workspace } from '../../workspace.svelte'
+import type {
+  ChatEntry,
+  ChatMember,
+  Chats,
+  ChatView,
+  Draft,
+  HistoryAsk,
+  Hit,
+  Offer,
+  Scheduled,
+} from './shapes'
+import { type ChatCache, MemoryCache } from './cache'
+import { ChatEngine, type Remote } from './engine'
+import * as http from './http'
+import { chatName, findPointers, makePointer, type Place, readPointer } from './pointers'
+import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
+import { isRetiredChat } from '../../workspace/retired-tabs'
+import { type Host, View } from './view.svelte'
+
+const RECEIPTS = 'orden:chat-receipts'
+
+const WIKILINK = /\[\[([^\]|#^]+)/g
+
+const LOOK_FIRST = 2000
+const LOOK_AGAIN = 30_000
+
+function remoteFor(id: string): Remote {
+  const other = () => {
+    const now = account.user?.id ?? account.guest?.id ?? null
+    return now !== null && now !== id
+  }
+  return {
+    list: () => (other() ? Promise.resolve(null) : http.listChats()),
+    events: (chat, after) => (other() ? Promise.resolve(null) : http.eventsOf(chat, { after })),
+    state: (chat, before) => (other() ? Promise.resolve(null) : http.stateOf(chat, before)),
+    post: (chat, events) => (other() ? Promise.resolve(null) : http.sendEvents(chat, events)),
+    read: (chat, seq, back) =>
+      other() ? Promise.resolve(false) : http.postRead(chat, seq, back).catch(() => false),
+  }
+}
+
+function newId(): string {
+  return ulid(Date.now(), Math.random)
+}
+
+function dayOf(at: number): string {
+  const date = new Date(at)
+  const pad = (one: number) => String(one).padStart(2, '0')
+  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function startOf(day: string): number {
+  const [year, month, date] = day.split('-').map(Number)
+  return new Date(year ?? 1970, (month ?? 1) - 1, date ?? 1).getTime()
+}
+
+class ChatsStore implements Chats {
+  list = $state.raw<ChatEntry[]>([])
+  ready = $state(false)
+
+  private engine: ChatEngine | null = null
+  private cache: ChatCache | null = null
+  private account: string | null = null
+  private readonly views = new Map<string, { view: View; holds: number }>()
+  private places = new Map<string, Place>()
+  private readonly gone = new Set<string>()
+  private readonly unread = new Map<string, number>()
+  private readonly countedAt = new Map<string, number>()
+  private readonly drafts = new Map<string, string>()
+  private readonly people = new Map<string, Promise<ChatMember[]>>()
+  private readonly listeners = new Set<() => void>()
+  private readonly arrivals = new Set<(chat: string, messages: readonly Message[]) => void>()
+  private looking: ReturnType<typeof setTimeout> | null = null
+  private lookWait = LOOK_FIRST
+  private stops: (() => void)[] = []
+
+  get me(): Who | null {
+    if (account.user) return `user:${account.user.id}`
+    if (account.guest) return `guest:${account.guest.id}`
+    return null
+  }
+
+  async start(id: string | null): Promise<void> {
+    if (id === this.account) return
+    this.stop()
+    if (!id) return
+    this.account = id
+    startedFor(id)
+
+    let cache: ChatCache = new MemoryCache()
+    if (isNative && account.user) {
+      const { nativeCache } = await import('./native-cache')
+      cache = nativeCache(id)
+    }
+    const engine = new ChatEngine(cache, remoteFor(id), () => this.me)
+    await engine.load().catch(() => undefined)
+    if (this.account !== id) return
+    this.cache = cache
+    this.engine = engine
+    for (const one of await cache.drafts().catch(() => [])) {
+      if (isRetiredChat(one.chat))
+        void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
+      else this.drafts.set(one.chat, one.text)
+    }
+
+    this.stops.push(
+      engine.listen((change) => {
+        if (change.t === 'messages') {
+          this.countLater(change.chat)
+          if (change.arrived.length)
+            for (const hear of this.arrivals) hear(change.chat, change.arrived)
+        }
+        if (change.t === 'list') this.drawList()
+      }),
+    )
+    this.drawList()
+    engine.flushAll().catch(() => undefined)
+    await engine.refresh()
+    this.ready = true
+    await this.lookForPointers()
+  }
+
+  async forget(): Promise<void> {
+    const cache = this.cache
+    this.stop()
+    this.forgetFiles(true)
+    await cache?.forget().catch(() => undefined)
+  }
+
+  private stop(): void {
+    for (const stop of this.stops.splice(0)) stop()
+    for (const held of [...this.views.values()]) {
+      held.holds = 1
+      held.view.close()
+    }
+    this.views.clear()
+    if (this.looking) clearTimeout(this.looking)
+    this.looking = null
+    this.lookWait = LOOK_FIRST
+    this.engine?.stop()
+    this.engine = null
+    this.cache = null
+    this.account = null
+    this.places = new Map()
+    forgetMoves()
+    this.gone.clear()
+    this.unread.clear()
+    this.countedAt.clear()
+    this.drafts.clear()
+    this.people.clear()
+    this.forgetFiles(false)
+    this.list = []
+    this.ready = false
+  }
+
+  async reconnected(): Promise<void> {
+    const engine = this.engine
+    if (!engine) return
+    await engine.flushAll()
+    await engine.refresh()
+  }
+
+  lookAgain(): Promise<void> {
+    return this.engine ? this.lookForPointers() : Promise.resolve()
+  }
+
+  poked(said: unknown): void {
+    const poke = chatPokeOf(said)
+    if (poke) this.engine?.poked(poke)
+  }
+
+  watch(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
+  }
+
+  heard(listener: (chat: string, messages: readonly Message[]) => void): () => void {
+    this.arrivals.add(listener)
+    return () => this.arrivals.delete(listener)
+  }
+
+  entry(chat: string): ChatEntry | null {
+    return this.list.find((one) => one.id === chat) ?? null
+  }
+
+  async message(chat: string, id: string): Promise<Message | null> {
+    const kept = await this.cache?.messages(chat, [id]).catch(() => [])
+    return kept?.[0]?.message ?? null
+  }
+
+  async markRead(chat: string, seq: number): Promise<void> {
+    const engine = this.engine
+    if (engine?.readTo(chat, seq)) await engine.tellRead(chat, seq, false).catch(() => false)
+  }
+
+  private drawList(): void {
+    const engine = this.engine
+    if (!engine) return
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
+    const spaces = new Map<string, string>()
+    const entries: ChatEntry[] = []
+    for (const chat of engine.chats.values()) {
+      const row = chat.row
+      if (!row || this.gone.has(chat.id)) continue
+      const place = this.places.get(chat.id) ?? null
+      let root = place?.root ?? spaces.get(row.space) ?? null
+      if (!root) {
+        root = workspace.spaces.find((one) => this.remoteOf(one.root) === row.space)?.root ?? null
+        if (root) spaces.set(row.space, root)
+      }
+      const behind = row.lastSeq > row.readSeq && row.lastBy !== this.me
+      if (this.countedAt.get(chat.id) !== row.readSeq) this.countLater(chat.id)
+      const counted = row.readSeq >= row.lastSeq ? 0 : (this.unread.get(chat.id) ?? 0)
+      entries.push({
+        id: chat.id,
+        space: row.space,
+        root,
+        path: place?.path ?? null,
+        name: place ? chatName(place.path) : null,
+        role: row.role,
+        members: row.members,
+        lastSeq: row.lastSeq,
+        lastAt: row.lastAt,
+        lastBy: row.lastBy,
+        readSeq: row.readSeq,
+        unread: Math.max(counted, behind && chat.seq < row.lastSeq ? 1 : 0),
+        mentions: row.mentions,
+        notify: row.notify,
+        mutedUntil: row.mutedUntil,
+        meta: row.meta,
+      })
+    }
+    entries.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
+    const before = new Map(this.list.map((one) => [one.id, one.members]))
+    this.list = entries
+    for (const one of entries) {
+      const was = before.get(one.id)
+      if (was === undefined || was === one.members) continue
+      this.people.delete(one.id)
+      this.views.get(one.id)?.view.relist()
+    }
+    for (const listener of this.listeners) listener()
+    if (entries.some((one) => !one.path)) this.awaitPointers()
+    else this.lookWait = LOOK_FIRST
+  }
+
+  private awaitPointers(): void {
+    if (this.looking) return
+    sync.nudge()
+    this.looking = setTimeout(() => {
+      this.looking = null
+      this.lookWait = Math.min(this.lookWait * 2, LOOK_AGAIN)
+      void this.lookForPointers()
+    }, this.lookWait)
+  }
+
+  private rank(chat: string, place: Place): number {
+    const space = this.engine?.chats.get(chat)?.row?.space ?? null
+    const home = space !== null && this.remoteOf(place.root) === space ? 2 : 0
+    const own = ownPointer(chat)
+    return home + (own !== null && samePath(own, place.path) ? 1 : 0)
+  }
+
+  private remoteOf(root: string): string | null {
+    return sync.remoteIdFor(root)
+  }
+
+  private counting = new Set<string>()
+
+  private countLater(chat: string): void {
+    if (this.counting.has(chat)) return
+    this.counting.add(chat)
+    queueMicrotask(() => void this.count(chat))
+  }
+
+  private async count(chat: string): Promise<void> {
+    {
+      this.counting.delete(chat)
+      const engine = this.engine
+      const me = this.me
+      const row = engine?.chats.get(chat)?.row
+      if (!engine || !me || !row || !this.cache) return
+      const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
+      this.countedAt.set(chat, row.readSeq)
+      if (this.unread.get(chat) === count) return
+      this.unread.set(chat, count)
+      this.drawList()
+    }
+  }
+
+  private async lookForPointers(): Promise<void> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
+    const ranked = new Map<string, Map<string, number>>()
+    const unread: string[] = []
+    const found = await findPointers(
+      (chat, place) => {
+        const rank = this.rank(chat, place)
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
+        const ranks = ranked.get(chat) ?? new Map<string, number>()
+        ranked.set(chat, ranks.set(place.path, rank))
+        return rank
+      },
+      (root) => unread.push(root),
+    ).catch(() => null)
+    const engine = this.engine
+    if (!found || !engine) return
+    for (const [chat, place] of found) {
+      const own = ownPointer(chat)
+      if (own !== null && unread.some((root) => within(root, own) !== null)) continue
+      const ranks = [...(ranked.get(chat)?.values() ?? [])]
+      const top = ranks.reduce((high, one) => Math.max(high, one), -Infinity)
+      keepOwnPointer(chat, ranks.filter((one) => one === top).length > 1 ? null : place.path)
+    }
+    for (const [chat, path] of ownPointers()) {
+      if (found.has(chat) || unread.some((root) => within(root, path) !== null)) continue
+      keepOwnPointer(chat, null)
+    }
+    const went = [...this.places.keys()].filter((chat) => !found.has(chat))
+    for (const chat of went) this.gone.add(chat)
+    for (const chat of found.keys()) this.gone.delete(chat)
+    this.places = found
+    if (went.length) void engine.refresh().catch(() => false)
+    if ([...found.keys()].some((chat) => !engine.chats.get(chat)?.row)) await engine.refresh()
+    this.drawList()
+  }
+
+  folderMoved(from: string, to: string): void {
+    for (const [chat, path] of ownPointers()) {
+      const inside = within(from, path)
+      if (inside !== null) keepOwnPointer(chat, inside ? joinPath(to, inside) : to)
+    }
+  }
+
+  pointersSeen(root: string | null, paths: readonly string[]): void {
+    if (!this.engine) return
+    const placed = [...this.places.values()]
+    const known = new Set(placed.map((one) => one.path))
+    const held = new Set(paths)
+    const came = paths.some((path) => !known.has(path))
+    const went =
+      root !== null && placed.some((one) => samePath(one.root, root) && !held.has(one.path))
+    if (came || went) void this.lookForPointers()
+  }
+
+  open(chat: string): ChatView {
+    const held = this.views.get(chat)
+    if (held) {
+      held.holds += 1
+      return held.view
+    }
+    const view = new View(chat, this.host())
+    this.views.set(chat, { view, holds: 1 })
+    void view.open()
+    for (const one of this.list) if (one.id === chat) this.countLater(chat)
+    return view
+  }
+
+  private host(): Host {
+    const engine = this.engine
+    const cache = this.cache
+    if (!engine || !cache) throw new Error('chats have not started')
+    return {
+      engine,
+      cache,
+      me: () => this.me ?? 'user:nobody',
+      entry: (chat) => this.entry(chat),
+      token: () => account.token,
+      device: async () => {
+        const { hub, deviceId } = await import('../../sync-client/src/api')
+        return hub.device ?? (await deviceId().catch(() => null))
+      },
+      members: (chat) => this.members(chat),
+      receipts: () => storedText(RECEIPTS) !== 'off',
+      profile: (who) => {
+        if (!who.startsWith('user:')) return
+        void import('../../accounts/src/api').then(({ people }) => people.refresh(who.slice(5)))
+        this.people.clear()
+      },
+      release: (chat) => {
+        const held = this.views.get(chat)
+        if (held && --held.holds > 0) return false
+        this.views.delete(chat)
+        return true
+      },
+    }
+  }
+
+  async send(chat: string, event: Event): Promise<void> {
+    const engine = this.engine
+    if (!engine) throw new Error('chats have not started')
+    await engine.queue(chat, event)
+  }
+
+  private async postOf(chat: string, draft: Draft): Promise<Post> {
+    const members = await this.members(chat).catch(() => [])
+    const mentions = mentionsIn(
+      draft.body,
+      members.map((one) => ({ who: one.who, name: one.name ?? '' })),
+    )
+    const post: Post = { kind: 'post', id: newId(), message: newId(), body: draft.body }
+    if (draft.parent) post.parent = draft.parent
+    if (draft.quote) post.quote = draft.quote
+    if (draft.files?.length) post.files = draft.files.slice(0, MOST_FILES)
+    if (draft.poll) post.poll = draft.poll
+    if (draft.preview) post.preview = draft.preview
+    if (draft.via) post.via = draft.via
+    if (draft.parent && draft.alsoToChat) post.alsoToChat = true
+    if (mentions.length) post.mentions = mentions
+    return post
+  }
+
+  async post(chat: string, draft: Draft): Promise<string> {
+    const post = await this.postOf(chat, draft)
+    await this.send(chat, post)
+    this.keepDraft(chat, '')
+    return post.message
+  }
+
+  async schedule(chat: string, draft: Draft, sendAt: number): Promise<string> {
+    const post = await this.postOf(chat, draft)
+    await this.send(chat, { kind: 'schedule', id: newId(), sendAt, post })
+    this.keepDraft(chat, '')
+    return post.message
+  }
+
+  async scheduled(chat: string): Promise<Scheduled[]> {
+    return (await http.scheduledOf(chat)) ?? []
+  }
+
+  edit(chat: string, message: string, body: string, files?: FileRef[]): Promise<void> {
+    return this.send(chat, {
+      kind: 'edit',
+      id: newId(),
+      target: message,
+      body,
+      ...(files ? { files } : {}),
+    })
+  }
+
+  async remove(chat: string, message: string): Promise<void> {
+    const engine = this.engine
+    const waiting = engine?.pending(chat).filter((row) => {
+      const event = row.event
+      return event.kind === 'post'
+        ? event.message === message
+        : 'target' in event && event.target === message
+    })
+    if (engine && waiting?.some((row) => row.event.kind === 'post')) {
+      await engine.drop(waiting.map((row) => row.id))
+      return
+    }
+    await this.send(chat, { kind: 'delete', id: newId(), target: message })
+  }
+
+  react(chat: string, message: string, emoji: string, on: boolean): Promise<void> {
+    return this.send(chat, { kind: 'react', id: newId(), target: message, emoji, on })
+  }
+
+  pin(chat: string, message: string, on: boolean): Promise<void> {
+    return this.send(chat, { kind: 'pin', id: newId(), target: message, on })
+  }
+
+  vote(chat: string, message: string, answers: number[]): Promise<void> {
+    return this.send(chat, { kind: 'vote', id: newId(), target: message, answers })
+  }
+
+  setMeta(chat: string, meta: Partial<Meta>): Promise<void> {
+    return this.send(chat, { kind: 'meta', id: newId(), ...meta })
+  }
+
+  async unsend(chat: string): Promise<string | null> {
+    const engine = this.engine
+    const me = this.me
+    const cache = this.cache
+    if (!engine || !me || !cache) return null
+    const now = Date.now()
+    const waiting = engine
+      .pending(chat)
+      .filter((row) => row.event.kind === 'post' && now - row.madeAt <= UNSEND_WITHIN)
+      .at(-1)
+    if (waiting?.event.kind === 'post') {
+      const body = waiting.event.body
+      await this.remove(chat, waiting.event.message)
+      return body
+    }
+    const last = (await cache.window({ chat, limit: 20 }))
+      .map((one) => one.message)
+      .filter((one) => one.author === me && !one.deleted && now - one.at <= UNSEND_WITHIN)
+      .at(-1)
+    if (!last) return null
+    await this.remove(chat, last.id)
+    return last.body
+  }
+
+  private rowsAbout(chat: string, message: string) {
+    return (this.engine?.pending(chat) ?? []).filter((row) => {
+      const event = row.event
+      if (event.kind === 'post') return event.message === message
+      return 'target' in event && event.target === message
+    })
+  }
+
+  async retry(chat: string, message: string): Promise<void> {
+    await this.engine?.retry(this.rowsAbout(chat, message).map((row) => row.id))
+  }
+
+  async discard(chat: string, message: string): Promise<void> {
+    const rows = this.rowsAbout(chat, message).filter((row) => row.refused)
+    await this.engine?.drop(rows.map((row) => row.id))
+  }
+
+  async notifyFor(chat: string, notify: Notify | null, mutedUntil: number | null): Promise<void> {
+    await http.putMe(chat, notify, mutedUntil)
+    const row = this.engine?.chats.get(chat)?.row
+    const engineChat = this.engine?.chats.get(chat)
+    if (row && engineChat) {
+      engineChat.row = { ...row, notify, mutedUntil }
+      this.drawList()
+    }
+  }
+
+  members(chat: string): Promise<ChatMember[]> {
+    let asked = this.people.get(chat)
+    if (!asked) {
+      asked = http.membersOf(chat).then((members) => {
+        if (!members) this.people.delete(chat)
+        return members ?? []
+      })
+      this.people.set(chat, asked)
+    }
+    return asked
+  }
+
+  parse(query: string): SearchQuery {
+    return parseSearch(query, dayOf(Date.now()))
+  }
+
+  async search(query: string, chat?: string): Promise<Hit[]> {
+    const cache = this.cache
+    const me = this.me
+    if (!cache || !me) return []
+    if (!isNative) return (await http.searchOnAccount(query, chat)) ?? []
+
+    const asked = this.parse(query)
+    const names = new Map(this.list.map((one) => [one.id, one.name ?? '']))
+    const inChats = asked.in.length
+      ? this.list
+          .filter((one) =>
+            asked.in.some((name) => name.toLowerCase() === (one.name ?? '').toLowerCase()),
+          )
+          .map((one) => one.id)
+      : []
+    if (asked.in.length && !inChats.length) return []
+    const chats = chat ? [chat] : inChats
+
+    const candidates = await cache.search({
+      chats,
+      words: asked.words,
+      phrases: asked.phrases,
+      has: asked.has,
+      reply: asked.isReply,
+      ...(asked.since ? { since: startOf(asked.since) } : {}),
+      ...(asked.until ? { until: startOf(asked.until) } : {}),
+      limit: 2000,
+    })
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
+    const known = new Map<Who, string[]>()
+    for (const id of new Set(candidates.map((one) => one.chat))) {
+      for (const member of await this.members(id).catch(() => [])) {
+        if (member.name) known.set(member.who, [member.name])
+      }
+    }
+    if (account.name) known.set(me, [account.name])
+    return candidates
+      .filter(({ chat: id, kept }) =>
+        matches(asked, {
+          message: kept.message,
+          chat: names.get(id) ?? '',
+          me,
+          namesOf: (who) => known.get(who) ?? [],
+          dayOf,
+        }),
+      )
+      .slice(0, 100)
+      .map(({ chat: id, kept }) => ({ chat: id, message: kept.message }))
+  }
+
+  async linking(names: readonly string[]): Promise<Hit[]> {
+    const cache = this.cache
+    if (!cache) return []
+    const wanted = new Set(names.map((name) => name.trim().toLowerCase()).filter(Boolean))
+    const hits: Hit[] = []
+    for (const name of wanted) {
+      const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+      if (!words.length) continue
+      for (const { chat, kept } of await cache.search({ words, limit: 500 })) {
+        const linked = [...kept.message.body.matchAll(WIKILINK)].some((found) =>
+          wanted.has((found[1] ?? '').trim().toLowerCase()),
+        )
+        if (linked && !hits.some((one) => one.message.id === kept.message.id)) {
+          hits.push({ chat, message: kept.message })
+        }
+      }
+    }
+    return hits.sort((a, b) => b.message.at - a.message.at)
+  }
+
+  async history(chat: string, ask: HistoryAsk): Promise<Message[]> {
+    const engine = this.engine
+    const cache = this.cache
+    if (!engine || !cache) return []
+    await engine.sync(chat).catch(() => undefined)
+    const limit = Math.max(1, ask.limit)
+    let around: number | undefined
+    let parent = ask.parent
+    if (ask.around !== undefined) {
+      const found = (await cache.messages(chat, [ask.around]))[0]?.message
+      if (!found) return []
+      around = found.seq
+      if (found.parent && !found.alsoToChat) parent ??= found.parent
+    }
+    const kept = await cache.window({
+      chat,
+      limit,
+      ...(parent !== undefined ? { parent } : {}),
+      ...(around !== undefined ? { around } : {}),
+      ...(ask.after !== undefined ? { after: ask.after } : {}),
+      ...(ask.before !== undefined ? { before: ask.before } : {}),
+    })
+    return kept.map((one) => one.message)
+  }
+
+  draft(chat: string): string {
+    return this.drafts.get(chat) ?? ''
+  }
+
+  private readonly offered = new Set<(offer: Offer) => void>()
+  private readonly waitingOffers = new Map<string, Offer>()
+
+  offer(chat: string, text: string, more: { parent?: string; note?: string } = {}): void {
+    const key = more.parent ? `${chat}/${more.parent}` : chat
+    this.keepDraft(key, text)
+    const offer: Offer = { chat, text, ...more }
+    this.waitingOffers.set(key, offer)
+    for (const hear of this.offered) hear(offer)
+  }
+
+  offers(listener: (offer: Offer) => void): () => void {
+    this.offered.add(listener)
+    return () => this.offered.delete(listener)
+  }
+
+  takeOffer(chat: string, parent?: string): Offer | null {
+    const key = parent ? `${chat}/${parent}` : chat
+    const offer = this.waitingOffers.get(key) ?? null
+    this.waitingOffers.delete(key)
+    return offer
+  }
+
+  private remoteNote(path: string): { space: string; note: string } | null {
+    const root = workspace.spaces.find((one) => within(one.root, path) !== null)?.root
+    const space = root ? this.remoteOf(root) : null
+    const note = sync.tracked(path)?.id
+    return space && note ? { space, note } : null
+  }
+
+  async noteReach(chat: string, path: string) {
+    const at = this.remoteNote(path)
+    return at ? await http.noteReachOf(chat, at.space, at.note) : null
+  }
+
+  async shareNote(chat: string, path: string): Promise<boolean> {
+    const at = this.remoteNote(path)
+    return at ? await http.shareNote(chat, at.space, at.note) : false
+  }
+
+  keepDraft(chat: string, text: string): void {
+    if ((this.drafts.get(chat) ?? '') === text) return
+    if (text) this.drafts.set(chat, text)
+    else this.drafts.delete(chat)
+    void this.cache
+      ?.write([
+        text ? { t: 'draft', draft: { chat, text, at: Date.now() } } : { t: 'undraft', chat },
+      ])
+      .catch(() => undefined)
+  }
+
+  async upload(bytes: Uint8Array): Promise<string | null> {
+    const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
+    const hash = [...new Uint8Array(digest)]
+      .map((one) => one.toString(16).padStart(2, '0'))
+      .join('')
+    return (await http.putBlob(hash, bytes)) ? hash : null
+  }
+
+  private readonly urls = new Map<string, Promise<string | null>>()
+  fileEpoch = $state(0)
+
+  fileUrl(chat: string, hash: string): Promise<string | null> {
+    const key = `${this.me}/${chat}/${hash}`
+    let url = this.urls.get(key)
+    if (!url) {
+      url = http.fileOf(chat, hash).then((blob) => {
+        if (blob) return URL.createObjectURL(blob)
+        if (this.urls.get(key) === url) this.urls.delete(key)
+        return null
+      })
+      this.urls.set(key, url)
+    }
+    return url
+  }
+
+  private forgetFiles(all: boolean): void {
+    const mine = `${this.me}/`
+    this.fileEpoch++
+    for (const [key, url] of this.urls) {
+      if (!all && key.startsWith(mine)) continue
+      this.urls.delete(key)
+      void url.then((one) => one && URL.revokeObjectURL(one))
+    }
+  }
+
+  async preview(url: string): Promise<Preview | null> {
+    const { previewOf } = await import('./preview')
+    return previewOf(url, (bytes) => this.upload(bytes))
+  }
+
+  async make(folder: string, name: string): Promise<string | null> {
+    const place = await makePointer(folder, name)
+    if (!place) return null
+    const chat = await readPointer(place.path)
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- `list` is what renders
+    if (chat) this.places = new Map(this.places).set(chat, place)
+    if (chat) keepOwnPointer(chat, place.path)
+    await this.engine?.refresh()
+    return place.path
+  }
+
+  placedAt(chat: string): string | null {
+    return this.places.get(chat)?.path ?? null
+  }
+
+  chatAt(path: string): Promise<string | null> {
+    return readPointer(path)
+  }
+
+  get receipts(): boolean {
+    return storedText(RECEIPTS) !== 'off'
+  }
+
+  set receipts(on: boolean) {
+    keep(RECEIPTS, on ? 'on' : 'off')
+  }
+
+  async pointerMoved(from: string | null, to: string | null): Promise<void> {
+    const before = [...this.places].find(([, place]) => from !== null && place.path === from)
+    const chat = to ? await readPointer(to) : null
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- `list` is what renders
+    const next = new Map(this.places)
+    if (before) next.delete(before[0])
+    if (before && !chat) this.gone.add(before[0])
+    if (chat) this.gone.delete(chat)
+    const row = chat ? (this.engine?.chats.get(chat)?.row ?? null) : null
+    const root = to
+      ? (workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null)
+      : null
+    const moved =
+      before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
+    if ((before && !chat) || (chat !== null && !row) || moved) {
+      void this.engine?.refresh().catch(() => false)
+    }
+    const own = chat ? ownPointer(chat) : null
+    if (chat && to && own !== null && from !== null && samePath(own, from)) {
+      keepOwnPointer(chat, to)
+    }
+    if (chat && to && root) {
+      const place = { root, path: to }
+      const held = next.get(chat)
+      if (!held || this.rank(chat, place) > this.rank(chat, held)) next.set(chat, place)
+    }
+    this.places = next
+    this.drawList()
+  }
+}
+
+export const chats = new ChatsStore()

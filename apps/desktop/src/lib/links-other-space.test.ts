@@ -207,7 +207,7 @@ test('a card on a canvas of another space shows the note of that space', async (
 })
 
 test("a message in a chat of another space links that space's notes", async () => {
-  const { bodyHtml } = await import('./chats/view/body')
+  const { bodyHtml } = await import('./chats-client/src/view/body')
   await links.spaceRead('/home/me/A/Team.chat')
 
   expect(bodyHtml('[[Only A]]', '/home/me/A/Team.chat')).toContain('href="Only%20A.md"')

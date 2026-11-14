@@ -16,8 +16,8 @@ THESIS = "/spaces/Team/thesis.chat"
 
 START = """
 async () => {
-  const { seeded } = await import('/src/lib/chats/view/seed.ts')
-  const { useStore } = await import('/src/lib/chats/view/source.svelte.ts')
+  const { seeded } = await import('/src/lib/chats-client/src/view/seed.ts')
+  const { useStore } = await import('/src/lib/chats-client/src/view/source.svelte.ts')
   const made = seeded()
   useStore(made.store)
   window.__chats = made
@@ -26,7 +26,7 @@ async () => {
 
 OPEN = """
 async (path) => {
-  const { openChat } = await import('/src/lib/chats/view/open.ts')
+  const { openChat } = await import('/src/lib/chats-client/src/view/open.ts')
   openChat(path)
 }
 """
@@ -160,11 +160,11 @@ def desktop(page: Page, scheme: str) -> None:
 
 BIG = """
 async () => {
-  const { bigChat } = await import('/src/lib/chats/view/seed.ts')
-  const { useStore } = await import('/src/lib/chats/view/source.svelte.ts')
+  const { bigChat } = await import('/src/lib/chats-client/src/view/seed.ts')
+  const { useStore } = await import('/src/lib/chats-client/src/view/source.svelte.ts')
   const made = bigChat(100000)
   useStore(made.store)
-  const { openChat } = await import('/src/lib/chats/view/open.ts')
+  const { openChat } = await import('/src/lib/chats-client/src/view/open.ts')
   const started = performance.now()
   openChat('/spaces/Team/big.chat')
   await new Promise((go) => {

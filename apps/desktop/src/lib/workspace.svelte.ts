@@ -2138,7 +2138,8 @@ class Workspace {
         return
       }
       case 'chat':
-        if (!__EVEN_PLUGIN__) (await import('./chats/view/open')).openChat(path, options)
+        if (!__EVEN_PLUGIN__)
+          (await (await import('./chats-client/src/api')).chatOpening()).openChat(path, options)
         return
       case 'term':
         if (!__EVEN_PLUGIN__) await (await import('./terminal/src/api')).openTerm(path, options)
@@ -3374,7 +3375,8 @@ class Workspace {
     else if (naming.making === 'database')
       await (await import('./views/new-database')).createDatabase(dir, name)
     else if (naming.making !== 'chat') await this.createNote(dir, name)
-    else if (!__EVEN_PLUGIN__) await (await import('./chats/view/open')).makeChat(dir, name)
+    else if (!__EVEN_PLUGIN__)
+      await (await (await import('./chats-client/src/api')).chatOpening()).makeChat(dir, name)
   }
 
   cancelNaming() {
