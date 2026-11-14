@@ -23,7 +23,6 @@
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/automation/acts.ts",
     "apps/desktop/src/lib/automation/caller.ts",
-    "apps/desktop/src/lib/diff.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",

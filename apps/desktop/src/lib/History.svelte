@@ -1,6 +1,6 @@
 <script lang="ts">
   import { closeOnBack } from './ui-kit/src/api'
-  import { diffCount, lineDiff, trimmed } from './diff'
+  import { diffCount, lineDiff, trimmed } from '@orden/markdown/line-diff'
   import { overlays } from './ui-kit/src/api'
   import { KEEP_YEAR, modes } from './modes.svelte'
   import { recovery } from './recovery.svelte'

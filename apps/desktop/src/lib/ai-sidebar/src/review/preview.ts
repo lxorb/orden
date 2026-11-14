@@ -1,6 +1,6 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { plan, readEdits, type Replacement } from '../../../agent-docs/src/api'
-import { type Row, lineDiff, trimmed } from '../../../diff'
+import { type Row, lineDiff, trimmed } from '@orden/markdown/line-diff'
 import { applied } from '@orden/scan/search/replace'
 import { insideSpace, notePath } from '../../../platform/src/api'
 import { spaceNamed, verbOf } from '../chat-parts'
