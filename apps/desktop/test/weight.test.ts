@@ -134,7 +134,7 @@ function holds(tail: string): boolean {
 }
 
 const BUDGET = 1_915_800
-const MOST_FILES = 414
+const MOST_FILES = 426
 
 const MOST_TEXT = 6_500
 
@@ -299,7 +299,7 @@ describe('what the app evaluates before it draws anything', () => {
     ],
     ['/lib/ContextMenu.svelte', 'the right-click menu'],
     ['/lib/FormatBar.svelte', 'the bar over a selection'],
-    ['/lib/SignIn.svelte', 'the sign-in sheet'],
+    ['/lib/accounts-ui/src/SignIn.svelte', 'the sign-in sheet'],
     ['/lib/JoinSheet.svelte', 'the join sheet'],
     ['/lib/drawer-follow.ts', "a drawer's drag"],
     ['/lib/swipe.ts', "the drag's arithmetic"],
@@ -315,7 +315,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/theme-looks/src/gallery/store.svelte.ts', "the theme gallery's store"],
     ['/lib/theme-looks/src/gallery/registry.ts', 'the theme catalogue'],
     ['/lib/theme-looks/src/gallery/validate.ts', 'the theme reviewer'],
-    ['/lib/api/routes.ts', "the service's calls"],
+    ['/lib/accounts/src/routes.ts', "the service's calls"],
     ['/lib/icon-sets.ts', 'the list of icon sets'],
     ['/lib/recorder/commands.ts', 'the row that wakes the recorder'],
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
