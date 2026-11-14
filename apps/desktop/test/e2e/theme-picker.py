@@ -113,19 +113,19 @@ def main() -> int:
         check("the store installed the six themes", {f"file:{one}" for one in INSTALL} <= set(installed))
         page.wait_for_timeout(300)
 
-        switch = page.locator(".foot .acts button[aria-disabled]").first
-        switch.click(button="right")
+        themes = page.locator('.foot .acts button[aria-label="Themes"]')
+        themes.click()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         box = page.locator('[role="dialog"][aria-label="Themes"]').bounding_box()
-        near = switch.bounding_box()
+        near = themes.bounding_box()
         check(
-            "a right click on the switch opens the picker beside it",
+            "the Themes button opens the picker beside it",
             box is not None
             and near is not None
             and box["y"] + box["height"] <= near["y"]
             and abs(box["x"] - near["x"]) < 400,
         )
-        shot("1-open-from-switch")
+        shot("1-open-from-button")
 
         card("GitHub").hover()
         now = state()
@@ -171,14 +171,14 @@ def main() -> int:
             now["id"] == "default" and now["kept"] == "default" and not now["open"],
         )
 
-        switch.click(button="right")
+        themes.click()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         card("Graphite").hover()
         page.mouse.click(1100, 400)
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         check("a press outside puts back the kept theme", state()["id"] == "default")
 
-        switch.click(button="right")
+        themes.click()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         page.locator('[role="radiogroup"] button[aria-label="Light"]').hover()
         now = state()
@@ -223,7 +223,7 @@ def main() -> int:
         page.evaluate(
             "() => { window.ordenApp.theme.select('default'); window.ordenApp.theme.setScheme('light') }"
         )
-        switch.click(button="right")
+        themes.click()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         shot("10-light-open")
         page.keyboard.press("Escape")
