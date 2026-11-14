@@ -52,6 +52,8 @@ const PAGE = {
   icon: null,
   live: false,
   shown: false,
+  playing: false,
+  muted: false,
 }
 providePort('web.pages', { ...webPages(), of: () => PAGE })
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
