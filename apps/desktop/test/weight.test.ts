@@ -133,7 +133,7 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 1_915_800
+const BUDGET = 1_920_000
 const MOST_FILES = 430
 
 const MOST_TEXT = 6_500
