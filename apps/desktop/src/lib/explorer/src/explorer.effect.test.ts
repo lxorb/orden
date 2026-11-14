@@ -1,0 +1,611 @@
+import { flushSync, mount, unmount } from 'svelte'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Listing } from './commands'
+
+const DISK: Record<string, string[]> = {
+  '/home/me': ['Music', 'Pictures', 'notes.txt', 'plan.pdf'],
+  '/home/me/Pictures': ['a.png'],
+  '/home/me/Music': [],
+  '/home/me/Sounds': ['a.mp3', 'b.mp3', 'c.mp3', 'd.mp3'],
+  '/home': ['me'],
+  '/': ['home'],
+}
+
+const opened: string[] = []
+
+const peeked: string[] = []
+
+const listedPaths: string[] = []
+
+vi.mock('./commands', () => ({
+  CHANGED: 'explorer://changed',
+  listFolder: (path: string): Promise<Listing> => {
+    listedPaths.push(path)
+    const names = DISK[path]
+    if (!names) return Promise.reject(new Error(`${path}: No such file or directory`))
+    return Promise.resolve({
+      path,
+      parent: null,
+      own: false,
+      spaces: false,
+      cut: false,
+      entries: names.map((name) => ({
+        name,
+        kind: name.includes('.') ? 'file' : 'folder',
+        folder: !name.includes('.'),
+        size: 2048,
+        modified: 0,
+        created: 0,
+        hidden: false,
+      })),
+    })
+  },
+  watchFolder: () => Promise.resolve(),
+  unwatchFolder: () => Promise.resolve(),
+  listPlaces: () =>
+    Promise.resolve([
+      { kind: 'home', path: '/home/me', name: null },
+      { kind: 'root', path: '/', name: null },
+    ]),
+  openWithSystem: (path: string) => {
+    opened.push(path)
+    return Promise.resolve()
+  },
+  renameTo: (path: string, name: string) => {
+    changed.push(`rename ${path} ${name}`)
+    return Promise.resolve(`${path.slice(0, path.lastIndexOf('/'))}/${name}`)
+  },
+  trashPaths: (paths: string[]) => {
+    changed.push(`trash ${paths.join(',')}`)
+    return Promise.resolve(paths.map((path) => ({ path, back: path, at: 1 })))
+  },
+  makeIn: (folder: string, name: string) => {
+    changed.push(`make ${folder} ${name}`)
+    return Promise.resolve(`${folder}/${name}`)
+  },
+  showInSystem: () => Promise.resolve(),
+  factsOf: (path: string) =>
+    Promise.resolve({
+      path,
+      name: path.slice(path.lastIndexOf('/') + 1),
+      kind: 'file',
+      folder: false,
+      size: 2048,
+      modified: 0,
+      hidden: false,
+      born: null,
+      accessed: null,
+      readonly: false,
+      mode: 'rw-r--r--',
+      link: null,
+    }),
+  peekAt: (path: string) => {
+    peeked.push(path)
+    return Promise.resolve({ bytes: new TextEncoder().encode('hello'), cut: false })
+  },
+  searchBelow: () => Promise.resolve({ found: 0, cut: false, cancelled: false }),
+  clashesIn: () => Promise.resolve([]),
+  transfer: (_job: string, sources: string[], folder: string, how: string) => {
+    changed.push(`${how} ${sources.join(',')} ${folder}`)
+    return Promise.resolve({ done: [], replaced: [], skipped: [], failed: [], cancelled: false })
+  },
+  FOUND: 'explorer://found',
+  PROGRESS: 'explorer://progress',
+  cancelJob: () => Promise.resolve(),
+}))
+
+const changed: string[] = []
+
+const { workspace } = await import('../../workspace.svelte')
+const ExplorerTab = (await import('./ExplorerTab.svelte')).default
+const { viewOf } = await import('./view.svelte')
+
+const columnSettled = () => new Promise((resolve) => setTimeout(resolve, 200))
+
+const settled = async () => {
+  for (let round = 0; round < 5; round++) await new Promise((resolve) => setTimeout(resolve))
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+  flushSync()
+}
+
+let target: HTMLElement
+let close: (() => void) | undefined
+
+async function explorer() {
+  const tab = workspace.openUnsaved('explorer', '', 'me')
+  const made = mount(ExplorerTab, { target, props: { tab, focused: true } })
+  close = () => void unmount(made)
+  await settled()
+  return { tab, view: viewOf(tab) }
+}
+
+function rows(): string[] {
+  return [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
+}
+
+function press(key: string, more: KeyboardEventInit = {}) {
+  const focused = document.activeElement
+  const on = focused && target.contains(focused) ? focused : target.querySelector('.rows')
+  on?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...more }))
+  flushSync()
+}
+
+beforeEach(() => {
+  opened.length = 0
+  peeked.length = 0
+  changed.length = 0
+  target = document.createElement('div')
+  document.body.append(target)
+})
+
+afterEach(() => {
+  close?.()
+  close = undefined
+  target.remove()
+})
+
+describe('a file explorer', () => {
+  test('lists the home folder, folders first, with the places beside it', async () => {
+    await explorer()
+    expect(rows()).toEqual(['Music', 'Pictures', 'notes.txt', 'plan.pdf'])
+    const places = [...target.querySelectorAll('.place .orden-row-label')].map(
+      (one) => one.textContent,
+    )
+    expect(places).toEqual(['Home', 'Computer'])
+    expect(target.querySelector('.place.is-on')?.textContent).toContain('Home')
+    expect(target.querySelector('.foot')?.textContent).toContain('4 items')
+  })
+
+  test('walks with the arrows, opens a folder with Enter and goes up with Backspace', async () => {
+    const { view } = await explorer()
+    press('ArrowDown')
+    press('ArrowDown')
+    expect(view.picked.cursor).toBe('Pictures')
+    press('Enter')
+    await settled()
+    expect(view.folder).toBe('/home/me/Pictures')
+    expect(rows()).toEqual(['a.png'])
+    press('Backspace')
+    await settled()
+    expect(view.folder).toBe('/home/me')
+    expect(view.picked.cursor).toBe('Pictures')
+  })
+
+  test('jumps to a name as it is typed and picks a range with Shift', async () => {
+    const { view } = await explorer()
+    press('n')
+    expect(view.picked.cursor).toBe('notes.txt')
+    press('ArrowDown', { shiftKey: true })
+    expect([...view.picked.names]).toEqual(['notes.txt', 'plan.pdf'])
+    expect(target.querySelectorAll('.entry.is-picked')).toHaveLength(2)
+    expect(target.querySelector('.foot')?.textContent).toContain('2 selected')
+  })
+
+  test('opens a file outside the spaces in the app the system opens it with', async () => {
+    await explorer()
+    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
+      one.textContent.includes('plan.pdf'),
+    )
+    row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    await settled()
+    expect(opened).toEqual(['/home/me/plan.pdf'])
+  })
+
+  test('opens plain text in a space in Orden, as it does a note', async () => {
+    const taken = vi.spyOn(workspace, 'openEntry').mockResolvedValue(undefined)
+    workspace.spaces = [{ id: 'me', name: 'Me', root: '/home/me' }]
+    try {
+      await explorer()
+      const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
+        one.textContent.includes('notes.txt'),
+      )
+      row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+      await settled()
+      expect(taken).toHaveBeenCalledWith('/home/me/notes.txt')
+      expect(opened).toEqual([])
+    } finally {
+      workspace.spaces = []
+      taken.mockRestore()
+    }
+  })
+
+  test('hands a picture to the system app when it is opened, looking at nothing in Orden', async () => {
+    const { view } = await explorer()
+    await view.go('/home/me/Pictures')
+    await settled()
+    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
+      one.textContent.includes('a.png'),
+    )
+    row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    await settled()
+    expect(opened).toEqual(['/home/me/Pictures/a.png'])
+    expect(target.querySelector('.look')).toBeNull()
+  })
+
+  test('goes where a path typed into the bar says', async () => {
+    const { view } = await explorer()
+    target.querySelector<HTMLElement>('.past')?.click()
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.path')
+    expect(field?.value).toBe('/home/me')
+    if (!field) return
+    field.value = '~/Music'
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(view.folder).toBe('/home/me/Music')
+    expect(target.querySelector('.said')?.textContent).toContain('empty')
+  })
+
+  test('renames in place with F2, the ending left out of what is chosen', async () => {
+    await explorer()
+    press('n')
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    expect(field?.value).toBe('notes.txt')
+    expect([field?.selectionStart, field?.selectionEnd]).toEqual([0, 5])
+    if (!field) return
+    field.value = 'letters.txt'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual(['rename /home/me/notes.txt letters.txt'])
+  })
+
+  test('Escape leaves a name being typed unwritten, though the field blurs as it goes', async () => {
+    await explorer()
+    press('n')
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    if (!field) throw new Error('no rename field')
+    field.value = 'letters.txt'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settled()
+    expect(target.querySelector('input.rename')).toBeNull()
+    expect(changed).toEqual([])
+  })
+
+  test('renames a file found below by its own name, and the found row takes it', async () => {
+    const { view } = await explorer()
+    view.searchBelow('bank')
+    const search = view.search
+    if (!search) throw new Error('no search')
+    search.found = [
+      {
+        name: 'letters/bank.txt',
+        kind: 'file',
+        folder: false,
+        size: 1,
+        modified: 0,
+        created: 0,
+        hidden: false,
+      },
+    ]
+    await settled()
+    view.pick('letters/bank.txt', 'one')
+    await settled()
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    if (!field) throw new Error('no rename field')
+    expect(field.value).toBe('bank.txt')
+    field.value = 'loan.txt'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual(['rename /home/me/letters/bank.txt loan.txt'])
+  })
+
+  test('a found file names its folder beside its name too, for when the folder column is hidden', async () => {
+    const { view } = await explorer()
+    view.searchBelow('draft')
+    const search = view.search
+    if (!search) throw new Error('no search')
+    search.found = ['letters/draft.txt', 'old/draft.txt', 'draft.txt'].map((name) => ({
+      name,
+      kind: 'file',
+      folder: false,
+      size: 1,
+      modified: 0,
+      created: 0,
+      hidden: false,
+    }))
+    await settled()
+    const names = [...target.querySelectorAll('.entry .name')].map((one) =>
+      [...one.querySelectorAll('.orden-row-label, .where')].map((part) => part.textContent),
+    )
+    expect(names).toEqual([['draft.txt'], ['draft.txt', 'letters'], ['draft.txt', 'old']])
+  })
+
+  test('renames several files found below at once, the same new name in two folders, and the found rows take the new names', async () => {
+    const { view } = await explorer()
+    view.searchBelow('draft')
+    const search = view.search
+    if (!search) throw new Error('no search')
+    search.found = ['letters/draft.txt', 'old/draft.txt'].map((name) => ({
+      name,
+      kind: 'file',
+      folder: false,
+      size: 1,
+      modified: 0,
+      created: 0,
+      hidden: false,
+    }))
+    await settled()
+    view.pickAll()
+    press('F2')
+    await settled()
+    const [find, replace] = [
+      ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
+    ]
+    if (!find || !replace) throw new Error('no fields')
+    find.value = 'draft'
+    find.dispatchEvent(new Event('input', { bubbles: true }))
+    replace.value = 'final'
+    replace.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual([
+      'rename /home/me/letters/draft.txt final.txt',
+      'rename /home/me/old/draft.txt final.txt',
+    ])
+    expect(search.found.map((one) => one.name)).toEqual(['letters/final.txt', 'old/final.txt'])
+    expect(rows()).toEqual(['final.txt', 'final.txt'])
+  })
+
+  test('keeps a name being typed when the folder is read again under it', async () => {
+    const { view } = await explorer()
+    press('n')
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    if (!field) throw new Error('no rename field')
+    field.value = 'let'
+    await view.reload()
+    await settled()
+    expect(target.querySelector('input.rename')).toBe(field)
+    expect(document.activeElement).toBe(field)
+    expect(changed).toEqual([])
+  })
+
+  test('puts what is picked in the trash with Delete, and makes a folder with its key', async () => {
+    const { workspace: ws } = await import('../../workspace.svelte')
+    await explorer()
+    press('p')
+    press('l')
+    press('Delete')
+    await settled()
+    expect(changed).toEqual(['trash /home/me/plan.pdf'])
+    expect(ws.undone.last).toEqual({
+      kind: 'outside',
+      steps: [
+        {
+          op: 'trashed',
+          tickets: [{ path: '/home/me/plan.pdf', back: '/home/me/plan.pdf', at: 1 }],
+        },
+      ],
+    })
+    press('N', { ctrlKey: true, shiftKey: true })
+    await settled()
+    expect(changed.at(-1)).toBe('make /home/me New folder')
+  })
+
+  test('narrows the folder as a filter is typed, and Escape brings the rest back', async () => {
+    const { view } = await explorer()
+    press('f', { ctrlKey: true })
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.filter')
+    expect(field).not.toBeNull()
+    if (!field) return
+    field.value = 'pl'
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    expect(rows()).toEqual(['plan.pdf'])
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settled()
+    expect(view.filter).toBe('')
+    expect(rows()).toHaveLength(4)
+  })
+
+  test('reads a film or a sound to look at only once the cursor rests on it', async () => {
+    const { view } = await explorer()
+    await view.go('/home/me/Sounds')
+    await settled()
+    press('a')
+    press(' ')
+    for (const name of ['b.mp3', 'c.mp3', 'd.mp3']) {
+      view.pick(name, 'one')
+      flushSync()
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await settled()
+    expect(peeked).toEqual(['/home/me/Sounds/d.mp3'])
+  })
+
+  test('looks at a file with Space, its words and its facts, and puts it away again', async () => {
+    await explorer()
+    press('n')
+    press(' ')
+    await settled()
+    const look = target.querySelector('.look')
+    expect(look?.textContent).toContain('notes.txt')
+    expect(look?.textContent).toContain('hello')
+    expect(look?.textContent).toContain('rw-r--r--')
+    look?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settled()
+    expect(target.querySelector('.look')).toBeNull()
+  })
+
+  test('draws the folder as a grid of tiles with Ctrl+2, and as a list with Ctrl+1', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    await explorer()
+    press('2', { ctrlKey: true })
+    await settled()
+    expect(target.querySelectorAll('.entry.tile').length).toBe(4)
+    press('1', { ctrlKey: true })
+    await settled()
+    expect(target.querySelectorAll('.entry.tile').length).toBe(0)
+    expect(explorerPrefs.view).toBe('list')
+  })
+
+  test('the hidden files button wears an open eye while they are shown and a shut one while not', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    await explorer()
+    const button = () =>
+      target.querySelector<HTMLButtonElement>('button[aria-label="Hidden files"]')
+    const shut = () => !!button()?.querySelector('path[d="m2 2 20 20"]')
+    expect(explorerPrefs.hidden).toBe(false)
+    expect(button()?.getAttribute('aria-pressed')).toBe('false')
+    expect(shut()).toBe(true)
+    button()?.click()
+    await settled()
+    expect(explorerPrefs.hidden).toBe(true)
+    expect(button()?.getAttribute('aria-pressed')).toBe('true')
+    expect(shut()).toBe(false)
+    button()?.click()
+    await settled()
+    expect(shut()).toBe(true)
+  })
+
+  test('renames several at once with F2, one name each from what is found and replaced', async () => {
+    await explorer()
+    press('n')
+    press('ArrowDown', { shiftKey: true })
+    press('F2')
+    await settled()
+    const sheet = target.querySelector('.many')
+    expect(sheet?.textContent).toContain('plan.pdf')
+    const [find, replace] = [
+      ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
+    ]
+    if (!find || !replace) return
+    find.value = 'n'
+    find.dispatchEvent(new Event('input', { bubbles: true }))
+    replace.value = 'N'
+    replace.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    expect(target.querySelector('.many')?.textContent).toContain('Notes.txt')
+    expect(target.querySelector('.many')?.textContent).toContain('plaN.pdf')
+    find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual([
+      'rename /home/me/notes.txt Notes.txt',
+      'rename /home/me/plan.pdf plaN.pdf',
+    ])
+  })
+
+  test('a key pressed in a sheet over the list never acts on the files behind it', async () => {
+    await explorer()
+    press('n')
+    press('ArrowDown', { shiftKey: true })
+    press('F2')
+    await settled()
+    const cancel = target.querySelector<HTMLButtonElement>('.many button')
+    cancel?.focus()
+    for (const key of ['Delete', 'Backspace', 'F2', 'a'])
+      cancel?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+    cancel?.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Delete',
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    await settled()
+    expect(changed).toEqual([])
+    expect(target.querySelector('.many')).not.toBeNull()
+    cancel?.click()
+    await settled()
+    press('p')
+    press(' ')
+    await settled()
+    const look = target.querySelector<HTMLElement>('.look')
+    look?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
+    )
+    look?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'F2', bubbles: true, cancelable: true }),
+    )
+    await settled()
+    expect(changed).toEqual([])
+    expect(target.querySelector('input.rename')).toBeNull()
+  })
+
+  test('a file dragged in from elsewhere onto a picked folder lands in that folder', async () => {
+    await explorer()
+    press('p')
+    await settled()
+    const row = [...target.querySelectorAll<HTMLElement>('.entry .orden-row-label')]
+      .find((one) => one.textContent === 'Pictures')
+      ?.closest<HTMLElement>('.entry')
+    if (!row) throw new Error('no Pictures row')
+    expect(row.classList.contains('is-picked')).toBe(true)
+    const data = new Map([['text/orden-path', '/home/me/Orden/Work/x.md']])
+    const drop = new Event('drop', { bubbles: true, cancelable: true })
+    Object.defineProperty(drop, 'dataTransfer', {
+      value: {
+        types: [...data.keys()],
+        getData: (type: string) => data.get(type) ?? '',
+        dropEffect: 'none',
+      },
+    })
+    row.dispatchEvent(drop)
+    await settled()
+    expect(changed).toEqual(['copy /home/me/Orden/Work/x.md /home/me/Pictures'])
+  })
+
+  test('draws only the rows of a long folder in columns that can be seen', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    const kept = DISK['/home/me/Pictures'] ?? []
+    DISK['/home/me/Pictures'] = Array.from({ length: 5000 }, (_, at) => `p${at}.png`)
+    try {
+      await explorer()
+      press('3', { ctrlKey: true })
+      await settled()
+      press('ArrowDown')
+      press('ArrowDown')
+      await columnSettled()
+      await settled()
+      const drawn = target.querySelectorAll('.column li')
+      expect(drawn.length).toBeGreaterThan(0)
+      expect(drawn.length).toBeLessThan(100)
+    } finally {
+      DISK['/home/me/Pictures'] = kept
+      explorerPrefs.show('list')
+    }
+  })
+
+  test('walks into a folder and back out with the sideways arrows in columns', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    const { view } = await explorer()
+    press('3', { ctrlKey: true })
+    await settled()
+    expect(explorerPrefs.view).toBe('columns')
+    press('ArrowDown')
+    press('ArrowDown')
+    press('ArrowRight')
+    await settled()
+    expect(view.folder).toBe('/home/me/Pictures')
+    press('ArrowLeft')
+    await settled()
+    expect(view.folder).toBe('/home/me')
+    explorerPrefs.show('list')
+  })
+
+  test('in columns, a folder the keyboard only passes over is not read', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    await explorer()
+    press('3', { ctrlKey: true })
+    await settled()
+    await columnSettled()
+    listedPaths.length = 0
+    press('ArrowDown')
+    press('ArrowDown')
+    await columnSettled()
+    await settled()
+    expect(listedPaths.filter((path) => path !== '/home/me')).toEqual(['/home/me/Pictures'])
+    explorerPrefs.show('list')
+  })
+})

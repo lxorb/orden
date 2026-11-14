@@ -8,13 +8,13 @@ import { asked } from './asks'
 import { type Call, done, maybe, need } from './call'
 import { Refused } from './problem'
 
-type View = import('../../explorer/view.svelte').ExplorerView
+type View = import('../../explorer/src/api').ExplorerView
 
 const OPS = 'op is list, open, go, select, trash, move, copy, rename or mkdir'
 
 export async function explorerTabs(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
-  const { viewOf } = await import('../../explorer/view.svelte')
+  const { viewOf } = await import('../../explorer/src/api')
   if (op === 'list') {
     return done(
       {
@@ -28,7 +28,7 @@ export async function explorerTabs(call: Call): Promise<AgentAnswer> {
   if (op === 'open') {
     const folder = await looked(call, await absolute(need(call, 'path')))
     if (typeof folder !== 'string') return folder
-    const { openExplorer } = await import('../../explorer/open')
+    const { openExplorer } = await import('../../explorer/src/api')
     const tab = await openExplorer(folder, false)
     const view = viewOf(tab)
     await view.appear()
@@ -73,8 +73,8 @@ async function changed(
   tab: Tab,
   view: View,
 ): Promise<AgentAnswer> {
-  const changes = await import('../../explorer/changes')
-  const { inASpace } = await import('../../explorer/open')
+  const changes = await import('../../explorer/src/api')
+  const { inASpace } = await import('../../explorer/src/api')
   const folder = view.listing?.path
   if (!folder || !changes.changeable(view)) {
     throw new Refused('read_only', `${folder ?? 'this tab'} takes no changes`)
@@ -106,12 +106,12 @@ async function changed(
         throw new Refused('bad_arguments', 'rename one path')
       await changes.renamePath(view, path, need(call, 'name'))
     } else if (op === 'mkdir') {
-      const { makeIn } = await import('../../explorer/commands')
+      const { makeIn } = await import('../../explorer/src/api')
       const made = await makeIn(folder, need(call, 'name'), false)
       workspace.undone.record({ kind: 'outside', steps: [{ op: 'made', path: made }] })
       await view.reload()
     } else if (to) {
-      const { listFolder } = await import('../../explorer/commands')
+      const { listFolder } = await import('../../explorer/src/api')
       await listFolder(to)
       await changes.carry(view, paths, to, op === 'move' ? 'move' : 'copy')
     }
@@ -147,8 +147,8 @@ function summary(
 }
 
 async function looked(call: Call, folder: string): Promise<string | AgentAnswer> {
-  const { inASpace } = await import('../../explorer/open')
-  const { listFolder } = await import('../../explorer/commands')
+  const { inASpace } = await import('../../explorer/src/api')
+  const { listFolder } = await import('../../explorer/src/api')
   let listing
   try {
     listing = await listFolder(folder)
@@ -171,7 +171,7 @@ async function looked(call: Call, folder: string): Promise<string | AgentAnswer>
 async function absolute(asked: string): Promise<string> {
   const said = asked.trim()
   if (said === '~' || /^~[\\/]/.test(said)) {
-    const { places } = await import('../../explorer/places.svelte')
+    const { places } = await import('../../explorer/src/api')
     const home = await places.home()
     if (!home) throw new Refused('failed', 'this computer has no home folder')
     return said === '~' ? home : joinPath(home, said.slice(2).replace(/\\/g, '/'))

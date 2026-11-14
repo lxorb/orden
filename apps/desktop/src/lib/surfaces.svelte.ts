@@ -105,7 +105,7 @@ export const applicationSurface = held(() =>
 export const explorerSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no file explorer in the Even Realities plugin'))
-    : import('./explorer/ExplorerTab.svelte'),
+    : import('./explorer/src/api').then((one) => one.loadExplorerTab()),
 )
 
 export const passSurface = held(() =>
