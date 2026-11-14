@@ -102,8 +102,8 @@ export function watchWidgets(): () => void {
 
   const stop = $effect.root(() => {
     $effect(() => {
-      void todos.todos
-      if (!workspace.protection.seen) return
+      const held = todos.todos.length
+      if (!workspace.protection.seen || held < 0) return
       reread()
     })
     $effect(() => {
