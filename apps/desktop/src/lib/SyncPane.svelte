@@ -11,7 +11,7 @@
   import { type Answer, type Clash, record } from './sync-mirror/src/api'
   import { sync } from './sync.svelte'
   import { nameOf, rootedAt } from './platform/src/api'
-  import { syncedCopies } from './foreign/synced'
+  import { syncedCopies } from './foreign/src/api'
   import { asking, scan, type Engine } from './sync-client/src/api'
   import { workspace } from './workspace.svelte'
   import { Hint } from './ui-controls/src/api'

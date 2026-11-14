@@ -14,28 +14,26 @@ const fake = vi.hoisted((): Fake => ({
   user: { id: 'u1' },
 }))
 
-vi.mock('../platform/src/stored', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/stored')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   stored: () => fake.saved,
 }))
-vi.mock('../accounts/src/account.svelte', () => ({
+vi.mock('../../accounts/src/api', () => ({
   account: {
     get user() {
       return fake.user
     },
     accountToken: 'token',
   },
-}))
-vi.mock('../accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   api: {
     deleteNote: (_token: string, id: string) => {
       fake.deleted.push(id)
       return Promise.resolve({ ok: true })
     },
   },
+  fromServer: () => false,
 }))
-vi.mock('../sync.svelte', () => ({
+vi.mock('../../sync.svelte', () => ({
   STORAGE_KEY: 'orden:mirrors',
   sync: {
     nudge: () => {
