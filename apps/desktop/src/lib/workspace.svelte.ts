@@ -152,6 +152,7 @@ import {
 import { agentMarks } from './agent-marks.svelte'
 import { beginSetup } from './onboarding/src/api'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
+import { showArchive } from './archive/src/api'
 
 function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
@@ -3143,7 +3144,7 @@ class Workspace {
 
     if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
       this.showPanel('tree')
-      void import('./archive-list.svelte').then(({ archiveList }) => archiveList.show(path))
+      void showArchive(path)
       return
     }
 

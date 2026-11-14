@@ -1,4 +1,4 @@
-import { keep, storedText } from './platform/src/api'
+import { keep, storedText } from '../../platform/src/api'
 
 const OPEN_KEY = 'orden:archive-open'
 

@@ -1,0 +1,20 @@
+{
+  "name": "archive",
+  "layer": "features",
+  "dependsOn": ["contracts", "platform"],
+  "pending": [
+    "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/Twist.svelte",
+    "apps/desktop/src/lib/drag-paths.ts",
+    "apps/desktop/src/lib/file-mark.ts",
+    "apps/desktop/src/lib/folder-notes.ts",
+    "apps/desktop/src/lib/longpress.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/new-tab.ts",
+    "apps/desktop/src/lib/roving.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/archive-map.ts",
+    "apps/desktop/src/lib/workspace/archive.svelte.ts",
+    "apps/desktop/src/lib/workspace/undo.svelte.ts"
+  ]
+}

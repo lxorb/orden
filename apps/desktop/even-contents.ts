@@ -104,6 +104,7 @@ export const APP_FOLDERS = [
   'accounts-ui',
   'ai-chat',
   'ai-providers',
+  'archive',
   'away',
   'back-swipe',
   'camera',

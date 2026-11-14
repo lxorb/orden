@@ -12,6 +12,7 @@ import { breathe } from './breathe'
 import { startup } from './startup.svelte'
 import { storedText } from './platform/src/api'
 import { loadTabNameField, stripMenus, tabMenus, tabNumbers } from './tab-strip/src/api'
+import { loadArchive, loadArchivedStrip } from './archive/src/api'
 
 export function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {
   return door(() => load().then((one) => one.default))
@@ -179,13 +180,13 @@ export const askPanel = held(() =>
 export const archiveSection = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no archive list in the Even Realities plugin'))
-    : import('./Archive.svelte'),
+    : loadArchive(),
 )
 
 export const archivedStrip = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no archive strip in the Even Realities plugin'))
-    : import('./ArchivedStrip.svelte'),
+    : loadArchivedStrip(),
 )
 
 export const historySheet = latched(loadHistory)
