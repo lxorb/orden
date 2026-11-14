@@ -2,7 +2,7 @@ import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
 import { loadRewriteSheet } from './ai-chat/src/api'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@orden/markdown/door'
-import { registered } from '@orden/contracts'
+import { commandRowsLoaded, registered } from '@orden/contracts'
 import { loadPalette } from './palette/src/api'
 import { loadSettingsPanel } from './settings/src/api'
 import { loadGraph } from './graph-view/src/api'
@@ -254,7 +254,10 @@ export const crashAsk = latched(() => {
   return import('./crash-reports/src/api').then((one) => one.loadCrashAsk())
 })
 
-export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
+export const appMenuRows = held(async () => {
+  const [{ appMenu }] = await Promise.all([import('./app-menu'), commandRowsLoaded()])
+  return { default: appMenu }
+})
 
 export const undoToastNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no undo toast in the Even Realities plugin')
@@ -304,7 +307,7 @@ export const spacesMenu = held(() => import('./SpaceMenu.svelte'))
 export const promptSheet = latched(() => import('./PromptSheet.svelte'))
 
 export const paletteDoor = latched(() =>
-  Promise.all([loadPalette(), registered()]).then(([one]) => one),
+  Promise.all([loadPalette(), registered(), commandRowsLoaded()]).then(([one]) => one),
 )
 
 export const paletteWords = $state<{ words: string | null }>({ words: null })
@@ -364,7 +367,10 @@ export async function warmDoors(): Promise<void> {
     () => readingSurface(),
     () => loadFind(),
     () => loadLineCommands(),
-    () => import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
+    () =>
+      Promise.all([import('./commands/src/api'), commandRowsLoaded()]).then(([{ blockRows }]) =>
+        setBlocks(blockRows),
+      ),
     () => spacePickerDialog.ask(),
     () => spacesMenu(),
     () => paletteDoor.ask(),

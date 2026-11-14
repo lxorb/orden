@@ -50,7 +50,8 @@ Element.prototype.animate = () =>
 Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { appCommands, blockRows, exportCommands } = await import('../../src/lib/commands')
+const { appCommands, blockRows } = await import('../../src/lib/commands/src/api')
+const { exportCommands } = await import('../../src/lib/export/src/api')
 const { default: Palette } = await (await import('../../src/lib/palette/src/api')).loadPalette()
 await (await import('@orden/contracts')).registered()
 

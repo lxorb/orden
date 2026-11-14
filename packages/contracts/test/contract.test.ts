@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   ASK_EFFORTS,
+  commandRows,
+  commandRowsLoaded,
   attempt,
   attemptAsync,
   EMPTY_EXTENSIONS,
@@ -30,6 +32,8 @@ import {
   registerSettingFields,
   registerSettingsPart,
   registerCommand,
+  registerCommandRows,
+  registerCommands,
   registerTabKind,
   settingFieldsIn,
   settingsPartsIn,
@@ -512,5 +516,38 @@ describe('loads', () => {
     unregister()
     broken()
     expect(await runCommand('time.start')).toBe(false)
+  })
+
+  it('runs a command of a registered namespace from the runs it loads, an exact one first', async () => {
+    const ran: string[] = []
+    const space = registerCommands('pass.', () =>
+      Promise.resolve({ 'pass.open': () => void ran.push('open') }),
+    )
+    const exact = registerCommand('pass.lock', () => Promise.resolve(() => void ran.push('lock')))
+    expect(await runCommand('pass.open')).toBe(true)
+    expect(await runCommand('pass.lock')).toBe(true)
+    expect(await runCommand('pass.generate')).toBe(false)
+    expect(await runCommand('passage')).toBe(false)
+    expect(ran).toEqual(['open', 'lock'])
+    space()
+    exact()
+    expect(await runCommand('pass.open')).toBe(false)
+  })
+
+  it('reads command rows of a place once loaded, with the view handed in, and none for a failed load', async () => {
+    const view = { line: 3 }
+    const rows = registerCommandRows('web', () =>
+      Promise.resolve((seen) => [
+        { id: seen === view ? 'web-seen' : 'web-blind', label: 'Web', run: () => undefined },
+      ]),
+    )
+    const broken = registerCommandRows('send', () => Promise.reject(new Error('offline')))
+    expect(commandRows('web', view)).toEqual([])
+    await commandRowsLoaded()
+    expect(commandRows('web', view).map((one) => one.id)).toEqual(['web-seen'])
+    expect(commandRows('send')).toEqual([])
+    rows()
+    broken()
+    expect(commandRows('web', view)).toEqual([])
   })
 })

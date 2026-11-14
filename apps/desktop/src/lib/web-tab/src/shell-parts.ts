@@ -1,4 +1,6 @@
 import {
+  registerCommand,
+  registerCommandRows,
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
@@ -12,6 +14,8 @@ export const runsExtensions = isDesktop && (platform() === 'windows' || platform
 if (!__EVEN_PLUGIN__) {
   registerPaletteKind('visits', () => import('./palette-visits').then((one) => one.visits))
   registerTabKind('web', () => import('./tab-kind').then((one) => one.webTabKind))
+  registerCommandRows('web', () => import('./command-rows').then((one) => one.webRows))
+  registerCommand('web.history', () => import('./history-open').then((one) => one.openHistory))
   registerSettingFields({
     section: 'general',
     group: 'Browser',

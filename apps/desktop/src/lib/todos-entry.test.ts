@@ -88,7 +88,7 @@ describe('where it is asked for', () => {
     expect(read('./shortcuts/src/registry.ts')).toMatch(
       /id: 'app\.tasks',[\s\S]*?run: \(\) => void import\('\.\.\/\.\.\/todos-entry'\)/,
     )
-    expect(read('./commands.ts')).toMatch(
+    expect(read('./commands/src/commands.ts')).toMatch(
       /id: 'todos',[\s\S]*?hint: shortcuts\.hint\('app\.tasks'\),[\s\S]*?todos-entry/,
     )
   })

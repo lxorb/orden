@@ -1,5 +1,7 @@
 import {
   registerCommand,
+  registerCommandRows,
+  registerCommands,
   registerFeature,
   registerSettingsPart,
   registerTabKind,
@@ -12,6 +14,13 @@ registerCommand(
   'app.scratchpad',
   async () => (await import('./scratchpad/src/api')).toggleScratchpad,
 )
+registerCommand('app.print', async () => {
+  const { runRow } = await import('./commands/src/api')
+  return () => void runRow('print')
+})
+registerCommands('views.', async () => (await import('./views/src/api')).viewCommands)
+registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
+registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
 
 if (!__EVEN_PLUGIN__) {
   registerFeature(() => import('./agents/src/api'))
@@ -32,13 +41,18 @@ if (!__EVEN_PLUGIN__) {
     async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
   )
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
-  registerCommand('app.pass', async () => (await import('./pass-sync/src/api')).openPass)
-  registerCommand('time.tab', async () => {
-    const { openTime } = await import('./time/src/api')
-    return () => void openTime()
+  registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
+  registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+  registerCommands('import.', async () => (await import('./import/src/api')).importCommands)
+  registerCommand('ai.threads', async () => {
+    const { chat } = await (await import('./ai-chat/src/api')).chatStore()
+    return () => chat.showThreads()
   })
-  registerCommand('time.start', async () => (await import('./time/src/api')).startTimer)
-  registerCommand('time.stop', async () => (await import('./time/src/api')).stopTimer)
+  registerCommandRows('export', async () => (await import('./export/src/api')).exportCommands)
+  registerCommandRows('export-picker', async () => (await import('./export/src/api')).exportPicker)
+  registerCommandRows('agent-undo', async () => (await import('./agent-docs/src/api')).undoRows)
+  registerCommandRows('send', async () => (await import('./chats-client/src/api')).sendRows)
+  registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
   registerTabKind('application', async () => (await import('./apps/src/api')).applicationTabKind)
   registerSettingsPart({
     section: 'import',

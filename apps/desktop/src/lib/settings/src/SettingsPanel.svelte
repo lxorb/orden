@@ -10,7 +10,6 @@
   import DefaultBrowser from './DefaultBrowser.svelte'
   import FontPicker from './FontPicker.svelte'
   import {
-    portOf,
     settingFieldsIn,
     type SettingsPart,
     type SettingsPartHost,
@@ -91,11 +90,6 @@
   let accessDetail = $state(false)
 
   const partHost: SettingsPartHost = { detail: (open) => (accessDetail = open) }
-
-  async function signOut() {
-    const leaving = portOf('account.signingOut')
-    await (leaving.ok ? leaving.value.signOut() : account.signOut('asked'))
-  }
 
   const panes = $derived(preferences())
   const current = $derived(panes.find((one) => one.id === settings.section))
@@ -830,7 +824,8 @@
       <Security />
 
       <div class="card">
-        <button class="orden-action is-danger" onclick={() => void signOut()}>Sign out</button>
+        <button class="orden-action is-danger" onclick={() => void account.leave()}>Sign out</button
+        >
         {#if leaving}
           {#await import('../../accounts-ui/src/api') then ui}
             <ui.DeleteAccount onend={() => (leaving = false)} />

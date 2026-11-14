@@ -32,9 +32,9 @@ import {
   viewport,
 } from './ui-kit/src/api'
 import { copySelection, cutSelection } from './ui-controls/src/api'
-import { blockCommands, exportCommands } from './commands'
+import { blockCommands } from './commands/src/api'
 import { fullscreen } from './fullscreen.svelte'
-import { frontShut } from './export/src/api'
+import { exportCommands, frontShut } from './export/src/api'
 import {
   canPrint,
   EXPORT_EXTRAS,

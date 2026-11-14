@@ -1,5 +1,6 @@
 import { readProperties } from '@orden/markdown/properties'
-import { appCommands } from '../commands'
+import { commandRowsLoaded } from '@orden/contracts'
+import { appCommands } from '../commands/src/api'
 import { countText } from '../counts'
 import { links } from '../link-index.svelte'
 import { scanHeadings } from '../outline'
@@ -76,7 +77,8 @@ export async function countWords(args: Said): Promise<unknown> {
   return { path: note.relative, ...countText(note.text) }
 }
 
-export function listCommands(): unknown {
+export async function listCommands(): Promise<unknown> {
+  await commandRowsLoaded()
   return {
     commands: appCommands(views.of(workspace.panes.focusedId))
       .filter((one) => one.ownWindow !== true)

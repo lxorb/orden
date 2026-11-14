@@ -12,7 +12,8 @@ import {
   onTheActivity,
   wordSaid,
 } from '../platform/src/api'
-import { appCommands } from '../commands'
+import { commandRowsLoaded } from '@orden/contracts'
+import { appCommands } from '../commands/src/api'
 import { applyImport } from '../import/src/api'
 import { putPicture, writeAtCaret } from '../insert-picture'
 import { modes } from '../modes.svelte'
@@ -67,9 +68,10 @@ export function askedFrom(json: string): Asked {
   }
 }
 
-function run(id: string): boolean {
+async function run(id: string): Promise<boolean> {
   if (!id) return false
 
+  await commandRowsLoaded()
   const view = views.of(workspace.panes.focusedId)
   const found = appCommands(view).find((one) => one.id === id)
   if (!found || found.disabled) return false
@@ -118,7 +120,7 @@ async function take(): Promise<void> {
 
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
-  if (asked.command) run(asked.command)
+  if (asked.command) await run(asked.command)
   if (asked.tick) await ticked(asked.tick)
 
   await taken(word)

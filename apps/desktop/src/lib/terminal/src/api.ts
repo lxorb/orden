@@ -1,4 +1,5 @@
 import './shell-parts'
+import { openTerminal } from './open'
 import type * as Closing from './closing'
 import type * as OnlineOpen from './online/open'
 import type * as Previews from './previews'
@@ -7,7 +8,8 @@ import type * as Rename from './rename'
 import type * as Sessions from './sessions.svelte'
 export { historyOf, moveHistory } from './history'
 export { setTerminalIcon } from './icon'
-export { openTerminal, shellRows } from './open'
+export { openTerminal }
+export { shellRows } from './open'
 export { ptyOf, runningTabs, shellRunning } from './running'
 export type { Session } from './sessions.svelte'
 export { shells } from './shells.svelte'
@@ -78,3 +80,21 @@ export const loadTerminalMark = () =>
 
 export const loadHostPicker = () =>
   __EVEN_PLUGIN__ ? refused() : import('./remote/HostPicker.svelte')
+
+async function pickHost() {
+  const { hostPicker } = await hostPicking()
+  hostPicker.toggle()
+}
+
+async function machineTo(on: boolean) {
+  const { machine } = await onlineMachine()
+  await machine.startStop(on)
+}
+
+export const terminalCommands = {
+  'terminal.new': () => void openTerminal(),
+  'terminal.remote': () => void pickHost(),
+  'terminal.online': () => void openOnline(),
+  'terminal.machine-start': () => void machineTo(true),
+  'terminal.machine-stop': () => void machineTo(false),
+}

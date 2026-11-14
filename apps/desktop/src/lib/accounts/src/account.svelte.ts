@@ -278,6 +278,11 @@ class Session {
     if (token) await api.signOut(token).catch(() => undefined)
   }
 
+  async leave() {
+    const leaving = portOf('account.signingOut')
+    await (leaving.ok ? leaving.value.signOut() : this.signOut('asked'))
+  }
+
   async rename(name: string) {
     const token = this.token
     if (!token) return

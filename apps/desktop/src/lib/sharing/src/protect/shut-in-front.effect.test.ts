@@ -8,7 +8,8 @@ vi.mock('../../../history/src/versions', () => ({
 
 const { workspace } = await import('../../../workspace.svelte')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
-const { appCommands, exportCommands } = await import('../../../commands')
+const { appCommands } = await import('../../../commands/src/api')
+const { exportCommands } = await import('../../../export/src/api')
 const { appMenu } = await import('../../../app-menu')
 const { openTarget } = await import('../../../export/src/context')
 const { settings } = await import('../../../settings.svelte')

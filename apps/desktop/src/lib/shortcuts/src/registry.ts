@@ -1,4 +1,4 @@
-import { runCommand } from '@orden/contracts'
+import { commandRows, commandRowsLoaded, runCommand } from '@orden/contracts'
 import {
   type BindingSpec,
   type EditorView,
@@ -204,18 +204,10 @@ function fromEditor(spec: BindingSpec): Shortcut {
   }
 }
 
-function runExport(id: ExportId) {
-  void import('../../commands').then(({ exportCommands }) => {
-    const command = exportCommands().find((one) => one.id === `export-${id}`)
-    if (command && !command.disabled) command.run()
-  })
-}
-
-function runPrint() {
-  void import('../../commands').then(({ appCommands }) => {
-    const command = appCommands().find((one) => one.id === 'print')
-    if (command && !command.disabled) command.run()
-  })
+async function runExport(id: ExportId) {
+  await commandRowsLoaded()
+  const command = commandRows('export').find((one) => one.id === `export-${id}`)
+  if (command && command.disabled !== true) command.run()
 }
 
 const PANE_WAYS: readonly [Toward, string, () => string][] = [
@@ -414,7 +406,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-p',
-    run: () => runPrint(),
+    run: () => void runCommand('app.print'),
   },
   ...EXPORT_KEYS.map((id): Shortcut => ({
     id: `export.${id}`,
@@ -422,7 +414,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: null,
-    run: () => runExport(id),
+    run: () => void runExport(id),
   })),
   {
     id: 'app.next-note',
@@ -906,7 +898,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: 'Mod-Alt-v',
           shown: () => passOn(),
-          run: () => void runCommand('app.pass'),
+          run: () => void runCommand('pass.open'),
         } satisfies Shortcut,
       ]),
   {

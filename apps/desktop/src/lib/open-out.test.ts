@@ -11,17 +11,18 @@ vi.mock('./workspace.svelte', () => ({
     get active() {
       return { kind: world.kind, note: {} }
     },
-    rootHolding: () => '/space',
   },
 }))
-vi.mock('./export/src/context', () => ({
-  openTarget: () => ({
-    source: '{}',
+vi.mock('./export/src/api', () => ({
+  openOut: () => ({
+    text: '{}',
     name: 'Board.canvas',
     path: '/space/Board.canvas',
+    root: '/space',
+    shared: null,
     trusted: world.trusted,
   }),
-  renderOptions: () => Promise.resolve({}),
+  printNote: () => Promise.resolve(),
 }))
 vi.mock('./plane/src/picture', () => ({
   printCanvas: (drawing: unknown) => {

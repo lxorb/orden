@@ -14,7 +14,6 @@
     "usage"
   ],
   "pending": [
-    "apps/desktop/src/lib/commands.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/pane-moves.ts",

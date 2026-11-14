@@ -274,7 +274,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/bases/src/index.ts', 'the rows engine'],
     ['/markdown/src/pages.ts', 'the pages engine'],
     ['/lib/web-tab/src/convert.ts', 'the old websites, converted'],
-    ['/lib/commands.ts', 'the command list'],
+    ['/lib/commands/src/commands.ts', 'the command list'],
     ['/lib/export/src/print.ts', 'printing'],
     ['/lib/mobile/dictation.ts', 'dictation'],
     ['/editor/src/lines.ts', 'the line commands'],

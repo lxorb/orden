@@ -22,5 +22,10 @@ export const createDatabase: typeof import('./new-database').createDatabase = (.
 export const pickTemplate: typeof import('./templates').pickTemplate = () =>
   import('./templates').then((one) => one.pickTemplate())
 
+export const viewCommands = {
+  'views.new-database': () => void createDatabase(),
+  'views.pick-template': () => void pickTemplate(),
+}
+
 export const orderMoved: typeof import('./order-paths').orderMoved = (...args) =>
   import('./order-paths').then((one) => one.orderMoved(...args))

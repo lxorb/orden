@@ -1,4 +1,4 @@
-import type { Command } from '../../commands'
+import type { Command } from '../../commands/src/api'
 import type { FileMark } from '../../file-mark'
 import type { PaletteDestination, PaletteHost } from '@orden/contracts'
 import type { Bookmark } from '../../workspace/bookmarks.svelte'

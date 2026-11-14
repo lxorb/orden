@@ -12,7 +12,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const { appCommands } = await import('../../src/lib/commands')
+const { appCommands } = await import('../../src/lib/commands/src/api')
 const { guardDrops } = await import('../../src/lib/drops')
 const { SHORTCUTS } = await import('../../src/lib/shortcuts/src/api')
 const { shortcuts } = await import('../../src/lib/shortcuts/src/api')

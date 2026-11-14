@@ -23,7 +23,9 @@ const lockLayout = () => read(ANDROID, 'res', 'layout', 'widget_notes_lock.xml')
 const rowsIn = (text: string) =>
   [...text.matchAll(/@\+id\/orden_row_(\d+)/g)].map((one) => Number(one[1]))
 
-const commands = read(SOURCE, 'lib', 'commands.ts')
+const commands =
+  read(SOURCE, 'lib', 'commands', 'src', 'commands.ts') +
+  read(SOURCE, 'lib', 'dictation', 'src', 'recorder', 'commands.ts')
 const bridge = read(SOURCE, 'lib', 'platform', 'src', 'mobile-bridge.ts')
 
 function sources(dir: string, found: string[] = []): string[] {

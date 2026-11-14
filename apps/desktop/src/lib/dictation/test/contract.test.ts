@@ -47,12 +47,10 @@ describe('the module stands on its own', () => {
     for (const one of [
       api.appendTo,
       api.canDictate,
-      api.canRecord,
       api.dictating,
       api.loadRecordingPill,
-      api.record,
       api.recordingAt,
-      api.recordLabel,
+      api.recordRows,
       api.recordVoice,
       api.transcribeEmbed,
       api.transcriber,

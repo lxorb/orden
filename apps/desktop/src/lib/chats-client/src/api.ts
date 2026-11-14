@@ -1,5 +1,6 @@
 import './shell-parts'
 export { hush } from './hush.svelte'
+export { sendRows } from './send-rows'
 export type { ChatEntry, Chats } from './shapes'
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)

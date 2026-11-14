@@ -14,10 +14,10 @@
     "sharing",
     "shortcuts",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "commands"
   ],
   "pending": [
-    "apps/desktop/src/lib/commands.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/longpress.ts",

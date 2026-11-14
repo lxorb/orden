@@ -16,7 +16,7 @@ export async function pressButton(base: Base, name: string, row: Row): Promise<v
   if (press.command !== undefined) {
     const { runCommand } = await import('../../automation/acts')
     try {
-      runCommand({ id: press.command }, 'link')
+      await runCommand({ id: press.command }, 'link')
     } catch {
       // A command that is gone or may not run from here does nothing; the rest of the
       // press already happened.

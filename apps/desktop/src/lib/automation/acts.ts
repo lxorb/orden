@@ -3,7 +3,8 @@ import type { TextEdit } from '@orden/markdown/edits'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
-import { appCommands } from '../commands'
+import { commandRowsLoaded } from '@orden/contracts'
+import { appCommands } from '../commands/src/api'
 import { links } from '../link-index.svelte'
 import {
   extensionOf,
@@ -155,7 +156,7 @@ export async function searchSpace(args: Said): Promise<unknown> {
   const query = said(args, 'query')
   if (!query) throw new Error('say what to search for')
 
-  runCommand({ id: 'search-space' })
+  await runCommand({ id: 'search-space' })
   search.ask(query)
 
   const until = Date.now() + SEARCH_PATIENCE
@@ -178,10 +179,11 @@ export async function searchSpace(args: Said): Promise<unknown> {
   }
 }
 
-export function runCommand(args: Said, road: Road = 'here'): unknown {
+export async function runCommand(args: Said, road: Road = 'here'): Promise<unknown> {
   const id = said(args, 'id')
   if (!id) throw new Error('say which command')
 
+  await commandRowsLoaded()
   const found = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
   if (!found) throw new Error(`there is no command called ${id}`)
   if (found.disabled === true) throw new Error(`${id} cannot run just now`)

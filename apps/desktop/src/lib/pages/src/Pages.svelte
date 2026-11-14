@@ -822,14 +822,15 @@
     store.clearPicked()
   }
 
+  async function runCommandRow(id: string) {
+    const { runRow } = await import('../../commands/src/api')
+    await runRow(id)
+  }
+
   function command(id: string, label: string): MenuEntry {
     return {
       label,
-      run: () =>
-        void import('../../commands').then(({ appCommands, exportCommands }) => {
-          const row = [...exportCommands(), ...appCommands()].find((one) => one.id === id)
-          if (row && !row.disabled) row.run()
-        }),
+      run: () => void runCommandRow(id),
     }
   }
 
