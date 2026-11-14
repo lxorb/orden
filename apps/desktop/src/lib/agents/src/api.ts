@@ -1,7 +1,4 @@
-export { type McpClient, mcpLine } from './mcp'
-export { default as AgentMark } from './settings/AgentMark.svelte'
 export { tauriCrate } from './settings/crate'
-export { AgentsPane } from './settings/pane.svelte'
 export { reach } from './settings/reach.svelte'
 export { asking } from './ui/asking.svelte'
 export { ACTIVE_FOR } from './ui/marks'
@@ -23,10 +20,10 @@ export const agentsUi = () =>
     ? Promise.reject(new Error('no agents in the Even Realities plugin'))
     : import('./ui/index')
 
-export const loadAgentDetail = () =>
+export const loadAccess = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no agent settings in the Even Realities plugin'))
-    : import('./settings/AgentDetail.svelte')
+    : import('./access/Access.svelte')
 
 export const agentStandIn = () => import('./settings/fake')
 

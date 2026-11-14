@@ -866,7 +866,7 @@
   {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
     {#if !accessDetail}<AiPane />{/if}
     {#if !__EVEN_PLUGIN__}
-      {#await import('./access/Access.svelte') then access}
+      {#await import('./agents/src/api').then((one) => one.loadAccess()) then access}
         <access.default ondetail={(open: boolean) => (accessDetail = open)} />
       {/await}
     {/if}

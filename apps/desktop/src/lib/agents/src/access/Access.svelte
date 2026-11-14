@@ -1,22 +1,25 @@
 <script lang="ts">
-  import { localDate } from '../platform/src/api'
-  import Facts from '../Facts.svelte'
+  import { localDate } from '../../../platform/src/api'
+  import Facts from '../../../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { account } from '../accounts/src/api'
-  import { AgentMark, AgentsPane, loadAgentDetail, reach, tauriCrate } from '../agents/src/api'
-  import { closeOnBack } from '../ui-kit/src/api'
-  import { connectors } from '../connectors.svelte'
-  import { dur, slide } from '../platform/src/api'
-  import { settings } from '../settings.svelte'
-  import { arrive, segmented } from '../ui-kit/src/api'
-  import { keep, storedText } from '../platform/src/api'
-  import { invoke, isDesktop, platform } from '../platform/src/api'
+  import { account } from '../../../accounts/src/api'
+  import AgentMark from '../settings/AgentMark.svelte'
+  import { tauriCrate } from '../settings/crate'
+  import { AgentsPane } from '../settings/pane.svelte'
+  import { reach } from '../settings/reach.svelte'
+  import { closeOnBack } from '../../../ui-kit/src/api'
+  import { connectors } from '../../../connectors.svelte'
+  import { dur, slide } from '../../../platform/src/api'
+  import { settings } from '../../../settings.svelte'
+  import { arrive, segmented } from '../../../ui-kit/src/api'
+  import { keep, storedText } from '../../../platform/src/api'
+  import { invoke, isDesktop, platform } from '../../../platform/src/api'
   import AccountSteps from './AccountSteps.svelte'
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
-  import { Hint } from '../ui-controls/src/api'
-  import { Switch } from '../ui-controls/src/api'
+  import { Hint } from '../../../ui-controls/src/api'
+  import { Switch } from '../../../ui-controls/src/api'
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
 
@@ -127,7 +130,7 @@
   {#key agent?.id}
     <div class="page" in:arrive>
       {#if agent && pane}
-        {#await loadAgentDetail() then { default: AgentDetail }}
+        {#await import('../settings/AgentDetail.svelte') then { default: AgentDetail }}
           <AgentDetail {pane} grant={agent} onback={() => (chosen = null)} />
         {/await}
       {:else}
