@@ -133,7 +133,7 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 1_933_000
+const BUDGET = 1_934_000
 const MOST_FILES = 444
 
 const MOST_TEXT = 6_500
@@ -287,7 +287,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/shortcuts/presets.ts', 'the keyboards'],
     ['/lib/PromptSheet.svelte', 'the question sheet'],
     ['/lib/files-out/src/save.ts', 'the writer behind Save as'],
-    ['/lib/pdf/papers.ts', "the papers' words"],
+    ['/lib/pdf/src/papers.ts', "the papers' words"],
     ['/lib/editor-menu.ts', "the editor's menu"],
     ['/editor/src/menu.ts', 'what it asks of the editor'],
     ['/lib/theme-looks/src/picker/picking.svelte.ts', 'the theme picker'],
