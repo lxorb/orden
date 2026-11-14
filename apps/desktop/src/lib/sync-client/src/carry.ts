@@ -1,11 +1,8 @@
 import type { Awareness } from 'y-protocols/awareness'
 import { account, type LiveNote } from './ports'
 import { busy } from '../../busy.svelte'
-import { rooms } from '../../rooms.svelte'
-import type { Carrying } from '../../rooms/carried'
-import type { Who } from '../../rooms/door'
-import type { Seen } from '../../rooms/peers'
-import { deviceAccent, deviceName, personFace, personName } from '../../rooms/who'
+import { deviceAccent, deviceName, personFace, personName, rooms } from '../../collab/src/api'
+import type { Carrying, Seen, Who } from '../../collab-rooms/src/api'
 import { theme } from '../../theme.svelte'
 import type { InkStroke } from '../../canvas/format'
 import type { Point } from '../../canvas/geometry'
@@ -28,7 +25,7 @@ export async function carry(
 } | null> {
   const token = account().token
   if (!token || rooms.carried.has(key)) return null
-  const { CarriedRoom, CarriedPlaneRoom } = await import('../../rooms/carried')
+  const { CarriedRoom, CarriedPlaneRoom } = await import('../../collab-rooms/src/api')
   if (rooms.carried.has(key) || account().token !== token) return null
 
   const entering = {

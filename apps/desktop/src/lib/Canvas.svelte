@@ -93,7 +93,7 @@
   import { menu } from './menu.svelte'
   import { followNote } from './open-link'
   import { dur, fade } from './motion'
-  import { rooms } from './rooms.svelte'
+  import { rooms } from './collab/src/api'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
   import { shortcuts } from './shortcuts.svelte'

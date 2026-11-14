@@ -61,7 +61,7 @@ const sockets = vi.hoisted(() => {
 vi.mock('./socket', () => ({ RoomSocket: sockets.FakeSocket }))
 
 const { Room } = await import('./room')
-const { NoteDoc } = await import('../workspace/documents.svelte')
+const { NoteDoc } = await import('../../workspace/documents.svelte')
 
 class Server {
   readonly doc = new Y.Doc()

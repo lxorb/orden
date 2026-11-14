@@ -7,7 +7,7 @@
   import { message } from './message'
   import { fly, LAYER } from './motion'
   import { overlays } from './overlays'
-  import { deviceAccent } from './rooms/who'
+  import { deviceAccent } from './collab/src/api'
   import { theme } from './theme.svelte'
   import { viewport } from './viewport.svelte'
 

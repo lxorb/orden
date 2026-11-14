@@ -15,7 +15,7 @@ import { glassesSettings, glassesStamp, resetGlasses } from './settings'
 import { type Row, type Settings, Shell, type Wish, type Words, type World } from './shell'
 import { spokenTask, Today } from './today'
 import { type Listening, Voice } from './voice'
-import { rooms } from '../rooms.svelte'
+import { rooms } from '../collab/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 
 const SETTLE = 700

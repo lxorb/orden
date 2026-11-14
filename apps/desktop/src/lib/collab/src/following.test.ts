@@ -4,7 +4,7 @@ import { isEdit, receive, syncUpdate, TEXT } from '@orden/rooms'
 import { NOW_READS } from '@orden/sync-core'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import type { PlaneSurface } from '../canvas/shared'
+import type { PlaneSurface } from '../../canvas/shared'
 
 const sockets = vi.hoisted(() => {
   interface Wire {
@@ -67,7 +67,7 @@ const sockets = vi.hoisted(() => {
   return { FakeSocket, opened }
 })
 
-vi.mock('./socket', () => ({ RoomSocket: sockets.FakeSocket }))
+vi.mock('../../collab-rooms/src/socket', () => ({ RoomSocket: sockets.FakeSocket }))
 vi.mock('./who', () => ({
   deviceName: () => 'Windows',
   deviceAccent: () => 'blue',
@@ -77,7 +77,7 @@ vi.mock('./who', () => ({
 }))
 const session = vi.hoisted(() => ({ token: 'session', name: null, rechecked: 0, listed: 0 }))
 
-vi.mock('../account.svelte', () => ({
+vi.mock('../../account.svelte', () => ({
   account: Object.assign(session, {
     forgetWithSession: () => undefined,
     recheck: () => {
@@ -90,20 +90,20 @@ vi.mock('../account.svelte', () => ({
     },
   }),
 }))
-vi.mock('../theme.svelte', () => ({ theme: { current: 'dark' } }))
+vi.mock('../../theme.svelte', () => ({ theme: { current: 'dark' } }))
 
 const said: string[] = []
 
-vi.mock('../busy.svelte', () => ({
+vi.mock('../../busy.svelte', () => ({
   busy: {
     failed: (reason: string) => said.push(reason),
     start: () => undefined,
   },
 }))
 
-const { inRooms, rooms } = await import('../rooms.svelte')
-const { record } = await import('../sync/record.svelte')
-const { NoteDoc } = await import('../workspace/documents.svelte')
+const { inRooms, rooms } = await import('./rooms.svelte')
+const { record } = await import('../../sync/record.svelte')
+const { NoteDoc } = await import('../../workspace/documents.svelte')
 
 type Doc = InstanceType<typeof NoteDoc>
 type Socket = InstanceType<typeof sockets.FakeSocket>
@@ -228,7 +228,7 @@ describe('a writer made a reader while the note is open in its room', () => {
       answer = done
     })
     const loading = vi
-      .spyOn((await import('../account.svelte')).account, 'loadSpaces')
+      .spyOn((await import('../../account.svelte')).account, 'loadSpaces')
       .mockImplementation(() => asked)
 
     try {
@@ -416,7 +416,7 @@ describe('a room the service threw away and will build again', () => {
   })
 
   test('takes its own words back from the new room as its own, never as a copy', async () => {
-    const { modes } = await import('../modes.svelte')
+    const { modes } = await import('../../modes.svelte')
     modes.conflicts = 'ask'
     try {
       const note = documentOn('/Notes/a.md', '# A\n')
@@ -448,7 +448,7 @@ describe('a room the service threw away and will build again', () => {
   })
 
   test('takes the new room’s words when nothing was typed here since', async () => {
-    const { modes } = await import('../modes.svelte')
+    const { modes } = await import('../../modes.svelte')
     modes.conflicts = 'ask'
     try {
       const note = documentOn('/Notes/a.md', '# A\n')
@@ -475,7 +475,7 @@ describe('a room the service threw away and will build again', () => {
   })
 
   test('stays out of its room while a reader is being asked, and rejoins after', async () => {
-    const { modes } = await import('../modes.svelte')
+    const { modes } = await import('../../modes.svelte')
     modes.conflicts = 'ask'
 
     try {

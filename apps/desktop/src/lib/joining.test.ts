@@ -131,7 +131,7 @@ vi.mock('./message', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-vi.mock('./rooms/who', () => ({ deviceName: () => 'Windows' }))
+vi.mock('./collab/src/api', () => ({ deviceName: () => 'Windows' }))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

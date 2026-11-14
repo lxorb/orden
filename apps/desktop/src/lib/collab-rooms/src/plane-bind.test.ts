@@ -9,9 +9,9 @@ import {
   type InkPoint,
   type InkStroke,
   writeCanvas,
-} from '../canvas/format'
-import { ordered } from '../canvas/arrange'
-import type { Hand, PlaneSurface, Reachable, SharedPlane } from '../canvas/shared'
+} from '../../canvas/format'
+import { ordered } from '../../canvas/arrange'
+import type { Hand, PlaneSurface, Reachable, SharedPlane } from '../../canvas/shared'
 import { PlaneBinding } from './plane-bind'
 
 class Device implements PlaneSurface {

@@ -96,7 +96,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/online/link.test.ts': ["'nib."],
   'apps/desktop/src/lib/open-link.test.ts': ['NIB://'],
   'apps/desktop/src/lib/open-link.ts': ['|nib)'],
-  'apps/desktop/src/lib/rooms/carried.test.ts': ["'nib."],
+  'apps/desktop/src/lib/collab-rooms/src/carried.test.ts': ["'nib."],
   'apps/desktop/src/lib/site-diagrams.test.ts': ['x-nib-diagram'],
   'apps/desktop/src/lib/site-diagrams.ts': ["'x-nib-diagram'"],
   'apps/desktop/src/lib/sync/aside.test.ts': ['.nib-moving-'],

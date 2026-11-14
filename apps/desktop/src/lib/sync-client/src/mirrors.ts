@@ -3,16 +3,20 @@ import { TEXT } from '@orden/rooms'
 import { fold } from '@orden/rooms/fold'
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import { rooms } from '../../rooms.svelte'
+import { roomKindOf, rooms } from '../../collab/src/api'
+import {
+  bind,
+  HAND,
+  handsIn,
+  peersIn,
+  PlaneBinding,
+  relative,
+  saidHand,
+  type Who,
+} from '../../collab-rooms/src/api'
 import type { InkStroke } from '../../canvas/format'
 import type { Point } from '../../canvas/geometry'
 import type { PlaneSurface } from '../../canvas/shared'
-import { bind } from '../../rooms/bind'
-import type { Who } from '../../rooms/door'
-import { HAND, handsIn, saidHand } from '../../rooms/hands'
-import { roomKindOf } from '../../rooms/kind'
-import { peersIn, relative } from '../../rooms/peers'
-import { PlaneBinding } from '../../rooms/plane-bind'
 import type { Scheme } from '../../theme.svelte'
 import type { LiveNote } from './ports'
 

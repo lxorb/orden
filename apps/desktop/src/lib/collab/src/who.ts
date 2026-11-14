@@ -1,9 +1,9 @@
-import { account } from '../account.svelte'
-import { ACCENTS, accentIdFor } from '../accents'
-import { keep, storedText } from '../stored'
-import { isNative, platform } from '../tauri'
+import { account } from '../../account.svelte'
+import { ACCENTS, accentIdFor } from '../../accents'
+import { keep, storedText } from '../../stored'
+import { isNative, platform } from '../../tauri'
 import { browserName } from './browser'
-import { appleHandheld } from '../device'
+import { appleHandheld } from '../../device'
 
 const KEY = 'orden:device-colour'
 
