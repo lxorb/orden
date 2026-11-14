@@ -35,7 +35,7 @@ const PANELS: Record<PanelTab, Entry> = {
     tab: __EVEN_PLUGIN__
       ? null
       : () =>
-          import('./time/open').then(({ openTime }) => {
+          import('./time/src/api').then(({ openTime }) => {
             openTime()
           }),
     fills: null,

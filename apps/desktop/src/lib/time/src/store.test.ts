@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { describe, expect, test, vi } from 'vitest'
-import { growth, GROWS_AT_MOST } from '../../../../../scripts/growth'
+import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import { openTimeDisk } from './disk'
 import { FakeTimeServer, OLD_SERVER } from './fake-server'
 import type { Span } from './records'

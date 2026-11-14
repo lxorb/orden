@@ -1,6 +1,6 @@
-import type { Tab } from '../workspace/documents.svelte'
-import { workspace } from '../workspace.svelte'
-import { timeOn } from '../settings.svelte'
+import type { Tab } from '../../workspace/documents.svelte'
+import { workspace } from '../../workspace.svelte'
+import { timeOn } from '../../settings.svelte'
 import { type Spec, writeSpec } from './spec'
 
 export function openTime(spec: Spec = { view: 'day', day: null }): Tab | null {

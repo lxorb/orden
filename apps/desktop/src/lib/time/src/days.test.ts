@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { growth, GROWS_AT_MOST } from '../../../../../scripts/growth'
+import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import {
   atClock,
   clockOf,

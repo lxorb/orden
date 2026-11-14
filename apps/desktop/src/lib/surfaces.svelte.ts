@@ -70,12 +70,14 @@ export const chatsPanel = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatsPanel.svelte'),
 )
 export const timePanel = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./time/TimePanel.svelte'),
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./time/src/api').then((one) => one.loadTimePanel()),
 )
 export const timeSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no time tracker in the Even Realities plugin'))
-    : import('./time/TimeTab.svelte'),
+    : import('./time/src/api').then((one) => one.loadTimeTab()),
 )
 
 export const pagesSurface = held(() =>

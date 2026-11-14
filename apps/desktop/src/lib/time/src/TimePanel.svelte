@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Facts from '../Facts.svelte'
+  import Facts from '../../Facts.svelte'
   import { counted, isOwn } from './counted'
   import { dayOf, daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
   import { hoursShown } from './lanes'

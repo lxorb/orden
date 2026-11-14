@@ -156,7 +156,9 @@ export function start(): () => void {
     void startup
       .turn('right')
       .then(() => import('./feature-gate.svelte'))
-      .then(({ whenTimeOn }) => whenTimeOn(() => void import('./time/start.svelte')))
+      .then(({ whenTimeOn }) =>
+        whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime())),
+      )
   }
 
   if (!__EVEN_PLUGIN__) {

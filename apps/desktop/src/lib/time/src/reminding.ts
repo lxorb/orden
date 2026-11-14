@@ -1,8 +1,8 @@
-import { inTurn, keepJson, stored } from '../platform/src/api'
-import { notify } from '../notify'
+import { inTurn, keepJson, stored } from '../../platform/src/api'
+import { notify } from '../../notify'
 import { counted } from './counted'
 import { lasting, MINUTE } from './days'
-import { timeOn } from '../settings.svelte'
+import { timeOn } from '../../settings.svelte'
 import { dueOf } from './goals'
 import { time } from './time.svelte'
 

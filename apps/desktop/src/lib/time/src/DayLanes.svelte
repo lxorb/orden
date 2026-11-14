@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { localDate } from '../platform/src/api'
+  import { localDate } from '../../platform/src/api'
   import { isOwn } from './counted'
   import { HOUR, MINUTE, piecesIn } from './days'
   import { type Band, bandsOf, bucketsOf, type Picked, stacked } from './lanes'

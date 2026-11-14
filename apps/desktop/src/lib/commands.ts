@@ -1493,19 +1493,19 @@ export function appCommands(view?: EditorView): Command[] {
                   id: 'time-tab',
                   label: 'Open time tracker',
                   hint: shortcuts.hint('time.tab'),
-                  run: () => void import('./time/open').then(({ openTime }) => openTime()),
+                  run: () => void import('./time/src/api').then(({ openTime }) => openTime()),
                 },
                 {
                   id: 'time-start',
                   label: 'Start timer',
                   hint: shortcuts.hint('time.start'),
-                  run: () => void import('./time/commands').then(({ startTimer }) => startTimer()),
+                  run: () => void import('./time/src/api').then(({ startTimer }) => startTimer()),
                 },
                 {
                   id: 'time-stop',
                   label: 'Stop timer',
                   hint: shortcuts.hint('time.stop'),
-                  run: () => void import('./time/commands').then(({ stopTimer }) => stopTimer()),
+                  run: () => void import('./time/src/api').then(({ stopTimer }) => stopTimer()),
                 },
               ]
             : []),

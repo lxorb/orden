@@ -1,6 +1,6 @@
 import { timePageOf } from '@orden/sync-core'
-import { ApiError, request } from '../accounts/src/api'
-import { isRecord } from '../platform/src/api'
+import { ApiError, request } from '../../accounts/src/api'
+import { isRecord } from '../../platform/src/api'
 import type { TimeServer } from './exchange'
 
 const missing = (error: unknown): boolean =>

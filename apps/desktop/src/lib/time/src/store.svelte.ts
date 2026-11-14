@@ -1,5 +1,5 @@
-import { ACCENTS } from '../theme/src/api'
-import { log, afterQuiet } from '../platform/src/api'
+import { ACCENTS } from '../../theme/src/api'
+import { log, afterQuiet } from '../../platform/src/api'
 import { recentFirst } from './counted'
 import { openTimeDisk, type TimeDisk } from './disk'
 import { exchange, type TimeServer } from './exchange'
