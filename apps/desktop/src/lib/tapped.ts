@@ -1,7 +1,7 @@
 import { DoubleTap, type Modifier, tapOf } from './double-tap'
 import { shortcuts } from './shortcuts.svelte'
 import { type AppContext, SHORTCUTS } from './shortcuts/registry'
-import { fromPage } from './web-tab/src/keys'
+import { fromPage } from './ui-kit/src/api'
 import { ran } from './usage/src/api'
 
 type Hearer = (key: Modifier) => void

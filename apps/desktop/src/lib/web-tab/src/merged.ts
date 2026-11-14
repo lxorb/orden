@@ -9,7 +9,8 @@ import {
 } from '../../platform/src/api'
 import { hostOf, isWebData, siteOf, storeName, type WebData } from './web-data'
 import { HISTORY } from './web-data.svelte'
-import { bounded, type Visit } from './visits'
+import { bounded } from './visits'
+import type { Visit } from '@orden/scan/visits'
 
 const OLD = 'orden:web-data'
 const OLD_UP = 'orden:web-data-up'

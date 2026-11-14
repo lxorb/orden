@@ -48,7 +48,7 @@
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
   import { zoomTo as zoomPageTo } from './zoom'
-  import { shownAddress } from './omnibox'
+  import { shownAddress } from '@orden/scan/visits'
   import { cardCorner, type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
   import { fading, opacityOf, underlaid } from './underlay'
   import { seek, shut, sought } from './seek'
@@ -68,7 +68,8 @@
   import WebDownloads from './WebDownloads.svelte'
   import WebExtensionPopup from './WebExtensionPopup.svelte'
   import WebExtensions from './WebExtensions.svelte'
-  import { extensions, runsExtensions, type Extension } from './extensions.svelte'
+  import { extensions, type Extension } from './extensions.svelte'
+  import { runsExtensions } from './shell-parts'
   import WebSite from './WebSite.svelte'
   import NewHere from '../../NewHere.svelte'
 

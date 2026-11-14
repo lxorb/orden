@@ -56,12 +56,8 @@
   import { trap } from './ui-controls/src/api'
   import { isDesktop } from './platform/src/api'
   import { viewport } from './ui-kit/src/api'
-  import { pages } from './web-tab/src/api'
-  import { shownAddress } from './web-tab/src/omnibox'
-  import { upgradeOf } from './web-tab/src/upgrade'
-  import { visited } from './web-tab/src/visited'
-  import { visitKey } from './web-tab/src/visits'
-  import { webData } from './web-tab/src/web-data.svelte'
+  import { paletteKind, webPages } from '@orden/contracts'
+  import { shownAddress, visitKey } from '@orden/scan/visits'
   import { workspace } from './workspace.svelte'
   import { fade, LAYER, scale } from './platform/src/api'
   import { scrollbar } from './ui-kit/src/api'
@@ -93,6 +89,7 @@
   const term = $derived(asked.term)
 
   const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
+  const visits = paletteKind('visits')
 
   let forgotten = $state(0)
 
@@ -108,7 +105,7 @@
       kind: tab.kind,
       path: tab.path,
       shown: tab.shown,
-      url: tab.kind === 'web' ? visitKey(pages.of(tab.id).url ?? '') : null,
+      url: tab.kind === 'web' ? visitKey(webPages().of(tab.id).url ?? '') : null,
     })),
   )
 
@@ -135,7 +132,7 @@
         (one) => !(one.kind === 'note' && samePath(one.path, AGENTS_NAME, root ?? undefined)),
       ),
       commands,
-      pages: browses ? visited.all(webData.history()) : [],
+      pages: browses ? visits.list() : [],
       settings: settingRows,
       hosts,
       worth: (key) => frecency.worth(key),
@@ -398,7 +395,7 @@
     openAside: (path) => void workspace.openAside(path),
     openPage: (url, ask) => {
       const opened = workspace.openPage(url, ask)
-      if (opened) pages.of(opened).upgrade = upgradeOf(term, url)
+      if (opened) visits.opened(opened, term, url)
     },
     activate: (tab) => workspace.activate(tab),
     openAtHeading: (path, heading, how) => void workspace.openAtHeading(path, heading, how),
@@ -457,7 +454,7 @@
     if (row.kind === 'note') workspace.device.unremember(row.entry.path)
     if (row.kind === 'tab' && row.tab.path) workspace.device.unremember(row.tab.path)
     if (!__EVEN_PLUGIN__ && row.kind === 'page') {
-      visited.remove(webData.history(), row.url)
+      visits.forget(row.url)
     }
     forgotten++
   }

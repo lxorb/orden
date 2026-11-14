@@ -25,6 +25,7 @@
     "./settle": "./src/settle.ts",
     "./shortcut": "./src/shortcut.ts",
     "./typed": "./src/typed.ts",
+    "./visits": "./src/visits.ts",
     "./web-address": "./src/web-address.ts",
     "./wire": "./src/wire.ts"
   },

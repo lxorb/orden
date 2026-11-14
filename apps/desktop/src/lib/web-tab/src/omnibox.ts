@@ -1,51 +1,18 @@
-import { readable } from '@orden/scan/web-address'
-import type { Visit } from './visits'
-
-const TYPED_WEIGHT = 10
-
-const DAY = 24 * 60 * 60 * 1000
+import { type AddressParts, addressParts, frecency, type Visit } from '@orden/scan/visits'
 
 const OFFERED = 5
 
-export function frecency(visit: Visit, now: number): number {
-  const days = (now - visit.last) / DAY
-  const recent = days < 4 ? 1 : days < 14 ? 0.7 : days < 31 ? 0.5 : days < 90 ? 0.3 : 0.1
-
-  return (visit.visits + visit.typed * TYPED_WEIGHT) * recent
-}
-
-interface Parts {
-  protocol: string
-  host: string
-  bare: string
-  hostShown: string
-  bareShown: string
-  path: string
+interface Parts extends AddressParts {
   words: string
 }
 
 const taken = new WeakMap<Visit, Parts>()
 
-function split(address: string): Omit<Parts, 'words'> {
-  const url = new URL(address)
-  const host = url.host.toLowerCase()
-  const hostShown = readable(host)
-
-  return {
-    protocol: url.protocol,
-    host,
-    bare: host.replace(/^www\./, ''),
-    hostShown,
-    bareShown: hostShown.replace(/^www\./, ''),
-    path: `${url.pathname}${url.search}`,
-  }
-}
-
 function partsOf(visit: Visit): Parts {
   const known = taken.get(visit)
   if (known) return known
 
-  const said = split(visit.url)
+  const said = addressParts(visit.url)
   const shown = said.bareShown === said.bare ? '' : ` ${said.bareShown}`
   const parts = {
     ...said,
@@ -54,13 +21,6 @@ function partsOf(visit: Visit): Parts {
 
   taken.set(visit, parts)
   return parts
-}
-
-export function shownAddress(url: string): string {
-  const { protocol, bareShown, path } = split(url)
-  const shown = `${bareShown}${path === '/' ? '' : path}`
-
-  return protocol === 'http:' ? `http://${shown}` : shown
 }
 
 export interface Completion {

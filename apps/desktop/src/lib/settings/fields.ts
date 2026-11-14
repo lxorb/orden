@@ -1,3 +1,4 @@
+import type { SettingCommon, SettingControl } from '@orden/contracts'
 import type { IconNode } from 'lucide'
 
 export interface PictureSide {
@@ -11,14 +12,8 @@ export interface PictureSide {
   place(x: number, y: number, kept: boolean): void
 }
 
-interface Common {
-  label: string
-  words?: string[]
-  hint: string
+interface Common extends SettingCommon {
   icon?: IconNode
-  key?: string
-  member?: string
-  check?: (value: string) => string | null
 }
 
 export interface SwatchOption {
@@ -42,13 +37,7 @@ export interface Segment {
 
 export type Field = Common &
   (
-    | {
-        kind: 'switch'
-        initial?: boolean
-        locked?: () => boolean
-        get(): boolean
-        set(on: boolean): void
-      }
+    | SettingControl
     | {
         kind: 'slider'
         min: number
@@ -60,14 +49,6 @@ export type Field = Common &
         get(): number
         preview?(value: number): void
         set(value: number): void
-      }
-    | {
-        kind: 'select'
-        options: { value: string; label: string; note?: string }[]
-        open?: boolean
-        initial?: string
-        get(): string
-        set(value: string): void
       }
     | {
         kind: 'segmented'
@@ -97,15 +78,6 @@ export type Field = Common &
         get(): string
         does: string
         press(): void
-      }
-    | {
-        kind: 'text'
-        placeholder: string
-        live?: boolean
-        font?: { mono: boolean }
-        initial?: string
-        get(): string
-        set(value: string): void
       }
   )
 

@@ -1,5 +1,6 @@
 import { providePort } from '@orden/contracts'
 import { landed } from '../../theme/src/api'
+import { replay } from '../../ui-kit/src/api'
 import {
   isNumber,
   isRecord,
@@ -1058,7 +1059,7 @@ class Pages {
         const page = said && this.held.get(said.tab)
         if (said && page) page.blocked = said.url
       })
-      const { readPressed, replay } = await import('./keys')
+      const { readPressed } = await import('./keys')
       await listen('orden://web-key', (event) => {
         const one = readPressed(event.payload)
         if (one) replay(one)
@@ -1173,8 +1174,9 @@ providePort('web.pages', {
     else searchEngine.setCustom(engine.custom)
     return 'taken'
   },
+  searchHome: async () => (await import('./search-engine.svelte')).searchEngine.home,
   replayKey: (key) => {
-    if (!__EVEN_PLUGIN__) void import('./keys').then((keys) => keys.replay(key))
+    if (!__EVEN_PLUGIN__) replay(key)
   },
 })
 

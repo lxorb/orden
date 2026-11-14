@@ -21,6 +21,14 @@ import {
   LONGEST_ID,
   mapResult,
   noteId,
+  NO_VISITS,
+  paletteKind,
+  registered,
+  registerPaletteKind,
+  registerSettingFields,
+  registerSettingsPart,
+  settingFieldsIn,
+  settingsPartsIn,
   notePath,
   ok,
   portOf,
@@ -290,5 +298,65 @@ describe('ports', () => {
     expect(webPages().of('t')).toBe(page)
     unbind()
     expect(webPages().of('t').url).toBeNull()
+  })
+})
+
+describe('registry', () => {
+  it('reads a palette kind once it is registered and loaded, and nothing before', async () => {
+    expect(paletteKind('visits')).toBe(NO_VISITS)
+    const seen = [{ url: 'https://a.example/', title: 'A', visits: 1, typed: 0, last: 0 }]
+    const visits = { ...NO_VISITS, list: () => seen }
+    const unregister = registerPaletteKind('visits', () => Promise.resolve(visits))
+    expect(paletteKind('visits')).toBe(NO_VISITS)
+    await registered()
+    expect(paletteKind('visits').list()).toEqual(seen)
+    unregister()
+    expect(paletteKind('visits')).toBe(NO_VISITS)
+  })
+
+  it('reads setting fields by section and group once loaded, and skips a load that fails', async () => {
+    let on = false
+    const unregister = registerSettingFields({
+      section: 'general',
+      group: 'Browser',
+      load: () =>
+        Promise.resolve(() => [
+          {
+            kind: 'switch' as const,
+            label: 'A',
+            hint: 'a',
+            get: () => on,
+            set: (to: boolean) => (on = to),
+          },
+        ]),
+    })
+    const broken = registerSettingFields({
+      section: 'general',
+      group: 'Browser',
+      load: () => Promise.reject(new Error('gone')),
+    })
+    expect(settingFieldsIn('general', 'Browser')).toEqual([])
+    await registered()
+    const [field] = settingFieldsIn('general', 'Browser')
+    expect(settingFieldsIn('general', 'Other')).toEqual([])
+    if (field?.kind === 'switch') field.set(true)
+    expect(on).toBe(true)
+    unregister()
+    broken()
+    expect(settingFieldsIn('general', 'Browser')).toEqual([])
+  })
+
+  it('lists the settings parts of a section', () => {
+    const part = {
+      section: 'general' as const,
+      title: 'Part',
+      shown: () => true,
+      load: () => Promise.resolve({ show: () => () => undefined }),
+    }
+    const unregister = registerSettingsPart(part)
+    expect(settingsPartsIn('general')).toEqual([part])
+    expect(settingsPartsIn('sync')).toEqual([])
+    unregister()
+    expect(settingsPartsIn('general')).toEqual([])
   })
 })

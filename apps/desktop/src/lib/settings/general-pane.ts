@@ -1,3 +1,4 @@
+import { settingFieldsIn } from '@orden/contracts'
 import { method, isDesktop, isMobile, platform } from '../platform/src/api'
 import { crashReports } from '../crash-reports/src/api'
 import { usageChoice } from '../usage/src/api'
@@ -17,9 +18,6 @@ import { asWarning, quitAsk } from '../quitting/src/api'
 import { shellName, shells, SIZES, bothName } from '../terminal/src/api'
 import { asChannel, switchWebChannel, webChannel } from '../updater'
 import { updates } from '../updates.svelte'
-import { pages } from '../web-tab/src/api'
-import { isSaver } from '../web-tab/src/resting'
-import { saver } from '../web-tab/src/saver.svelte'
 import { hiddenTabs } from '../workspace/hidden-tabs.svelte'
 import { quickAdd } from '../quick-add/src/api'
 import { isHiddenTabs } from '../workspace/sets'
@@ -408,27 +406,9 @@ export function generalPane(): Pane {
                   get: () => hiddenTabs.choice,
                   set: (value) => hiddenTabs.set(isHiddenTabs(value) ? value : 'ask'),
                 },
-                {
-                  kind: 'select',
-                  key: 'general.memorySaver',
-                  label: 'Memory saver',
-                  hint: 'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.',
-                  words: ['memory', 'ram', 'discard', 'sleep', 'reload', 'performance'],
-                  options: [
-                    { value: 'off', label: 'Off' },
-                    { value: 'moderate', label: 'Moderate' },
-                    { value: 'balanced', label: 'Balanced' },
-                    { value: 'maximum', label: 'Maximum' },
-                  ],
-                  initial: 'off',
-                  get: () => saver.mode,
-                  set: (value) => {
-                    saver.set(isSaver(value) ? value : 'off')
-                    pages.retime()
-                  },
-                },
               ] satisfies Field[])
             : []),
+          ...settingFieldsIn('general', 'Tabs'),
         ],
       },
       {

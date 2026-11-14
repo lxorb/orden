@@ -1,27 +1,9 @@
 import { isNumber, isRecord, isString } from '../../platform/src/api'
-import { isWebAddress } from '@orden/scan/web-address'
+import { type Visit, visitKey } from '@orden/scan/visits'
 
 export const MOST_VISITS = 2000
 
-const LONGEST_ADDRESS = 2048
-
 const LONGEST_TITLE = 200
-
-export interface Visit {
-  url: string
-  title: string
-  visits: number
-  typed: number
-  last: number
-}
-
-export function visitKey(url: string): string | null {
-  if (url.length > LONGEST_ADDRESS || !isWebAddress(url)) return null
-
-  const parsed = new URL(url)
-  parsed.hash = ''
-  return parsed.href
-}
 
 function readVisit(value: unknown): Visit | null {
   if (!isRecord(value)) return null

@@ -1,7 +1,5 @@
-import { keepJson, stored, invoke, isDesktop, platform } from '../../platform/src/api'
+import { keepJson, stored, invoke, isDesktop } from '../../platform/src/api'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
-
-export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
 
 export interface Gaps {
   said: string[]

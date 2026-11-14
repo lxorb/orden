@@ -20,7 +20,7 @@ if (typeof globalThis.CSS === 'undefined') {
 }
 
 const { numbers } = await import('../../src/lib/tab-strip/numbers.svelte')
-const { replay } = await import('../../src/lib/web-tab/src/keys')
+const { replay } = await import('../../src/lib/ui-kit/src/api')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 type Tab = import('../../src/lib/workspace.svelte').Tab
 

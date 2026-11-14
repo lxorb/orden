@@ -7,11 +7,10 @@ import {
   typedTo,
   unvisited,
   unvisitedSince,
-  visitKey,
   visited as arrived,
   visitsFrom,
 } from './visits'
-import type { Visit } from './visits'
+import { type Visit, visitKey } from '@orden/scan/visits'
 
 type Book = string
 

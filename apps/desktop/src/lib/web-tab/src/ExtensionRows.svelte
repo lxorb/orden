@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
-  import { Switch } from '../ui-controls/src/api'
-  import { dur, slide } from '../platform/src/api'
-  import { workspace } from '../workspace.svelte'
-  import ExtensionGaps from '../web-tab/src/ExtensionGaps.svelte'
-  import { extensions } from '../web-tab/src/extensions.svelte'
+  import { Switch } from '../../ui-controls/src/api'
+  import { dur, slide } from '../../platform/src/api'
+  import { workspace } from '../../workspace.svelte'
+  import ExtensionGaps from './ExtensionGaps.svelte'
+  import { extensions } from './extensions.svelte'
 
   let opened = $state<string | null>(null)
   let link = $state('')
