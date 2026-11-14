@@ -2,8 +2,7 @@ import type { OpenHow } from '../new-tab'
 import { nameOf, samePath } from '../space-paths'
 import { basesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
-import { readSpec, sameView, type ViewSpec, writeSpec } from './spec'
-import { builtinName } from './words'
+import { builtinName, readSpec, sameView, type ViewSpec, writeSpec } from './spec'
 
 function openAlready(spec: ViewSpec, path: string | null) {
   const paneId = workspace.panes.focusedId

@@ -224,11 +224,19 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
 
-  test('names to-dos, bases and boards now, rather than markdown and nothing else', () => {
+  test('names bases and boards now, rather than to-dos or markdown and nothing else', () => {
     expect(WELCOME).toContain(
-      '- Every note is a Markdown file you own, with to-dos, bases and boards right inside\n',
+      '- Every note is a Markdown file you own, with bases and boards right inside\n',
     )
+    expect(WELCOME).not.toContain('to-dos')
     expect(WELCOME).not.toContain('nothing else')
+  })
+
+  test('nor the one that promised to-dos inside notes', () => {
+    const earlier = WELCOME.replace('with bases and boards', 'with to-dos, bases and boards')
+    expect(earlier).not.toBe(WELCOME)
+    expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
+    expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
 
   test.each(['Nib', 'nibeditor'])('nor the one written while it was called %s', (name) => {

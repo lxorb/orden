@@ -106,6 +106,16 @@ describe('reading one tab', () => {
     expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('anchor')
   })
 
+  test('a builtin view takes its name from the app, not from the session it was written in', () => {
+    const doc = '{"builtin":"todos"}'
+    expect(readDraft({ kind: 'view', path: null, name: 'Tasks', doc })).toMatchObject({
+      name: 'Todos',
+    })
+    expect(readDraft({ kind: 'view', path: null, name: 'Mine', doc: '{"tag":"x"}' })).toMatchObject(
+      { name: 'Mine' },
+    )
+  })
+
   test('brings back which face of the note was up', () => {
     expect(readDraft({ path: null, name: 'a', doc: '', reading: true })).toMatchObject({
       reading: true,
