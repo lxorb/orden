@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { shownName } from './platform/src/api'
-  import { ARCHIVE_MARK } from './archive-marks'
+  import { ARCHIVE_MARK } from './archive/src/api'
   import { SEARCH_MARK } from './panel-marks'
   import { roving } from './roving'
   import { howFor, middleOpens, tabAsk } from './new-tab'

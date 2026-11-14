@@ -1,4 +1,4 @@
-import { coveredBy } from './workspace/archive.svelte'
+import { coveredBy } from '../../workspace/archive.svelte'
 
 function under(path: string, folder: string): boolean {
   return path === folder || path.startsWith(`${folder}/`)

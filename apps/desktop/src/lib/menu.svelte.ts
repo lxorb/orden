@@ -14,6 +14,7 @@ import { canShareItem, canWriteAt, shareThisFile } from './sharing/src/api'
 import { isMarkdownPath, withinSpace } from './platform/src/api'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
+import { archive, unarchive } from './archive/src/api'
 
 export { DIVIDER, type MenuEntry, type MenuItem } from './ui-kit/src/api'
 
@@ -134,10 +135,7 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
     : [
         {
           label: archived ? 'Unarchive' : 'Archive',
-          run: () =>
-            void import('./archiving').then((one) =>
-              archived ? one.unarchive(path) : one.archive([path]),
-            ),
+          run: () => void (archived ? unarchive(path) : archive([path])),
         },
       ]
 }

@@ -3,6 +3,7 @@ import { copyAgain, type Copies } from './copying'
 import type { FileAction } from './undo.svelte'
 import { putBack } from './undoing'
 import type { Bookmark } from './bookmarks.svelte'
+import { archiveAgain } from '../archive/src/api'
 
 export interface DoesAgain extends Copies {
   move(from: string, intoFolder: string, how?: 'carries'): Promise<void>
@@ -66,7 +67,7 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       break
     case 'archive':
     case 'unarchive':
-      if (!__EVEN_PLUGIN__) (await import('../archiving')).archiveAgain(action)
+      if (!__EVEN_PLUGIN__) await archiveAgain(action)
       break
     case 'outside':
       if (!__EVEN_PLUGIN__) await (await import('../explorer/src/api')).redoOutside(action)

@@ -30,6 +30,7 @@ import { entryAt } from './tree-edits'
 import { viewport } from './ui-kit/src/api'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
+import { archive, showArchive } from './archive/src/api'
 
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
@@ -184,7 +185,7 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
     : [
         {
           label: 'Archive',
-          run: () => void import('./archiving').then(({ archive }) => archive(paths)),
+          run: () => void archive(paths),
         },
       ]
 }
@@ -269,8 +270,7 @@ export async function refuseDeleting(paths: readonly string[]) {
   })
 
   if (show) {
-    const { archiveList } = await import('./archive-list.svelte')
-    archiveList.show()
+    await showArchive()
   }
 }
 
