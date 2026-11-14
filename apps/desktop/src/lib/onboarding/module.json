@@ -1,0 +1,25 @@
+{
+  "name": "onboarding",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "ai-providers",
+    "back-swipe",
+    "platform",
+    "sharing",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "usage"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Icon.svelte",
+    "apps/desktop/src/lib/feedback.svelte.ts",
+    "apps/desktop/src/lib/icon-library.svelte.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/settling.ts",
+    "apps/desktop/src/lib/tab-cycle.svelte.ts",
+    "apps/desktop/src/lib/tab-strip/icon-tabs.svelte.ts"
+  ]
+}

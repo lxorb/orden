@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { sourceOf, type Source } from './import/src/sources'
-import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
+import { sourceOf, type Source } from './sources'
+import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format'
 
 interface Entry {
   path: string
@@ -83,7 +83,7 @@ const ws = {
   showPanel: () => undefined,
 }
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'write_note' || command === 'write_bytes') wrote.add(String(args.path))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
@@ -93,22 +93,22 @@ vi.mock('./platform/src/tauri', () => ({
   isNative: false,
   isDesktop: true,
 }))
-vi.mock('./workspace.svelte', () => ({ workspace: ws }))
-vi.mock('./sharing/src/api', () => ({ canWriteAt: () => true }))
-vi.mock('./link-index.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({ workspace: ws }))
+vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
+vi.mock('../../link-index.svelte', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))
-vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
-vi.mock('./ui-kit/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./ui-kit/src/api')>()),
+vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: { drawer: false },
 }))
-vi.mock('./settings.svelte', () => ({ settings: { open: true } }))
-vi.mock('./first-visit.svelte', () => ({
+vi.mock('../../settings.svelte', () => ({ settings: { open: true } }))
+vi.mock('../../first-visit.svelte', () => ({
   firstVisit: { fresh: false, answered: () => undefined },
 }))
-vi.mock('./carry-over', async () => {
-  const { setLinkWriting } = await import('./link-format')
+vi.mock('../../carry-over', async () => {
+  const { setLinkWriting } = await import('../../link-format')
   return {
     carryOver: async (carried: { linkFormat?: LinkFormat }) => {
       if (carried.linkFormat) setLinkWriting(carried.linkFormat)
@@ -117,7 +117,7 @@ vi.mock('./carry-over', async () => {
 })
 
 const { importAsSpace, arrive } = await import('./migrating.svelte')
-const { busy } = await import('./ui-kit/src/busy.svelte')
+const { busy } = await import('../../ui-kit/src/api')
 
 function file(path: string, body: string | Uint8Array = 'x'): Source {
   return sourceOf(path, typeof body === 'string' ? new TextEncoder().encode(body) : body)

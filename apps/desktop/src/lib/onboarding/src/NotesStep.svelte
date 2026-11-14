@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { CopyButton } from '../ui-controls/src/api'
-  import { closeOnBack } from '../ui-kit/src/api'
+  import { CopyButton } from '../../ui-controls/src/api'
+  import { closeOnBack } from '../../ui-kit/src/api'
+  import { bringing as bring } from './bring'
   import { importPrompt, MAIN_NOTES, NOTES_APPS, type NotesApp } from './catalog'
   import { matching, phoneBringing, requestKey, typedName } from './flow'
   import RequestRow from './RequestRow.svelte'
@@ -59,8 +60,9 @@
     const how = way
     if (how && how !== 'computer') {
       bringing = true
-      const { bringNotes } = await import('./bring')
-      const outcome = await bringNotes(how).finally(() => (bringing = false))
+      const outcome = await bring()
+        .notes(how)
+        .finally(() => (bringing = false))
       if (!outcome.picked) return
       setup.tell(outcome.trouble)
       setup.got('notes')

@@ -52,3 +52,15 @@ providePort('web.lending', {
     if (!__EVEN_PLUGIN__) void import('./web-tab/src/lending').then((one) => one.unlend(tab))
   },
 })
+
+const bringing = () => import('./import/src/api').then((one) => one.bringing())
+
+providePort('import.bring', {
+  here: () => (__EVEN_PLUGIN__ ? Promise.resolve(new Set()) : bringing().then((one) => one.here())),
+  browser: (importer) =>
+    __EVEN_PLUGIN__ ? Promise.resolve([]) : bringing().then((one) => one.browser(importer)),
+  notes: (from) =>
+    __EVEN_PLUGIN__
+      ? Promise.resolve({ picked: false, trouble: null })
+      : bringing().then((one) => one.notes(from)),
+})

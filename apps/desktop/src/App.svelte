@@ -106,7 +106,7 @@
   import PullMark from './lib/PullMark.svelte'
   import type { AppContext } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
-  import { gate } from './lib/onboarding/gate.svelte'
+  import { gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
   import Door from './lib/Door.svelte'
 
   if (renamed.showing) void renameNotice.ask()
@@ -954,12 +954,12 @@
 <SizeBadge />
 
 {#if !__EVEN_PLUGIN__}
-  <Door open={gate.showing} load={() => import('./lib/onboarding/Setup.svelte')}>
+  <Door open={gate.showing} load={loadSetup}>
     {#snippet children(Setup)}
       <Setup.default />
     {/snippet}
   </Door>
-  <Door open={gate.guiding} load={() => import('./lib/onboarding/Guide.svelte')}>
+  <Door open={gate.guiding} load={loadGuide}>
     {#snippet children(Guide)}
       <Guide.default />
     {/snippet}

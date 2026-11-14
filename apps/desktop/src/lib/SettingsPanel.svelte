@@ -885,7 +885,7 @@
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
   {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}
-    {#await import('./MigrateRows.svelte') then rows}
+    {#await import('./import/src/api').then((one) => one.loadMigrateRows()) then rows}
       <div class="card">
         <rows.default />
       </div>

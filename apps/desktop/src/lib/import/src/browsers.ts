@@ -1,16 +1,5 @@
+import type { BrowserId } from '@orden/contracts'
 import { fromBase64, invoke, isDesktop } from '../../platform/src/api'
-
-export type BrowserId =
-  | 'safari'
-  | 'firefox'
-  | 'chrome'
-  | 'edge'
-  | 'brave'
-  | 'chromium'
-  | 'vivaldi'
-  | 'opera'
-  | 'opera-gx'
-  | 'arc'
 
 export const BROWSER_NAMES: Record<BrowserId, string> = {
   safari: 'Safari',

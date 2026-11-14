@@ -4,6 +4,7 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   applyImport,
+  bringing,
   detect,
   folderNameFor,
   foundBrowsers,
@@ -12,7 +13,9 @@ import {
   landBrowser,
   landZen,
   loadImportSheet,
+  loadMigrateRows,
   macNotes,
+  migratingStore,
   pickedFolder,
   readAs,
   safeName,
@@ -64,13 +67,16 @@ describe('the module stands on its own', () => {
   test('the api loads and every call is there', () => {
     for (const one of [
       applyImport,
+      bringing,
       detect,
       foundBrowsers,
       importingStore,
       landBrowser,
       landZen,
       loadImportSheet,
+      loadMigrateRows,
       macNotes,
+      migratingStore,
       readAs,
       sourcesFrom,
       todoistAccount,

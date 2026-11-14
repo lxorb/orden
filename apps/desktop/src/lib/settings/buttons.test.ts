@@ -38,7 +38,11 @@ function buttons(source: string): string[] {
 describe('a button in Settings', () => {
   test('is read in the panes that draw rows', () => {
     expect(PANES.map((one) => one.path)).toEqual(
-      expect.arrayContaining(['SettingsPanel.svelte', 'MigrateRows.svelte', 'AiPane.svelte']),
+      expect.arrayContaining([
+        'SettingsPanel.svelte',
+        'import/src/MigrateRows.svelte',
+        'AiPane.svelte',
+      ]),
     )
   })
 
@@ -70,7 +74,7 @@ describe('a row in Settings', () => {
 })
 
 const SETTINGS =
-  /^((SettingsPanel|AiPane|SyncPane|Security|MigrateRows|RecentlyDeleted)\.svelte|people\/ProfileRows\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
+  /^((SettingsPanel|AiPane|SyncPane|Security|RecentlyDeleted)\.svelte|(people\/ProfileRows|import\/src\/MigrateRows)\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
 
 describe('an on/off control in Settings', () => {
   test('is the shared switch, never one drawn by hand', () => {
@@ -88,7 +92,7 @@ describe('an on/off control in Settings', () => {
 })
 
 describe('Settings > Import', () => {
-  const source = readFileSync(join(LIB, 'MigrateRows.svelte'), 'utf8')
+  const source = readFileSync(join(LIB, 'import/src/MigrateRows.svelte'), 'utf8')
   const markup = source.slice(source.indexOf('</script>'), source.indexOf('{#snippet mark'))
   const rows = markup.split('<div class="orden-setting">').slice(1)
 

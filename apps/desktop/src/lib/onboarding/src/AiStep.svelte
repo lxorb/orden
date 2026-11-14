@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type LocalPlans, localCli } from '../ai-providers/src/api'
+  import { type LocalPlans, localCli } from '../../ai-providers/src/api'
   import { type Compatible, MORE_AI, type Plan, PLANS } from './catalog'
   import { connectCompatible, connectKey, signInKind, signInWith } from './connect'
   import { keyKindOf, type KeyedKind, matching, offersApiKey, requestKey, typedName } from './flow'

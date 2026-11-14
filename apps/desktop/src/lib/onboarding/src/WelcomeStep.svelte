@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { feedback } from '../feedback.svelte'
+  import { feedback } from '../../feedback.svelte'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'

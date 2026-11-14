@@ -138,6 +138,14 @@ export type { AgentPorts, AgentWritesPort } from './agents'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'
 export type {
+  BrowserId,
+  ImportBringPort,
+  Importer,
+  ImportPorts,
+  NotesBrought,
+  NotesFrom,
+} from './import'
+export type {
   PlanePicturePort,
   PlaneShown,
   PreviewedTab,
