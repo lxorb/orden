@@ -379,7 +379,7 @@ WITH_SOMEBODY = """
   const tab = app.workspace.tabs.find((one) => one.path && one.path.endsWith('.md'))
   if (!tab) return null
 
-  app.rooms.present = { ...app.rooms.present, [tab.note.key]: 1 }
+  app.rooms.heard(tab.note.key, 1, { people: [{ key: 'nina', name: 'Nina', face: null, fill: '#7a5cff' }], mine: 0 })
   return tab.path
 }
 """
