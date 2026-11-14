@@ -3,6 +3,7 @@
   import { ASK_EVERYONE_PAST } from '@orden/chats/limits'
   import { createEditor, EditorView, modeEffects, setNoteIndex } from '@orden/editor'
   import { onMount, untrack } from 'svelte'
+  import { chatReplies } from '../../../ai-chat/src/api'
   import { chooseFiles } from '../../../choose-files'
   import { pickedLink } from '../../../composer'
   import { localDate, localNumber } from '../../../platform/src/api'
@@ -217,7 +218,7 @@
     if (question !== null && !attachments.refs.length) {
       setText('')
       store().keepDraft(draftKey, '')
-      const { askOrden } = await import('./ask-orden')
+      const { askOrden } = await chatReplies()
       await askOrden(page.id, question, parent)
       return
     }

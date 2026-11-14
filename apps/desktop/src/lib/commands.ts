@@ -85,7 +85,7 @@ import { closeAfterLabel } from './workspace/closing-around'
 import { revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { spacePicker } from './space-picker.svelte'
-import { askQuickly } from './ai/quick-door'
+import { askQuickly, chatStore } from './ai-chat/src/api'
 import { switchableAccounts, switchAccount } from './ai-providers/src/api'
 import { toggleScratchpad } from './scratchpad/src/api'
 import {
@@ -378,7 +378,7 @@ function agentRows(): Command[] {
       label: 'Agents',
       run: () => {
         revealPanel('ask')
-        void import('./ai/sidebar/chat.svelte').then(({ chat }) => chat.showThreads())
+        void chatStore().then(({ chat }) => chat.showThreads())
       },
     },
     {

@@ -1,4 +1,5 @@
 import type { AgentAnswer } from '../automation/caller'
+import { helperRun } from '../ai-chat/src/api'
 import { type Mode, modeOfGrant } from '../ai-providers/src/api'
 import type { Scope } from '../agents/src/api'
 import { type Call, done } from './call'
@@ -44,9 +45,9 @@ function askerOf(call: Call) {
 }
 
 async function answered(
-  ask: (helpers: typeof import('../ai/helpers/run')) => Promise<unknown>,
+  ask: (helpers: Awaited<ReturnType<typeof helperRun>>) => Promise<unknown>,
 ): Promise<AgentAnswer> {
-  const said = await ask(await import('../ai/helpers/run'))
+  const said = await ask(await helperRun())
   if (typeof said === 'object' && said !== null && 'refused' in said) {
     return answerOf(new Refused('bad_arguments', String(said.refused)))
   }

@@ -1,14 +1,27 @@
 import { providePort } from '@orden/contracts'
 
-providePort('chats.names', {
-  names: () =>
+const chatsStore = () =>
+  import('./chats-client/src/api').then((one) => one.chatStore()).then(({ chats }) => chats)
+
+providePort('chats', {
+  list: () =>
     __EVEN_PLUGIN__
-      ? Promise.resolve({})
+      ? Promise.resolve([])
+      : chatsStore().then((chats) =>
+          chats.list.map(({ id, name, unread, mentions }) => ({ id, name, unread, mentions })),
+        ),
+  chatAt: (path) =>
+    __EVEN_PLUGIN__ ? Promise.resolve(null) : chatsStore().then((chats) => chats.chatAt(path)),
+  part: (chat, wanted) =>
+    __EVEN_PLUGIN__
+      ? Promise.resolve(null)
       : import('./chats-client/src/api')
-          .then((one) => one.chatStore())
-          .then(({ chats }) =>
-            Object.fromEntries(chats.list.map((one) => [one.id, one.name ?? one.id])),
-          ),
+          .then((one) => one.chatContext())
+          .then(({ chatPart }) => chatPart(chat, wanted)),
+  offer: async (chat, text, parent) => {
+    if (__EVEN_PLUGIN__) return
+    ;(await chatsStore()).offer(chat, text, parent ? { parent } : {})
+  },
 })
 
 providePort('agents.writes', {

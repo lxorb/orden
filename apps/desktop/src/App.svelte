@@ -79,6 +79,7 @@
     OUTSIDE,
   } from './lib/surfaces.svelte'
   import { start } from './lib/start'
+  import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'
   import StatusBar from './lib/StatusBar.svelte'
@@ -435,7 +436,7 @@
       import('./lib/import/src/api').then((one) => one.importingStore()),
       import('./lib/publishing/src/api'),
       import('./lib/ai-providers/src/api'),
-      import('./lib/ai/rewriting.svelte'),
+      rewritingStore(),
       import('./lib/sync-client/test/fake-engine.svelte'),
       import('./lib/agents/src/api').then((one) => one.agentStandIn()),
       import('./lib/theme-looks/src/api'),
@@ -479,7 +480,7 @@
           aiChats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
-              : import('./lib/ai/sidebar/chat.svelte').then(({ chat }) => chat),
+              : chatStore().then(({ chat }) => chat),
           aiVault: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))

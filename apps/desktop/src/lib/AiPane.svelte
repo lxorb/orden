@@ -550,7 +550,7 @@
 {/if}
 
 {#if !__EVEN_PLUGIN__}
-  {#await import('./ai/DoWithAiCard.svelte') then card}
+  {#await import('./ai-sidebar/src/api').then((one) => one.loadDoWithAiCard()) then card}
     <card.default />
   {/await}
 {/if}

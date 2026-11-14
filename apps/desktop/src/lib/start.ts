@@ -2,7 +2,7 @@ import { oneWindow } from './web-tab/src/api'
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './accounts/src/api'
 import { busy, viewport } from './ui-kit/src/api'
-import { installAiRunner } from './ai/ask'
+import { installAiRunner } from './ai-chat/src/api'
 import { guardDrops } from './drops'
 import { joining } from './sharing/src/api'
 import {

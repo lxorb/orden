@@ -1,0 +1,77 @@
+import { oneEdit } from '@orden/markdown/edits'
+import { plan, readEdits, type Replacement } from '../../../agent-docs/src/api'
+import { type Row, lineDiff, trimmed } from '../../../diff'
+import { applied } from '@orden/scan/search/replace'
+import { insideSpace, notePath } from '../../../platform/src/api'
+import { spaceNamed, verbOf } from '../chat-parts'
+
+export type Words = (path: string) => Promise<string | null>
+
+export interface Preview {
+  path: string
+  rows: Row[]
+}
+
+interface Space {
+  id: string
+  name: string
+  root: string
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
+}
+
+function said(value: unknown): string | null {
+  return typeof value === 'string' ? value : null
+}
+
+function sent(args: Record<string, unknown>): string | null {
+  return said(args.content) ?? said(args.text)
+}
+
+function editsOf(verb: string, args: Record<string, unknown>, words: string): Replacement[] | null {
+  try {
+    if (verb === 'edit_note') return plan(readEdits(args.edits), words, null).edits
+    if (verb === 'append_note') {
+      const content = sent(args)
+      if (content === null) return null
+      const under = said(args.under)
+      const at = under ? { heading: under } : { end: true }
+      return plan(readEdits([{ at, insert_after: content }]), words, null).edits
+    }
+    if (verb === 'write_note' || verb === 'create_note') {
+      const content = sent(args)
+      if (content === null) return null
+      const edit = oneEdit(words, content.replace(/\r\n?/g, '\n'))
+      return edit ? [edit] : []
+    }
+  } catch {
+    // An anchor that is not there: the write would be refused, and so is the preview.
+  }
+  return null
+}
+
+export async function previewOf(
+  name: string,
+  args: unknown,
+  spaces: readonly Space[],
+  open: string | undefined,
+  words: Words,
+): Promise<Preview | null> {
+  const verb = verbOf(name)
+  const given = record(args)
+  const path = said(given.path)
+  if (!path || said(given.tab)) return null
+
+  const named = said(given.space)
+  const space = named ? spaceNamed(spaces, named) : spaces.find((one) => one.id === open)
+  if (!space) return null
+
+  const relative = notePath(path) ?? path
+  const at = insideSpace(space.root, relative)
+  const before = verb === 'create_note' ? '' : ((await words(at)) ?? '').replace(/\r\n?/g, '\n')
+  const edits = editsOf(verb, given, before)
+  if (!edits) return null
+  return { path: relative, rows: trimmed(lineDiff(before, applied(before, edits))) }
+}

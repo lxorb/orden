@@ -79,7 +79,7 @@ async (base) => {
 
 SEED = """async (provider) => {
   const chat = await window.ordenApp.aiChats()
-  const { writeThread } = await import('/src/lib/ai/chat/threads.ts')
+  const { writeThread } = await import('/src/lib/ai-chat/src/chat/threads.ts')
   const space = chat.space || chat.spaces[0]
   const now = Date.now()
   await writeThread({ id: 'twin', space, title: 'Herons', provider, model: 'fake-small', effort: 'medium', mode: 'ask',
@@ -90,8 +90,8 @@ SEED = """async (provider) => {
 }"""
 
 OPEN = """async () => { const chat = await window.ordenApp.aiChats(); await chat.openThread('twin', false); return chat.thread?.title }"""
-STORED = """async (space) => { const { readThread } = await import('/src/lib/ai/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? { title: t.title, pinned: !!t.pinned, archived: !!t.archived } : null }"""
-STORED_TURNS = """async (space) => { const { readThread } = await import('/src/lib/ai/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? t.turns.map((turn) => turn.role === 'you' ? 'you' : 'model:' + turn.parts.map((part) => part.text || '').join('')) : null }"""
+STORED = """async (space) => { const { readThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? { title: t.title, pinned: !!t.pinned, archived: !!t.archived } : null }"""
+STORED_TURNS = """async (space) => { const { readThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? t.turns.map((turn) => turn.role === 'you' ? 'you' : 'model:' + turn.parts.map((part) => part.text || '').join('')) : null }"""
 BUSY = """async () => (await window.ordenApp.aiChats()).running.length > 0"""
 HEADS = """async () => (await window.ordenApp.aiChats()).heads.map((one) => one.id)"""
 
@@ -131,7 +131,7 @@ def drive(browser: Browser) -> None:
         wrong(f"two windows answered the same chat at once ({Model.most} at a time)")
     if not told or told.count("you") != 3:
         wrong(f"a message sent in one window was lost: {told}")
-    a.evaluate("async (space) => { const { deleteThread } = await import('/src/lib/ai/chat/threads.ts'); await deleteThread(space, 'twin') }", space)
+    a.evaluate("async (space) => { const { deleteThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); await deleteThread(space, 'twin') }", space)
     a.wait_for_timeout(600)
     b.evaluate("async () => (await window.ordenApp.aiChats()).pin('twin', false)")
     b.wait_for_timeout(600)

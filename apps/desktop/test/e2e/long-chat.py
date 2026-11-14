@@ -23,7 +23,7 @@ async () => {
 
 SEED = """async ([n, provider]) => {
   const chat = await window.ordenApp.aiChats()
-  const { writeThread } = await import('/src/lib/ai/chat/threads.ts')
+  const { writeThread } = await import('/src/lib/ai-chat/src/chat/threads.ts')
   const space = chat.space || (chat.spaces && chat.spaces[0])
   const now = Date.now()
   const body = (at) => `## Part ${at}\\n\\nHerons **stand** still in the *shallows* for a long time, then [strike](https://example.com/${at}).\\n\\n` +

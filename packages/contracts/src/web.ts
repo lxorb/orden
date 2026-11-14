@@ -23,6 +23,12 @@ export type OfferedEngine = { readonly id: string } | { readonly custom: string 
 
 export type EngineTaken = 'same' | 'taken' | 'kept'
 
+export interface WebClip {
+  readonly url: string
+  readonly title: string
+  readonly html: string
+}
+
 export interface WebPagesPort {
   readonly cuts: boolean
   of(tab: string): WebPageSeen
@@ -30,6 +36,7 @@ export interface WebPagesPort {
   addressOf(tab: string): string | null
   loadingOf(tab: string): boolean
   shoot(tab: string): Promise<void>
+  clip(tab: string, selection: boolean): Promise<WebClip | null>
   faviconOf(url: string | null | undefined): string | null
   holdStill(): Promise<void> | null
   letGo(): Promise<void>
@@ -68,6 +75,7 @@ export const NO_WEB_PAGES: WebPagesPort = {
   addressOf: () => null,
   loadingOf: () => false,
   shoot: () => Promise.resolve(),
+  clip: () => Promise.resolve(null),
   faviconOf: () => null,
   holdStill: () => null,
   letGo: () => Promise.resolve(),

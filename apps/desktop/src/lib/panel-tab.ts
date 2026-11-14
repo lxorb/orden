@@ -1,3 +1,4 @@
+import { chatReveal } from './ai-chat/src/api'
 import type { Panel } from './workspace.svelte'
 import { TAB_KINDS, type TabKind, type TabPanel } from './workspace/tab-kinds'
 
@@ -21,7 +22,7 @@ const declared = (panel: TabPanel, tab: Filling): boolean =>
 const PANELS: Record<PanelTab, Entry> = {
   tasks: { tab: () => import('./todos-entry').then(({ showTodos }) => showTodos()), fills: null },
   ask: {
-    tab: () => import('./ai/sidebar/reveal').then(({ chatToTab }) => chatToTab()),
+    tab: () => chatReveal().then(({ chatToTab }) => chatToTab()),
     fills: null,
   },
   scratchpad: {

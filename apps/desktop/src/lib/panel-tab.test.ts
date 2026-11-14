@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const asked = vi.hoisted(() => [] as string[])
 
 vi.mock('./todos-entry', () => ({ showTodos: () => asked.push('todos') }))
-vi.mock('./ai/sidebar/reveal', () => ({ chatToTab: () => asked.push('chat') }))
+vi.mock('./ai-chat/src/api', () => ({
+  chatReveal: () => Promise.resolve({ chatToTab: () => asked.push('chat') }),
+}))
 vi.mock('./scratchpad/src/api', () => ({
   pad: () => Promise.resolve({ asNote: () => asked.push('pad') }),
 }))
@@ -25,7 +27,7 @@ describe('a panel as a tab', () => {
     openAsTab('ask')
     openAsTab('scratchpad')
     await settle()
-    expect(asked).toEqual(['todos', 'chat', 'pad'])
+    expect([...asked].sort()).toEqual(['chat', 'pad', 'todos'])
   })
 
   test('a panel about the note in front has none, and a double press on it does nothing', async () => {

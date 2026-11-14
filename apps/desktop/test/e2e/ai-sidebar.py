@@ -508,14 +508,14 @@ BOX = """
 }
 """
 
-QUICK = "() => import('/src/lib/ai/quick-door.ts').then((door) => door.askQuickly())"
+QUICK = "() => import('/src/lib/ai-chat/src/quick-door.ts').then((door) => door.askQuickly())"
 
 def menu_row(page: Page, words: str):
     return page.locator(".menu [role=menuitem]").filter(has_text=words).first
 
 STEPS = """
 async () => {
-  const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
+  const { chat } = await import('/src/lib/ai-chat/src/store/chat.svelte.ts')
   const thread = chat.thread
   const turn = [...thread.turns].reverse().find((one) => one.role === 'model')
   const ok = (text) => ({ text, images: [], error: false })
@@ -535,7 +535,7 @@ async () => {
 
 ASKING = """
 async () => {
-  const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
+  const { chat } = await import('/src/lib/ai-chat/src/store/chat.svelte.ts')
   const thread = chat.thread
   thread.turns.push({ id: 'you-ask', role: 'you', at: Date.now(), draft: { text: 'Shout the first words too', attachments: [] }, parts: [] })
   thread.turns.push({ id: 'model-ask', role: 'model', at: Date.now(), parts: [

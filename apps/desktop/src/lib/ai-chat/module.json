@@ -1,0 +1,43 @@
+{
+  "name": "ai-chat",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "agent-docs",
+    "ai-providers",
+    "chats",
+    "dictation",
+    "editor",
+    "markdown",
+    "platform",
+    "protect",
+    "scan",
+    "scratchpad",
+    "search",
+    "sharing",
+    "theme-looks",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/agent-marks.svelte.ts",
+    "apps/desktop/src/lib/automation/acts.ts",
+    "apps/desktop/src/lib/automation/caller.ts",
+    "apps/desktop/src/lib/diff.ts",
+    "apps/desktop/src/lib/focus.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/parting.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/task-actions.ts",
+    "apps/desktop/src/lib/views.svelte.ts",
+    "apps/desktop/src/lib/web/store.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/undo.svelte.ts",
+    "apps/desktop/src/lib/workspace/undoing.ts",
+    "apps/desktop/src/lib/workspace/write-file.ts"
+  ]
+}

@@ -5,6 +5,7 @@
     "contracts",
     "accounts",
     "accounts-ui",
+    "ai-chat",
     "ai-providers",
     "bases",
     "chat-kit",
@@ -24,9 +25,6 @@
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/ai/commands/chats.ts",
-    "apps/desktop/src/lib/ai/sidebar/chat.svelte.ts",
-    "apps/desktop/src/lib/ai/sidebar/reveal.ts",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/chosen-icon.ts",

@@ -72,7 +72,7 @@ export default {
         'src/pass-web.ts',
         'src/lib/pass-sync/src/test-device.ts',
         'src/site/site.ts',
-        'src/lib/ai/review/index.ts',
+        'src/lib/ai-chat/src/review/index.ts',
       ],
       ignoreDependencies: ['katex', 'axe-core'],
       ignoreBinaries: ['jq'],

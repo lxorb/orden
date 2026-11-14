@@ -15,7 +15,7 @@
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
   import { agentMarks } from './agent-marks.svelte'
-  import { chatsUnread, lookAtLaunch } from './ai/unread.svelte'
+  import { chatStore, chatsUnread, lookAtLaunch } from './ai-chat/src/api'
   import { UnreadDot } from './ui-kit/src/api'
   import { account } from './accounts/src/api'
   import {
@@ -751,8 +751,7 @@
             title="New chat"
             aria-label="New chat"
             onclick={() => {
-              if (!__EVEN_PLUGIN__)
-                void import('./ai/sidebar/chat.svelte').then((one) => one.chat.newThread())
+              if (!__EVEN_PLUGIN__) void chatStore().then((one) => one.chat.newThread())
             }}
           >
             <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
@@ -762,8 +761,7 @@
             title={shortcuts.tooltip('Chats', 'app.ask')}
             aria-label="Chats"
             onclick={() => {
-              if (!__EVEN_PLUGIN__)
-                void import('./ai/sidebar/chat.svelte').then((one) => one.chat.showThreads())
+              if (!__EVEN_PLUGIN__) void chatStore().then((one) => one.chat.showThreads())
             }}
           >
             <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>

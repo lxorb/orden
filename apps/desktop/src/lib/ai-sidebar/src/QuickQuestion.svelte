@@ -1,0 +1,602 @@
+<script lang="ts">
+  import { untrack } from 'svelte'
+  import { SvelteSet } from 'svelte/reactivity'
+  import { cubicOut } from 'svelte/easing'
+  import Answer from './Answer.svelte'
+  import LiveAnswer from './LiveAnswer.svelte'
+  import { answerHtml } from './drawn'
+  import type { ContextKind } from './chat-parts'
+  import { dollarMaths } from '@orden/markdown/streamed'
+  import { quick } from './chat-parts'
+  import Thinking from './Thinking.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
+  import { copyText } from '../../ui-controls/src/api'
+  import { Cross } from '../../ui-kit/src/api'
+  import { links } from '../../link-index.svelte'
+  import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
+  import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
+  import { overlays } from '../../ui-kit/src/api'
+  import { scrollbar } from '../../ui-kit/src/api'
+  import { settings } from '../../settings.svelte'
+  import { trap } from '../../ui-controls/src/api'
+  import { grow } from '../../grow'
+  import { longPaste } from '../../long-paste'
+  import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
+  import type { Dictates } from '../../dictation/src/api'
+  import { workspace } from '../../workspace.svelte'
+
+  let talk = $state<HTMLElement>()
+  let field = $state<HTMLTextAreaElement>()
+
+  const voiceField: Dictates = {
+    field: () => field,
+    words: () => (quick.context ? [quick.context.name] : []),
+  }
+
+  const turns = $derived(quick.turns)
+  const last = $derived(turns.at(-1))
+  const waiting = $derived(quick.running && last?.role !== 'model')
+  const done = $derived(last?.role === 'model' && !quick.running ? last : null)
+
+  $effect(() => (quick.open ? overlays.show(() => quick.close()) : undefined))
+  $effect(() => closeOnBack(quick.open, () => quick.close()))
+
+  const follows = (..._values: unknown[]) => undefined
+
+  let atEnd = true
+
+  function onScroll() {
+    const box = talk
+    if (box) atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 24
+  }
+
+  const asked = $derived(turns.filter((one) => one.role === 'you').length)
+
+  $effect(() => {
+    follows(asked)
+    atEnd = true
+  })
+
+  $effect(() => {
+    follows(last?.text.length, waiting, quick.trouble)
+    const box = talk
+    if (box && atEnd) box.scrollTop = box.scrollHeight
+  })
+
+  function onPaste(event: ClipboardEvent) {
+    const text = longPaste(event)
+    if (text === null) return
+    const name = 'Text'
+    if (text.length > 2_000_000) {
+      quick.refuse(`${name} was not added: a chat takes pictures, and text files up to 2 MB.`)
+      return
+    }
+    quick.take(name, text)
+  }
+
+  function onKey(event: KeyboardEvent) {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return
+    event.preventDefault()
+    void quick.ask()
+  }
+
+  function follow(event: MouseEvent) {
+    if (!opensLink(event)) return
+    const anchor = (event.target as Element | null)?.closest('a')
+    const href = anchor?.getAttribute('href')
+    if (!anchor || !href) return
+
+    event.preventDefault()
+    if (href.startsWith('#')) return
+    const elsewhere = /^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')
+    if (!elsewhere && event.button === MIDDLE && !anchor.classList.contains('wikilink')) return
+    const from = workspace.panelTab?.path ?? null
+    quick.close()
+    if (elsewhere) followHref(href, event)
+    else
+      followNote({ path: href, target: href, heading: null, block: null, page: null }, event, from)
+  }
+
+  const pictures = new SvelteSet<string>()
+
+  function drawn(text: string, live: boolean): string {
+    const from = untrack(() => workspace.panelTab?.path ?? null)
+    return answerHtml(text, {
+      resolveLink: (link) => {
+        const found = link.target
+          ? links.targetOf(from, { kind: 'wikilink', target: link.target })
+          : null
+        return found === null ? null : { href: found }
+      },
+      copy: 'Copy code',
+      live,
+      from,
+      shown: pictures,
+    })
+  }
+  const show = (src: string) => pictures.add(src)
+
+  let copied = $state(false)
+  let copying: ReturnType<typeof setTimeout> | undefined
+
+  async function copy(text: string) {
+    await copyText(text)
+    copied = true
+    clearTimeout(copying)
+    copying = setTimeout(() => (copied = false), 1600)
+  }
+
+  const MARKS: Record<ContextKind, string> = {
+    note: 'M7.5 1.8H3.6a1 1 0 0 0-1 1v7.4a1 1 0 0 0 1 1h5.8a1 1 0 0 0 1-1V4.7zM7.5 1.8v2.9h2.9',
+    selection: 'M2.5 3.5h8M2.5 6.5h8M2.5 9.5h5',
+    page: 'M6.5 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 1 0 0-9.4zM1.8 6.5h9.4M6.5 1.8c1.3 1.3 1.9 2.9 1.9 4.7s-.6 3.4-1.9 4.7c-1.3-1.3-1.9-2.9-1.9-4.7s.6-3.4 1.9-4.7z',
+  }
+</script>
+
+{#if quick.open}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div
+    class="orden-scrim scrim"
+    transition:fade={{ duration: LAYER.fade }}
+    onclick={() => quick.close()}
+  ></div>
+
+  <div
+    class="orden-screen quick"
+    use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label="Quick question"
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
+  >
+    {#if quick.ready}
+      <div class="field orden-field">
+        <textarea
+          bind:this={field}
+          bind:value={quick.question}
+          use:grow={quick.question}
+          use:dictating={voiceField}
+          data-lands
+          rows="1"
+          placeholder="Ask"
+          aria-label="Quick question"
+          spellcheck="false"
+          onpaste={onPaste}
+          onkeydown={onKey}></textarea>
+
+        {#if canDictate()}
+          <span class="voice"><DictateButton owner={voiceField} below /></span>
+        {/if}
+
+        {#if quick.running}
+          <button class="go" title="Stop" aria-label="Stop" onclick={() => quick.stop()}>
+            <svg viewBox="0 0 13 13"
+              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
+            >
+          </button>
+        {:else}
+          <button
+            class="go"
+            title="Ask"
+            aria-label="Ask"
+            disabled={!quick.question.trim() && !quick.texts.length}
+            onclick={() => void quick.ask()}
+          >
+            <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
+          </button>
+        {/if}
+      </div>
+
+      {#if quick.context !== null || quick.texts.length > 0}
+        <div class="chips" transition:fade={{ duration: dur(120) }}>
+          {#if quick.context}
+            {@const context = quick.context}
+            <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
+              <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
+              <span class="what" dir="auto">{context.name}</span>
+              <button
+                class="drop"
+                title="Remove"
+                aria-label="Remove"
+                onclick={() => {
+                  quick.drop()
+                  field?.focus()
+                }}
+              >
+                <Cross small />
+              </button>
+            </span>
+          {/if}
+          {#each quick.texts as one (one.id)}
+            <span class="chip" title={one.label}>
+              <svg viewBox="0 0 13 13"><path d={MARKS.selection} /></svg>
+              <span class="what" dir="auto">{one.label}</span>
+              <button
+                class="drop"
+                title="Remove"
+                aria-label="Remove"
+                onclick={() => {
+                  quick.dropText(one.id)
+                  field?.focus()
+                }}
+              >
+                <Cross small />
+              </button>
+            </span>
+          {/each}
+        </div>
+      {/if}
+    {:else}
+      <p class="empty-text">
+        Add an AI provider in Settings first.
+        <button
+          class="link"
+          data-lands
+          onclick={() => {
+            quick.close()
+            settings.show('ai')
+          }}>Settings › AI</button
+        >
+      </p>
+    {/if}
+
+    {#if turns.length || quick.trouble}
+      <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
+        {#each turns as turn, at (at)}
+          {#if turn.role === 'you'}
+            <p class="said" dir="auto" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>
+              {turn.text}
+            </p>
+          {:else}
+            {#if quick.running && at === turns.length - 1}
+              <LiveAnswer
+                text={turn.text}
+                draw={(text: string) => drawn(text, true)}
+                onfollow={follow}
+                onpicture={show}
+              />
+            {:else}
+              <Answer html={drawn(turn.text, false)} onfollow={follow} onpicture={show} />
+            {/if}
+          {/if}
+        {/each}
+
+        {#if waiting}
+          <Thinking />
+        {/if}
+
+        {#if quick.asking && workspace.offers('ask')}
+          <div class="acts" in:fade={{ duration: dur(120) }}>
+            <button
+              class="orden-glyph act"
+              title="Continue in the panel"
+              aria-label="Continue in the panel"
+              onclick={() => void quick.continueInPanel()}
+            >
+              <svg viewBox="0 0 13 13"
+                ><path
+                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+                /></svg
+              >
+            </button>
+          </div>
+        {/if}
+
+        {#if quick.trouble}
+          <p class="wrong">{quick.trouble}</p>
+        {/if}
+
+        {#if done}
+          <div class="acts" in:fade={{ duration: dur(120) }}>
+            <button
+              class="orden-glyph act"
+              title="Add to note"
+              aria-label="Add to note"
+              onclick={() => void quick.addToNote(dollarMaths(done.text))}
+            >
+              <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg
+              >
+            </button>
+            <button
+              class="orden-glyph act"
+              title="Copy"
+              aria-label="Copy"
+              onclick={() => void copy(dollarMaths(done.text))}
+            >
+              <svg viewBox="0 0 13 13">
+                {#if copied}
+                  <path d="M2.8 6.8l2.4 2.4 5-5.4" />
+                {:else}
+                  <path
+                    d="M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z"
+                  />
+                {/if}
+              </svg>
+            </button>
+            {#if workspace.offers('ask')}
+              <button
+                class="orden-glyph act"
+                title="Continue in the panel"
+                aria-label="Continue in the panel"
+                onclick={() => void quick.continueInPanel()}
+              >
+                <svg viewBox="0 0 13 13"
+                  ><path
+                    d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+                  /></svg
+                >
+              </button>
+            {/if}
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </div>
+{/if}
+
+<style>
+  .scrim {
+    --scrim-z: var(--z-screen);
+  }
+
+  .quick {
+    --screen-width: var(--screen-list);
+    --quick-inset: var(--space-3);
+    --go-inset: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
+
+    z-index: var(--z-screen);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .field {
+    flex: none;
+    align-items: flex-end;
+    min-height: 0;
+    width: calc(100% - 2 * var(--quick-inset));
+    margin: var(--quick-inset) var(--quick-inset) 0;
+    padding: 0 var(--go-inset) 0 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  .field:last-child {
+    margin-bottom: var(--quick-inset);
+  }
+
+  textarea {
+    min-height: 0;
+    max-height: 9rem;
+    padding: var(--space-3);
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    line-height: 1.4;
+    resize: none;
+    field-sizing: content;
+  }
+
+  textarea::placeholder {
+    color: var(--muted);
+  }
+
+  .voice {
+    flex: none;
+    display: grid;
+    margin: 0 2px calc(var(--go-inset) + 2px) 0;
+  }
+
+  .go {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: var(--go-inset);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--text-strong);
+    color: var(--bg);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      scale var(--dur-fast) var(--ease-out);
+  }
+
+  .go:disabled {
+    background: var(--surface-hover);
+    color: var(--muted);
+  }
+
+  .go:active:not(:disabled) {
+    scale: 0.92;
+  }
+
+  .go svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .go .square {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .act svg,
+  .chip svg {
+    stroke-width: 1.3;
+  }
+
+  .chips {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--quick-inset) var(--quick-inset);
+  }
+
+  .chips + .talk {
+    padding-top: 0;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 1px 1px 1px 6px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-row);
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+  }
+
+  .chip svg {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .what {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chip.quoted .what::before {
+    content: '\201C';
+  }
+
+  .chip.quoted .what::after {
+    content: '\201D';
+  }
+
+  .drop {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .drop :global(svg) {
+    width: 8px;
+    height: 8px;
+    stroke-width: 1.4;
+  }
+
+  @media (hover: hover) {
+    .drop:hover {
+      background: var(--surface-hover);
+      color: var(--text-strong);
+    }
+  }
+
+  .drop:active {
+    background: var(--surface-press);
+  }
+
+  .talk {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--quick-inset);
+  }
+
+  .said {
+    align-self: flex-end;
+    max-width: 85%;
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--ink-wash);
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .acts {
+    display: flex;
+    margin: calc(var(--space-2) * -1) 0 0 -6px;
+  }
+
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    cursor: default;
+  }
+
+  @media (hover: hover) {
+    .link:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .empty-text,
+  .wrong {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+    color: var(--muted);
+  }
+
+  .empty-text {
+    padding: var(--space-4);
+  }
+
+  .wrong {
+    color: var(--danger);
+  }
+
+  :global([data-touch]) .quick {
+    top: auto;
+    bottom: var(--keyboard);
+    left: 0;
+    translate: none;
+    width: 100%;
+    max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: var(--touch-bottom);
+  }
+
+  :global([data-touch]) textarea,
+  :global([data-touch]) .said,
+  :global([data-touch]) .empty-text,
+  :global([data-touch]) .wrong {
+    font-size: var(--text-base);
+  }
+</style>
