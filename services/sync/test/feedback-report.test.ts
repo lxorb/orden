@@ -6,9 +6,9 @@ import {
   pictureOf,
   pngWithout,
   sniffed,
-} from '../src/sync-server/src/feedback-images'
-import { issueBody } from '../src/sync-server/src/feedback-issues'
-import { reportPage, standing } from '../src/sync-server/src/feedback-page'
+} from '../src/sync-server-feedback/src/feedback-images'
+import { issueBody } from '../src/sync-server-feedback/src/feedback-issues'
+import { reportPage, standing } from '../src/sync-server-feedback/src/feedback-page'
 import { sweepLeftovers } from '../src/sync-server/src/leftovers'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 

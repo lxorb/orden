@@ -173,6 +173,10 @@ describe('hooks', () => {
         eraseChats: (_env: unknown, chats: readonly string[]) => Promise.resolve([...chats]),
         linkPointer: () => Promise.resolve(),
       },
+      feedback: {
+        withdrawIssues: (_env: unknown, numbers: readonly number[]) =>
+          Promise.resolve([...numbers]),
+      },
       machines: {
         eraseMachines: (_env: unknown, ids: readonly string[]) => Promise.resolve([...ids]),
         endTerms: () => Promise.resolve(),

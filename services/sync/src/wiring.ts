@@ -16,12 +16,14 @@ import {
   machinesSignedOut,
   tellEnded,
 } from './sync-server-machines/src/api'
+import { withdrawIssues } from './sync-server-feedback/src/api'
 import { PASS_ERASED } from './sync-server-pass/src/api'
 
 wire({
   accounts: { whoever: requireWhoever, signingIn, sessionFor },
   blog: { publishesFile },
   chats: { askChat, chatsRevoked, closeChats, eraseChats, linkPointer },
+  feedback: { withdrawIssues },
   machines: { endingTerm, endTerms, eraseMachines, machinesRevoked, machinesSignedOut, tellEnded },
   pass: { erased: PASS_ERASED },
 })

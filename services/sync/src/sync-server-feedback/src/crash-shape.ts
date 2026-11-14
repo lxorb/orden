@@ -1,4 +1,4 @@
-import { sha256 } from './crypto'
+import { sha256 } from '../../sync-server/src/api'
 
 const CRASH_KINDS = ['panic', 'crash', 'freeze', 'engine', 'js', 'exit'] as const
 type CrashKind = (typeof CRASH_KINDS)[number]

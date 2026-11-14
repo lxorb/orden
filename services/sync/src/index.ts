@@ -47,11 +47,7 @@ import {
   sweepTreeOps,
   spaces,
   join,
-  crashes,
-  sweepCrashes,
   usage,
-  feedback,
-  openWaitingIssues,
   recheckDomains,
   expireRequests,
   sharedWithMe,
@@ -102,6 +98,7 @@ import {
 } from './sync-server-machines/src/api'
 import { blobs, publicBlobs, siteIcons } from './sync-server-blobs/src/api'
 import { serveBlog } from './sync-server-blog/src/api'
+import { crashes, feedback, openWaitingIssues, sweepCrashes } from './sync-server-feedback/src/api'
 import {
   chatDoor,
   chats,

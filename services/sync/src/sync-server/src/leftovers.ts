@@ -1,6 +1,5 @@
 import { askInChunks, chunks, places } from './bound'
 import { note } from './failed'
-import { ISSUES, withdrawIssues } from './feedback-issues'
 import { DOMAIN, releaseLeftDomains } from './hostnames'
 import { eraseHubs } from './hub/reach'
 import { hooks } from './hooks'
@@ -19,6 +18,8 @@ const CHAT = 'chats/'
 const HOME = 'homes/'
 
 const WORDS = 'words/'
+
+export const ISSUES = 'issues/'
 
 export const ERASING = 'accounts/'
 
@@ -123,7 +124,9 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await eraseHubs(env, of(HUB))).map((id) => HUB + id),
     ...(await hooks().machines.eraseMachines(env, of(MACHINE))).map((id) => MACHINE + id),
     ...(await hooks().chats.eraseChats(env, of(CHAT))).map((id) => CHAT + id),
-    ...(await withdrawIssues(env, of(ISSUES).map(Number))).map((n) => ISSUES + String(n)),
+    ...(await hooks().feedback.withdrawIssues(env, of(ISSUES).map(Number))).map(
+      (n) => ISSUES + String(n),
+    ),
     ...(await releaseLeftDomains(env, of(DOMAIN))).map((domain) => DOMAIN + domain),
     ...(homesBucket ? homes : []),
   ])

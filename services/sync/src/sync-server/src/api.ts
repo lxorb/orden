@@ -2,7 +2,6 @@ export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setK
 export { type Body, bytesAtMost, listIn, objectBody, objectIn, readBody, textAtMost } from './body'
 export { askInChunks, AT_A_TIME, chunks, places } from './bound'
 export { serveApp, servePage, servePass, switchChannel } from './channel'
-export { crashes, sweepCrashes } from './crashes'
 export {
   byteLength,
   cleanPersonName,
@@ -17,11 +16,9 @@ export {
   randomToken,
   sha256,
 } from './crypto'
-export { codeMessage, leavingMessage, mailer, refusedMail } from './email'
+export { codeMessage, leavingMessage, mailer, oneLine, refusedMail } from './email'
 export { eraseAccount, finishErasing } from './erase'
 export { failed, note } from './failed'
-export { openWaitingIssues } from './feedback-issues'
-export { feedback } from './feedback'
 export {
   claimGuest,
   claimGuestsAt,
@@ -49,7 +46,7 @@ export { pokeNow } from './hub/poke'
 export { askHub, tellHubs } from './hub/reach'
 export { homeSpace, inboxText, writeInboxText } from './inbox-text'
 export { inbox } from './inbox'
-export { sweepLeftovers } from './leftovers'
+export { ISSUES, sweepLeftovers } from './leftovers'
 export {
   machineOf,
   mailCeilings,
@@ -105,6 +102,7 @@ export {
   NOT_AN_EMAIL,
   NOT_AN_OBJECT,
   NOT_FOUND,
+  NOT_JSON,
   OUT_OF_SPACE,
   SIGN_IN,
   SIGN_IN_TO_DO_THAT,
