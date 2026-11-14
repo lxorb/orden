@@ -47,7 +47,7 @@ export interface PeerWorld {
 
 const pageWorld: PeerWorld = {
   async servers() {
-    const { account, request } = await import('../accounts/src/api')
+    const { account, request } = await import('../../accounts/src/api')
     const token = account.accountToken
     const answer = token
       ? await request<{ iceServers?: unknown }>(ICE_PATH, { token }).catch(() => null)
@@ -65,7 +65,7 @@ const pageWorld: PeerWorld = {
   },
   now: () => Date.now(),
   copy: (text) => {
-    void import('../ui-controls/src/api')
+    void import('../../ui-controls/src/api')
       .then(({ copyText }) => copyText(text))
       .catch(() => undefined)
   },

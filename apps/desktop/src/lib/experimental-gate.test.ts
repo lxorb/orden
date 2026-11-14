@@ -40,7 +40,7 @@ const {
 const { receive } = await import('./kind-choice')
 const { experimentalPane } = await import('./settings/experimental-pane')
 const { kindsPane } = await import('./settings/kinds-pane')
-const { openApplication } = await import('./apps/open')
+const { openApplication } = await import('./apps/src/open')
 const { account } = await import('./accounts/src/account.svelte')
 
 Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })

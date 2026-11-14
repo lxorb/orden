@@ -1,4 +1,4 @@
-import { pngData } from '../png-off'
+import { pngData } from '../../png-off'
 
 export interface Frame {
   png: string

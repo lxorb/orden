@@ -1,6 +1,6 @@
 import type { AppFile, HostFrame, NotStarted, RelayToHost, View } from '@orden/online/apps'
 import { describe, expect, test } from 'vitest'
-import type { LinkWorld, Opened } from '../online/link'
+import type { LinkWorld, Opened } from '../../online/link'
 import {
   applicationFiles,
   BYE,

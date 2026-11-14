@@ -107,7 +107,9 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'a',
     make: (paneId) => {
       if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./apps/make').then(({ makeApplication }) => makeApplication()))
+        inPane(paneId, () =>
+          import('./apps/src/api').then(({ makeApplication }) => makeApplication()),
+        )
     },
   }),
   web: () => ({

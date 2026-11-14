@@ -17,7 +17,7 @@ import {
   type View,
 } from '@orden/online/apps'
 import { untrack } from 'svelte'
-import { Channel, type LinkWorld, type Opened } from '../online/link'
+import { Channel, type LinkWorld, type Opened } from '../../online/link'
 import { find } from './session.svelte'
 
 export const FIRST_VIEW: View = { width: 1280, height: 800, dpr: 1, hz: 60 }
@@ -307,12 +307,12 @@ async function appWorld(): Promise<{
     native,
     { platform, invoke },
   ] = await Promise.all([
-    import('../accounts/src/api'),
-    import('../online/link'),
-    import('../sync-client/src/api'),
-    import('../workspace.svelte'),
-    import('../crate/src/api'),
-    import('../platform/src/api'),
+    import('../../accounts/src/api'),
+    import('../../online/link'),
+    import('../../sync-client/src/api'),
+    import('../../workspace.svelte'),
+    import('../../crate/src/api'),
+    import('../../platform/src/api'),
   ])
   const linkWorld: LinkWorld = pageWorld(BASE, () => account.accountToken, deviceId)
 

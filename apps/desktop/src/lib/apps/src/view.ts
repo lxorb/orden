@@ -1,11 +1,12 @@
+import { middle } from './stats'
+
 export const SETTLE = 150
 
 export function refreshRate(gaps: readonly number[]): number | null {
   if (gaps.length < 8) return null
-  const sorted = [...gaps].sort((one, other) => one - other)
-  const middle = sorted[Math.floor(sorted.length / 2)] ?? 0
-  if (middle <= 0) return null
-  const hz = Math.round(1000 / middle)
+  const gap = middle(gaps) ?? 0
+  if (gap <= 0) return null
+  const hz = Math.round(1000 / gap)
   return hz >= 24 && hz <= 500 ? hz : null
 }
 

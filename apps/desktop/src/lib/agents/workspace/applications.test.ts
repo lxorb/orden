@@ -30,12 +30,11 @@ vi.mock('../../workspace.svelte', () => ({
 }))
 
 const sessions = new Map<string, FakeSession>()
-vi.mock('../../apps/session.svelte', () => ({
-  appSessionIfAny: (tab: { id: string }) => sessions.get(tab.id) ?? null,
-}))
-
 const frames = vi.hoisted((): { next: unknown } => ({ next: null }))
-vi.mock('../../apps/frame', () => ({ frameOf: () => Promise.resolve(frames.next) }))
+vi.mock('../../apps/src/api', () => ({
+  appSessionIfAny: (tab: { id: string }) => sessions.get(tab.id) ?? null,
+  frameOf: () => Promise.resolve(frames.next),
+}))
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }

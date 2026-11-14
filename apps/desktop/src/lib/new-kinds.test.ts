@@ -24,7 +24,7 @@ vi.mock('./online/open', () => ({
     return Promise.resolve(null)
   },
 }))
-vi.mock('./apps/make', () => ({
+vi.mock('./apps/src/make', () => ({
   makeApplication: () => {
     online.made?.push('application')
     return Promise.resolve(null)

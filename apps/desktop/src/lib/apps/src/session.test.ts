@@ -1,6 +1,6 @@
 import { UNKNOWN_APP, type View } from '@orden/online/apps'
 import { describe, expect, test, vi } from 'vitest'
-import type { Tab } from '../workspace/documents.svelte'
+import type { Tab } from '../../workspace/documents.svelte'
 import type { AppHeard } from './link'
 import {
   ANSWER_WITHIN,
@@ -20,8 +20,8 @@ import {
 
 const server = vi.hoisted(() => ({ version: 1, asked: 0 }))
 
-vi.mock('../accounts/src/client', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../accounts/src/client')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
   const me = () => {
     server.asked += 1
     return Promise.resolve({
@@ -271,10 +271,10 @@ describe('an application tab connecting', () => {
 
 describe('finding an application on an account that started on the old sync', () => {
   async function onOldSync(now: number) {
-    const { account } = await import('../accounts/src/account.svelte')
+    const { account } = await import('../../accounts/src/account.svelte')
     server.version = now
     server.asked = 0
-    vi.doMock('../sync-client/src/runner.svelte', () => ({
+    vi.doMock('../../sync-client/src/runner.svelte', () => ({
       runner: { idAt: () => Promise.resolve({ id: 'app-1', own: true }) },
     }))
     account.token = 'tok'

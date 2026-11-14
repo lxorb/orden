@@ -22,11 +22,11 @@ const MODIFIERS: Readonly<Record<string, { key: string; code: string }>> = {
   cmd: { key: 'Meta', code: 'MetaLeft' },
 }
 
-type Session = import('../../apps/session.svelte').AppSession
+type Session = import('../../apps/src/api').AppSession
 
 export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
-  const { appSessionIfAny } = await import('../../apps/session.svelte')
+  const { appSessionIfAny } = await import('../../apps/src/api')
   if (op === 'list') {
     return done({
       applications: workspace.tabs
@@ -56,7 +56,7 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
     if (session.picture.status.is !== 'showing' || !stream) {
       throw new Refused('failed', `${named(tab)} shows no picture now: start it, then ask again`)
     }
-    const { frameOf } = await import('../../apps/frame')
+    const { frameOf } = await import('../../apps/src/api')
     const frame = await frameOf(stream)
     if (!frame) throw new Refused('timeout', `${named(tab)} gave no frame in time`)
     return done(frame, `the application ${named(tab)}`)

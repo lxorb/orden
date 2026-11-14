@@ -2136,7 +2136,7 @@ class Workspace {
         if (!__EVEN_PLUGIN__) (await import('./online/open')).openTerm(path, options)
         return
       case 'application':
-        if (!__EVEN_PLUGIN__) (await import('./apps/open')).openApplication(path, options)
+        if (!__EVEN_PLUGIN__) (await import('./apps/src/api')).openApplication(path, options)
         return
       case 'note':
         await this.open(path, options)

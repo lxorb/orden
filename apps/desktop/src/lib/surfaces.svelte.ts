@@ -99,7 +99,7 @@ export const terminalSurface = held(() =>
 export const applicationSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no application in the Even Realities plugin'))
-    : import('./apps/ApplicationTab.svelte'),
+    : import('./apps/src/api').then((one) => one.loadApplicationTab()),
 )
 
 export const explorerSurface = held(() =>

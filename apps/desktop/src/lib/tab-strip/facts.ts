@@ -36,7 +36,7 @@ export function watchFacts(tab: Tab, said: (lines: string[][]) => void): () => v
     const { readableSize } = await import('../usage.svelte')
     const lines: string[][] = []
     if (tab.kind === 'application') {
-      const { appSessionIfAny } = await import('../apps/session.svelte')
+      const { appSessionIfAny } = await import('../apps/src/api')
       const session = appSessionIfAny(tab)
       if (session) {
         release ??= session.picture.hold()
