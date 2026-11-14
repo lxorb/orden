@@ -63,10 +63,6 @@
     border-radius: var(--radius-row);
   }
 
-  .row:hover {
-    background: var(--surface-hover);
-  }
-
   .row.open {
     background: var(--surface-selected);
   }

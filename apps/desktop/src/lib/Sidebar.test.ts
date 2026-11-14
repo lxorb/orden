@@ -54,7 +54,7 @@ describe('the panel tabs', () => {
     open('# Head\n')
 
     expect(strip('left')).toEqual(['Files'])
-    expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Tasks', 'Scratchpad'])
+    expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Todos', 'Scratchpad'])
   })
 
   test('and a panel moved over is on the other side, at the end of its strip', () => {
@@ -62,9 +62,9 @@ describe('the panel tabs', () => {
     workspace.movePanel('outline', 'left')
 
     expect(strip('left')).toEqual(['Files', 'Outline'])
-    expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Scratchpad'])
+    expect(strip('right')).toEqual(['Links', 'Ask', 'Todos', 'Scratchpad'])
     workspace.movePanel('outline', 'right')
-    expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Outline', 'Scratchpad'])
+    expect(strip('right')).toEqual(['Links', 'Ask', 'Todos', 'Outline', 'Scratchpad'])
     workspace.right = [...STARTS_RIGHT]
   })
 

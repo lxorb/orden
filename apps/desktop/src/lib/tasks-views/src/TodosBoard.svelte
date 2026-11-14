@@ -92,6 +92,9 @@
                   event.dataTransfer?.setData('text/plain', todo.id)
                 }}
                 ondragend={() => (dragged = null)}
+                ondragenter={(event) => {
+                  if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
+                }}
                 ondragover={(event) => {
                   if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
                 }}
@@ -112,6 +115,9 @@
             {/each}
             <li
               class="tail"
+              ondragenter={(event) => {
+                if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
+              }}
               ondragover={(event) => {
                 if (shown.sort === 'manual' && dragged !== null) event.preventDefault()
               }}
@@ -169,7 +175,6 @@
     font-size: var(--text-sm);
   }
 
-  .sort select,
   .field {
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--line);

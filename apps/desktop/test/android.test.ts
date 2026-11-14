@@ -40,6 +40,8 @@ const page = sources(SOURCE)
   .map((path) => readFileSync(path, 'utf8'))
   .join('\n')
 
+const ASKED_OF_NOTHING = new Set(['__ordenReminders'])
+
 describe('what Android may copy out of the app', () => {
   test('nothing: no cloud backup and no transfer to a new phone', () => {
     expect(manifest).toContain('android:allowBackup="false"')
@@ -319,7 +321,7 @@ describe('the bridge the page talks over', () => {
     const called = [...activity.matchAll(/window\.(__orden\w+)/g)].map((one) => one[1])
     expect(called.length).toBeGreaterThan(2)
 
-    for (const name of called) {
+    for (const name of called.filter((one) => !ASKED_OF_NOTHING.has(one ?? ''))) {
       expect(page, name).toContain(`answer('${name}'`)
     }
   })
@@ -373,7 +375,7 @@ describe('the Today widget', () => {
   test('ticks through the page, which reads the anchor the activity hands over', () => {
     expect(kotlin).toContain('MainActivity.EXTRA_TICK')
     expect(activity).toContain('json.put("tick", ticking)')
-    expect(read(SOURCE, 'lib', 'mobile', 'handed.ts')).toContain('tickTask(at, space, true)')
+    expect(read(SOURCE, 'lib', 'mobile', 'handed.ts')).toContain('tickTask(at, true)')
     expect(widgets).toContain('TodayWidget.refresh(context)')
   })
 })

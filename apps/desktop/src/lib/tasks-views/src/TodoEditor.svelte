@@ -265,7 +265,6 @@
 
   .description,
   .new,
-  select,
   input[type='date'] {
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--line);

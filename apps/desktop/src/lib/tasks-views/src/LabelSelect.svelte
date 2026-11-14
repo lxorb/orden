@@ -64,7 +64,7 @@
     {chosen ?? 'All labels'}
   </button>
   {#if open}
-    <div class="list" role="listbox" aria-label="Label">
+    <div class="list" role="listbox" aria-label="Label" data-covers>
       <input
         bind:this={field}
         bind:value={typed}
