@@ -253,3 +253,22 @@ describe('the activity a drive stands in for', () => {
     expect(wrong, `${name} stands in for an activity the app no longer talks to`).toEqual([])
   })
 })
+
+describe('the Worker a drive asks', () => {
+  const helper = (source: string): string =>
+    /^def request\([\s\S]*?(?=^[^\s)])/m.exec(source)?.[0] ?? ''
+
+  test('every drive asks it through harness.request, not a urlopen of its own', () => {
+    const own = drives.filter(
+      (name) => name !== 'harness.py' && /\burlopen\(/.test(helper(read(E2E, name))),
+    )
+    expect(own).toEqual([])
+  })
+
+  test('harness.request asks again when the dev server lost the request on its way', () => {
+    const harness = read(E2E, 'harness.py')
+    expect(harness).toMatch(/^DROPPED = b"Network connection lost"$/m)
+    expect(helper(harness)).toMatch(/\bopened\(/)
+    expect(/^def opened\([\s\S]*?(?=^[^\s)])/m.exec(harness)?.[0]).toMatch(/DROPPED not in said/)
+  })
+})
