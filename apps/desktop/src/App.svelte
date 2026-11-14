@@ -225,7 +225,7 @@
         recovery.receive(remote)
         void import('./lib/space-archive').then((one) => one.receive(remote))
         if (!__EVEN_PLUGIN__)
-          void import('./lib/chats/hush.svelte').then(({ hush }) => hush.receive(remote))
+          void import('./lib/chats-client/src/api').then(({ hush }) => hush.receive(remote))
       })
     }
   })
@@ -466,8 +466,8 @@
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no chats in the Even Realities plugin'))
               : Promise.all([
-                  import('./lib/chats/store.svelte'),
-                  import('./lib/chats/view/open'),
+                  import('./lib/chats-client/src/api').then((one) => one.chatStore()),
+                  import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           time: () =>
             __EVEN_PLUGIN__

@@ -30,7 +30,9 @@
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
 
   const chatLinks = held(() =>
-    __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatLinks.svelte'),
+    __EVEN_PLUGIN__
+      ? new Promise<never>(() => undefined)
+      : import('./chats-client/src/api').then((one) => one.loadChatLinks()),
   )
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
 

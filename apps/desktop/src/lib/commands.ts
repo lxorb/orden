@@ -855,11 +855,13 @@ function sendToChatCommand(view?: EditorView): Command[] {
   if (__EVEN_PLUGIN__ || !note || !account.accountToken || !chatsOn()) return []
   const run = () => {
     const range = view?.state.selection.main
-    void import('./chats/send').then(({ sendSelection, sendToChat }) =>
-      view && range && !range.empty
-        ? sendSelection(note, view.state.doc.toString(), range.from, range.to)
-        : sendToChat(note),
-    )
+    void import('./chats-client/src/api')
+      .then((one) => one.chatSending())
+      .then(({ sendSelection, sendToChat }) =>
+        view && range && !range.empty
+          ? sendSelection(note, view.state.doc.toString(), range.from, range.to)
+          : sendToChat(note),
+      )
   }
   return [{ id: 'send-to-chat', label: 'Send to chat', run }]
 }

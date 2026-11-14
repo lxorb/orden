@@ -144,10 +144,13 @@ export function start(): () => void {
     void startup
       .turn('right')
       .then(() => import('./feature-gate.svelte'))
-      .then(({ whenChatsOn }) => whenChatsOn(() => void import('./chats/start.svelte')))
+      .then(({ whenChatsOn }) =>
+        whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats())),
+      )
     void startup
       .turn('right')
-      .then(() => import('./chats/retired'))
+      .then(() => import('./chats-client/src/api'))
+      .then((one) => one.retireChats())
       .then((one) => one.forgetRetiredChatsHere())
       .catch(() => undefined)
   }

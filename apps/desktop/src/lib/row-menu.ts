@@ -292,7 +292,9 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
     ? {}
     : {
         chat: (folder?: string) =>
-          import('./chats/view/open').then(({ makeChat }) => makeChat(folder)),
+          import('./chats-client/src/api')
+            .then((one) => one.chatOpening())
+            .then(({ makeChat }) => makeChat(folder)),
       }),
 }
 

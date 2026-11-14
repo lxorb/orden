@@ -1,5 +1,5 @@
-import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats/hush.svelte'
-import { priorities } from './chats/priorities.svelte'
+import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats-client/src/api'
+import { priorities } from './chats-client/src/api'
 import { localDate } from './platform/src/api'
 import type { Field } from './preferences'
 

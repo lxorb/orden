@@ -19,8 +19,8 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../chats/http', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../chats/http')>()),
+vi.mock('../chats-client/src/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../chats-client/src/http')>()),
   moveChat: async (chat: string, space: string) => {
     asked.moves.push([chat, space])
     const answer = await asked.answer()
@@ -43,7 +43,7 @@ const { sync } = await import('../sync.svelte')
 const { ApiError } = await import('../accounts/src/client')
 const { failed } = await import('../views/failed.svelte')
 const { spacesOfPaths } = await import('../tab-strip/to-space')
-const { keepOwnPointer } = await import('../chats/places')
+const { keepOwnPointer } = await import('../chats-client/src/places')
 const { prompt } = await import('../ui-kit/src/prompt.svelte')
 
 const SHARED = '/spaces/Team'

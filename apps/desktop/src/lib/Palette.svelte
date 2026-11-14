@@ -208,7 +208,9 @@
     }
     let current = true
     const timer = setTimeout(() => {
-      const finding = __EVEN_PLUGIN__ ? null : import('./chats/view/palette-hits')
+      const finding = __EVEN_PLUGIN__
+        ? null
+        : import('./chats-client/src/api').then((one) => one.chatPaletteHits())
       void finding
         ?.then(({ messageHits }) => messageHits(words))
         .then((found) => {
@@ -428,7 +430,9 @@
     },
     connect: (wanted) => void connectTo(wanted),
     openMessage: (path, message, how) => {
-      const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
+      const opening = __EVEN_PLUGIN__
+        ? null
+        : import('./chats-client/src/api').then((one) => one.chatOpening())
       void opening?.then(({ openChat }) => openChat(path, how, message))
     },
   }

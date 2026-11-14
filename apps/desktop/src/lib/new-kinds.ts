@@ -70,7 +70,11 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'm',
     make: (paneId) => {
       if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat()))
+        inPane(paneId, () =>
+          import('./chats-client/src/api')
+            .then((one) => one.chatOpening())
+            .then((one) => one.makeChat()),
+        )
     },
   }),
   explorer: () => ({

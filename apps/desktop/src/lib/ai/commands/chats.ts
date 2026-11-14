@@ -20,7 +20,7 @@ const REPLY = [
 ].join(' ')
 
 async function chatsStore() {
-  const { chats } = await import('../../chats/store.svelte')
+  const { chats } = await (await import('../../chats-client/src/api')).chatStore()
   return chats
 }
 
@@ -44,7 +44,7 @@ export async function draftReply(
   wishes: string,
   parent?: string,
 ): Promise<boolean> {
-  const { chatPart } = await import('../../chats/context')
+  const { chatPart } = await (await import('../../chats-client/src/api')).chatContext()
   const part = await chatPart(chat, 'unread-or-newest')
   const asked = wishes.trim() ? `${wishes.trim()}\n\n${REPLY}` : `Write my reply. ${REPLY}`
   const ended = await sendWith(panel, thread, asked, part ? [part] : [])
@@ -79,7 +79,7 @@ export async function reply(host: Host, thread: Thread, args: string): Promise<v
 export async function catchup(host: Host, thread: Thread, args: string): Promise<void> {
   if (chatsOff(host, thread)) return
   const chats = await chatsStore()
-  const { chatPart } = await import('../../chats/context')
+  const { chatPart } = await (await import('../../chats-client/src/api')).chatContext()
   const named = args.trim().replace(/^#/, '').toLowerCase()
   const wanted = chats.list
     .filter((one) =>

@@ -98,7 +98,9 @@ async function follow(uri: string, depth = 0): Promise<void> {
   if (isFileUri(uri)) return
 
   if (/^orden:\/\/chat\//i.test(uri.trim())) {
-    const opening = __EVEN_PLUGIN__ ? null : import('../chats/view/open')
+    const opening = __EVEN_PLUGIN__
+      ? null
+      : import('../chats-client/src/api').then((one) => one.chatOpening())
     await opening?.then(({ openChatLink }) => openChatLink(uri.trim()))
     return
   }

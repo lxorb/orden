@@ -45,7 +45,9 @@ export function followHref(href: string, press: LinkPress): void {
   }
   const ask = tabAsk(press, true)
   if (/^(orden|nib):\/\/chat\//i.test(href)) {
-    const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
+    const opening = __EVEN_PLUGIN__
+      ? null
+      : import('./chats-client/src/api').then((one) => one.chatOpening())
     void opening?.then(({ openChatLink }) => openChatLink(href, howFor(ask)))
     return
   }

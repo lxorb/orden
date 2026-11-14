@@ -56,7 +56,9 @@
   let chatNames = $state.raw<Record<string, string>>({})
   $effect(() => {
     if (!sites.some((one) => one.site.startsWith('chat:'))) return
-    const store = __EVEN_PLUGIN__ ? null : import('../../chats/store.svelte')
+    const store = __EVEN_PLUGIN__
+      ? null
+      : import('../../chats-client/src/api').then((one) => one.chatStore())
     void store?.then(({ chats }) => {
       chatNames = Object.fromEntries(
         chats.list.map((one) => [`chat:${one.id}`, `#${one.name ?? one.id}`]),

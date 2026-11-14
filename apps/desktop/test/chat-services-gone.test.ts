@@ -100,7 +100,7 @@ describe('chats from other services', () => {
   test('no file of the chats is named for one', () => {
     const named = [
       join(ROOT, 'packages/chats/src'),
-      join(ROOT, 'apps/desktop/src/lib/chats'),
+      join(ROOT, 'apps/desktop/src/lib/chats-client'),
       join(ROOT, 'apps/desktop/src-tauri/src'),
     ].flatMap((dir) =>
       files(dir, (path) => SERVICES.test(relative(dir, path))).map((path) => relative(ROOT, path)),
