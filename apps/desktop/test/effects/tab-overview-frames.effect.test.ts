@@ -12,7 +12,7 @@ window.matchMedia = ((query: string) => ({
 Element.prototype.scrollIntoView = () => undefined
 
 let drawn: (() => void)[] = []
-vi.mock('../../src/lib/reading/render', () => ({
+vi.mock('../../src/lib/reading/src/api', () => ({
   readingHtml: () =>
     new Promise<string>((done) => drawn.push(() => done('<p>Some words of it.</p>'))),
   unreadableHtml: (text: string) => text,

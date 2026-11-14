@@ -11,6 +11,7 @@
     "./json-skim": "./src/json-skim.ts",
     "./note": "./src/scan-note.ts",
     "./own-pages": "./src/own-pages.ts",
+    "./search/find": "./src/search/find.ts",
     "./search/fuzzy": "./src/search/fuzzy.ts",
     "./search/lines": "./src/search/lines.ts",
     "./search/match": "./src/search/match.ts",

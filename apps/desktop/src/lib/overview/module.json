@@ -1,13 +1,21 @@
 {
   "name": "overview",
   "layer": "features",
-  "dependsOn": ["contracts", "platform", "protect", "sharing", "theme", "ui-controls", "ui-kit"],
+  "dependsOn": [
+    "contracts",
+    "platform",
+    "protect",
+    "sharing",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "reading"
+  ],
   "pending": [
     "apps/desktop/src/lib/TabMark.svelte",
     "apps/desktop/src/lib/graph.ts",
     "apps/desktop/src/lib/held-database.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
-    "apps/desktop/src/lib/reading/render.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",

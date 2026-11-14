@@ -2,7 +2,10 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { note } from './reading-find-redraw-world.svelte'
 
-vi.mock('../../src/lib/reading/render', () => ({
+vi.mock('../../src/lib/reading/src/api', async () => ({
+  ...(await import('../../src/lib/reading/src/find')),
+  ...(await import('../../src/lib/reading/src/places')),
+  inlineFiles: () => () => undefined,
   readingHtml: async (source: { text: string }) =>
     source.text
       .split('\n')
@@ -11,7 +14,6 @@ vi.mock('../../src/lib/reading/render', () => ({
   unreadableHtml: (text: string) => text,
   tagAnchor: (tag: string) => `#${tag}`,
 }))
-vi.mock('../../src/lib/reading/drawn', () => ({ inlineFiles: () => () => undefined }))
 vi.mock('../../src/lib/views/mount', () => ({
   mountBases: (page: HTMLElement) => {
     for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')

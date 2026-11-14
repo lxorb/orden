@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { locate, paint, placesIn, placesOf, type Piece, type Words } from './find'
+import { locate, placesIn, placesOf, type Piece, type Words } from '@orden/scan/search/find'
+import { paint } from './find'
 
 const text = 'The word, and the word again, and a wordy one.'
 

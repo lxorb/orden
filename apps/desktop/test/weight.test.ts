@@ -238,7 +238,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/TagTree.svelte', "the panel's tag tree"],
     ['/lib/FindBar.svelte', 'the find bar'],
     ['/lib/Reading.svelte', 'the reading view'],
-    ['/lib/reading/render.ts', 'what it draws with'],
+    ['/lib/reading/src/render.ts', 'what it draws with'],
     ['/lib/app-menu.ts', "the app menu's rows"],
     ['/lib/publishing/src/publishing.svelte.ts', "the publish sheet's store"],
     ['/lib/import/src/importing.svelte.ts', "the import sheet's store"],
@@ -309,7 +309,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
     ['/lib/search/match.ts', 'the matcher'],
     ['/lib/preview-card.ts', 'the editor in a link card'],
-    ['/lib/reading/drawn.ts', 'a paper or a plane drawn in a note'],
+    ['/lib/reading/src/drawn.ts', 'a paper or a plane drawn in a note'],
     ['/lib/query-block.ts', "a query fence's rows"],
     ['/lib/note-cover.ts', "a note's cover, written"],
     ['/lib/theme-looks/src/gallery/store.svelte.ts', "the theme gallery's store"],
@@ -417,7 +417,7 @@ describe('what the app evaluates before it draws anything', () => {
 })
 
 describe('what reading a note fetches', () => {
-  const READING = join(import.meta.dirname, '../src/lib/reading/render.ts')
+  const READING = join(import.meta.dirname, '../src/lib/reading/src/render.ts')
   const EXPORTER = join(import.meta.dirname, '../src/lib/export/src/render.ts')
   const RENDERER = join(import.meta.dirname, '../../../packages/markdown/src/index.ts')
 

@@ -4,10 +4,20 @@
   import { keyElsewhere } from './layer-keys'
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
-  import { inlineFiles } from './reading/drawn'
-  import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
-  import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
-  import { readingHtml, tagAnchor, unreadableHtml } from './reading/render'
+  import { placesIn, type Words } from '@orden/scan/search/find'
+  import {
+    headingOffsets,
+    inlineFiles,
+    paint,
+    positionOf,
+    rangeOf,
+    readingHtml,
+    type Section,
+    sectionAt,
+    tagAnchor,
+    unreadableHtml,
+    wordsOf,
+  } from './reading/src/api'
   import { trustsHtmlIn } from './sharing/src/api'
   import { scrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'

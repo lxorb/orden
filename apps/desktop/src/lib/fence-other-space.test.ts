@@ -37,7 +37,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
-const { readingHtml } = await import('./reading/render')
+const { readingHtml } = await import('./reading/src/render')
 
 beforeEach(() => {
   searched.length = 0

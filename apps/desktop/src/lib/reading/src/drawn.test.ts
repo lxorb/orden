@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { expect, test, vi } from 'vitest'
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../../link-index.svelte', () => ({
   links: {
     version: 1,
     index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),
@@ -9,9 +9,9 @@ vi.mock('../link-index.svelte', () => ({
     fileFor: () => null,
   },
 }))
-vi.mock('../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string) =>
     command === 'read_note'
       ? Promise.resolve(
@@ -24,12 +24,12 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
         )
       : Promise.resolve(null),
 }))
-vi.mock('../pages/raster', () => ({
+vi.mock('../../pages/raster', () => ({
   paperPicture: (at: { file: string }) =>
     Promise.resolve(at.file === 'Reading.pdf' ? 'data:image/png;base64,UEFHRQ==' : null),
 }))
 
-vi.mock('../pages/paper', () => ({ holdPaper: () => () => undefined }))
+vi.mock('../../pages/paper', () => ({ holdPaper: () => () => undefined }))
 
 vi.stubGlobal(
   'IntersectionObserver',

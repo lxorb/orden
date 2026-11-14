@@ -847,7 +847,7 @@ class Links {
 
     let stop: (() => void) | null = null
     let stopped = false
-    void import('./reading/drawn').then(({ drawFile }) => {
+    void import('./reading/src/api').then(({ drawFile }) => {
       if (!stopped) stop = drawFile(card, { ...file, root })
     })
 
@@ -859,7 +859,7 @@ class Links {
 
   private async shownHtml(source: string, from: string | null, root = this.root): Promise<string> {
     const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
-      import('./reading/render'),
+      import('./reading/src/api'),
       import('./theme/src/api'),
       import('./sharing/src/api'),
     ])

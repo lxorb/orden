@@ -51,8 +51,8 @@ const BODIES: Record<string, string> = {
 
 const FILES = ['shot.png']
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
 
@@ -73,17 +73,17 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../note-images', () => ({
+vi.mock('../../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 
-const { links } = await import('../link-index.svelte')
-const { startup } = await import('../startup.svelte')
+const { links } = await import('../../link-index.svelte')
+const { startup } = await import('../../startup.svelte')
 const { readingHtml } = await import('./render')
-await import('../modes.svelte')
+await import('../../modes.svelte')
 const { EditorState, noteIndexExtension, renderNote } = await import('@orden/editor')
 
-await import('../export/src/render')
+await import('../../export/src/render')
 
 void startup.shown()
 await links.build(ROOT)
