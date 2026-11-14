@@ -25,9 +25,9 @@ vi.mock('../../src/lib/terminal/sessions.svelte', () => ({
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
 const { TAB_KINDS } = await import('../../src/lib/workspace/tab-kinds')
-const { faces } = await import('../../src/lib/overview/faces.svelte')
-const { scrollbackOf } = await import('../../src/lib/overview/previews')
-const Offstage = (await import('../../src/lib/overview/Offstage.svelte')).default
+const { faces } = await import('../../src/lib/overview/src/faces.svelte')
+const { scrollbackOf } = await import('../../src/lib/overview/src/previews')
+const Offstage = (await import('../../src/lib/overview/src/Offstage.svelte')).default
 
 let shown: ReturnType<typeof mount> | undefined
 afterEach(() => {

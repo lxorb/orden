@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type Frame, pane } from '../workspace/pane-tree'
+import { type Frame, pane } from '../../workspace/pane-tree'
 import { around, type Box, gridFor, lay, seamPath, seamsAmong } from './layout'
 
 const room: Box = { x: 0, y: 0, w: 1200, h: 800 }

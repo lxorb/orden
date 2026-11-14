@@ -1,18 +1,18 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
-  import { closeOnBack } from '../ui-kit/src/api'
-  import { chorded } from '../ui-kit/src/api'
-  import { stillness } from '../platform/src/api'
-  import { overlays } from '../ui-kit/src/api'
-  import { Cross } from '../ui-kit/src/api'
-  import { Select } from '../ui-controls/src/api'
-  import { tabOverview } from '../surfaces.svelte'
-  import TabMark from '../TabMark.svelte'
-  import { trap } from '../ui-controls/src/api'
-  import { prompt } from '../ui-kit/src/api'
-  import { pages } from '../web-tab/pages.svelte'
-  import { isDraft } from '../workspace/drafts'
-  import { type Tab, workspace } from '../workspace.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
+  import { chorded } from '../../ui-kit/src/api'
+  import { stillness } from '../../platform/src/api'
+  import { overlays } from '../../ui-kit/src/api'
+  import { Cross } from '../../ui-kit/src/api'
+  import { Select } from '../../ui-controls/src/api'
+  import { tabOverview } from '../../surfaces.svelte'
+  import TabMark from '../../TabMark.svelte'
+  import { trap } from '../../ui-controls/src/api'
+  import { prompt } from '../../ui-kit/src/api'
+  import { pages } from '../../web-tab/pages.svelte'
+  import { isDraft } from '../../workspace/drafts'
+  import { type Tab, workspace } from '../../workspace.svelte'
   import {
     aimed,
     boxToCanvas,
@@ -33,13 +33,13 @@
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
   import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
-  import { keep, storedText } from '../platform/src/api'
-  import { canWriteAt } from '../sharing/src/api'
-  import { shortcuts } from '../shortcuts.svelte'
-  import { mayCarry } from '../workspace/chat-carry'
-  import { TAB_KINDS } from '../workspace/tab-kinds'
-  import type { Frame } from '../workspace/pane-tree'
-  import { movingOf, spacesFor } from '../workspace/space-move'
+  import { keep, storedText } from '../../platform/src/api'
+  import { canWriteAt } from '../../sharing/src/api'
+  import { shortcuts } from '../../shortcuts.svelte'
+  import { mayCarry } from '../../workspace/chat-carry'
+  import { TAB_KINDS } from '../../workspace/tab-kinds'
+  import type { Frame } from '../../workspace/pane-tree'
+  import { movingOf, spacesFor } from '../../workspace/space-move'
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
@@ -264,7 +264,7 @@
 
   let sets = $state<{ frameOf: (key: string) => Frame | null } | null>(null)
   $effect(() => {
-    if (all && !sets) void import('../workspace/sets.svelte').then((one) => (sets = one.sets))
+    if (all && !sets) void import('../../workspace/sets.svelte').then((one) => (sets = one.sets))
   })
 
   const shownKeys = $derived.by((): string[] => {
@@ -1329,7 +1329,7 @@
 
   function drop(ids: readonly string[], landing: Landing) {
     if (landing.kind === 'space') {
-      void import('../workspace/moving-space')
+      void import('../../workspace/moving-space')
         .then((one) => one.moveToSpace(ids, landing.key))
         .then((went) => {
           if (!went) for (const one of ids) places.forgetWindow(one, workspace.tabs)

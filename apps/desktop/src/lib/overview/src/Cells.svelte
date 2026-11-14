@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { stillness } from '../platform/src/api'
+  import { stillness } from '../../platform/src/api'
   import { apart, Bubble } from './bubble'
   import type { Box } from './layout'
 

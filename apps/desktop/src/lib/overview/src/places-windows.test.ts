@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { memoryStorage } from '../../../test/disk'
+import { memoryStorage } from '../../../../test/disk'
 
 type Places = typeof import('./places.svelte').places
 

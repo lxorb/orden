@@ -35,10 +35,7 @@ export function step(one: Spring, seconds: number, feel: Feel = FLIGHT): void {
     left -= dt
   }
 
-  if (resting(one)) {
-    one.at = one.to
-    one.speed = 0
-  }
+  if (resting(one)) land(one)
 }
 
 export function resting(one: Spring): boolean {

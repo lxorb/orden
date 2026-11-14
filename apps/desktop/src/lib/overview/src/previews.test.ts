@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { TAB_KINDS } from '../workspace/tab-kinds'
+import { TAB_KINDS } from '../../workspace/tab-kinds'
 import { readingFrom, screenText } from './previews'
 
 test('a note reads from the start of the line it was left at, as it is now', () => {

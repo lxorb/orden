@@ -260,7 +260,9 @@ export const syncMark = latched(() =>
 
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
-export const tabOverviewLayer = latched(() => import('./overview/Overview.svelte'))
+export const tabOverviewLayer = latched(() =>
+  import('./overview/src/api').then((one) => one.loadOverview()),
+)
 export const tabOverview = $state<{ open: boolean; out: string[]; lifted: string[] }>({
   open: false,
   out: [],

@@ -1,4 +1,4 @@
-import { heldDatabase } from '../held-database'
+import { heldDatabase } from '../../held-database'
 
 export interface Face {
   html: string | null

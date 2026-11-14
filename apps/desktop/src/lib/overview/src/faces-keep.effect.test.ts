@@ -15,10 +15,10 @@ vi.mock('./faces', async (real) => ({
   readFaces: () => Promise.resolve([]),
 }))
 
-const { memoryStorage } = await import('../../../test/disk')
+const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
-const { workspace } = await import('../workspace.svelte')
-const { pages } = await import('../web-tab/pages.svelte')
+const { workspace } = await import('../../workspace.svelte')
+const { pages } = await import('../../web-tab/pages.svelte')
 const { faces } = await import('./faces.svelte')
 const { places } = await import('./places.svelte')
 

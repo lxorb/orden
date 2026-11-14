@@ -18,10 +18,10 @@ vi.mock('../../src/lib/reading/render', () => ({
   unreadableHtml: (text: string) => text,
 }))
 
-const { default: Overview } = await import('../../src/lib/overview/Overview.svelte')
+const { default: Overview } = await import('../../src/lib/overview/src/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { faces } = await import('../../src/lib/overview/faces.svelte')
+const { faces } = await import('../../src/lib/overview/src/faces.svelte')
 
 let now = 0
 let waiting = new Map<number, FrameRequestCallback>()
@@ -269,7 +269,7 @@ test('no frame of the way out, a zoom or the way home makes a layer of its own o
 })
 
 const TOKENS = readFileSync(resolve('../../packages/themes/src/tokens.css'), 'utf8')
-const SOURCE = await import('../../src/lib/overview/Overview.svelte?raw')
+const SOURCE = await import('../../src/lib/overview/src/Overview.svelte?raw')
 
 function rung(value: string): number {
   const named = /var\((--z-[a-z]+)\)/.exec(value)?.[1] ?? ''

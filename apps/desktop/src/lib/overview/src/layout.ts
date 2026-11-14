@@ -1,4 +1,4 @@
-import { type Frame, panesIn } from '../workspace/pane-tree'
+import { type Frame, panesIn } from '../../workspace/pane-tree'
 
 export interface Box {
   x: number

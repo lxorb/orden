@@ -138,5 +138,5 @@ test("the strip's, the overview's and the keys' closes all ask through the store
   expect(store).toMatch(/async closeMany[\s\S]{0,200}this\.mayClose\(going\)/)
   expect(store).toMatch(/mayEnd\(closing, this\.tabs\)/)
   expect(read('../Tabs.svelte')).toContain('workspace.closeAsking(tab.id)')
-  expect(read('../overview/Overview.svelte')).toContain('workspace.closeAsking(tab.id)')
+  expect(read('../overview/src/Overview.svelte')).toContain('workspace.closeAsking(tab.id)')
 })
