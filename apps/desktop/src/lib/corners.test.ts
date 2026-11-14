@@ -37,7 +37,7 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
     'Titlebar.svelte': ['--chrome-seam'],
     'Tabs.svelte': ['--strip-line'],
     'StatusBar.svelte': ['--card-room'],
-    'overview/Overview.svelte': ['--card-radius'],
+    'overview/src/Overview.svelte': ['--card-radius'],
   }
   for (const [file, tokens] of Object.entries(readers)) {
     const text = read(`./${file}`)

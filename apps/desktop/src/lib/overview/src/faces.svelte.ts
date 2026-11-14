@@ -1,7 +1,7 @@
 import { untrack } from 'svelte'
-import { pages } from '../web-tab/pages.svelte'
-import { type Tab, workspace } from '../workspace.svelte'
-import { TAB_KINDS } from '../workspace/tab-kinds'
+import { pages } from '../../web-tab/pages.svelte'
+import { type Tab, workspace } from '../../workspace.svelte'
+import { TAB_KINDS } from '../../workspace/tab-kinds'
 import {
   evicted,
   type Face,

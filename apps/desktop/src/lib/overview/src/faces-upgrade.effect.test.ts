@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { expect, test, vi } from 'vitest'
 
-const { memoryStorage } = await import('../../../test/disk')
+const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
 function writtenBefore(): Promise<void> {

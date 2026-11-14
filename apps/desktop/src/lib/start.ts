@@ -184,7 +184,11 @@ export function start(): () => void {
     void startup.turn('right').then(() => import('./workspace/blank-tabs.svelte'))
   }
 
-  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./overview/faces.svelte'))
+  if (!__EVEN_PLUGIN__)
+    void startup
+      .turn('right')
+      .then(() => import('./overview/src/api'))
+      .then((one) => one.wakeFaces())
 
   if (!__EVEN_PLUGIN__) {
     void startup.turn('rooms').then(() =>

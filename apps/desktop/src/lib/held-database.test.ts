@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, expect, test } from 'vitest'
 import { heldDatabase } from './held-database'
-import { readFaces, writeFace } from './overview/faces'
+import { readFaces, writeFace } from './overview/src/faces'
 import { padDisk } from './scratchpad/disk'
 import { openTimeDisk } from './time/disk'
 

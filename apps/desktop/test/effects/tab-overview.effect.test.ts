@@ -9,7 +9,7 @@ window.matchMedia = ((query: string) => ({
 })) as unknown as typeof window.matchMedia
 Element.prototype.scrollIntoView = () => undefined
 
-const { default: Overview } = await import('../../src/lib/overview/Overview.svelte')
+const { default: Overview } = await import('../../src/lib/overview/src/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
@@ -155,7 +155,7 @@ test('it comes back where the camera was left', async () => {
 })
 
 test('Tidy up puts every window back where its panes put it', async () => {
-  const { places } = await import('../../src/lib/overview/places.svelte')
+  const { places } = await import('../../src/lib/overview/src/places.svelte')
   const id = workspace.tabs[0]?.id ?? ''
   places.keepWindows({ [id]: { x: 4000, y: 4000, w: 300, h: 200 } }, workspace.tabs)
   await opened()
@@ -167,7 +167,7 @@ test('Tidy up puts every window back where its panes put it', async () => {
 })
 
 test('a window put by hand is found again by the next run, whose tabs have new ids', async () => {
-  const { places } = await import('../../src/lib/overview/places.svelte')
+  const { places } = await import('../../src/lib/overview/src/places.svelte')
   const [first] = workspace.tabs
   places.keepWindows({ [first?.id ?? '']: { x: 3000, y: 10, w: 300, h: 200 } }, workspace.tabs)
   const again = workspace.tabs.map((one) => ({
@@ -181,7 +181,7 @@ test('a window put by hand is found again by the next run, whose tabs have new i
 })
 
 test('windows kept where they were put on each other open apart, with nothing to drag', async () => {
-  const { places } = await import('../../src/lib/overview/places.svelte')
+  const { places } = await import('../../src/lib/overview/src/places.svelte')
   const kept = Object.fromEntries(
     workspace.tabs.map((one, index) => [
       one.id,
@@ -346,7 +346,7 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   const [cx, cy] = (cross?.style.translate ?? '').split(' ').map(parseFloat)
   expect(cx).toBeCloseTo((x ?? 0) + width, 3)
   expect(cy).toBeCloseTo(y ?? 0, 3)
-  const { default: source } = await import('../../src/lib/overview/Overview.svelte?raw')
+  const { default: source } = await import('../../src/lib/overview/src/Overview.svelte?raw')
   const rule = (head: string) => {
     const at = source.indexOf(`\n  ${head}`)
     return at < 0 ? '' : source.slice(source.indexOf('{', at), source.indexOf('}', at))
@@ -498,7 +498,7 @@ test('the sides are not opened or shut while it is up, by their buttons, keys or
 
 test('a launcher or top button that comes while the overview is open is under it from the start (#1493)', async () => {
   const pane = (await import('../../src/lib/Pane.svelte?raw')).default
-  const overview = (await import('../../src/lib/overview/Overview.svelte?raw')).default
+  const overview = (await import('../../src/lib/overview/src/Overview.svelte?raw')).default
   expect(pane).toMatch(
     /\.pane:has\(> :global\(\.here\)\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
   )

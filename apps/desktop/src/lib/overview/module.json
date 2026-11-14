@@ -1,0 +1,26 @@
+{
+  "name": "overview",
+  "layer": "features",
+  "dependsOn": ["contracts", "platform", "protect", "sharing", "theme", "ui-controls", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/TabMark.svelte",
+    "apps/desktop/src/lib/graph.ts",
+    "apps/desktop/src/lib/held-database.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/reading/render.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/terminal/history.ts",
+    "apps/desktop/src/lib/terminal/sessions.svelte.ts",
+    "apps/desktop/src/lib/terminal/spec.ts",
+    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/chat-carry.ts",
+    "apps/desktop/src/lib/workspace/drafts.ts",
+    "apps/desktop/src/lib/workspace/moving-space.ts",
+    "apps/desktop/src/lib/workspace/pane-tree.ts",
+    "apps/desktop/src/lib/workspace/sets.svelte.ts",
+    "apps/desktop/src/lib/workspace/space-move.ts",
+    "apps/desktop/src/lib/workspace/tab-kinds.ts"
+  ]
+}

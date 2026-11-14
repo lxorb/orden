@@ -5,7 +5,11 @@ import { expect, test } from 'vitest'
 
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 
-const SMALL = ['overview/mirror.ts', 'tab-strip/thumb.ts', 'theme-looks/src/wallpaper/render.ts']
+const SMALL = [
+  'overview/src/mirror.ts',
+  'tab-strip/thumb.ts',
+  'theme-looks/src/wallpaper/render.ts',
+]
 
 function sources(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {

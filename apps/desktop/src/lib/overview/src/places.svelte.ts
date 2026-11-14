@@ -1,4 +1,4 @@
-import { forget, keepJson, stored, storedText } from '../platform/src/api'
+import { forget, keepJson, stored, storedText } from '../../platform/src/api'
 import type { Camera } from './camera'
 import type { Box } from './layout'
 import { type Keyed, lastingKeys } from './tab-keys'

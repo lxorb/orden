@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { Tab } from '../workspace.svelte'
-  import { TAB_KINDS } from '../workspace/tab-kinds'
+  import type { Tab } from '../../workspace.svelte'
+  import { TAB_KINDS } from '../../workspace/tab-kinds'
   import { SvelteSet } from 'svelte/reactivity'
-  import { without } from '../graph'
-  import { links } from '../link-index.svelte'
-  import { workspace } from '../workspace.svelte'
+  import { without } from '../../graph'
+  import { links } from '../../link-index.svelte'
+  import { workspace } from '../../workspace.svelte'
   import {
     askPanel,
     canvasSurface,
@@ -14,7 +14,7 @@
     timeSurface,
     pagesSurface,
     viewSurface,
-  } from '../surfaces.svelte'
+  } from '../../surfaces.svelte'
   import { faces } from './faces.svelte'
   import { snapshotFrom } from './mirror'
 

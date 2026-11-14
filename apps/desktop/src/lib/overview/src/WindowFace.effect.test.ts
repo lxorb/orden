@@ -1,9 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test } from 'vitest'
 
-const { workspace } = await import('../workspace.svelte')
-const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
-const { unlocks } = await import('../protect/src/unlocked.svelte')
+const { workspace } = await import('../../workspace.svelte')
+const { NoteDoc, Tab } = await import('../../workspace/documents.svelte')
+const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const WindowFace = (await import('./WindowFace.svelte')).default
 
 const ROOT = '/space'

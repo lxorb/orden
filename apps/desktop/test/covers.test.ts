@@ -23,28 +23,28 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
   'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
-  'lib/overview/Offstage.svelte .offstage': 'drawn off the window, where no page is',
-  'lib/overview/Overview.svelte .under':
+  'lib/overview/src/Offstage.svelte .offstage': 'drawn off the window, where no page is',
+  'lib/overview/src/Overview.svelte .under':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .floor':
+  'lib/overview/src/Overview.svelte .floor':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .top':
+  'lib/overview/src/Overview.svelte .top':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .window':
+  'lib/overview/src/Overview.svelte .window':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .closer':
+  'lib/overview/src/Overview.svelte .closer':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .rider':
+  'lib/overview/src/Overview.svelte .rider':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .window.is-front':
+  'lib/overview/src/Overview.svelte .window.is-front':
     'the same, stacked over its neighbours: see .window',
-  'lib/overview/Overview.svelte .window.is-held':
+  'lib/overview/src/Overview.svelte .window.is-held':
     'the same, stacked over its neighbours: see .window',
-  'lib/overview/Overview.svelte .closer.is-front':
+  'lib/overview/src/Overview.svelte .closer.is-front':
     'the same, stacked over its neighbours: see .closer',
-  'lib/overview/Overview.svelte .closer.is-held':
+  'lib/overview/src/Overview.svelte .closer.is-held':
     'the same, stacked over its neighbours: see .closer',
-  'lib/overview/Overview.svelte .rider.is-front':
+  'lib/overview/src/Overview.svelte .rider.is-front':
     'the same, stacked over its neighbours: see .rider',
   'lib/even/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
   'lib/tab-strip/TabChip.svelte .chip':
