@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { dropOver } from './drag-paths'
+  import { dropOver } from '../../drag-paths'
 
-  import Facts from './Facts.svelte'
-  import { importing, onMac } from './importing.svelte'
-  import { droppedFiles, pickFiles } from './picking'
-  import type { FormatId } from './import/src/api'
-  import { dur, fade } from './platform/src/api'
-  import { settings } from './settings.svelte'
-  import { segmented } from './ui-kit/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import { Sheet } from './ui-controls/src/api'
+  import Facts from '../../Facts.svelte'
+  import { droppedFiles, pickFiles } from '../../picking'
+  import { settings } from '../../settings.svelte'
+  import { dur, fade } from '../../platform/src/api'
+  import { Sheet } from '../../ui-controls/src/api'
+  import { segmented, viewport } from '../../ui-kit/src/api'
+  import { onMac } from './folder-name'
+  import { importing } from './importing.svelte'
+  import type { FormatId } from './plan'
 
   const FORMATS: Record<FormatId, string> = {
     notion: 'Notion',

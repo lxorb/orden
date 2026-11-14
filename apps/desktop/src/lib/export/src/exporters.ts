@@ -1,7 +1,6 @@
 export {
   assetsOf,
   exportPandoc,
-  importDocument,
   inlineImages,
   localSources,
   pandocAvailable,

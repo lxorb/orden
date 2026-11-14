@@ -17,7 +17,6 @@
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
     "apps/desktop/src/lib/commands.ts",
-    "apps/desktop/src/lib/dialog-answer.ts",
     "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/images.ts",
     "apps/desktop/src/lib/internal/work.ts",

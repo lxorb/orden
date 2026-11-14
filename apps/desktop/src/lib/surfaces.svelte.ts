@@ -188,9 +188,7 @@ export const exportSheet = latched(() =>
 )
 
 export const importSheet = latched(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no import in the Even Realities plugin'))
-    : import('./ImportSheet.svelte'),
+  import('./import/src/api').then((one) => one.loadImportSheet()),
 )
 
 export const iconPicker = latched(() => import('./IconPicker.svelte'))

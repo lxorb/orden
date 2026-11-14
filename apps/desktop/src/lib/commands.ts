@@ -281,7 +281,9 @@ function importCommand(): Command | null {
     id: 'import',
     label: 'Import',
     run: () => {
-      void import('./importing.svelte').then(({ importing }) => importing.show())
+      void import('./import/src/api')
+        .then((one) => one.importingStore())
+        .then(({ importing }) => importing.show())
     },
   }
 }

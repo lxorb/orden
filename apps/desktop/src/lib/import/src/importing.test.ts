@@ -1,7 +1,7 @@
 import type { PickedFile } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 
-import { folderNameFor } from './importing.svelte'
+import { folderNameFor } from './folder-name'
 
 function picked(name: string, inside = ''): PickedFile {
   return {

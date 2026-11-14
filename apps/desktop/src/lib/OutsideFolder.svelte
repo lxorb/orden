@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { importing } from './importing.svelte'
+  import { importingStore } from './import/src/api'
   import { dur, fly } from './platform/src/api'
   import { told } from './said.svelte'
   import { forget, isRecord, isString, stored } from './platform/src/api'
@@ -38,7 +38,7 @@
         class="link"
         onclick={() => {
           showing = false
-          importing.show()
+          void importingStore().then(({ importing }) => importing.show())
         }}
       >
         Import

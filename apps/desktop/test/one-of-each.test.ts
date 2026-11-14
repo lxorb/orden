@@ -335,12 +335,12 @@ describe('the switch', () => {
 
     expect(wearing).toEqual([
       'lib/GraphControls.svelte',
-      'lib/ImportSheet.svelte',
       'lib/Palette.svelte',
       'lib/ShareSheet.svelte',
       'lib/ai/DoWithAiCard.svelte',
       'lib/ai/sidebar/ModelPicker.svelte',
       'lib/chats-client/src/view/PollSheet.svelte',
+      'lib/import/src/ImportSheet.svelte',
       'lib/pass-ui/src/SwitchRow.svelte',
       'lib/ui-controls/src/Switch.svelte',
       'lib/views/AutomationsBuilder.svelte',
@@ -484,7 +484,7 @@ describe('the fade on something refused', () => {
         .map((rule) => `${one.name}: ${rule.selector}`),
     )
 
-    expect(own).toEqual(['lib/ImportSheet.svelte: .drop:disabled'])
+    expect(own).toEqual(['lib/import/src/ImportSheet.svelte: .drop:disabled'])
   })
 })
 

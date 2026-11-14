@@ -1,4 +1,3 @@
-import type { PandocPicture } from '@orden/contracts'
 import { escapeAll } from '@orden/markdown/html'
 import { CODE_PALETTES } from '@orden/editor'
 import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@orden/markdown'
@@ -246,54 +245,6 @@ export function printInFrame(html: string | Blob, page?: PaperInches): Promise<v
 export async function pandocAvailable(): Promise<boolean> {
   if (!isDesktop) return false
   return invoke<boolean>('has_pandoc').catch(() => false)
-}
-
-export async function importDocument(): Promise<{
-  name: string
-  markdown: string
-  pictures: PandocPicture[]
-} | null> {
-  if (!isDesktop) return null
-
-  const { open } = await import('@tauri-apps/plugin-dialog')
-  const given = (await import('../../dialog-answer')).dialogAnswer()
-  const picked = given
-    ? await given(false)
-    : await open({
-        filters: [
-          {
-            name: 'Documents',
-            extensions: [
-              'docx',
-              'odt',
-              'rtf',
-              'epub',
-              'rst',
-              'textile',
-              'tex',
-              'html',
-              'opml',
-              'org',
-            ],
-          },
-        ],
-      })
-
-  if (typeof picked !== 'string') return null
-
-  const { markdown, leftOut, pictures } = await invoke<{
-    markdown: string
-    leftOut: string | null
-    pictures: PandocPicture[]
-  }>('import_document', { path: picked })
-  if (leftOut) busy.failed(leftOut)
-  const name =
-    picked
-      .split(/[\\/]/)
-      .pop()
-      ?.replace(/\.[^.]+$/, '') ?? 'Imported'
-
-  return { name: `${name}.md`, markdown, pictures }
 }
 
 export async function exportPandoc(
