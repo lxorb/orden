@@ -1,24 +1,32 @@
 import { DIAGRAM_SCHEMES, diagramKey } from '@orden/markdown/diagrams'
 import { Hono } from 'hono'
-import { NOT_A_HASH, OUT_OF_SPACE } from './refused'
-import { hooks } from './hooks'
-import { spaceForHost } from './site/host'
-import { readSite, SVG_POLICY } from './site/site'
-import { now } from './crypto'
-import { readSpaceFiles } from './spaces/files'
-import { allows, reachedSpace } from './spaces/space'
 import {
+  allows,
+  blobKey,
   BYTES,
+  type Env,
+  fits,
+  fitsSql,
   hashOfBytes,
   held,
   holdsItsName,
+  hooks,
+  letGo,
+  NOT_A_HASH,
+  now,
+  OUT_OF_SPACE,
+  reachedSpace,
+  readSite,
+  readSpaceFiles,
+  said,
+  type Space,
+  spaceForHost,
   spellsADiagramName,
+  SVG_POLICY,
+  type Variables,
+  type Whoever,
   WRONG_BYTES,
-} from './sync2/files'
-import { fits, fitsSql } from './storage'
-import type { Env, Space, Variables, Whoever } from './types'
-import { handedTo, ownOtherwise, type Reading, reading, unreadUses, usedElsewhere } from './used'
-import { said } from './said'
+} from '../../sync-server/src/api'
 
 const LIMITS: Record<string, number> = {
   'image/png': 16 * 1024 * 1024,
@@ -41,8 +49,6 @@ const STILL_READING = 'that file may still be in a note - try again tomorrow'
 function typeOf(header: string): string {
   return (header.split(';')[0] ?? '').trim().toLowerCase()
 }
-
-const key = (hash: string) => `blobs/${hash}`
 
 export const blobs = new Hono<{ Bindings: Env; Variables: Variables }>()
 
@@ -84,7 +90,7 @@ blobs.put('/:hash', async (context) => {
   }
 
   if (!there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))) {
-    await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
+    await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   }
   const written = await context.env.DB.prepare(
     `insert into blobs (hash, user_id, size, type, created_at)
@@ -96,7 +102,7 @@ blobs.put('/:hash', async (context) => {
   if (!written.meta.changes) {
     const after = await held(context.env, user.id, hash)
     if (!after.mine) {
-      if (!after.there) await context.env.NOTES.delete(key(hash))
+      if (!after.there) await context.env.NOTES.delete(blobKey(hash))
       return context.json({ error: OUT_OF_SPACE }, 507)
     }
   }
@@ -127,46 +133,6 @@ blobs.delete('/:hash', async (context) => {
   }
   return context.json({ ok: true })
 })
-
-export async function letGo(
-  env: Env,
-  userId: string,
-  hash: string,
-  own = false,
-  done: Reading = reading(),
-): Promise<boolean> {
-  const owed = await usedElsewhere(env, userId, new Set([hash]), own)
-  if (owed.has(userId)) return true
-
-  const mine = await env.DB.prepare(
-    'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
-  )
-    .bind(hash, userId)
-    .first<{ email: string; type: string }>()
-  const picture = mine?.type.startsWith('image/') ?? false
-
-  if (own) {
-    const otherwise = await ownOtherwise(env, userId, hash, picture, done)
-    if (otherwise === 'used') return true
-    if (otherwise === 'unknown') return false
-  }
-
-  if (mine && picture) {
-    const user = { id: userId, email: mine.email }
-    if (!(await unreadUses(env, user, new Set([hash]), owed, false, done))) return false
-  }
-
-  await env.DB.batch([
-    ...handedTo(env, userId, owed, now()),
-    env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
-  ])
-
-  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
-    .bind(hash)
-    .first()
-  if (!others) await env.NOTES.delete(key(hash))
-  return true
-}
 
 export const publicBlobs = new Hono<{ Bindings: Env }>()
 
@@ -203,7 +169,7 @@ publicBlobs.get('/:name', async (context) => {
   const hash = context.req.param('name').split('.')[0]?.toLowerCase() ?? ''
   if (!HASH.test(hash)) return context.notFound()
 
-  const object = await context.env.NOTES.get(key(hash))
+  const object = await context.env.NOTES.get(blobKey(hash))
   if (!object) return context.notFound()
 
   const type = object.httpMetadata?.contentType ?? 'application/octet-stream'

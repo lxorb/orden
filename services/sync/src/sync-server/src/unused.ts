@@ -1,7 +1,6 @@
-import { letGo } from './blobs'
 import { chunks } from './bound'
 import { now } from './crypto'
-import { reading } from './used'
+import { letGo, reading } from './used'
 import type { Env } from './types'
 
 export const RIGHT_AFTER = 25

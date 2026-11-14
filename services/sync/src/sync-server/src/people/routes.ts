@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
-import { letGo } from '../blobs'
 import { objectBody, readBody } from '../body'
 import { cleanPersonName, now } from '../crypto'
 import { NOT_A_HASH, NOT_AN_OBJECT } from '../refused'
 import { atLeast, spaceOf } from '../spaces/space'
+import { letGo } from '../used'
 import type { Env, User, Variables } from '../types'
 import { avatarIn, isHash } from './avatar'
 import {
