@@ -80,11 +80,7 @@
       <p class="partial" role="status">{title} took too long to answer.</p>
     {/if}
     {#key layout}
-      <div
-        class="body"
-        class:fills={layout === 'kanban' || layout === 'timeline'}
-        in:arrive
-      >
+      <div class="body" class:fills={layout === 'kanban' || layout === 'timeline'} in:arrive>
         {#if layout === 'table'}
           <TableLayout {kit} />
         {:else if layout === 'cards'}

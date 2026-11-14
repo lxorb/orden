@@ -255,4 +255,3 @@ describe('the chart', () => {
     expect(html.match(/<rect/g)).toHaveLength(2)
   })
 })
-

@@ -47,4 +47,3 @@ export function sameView(a: ViewSpec, b: ViewSpec): boolean {
     (a.builtin !== undefined || a.view === b.view)
   )
 }
-
