@@ -268,14 +268,6 @@
     transition: inline-size var(--dur-base) var(--ease-out);
   }
 
-  .task {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-width: 0;
-  }
-
-  .words,
   .shown {
     min-width: 0;
     overflow: hidden;
