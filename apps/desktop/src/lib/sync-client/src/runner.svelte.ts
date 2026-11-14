@@ -323,6 +323,12 @@ class Runner {
       return null
     }
     this.current = engine
+    if (!isNative()) {
+      keptAway.reach(
+        (path) => engine.awayAt(path),
+        (path) => this.fetchAway(engine, path),
+      )
+    }
     await followRoots(engine.core)
     if (!isNative()) {
       const store = await openIndex(user.id).catch(() => null)

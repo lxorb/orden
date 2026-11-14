@@ -25,6 +25,7 @@ export const NOT_HERE = 'that note is not on this device, and the account could 
 class KeptAway {
   private files = $state.raw(new Map<string, Away>())
   private fetch: ((path: string) => Promise<boolean>) | null = null
+  private live: ((path: string) => Away | null) | null = null
   private scans: ReadonlyMap<string, IndexedNote> = new Map()
   private searching: SearchAway | null = null
   readonly fetching = new SvelteSet<string>()
@@ -38,9 +39,15 @@ class KeptAway {
     return back
   }
 
+  reach(live: (path: string) => Away | null, fetch: (path: string) => Promise<boolean>) {
+    this.live = live
+    this.fetch = fetch
+  }
+
   clear() {
     this.scans = new Map()
     this.searching = null
+    this.live = null
     if (!this.files.size && !this.fetch) return
     this.files = new Map()
     this.fetch = null
@@ -75,12 +82,12 @@ class KeptAway {
   }
 
   at(path: string): Away | null {
-    return this.files.get(normalise(path)) ?? null
+    return this.files.get(normalise(path)) ?? this.live?.(path) ?? null
   }
 
   under(path: string): Away[] {
     const base = normalise(path)
-    const exact = this.files.get(base)
+    const exact = this.at(base)
     if (exact) return [exact]
     return [...this.files.entries()].flatMap(([one, away]) =>
       one !== base && under(base, one) ? [away] : [],
@@ -118,7 +125,7 @@ class KeptAway {
 
   async bringBack(path: string): Promise<boolean> {
     const at = normalise(path)
-    if (!this.files.has(at) || !this.fetch) return false
+    if (!this.at(path) || !this.fetch) return false
     this.fetching.add(at)
     try {
       const here = await this.fetch(at)
