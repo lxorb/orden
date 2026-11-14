@@ -9,7 +9,7 @@ import App from './App.svelte'
 import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
 import { isDesktop, isMobile, platform } from './lib/platform/src/api'
-import { watchPresses } from './lib/downloads/started'
+import { watchPresses } from './lib/downloads/src/api'
 import { holdComposingKeys } from './lib/ui-kit/src/api'
 
 mark('modules evaluated')

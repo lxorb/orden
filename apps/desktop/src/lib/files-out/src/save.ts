@@ -1,4 +1,4 @@
-import { downloadStarted } from '../../downloads/started'
+import { downloadStarted } from '../../downloads/src/api'
 import {
   keep,
   storedText,

@@ -1,10 +1,9 @@
 {
   "name": "files-out",
   "layer": "foundation",
-  "dependsOn": ["contracts", "markdown", "platform"],
+  "dependsOn": ["contracts", "downloads", "markdown", "platform"],
   "pending": [
     "apps/desktop/src/lib/dialog-answer.ts",
-    "apps/desktop/src/lib/downloads/started.ts",
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"
   ]

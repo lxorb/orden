@@ -1,0 +1,6 @@
+{
+  "name": "downloads",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform"],
+  "pending": ["apps/desktop/src/lib/said.svelte.ts", "apps/desktop/src/lib/web-tab/pages.svelte.ts"]
+}

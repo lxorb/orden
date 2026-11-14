@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 let still = false
-vi.mock('../platform/src/motion', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/motion')>()),
+vi.mock('../../platform/src/motion', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/motion')>()),
   stillness: () => still,
   dur: (ms: number) => (still ? 0 : ms),
 }))
 
-const { said } = await import('../said.svelte')
+const { said } = await import('../../said.svelte')
 const { started, stopFlights } = await import('./flight')
 
 interface Played {

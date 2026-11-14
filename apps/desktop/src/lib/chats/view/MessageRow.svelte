@@ -3,7 +3,7 @@
   import { chatLinkOf } from '@orden/chats/links'
   import type { Shown } from '../api'
   import { cubicOut } from 'svelte/easing'
-  import { downloadStarted } from '../../downloads/started'
+  import { downloadStarted } from '../../downloads/src/api'
   import { localNumber } from '../../platform/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { followHref } from '../../open-link'

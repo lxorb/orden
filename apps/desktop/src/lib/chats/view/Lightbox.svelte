@@ -2,7 +2,7 @@
   import type { FileRef } from '@orden/chats'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../ui-kit/src/api'
-  import { downloadStarted } from '../../downloads/started'
+  import { downloadStarted } from '../../downloads/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import Glyph from './Glyph.svelte'

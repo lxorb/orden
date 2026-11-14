@@ -25,7 +25,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/RenameNotice.svelte': 'a notice nothing opened, gone at the first press or key',
   'lib/web-tab/WebTab.svelte': 'a press hides the native page before what it opens is drawn',
   'lib/web-tab/AddressField.svelte': 'a press says where the keyboard goes once it is over',
-  'lib/downloads/started.ts': 'a press says where a download was asked for, to fly from',
+  'lib/downloads/src/api.ts': 'a press says where a download was asked for, to fly from',
   'lib/select-all.ts': 'a press inside a name field leaves its second take of the words alone',
   'lib/workspace/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
 }
