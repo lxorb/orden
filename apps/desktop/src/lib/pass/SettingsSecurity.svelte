@@ -1,6 +1,6 @@
 <script lang="ts">
   import { pinIn } from '@orden/pass/device'
-  import { deliver } from '../export/save'
+  import { deliver } from '../files-out/src/api'
   import { deviceName } from '../protect/src/api'
   import { Select } from '../ui-controls/src/api'
   import ChangePassword from './ChangePassword.svelte'

@@ -15,7 +15,7 @@ vi.mock('../link-index.svelte', () => ({
     fileFor: () => null,
   },
 }))
-vi.mock('../export/save', () => ({
+vi.mock('../files-out/src/save', () => ({
   chooseTarget: () => Promise.resolve(null),
   download: (_name: string, payload: { pieces: Blob }) => world.saved.push(payload.pieces),
 }))
@@ -23,8 +23,8 @@ vi.mock('../export/save', () => ({
 vi.mock('../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
 
 const { settings } = await import('../settings.svelte')
-vi.mock('../export', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../export')>()),
+vi.mock('../export/src/render', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../export/src/render')>()),
   printInFrame: (html: string) => {
     world.printed.push(html)
     return Promise.resolve()

@@ -176,7 +176,7 @@ export const publishSheet = latched(() => import('./PublishSheet.svelte'))
 export const exportSheet = latched(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no export in the Even Realities plugin'))
-    : import('./export/ExportSheet.svelte'),
+    : import('./export/src/api').then((one) => one.loadExportSheet()),
 )
 
 export const importSheet = latched(() =>

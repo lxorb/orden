@@ -43,13 +43,13 @@ vi.mock('./raster', () => ({
     return Promise.resolve(number <= 2 ? { width: 1, page: number } : null)
   },
 }))
-vi.mock('../export/zip', () => ({
+vi.mock('../export/src/zip', () => ({
   zipOf: (entries: { path: string; body: unknown }[]) => {
     held.zipped = entries
     return Promise.resolve(new Uint8Array())
   },
 }))
-vi.mock('../export/save', () => ({ download: () => undefined }))
+vi.mock('../files-out/src/save', () => ({ download: () => undefined }))
 
 const { exportPagesPng, exportPagesSvg, pagesPdf, printPages, sheetStyle } = await import('./out')
 
@@ -156,7 +156,7 @@ describe('a paper locked by its owner', () => {
   test('and is not printed', async () => {
     held.bytes = await ownerLocked()
     const printing = vi.fn()
-    vi.doMock('../export', () => ({ printInFrame: printing }))
+    vi.doMock('../export/src/render', () => ({ printInFrame: printing }))
 
     await printPages(out(paperNote()))
 

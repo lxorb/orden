@@ -143,7 +143,7 @@ describe('writing an export', () => {
   test('writes bytes through a command the crate registers and the frontend calls', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
     expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
-    expect(read('../src/lib/export/save.ts')).toContain('writeBytes(')
+    expect(read('../src/lib/files-out/src/save.ts')).toContain('writeBytes(')
     expect(read('../src/lib/workspace/write-file.ts')).toContain("invoke('write_bytes'")
   })
 
@@ -155,18 +155,20 @@ describe('writing an export', () => {
   })
 
   test('asks the desktop where to save, which needs the save dialog', () => {
-    expect(read('../src/lib/export/save.ts')).toContain("import('@tauri-apps/plugin-dialog')")
+    expect(read('../src/lib/files-out/src/save.ts')).toContain(
+      "import('@tauri-apps/plugin-dialog')",
+    )
     expect(capabilities.permissions).toContain('dialog:allow-save')
   })
 
   test('shows the finished file in the file manager, which the opener covers', () => {
-    expect(read('../src/lib/export/save.ts')).toContain("import('../reveal')")
+    expect(read('../src/lib/files-out/src/save.ts')).toContain("import('../../reveal')")
     expect(read('../src/lib/reveal.ts')).toContain('revealItemInDir')
     expect(capabilities.permissions).toContain('opener:default')
   })
 
   test('a phone writes into its own documents folder, since it has no dialog', () => {
-    expect(read('../src/lib/export/save.ts')).toContain('spaces_root')
+    expect(read('../src/lib/files-out/src/save.ts')).toContain('spaces_root')
     expect(mobile.permissions.filter((one) => one.startsWith('dialog:'))).toEqual([])
   })
 })

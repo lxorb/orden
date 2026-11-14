@@ -147,7 +147,7 @@ async function plane(file: Drawn): Promise<SVGSVGElement | null> {
   const text = await invoke<string>('read_note', { path: joinPath(file.root, file.path) })
 
   const [{ drawingOf }, { canvasSvg }, { pdfFaces }] = await Promise.all([
-    import('../export/drawing'),
+    import('../canvas/drawing'),
     import('../canvas/picture'),
     import('../canvas/faces'),
   ])

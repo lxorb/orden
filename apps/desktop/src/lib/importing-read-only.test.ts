@@ -59,7 +59,7 @@ vi.mock('./ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-vi.mock('./export', () => ({
+vi.mock('./export/src/render', () => ({
   importDocument: () =>
     Promise.resolve({
       name: 'Report.md',

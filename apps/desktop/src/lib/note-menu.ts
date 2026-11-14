@@ -11,7 +11,7 @@ const GROUPS: readonly (readonly string[])[] = [
 export function noteMenu(paneId: string): MenuEntry[] {
   const commands = new Map(appCommands(views.of(paneId)).map((one) => [one.id, one]))
   const pick = (ids: readonly string[]) => ids.flatMap((id) => commands.get(id) ?? [])
-  const formats = () => void import('./export/picker.svelte').then(({ picker }) => picker.show())
+  const formats = () => void import('./export/src/api').then(({ picker }) => picker.show())
 
   return [
     ...pick(['history', 'print']),

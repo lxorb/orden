@@ -20,12 +20,12 @@
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
+    "apps/desktop/src/lib/canvas/drawing.ts",
     "apps/desktop/src/lib/canvas/faces.ts",
     "apps/desktop/src/lib/canvas/format.ts",
     "apps/desktop/src/lib/canvas/geometry.ts",
     "apps/desktop/src/lib/canvas/picture.ts",
     "apps/desktop/src/lib/canvas/shared.ts",
-    "apps/desktop/src/lib/export/drawing.ts",
     "apps/desktop/src/lib/icloud-placeholder.ts",
     "apps/desktop/src/lib/internal/roots.ts",
     "apps/desktop/src/lib/internal/watch.ts",

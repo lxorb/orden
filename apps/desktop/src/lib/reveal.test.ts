@@ -99,7 +99,7 @@ describe('showing a file where it sits', () => {
     expect(callers).toEqual([
       'commands.ts',
       'explorer/menu.ts',
-      'export/save.ts',
+      'files-out/src/save.ts',
       'row-menu.ts',
       'web-tab/downloads.svelte.ts',
     ])

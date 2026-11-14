@@ -34,10 +34,15 @@ import {
 import { copySelection, cutSelection } from './ui-controls/src/api'
 import { blockCommands, exportCommands } from './commands'
 import { fullscreen } from './fullscreen.svelte'
-import { frontShut } from './export/context'
-import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
-import { EXPORT_EXTRAS } from './export/offer'
-import { canPrint, printable, printOpen } from './export/print'
+import { frontShut } from './export/src/api'
+import {
+  canPrint,
+  EXPORT_EXTRAS,
+  EXPORT_FORMATS,
+  EXPORT_VARIANTS,
+  printable,
+} from './export-formats/src/api'
+import { printOpen } from './open-out'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'

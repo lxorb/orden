@@ -44,12 +44,12 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'glyphs the glasses font lacks, mapped to ones it has',
   },
   {
-    path: 'apps/desktop/src/lib/export/document.ts',
+    path: 'apps/desktop/src/lib/export/src/document.ts',
     holds: "['bull'",
     why: 'the RTF bullet control word',
   },
   {
-    path: 'apps/desktop/src/lib/export/omml.ts',
+    path: 'apps/desktop/src/lib/export/src/omml.ts',
     holds: "'\\\\cdot'",
     why: 'the TeX multiplication dot',
   },

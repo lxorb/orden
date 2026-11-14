@@ -16,7 +16,7 @@ vi.mock('../protect/src/device', () => ({
 }))
 
 const delivered = vi.hoisted(() => [] as string[])
-vi.mock('../export/save', () => ({
+vi.mock('../files-out/src/save', () => ({
   deliver: (name: string) => {
     delivered.push(name)
     return Promise.resolve(name)

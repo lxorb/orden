@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { deliver } from '../export/save'
+  import { deliver } from '../files-out/src/api'
   import { message } from '../ui-kit/src/api'
   import { segmented } from '../ui-kit/src/api'
   import { pass } from './store.svelte'
