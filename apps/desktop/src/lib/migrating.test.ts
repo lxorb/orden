@@ -99,7 +99,10 @@ vi.mock('./link-index.svelte', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))
 vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
-vi.mock('./ui-kit/src/viewport.svelte', () => ({ viewport: { drawer: false } }))
+vi.mock('./ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./ui-kit/src/api')>()),
+  viewport: { drawer: false },
+}))
 vi.mock('./settings.svelte', () => ({ settings: { open: true } }))
 vi.mock('./first-visit.svelte', () => ({
   firstVisit: { fresh: false, answered: () => undefined },

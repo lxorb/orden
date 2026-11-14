@@ -419,7 +419,7 @@ class Workspace {
       const tree = this.tree
       if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree || op.heard) return
       if (!samePath(op.root, this.activeSpace?.root ?? '')) return
-      return import('./views/order-paths').then(
+      return import('./views/src/api').then(
         ({ orderMoved }) => orderMoved(tree, op.root ?? '', op.from, op.to),
         unfetched,
       )
@@ -2142,7 +2142,7 @@ class Workspace {
           busy.failed('Databases are off. Turn them on in Settings.')
           return
         }
-        const { openBaseFile } = await import('./views/open')
+        const { openBaseFile } = await (await import('./views/src/api')).baseOpening()
         openBaseFile(path, options)
         return
       }
@@ -2298,7 +2298,7 @@ class Workspace {
     this.showMove(from, target)
 
     await this.undone.batch(async () => {
-      const { moving } = await import('./views/moving')
+      const { moving } = await import('./workspace/landing')
       await moving(target, () =>
         this.saving.holdingUnder(from, async () => {
           try {
@@ -2907,7 +2907,7 @@ class Workspace {
     this.clearSelection()
     if (!stayed.length) return true
 
-    const { failed } = await import('./views/failed.svelte')
+    const { failed } = await import('./failed.svelte')
     failed.tell(() => void this.moveMany(stayed, intoFolder, undoing))
     return false
   }
@@ -3005,7 +3005,7 @@ class Workspace {
     })
     if (!stayed.length) return
 
-    const { failed } = await import('./views/failed.svelte')
+    const { failed } = await import('./failed.svelte')
     failed.tell(() => void this.removeMany(stayed))
   }
 
@@ -3382,7 +3382,7 @@ class Workspace {
     else if (naming.making === 'pages') await this.createPages(dir, name)
     else if (naming.making === 'web') await this.createWebsite(dir, name)
     else if (naming.making === 'database')
-      await (await import('./views/new-database')).createDatabase(dir, name)
+      await (await import('./views/src/api')).createDatabase(dir, name)
     else if (naming.making !== 'chat') await this.createNote(dir, name)
     else if (!__EVEN_PLUGIN__)
       await (await (await import('./chats-client/src/api')).chatOpening()).makeChat(dir, name)
@@ -3431,7 +3431,7 @@ class Workspace {
   }
 
   private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
-    const { moving } = await import('./views/moving')
+    const { moving } = await import('./workspace/landing')
     await moving(target, () => this.renamingFile(path, target, undoable, hold))
   }
 
@@ -3641,7 +3641,7 @@ class Workspace {
 
   private async landedFor(again: () => void): Promise<boolean> {
     if (await this.undone.landed()) return true
-    const { failed } = await import('./views/failed.svelte')
+    const { failed } = await import('./failed.svelte')
     failed.tell(again, true)
     return false
   }

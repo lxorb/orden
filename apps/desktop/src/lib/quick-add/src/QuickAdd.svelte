@@ -29,7 +29,8 @@
     without,
   } from './field'
   import Glyph from './Glyph.svelte'
-  import { dayWords, durationLabel, priorityTone } from './labels'
+  import { priorityTone } from '../../tasks-model/src/api'
+  import { dayWords, durationLabel } from './labels'
   import Picker from './Picker.svelte'
   import { dayRows, durationRows, priorityRows, remindRows, tagRows } from './pickers'
 

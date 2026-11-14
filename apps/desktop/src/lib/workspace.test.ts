@@ -795,7 +795,7 @@ describe('selecting several rows', () => {
   })
 
   test('every picked row goes at once, waiting on saving once, even past one that will not go', async () => {
-    const { failed } = await import('./views/failed.svelte')
+    const { failed } = await import('./failed.svelte')
     const told = vi.spyOn(failed, 'tell').mockImplementation(() => undefined)
     const { Saving } = await import('./workspace/saving.svelte')
     const settling = vi.spyOn(Saving.prototype, 'settled')

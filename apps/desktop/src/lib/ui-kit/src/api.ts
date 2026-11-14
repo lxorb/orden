@@ -50,4 +50,11 @@ export { prompt } from './prompt.svelte'
 export { overlayScrollbar, scrollbar } from './scrollbar'
 export type { OverlayScrollbar } from './scrollbar'
 export { arrive, leave, letGo, LIST_STEP, segmented } from './slide'
-export { pageHeight, scrollerOf, showField, viewport } from './viewport.svelte'
+export {
+  carryThumb,
+  isThumbCarrying,
+  pageHeight,
+  scrollerOf,
+  showField,
+  viewport,
+} from './viewport.svelte'

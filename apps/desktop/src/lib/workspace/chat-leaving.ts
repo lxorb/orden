@@ -1,7 +1,7 @@
 import { ApiError } from '../accounts/src/api'
 import { onDisk, nameOf, samePath, within, joinPath } from '../platform/src/api'
 import { sync } from '../sync.svelte'
-import { failed } from '../views/failed.svelte'
+import { failed } from '../failed.svelte'
 import { workspace } from '../workspace.svelte'
 import { carryQuestion } from './carry-question'
 import { mayCarry, pointersMoving, spaceHolding } from './chat-carry'

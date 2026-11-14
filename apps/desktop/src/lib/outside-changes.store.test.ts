@@ -405,7 +405,7 @@ describe('from the review', () => {
   test('a move still under way is not taken for another program', async () => {
     await fresh({ '/s/w.md': 'w\n' })
     await workspace.rename('/s/w.md', 'x.md')
-    const { moving } = await import('./views/moving')
+    const { moving } = await import('./workspace/landing')
     const heard: string[] = []
     const stop = workspace.fileOps.follow((op) => heard.push(op.op))
     await moving('/s/y.md', async () => {

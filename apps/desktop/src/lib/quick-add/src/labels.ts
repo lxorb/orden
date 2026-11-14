@@ -17,9 +17,3 @@ export function remindLabel(one: Remind, today: string): string {
   if ('at' in one) return dayWords(one.at, today, one.time)
   return timeWords(one.time)
 }
-
-export function priorityTone(priority: number): string | undefined {
-  return (
-    { 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' } as Record<number, string>
-  )[priority]
-}

@@ -3,8 +3,8 @@ import { workspace } from './workspace.svelte'
 export async function showTodos(): Promise<void> {
   if (__EVEN_PLUGIN__) return
   const [{ openTodos }, { readSpec }] = await Promise.all([
-    import('./views/open'),
-    import('./views/spec'),
+    import('./views/src/api').then((one) => one.baseOpening()),
+    import('./views/src/api'),
   ])
 
   const there = workspace.tabs.find(

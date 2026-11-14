@@ -832,9 +832,11 @@ class Links {
     const from = path === null || root === null ? null : insideSpace(root, path)
     let stop: (() => void) | null = null
     let stopped = false
-    void import('./views/mount').then(({ mountBase }) => {
-      if (!stopped) stop = mountBase(host, ask, from, stranger)
-    })
+    void import('./views/src/api')
+      .then((one) => one.baseMounting())
+      .then(({ mountBase }) => {
+        if (!stopped) stop = mountBase(host, ask, from, stranger)
+      })
     return () => {
       stopped = true
       stop?.()

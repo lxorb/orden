@@ -34,10 +34,16 @@ vi.mock('./write-file', () => ({
   writeBytes: async () => undefined,
   writeFile: async (path: string, content: string) => void disk.set(path, content),
 }))
-vi.mock('../views/copied', () => ({
-  numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
-  withoutIds: (path: string, text: string) =>
-    path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text) ? text.replace(/^id: .*\n/m, '') : null,
+vi.mock('../views/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../views/src/api')>()),
+  rowsCopied: () =>
+    Promise.resolve({
+      numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
+      withoutIds: (path: string, text: string) =>
+        path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text)
+          ? text.replace(/^id: .*\n/m, '')
+          : null,
+    }),
 }))
 
 const stored = new Map<string, string>()

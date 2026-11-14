@@ -315,7 +315,7 @@ export function newFileRows(inside?: string): MenuEntry[] {
       : [
           {
             label: 'New database',
-            run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+            run: () => void import('./views/src/api').then((one) => one.createDatabase()),
           },
         ]),
   ]

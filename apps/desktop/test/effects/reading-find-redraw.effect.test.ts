@@ -14,11 +14,15 @@ vi.mock('../../src/lib/reading/src/api', async () => ({
   unreadableHtml: (text: string) => text,
   tagAnchor: (tag: string) => `#${tag}`,
 }))
-vi.mock('../../src/lib/views/mount', () => ({
-  mountBases: (page: HTMLElement) => {
-    for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')
-    return () => undefined
-  },
+vi.mock('../../src/lib/views/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/views/src/api')>()),
+  baseMounting: () =>
+    Promise.resolve({
+      mountBases: (page: HTMLElement) => {
+        for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')
+        return () => undefined
+      },
+    }),
 }))
 vi.mock('../../src/lib/ui-kit/src/scrollbar', () => ({
   scrollbar: () => ({ destroy: () => undefined }),

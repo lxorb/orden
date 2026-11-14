@@ -11,7 +11,7 @@ import {
   keepJson,
   stringList,
 } from '../platform/src/api'
-import { builtinName, readSpec } from '../views/spec'
+import { builtinName, readSpec } from '../views/src/api'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'

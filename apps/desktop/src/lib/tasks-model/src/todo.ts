@@ -12,6 +12,12 @@ export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
   3: 'High',
 }
 
+export function priorityTone(priority: number): string | undefined {
+  return (
+    { 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' } as Record<number, string>
+  )[priority]
+}
+
 export interface Subtask {
   readonly id: string
   readonly title: string

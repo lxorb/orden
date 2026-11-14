@@ -9,7 +9,7 @@
   import { gateNote } from './gate-note.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
-  import { failed } from './views/failed.svelte'
+  import { failed } from './failed.svelte'
   import { workspace } from './workspace.svelte'
 
   const word = $derived({

@@ -1,6 +1,5 @@
 export { quickAdd } from './asked.svelte'
 export type { Prefill } from './entry'
-export { priorityTone } from './labels'
 
 export const loadQuickAddSheet = () =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./QuickAddSheet.svelte')

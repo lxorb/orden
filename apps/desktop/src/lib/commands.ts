@@ -937,7 +937,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'new-database',
             label: 'New database',
             disabled: readOnly,
-            run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+            run: () => void import('./views/src/api').then((one) => one.createDatabase()),
           },
         ]
       : []),
@@ -945,7 +945,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'new-from-template',
       label: 'New note from template',
       disabled: readOnly,
-      run: () => void import('./views/templates').then((one) => one.pickTemplate()),
+      run: () => void import('./views/src/api').then((one) => one.pickTemplate()),
     },
     ...(viewport.touch
       ? []

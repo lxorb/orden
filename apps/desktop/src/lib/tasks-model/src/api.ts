@@ -5,6 +5,7 @@ export {
   LIMITS,
   PRIORITIES,
   PRIORITY_NAMES,
+  priorityTone,
   type Priority,
   type Subtask,
   type Todo,

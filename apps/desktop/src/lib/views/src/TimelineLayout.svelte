@@ -1,0 +1,395 @@
+<script lang="ts">
+  import { addDays, cellValue, type Row, rowId, type Value } from '@orden/bases'
+  import { linkModifier } from '@orden/editor'
+  import { localDate } from '../../platform/src/api'
+  import type { RowChange } from '../../rows/write'
+  import { priorityTone } from '../../tasks-model/src/api'
+  import { changeOf } from './columns'
+  import { dateAt } from './days'
+  import { plain } from './inline'
+  import type { Kit } from './kit'
+  import { everyRow } from './list-items'
+  import { carryThumb } from '../../ui-kit/src/api'
+  import { HOLD, holdsThumb, THUMB_SLOP } from './drag.svelte'
+  import {
+    arrowsOf,
+    type Bar,
+    barOf,
+    DAY_WIDTH,
+    daysBetween,
+    dragged,
+    drawnOf,
+    type Scale,
+    SCALES,
+    spanOf,
+  } from './timeline'
+
+  const { kit }: { kit: Kit } = $props()
+
+  const live = $derived(kit.live)
+  const view = $derived(live.view)
+  let scale = $state<Scale>('week')
+
+  const SCALE_NAMES: Record<Scale, string> = {
+    day: 'Days',
+    week: 'Weeks',
+    month: 'Months',
+    quarter: 'Quarters',
+  }
+
+  const rows = $derived(everyRow(live.answer?.groups ?? []))
+  const bars = $derived.by((): Bar[] => {
+    const base = live.base
+    if (!base) return []
+    const read = (row: Row, property: string): Value => cellValue(base, property, row, live.context)
+    return rows.flatMap((row) => {
+      const bar = barOf(row, { start: view?.orden.date, end: view?.orden.end }, read)
+      return bar ? [bar] : []
+    })
+  })
+  const span = $derived(spanOf(bars, live.today))
+  const todayShown = $derived(live.today >= span.first && live.today <= span.last)
+  const width = $derived(DAY_WIDTH[scale])
+  const total = $derived((daysBetween(span.first, span.last) + 1) * width)
+  const ROW = 32
+  const NAMED = 80
+
+  const x = (day: string) => daysBetween(span.first, day) * width
+
+  const ticks = $derived.by(() => {
+    const out: { day: string; label: string }[] = []
+    for (let day = span.first; day <= span.last; day = addDays(day, 1)) {
+      const date = dateAt(day)
+      const first = day.endsWith('-01')
+      if (scale === 'day') out.push({ day, label: localDate(date, { day: 'numeric' }) })
+      else if (scale === 'week' && date.getDay() === 1)
+        out.push({ day, label: localDate(date, { month: 'short', day: 'numeric' }) })
+      else if (scale === 'month' && first)
+        out.push({ day, label: localDate(date, { month: 'short' }) })
+      else if (scale === 'quarter' && first && date.getMonth() % 3 === 0)
+        out.push({ day, label: localDate(date, { month: 'short', year: '2-digit' }) })
+    }
+    return out
+  })
+
+  const arrows = $derived(
+    arrowsOf(bars).map((one) => ({
+      from: { x: x(drawnOf(one.from.bar, span).end) + width, y: one.from.at * ROW + ROW / 2 },
+      to: { x: x(drawnOf(one.to.bar, span).start), y: one.to.at * ROW + ROW / 2 },
+    })),
+  )
+
+  function drag(event: PointerEvent, bar: Bar, part: 'move' | 'start' | 'end') {
+    if (event.button !== 0) return
+    event.preventDefault()
+    event.stopPropagation()
+    const start = event.clientX
+    const element = (
+      part === 'move' ? event.currentTarget : (event.currentTarget as HTMLElement).parentElement
+    ) as HTMLElement
+    const startY = event.clientY
+    let moved = false
+    const thumb = event.pointerType === 'touch'
+    const hold = thumb
+      ? setTimeout(() => {
+          carrying = true
+          carryThumb(true)
+        }, HOLD)
+      : undefined
+    const days = (to: number) => Math.round((to - start) / width)
+    const done = () => {
+      clearTimeout(hold)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', done)
+      element.style.translate = ''
+      element.style.marginInlineStart = ''
+      element.style.marginInlineEnd = ''
+      carrying = false
+      carryThumb(false)
+    }
+    const move = (next: PointerEvent) => {
+      if (thumb && !carrying) {
+        if (Math.hypot(next.clientX - start, next.clientY - startY) > THUMB_SLOP) done()
+        return
+      }
+      const by = days(next.clientX)
+      if (Math.abs(next.clientX - start) > (thumb ? THUMB_SLOP : 3)) moved = true
+      if (part === 'move') element.style.translate = `${by * width}px 0`
+      else if (part === 'start') {
+        element.style.marginInlineStart = `${by * width}px`
+      } else element.style.marginInlineEnd = `${-by * width}px`
+    }
+    const up = (next: PointerEvent) => {
+      const held = carrying
+      done()
+      if (!moved) {
+        if (part === 'move' && !(thumb && held)) kit.choose(bar.row, linkModifier(next))
+        return
+      }
+      const written = dragged(bar, part, days(next.clientX))
+      const change: RowChange = {}
+      for (const [property, day] of Object.entries(written)) {
+        const one = changeOf(bar.row, property, day)
+        if (one?.note) change.note = { ...change.note, ...one.note }
+        if (one?.task) change.task = { ...change.task, ...one.task }
+      }
+      if (change.note || change.task) kit.write(bar.row, change)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', done)
+  }
+
+  let carrying = false
+</script>
+
+<div class="timeline">
+  <div class="bar-head">
+    <div class="orden-segmented scales" role="tablist">
+      {#each SCALES as one (one)}
+        <button
+          type="button"
+          role="tab"
+          class:on={scale === one}
+          aria-selected={scale === one}
+          onclick={() => (scale = one)}>{SCALE_NAMES[one]}</button
+        >
+      {/each}
+    </div>
+  </div>
+  <div class="body">
+    <div class="names">
+      <div class="corner"></div>
+      {#each bars as bar (`${bar.row.space}:${rowId(bar.row)}`)}
+        <button
+          type="button"
+          class="name"
+          onclick={(event) => kit.choose(bar.row, linkModifier(event))}
+        >
+          {bar.row.task ? plain(bar.row.task.text) : bar.row.file.basename}
+        </button>
+      {/each}
+    </div>
+    <div class="track">
+      <div class="inner" style:width={`${total}px`}>
+        <div class="ticks">
+          {#each ticks as tick (tick.day)}
+            <span style:inset-inline-start={`${x(tick.day)}px`}>{tick.label}</span>
+          {/each}
+        </div>
+        <div class="lanes" style:height={`${bars.length * ROW}px`}>
+          {#each ticks as tick (tick.day)}
+            <span class="rule" style:inset-inline-start={`${x(tick.day)}px`}></span>
+          {/each}
+          {#if todayShown}
+            <span class="today" style:inset-inline-start={`${x(live.today) + width / 2}px`}></span>
+          {/if}
+          <svg class="arrows" width={total} height={bars.length * ROW} aria-hidden="true">
+            {#each arrows as arrow, at (at)}
+              <path
+                d={`M${arrow.from.x} ${arrow.from.y} C${arrow.from.x + 16} ${arrow.from.y} ${arrow.to.x - 16} ${arrow.to.y} ${arrow.to.x} ${arrow.to.y}`}
+              />
+            {/each}
+          </svg>
+          {#each bars as bar, at (`${bar.row.space}:${rowId(bar.row)}`)}
+            {@const drawn = drawnOf(bar, span)}
+            {@const long = (daysBetween(drawn.start, drawn.end) + 1) * width}
+            {@const words = bar.row.task ? plain(bar.row.task.text) : bar.row.file.basename}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+              class="span"
+              class:done={bar.row.task?.done}
+              class:far={drawn.far}
+              style:--tone={bar.row.task ? priorityTone(bar.row.task.priority) : null}
+              style:top={`${at * ROW + 5}px`}
+              style:inset-inline-start={`${x(drawn.start)}px`}
+              style:width={`${long}px`}
+              onpointerdown={(event) => drag(event, bar, 'move')}
+              use:holdsThumb
+            >
+              <span class="edge start" onpointerdown={(event) => drag(event, bar, 'start')}></span>
+              <span class="words">{long >= NAMED ? words : ''}</span>
+              <span class="edge end" onpointerdown={(event) => drag(event, bar, 'end')}></span>
+            </div>
+            {#if long < NAMED}
+              <span
+                class="beside"
+                style:top={`${at * ROW + 5}px`}
+                style:inset-inline-start={`${x(drawn.start) + long + 6}px`}>{words}</span
+              >
+            {/if}
+          {/each}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+  }
+
+  .bar-head {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .scales button {
+    padding: 0 var(--space-3);
+  }
+
+  .body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow-y: auto;
+    border-top: 1px solid var(--line);
+  }
+
+  .names {
+    flex: none;
+    width: 220px;
+    border-inline-end: 1px solid var(--line);
+  }
+
+  .corner {
+    height: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .name {
+    display: block;
+    width: 100%;
+    height: 32px;
+    padding: 0 var(--space-3);
+    overflow: hidden;
+    border: none;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: start;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  @media (hover: hover) {
+    .name:hover {
+      color: var(--text-strong);
+    }
+  }
+
+  .track {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .inner {
+    position: relative;
+  }
+
+  .ticks {
+    position: relative;
+    height: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ticks span {
+    position: absolute;
+    top: 6px;
+    padding-inline-start: 4px;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .lanes {
+    position: relative;
+  }
+
+  .rule,
+  .today {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--line);
+  }
+
+  .today {
+    width: 2px;
+    background: var(--accent);
+  }
+
+  .arrows {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .arrows path {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.2;
+  }
+
+  .span {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    height: 22px;
+    min-width: 8px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--tone, var(--accent)) 30%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--tone, var(--accent)) 60%, transparent);
+    color: var(--text-strong);
+    font-size: var(--text-xs);
+    cursor: grab;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .span.far {
+    border-style: dashed;
+  }
+
+  .span.done {
+    opacity: 0.55;
+  }
+
+  .words {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--space-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .beside {
+    position: absolute;
+    height: 22px;
+    line-height: 22px;
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .edge {
+    flex: none;
+    width: 6px;
+    align-self: stretch;
+    cursor: ew-resize;
+  }
+</style>
