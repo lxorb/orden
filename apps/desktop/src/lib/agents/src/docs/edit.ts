@@ -1,5 +1,5 @@
 import { oneEdit } from '@orden/markdown/edits'
-import { applied, changeOf, type Edit } from '../../../search/replace'
+import { applied, changeOf, type Edit } from '@orden/scan/search/replace'
 import type { Keeping } from '../../../workspace/note-text'
 import { waited, folderOf, movedTo, nameOf, samePath, within } from '../../../platform/src/api'
 import type { NoteDoc } from '../../../workspace/documents.svelte'

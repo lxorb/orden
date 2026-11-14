@@ -1,9 +1,9 @@
 import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
-import { taskOf } from './search/task'
+import { taskOf } from '@orden/scan/search/task'
 import { parseQuery } from '@orden/scan/search/query'
-import { searchSpace } from './search/space'
+import { searchSpace } from './search/src/api'
 
 const MOST = 40
 

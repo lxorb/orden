@@ -37,7 +37,8 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('./search/space', () => ({
+vi.mock('./search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./search/src/api')>()),
   searchSpace: async (
     _root: string,
     query: Query,

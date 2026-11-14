@@ -4,8 +4,8 @@ import type { Hit } from '@orden/scan/search/match'
 const asked = vi.hoisted(() => ({ excluded: null as string[] | null, hits: [] as Hit[] }))
 let told: ((event: { payload: { id: number; hits: Hit[] } }) => void) | null = null
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isNative: true,
   internal: { routed: false },
   invoke: (command: string, args: { id: number; excluded: string[] }) => {
@@ -15,20 +15,19 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-vi.mock('../own-window', () => ({
+vi.mock('../../own-window', () => ({
   hearHere: (_event: string, then: typeof told) => {
     told = then
     return Promise.resolve(() => (told = null))
   },
 }))
-vi.mock('../pdf/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   papers: () => Promise.resolve({ papersFor: () => Promise.resolve(), searchPapers: () => [] }),
 }))
-vi.mock('./inbox', () => ({ inboxHits: () => Promise.resolve([]) }))
 
-const { workspace } = await import('../workspace.svelte')
-const { unlocks } = await import('../protect/src/unlocked.svelte')
+const { workspace } = await import('../../workspace.svelte')
+const { unlocks } = await import('../../protect/src/api')
 const { searchSpace } = await import('./space')
 
 const ROOT = '/space'

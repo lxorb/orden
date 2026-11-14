@@ -1,4 +1,4 @@
-import { internal, invoke, isNative } from '../platform/src/api'
+import { internal, invoke, isNative } from '../../platform/src/api'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -22,7 +22,7 @@ export async function searchSpace(
   onFound: (found: Found) => void,
   excluded: readonly string[] = [],
 ): Promise<void> {
-  const { workspace } = await import('../workspace.svelte')
+  const { workspace } = await import('../../workspace.svelte')
   const shut = workspace.protection.shutIn(root)
   if (shut === null) return
   if (shut.length) {
@@ -31,15 +31,15 @@ export async function searchSpace(
     const open = (one: { path: string }) => !workspace.protection.locked(one.path)
     onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
   }
-  const { papersFor, searchPapers } = await (await import('../pdf/src/api')).papers()
+  const { papersFor, searchPapers } = await (await import('../../pdf/src/api')).papers()
   await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })
 
   if (!isNative) {
     const [{ searchInWorker }, { keptAway }] = await Promise.all([
-      import('../web/search-client'),
-      import('../web/away.svelte'),
+      import('../../web/search-client'),
+      import('../../web/away.svelte'),
     ])
     let found = 0
     const loose: FuzzyHit[] = []
@@ -56,12 +56,12 @@ export async function searchSpace(
   }
 
   if (internal.routed) {
-    const { searchInternal } = await import('../internal/search')
+    const { searchInternal } = await import('../../internal/search')
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
 
   const id = ++asked
-  const { hearHere } = await import('../own-window')
+  const { hearHere } = await import('../../own-window')
   const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
     const batch = event.payload
     if (batch.id !== id) return

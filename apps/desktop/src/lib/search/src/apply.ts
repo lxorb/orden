@@ -1,15 +1,7 @@
-import { isMarkdownPath, relativeTo } from '../platform/src/api'
+import { isMarkdownPath, relativeTo } from '../../platform/src/api'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
-import { changeOf, type Edit, replaceIn } from './replace'
-
-export interface Change {
-  path: string
-  before: string
-  after: string
-  edits: Edit[]
-  back: Edit[]
-}
+import { type Change, changeOf, replaceIn } from '@orden/scan/search/replace'
 
 function linesPerNote(hits: readonly Hit[]): Map<string, Set<number>> {
   const out = new Map<string, Set<number>>()

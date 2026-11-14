@@ -108,7 +108,7 @@ async function batchNotes(
   root: string,
   targets: { folders: string[]; tags: string[] },
 ): Promise<string[]> {
-  const { searchSpace } = await import('../../search/space')
+  const { searchSpace } = await import('../../search/src/api')
   const paths = new Set<string>()
   const ask = async (of: Query[], most: number, keep: (path: string) => boolean): Promise<void> => {
     if (!of.length) return

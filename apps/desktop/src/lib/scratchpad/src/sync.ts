@@ -1,7 +1,7 @@
 import { TEXT } from '@orden/rooms'
 import { padEdits, textops, type PadAnswer, type PadTrade } from '@orden/sync-core'
 import * as Y from 'yjs'
-import type { Edit } from '../../search/replace'
+import type { Edit } from '@orden/scan/search/replace'
 import { isRecord } from '../../platform/src/api'
 import { joined } from './words'
 

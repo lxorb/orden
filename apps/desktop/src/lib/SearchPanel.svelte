@@ -7,10 +7,10 @@
   import { howFor, middleOpens, tabAsk } from './new-tab'
   import { search } from './search.svelte'
   import { OPERATORS } from '@orden/scan/search/query'
-  import { warm } from './search/warm.svelte'
-  import { chosen, completing, naming, nearest, offered } from './search/suggest'
+  import { searchWarmth, type Warming } from './search/src/api'
+  import { chosen, completing, naming, nearest, offered } from '@orden/scan/search/suggest'
   import type { Hit, Range } from '@orden/scan/search/match'
-  import { taskOf } from './search/task'
+  import { taskOf } from '@orden/scan/search/task'
   import { relativeTo } from './platform/src/api'
   import Suggest from './Suggest.svelte'
   import { nodesIn, tagTree } from './tag-tree'
@@ -28,6 +28,9 @@
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
 
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
+
+  let warm = $state<Warming>()
+  void searchWarmth().then((one) => (warm = one))
 
   const writable = $derived(canWriteAt(workspace.activeSpace?.root ?? ''))
 
@@ -230,7 +233,7 @@
   }
 </script>
 
-<div class="find" data-search={warm.said}>
+<div class="find" data-search={warm?.said}>
   <div class="row">
     <div class="box">
       <svg class="orden-field-mark mag" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>

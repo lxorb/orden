@@ -45,7 +45,7 @@ import {
 } from './platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
-import { searchSpace } from './search/space'
+import { searchSpace } from './search/src/api'
 import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
 import { startup } from './startup.svelte'
 import { mark } from './trace'

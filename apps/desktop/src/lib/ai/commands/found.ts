@@ -17,7 +17,7 @@ const held = new Map<string, { version: number; found: NoteCommand[] }>()
 const asking = new Map<string, Promise<NoteCommand[]>>()
 
 async function ask(root: string, version: number): Promise<NoteCommand[]> {
-  const { searchSpace } = await import('../../search/space')
+  const { searchSpace } = await import('../../search/src/api')
   const paths = new Set<string>()
   await searchSpace(
     root,

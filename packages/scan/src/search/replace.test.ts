@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { Matcher } from '@orden/scan/search/match'
-import { parseQuery } from '@orden/scan/search/query'
+import { Matcher } from './match'
+import { parseQuery } from './query'
 import { applied, expand, replaceIn, reverse } from './replace'
 
 function rewrite(body: string, query: string, replacement: string, lines?: number[]) {

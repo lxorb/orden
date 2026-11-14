@@ -2,7 +2,7 @@ import { isPagesTarget } from '@orden/markdown/links'
 import { holderOf, paperOf } from '../../pages/held'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
-import { warm } from '../../search/warm.svelte'
+import type { PapersHeld } from '@orden/scan/search/warmth'
 import { folderOf, pathKey, pathKeys, afterQuiet } from '../../platform/src/api'
 import { forgetPaperText, keepPaperText, paperFiles, paperText, paperTextOf } from './text-cache'
 
@@ -263,11 +263,21 @@ async function moveStored(from: string, to: string, moved: ReadonlySet<string>):
   }
 }
 
-function told(): void {
-  warm.holdingPapers(papersHeld())
+let hearing: ((held: PapersHeld) => void) | null = null
+
+let toldOnce = false
+
+export function hearPapers(hear: (held: PapersHeld) => void): void {
+  hearing = hear
+  if (toldOnce) hear(papersHeld())
 }
 
-export function papersHeld(): { papers: number; characters: number; cap: number } {
+function told(): void {
+  toldOnce = true
+  hearing?.(papersHeld())
+}
+
+export function papersHeld(): PapersHeld {
   return { papers: papersRead(), characters: characters(), cap: IN_MEMORY }
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { OPERATORS, parseQuery, type Query } from '@orden/scan/search/query'
+import { OPERATORS, parseQuery, type Query } from './query'
 import { chosen, completing, naming, offered } from './suggest'
 
 function at(source: string) {

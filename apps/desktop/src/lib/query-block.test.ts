@@ -4,7 +4,8 @@ import type { Hit } from '@orden/scan/search/match'
 const asked: { query: unknown; excluded: unknown }[] = []
 let answering: Hit[] = []
 
-vi.mock('./search/space', () => ({
+vi.mock('./search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./search/src/api')>()),
   searchSpace: (
     _root: string,
     query: unknown,

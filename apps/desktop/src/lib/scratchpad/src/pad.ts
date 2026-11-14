@@ -10,7 +10,7 @@ import {
   storedText,
   invoke,
 } from '../../platform/src/api'
-import { applied, type Edit } from '../../search/replace'
+import { applied, type Edit } from '@orden/scan/search/replace'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { closeScratchpad, shown } from './is.svelte'

@@ -78,7 +78,8 @@ vi.mock('./sharing/src/api', async (importOriginal) => ({
   trustsHtmlAt: (path: string | null) => path === null || !theirs.has(path),
 }))
 
-vi.mock('./search/space', () => ({
+vi.mock('./search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./search/src/api')>()),
   searchSpace: async (
     _root: string,
     query: Query,

@@ -9,7 +9,7 @@ import {
   within,
   invoke,
 } from '../platform/src/api'
-import { applied, appliedToFile, type Edit, endingsLike } from '../search/replace'
+import { applied, appliedToFile, type Edit, endingsLike } from '@orden/scan/search/replace'
 import { links, type Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { keptAway } from '../web/away.svelte'

@@ -1,0 +1,14 @@
+{
+  "name": "search",
+  "layer": "content",
+  "dependsOn": ["contracts", "editor", "pdf", "platform", "scan"],
+  "pending": [
+    "apps/desktop/src/lib/internal/search.ts",
+    "apps/desktop/src/lib/own-window.ts",
+    "apps/desktop/src/lib/startup.svelte.ts",
+    "apps/desktop/src/lib/trace.ts",
+    "apps/desktop/src/lib/web/away.svelte.ts",
+    "apps/desktop/src/lib/web/search-client.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

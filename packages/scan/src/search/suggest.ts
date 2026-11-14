@@ -1,5 +1,5 @@
-import { fit } from '@orden/scan/search/fuzzy'
-import { OPERATORS } from '@orden/scan/search/query'
+import { fit } from './fuzzy'
+import { OPERATORS } from './query'
 
 type Field = 'path' | 'file' | 'tag'
 

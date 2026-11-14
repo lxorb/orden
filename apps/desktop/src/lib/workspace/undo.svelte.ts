@@ -1,4 +1,4 @@
-import type { Edit } from '../search/replace'
+import type { Edit } from '@orden/scan/search/replace'
 import type { Bookmark } from './bookmarks.svelte'
 
 export type FileAction =

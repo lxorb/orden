@@ -10,6 +10,11 @@ export {
 
 export const pad = () => import('./pad').then((one) => one.scratchpad)
 
+export const scratchpadHits: typeof import('./hits').scratchpadHits = (...args) =>
+  __EVEN_PLUGIN__
+    ? Promise.resolve([])
+    : import('./hits').then((one) => one.scratchpadHits(...args))
+
 export const wakeScratchpad = () =>
   __EVEN_PLUGIN__ ? Promise.resolve() : import('./start.svelte').then(() => undefined)
 

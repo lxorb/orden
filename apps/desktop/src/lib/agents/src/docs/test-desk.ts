@@ -6,8 +6,7 @@ import {
   remoteCarets,
   undoEdit,
 } from '@orden/editor'
-import type { Change } from '../../../search/apply'
-import { applied } from '../../../search/replace'
+import { applied, type Change } from '@orden/scan/search/replace'
 import { NoteDoc } from '../../../workspace/documents.svelte'
 import type { Keeping } from '../../../workspace/note-text'
 import type { Desk, Space } from './desk'

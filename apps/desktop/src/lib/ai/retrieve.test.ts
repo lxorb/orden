@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Found } from '../search/space'
+import type { Found } from '../search/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import {

@@ -1,5 +1,5 @@
 import { taskAt } from '@orden/markdown/tasks'
-import type { Hit, Range } from '@orden/scan/search/match'
+import type { Hit, Range } from './match'
 
 export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[] } | null {
   const task = taskAt(hit.text)

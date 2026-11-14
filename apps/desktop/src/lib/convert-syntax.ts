@@ -2,8 +2,7 @@ import { oneEdit } from '@orden/markdown/edits'
 
 import { converted } from './import/src/api'
 import { protection } from './protect/src/api'
-import type { Change } from './search/apply'
-import { changeOf } from './search/replace'
+import { type Change, changeOf } from '@orden/scan/search/replace'
 import { isMarkdownPath } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
