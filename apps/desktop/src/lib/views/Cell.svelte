@@ -4,7 +4,7 @@
   import { tick } from 'svelte'
   import type { Property } from '@orden/markdown/properties'
   import type { ListItem } from '@orden/markdown/property-edits'
-  import PropertyValue from '../properties/PropertyValue.svelte'
+  import PropertyValue from './PropertyValue.svelte'
   import { valueText } from './chips'
   import {
     bare,
