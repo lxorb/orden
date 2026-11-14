@@ -1,7 +1,7 @@
 import { flushHeldEdits } from '@orden/contracts'
 import { idle } from '../../breathe'
 import { type Camera, clampScale, CLOSEST, framingBox, turnOf } from '../../camera/src/api'
-import { owesWords } from '../../parting'
+import { owesWords } from '../../parting/src/api'
 import {
   type Canvas,
   canvasRuns,

@@ -6,7 +6,7 @@ import type { ChatPorts } from './chats'
 import type { ImportPorts } from './import'
 import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
-import type { QuittingPorts } from './quitting'
+import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SharingPorts } from './sharing'
 import type { SyncPorts } from './sync-client'
 import type { TerminalPorts } from './terminal'
@@ -73,6 +73,11 @@ export function whenPortProvided<Name extends PortName>(
 
 export function flushHeldEdits(): void {
   ;(provided.get('edits.held') as HeldEditPort | undefined)?.flush()
+}
+
+export function mayStop(why: StopReason): Promise<boolean> {
+  const port = provided.get('quit.ask') as StopAskingPort | undefined
+  return port ? port.mayStop(why) : Promise.resolve(true)
 }
 
 export function webPages(): WebPagesPort {

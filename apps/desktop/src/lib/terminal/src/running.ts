@@ -1,4 +1,4 @@
-import { runs } from '../../parting'
+import { runs } from '../../parting/src/api'
 
 const running = new Map<string, string>()
 runs(() => running.size > 0)

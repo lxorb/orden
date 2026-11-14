@@ -130,7 +130,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { flushSync } = await import('svelte')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 const ESC = '\x1b'
 

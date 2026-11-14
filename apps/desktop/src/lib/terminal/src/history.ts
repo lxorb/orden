@@ -1,4 +1,4 @@
-import { writing } from '../../parting'
+import { writing } from '../../parting/src/api'
 import { forget, isNumber, isRecord, isString, stored, invoke } from '../../platform/src/api'
 
 export interface History {

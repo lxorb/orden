@@ -1,0 +1,17 @@
+export {
+  anythingRuns,
+  GIVE_UP,
+  keptInTray,
+  owes,
+  owesAtTheEnd,
+  owesLast,
+  owesWords,
+  runs,
+  settleUp,
+  stillWriting,
+  surfacesToWords,
+  trayKeeper,
+  writeOwed,
+  writing,
+  written,
+} from './parting'

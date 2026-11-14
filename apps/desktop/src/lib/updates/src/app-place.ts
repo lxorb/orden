@@ -1,5 +1,5 @@
 import { discard } from './updater'
-import { invoke, isDesktop, platform } from './platform/src/api'
+import { invoke, isDesktop, platform } from '../../platform/src/api'
 
 let asked: Promise<boolean> | null = null
 

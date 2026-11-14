@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { GIVE_UP } from './parting'
+import { GIVE_UP } from '../../parting/src/api'
 
 const world = vi.hoisted(() => ({
   manager: null as string | null,
@@ -17,7 +17,6 @@ const world = vi.hoisted(() => ({
   relaunched: 0,
 }))
 
-vi.mock('./quit-ports', () => ({ mayStop: () => Promise.resolve(world.mayStop) }))
 vi.mock('@tauri-apps/plugin-process', () => ({
   relaunch: () => {
     world.relaunched++
@@ -25,7 +24,8 @@ vi.mock('@tauri-apps/plugin-process', () => ({
   },
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: unknown) => {
@@ -90,6 +90,8 @@ beforeEach(async () => {
   world.mayStop = true
   world.relaunched = 0
   vi.resetModules()
+  const { providePort } = await import('@orden/contracts')
+  providePort('quit.ask', { mayStop: () => Promise.resolve(world.mayStop) })
   updater = await import('./updater')
 })
 

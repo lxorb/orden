@@ -1,4 +1,4 @@
-import { keep, storedText, isDesktop } from './platform/src/api'
+import { keep, storedText, isDesktop } from '../../platform/src/api'
 import {
   announcedVersion,
   asChannel,

@@ -32,6 +32,7 @@ import {
   registerTabKind,
   settingFieldsIn,
   settingsPartsIn,
+  mayStop,
   notePath,
   ok,
   portOf,
@@ -218,6 +219,20 @@ describe('shell extension points', () => {
     const port = portOf('quit.thread')
     expect(port.ok && (await port.value.rows('main', false))).toEqual([row])
     expect(portProvided('quit.terminal')).toBe(false)
+    unbind()
+  })
+
+  it('may stop when nothing asks, and otherwise as the asking port answers', async () => {
+    expect(await mayStop('restart')).toBe(true)
+    const asked: string[] = []
+    const unbind = providePort('quit.ask', {
+      mayStop: (why) => {
+        asked.push(why)
+        return Promise.resolve(false)
+      },
+    })
+    expect(await mayStop('restart')).toBe(false)
+    expect(asked).toEqual(['restart'])
     unbind()
   })
 

@@ -175,6 +175,7 @@ export {
 } from './tab-kinds'
 export {
   flushHeldEdits,
+  mayStop,
   type PortMap,
   type PortName,
   portOf,
@@ -222,6 +223,8 @@ export {
   type StoppingKind,
   STOPPING_KINDS,
   type StoppingPort,
+  type StopAskingPort,
+  type StopReason,
 } from './quitting'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
 export type { VoicePort, VoicePorts, VoiceRecording } from './voice'

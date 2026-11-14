@@ -41,7 +41,7 @@ const {
   restoredAbove,
   restoredLine,
 } = await import('./history')
-const { stillWriting, written } = await import('../../parting')
+const { stillWriting, written } = await import('../../parting/src/api')
 
 const place = { space: 's1', key: 'k1' }
 const screen = (text: string, at = 1) => ({ cols: 120, rows: 30, at, text })

@@ -41,7 +41,7 @@ vi.mock('../sync.svelte', () => ({
 }))
 
 const { IN_THE_AIR_AT_MOST, Saving } = await import('./saving.svelte')
-const { owesAtTheEnd, settleUp } = await import('../parting')
+const { owesAtTheEnd, settleUp } = await import('../parting/src/api')
 const { NoteDoc, Tab, UNTITLED } = await import('./documents.svelte')
 type Writes = import('./saving.svelte').Writes
 type Doc = import('./documents.svelte').NoteDoc

@@ -63,7 +63,7 @@ import { startup } from './startup.svelte'
 import { tabOverview } from './surfaces.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
-import { GIVE_UP } from './parting'
+import { GIVE_UP } from './parting/src/api'
 import { holdsRetiredTab } from './workspace/retired-tabs'
 import { WELCOME_PATH } from './welcome'
 import {

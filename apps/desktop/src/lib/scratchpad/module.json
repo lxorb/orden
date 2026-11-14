@@ -9,7 +9,8 @@
     "rooms",
     "scan",
     "sync-core",
-    "ui-kit"
+    "ui-kit",
+    "parting"
   ],
   "pending": [
     "apps/desktop/src/lib/composer.ts",
@@ -19,7 +20,6 @@
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/open-link.ts",
-    "apps/desktop/src/lib/parting.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/unread.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",

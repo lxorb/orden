@@ -17,12 +17,10 @@ vi.mock('../../platform/src/tauri', () => ({
     return world.desktop
   },
 }))
-vi.mock('../../updater', () => ({
+vi.mock('../../updates/src/api', () => ({
   get webChannel() {
     return world.web
   },
-}))
-vi.mock('../../updates.svelte', () => ({
   updates: {
     get channel() {
       return world.channel

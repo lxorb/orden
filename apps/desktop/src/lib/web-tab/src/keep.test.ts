@@ -32,7 +32,7 @@ vi.mock('../../sharing/src/api', () => ({
 
 const { keepPage, keepNow } = await import('./keep')
 const { SAVE_AT_MOST, SAVE_DELAY } = await import('../../platform/src/backoff')
-const { settleUp, written: landed } = await import('../../parting')
+const { settleUp, written: landed } = await import('../../parting/src/api')
 
 const PATH = '/Notes/Svelte docs.url'
 const FILE =

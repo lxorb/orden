@@ -417,7 +417,7 @@ describe('the button with words in it', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
     expect(shared).toContain('.orden-button')
 
-    expect(draw(/\.orden-button/)).toEqual(['lib/UpdateNotice.svelte'])
+    expect(draw(/\.orden-button/)).toEqual(['lib/updates/src/UpdateNotice.svelte'])
   })
 
   test('and no component draws a primary of its own', () => {

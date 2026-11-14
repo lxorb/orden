@@ -24,6 +24,12 @@ export interface StoppingPort {
   show(row: Stopping): Promise<void>
 }
 
+export type StopReason = 'quit' | 'window' | 'restart'
+
+export interface StopAskingPort {
+  mayStop(why: StopReason): Promise<boolean>
+}
+
 export type QuittingPorts = {
   readonly [Kind in StoppingKind as `quit.${Kind}`]: StoppingPort
-}
+} & { readonly 'quit.ask': StopAskingPort }

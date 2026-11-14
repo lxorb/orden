@@ -97,7 +97,7 @@ const { openRemote } = await import('../../src/lib/terminal/src/remote/open')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { busy } = await import('../../src/lib/ui-kit/src/busy.svelte')
 const { flushSync } = await import('svelte')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 type Opened = ReturnType<typeof sessionOf>
 

@@ -32,7 +32,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 await import('../../src/lib/workspace/sets.svelte')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
 const { moveToSpace } = await import('../../src/lib/workspace/moving-space')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'

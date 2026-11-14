@@ -7,8 +7,9 @@ import {
   isDesktop,
   isNative,
   waited,
-} from './platform/src/api'
-import { GIVE_UP, settleUp, written } from './parting'
+} from '../../platform/src/api'
+import { mayStop } from '@orden/contracts'
+import { GIVE_UP, settleUp, written } from '../../parting/src/api'
 
 const CHANNELS = ['stable', 'unstable'] as const
 export type Channel = (typeof CHANNELS)[number]
@@ -108,10 +109,14 @@ export async function discard() {
   }
 }
 
-export async function restartToUpdate(install = true) {
-  if (!__EVEN_PLUGIN__ && !(await (await import('./quit-ports')).mayStop('restart'))) return
+export async function settled(): Promise<void> {
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
+}
+
+export async function restartToUpdate(install = true) {
+  if (!(await mayStop('restart'))) return
+  await settled()
   if (install && !(await installStaged())) return
 
   try {

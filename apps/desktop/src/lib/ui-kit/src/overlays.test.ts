@@ -352,7 +352,7 @@ describe('what hides a web page', () => {
   }
 
   const FURNITURE = [
-    'lib/UpdateNotice.svelte',
+    'lib/updates/src/UpdateNotice.svelte',
     'lib/RenameNotice.svelte',
     'lib/StorageWarning.svelte',
     'lib/dictation/src/recorder/RecordingPill.svelte',
