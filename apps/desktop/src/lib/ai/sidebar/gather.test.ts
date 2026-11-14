@@ -54,7 +54,9 @@ vi.mock('../../workspace.svelte', () => ({
 
 vi.mock('../../link-index.svelte', () => ({ links: {} }))
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { read: () => Promise.resolve(null) } }))
-vi.mock('../../scratchpad/pad', () => ({ scratchpad: { where: () => Promise.resolve('') } }))
+vi.mock('../../scratchpad/src/api', () => ({
+  pad: () => Promise.resolve({ where: () => Promise.resolve('') }),
+}))
 vi.mock('../chat/threads', () => ({
   readThread: (space: string, id: string) =>
     Promise.resolve(

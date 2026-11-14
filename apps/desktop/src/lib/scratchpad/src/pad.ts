@@ -9,10 +9,10 @@ import {
   stored,
   storedText,
   invoke,
-} from '../platform/src/api'
-import { applied, type Edit } from '../search/replace'
-import { workspace } from '../workspace.svelte'
-import { writeFile } from '../workspace/write-file'
+} from '../../platform/src/api'
+import { applied, type Edit } from '../../search/replace'
+import { workspace } from '../../workspace.svelte'
+import { writeFile } from '../../workspace/write-file'
 import { closeScratchpad, shown } from './is.svelte'
 import { difference, joined } from './words'
 

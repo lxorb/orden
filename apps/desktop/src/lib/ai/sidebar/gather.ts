@@ -1,7 +1,7 @@
 import { protection } from '../../protect/src/api'
 import { searchSpace } from '../../search/space'
 import { parseQuery } from '@orden/scan/search/query'
-import { scratchpad } from '../../scratchpad/pad'
+import { pad } from '../../scratchpad/src/api'
 import { insideSpace, relativeTo, within, withinSpace } from '../../platform/src/api'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
@@ -143,7 +143,9 @@ async function attachmentOf(
       return (await pickedFromOthers(picked)) ? { ...one, untrusted: true } : one
     }
     case 'scratchpad': {
-      const path = await scratchpad.where().catch(() => '')
+      const path = await pad()
+        .then((scratchpad) => scratchpad.where())
+        .catch(() => '')
       const text = path ? await workspace.noteText(path) : null
       return text
         ? await markedFrom({ label: 'scratchpad', text: fitted(text, NOTE) }, [path])

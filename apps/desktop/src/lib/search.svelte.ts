@@ -1,7 +1,7 @@
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
-import { isScratchpad } from './scratchpad/is.svelte'
+import { isScratchpad } from './scratchpad/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
 import { selectedWords } from './search/seed'

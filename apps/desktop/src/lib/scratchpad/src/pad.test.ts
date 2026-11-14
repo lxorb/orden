@@ -11,12 +11,12 @@ const fake = vi.hoisted(() => ({
 
 const PAD = '/app/scratchpad.md'
 
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string) =>
     command === 'scratchpad_path' ? Promise.resolve(PAD) : Promise.reject(new Error(command)),
 }))
 
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     noteText: (path: string) =>
       Promise.resolve(fake.unreadable.has(path) ? null : (fake.disk.get(path) ?? null)),
@@ -24,13 +24,13 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../platform/src/on-disk', () => ({
+vi.mock('../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(fake.disk.has(path)),
 }))
 
-vi.mock('../platform/src/log', () => ({ log: () => undefined }))
+vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 
-vi.mock('../platform/src/stored', () => ({
+vi.mock('../../platform/src/stored', () => ({
   storedText: (key: string) => fake.kept.get(key) ?? null,
   stored: (key: string): unknown => JSON.parse(fake.kept.get(key) ?? 'null'),
   isRecord: (value: unknown) => typeof value === 'object' && value !== null,
@@ -48,7 +48,7 @@ vi.mock('../platform/src/stored', () => ({
   forget: (key: string) => fake.kept.delete(key),
 }))
 
-vi.mock('../workspace/write-file', () => ({
+vi.mock('../../workspace/write-file', () => ({
   writeFile: (path: string, words: string) => {
     if (fake.going) return new Promise(() => undefined)
     if (fake.refusing) return Promise.reject(new Error('read-only'))

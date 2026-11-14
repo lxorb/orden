@@ -51,7 +51,7 @@
     tasksPanel,
     timePanel,
   } from './surfaces.svelte'
-  import { shown as pad } from './scratchpad/is.svelte'
+  import { shown as pad } from './scratchpad/src/api'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'

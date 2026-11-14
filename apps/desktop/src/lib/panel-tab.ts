@@ -25,7 +25,7 @@ const PANELS: Record<PanelTab, Entry> = {
     fills: null,
   },
   scratchpad: {
-    tab: () => import('./scratchpad/pad').then(({ scratchpad }) => scratchpad.asNote()),
+    tab: () => import('./scratchpad/src/api').then(async (one) => (await one.pad()).asNote()),
     fills: null,
   },
   tree: { tab: null, fills: null },

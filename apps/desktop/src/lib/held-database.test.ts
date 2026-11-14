@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { describe, expect, test } from 'vitest'
 import { heldDatabase } from './held-database'
 import { readFaces, writeFace } from './overview/src/faces'
-import { padDisk } from './scratchpad/disk'
+import { padDisk } from './scratchpad/src/disk'
 import { openTimeDisk } from './time/src/disk'
 
 function deletedElsewhere(name: string): Promise<'gone' | 'stuck'> {

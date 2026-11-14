@@ -1,7 +1,8 @@
 import { TEXT } from '@orden/rooms'
 import { padEdits, textops, type PadAnswer, type PadTrade } from '@orden/sync-core'
 import * as Y from 'yjs'
-import type { Edit } from '../search/replace'
+import type { Edit } from '../../search/replace'
+import { isRecord } from '../../platform/src/api'
 import { joined } from './words'
 
 export interface PadServer {
@@ -43,9 +44,6 @@ const LAST = 'last'
 const MOST_ROUNDS = 4
 
 const NOTHING = Y.encodeStateVector(new Y.Doc())
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 function keptOf(value: unknown): Kept | null {
   if (!isRecord(value) || !(value.doc instanceof Uint8Array)) return null

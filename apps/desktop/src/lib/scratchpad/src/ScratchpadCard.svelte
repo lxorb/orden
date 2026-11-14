@@ -1,5 +1,5 @@
 <script module lang="ts">
-  import { owes, writing } from '../parting'
+  import { owes, writing } from '../../parting'
 
   let owing: (() => void) | null = null
   owes(() => owing?.())
@@ -10,17 +10,17 @@
 <script lang="ts">
   import { createEditor, EditorView, setNoteIndex } from '@orden/editor'
   import { onMount } from 'svelte'
-  import { SAVE_DELAY } from '../platform/src/api'
-  import { pickedLink } from '../composer'
-  import { adrift, pressedThrough } from '../keyboard-home'
-  import { links } from '../link-index.svelte'
-  import { modes } from '../modes.svelte'
-  import { followHref, followNoteFrom } from '../open-link'
-  import { shortcuts } from '../shortcuts.svelte'
-  import { afterQuiet } from '../platform/src/api'
+  import { SAVE_DELAY } from '../../platform/src/api'
+  import { pickedLink } from '../../composer'
+  import { adrift, pressedThrough } from '../../keyboard-home'
+  import { links } from '../../link-index.svelte'
+  import { modes } from '../../modes.svelte'
+  import { followHref, followNoteFrom } from '../../open-link'
+  import { shortcuts } from '../../shortcuts.svelte'
+  import { afterQuiet } from '../../platform/src/api'
   import { scratchpad } from './pad'
   import { closeScratchpad, padTab, shown, WIDTH } from './is.svelte'
-  import { viewport } from '../ui-kit/src/api'
+  import { viewport } from '../../ui-kit/src/api'
 
   const { docked = false }: { docked?: boolean } = $props()
 
@@ -52,7 +52,7 @@
       if (text === null) {
         path = null
         shown.hide()
-        void import('../unread.svelte').then((one) => one.unread.there(at))
+        void import('../../unread.svelte').then((one) => one.unread.there(at))
         return
       }
 

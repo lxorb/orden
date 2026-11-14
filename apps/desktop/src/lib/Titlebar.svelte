@@ -9,7 +9,7 @@
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
-  import { shown as pad } from './scratchpad/is.svelte'
+  import { shown as pad } from './scratchpad/src/api'
   import { isDraft } from './workspace/drafts'
   import TopStrips from './TopStrips.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './platform/src/api'

@@ -202,7 +202,7 @@ export const quickSheet = latched(() =>
 export const scratchpadCard = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('not in the plugin'))
-    : import('./scratchpad/ScratchpadCard.svelte'),
+    : import('./scratchpad/src/api').then((one) => one.loadScratchpadCard()),
 )
 
 export const recordingPill = latched(() => import('./RecordingPill.svelte'))

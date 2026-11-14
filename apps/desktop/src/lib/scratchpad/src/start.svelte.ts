@@ -1,6 +1,6 @@
 import { untrack } from 'svelte'
-import { account } from '../accounts/src/api'
-import { RECONCILE_INTERVAL, inTurn, log, afterQuiet } from '../platform/src/api'
+import { account } from '../../accounts/src/api'
+import { RECONCILE_INTERVAL, inTurn, log, afterQuiet } from '../../platform/src/api'
 import { padDisk } from './disk'
 import { padTab, shown } from './is.svelte'
 import { scratchpad } from './pad'

@@ -1,8 +1,7 @@
 import { documentOf } from '@orden/editor'
 import { links } from '../../link-index.svelte'
 import { protection } from '../../protect/src/api'
-import { isScratchpad } from '../../scratchpad/is.svelte'
-import { scratchpad } from '../../scratchpad/pad'
+import { isScratchpad, pad } from '../../scratchpad/src/api'
 import { withinSpace, invoke } from '../../platform/src/api'
 import { theme } from '../../theme/src/api'
 import { views } from '../../views.svelte'
@@ -74,14 +73,14 @@ const desk: Desk = {
     const tab = workspace.tabs.find((one) => one.id === id)
     return tab?.kind === 'note' && isDraft(tab.note) ? tab.note : null
   },
-  padText: () => scratchpad.text(),
-  padWrite: (before, edits) => scratchpad.replace(before, edits),
+  padText: async () => (await pad()).text(),
+  padWrite: async (before, edits) => (await pad()).replace(before, edits),
   scheme: () => theme.current,
   agentsMay: (path) => protection.agentsMay(path),
 }
 
 async function padded(at: NoteAt): Promise<NoteAt> {
-  return at.tab === SCRATCHPAD_TAB ? { ...at, pad: await scratchpad.where() } : at
+  return at.tab === SCRATCHPAD_TAB ? { ...at, pad: await (await pad()).where() } : at
 }
 
 export const notes: NoteDocs = {
