@@ -1,8 +1,12 @@
 import { Hono } from 'hono'
-import { bytesAtMost, objectBody } from './body'
-import { privateHost } from './redirects'
-import { NOT_AN_OBJECT } from './refused'
-import type { Env, Variables } from './types'
+import {
+  bytesAtMost,
+  type Env,
+  NOT_AN_OBJECT,
+  objectBody,
+  privateHost,
+  type Variables,
+} from '../../sync-server/src/api'
 
 export const MOST_SITES = 300
 

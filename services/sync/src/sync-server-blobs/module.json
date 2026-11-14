@@ -1,0 +1,5 @@
+{
+  "name": "sync-server-blobs",
+  "layer": "foundation",
+  "dependsOn": ["markdown", "sync-server"]
+}

@@ -1,6 +1,5 @@
 export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
-export { blobs, publicBlobs } from './blobs'
-export { type Body, listIn, objectBody, objectIn, readBody, textAtMost } from './body'
+export { type Body, bytesAtMost, listIn, objectBody, objectIn, readBody, textAtMost } from './body'
 export { askInChunks, AT_A_TIME, chunks, places } from './bound'
 export { serveApp, servePage, servePass, switchChannel } from './channel'
 export { crashes, sweepCrashes } from './crashes'
@@ -102,6 +101,7 @@ export {
 } from './redirects'
 export {
   NO_SUCH_SPACE,
+  NOT_A_HASH,
   NOT_AN_EMAIL,
   NOT_AN_OBJECT,
   NOT_FOUND,
@@ -120,7 +120,6 @@ export { NoteRoom } from './rooms/room'
 export { SAID, said, tokenIn } from './said'
 export { settings, shownWords } from './settings'
 export { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from './signins'
-export { siteIcons } from './site-icons'
 export { fillFronts } from './site/fill'
 export { answersFrom, formHtml, formOf } from './site/form'
 export { type NoteFront, readFront } from './site/front'
@@ -147,16 +146,20 @@ export {
 } from './spaces/share'
 export { allows, MOST_ITEMS, onceShared, reachedItem, reachedSpace, refusal } from './spaces/space'
 export { steadyEnv } from './steady'
-export { fits, QUOTA, usedBytes } from './storage'
+export { fits, fitsSql, QUOTA, usedBytes } from './storage'
 export { deviceOf, programDevice } from './sync2/device'
 export {
   blobKey,
   BYTES,
   hashOfBytes,
+  held,
+  holdsItsName,
   NO_SUCH_FILE,
+  spellsADiagramName,
   sweepMisnamed,
   v2Blobs,
   v2Files,
+  WRONG_BYTES,
 } from './sync2/files'
 export {
   type Account,
@@ -176,5 +179,6 @@ export { time } from './time'
 export { purgeExpired, trash } from './trash'
 export { type Env, type Note, type Space, type User, type Variables, type Whoever } from './types'
 export { noteChatFiles, noteUnusedBy } from './unused'
+export { letGo } from './used'
 export { usage } from './usage'
 export { deviceIn, sweepVersions } from './versions'

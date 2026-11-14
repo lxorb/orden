@@ -1,8 +1,10 @@
+import { now } from './crypto'
 import { FRONT_REV } from './site/front'
 import { hooks } from './hooks'
 import { noteKey } from './notes'
 import { picturesOf } from './pictures'
 import { readSpaceFiles } from './spaces/files'
+import { blobKey } from './sync2/files'
 import type { Env } from './types'
 import { picturesOfVersion, versionKey } from './versions'
 
@@ -66,7 +68,7 @@ export async function usedElsewhere(
   return owed
 }
 
-export async function ownOtherwise(
+async function ownOtherwise(
   env: Env,
   userId: string,
   hash: string,
@@ -326,4 +328,44 @@ async function picturesIn(
   }
 
   return found
+}
+
+export async function letGo(
+  env: Env,
+  userId: string,
+  hash: string,
+  own = false,
+  done: Reading = reading(),
+): Promise<boolean> {
+  const owed = await usedElsewhere(env, userId, new Set([hash]), own)
+  if (owed.has(userId)) return true
+
+  const mine = await env.DB.prepare(
+    'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
+  )
+    .bind(hash, userId)
+    .first<{ email: string; type: string }>()
+  const picture = mine?.type.startsWith('image/') ?? false
+
+  if (own) {
+    const otherwise = await ownOtherwise(env, userId, hash, picture, done)
+    if (otherwise === 'used') return true
+    if (otherwise === 'unknown') return false
+  }
+
+  if (mine && picture) {
+    const user = { id: userId, email: mine.email }
+    if (!(await unreadUses(env, user, new Set([hash]), owed, false, done))) return false
+  }
+
+  await env.DB.batch([
+    ...handedTo(env, userId, owed, now()),
+    env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
+  ])
+
+  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
+    .bind(hash)
+    .first()
+  if (!others) await env.NOTES.delete(blobKey(hash))
+  return true
 }

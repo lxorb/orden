@@ -4,8 +4,6 @@ import {
   SIGN_IN,
   SIGN_IN_TO_DO_THAT,
   readBody,
-  blobs,
-  publicBlobs,
   hostnameOf,
   spaceForHost,
   blogRootOf,
@@ -38,7 +36,6 @@ import {
   rooms,
   devices,
   hubDoor,
-  siteIcons,
   settings,
   protectedRoutes,
   v2Docs,
@@ -103,6 +100,7 @@ import {
   online,
   syncAdmin,
 } from './sync-server-machines/src/api'
+import { blobs, publicBlobs, siteIcons } from './sync-server-blobs/src/api'
 import { serveBlog } from './sync-server-blog/src/api'
 import {
   chatDoor,
