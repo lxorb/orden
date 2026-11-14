@@ -33,7 +33,7 @@
   import { busy } from './ui-kit/src/api'
 
   import { chrome } from './theme/src/api'
-  import { without } from './graph'
+  import { without } from './graph/src/api'
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
   import { pull } from './pull.svelte'

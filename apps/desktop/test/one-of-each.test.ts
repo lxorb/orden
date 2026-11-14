@@ -334,11 +334,11 @@ describe('the switch', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/GraphControls.svelte',
       'lib/ShareSheet.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
       'lib/ai-sidebar/src/ModelPicker.svelte',
       'lib/chats-client/src/view/PollSheet.svelte',
+      'lib/graph-view/src/GraphControls.svelte',
       'lib/import/src/ImportSheet.svelte',
       'lib/palette/src/Palette.svelte',
       'lib/pass-ui/src/SwitchRow.svelte',

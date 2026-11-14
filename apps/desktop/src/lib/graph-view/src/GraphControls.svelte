@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { closeOnBack } from './ui-kit/src/api'
-  import { overlays } from './ui-kit/src/api'
-  import Twist from './Twist.svelte'
-  import { workspace } from './workspace.svelte'
+  import { closeOnBack, overlays } from '../../ui-kit/src/api'
+  import Twist from '../../Twist.svelte'
+  import { workspace } from '../../workspace.svelte'
   import {
     DEEPEST,
     LEAST_DISTANCE,
@@ -17,7 +16,7 @@
     MOST_PUSH,
     MOST_SPREAD,
     SHALLOWEST,
-  } from './workspace/graph-settings.svelte'
+  } from './settings.svelte'
 
   const {
     open,
@@ -82,7 +81,7 @@
   }
 
   async function keepView() {
-    const { prompt } = await import('./ui-kit/src/api')
+    const { prompt } = await import('../../ui-kit/src/api')
     const name = await prompt.ask({ title: 'Add view to Essentials', confirmLabel: 'Keep' })
     if (!name) return
 

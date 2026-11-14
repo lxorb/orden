@@ -1,21 +1,25 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
-  import type { NoteGraph } from './graph'
-  import { neighbours, signature } from './graph-walk'
-  import { Fingers } from './graph-fingers'
-  import { graphFilter, type Keeps } from './graph-filter'
-  import { Layout } from './graph-layout'
-  import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'
-  import { type Camera, framing, graphPoint, nodeAt, wheelPixels, zoomed } from './camera/src/api'
-  import { type GraphColours, paint, radiusOf } from './graph-paint'
-  import { stillness } from './platform/src/api'
+  import { neighbours, type NoteGraph, signature } from '../../graph/src/api'
+  import { Fingers } from './fingers'
+  import { graphFilter, type Keeps } from './filter'
+  import { type GraphColours, Layout, paint, radiusOf } from '../../graph-drawing/src/api'
+  import { howFor, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
+  import {
+    type Camera,
+    framing,
+    graphPoint,
+    nodeAt,
+    wheelPixels,
+    zoomed,
+  } from '../../camera/src/api'
+  import { relativeTo, stillness } from '../../platform/src/api'
   import { parseQuery } from '@orden/scan/search/query'
-  import { relativeTo } from './platform/src/api'
-  import { pixelRatio } from './pixel-ratio.svelte'
-  import { theme } from './theme/src/api'
-  import { workspace } from './workspace.svelte'
-  import { MOST_GROUPS } from './workspace/graph-settings.svelte'
+  import { pixelRatio } from '../../pixel-ratio.svelte'
+  import { theme } from '../../theme/src/api'
+  import { workspace } from '../../workspace.svelte'
+  import { MOST_GROUPS } from './settings.svelte'
 
   const {
     graph,
@@ -33,7 +37,8 @@
     onescape?: (() => void) | undefined
   } = $props()
 
-  if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.dismiss('graph'))
+  if (!__EVEN_PLUGIN__)
+    void import('../../hints.svelte').then(({ hints }) => hints.dismiss('graph'))
 
   const A_FRAME = 6
 

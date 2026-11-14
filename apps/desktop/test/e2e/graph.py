@@ -199,7 +199,7 @@ async ({ ratio, width, height }) => {
 
   // The same hairline stroked more than once, a device pixel apart, which is what
   // the Lines dial's thick step draws: a line two device pixels wide out of strokes
-  // that are each still a hairline. See `LINES` in graph-paint.ts.
+  // that are each still a hairline. See `LINES` in graph-drawing/src/paint.ts.
   const brushed = (offsets) => (shift) => {
     const hair = 1 / ratio
     const path = new Path2D()

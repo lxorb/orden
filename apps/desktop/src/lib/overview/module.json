@@ -4,6 +4,7 @@
   "dependsOn": [
     "contracts",
     "camera",
+    "graph",
     "platform",
     "protect",
     "sharing",
@@ -14,7 +15,6 @@
   ],
   "pending": [
     "apps/desktop/src/lib/TabMark.svelte",
-    "apps/desktop/src/lib/graph.ts",
     "apps/desktop/src/lib/held-database.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",

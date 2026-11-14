@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { NoteGraph } from './graph'
-import { paint } from './graph-paint'
+import type { NoteGraph } from '../../graph/src/api'
+import { paint } from './paint'
 
 class FakePath {
   readonly steps: string[] = []

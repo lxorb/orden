@@ -1,6 +1,5 @@
-import type { Camera } from './camera/src/api'
-import { SMALLEST_DOT } from './camera/src/api'
-import type { NoteGraph } from './graph'
+import { type Camera, SMALLEST_DOT } from '../../camera/src/api'
+import type { NoteGraph } from '../../graph/src/api'
 import { shownName } from '@orden/markdown/note-name'
 
 export function radiusOf(degree: number): number {

@@ -196,8 +196,8 @@ describe('what the app evaluates before it draws anything', () => {
   test.each([
     ['/lib/canvas/src/Canvas.svelte', 'the canvas'],
     ['/lib/plane/src/ink.ts', "the canvas's ink"],
-    ['/lib/Graph.svelte', 'the graph'],
-    ['/lib/graph-layout.ts', "the graph's layout"],
+    ['/lib/graph-view/src/Graph.svelte', 'the graph'],
+    ['/lib/graph-drawing/src/layout.ts', "the graph's layout"],
     ['/lib/pages/src/Pages.svelte', 'the pages surface'],
     ['/lib/pages/src/PagesNavigator.svelte', "the pages surface's thumbnails"],
     ['/lib/web-tab/src/WebTab.svelte', 'the web tab'],

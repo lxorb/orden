@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Fingers } from './graph-fingers'
+import { Fingers } from './fingers'
 
 describe('fingers on the graph', () => {
   test('one finger leads, and a second one pinches by how far apart they go and where their middle goes', () => {

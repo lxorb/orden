@@ -8,9 +8,12 @@ const SOURCES = [
   'apps/desktop/src/site/site.ts',
   'apps/desktop/src/lib/camera/src/api.ts',
   'apps/desktop/src/lib/camera/src/camera.ts',
-  'apps/desktop/src/lib/graph.ts',
-  'apps/desktop/src/lib/graph-layout.ts',
-  'apps/desktop/src/lib/graph-paint.ts',
+  'apps/desktop/src/lib/graph/src/api.ts',
+  'apps/desktop/src/lib/graph/src/graph.ts',
+  'apps/desktop/src/lib/graph/src/walk.ts',
+  'apps/desktop/src/lib/graph-drawing/src/api.ts',
+  'apps/desktop/src/lib/graph-drawing/src/layout.ts',
+  'apps/desktop/src/lib/graph-drawing/src/paint.ts',
   'packages/markdown/src/note-name.ts',
 ]
 

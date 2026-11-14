@@ -1,0 +1,5 @@
+{
+  "name": "graph-drawing",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "camera", "graph", "markdown"]
+}

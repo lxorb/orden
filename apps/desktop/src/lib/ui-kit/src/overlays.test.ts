@@ -302,7 +302,7 @@ describe('what hides a web page', () => {
     'lib/canvas/src/CanvasPicked.svelte': "the colours of what is picked, over the plane's own bar",
     'lib/ContextMenu.svelte': 'menu',
     'lib/crash-reports/src/CrashAsk.svelte': 'dialog',
-    'lib/GraphControls.svelte': 'dropdown',
+    'lib/graph-view/src/GraphControls.svelte': 'dropdown',
     'lib/FeedbackSheet.svelte': 'dialog',
     'lib/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/History.svelte': 'sheet',

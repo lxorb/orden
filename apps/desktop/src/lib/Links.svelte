@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { type NoteGraph, without } from './graph'
-  import { neighbourhood } from './graph-walk'
+  import { neighbourhood, type NoteGraph, without } from './graph/src/api'
   import { account } from './accounts/src/api'
   import { chatsOn } from './settings.svelte'
   import { graphSurface, held } from './surfaces.svelte'
