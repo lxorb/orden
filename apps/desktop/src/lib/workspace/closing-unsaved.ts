@@ -26,7 +26,7 @@ export async function mayLose(ws: Closing, closing: readonly Tab[]): Promise<boo
 
   const [only] = unsaved
   if (only && unsaved.length === 1) {
-    const { askPlace } = await import('../save-place/door')
+    const { askPlace } = await import('../save-place/src/api')
     askPlace(only.id, () => void ws.closeAsking(only.id))
     return false
   }

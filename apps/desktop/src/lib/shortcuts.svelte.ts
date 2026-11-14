@@ -23,7 +23,7 @@ import {
   type Shortcut,
   SYSTEM_KEYS,
 } from './shortcuts/registry'
-import { saveFront } from './save-place/door'
+import { saveFront } from './save-place/src/api'
 import { ran } from './usage/src/api'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'

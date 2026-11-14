@@ -333,7 +333,7 @@ describe('what hides a web page', () => {
     'lib/quitting/QuitSheet.svelte': 'dialog',
     'lib/remote/HostPicker.svelte': 'dialog',
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
-    'lib/save-place/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
+    'lib/save-place/src/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
     'lib/settings/FontPicker.svelte': 'dropdown',
     'lib/theme-looks/src/picker/ThemePicker.svelte':
       'the theme picker, over the themes button or the note',
