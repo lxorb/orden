@@ -20,16 +20,7 @@ from typing import Any
 import crash_told
 from fresh_app import ended, fresh
 
-CANNOT: dict[str, set[str]] = {
-    "webview2": set(),
-    "chromium": set(),
-    "wkwebview": {
-        "browser_drag",
-        "browser_upload",
-        "browser_console",
-        "browser_network",
-    },
-}
+CANNOT: dict[str, set[str]] = {"chromium": set()}
 
 KNOWN: dict[str, dict[str, str]] = {}
 

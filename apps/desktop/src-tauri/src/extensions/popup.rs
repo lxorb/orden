@@ -171,10 +171,6 @@ pub async fn extension_popup_open(
                 return;
             }
         }
-        #[cfg(all(windows, not(feature = "cef")))]
-        let builder =
-            crate::web_tabs::on_shared_session(builder, &window, &building, store.as_deref());
-        #[cfg(not(all(windows, not(feature = "cef"))))]
         let _ = &store;
         let scale = crate::page_scale::of(&window).unwrap_or(1.0);
         let made = crate::engine::add_child(
@@ -255,68 +251,12 @@ fn blank() -> Result<Url, String> {
 }
 
 fn sent(app: &AppHandle, view: &Webview, address: &Url) {
-    #[cfg(all(windows, not(feature = "cef")))]
-    {
-        let (closing, label) = (app.clone(), view.label().to_owned());
-        let address = address.to_string();
-        let _ = crate::engine::with_platform!(view, move |platform| {
-            crate::web_worlds::sent(&platform, &address, "", |_| {});
-            heard(&closing, &label, &platform);
-        });
-    }
-    #[cfg(feature = "cef")]
     {
         let _ = app;
         let (view, address) = (view.clone(), address.clone());
         std::thread::spawn(move || {
             let _ = crate::web_worlds::sent(&view, &address, "");
         });
-    }
-    #[cfg(not(any(windows, feature = "cef")))]
-    let _ = (app, view, address);
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the key and the close are WebView2's own events, reached through its COM interfaces"
-)]
-fn heard(app: &AppHandle, label: &str, platform: &tauri::webview::PlatformWebview) {
-    use webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN;
-    use webview2_com::{AcceleratorKeyPressedEventHandler, WindowCloseRequestedEventHandler};
-
-    const ESCAPE: u32 = 0x1b;
-
-    let controller = platform.controller();
-    let (escaping, escaped) = (app.clone(), label.to_owned());
-    let keys = AcceleratorKeyPressedEventHandler::create(Box::new(move |_, args| {
-        let Some(args) = args else { return Ok(()) };
-        let (mut kind, mut key) = (
-            webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_KEY_EVENT_KIND::default(),
-            0u32,
-        );
-        unsafe {
-            args.KeyEventKind(&raw mut kind)?;
-            args.VirtualKey(&raw mut key)?;
-        }
-        if kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN && key == ESCAPE {
-            let (app, label) = (escaping.clone(), escaped.clone());
-            let _ = escaping.run_on_main_thread(move || went(&app, &label));
-        }
-        Ok(())
-    }));
-    let (closing, shutting) = (app.clone(), label.to_owned());
-    let shut = WindowCloseRequestedEventHandler::create(Box::new(move |_, _| {
-        let (app, label) = (closing.clone(), shutting.clone());
-        let _ = closing.run_on_main_thread(move || went(&app, &label));
-        Ok(())
-    }));
-    unsafe {
-        let mut token = 0i64;
-        let _ = controller.add_AcceleratorKeyPressed(&keys, &raw mut token);
-        if let Ok(core) = controller.CoreWebView2() {
-            let _ = core.add_WindowCloseRequested(&shut, &raw mut token);
-        }
     }
 }
 
@@ -374,7 +314,6 @@ fn pixels(length: f64) -> u32 {
     length.ceil().max(0.0) as u32
 }
 
-#[cfg(any(windows, feature = "cef"))]
 const ASK: &str = "(() => { const root = document.documentElement, body = document.body, own = root.getAttribute('style'); root.removeAttribute('style'); const size = [Math.max(root.scrollWidth, body ? body.scrollWidth : 0), Math.max(root.scrollHeight, body ? body.scrollHeight : 0)]; if (own !== null) root.setAttribute('style', own); return JSON.stringify(size) })()";
 
 fn laid_out(view: &Webview) -> Option<(f64, f64)> {
@@ -383,34 +322,6 @@ fn laid_out(view: &Webview) -> Option<(f64, f64)> {
     Some(pair)
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "WebView2's own script call, through its COM interface"
-)]
-fn evaluated(view: &Webview) -> Option<String> {
-    use webview2_com::ExecuteScriptCompletedHandler;
-
-    let (answered, answer) = std::sync::mpsc::sync_channel::<Option<String>>(1);
-    view.with_webview(move |platform| {
-        let handler = ExecuteScriptCompletedHandler::create(Box::new(move |result, json| {
-            let said = result
-                .ok()
-                .and_then(|()| serde_json::from_str::<String>(&json).ok());
-            let _ = answered.try_send(said);
-            Ok(())
-        }));
-        unsafe {
-            if let Ok(core) = platform.controller().CoreWebView2() {
-                let _ = core.ExecuteScript(&windows_core::HSTRING::from(ASK), &handler);
-            }
-        }
-    })
-    .ok()?;
-    answer.recv_timeout(Duration::from_secs(2)).ok().flatten()
-}
-
-#[cfg(feature = "cef")]
 fn evaluated(view: &Webview) -> Option<String> {
     let said = crate::engine::devtools::call(
         view,
@@ -424,11 +335,6 @@ fn evaluated(view: &Webview) -> Option<String> {
         .get("value")?
         .as_str()
         .map(str::to_owned)
-}
-
-#[cfg(not(any(windows, feature = "cef")))]
-fn evaluated(_view: &Webview) -> Option<String> {
-    None
 }
 
 #[cfg(test)]

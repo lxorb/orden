@@ -115,7 +115,7 @@ def drive(browser, token: str) -> dict[str, object]:
         "() => { const s = window.ordenApp?.sync;"
         " return !!s && !s.running && (s.reconciledAt ?? 0) > 0 }",
         "the first pass has come back",
-        patience=900_000 if harness.WEBKIT else 420_000,
+        patience=420_000,
     )
 
     seen = -1

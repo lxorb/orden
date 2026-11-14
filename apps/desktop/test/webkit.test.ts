@@ -111,7 +111,7 @@ const MISSING: [string, RegExp, RegExp][] = [
   ['navigator.locks', /navigator\.locks\s*\.request/, /navigator\.locks\s*\?|typeof navigator/],
 ]
 
-describe("a Mac's WebKit", () => {
+describe('WebKit on iOS', () => {
   test('the scan reads the app', () => {
     expect(files.length).toBeGreaterThan(500)
     expect(sheets.some((one) => one.name.endsWith('base.css'))).toBe(true)

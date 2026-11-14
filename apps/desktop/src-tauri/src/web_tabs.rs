@@ -10,7 +10,6 @@ use tauri::{
 
 pub(crate) const LABEL: &str = "web-";
 
-#[cfg(any(windows, target_os = "macos", feature = "cef"))]
 pub(crate) fn is_page(label: &str) -> bool {
     label.starts_with(LABEL) || adopted_label(label)
 }
@@ -27,13 +26,6 @@ fn mark_private(label: &str, private: bool) {
     }
 }
 
-#[cfg_attr(
-    not(any(windows, target_os = "macos", feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only the engines whose cookies are given an expiry ask"
-    )
-)]
 pub(crate) fn is_private(label: &str) -> bool {
     PRIVATE
         .lock()
@@ -76,122 +68,6 @@ pub(crate) fn tab_of(label: &str) -> Option<String> {
     adopted.or_else(|| label.strip_prefix(LABEL).map(str::to_string))
 }
 
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has agent tabs to show")
-)]
-pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Option<String>) {
-    if let Ok(mut held) = ADOPTED.lock() {
-        held.get_or_insert_with(HashMap::new)
-            .insert(tab.to_string(), label.to_string());
-    }
-    listening(app, tab, store, None);
-    #[cfg(all(windows, not(feature = "cef")))]
-    reported(app, tab, label);
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "a page's loads and title are WebView2's own events, reached through its COM interfaces"
-)]
-fn reported(app: &AppHandle, tab: &str, label: &str) {
-    use webview2_com::{
-        DocumentTitleChangedEventHandler, NavigationCompletedEventHandler,
-        NavigationStartingEventHandler,
-    };
-    use windows_core::PWSTR;
-
-    let Some(view) = app.get_webview(label) else {
-        return;
-    };
-    let (app, tab, label) = (app.clone(), tab.to_string(), label.to_string());
-    let _ = view.with_webview(move |platform| {
-        let said = |app: &AppHandle, tab: &str, label: &str, url: String, title: Option<String>| {
-            if let Some(view) = app.get_webview(label) {
-                say(app, &view, tab, &url, title, false);
-            }
-        };
-        let starting = {
-            let (app, tab) = (app.clone(), tab.clone());
-            NavigationStartingEventHandler::create(Box::new(move |_, _| {
-                started(&app, &tab);
-                Ok(())
-            }))
-        };
-        let ended = {
-            let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
-            NavigationCompletedEventHandler::create(Box::new(move |sender, _| {
-                let mut url = PWSTR::null();
-                let url = sender.and_then(|core| unsafe {
-                    core.Source(&raw mut url).ok()?;
-                    Some(webview2_com::take_pwstr(url))
-                });
-                said(&app, &tab, &label, url.unwrap_or_default(), None);
-                Ok(())
-            }))
-        };
-        let titled = {
-            let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
-            DocumentTitleChangedEventHandler::create(Box::new(move |sender, _| {
-                let (mut url, mut title) = (PWSTR::null(), PWSTR::null());
-                let read = sender.and_then(|core| unsafe {
-                    core.Source(&raw mut url).ok()?;
-                    core.DocumentTitle(&raw mut title).ok()?;
-                    Some((
-                        webview2_com::take_pwstr(url),
-                        webview2_com::take_pwstr(title),
-                    ))
-                });
-                if let Some((url, title)) = read {
-                    said(&app, &tab, &label, url, Some(title));
-                }
-                Ok(())
-            }))
-        };
-        unsafe {
-            if let Ok(core) = platform.controller().CoreWebView2() {
-                let mut token = 0i64;
-                let _ = core.add_NavigationStarting(&starting, &raw mut token);
-                let _ = core.add_NavigationCompleted(&ended, &raw mut token);
-                let _ = core.add_DocumentTitleChanged(&titled, &raw mut token);
-            }
-        }
-    });
-}
-
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has agent tabs to show")
-)]
-pub(crate) fn opened_from_adopted(app: &AppHandle, label: &str, url: &str) {
-    let tab = ADOPTED.lock().ok().and_then(|held| {
-        held.as_ref()?
-            .iter()
-            .find(|(_, one)| *one == label)
-            .map(|(tab, _)| tab.clone())
-    });
-    let (Some(tab), Ok(parsed)) = (tab, url.parse::<Url>()) else {
-        return;
-    };
-    let Some(address) = handed_over(&parsed) else {
-        return;
-    };
-    let holder = app.get_webview(label).map_or_else(
-        || MAIN.to_string(),
-        |view| view.window().label().to_string(),
-    );
-    let _ = app.emit_to(
-        &holder,
-        OPENED,
-        Opening {
-            tab,
-            url: address,
-            behind: false,
-        },
-    );
-}
-
 fn unadopt(tab: &str) {
     if let Ok(mut held) = ADOPTED.lock() {
         if let Some(all) = held.as_mut() {
@@ -203,12 +79,6 @@ fn unadopt(tab: &str) {
 const MAIN: &str = "main";
 
 const MOVED: &str = "orden://web-tab";
-
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(dead_code)
-)]
-const ASKED: &str = "orden://web-ask";
 
 const OPENED: &str = "orden://web-open";
 
@@ -314,7 +184,6 @@ impl Trail {
 }
 
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    #[cfg(any(windows, target_os = "macos", feature = "cef"))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
         .on_window_event(crate::web_follow::heard)
@@ -417,9 +286,6 @@ struct Opening {
     behind: bool,
 }
 
-#[cfg(not(feature = "cef"))]
-const POPUP: &str = "popup-";
-
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Place {
     x: f64,
@@ -440,18 +306,6 @@ struct Looked {
     y: f64,
     #[serde(default)]
     edited: bool,
-}
-
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(dead_code)
-)]
-#[derive(Clone, Serialize)]
-struct Asked {
-    tab: String,
-    id: u64,
-    origin: String,
-    kind: String,
 }
 
 #[derive(Serialize)]
@@ -487,14 +341,6 @@ pub(crate) fn tab_may_open(url: &Url) -> bool {
     orden_web_engine::tab_may_open(url, &crate::extensions::ours)
 }
 
-#[cfg_attr(
-    not(all(target_os = "macos", not(feature = "cef"))),
-    allow(dead_code, reason = "only WKWebView asks about a frame's navigation")
-)]
-pub(crate) fn frame_may_open(url: &Url) -> bool {
-    orden_web_engine::frame_may_open(url, &crate::extensions::ours)
-}
-
 pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let payload = Opening {
         tab: tab.to_string(),
@@ -504,7 +350,6 @@ pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let _ = app.emit_to(window, OPENED, payload);
 }
 
-#[cfg(feature = "cef")]
 pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
@@ -547,61 +392,6 @@ pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str)
     let _ = app.emit_to(window, BLOCKED, payload);
 }
 
-#[cfg(not(feature = "cef"))]
-fn popup(
-    app: &AppHandle,
-    url: &Url,
-    features: tauri::webview::NewWindowFeatures,
-    tab: &str,
-    holder: &str,
-    private: bool,
-) -> Option<tauri::WebviewWindow> {
-    use std::sync::atomic::{AtomicU64, Ordering};
-
-    static NEXT: AtomicU64 = AtomicU64::new(1);
-
-    let label = format!("{POPUP}{}", NEXT.fetch_add(1, Ordering::Relaxed));
-    let blank = Url::parse(BLANK).ok()?;
-    let opening = app.clone();
-    let asking = tab.to_string();
-    let holding = holder.to_string();
-
-    let building = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
-        .window_features(features)
-        .incognito(private)
-        .title(url.host_str().unwrap_or_default())
-        .disable_drag_drop_handler()
-        .on_navigation(allowed)
-        .on_new_window(move |url, _| {
-            if let Some(address) = handed_over(&url) {
-                let payload = Opening {
-                    tab: asking.clone(),
-                    url: address,
-                    behind: false,
-                };
-                let _ = opening.emit_to(&holding, OPENED, payload);
-            }
-            NewWindowResponse::Deny
-        })
-        .on_document_title_changed(|window, title| {
-            let _ = window.set_title(&title);
-        });
-
-    let window = crate::placement::built(building).ok()?;
-
-    #[cfg(windows)]
-    {
-        let closing = window.clone();
-        let _ = crate::engine::with_platform!(window, move |platform| {
-            crate::web_opens::closing(&platform, closing);
-            crate::web_worlds::cleared(&platform, "", |cleared| {
-                crate::trace::mark(&format!("web popup: {}", cleared.said()));
-            });
-        });
-    }
-    Some(window)
-}
-
 fn address(url: &str) -> Result<Url, String> {
     let parsed = Url::parse(url).map_err(|error| format!("that is not an address: {error}"))?;
     if tab_may_open(&parsed) {
@@ -622,29 +412,18 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    let mut scripts = vec![
-        crate::web_opens::SCRIPT.to_string(),
-        crate::web_swipe::script().to_string(),
-    ];
-    #[cfg(feature = "cef")]
     let mut scripts = vec![
         crate::web_opens::script(),
         crate::web_swipe::script().to_string(),
         crate::web_media::script().to_string(),
     ];
-    #[cfg(all(not(windows), not(feature = "cef")))]
-    let mut scripts: Vec<String> = Vec::new();
 
     #[cfg(windows)]
     scripts.push(bars().to_string());
 
-    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     if pass {
         scripts.push(crate::web_pass::script().to_string());
     }
-    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-    let _ = pass;
 
     if let Some(one) = want {
         scripts.push(PLACE.replace("__PLACE__", &one));
@@ -656,161 +435,6 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
         .collect()
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-mod session {
-    use std::cell::RefCell;
-    use std::collections::HashMap;
-
-    use webview2_com::BrowserProcessExitedEventHandler;
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2Environment, ICoreWebView2Environment5,
-    };
-    use windows_core::Interface as _;
-
-    thread_local! {
-        static ENV: RefCell<HashMap<String, (ICoreWebView2Environment, u32)>> =
-            RefCell::new(HashMap::new());
-    }
-
-    fn key(store: Option<&str>) -> String {
-        store.unwrap_or_default().to_string()
-    }
-
-    pub fn shared(store: Option<&str>) -> Option<ICoreWebView2Environment> {
-        let named = key(store);
-        let (env, browser) = ENV.with_borrow(|held| held.get(&named).cloned())?;
-        if running(browser) {
-            return Some(env);
-        }
-        ENV.with_borrow_mut(|held| held.remove(&named));
-        None
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "whether the browser process still runs is Win32's to say"
-    )]
-    fn running(browser: u32) -> bool {
-        use windows::Win32::Foundation::CloseHandle;
-        use windows::Win32::System::Threading::{
-            GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
-        };
-
-        const STILL_ACTIVE: u32 = 259;
-
-        if browser == 0 {
-            return true;
-        }
-        unsafe {
-            let Ok(process) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, browser) else {
-                return false;
-            };
-            let mut code = 0u32;
-            let asked = GetExitCodeProcess(process, &raw mut code);
-            let _ = CloseHandle(process);
-            asked.is_err() || code == STILL_ACTIVE
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "the browser process is named by WebView2's COM interface"
-    )]
-    fn browser_of(platform: &tauri::webview::PlatformWebview) -> u32 {
-        let mut browser = 0u32;
-        unsafe {
-            if let Ok(core) = platform.controller().CoreWebView2() {
-                let _ = core.BrowserProcessId(&raw mut browser);
-            }
-        }
-        browser
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "the process ending is WebView2's own event, reached through its COM interfaces"
-    )]
-    pub fn keep(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
-        let env = platform.environment();
-        let named = key(store);
-        let browser = browser_of(platform);
-        let fresh = ENV.with_borrow_mut(|held| {
-            if held.contains_key(&named) {
-                return false;
-            }
-            held.insert(named.clone(), (env.clone(), browser));
-            true
-        });
-
-        if !fresh {
-            return;
-        }
-
-        let kept = env.as_raw() as usize;
-        let handler = BrowserProcessExitedEventHandler::create(Box::new(move |_env, _args| {
-            ENV.with_borrow_mut(|held| {
-                if held.get(&named).map(|(one, _)| one.as_raw() as usize) == Some(kept) {
-                    held.remove(&named);
-                }
-            });
-            Ok(())
-        }));
-        unsafe {
-            if let Ok(env) = env.cast::<ICoreWebView2Environment5>() {
-                let mut token = 0i64;
-                let _ = env.add_BrowserProcessExited(&handler, &raw mut token);
-            }
-        }
-    }
-
-    pub fn answering(app: &tauri::AppHandle, store: Option<&str>) -> Result<(), String> {
-        use tauri::Manager as _;
-        let answers = store.is_some()
-            || app
-                .get_webview(ANCHOR)
-                .is_none_or(|anchor| crate::web_answers::answers(&anchor));
-        if answers {
-            return Ok(());
-        }
-        crate::web_answers::said(app);
-        Err(crate::web_answers::NOT_ANSWERING.to_owned())
-    }
-
-    const ANCHOR: &str = "web-session";
-
-    pub fn anchor(window: &tauri::Window, app: &tauri::AppHandle) {
-        use tauri::Manager as _;
-
-        if window.app_handle().get_webview(ANCHOR).is_some() {
-            return;
-        }
-
-        let Ok(blank) = super::BLANK.parse::<tauri::Url>() else {
-            return;
-        };
-
-        let builder = tauri::WebviewBuilder::new(ANCHOR, tauri::WebviewUrl::External(blank))
-            .focused(false)
-            .disable_drag_drop_handler();
-
-        let Ok(builder) = crate::engine::web_store(builder, app, None) else {
-            return;
-        };
-
-        let made = crate::engine::add_child(
-            window,
-            builder,
-            tauri::LogicalPosition::new(0.0, 0.0),
-            tauri::LogicalSize::new(1.0, 1.0),
-        );
-
-        if let Ok(view) = made {
-            let _ = view.hide();
-            let _ = view.with_webview(|platform| keep(None, &platform));
-        }
-    }
-}
-
 fn page_built(
     window: &tauri::Window,
     builder: WebviewBuilder<crate::Engine>,
@@ -819,12 +443,6 @@ fn page_built(
     store: Option<&str>,
 ) -> Result<(), String> {
     let _doing = crate::stall::doing("web_open: building the page");
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = {
-        session::answering(app, store)?;
-        on_shared_session(builder, window, app, store)
-    };
-    #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = (app, store);
 
     let bounds = crate::web_follow::Bounds::from(pane);
@@ -837,8 +455,6 @@ fn page_built(
         PhysicalSize::new(width, height),
     )
     .map_err(|error| format!("that page could not be opened: {error}"))?;
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    crate::web_cut::under::lower(window, &view);
     crate::page_style::worn(&view);
     crate::page_scheme::wear(&view);
     let zoom = crate::page_scale::web(1.0);
@@ -850,40 +466,7 @@ fn page_built(
     Ok(())
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) fn warm(app: &AppHandle) {
-    let anchoring = app.clone();
-    let _ = app.run_on_main_thread(move || {
-        if let Some(window) = anchoring.get_window(MAIN) {
-            let _doing = crate::stall::doing("web_warm");
-            session::anchor(&window, &anchoring);
-            crate::trace::mark("web session warmed");
-        }
-    });
-}
-
-#[cfg(all(desktop, not(all(windows, not(feature = "cef")))))]
 pub(crate) fn warm(_app: &AppHandle) {}
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) fn on_shared_session(
-    builder: WebviewBuilder<tauri::Wry>,
-    window: &tauri::Window,
-    app: &AppHandle,
-    store: Option<&str>,
-) -> WebviewBuilder<tauri::Wry> {
-    session::anchor(window, app);
-
-    match session::shared(store) {
-        Some(env) => builder.with_environment(env),
-        None => builder,
-    }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) fn keep_session(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
-    session::keep(store, platform);
-}
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Profile {
@@ -950,9 +533,6 @@ pub async fn web_open(
         })
         .disable_drag_drop_handler();
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.zoom_hotkeys_enabled(true);
-
     mark_private(&label_of(&tab), private);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
 
@@ -990,9 +570,6 @@ pub async fn web_open(
     made?;
     crate::keyboard::built(&label_of(&tab));
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    crate::web_wheel::arm();
-
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
     Ok(crate::web_cut::layering(&label_of(&tab)))
@@ -1005,21 +582,14 @@ fn windows_asked(
     holder: &str,
     private: bool,
 ) -> WebviewBuilder<crate::Engine> {
-    #[cfg(feature = "cef")]
     let _ = private;
     let opening = app.clone();
     let asking = tab.to_string();
     let holder = holder.to_string();
     builder.on_new_window(move |url: Url, features| {
-        #[cfg(all(windows, not(feature = "cef")))]
-        let hushed = crate::extensions::welcome::taken(&asking, &url);
         let heard = crate::web_opens::heard(&asking, &url);
         let said = heard.said;
         if heard.ours {
-            return NewWindowResponse::Deny;
-        }
-        #[cfg(all(windows, not(feature = "cef")))]
-        if hushed {
             return NewWindowResponse::Deny;
         }
 
@@ -1031,18 +601,7 @@ fn windows_asked(
                 return NewWindowResponse::Deny;
             }
             Becomes::Tab(address) => address,
-            #[cfg(feature = "cef")]
             Becomes::Window => return NewWindowResponse::Allow,
-            #[cfg(not(feature = "cef"))]
-            Becomes::Window => {
-                if let Some(window) = popup(&opening, &url, features, &asking, &holder, private) {
-                    return NewWindowResponse::Create { window };
-                }
-                match handed_over(&url) {
-                    Some(address) => address,
-                    None => return NewWindowResponse::Deny,
-                }
-            }
         };
 
         let payload = Opening {
@@ -1061,8 +620,6 @@ fn reporting(
     tab: &str,
     private: bool,
 ) -> WebviewBuilder<crate::Engine> {
-    #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
-    let _ = private;
     let moved = tab.to_string();
     let sending = app.clone();
     let seen = std::sync::Arc::new(Mutex::new(String::new()));
@@ -1086,28 +643,10 @@ fn reporting(
         }
         crate::page_style::worn(&view);
 
-        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
-        if !private {
-            let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
-        }
-        #[cfg(feature = "cef")]
         if !private {
             crate::web_cookies::keep(&view, || ());
         }
 
-        #[cfg(all(not(windows), not(feature = "cef")))]
-        {
-            let marked = sending.clone();
-            let named = moved.clone();
-            let holder = view.window().label().to_string();
-            let _ = view.eval_with_callback(crate::web_icons::ASK, move |answer| {
-                let declaring = serde_json::from_str(&answer).unwrap_or_default();
-                if let Some(icon) = crate::web_icons::best(&declaring) {
-                    crate::web_icons::said(&marked, &holder, &named, &icon);
-                }
-            });
-        }
-        #[cfg(feature = "cef")]
         {
             let marked = sending.clone();
             let named = moved.clone();
@@ -1133,12 +672,6 @@ fn reporting(
 }
 
 fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
-    #[cfg(not(feature = "cef"))]
-    {
-        let _ = seen;
-        view.url().map(|one| one.to_string()).unwrap_or_default()
-    }
-    #[cfg(feature = "cef")]
     {
         let _ = view;
         seen.lock().map(|last| last.clone()).unwrap_or_default()
@@ -1146,14 +679,12 @@ fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
 }
 
 fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(Url, String)>) {
-    #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
 
     let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
     };
 
-    #[cfg(feature = "cef")]
     if let Some((address, scripts)) = onward.clone() {
         let clearing = view.clone();
         let (hearing, named, holder) = (
@@ -1175,12 +706,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     let named = tab.to_string();
     let _ = on_the_page(app, &label_of(tab), move |view| {
         let _ = crate::engine::with_platform!(view, move |platform| {
-            #[cfg(all(windows, not(feature = "cef")))]
-            session::keep(store.as_deref(), &platform);
-            #[cfg(all(windows, not(feature = "cef")))]
-            crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
-            #[cfg(all(windows, not(feature = "cef")))]
-            crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
             crate::web_keys::listen(&platform, asking.clone(), window.clone());
             crate::keyboard::page(&asking, &platform, &label, &window);
             crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
@@ -1192,13 +717,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             crate::pinch::web_page(&platform, &asking, &label);
             crate::web_pass::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
-
-            #[cfg(not(feature = "cef"))]
-            if let Some((address, scripts)) = onward {
-                crate::web_worlds::sent(&platform, address.as_str(), &scripts, |cleared| {
-                    crate::trace::mark(&format!("web tab: {}", cleared.said()));
-                });
-            }
         });
     });
 }
@@ -1223,8 +741,6 @@ pub fn hearing(app: &AppHandle) {
     });
 }
 
-const OURS: [&str; 2] = ["http://tauri.localhost", "tauri://localhost"];
-
 fn origin_of(url: &str) -> String {
     match url.find("://") {
         Some(at) => match url[at + 3..].find('/') {
@@ -1235,38 +751,13 @@ fn origin_of(url: &str) -> String {
     }
 }
 
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(
-        dead_code,
-        reason = "only the WebView2 and WKWebView handlers ask this; see `own` in `ask`"
-    )
-)]
-fn is_ours(known: &[String], asked: &str) -> bool {
-    let origin = origin_of(asked);
-    if origin.is_empty() {
-        return false;
-    }
-
-    OURS.contains(&origin.as_str()) || known.contains(&origin)
-}
-
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(test)]
 fn capture_kinds(kind: isize) -> &'static [&'static str] {
     match kind {
         0 => &["camera"],
         1 => &["microphone"],
         2 => &["camera", "microphone"],
         _ => &[],
-    }
-}
-
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
-pub(crate) fn origin_written(protocol: &str, host: &str, port: isize) -> String {
-    if port > 0 {
-        format!("{protocol}://{host}:{port}")
-    } else {
-        format!("{protocol}://{host}")
     }
 }
 
@@ -1368,17 +859,6 @@ pub fn web_place(
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    if crate::web_visual::is_drawn_under(view.label()) {
-        crate::web_visual::visual_corner(&view, corner.unwrap_or(0.0), scale);
-        crate::web_visual::visual_opacity(&view, opacity.unwrap_or(1.0));
-    }
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    crate::web_cut::under::opacity(&view, opacity.unwrap_or(1.0));
-    #[cfg(not(any(
-        all(windows, not(feature = "cef")),
-        all(target_os = "macos", not(feature = "cef"))
-    )))]
     let _ = opacity;
     if visible {
         let _doing = crate::stall::doing("web_place: cut");
@@ -1400,7 +880,6 @@ pub fn web_place(
     }
 
     let _doing = crate::stall::doing("web_place: keyboard");
-    #[cfg(feature = "cef")]
     if visible && cut.is_some() {
         crate::keyboard::hold_for_layer(&app, window.label());
     }
@@ -1517,16 +996,6 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
 
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    return view
-        .with_webview(|platform| {
-            if let Err(error) = crate::pdf::print_sheet(&platform) {
-                eprintln!("web_print: {error}");
-            }
-        })
-        .map_err(|error| format!("that page could not be printed: {error}"));
-
-    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
     view.eval("window.print()")
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
@@ -1551,50 +1020,12 @@ pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Cl
     in_the_page(&view, script).await
 }
 
-#[cfg(feature = "cef")]
 async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
     let (view, script) = (view.clone(), script.to_string());
     tauri::async_runtime::spawn_blocking(move || crate::web_worlds::value(&view, &script))
         .await
         .ok()
         .flatten()
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "a page's world is reached through WebView2's COM interfaces"
-)]
-async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
-    let (sending, mut waiting) = tauri::async_runtime::channel::<Option<String>>(1);
-    let script = script.to_string();
-
-    view.with_webview(
-        move |platform| match unsafe { platform.controller().CoreWebView2() } {
-            Ok(core) => crate::web_worlds::evaluate(&core, script, move |answer| {
-                let _ = sending.try_send(answer);
-            }),
-            Err(_) => {
-                let _ = sending.try_send(None);
-            }
-        },
-    )
-    .ok()?;
-
-    let answer = waiting.recv().await.flatten()?;
-    serde_json::from_str::<serde_json::Value>(&answer)
-        .ok()?
-        .pointer("/result/value")
-        .cloned()
-}
-
-#[cfg(all(not(windows), not(feature = "cef")))]
-#[allow(
-    clippy::unused_async,
-    reason = "the same call as on the engines that do wait for a world"
-)]
-async fn in_our_world(_view: &Webview, _script: &str) -> Option<serde_json::Value> {
-    None
 }
 
 async fn in_the_page(view: &Webview, script: String) -> Result<Clipped, String> {
@@ -1638,7 +1069,6 @@ pub async fn web_close(
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
             crate::web_cut::uncut(view.label());
-            #[cfg(feature = "cef")]
             let_go(view.label());
             if !crate::web_answers::answers(&view) {
                 crate::web_answers::said(&closing);
@@ -1674,7 +1104,6 @@ pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, Str
     photographed(found(&app, &tab)?).await
 }
 
-#[cfg(feature = "cef")]
 async fn photographed(view: Webview) -> Result<Option<String>, String> {
     let taken = tauri::async_runtime::spawn_blocking(move || {
         crate::agents::cdp::call_in(
@@ -1698,32 +1127,6 @@ async fn photographed(view: Webview) -> Result<Option<String>, String> {
     })
 }
 
-#[cfg(not(feature = "cef"))]
-async fn photographed(view: Webview) -> Result<Option<String>, String> {
-    let (sending, mut waiting) = tauri::async_runtime::channel::<Option<Vec<u8>>>(1);
-
-    let asked = view.with_webview(move |platform| {
-        let answering = sending.clone();
-        if let Err(error) = shot::photograph(&platform, sending) {
-            eprintln!("web_shot: {error}");
-            let _ = answering.try_send(None);
-        }
-    });
-
-    if asked.is_err() {
-        return Ok(None);
-    }
-
-    let bytes = waiting.recv().await.flatten();
-    Ok(bytes.map(|one| {
-        use base64::Engine as _;
-        format!(
-            "data:image/png;base64,{}",
-            base64::engine::general_purpose::STANDARD.encode(one)
-        )
-    }))
-}
-
 #[tauri::command]
 pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
     let _ = app.run_on_main_thread(move || ask::answer(id, allow));
@@ -1731,7 +1134,6 @@ pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
 
 pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
-        #[cfg(feature = "cef")]
         let_go(view.label());
         crate::keyboard::closed(view.label());
         crate::web_follow::unfollow(view.label());
@@ -1740,7 +1142,6 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     }
 }
 
-#[cfg(feature = "cef")]
 fn let_go(label: &str) {
     crate::engine::devtools::let_go_of(label);
 }
@@ -1763,473 +1164,6 @@ pub(crate) fn on_the_page(
     })
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-mod ask {
-    use std::cell::RefCell;
-    use std::collections::HashMap;
-    use std::sync::atomic::{AtomicU64, Ordering};
-
-    use tauri::webview::PlatformWebview;
-    use tauri::{AppHandle, Emitter};
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2Deferral, ICoreWebView2PermissionRequestedEventArgs,
-        COREWEBVIEW2_PERMISSION_KIND, COREWEBVIEW2_PERMISSION_KIND_CAMERA,
-        COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ, COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION,
-        COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS, COREWEBVIEW2_PERMISSION_KIND_MICROPHONE,
-        COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES,
-        COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS,
-        COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS, COREWEBVIEW2_PERMISSION_KIND_OTHER_SENSORS,
-        COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT, COREWEBVIEW2_PERMISSION_STATE_ALLOW,
-        COREWEBVIEW2_PERMISSION_STATE_DENY,
-    };
-    use webview2_com::{NavigationStartingEventHandler, PermissionRequestedEventHandler};
-
-    use super::{Asked, ASKED};
-
-    struct Waiting {
-        tab: String,
-        args: ICoreWebView2PermissionRequestedEventArgs,
-        deferral: ICoreWebView2Deferral,
-    }
-
-    thread_local! {
-        static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
-    }
-
-    static NEXT: AtomicU64 = AtomicU64::new(1);
-
-    fn named(kind: COREWEBVIEW2_PERMISSION_KIND) -> Option<&'static str> {
-        match kind {
-            COREWEBVIEW2_PERMISSION_KIND_CAMERA => Some("camera"),
-            COREWEBVIEW2_PERMISSION_KIND_MICROPHONE => Some("microphone"),
-            COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION => Some("location"),
-            COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS => Some("notifications"),
-            COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ => Some("clipboard"),
-            COREWEBVIEW2_PERMISSION_KIND_OTHER_SENSORS => Some("sensors"),
-            COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS => Some("downloads"),
-            COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS => Some("fonts"),
-            COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES => Some("midi"),
-            COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT => Some("windows"),
-            _ => None,
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
-    )]
-    pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
-        unsafe {
-            let Ok(core) = webview.controller().CoreWebView2() else {
-                return;
-            };
-
-            let leaving = NavigationStartingEventHandler::create(Box::new({
-                let tab = tab.clone();
-                move |_, _| {
-                    forget(&tab);
-                    Ok(())
-                }
-            }));
-            let mut token = 0i64;
-            let _ = core.add_NavigationStarting(&leaving, &raw mut token);
-
-            let handler =
-                PermissionRequestedEventHandler::create(Box::new(move |_sender, args| {
-                    let Some(args) = args else {
-                        return Ok(());
-                    };
-
-                    let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
-                    if args.PermissionKind(&raw mut kind).is_err() {
-                        return Ok(());
-                    }
-                    let Some(kind) = named(kind) else {
-                        let _ = args.SetState(COREWEBVIEW2_PERMISSION_STATE_DENY);
-                        return Ok(());
-                    };
-
-                    let mut uri = windows_core::PWSTR::null();
-                    if args.Uri(&raw mut uri).is_err() {
-                        return Ok(());
-                    }
-                    let origin = webview2_com::take_pwstr(uri);
-
-                    let Ok(deferral) = args.GetDeferral() else {
-                        return Ok(());
-                    };
-
-                    let id = NEXT.fetch_add(1, Ordering::Relaxed);
-                    WAITING.with_borrow_mut(|held| {
-                        held.insert(
-                            id,
-                            Waiting {
-                                tab: tab.clone(),
-                                args: args.clone(),
-                                deferral,
-                            },
-                        );
-                    });
-
-                    let told = app.emit_to(
-                        window.as_str(),
-                        ASKED,
-                        Asked {
-                            tab: tab.clone(),
-                            id,
-                            origin,
-                            kind: kind.to_string(),
-                        },
-                    );
-                    if told.is_err() {
-                        answer(id, false);
-                    }
-
-                    Ok(())
-                }));
-
-            let mut token = 0i64;
-            let _ = core.add_PermissionRequested(&handler, &raw mut token);
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
-    )]
-    pub fn own(webview: &PlatformWebview, ours: Vec<String>) {
-        unsafe {
-            let Ok(core) = webview.controller().CoreWebView2() else {
-                return;
-            };
-
-            let handler =
-                PermissionRequestedEventHandler::create(Box::new(move |_sender, args| {
-                    let Some(args) = args else {
-                        return Ok(());
-                    };
-
-                    let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
-                    if args.PermissionKind(&raw mut kind).is_err() {
-                        return Ok(());
-                    }
-
-                    let mut uri = windows_core::PWSTR::null();
-                    if args.Uri(&raw mut uri).is_err() {
-                        return Ok(());
-                    }
-                    let origin = webview2_com::take_pwstr(uri);
-
-                    let mine = super::is_ours(&ours, &origin);
-                    let asked_for = matches!(
-                        kind,
-                        COREWEBVIEW2_PERMISSION_KIND_MICROPHONE
-                            | COREWEBVIEW2_PERMISSION_KIND_CAMERA
-                    );
-                    let allow = mine && asked_for;
-
-                    crate::trace::mark(&format!(
-                        "microphone: {origin} asked for {kind:?} and was {}",
-                        if allow { "allowed" } else { "refused" }
-                    ));
-
-                    let _ = args.SetState(if allow {
-                        COREWEBVIEW2_PERMISSION_STATE_ALLOW
-                    } else {
-                        COREWEBVIEW2_PERMISSION_STATE_DENY
-                    });
-
-                    Ok(())
-                }));
-
-            let mut token = 0i64;
-            let _ = core.add_PermissionRequested(&handler, &raw mut token);
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "the request and its deferral are WebView2's own objects"
-    )]
-    pub fn answer(id: u64, allow: bool) {
-        let Some(waiting) = WAITING.with_borrow_mut(|held| held.remove(&id)) else {
-            return;
-        };
-
-        unsafe {
-            let _ = waiting.args.SetState(if allow {
-                COREWEBVIEW2_PERMISSION_STATE_ALLOW
-            } else {
-                COREWEBVIEW2_PERMISSION_STATE_DENY
-            });
-            let _ = waiting.deferral.Complete();
-        }
-    }
-
-    pub fn forget(tab: &str) {
-        let gone: Vec<u64> = WAITING.with_borrow(|held| {
-            held.iter()
-                .filter(|(_, one)| one.tab == tab)
-                .map(|(id, _)| *id)
-                .collect()
-        });
-        for id in gone {
-            answer(id, false);
-        }
-    }
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod ask {
-    use std::cell::RefCell;
-    use std::collections::HashMap;
-    use std::ffi::c_void;
-    use std::sync::atomic::{AtomicU64, Ordering};
-
-    use block2::{DynBlock, RcBlock};
-    use objc2::rc::Retained;
-    use objc2::runtime::{AnyObject, NSObject, ProtocolObject, Sel};
-    use objc2::{define_class, msg_send, DefinedClass, MainThreadOnly};
-    use objc2_foundation::{MainThreadMarker, NSObjectProtocol};
-    use objc2_web_kit::{
-        WKFrameInfo, WKMediaCaptureType, WKPermissionDecision, WKSecurityOrigin, WKUIDelegate,
-        WKWebView,
-    };
-    use tauri::webview::PlatformWebview;
-    use tauri::{AppHandle, Emitter};
-
-    use super::{Asked, ASKED};
-
-    enum Answering {
-        Tab {
-            app: AppHandle,
-            tab: String,
-            window: String,
-        },
-        Own {
-            ours: Vec<String>,
-        },
-    }
-
-    struct Held {
-        inner: Option<Retained<ProtocolObject<dyn WKUIDelegate>>>,
-        answering: Answering,
-    }
-
-    define_class!(
-        #[unsafe(super(NSObject))]
-        #[thread_kind = MainThreadOnly]
-        #[name = "OrdenWebCaptureDelegate"]
-        #[ivars = Held]
-        struct Gate;
-
-        unsafe impl NSObjectProtocol for Gate {}
-
-        unsafe impl WKUIDelegate for Gate {
-            #[unsafe(method(webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:))]
-            fn request_media_capture_permission(
-                &self,
-                _webview: &WKWebView,
-                _origin: &WKSecurityOrigin,
-                frame: &WKFrameInfo,
-                kind: WKMediaCaptureType,
-                decide: &DynBlock<dyn Fn(WKPermissionDecision)>,
-            ) {
-                requested(&self.ivars().answering, frame, kind, decide);
-            }
-        }
-
-        impl Gate {
-            #[unsafe(method(respondsToSelector:))]
-            fn responds_to_selector(&self, selector: Sel) -> bool {
-                forwards(self, selector)
-            }
-
-            #[unsafe(method(forwardingTargetForSelector:))]
-            fn forwarding_target_for_selector(&self, _selector: Sel) -> *mut AnyObject {
-                self.ivars()
-                    .inner
-                    .as_ref()
-                    .map_or(std::ptr::null_mut(), |inner| {
-                        Retained::as_ptr(inner).cast::<AnyObject>().cast_mut()
-                    })
-            }
-        }
-    );
-
-    #[allow(
-        unsafe_code,
-        reason = "the superclass's own answer is asked for through the Objective-C runtime"
-    )]
-    fn forwards(gate: &Gate, selector: Sel) -> bool {
-        let own: bool = unsafe { msg_send![super(gate), respondsToSelector: selector] };
-        own || gate
-            .ivars()
-            .inner
-            .as_ref()
-            .is_some_and(|inner| inner.respondsToSelector(selector))
-    }
-
-    struct Waiting {
-        decide: RcBlock<dyn Fn(WKPermissionDecision)>,
-        then: Option<&'static str>,
-        origin: String,
-        app: AppHandle,
-        tab: String,
-        window: String,
-    }
-
-    thread_local! {
-        static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
-    }
-
-    static NEXT: AtomicU64 = AtomicU64::new(1);
-
-    static KEPT: u8 = 0;
-
-    #[allow(
-        unsafe_code,
-        reason = "a frame's security origin is read through the Objective-C runtime"
-    )]
-    fn origin_of(frame: &WKFrameInfo) -> String {
-        unsafe {
-            let origin = frame.securityOrigin();
-            super::origin_written(
-                &origin.protocol().to_string(),
-                &origin.host().to_string(),
-                origin.port(),
-            )
-        }
-    }
-
-    fn requested(
-        answering: &Answering,
-        frame: &WKFrameInfo,
-        kind: WKMediaCaptureType,
-        decide: &DynBlock<dyn Fn(WKPermissionDecision)>,
-    ) {
-        let origin = origin_of(frame);
-        let asked = super::capture_kinds(kind.0);
-
-        match answering {
-            Answering::Own { ours } => {
-                let allow = !asked.is_empty() && super::is_ours(ours, &origin);
-                crate::trace::mark(&format!(
-                    "microphone: {origin} asked for {asked:?} and was {}",
-                    if allow { "allowed" } else { "refused" }
-                ));
-                decide.call((if allow {
-                    WKPermissionDecision::Grant
-                } else {
-                    WKPermissionDecision::Deny
-                },));
-            }
-            Answering::Tab { app, tab, window } => {
-                let Some((first, rest)) = asked.split_first() else {
-                    decide.call((WKPermissionDecision::Deny,));
-                    return;
-                };
-
-                hold(
-                    Waiting {
-                        decide: decide.copy(),
-                        then: rest.first().copied(),
-                        origin,
-                        app: app.clone(),
-                        tab: tab.clone(),
-                        window: window.clone(),
-                    },
-                    first,
-                );
-            }
-        }
-    }
-
-    fn hold(waiting: Waiting, kind: &str) {
-        let id = NEXT.fetch_add(1, Ordering::Relaxed);
-        let said = Asked {
-            tab: waiting.tab.clone(),
-            id,
-            origin: waiting.origin.clone(),
-            kind: kind.to_string(),
-        };
-        let (app, window) = (waiting.app.clone(), waiting.window.clone());
-
-        WAITING.with_borrow_mut(|held| held.insert(id, waiting));
-        if app.emit_to(window.as_str(), ASKED, said).is_err() {
-            answer(id, false);
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a WKWebView's UI delegate is set, and kept alive, through the Objective-C runtime"
-    )]
-    fn guard(webview: &PlatformWebview, answering: Answering) {
-        let Some(mtm) = MainThreadMarker::new() else {
-            return;
-        };
-
-        let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
-            return;
-        };
-
-        unsafe {
-            let inner = view.UIDelegate();
-            let gate = Gate::alloc(mtm).set_ivars(Held { inner, answering });
-            let gate: Retained<Gate> = msg_send![super(gate), init];
-
-            view.setUIDelegate(Some(ProtocolObject::from_ref(&*gate)));
-            objc2::ffi::objc_setAssociatedObject(
-                Retained::as_ptr(&view).cast::<AnyObject>().cast_mut(),
-                (&raw const KEPT).cast::<c_void>(),
-                Retained::as_ptr(&gate).cast::<AnyObject>().cast_mut(),
-                objc2::ffi::OBJC_ASSOCIATION_RETAIN_NONATOMIC,
-            );
-        }
-    }
-
-    pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
-        guard(webview, Answering::Tab { app, tab, window });
-    }
-
-    pub fn own(webview: &PlatformWebview, ours: Vec<String>) {
-        guard(webview, Answering::Own { ours });
-    }
-
-    pub fn answer(id: u64, allow: bool) {
-        let Some(mut waiting) = WAITING.with_borrow_mut(|held| held.remove(&id)) else {
-            return;
-        };
-
-        if allow {
-            if let Some(next) = waiting.then.take() {
-                hold(waiting, next);
-                return;
-            }
-        }
-
-        waiting.decide.call((if allow {
-            WKPermissionDecision::Grant
-        } else {
-            WKPermissionDecision::Deny
-        },));
-    }
-
-    pub fn forget(tab: &str) {
-        let gone: Vec<u64> = WAITING.with_borrow(|held| {
-            held.iter()
-                .filter(|(_, one)| one.tab == tab)
-                .map(|(id, _)| *id)
-                .collect()
-        });
-        for id in gone {
-            answer(id, false);
-        }
-    }
-}
-
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
 mod ask {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
@@ -2243,159 +1177,11 @@ mod ask {
     pub fn forget(_tab: &str) {}
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-mod shot {
-    use tauri::async_runtime::Sender;
-    use tauri::webview::PlatformWebview;
-    use webview2_com::CapturePreviewCompletedHandler;
-    use webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG;
-    use windows_com::Win32::Foundation::HGLOBAL;
-    use windows_com::Win32::System::Com::{
-        IStream, StructuredStorage::CreateStreamOnHGlobal, STREAM_SEEK_END, STREAM_SEEK_SET,
-    };
-
-    #[allow(
-        unsafe_code,
-        reason = "CapturePreview is reached through WebView2's COM interfaces, and the picture comes back in a COM stream"
-    )]
-    pub fn photograph(
-        webview: &PlatformWebview,
-        done: Sender<Option<Vec<u8>>>,
-    ) -> Result<(), String> {
-        unsafe {
-            let core = webview
-                .controller()
-                .CoreWebView2()
-                .map_err(|error| error.to_string())?;
-
-            let stream: IStream = CreateStreamOnHGlobal(HGLOBAL(std::ptr::null_mut()), true)
-                .map_err(|error| error.to_string())?;
-
-            let reading = stream.clone();
-            let handler = CapturePreviewCompletedHandler::create(Box::new(move |result| {
-                let bytes = match result {
-                    Err(_) => None,
-                    Ok(()) => png(&reading),
-                };
-                let _ = done.try_send(bytes);
-                Ok(())
-            }));
-
-            core.CapturePreview(
-                COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG,
-                &stream,
-                &handler,
-            )
-            .map_err(|error| error.to_string())
-        }
-    }
-
-    #[allow(unsafe_code, reason = "a COM stream is read through its own interface")]
-    pub fn png(stream: &IStream) -> Option<Vec<u8>> {
-        unsafe {
-            let mut end = 0u64;
-            stream.Seek(0, STREAM_SEEK_END, Some(&raw mut end)).ok()?;
-            stream.Seek(0, STREAM_SEEK_SET, None).ok()?;
-
-            let size = usize::try_from(end).ok()?;
-            if size == 0 || size > 32 * 1024 * 1024 {
-                return None;
-            }
-
-            let mut bytes = vec![0u8; size];
-            let mut read = 0u32;
-            let got = stream.Read(
-                bytes.as_mut_ptr().cast(),
-                u32::try_from(size).ok()?,
-                Some(&raw mut read),
-            );
-            if got.is_err() {
-                return None;
-            }
-
-            bytes.truncate(usize::try_from(read).unwrap_or(0));
-            (!bytes.is_empty()).then_some(bytes)
-        }
-    }
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod shot {
-    use block2::RcBlock;
-    use objc2::rc::Retained;
-    use objc2_app_kit::{NSBitmapImageFileType, NSBitmapImageRep, NSImage};
-    use objc2_foundation::{NSDictionary, NSError};
-    use objc2_web_kit::WKWebView;
-    use tauri::async_runtime::Sender;
-    use tauri::webview::PlatformWebview;
-
-    const LARGEST: usize = 32 * 1024 * 1024;
-
-    #[allow(
-        unsafe_code,
-        reason = "WKWebView's snapshot is reached through the Objective-C runtime, from the pointer wry hands out"
-    )]
-    pub fn photograph(
-        webview: &PlatformWebview,
-        done: Sender<Option<Vec<u8>>>,
-    ) -> Result<(), String> {
-        let view = unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }
-            .ok_or("there is no page to photograph")?;
-
-        let handler = RcBlock::new(move |image: *mut NSImage, _error: *mut NSError| {
-            let bytes = unsafe { image.as_ref() }.and_then(png);
-            let _ = done.try_send(bytes);
-        });
-
-        unsafe { view.takeSnapshotWithConfiguration_completionHandler(None, &handler) };
-        Ok(())
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a bitmap is encoded through AppKit's Objective-C interface"
-    )]
-    fn png(image: &NSImage) -> Option<Vec<u8>> {
-        let tiff = image.TIFFRepresentation()?;
-        let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)?;
-        let data = unsafe {
-            bitmap.representationUsingType_properties(
-                NSBitmapImageFileType::PNG,
-                &NSDictionary::new(),
-            )
-        }?;
-
-        let bytes = data.to_vec();
-        (!bytes.is_empty() && bytes.len() <= LARGEST).then_some(bytes)
-    }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) use shot::png as read_stream;
-
-#[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
-mod shot {
-    use tauri::async_runtime::Sender;
-    use tauri::webview::PlatformWebview;
-
-    #[allow(
-        clippy::unnecessary_wraps,
-        reason = "the signature matches the Windows photograph, which does fail"
-    )]
-    pub fn photograph(
-        _webview: &PlatformWebview,
-        done: Sender<Option<Vec<u8>>>,
-    ) -> Result<(), String> {
-        let _ = done.try_send(None);
-        Ok(())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{
-        address, allowed, becomes, capture_kinds, frame_may_open, handed_over, is_ours, opening,
-        origin_of, origin_written, reader, tab_of, Becomes, Place, Profile, Trail, WebTabs, BLANK,
+        address, allowed, becomes, capture_kinds, handed_over, opening, origin_of, reader, tab_of,
+        Becomes, Place, Profile, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -2541,46 +1327,12 @@ mod tests {
     }
 
     #[test]
-    fn the_window_own_page_is_the_app() {
-        assert!(is_ours(&[], "http://tauri.localhost/"));
-        assert!(is_ours(&[], "http://tauri.localhost"));
-        assert!(is_ours(&[], "tauri://localhost/index.html"));
-        let dev = vec!["http://localhost:1420".to_string()];
-        assert!(is_ours(&dev, "http://localhost:1420/"));
-    }
-
-    #[test]
-    fn and_nothing_else_is() {
-        assert!(!is_ours(&[], "https://tauri.localhost/"));
-        assert!(!is_ours(&[], "http://tauri.localhost.example.com/"));
-        assert!(!is_ours(&[], "http://evil.example/"));
-        let dev = vec!["http://localhost:1420".to_string()];
-        assert!(!is_ours(&dev, "http://localhost:8080/"));
-        assert!(!is_ours(&[], ""));
-        assert!(!is_ours(&[], "about:blank"));
-    }
-
-    #[test]
     fn a_capture_request_is_asked_about_kind_by_kind() {
         assert_eq!(capture_kinds(0), ["camera"]);
         assert_eq!(capture_kinds(1), ["microphone"]);
         assert_eq!(capture_kinds(2), ["camera", "microphone"]);
         assert!(capture_kinds(3).is_empty());
         assert!(capture_kinds(-1).is_empty());
-    }
-
-    #[test]
-    fn a_security_origin_is_written_as_an_origin() {
-        assert_eq!(
-            origin_written("https", "example.com", 0),
-            "https://example.com"
-        );
-        assert_eq!(
-            origin_written("http", "localhost", 1420),
-            "http://localhost:1420"
-        );
-        assert!(is_ours(&[], &origin_written("tauri", "localhost", 0)));
-        assert!(!is_ours(&[], &origin_written("https", "evil.example", 0)));
     }
 
     #[test]
@@ -2600,31 +1352,6 @@ mod tests {
         assert!(!allowed(&at("file:///C:/notes/Idea.md")));
         assert!(!allowed(&at("mailto:someone@example.com")));
         assert!(!allowed(&at("data:text/html,<p>hi")));
-    }
-
-    #[test]
-    fn a_frame_holds_the_page_s_own_documents_and_nothing_a_tab_may_not_open() {
-        for own in [
-            "about:blank",
-            "about:srcdoc",
-            "data:text/html,<p>hi",
-            "blob:https://example.com/4b1f-11",
-            "https://example.com/embed",
-        ] {
-            assert!(frame_may_open(&at(own)), "{own}");
-        }
-        for never in [
-            "about:preferences",
-            "blob:file:///C:/x",
-            "blob:http://tauri.localhost/1",
-            "file:///C:/notes/Idea.md",
-            "http://ipc.localhost/notes",
-            "orden://open?path=a.md",
-            "mailto:someone@example.com",
-        ] {
-            assert!(!frame_may_open(&at(never)), "{never}");
-        }
-        assert!(!allowed(&at("about:blank")));
     }
 
     #[test]
@@ -2793,22 +1520,6 @@ mod tests {
         }
     }
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    #[test]
-    fn a_page_is_handed_the_keys_script_and_nothing_else() {
-        assert_eq!(
-            opening(None, "https://a.example/page", true),
-            format!(
-                "{};\n{};\n{};\n{};\n",
-                crate::web_opens::SCRIPT,
-                crate::web_swipe::script(),
-                super::bars(),
-                crate::web_pass::script()
-            )
-        );
-    }
-
-    #[cfg(feature = "cef")]
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
@@ -2825,15 +1536,6 @@ mod tests {
                 },
                 crate::web_pass::script()
             )
-        );
-    }
-
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    #[test]
-    fn a_page_on_a_mac_is_handed_pass_s_script_alone() {
-        assert_eq!(
-            opening(None, "https://a.example/page", true),
-            format!("{};\n", crate::web_pass::script())
         );
     }
 
@@ -2960,21 +1662,6 @@ mod tests {
             .and_then(|from| from.split("\n}\n").next())
             .expect("the close");
         assert!(close.contains("ask::forget(&named)"));
-
-        let asking = source
-            .split("mod ask {")
-            .nth(1)
-            .and_then(|from| from.split("pub fn listen(").nth(1))
-            .and_then(|from| from.split("\n    }\n").next())
-            .expect("the windows asks");
-        let leaving = asking
-            .find("add_NavigationStarting")
-            .expect("let go as it leaves");
-        assert!(leaving < asking.find("add_PermissionRequested").expect("heard"));
-        assert!(asking.contains("forget(&tab)"));
-
-        let dialogs = include_str!("web_dialogs.rs");
-        assert!(dialogs.contains("add_NavigationStarting(&starting"));
     }
 
     #[test]

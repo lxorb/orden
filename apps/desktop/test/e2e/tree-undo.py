@@ -5,7 +5,7 @@ import re
 
 from playwright.sync_api import Browser, Page
 
-from harness import WEBKIT, Drive
+from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -165,7 +165,7 @@ def drive(browser: Browser) -> None:
         page.evaluate("() => window.ordenApp.workspace.device.expand(window.ordenApp.workspace.activeSpace.root.replace(/\\/$/, '') + '/Work')")
         row(page, "Work/Ideas.md").click(modifiers=["Alt"])
         row(page, "Work/Ideas.md").focus()
-        page.keyboard.press("Meta+Backspace" if WEBKIT else "Delete")
+        page.keyboard.press("Delete")
         two = but("Plan.md", "Work/Ideas.md")
         until(page, two, "two deleted at once")
         recorded(page, "two deleted at once")

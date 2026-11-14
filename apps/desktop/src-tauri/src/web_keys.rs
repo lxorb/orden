@@ -1,6 +1,5 @@
 use serde::Serialize;
 
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub const PRESSED: &str = "orden://web-key";
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
@@ -21,12 +20,11 @@ pub struct Pressed {
 }
 
 impl Pressed {
-    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+    #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
     pub fn keeps_page(&self) -> bool {
         self.code == "F11"
     }
 
-    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
     pub const fn with_ctrl(key: &'static str, code: &'static str, shift: bool) -> Self {
         Self {
             key,
@@ -42,7 +40,6 @@ impl Pressed {
     }
 }
 
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     let pressed = |key, code| Pressed {
         key,
@@ -92,13 +89,7 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
     }
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     if !down || repeat || held.ctrl {
         return None;
@@ -135,13 +126,7 @@ fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
     DIGITS.get(at).copied()
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
     const LETTERS: [(&str, &str, &str); 26] = [
         ("a", "A", "KeyA"),
@@ -236,14 +221,7 @@ fn take(window: &str, chords: Vec<Chord>) {
     taken.push((window.to_owned(), chords));
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux"),
-        test
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn app_chords(window: &str) -> Vec<Chord> {
     TAKEN
         .read()
@@ -254,10 +232,7 @@ fn app_chords(window: &str) -> Vec<Chord> {
         .unwrap_or_default()
 }
 
-#[cfg_attr(
-    not(any(all(feature = "cef", target_os = "linux"), test)),
-    allow(dead_code)
-)]
+#[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn every_chord() -> Vec<Chord> {
     TAKEN
         .read()
@@ -267,13 +242,7 @@ fn every_chord() -> Vec<Chord> {
         .collect()
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Option<Pressed> {
     if !down || !taken.contains(&Chord { vk, held }) {
         return None;
@@ -288,7 +257,7 @@ fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Opti
     })
 }
 
-#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn heard_raw(
     vk: u32,
     held: Held,
@@ -322,99 +291,17 @@ pub fn web_keys_take(app: tauri::AppHandle, window: tauri::Window, chords: Vec<A
     tells_alt(&app)
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-fn tells_alt(_app: &tauri::AppHandle) -> bool {
-    true
-}
-
-#[cfg(all(feature = "cef", target_os = "linux"))]
+#[cfg(target_os = "linux")]
 fn tells_alt(app: &tauri::AppHandle) -> bool {
     grabbed::retake(app)
 }
 
-#[cfg(not(any(
-    all(windows, not(feature = "cef")),
-    all(feature = "cef", target_os = "linux")
-)))]
+#[cfg(not(target_os = "linux"))]
 fn tells_alt(_app: &tauri::AppHandle) -> bool {
     false
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "a key pressed in a page is one of WebView2's own events, and its objects are reached through COM"
-)]
-pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, window: String) {
-    use tauri::{Emitter, Manager};
-    use webview2_com::AcceleratorKeyPressedEventHandler;
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        COREWEBVIEW2_KEY_EVENT_KIND, COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN,
-        COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN, COREWEBVIEW2_PHYSICAL_KEY_STATUS,
-    };
-    use windows::Win32::UI::Input::KeyboardAndMouse::{
-        GetAsyncKeyState, GetKeyState, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT,
-    };
-
-    let held = |key: VIRTUAL_KEY| {
-        let code = i32::from(key.0);
-        unsafe { GetKeyState(code) < 0 || GetAsyncKeyState(code) < 0 }
-    };
-
-    unsafe {
-        let handler = AcceleratorKeyPressedEventHandler::create(Box::new(move |sender, args| {
-            let Some(args) = args else {
-                return Ok(());
-            };
-
-            let mut kind = COREWEBVIEW2_KEY_EVENT_KIND::default();
-            let mut vk = 0u32;
-            let mut status = COREWEBVIEW2_PHYSICAL_KEY_STATUS::default();
-            args.KeyEventKind(&raw mut kind)?;
-            args.VirtualKey(&raw mut vk)?;
-            args.PhysicalKeyStatus(&raw mut status)?;
-
-            let down = kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN
-                || kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN;
-            let now = Held {
-                ctrl: held(VK_CONTROL),
-                shift: held(VK_SHIFT),
-                alt: held(VK_MENU),
-            };
-            let repeat = status.WasKeyDown.as_bool();
-            if vk == 0x7A && sender.is_some_and(|one| crate::web_page::holds_screen(&one)) {
-                return Ok(());
-            }
-            let pressed = meaning(vk, now, down, repeat)
-                .or_else(|| app_s(vk, now, down, repeat, &app_chords(&window)));
-            let Some(pressed) = pressed else {
-                if let Some(said) = told(vk, now, down, repeat) {
-                    let _ = app.emit_to(window.as_str(), PRESSED, said);
-                }
-                return Ok(());
-            };
-
-            if down {
-                args.SetHandled(true)?;
-                if !pressed.keeps_page() {
-                    if let Some(ours) = app.get_webview(&window) {
-                        crate::placement::keyboard_to(&ours);
-                    }
-                }
-            }
-
-            let _ = app.emit_to(window.as_str(), PRESSED, pressed);
-            Ok(())
-        }));
-
-        let mut token = 0i64;
-        let _ = webview
-            .controller()
-            .add_AcceleratorKeyPressed(&handler, &raw mut token);
-    }
-}
-
-#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     if held.alt {
         return None;
@@ -434,7 +321,7 @@ pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     }
 }
 
-#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn vk_of(keyval: u32) -> Option<u32> {
     match keyval {
         0x61..=0x7A => Some(keyval - 0x20),
@@ -452,28 +339,24 @@ pub fn vk_of(keyval: u32) -> Option<u32> {
     }
 }
 
-#[cfg(not(any(windows, feature = "cef")))]
-pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
-}
-
-#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn page_took_focus(mode: u8, detail: u8) -> bool {
     !matches!(mode, 1 | 2) && !matches!(detail, 5..=7)
 }
 
-#[cfg(all(feature = "cef", target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub use grabbed::{focus_in, listen};
 
-#[cfg(all(feature = "cef", not(target_os = "linux")))]
+#[cfg(not(target_os = "linux"))]
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
 
-#[cfg(all(feature = "cef", not(target_os = "linux")))]
+#[cfg(not(target_os = "linux"))]
 pub fn focus_in(_pages: &[u32]) -> Option<u32> {
     None
 }
 
-#[cfg(all(feature = "cef", target_os = "linux"))]
+#[cfg(target_os = "linux")]
 mod grabbed {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex, OnceLock, PoisonError};

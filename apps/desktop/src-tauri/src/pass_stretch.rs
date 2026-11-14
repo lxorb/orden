@@ -47,7 +47,7 @@ pub async fn pass_stretch(
 ) -> Result<String, String> {
     #[cfg(desktop)]
     crate::agents::from_the_app(&webview)?;
-    #[cfg(not(desktop))]
+    #[cfg(mobile)]
     let _ = webview;
     let secret = Zeroizing::new(secret);
     let salt = STANDARD

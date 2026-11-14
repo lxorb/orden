@@ -5,26 +5,8 @@ use tauri::AppHandle;
 mod separately;
 mod x509;
 
-#[cfg(feature = "cef")]
 #[path = "web_certificate/chromium.rs"]
 mod engine;
-#[cfg(all(windows, not(feature = "cef")))]
-#[path = "web_certificate/webview2.rs"]
-mod engine;
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-#[path = "web_certificate/webkit.rs"]
-mod engine;
-#[cfg(not(any(feature = "cef", windows, target_os = "macos")))]
-mod engine {
-    use tauri::Webview;
-
-    use super::Served;
-
-    #[allow(clippy::unused_async, reason = "the same call as on the other engines")]
-    pub async fn read(_view: Webview, _address: &str) -> Option<Served> {
-        None
-    }
-}
 
 #[derive(Serialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]

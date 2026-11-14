@@ -299,7 +299,7 @@ fn window_builder<'a>(
         .title("Orden")
         .inner_size(1180.0, 760.0)
         .min_inner_size(520.0, 400.0);
-    #[cfg(not(all(any(target_os = "macos", windows), feature = "cef")))]
+    #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
 
     #[cfg(not(target_os = "macos"))]
@@ -307,11 +307,6 @@ fn window_builder<'a>(
     #[cfg(target_os = "macos")]
     let builder = builder.visible(false);
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder
-        .additional_browser_args(&crate::engine::browser_args(app))
-        .initialization_script(crate::page_scheme::SCRIPT);
-    #[cfg(feature = "cef")]
     let builder = crate::engine::own_window(builder);
 
     builder

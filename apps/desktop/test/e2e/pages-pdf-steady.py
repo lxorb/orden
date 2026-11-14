@@ -15,7 +15,6 @@ from heavy_paper import BENCH_BODY, REFERENCE, heavy_paper  # noqa: E402
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-WEBKIT = os.environ.get("ORDEN_ENGINE", "chromium") == "webkit"
 
 OPEN_LIMIT = float(os.environ.get("ORDEN_OPEN_LIMIT") or 8000)
 
@@ -190,7 +189,7 @@ def drive(browser: Browser) -> None:
         wrong(f"opening the page note held the main thread {opening['blocked']:.0f} ms")
     shot(page, "opened")
 
-    cdp = None if WEBKIT else context.new_cdp_session(page)
+    cdp = context.new_cdp_session(page)
     frames = Frames(cdp) if cdp else None
     box = page.locator(".pages").first.bounding_box()
     assert box

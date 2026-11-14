@@ -1,7 +1,6 @@
 use std::path::Path;
 use std::sync::OnceLock;
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("gpu.js");
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -34,19 +33,12 @@ static SEEN: OnceLock<Seen> = OnceLock::new();
 
 const FILE: &str = "gpu.txt";
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub(crate) const OFF: [&str; 2] = ["--disable-gpu", "--disable-gpu-compositing"];
 
 static ACCELERATED: OnceLock<bool> = OnceLock::new();
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub fn accelerated(config: &Path) -> bool {
     *ACCELERATED.get_or_init(|| chosen(config))
-}
-
-#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
-pub fn this_run() -> bool {
-    ACCELERATED.get().copied().unwrap_or(true)
 }
 
 fn chosen(config: &Path) -> bool {

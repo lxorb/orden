@@ -175,11 +175,7 @@ pub fn heard(window: &Window, event: &WindowEvent) {
             new_inner_size,
             ..
         } => {
-            let scale = if cfg!(feature = "cef") {
-                crate::page_scale::of(window).unwrap_or(*scale_factor)
-            } else {
-                *scale_factor
-            };
+            let scale = crate::page_scale::of(window).unwrap_or(*scale_factor);
             (
                 extent(new_inner_size.width, new_inner_size.height, scale),
                 scale,

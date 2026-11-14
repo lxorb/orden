@@ -338,7 +338,7 @@ def note_menu(page: Page) -> None:
 
     def caret_on(words: str | None) -> dict:
         page.evaluate("() => document.querySelector('.cm-content').focus()")
-        page.keyboard.press("Meta+ArrowUp" if harness.WEBKIT else "Control+Home")
+        page.keyboard.press("Control+Home")
         past = False
         for _ in range(12):
             at = page.evaluate(LINE)
@@ -464,8 +464,7 @@ VERSION = (
 )
 
 def version_row(page: Page) -> None:
-    if not harness.WEBKIT:
-        page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.evaluate("() => window.ordenApp.settings.show()")
     wait_for(page, f"!!{VERSION}", "the version's row")
     quiet(page)

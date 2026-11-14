@@ -1,15 +1,13 @@
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SWITCH: (&str, &str) = ("--force-device-scale-factor", "1");
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("page_scale.js");
 
-#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
     (xft_dpi > 0).then(|| (f64::from(xft_dpi) / 1024.0 / 96.0).clamp(0.5, 4.0))
 }
 
-#[cfg_attr(not(all(feature = "cef", target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     let big = *data.first()? == b'B';
     let word = |at: usize| -> Option<u32> {
@@ -52,10 +50,8 @@ pub(crate) fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     None
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 const RUNGS: [f64; 8] = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 fn zoom_of(factor: f64) -> Option<f64> {
     (factor.is_finite() && factor > 0.0).then(|| {
         RUNGS
@@ -67,45 +63,25 @@ fn zoom_of(factor: f64) -> Option<f64> {
 
 #[tauri::command(async)]
 pub fn interface_zoom_chosen() -> f64 {
-    #[cfg(feature = "cef")]
     {
         engine::in_force()
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        1.0
     }
 }
 
 #[tauri::command(async)]
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(
-        clippy::needless_pass_by_value,
-        reason = "a command's arguments are its own"
-    )
-)]
 pub fn interface_zoom_choose(
     app: tauri::AppHandle<crate::Engine>,
     factor: f64,
 ) -> Result<(), String> {
-    #[cfg(feature = "cef")]
     {
         engine::choose(&app, factor)
     }
-    #[cfg(not(feature = "cef"))]
-    {
-        let _ = (app, factor);
-        Err("the interface has no zoom here".to_owned())
-    }
 }
 
-#[cfg(feature = "cef")]
 pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
     engine::read_chosen(app);
 }
 
-#[cfg(feature = "cef")]
 mod engine {
     use std::collections::HashMap;
     use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
@@ -189,7 +165,6 @@ mod engine {
     }
 }
 
-#[cfg(feature = "cef")]
 pub fn start(app: &tauri::AppHandle<crate::Engine>) {
     let scale = engine::start();
     crate::logs::say(
@@ -202,49 +177,26 @@ pub fn start(app: &tauri::AppHandle<crate::Engine>) {
 }
 
 #[tauri::command(async)]
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(
-        clippy::needless_pass_by_value,
-        reason = "a command's arguments are its own"
-    )
-)]
 pub fn page_scale_seen(webview: tauri::Webview<crate::Engine>, ratio: f64) {
     if !ratio.is_finite() || ratio <= 0.0 {
         return;
     }
-    #[cfg(feature = "cef")]
     engine::heard(&webview, ratio);
-    #[cfg(not(feature = "cef"))]
-    let _ = (webview, ratio);
 }
 
-#[cfg_attr(
-    feature = "cef",
-    allow(
-        clippy::unnecessary_wraps,
-        reason = "the window's scale, elsewhere, can fail"
-    )
+#[allow(
+    clippy::unnecessary_wraps,
+    reason = "the window's scale, elsewhere, can fail"
 )]
 pub fn of(window: &tauri::Window<crate::Engine>) -> tauri::Result<f64> {
-    #[cfg(feature = "cef")]
     {
         Ok(engine::of(window))
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        window.scale_factor()
     }
 }
 
 pub fn web(factor: f64) -> f64 {
-    #[cfg(feature = "cef")]
     {
         factor * engine::desktop()
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        factor
     }
 }
 

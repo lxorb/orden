@@ -4,7 +4,7 @@ use orden_lib as orden;
 
 fn main() {
     orden::former_name::carry_env();
-    #[cfg(feature = "cef")]
+    #[cfg(desktop)]
     if orden::cef_helper() {
         return;
     }

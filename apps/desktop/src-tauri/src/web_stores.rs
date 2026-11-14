@@ -1,10 +1,3 @@
-#[cfg_attr(
-    any(feature = "cef", target_os = "macos"),
-    allow(
-        dead_code,
-        reason = "a Mac's own engine is handed an identifier rather than a folder, and Orden's own Chromium keeps every store in its primary profile; the folder is what Windows and Linux use"
-    )
-)]
 pub(crate) const STORES: &str = "web-stores";
 
 pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
@@ -15,7 +8,7 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     }
 }
 
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(test)]
 pub(crate) fn identifier(name: &str) -> [u8; 16] {
     fn hashed(name: &str, start: u64) -> u64 {
         name.bytes().fold(start, |hash, byte| {

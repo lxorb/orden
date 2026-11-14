@@ -70,7 +70,6 @@ pub(crate) async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), Strin
     engine::set(view, cookies, now()).await
 }
 
-#[cfg(any(windows, feature = "cef"))]
 pub(crate) mod engine {
     use serde_json::{json, Map, Value};
     use tauri::Webview;
@@ -98,24 +97,6 @@ pub(crate) mod engine {
             .as_array()
             .map(|list| list.iter().filter_map(from_devtools).collect())
             .unwrap_or_default()
-    }
-
-    #[cfg_attr(
-        feature = "cef",
-        allow(
-            dead_code,
-            reason = "web_cookies.rs, its one caller, is WebView2's and WKWebView's"
-        )
-    )]
-    pub(crate) fn deleting(cookie: &Cookie) -> Value {
-        let mut asked = Map::new();
-        asked.insert("name".into(), json!(cookie.name));
-        asked.insert("domain".into(), json!(cookie.domain));
-        asked.insert("path".into(), json!(cookie.path));
-        if let Some(partition) = &cookie.partition {
-            asked.insert("partitionKey".into(), partition_key(partition));
-        }
-        Value::Object(asked)
     }
 
     fn partition_key(partition: &Partition) -> Value {
@@ -205,100 +186,6 @@ pub(crate) mod engine {
             out.insert("sourcePort".into(), json!(port));
         }
         Value::Object(out)
-    }
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod engine {
-    use tauri::webview::cookie;
-    use tauri::Webview;
-
-    use super::{until, Cookie, SameSite};
-
-    async fn blocking<T: Send + 'static>(
-        view: &Webview,
-        work: impl FnOnce(Webview) -> Result<T, String> + Send + 'static,
-    ) -> Result<T, String> {
-        let view = view.clone();
-        tauri::async_runtime::spawn_blocking(move || work(view))
-            .await
-            .map_err(|error| error.to_string())?
-    }
-
-    pub(super) async fn all(view: &Webview) -> Result<Vec<Cookie>, String> {
-        blocking(view, |view| {
-            Ok(view
-                .cookies()
-                .map_err(|error| error.to_string())?
-                .iter()
-                .map(from_engine)
-                .collect())
-        })
-        .await
-    }
-
-    pub(super) async fn set(view: &Webview, cookies: &[&Cookie], now: f64) -> Result<(), String> {
-        let made: Vec<cookie::Cookie<'static>> =
-            cookies.iter().map(|one| to_engine(one, now)).collect();
-        blocking(view, move |view| {
-            for one in made {
-                view.set_cookie(one).map_err(|error| error.to_string())?;
-            }
-            Ok(())
-        })
-        .await
-    }
-
-    #[allow(
-        clippy::cast_precision_loss,
-        reason = "seconds since 1970 fit a double's 53 bits for millions of years"
-    )]
-    fn seconds(at: cookie::time::OffsetDateTime) -> f64 {
-        at.unix_timestamp() as f64
-    }
-
-    fn from_engine(said: &cookie::Cookie<'static>) -> Cookie {
-        Cookie {
-            name: said.name().to_owned(),
-            value: said.value().to_owned(),
-            domain: said.domain_raw().unwrap_or_default().to_owned(),
-            path: said.path().unwrap_or("/").to_owned(),
-            expires: said.expires_datetime().map(seconds),
-            http_only: said.http_only().unwrap_or(false),
-            secure: said.secure().unwrap_or(false),
-            same_site: said.same_site().map(|one| match one {
-                cookie::SameSite::Strict => SameSite::Strict,
-                cookie::SameSite::Lax => SameSite::Lax,
-                cookie::SameSite::None => SameSite::None,
-            }),
-            priority: None,
-            partition: None,
-            source_scheme: None,
-            source_port: None,
-        }
-    }
-
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "an expiry is whole seconds; the fraction a cookie store keeps is noise"
-    )]
-    fn to_engine(one: &Cookie, now: f64) -> cookie::Cookie<'static> {
-        let expires = cookie::time::OffsetDateTime::from_unix_timestamp(until(one, now) as i64)
-            .map_or(cookie::Expiration::Session, cookie::Expiration::DateTime);
-        let mut made = cookie::Cookie::build((one.name.clone(), one.value.clone()))
-            .domain(one.domain.clone())
-            .path(one.path.clone())
-            .secure(one.secure)
-            .http_only(one.http_only)
-            .expires(expires);
-        if let Some(same_site) = one.same_site {
-            made = made.same_site(match same_site {
-                SameSite::Strict => cookie::SameSite::Strict,
-                SameSite::Lax => cookie::SameSite::Lax,
-                SameSite::None => cookie::SameSite::None,
-            });
-        }
-        made.build()
     }
 }
 

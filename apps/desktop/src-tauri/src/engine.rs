@@ -5,39 +5,12 @@ use tauri::{AppHandle, Runtime};
 
 use crate::paths::{config_dir, made};
 
-#[cfg(not(feature = "cef"))]
-const ROOT: &str = "web";
-
-#[cfg(feature = "cef")]
 const ROOT: &str = orden_web_engine::ROOT;
 
-#[cfg(feature = "cef")]
 const STORE_PROFILE: &str = orden_web_engine::STORE_PROFILE;
 
-#[cfg(feature = "cef")]
 const APP_PROFILE: &str = orden_web_engine::APP_PROFILE;
 
-#[cfg(all(not(feature = "cef"), target_os = "macos"))]
-const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) const BROWSER_ARGS: &str = concat!(
-    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping,",
-    "TouchpadOverscrollHistoryNavigation",
-    " --enable-features=msOverlayScrollbarWinStyle,msOverlayScrollbarWinStyleAnimation",
-    " --overscroll-history-navigation=0",
-);
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) fn browser_args(_app: &AppHandle) -> String {
-    if crate::gpu::this_run() {
-        BROWSER_ARGS.to_owned()
-    } else {
-        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
-    }
-}
-
-#[cfg(feature = "cef")]
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use orden_web_engine::{debug_port, switches, with_extensions, LOAD_EXTENSION_OFF};
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
@@ -99,12 +72,10 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     engine
 }
 
-#[cfg(feature = "cef")]
 fn from_run(name: &str) -> Option<String> {
     orden_web_engine::from_run(cfg!(debug_assertions), name)
 }
 
-#[cfg(feature = "cef")]
 fn cef_root() -> Option<PathBuf> {
     let config: serde_json::Value =
         serde_json::from_str(include_str!("../tauri.conf.json")).ok()?;
@@ -115,65 +86,18 @@ fn cef_root() -> Option<PathBuf> {
     Some(dirs::config_dir()?.join(identifier).join(ROOT))
 }
 
-#[cfg(desktop)]
-#[cfg_attr(
-    all(not(feature = "cef"), target_os = "macos"),
-    allow(
-        dead_code,
-        reason = "a Mac's own engine is handed a store identifier rather than a folder; the folder is what the other two desktops and Orden's own Chromium use"
-    )
-)]
 pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = config_dir(app)?.join(ROOT);
     made(&dir)?;
     Ok(dir)
 }
 
-#[cfg(feature = "cef")]
 pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = root(app)?.join(APP_PROFILE);
     made(&dir)?;
     Ok(dir)
 }
 
-#[cfg(all(desktop, not(feature = "cef")))]
-#[cfg_attr(
-    target_os = "macos",
-    allow(
-        clippy::unnecessary_wraps,
-        reason = "the seam is one signature for every engine and platform; only the Windows and Linux path reaches the disk and can fail, and the caller returns Result either way"
-    )
-)]
-pub(crate) fn web_store<R: Runtime>(
-    builder: WebviewBuilder<R>,
-    app: &AppHandle,
-    store: Option<&str>,
-) -> Result<WebviewBuilder<R>, String> {
-    #[cfg(windows)]
-    let builder = builder
-        .additional_browser_args(&browser_args(app))
-        .browser_extensions_enabled(crate::extensions::in_store(store));
-
-    #[cfg(any(windows, target_os = "linux"))]
-    let builder = builder.data_directory(match store {
-        None => root(app)?,
-        Some(name) => {
-            let dir = config_dir(app)?.join(crate::web_stores::STORES).join(name);
-            made(&dir)?;
-            dir
-        }
-    });
-
-    #[cfg(target_os = "macos")]
-    let builder = {
-        let _ = app;
-        builder.data_store_identifier(store.map_or(STORE_ID, crate::web_stores::identifier))
-    };
-
-    Ok(builder)
-}
-
-#[cfg(feature = "cef")]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
     app: &AppHandle,
@@ -182,7 +106,6 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder.data_directory(profile(app, store)?))
 }
 
-#[cfg(feature = "cef")]
 pub(crate) fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, String> {
     let root = root(app)?;
     Ok(match store {
@@ -195,39 +118,26 @@ pub(crate) fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, S
     })
 }
 
-#[cfg(desktop)]
 pub(crate) fn add_child<R: Runtime>(
     window: &tauri::Window<R>,
     builder: WebviewBuilder<R>,
     position: impl Into<tauri::Position>,
     size: impl Into<tauri::Size>,
 ) -> tauri::Result<tauri::Webview<R>> {
-    #[cfg(not(feature = "cef"))]
-    let built = one_at_a_time(|| window.add_child(builder, position, size));
-    #[cfg(feature = "cef")]
-    let built = one_at_a_time(|| window.add_child(builder.position(position).size(size)));
-    #[cfg(all(windows, not(feature = "cef")))]
-    if let Ok(view) = &built {
-        crate::web_visual::host_page(view);
-    }
-    built
+    one_at_a_time(|| window.add_child(builder.position(position).size(size)))
 }
 
-#[cfg(desktop)]
 pub(crate) fn one_at_a_time<T>(build: impl FnOnce() -> tauri::Result<T>) -> tauri::Result<T> {
     orden_web_engine::one_at_a_time(|| tauri::Error::FailedToReceiveMessage, build)
 }
 
-#[cfg(desktop)]
 pub(crate) use orden_web_engine::{handed_out, once_built};
 
-#[cfg(desktop)]
 macro_rules! with_platform {
     ($page:expr, $then:expr) => {
         $crate::engine::handed_out(|f| $page.with_webview(f), $then)
     };
 }
-#[cfg(desktop)]
 pub(crate) use with_platform;
 
 pub(crate) fn take_ui_window(
@@ -246,15 +156,6 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
-    #[cfg(all(windows, not(feature = "cef")))]
-    if let Ok(settings) = config_dir(manager.app_handle()) {
-        crate::gpu::accelerated(&settings);
-    }
-    #[cfg(all(windows, not(feature = "cef")))]
-    let building = building
-        .additional_browser_args(&browser_args(manager.app_handle()))
-        .initialization_script(crate::page_scheme::SCRIPT);
-    #[cfg(feature = "cef")]
     let building = {
         let _ = OWN_PROFILE.set(app_profile(manager.app_handle())?);
         crate::page_scale::read_chosen(manager.app_handle());
@@ -264,7 +165,6 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     Ok(building.initialization_script(crate::old_home::script()))
 }
 
-#[cfg(feature = "cef")]
 pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
 ) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
@@ -284,7 +184,6 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     }
 }
 
-#[cfg(feature = "cef")]
 pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
 ) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
@@ -296,20 +195,15 @@ pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
     }
 }
 
-#[cfg(feature = "cef")]
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
 pub(crate) use orden_web_engine::internal;
 
-#[cfg(feature = "cef")]
 pub(crate) mod devtools;
-#[cfg(feature = "cef")]
 pub(crate) mod renderer;
 
 #[cfg(test)]
 mod tests {
-    #[cfg(all(windows, not(feature = "cef")))]
-    use orden_web_engine::ENGINE_SWIPE;
 
     #[test]
     fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_it() {
@@ -342,52 +236,8 @@ mod tests {
     }
 
     #[test]
-    fn the_runtime_holds_no_lock_of_its_own_while_a_webview_is_used_built_or_let_go() {
-        let runtime =
-            std::fs::read_to_string(crate::app_dir().join("windows/tauri-runtime-wry/src/lib.rs"))
-                .expect("the runtime's source");
-        assert!(
-            !runtime.contains("self.window_id.lock().unwrap(),"),
-            "a webview's window id is locked for the whole of a call made with it"
-        );
-        assert!(
-            !runtime.contains("self.context_store.lock()"),
-            "a webview let go of while another is built waits on the store the build holds"
-        );
-    }
-
-    #[test]
-    fn the_windows_engine_gives_up_every_wait_for_webview2_in_time() {
-        let folder = crate::app_dir().join("windows/wry/src/webview2");
-        let mut unbounded = Vec::new();
-        for entry in std::fs::read_dir(&folder)
-            .expect("the engine's source")
-            .flatten()
-        {
-            let text = std::fs::read_to_string(entry.path()).unwrap_or_default();
-            for wait in ["wait_with_pump(", "::wait_for_async_operation("] {
-                let calls = text
-                    .match_indices(wait)
-                    .filter(|&(at, _)| {
-                        let line = text[..at].rsplit('\n').next().unwrap_or_default();
-                        !line.trim_start().starts_with("//")
-                    })
-                    .count();
-                if calls > 0 {
-                    unbounded.push(format!("{} {wait} x{calls}", entry.path().display()));
-                }
-            }
-        }
-        assert!(
-            unbounded.is_empty(),
-            "a wait for WebView2 that holds the window until it answers: {unbounded:?}"
-        );
-    }
-
-    #[test]
     fn a_new_window_is_handed_only_to_a_page_still_open() {
         let sources = [
-            "windows/wry/src/webview2/mod.rs",
             "src/agents/quiet.rs",
             "src/web_tabs.rs",
             "src/extensions/popup.rs",
@@ -488,17 +338,9 @@ mod tests {
         let linux = read("linux/Cargo.toml");
         assert!(linux.contains("\ndefault = [\"cef\"]\ncef = []\n"));
         let built = read("Cargo.toml");
-        assert_eq!(built == linux, cfg!(feature = "cef"));
-        if !cfg!(feature = "cef") {
-            assert!(built.contains("\ncef = []"), "the feature is not declared");
-            assert!(
-                !built.contains("\ndefault = ["),
-                "the app's manifest has a default feature list, so something is on that nobody asked for"
-            );
-        }
+        assert!(built == linux, "the desktop builds from linux/Cargo.toml");
     }
 
-    #[cfg(feature = "cef")]
     #[test]
     fn a_feature_list_a_run_asks_for_joins_the_engine_s_own() {
         let engine =
@@ -531,50 +373,5 @@ mod tests {
             .find(|line| line.contains("scripts/linux-cef.sh tauri build"))
             .expect("the release's Linux build");
         assert!(!linux.contains("--debug"), "{linux}");
-    }
-
-    #[cfg(all(windows, not(feature = "cef")))]
-    #[test]
-    fn the_engine_never_hides_the_pointer_and_keeps_wry_s_switches() {
-        let features: Vec<&str> = super::BROWSER_ARGS
-            .split_whitespace()
-            .filter_map(|one| one.strip_prefix("--disable-features="))
-            .collect();
-
-        assert_eq!(
-            features.len(),
-            1,
-            "one --disable-features, or all but the last are lost"
-        );
-        let off: Vec<&str> = features[0].split(',').collect();
-        for feature in [
-            "HideCursorWhileTyping",
-            "msWebOOUI",
-            "msPdfOOUI",
-            "msSmartScreenProtection",
-        ] {
-            assert!(off.contains(&feature), "{feature} is not switched off");
-        }
-        let (swipe, switch, value) = ENGINE_SWIPE;
-        assert!(
-            off.contains(&swipe),
-            "the engine's touchpad swipe is not off"
-        );
-        let on: Vec<&str> = super::BROWSER_ARGS
-            .split_whitespace()
-            .filter_map(|one| one.strip_prefix("--enable-features="))
-            .flat_map(|one| one.split(','))
-            .collect();
-        assert!(
-            on.contains(&"msOverlayScrollbarWinStyle"),
-            "a page's scrollbars are not laid over it, so its bar runs through the pane's rounded corner"
-        );
-        let wanted = format!("--{switch}={value}");
-        assert!(
-            super::BROWSER_ARGS
-                .split_whitespace()
-                .any(|one| one == wanted),
-            "the engine's swipe is not switched off"
-        );
     }
 }

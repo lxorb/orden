@@ -10,8 +10,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-WEBKIT = os.environ.get("ORDEN_ENGINE", "chromium") == "webkit"
-MOD = "Meta" if WEBKIT else "Control"
+MOD = "Control"
 
 SEED = """
 async ({ path, data }) => {
