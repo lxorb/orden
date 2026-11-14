@@ -179,6 +179,7 @@ vi.mock('../../workspace.svelte', () => ({
       world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
     closeShared: (id: string) => world.closed.push(id),
     showingShared: (id: string) => world.showing.includes(id),
+    restored: true,
     adoptSpace: (name: string) => Promise.resolve(name),
     applyIcon: () => null,
     applySpaceOrder: () => false,

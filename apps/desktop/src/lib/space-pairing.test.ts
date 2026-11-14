@@ -14,6 +14,8 @@ const world = vi.hoisted(() => ({
   expired: false,
   blocked: false,
   adopted: [] as { name: string; fresh: boolean }[],
+  restored: true,
+  onDisk: [] as { id: string; name: string; root: string }[],
 }))
 
 vi.mock('./accounts/src/client', async (importOriginal) => {
@@ -75,7 +77,15 @@ vi.mock('./workspace.svelte', () => ({
     get spaces() {
       return world.spaces
     },
-    loadSpaces: () => Promise.resolve(),
+    get restored() {
+      return world.restored
+    },
+    loadSpaces: () => {
+      for (const one of world.onDisk) {
+        if (!world.spaces.some((space) => space.root === one.root)) world.spaces.push(one)
+      }
+      return Promise.resolve()
+    },
     deleteSpace: () => Promise.resolve(),
     adoptSpace: (name: string, fresh: boolean) => {
       world.adopted.push({ name, fresh })
@@ -136,6 +146,8 @@ beforeEach(() => {
   world.expired = false
   world.blocked = false
   world.onMade = null
+  world.restored = true
+  world.onDisk = []
 })
 
 describe('signing in on a device another account signed out of', () => {
@@ -164,6 +176,23 @@ describe('signing in on a device another account signed out of', () => {
     expect(pairs).toContainEqual({ root: '/Hunt out', spaceId: 'a-Hunt out', shared: false })
     expect(world.made).toEqual(['Fresh'])
     expect(leftBy('/Hunt out')).toBe('a')
+  })
+})
+
+describe('a round of pairing that starts before the window has read its spaces', () => {
+  test('reads them first, so a space this device keeps is not made again as a copy', async () => {
+    world.restored = false
+    world.spaces = []
+    world.onDisk = [{ id: '1', name: 'Team', root: '/Team' }]
+    signedIn('a', ['Team'])
+    const { pairs, pairing: held } = pairing()
+    pairs.push({ root: '/Team', spaceId: 'a-Team', shared: false })
+
+    await pairSpaces('token-a', held)
+
+    expect(world.adopted).toEqual([])
+    expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
+    expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: false }])
   })
 })
 
