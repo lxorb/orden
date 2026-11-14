@@ -16,7 +16,6 @@
     "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/tree-order.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/web-tab/carry-in.ts",
     "apps/desktop/src/lib/when.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",

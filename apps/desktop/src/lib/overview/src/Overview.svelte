@@ -10,7 +10,7 @@
   import TabMark from '../../TabMark.svelte'
   import { trap } from '../../ui-controls/src/api'
   import { prompt } from '../../ui-kit/src/api'
-  import { pages } from '../../web-tab/pages.svelte'
+  import { webPages } from '@orden/contracts'
   import { isDraft } from '../../workspace/drafts'
   import { type Tab, workspace } from '../../workspace.svelte'
   import {
@@ -865,7 +865,7 @@
       entered = performance.now()
       started = false
       readying(faces.read())
-      const holding = pages.holdStill()
+      const holding = webPages().holdStill()
       stood = holding === null
       void holding?.finally(() => (stood = true))
       measure()
@@ -963,7 +963,7 @@
     tabOverview.out = []
     tabOverview.lifted = []
     delete document.documentElement.dataset.overview
-    void pages.letGo()
+    void webPages().letGo()
     for (const one of opens) one.style.removeProperty('--overview-open')
     for (const one of slides) one.style.removeProperty('--overview-slide')
     bar?.style.removeProperty('--overview-bar')

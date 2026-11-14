@@ -1,15 +1,16 @@
+import { providePort, webPages } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('../../platform/src/tauri', () => ({ isDesktop: false, isMobile: false }))
-vi.mock('../../web-tab/pages.svelte', () => ({
-  pages: { of: () => ({ back: true, forward: false }) },
-}))
 vi.mock('../../workspace.svelte', () => ({
   workspace: { tabs: [], goBack: () => undefined, goForward: () => undefined },
 }))
 
 const { heard } = await import('./swipes')
 const { swiping } = await import('./shown.svelte')
+
+const PAGE = { url: null, title: '', back: true, forward: false, zoom: 1, shot: null }
+providePort('web.pages', { ...webPages(), of: () => PAGE })
 type Tab = import('../../workspace.svelte').Tab
 
 const pane = document.createElement('div')

@@ -1,3 +1,4 @@
+import { providePort } from '@orden/contracts'
 import { landed } from '../theme/src/api'
 import {
   isNumber,
@@ -1135,6 +1136,21 @@ class Pages {
 }
 
 export const pages = new Pages()
+
+function carried(step: (carry: typeof import('./carry-in')) => void): void {
+  if (isDesktop && !__EVEN_PLUGIN__) void import('./carry-in').then(step)
+}
+
+providePort('web.pages', {
+  get cuts() {
+    return pages.cuts
+  },
+  of: (tab) => pages.of(tab),
+  holdStill: () => pages.holdStill(),
+  letGo: () => pages.letGo(),
+  carryIn: (paths) => carried((carry) => carry.carryToPages(paths)),
+  carriedIn: () => carried((carry) => carry.carriedToPages()),
+})
 
 export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'

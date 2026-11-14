@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
 import { calm, dur, stillness } from '../../platform/src/api'
 import { said } from '../../said.svelte'
@@ -64,10 +65,8 @@ function pagesInWindow(): boolean {
   return document.querySelector('.webbar') !== null
 }
 
-async function engineCuts(): Promise<boolean> {
-  if (!pagesInWindow()) return false
-  const { pages } = await import('../../web-tab/pages.svelte')
-  return pages.cuts
+function engineCuts(): boolean {
+  return pagesInWindow() && webPages().cuts
 }
 
 function pageOf(tab: string, cuts: boolean): Point | null {
@@ -172,7 +171,7 @@ export async function started(
   said.say(`Downloading ${name}`)
   const element = shown(from.element)
   await settled()
-  const cuts = await engineCuts()
+  const cuts = engineCuts()
 
   const glyphs = glyphsOnScreen()
   const target = landing(

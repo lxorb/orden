@@ -1,4 +1,4 @@
-import type { PickedFile } from '@orden/contracts'
+import { type PickedFile, webPages } from '@orden/contracts'
 import {
   caughtFiles,
   carriedNothing,
@@ -10,7 +10,7 @@ import {
   isTreeDrag,
 } from '../../drag-paths'
 import { message } from '../../ui-kit/src/api'
-import { invoke, isDesktop, joinPath, platform } from '../../platform/src/api'
+import { invoke, joinPath, platform } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { OutsideStep } from '../../workspace/undo.svelte'
 import { carry, changeable, freeName, takenNames } from './changes'
@@ -25,11 +25,11 @@ export function startDrag(event: DragEvent, paths: string[]) {
     paths,
     paths.every((one) => inASpace(one)),
   )
-  if (isDesktop) void import('../../web-tab/carry-in').then((pages) => pages.carryToPages(paths))
+  webPages().carryIn(paths)
 }
 
 export function endDrag() {
-  if (isDesktop) void import('../../web-tab/carry-in').then((pages) => pages.carriedToPages())
+  webPages().carriedIn()
   carriedNothing()
 }
 
