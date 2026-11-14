@@ -46,7 +46,7 @@ def settings(page: Page) -> None:
     wait_for(page, "document.querySelectorAll('[role=switch]').length > 1", "Settings › Note types")
 
 def closed(page: Page) -> None:
-    page.keyboard.press("Escape")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
     wait_for(page, "!document.querySelector('[role=switch]')", "Settings to close")
 
 def press(page: Page, name: str) -> None:

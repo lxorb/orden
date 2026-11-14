@@ -80,7 +80,8 @@ def drive(browser: Browser) -> None:
     if row.get_attribute("aria-checked") != "true":
         wrong("the switch did not take")
     shot(page, "03-settings")
-    page.keyboard.press("Escape")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
+    wait_for(page, "document.querySelectorAll('.pane .cm-content').length === 2", "both editors after Settings")
 
     seen = faces(page)
     if seen != [{"raw": False, "source": False}, {"raw": True, "source": True}]:
