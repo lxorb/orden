@@ -26,6 +26,11 @@ UNANSWERED = (
     " localStorage.removeItem('orden:first-visit') } } catch {}"
 )
 
+SET_UP = (
+    f"try {{ if (location.origin === {NEW!r} && localStorage.getItem('orden:setup') === null)"
+    " localStorage.setItem('orden:setup', '\"done\"') } catch {}"
+)
+
 SESSION = "handed-over-token"
 
 ORIGINS = FOLDER / ".handoff-origins"
@@ -65,6 +70,7 @@ def context(browser: Browser) -> Any:
         viewport={"width": 1100, "height": 760}, first_look=True, service_workers="block"
     )
     made.add_init_script(UNANSWERED)
+    made.add_init_script(SET_UP)
     made.route("https://orden.so/**", lambda route: route.abort())
     made.route("https://nibeditor.com/**", lambda route: route.abort())
     return made
