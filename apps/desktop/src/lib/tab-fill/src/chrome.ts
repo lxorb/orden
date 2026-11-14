@@ -1,4 +1,4 @@
-import { dur } from '../platform/src/api'
+import { dur } from '../../platform/src/api'
 
 type Edge = 'start' | 'end' | 'top' | 'bottom'
 

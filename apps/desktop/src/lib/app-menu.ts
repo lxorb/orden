@@ -45,7 +45,7 @@ import {
 import { printOpen } from './open-out'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { toggleFill } from './tab-fill/fill'
+import { toggleFill } from './tab-fill/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
 import { isDesktop, isNative, openExternal } from './platform/src/api'
 import { updates } from './updates.svelte'

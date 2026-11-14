@@ -993,7 +993,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Shift-F11',
     mac: 'Mod-Ctrl-Shift-f',
-    run: () => void import('../tab-fill/fill').then((one) => one.toggleFill()),
+    run: () => void import('../tab-fill/src/api').then((one) => one.toggleFill()),
   },
   {
     id: 'app.zoom-in',

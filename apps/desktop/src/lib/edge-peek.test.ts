@@ -216,7 +216,7 @@ describe('the left side', () => {
   })
 
   test("a filled window's top bar comes at once too, and goes after the same grace", () => {
-    const bar = readFileSync(join(import.meta.dirname, './tab-fill/FillBar.svelte'), 'utf8')
+    const bar = readFileSync(join(import.meta.dirname, './tab-fill/src/FillBar.svelte'), 'utf8')
     expect(bar).toContain('const GOES_AFTER = GRACE')
     const moved = bar.slice(bar.indexOf('function moved('), bar.indexOf('function letGo('))
     expect(moved).not.toContain('setTimeout')

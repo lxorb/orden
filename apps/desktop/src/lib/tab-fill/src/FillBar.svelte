@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onDestroy, type Snippet, tick, untrack } from 'svelte'
-  import { GRACE } from '../edge-peek.svelte'
-  import { focusEditor } from '../focus'
-  import { overlays } from '../ui-kit/src/api'
-  import { workspace } from '../workspace.svelte'
+  import { GRACE } from '../../edge-peek.svelte'
+  import { focusEditor } from '../../focus'
+  import { overlays } from '../../ui-kit/src/api'
+  import { workspace } from '../../workspace.svelte'
   import { chromeComes } from './chrome'
   import { unfill } from './fill'
   import { atEdge, escapeLeaves, mayHide, stillFills } from './rules'
