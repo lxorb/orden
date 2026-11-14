@@ -1,3 +1,4 @@
+import { wheelPixels } from '../../camera/src/api'
 import type { Box } from './layout'
 
 export interface Camera {
@@ -77,9 +78,6 @@ export interface Turn {
   y: number
 }
 
-const LINE = 40
-const PAGE = 800
-
 const PINCH = 0.01
 const MOST = 40
 
@@ -90,8 +88,7 @@ export function isNotch(turn: Turn): boolean {
 const NOTCH = 0.002
 
 export function notched(goal: number, turn: Turn): number {
-  const unit = turn.deltaMode === 1 ? LINE : turn.deltaMode === 2 ? PAGE : 1
-  return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-turn.deltaY * unit * NOTCH)))
+  return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-wheelPixels(turn).y * NOTCH)))
 }
 
 const EASE = 0.08
@@ -111,9 +108,7 @@ export function eased(
 }
 
 function fingered(goal: number, turn: Turn): number {
-  const unit = turn.deltaMode === 1 ? LINE : turn.deltaMode === 2 ? PAGE : 1
-  const dy = turn.deltaY * unit
-  const step = Math.max(-MOST, Math.min(MOST, dy))
+  const step = Math.max(-MOST, Math.min(MOST, wheelPixels(turn).y))
   const rate = turn.ctrlKey || turn.metaKey ? PINCH : NOTCH
   return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-step * rate)))
 }

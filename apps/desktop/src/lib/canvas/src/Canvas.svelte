@@ -23,7 +23,7 @@
     turnOf,
     unsnapped,
     zoomed,
-  } from '../../camera'
+  } from '../../camera/src/api'
   import { actualSize, canvasMenu, isPdfFile, place, pull, run } from './actions'
   import {
     coloured,

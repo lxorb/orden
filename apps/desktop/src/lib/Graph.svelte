@@ -7,7 +7,7 @@
   import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
   import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'
-  import { type Camera, framing, graphPoint, nodeAt, wheelPixels, zoomed } from './camera'
+  import { type Camera, framing, graphPoint, nodeAt, wheelPixels, zoomed } from './camera/src/api'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { stillness } from './platform/src/api'
   import { parseQuery } from '@orden/scan/search/query'

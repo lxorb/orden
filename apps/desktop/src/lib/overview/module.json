@@ -3,6 +3,7 @@
   "layer": "features",
   "dependsOn": [
     "contracts",
+    "camera",
     "platform",
     "protect",
     "sharing",

@@ -34,7 +34,7 @@
     NOTCH,
     pinching,
     turnOf,
-  } from '../../camera'
+  } from '../../camera/src/api'
   import {
     cardsInLasso,
     coloured,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Camera } from '../../camera'
+  import type { Camera } from '../../camera/src/api'
   import { paintFar } from './far'
   import type { CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
   import type { Box } from '../../plane/src/api'

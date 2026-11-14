@@ -3,6 +3,7 @@
   "layer": "content",
   "dependsOn": [
     "contracts",
+    "camera",
     "canvas",
     "collab",
     "files-out",
@@ -15,7 +16,6 @@
     "ui-kit"
   ],
   "pending": [
-    "apps/desktop/src/lib/camera.ts",
     "apps/desktop/src/lib/commands.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/layer-keys.ts",

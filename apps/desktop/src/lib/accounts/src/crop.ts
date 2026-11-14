@@ -1,4 +1,4 @@
-import { type Turned, wheelPixels } from '../../camera'
+import { type Turned, wheelPixels } from '../../camera/src/api'
 
 export interface Point {
   x: number

@@ -1,4 +1,4 @@
-import { settledTurn, TURN_DEADBAND, turnedBy } from '../../camera'
+import { settledTurn, TURN_DEADBAND, turnedBy } from '../../camera/src/api'
 import type { InkPoint, InkTool, Shape, Side } from '@orden/markdown/canvas'
 import type { Box, HandleId, Point } from '../../plane/src/api'
 import { rubbedBetween } from '../../plane/src/api'

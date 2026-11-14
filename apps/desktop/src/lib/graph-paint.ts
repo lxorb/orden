@@ -1,5 +1,5 @@
-import type { Camera } from './camera'
-import { SMALLEST_DOT } from './camera'
+import type { Camera } from './camera/src/api'
+import { SMALLEST_DOT } from './camera/src/api'
 import type { NoteGraph } from './graph'
 import { shownName } from '@orden/markdown/note-name'
 

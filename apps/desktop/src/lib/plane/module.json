@@ -3,6 +3,7 @@
   "layer": "content",
   "dependsOn": [
     "contracts",
+    "camera",
     "accounts",
     "files-out",
     "markdown",
@@ -13,7 +14,6 @@
   ],
   "pending": [
     "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/camera.ts",
     "apps/desktop/src/lib/engines.svelte.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts"

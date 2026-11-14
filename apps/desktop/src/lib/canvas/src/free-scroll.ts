@@ -1,5 +1,5 @@
 import { invoke, isDesktop, platform } from '../../platform/src/api'
-import { wheelPixels } from '../../camera'
+import { wheelPixels } from '../../camera/src/api'
 
 const FRESH = 150
 
