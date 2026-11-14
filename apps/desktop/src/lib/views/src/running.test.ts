@@ -50,7 +50,7 @@ vi.mock('../../workspace.svelte', () => ({
     loadTree: async () => undefined,
   },
 }))
-vi.mock('../../rows/rows.svelte', () => ({
+vi.mock('../../rows/src/rows.svelte', () => ({
   rows: {
     get shown() {
       return this.of

@@ -42,6 +42,7 @@ import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready, settledForInstaller } from './updater'
 import { updates } from './updates.svelte'
+import { startRunner } from './views/src/api'
 import { workspace } from './workspace.svelte'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -127,7 +128,12 @@ export function start(): () => void {
     // Answered by reloading.svelte.ts.
   })
 
-  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('right')
+      .then(() => import('./rows/src/api'))
+      .then(() => startRunner())
+  }
 
   if (!__EVEN_PLUGIN__) {
     void startup

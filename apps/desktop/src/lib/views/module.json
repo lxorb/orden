@@ -14,7 +14,8 @@
     "sharing",
     "tasks-model",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "rows"
   ],
   "pending": [
     "apps/desktop/src/lib/automation/acts.ts",
@@ -31,9 +32,6 @@
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/row-window.svelte.ts",
     "apps/desktop/src/lib/row-window.ts",
-    "apps/desktop/src/lib/rows/rows.svelte.ts",
-    "apps/desktop/src/lib/rows/store.ts",
-    "apps/desktop/src/lib/rows/write.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/swipe.ts",

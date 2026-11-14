@@ -8,7 +8,7 @@ import {
   type SelectOption,
   type Value,
 } from '@orden/bases'
-import type { RowChange } from '../../rows/write'
+import type { RowChange } from '../../rows/src/api'
 import { bare } from './columns'
 
 function wordsIn(value: Value | undefined): string[] {

@@ -4,7 +4,7 @@ import { joinPath, insideOnly, folderOf, insideSpace, within } from '../../platf
 import { contextFor } from './context'
 import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
-import { rows } from '../../rows/rows.svelte'
+import { rows } from '../../rows/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'

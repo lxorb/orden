@@ -10,7 +10,7 @@ import {
   type TaskChange,
   type Value,
 } from '@orden/bases'
-import type { RowChange } from '../../rows/write'
+import type { RowChange } from '../../rows/src/api'
 import type { Holds, HoldsOf } from './filter-rows'
 import { isLinkValue } from './values'
 

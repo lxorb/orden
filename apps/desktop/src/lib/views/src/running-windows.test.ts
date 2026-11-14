@@ -23,7 +23,7 @@ vi.mock('../../workspace.svelte', () => ({
     activeSpace: { id: 'shared', name: 'Shared', root: '/s/Shared' },
   },
 }))
-vi.mock('../../rows/rows.svelte', () => ({ rows: { ready: true, of: () => [] } }))
+vi.mock('../../rows/src/rows.svelte', () => ({ rows: { ready: true, of: () => [] } }))
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: async () => undefined,
