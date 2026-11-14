@@ -1,4 +1,4 @@
-import type { Scope } from '../agents/verbs'
+import type { Scope } from '../agents/src/api'
 
 interface Agent {
   id: string

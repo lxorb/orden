@@ -27,7 +27,7 @@ import {
   syncStatus,
   windowRect,
 } from './answers'
-import type { Scope } from '../agents/verbs'
+import type { Scope } from '../agents/src/api'
 import { said as wordsOf, type Road, type Said, yes } from './args'
 import { type AgentAnswer, type Caller, holds, READER, refusal } from './caller'
 
@@ -225,7 +225,7 @@ async function agentVerb(
     return refusal('not_granted', `${name} needs ${scope}, which this agent was not granted`)
   }
 
-  const { runAgentVerb } = await import('../agents/workspace')
+  const { runAgentVerb } = await import('../agent-host/index')
   const answer = await runAgentVerb(name, args, caller)
   if (caller.agent !== null) return answer
 
@@ -234,7 +234,7 @@ async function agentVerb(
 }
 
 async function asReader(name: string, args: Said): Promise<unknown> {
-  const { runAgentVerb } = await import('../agents/workspace')
+  const { runAgentVerb } = await import('../agent-host/index')
   const answer = await runAgentVerb(name, args, READER)
   if (answer.status === 'ok') return answer.result
   throw new Error(answer.status === 'error' ? answer.message : answer.summary)
@@ -247,7 +247,7 @@ function addTask(args: Said, road: Road): Promise<unknown> {
 }
 
 async function fromTheCrate(name: string, args: Said): Promise<unknown> {
-  const { answerTheCrate } = await import('../agents/workspace')
+  const { answerTheCrate } = await import('../agent-host/index')
   return answerTheCrate(name, args)
 }
 

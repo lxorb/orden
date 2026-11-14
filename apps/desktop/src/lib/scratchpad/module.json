@@ -1,6 +1,6 @@
 {
   "name": "scratchpad",
-  "layer": "features",
+  "layer": "content",
   "dependsOn": ["contracts", "accounts", "editor", "platform", "rooms", "sync-core", "ui-kit"],
   "pending": [
     "apps/desktop/src/lib/composer.ts",

@@ -22,7 +22,6 @@
     "apps/desktop/src/lib/NewHere.svelte",
     "apps/desktop/src/lib/Suggest.svelte",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/agents/ui/TakeoverBar.svelte",
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/double-tap.ts",
     "apps/desktop/src/lib/drag-paths.ts",

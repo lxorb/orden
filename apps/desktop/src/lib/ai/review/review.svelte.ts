@@ -7,14 +7,7 @@ import {
   setReviewMarks,
   setReviewSource,
 } from '@orden/editor/review'
-import {
-  onTracks,
-  putBackIn,
-  trackedAgents,
-  tracksAside,
-  tracksOf,
-  undoSomeIn,
-} from '../../agents/docs'
+import { agentDocs } from '../../agents/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { insideSpace, notePath, withinSpace, dur, onDisk, onceAFrame } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
@@ -38,6 +31,8 @@ import { markUnmade, redoFile, undoFile } from './file-ops'
 import { type FileChange, fileChangesOf, spaceNamed } from './files'
 import { type Choice, type Made, planFor, type Plan, type Step } from './plan'
 import { summarized } from './summary'
+
+const { onTracks, putBackIn, trackedAgents, tracksAside, tracksOf, undoSomeIn } = await agentDocs()
 
 export interface ReviewPanel {
   send(text: string): void

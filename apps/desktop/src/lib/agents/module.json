@@ -1,0 +1,41 @@
+{
+  "name": "agents",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "dictation",
+    "editor",
+    "markdown",
+    "platform",
+    "protect",
+    "rooms",
+    "scratchpad",
+    "theme",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Facts.svelte",
+    "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/accelerator.ts",
+    "apps/desktop/src/lib/agent-host/editor.ts",
+    "apps/desktop/src/lib/agent-marks.svelte.ts",
+    "apps/desktop/src/lib/ai/sidebar/agent-open.svelte.ts",
+    "apps/desktop/src/lib/ai/sidebar/chat.svelte.ts",
+    "apps/desktop/src/lib/focus.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/notify.ts",
+    "apps/desktop/src/lib/panel-marks.ts",
+    "apps/desktop/src/lib/search/apply.ts",
+    "apps/desktop/src/lib/search/replace.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/take-keyboard.ts",
+    "apps/desktop/src/lib/views.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/drafts.ts",
+    "apps/desktop/src/lib/workspace/in-turn.ts",
+    "apps/desktop/src/lib/workspace/note-text.ts",
+    "apps/desktop/test/disk.ts"
+  ]
+}

@@ -125,12 +125,14 @@ export {
   webPages,
   whenPortProvided,
 } from './ports'
+export type { ChatNamesPort, ChatPorts } from './chats'
 export type { PandocPicture, PickedFile } from './files'
 export type { PreviewedTab, PreviewPorts, ScreenPreview, TerminalPreviewPort } from './previews'
 export type {
   EngineTaken,
   OfferedEngine,
   PressedKey,
+  WebLendingPort,
   WebPageSeen,
   WebPagesPort,
   WebPorts,

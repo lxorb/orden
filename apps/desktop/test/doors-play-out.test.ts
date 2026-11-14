@@ -66,7 +66,6 @@ const MOVES = /\s(?:transition|in|out):/
 
 const NOT_YET = new Set([
   'lib/SettingsPanel.svelte: ./DeleteAccount.svelte',
-  'lib/web-tab/src/WebTab.svelte: ../../agents/ui/TakeoverBar.svelte',
   'lib/web-tab/src/WebTab.svelte: findBar',
 ])
 

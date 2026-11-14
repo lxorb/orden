@@ -1,5 +1,5 @@
 import { account } from '../accounts/src/api'
-import { reach } from '../agents/settings/reach.svelte'
+import { reach } from '../agents/src/api'
 import type { Place } from '../settings-search'
 import { isDesktop } from '../platform/src/api'
 

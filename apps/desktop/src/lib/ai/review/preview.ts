@@ -1,5 +1,5 @@
 import { oneEdit } from '@orden/markdown/edits'
-import { plan, readEdits, type Replacement } from '../../agents/docs/edits'
+import { plan, readEdits, type Replacement } from '../../agents/src/api'
 import { type Row, lineDiff, trimmed } from '../../diff'
 import { applied } from '../../search/replace'
 import { insideSpace, notePath } from '../../platform/src/api'
