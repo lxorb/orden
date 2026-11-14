@@ -40,15 +40,15 @@ vi.stubGlobal('document', {
 })
 
 let modes: typeof import('./modes.svelte').modes
-let preferences: typeof import('./preferences').preferences
-let sectionGroups: typeof import('./settings/sections').sectionGroups
+let preferences: typeof import('./settings/src/preferences').preferences
+let sectionGroups: typeof import('./settings/src/sections').sectionGroups
 let hiddenKinds: typeof import('./settings.svelte').hiddenKinds
 let words: { experimental: string; glasses: string }
 
 beforeAll(async () => {
   ;({ modes } = await import('./modes.svelte'))
-  ;({ preferences } = await import('./preferences'))
-  ;({ sectionGroups } = await import('./settings/sections'))
+  ;({ preferences } = await import('./settings/src/preferences'))
+  ;({ sectionGroups } = await import('./settings/src/sections'))
   const gates = await import('./settings.svelte')
   hiddenKinds = gates.hiddenKinds
   words = { experimental: gates.EXPERIMENTAL_WORD, glasses: gates.GLASSES_WORD }

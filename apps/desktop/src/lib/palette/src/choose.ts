@@ -56,13 +56,8 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       hands.openPage(row.url, ask)
       return 'close'
     case 'setting': {
-      const field = row.setting.field
-      if (field?.kind === 'switch') {
-        field.set(!field.get())
-        return 'stay'
-      }
-      if (field?.kind === 'value') {
-        field.press()
+      if (row.setting.press) {
+        row.setting.press()
         return 'stay'
       }
       hands.showSetting(row.setting.section, row.setting.row ? row.setting.label : null)

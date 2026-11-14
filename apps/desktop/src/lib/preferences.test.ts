@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 import { inLanguageOrder } from '@orden/markdown/language-order'
-import type { Pane } from './preferences'
+import type { Pane } from './settings/src/preferences'
 
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
@@ -20,7 +20,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-const { preferences, resettable } = await import('./preferences')
+const { preferences, resettable } = await import('./settings/src/preferences')
 const { theme } = await import('./theme/src/theme.svelte')
 const { DICTIONARIES } = await import('./spell-languages')
 await import('./quick-add/src/api')
@@ -103,7 +103,7 @@ describe('the Note types pane', () => {
   })
 
   test('is found by the new tab and its key', async () => {
-    const { search } = await import('./settings-search')
+    const { search } = await import('./settings/src/settings-search')
     for (const query of ['Ctrl+T', 'new tab']) {
       const hits = search(query, preferences(), [])
       expect(
@@ -216,7 +216,7 @@ describe('the release channel', () => {
       isNative: true,
     }))
 
-    desktop = (await import('./preferences')).preferences()
+    desktop = (await import('./settings/src/preferences')).preferences()
   })
 
   afterAll(() => {

@@ -17,7 +17,7 @@ import type { TabKind } from '../../workspace/documents.svelte'
 import type { Entry } from '../../workspace.svelte'
 import type { Candidate, Kind } from '../../matching/src/api'
 import type { OpenTab, Row } from './rows'
-import type { Setting } from './settings'
+import type { PaletteSetting } from '@orden/contracts'
 
 export interface World {
   root: string
@@ -29,7 +29,7 @@ export interface World {
   bookmarks: readonly Bookmark[]
   commands: readonly Command[]
   pages: readonly Visit[]
-  settings: readonly Setting[]
+  settings: readonly PaletteSetting[]
   hosts: readonly PaletteHost[]
   worth: (key: string) => number
   now: number

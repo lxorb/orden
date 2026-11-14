@@ -1,6 +1,6 @@
 import { flushSync, mount } from 'svelte'
 import { expect, test } from 'vitest'
-import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
+import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
 import { settings } from '../../src/lib/settings.svelte'
 
 Element.prototype.animate = () => ({ finished: Promise.resolve() }) as unknown as Animation

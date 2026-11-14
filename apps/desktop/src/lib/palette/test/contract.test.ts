@@ -51,5 +51,6 @@ describe('the kinds it reads from the registry', () => {
     expect(paletteKind('hosts').wanted('ssh pi@example.com')).toBeNull()
     expect(await paletteKind('hosts').list()).toEqual([])
     expect(await paletteKind('messages').hits('plans')).toEqual({ rows: [], only: false })
+    expect(paletteKind('settings').rows()).toEqual([])
   })
 })

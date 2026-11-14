@@ -11,7 +11,7 @@ const { hiddenKinds, KINDS_KEY, PASS_WORD, EXPERIMENTAL_WORD, passOn, kindsHere 
   await import('./settings.svelte')
 const { setKind, setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
-const { experimentalPane } = await import('./settings/experimental-pane')
+const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { appCommands } = await import('./commands')
 const { offeredKinds } = await import('./new-kinds')
 const { openPass } = await import('./pass-sync/src/open')

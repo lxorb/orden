@@ -118,7 +118,7 @@ describe('the row a list is made of', () => {
       'lib/ContextMenu.svelte',
       'lib/HitList.svelte',
       'lib/SearchPanel.svelte',
-      'lib/SettingsPanel.svelte',
+      'lib/settings/src/SettingsPanel.svelte',
       'lib/Sidebar.svelte',
       'lib/TagTree.svelte',
       'lib/Tree.svelte',
@@ -437,7 +437,7 @@ describe('the action in a card', () => {
   })
 
   test('and laid into a grouped card on a phone by the one sheet that has those', () => {
-    expect(draw(/\.orden-action|\.action\b/)).toEqual(['lib/SettingsPanel.svelte'])
+    expect(draw(/\.orden-action|\.action\b/)).toEqual(['lib/settings/src/SettingsPanel.svelte'])
   })
 })
 
@@ -604,12 +604,12 @@ describe('the sentence behind a setting', () => {
 
     expect(own).toEqual([
       'lib/AiPane.svelte',
-      'lib/SettingsPanel.svelte',
       'lib/SyncPane.svelte',
       'lib/accounts-ui/src/ProfileRows.svelte',
       'lib/agents/src/access/Access.svelte',
       'lib/agents/src/settings/Words.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
+      'lib/settings/src/SettingsPanel.svelte',
     ])
   })
 })

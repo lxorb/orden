@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import type { Field } from './preferences'
+import type { Field } from './settings/src/preferences'
 import { resetFields } from './reset-fields'
 
 function recorder() {

@@ -129,6 +129,7 @@ export {
 export {
   NO_HOSTS,
   NO_MESSAGES,
+  NO_SETTINGS,
   NO_VISITS,
   type PaletteDestination,
   type PaletteHost,
@@ -136,6 +137,8 @@ export {
   type PaletteMessage,
   type PaletteMessages,
   type PaletteOpenHow,
+  type PaletteSetting,
+  type PaletteSettings,
   type PaletteKindId,
   type PaletteKinds,
   paletteKind,

@@ -11,7 +11,7 @@ import {
   glassesStamp,
   resetGlasses,
 } from '../../glasses-choices/src/api'
-import type { Field } from '../../preferences'
+import type { Field } from '../../settings/src/api'
 import { fileMark } from '../../file-mark'
 import { modes } from '../../modes.svelte'
 import { shownName } from '../../platform/src/api'

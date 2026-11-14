@@ -11,14 +11,14 @@
     "sharing",
     "sync-client",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "settings"
   ],
   "pending": [
     "apps/desktop/src/lib/Sweep.svelte",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/png-off.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/settings/apps-clipboard.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"

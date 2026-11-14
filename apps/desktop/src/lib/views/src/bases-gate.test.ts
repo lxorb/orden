@@ -17,7 +17,7 @@ vi.mock('../../workspace/write-file', () => ({
 const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesOn } =
   await import('../../settings.svelte')
 const { setWord, receive } = await import('../../kind-choice')
-const { experimentalPane } = await import('../../settings/experimental-pane')
+const { experimentalPane } = await import('../../settings/src/experimental-pane')
 const { appCommands } = await import('../../commands')
 const { newFileRows } = await import('../../row-menu')
 const { openBaseFile } = await import('./open')

@@ -20,14 +20,14 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { paletteCommands } = await import('../../commands')
-const { preferences } = await import('../../preferences')
-const { places } = await import('../../settings/places')
-const { sectionGroups } = await import('../../settings/sections')
+const { preferences } = await import('../../settings/src/preferences')
+const { places } = await import('../../settings/src/places')
+const { sectionGroups } = await import('../../settings/src/sections')
 const { rank, recentFirst } = await import('../../ui-kit/src/fuzzy')
 const { shownName } = await import('@orden/markdown/note-name')
 const { candidates } = await import('./kinds')
 const { ranked } = await import('../../matching/src/api')
-const { settingsOf } = await import('./settings')
+const { settingRows } = await import('../../settings/src/palette-rows')
 const { file, named, NOW, ROOT, tab, visit, world } = await import('./world.fixture')
 
 const FILES = [
@@ -78,7 +78,7 @@ const WORLD = world({
     visit('https://docs.rs/tauri/latest/tauri/', 'tauri - Rust', { visits: 3 }),
     visit('https://www.polybox.ethz.ch/', 'polybox', { visits: 2 }),
   ],
-  settings: settingsOf(sectionGroups().flat(), preferences(), places(), 'Settings'),
+  settings: settingRows(sectionGroups().flat(), preferences(), places(), 'Settings'),
   now: NOW,
 })
 

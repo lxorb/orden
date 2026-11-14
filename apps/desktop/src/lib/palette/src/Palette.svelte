@@ -29,15 +29,10 @@
   import type { OpenTab, Row } from './rows'
   import UnsavedDot from '../../UnsavedDot.svelte'
   import { isDraft } from '../../workspace/drafts'
-  import { settingsOf, settingValue } from './settings'
   import { lookOf } from './trying'
-  import { preferences } from '../../preferences'
   import { search } from '../../search.svelte'
   import { paletteWords } from '../../surfaces.svelte'
-  import { chatsOn, hiddenKinds, settings } from '../../settings.svelte'
-  import { landing } from '../../settings/landing.svelte'
-  import { places } from '../../settings/places'
-  import { ICONS, sectionGroups } from '../../settings/sections'
+  import { chatsOn, hiddenKinds } from '../../settings.svelte'
   import { relativeTo, samePath } from '../../platform/src/api'
   import TabMark from '../../TabMark.svelte'
   import { theme } from '../../theme/src/api'
@@ -85,9 +80,7 @@
 
   const commands = $derived(open ? paletteCommands(view) : [])
 
-  const settingRows = $derived(
-    open ? settingsOf(sectionGroups().flat(), preferences(view), places(), 'Settings') : [],
-  )
+  const settingRows = $derived(open ? paletteKind('settings').rows(view) : [])
 
   const tabs = $derived(
     workspace.tabs.map((tab): OpenTab => ({
@@ -400,10 +393,7 @@
       workspace.graphSettings.take(view)
       workspace.openGraph()
     },
-    showSetting: (section, label) => {
-      settings.show(section)
-      landing.label = label
-    },
+    showSetting: (section, label) => paletteKind('settings').show(section, label),
     agents: () => {
       if (root) void import('../../reserved-name.svelte').then((one) => one.openInstructions(root))
     },
@@ -591,9 +581,7 @@
               {:else if row.kind === 'page' || row.kind === 'address'}
                 <FileMark mark="web" url={row.url} />
               {:else if row.kind === 'setting'}
-                <svg class="mark drawn" viewBox="0 0 16 16"
-                  ><path d={ICONS[row.setting.section]} /></svg
-                >
+                <svg class="mark drawn" viewBox="0 0 16 16"><path d={row.setting.icon} /></svg>
               {:else if row.kind === 'place'}
                 <svg class="mark drawn" viewBox="0 0 13 13"><path d={OUTLINE_MARK} /></svg>
               {:else if row.kind === 'make'}
@@ -618,12 +606,12 @@
                       parts={where}
                     />{/if}</span
                 >{/if}
-              {#if row.kind === 'setting' && row.setting.field?.kind === 'switch'}
+              {#if row.kind === 'setting' && row.setting.switched() !== null}
                 <span class="flip" aria-hidden="true"
-                  ><span class="orden-switch" class:on={row.setting.field.get()}></span></span
+                  ><span class="orden-switch" class:on={row.setting.switched()}></span></span
                 >
-              {:else if row.kind === 'setting' && settingValue(row.setting.field)}
-                <span class="value">{settingValue(row.setting.field)}</span>
+              {:else if row.kind === 'setting' && row.setting.value()}
+                <span class="value">{row.setting.value()}</span>
               {:else if hint}
                 <kbd>{hint}</kbd>
               {/if}

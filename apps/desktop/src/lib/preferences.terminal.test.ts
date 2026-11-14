@@ -14,7 +14,7 @@ vi.mock('./platform/src/tauri', async (actual) => ({
   invoke: () => Promise.reject(new Error('no crate')),
 }))
 
-const { preferences } = await import('./preferences')
+const { preferences } = await import('./settings/src/preferences')
 const { shells } = await import('./terminal/src/api')
 const { shortcuts } = await import('./shortcuts.svelte')
 await import('./web-tab/src/api')

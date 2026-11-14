@@ -2,7 +2,7 @@ import type { AgentAnswer } from '../automation/caller'
 import { ACCENTS, theme } from '../theme/src/api'
 import { LINK_FORMATS } from '../link-format'
 import { LINE_HEIGHTS, modes, WIDTHS } from '../modes.svelte'
-import type { Field } from '../settings/fields'
+import { type Field, settingDeclarations, settingSchema } from '../settings/src/api'
 import { asked } from './asks'
 import { type Call, done, need } from './call'
 import { Refused } from './problem'
@@ -137,12 +137,12 @@ const SETTINGS: Record<string, Setting> = {
 }
 
 async function rows(): Promise<Field[]> {
-  const { declarations } = await import('../settings/declarations')
+  const { declarations } = await settingDeclarations()
   return declarations()
 }
 
 async function declaredSetting(key: string, all: Field[]): Promise<Setting | null> {
-  const { refusal, schemaOf } = await import('../settings/schema')
+  const { refusal, schemaOf } = await settingSchema()
   const named = all.filter((one) => one.key === key)
   const schema = schemaOf(named)[key]
   const [first] = named

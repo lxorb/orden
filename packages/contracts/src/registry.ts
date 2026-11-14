@@ -140,10 +140,29 @@ export interface PaletteMessages {
   open(path: string, message: string, how: PaletteOpenHow): void
 }
 
+export interface PaletteSetting {
+  readonly section: SettingsSectionId
+  readonly label: string
+  readonly where: string
+  readonly names: readonly string[]
+  readonly words: readonly string[]
+  readonly row: boolean
+  readonly icon: string
+  switched(): boolean | null
+  value(): string | null
+  readonly press: (() => void) | null
+}
+
+export interface PaletteSettings {
+  rows(view?: object): readonly PaletteSetting[]
+  show(section: SettingsSectionId, label: string | null): void
+}
+
 export interface PaletteKinds {
   readonly visits: PaletteVisits
   readonly hosts: PaletteHosts
   readonly messages: PaletteMessages
+  readonly settings: PaletteSettings
 }
 
 export type PaletteKindId = keyof PaletteKinds
@@ -167,7 +186,17 @@ export const NO_MESSAGES: PaletteMessages = {
   open: () => undefined,
 }
 
-const NONE: PaletteKinds = { visits: NO_VISITS, hosts: NO_HOSTS, messages: NO_MESSAGES }
+export const NO_SETTINGS: PaletteSettings = {
+  rows: () => [],
+  show: () => undefined,
+}
+
+const NONE: PaletteKinds = {
+  visits: NO_VISITS,
+  hosts: NO_HOSTS,
+  messages: NO_MESSAGES,
+  settings: NO_SETTINGS,
+}
 
 const kindLoads = new Map<PaletteKindId, () => Promise<PaletteKinds[PaletteKindId]>>()
 const kindsLoaded = new Map<PaletteKindId, PaletteKinds[PaletteKindId]>()

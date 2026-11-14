@@ -2,6 +2,7 @@ import type { PickedFile } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
 import { appsOn, basesOn, hiddenKinds } from './settings.svelte'
+import { settingsTab } from './settings-tab'
 import { arriving } from './arriving.svelte'
 import { keptAway } from './web/away.svelte'
 import {
@@ -150,7 +151,6 @@ import {
 import { agentMarks } from './agent-marks.svelte'
 import { beginSetup } from './onboarding/src/api'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
-import { settingsTab } from './settings/tab-hook'
 
 function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
