@@ -603,8 +603,8 @@ describe('the sentence behind a setting', () => {
       'lib/AiPane.svelte',
       'lib/SettingsPanel.svelte',
       'lib/SyncPane.svelte',
-      'lib/access/Access.svelte',
       'lib/accounts-ui/src/ProfileRows.svelte',
+      'lib/agents/src/access/Access.svelte',
       'lib/agents/src/settings/Words.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
     ])

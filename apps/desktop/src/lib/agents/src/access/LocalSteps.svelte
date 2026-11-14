@@ -1,10 +1,10 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { Copyable } from '../ui-controls/src/api'
-  import { CopyButton } from '../ui-controls/src/api'
-  import { dur, slide } from '../platform/src/api'
-  import { type McpClient, mcpLine } from '../agents/src/api'
-  import type { AgentsPane } from '../agents/src/api'
+  import { Copyable } from '../../../ui-controls/src/api'
+  import { CopyButton } from '../../../ui-controls/src/api'
+  import { dur, slide } from '../../../platform/src/api'
+  import { type McpClient, mcpLine } from '../mcp'
+  import type { AgentsPane } from '../settings/pane.svelte'
 
   const {
     pane,

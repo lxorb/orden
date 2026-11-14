@@ -6,11 +6,10 @@ import {
   agentsUi,
   agentStandIn,
   CAPTURE_AS,
-  loadAgentDetail,
+  loadAccess,
   loadAgentRows,
   loadAgentSession,
   loadTakeoverBar,
-  mcpLine,
 } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
@@ -49,11 +48,11 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('the live agents, the stand-in and the panels open through doors', () => {
+  test('the live agents, the stand-in, the access pane and the panels open through doors', () => {
     for (const one of [
       agentsUi,
       agentStandIn,
-      loadAgentDetail,
+      loadAccess,
       loadAgentRows,
       loadAgentSession,
       loadTakeoverBar,
@@ -71,15 +70,5 @@ describe('what an agent may do from a window', () => {
 
   test('a page is captured as a clip, a screenshot or a pdf', () => {
     expect([...CAPTURE_AS]).toEqual(['clip', 'screenshot', 'pdf'])
-  })
-})
-
-describe('the line that adds Orden to a coding agent', () => {
-  test('names the program it runs as an MCP server', () => {
-    expect(mcpLine('orden')).toContain('mcp add')
-    expect(mcpLine('orden')).toContain('orden mcp')
-    expect(JSON.parse(mcpLine('orden', 'json'))).toEqual({
-      mcpServers: { orden: { command: 'orden', args: ['mcp'] } },
-    })
   })
 })

@@ -3,6 +3,7 @@
   "layer": "features",
   "dependsOn": [
     "contracts",
+    "accounts",
     "agent-docs",
     "dictation",
     "platform",
@@ -13,12 +14,15 @@
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/Outward.svelte",
     "apps/desktop/src/lib/accelerator.ts",
     "apps/desktop/src/lib/agent-host/editor.ts",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
+    "apps/desktop/src/lib/connectors.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/notify.ts",
     "apps/desktop/src/lib/panel-marks.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
