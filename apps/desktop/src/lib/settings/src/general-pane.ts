@@ -16,7 +16,7 @@ import { isHiddenTabs } from '../../workspace/sets'
 import type { Field, Group, Pane } from './fields'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
-import { keptForGood } from '../../web/kept-for-good.svelte'
+import { keptForGood } from '../../kept-for-good/src/api'
 
 export function relockField(): Field {
   return {

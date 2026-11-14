@@ -1,6 +1,7 @@
 import { internal, invoke, isNative } from '../../platform/src/api'
 import { startup } from '../../startup.svelte'
 import { mark } from '../../trace'
+import { warmInternal, warmSpace } from '../../web-backend/src/api'
 import { isWarmth, type PapersHeld, said, type Warmth } from '@orden/scan/search/warmth'
 
 class Warm {
@@ -25,20 +26,14 @@ class Warm {
     if (this.root !== root) return
 
     if (!isNative) {
-      const { warmSpace, whenWarmer } = await import('../../web/search-client')
-      whenWarmer((warmth) => {
+      await warmSpace(root, (warmth) => {
         this.held = warmth
       })
-      warmSpace(root)
       return
     }
 
     mark('warm_search asked')
-    const kept = internal.routed
-      ? await import('../../internal/search')
-          .then(({ warmInternal }) => warmInternal(root))
-          .catch(() => null)
-      : null
+    const kept = internal.routed ? await warmInternal(root).catch(() => null) : null
     const found = kept ?? (await invoke<unknown>('warm_search', { root }).catch(() => null))
     mark('warm_search answered')
     if (this.root === root && isWarmth(found)) this.held = found

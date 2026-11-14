@@ -6,7 +6,7 @@ import { workspace } from '../workspace.svelte'
 import { pages } from '../web-tab/src/api'
 
 async function working(path: string): Promise<string | null> {
-  const { workingFolder } = await import('../internal/work')
+  const { workingFolder } = await import('../web-backend/src/api')
   return workingFolder(path)
 }
 

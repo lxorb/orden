@@ -1,5 +1,6 @@
 import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
+import { searchInternal, searchInWorker } from '../../web-backend/src/api'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -38,7 +39,6 @@ export async function searchSpace(
   if (papers.length) onFound({ hits: papers, loose: [] })
 
   if (!isNative) {
-    const { searchInWorker } = await import('../../web/search-client')
     let found = 0
     const loose: FuzzyHit[] = []
     const gathered = (batch: Found) => {
@@ -54,7 +54,6 @@ export async function searchSpace(
   }
 
   if (internal.routed) {
-    const { searchInternal } = await import('../../internal/search')
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
 

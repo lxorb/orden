@@ -3,6 +3,7 @@ import { said } from '../automation/args'
 import { READER } from '../automation/caller'
 import { webDataStores, webNotes } from '../web-tab/src/api'
 import type { StoreSaid } from '../agents/src/api'
+import { workingPath } from '../web-backend/src/api'
 import { placeFor } from './spaces'
 import { lendTab, readerTabs } from './tabs'
 
@@ -38,7 +39,6 @@ export async function answerTheCrate(name: string, args: Said): Promise<unknown>
       return markdown(args)
     case 'agent.working_folder': {
       if (__EVEN_PLUGIN__) return null
-      const { workingPath } = await import('../internal/work')
       const path = said(args, 'path')
       return path ? await workingPath(path) : null
     }

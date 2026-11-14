@@ -223,7 +223,7 @@ class Session {
     this.email = ''
 
     arriving.begin()
-    void import('../../web/kept-for-good.svelte').then((one) => one.keptForGood.ask())
+    void import('../../kept-for-good/src/api').then((one) => one.keptForGood.ask())
 
     await this.loadSpaces().catch(() => undefined)
   }

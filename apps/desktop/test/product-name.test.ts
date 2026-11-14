@@ -18,7 +18,7 @@ function identifier(text: string, at: number, length: number): boolean {
 
 const NAMED: Record<string, string[]> = {
   'lib/welcome.ts': ['# Welcome to Nib', '# Welcome to nibeditor'],
-  'lib/web/commands.ts': ['Nib'],
+  'lib/web-backend/src/web/commands.ts': ['Nib'],
 }
 
 const renaming = (text: string) => text.includes('Orden')

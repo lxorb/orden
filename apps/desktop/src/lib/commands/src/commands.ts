@@ -94,6 +94,7 @@ import {
   isMarkdownPath,
   samePath,
 } from '../../platform/src/api'
+import { exportSpace } from '../../web-backend/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
 import { theme } from '../../theme/src/api'
 import { workspace } from '../../workspace.svelte'
@@ -597,7 +598,6 @@ function spaceCommands(): Command[] {
               busy.start(
                 'Exporting',
                 async () => {
-                  const { exportSpace } = await import('../../internal/export')
                   const items = workspace.itemMeta.itemsOf(space.root)
                   const metaOf = (path: string) => items[path] ?? null
                   await exportSpace(space.root, space.name, metaOf)

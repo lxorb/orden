@@ -1416,7 +1416,7 @@ describe('the folder watcher', () => {
       heard.push(hear)
       return Promise.resolve()
     })
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine: here.engine,
       ready: () => true,
       changed: () => undefined,
@@ -1451,7 +1451,7 @@ describe('the folder watcher', () => {
       heard.push(hear)
       return Promise.resolve()
     })
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine: here.engine,
       ready: () => true,
       changed: () => undefined,
@@ -1485,7 +1485,7 @@ describe('the folder watcher', () => {
         heard.push(hear)
         return Promise.resolve()
       })
-      const watched = watchFolders({
+      const watched = await watchFolders({
         engine: here.engine,
         ready: () => false,
         changed: () => undefined,
@@ -1507,14 +1507,14 @@ describe('the folder watcher', () => {
     },
   )
 
-  function listening(engine: Engine) {
+  async function listening(engine: Engine) {
     const heard: ((news: SpaceNews) => void)[] = []
     watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
       heard.push(hear)
       return Promise.resolve()
     })
     const moves: string[] = []
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine,
       ready: () => true,
       changed: () => undefined,
@@ -1542,7 +1542,7 @@ describe('the folder watcher', () => {
   test('hears a rename the file list makes, halfway, as nothing: one rename, the note itself (#1068)', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await device(account, 'd0')
-    const { say, stop } = listening(here.engine)
+    const { say, stop } = await listening(here.engine)
 
     await here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, async () => {
       await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`)
@@ -1563,7 +1563,7 @@ describe('the folder watcher', () => {
   test('reads a message that comes late against the disk as it is now (#1068)', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await device(account, 'd0')
-    const { say, stop } = listening(here.engine)
+    const { say, stop } = await listening(here.engine)
 
     await here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () =>
       here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`),
@@ -1587,7 +1587,7 @@ describe('the folder watcher', () => {
     )
     await there.engine.pass(SPACE)
 
-    const { say, stop } = listening(here.engine)
+    const { say, stop } = await listening(here.engine)
     const move = here.disk.move.bind(here.disk)
     here.disk.move = async (from: string, to: string) => {
       await move(from, to)
@@ -1608,7 +1608,7 @@ describe('the folder watcher', () => {
   test('says a rename another program made to everything kept by path (#1068)', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await device(account, 'd0')
-    const { say, moves, stop } = listening(here.engine)
+    const { say, moves, stop } = await listening(here.engine)
     await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`)
     await say({ ...created(`${ROOT}/Goals.md`), kind: 'renamed', from: `${ROOT}/Plan.md` })
     stop()
@@ -1625,7 +1625,7 @@ describe('the folder watcher', () => {
     await there.engine.pass(SPACE)
 
     const here = await device(account, 'd0')
-    const { say, stop } = listening(here.engine)
+    const { say, stop } = await listening(here.engine)
     await here.disk.write(`${ROOT}/2026-11-04.md`, 'here mk2z')
     await say(created(`${ROOT}/2026-11-04.md`))
     await here.engine.created(`${ROOT}/2026-11-04.md`, false, 'here mk2z', '')
@@ -1691,7 +1691,7 @@ describe('the folder watcher', () => {
       heard.push(hear)
       return Promise.resolve()
     })
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine: here.engine,
       ready: () => true,
       changed: () => undefined,
@@ -1729,7 +1729,7 @@ describe('the folder watcher', () => {
       return Promise.resolve()
     })
     told.mockReset()
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine: here.engine,
       ready: () => true,
       changed: () => undefined,
@@ -1750,7 +1750,7 @@ describe('the folder watcher', () => {
     const here = await device()
     watch.mockReset()
     watch.mockImplementation(() => Promise.resolve())
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine: here.engine,
       ready: () => true,
       changed: () => undefined,

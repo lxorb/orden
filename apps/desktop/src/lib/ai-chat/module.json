@@ -18,7 +18,8 @@
     "theme-looks",
     "ui-controls",
     "ui-kit",
-    "parting"
+    "parting",
+    "web-backend"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -32,7 +33,6 @@
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts",
-    "apps/desktop/src/lib/web/store.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/undo.svelte.ts",

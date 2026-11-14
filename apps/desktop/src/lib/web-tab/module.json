@@ -16,7 +16,8 @@
     "theme",
     "ui-controls",
     "ui-kit",
-    "parting"
+    "parting",
+    "web-backend"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -31,7 +32,6 @@
     "apps/desktop/src/lib/frecency.ts",
     "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/icon-sets.ts",
-    "apps/desktop/src/lib/internal/work.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/longpress.ts",

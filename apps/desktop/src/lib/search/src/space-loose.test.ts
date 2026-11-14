@@ -23,7 +23,9 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   papers: () => Promise.resolve({ papersFor: () => Promise.resolve(), searchPapers: () => [] }),
 }))
-vi.mock('../../web/search-client', () => ({
+vi.mock('../../web-backend/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../web-backend/src/api')>()),
+  searchInternal: () => Promise.resolve(false),
   searchInWorker: (_root: string, _query: unknown, _terms: string[], limit: number, told: Told) => {
     told({
       hits: [hit('/space/Here.md')],

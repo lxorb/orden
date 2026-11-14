@@ -15,7 +15,8 @@
     "theme",
     "theme-looks",
     "ui-kit",
-    "updates"
+    "updates",
+    "web-backend"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -26,7 +27,6 @@
     "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/insert-picture.ts",
-    "apps/desktop/src/lib/internal/export.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/links.ts",

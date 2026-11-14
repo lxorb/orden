@@ -7,7 +7,7 @@ on:
     paths:
       - apps/desktop/src-tauri/src/old_home.rs
       - apps/desktop/src-tauri/src/former.js
-      - apps/desktop/src/lib/internal/convert.ts
+      - apps/desktop/src/lib/web-backend/src/internal/convert.ts
       - apps/desktop/src/lib/workspace/former-home.ts
       - apps/desktop/src/lib/workspace/moved.ts
       - apps/desktop/src/lib/workspace/item-meta.svelte.ts
@@ -19,7 +19,7 @@ on:
     paths:
       - apps/desktop/src-tauri/src/old_home.rs
       - apps/desktop/src-tauri/src/former.js
-      - apps/desktop/src/lib/internal/convert.ts
+      - apps/desktop/src/lib/web-backend/src/internal/convert.ts
       - apps/desktop/src/lib/workspace/former-home.ts
       - apps/desktop/src/lib/workspace/moved.ts
       - apps/desktop/src/lib/workspace/item-meta.svelte.ts

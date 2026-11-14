@@ -30,6 +30,7 @@ import type {
   Usage,
 } from '../../../ai-providers/src/api'
 import { noUsage } from './usage'
+import { webMeta } from '../../../web-backend/src/api'
 
 const WORDS = 2_000
 
@@ -497,7 +498,7 @@ function inTurn(space: string, run: () => Promise<void>): Promise<void> {
 }
 
 async function web() {
-  const { meta } = await import('../../../web/store')
+  const meta = await webMeta()
   const listKey = (space: string) => `ai-threads:${space}`
   const threadKey = (space: string, id: string) => `ai-thread:${space}:${id}`
   const heads = async (space: string): Promise<unknown[]> => {

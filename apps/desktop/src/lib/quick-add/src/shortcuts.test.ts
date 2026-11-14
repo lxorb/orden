@@ -43,25 +43,19 @@ vi.mock('../../crate/src/native', () => ({
 
 vi.mock('../../own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
 
-vi.mock('../../internal/spaces', () => ({
-  HOME: '.orden',
+vi.mock('../../web-backend/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../web-backend/src/api')>()),
   keptCameFrom: () =>
     Promise.resolve([{ root: '/Orden/.orden/Notes/Notes', from: '/Orden/Notes' }]),
-}))
-
-vi.mock('../../internal/roots', () => ({
-  mountOf: (path: string) =>
-    path === '/Orden/.orden/Notes/Notes'
-      ? {
-          inside: '',
-          mount: {
-            folder: {
-              name: '/Orden/.orden/Notes',
-              readText: (rel: string) => Promise.resolve(disk.kept.get(rel) ?? null),
-            },
-          },
-        }
-      : null,
+  keptFolder: (path: string) =>
+    Promise.resolve(
+      path === '/Orden/.orden/Notes/Notes'
+        ? {
+            name: '/Orden/.orden/Notes',
+            readText: (rel: string) => Promise.resolve(disk.kept.get(rel) ?? null),
+          }
+        : null,
+    ),
 }))
 
 const { takeAdded, tasksSince, TAKEN } = await import('./shortcuts')

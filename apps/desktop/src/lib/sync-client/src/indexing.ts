@@ -5,7 +5,7 @@ import type { IndexedNote } from '@orden/scan/wire'
 import type { AwayFile, Engine } from './engine'
 import type { Leaving } from './keeping'
 import type { Reading } from './transport'
-import type { IndexRow, IndexStore } from '../../web/index-store'
+import type { IndexRow, IndexStore } from './index-store'
 
 const BATCH = 200
 

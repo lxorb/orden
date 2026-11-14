@@ -1,15 +1,6 @@
 import { providePort } from '@orden/contracts'
+import { internalInvoke, webInvoke } from './web-backend/src/api'
 
-providePort('backend.web', {
-  invoke: async <T>(command: string, args?: Record<string, unknown>) => {
-    const { webInvoke } = await import('./web/commands')
-    return webInvoke<T>(command, args)
-  },
-})
+providePort('backend.web', { invoke: webInvoke })
 
-providePort('backend.internal', {
-  invoke: async <T>(command: string, args?: Record<string, unknown>) => {
-    const { internalInvoke } = await import('./internal/route')
-    return internalInvoke<T>(command, args)
-  },
-})
+providePort('backend.internal', { invoke: internalInvoke })

@@ -13,13 +13,12 @@
     "shortcuts",
     "tasks-model",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "web-backend"
   ],
   "pending": [
     "apps/desktop/src/lib/accelerator.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/internal/roots.ts",
-    "apps/desktop/src/lib/internal/spaces.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/long-paste.ts",
     "apps/desktop/src/lib/own-window.ts",

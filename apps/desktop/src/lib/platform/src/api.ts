@@ -1,3 +1,4 @@
+export { carryKeys } from './former-keys'
 export { ASSET_ROUTE, assetType } from './asset-route'
 export { serveAssets } from './serve-assets'
 export {
@@ -50,6 +51,8 @@ export {
   isHiddenPath,
   isMarkdownPath,
   isPicturePath,
+  KEPT_HOME,
+  keptShaped,
   movedTo,
   nameOf,
   noteName,

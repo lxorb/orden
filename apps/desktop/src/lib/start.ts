@@ -38,6 +38,7 @@ import { shortcuts } from './shortcuts/src/api'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme/src/api'
 import { pull } from './pull.svelte'
+import { convertAll, keepWorking } from './web-backend/src/api'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash/src/api'
 import { installStaged, ready, settledForInstaller, updates } from './updates/src/api'
@@ -219,19 +220,14 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup
-      .turn('right')
-      .then(() => import('./internal/convert'))
-      .then(({ convertAll }) => convertAll(workspace))
-      .then(() => import('./internal/work'))
-      .then(({ keepWorking }) => keepWorking())
-      .then(() =>
-        platform() === 'macos'
-          ? import('./quick-add/src/api').then((one) => one.quickShortcuts())
-          : null,
-      )
-      .then((one) => one?.hearShortcuts())
-      .catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
+    void (async () => {
+      await startup.turn('right')
+      await convertAll(workspace)
+      await keepWorking()
+      if (platform() !== 'macos') return
+      const { quickShortcuts } = await import('./quick-add/src/api')
+      await (await quickShortcuts()).hearShortcuts()
+    })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
