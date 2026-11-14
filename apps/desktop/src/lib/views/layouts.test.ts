@@ -1,5 +1,4 @@
-import { answer, type Base, builtinView, cellValue, readBase, type Row } from '@orden/bases'
-import { timeWords } from '@orden/editor/task-days'
+import { answer, type Base, cellValue, readBase, type Row } from '@orden/bases'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -30,7 +29,6 @@ const TimelineLayout = (await import('./TimelineLayout.svelte')).default
 const ChartLayout = (await import('./ChartLayout.svelte')).default
 const FormLayout = (await import('./FormLayout.svelte')).default
 const { toneColour } = await import('./chips')
-const ViewFrame = (await import('./ViewFrame.svelte')).default
 const Cell = (await import('./Cell.svelte')).default
 
 const TODAY = '2026-10-04'

@@ -1,9 +1,14 @@
-import type { Row, TaskRow, Value } from '@orden/bases'
+import type { Value } from '@orden/bases'
 import { localNumber } from '../region'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
-import { plain } from './inline'
 import { dayWords } from '@orden/editor/task-days'
-import { deadlineOf, startOf } from '@orden/markdown/task-dates'
+
+function minutesText(minutes: number): string {
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (!hours) return `${localNumber(rest)}m`
+  return rest ? `${localNumber(hours)}h ${localNumber(rest)}m` : `${localNumber(hours)}h`
+}
 
 export function valueText(value: Value, today: string): string {
   if (value === null) return ''

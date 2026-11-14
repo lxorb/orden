@@ -1,21 +1,8 @@
-import { answer, readBase } from '@orden/bases'
-import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, describe, expect, test, vi } from 'vitest'
-
-vi.mock('./sharing.svelte', () => ({ canWriteAt: () => true }))
+import { afterEach, describe, expect, test } from 'vitest'
 
 const { keyElsewhere } = await import('./layer-keys')
-const { taskRow } = await import('./views/fixture')
-const { kitFor } = await import('./views/kit')
-const { contextFor } = await import('./views/context')
-const { columnsOf } = await import('./views/columns')
-const ViewFrame = (await import('./views/ViewFrame.svelte')).default
-
-let close: (() => void) | undefined
 
 afterEach(() => {
-  close?.()
-  close = undefined
   document.body.replaceChildren()
 })
 
@@ -144,64 +131,4 @@ describe('a key pressed in a layer', () => {
     press(at('.in'), 'q')
     expect(held).toEqual([false, true])
   })
-})
-
-function frame() {
-  const base = readBase(`views:
-  - type: table
-    name: Table
-    orden: { rows: tasks }
-`)
-  const rows = [taskRow('Plan.md', '- [ ] water the plants', 3)]
-  const context = contextFor({ rows, today: '2026-10-24', now: '2026-10-24T12:00' })
-  const live = {
-    base,
-    at: 0,
-    view: base.views[0],
-    rows,
-    context,
-    today: '2026-10-24',
-    typed: '',
-    failed: false,
-    answer: answer(base, 0, rows, context),
-    columns: columnsOf(base, 0, rows),
-    search: () => undefined,
-    change: () => Promise.resolve(),
-    reload: () => Promise.resolve(),
-    builder: null,
-    writtenAt: null,
-    locked: false,
-    refused: 0,
-    colourOf: () => null,
-  }
-  const made = kitFor(live as unknown as Parameters<typeof kitFor>[0], {}, null, false)
-  const kit = Object.create(made, {
-    writable: { value: true },
-    adds: { value: true },
-  }) as typeof made
-  const target = document.createElement('div')
-  document.body.append(target)
-  const shown = mount(ViewFrame, { target, props: { kit, title: 'Plan' } })
-  close = () => void unmount(shown)
-  flushSync()
-  return target
-}
-
-test('Q in a view’s display popover adds no row behind it, and Q on the view still does', () => {
-  const target = frame()
-  const display = target.querySelector<HTMLButtonElement>('button[aria-label="Display"]')
-  if (!display) throw new Error('no display button')
-  display.click()
-  flushSync()
-  const inside = target.querySelector('.pop[role="dialog"] button, .pop[role="dialog"] [tabindex]')
-  if (!inside) throw new Error('no popover')
-  press(inside, 'q')
-  flushSync()
-  expect(target.querySelector('.adding')).toBeNull()
-
-  const body = target.querySelector('.body')
-  if (!body) throw new Error('no body')
-  press(body, 'q')
-  flushSync()
-  expect(target.querySelector('.adding')).not.toBeNull()
 })

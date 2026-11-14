@@ -137,8 +137,6 @@ export function dayHead(value: Value, today: string): string {
   return day === today || day === addDays(today, 1) ? `${near}, ${date}` : date
 }
 
-const statusName = (status: string): string => STATUS_NAMES[status] ?? 'To do'
-
 const CHART_NAMES: Record<ChartKind, string> = {
   bar: 'Bars',
   hbar: 'Bars across',
