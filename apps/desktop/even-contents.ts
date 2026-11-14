@@ -102,6 +102,7 @@ export const PACKAGES = [
 export const APP_FOLDERS = [
   'accounts',
   'accounts-ui',
+  'agent-docs',
   'agents',
   'ai',
   'ai-providers',

@@ -5,7 +5,7 @@ import { isMarkdownPath, notePath, relativeTo, invoke } from '../platform/src/ap
 import { entryAt } from '../tree-edits'
 import { coveredBy } from '../workspace/archive.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
-import { revOf } from '../agents/src/api'
+import { revOf } from '../agent-docs/src/api'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, needScope, sourceOf } from './call'
 import { indexOf } from './links'

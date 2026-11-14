@@ -11,6 +11,16 @@ providePort('chats.names', {
           ),
 })
 
+providePort('agents.writes', {
+  wrote: (agent, tabs) => {
+    if (!__EVEN_PLUGIN__) {
+      void import('./agents/src/api')
+        .then((one) => one.agentsUi())
+        .then((ui) => ui.wrote(agent, tabs))
+    }
+  },
+})
+
 providePort('voice', {
   record: () => import('./dictation/src/api').then((one) => one.recordVoice()),
   wordsIn: (bytes) =>

@@ -1,6 +1,6 @@
 import { ChangeSet, type Heard, type Mark, Text } from '@orden/editor'
 import { fold } from '@orden/rooms/fold'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
+import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Replacement } from './edits'
 import { Steps } from './steps'
 

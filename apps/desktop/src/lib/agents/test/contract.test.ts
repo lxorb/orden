@@ -1,26 +1,17 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
   AGENT_WINDOW_VERBS,
-  agentDocs,
   agentsUi,
   agentStandIn,
   CAPTURE_AS,
-  inTurn,
   loadAgentDetail,
   loadAgentRows,
   loadAgentSession,
   loadTakeoverBar,
   mcpLine,
-  revOf,
-  touchedBy,
 } from '../src/api'
-
-const followed = vi.hoisted(() => [] as unknown[])
-vi.mock('../../workspace.svelte', () => ({
-  workspace: { fileOps: { follow: (one: unknown) => followed.push(one) } },
-}))
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -58,9 +49,8 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('the note docs, the live agents, the stand-in and the panels open through doors', () => {
+  test('the live agents, the stand-in and the panels open through doors', () => {
     for (const one of [
-      agentDocs,
       agentsUi,
       agentStandIn,
       loadAgentDetail,
@@ -70,10 +60,6 @@ describe('the module stands on its own', () => {
     ]) {
       expect(typeof one).toBe('function')
     }
-  })
-
-  test('the api loads without the note docs, which follow file moves only once opened', () => {
-    expect(followed).toEqual([])
   })
 })
 
@@ -85,36 +71,6 @@ describe('what an agent may do from a window', () => {
 
   test('a page is captured as a clip, a screenshot or a pdf', () => {
     expect([...CAPTURE_AS]).toEqual(['clip', 'screenshot', 'pdf'])
-  })
-})
-
-describe('a note an agent reads', () => {
-  test('has one revision for the same words and another for other words', () => {
-    expect(revOf('plan')).toBe(revOf('plan'))
-    expect(revOf('plan')).not.toBe(revOf('plans'))
-  })
-
-  test('was touched by nobody while no agent wrote to it', () => {
-    expect(touchedBy('notes/a.md')).toEqual([])
-    expect(touchedBy(null)).toEqual([])
-  })
-})
-
-describe('turns', () => {
-  test('runs taken under one key wait for each other, even past a failure', async () => {
-    const order: string[] = []
-    const first = inTurn('a.md', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 5))
-      order.push('first')
-      throw new Error('refused')
-    })
-    const second = inTurn('a.md', async () => {
-      order.push('second')
-      return 2
-    })
-    await expect(first).rejects.toThrow('refused')
-    await expect(second).resolves.toBe(2)
-    expect(order).toEqual(['first', 'second'])
   })
 })
 

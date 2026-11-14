@@ -350,7 +350,7 @@ describe('what the app evaluates before it draws anything', () => {
   })
 
   test('and nothing of the agents', () => {
-    expect([...names].filter((one) => one.includes('/lib/agents/'))).toEqual([])
+    expect([...names].filter((one) => /\/lib\/(agents|agent-docs)\//.test(one))).toEqual([])
     expect(holds('/lib/agent-marks.svelte.ts')).toBe(true)
   })
 

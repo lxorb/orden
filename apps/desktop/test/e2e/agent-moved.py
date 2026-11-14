@@ -10,8 +10,8 @@ DRIVE = Drive(__file__, dev=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 AGENT = "{ id: 'orden-moved', name: 'Fake' }"
-DOCS = "await import('/src/lib/agents/src/docs/index.ts')"
-TOUCHED = "await import('/src/lib/agents/src/docs/touched.ts')"
+DOCS = "await import('/src/lib/agent-docs/src/index.ts')"
+TOUCHED = "await import('/src/lib/agent-docs/src/touched.ts')"
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})

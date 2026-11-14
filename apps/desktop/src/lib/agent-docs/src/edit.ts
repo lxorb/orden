@@ -1,8 +1,8 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { applied, changeOf, type Edit } from '@orden/scan/search/replace'
-import type { Keeping } from '../../../workspace/note-text'
-import { waited, folderOf, movedTo, nameOf, samePath, within } from '../../../platform/src/api'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
+import type { Keeping } from '../../workspace/note-text'
+import { waited, folderOf, movedTo, nameOf, samePath, within } from '../../platform/src/api'
+import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Selected } from './anchors'
 import { type Desk, type Located, type NoteAt, openNote, reachable, TYPING, wordsOf } from './desk'
 import { type Planned, plan, readEdits, type Replacement } from './edits'
@@ -11,7 +11,7 @@ import { DocError } from './problem'
 import { revOf } from './rev'
 import { touch, touchedBy, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
-import { inTurn } from '../turns'
+import { inTurn } from './turns'
 
 export const PATIENCE = 30_000
 
@@ -332,7 +332,8 @@ function changeOpen(
   if (first && !note.draft) void desk.snapshot(note.path, text, agent.name)
 
   const last = planned.edits.at(-1)
-  if (last) showAgent(open, agent, changes.mapPos(last.to, 1), desk.scheme())
+  if (last)
+    showAgent(open, agent, changes.mapPos(last.to, 1), desk.scheme(), desk.tabsShowing(open))
 
   return answer(note, open.live.text.toString(), planned, changes)
 }

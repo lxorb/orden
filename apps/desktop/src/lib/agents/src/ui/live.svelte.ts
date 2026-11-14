@@ -11,7 +11,6 @@ import { nextLapse, sameMarks, wornAt } from './marks'
 import PairingBubble from './PairingBubble.svelte'
 import { readEvent } from './read'
 import { crate, type Source } from './source'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
 
 const PAST = 20
 
@@ -150,6 +149,6 @@ export function stopAgents(): void {
   void running?.stop().catch(() => undefined)
 }
 
-export function wrote(note: NoteDoc, agent: string): void {
-  started().wrote(note, agent)
+export function wrote(agent: string, tabs: readonly string[]): void {
+  started().wrote(agent, tabs)
 }

@@ -1,8 +1,8 @@
 import type { EditorView } from '@orden/editor'
-import { insideOnly, insideSpace, nameOf, notePath } from '../../../platform/src/api'
+import { insideOnly, insideSpace, nameOf, notePath } from '../../platform/src/api'
 import type { Change, Edit } from '@orden/scan/search/replace'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
-import type { Keeping } from '../../../workspace/note-text'
+import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { Keeping } from '../../workspace/note-text'
 import { DocError } from './problem'
 
 export interface Space {
@@ -26,6 +26,7 @@ export interface Desk {
   padText(): Promise<string>
   padWrite(before: string, edits: readonly Edit[]): Promise<boolean>
   scheme(): 'dark' | 'light'
+  tabsShowing(note: NoteDoc): readonly string[]
   agentsMay(path: string): boolean
 }
 

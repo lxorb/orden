@@ -2,9 +2,8 @@ import { accentFor, theme } from '../../../theme/src/api'
 import type { TabAct } from '../../../agent-marks.svelte'
 import { portOf } from '@orden/contracts'
 import { workspace } from '../../../workspace.svelte'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
 import type { AgentEvent, Approval, Grant, Picture } from '../verbs'
-import { touchedBy } from '../docs/touched'
+import { agentDocs, touchedBy } from '../../../agent-docs/src/api'
 import { keepInNote } from './keep'
 import { callsOf, sessionMarkdown, today, type Call } from './session'
 import { heard, isStopped, nothing, overviewed, type Seen, wrote } from './seen'
@@ -68,14 +67,9 @@ export class Activity {
     }
   }
 
-  wrote(note: NoteDoc, agent: string): void {
+  wrote(agent: string, tabs: readonly string[]): void {
     const now = Date.now()
-    wrote(
-      this.seen,
-      agent,
-      workspace.tabs.filter((tab) => tab.note === note).map((tab) => tab.id),
-      now,
-    )
+    wrote(this.seen, agent, tabs, now)
     this.now = now
   }
 
@@ -201,7 +195,7 @@ export class Activity {
     const path = this.undoable(agent)
     if (path === null) return
 
-    const { undoAgentIn } = await import('../docs/index')
+    const { undoAgentIn } = await agentDocs()
     await undoAgentIn({ id: agent, name: this.nameOf(agent) }, path)
   }
 }
