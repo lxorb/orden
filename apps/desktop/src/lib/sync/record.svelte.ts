@@ -1,8 +1,14 @@
 import { isWebTarget } from '@orden/markdown/links'
-import { log } from '../log'
-import { insideSpace, withinSpace } from '../space-paths'
-import { forget, isRecord, keepJson, stored } from '../stored'
-import { invoke } from '../tauri'
+import {
+  log,
+  insideSpace,
+  withinSpace,
+  forget,
+  isRecord,
+  keepJson,
+  stored,
+  invoke,
+} from '../platform/src/api'
 import type { FileOp } from '../workspace/file-ops'
 import type { Answer, Clash } from './conflicts'
 

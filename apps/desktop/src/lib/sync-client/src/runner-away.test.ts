@@ -16,15 +16,15 @@ vi.stubGlobal('localStorage', {
   setItem: () => undefined,
   removeItem: () => undefined,
 })
-vi.mock('../../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isNative: false,
   isDesktop: false,
 }))
 
 const { runner } = await import('./runner.svelte')
 const { keptAway } = await import('../../web/away.svelte')
-const { windows } = await import('../../windows')
+const { windows } = await import('../../platform/src/windows')
 
 const ROOT = '/browser/space'
 const SPACE = 'sim'

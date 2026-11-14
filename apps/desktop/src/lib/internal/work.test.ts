@@ -4,7 +4,7 @@ import { InternalFolder } from './folder'
 import { MemoryBytes } from './memory'
 import { carried, Mirror, type WorkDisk, workFolderOf } from './work'
 
-vi.mock('../native', () => ({ invoke: () => Promise.resolve(null) }))
+vi.mock('../crate/src/native', () => ({ invoke: () => Promise.resolve(null) }))
 
 const ROOT = '/spaces/.orden/.work/Notes'
 

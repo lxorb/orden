@@ -1,6 +1,5 @@
 import { wallpaperCss } from '@orden/themes/wallpaper'
-import { theme } from '../../../theme/src/api'
-import { valueOf } from '../../../theme/src/api'
+import { theme, valueOf } from '../../../theme/src/api'
 import { coloursOf, fieldFloors } from './colours'
 import type { Scheme } from '@orden/contracts'
 import { type Held, heldDark, heldWallpaper, WALLPAPER_THEME } from './held'

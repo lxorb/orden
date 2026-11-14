@@ -1,5 +1,5 @@
 import { toArchive, toRestore } from './archive-plan'
-import { relativeTo, insideSpace, withinSpace } from './space-paths'
+import { relativeTo, insideSpace, withinSpace } from './platform/src/api'
 import { coveredBy } from './workspace/archive.svelte'
 import { changed } from './workspace/archive-map'
 import type { FileAction } from './workspace/undo.svelte'

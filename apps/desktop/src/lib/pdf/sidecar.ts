@@ -1,5 +1,4 @@
-import { log } from '../log'
-import { invoke } from '../tauri'
+import { log, invoke } from '../platform/src/api'
 import { frozen, type Held, leftAlone, readSheet, type Sheet, writeSheet } from './highlights'
 
 export async function loadHighlights(path: string): Promise<Sheet> {

@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { region } from '../../region'
   import { localDate } from '../../region'
-  import { dur, slide } from '../../motion'
+  import { dur, slide } from '../../platform/src/api'
   import { prompt } from '../../prompt.svelte'
   import { workspace } from '../../workspace.svelte'
   import { keepInNote } from '../ui/keep'

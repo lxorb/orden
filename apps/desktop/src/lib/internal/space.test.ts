@@ -16,7 +16,7 @@ vi.mock('./work', () => ({
     ),
 }))
 
-vi.mock('../native', () => ({
+vi.mock('../crate/src/native', () => ({
   invoke: (command: string, args: unknown) => {
     crate.calls.push({ command, args })
     if (command === 'list_trash')

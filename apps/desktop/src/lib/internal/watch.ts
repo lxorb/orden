@@ -1,5 +1,5 @@
 import type { Listed, SpaceChange } from '../space-watch'
-import { joinPath } from '../tauri'
+import { joinPath } from '../platform/src/api'
 import { keptShaped, mountOf } from './roots'
 
 export async function mountedFor(root: string): Promise<boolean> {

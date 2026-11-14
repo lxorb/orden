@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({ asked: [] as unknown[], refuse: null as string | null }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     world.asked.push({ command, output: args?.output, bytes: args?.bytes })
     return world.refuse ? Promise.reject(new Error(world.refuse)) : Promise.resolve(undefined)

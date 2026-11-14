@@ -1,5 +1,5 @@
 import { mount, unmount } from 'svelte'
-import { nameOf } from '../space-paths'
+import { nameOf } from '../platform/src/api'
 import BaseBlock from './BaseBlock.svelte'
 import { embeddedPath } from './source'
 

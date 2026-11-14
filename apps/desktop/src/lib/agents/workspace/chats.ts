@@ -4,7 +4,7 @@ import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@o
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import type { ChatEntry, Chats } from '../../chats/api'
 import { chatsOn } from '../../settings.svelte'
-import { rootedAt } from '../../space-paths'
+import { rootedAt } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, short, text } from './call'

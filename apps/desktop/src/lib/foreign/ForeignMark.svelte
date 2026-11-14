@@ -2,7 +2,7 @@
   import { foreignCopy } from '@orden/sync-core'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
   import SharedMark from '../SharedMark.svelte'
-  import { nameOf } from '../space-paths'
+  import { nameOf } from '../platform/src/api'
 
   const { path }: { path: string | null } = $props()
 

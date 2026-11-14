@@ -1,7 +1,6 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { message } from '../../message'
-import { foldsIn, pathKeyAs, samePath } from '../../space-paths'
-import { joinPath } from '../../tauri'
+import { foldsIn, pathKeyAs, samePath, joinPath } from '../../platform/src/api'
 import type { Tab } from '../../workspace.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Category } from '../verbs'

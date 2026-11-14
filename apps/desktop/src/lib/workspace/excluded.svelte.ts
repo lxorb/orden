@@ -1,6 +1,18 @@
-import { insideItsSpace, movedTo, relativeTo, samePath, within } from '../space-paths'
-import { isString, keepJson } from '../stored'
-import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
+import {
+  insideItsSpace,
+  movedTo,
+  relativeTo,
+  samePath,
+  within,
+  isString,
+  keepJson,
+  filledIn,
+  type Folded,
+  type Folding,
+  meet,
+  readSpaces,
+  without,
+} from '../platform/src/api'
 import { carried, moving } from './file-ops'
 
 export const STORAGE_KEY = 'orden:excluded'

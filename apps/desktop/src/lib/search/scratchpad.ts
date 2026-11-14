@@ -1,6 +1,6 @@
 import { scratchpad } from '../scratchpad/pad'
 import { SCRATCHPAD } from '../scratchpad/is.svelte'
-import { noteName } from '../space-paths'
+import { noteName } from '../platform/src/api'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 

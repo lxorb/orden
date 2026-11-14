@@ -1,5 +1,5 @@
 import { parseCombination, type Platform } from '../keys'
-import { isRecord } from '../stored'
+import { isRecord } from '../platform/src/api'
 
 export interface Pressed {
   key: string

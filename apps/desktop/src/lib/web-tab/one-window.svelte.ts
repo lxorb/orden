@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 
 interface Said {

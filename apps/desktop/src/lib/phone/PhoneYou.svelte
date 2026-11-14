@@ -3,7 +3,7 @@
   import { showAccount } from '../account-menu'
   import { AccountBadge } from '../accounts/src/api'
   import { arriving } from '../arriving.svelte'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
   import { scratchFromDrawer } from '../scratchpad/is.svelte'
   import { showFeedback } from '../surfaces.svelte'
 

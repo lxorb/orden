@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly } from '../motion'
+  import { dur, fly } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { takeKeyboard } from '../take-keyboard'
-  import { isDesktop } from '../tauri'
+  import { isDesktop } from '../platform/src/api'
   import type { Dialog } from './dialogs.svelte'
   import { dialogs } from './dialogs.svelte'
 

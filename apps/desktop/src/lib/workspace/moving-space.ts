@@ -1,6 +1,4 @@
-import { log } from '../log'
-import { isAgentsName } from '../note-name'
-import { nameOf, samePath } from '../space-paths'
+import { log, isAgentsName, nameOf, samePath } from '../platform/src/api'
 import { canWriteAt } from '../sharing.svelte'
 import { moveHistory } from '../terminal/history'
 import { readSpec } from '../terminal/spec'
@@ -58,7 +56,7 @@ export async function reopening(draft: Draft): Promise<Draft | null> {
     return null
   }
   if (draft.path !== null && !draft.dirty) {
-    const { onDisk } = await import('../on-disk')
+    const { onDisk } = await import('../platform/src/api')
     if (!(await onDisk(draft.path))) return null
   }
   await ws.showSpace(owner)

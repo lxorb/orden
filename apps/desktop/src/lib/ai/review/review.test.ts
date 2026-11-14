@@ -100,7 +100,7 @@ vi.mock('../../agents/docs', async () => {
   }
 })
 
-vi.mock('../../on-disk', () => ({
+vi.mock('../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(fake.desk.disk.has(path)),
 }))
 

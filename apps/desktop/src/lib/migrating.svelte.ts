@@ -7,7 +7,7 @@ import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } fro
 import type { BrowserProfile, FoundBrowser } from './import/browsers'
 import type { Vault } from './import/vaults'
 import type { ZenProfile } from './import/zen-profiles'
-import { isDesktop } from './tauri'
+import { isDesktop } from './platform/src/api'
 import { viewport } from './viewport.svelte'
 import { type Space, workspace } from './workspace.svelte'
 

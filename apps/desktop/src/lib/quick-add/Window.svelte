@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { invoke } from '../tauri'
+  import { invoke } from '../platform/src/api'
   import { asking, CHANNEL, heard, type Said } from './channel'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'

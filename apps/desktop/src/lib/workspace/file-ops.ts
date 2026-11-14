@@ -1,5 +1,4 @@
-import { log } from '../log'
-import { movedTo, relativeTo, samePath, within } from '../space-paths'
+import { log, movedTo, relativeTo, samePath, within } from '../platform/src/api'
 
 export type Kind = 'file' | 'folder' | 'space'
 

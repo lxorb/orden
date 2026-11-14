@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { invoke } from '../../tauri'
+import { invoke, notePath } from '../../platform/src/api'
 import { type Version, versionsOf, versionText } from '../../versions'
 import { workspace } from '../../workspace.svelte'
 import { notes } from '../docs'
@@ -8,7 +8,6 @@ import { readable } from './guarded'
 import { type Call, done, need, writerOf } from './call'
 import { Refused } from './problem'
 import { judged, onDisk, type Place, placeOf, sharedSource, writableAt } from './spaces'
-import { notePath } from '../../space-paths'
 
 function idOf(version: Version): string {
   return `${version.path === null ? 'account' : 'device'}:${version.at}`

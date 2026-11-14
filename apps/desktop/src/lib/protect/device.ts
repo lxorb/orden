@@ -1,5 +1,5 @@
 import { answer, frameWord, method } from '../mobile/bridge'
-import { invoke, isMobile, platform } from '../tauri'
+import { invoke, isMobile, platform } from '../platform/src/api'
 
 export function deviceName(): string {
   switch (platform()) {

@@ -1,6 +1,6 @@
 import { TAG_NAME } from '@orden/markdown/tags'
 import type { Query } from '@orden/scan/search/query'
-import { within } from '../../space-paths'
+import { within } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { branchThread, newThread } from '../chat/threads'
 import { helpers } from '../helpers/helpers.svelte'

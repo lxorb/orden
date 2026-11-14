@@ -1,4 +1,4 @@
-import { keepJson, stored } from '../stored'
+import { keepJson, stored } from '../platform/src/api'
 import { clampOpacity, type InkTool, isInkTool } from './format'
 import { INK_STYLES } from './ink'
 import { DEFAULT_INK } from './palette'

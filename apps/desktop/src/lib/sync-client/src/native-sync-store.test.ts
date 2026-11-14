@@ -9,7 +9,7 @@ interface Calls {
 
 const calls = vi.hoisted((): Calls => ({ made: [], answer: null }))
 
-vi.mock('../../native', () => ({
+vi.mock('../../crate/src/native', () => ({
   invoke: (command: string, args: unknown) => {
     calls.made.push({ command, args })
     return Promise.resolve(calls.answer)

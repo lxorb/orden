@@ -1,6 +1,6 @@
 import { termOf } from '@orden/online/term'
 import { isOnlineTab } from '../online/path'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import type { Tab } from '../workspace.svelte'
 import { isUnsaved } from '../workspace/drafts'
 import { ptyOf } from './running'

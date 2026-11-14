@@ -159,8 +159,8 @@ function signIn(one: Window) {
 
 const wrong = () => crate.log.filter((line) => line.startsWith('WRONG'))
 
-vi.mock('../../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
 }))
 vi.mock('./watching', () => ({
@@ -171,8 +171,8 @@ vi.mock('./watching', () => ({
   }),
 }))
 
-vi.mock('../../backoff', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../backoff')>()),
+vi.mock('../../platform/src/backoff', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/backoff')>()),
   pollDelay: () => 400,
 }))
 

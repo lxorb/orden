@@ -25,7 +25,7 @@ vi.mock('@tauri-apps/plugin-process', () => ({
   },
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: unknown) => {

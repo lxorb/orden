@@ -10,7 +10,7 @@
   import type { StoreTheme } from './theme-looks/src/api'
   import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './theme-looks/src/api'
   import { PAINT, store } from './theme-looks/src/api'
-  import { dur, fade, fly, LAYER, scale } from './motion'
+  import { dur, fade, fly, LAYER, scale } from './platform/src/api'
   import { trap } from './trap'
   import Cross from './Cross.svelte'
 

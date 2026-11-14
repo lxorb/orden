@@ -1,6 +1,17 @@
-import { movedTo, relativeTo, samePath, within } from '../space-paths'
-import { type Folded, type Folding, meet, readSpaces, without } from '../records'
-import { isRecord, isString, keepJson } from '../stored'
+import {
+  movedTo,
+  relativeTo,
+  samePath,
+  within,
+  type Folded,
+  type Folding,
+  meet,
+  readSpaces,
+  without,
+  isRecord,
+  isString,
+  keepJson,
+} from '../platform/src/api'
 import { type EntryIds, entryIds } from './entry-ids'
 import { carried, moving } from './file-ops'
 

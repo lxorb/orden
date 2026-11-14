@@ -2,8 +2,8 @@ import { expect, test, vi } from 'vitest'
 
 const made = vi.hoisted(() => [] as string[])
 
-vi.mock('../tauri', async (original) => ({
-  ...(await original<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: { path: string }) => {
     if (command === 'create_folder') made.push(args.path)
     return Promise.resolve()

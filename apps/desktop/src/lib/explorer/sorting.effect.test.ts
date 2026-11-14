@@ -17,8 +17,8 @@ type Heard = (event: { payload: unknown }) => void
 
 const ears = vi.hoisted(() => ({ heard: new Map<string, Heard>() }))
 
-vi.mock('../tauri', async (original) => ({
-  ...(await original<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
 }))
 

@@ -10,6 +10,7 @@ const SOURCES = [
   'apps/desktop/src/lib/graph.ts',
   'apps/desktop/src/lib/graph-layout.ts',
   'apps/desktop/src/lib/graph-paint.ts',
+  'packages/markdown/src/note-name.ts',
 ]
 
 export function sourceHash(): string {

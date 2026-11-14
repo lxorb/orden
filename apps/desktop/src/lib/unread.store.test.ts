@@ -2,8 +2,8 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ native: false, files: new Set<string>() }))
 
-vi.mock('./tauri', async (original) => ({
-  ...(await original<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('./platform/src/tauri')>()),
   get isNative() {
     return disk.native
   },

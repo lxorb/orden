@@ -1,5 +1,4 @@
-import { log } from './log'
-import { onDisk } from './on-disk'
+import { log, onDisk } from './platform/src/api'
 import { undoToastNotice } from './surfaces.svelte'
 import { UNDO_LINGER } from './undo-toast.svelte'
 

@@ -4,7 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { agentMarks } from '../../agent-marks.svelte'
   import { menu } from '../../menu.svelte'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import type { Place } from '../../row-window'
   import { scrollbar } from '../../scrollbar'
   import { shortcuts } from '../../shortcuts.svelte'

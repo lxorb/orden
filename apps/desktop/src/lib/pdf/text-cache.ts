@@ -1,5 +1,4 @@
-import { isNumber, isRecord, isString } from '../stored'
-import { invoke } from '../tauri'
+import { isNumber, isRecord, isString, invoke } from '../platform/src/api'
 
 const A_PAPER = 2_000_000
 

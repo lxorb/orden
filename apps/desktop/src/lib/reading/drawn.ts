@@ -1,7 +1,6 @@
 import type { FileDrawing } from '@orden/editor'
 import { decodeTarget } from '@orden/markdown/links'
-import { nameOf } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import { nameOf, invoke, joinPath } from '../platform/src/api'
 
 export interface Drawn extends FileDrawing {
   root: string

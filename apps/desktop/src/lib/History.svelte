@@ -12,7 +12,7 @@
   import { cubicOut } from 'svelte/easing'
   import { type Tab, workspace } from './workspace.svelte'
   import { type Version, versionsOf, versionText } from './versions'
-  import { fade, LAYER, scale } from './motion'
+  import { fade, LAYER, scale } from './platform/src/api'
   import { trap } from './trap'
 
   let { open = $bindable(false) }: { open?: boolean } = $props()

@@ -524,7 +524,7 @@ describe('how a surface swaps what it is showing', () => {
   })
 
   test('and its durations come through the one place reduced motion is answered', () => {
-    expect(slide).toContain("from './motion'")
+    expect(slide).toMatch(/from '(?:\.\.?\/)+platform\/src\/api'/)
     expect(slide).toContain('duration: dur(ms)')
   })
 

@@ -1,4 +1,4 @@
-import { nameOf } from '../space-paths'
+import { nameOf } from '../platform/src/api'
 
 const BETWEEN = ', '
 

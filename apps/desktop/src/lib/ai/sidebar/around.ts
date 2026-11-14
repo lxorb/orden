@@ -1,4 +1,4 @@
-import { withinSpace } from '../../space-paths'
+import { withinSpace } from '../../platform/src/api'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Front, Picked } from './gather'

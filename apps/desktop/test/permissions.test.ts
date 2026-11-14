@@ -46,7 +46,7 @@ function sources(): [string, string][] {
 }
 
 function windowMethods(): string[] {
-  const source = read('../src/lib/tauri.ts')
+  const source = read('../src/lib/platform/src/tauri.ts')
   const [, block] = /interface WindowLike \{([\s\S]*?)\n\}/.exec(source) ?? []
   if (block === undefined) throw new Error('WindowLike interface not found in tauri.ts')
 
@@ -96,7 +96,7 @@ describe('window permissions', () => {
   })
 
   test('full screen is the crate’s, and the window plugin’s is not granted', () => {
-    const tauri = read('../src/lib/tauri.ts')
+    const tauri = read('../src/lib/platform/src/tauri.ts')
     const lib = read('../src-tauri/src/lib.rs')
     for (const command of Object.values(CRATE)) {
       expect(tauri).toContain(`('${command}'`)
@@ -251,7 +251,7 @@ describe('phone permissions', () => {
   })
 
   test('a link tapped in a note can still leave the app', () => {
-    expect(read('../src/lib/tauri.ts')).toContain('await openUrl(url)')
+    expect(read('../src/lib/platform/src/tauri.ts')).toContain('await openUrl(url)')
     expect(mobile.permissions).toContain('opener:allow-open-url')
     expect(mobile.permissions).toContain('opener:allow-default-urls')
   })

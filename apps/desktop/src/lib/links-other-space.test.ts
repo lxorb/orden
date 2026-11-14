@@ -5,8 +5,8 @@ const disk = new Map<string, string>()
 const sent: { command: string; path: string; folder?: unknown; bytes?: unknown }[] = []
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = text(args?.path)
     sent.push({ command, path, folder: args?.folder, bytes: args?.bytes })
@@ -73,7 +73,7 @@ const { startup } = await import('./startup.svelte')
 const { notePicture } = await import('./note-images')
 const { storeBeside } = await import('./assets')
 const { modes } = await import('./modes.svelte')
-const { assetUrl } = await import('./tauri')
+const { assetUrl } = await import('./platform/src/tauri')
 void startup.shown()
 
 const jump = (path: string | null, target: string) => ({

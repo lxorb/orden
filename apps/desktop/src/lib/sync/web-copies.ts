@@ -1,5 +1,4 @@
-import { log } from '../log'
-import { invoke } from '../tauri'
+import { log, invoke } from '../platform/src/api'
 import { sameWebNote, settleShortcuts } from '../web-tab/settle'
 import type { Entry } from '../workspace.svelte'
 import { writeDown } from './write-down'

@@ -11,7 +11,7 @@ import {
   landing,
 } from './drag-paths'
 import { shortcuts } from './shortcuts.svelte'
-import { within } from './space-paths'
+import { within } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 class FileClipboard {

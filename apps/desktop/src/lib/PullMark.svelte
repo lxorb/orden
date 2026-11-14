@@ -1,6 +1,6 @@
 <script lang="ts">
   import { pull, REACH } from './pull.svelte'
-  import { stillness } from './motion'
+  import { stillness } from './platform/src/api'
   import { nameFor } from './toolbar.svelte'
 
   const waiting = $derived(pull.refreshing || pull.failed)

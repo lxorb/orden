@@ -4,7 +4,7 @@ import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
 import { safeName, titleFrom } from '../import/names'
-import { isPicturePath } from '../space-paths'
+import { isPicturePath } from '../platform/src/api'
 import type { ImportPlan, Planned } from '../import/plan'
 
 export interface SharedItem {

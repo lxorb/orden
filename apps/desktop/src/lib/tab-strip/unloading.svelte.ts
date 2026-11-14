@@ -1,7 +1,7 @@
 import { tick } from 'svelte'
 import { agentMarks } from '../agent-marks.svelte'
 import type { MenuEntry } from '../menu-item'
-import { keep, storedText } from '../stored'
+import { keep, storedText } from '../platform/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { viewport } from '../viewport.svelte'
 import { type Tab, workspace } from '../workspace.svelte'

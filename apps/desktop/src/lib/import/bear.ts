@@ -1,4 +1,4 @@
-import { relativePath } from '../space-paths'
+import { relativePath } from '../platform/src/api'
 import { convertTags, outsideCode } from './convert'
 import { isHidden } from './folder'
 import { dayOf, type Meta } from './meta'

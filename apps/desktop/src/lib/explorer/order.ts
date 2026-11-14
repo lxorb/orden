@@ -1,4 +1,4 @@
-import { folderOf, nameOf } from '../space-paths'
+import { folderOf, nameOf } from '../platform/src/api'
 import { byName } from '../tree-order'
 import type { Entry } from './commands'
 

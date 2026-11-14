@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { joinPath } from '../tauri'
+  import { joinPath } from '../platform/src/api'
   import { type Entry, listFolder } from './commands'
   import EntryMark from './EntryMark.svelte'
   import { openFile } from './open'
   import { ordered, sortShown } from './order'
   import { explorerPrefs } from './prefs.svelte'
   import { type ExplorerView, watchHeard } from './view.svelte'
-  import { samePath } from '../space-paths'
+  import { samePath } from '../platform/src/api'
 
   const {
     view,

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const sent: string[] = []
 let trees = new Map<string, unknown>()
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push(command)
     if (command === 'read_tree') return Promise.resolve(trees.get(String(args?.root)) ?? null)

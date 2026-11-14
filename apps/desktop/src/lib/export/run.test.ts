@@ -3,8 +3,8 @@ import type { Payload } from './save'
 
 const handed: Payload[] = []
 
-vi.mock('../tauri', async (original) => ({
-  ...(await original<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../platform/src/tauri')>()),
   isNative: true,
   isMobile: false,
   isDesktop: true,

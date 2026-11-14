@@ -1,13 +1,17 @@
 import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
-import { fileBytes } from '../bytes'
+import {
+  fileBytes,
+  log,
+  nameFromTitle,
+  nameOf,
+  samePath,
+  within,
+  invoke,
+} from '../platform/src/api'
 import { CanvasStore } from '../canvas/store.svelte'
-import { log } from '../log'
-import { nameFromTitle } from '../note-name'
 import { asDraft, paperNamed, paperOutside } from '../pages/from-pdf'
 import { paperOf } from '../pages/held'
 import { pageSizes } from '../pdf/document'
-import { nameOf, samePath, within } from '../space-paths'
-import { invoke } from '../tauri'
 import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
 import { isDraft } from './drafts'
 

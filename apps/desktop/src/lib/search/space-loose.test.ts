@@ -14,8 +14,8 @@ const guess = (path: string, score: number): FuzzyHit => ({
 })
 const hit = (path: string): Hit => ({ path, name: path, line: 1, text: 'tulip', ranges: [] })
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isNative: false,
   internal: { routed: false },
 }))

@@ -7,8 +7,8 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-vi.mock('./tauri', async (actual) => ({
-  ...(await actual<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
 }))
 

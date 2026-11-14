@@ -1,6 +1,5 @@
 import { message } from '../message'
-import { afterQuiet } from '../timing'
-import { isDesktop, joinPath } from '../tauri'
+import { afterQuiet, isDesktop, joinPath, samePath } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import {
@@ -27,7 +26,6 @@ import { onMoved } from './follow'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
 import { readSpec, type Spec, steppedBack, steppedForward, wentTo, writeSpec } from './spec'
-import { samePath } from '../space-paths'
 
 export class ExplorerView {
   readonly tab: Tab

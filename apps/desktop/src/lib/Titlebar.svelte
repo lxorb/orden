@@ -12,7 +12,7 @@
   import { shown as pad } from './scratchpad/is.svelte'
   import { isDraft } from './workspace/drafts'
   import TopStrips from './TopStrips.svelte'
-  import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
+  import { closeWindow, currentWindow, isDesktop, platform } from './platform/src/api'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { startup } from './startup.svelte'

@@ -1,5 +1,5 @@
 import { modes } from './modes.svelte'
-import { platform } from './tauri'
+import { platform } from './platform/src/api'
 
 export function sizeStepFor(
   event: { ctrlKey: boolean; deltaY: number; defaultPrevented: boolean },

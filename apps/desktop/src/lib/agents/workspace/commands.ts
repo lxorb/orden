@@ -1,5 +1,5 @@
 import { appCommands, type Command } from '../../commands'
-import { invoke } from '../../tauri'
+import { invoke } from '../../platform/src/api'
 import type { AgentAnswer } from '../../automation/caller'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'

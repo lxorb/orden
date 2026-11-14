@@ -13,7 +13,7 @@
   import { copyText } from './clipboard'
   import Cross from './Cross.svelte'
   import { links } from './link-index.svelte'
-  import { dur, fade, fly, LAYER, scale } from './motion'
+  import { dur, fade, fly, LAYER, scale } from './platform/src/api'
   import { followHref, followNote, MIDDLE, opensLink } from './open-link'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'

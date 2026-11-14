@@ -16,10 +16,8 @@ import {
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
 import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../accounts/src/api'
-import { samePath, within } from '../space-paths'
-import { keep, storedText } from '../stored'
+import { samePath, within, keep, storedText, isNative, joinPath } from '../platform/src/api'
 import { sync } from '../sync.svelte'
-import { isNative, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type {
   ChatEntry,

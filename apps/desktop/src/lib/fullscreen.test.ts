@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const asked: boolean[] = []
 let refuses = false
 
-vi.mock('./tauri', async (actual) => ({
-  whenScreenGivenBack: (await actual<typeof import('./tauri')>()).whenScreenGivenBack,
+vi.mock('./platform/src/tauri', async (actual) => ({
+  whenScreenGivenBack: (await actual<typeof import('./platform/src/tauri')>()).whenScreenGivenBack,
   isMobile: false,
   currentWindow: () =>
     Promise.resolve({

@@ -1,4 +1,4 @@
-import { isRecord } from '../../stored'
+import { isRecord } from '../../platform/src/api'
 import type { Grant, Minted } from '../verbs'
 import type { AgentsCrate, Heard } from './crate'
 import { ownGrant, thirdPartyGrant } from './grant'

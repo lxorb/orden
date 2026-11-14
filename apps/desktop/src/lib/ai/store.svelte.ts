@@ -1,5 +1,4 @@
-import { log } from '../log'
-import { keep, stored, storedText } from '../stored'
+import { log, keep, stored, storedText } from '../platform/src/api'
 import {
   type Account,
   type Accounts,

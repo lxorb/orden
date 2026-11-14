@@ -1,5 +1,4 @@
-import { forget, isRecord, keep, stored, storedText } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import { forget, isRecord, keep, stored, storedText, invoke, isDesktop } from '../platform/src/api'
 import { hostOf, isWebData, siteOf, storeName, type WebData } from './web-data'
 import { HISTORY } from './web-data.svelte'
 import { bounded, type Visit } from './visits'

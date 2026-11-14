@@ -1,10 +1,7 @@
 import { message } from '../../../message'
-import { log } from '../../../log'
-import { isBuiltIn, theme } from '../../../theme/src/api'
-import { keepJson, stored, stringList } from '../../../stored'
-import { invoke } from '../../../tauri'
+import { log, keepJson, stored, stringList, invoke } from '../../../platform/src/api'
+import { isBuiltIn, theme, stamped } from '../../../theme/src/api'
 import { indexUrl, isNewer, readIndex, type StoreTheme, styleUrl } from './registry'
-import { stamped } from '../../../theme/src/api'
 import { review } from './validate'
 
 type Order = 'newest' | 'name'

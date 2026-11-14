@@ -1,5 +1,5 @@
 import { modes } from './modes.svelte'
-import { keepJson, stored, stringList } from './stored'
+import { keepJson, stored, stringList } from './platform/src/api'
 
 export const HINTS = ['drawer', 'graph', 'palette'] as const
 export type Hint = (typeof HINTS)[number]

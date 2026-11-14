@@ -1,6 +1,6 @@
 import { outFrame, text } from '@orden/online/wire'
 import { describe, expect, test } from 'vitest'
-import { BEAT_EVERY } from '../backoff'
+import { BEAT_EVERY } from '../platform/src/backoff'
 import { type Heard, Link, type LinkWorld, OPEN_WITHIN, PROBE_WITHIN } from './link'
 
 function fakeWorld(token: string | null = 'tok') {

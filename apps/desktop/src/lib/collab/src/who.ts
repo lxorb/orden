@@ -1,9 +1,7 @@
 import { account } from '../../accounts/src/api'
 import { ACCENTS, accentIdFor } from '../../accents'
-import { keep, storedText } from '../../stored'
-import { isNative, platform } from '../../tauri'
+import { keep, storedText, isNative, platform, appleHandheld } from '../../platform/src/api'
 import { browserName } from './browser'
-import { appleHandheld } from '../../device'
 
 const KEY = 'orden:device-colour'
 

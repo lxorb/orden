@@ -1,4 +1,4 @@
-import { forget as unkeep, keep, keepJson } from '../stored'
+import { forget as unkeep, keep, keepJson } from '../platform/src/api'
 import { drawable, favicons, keysOf, MARK, MARKS, type Seen } from './pages.svelte'
 
 const MOST_PAGES = 500

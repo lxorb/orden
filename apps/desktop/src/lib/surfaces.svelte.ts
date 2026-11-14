@@ -3,7 +3,7 @@ import { door } from '@orden/markdown/door'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
-import { storedText } from './stored'
+import { storedText } from './platform/src/api'
 
 export function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {
   return door(() => load().then((one) => one.default))

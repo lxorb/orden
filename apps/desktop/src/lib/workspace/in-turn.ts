@@ -1,9 +1,8 @@
-import { log } from '../log'
-import { invoke } from '../tauri'
+import { log, invoke } from '../platform/src/api'
 import type { Across } from './across'
 import type { NoteDoc } from './documents.svelte'
 
-const others = () => import('../windows')
+const others = () => import('../platform/src/api')
 
 export async function inFileTurn<T>(path: string, run: () => Promise<T>): Promise<T> {
   const { oneWriteAt } = await others()

@@ -1,5 +1,5 @@
 import { viewport } from './viewport.svelte'
-import { forget } from './stored'
+import { forget } from './platform/src/api'
 
 const STORAGE_KEY = 'orden:pull'
 

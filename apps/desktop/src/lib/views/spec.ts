@@ -1,4 +1,4 @@
-import { isRecord, isString, parsed } from '../stored'
+import { isRecord, isString, parsed } from '../platform/src/api'
 
 const BUILTINS = ['todos'] as const
 export type Builtin = (typeof BUILTINS)[number]

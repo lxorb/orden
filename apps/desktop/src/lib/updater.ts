@@ -1,8 +1,14 @@
-import { log } from './log'
+import {
+  log,
+  isNumber,
+  isRecord,
+  isString,
+  invoke,
+  isDesktop,
+  isNative,
+  waited,
+} from './platform/src/api'
 import { GIVE_UP, settleUp, written } from './parting'
-import { isNumber, isRecord, isString } from './stored'
-import { invoke, isDesktop, isNative } from './tauri'
-import { waited } from './timing'
 
 const CHANNELS = ['stable', 'unstable'] as const
 export type Channel = (typeof CHANNELS)[number]

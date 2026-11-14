@@ -1,5 +1,5 @@
 import { canWriteAt } from '../../sharing.svelte'
-import { samePath } from '../../space-paths'
+import { samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { writeIfAbsent } from '../../workspace/write-file'
 import type { Thread } from '../chat/types'

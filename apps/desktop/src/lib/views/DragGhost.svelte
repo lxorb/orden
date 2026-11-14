@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dur, scale } from '../motion'
+  import { dur, scale } from '../platform/src/api'
   import { dragging } from './drag.svelte'
 </script>
 

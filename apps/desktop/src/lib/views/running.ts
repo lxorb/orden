@@ -1,16 +1,22 @@
 import { idNumber, inBase, readBase, readAutomations, repeatDue, type Row } from '@orden/bases'
 import { withProperties } from '@orden/bases/agent'
 import { frontMatterValue } from '@orden/markdown'
-import { insideOnly } from '../automation/inside'
-import { heldForLife, inTurn } from '../locks'
+import {
+  insideOnly,
+  heldForLife,
+  inTurn,
+  insideSpace,
+  pathKey,
+  within,
+  invoke,
+  joinPath,
+} from '../platform/src/api'
 import { protection } from '../protect/protection.svelte'
 import { notify } from '../notify'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
 import { basesOn } from '../settings.svelte'
 import { canWriteAt } from '../sharing.svelte'
-import { insideSpace, pathKey, within } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { writeEach } from './act'

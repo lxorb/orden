@@ -1,6 +1,11 @@
-import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
-import { isRecord, isString, keepJson } from '../stored'
 import {
+  insideItsSpace,
+  movedTo,
+  relativeTo,
+  within,
+  isRecord,
+  isString,
+  keepJson,
   filledIn,
   type Folded,
   type Folding,
@@ -8,7 +13,7 @@ import {
   readSpaces,
   without,
   withOrWithout,
-} from '../records'
+} from '../platform/src/api'
 import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'orden:folder-icons'

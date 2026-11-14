@@ -1,17 +1,12 @@
 {
   "name": "collab",
   "layer": "foundation",
-  "dependsOn": ["contracts", "collab-rooms", "editor", "markdown", "theme", "accounts"],
+  "dependsOn": ["contracts", "collab-rooms", "editor", "markdown", "theme", "accounts", "platform"],
   "pending": [
     "apps/desktop/src/lib/accents.ts",
     "apps/desktop/src/lib/busy.svelte.ts",
-    "apps/desktop/src/lib/bytes.ts",
     "apps/desktop/src/lib/canvas/shared.ts",
-    "apps/desktop/src/lib/device.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
-    "apps/desktop/src/lib/records.ts",
-    "apps/desktop/src/lib/stored.ts",
-    "apps/desktop/src/lib/tauri.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts"
   ]
 }

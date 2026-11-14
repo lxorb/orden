@@ -1,8 +1,6 @@
 import { leftByAnother, leftGone } from '../../left-spaces'
-import { log } from '../../log'
+import { log, samePath, windows } from '../../platform/src/api'
 import { prompt } from '../../prompt.svelte'
-import { samePath } from '../../space-paths'
-import { windows } from '../../windows'
 import { workspace } from './ports'
 import type { Engine } from './engine'
 

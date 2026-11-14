@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { fromBase64 } from '../bytes'
+import { fromBase64 } from '../platform/src/bytes'
 import { LOCKED, SESSION } from './chromium.fixture'
 import { readSnss } from './snss'
 

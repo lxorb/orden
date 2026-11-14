@@ -1,6 +1,5 @@
 import { type MoveTarget, moveTargets, type Space } from '../move-targets'
-import { nameFromTitle } from '../note-name'
-import { samePath } from '../space-paths'
+import { nameFromTitle, samePath } from '../platform/src/api'
 import type { Entry } from '../workspace.svelte'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import { fileNamed, offeredName } from '../workspace/drafts'

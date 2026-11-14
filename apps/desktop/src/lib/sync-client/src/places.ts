@@ -15,7 +15,7 @@ import {
   type TreeEntry,
   type TreeState,
 } from '@orden/sync-core'
-import { isReserved } from '../../naming'
+import { isReserved } from '../../platform/src/api'
 import { holdsDocument } from './kinds'
 import { emptyKeeping } from './keeping'
 import { emptyOrdering, type Gone, type Keeping, type Ordering, type Outgoing } from './records'

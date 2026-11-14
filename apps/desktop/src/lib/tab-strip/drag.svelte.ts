@@ -1,4 +1,4 @@
-import { without } from '../records'
+import { without } from '../platform/src/api'
 import type { Landing } from '../workspace/panes.svelte'
 import { clampedStart, nearestSlot, reorderSlack } from './layout'
 

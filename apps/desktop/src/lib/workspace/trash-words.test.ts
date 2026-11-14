@@ -7,8 +7,8 @@ vi.mock('../sharing.svelte', () => ({
 }))
 
 const trashed: string[] = []
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: { path: string }) => {
     if (command === 'trash_words') trashed.push(args.path)
     return Promise.resolve({ id: 'one' })

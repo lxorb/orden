@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import Switch from '../Switch.svelte'
-  import { dur, slide } from '../motion'
+  import { dur, slide } from '../platform/src/api'
   import { workspace } from '../workspace.svelte'
   import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'
   import { extensions } from '../web-tab/extensions.svelte'

@@ -1,10 +1,16 @@
 import { fold } from '@orden/rooms/fold'
-import { log } from '../log'
-import { onDisk } from '../on-disk'
-import { samePath, within } from '../space-paths'
-import { invoke } from '../tauri'
-import { afterQuiet, waited } from '../timing'
-import { oneWriteAt, type Windows, windows as theWindows } from '../windows'
+import {
+  log,
+  onDisk,
+  samePath,
+  within,
+  invoke,
+  afterQuiet,
+  waited,
+  oneWriteAt,
+  type Windows,
+  windows as theWindows,
+} from '../platform/src/api'
 import { type NoteDoc, unixLines } from './documents.svelte'
 import type { FileOp } from './file-ops'
 

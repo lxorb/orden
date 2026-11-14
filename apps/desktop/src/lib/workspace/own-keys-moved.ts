@@ -1,12 +1,10 @@
 import { oneEdit } from '@orden/markdown/edits'
 import type { MetaPatch } from '@orden/sync-core'
 import { links } from '../link-index.svelte'
-import { log } from '../log'
+import { log, isMarkdownPath, samePath, joinPath } from '../platform/src/api'
 import { ownKeysTaken } from '../own-keys'
 import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
-import { isMarkdownPath, samePath } from '../space-paths'
-import { joinPath } from '../tauri'
 import type { ItemMetaStore } from './item-meta.svelte'
 import type { Keeping } from './note-text'
 

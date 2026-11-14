@@ -1,5 +1,4 @@
-import { account } from './accounts/src/api'
-import { api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from './accounts/src/api'
 import {
   DEFAULT_DAYS,
   DEFAULT_MINUTES,
@@ -7,8 +6,7 @@ import {
   SNAPSHOT_MINUTES,
   snapshotMinutes,
 } from './recovery'
-import { isRecord, keepJson, stored } from './stored'
-import { invoke } from './tauri'
+import { isRecord, keepJson, stored, invoke } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 export const STORAGE_KEY = 'orden:recovery'

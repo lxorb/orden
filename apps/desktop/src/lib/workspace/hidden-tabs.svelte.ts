@@ -1,5 +1,5 @@
 import { agentMarks } from '../agent-marks.svelte'
-import { keepJson, stored } from '../stored'
+import { keepJson, stored } from '../platform/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type HiddenTabs, isHiddenTabs, onLeaving } from './sets'

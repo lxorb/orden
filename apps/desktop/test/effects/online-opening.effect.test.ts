@@ -17,8 +17,8 @@ vi.mock('../../src/lib/web-tab/pages.svelte', async () => {
   return { pages: pagesOf() }
 })
 const external: string[] = []
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   openExternal: (url: string) => {
     external.push(url)
     return Promise.resolve()

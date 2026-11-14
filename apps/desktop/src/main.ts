@@ -7,7 +7,7 @@ import { mount } from 'svelte'
 import App from './App.svelte'
 import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
-import { isDesktop, isMobile, platform } from './lib/tauri'
+import { isDesktop, isMobile, platform } from './lib/platform/src/api'
 import { watchPresses } from './lib/downloads/started'
 import { holdComposingKeys } from './lib/keys'
 

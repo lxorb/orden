@@ -1,7 +1,5 @@
 import { foldName } from '@orden/markdown/links'
-import { endingOf, isAgentsName, isReserved } from './note-name'
-
-export { isReserved }
+import { endingOf, isAgentsName, isReserved } from '@orden/markdown/note-name'
 
 export type NameFault =
   'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'agents' | 'taken'

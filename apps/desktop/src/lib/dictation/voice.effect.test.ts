@@ -65,7 +65,7 @@ vi.mock('../accounts/src/account.svelte', () => ({
   },
 }))
 vi.mock('../ai/hears', () => ({ transcriberNow: () => world.provider }))
-vi.mock('../stored', () => ({
+vi.mock('../platform/src/stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),

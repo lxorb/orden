@@ -1,7 +1,5 @@
 import { foldName } from '@orden/markdown/links'
-import { nameOf, samePath } from '../space-paths'
-import { joinPath } from '../tauri'
-import { shownName } from '../note-name'
+import { nameOf, samePath, joinPath, shownName } from '../platform/src/api'
 import type { Candidate } from '../palette/rank'
 import { ranked } from '../palette/rank'
 import { shownAddress } from './omnibox'

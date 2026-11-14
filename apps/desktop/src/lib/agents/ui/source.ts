@@ -1,4 +1,4 @@
-import { invoke } from '../../tauri'
+import { invoke } from '../../platform/src/api'
 import type { Approval, Overview, Picture, ShellWords } from '../verbs'
 
 export interface LogRead {

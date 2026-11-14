@@ -1,7 +1,7 @@
 import { account } from '../accounts/src/api'
 import { reach } from '../agents/settings/reach.svelte'
 import type { Place } from '../settings-search'
-import { isDesktop } from '../tauri'
+import { isDesktop } from '../platform/src/api'
 
 export function places(): Place[] {
   const all: Place[] = [

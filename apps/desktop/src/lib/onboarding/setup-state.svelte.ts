@@ -3,7 +3,7 @@ import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepAfter } from './flow'
 import { gate } from './gate.svelte'
 import { heardBefore, keepProgress, readProgress } from './kept'
-import { isMobile } from '../tauri'
+import { isMobile } from '../platform/src/api'
 import { stepped } from '../usage/tally'
 
 export interface Issue {

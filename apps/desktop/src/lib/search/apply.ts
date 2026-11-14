@@ -1,4 +1,4 @@
-import { isMarkdownPath, relativeTo } from '../space-paths'
+import { isMarkdownPath, relativeTo } from '../platform/src/api'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import { changeOf, type Edit, replaceIn } from './replace'

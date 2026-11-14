@@ -154,7 +154,7 @@ const workspace = {
   holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
   undone: { moved: () => undefined },
   renameOnDisk: vi.fn(async (from: string, to: string) => {
-    const { invoke } = await import('../../tauri')
+    const { invoke } = await import('../../platform/src/tauri')
     await invoke('rename_note', { from, to })
   }),
   fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
@@ -234,13 +234,13 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
   }
 }
 
-vi.mock('../../tauri', async (original) => ({
-  ...(await original<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => crate(command, args),
 }))
 
-vi.mock('../../native', async (original) => ({
-  ...(await original<typeof import('../../native')>()),
+vi.mock('../../crate/src/native', async (original) => ({
+  ...(await original<typeof import('../../crate/src/native')>()),
   Channel: class {
     onmessage: (message: unknown) => void = () => undefined
   },

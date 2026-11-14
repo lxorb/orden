@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
   import { region } from '../region'
-  import { fade, LAYER, scale } from '../motion'
+  import { fade, LAYER, scale } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
   import { quickAdd } from './asked.svelte'

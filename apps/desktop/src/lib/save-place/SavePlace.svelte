@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../FileMark.svelte'
   import { rank } from '../fuzzy'
-  import { LAYER, scale } from '../motion'
+  import { LAYER, scale } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { selectAll } from '../select-all'
   import { canWriteAt } from '../sharing.svelte'
@@ -12,8 +12,8 @@
   import { pages } from '../web-tab/pages.svelte'
   import { type Tab, workspace } from '../workspace.svelte'
   import { offeredName } from '../workspace/drafts'
-  import { isAgentsName } from '../note-name'
-  import { joinPath } from '../tauri'
+  import { isAgentsName } from '../platform/src/api'
+  import { joinPath } from '../platform/src/api'
   import { fileFor, placesFor, startingPlace } from './places'
 
   const {

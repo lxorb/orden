@@ -1,5 +1,5 @@
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
-import { calm, dur, stillness } from '../motion'
+import { calm, dur, stillness } from '../platform/src/api'
 import { said } from '../said.svelte'
 import { lastPress, type Origin, type Press } from './started'
 import {

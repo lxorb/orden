@@ -1,5 +1,5 @@
 import { BASE } from '../../../accounts/src/api'
-import { isRecord, isString, stringList } from '../../../stored'
+import { isRecord, isString, stringList } from '../../../platform/src/api'
 import { carriedToken } from '../../../theme/src/api'
 import { usablePaletteValue } from './validate'
 import type { Scheme } from '../../../theme/src/api'

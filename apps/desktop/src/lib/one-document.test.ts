@@ -10,8 +10,8 @@ vi.mock('./pdf/document', async (importOriginal) => ({
   pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
 }))
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {

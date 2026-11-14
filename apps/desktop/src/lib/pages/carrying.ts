@@ -1,9 +1,16 @@
-import { account } from '../accounts/src/api'
-import { api } from '../accounts/src/api'
-import { fileBytes, sha256 } from '../bytes'
-import { rootedAt } from '../space-paths'
-import { keepJson, recordOf, stored, isString } from '../stored'
-import { invoke, isNative, joinPath } from '../tauri'
+import { account, api } from '../accounts/src/api'
+import {
+  fileBytes,
+  sha256,
+  rootedAt,
+  keepJson,
+  recordOf,
+  stored,
+  isString,
+  invoke,
+  isNative,
+  joinPath,
+} from '../platform/src/api'
 import { isPagesTarget } from '@orden/markdown/links'
 import type { Mirror } from '../sync/mirror'
 import { workspace } from '../workspace.svelte'

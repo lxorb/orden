@@ -7,11 +7,9 @@ import {
   INPUT_RATE,
   type ServerFrame,
 } from '@orden/online/wire'
-import { account } from '../accounts/src/api'
-import { ApiError, BASE } from '../accounts/src/api'
-import { toBase64 } from '../bytes'
+import { account, ApiError, BASE } from '../accounts/src/api'
+import { toBase64, isDesktop, isNative } from '../platform/src/api'
 import type { Said, Source } from '../terminal/source'
-import { isDesktop, isNative } from '../tauri'
 import { viewport } from '../viewport.svelte'
 import { writeFile } from '../workspace/write-file'
 import { refusedOf, termSession } from './calls'
@@ -40,7 +38,7 @@ async function termIdOf(path: string, until: number): Promise<string | null> {
 
 async function sessionOf(id: string, path: string, until: number): Promise<string | null> {
   const { runner } = await import('../sync-client/src/api')
-  const { invoke } = await import('../tauri')
+  const { invoke } = await import('../platform/src/api')
   const words = await invoke<string>('read_note', { path }).catch(() => null)
   for (;;) {
     try {
@@ -73,7 +71,7 @@ async function socketName(
 ): Promise<{ name: string } | { refused: string }> {
   const { sync } = await import('../sync.svelte')
   if (sync.version === 1) {
-    const { invoke } = await import('../tauri')
+    const { invoke } = await import('../platform/src/api')
     try {
       const name = await ownSession({
         read: () => invoke<string>('read_note', { path }).catch(() => null),
@@ -317,7 +315,7 @@ export function onlineSource(
 export async function cacheKey(words: string, path: string | null): Promise<string> {
   let term = termOf(words)
   if (!term && path !== null) {
-    const { invoke } = await import('../tauri')
+    const { invoke } = await import('../platform/src/api')
     const read = await invoke<string>('read_note', { path }).catch(() => null)
     term = read === null ? null : termOf(read)
   }

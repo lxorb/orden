@@ -2,8 +2,8 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const told: { tab: string; muted: boolean }[] = []
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'web_mute') told.push({ tab: String(args.tab), muted: args.muted === true })
     return Promise.resolve(undefined)

@@ -1,5 +1,4 @@
-import { withOrWithout } from '../records'
-import { isRecord, isString } from '../stored'
+import { withOrWithout, isRecord, isString } from '../platform/src/api'
 import { isLocal, type Provider, type ProviderKind } from './providers'
 
 export type Vendor = string

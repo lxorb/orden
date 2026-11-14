@@ -5,18 +5,27 @@ import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
-import { extensionOf, nameToWrite } from '../naming'
+import {
+  extensionOf,
+  nameToWrite,
+  AGENTS_NAME,
+  isAgentsName,
+  onDisk,
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  nameOf,
+  relativeTo,
+  samePath,
+  joinPath,
+  waited,
+} from '../platform/src/api'
 import { search } from '../search.svelte'
-import { AGENTS_NAME, isAgentsName } from '../note-name'
-import { onDisk } from '../on-disk'
 import { OWN_KEYS } from '../own-keys'
-import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo, samePath } from '../space-paths'
-import { joinPath } from '../tauri'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
-import { waited } from '../timing'
 import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i

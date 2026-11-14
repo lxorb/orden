@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { shownName } from './note-name'
+import { shownName } from '@orden/markdown/note-name'
 import { scanNote } from '@orden/scan/note'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -20,8 +20,8 @@ const stringOf = (args: Record<string, unknown> | undefined, name: string) => {
   return typeof value === 'string' ? value : ''
 }
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = stringOf(args, 'path')
 

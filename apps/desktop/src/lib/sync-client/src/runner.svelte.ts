@@ -1,21 +1,29 @@
 import { untrack } from 'svelte'
-import { passing, pollDelay, RECONCILE_INTERVAL } from '../../backoff'
-import { log } from '../../log'
+import {
+  passing,
+  pollDelay,
+  RECONCILE_INTERVAL,
+  log,
+  onDisk,
+  nameOf,
+  pathKey,
+  samePath,
+  oneWriteAt,
+  type Said,
+  windows,
+} from '../../platform/src/api'
 import { type Pairing, pairSpaces } from '../../space-pairing'
 import { readMirror, type Mirror } from '../../sync/mirror'
 import { isRecord } from './shape'
 import { type SyncFileDoer, type SyncFileOp, whenPortProvided } from '@orden/contracts'
 import { owesAtTheEnd, owesLast, writing } from '../../parting'
 import { keptAway } from '../../web/away.svelte'
-import { onDisk } from '../../on-disk'
 import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
 import { links } from '../../link-index.svelte'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
 import { forgetIndex, type IndexStore, openIndex } from '../../web/index-store'
-import { nameOf, pathKey, samePath } from '../../space-paths'
 import { followRoots } from './roots'
-import { oneWriteAt, type Said, windows } from '../../windows'
 import { sheetArrived } from '../../pdf/sheets.svelte'
 import {
   account,

@@ -1,5 +1,5 @@
 import type { Tab } from '../../workspace.svelte'
-import { within } from '../../space-paths'
+import { within } from '../../platform/src/api'
 import type { TabKind } from '../../workspace/documents.svelte'
 import { type Call, maybe, need } from './call'
 import { Refused } from './problem'

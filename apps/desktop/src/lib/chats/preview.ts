@@ -1,6 +1,5 @@
 import type { Preview } from '@orden/chats'
-import { isRecord, isString } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import { isRecord, isString, invoke, isDesktop } from '../platform/src/api'
 
 const WIDEST = 480
 

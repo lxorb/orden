@@ -24,8 +24,8 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 vi.mock('../rows/rows.svelte', () => ({ rows: { ready: true, of: () => [] } }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: async () => undefined,
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))

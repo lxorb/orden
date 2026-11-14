@@ -2,7 +2,7 @@ import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import type { Warmth } from '../search/warmth'
-import { joinPath } from '../tauri'
+import { joinPath } from '../platform/src/api'
 import { type Mounted, mountOf } from './roots'
 
 const following = new WeakSet<Mounted>()

@@ -1,6 +1,5 @@
-import { inTurn } from '../locks'
+import { inTurn, keepJson, stored } from '../platform/src/api'
 import { notify } from '../notify'
-import { keepJson, stored } from '../stored'
 import { counted } from './counted'
 import { lasting, MINUTE } from './days'
 import { timeOn } from '../settings.svelte'

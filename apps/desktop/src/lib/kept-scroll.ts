@@ -1,4 +1,4 @@
-import { keepJson, stored } from './stored'
+import { keepJson, stored } from './platform/src/api'
 import type { TabKind } from './workspace/tab-kinds'
 
 const STORE = 'orden:kept-scroll'

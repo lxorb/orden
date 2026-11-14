@@ -1,5 +1,4 @@
-import { invoke } from '../../tauri'
-import { waited } from '../../timing'
+import { invoke, waited } from '../../platform/src/api'
 import type { LocalKind } from '../providers'
 import type { Limit } from './heard'
 import { saidIn, type Standing, standingOf } from './standing'

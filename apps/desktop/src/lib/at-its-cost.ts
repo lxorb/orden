@@ -1,4 +1,4 @@
-import type { Later } from './timing'
+import type { Later } from './platform/src/api'
 
 export function atItsCost(run: () => void, rest = 2): Later {
   let timer: ReturnType<typeof setTimeout> | undefined

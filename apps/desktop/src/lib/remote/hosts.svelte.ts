@@ -1,5 +1,4 @@
-import { isRecord, isString } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import { isRecord, isString, invoke, isDesktop } from '../platform/src/api'
 import {
   type ConfigHost,
   type Destination,

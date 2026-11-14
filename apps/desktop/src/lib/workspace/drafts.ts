@@ -1,6 +1,12 @@
-import { endingOf, nameFromContent, nameFromTitle, shownName, TITLE_CHARS } from '../note-name'
+import {
+  endingOf,
+  nameFromContent,
+  nameFromTitle,
+  shownName,
+  TITLE_CHARS,
+  isMarkdownPath,
+} from '../platform/src/api'
 import { isOnlineTab } from '../online/path'
-import { isMarkdownPath } from '../space-paths'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 import { TAB_KINDS } from './tab-kinds'
 

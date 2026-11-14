@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { canWriteAt } from '../sharing.svelte'
-import { isMarkdownPath } from '../space-paths'
+import { isMarkdownPath } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { canRecordHere } from './container'
 

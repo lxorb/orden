@@ -8,7 +8,7 @@ const wrote: { command: string; path: string; content: string }[] = []
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     wrote.push({ command, path: text(args.path), content: text(args.content) })
     if (command === 'read_note') return Promise.reject(new Error('no such file'))

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
   import { overlays } from '../overlays'
-  import { invoke } from '../tauri'
+  import { invoke } from '../platform/src/api'
   import { extensions, type Popped } from './extensions.svelte'
 
   const { popped, right, from }: { popped: Popped; right: number; from?: HTMLElement | null } =

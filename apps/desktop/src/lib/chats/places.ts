@@ -1,5 +1,5 @@
 import { account } from '../accounts/src/api'
-import { keepJson, stored } from '../stored'
+import { keepJson, stored } from '../platform/src/api'
 
 const KEY = 'orden:chat-own-pointers'
 

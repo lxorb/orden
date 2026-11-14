@@ -1,6 +1,4 @@
-import { nameFromTitle, shownName } from '../note-name'
-import { samePath } from '../space-paths'
-import { joinPath } from '../tauri'
+import { nameFromTitle, shownName, samePath, joinPath } from '../platform/src/api'
 import type { Entry, Space } from '../workspace.svelte'
 import { UNTITLED } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'

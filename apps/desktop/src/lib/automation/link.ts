@@ -1,6 +1,6 @@
 import { copyText } from '../clipboard'
 import { headingAt, lineOf, scanHeadings } from '../outline'
-import { relativeTo } from '../space-paths'
+import { relativeTo } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 
 export function linkTo(space: string, path: string, heading?: string | null): string {

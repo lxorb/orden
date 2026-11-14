@@ -6,8 +6,8 @@ const builds: (string | null)[] = []
 const lists: Promise<unknown[]>[] = []
 const installs: Promise<unknown>[] = []
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     asked.push({ command, args })
     if (command === 'extensions_list' && lists.length) return lists.shift()

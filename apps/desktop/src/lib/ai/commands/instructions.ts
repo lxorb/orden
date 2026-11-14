@@ -1,4 +1,4 @@
-import { isBoolean, keepJson, stored } from '../../stored'
+import { isBoolean, keepJson, stored } from '../../platform/src/api'
 import type { Thread } from '../chat/types'
 import { foundNamed, rootOfSpace, wordsOf } from './found'
 import { actsAlone } from '../modes'

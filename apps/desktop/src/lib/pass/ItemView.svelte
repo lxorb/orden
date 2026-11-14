@@ -11,7 +11,7 @@
   import { localDate } from '../region'
   import { iconChoice } from '../icon-choice.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
   import { prompt } from '../prompt.svelte'
   import { said } from '../said.svelte'
   import AliasPanel from './AliasPanel.svelte'

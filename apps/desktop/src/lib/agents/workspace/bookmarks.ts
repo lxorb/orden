@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { notePath } from '../../space-paths'
+import { notePath } from '../../platform/src/api'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../../workspace/bookmarks.svelte'
 import { workspace } from '../../workspace.svelte'
 import { asked } from './asks'

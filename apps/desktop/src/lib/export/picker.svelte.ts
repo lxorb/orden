@@ -1,4 +1,4 @@
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../platform/src/api'
 import { exportSheet } from '../surfaces.svelte'
 
 const KEPT = 'orden:export-choice'

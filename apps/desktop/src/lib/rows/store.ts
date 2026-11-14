@@ -1,9 +1,15 @@
 import type { Row } from '@orden/bases'
 import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
 import { scanNote } from '@orden/scan/note'
-import { AGENTS_NAME } from '../note-name'
+import {
+  AGENTS_NAME,
+  insideSpace,
+  isMarkdownPath,
+  pathKey,
+  samePath,
+  within,
+} from '../platform/src/api'
 import { scanRows } from '@orden/bases/scan'
-import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
 

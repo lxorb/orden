@@ -91,7 +91,7 @@ vi.mock('../../explorer/places.svelte', () => ({
 }))
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   platform: () => 'linux',
   joinPath: (dir: string, rest: string) => `${dir}/${rest}`,
   invoke: (command: string, args: Record<string, unknown> = {}) => {

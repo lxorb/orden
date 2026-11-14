@@ -25,8 +25,8 @@ interface Sent {
 
 const sent: Sent[] = []
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isNative: true,
   isDesktop: false,
   invoke: async (command: string, args?: Record<string, unknown>) => {

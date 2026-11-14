@@ -1,5 +1,4 @@
-import { keep, storedText } from './stored'
-import { invoke, isDesktop, platform } from './tauri'
+import { keep, storedText, invoke, isDesktop, platform } from './platform/src/api'
 import { keptInTray } from './parting'
 
 const KEY = 'orden.tray'

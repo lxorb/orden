@@ -1,5 +1,4 @@
-import { dur } from './motion'
-import { afterQuiet, onceAFrame } from './timing'
+import { dur, afterQuiet, onceAFrame } from './platform/src/api'
 
 const LEAST = 28
 

@@ -6,7 +6,7 @@ let alone = false
 
 let there = false
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string) => {
     order.push(command)
@@ -16,7 +16,7 @@ vi.mock('../tauri', () => ({
 vi.mock('../link-index.svelte', () => ({
   links: { noteSaved: (path: string) => void order.push(`index ${path}`) },
 }))
-vi.mock('../windows', () => ({
+vi.mock('../platform/src/windows', () => ({
   windows: {
     get alone() {
       return alone

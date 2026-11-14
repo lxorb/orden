@@ -3,8 +3,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 const closed = vi.fn(() => Promise.resolve())
 let os = 'macos'
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => os,

@@ -1,5 +1,4 @@
-import { isRecord } from '../../stored'
-import { invoke } from '../../tauri'
+import { isRecord, invoke } from '../../platform/src/api'
 import {
   AGENT_EVENT,
   type AgentEvent,

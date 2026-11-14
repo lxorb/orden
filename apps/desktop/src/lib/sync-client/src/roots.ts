@@ -1,4 +1,4 @@
-import { movedTo, samePath } from '../../space-paths'
+import { movedTo, samePath } from '../../platform/src/api'
 import type { Core } from './core'
 import type { Change } from './store'
 import { workspace } from './ports'

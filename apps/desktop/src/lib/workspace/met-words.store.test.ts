@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const versions = vi.hoisted(() => [] as string[])
 const slow = vi.hoisted(() => ({ hold: null as Promise<void> | null }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {

@@ -1,5 +1,5 @@
 import type { FoldLines } from '@orden/editor'
-import { movedTo, samePath } from '../space-paths'
+import { movedTo, samePath } from '../platform/src/api'
 import type { FileOp } from './file-ops'
 import type { Position } from './session'
 

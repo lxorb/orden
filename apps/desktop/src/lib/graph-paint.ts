@@ -1,7 +1,7 @@
 import type { Camera } from './camera'
 import { SMALLEST_DOT } from './camera'
 import type { NoteGraph } from './graph'
-import { shownName } from './note-name'
+import { shownName } from '@orden/markdown/note-name'
 
 export function radiusOf(degree: number): number {
   return 3 + Math.min(7, Math.sqrt(degree))

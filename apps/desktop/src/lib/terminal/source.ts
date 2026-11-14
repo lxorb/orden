@@ -1,8 +1,7 @@
 import { type Usage, usageOf } from '@orden/online/apps'
 import type { DownReason, ImageKind } from '@orden/online/wire'
-import { Channel } from '../native'
-import { isNumber, isRecord } from '../stored'
-import { invoke } from '../tauri'
+import { Channel } from '../crate/src/api'
+import { isNumber, isRecord, invoke } from '../platform/src/api'
 import type { Destination } from '../remote/hosts'
 import { hostIdOf } from './spec'
 

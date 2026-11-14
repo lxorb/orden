@@ -1,5 +1,5 @@
 import { escapeAll } from '@orden/markdown/html'
-import { shownName } from './note-name'
+import { shownName } from './platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { taskOf } from './search/task'
 import { parseQuery } from '@orden/scan/search/query'

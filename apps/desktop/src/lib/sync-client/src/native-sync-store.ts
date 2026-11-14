@@ -1,5 +1,5 @@
 import { frame, unframe } from '@orden/sync-core'
-import { invoke } from '../../native'
+import { invoke } from '../../crate/src/api'
 import {
   answerOf,
   changeOf,

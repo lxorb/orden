@@ -1,6 +1,6 @@
 import { callbacksIn, isCallbackOf, isWebUrl } from '@orden/online/urls'
 import { untrack } from 'svelte'
-import { openExternal } from '../tauri'
+import { openExternal } from '../platform/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
 

@@ -1,7 +1,6 @@
 import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { untrack } from 'svelte'
-import { BEAT_EVERY, roomDelay } from '../../backoff'
-import { heldForLife } from '../../locks'
+import { BEAT_EVERY, roomDelay, heldForLife } from '../../platform/src/api'
 import { madeDeviceId } from './made-device'
 import { account, invoke, isDesktop, platform, remote } from './ports'
 import {

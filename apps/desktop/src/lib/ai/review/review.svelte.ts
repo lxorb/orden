@@ -16,10 +16,7 @@ import {
   undoSomeIn,
 } from '../../agents/docs'
 import { busy } from '../../busy.svelte'
-import { insideSpace, notePath, withinSpace } from '../../space-paths'
-import { dur } from '../../motion'
-import { onDisk } from '../../on-disk'
-import { onceAFrame } from '../../timing'
+import { insideSpace, notePath, withinSpace, dur, onDisk, onceAFrame } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { writeFile } from '../../workspace/write-file'

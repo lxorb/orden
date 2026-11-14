@@ -6,7 +6,7 @@ import { modes } from './modes.svelte'
 import { notePicture } from './note-images'
 import { canWriteAt, trustsHtmlAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { insideSpace } from './space-paths'
+import { insideSpace } from './platform/src/api'
 import { followHref } from './open-link'
 import { workspace } from './workspace.svelte'
 

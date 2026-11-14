@@ -1,7 +1,5 @@
 import { overlays } from './overlays'
-import { keep, storedText } from './stored'
-import { isNative } from './tauri'
-import { afterQuiet } from './timing'
+import { keep, storedText, isNative, afterQuiet } from './platform/src/api'
 
 const HANDS_OFF = 3000
 

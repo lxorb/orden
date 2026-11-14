@@ -82,8 +82,7 @@ export interface Copied {
   from?: string
 }
 
-import { shownName } from '../note-name'
-import { folderOf, nameOf, samePath } from '../space-paths'
+import { shownName, folderOf, nameOf, samePath } from '../platform/src/api'
 import type { FileOp } from './file-ops'
 
 const KEPT = 20

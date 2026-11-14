@@ -1,5 +1,5 @@
 import { normalizeUrl } from '@orden/pass/urls'
-import { openExternal } from '../tauri'
+import { openExternal } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 
 export function openSite(url: string): void {

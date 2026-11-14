@@ -2,7 +2,7 @@
   import FileMark from '../../FileMark.svelte'
   import { fileMark } from '../../file-mark'
   import { links } from '../../link-index.svelte'
-  import { folderOf, insideSpace, nameOf, withoutExtension } from '../../space-paths'
+  import { folderOf, insideSpace, nameOf, withoutExtension } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
   import { cardLines } from './note-card'
 

@@ -13,11 +13,17 @@ import {
 } from './menu.svelte'
 import { moveTargets, type MoveTarget, movesInto } from './move-targets'
 import { howFor } from './new-tab'
-import { rowName } from './note-name'
+import {
+  rowName,
+  folderOf,
+  isMarkdownPath,
+  isPicturePath,
+  relativeTo,
+  isDesktop,
+  joinPath,
+} from './platform/src/api'
 import { canWriteAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
-import { isDesktop, joinPath } from './tauri'
 import { showLabel } from './reveal'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'

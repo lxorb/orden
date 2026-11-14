@@ -1,11 +1,16 @@
 import { mount, unmount, untrack } from 'svelte'
-import { account } from '../../accounts/src/api'
-import { request } from '../../accounts/src/api'
-import { deviceName } from '../../device'
-import { forget, keep, keepJson, parsed, storedText } from '../../stored'
+import { account, request } from '../../accounts/src/api'
+import {
+  deviceName,
+  forget,
+  keep,
+  keepJson,
+  parsed,
+  storedText,
+  isNative,
+} from '../../platform/src/api'
 import { hub } from '../../sync-client/src/api'
 import { NoWord, wordSaid } from '../../mobile/bridge'
-import { isNative } from '../../tauri'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
 import { ai } from '../store.svelte'

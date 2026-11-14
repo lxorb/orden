@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { nameToWrite } from './naming'
-import { type Opener, openerFor } from './openers'
+import { type Opener, openerFor } from '../../openers'
 import {
   draftName,
   endingOf,
@@ -9,7 +9,7 @@ import {
   rowName,
   shownName,
   titleFrom,
-} from './note-name'
+} from '@orden/markdown/note-name'
 
 const lines = (doc: string) => doc.split('\n')
 

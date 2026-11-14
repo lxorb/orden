@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => [] as string[])
 
-vi.mock('../tauri', () => ({ isDesktop: false }))
+vi.mock('../platform/src/tauri', () => ({ isDesktop: false }))
 vi.mock('../surfaces.svelte', () => ({ tabOverview: { open: false } }))
 vi.mock('../viewport.svelte', () => ({ viewport: { touch: false } }))
 vi.mock('../shortcuts.svelte', () => ({

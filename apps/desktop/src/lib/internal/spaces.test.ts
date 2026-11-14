@@ -160,7 +160,7 @@ const disk = vi.hoisted(() => {
   }
 })
 
-vi.mock('../native', () => ({
+vi.mock('../crate/src/native', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     try {
       return Promise.resolve(disk.crate(command, args))

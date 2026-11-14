@@ -10,7 +10,7 @@ import {
 } from '../drag-paths'
 import { message } from '../message'
 import type { Picked } from '../import/sources'
-import { invoke, isDesktop, joinPath, platform } from '../tauri'
+import { invoke, isDesktop, joinPath, platform } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import type { OutsideStep } from '../workspace/undo.svelte'
 import { carry, changeable, freeName, takenNames } from './changes'

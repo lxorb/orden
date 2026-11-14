@@ -1,11 +1,9 @@
-import { account } from './accounts/src/api'
-import { api } from './accounts/src/api'
+import { account, api } from './accounts/src/api'
 import { message } from './message'
 import { prompt } from './prompt.svelte'
 import { canWriteAt } from './sharing.svelte'
 import { sync } from './sync.svelte'
-import { folderOf, insideSpace, samePath, within } from './space-paths'
-import { invoke } from './tauri'
+import { folderOf, insideSpace, samePath, within, invoke } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000

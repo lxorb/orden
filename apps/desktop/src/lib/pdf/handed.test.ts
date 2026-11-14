@@ -48,15 +48,15 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../tauri', async (actual) => ({
-  ...(await actual<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../platform/src/tauri')>()),
   invoke: (command: string) => {
     world.asked.push(command)
     return Promise.resolve(world.waiting)
   },
 }))
 
-vi.mock('../log', () => ({ log: () => undefined }))
+vi.mock('../platform/src/log', () => ({ log: () => undefined }))
 
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),

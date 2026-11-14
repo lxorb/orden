@@ -1,4 +1,4 @@
-import { currentWindow } from '../tauri'
+import { currentWindow } from '../platform/src/api'
 
 class Filling {
   by = $state<string | null>(null)

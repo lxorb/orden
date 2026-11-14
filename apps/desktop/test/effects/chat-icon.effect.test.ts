@@ -5,8 +5,8 @@ const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
 const files: Record<string, string> = {}
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args: { path?: string; content?: string } = {}) => {
     const path = String(args.path)
     if (command === 'write_note') files[path] = String(args.content)

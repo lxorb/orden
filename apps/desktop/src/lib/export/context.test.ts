@@ -31,7 +31,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 vi.mock('../images', () => ({ imagePath: () => null }))
-vi.mock('../tauri', () => ({ invoke: () => Promise.resolve(''), isNative: false }))
+vi.mock('../platform/src/tauri', () => ({ invoke: () => Promise.resolve(''), isNative: false }))
 
 const { openTarget, renderOptions } = await import('./context')
 

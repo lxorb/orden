@@ -1,9 +1,15 @@
-import { without } from '../../records'
-import { isNumber, isRecord, isString } from '../../stored'
-import { locksHere, locksWork } from '../../locks'
-import { isNative, invoke } from '../../tauri'
+import {
+  without,
+  isNumber,
+  isRecord,
+  isString,
+  locksHere,
+  locksWork,
+  isNative,
+  invoke,
+  windows,
+} from '../../platform/src/api'
 import { FIRST_MODE, modeIn } from '../modes'
-import { windows } from '../../windows'
 import { isSessionState, type SessionState } from '../session-state'
 import { isEffort } from './effort'
 import type {

@@ -1,11 +1,9 @@
-import { account } from './accounts/src/api'
-import { api } from './accounts/src/api'
+import { account, api } from './accounts/src/api'
 import { leaveSpaces, leftByAnother } from './left-spaces'
 import { forgetSeedSpace, seedSpaceRoot } from './seeded'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
-import { samePath } from './space-paths'
-import { invoke, isNative } from './tauri'
+import { samePath, invoke, isNative } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 export interface Pairing {

@@ -1,6 +1,5 @@
 import { busy } from '../../busy.svelte'
-import { shownName } from '../../note-name'
-import { insideSpace, nameOf, samePath } from '../../space-paths'
+import { shownName, insideSpace, nameOf, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { FileAction } from '../../workspace/undo.svelte'
 import type { Thread } from '../chat/types'

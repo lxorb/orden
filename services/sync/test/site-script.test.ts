@@ -22,6 +22,10 @@ describe('the script a site serves', () => {
     expect(SITE_JS.length).toBeGreaterThan(4000)
   })
 
+  test('and nothing else the graph files reach through an api barrel', () => {
+    expect(SITE_JS.length).toBeLessThan(32_000)
+  })
+
   test('names the one inline line by its own hash', () => {
     expect(THEME_JS).toContain('orden:site-theme')
     expect(THEME_JS).toContain('nib:site-theme')

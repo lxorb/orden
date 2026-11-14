@@ -1,5 +1,5 @@
 import { dropTarget, targetFor } from '../drop-target.svelte'
-import { dur } from '../motion'
+import { dur } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { isUnsaved } from '../workspace/drafts'
 import type { Landing } from '../workspace/panes.svelte'

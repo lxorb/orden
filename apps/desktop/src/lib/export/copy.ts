@@ -1,5 +1,4 @@
-import { fileBytes } from '../bytes'
-import { mimeOfPath, UNKNOWN_TYPE } from '../mime'
+import { fileBytes, mimeOfPath, UNKNOWN_TYPE } from '../platform/src/api'
 import { deliver } from './save'
 
 export function extensionOf(path: string): string {

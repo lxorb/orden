@@ -1,9 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { importing } from './importing.svelte'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
   import { told } from './said.svelte'
-  import { forget, isRecord, isString, stored } from './stored'
+  import { forget, isRecord, isString, stored } from './platform/src/api'
   import { OUTSIDE } from './surfaces.svelte'
 
   const said = stored(OUTSIDE)

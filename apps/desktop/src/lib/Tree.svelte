@@ -22,8 +22,8 @@
   import { landsIn } from './move-targets'
   import NameField from './NameField.svelte'
   import { howFor, middleOpens, tabAsk } from './new-tab'
-  import { extensionOf } from './naming'
-  import { rowName } from './note-name'
+  import { extensionOf } from './platform/src/api'
+  import { rowName } from './platform/src/api'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
   import { LOCK_MARK } from './protect/entries'
@@ -39,7 +39,7 @@
     landing,
     listenOver,
   } from './drag-paths'
-  import { isDesktop } from './tauri'
+  import { isDesktop } from './platform/src/api'
   import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import {
@@ -52,7 +52,7 @@
     windowFor,
   } from './row-window'
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
-  import { folderOf, samePath } from './space-paths'
+  import { folderOf, samePath } from './platform/src/api'
   import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree-flat'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
@@ -60,7 +60,7 @@
   import { workspace } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import Twist from './Twist.svelte'
-  import { dur } from './motion'
+  import { dur } from './platform/src/api'
   import { keptAway } from './web/away.svelte'
   import { rowIds } from './row-ids'
   import { indexed, settle } from './tree-settle'

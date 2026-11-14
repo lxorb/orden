@@ -3,19 +3,19 @@
   import { localDate } from './region'
   import { publish } from './publishing.svelte'
   import { segmented } from './slide'
-  import { shownName } from './note-name'
-  import { nameOf } from './space-paths'
+  import { shownName } from './platform/src/api'
+  import { nameOf } from './platform/src/api'
   import Facts from './Facts.svelte'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
   import { chooseTarget, download, writeFile } from './export/save'
   import { siteIcon } from './site-icon'
-  import { isDesktop, openExternal } from './tauri'
+  import { isDesktop, openExternal } from './platform/src/api'
   import SpaceMark from './SpaceMark.svelte'
   import { readableSize } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
-  import { dur, slide } from './motion'
+  import { dur, slide } from './platform/src/api'
 
   const blog = $derived(publish.blog)
   const published = $derived(publish.published)

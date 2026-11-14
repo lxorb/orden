@@ -1,5 +1,4 @@
-import { isDesktop, platform } from '../tauri'
-import { keepJson, stored } from '../stored'
+import { isDesktop, platform, keepJson, stored } from '../platform/src/api'
 import { hasKey } from './keys'
 import { ai } from './store.svelte'
 
@@ -16,7 +15,7 @@ class KeysMoved {
     let missing = false
     for (const one of keyed) {
       if (one.kind === 'chatgpt') {
-        const { invoke } = await import('../tauri')
+        const { invoke } = await import('../platform/src/api')
         missing ||= (await invoke<unknown>('chatgpt_account').catch(() => null)) === null
       } else {
         missing ||= !(await hasKey(one.id).catch(() => true))

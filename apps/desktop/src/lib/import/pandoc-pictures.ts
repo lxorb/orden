@@ -1,4 +1,4 @@
-import { fromBase64, sha256 } from '../bytes'
+import { fromBase64, sha256 } from '../platform/src/api'
 
 export interface PandocPicture {
   link: string

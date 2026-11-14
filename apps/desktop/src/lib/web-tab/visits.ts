@@ -1,4 +1,4 @@
-import { isNumber, isRecord, isString } from '../stored'
+import { isNumber, isRecord, isString } from '../platform/src/api'
 import { isWebAddress } from './address'
 
 export const MOST_VISITS = 2000

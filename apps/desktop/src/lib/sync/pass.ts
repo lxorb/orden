@@ -7,14 +7,24 @@ import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/
 import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy, hash32, isEntryId } from '@orden/sync-core'
 import { api, ApiError, fromServer, type RemoteNote, type SpaceFile } from '../accounts/src/api'
-import { sha256 } from '../bytes'
+import {
+  sha256,
+  log,
+  without,
+  isNumber,
+  isRecord,
+  isString,
+  folderOf,
+  insideSpace,
+  nameOf,
+  relativeTo,
+  samePath,
+  invoke,
+  joinPath,
+  passing,
+} from '../platform/src/api'
 import { evictedHere } from '../icloud-placeholder'
-import { log } from '../log'
-import { without } from '../records'
-import { isNumber, isRecord, isString } from '../stored'
-import { folderOf, insideSpace, nameOf, relativeTo, samePath } from '../space-paths'
 import { syncMark } from '../surfaces.svelte'
-import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
 import { syncDeletes } from '../sync-client/src/api'
@@ -31,7 +41,6 @@ import {
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
 import type { Entry } from '../workspace.svelte'
-import { passing } from '../backoff'
 
 function ordered<T extends { path: string }>(
   notes: readonly T[],

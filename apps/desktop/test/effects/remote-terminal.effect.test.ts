@@ -6,8 +6,8 @@ let refuse = false
 let front: string | null = null
 let reached: Record<string, unknown> | null = null
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => 'windows',
@@ -35,7 +35,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 const channels: { onmessage: ((message: unknown) => void) | null }[] = []
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
     constructor() {

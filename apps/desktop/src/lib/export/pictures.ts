@@ -1,6 +1,5 @@
 import { mapSources, sourcesOf } from '@orden/markdown/sources'
-import { fileBytes, parseDataUri, toBase64 } from '../bytes'
-import { isReserved } from '../naming'
+import { fileBytes, parseDataUri, toBase64, isReserved } from '../platform/src/api'
 import { claimName } from './naming'
 
 export interface Picture {

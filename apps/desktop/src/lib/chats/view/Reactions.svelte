@@ -2,7 +2,7 @@
   import type { Message } from '@orden/chats'
   import { backOut } from 'svelte/easing'
   import { localNumber } from '../../region'
-  import { dur, scale } from '../../motion'
+  import { dur, scale } from '../../platform/src/api'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'
   import { nameOf } from './people'

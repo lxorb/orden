@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let answer: unknown = null
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: (command: string, args: Record<string, unknown>) => {

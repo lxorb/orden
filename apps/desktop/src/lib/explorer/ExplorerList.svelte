@@ -4,7 +4,7 @@
   import { spelled, type Spelling } from '../list-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { readableSize } from '../usage.svelte'
-  import { isPicturePath, nameOf, folderOf, samePath } from '../space-paths'
+  import { isPicturePath, nameOf, folderOf, samePath } from '../platform/src/api'
   import { menu } from '../menu.svelte'
   import { when } from '../when'
   import { renamePath } from './changes'

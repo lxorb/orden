@@ -1,6 +1,4 @@
-import { movedTo, relativeTo, samePath } from '../space-paths'
-import { keep, storedText } from '../stored'
-import { isDesktop } from '../tauri'
+import { movedTo, relativeTo, samePath, keep, storedText, isDesktop } from '../platform/src/api'
 import type { Lock } from './protection.svelte'
 
 const RELOCK_KEY = 'orden:protect-relock'

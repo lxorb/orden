@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
 import { writeAtCaret } from '../insert-picture'
-import { log } from '../log'
+import { log } from '../platform/src/api'
 import { systemLocale } from '../region'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'

@@ -1,9 +1,6 @@
-import { locksHere, locksWork } from '../locks'
-import { log } from '../log'
-import { invoke as crate } from '../native'
+import { locksHere, locksWork, log, nameOf, within, joinPath } from '../platform/src/api'
+import { invoke as crate } from '../crate/src/api'
 import { hearHere } from '../own-window'
-import { nameOf, within } from '../space-paths'
-import { joinPath } from '../tauri'
 
 const TAKING = 'orden:shortcuts-added'
 

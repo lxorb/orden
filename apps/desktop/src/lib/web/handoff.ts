@@ -1,5 +1,5 @@
 import { carryKeys } from '../former-keys'
-import { keep, storedText } from '../stored'
+import { keep, storedText } from '../platform/src/api'
 import { type DatabaseDump, dump, finished, shaped } from './database-dump'
 
 export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://orden.so'

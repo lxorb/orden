@@ -1,4 +1,4 @@
-import { samePath } from '../space-paths'
+import { samePath } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { Tab } from '../workspace/documents.svelte'
 

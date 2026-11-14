@@ -1,6 +1,5 @@
 import { MATERIAL_KEY, rememberGround } from './ground'
-import { forget, keep } from '../../stored'
-import { invoke, isDesktop } from '../../tauri'
+import { forget, keep, invoke, isDesktop } from '../../platform/src/api'
 
 let worn: { on: boolean; dark: boolean; kind: string } | null = null
 let standing: string | null = null

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { leadSync } from './sync-client/src/lead'
-import { heldForLife, holdIfFree, ifFree, inTurn, locksWork } from './locks'
+import { heldForLife, holdIfFree, ifFree, inTurn, locksWork } from './platform/src/locks'
 import { aloneHere } from './sync-client/src/budget'
-import { oneWriteAt } from './windows'
+import { oneWriteAt } from './platform/src/windows'
 import { takeSlot } from './workspace/slot'
 
 const BROKEN = {

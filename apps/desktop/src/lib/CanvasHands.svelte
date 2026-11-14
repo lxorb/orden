@@ -6,7 +6,7 @@
   import { INK_STYLES, inkOpacity, inkPath, outlineOf } from './canvas/ink'
   import type { Palette } from './canvas/paint'
   import type { Hand } from './canvas/shared'
-  import { stillness } from './motion'
+  import { stillness } from './platform/src/api'
 
   const {
     hands,

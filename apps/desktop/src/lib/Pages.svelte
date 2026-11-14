@@ -50,7 +50,7 @@
   import { pageAt } from '@orden/markdown/pages'
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
-  import { stillness } from './motion'
+  import { stillness } from './platform/src/api'
   import { type Found, matches } from './canvas/find'
   import {
     PapersHeld,
@@ -88,7 +88,7 @@
 
   import { pages as pagesState } from './pages/showing.svelte'
   import { viewport } from './viewport.svelte'
-  import { samePath } from './space-paths'
+  import { samePath } from './platform/src/api'
   import { workspace, type Tab } from './workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()

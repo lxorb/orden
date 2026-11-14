@@ -1,5 +1,5 @@
 import { copyText } from '../clipboard'
-import { isDesktop } from '../tauri'
+import { isDesktop } from '../platform/src/api'
 import { webChannel } from '../updater'
 import { updates } from '../updates.svelte'
 import type { Field } from './fields'

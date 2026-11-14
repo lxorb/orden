@@ -1,5 +1,5 @@
 import { SvelteMap } from 'svelte/reactivity'
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isDesktop } from '../platform/src/api'
 import { endingOf } from './order'
 
 const AT_ONCE = 4

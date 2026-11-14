@@ -1,5 +1,5 @@
 import { dayOf, settingName, usageName, type UsageStartup, type UsageVia } from '@orden/sync-core'
-import { keepJson, stored } from '../stored'
+import { keepJson, stored } from '../platform/src/api'
 import { USAGE_DAYS, usageChoice } from './choice.svelte'
 
 export interface Tally {

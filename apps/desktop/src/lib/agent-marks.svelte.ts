@@ -1,5 +1,5 @@
 import { door } from '@orden/markdown/door'
-import { isDesktop } from './tauri'
+import { isDesktop } from './platform/src/api'
 
 export interface Worn {
   agent: string

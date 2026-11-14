@@ -42,7 +42,7 @@
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
-  import { isDesktop, openExternal } from './tauri'
+  import { isDesktop, openExternal } from './platform/src/api'
   import { runsExtensions } from './web-tab/extensions.svelte'
   import { theme } from './theme/src/api'
   import ThemeStore from './ThemeStore.svelte'
@@ -54,8 +54,8 @@
   import { readableSize, usage } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
-  import { dur, fly, slide } from './motion'
-  import { waited } from './timing'
+  import { dur, fly, slide } from './platform/src/api'
+  import { waited } from './platform/src/api'
   import Cross from './Cross.svelte'
 
   const offered = new Offered()

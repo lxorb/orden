@@ -17,8 +17,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const asked = vi.hoisted(() => [] as { command: string; args?: unknown }[])
 const answer = vi.hoisted((): { taken: unknown } => ({ taken: null }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args?: unknown) => {
     asked.push({ command, args })
     if (command === 'take_in_outside') return Promise.resolve(answer.taken)

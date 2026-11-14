@@ -6,12 +6,11 @@ import {
   type SharedItem,
   type Sharing,
   type SpaceRole,
+  account,
 } from './accounts/src/api'
-import { account } from './accounts/src/api'
 import { message } from './message'
 import { rooms } from './collab/src/api'
-import { samePath } from './space-paths'
-import { forget, keepJson, Shared } from './stored'
+import { samePath, forget, keepJson, Shared } from './platform/src/api'
 import { within } from './sync/mirror'
 import { sync } from './sync.svelte'
 import { type Origin, originOf, trustsHtml } from './trust'

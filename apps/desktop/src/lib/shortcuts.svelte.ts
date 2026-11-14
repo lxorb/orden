@@ -1,6 +1,5 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
-import { account } from './accounts/src/api'
-import { api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from './accounts/src/api'
 import {
   currentPlatform,
   type Keystroke,
@@ -12,7 +11,7 @@ import {
 import { modes } from './modes.svelte'
 import { knownPreset, type PresetId } from './shortcuts/preset-ids'
 import type { Preset } from './shortcuts/presets'
-import { without } from './records'
+import { without, isRecord, keep, keepJson, stored, storedText, isNative } from './platform/src/api'
 import {
   type AppContext,
   BROWSER_KEYS,
@@ -23,8 +22,6 @@ import {
   type Shortcut,
   SYSTEM_KEYS,
 } from './shortcuts/registry'
-import { isRecord, keep, keepJson, stored, storedText } from './stored'
-import { isNative } from './tauri'
 import { viewport } from './viewport.svelte'
 import { saveFront } from './save-place/door'
 import { ran } from './usage/tally'

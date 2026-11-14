@@ -1,9 +1,25 @@
 import { untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
-import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
-import { isRecord, isString, keepJson, recordOf, stored } from '../stored'
+import {
+  insideItsSpace,
+  movedTo,
+  nameOf,
+  relativeTo,
+  samePath,
+  within,
+  isRecord,
+  isString,
+  keepJson,
+  recordOf,
+  stored,
+  filledIn,
+  type Folded,
+  type Folding,
+  meet,
+  readSpaces,
+  without,
+} from '../platform/src/api'
 import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '../tree-order'
-import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'orden:arranged'

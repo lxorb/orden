@@ -6,7 +6,7 @@
   import { overlays } from './overlays'
   import { hang } from './portal'
   import { viewport } from './viewport.svelte'
-  import { dur, fade, fly } from './motion'
+  import { dur, fade, fly } from './platform/src/api'
 
   interface Option {
     value: string

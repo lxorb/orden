@@ -1,14 +1,10 @@
 {
   "name": "theme",
   "layer": "foundation",
-  "dependsOn": ["contracts", "sync-core", "themes"],
+  "dependsOn": ["contracts", "sync-core", "themes", "platform"],
   "pending": [
     "apps/desktop/src/lib/accents.ts",
     "apps/desktop/src/lib/insets.ts",
-    "apps/desktop/src/lib/log.ts",
-    "apps/desktop/src/lib/records.ts",
-    "apps/desktop/src/lib/startup.svelte.ts",
-    "apps/desktop/src/lib/stored.ts",
-    "apps/desktop/src/lib/tauri.ts"
+    "apps/desktop/src/lib/startup.svelte.ts"
   ]
 }

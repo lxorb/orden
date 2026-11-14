@@ -1,7 +1,5 @@
-import { fromBase64, toBase64 } from '../bytes'
+import { fromBase64, toBase64, assetType, basename, normalise, parent } from '../platform/src/api'
 import type { PlaneMarks } from '@orden/scan/canvas'
-import { assetType } from '../web/asset-route'
-import { basename, normalise, parent } from '../web/paths'
 import { type AssetRow, type FileRow, KEEP, type Rows, type Trashed } from '../web/store'
 import type { InternalEntry, InternalFolder } from './folder'
 

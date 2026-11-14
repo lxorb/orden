@@ -57,7 +57,7 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   invoke: () => Promise.reject(new Error('no disk here')),
   isNative: true,
   isDesktop: true,

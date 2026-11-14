@@ -1,8 +1,5 @@
-import { log } from './log'
+import { log, isRecord, isString, invoke, waited } from './platform/src/api'
 import { GIVE_UP, settleUp, written } from './parting'
-import { isRecord, isString } from './stored'
-import { invoke } from './tauri'
-import { waited } from './timing'
 import type { Channel } from './updater'
 
 function notUpdated(value: unknown): { refused: boolean; command: string | null; reason: string } {

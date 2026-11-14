@@ -1,6 +1,6 @@
 import { type Base, readBase, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
-import { folderOf, relativeTo } from '../space-paths'
+import { folderOf, relativeTo } from '../platform/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
 

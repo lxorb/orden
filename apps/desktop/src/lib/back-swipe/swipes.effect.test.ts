@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('../tauri', () => ({ isDesktop: false, isMobile: false }))
+vi.mock('../platform/src/tauri', () => ({ isDesktop: false, isMobile: false }))
 vi.mock('../web-tab/pages.svelte', () => ({
   pages: { of: () => ({ back: true, forward: false }) },
 }))

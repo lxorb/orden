@@ -1,4 +1,4 @@
-import { assetRoute, assetStorePath } from './web/asset-route'
+import { assetRoute, assetStorePath } from './asset-route'
 
 const PHONES = new Set<string>(['android', 'ios'])
 
@@ -24,7 +24,7 @@ export const isMobile = isNative && PHONES.has(platform())
 
 export const isDesktop = isNative && !isMobile
 
-if (isNative) void import('./native')
+if (isNative) void import('../../crate/src/api')
 
 export const asking = new Map<number, { command: string; at: number }>()
 let calls = 0
@@ -39,18 +39,18 @@ const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', '
 
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!isNative) {
-    const { webInvoke } = await import('./web/commands')
+    const { webInvoke } = await import('../../web/commands')
     return webInvoke<T>(command, args)
   }
   if (internal.routed?.(command, args) || (isDesktop && SPACE_COMMANDS.has(command))) {
-    const { internalInvoke } = await import('./internal/route')
+    const { internalInvoke } = await import('../../internal/route')
     return internalInvoke<T>(command, args)
   }
 
   const call = ++calls
   asking.set(call, { command, at: performance.now() })
   try {
-    const { invoke } = await import('./native')
+    const { invoke } = await import('../../crate/src/api')
     return await invoke<T>(command, args)
   } finally {
     asking.delete(call)

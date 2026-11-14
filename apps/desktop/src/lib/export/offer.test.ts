@@ -139,8 +139,8 @@ vi.mock('../pdf/document', async (importOriginal) => ({
 
 const written = vi.hoisted(() => new Map<string, string>())
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args?: { path?: string; content?: string }) => {
     const path = args?.path ?? ''
     if (command === 'write_note') written.set(path, args?.content ?? '')

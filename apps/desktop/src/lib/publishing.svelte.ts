@@ -7,19 +7,14 @@ import {
   type RemoteSpace,
   type SiteChanges,
   type SiteSettings,
+  account,
 } from './accounts/src/api'
-import { invoke } from './tauri'
-import { theme } from './theme/src/api'
-import { carriedCss } from './theme/src/api'
-import { account } from './accounts/src/api'
-import { sha256 } from './bytes'
+import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from './platform/src/api'
+import { theme, carriedCss } from './theme/src/api'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './message'
-import { log } from './log'
-import { relativeTo as relativeIn } from './space-paths'
 import { publishSheet } from './surfaces.svelte'
 import { sync } from './sync.svelte'
-import { afterQuiet } from './timing'
 import type { Space } from './workspace.svelte'
 
 type Address = 'subdomain' | 'domain'

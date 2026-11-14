@@ -1,5 +1,5 @@
 import { hexOf } from '../../../legibility'
-import { invoke, isDesktop } from '../../../tauri'
+import { invoke, isDesktop } from '../../../platform/src/api'
 import { pages } from '../../../web-tab/pages.svelte'
 import { groundSaid, type PageSaid, stripGround } from './colours'
 import { pixelsOf } from './pictures'

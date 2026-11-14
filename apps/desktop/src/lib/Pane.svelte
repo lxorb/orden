@@ -25,7 +25,7 @@
   import { type Pane, panesIn, topRow } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
-  import { isDesktop } from './tauri'
+  import { isDesktop } from './platform/src/api'
   import { dragged, dropOver, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { message } from './message'

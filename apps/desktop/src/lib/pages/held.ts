@@ -1,5 +1,5 @@
 import { isPagesTarget } from '@orden/markdown/links'
-import { placesOf, samePath } from '../space-paths'
+import { placesOf, samePath } from '../platform/src/api'
 
 export function paperOf(pages: string): string {
   return `${pages}.pdf`

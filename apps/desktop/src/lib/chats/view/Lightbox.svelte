@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../../backstack.svelte'
   import { downloadStarted } from '../../downloads/started'
-  import { fade, LAYER, scale } from '../../motion'
+  import { fade, LAYER, scale } from '../../platform/src/api'
   import { overlays } from '../../overlays'
   import Glyph from './Glyph.svelte'
   import { isVideo } from './media'

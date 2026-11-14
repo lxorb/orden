@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fade, LAYER, scale } from '../motion'
+  import { fade, LAYER, scale } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { trap } from '../trap'
   import { usageChoice } from '../usage/choice.svelte'

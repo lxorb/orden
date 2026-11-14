@@ -16,10 +16,9 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
-import { onDisk } from './on-disk'
-import { noteId } from './note-id'
-import { insideOnly } from './automation/inside'
 import {
+  onDisk,
+  insideOnly,
   askCase,
   folderOf,
   insideSpace,
@@ -34,9 +33,24 @@ import {
   sameSpelling,
   within,
   withinSpace,
-} from './space-paths'
+  AGENTS_NAME,
+  isAgentsName,
+  nameFromContent,
+  shownName,
+  afterQuiet,
+  waited,
+  isRecord,
+  keepJson,
+  stored,
+  log,
+  invoke,
+  isDesktop,
+  isNative,
+  joinPath,
+  openExternal,
+} from './platform/src/api'
+import { noteId } from './note-id'
 import { busy } from './busy.svelte'
-import { AGENTS_NAME, isAgentsName, nameFromContent, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -46,9 +60,7 @@ import { startup } from './startup.svelte'
 import { tabOverview } from './surfaces.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
-import { afterQuiet, waited } from './timing'
 import { GIVE_UP } from './parting'
-import { isRecord, keepJson, stored } from './stored'
 import { holdsRetiredTab } from './workspace/retired-tabs'
 import { WELCOME_PATH } from './welcome'
 import {
@@ -125,8 +137,6 @@ import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } f
 import { rowIds } from './row-ids'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
-import { log } from './log'
-import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
@@ -1592,7 +1602,7 @@ class Workspace {
   private async heldBy(path: string): Promise<string | null> {
     const [{ noteHolding }, { onDisk }] = await Promise.all([
       import('./pages/from-pdf'),
-      import('./on-disk'),
+      import('./platform/src/api'),
     ])
     return noteHolding(path, {
       root: this.rootHolding(path),

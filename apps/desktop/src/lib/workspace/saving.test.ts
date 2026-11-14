@@ -8,7 +8,7 @@ let holdingVersion: Promise<void> | null = null
 
 const refusing = new Map<string, number>()
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: async (command: string, args?: Record<string, unknown>) => {
     sent.push({
       command,

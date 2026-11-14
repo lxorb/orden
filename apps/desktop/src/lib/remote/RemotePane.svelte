@@ -4,7 +4,7 @@
   import { dropOver } from '../drag-paths'
   import { prompt } from '../prompt.svelte'
   import { arrive } from '../slide'
-  import { invoke } from '../tauri'
+  import { invoke } from '../platform/src/api'
   import { viewport } from '../viewport.svelte'
   import HostDetail from './HostDetail.svelte'
   import HostMark from './HostMark.svelte'

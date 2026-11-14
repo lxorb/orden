@@ -1,8 +1,14 @@
 import { foldName } from '@orden/markdown/links'
 import type { Command } from '../commands'
 import { fileMark } from '../file-mark'
-import { shownName, rowName } from '../note-name'
-import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
+import {
+  shownName,
+  rowName,
+  folderOf,
+  insideSpace,
+  relativeTo,
+  withinSpace,
+} from '../platform/src/api'
 import { frecency as visitWeight, shownAddress } from '../web-tab/omnibox'
 import type { Visit } from '../web-tab/visits'
 import type { Host } from '../remote/hosts'

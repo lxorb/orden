@@ -5,7 +5,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { initial } from './icons'
   import { message } from './message'
-  import { fly, LAYER } from './motion'
+  import { fly, LAYER } from './platform/src/api'
   import { overlays } from './overlays'
   import { deviceAccent } from './collab/src/api'
   import { theme } from './theme/src/api'

@@ -1,6 +1,6 @@
 import { subprotocol } from '@orden/rooms'
 import { BEAT, BEAT_ANSWER } from '@orden/sync-core'
-import { BEAT_EVERY, roomDelay } from '../../backoff'
+import { BEAT_EVERY, roomDelay } from '../../platform/src/api'
 import { BASE } from '../../accounts/src/api'
 
 const SILENT_BEATS = 3

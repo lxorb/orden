@@ -1,7 +1,7 @@
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeedSpace, markSeeded, wasSeeded } from './seeded'
 import { madeSpace } from './space-actions'
-import { joinPath } from './tauri'
+import { joinPath } from './platform/src/api'
 import { viewport } from './viewport.svelte'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
 import { writeFile } from './workspace/write-file'

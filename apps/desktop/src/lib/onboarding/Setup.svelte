@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { iconLibrary } from '../icon-library.svelte'
   import { BRANDS } from '../icons'
-  import { dur, fade, fly } from '../motion'
+  import { dur, fade, fly } from '../platform/src/api'
   import { trap } from '../trap'
   import AccountStep from './AccountStep.svelte'
   import AiStep from './AiStep.svelte'

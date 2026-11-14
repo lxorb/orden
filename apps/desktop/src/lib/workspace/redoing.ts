@@ -1,4 +1,4 @@
-import { folderOf, nameOf } from '../space-paths'
+import { folderOf, nameOf } from '../platform/src/api'
 import { copyAgain, type Copies } from './copying'
 import type { FileAction } from './undo.svelte'
 import { putBack } from './undoing'

@@ -1,6 +1,5 @@
 import { door } from '@orden/markdown/door'
-import { deviceName } from '../../device'
-import { isRecord, isString, parsed } from '../../stored'
+import { deviceName, isRecord, isString, parsed } from '../../platform/src/api'
 
 export const BASE: string = import.meta.env.VITE_ORDEN_API ?? 'https://orden.so'
 

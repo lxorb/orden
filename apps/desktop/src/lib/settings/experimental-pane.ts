@@ -17,7 +17,7 @@ import {
   PASS_WORD,
   TIME_WORD,
 } from '../settings.svelte'
-import { isDesktop, isMobile } from '../tauri'
+import { isDesktop, isMobile } from '../platform/src/api'
 import { clipboardSharing } from './apps-clipboard.svelte'
 import type { Field, Group, Pane } from './fields'
 

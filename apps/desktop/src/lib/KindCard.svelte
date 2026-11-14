@@ -4,7 +4,7 @@
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import { MARKS } from './file-mark'
   import Icon from './Icon.svelte'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
   import type { NewKindRow } from './new-kinds'
 
   const {

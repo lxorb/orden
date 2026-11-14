@@ -17,8 +17,8 @@ vi.mock('../sync.svelte', () => ({
   },
 }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isNative: false,
   isDesktop: false,
   invoke: () => Promise.resolve(),

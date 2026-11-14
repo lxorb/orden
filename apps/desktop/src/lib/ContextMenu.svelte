@@ -10,7 +10,7 @@
   import { viewport } from './viewport.svelte'
   import { walked } from './walk'
   import { ran } from './usage/tally'
-  import { dur, fade, fly, scale } from './motion'
+  import { dur, fade, fly, scale } from './platform/src/api'
 
   let element = $state<HTMLDivElement>()
   let position = $state({ x: 0, y: 0 })

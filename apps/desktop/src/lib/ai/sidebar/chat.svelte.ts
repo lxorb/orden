@@ -4,9 +4,16 @@ import { region } from '../../region'
 import { message } from '../../message'
 import { owes, writing } from '../../parting'
 import { prompt } from '../../prompt.svelte'
-import { without } from '../../records'
-import { forget, keep, keepJson, stored, storedText } from '../../stored'
-import { afterQuiet, onceAFrame } from '../../timing'
+import {
+  without,
+  forget,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  afterQuiet,
+  onceAFrame,
+} from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'

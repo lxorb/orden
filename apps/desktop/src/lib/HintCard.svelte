@@ -3,7 +3,7 @@
   import Cross from './Cross.svelte'
   import { type Hint, hints } from './hints.svelte'
   import { hang } from './portal'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
 
   const {
     hint,

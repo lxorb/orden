@@ -7,8 +7,8 @@ const world = vi.hoisted(() => ({
   ended: [] as string[],
 }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
 vi.mock('../prompt.svelte', () => ({

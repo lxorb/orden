@@ -1,5 +1,4 @@
-import { account } from '../accounts/src/api'
-import { BASE, request } from '../accounts/src/api'
+import { account, BASE, request } from '../accounts/src/api'
 import { hub } from '../sync-client/src/api'
 import { ShareApi } from './share-api'
 

@@ -1,5 +1,5 @@
 import type { TransitionConfig } from 'svelte/transition'
-import { dur, fade } from './motion'
+import { dur, fade } from './platform/src/api'
 
 export function keytipIn(_: Element): TransitionConfig {
   return { duration: dur(70), css: (t) => `opacity: ${0.5 + 0.5 * t}` }

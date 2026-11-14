@@ -1,5 +1,4 @@
-import { isRecord } from '../stored'
-import { within } from '../space-paths'
+import { isRecord, within } from '../platform/src/api'
 import type { Panel } from '../workspace.svelte'
 import { type Frame, paneIn, panesIn, withoutPane } from './pane-tree'
 import { isPanel, type Layout, readLayout } from './session'

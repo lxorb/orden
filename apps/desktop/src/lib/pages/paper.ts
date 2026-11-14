@@ -1,6 +1,6 @@
 import type { PDFPageProxy } from 'pdfjs-dist'
 import type { OpenPdf } from '../pdf/document'
-import { fileBytes } from '../bytes'
+import { fileBytes, pathKey } from '../platform/src/api'
 import { mark } from '../trace'
 import { type AwayDraw, closeAway, drawAway, drawsAway, HERE, openAway } from './paper-away'
 import { openBytes, openDocument, pdfjs } from '../pdf/document'
@@ -11,7 +11,6 @@ import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
 import { idle } from '../breathe'
 import { runsOfItems, textOfRuns } from '../pdf/find'
-import { pathKey } from '../space-paths'
 import { SvelteMap } from 'svelte/reactivity'
 
 const SCALE = 2

@@ -1,4 +1,4 @@
-import { invoke, isDesktop, platform } from '../tauri'
+import { invoke, isDesktop, platform } from '../platform/src/api'
 import { wheelPixels } from '../camera'
 
 const FRESH = 150

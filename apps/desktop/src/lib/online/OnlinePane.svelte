@@ -4,7 +4,7 @@
   import { localDate, localNumber } from '../region'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
-  import { within } from '../space-paths'
+  import { within } from '../platform/src/api'
   import { runner } from '../sync-client/src/api'
   import { workspace } from '../workspace.svelte'
   import { cityOf } from './calls'

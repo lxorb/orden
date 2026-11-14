@@ -38,7 +38,7 @@ export function hiddenUnder(root: string, path: string): boolean {
   return inside.split('/').some((part) => part.startsWith('.'))
 }
 
-export function within(root: string, path: string): boolean {
+export function under(root: string, path: string): boolean {
   const base = normalise(root)
   return base === '/' || normalise(path).startsWith(`${base}/`)
 }

@@ -22,7 +22,7 @@ vi.mock('../ai/hears', () => ({ transcriberNow: () => world.provider }))
 vi.mock('../mobile/bridge', () => ({
   method: (name: string) => (name === 'dictates' && world.phone ? () => true : undefined),
 }))
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   get isNative() {
     return world.native
   },
@@ -35,12 +35,12 @@ vi.mock('../tauri', () => ({
     return new Promise(() => undefined)
   },
 }))
-vi.mock('../native', () => ({
+vi.mock('../crate/src/native', () => ({
   Channel: class {
     onmessage: unknown = null
   },
 }))
-vi.mock('../stored', () => ({
+vi.mock('../platform/src/stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),

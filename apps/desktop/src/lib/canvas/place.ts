@@ -1,5 +1,5 @@
 import type { Camera } from '../camera'
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../platform/src/api'
 
 const STORAGE_KEY = 'orden:canvas-views'
 

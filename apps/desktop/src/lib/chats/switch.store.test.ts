@@ -4,8 +4,8 @@ const CHAT = `c_${'1'.repeat(32)}`
 
 const sent = vi.hoisted(() => ({ by: [] as string[] }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isNative: false,
   isDesktop: false,
   invoke: () => Promise.resolve(),

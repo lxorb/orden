@@ -3,7 +3,7 @@ import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { accentColour, accentFor } from '../../accents'
 import { faceUrl } from '../../accounts/src/api'
-import { isNumber, isRecord, isString } from '../../stored'
+import { isNumber, isRecord, isString } from '../../platform/src/api'
 
 interface Named {
   name: string

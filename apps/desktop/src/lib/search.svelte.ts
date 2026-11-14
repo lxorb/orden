@@ -6,9 +6,14 @@ import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
 import { selectedWords } from './search/seed'
 import { searchSpace } from './search/space'
-import { isMarkdownPath } from './space-paths'
-import { isBoolean, isRecord, keepJson, stored } from './stored'
-import { afterQuiet } from './timing'
+import {
+  isMarkdownPath,
+  isBoolean,
+  isRecord,
+  keepJson,
+  stored,
+  afterQuiet,
+} from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 const WAIT = 140

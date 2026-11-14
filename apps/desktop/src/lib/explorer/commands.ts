@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import type { OutsideTicket } from '../workspace/undo.svelte'
 import { moved } from './follow'
 

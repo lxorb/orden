@@ -1,5 +1,4 @@
-import { withOrWithout } from '../records'
-import { isNumber, recordOf, Shared, stringList } from '../stored'
+import { withOrWithout, isNumber, recordOf, Shared, stringList } from '../platform/src/api'
 
 const muted = new Shared('orden:web-muted', (value) => new Set(stringList(value) ?? []))
 const zooms = new Shared('orden:web-zooms', (value) => recordOf(value, isNumber))

@@ -1,5 +1,5 @@
 import { prompt } from '../prompt.svelte'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { restartToUpdate } from '../updater'
 
 class Gpu {

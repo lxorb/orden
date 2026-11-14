@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EditorState } from '@orden/editor'
-import { oneWriteAt, Windows } from '../windows'
+import { oneWriteAt, Windows } from '../platform/src/windows'
 import { NoteDoc } from './documents.svelte'
 import { Across, type Desk } from './across'
 import type { FileOp } from './file-ops'
 
-vi.mock('../log', () => ({ log: vi.fn() }))
+vi.mock('../platform/src/log', () => ({ log: vi.fn() }))
 
 function fakeLocks(): LockManager {
   const tails = new Map<string, Promise<unknown>>()

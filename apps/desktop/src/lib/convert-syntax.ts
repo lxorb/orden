@@ -4,7 +4,7 @@ import { converted } from './import/convert'
 import { protection } from './protect/protection.svelte'
 import type { Change } from './search/apply'
 import { changeOf } from './search/replace'
-import { isMarkdownPath } from './space-paths'
+import { isMarkdownPath } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 export function syntaxChanges(

@@ -1,5 +1,4 @@
-import { keepJson, stored } from '../stored'
-import { invoke, isDesktop, platform } from '../tauri'
+import { keepJson, stored, invoke, isDesktop, platform } from '../platform/src/api'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 
 export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')

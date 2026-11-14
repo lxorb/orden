@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 vi.mock('../link-index.svelte', () => ({ links: { name: 'links' } }))
 vi.mock('../search.svelte', () => ({ search: {} }))
 vi.mock('../settings.svelte', () => ({ settings: {} }))
-vi.mock('../tauri', () => ({ invoke: () => Promise.resolve(null) }))
+vi.mock('../platform/src/tauri', () => ({ invoke: () => Promise.resolve(null) }))
 vi.mock('../workspace.svelte', () => ({ workspace: {} }))
 vi.mock('../web-tab/pages.svelte', () => ({ pages: {} }))
 

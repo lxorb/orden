@@ -2,7 +2,7 @@ import type { Query } from '@orden/scan/search/query'
 import type { Found } from '@orden/scan/search/walk'
 import type { IndexedNote } from '@orden/scan/wire'
 import { SvelteSet } from 'svelte/reactivity'
-import { normalise, within } from './paths'
+import { normalise, under } from '../platform/src/api'
 
 interface Away {
   id: string
@@ -83,7 +83,7 @@ class KeptAway {
     const exact = this.files.get(base)
     if (exact) return [exact]
     return [...this.files.entries()].flatMap(([one, away]) =>
-      one !== base && within(base, one) ? [away] : [],
+      one !== base && under(base, one) ? [away] : [],
     )
   }
 

@@ -16,7 +16,7 @@ import type { KeptView } from '../canvas/place'
 import { CanvasStore } from '../canvas/store.svelte'
 import type { Highlight } from '../pdf/highlights'
 import type { PdfHeading } from '../pdf/outline'
-import { stillness } from '../motion'
+import { stillness } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 
 const MARGIN = 28

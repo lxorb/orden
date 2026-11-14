@@ -1,4 +1,4 @@
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../platform/src/api'
 import { firstDown, SORT_KEYS, type Sort, type SortKey } from './order'
 
 const KEY = 'orden:explorer'

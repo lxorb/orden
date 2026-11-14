@@ -1,4 +1,4 @@
-import { insideSpace, withinSpace } from '../space-paths'
+import { insideSpace, withinSpace } from '../platform/src/api'
 
 interface Space {
   id: string

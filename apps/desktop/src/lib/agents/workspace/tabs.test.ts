@@ -129,8 +129,8 @@ let answer: Record<string, unknown> = { status: 'ok', result: {} }
 const asked: { command: string; args: Record<string, unknown> }[] = []
 const others = new Set(['/s/Work/Report.pages.pdf'])
 
-vi.mock('../../tauri', async (original) => ({
-  ...(await original<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push({ command, args })
     if (command === 'path_exists') return Promise.resolve(others.has(String(args.path)))

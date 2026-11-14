@@ -3,7 +3,7 @@
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { menu } from '../../menu.svelte'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { hearAgain } from '../../shortcuts/registry'
   import { shortcuts } from '../../shortcuts.svelte'
   import { dropOver, isTreeDrag } from '../../drag-paths'

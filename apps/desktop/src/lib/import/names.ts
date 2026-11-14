@@ -1,5 +1,5 @@
 import { freePath, withoutForbidden } from '@orden/markdown/paths'
-import { isReserved } from '../naming'
+import { isReserved } from '../platform/src/api'
 
 const LONGEST = 96
 

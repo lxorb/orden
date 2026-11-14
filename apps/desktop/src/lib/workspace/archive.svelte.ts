@@ -1,6 +1,15 @@
-import { insideItsSpace, relativeTo, within } from '../space-paths'
-import { isNumber, isRecord, keepJson } from '../stored'
-import { filledIn, type Folded, readSpaces, without } from '../records'
+import {
+  insideItsSpace,
+  relativeTo,
+  within,
+  isNumber,
+  isRecord,
+  keepJson,
+  filledIn,
+  type Folded,
+  readSpaces,
+  without,
+} from '../platform/src/api'
 import { carried, moving } from './file-ops'
 
 export const STORAGE_KEY = 'orden:archived'

@@ -14,7 +14,7 @@ import {
 import { changesBetween, type Written, written } from './written'
 import { idSet, pickedBox, planeBox } from './edits'
 import { type KeptView, viewKept, viewOf } from './place'
-import { afterQuiet } from '../timing'
+import { afterQuiet } from '../platform/src/api'
 import { CanvasHistory } from './history'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from './shared'
 import { flushCardEdits } from './writing'

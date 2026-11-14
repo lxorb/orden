@@ -1,4 +1,4 @@
-import { invoke, joinPath } from '../tauri'
+import { invoke, joinPath } from '../platform/src/api'
 
 const SETTINGS = ['app.json', 'workspace.json', 'core-plugins.json']
 

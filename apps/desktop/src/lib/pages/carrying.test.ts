@@ -8,12 +8,12 @@ const world = vi.hoisted(() => ({
 
 vi.mock('../accounts/src/account.svelte', () => ({ account: world.account }))
 vi.mock('../workspace.svelte', () => ({ workspace: { spaces: [] } }))
-vi.mock('../bytes', () => ({
+vi.mock('../platform/src/bytes', () => ({
   fileBytes: () => Promise.resolve(new Uint8Array(3)),
   sha256: () => Promise.resolve('hash'),
   toBase64: () => '',
 }))
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: true,
   joinPath: (root: string, path: string) => `${root}/${path}`,
   invoke: () => Promise.resolve({ modified: 1, size: 3 }),

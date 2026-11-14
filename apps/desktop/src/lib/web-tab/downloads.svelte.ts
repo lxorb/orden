@@ -1,5 +1,5 @@
 import { downloadStarted } from '../downloads/started'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 
 type DownloadState = 'going' | 'done' | 'failed' | 'cancelled'
 

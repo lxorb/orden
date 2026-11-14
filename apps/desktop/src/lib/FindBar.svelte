@@ -5,7 +5,7 @@
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import Regex from 'lucide/dist/esm/icons/regex.mjs'
   import WholeWord from 'lucide/dist/esm/icons/whole-word.mjs'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
   import { SEARCH_MARK } from './panel-marks'
   import { arrive } from './slide'
   import { shortcuts } from './shortcuts.svelte'

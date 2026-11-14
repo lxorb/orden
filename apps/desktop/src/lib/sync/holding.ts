@@ -1,5 +1,4 @@
-import { sha256 } from '../bytes'
-import { invoke } from '../tauri'
+import { sha256, invoke } from '../platform/src/api'
 import type { Mirror } from './mirror'
 
 export interface Holding {

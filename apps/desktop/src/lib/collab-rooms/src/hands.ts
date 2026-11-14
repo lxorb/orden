@@ -5,7 +5,7 @@ import { accentColour } from '../../accents'
 import type { InkStroke } from '../../canvas/format'
 import type { Point } from '../../canvas/geometry'
 import type { Hand } from '../../canvas/shared'
-import { isRecord } from '../../stored'
+import { isRecord } from '../../platform/src/api'
 import { type Seen, whoElse } from './peers'
 
 export const HAND = 'hand'

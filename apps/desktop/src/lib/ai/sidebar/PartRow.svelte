@@ -1,9 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { region } from '../../region'
-  import { dur, slide } from '../../motion'
+  import { dur, slide } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
-  import { insideSpace } from '../../space-paths'
+  import { insideSpace } from '../../platform/src/api'
   import type { Part } from '../chat/types'
   import Approval from '../review/Approval.svelte'
   import { chat } from './chat.svelte'

@@ -19,7 +19,7 @@
     takesTint,
     writtenIcon,
   } from './icons'
-  import { dur, fade, LAYER, scale } from './motion'
+  import { dur, fade, LAYER, scale } from './platform/src/api'
   import { overlays } from './overlays'
   import { segmented } from './slide'
   import { trap } from './trap'

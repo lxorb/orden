@@ -1,7 +1,7 @@
 import { isWebTarget } from '@orden/markdown/links'
 import { readWebFile } from '@orden/scan/shortcut'
 import { isExplorerDrag, isTreeDrag } from '../drag-paths'
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isDesktop } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { zoneAt } from '../workspace/zones'
 

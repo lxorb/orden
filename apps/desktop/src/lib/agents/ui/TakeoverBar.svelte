@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { dur, slide } from '../../motion'
+  import { dur, slide } from '../../platform/src/api'
   import { started } from './live.svelte'
   import Spark from './Spark.svelte'
 

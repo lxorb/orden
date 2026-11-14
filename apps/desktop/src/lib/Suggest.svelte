@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
   import type { Piece } from './palette/pieces'
 
   const {

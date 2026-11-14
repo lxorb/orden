@@ -1,4 +1,4 @@
-import { toBase64 } from './bytes'
+import { toBase64 } from './platform/src/api'
 
 type As = 'data' | 'bytes'
 

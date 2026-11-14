@@ -1,7 +1,6 @@
 import { assetsOf, printInFrame, printsInFrame } from '../export'
 import type { PaperInches } from '../page-setup'
-import { assetPath, invoke, isNative } from '../tauri'
-import { toBase64 } from '../bytes'
+import { assetPath, invoke, isNative, toBase64 } from '../platform/src/api'
 import { mimeOf, type Picture } from './pictures'
 
 const PLACED = /(<(?:img|audio|video|source)\b[^>]*?\bsrc="|<image\b[^>]*?\bhref=")([^"]*)(")/g

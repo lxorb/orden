@@ -1,7 +1,14 @@
 import { downloadStarted } from '../downloads/started'
-import { keep, storedText } from '../stored'
-import { folderOf, nameOf } from '../space-paths'
-import { invoke, isMobile, isNative, joinPath } from '../tauri'
+import {
+  keep,
+  storedText,
+  folderOf,
+  nameOf,
+  invoke,
+  isMobile,
+  isNative,
+  joinPath,
+} from '../platform/src/api'
 import { writeBytes, writeFile as writeText } from '../workspace/write-file'
 import { numbered } from '@orden/markdown/paths'
 import { fileNameFor, freeName, stemOf } from './naming'

@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { expect, test, vi } from 'vitest'
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   isDesktop: false,
   invoke: () => Promise.reject(new Error('not here')),

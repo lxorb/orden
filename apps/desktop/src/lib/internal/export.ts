@@ -1,6 +1,6 @@
 import type { ItemMeta } from '@orden/sync-core'
-import { invoke as crate } from '../native'
-import { joinPath } from '../tauri'
+import { invoke as crate } from '../crate/src/api'
+import { joinPath } from '../platform/src/api'
 import { mountOf } from './roots'
 
 interface Listed {

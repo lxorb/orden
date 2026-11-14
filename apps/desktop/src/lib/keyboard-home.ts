@@ -1,5 +1,5 @@
 import { overlays } from './overlays'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop } from './platform/src/api'
 import { IN_A_PAGE } from './trap'
 
 export const IN_PAGE = 'orden://keyboard-in-page'

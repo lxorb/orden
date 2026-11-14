@@ -1,6 +1,5 @@
 import { writing } from '../parting'
-import { forget, isNumber, isRecord, isString, stored } from '../stored'
-import { invoke } from '../tauri'
+import { forget, isNumber, isRecord, isString, stored, invoke } from '../platform/src/api'
 
 export interface History {
   cols: number

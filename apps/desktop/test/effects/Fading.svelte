@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fade } from '../../src/lib/motion'
+  import { fade } from '../../src/lib/platform/src/motion'
 
   const { ended }: { ended: () => void } = $props()
 

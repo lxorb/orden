@@ -97,7 +97,7 @@ async function started(kind: Kind = {}, width = 390, height = 844) {
   const window = stubWindow(width, height, kind.finger ?? false)
   const document = stubDocument(window)
   vi.resetModules()
-  vi.doMock('./tauri', () => ({ isMobile: kind.app ?? false }))
+  vi.doMock('./platform/src/tauri', () => ({ isMobile: kind.app ?? false }))
   vi.stubGlobal('window', window)
   vi.stubGlobal('document', document)
   vi.stubGlobal('navigator', {

@@ -1,5 +1,4 @@
-import { movedTo, samePath } from '../space-paths'
-import { isRecord, isString, stringList } from '../stored'
+import { movedTo, samePath, isRecord, isString, stringList } from '../platform/src/api'
 
 export interface Spec {
   folder: string

@@ -1,6 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import { samePath } from './space-paths'
-import { isNumber, isRecord, isString, stored } from './stored'
+import { samePath, isNumber, isRecord, isString, stored } from './platform/src/api'
 import { mark } from './trace'
 import type { Draft, Session } from './workspace/session'
 

@@ -8,8 +8,8 @@ vi.stubGlobal('localStorage', {
 })
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-vi.mock('./tauri', async (actual) => ({
-  ...(await actual<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   invoke: () => Promise.reject(new Error('no crate')),
 }))

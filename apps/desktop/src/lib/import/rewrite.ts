@@ -2,7 +2,7 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { foldName } from '@orden/markdown/links'
 
 import { linkTo } from '../composer'
-import { folderOf, isMarkdownPath, relativePath } from '../space-paths'
+import { folderOf, isMarkdownPath, relativePath } from '../platform/src/api'
 
 export interface Found {
   path: string

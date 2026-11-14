@@ -11,7 +11,7 @@ import {
 import { added, emptyPages } from '@orden/markdown/pages'
 import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '../canvas/format'
 
-vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
+vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
 const raster = vi.hoisted(() => ({
   drawn: [] as string[],
   refuse: false,

@@ -1,5 +1,4 @@
-import { invoke, platform } from '../../tauri'
-import { waited } from '../../timing'
+import { invoke, platform, waited } from '../../platform/src/api'
 import type { LocalKind } from '../providers'
 
 const LOGIN: Record<LocalKind, string> = {

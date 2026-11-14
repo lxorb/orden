@@ -12,10 +12,8 @@ import {
   writeBase,
 } from '@orden/bases/agent'
 import type { AgentAnswer } from '../../automation/caller'
-import { onDisk as there } from '../../on-disk'
+import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
 import { reachedByOthersIn } from '../../sharing.svelte'
-import { folderOf, nameOf } from '../../space-paths'
-import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'

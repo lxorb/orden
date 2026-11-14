@@ -1,7 +1,7 @@
 import { documentOf } from '@orden/editor'
 import { seen } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
-import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
+import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import type { Section } from '../../settings.svelte'
 import { isOnlineTab } from '../../online/path'
 import { shellRunning } from '../../terminal/running'

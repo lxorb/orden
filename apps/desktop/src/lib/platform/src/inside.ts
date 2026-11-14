@@ -1,4 +1,4 @@
-import { isReserved } from '../naming'
+import { isReserved } from '@orden/markdown/note-name'
 
 const CONTROL = 0x20
 

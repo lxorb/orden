@@ -8,7 +8,7 @@ const crate = vi.hoisted(() => ({
   heard: new Map<string, () => void>(),
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   isDesktop: true,
   invoke: async (command: string) => {
     if (command !== 'keyboard_went') return undefined

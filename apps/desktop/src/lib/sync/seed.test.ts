@@ -145,8 +145,8 @@ const fake = vi.hoisted(() => {
   return { addRemote, api, calls, disk, invoke, remote, reset }
 })
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: fake.invoke,
 }))
 

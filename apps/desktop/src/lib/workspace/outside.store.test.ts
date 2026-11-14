@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const watching = vi.hoisted(() => ({ roots: [] as string[][], stops: 0 }))
-vi.mock('../native', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../native')>()),
+vi.mock('../crate/src/native', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../crate/src/native')>()),
   Channel: class {
     onmessage: unknown = null
   },
@@ -15,8 +15,8 @@ vi.mock('../native', async (importOriginal) => ({
 vi.mock('../sync-client/src/lead', () => ({
   leadSync: () => Promise.resolve({ release: () => undefined }),
 }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: () => Promise.resolve(undefined),

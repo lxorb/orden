@@ -1,4 +1,4 @@
-import { isDesktop } from '../tauri'
+import { isDesktop } from '../platform/src/api'
 import type { RelockAfter } from './settings'
 
 export class Relock {

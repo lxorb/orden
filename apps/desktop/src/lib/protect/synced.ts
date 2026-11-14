@@ -1,6 +1,5 @@
-import { account } from '../accounts/src/api'
-import { request } from '../accounts/src/api'
-import { isRecord } from '../stored'
+import { account, request } from '../accounts/src/api'
+import { isRecord } from '../platform/src/api'
 import { sync } from '../sync.svelte'
 import { workspace } from '../workspace.svelte'
 import { hashedOf, protectedMap, type Way } from './protection.svelte'

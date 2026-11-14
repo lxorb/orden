@@ -1,4 +1,4 @@
-import { isRecord, isString } from '../stored'
+import { isRecord, isString } from '../platform/src/api'
 
 const RETIRED_CHAT = 'connected-chat\n'
 

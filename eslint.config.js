@@ -274,7 +274,7 @@ export default tseslint.config(
   },
   {
     files: ['apps/**/*.{ts,svelte}'],
-    ignores: ['apps/desktop/src/lib/motion.ts'],
+    ignores: ['apps/desktop/src/lib/platform/src/motion.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

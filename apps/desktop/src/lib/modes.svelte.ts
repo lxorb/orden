@@ -30,8 +30,7 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account } from './accounts/src/api'
-import { api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from './accounts/src/api'
 import { viewport } from './viewport.svelte'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -46,8 +45,17 @@ import {
 } from '@orden/glasses/choices'
 import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
-import { isNumber, isRecord, isString, keepJson, stored, stringList } from './stored'
-import { currentWindow, invoke, isDesktop } from './tauri'
+import {
+  isNumber,
+  isRecord,
+  isString,
+  keepJson,
+  stored,
+  stringList,
+  currentWindow,
+  invoke,
+  isDesktop,
+} from './platform/src/api'
 import { theme } from './theme/src/api'
 import { opening } from './workspace/documents.svelte'
 

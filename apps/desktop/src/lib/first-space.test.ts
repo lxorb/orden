@@ -7,8 +7,8 @@ const made: { name: string; path: string }[] = []
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -315,7 +315,7 @@ describe('a folder brought in as a space', () => {
 const { seedSpaceRoot } = await import('./seeded')
 const { untouchedSeedSpace } = await import('./seed-space')
 const { madeSpace } = await import('./space-actions')
-const { invoke } = await import('./tauri')
+const { invoke } = await import('./platform/src/tauri')
 
 describe('the space a fresh start made', () => {
   const read = {

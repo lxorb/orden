@@ -1,5 +1,5 @@
 import { hiddenKinds } from './settings.svelte'
-import { isDesktop, platform } from './tauri'
+import { isDesktop, platform } from './platform/src/api'
 
 function explorerReveals(): boolean {
   return hiddenKinds.offers('explorer')

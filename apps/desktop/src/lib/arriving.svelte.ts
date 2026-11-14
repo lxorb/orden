@@ -1,5 +1,5 @@
 import { SvelteSet } from 'svelte/reactivity'
-import { afterQuiet } from './timing'
+import { afterQuiet } from './platform/src/api'
 
 const STUCK = 6000
 

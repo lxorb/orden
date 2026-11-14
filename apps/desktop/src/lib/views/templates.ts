@@ -1,8 +1,15 @@
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { menu } from '../menu.svelte'
 import { rows } from '../rows/rows.svelte'
-import { folderOf, insideSpace, relativeTo, samePath, within } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import {
+  folderOf,
+  insideSpace,
+  relativeTo,
+  samePath,
+  within,
+  invoke,
+  joinPath,
+} from '../platform/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { nowHere } from './days'

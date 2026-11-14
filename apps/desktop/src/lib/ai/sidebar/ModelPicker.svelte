@@ -3,7 +3,7 @@
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { region } from '../../region'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { segmented } from '../../slide'
   import { ordered } from '../chat/effort'
   import type { Effort } from '../chat/types'

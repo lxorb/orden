@@ -21,14 +21,14 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string) => {
     world.asked.push(command)
     return Promise.resolve(world.waiting)
   },
 }))
 
-vi.mock('../log', () => ({ log: () => undefined }))
+vi.mock('../platform/src/log', () => ({ log: () => undefined }))
 
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({

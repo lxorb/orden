@@ -1,5 +1,5 @@
 import { workspace } from '../../workspace.svelte'
-import { nameOf } from '../../space-paths'
+import { nameOf } from '../../platform/src/api'
 import type { Edit } from './changes'
 
 const SHOWN = 60

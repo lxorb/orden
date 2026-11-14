@@ -1,9 +1,7 @@
 import { account } from '../accounts/src/api'
 import { identifier } from '../identifier'
 import { leftGone, leftMoved } from '../left-spaces'
-import { samePath } from '../space-paths'
-import { invoke } from '../tauri'
-import { windows } from '../windows'
+import { samePath, invoke, windows } from '../platform/src/api'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 

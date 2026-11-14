@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -17,7 +17,7 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../workspace.svelte')
-const { onDisk } = await import('../on-disk')
+const { onDisk } = await import('../platform/src/on-disk')
 const { hearWrites, writeBytes, writeFile } = await import('./write-file')
 
 const ROOT = '/space'

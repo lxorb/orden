@@ -1,5 +1,4 @@
-import { folderOf, nameOf, pathKey } from '../space-paths'
-import { joinPath } from '../tauri'
+import { folderOf, nameOf, pathKey, joinPath } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import type { FileAction, OutsideStep } from '../workspace/undo.svelte'
 import { type Pair, put, trashPaths, type Transferred, untrash } from './commands'

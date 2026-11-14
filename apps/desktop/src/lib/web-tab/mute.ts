@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { type Page, pages } from './pages.svelte'
 import { siteOf } from './permissions.svelte'
 import { asideFor, isMuted, setMuted } from './sites'

@@ -1,7 +1,7 @@
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { isOnlineTab, MADE_NAME } from '../online/path'
-import { folderOf } from '../space-paths'
+import { folderOf } from '../platform/src/api'
 import { shellName, shells } from './shells.svelte'
 import { hostIdOf, readSpec, writeSpec } from './spec'
 

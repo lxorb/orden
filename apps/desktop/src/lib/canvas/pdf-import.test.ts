@@ -45,7 +45,7 @@ vi.mock('../assets', () => ({
     return Promise.resolve(`/space/assets/page-${String(world.stored)}.png`)
   },
 }))
-vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(new Uint8Array([1])) }))
+vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(new Uint8Array([1])) }))
 vi.mock('../pdf/document', () => ({
   loading: (library: { getDocument: (source: object) => unknown }, data: Uint8Array) =>
     library.getDocument({ data }),

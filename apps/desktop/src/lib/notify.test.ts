@@ -5,7 +5,7 @@ const world = vi.hoisted(() => ({
   pressed: null as ((event: { payload: unknown }) => void) | null,
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   isDesktop: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
     world.asked.push({ command, args })

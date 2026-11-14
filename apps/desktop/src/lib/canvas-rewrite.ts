@@ -1,7 +1,7 @@
 import type { Canvas } from '@orden/markdown/canvas'
 import { type FoundLink, isPagesTarget } from '@orden/markdown/links'
 import { paperOf } from './pages/held'
-import { folderOf } from './space-paths'
+import { folderOf } from './platform/src/api'
 import type { NoteDoc } from './workspace/documents.svelte'
 import { skim, type Span } from '@orden/scan/json-skim'
 import { type Move, type Placed, retargetLinks } from './link-rewrite'

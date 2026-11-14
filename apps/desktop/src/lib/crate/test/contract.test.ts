@@ -10,7 +10,7 @@ vi.mock('@tauri-apps/api/core', () => ({
   },
 }))
 
-const { invoke } = await import('./native')
+const { invoke } = await import('../src/api')
 
 beforeEach(() => {
   handed.length = 0

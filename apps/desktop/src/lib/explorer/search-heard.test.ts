@@ -4,7 +4,7 @@ type Heard = (event: { payload: { job: string; found: unknown[] } }) => void
 
 const ears = vi.hoisted(() => ({ heard: null as Heard | null }))
 
-vi.mock('../tauri', () => ({ isDesktop: true }))
+vi.mock('../platform/src/tauri', () => ({ isDesktop: true }))
 
 vi.mock('@tauri-apps/api/event', () => ({
   listen: async (_event: string, heard: Heard) => {

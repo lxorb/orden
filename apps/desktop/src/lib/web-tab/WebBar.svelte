@@ -10,7 +10,7 @@
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { longPress } from '../longpress'
-  import { dur, scale } from '../motion'
+  import { dur, scale } from '../platform/src/api'
   import { middleOpens } from '../new-tab'
   import { overlays } from '../overlays'
   import { shortcuts } from '../shortcuts.svelte'
@@ -24,7 +24,7 @@
   import { meantBy, shownUrl } from './idn'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
-  import { invoke, isDesktop } from '../tauri'
+  import { invoke, isDesktop } from '../platform/src/api'
   import { IN_A_PAGE } from '../trap'
   import { type Page, siteMark } from './pages.svelte'
 

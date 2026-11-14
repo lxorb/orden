@@ -4,7 +4,16 @@ import { busy } from './busy.svelte'
 import { installAiRunner } from './ai/ask'
 import { guardDrops } from './drops'
 import { joining } from './joining.svelte'
-import { collectErrors, log } from './log'
+import {
+  collectErrors,
+  log,
+  currentWindow,
+  internal,
+  isDesktop,
+  isMobile,
+  platform,
+  waited,
+} from './platform/src/api'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
 import {
@@ -25,8 +34,6 @@ import { hiddenKinds, settings } from './settings.svelte'
 import { gate } from './onboarding/gate.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { currentWindow, internal, isDesktop, isMobile, platform } from './tauri'
-import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme/src/api'
 import { pull } from './pull.svelte'

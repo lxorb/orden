@@ -1,5 +1,5 @@
 import { startInsets } from './insets'
-import { isMobile } from './tauri'
+import { isMobile } from './platform/src/api'
 
 export type Device = 'phone' | 'tablet' | 'desktop'
 

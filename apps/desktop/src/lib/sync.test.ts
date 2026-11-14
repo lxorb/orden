@@ -341,8 +341,8 @@ const fake = vi.hoisted(() => {
   }
 })
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   invoke: fake.invoke,
 }))
 
@@ -444,7 +444,7 @@ function standInForTheWindow(): void {
 }
 
 async function afterTheReconcileInterval(run: () => Promise<unknown>) {
-  const { RECONCILE_INTERVAL } = await import('./backoff')
+  const { RECONCILE_INTERVAL } = await import('./platform/src/backoff')
 
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.setSystemTime(Date.now() + RECONCILE_INTERVAL + 1)
@@ -1641,7 +1641,7 @@ describe('a pass that fails partway through', () => {
       expect(sync.status).toBe('error')
       expect(arriving.showing).toBe(false)
 
-      const { pollDelay } = await import('./backoff')
+      const { pollDelay } = await import('./platform/src/backoff')
       await vi.advanceTimersByTimeAsync(pollDelay(1, false) + 1)
       expect(asked).toBeGreaterThan(1)
     } finally {
@@ -1922,7 +1922,7 @@ describe('what the account holds of a file', () => {
     role: 'owner' | 'write' = 'owner',
   ) {
     fake.remote.spaces.push({ id: 's-Notes', name: 'Notes', role })
-    const { sha256 } = await import('./bytes')
+    const { sha256 } = await import('./platform/src/bytes')
     const tracked: Record<string, { hash: string; modified: number }> = {}
     for (const [path, words] of Object.entries(files)) {
       tracked[path] = { hash: await sha256(words), modified: pushedAt }

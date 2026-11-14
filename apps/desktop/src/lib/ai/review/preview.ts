@@ -2,7 +2,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import { plan, readEdits, type Replacement } from '../../agents/docs/edits'
 import { type Row, lineDiff, trimmed } from '../../diff'
 import { applied } from '../../search/replace'
-import { insideSpace, notePath } from '../../space-paths'
+import { insideSpace, notePath } from '../../platform/src/api'
 import { spaceNamed, verbOf } from './files'
 
 export type Words = (path: string) => Promise<string | null>

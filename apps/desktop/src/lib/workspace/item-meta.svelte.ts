@@ -6,10 +6,20 @@ import {
   type ItemMeta,
   type MetaPatch,
 } from '@orden/sync-core'
-import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
-import { joinPath } from '../tauri'
-import { isRecord, keepJson, stored } from '../stored'
-import { filledIn, readSpaces, without, withOrWithout } from '../records'
+import {
+  insideItsSpace,
+  movedTo,
+  relativeTo,
+  within,
+  joinPath,
+  isRecord,
+  keepJson,
+  stored,
+  filledIn,
+  readSpaces,
+  without,
+  withOrWithout,
+} from '../platform/src/api'
 import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'orden:item-meta'

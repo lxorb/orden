@@ -8,8 +8,8 @@ vi.stubGlobal('localStorage', {
 })
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, args })
     return Promise.resolve(undefined)

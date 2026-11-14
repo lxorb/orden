@@ -26,7 +26,7 @@ vi.mock('../../workspace/write-file', () => ({
     return Promise.resolve(true)
   },
 }))
-vi.mock('../../on-disk', () => ({
+vi.mock('../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path)),
 }))
 vi.mock('../../sharing.svelte', () => ({ canWriteAt: () => disk.writable }))

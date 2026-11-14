@@ -1,6 +1,5 @@
 import type { Vault } from '../accounts/src/api'
-import { forget as forgetHere, keep as keepHere, storedText } from '../stored'
-import { waited } from '../timing'
+import { forget as forgetHere, keep as keepHere, storedText, waited } from '../platform/src/api'
 import { connectStore } from './sdk'
 
 export interface Keep {

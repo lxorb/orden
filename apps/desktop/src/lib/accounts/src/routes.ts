@@ -1,5 +1,5 @@
 import { ApiError, BASE, request } from './client'
-import { isRecord, isString, parsed } from '../../stored'
+import { isRecord, isString, parsed } from '../../platform/src/api'
 import type { Bookmark } from '../../workspace/bookmarks.svelte'
 import type { GraphSettings } from '../../workspace/graph-settings.svelte'
 import type { Avatar, Status } from './face'

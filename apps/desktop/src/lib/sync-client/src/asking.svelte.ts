@@ -4,7 +4,7 @@ import type { Excerpt } from '@orden/sync-core'
 import { message } from '../../message'
 import { overlays } from '../../overlays'
 import { syncMark, undoToastNotice } from '../../surfaces.svelte'
-import { afterQuiet } from '../../timing'
+import { afterQuiet } from '../../platform/src/api'
 import { workspace } from './ports'
 import type { LogRow, SyncStore } from './store'
 

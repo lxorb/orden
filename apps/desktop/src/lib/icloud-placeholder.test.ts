@@ -4,7 +4,7 @@ const crate = vi.hoisted(() => ({
   native: true,
   answer: (): Promise<unknown> => Promise.resolve(false),
 }))
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   get isNative() {
     return crate.native
   },

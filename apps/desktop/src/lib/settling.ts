@@ -1,8 +1,7 @@
 import { account } from './accounts/src/api'
 import { prompt } from './prompt.svelte'
 import { MIRRORS_KEY, savedRecord } from './sync/mirror'
-import { rootedAt } from './space-paths'
-import { stored } from './stored'
+import { rootedAt, stored } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
 export async function settleLocalNotes(): Promise<void> {

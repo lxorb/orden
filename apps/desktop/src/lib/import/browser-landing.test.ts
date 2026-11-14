@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { toBase64 } from '../bytes'
+import { toBase64 } from '../platform/src/bytes'
 import { readShortcut } from '@orden/scan/shortcut'
 import { SIDEBAR as ARC } from './arc.fixture'
 import type { BrowserProfile } from './browsers'
@@ -29,7 +29,7 @@ const marks: { path: string }[] = []
 const packed = (value: unknown) =>
   toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(value))))
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push(`${command} ${String(args.file ?? args.profile)}`)
     if (command === 'read_browser_file') {

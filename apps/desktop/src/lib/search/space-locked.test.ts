@@ -4,8 +4,8 @@ import type { Hit } from '@orden/scan/search/match'
 const asked = vi.hoisted(() => ({ excluded: null as string[] | null, hits: [] as Hit[] }))
 let told: ((event: { payload: { id: number; hits: Hit[] } }) => void) | null = null
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isNative: true,
   internal: { routed: false },
   invoke: (command: string, args: { id: number; excluded: string[] }) => {

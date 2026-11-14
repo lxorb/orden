@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import { dur, fade } from '../motion'
-  import { isDesktop } from '../tauri'
+  import { dur, fade } from '../platform/src/api'
+  import { isDesktop } from '../platform/src/api'
   import { trap } from '../trap'
   import { BROWSERS, NOTES_APPS } from './catalog'
   import { gate } from './gate.svelte'

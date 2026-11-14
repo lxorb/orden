@@ -1,7 +1,6 @@
-import { api } from './accounts/src/api'
-import { account } from './accounts/src/api'
+import { api, account } from './accounts/src/api'
 import { message } from './message'
-import { isRecord, keep, keepJson, stored, storedText } from './stored'
+import { isRecord, keep, keepJson, stored, storedText } from './platform/src/api'
 
 const STORAGE_KEY = 'orden:llm'
 const CLIENT_KEY = 'orden:llm-client'

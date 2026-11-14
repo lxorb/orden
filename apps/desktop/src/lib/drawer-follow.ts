@@ -11,7 +11,7 @@ import {
   settleOpen,
 } from './swipe'
 import { fullscreen } from './fullscreen.svelte'
-import { dur } from './motion'
+import { dur } from './platform/src/api'
 import { isThumbCarrying } from './views/drag.svelte'
 import { viewport } from './viewport.svelte'
 import { drawer, rightDrawer } from './drawer.svelte'

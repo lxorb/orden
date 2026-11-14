@@ -1,5 +1,5 @@
 import { type Base, pressed, readButtons, type Row } from '@orden/bases'
-import { openExternal } from '../tauri'
+import { openExternal } from '../platform/src/api'
 import { pressRow } from './act'
 import { nowHere } from './days'
 

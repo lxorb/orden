@@ -3,7 +3,7 @@ import { callerOf } from '../../automation/caller'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push({ command, args })
     return Promise.resolve(answer)

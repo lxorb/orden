@@ -11,7 +11,7 @@ import { landSpaces } from './sidebar-landing'
 import { sidebarImport } from './sidebar-plan'
 import { safariSidebar } from './safari'
 import { readSnss, type SnssSession } from './snss'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 
 interface Read {
   sidebar: Sidebar

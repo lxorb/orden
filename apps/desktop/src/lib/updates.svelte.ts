@@ -1,5 +1,4 @@
-import { keep, storedText } from './stored'
-import { isDesktop } from './tauri'
+import { keep, storedText, isDesktop } from './platform/src/api'
 import {
   announcedVersion,
   asChannel,

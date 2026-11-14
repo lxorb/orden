@@ -1,10 +1,9 @@
-import { account } from '../../accounts/src/api'
+import { account, nameIn } from '../../accounts/src/api'
 import { busy } from '../../busy.svelte'
 import { message } from '../../message'
 import { prompt } from '../../prompt.svelte'
 import { sync } from '../../sync.svelte'
 import type { Space } from '../../workspace.svelte'
-import { nameIn } from '../../accounts/src/api'
 
 export async function nameHere(space: Space): Promise<void> {
   const id = sync.remoteIdFor(space.root)

@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import type { BrowserEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { type FolderWords, isObject, text } from './sidebar-made'

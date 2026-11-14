@@ -1,4 +1,4 @@
-import { keep, storedText } from './stored'
+import { keep, storedText } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 import type { Tab } from './workspace/documents.svelte'
 import { Walk } from './workspace/recency'

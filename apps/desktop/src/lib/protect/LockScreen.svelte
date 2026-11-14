@@ -1,7 +1,7 @@
 <script lang="ts">
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import Icon from '../Icon.svelte'
-  import { nameOf } from '../space-paths'
+  import { nameOf } from '../platform/src/api'
   import { workspace } from '../workspace.svelte'
   import { deviceCan, deviceName } from './device'
   import { unlockAt, unlockByDevice } from './unlocking'

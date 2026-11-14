@@ -1,9 +1,9 @@
 import '../../sync-ports'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Said } from '../../windows'
+import type { Said } from '../../platform/src/windows'
 
-vi.mock('../../windows', async (original) => {
-  const real = await original<typeof import('../../windows')>()
+vi.mock('../../platform/src/windows', async (original) => {
+  const real = await original<typeof import('../../platform/src/windows')>()
   const ends: { onmessage: ((event: MessageEvent<unknown>) => void) | null }[] = []
   const end = () => {
     const line = {
@@ -102,9 +102,9 @@ function locksOf() {
   }
 }
 
-const { other, windows } = (await import('../../windows')) as unknown as {
-  other: import('../../windows').Windows
-  windows: import('../../windows').Windows
+const { other, windows } = (await import('../../platform/src/windows')) as unknown as {
+  other: import('../../platform/src/windows').Windows
+  windows: import('../../platform/src/windows').Windows
 }
 const { runner } = await import('./runner.svelte')
 const { account } = await import('../../accounts/src/account.svelte')

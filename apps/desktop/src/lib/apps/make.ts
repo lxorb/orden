@@ -7,8 +7,7 @@ import {
 } from '@orden/online/apps'
 import { account } from '../accounts/src/api'
 import { canWriteAt } from '../sharing.svelte'
-import { nameOf } from '../space-paths'
-import { joinPath } from '../tauri'
+import { nameOf, joinPath } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -91,7 +90,7 @@ const ANOTHER = '\u0000another'
 
 async function installedOn(host: string, here: boolean, token: string): Promise<Installed[]> {
   if (here) {
-    const { invoke, isDesktop } = await import('../tauri')
+    const { invoke, isDesktop } = await import('../platform/src/api')
     if (!isDesktop) return []
     const listed = await invoke<unknown>('apps_installed').catch(() => null)
     return catalogueOf(listed) ?? []

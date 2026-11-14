@@ -9,8 +9,7 @@ import {
 import { SvelteMap } from 'svelte/reactivity'
 import { saysNothing } from '@orden/scan/note'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
-import { isMarkdownPath, noteName, pathKey, within } from './space-paths'
-import { invoke } from './tauri'
+import { isMarkdownPath, noteName, pathKey, within, invoke } from './platform/src/api'
 import { readWebFile } from '@orden/scan/shortcut'
 
 interface Worn {
@@ -81,7 +80,10 @@ async function wornBy(path: string, content: string): Promise<Worn> {
 }
 
 async function holdsItsPaper(path: string): Promise<boolean> {
-  const [{ onDisk }, { paperOf }] = await Promise.all([import('./on-disk'), import('./pages/held')])
+  const [{ onDisk }, { paperOf }] = await Promise.all([
+    import('./platform/src/api'),
+    import('./pages/held'),
+  ])
   return onDisk(paperOf(path))
 }
 

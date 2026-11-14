@@ -27,8 +27,8 @@ vi.mock('./accounts/src/account.svelte', () => ({
   },
 }))
 
-vi.mock('./stored', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./stored')>()),
+vi.mock('./platform/src/stored', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/stored')>()),
   stored: () => world.record,
 }))
 

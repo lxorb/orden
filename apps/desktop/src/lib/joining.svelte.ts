@@ -1,9 +1,7 @@
-import { api, fromServer, type Invitation, type Joined } from './accounts/src/api'
-import { account } from './accounts/src/api'
-import { passing, pollDelay } from './backoff'
+import { api, fromServer, type Invitation, type Joined, account } from './accounts/src/api'
+import { passing, pollDelay, forget, keep, storedText } from './platform/src/api'
 import { message } from './message'
 import { deviceName } from './collab/src/api'
-import { forget, keep, storedText } from './stored'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
 

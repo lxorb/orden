@@ -1,7 +1,7 @@
 import { foldName } from '@orden/markdown/links'
 
 import { encodeTarget } from '../link-rewrite'
-import { folderOf, relativePath } from '../space-paths'
+import { folderOf, relativePath } from '../platform/src/api'
 
 import { folderPlan, isHidden, isJunk } from './folder'
 import { dayOf, type Meta } from './meta'

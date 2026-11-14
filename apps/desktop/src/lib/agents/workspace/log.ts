@@ -1,6 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { notePath } from '../../space-paths'
-import { invoke } from '../../tauri'
+import { notePath, invoke } from '../../platform/src/api'
 import { notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'

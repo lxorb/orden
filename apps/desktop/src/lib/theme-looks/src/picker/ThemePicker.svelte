@@ -5,7 +5,7 @@
   import { paintsOver } from '../../../theme/src/api'
   import Swatches from '../../../Swatches.svelte'
   import { closeOnBack } from '../../../backstack.svelte'
-  import { fade, fly, LAYER, scale } from '../../../motion'
+  import { fade, fly, LAYER, scale } from '../../../platform/src/api'
   import { overlays } from '../../../overlays'
   import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
   import { scrollbar } from '../../../scrollbar'

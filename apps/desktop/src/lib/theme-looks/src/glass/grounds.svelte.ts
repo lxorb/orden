@@ -1,5 +1,5 @@
 import { type Rgb, rgbOf } from '../../../legibility'
-import { isNumber, isRecord, isString, keepJson, stored } from '../../../stored'
+import { isNumber, isRecord, isString, keepJson, stored } from '../../../platform/src/api'
 import { keysOf } from '../../../web-tab/pages.svelte'
 
 const KEY = 'orden:glass-grounds'

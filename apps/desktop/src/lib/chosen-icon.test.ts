@@ -37,8 +37,8 @@ const reads: string[] = []
 const relative = (path: string) =>
   path.startsWith(`${index.root}/`) ? path.slice(index.root.length + 1) : path
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   invoke: (command: string, args: { path?: string; root?: string } = {}) => {
     if (command === 'file_stamp' || command === 'path_exists') {
       asked.push(String(args.path))

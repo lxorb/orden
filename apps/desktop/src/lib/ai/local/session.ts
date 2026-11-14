@@ -1,6 +1,6 @@
 import { identifier } from '../../identifier'
-import { Channel } from '../../native'
-import { invoke } from '../../tauri'
+import { Channel } from '../../crate/src/api'
+import { invoke } from '../../platform/src/api'
 import { READER_TABS } from '../chat/choices'
 import type { Mode } from '../modes'
 import type { LocalKind } from '../providers'

@@ -1,4 +1,4 @@
-import { isRecord } from '../stored'
+import { isRecord } from '../platform/src/api'
 import type { Scope, Sort, TypeFilter } from './list'
 import { SORTS, TYPE_FILTERS } from './list'
 

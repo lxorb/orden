@@ -10,13 +10,13 @@
   import FileMark from './FileMark.svelte'
   import { folderNote } from './folder-notes'
   import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from './menu.svelte'
-  import { dur, scale } from './motion'
+  import { dur, scale } from './platform/src/api'
   import Twist from './Twist.svelte'
   import { longPress } from './longpress'
   import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from './new-tab'
   import { roving } from './roving'
   import { GRAPH_MARK, SEARCH_MARK } from './panel-marks'
-  import { rowName } from './note-name'
+  import { rowName } from './platform/src/api'
   import {
     carried,
     carriedNothing,
@@ -26,7 +26,7 @@
     isTreeDrag,
   } from './drag-paths'
   import { basesOn } from './settings.svelte'
-  import { insideSpace, samePath } from './space-paths'
+  import { insideSpace, samePath } from './platform/src/api'
   import { type Bookmark, isTile, sameBookmark } from './workspace/bookmarks.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'

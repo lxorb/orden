@@ -1,6 +1,6 @@
 import { blank } from '@orden/pass/envelope'
 import type { Alias, Item } from '@orden/pass/types'
-import { log } from '../log'
+import { log } from '../platform/src/api'
 import type { AliasAccount } from './alias-account'
 import type { AliasAsk, AliasMade, AliasOptions, AliasService } from './aliases'
 import { aliasClient } from './aliases'

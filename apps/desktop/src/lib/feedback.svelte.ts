@@ -1,8 +1,6 @@
-import { account } from './accounts/src/api'
-import { request } from './accounts/src/api'
+import { account, request } from './accounts/src/api'
 import { scrubbedLog } from './feedback-log'
-import { recentLog } from './log'
-import { invoke, isDesktop, isMobile, isNative, platform } from './tauri'
+import { recentLog, invoke, isDesktop, isMobile, isNative, platform } from './platform/src/api'
 
 const LOG_LINES = 200
 const LOG_BYTES = 60 * 1024

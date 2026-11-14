@@ -1,7 +1,7 @@
 import { account } from '../accounts/src/api'
 import { modes } from '../modes.svelte'
 import type { Section } from '../settings.svelte'
-import { isDesktop } from '../tauri'
+import { isDesktop } from '../platform/src/api'
 import { viewport } from '../viewport.svelte'
 
 export interface Item {

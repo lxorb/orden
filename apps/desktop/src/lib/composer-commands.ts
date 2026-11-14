@@ -1,9 +1,8 @@
 import type { EditorView } from '@orden/editor'
 import type { Command } from './commands'
 import type { MenuEntry } from './menu.svelte'
-import { shownName } from './note-name'
+import { shownName, isMarkdownPath } from './platform/src/api'
 import { canWriteAt, canWriteIn } from './sharing.svelte'
-import { isMarkdownPath } from './space-paths'
 import { carvable, mergeable } from './workspace/composing'
 import { workspace } from './workspace.svelte'
 

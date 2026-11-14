@@ -13,9 +13,8 @@ import {
   statePageOf,
   type StatePage,
 } from '@orden/chats/wire'
-import { account } from '../accounts/src/api'
-import { ApiError, BASE, fromServer, request } from '../accounts/src/api'
-import { isRecord } from '../stored'
+import { account, ApiError, BASE, fromServer, request } from '../accounts/src/api'
+import { isRecord } from '../platform/src/api'
 import type { ChatMember, Hit, Scheduled } from './api'
 
 const chatPath = (chat: string) => `/v2/chats/${encodeURIComponent(chat)}`

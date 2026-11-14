@@ -1,4 +1,4 @@
-import { withinSpace } from '../space-paths'
+import { withinSpace } from '../platform/src/api'
 import { ownerOf } from '../workspace/sets'
 
 export const REENTRY = 300

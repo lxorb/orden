@@ -1,4 +1,4 @@
-import { internal } from '../tauri'
+import { internal } from '../platform/src/api'
 import type { InternalFolder } from './folder'
 
 export interface Mounted {

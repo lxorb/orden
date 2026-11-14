@@ -1,5 +1,4 @@
-import { isNumber, isRecord, isString } from '../stored'
-import { invoke } from '../tauri'
+import { isNumber, isRecord, isString, invoke } from '../platform/src/api'
 
 export interface Tracked {
   id: string

@@ -1,4 +1,4 @@
-import { noteName } from './space-paths'
+import { noteName } from './platform/src/api'
 
 const ASSETS = 'assets'
 
