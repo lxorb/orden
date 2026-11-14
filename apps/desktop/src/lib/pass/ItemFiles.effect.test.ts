@@ -22,7 +22,7 @@ vi.mock('../protect/device', () => ({
   deviceName: () => 'Touch ID',
 }))
 
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: { confirm: fake.confirm, choose: vi.fn(), ask: vi.fn() },
 }))
 

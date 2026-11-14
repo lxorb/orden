@@ -1,6 +1,6 @@
 import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
-import { systemLocale } from '../region'
-import { message } from '../message'
+import { systemLocale } from '../platform/src/api'
+import { message } from '../ui-kit/src/api'
 import { complete, wasStopped } from './complete'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
 import { rewriteSheet } from '../surfaces.svelte'

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from './backstack.svelte'
-  import { chorded } from './keys'
-  import { opensAt, type Walk, walk } from './list-keys'
-  import { overlays } from './overlays'
-  import { hang } from './portal'
-  import { viewport } from './viewport.svelte'
-  import { dur, fade, fly } from './platform/src/api'
+  import { closeOnBack } from '../../ui-kit/src/api'
+  import { chorded } from '../../ui-kit/src/api'
+  import { opensAt, type Walk, walk } from '../../ui-kit/src/api'
+  import { overlays } from '../../ui-kit/src/api'
+  import { hang } from '../../ui-kit/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import { dur, fade, fly } from '../../platform/src/api'
 
   interface Option {
     value: string

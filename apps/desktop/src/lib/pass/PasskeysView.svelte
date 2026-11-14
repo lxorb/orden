@@ -4,8 +4,8 @@
   import { atLeast } from '@orden/pass/types'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { localDate } from '../region'
-  import { prompt } from '../prompt.svelte'
+  import { localDate } from '../platform/src/api'
+  import { prompt } from '../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
   import { pass } from './store.svelte'
 

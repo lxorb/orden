@@ -59,7 +59,7 @@ vi.mock('../sharing.svelte', () => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-vi.mock('../busy.svelte', () => ({
+vi.mock('../ui-kit/src/busy.svelte', () => ({
   busy: { failed: (said: string) => void done.push(`said ${said}`) },
 }))
 

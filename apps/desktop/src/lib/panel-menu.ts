@@ -1,4 +1,4 @@
-import { DIVIDER, type MenuEntry } from './menu-item'
+import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
 import { hasTab, openAsTab } from './panel-tab'
 import { search, type SearchSort } from './search.svelte'
 import { mayLiveOn } from './workspace/panels'

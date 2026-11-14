@@ -43,8 +43,8 @@ describe('the labels it follows', () => {
   }
 
   test('are a run of text, not a flex row', () => {
-    const panel = read('./SettingsPanel.svelte')
-    const base = read('../../../../packages/themes/src/base.css')
+    const panel = read('../../SettingsPanel.svelte')
+    const base = read('../../../../../../packages/themes/src/base.css')
     for (const one of [
       rule(panel, '.setting .name .what'),
       rule(base, '.orden-setting .name .orden-named'),
@@ -56,7 +56,7 @@ describe('the labels it follows', () => {
 })
 
 describe('where the panel draws it', () => {
-  const panel = readFileSync(join(import.meta.dirname, './SettingsPanel.svelte'), {
+  const panel = readFileSync(join(import.meta.dirname, '../../SettingsPanel.svelte'), {
     encoding: 'utf8',
   })
 

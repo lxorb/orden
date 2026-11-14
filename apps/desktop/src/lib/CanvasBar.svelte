@@ -24,9 +24,9 @@
   import { tick } from './canvas/tick'
   import { shortcuts } from './shortcuts.svelte'
   import { tools } from './canvas/tools.svelte'
-  import { closeOnBack } from './backstack.svelte'
-  import { overlays } from './overlays'
-  import { viewport } from './viewport.svelte'
+  import { closeOnBack } from './ui-kit/src/api'
+  import { overlays } from './ui-kit/src/api'
+  import { viewport } from './ui-kit/src/api'
 
   const {
     canundo,

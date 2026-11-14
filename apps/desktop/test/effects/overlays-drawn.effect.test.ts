@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { overlays } from '../../src/lib/overlays'
+import { overlays } from '../../src/lib/ui-kit/src/overlays'
 
 let strip: HTMLDivElement
 let panel: HTMLDivElement

@@ -1,7 +1,13 @@
 import { wallpaperCss } from '@orden/themes/wallpaper'
-import { accentColour } from '../../../accents'
-import { linkOf, type PaperInks } from '../../../content-ground'
-import { over, type Rgb, rgbOf, type Span } from '../../../legibility'
+import { accentColour } from '../../../theme/src/api'
+import {
+  linkOf,
+  type PaperInks,
+  over,
+  type Rgb,
+  rgbOf,
+  type Span,
+} from '../../../ui-controls/src/api'
 import { PAPER, schemeTokens } from '../scheme-tokens'
 import { paletteOf, sheetColour } from './floors'
 import type { Scheme } from '@orden/contracts'

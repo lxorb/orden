@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import { dur, fade } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { invoke } from '../platform/src/api'
   import { extensions, type Popped } from './extensions.svelte'
 

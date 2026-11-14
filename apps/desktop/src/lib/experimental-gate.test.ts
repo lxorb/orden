@@ -13,7 +13,7 @@ vi.mock('./platform/src/tauri', async (actual) => ({
 }))
 
 const asked = vi.hoisted(() => ({ answer: true, titles: [] as string[], details: [] as string[] }))
-vi.mock('./prompt.svelte', () => ({
+vi.mock('./ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (options: { title: string; detail?: string }) => {
       asked.titles.push(options.title)

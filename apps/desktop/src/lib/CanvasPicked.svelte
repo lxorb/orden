@@ -7,7 +7,7 @@
   import { shownColour } from './canvas/palette'
   import { LEAST_WIDTH, MOST_WIDTH } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
 
   const {
     at,

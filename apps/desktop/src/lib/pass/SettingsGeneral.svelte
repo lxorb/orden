@@ -1,7 +1,7 @@
 <script lang="ts">
   import { hostOf } from '@orden/pass/urls'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import Select from '../Select.svelte'
+  import { Select } from '../ui-controls/src/api'
   import Glyph from './Glyph.svelte'
   import { pauseWord } from './settings-words'
   import { type Paused, PAUSES } from './settings'

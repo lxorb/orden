@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { accentFor } from '../../accents'
+  import { accentFor } from '../../theme/src/api'
   import { faceUrl } from '../../accounts/src/api'
-  import { initial } from '../../icons'
+  import { initial } from '../../ui-kit/src/api'
   import { theme } from '../../theme/src/api'
   import type { Face, Presence } from '../../accounts/src/api'
 

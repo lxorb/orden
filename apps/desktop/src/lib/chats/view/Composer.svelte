@@ -5,7 +5,7 @@
   import { onMount, untrack } from 'svelte'
   import { chooseFiles } from '../../choose-files'
   import { pickedLink } from '../../composer'
-  import { localDate, localNumber } from '../../region'
+  import { localDate, localNumber } from '../../platform/src/api'
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { modes } from '../../modes.svelte'
@@ -222,7 +222,7 @@
       return
     }
     if (/(?:^|\s)@(?:here|everyone)\b/.test(words) && page.members.length > ASK_EVERYONE_PAST) {
-      const { prompt } = await import('../../prompt.svelte')
+      const { prompt } = await import('../../ui-kit/src/api')
       const said = await prompt.choose({
         title: 'Send',
         detail: words.slice(0, 200),

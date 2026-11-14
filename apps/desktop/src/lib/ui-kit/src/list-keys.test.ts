@@ -110,7 +110,7 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
   })
 
   test('and the pointer has a highlight of its own to move', () => {
-    const source = readFileSync(join(import.meta.dirname, './Select.svelte'), {
+    const source = readFileSync(join(import.meta.dirname, '../../ui-controls/src/Select.svelte'), {
       encoding: 'utf8',
     })
 

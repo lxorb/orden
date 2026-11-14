@@ -1,7 +1,6 @@
 import type { AiAsk } from '@orden/editor'
 import { TexDelimiters } from '@orden/markdown/streamed'
-import { busy } from '../busy.svelte'
-import { message } from '../message'
+import { busy, message } from '../ui-kit/src/api'
 import { complete, wasStopped } from './complete'
 import { ai } from './store.svelte'
 

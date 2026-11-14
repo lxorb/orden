@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { fuzzy } from '../fuzzy'
+import { fuzzy } from '../ui-kit/src/fuzzy'
 import { fuzzyFolded, fuzzyPlaces, nearly, oneSlip } from './match'
 
 describe('the best place to start', () => {

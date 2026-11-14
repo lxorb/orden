@@ -293,7 +293,7 @@ describe('a press past a popup', () => {
 })
 
 describe('what hides a web page', () => {
-  const src = fileURLToPath(new URL('..', import.meta.url))
+  const src = fileURLToPath(new URL('../../..', import.meta.url))
   const read = (path: string) => readFileSync(join(src, path), 'utf8')
 
   const LAYERS: Record<string, string> = {
@@ -311,9 +311,9 @@ describe('what hides a web page', () => {
     'lib/Palette.svelte': 'dialog',
     'lib/PromptSheet.svelte': 'dialog',
     'lib/QuickQuestion.svelte': 'dialog',
-    'lib/Select.svelte': 'dropdown',
+    'lib/ui-controls/src/Select.svelte': 'dropdown',
     'lib/Sidebar.svelte': 'the shut file list, out over the note while the pointer is on it',
-    'lib/Sheet.svelte': 'sheet',
+    'lib/ui-controls/src/Sheet.svelte': 'sheet',
     'lib/accounts-ui/src/SignIn.svelte': 'sheet',
     'lib/SpacePicker.svelte': 'dialog',
     'lib/SpaceSwitcher.svelte': 'menu',

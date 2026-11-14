@@ -1,5 +1,5 @@
-import { ACCENTS } from '../accents'
-import { readIcon } from '../icons'
+import { ACCENTS } from '../theme/src/api'
+import { readIcon } from '../ui-kit/src/api'
 
 const DRAWING = /^chrome:\/\/browser\/skin\/zen-icons\/(?:[\w-]+\/)*([\w-]+)\.svg$/i
 

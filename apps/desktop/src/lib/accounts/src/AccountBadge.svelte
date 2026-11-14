@@ -1,7 +1,7 @@
 <script lang="ts">
   import { account } from './account.svelte'
   import { faceUrl } from './client'
-  import { initial } from '../../icons'
+  import { initial } from '../../ui-kit/src/api'
 
   const who = $derived(account.name)
   const face = $derived(faceUrl(account.user?.avatar?.s))

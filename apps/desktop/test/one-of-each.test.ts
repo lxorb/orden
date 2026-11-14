@@ -289,7 +289,6 @@ describe('the badge in front of a name', () => {
 
     expect(wearing).toEqual([
       'lib/ShareSheet.svelte',
-      'lib/Sheet.svelte',
       'lib/SpaceBadge.svelte',
       'lib/SpaceMenu.svelte',
       'lib/accounts/src/AccountBadge.svelte',
@@ -298,6 +297,7 @@ describe('the badge in front of a name', () => {
       'lib/ai/vault/VaultApprove.svelte',
       'lib/pass/VaultMark.svelte',
       'lib/tab-strip/TabCard.svelte',
+      'lib/ui-controls/src/Sheet.svelte',
     ])
   })
 
@@ -338,11 +338,11 @@ describe('the switch', () => {
       'lib/ImportSheet.svelte',
       'lib/Palette.svelte',
       'lib/ShareSheet.svelte',
-      'lib/Switch.svelte',
       'lib/ai/DoWithAiCard.svelte',
       'lib/ai/sidebar/ModelPicker.svelte',
       'lib/chats/view/PollSheet.svelte',
       'lib/pass/SwitchRow.svelte',
+      'lib/ui-controls/src/Switch.svelte',
       'lib/views/AutomationsBuilder.svelte',
       'lib/views/ViewSettings.svelte',
       'lib/web-tab/WebClear.svelte',
@@ -400,7 +400,7 @@ describe('the cross that shuts something', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(drawing).toEqual(['lib/Cross.svelte', 'lib/Titlebar.svelte'])
+    expect(drawing).toEqual(['lib/Titlebar.svelte', 'lib/ui-kit/src/Cross.svelte'])
   })
 
   test('and no button spells one as a letter', () => {
@@ -504,7 +504,7 @@ describe('the segmented control', () => {
 })
 
 describe('how a surface swaps what it is showing', () => {
-  const slide = readFileSync(join(SOURCE, 'lib/slide.ts'), 'utf8')
+  const slide = readFileSync(join(SOURCE, 'lib/ui-kit/src/slide.ts'), 'utf8')
 
   test('is one module, and it moves nothing but a transform and an opacity', () => {
     expect(slide).toContain('export function arrive')
@@ -548,11 +548,11 @@ describe('how a surface swaps what it is showing', () => {
 
 describe('a value beside its copy button', () => {
   test('is one component', () => {
-    expect(draw(/\.copyable/)).toEqual(['lib/Copyable.svelte'])
+    expect(draw(/\.copyable/)).toEqual(['lib/ui-controls/src/Copyable.svelte'])
   })
 
   test('and the button is another, which is the only thing that copies', () => {
-    expect(draw(/\.copy\b/)).toEqual(['lib/CopyButton.svelte'])
+    expect(draw(/\.copy\b/)).toEqual(['lib/ui-controls/src/CopyButton.svelte'])
   })
 })
 
@@ -570,7 +570,6 @@ describe('the bubble a sentence appears in', () => {
       .sort()
 
     expect(own).toEqual([
-      'lib/Hint.svelte',
       'lib/HintCard.svelte',
       'lib/NameField.svelte',
       'lib/agents/ui/PairingBubble.svelte',
@@ -578,6 +577,7 @@ describe('the bubble a sentence appears in', () => {
       'lib/chats/view/Tip.svelte',
       'lib/pass/PassFill.svelte',
       'lib/tab-strip/TabCard.svelte',
+      'lib/ui-controls/src/Hint.svelte',
       'lib/web-tab/WebAsk.svelte',
       'lib/web-tab/WebDialog.svelte',
       'lib/web-tab/WebDownloads.svelte',
@@ -590,7 +590,7 @@ describe('the bubble a sentence appears in', () => {
 
 describe('the sentence behind a setting', () => {
   test('is one component, so it is one bubble in one place', () => {
-    expect(draw(/\.explain\b|\.sentence\b/)).toEqual(['lib/Hint.svelte'])
+    expect(draw(/\.explain\b|\.sentence\b/)).toEqual(['lib/ui-controls/src/Hint.svelte'])
   })
 
   test('and the settings ask for it rather than drawing their own', () => {
@@ -614,7 +614,7 @@ describe('the sentence behind a setting', () => {
 describe('saying Copied for a moment', () => {
   test('happens in one place, so it is one length of a moment', () => {
     const says = components.filter((one) => one.text.includes("'Copied'")).map((one) => one.name)
-    expect(says).toEqual(['lib/CopyButton.svelte'])
+    expect(says).toEqual(['lib/ui-controls/src/CopyButton.svelte'])
   })
 })
 

@@ -8,7 +8,7 @@ import {
   isFileDrop,
   isTreeDrag,
 } from '../drag-paths'
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import type { Picked } from '../import/sources'
 import { invoke, isDesktop, joinPath, platform } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'

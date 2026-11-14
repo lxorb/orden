@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { message } from '../message'
+  import { message } from '../ui-kit/src/api'
   import { dur, fade } from '../platform/src/api'
   import { settings } from '../settings.svelte'
   import { invoke } from '../platform/src/api'

@@ -1,4 +1,4 @@
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { isDesktop } from '../platform/src/api'
 import { webChannel } from '../updater'
 import { updates } from '../updates.svelte'

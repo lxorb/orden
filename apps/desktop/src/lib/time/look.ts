@@ -1,7 +1,5 @@
-import { accentColour, accentFor } from '../accents'
-import { region } from '../region'
-import { localDate } from '../region'
-import { theme } from '../theme/src/api'
+import { accentColour, accentFor, theme } from '../theme/src/api'
+import { region, localDate } from '../platform/src/api'
 import { MINUTE } from './days'
 import { time } from './time.svelte'
 

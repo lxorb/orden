@@ -7,8 +7,7 @@ import {
   type UsageEvent,
 } from '@orden/sync-core'
 import { account, request } from '../accounts/src/api'
-import { systemLocale } from '../region'
-import { log, keepJson, stored, isMobile, isNative } from '../platform/src/api'
+import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../platform/src/api'
 import { updates } from '../updates.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
 import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'

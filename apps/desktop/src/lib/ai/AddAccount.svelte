@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Sheet from '../Sheet.svelte'
+  import { Sheet } from '../ui-controls/src/api'
   import {
     type Adding,
     type Maker,

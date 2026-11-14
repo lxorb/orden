@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { MenuItem } from '../menu-item'
+import type { MenuItem } from '../ui-kit/src/menu-item'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 import {
   EXPORT_EXTRAS,
@@ -156,7 +156,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { workspace } = await import('../workspace.svelte')
 const { exportCommands } = await import('../commands')
 const { appMenu } = await import('../app-menu')
-const { isSubmenu } = await import('../menu-item')
+const { isSubmenu } = await import('../ui-kit/src/menu-item')
 const { SHORTCUTS } = await import('../shortcuts/registry')
 
 function menuRows(): MenuItem[] {

@@ -1,12 +1,10 @@
 import type { EditorView } from '@orden/editor'
 import { encodeTarget } from '@orden/markdown/links'
 import { storeImage } from './assets'
-import { busy } from './busy.svelte'
+import { busy, message, viewport } from './ui-kit/src/api'
 import { chooseFiles, PICTURES } from './choose-files'
-import { message } from './message'
 import { settings } from './settings.svelte'
 import { usage } from './usage.svelte'
-import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
 export function canInsertPicture(view?: EditorView): boolean {

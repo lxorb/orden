@@ -202,7 +202,7 @@ describe('the build a drive steers', () => {
 })
 
 describe('the activity a drive stands in for', () => {
-  const BRIDGE = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'mobile', 'bridge.ts')
+  const BRIDGE = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'platform', 'src', 'mobile-bridge.ts')
 
   const declared = new Map<string, string[]>()
   const block = BRIDGE.slice(BRIDGE.indexOf('export interface OrdenSystem {'))

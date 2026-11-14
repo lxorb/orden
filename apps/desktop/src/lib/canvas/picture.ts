@@ -22,7 +22,7 @@ import { paletteOf } from './palette'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { type Faces, faceOf, NO_FACES, pdfFaces } from './faces'
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import { settings } from '../settings.svelte'
 
 const PADDING = 32

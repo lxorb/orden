@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { closeOnBack } from './backstack.svelte'
-  import { overlays } from './overlays'
+  import { closeOnBack } from './ui-kit/src/api'
+  import { overlays } from './ui-kit/src/api'
   import Twist from './Twist.svelte'
   import { workspace } from './workspace.svelte'
   import {
@@ -82,7 +82,7 @@
   }
 
   async function keepView() {
-    const { prompt } = await import('./prompt.svelte')
+    const { prompt } = await import('./ui-kit/src/api')
     const name = await prompt.ask({ title: 'Add view to Essentials', confirmLabel: 'Keep' })
     if (!name) return
 

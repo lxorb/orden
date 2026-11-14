@@ -1,6 +1,5 @@
 import { account, api } from './accounts/src/api'
-import { message } from './message'
-import { prompt } from './prompt.svelte'
+import { message, prompt } from './ui-kit/src/api'
 import { canWriteAt } from './sharing.svelte'
 import { sync } from './sync.svelte'
 import { folderOf, insideSpace, samePath, within, invoke } from './platform/src/api'

@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import Select from '../../src/lib/Select.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
+import Select from '../../src/lib/ui-controls/src/Select.svelte'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
 Element.prototype.animate = () =>
   ({

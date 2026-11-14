@@ -17,7 +17,7 @@ vi.mock('./chosen-icon', () => ({
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
-const { loadIcons } = await import('./icons')
+const { loadIcons } = await import('./ui-kit/src/icons')
 const { MARKS } = await import('./file-mark')
 type Mark = keyof typeof MARKS
 const FileMark = (await import('./FileMark.svelte')).default

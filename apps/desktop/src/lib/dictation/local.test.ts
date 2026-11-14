@@ -22,7 +22,7 @@ vi.mock('../crate/src/native', () => ({
     onmessage: ((value: unknown) => void) | null = null
   },
 }))
-vi.mock('../message', () => ({
+vi.mock('../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

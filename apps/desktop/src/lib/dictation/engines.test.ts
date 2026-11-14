@@ -19,7 +19,7 @@ vi.mock('../accounts/src/account.svelte', () => ({
   },
 }))
 vi.mock('../ai/hears', () => ({ transcriberNow: () => world.provider }))
-vi.mock('../mobile/bridge', () => ({
+vi.mock('../platform/src/mobile-bridge', () => ({
   method: (name: string) => (name === 'dictates' && world.phone ? () => true : undefined),
 }))
 vi.mock('../platform/src/tauri', () => ({

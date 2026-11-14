@@ -9,7 +9,7 @@ import type {
 import { account } from './accounts/src/api'
 import { fullscreen } from './fullscreen.svelte'
 import { hiddenKinds } from './settings.svelte'
-import type { MenuItem } from './menu-item'
+import type { MenuItem } from './ui-kit/src/api'
 import { modes } from './modes.svelte'
 import {
   type Change,
@@ -34,7 +34,7 @@ import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
 import { appMenuRows } from './surfaces.svelte'
 import { takeKeyboard } from './take-keyboard'
 import { currentWindow, invoke, afterQuiet } from './platform/src/api'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/api'
 import { workspace } from './workspace.svelte'
 
 export interface MenuBarContext {

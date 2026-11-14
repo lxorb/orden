@@ -1,14 +1,23 @@
 import { attachmentFolder } from '../attachments'
-import { busy } from '../busy.svelte'
-import { fromBase64, log, insideAnyOf, joinPath, waited } from '../platform/src/api'
+import { busy, prompt } from '../ui-kit/src/api'
+import {
+  fromBase64,
+  log,
+  insideAnyOf,
+  joinPath,
+  waited,
+  answer,
+  frameWord,
+  method,
+  onTheActivity,
+  wordSaid,
+} from '../platform/src/api'
 import { appCommands } from '../commands'
 import { applyImport } from '../import/apply'
 import { putPicture, writeAtCaret } from '../insert-picture'
 import { modes } from '../modes.svelte'
-import { prompt } from '../prompt.svelte'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { answer, frameWord, method, onTheActivity, wordSaid } from './bridge'
 import {
   type Arrived,
   arrivedFrom,

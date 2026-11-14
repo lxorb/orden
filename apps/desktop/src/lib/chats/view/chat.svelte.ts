@@ -1,6 +1,6 @@
 import type { FileRef, Member, Message, Poll, Preview, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
-import { copyText } from '../../clipboard'
+import { copyText } from '../../ui-controls/src/api'
 import { paletteWords } from '../../surfaces.svelte'
 import type { ChatEntry, ChatView, Shown } from '../api'
 import { trimmed } from './compose'

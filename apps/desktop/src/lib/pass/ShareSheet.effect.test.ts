@@ -37,7 +37,7 @@ const fake = vi.hoisted(() => {
 
 vi.mock('./store.svelte', () => ({ pass: fake.pass }))
 vi.mock('../accounts/src/account.svelte', () => ({ account: fake.account }))
-vi.mock('../prompt.svelte', () => ({ prompt: fake.prompt }))
+vi.mock('../ui-kit/src/prompt.svelte', () => ({ prompt: fake.prompt }))
 
 const { PassUi } = await import('./ui.svelte')
 const ShareSheet = (await import('./ShareSheet.svelte')).default

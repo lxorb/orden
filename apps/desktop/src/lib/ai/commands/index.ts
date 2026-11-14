@@ -15,7 +15,7 @@ import { tasks } from './tasks.svelte'
 import { planDay, showTasks } from './todos'
 import type { CommandContext, Panel, PanelCommand } from './types'
 import { explain, review, rewrite, summarize } from './words'
-import { message } from '../../message'
+import { message } from '../../ui-kit/src/api'
 import { FIRST_MODE, noMoreThan } from '../modes'
 
 interface ReviewCommands {

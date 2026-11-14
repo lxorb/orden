@@ -103,7 +103,7 @@ const BESIDE_PAPER = JSON.stringify({
   orden: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
 })
 
-vi.mock('./prompt.svelte', () => ({
+vi.mock('./ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: (options: { title: string }) => {
       sheet.asked.push(options.title)
@@ -144,7 +144,7 @@ const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
 const { answeredCase } = await import('./platform/src/space-paths')
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const { links } = await import('./link-index.svelte')

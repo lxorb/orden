@@ -43,7 +43,7 @@ const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } =
 const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/gesture')
 const { swipeChoice } = await import('../../src/lib/back-swipe/choice.svelte')
 const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 
 let stop: () => void
 let words: HTMLElement

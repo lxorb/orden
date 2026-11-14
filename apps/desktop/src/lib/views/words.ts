@@ -1,5 +1,5 @@
 import { addDays, groupName, isWhen, placeOfKey, type Value } from '@orden/bases'
-import { localDate } from '../region'
+import { localDate } from '../platform/src/api'
 import { dateAt } from './days'
 import { bare } from './columns'
 import { dayWords } from '@orden/editor/task-days'

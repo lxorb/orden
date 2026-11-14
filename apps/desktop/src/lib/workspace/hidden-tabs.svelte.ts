@@ -46,7 +46,7 @@ class Hidden {
   }
 
   private ask(): Promise<string | null> {
-    this.asking ??= import('../prompt.svelte')
+    this.asking ??= import('../ui-kit/src/api')
       .then(({ prompt }) =>
         prompt.choose({
           title: 'Hidden tabs',

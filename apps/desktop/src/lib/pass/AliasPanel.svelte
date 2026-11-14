@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Alias, Item } from '@orden/pass/types'
   import { atLeast } from '@orden/pass/types'
-  import { message } from '../message'
+  import { message } from '../ui-kit/src/api'
   import { aliasStats, switchedAlias } from './alias-live'
   import type { AliasStats } from './aliases'
   import { pass } from './store.svelte'

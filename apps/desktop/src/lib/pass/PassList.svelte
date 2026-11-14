@@ -9,7 +9,7 @@
   import Menu from 'lucide/dist/esm/icons/menu.mjs'
   import Search from 'lucide/dist/esm/icons/search.mjs'
   import { menu } from '../menu.svelte'
-  import { prompt } from '../prompt.svelte'
+  import { prompt } from '../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
   import DeletedElsewhere from './DeletedElsewhere.svelte'
   import InvitesList from './InvitesList.svelte'

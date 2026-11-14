@@ -1,4 +1,4 @@
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import { settings } from '../settings.svelte'
 import { engines } from './engines.svelte'
 import type { Hooks, Listening } from './listening'

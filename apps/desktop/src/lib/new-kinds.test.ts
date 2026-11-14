@@ -33,7 +33,7 @@ vi.mock('./apps/make', () => ({
 
 const { kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('./workspace.svelte')
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('./settings.svelte')
 
 let was: 'phone' | 'tablet' | 'desktop'

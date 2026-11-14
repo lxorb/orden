@@ -23,7 +23,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 const confirmed: { title: string; detail?: string }[] = []
 let sure = true
 
-vi.mock('../../src/lib/prompt.svelte', () => ({
+vi.mock('../../src/lib/ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (options: { title: string; detail?: string }) => {
       confirmed.push(options)

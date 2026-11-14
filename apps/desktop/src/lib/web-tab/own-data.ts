@@ -1,5 +1,5 @@
 import { menu } from '../menu.svelte'
-import { prompt } from '../prompt.svelte'
+import { prompt } from '../ui-kit/src/api'
 import { canWriteAt } from '../sharing.svelte'
 import { samePath, invoke } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'

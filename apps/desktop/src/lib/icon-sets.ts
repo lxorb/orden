@@ -9,7 +9,7 @@ import {
   SITE_ICONS,
   squash,
   writtenIcon,
-} from './icons'
+} from './ui-kit/src/api'
 import { outlineName, plain } from './outline-names'
 
 let tagged: Map<string, string> | null = null

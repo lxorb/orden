@@ -16,7 +16,7 @@ import {
   isDesktop,
   isNative,
 } from './platform/src/api'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/api'
 import { settingsTab } from './settings/tab-hook'
 
 const PAGE_KEY = 'orden:page'

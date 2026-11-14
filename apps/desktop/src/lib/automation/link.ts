@@ -1,4 +1,4 @@
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { headingAt, lineOf, scanHeadings } from '../outline'
 import { relativeTo } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'

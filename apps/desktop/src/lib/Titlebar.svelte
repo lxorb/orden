@@ -16,7 +16,7 @@
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { startup } from './startup.svelte'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { WindowState } from './window-state.svelte'
   import { topRow } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'

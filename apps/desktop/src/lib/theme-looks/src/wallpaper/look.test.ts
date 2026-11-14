@@ -1,8 +1,16 @@
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
-import { accentColour } from '../../../accents'
-import { alphaFor, BODY, layered, linkOf } from '../../../content-ground'
-import { AA, over, ratio, type Rgb, rgbOf, SHARP, type Span } from '../../../legibility'
+import { accentColour } from '../../../theme/src/accents'
+import { alphaFor, BODY, layered, linkOf } from '../../../ui-controls/src/content-ground'
+import {
+  AA,
+  over,
+  ratio,
+  type Rgb,
+  rgbOf,
+  SHARP,
+  type Span,
+} from '../../../ui-controls/src/legibility'
 import { type Palette, paletteOf } from './floors'
 import type { Held } from './held'
 import {

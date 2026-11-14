@@ -3,8 +3,8 @@
 
   import { account } from '../../accounts/src/api'
   import { fromServer, request } from '../../accounts/src/api'
-  import { region } from '../../region'
-  import { message } from '../../message'
+  import { region } from '../../platform/src/api'
+  import { message } from '../../ui-kit/src/api'
   import { dur, fade } from '../../platform/src/api'
 
   const { onend }: { onend: () => void } = $props()

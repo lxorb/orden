@@ -65,7 +65,9 @@ const pageWorld: PeerWorld = {
   },
   now: () => Date.now(),
   copy: (text) => {
-    void import('../clipboard').then(({ copyText }) => copyText(text)).catch(() => undefined)
+    void import('../ui-controls/src/api')
+      .then(({ copyText }) => copyText(text))
+      .catch(() => undefined)
   },
 }
 

@@ -24,7 +24,7 @@ export async function makeApplication(): Promise<Tab | null> {
   if (!root || !canWriteAt(root)) return null
 
   const { request } = await import('../accounts/src/api')
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   const listed = await request<{ devices?: Computer[] }>('/v2/devices', { token }).catch(() => null)
   const computers = (listed?.devices ?? []).filter((one) => mayHost(one.platform))
   if (!computers.length) {

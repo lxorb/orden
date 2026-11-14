@@ -1,7 +1,6 @@
 import { mount, unmount } from 'svelte'
-import { overlays } from '../overlays'
+import { overlays, viewport } from '../ui-kit/src/api'
 import { dur, isDesktop, isMobile } from '../platform/src/api'
-import { viewport } from '../viewport.svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { swipeChoice } from './choice.svelte'

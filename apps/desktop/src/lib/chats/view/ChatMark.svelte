@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chosenIcon, chosenTint } from '../../chosen-icon'
   import Icon from '../../Icon.svelte'
-  import { readIcon } from '../../icons'
+  import { readIcon } from '../../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
 
   const { path }: { path: string | null | undefined } = $props()

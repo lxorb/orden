@@ -2,7 +2,7 @@
   import type { Message } from '@orden/chats'
   import { may } from '@orden/chats'
   import { onMount, untrack } from 'svelte'
-  import { localNumber } from '../../region'
+  import { localNumber } from '../../platform/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { longPress } from '../../longpress'
   import { menu } from '../../menu.svelte'

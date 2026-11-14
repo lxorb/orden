@@ -1,6 +1,5 @@
 import { mount, unmount } from 'svelte'
-import { busy } from '../busy.svelte'
-import { prompt } from '../prompt.svelte'
+import { busy, prompt } from '../ui-kit/src/api'
 import { workspace } from '../workspace.svelte'
 import { deviceCan, deviceName, deviceSays } from './device'
 import { hashPassword, matches } from './password'

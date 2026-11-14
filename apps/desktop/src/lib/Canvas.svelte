@@ -98,7 +98,7 @@
   import { pastesMarkup } from './trust'
   import { shortcuts } from './shortcuts.svelte'
   import { modes } from './modes.svelte'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { workspace, type Tab } from './workspace.svelte'
   import { RightPan } from './canvas/right-pan'
   import { freeScroll, holdFreeScroll } from './canvas/free-scroll'

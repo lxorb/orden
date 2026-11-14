@@ -1,6 +1,6 @@
 import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats/hush.svelte'
 import { priorities } from './chats/priorities.svelte'
-import { localDate } from './region'
+import { localDate } from './platform/src/api'
 import type { Field } from './preferences'
 
 export function chatsFields(): Field[] {

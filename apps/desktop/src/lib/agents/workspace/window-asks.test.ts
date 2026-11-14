@@ -11,7 +11,7 @@ vi.mock('../../platform/src/tauri', () => ({
 }))
 
 const copied: string[] = []
-vi.mock('../../clipboard', () => ({
+vi.mock('../../ui-controls/src/clipboard', () => ({
   copyText: (text: string) => {
     copied.push(text)
     return Promise.resolve()

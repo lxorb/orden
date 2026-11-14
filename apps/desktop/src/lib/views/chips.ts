@@ -1,5 +1,5 @@
 import type { Value } from '@orden/bases'
-import { localNumber } from '../region'
+import { localNumber } from '../platform/src/api'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { dayWords } from '@orden/editor/task-days'
 

@@ -18,7 +18,7 @@ const store = vi.hoisted(() => ({
 vi.mock('./joining.svelte', () => ({ joining: store }))
 vi.mock('./accounts/src/account.svelte', () => ({ account: { open: false } }))
 
-const { overlays } = await import('./overlays')
+const { overlays } = await import('./ui-kit/src/overlays')
 const JoinSheet = (await import('./JoinSheet.svelte')).default
 const JoinPending = (await import('./JoinPending.svelte')).default
 

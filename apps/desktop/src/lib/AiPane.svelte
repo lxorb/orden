@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { localDate, localNumber } from './region'
+  import { localDate, localNumber } from './platform/src/api'
   import { onMount } from 'svelte'
   import { accountName, vendorName } from './ai/account-words'
   import { type Account, repeatable, vendorOf } from './ai/accounts'
@@ -15,14 +15,14 @@
   import ProviderMark from './ai/ProviderMark.svelte'
   import { firstModel, isLocal, offeredKinds, type Provider } from './ai/providers'
   import { glassesKey } from './even/key.svelte'
-  import { NoWord, wordSaid } from './mobile/bridge'
-  import { message } from './message'
+  import { NoWord, wordSaid } from './platform/src/api'
+  import { message } from './ui-kit/src/api'
   import { dur, slide } from './platform/src/api'
-  import Select from './Select.svelte'
+  import { Select } from './ui-controls/src/api'
   import { invoke, isDesktop } from './platform/src/api'
-  import { viewport } from './viewport.svelte'
-  import Hint from './Hint.svelte'
-  import Switch from './Switch.svelte'
+  import { viewport } from './ui-kit/src/api'
+  import { Hint } from './ui-controls/src/api'
+  import { Switch } from './ui-controls/src/api'
   import { canDictate, type Engine, engines } from './dictation/engines.svelte'
   import { local } from './dictation/local.svelte'
 
@@ -181,7 +181,7 @@
   }
 
   async function removeDevice(id: string, name: string) {
-    const { prompt } = await import('./prompt.svelte')
+    const { prompt } = await import('./ui-kit/src/api')
     const sure = await prompt.confirm({
       title: `Remove ${name}?`,
       detail: 'The device can no longer read your AI accounts, and the others get a new key.',

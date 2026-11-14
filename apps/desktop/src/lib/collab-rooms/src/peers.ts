@@ -1,7 +1,7 @@
 import type { Peer } from '@orden/editor'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import { accentColour, accentFor } from '../../accents'
+import { accentColour, accentFor } from '../../theme/src/api'
 import { faceUrl } from '../../accounts/src/api'
 import { isNumber, isRecord, isString } from '../../platform/src/api'
 

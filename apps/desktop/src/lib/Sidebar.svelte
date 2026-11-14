@@ -34,7 +34,7 @@
   import { newSpace } from './space-actions'
   import { startup } from './startup.svelte'
   import { arriving } from './arriving.svelte'
-  import { arrive, leave, segmented } from './slide'
+  import { arrive, leave, segmented } from './ui-kit/src/api'
   import { splitTabs, tabsShown } from './workspace/panels'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
@@ -56,16 +56,16 @@
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
   import { pullable } from './pull.svelte'
-  import { scrollbar } from './scrollbar'
+  import { scrollbar } from './ui-kit/src/api'
   import { workspace } from './workspace.svelte'
   import { links } from './link-index.svelte'
   import { worthAGraph } from './graph'
   import { DEEPEST, SHALLOWEST } from './workspace/graph-settings.svelte'
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { edgePeek } from './edge-peek.svelte'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
   import { fullscreen } from './fullscreen.svelte'
   import { alone } from './alone.svelte'
   import { chatsOn, hiddenKinds, timeOn } from './settings.svelte'
@@ -460,7 +460,7 @@
         label: 'Move',
         run: () => {
           void (async () => {
-            const { prompt } = await import('./prompt.svelte')
+            const { prompt } = await import('./ui-kit/src/api')
             const to = await prompt.find({
               title: 'Move after',
               options: targets.map((one) => ({ id: one.id, label: one.label })),

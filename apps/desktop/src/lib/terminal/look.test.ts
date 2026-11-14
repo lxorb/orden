@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { AA, ratio, rgbOf } from '../legibility'
+import { AA, ratio, rgbOf } from '../ui-controls/src/legibility'
 import { FIXED_PALETTE, terminalGround, terminalPalette, type TerminalTokens } from './look'
 
 const THEMES = fileURLToPath(new URL('../../../../../packages/themes/src/', import.meta.url))

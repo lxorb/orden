@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { closeOnBack } from '../../src/lib/backstack.svelte'
+import { closeOnBack } from '../../src/lib/ui-kit/src/backstack.svelte'
 import { fullscreen } from '../../src/lib/fullscreen.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { reactive, root, watch } from './runes.svelte'
 
 beforeEach(() => {

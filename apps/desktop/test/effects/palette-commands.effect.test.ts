@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { viewport } from '../../src/lib/viewport.svelte'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
 class NoLayout {
   observe() {
@@ -18,7 +18,7 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { default: Palette } = await import('../../src/lib/Palette.svelte')
 
 Element.prototype.animate = () =>

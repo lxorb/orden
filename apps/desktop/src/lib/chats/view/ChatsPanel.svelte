@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { localNumber } from '../../region'
+  import { localNumber } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
   import { hiddenKinds } from '../../settings.svelte'
   import { canWriteAt } from '../../sharing.svelte'

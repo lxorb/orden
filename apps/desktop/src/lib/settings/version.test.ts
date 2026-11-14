@@ -29,7 +29,7 @@ vi.mock('../updates.svelte', () => ({
     },
   },
 }))
-vi.mock('../clipboard', () => ({
+vi.mock('../ui-controls/src/clipboard', () => ({
   copyText: (text: string) => {
     world.copied.push(text)
     return Promise.resolve()

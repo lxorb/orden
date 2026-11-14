@@ -1,5 +1,4 @@
-import { frameWord, NoWord } from '../mobile/bridge'
-import { isDesktop, isMobile, isNative, invoke } from '../platform/src/api'
+import { frameWord, NoWord, isDesktop, isMobile, isNative, invoke } from '../platform/src/api'
 import type { Provider } from './providers'
 
 interface Secrets {

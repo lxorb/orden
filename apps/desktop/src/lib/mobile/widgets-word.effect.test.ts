@@ -8,7 +8,7 @@ const said = vi.hoisted(() => {
 })
 const pushed: string[] = []
 
-vi.mock('./bridge', () => ({
+vi.mock('../platform/src/mobile-bridge', () => ({
   frameWord: () => Promise.resolve(said.word),
   wordSaid: () => said.spoken,
   method: (name: string) =>

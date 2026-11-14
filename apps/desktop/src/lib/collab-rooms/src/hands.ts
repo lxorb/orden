@@ -1,7 +1,7 @@
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
 import { packed, strokeOf } from '@orden/markdown/canvas'
-import { accentColour } from '../../accents'
+import { accentColour } from '../../theme/src/api'
 import type { InkStroke } from '../../canvas/format'
 import type { Point } from '../../canvas/geometry'
 import type { Hand } from '../../canvas/shared'

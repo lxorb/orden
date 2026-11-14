@@ -1,5 +1,5 @@
 import { cellValue, csvText, csvValue, isButton, sheetSafe } from '@orden/bases'
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { deliver } from '../export/save'
 import { displayName } from './columns'
 import { everyRow } from './list-items'

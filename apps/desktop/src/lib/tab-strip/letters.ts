@@ -1,4 +1,4 @@
-import { parseCombination, type Platform } from '../keys'
+import { parseCombination, type Platform } from '../ui-kit/src/api'
 
 export const PANE_LETTERS: readonly string[] = ['H', 'J', 'K', 'L']
 

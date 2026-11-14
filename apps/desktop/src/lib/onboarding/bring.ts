@@ -1,6 +1,5 @@
 import type { BrowserId } from '../import/browsers'
-import { busy } from '../busy.svelte'
-import { message } from '../message'
+import { busy, message } from '../ui-kit/src/api'
 import type { FormatId } from '../import/plan'
 import type { Picked, Source } from '../import/sources'
 import { isDesktop } from '../platform/src/api'

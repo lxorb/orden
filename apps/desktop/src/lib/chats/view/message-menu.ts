@@ -1,5 +1,5 @@
 import { may, type Message, type Role } from '@orden/chats'
-import { copyText } from '../../clipboard'
+import { copyText } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
 import { canWriteAt } from '../../sharing.svelte'
 import type { ChatPage } from './chat.svelte'

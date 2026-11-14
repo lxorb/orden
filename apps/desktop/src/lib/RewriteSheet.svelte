@@ -3,10 +3,10 @@
   import { languageNames, VERBS } from './ai/rewrite'
   import { diffCount, lineDiff, trimmed } from './diff'
   import { dur, fade } from './platform/src/api'
-  import { scrollbar } from './scrollbar'
-  import Select from './Select.svelte'
-  import Sheet from './Sheet.svelte'
-  import { viewport } from './viewport.svelte'
+  import { scrollbar } from './ui-kit/src/api'
+  import { Select } from './ui-controls/src/api'
+  import { Sheet } from './ui-controls/src/api'
+  import { viewport } from './ui-kit/src/api'
 
   const answer = $derived(rewriting.after.trim())
   const difference = $derived(answer ? lineDiff(rewriting.before, answer) : [])

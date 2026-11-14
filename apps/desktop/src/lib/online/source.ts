@@ -10,7 +10,7 @@ import {
 import { account, ApiError, BASE } from '../accounts/src/api'
 import { toBase64, isDesktop, isNative } from '../platform/src/api'
 import type { Said, Source } from '../terminal/source'
-import { viewport } from '../viewport.svelte'
+import { viewport } from '../ui-kit/src/api'
 import { writeFile } from '../workspace/write-file'
 import { refusedOf, termSession } from './calls'
 import { Link, pageWorld } from './link'

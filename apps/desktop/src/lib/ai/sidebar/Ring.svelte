@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { region } from '../../region'
+  import { region } from '../../platform/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { chat } from './chat.svelte'
   import { hostHere } from './host'

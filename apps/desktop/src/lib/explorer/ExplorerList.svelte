@@ -1,7 +1,7 @@
 <script lang="ts">
   import { carried, dropOver } from '../drag-paths'
   import { tick, untrack } from 'svelte'
-  import { spelled, type Spelling } from '../list-keys'
+  import { spelled, type Spelling } from '../ui-kit/src/api'
   import { shortcuts } from '../shortcuts.svelte'
   import { readableSize } from '../usage.svelte'
   import { isPicturePath, nameOf, folderOf, samePath } from '../platform/src/api'

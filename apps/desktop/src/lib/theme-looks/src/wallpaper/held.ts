@@ -1,5 +1,5 @@
 import type { Scheme } from '@orden/contracts'
-import type { Rgb, Span } from '../../../legibility'
+import type { Rgb, Span } from '../../../ui-controls/src/api'
 import { isNumber, isRecord, isString, parsed, storedText } from '../../../platform/src/api'
 
 export const WALLPAPER_THEME = 'wallpaper'

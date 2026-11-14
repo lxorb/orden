@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Select from '../Select.svelte'
-  import Sheet from '../Sheet.svelte'
-  import { message } from '../message'
+  import { Select } from '../ui-controls/src/api'
+  import { Sheet } from '../ui-controls/src/api'
+  import { message } from '../ui-kit/src/api'
   import { isDesktop } from '../platform/src/api'
-  import { viewport } from '../viewport.svelte'
+  import { viewport } from '../ui-kit/src/api'
   import { clearData, DEFAULT_RANGE, type Range } from './clearing'
 
   const {

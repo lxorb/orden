@@ -1,4 +1,4 @@
-import { luminance, type Rgb, rgbOf } from '../../../legibility'
+import { luminance, type Rgb, rgbOf } from '../../../ui-controls/src/api'
 
 export interface PageSaid {
   theme: string

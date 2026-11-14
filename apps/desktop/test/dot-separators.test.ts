@@ -55,7 +55,7 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
   },
   { path: 'apps/desktop/src/lib/import/sources.ts', holds: "'", why: 'a code page table' },
   {
-    path: 'apps/desktop/src/lib/icons.ts',
+    path: 'apps/desktop/src/lib/ui-kit/src/icons.ts',
     holds: "first === undefined ? '",
     why: 'the mark of a nameless thing, alone',
   },

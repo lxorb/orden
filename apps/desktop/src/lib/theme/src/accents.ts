@@ -1,4 +1,4 @@
-import type { ThemeSetting } from './theme/src/api'
+import type { ThemeSetting } from '@orden/contracts'
 
 export interface Accent {
   id: string

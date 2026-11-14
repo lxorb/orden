@@ -125,7 +125,7 @@ vi.mock('../../workspace/write-file', () => ({
 const { deskWith } = await import('../../agents/docs/test-desk')
 const { editNote } = await import('../../agents/docs/edit')
 const { review } = await import('./review.svelte')
-const { busy } = await import('../../busy.svelte')
+const { busy } = await import('../../ui-kit/src/busy.svelte')
 
 class Viewer {
   state: EditorState

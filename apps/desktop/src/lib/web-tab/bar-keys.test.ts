@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { matchesCombination } from '../keys'
+import { matchesCombination } from '../ui-kit/src/keys'
 import { barKey, type Bindings, stops } from './bar-keys'
 import { replay } from './keys'
 

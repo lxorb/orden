@@ -7,9 +7,9 @@
   import type { FormatId } from './import/plan'
   import { dur, fade } from './platform/src/api'
   import { settings } from './settings.svelte'
-  import { segmented } from './slide'
-  import { viewport } from './viewport.svelte'
-  import Sheet from './Sheet.svelte'
+  import { segmented } from './ui-kit/src/api'
+  import { viewport } from './ui-kit/src/api'
+  import { Sheet } from './ui-controls/src/api'
 
   const FORMATS: Record<FormatId, string> = {
     notion: 'Notion',

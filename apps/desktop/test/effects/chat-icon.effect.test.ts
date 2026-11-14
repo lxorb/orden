@@ -27,7 +27,7 @@ const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../src/l
 const { setFileIcon } = await import('../../src/lib/file-icon')
 const { iconEntries } = await import('../../src/lib/menu.svelte')
 const { iconLibrary } = await import('../../src/lib/icon-library.svelte')
-const { loadIcons } = await import('../../src/lib/icons')
+const { loadIcons } = await import('../../src/lib/ui-kit/src/icons')
 
 iconLibrary.set = await loadIcons()
 

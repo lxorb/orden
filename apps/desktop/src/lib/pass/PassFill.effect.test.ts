@@ -41,7 +41,7 @@ vi.mock('./store.svelte', () => ({
 }))
 
 const PassFill = (await import('./PassFill.svelte')).default
-const { overlays } = await import('../overlays')
+const { overlays } = await import('../ui-kit/src/overlays')
 
 const TAB = 'tab-1'
 

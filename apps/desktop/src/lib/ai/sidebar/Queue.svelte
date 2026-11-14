@@ -2,7 +2,7 @@
   import { dropOver } from '../../drag-paths'
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
-  import Cross from '../../Cross.svelte'
+  import { Cross } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { chat } from './chat.svelte'
 

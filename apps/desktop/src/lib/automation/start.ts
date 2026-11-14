@@ -1,4 +1,4 @@
-import { busy } from '../busy.svelte'
+import { busy } from '../ui-kit/src/api'
 import { log, invoke, isDesktop, isNative, openExternal } from '../platform/src/api'
 import { hearHere } from '../own-window'
 import { callerOf } from './caller'

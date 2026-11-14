@@ -28,7 +28,7 @@ vi.mock('./refresh', () => ({
   },
 }))
 const screen = vi.hoisted(() => ({ typing: false }))
-vi.mock('./viewport.svelte', () => ({ viewport: screen }))
+vi.mock('./ui-kit/src/viewport.svelte', () => ({ viewport: screen }))
 
 import { armed, CLAIM, claimsPull, pull, pulled, REACH } from './pull.svelte'
 

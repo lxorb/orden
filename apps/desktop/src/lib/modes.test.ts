@@ -991,7 +991,7 @@ describe('taking over what the account holds', () => {
         return { settings: {} }
       }
       api.settings = async () => ({ settings: account })
-      const { viewport } = await import('./viewport.svelte')
+      const { viewport } = await import('./ui-kit/src/viewport.svelte')
       viewport.device = device
       await modes.adopt('token')
       return patches
@@ -1022,7 +1022,7 @@ describe('taking over what the account holds', () => {
         throw new Error('unknown setting mobileSeen')
       }
       api.settings = async () => ({ settings: {} })
-      const { viewport } = await import('./viewport.svelte')
+      const { viewport } = await import('./ui-kit/src/viewport.svelte')
       viewport.device = 'phone'
       await modes.adopt('token')
 

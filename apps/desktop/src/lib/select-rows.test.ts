@@ -2,7 +2,10 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
-const SOURCE = readFileSync(join(import.meta.dirname, 'Select.svelte'), 'utf8')
+const SOURCE = readFileSync(
+  join(import.meta.dirname, 'ui-controls', 'src', 'Select.svelte'),
+  'utf8',
+)
 
 describe('a list of choices as long as the languages, each named in its own script', () => {
   test('lays out only the rows in sight, so opening it loads no font a row out of sight needs', () => {

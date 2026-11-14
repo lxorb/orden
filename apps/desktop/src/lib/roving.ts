@@ -1,7 +1,5 @@
 import { focusEditor } from './focus'
-import { chorded } from './keys'
-import { spelled, type Spelling } from './list-keys'
-import { overlays } from './overlays'
+import { chorded, spelled, type Spelling, overlays } from './ui-kit/src/api'
 import { walked } from './walk'
 
 interface LongList {

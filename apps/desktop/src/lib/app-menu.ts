@@ -23,22 +23,27 @@ import {
 } from '@orden/editor'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from './accounts/src/api'
-import { busy } from './busy.svelte'
-import { copySelection, cutSelection } from './clipboard'
+import {
+  busy,
+  DIVIDER,
+  type MenuGroup,
+  type MenuItem,
+  type MenuRow,
+  viewport,
+} from './ui-kit/src/api'
+import { copySelection, cutSelection } from './ui-controls/src/api'
 import { blockCommands, exportCommands } from './commands'
 import { fullscreen } from './fullscreen.svelte'
 import { frontShut } from './export/context'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printable, printOpen } from './export/print'
-import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
 import { isDesktop, isNative, openExternal } from './platform/src/api'
 import { updates } from './updates.svelte'
-import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
 interface Context {

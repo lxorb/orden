@@ -1,6 +1,6 @@
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { fileClipboard } from '../list-landing.svelte'
-import { DIVIDER, type MenuEntry } from '../menu-item'
+import { DIVIDER, type MenuEntry } from '../ui-kit/src/api'
 import { reveal, showLabel } from '../reveal'
 import { platform } from '../platform/src/api'
 import { shortcuts } from '../shortcuts.svelte'

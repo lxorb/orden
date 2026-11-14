@@ -38,7 +38,7 @@ async function askUnsaved(unsaved: readonly Tab[]): Promise<Unsaved> {
   const [only] = unsaved
   if (!only) return 'discard'
 
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   const answer = await prompt.choose({
     title: unsaved.length === 1 ? `Save changes to ${only.shown}?` : 'Save changes to these tabs?',
     detail: 'Unsaved words go to Recently deleted.',

@@ -1,4 +1,4 @@
-import { chorded, type Keystroke } from './keys'
+import { chorded, type Keystroke } from './ui-kit/src/api'
 import { takesWords } from './typing-pointer'
 
 export function kindOfLetter<Kind extends { letter: string }>(

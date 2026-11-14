@@ -63,7 +63,7 @@
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
   import { RightPan } from './canvas/right-pan'
   import { freeScroll, holdFreeScroll } from './canvas/free-scroll'
-  import { copyText } from './clipboard'
+  import { copyText } from './ui-controls/src/api'
   import { placesOnPaper } from './pdf/find'
   import type { Highlight } from './pdf/highlights'
   import { marksFromOutside } from './pdf/sheets.svelte'
@@ -87,7 +87,7 @@
   import { shortcuts } from './shortcuts.svelte'
 
   import { pages as pagesState } from './pages/showing.svelte'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { samePath } from './platform/src/api'
   import { workspace, type Tab } from './workspace.svelte'
 

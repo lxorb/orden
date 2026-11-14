@@ -9,7 +9,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const { shortcuts } = await import('./shortcuts.svelte')
 const tooltip = (label: string, id: string | null = null) => shortcuts.tooltip(label, id)
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 
 afterEach(() => {
   shortcuts.resetAll()

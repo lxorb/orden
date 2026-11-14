@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { hang } from './portal'
+  import { hang } from './ui-kit/src/api'
   import { dur, fly } from './platform/src/api'
   import { type NameFault, nameFault, nameToCommit } from './platform/src/api'
   import { caretAtEnd, selectAll, selectStem } from './select-all'

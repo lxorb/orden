@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { localNumber } from '../region'
+  import { localNumber } from '../platform/src/api'
   import { keyElsewhere } from '../layer-keys'
   import { onMount, untrack } from 'svelte'
   import { shortcuts } from '../shortcuts.svelte'

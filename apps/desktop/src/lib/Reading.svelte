@@ -9,7 +9,7 @@
   import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
   import { readingHtml, tagAnchor, unreadableHtml } from './reading/render'
   import { trustsHtmlIn } from './sharing.svelte'
-  import { scrollbar } from './scrollbar'
+  import { scrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { followHref, MIDDLE, opensLink } from './open-link'
   import { tabAsk } from './new-tab'

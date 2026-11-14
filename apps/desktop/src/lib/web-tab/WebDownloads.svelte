@@ -5,7 +5,7 @@
   import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { dur, fly } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { showLabel } from '../reveal'
   import { downloads, type Download } from './downloads.svelte'
 

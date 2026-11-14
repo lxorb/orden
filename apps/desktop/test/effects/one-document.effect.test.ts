@@ -36,7 +36,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 
 const open = () => workspace.tabs.map((tab) => tab.shown)
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import ShieldCheck from 'lucide/dist/esm/icons/shield-check.mjs'
-  import { message } from '../message'
+  import { message } from '../ui-kit/src/api'
   import Gate from './Gate.svelte'
   import { pass } from './store.svelte'
   import StrengthMeter from './StrengthMeter.svelte'

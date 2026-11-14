@@ -1,6 +1,6 @@
 import type { Awareness } from 'y-protocols/awareness'
 import { account, type LiveNote } from './ports'
-import { busy } from '../../busy.svelte'
+import { busy } from '../../ui-kit/src/api'
 import { deviceAccent, deviceName, personFace, personName, rooms } from '../../collab/src/api'
 import type { Carrying, Seen, Who } from '../../collab-rooms/src/api'
 import { theme } from '../../theme/src/api'

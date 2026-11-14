@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Cross from './Cross.svelte'
+  import { Cross } from './ui-kit/src/api'
   import { joining } from './joining.svelte'
 
   const who = $derived(joining.invitation?.from ?? 'Somebody')

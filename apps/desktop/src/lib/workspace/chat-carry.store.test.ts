@@ -44,7 +44,7 @@ const { ApiError } = await import('../accounts/src/client')
 const { failed } = await import('../views/failed.svelte')
 const { spacesOfPaths } = await import('../tab-strip/to-space')
 const { keepOwnPointer } = await import('../chats/places')
-const { prompt } = await import('../prompt.svelte')
+const { prompt } = await import('../ui-kit/src/prompt.svelte')
 
 const SHARED = '/spaces/Team'
 const OWNERS = '/spaces/Lab'

@@ -1,9 +1,9 @@
 <script lang="ts">
   import Facts from '../Facts.svelte'
-  import { region } from '../region'
-  import { localDate, localNumber } from '../region'
+  import { region } from '../platform/src/api'
+  import { localDate, localNumber } from '../platform/src/api'
   import { diskNear, diskShare, shares } from '@orden/online'
-  import { prompt } from '../prompt.svelte'
+  import { prompt } from '../ui-kit/src/api'
   import { within } from '../platform/src/api'
   import { runner } from '../sync-client/src/api'
   import { workspace } from '../workspace.svelte'

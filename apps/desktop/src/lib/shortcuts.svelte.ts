@@ -7,7 +7,8 @@ import {
   parseCombination,
   sameCombination,
   showCombination,
-} from './keys'
+  viewport,
+} from './ui-kit/src/api'
 import { modes } from './modes.svelte'
 import { knownPreset, type PresetId } from './shortcuts/preset-ids'
 import type { Preset } from './shortcuts/presets'
@@ -22,7 +23,6 @@ import {
   type Shortcut,
   SYSTEM_KEYS,
 } from './shortcuts/registry'
-import { viewport } from './viewport.svelte'
 import { saveFront } from './save-place/door'
 import { ran } from './usage/tally'
 

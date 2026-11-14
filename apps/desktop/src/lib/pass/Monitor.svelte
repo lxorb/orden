@@ -10,7 +10,7 @@
   import ShieldAlert from 'lucide/dist/esm/icons/shield-alert.mjs'
   import ShieldOff from 'lucide/dist/esm/icons/shield-off.mjs'
   import Smartphone from 'lucide/dist/esm/icons/smartphone.mjs'
-  import { message } from '../message'
+  import { message } from '../ui-kit/src/api'
   import { fetcher } from './breach-fetch'
   import { flagName } from './flag-words'
   import Glyph from './Glyph.svelte'

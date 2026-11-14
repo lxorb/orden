@@ -13,9 +13,9 @@ const { appMenu } = await import('../app-menu')
 const { openTarget } = await import('../export/context')
 const { settings } = await import('../settings.svelte')
 const { menu } = await import('../menu.svelte')
-const { DIVIDER } = await import('../menu-item')
+const { DIVIDER } = await import('../ui-kit/src/menu-item')
 const History = (await import('../History.svelte')).default
-type MenuItem = import('../menu-item').MenuItem
+type MenuItem = import('../ui-kit/src/menu-item').MenuItem
 
 const ROOT = '/space'
 const NOTE = `${ROOT}/Diary.md`

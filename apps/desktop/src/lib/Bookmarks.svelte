@@ -329,13 +329,13 @@
   }
 
   async function newGroup() {
-    const { prompt } = await import('./prompt.svelte')
+    const { prompt } = await import('./ui-kit/src/api')
     const name = await prompt.ask({ title: 'New group', confirmLabel: 'Make' })
     if (name) workspace.bookmarks.addGroup(name)
   }
 
   async function renameGroup(mark: Bookmark) {
-    const { prompt } = await import('./prompt.svelte')
+    const { prompt } = await import('./ui-kit/src/api')
     const name = await prompt.ask({
       title: 'Rename',
       value: mark.text,

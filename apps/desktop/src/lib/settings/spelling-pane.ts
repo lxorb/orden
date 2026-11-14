@@ -1,5 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import { systemLocale } from '../region'
+import { systemLocale } from '../platform/src/api'
 import { DEFAULTS, modes } from '../modes.svelte'
 import {
   choosable,

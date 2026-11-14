@@ -1,7 +1,6 @@
 import { untrack } from 'svelte'
 import { accelerator } from '../accelerator'
-import { region } from '../region'
-import { heldForLife, log, invoke } from '../platform/src/api'
+import { region, heldForLife, log, invoke } from '../platform/src/api'
 import { shortcuts } from '../shortcuts.svelte'
 import { quickAdd } from './asked.svelte'
 import { addingOnce, ANSWERING, CHANNEL, heard, type Said } from './channel'

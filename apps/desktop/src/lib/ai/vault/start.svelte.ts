@@ -8,9 +8,10 @@ import {
   parsed,
   storedText,
   isNative,
+  NoWord,
+  wordSaid,
 } from '../../platform/src/api'
 import { hub } from '../../sync-client/src/api'
-import { NoWord, wordSaid } from '../../mobile/bridge'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
 import { ai } from '../store.svelte'

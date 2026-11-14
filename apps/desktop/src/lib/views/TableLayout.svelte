@@ -5,7 +5,7 @@
   import { menu } from '../menu.svelte'
   import { windowFor } from '../row-window'
   import { ListView, tokenRow } from '../row-window.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { viewport } from '../ui-kit/src/api'
   import Cell from './Cell.svelte'
   import { valueText } from './chips'
   import { columnMenu } from './column-menu'

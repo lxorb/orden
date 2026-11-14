@@ -31,7 +31,7 @@ export function syntaxChanges(
 }
 
 export async function convertSyntax() {
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const open = workspace.active
   const names = workspace.notes.map((one) => one.name)
 

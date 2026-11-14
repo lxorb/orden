@@ -1,5 +1,5 @@
 import { account } from '../../accounts/src/api'
-import { ACCENTS, accentIdFor } from '../../accents'
+import { ACCENTS, accentIdFor } from '../../theme/src/api'
 import { keep, storedText, isNative, platform, appleHandheld } from '../../platform/src/api'
 import { browserName } from './browser'
 

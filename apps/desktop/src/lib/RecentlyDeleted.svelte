@@ -2,7 +2,7 @@
   import Facts from './Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from './ago'
-  import { region } from './region'
+  import { region } from './platform/src/api'
   import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
   import { rowName } from './platform/src/api'

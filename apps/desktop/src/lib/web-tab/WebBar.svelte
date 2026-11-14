@@ -12,7 +12,7 @@
   import { longPress } from '../longpress'
   import { dur, scale } from '../platform/src/api'
   import { middleOpens } from '../new-tab'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { shortcuts } from '../shortcuts.svelte'
   import { showTab } from '../shortcuts/registry'
   import AddressField from './AddressField.svelte'
@@ -25,7 +25,7 @@
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
   import { invoke, isDesktop } from '../platform/src/api'
-  import { IN_A_PAGE } from '../trap'
+  import { IN_A_PAGE } from '../ui-controls/src/api'
   import { type Page, siteMark } from './pages.svelte'
 
   const {

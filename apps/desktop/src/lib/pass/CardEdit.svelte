@@ -1,6 +1,6 @@
 <script lang="ts">
   import { CARD_BRANDS, type Card, type CardBrand } from '@orden/pass/types'
-  import Select from '../Select.svelte'
+  import { Select } from '../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
   import { FIELD_ICONS } from './field-icons'

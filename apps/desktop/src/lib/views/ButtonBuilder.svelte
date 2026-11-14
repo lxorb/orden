@@ -1,8 +1,8 @@
 <script lang="ts">
   import { BUTTON, type Button, readButtons, withButton } from '@orden/bases'
   import { appCommands } from '../commands'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { bare, knownProperties } from './columns'
   import { setColumns } from './edit'
   import type { Kit } from './kit'

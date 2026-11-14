@@ -1,6 +1,6 @@
 import type { CarriedFiles } from '@orden/editor'
 import type { Action } from 'svelte/action'
-import type { Platform } from './keys'
+import type { Platform } from './ui-kit/src/api'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 
 const ONE = 'text/orden-path'

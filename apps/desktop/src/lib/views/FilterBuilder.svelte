@@ -1,8 +1,8 @@
 <script lang="ts">
   import { fromTodoist } from '@orden/bases'
-  import { region } from '../region'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { region } from '../platform/src/api'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { displayName, holdsOf, knownProperties } from './columns'
   import { setFilter, setShowCompleted } from './edit'
   import {

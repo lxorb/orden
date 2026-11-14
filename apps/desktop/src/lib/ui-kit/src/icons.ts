@@ -1,4 +1,4 @@
-import { ACCENTS } from './accents'
+import { ACCENTS } from '../../theme/src/api'
 import { fuzzy } from './fuzzy'
 
 export type IconNode = [tag: string, attrs: Record<string, string | number | undefined>][]

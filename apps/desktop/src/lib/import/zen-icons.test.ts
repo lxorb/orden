@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { keyNamed, loadIcons } from '../icons'
+import { keyNamed, loadIcons } from '../ui-kit/src/icons'
 import { ZEN_DRAWINGS, zenIcon, zenTint } from './zen-icons'
 
 describe("a Zen space's icon", () => {

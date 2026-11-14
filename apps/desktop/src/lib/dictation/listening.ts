@@ -1,4 +1,4 @@
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import { heardPiece } from '../recorder/transcribe'
 import { RATE, wavOf } from '../recorder/wav'
 import { type Capture, capture } from './capture'

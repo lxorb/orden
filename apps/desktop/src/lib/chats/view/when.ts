@@ -1,5 +1,4 @@
-import { region } from '../../region'
-import { localDate } from '../../region'
+import { region, localDate } from '../../platform/src/api'
 
 export function dayOf(at: number): string {
   const date = new Date(at)

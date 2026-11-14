@@ -1,7 +1,5 @@
 import { account, nameIn } from '../../accounts/src/api'
-import { busy } from '../../busy.svelte'
-import { message } from '../../message'
-import { prompt } from '../../prompt.svelte'
+import { busy, message, prompt } from '../../ui-kit/src/api'
 import { sync } from '../../sync.svelte'
 import type { Space } from '../../workspace.svelte'
 

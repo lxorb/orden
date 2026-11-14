@@ -8,7 +8,7 @@ vi.mock('./device', () => ({
   deviceSays: () => Promise.resolve(owner.can && owner.says),
 }))
 
-const { prompt } = await import('../prompt.svelte')
+const { prompt } = await import('../ui-kit/src/prompt.svelte')
 const { workspace } = await import('../workspace.svelte')
 const { unlocks } = await import('./unlocked.svelte')
 const { protect, unprotect } = await import('./unlocking')

@@ -1,10 +1,7 @@
 import { untrack } from 'svelte'
 import { answerThreadSpaces } from '../../automation/caller'
-import { region } from '../../region'
-import { message } from '../../message'
-import { owes, writing } from '../../parting'
-import { prompt } from '../../prompt.svelte'
 import {
+  region,
   without,
   forget,
   keep,
@@ -14,6 +11,8 @@ import {
   afterQuiet,
   onceAFrame,
 } from '../../platform/src/api'
+import { message, prompt } from '../../ui-kit/src/api'
+import { owes, writing } from '../../parting'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'

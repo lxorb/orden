@@ -1,7 +1,6 @@
 import { mount } from 'svelte'
 import { modes } from '../modes.svelte'
-import { overlays } from '../overlays'
-import { viewport } from '../viewport.svelte'
+import { overlays, viewport } from '../ui-kit/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { type Anchor, type From, fromOf, REENTRY, siteOf, spot, whereOf } from './card'

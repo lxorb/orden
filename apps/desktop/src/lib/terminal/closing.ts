@@ -16,7 +16,7 @@ export async function mayEnd(
   const [one] = loose
   if (!one) return true
 
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   const answer = await prompt.choose({
     title: loose.length === 1 ? `End ${one.shown}?` : 'End these online terminals?',
     detail: `Saved nowhere, a session kept running is found again in Settings, Online terminal.`,
@@ -62,7 +62,7 @@ async function mayStop(closing: readonly Tab[]): Promise<boolean> {
   const [only] = asking
   if (!only) return true
 
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   return prompt.confirm({
     title:
       asking.length === 1

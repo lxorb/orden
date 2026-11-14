@@ -776,7 +776,7 @@ describe('making a folder a kept space, whatever happens on the way', () => {
 
   test('shows how far it is while it goes, and says so when a space stays a folder', async () => {
     const { convertAll } = await import('./convert')
-    const { busy } = await import('../busy.svelte')
+    const { busy } = await import('../ui-kit/src/busy.svelte')
     notes()
     disk.dirs.add('/spaces/Stuck')
     disk.files.set('/spaces/Stuck/Plan.md', 'stuck')
@@ -818,7 +818,7 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     await Promise.all([convertAll(one.ws), other.convertAll(two.ws)])
     const root = '/spaces/.orden/Notes/Notes'
     expect([...one.said, ...two.said]).toEqual([`/spaces/Notes -> ${root}`])
-    const { busy } = await import('../busy.svelte')
+    const { busy } = await import('../ui-kit/src/busy.svelte')
     expect(busy.trouble).toBeNull()
     expect(disk.files.has(root)).toBe(true)
     expect([...disk.files.keys()].filter((one) => one.includes('/.backups/'))).toHaveLength(2)

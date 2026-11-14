@@ -1,12 +1,12 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import Spark from '../agents/ui/Spark.svelte'
-  import { closeOnBack } from '../backstack.svelte'
+  import { closeOnBack } from '../ui-kit/src/api'
   import { fade, LAYER, scale } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import TerminalMark from '../terminal/TerminalMark.svelte'
   import TickBox from '../TickBox.svelte'
-  import { trap } from '../trap'
+  import { trap } from '../ui-controls/src/api'
   import { quitAsk } from './state.svelte'
 
   const NAME = 'Orden'

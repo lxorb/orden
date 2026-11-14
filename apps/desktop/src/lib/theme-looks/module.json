@@ -1,23 +1,22 @@
 {
   "name": "theme-looks",
   "layer": "foundation",
-  "dependsOn": ["contracts", "theme", "sync-client", "sync-core", "themes", "accounts", "platform"],
+  "dependsOn": [
+    "contracts",
+    "theme",
+    "sync-client",
+    "sync-core",
+    "themes",
+    "accounts",
+    "platform",
+    "ui-kit",
+    "ui-controls"
+  ],
   "pending": [
     "apps/desktop/src/lib/Swatches.svelte",
-    "apps/desktop/src/lib/accents.ts",
-    "apps/desktop/src/lib/backstack.svelte.ts",
     "apps/desktop/src/lib/choose-files.ts",
-    "apps/desktop/src/lib/content-ground.ts",
     "apps/desktop/src/lib/held-database.ts",
-    "apps/desktop/src/lib/legibility.ts",
-    "apps/desktop/src/lib/message.ts",
-    "apps/desktop/src/lib/overlays.ts",
-    "apps/desktop/src/lib/scrollbar.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/sheet-pull.ts",
-    "apps/desktop/src/lib/slide.ts",
-    "apps/desktop/src/lib/trap.ts",
-    "apps/desktop/src/lib/viewport.svelte.ts",
     "apps/desktop/src/lib/web-tab/pages.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]

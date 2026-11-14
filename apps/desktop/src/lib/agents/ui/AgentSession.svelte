@@ -2,7 +2,7 @@
   import Facts from '../../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { localDate } from '../../region'
+  import { localDate } from '../../platform/src/api'
   import { dur, slide } from '../../platform/src/api'
   import { afterQuiet } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'

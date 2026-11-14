@@ -1,6 +1,6 @@
 import type { TransitionConfig } from 'svelte/transition'
 import { cubicOut } from 'svelte/easing'
-import { dur } from './platform/src/api'
+import { dur } from '../../platform/src/api'
 
 const STEP = 6
 export const LIST_STEP = 8

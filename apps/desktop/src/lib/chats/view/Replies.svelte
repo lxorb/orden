@@ -3,7 +3,7 @@
   import { may } from '@orden/chats'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { localNumber } from '../../region'
+  import { localNumber } from '../../platform/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'

@@ -110,7 +110,7 @@ const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { account } = await import('./accounts/src/account.svelte')
 const { newKinds, offeredKinds } = await import('./new-kinds')
-const { busy } = await import('./busy.svelte')
+const { busy } = await import('./ui-kit/src/busy.svelte')
 const { makeChat, openChat } = await import('./chats/view/open')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('./settings.svelte')
 

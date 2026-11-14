@@ -1,4 +1,4 @@
-import { dur } from './platform/src/api'
+import { dur } from '../../platform/src/api'
 
 const TWITCH = 12
 

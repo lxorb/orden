@@ -89,7 +89,7 @@ async function carryAsked(
   from: string,
   to: string,
 ): Promise<'chat' | 'file' | null> {
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   const answer = await prompt.choose(carryQuestion(names, from, to))
   return answer === 'chat' || answer === 'file' ? answer : null
 }

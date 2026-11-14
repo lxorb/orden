@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { accentFor } from '../../accents'
-  import { initial } from '../../icons'
+  import { accentFor } from '../../theme/src/api'
+  import { initial } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
-  import { overlays } from '../../overlays'
+  import { overlays } from '../../ui-kit/src/api'
   import { takeKeyboard } from '../../take-keyboard'
   import { isDesktop } from '../../platform/src/api'
   import { theme } from '../../theme/src/api'

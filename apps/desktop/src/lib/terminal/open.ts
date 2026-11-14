@@ -1,5 +1,5 @@
 import { identifier } from '../identifier'
-import type { MenuEntry } from '../menu-item'
+import type { MenuEntry } from '../ui-kit/src/api'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type Shell, shellName, shells } from './shells.svelte'
 import { hostIdOf, startingFolder, writeSpec } from './spec'

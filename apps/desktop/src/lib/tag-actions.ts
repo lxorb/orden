@@ -1,4 +1,4 @@
-import { message } from './message'
+import { message } from './ui-kit/src/api'
 import { settings } from './settings.svelte'
 import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
@@ -11,7 +11,7 @@ function refusedAsTag(name: string): boolean {
 }
 
 export async function renameTag(node: TagNode) {
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
 
   const typed = await prompt.ask({
     title: `Rename ${node.name}`,
@@ -32,7 +32,7 @@ export async function renameTag(node: TagNode) {
 }
 
 export async function removeTag(node: TagNode) {
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const up = liftedFrom(node.path)
 
   const answer = await prompt.choose({

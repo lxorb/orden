@@ -1,4 +1,4 @@
-import { message } from '../../../message'
+import { message } from '../../../ui-kit/src/api'
 import { log, keepJson, stored, stringList, invoke } from '../../../platform/src/api'
 import { isBuiltIn, theme, stamped } from '../../../theme/src/api'
 import { indexUrl, isNewer, readIndex, type StoreTheme, styleUrl } from './registry'

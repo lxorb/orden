@@ -13,7 +13,7 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: () => {
       asked.count += 1

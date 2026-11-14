@@ -1,15 +1,15 @@
 <script lang="ts">
   import { dropOver } from './drag-paths'
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from './backstack.svelte'
-  import Cross from './Cross.svelte'
+  import { closeOnBack } from './ui-kit/src/api'
+  import { Cross } from './ui-kit/src/api'
   import { feedback } from './feedback.svelte'
   import { MOST_PICTURES, type Picture, picturesAmong } from './feedback-pictures'
   import { pictureOf } from './pictures-away'
   import { fade, LAYER, scale } from './platform/src/api'
   import { followHref } from './open-link'
-  import { overlays } from './overlays'
-  import { trap } from './trap'
+  import { overlays } from './ui-kit/src/api'
+  import { trap } from './ui-controls/src/api'
   import { chooseFiles } from './choose-files'
 
   let text = $state('')

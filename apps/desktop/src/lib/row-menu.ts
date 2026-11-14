@@ -26,7 +26,7 @@ import { canWriteAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { showLabel } from './reveal'
 import { entryAt } from './tree-edits'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/api'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 import { protectEntries } from './protect/entries'
@@ -218,13 +218,13 @@ async function moveAllTo(paths: readonly string[]) {
       paths.every((path, at) => each[at]?.has(target.id) === true || folderOf(path) === target.id),
   )
 
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const into = await prompt.find({ title: 'Move to', options: targets })
   if (into) await workspace.moveMany([...paths], into)
 }
 
 async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const into = await prompt.find({ title: 'Move to', options: [...targets] })
 
   if (into) await workspace.moveMany([entry.path], into)
@@ -241,7 +241,7 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
     return
   }
 
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const sure = await prompt.confirm({
     title: `Delete ${rowName(marked.name, marked.is_dir)}?`,
     detail: 'The notes inside it go too.',
@@ -261,7 +261,7 @@ export async function refuseDeleting(paths: readonly string[]) {
     }),
   ).length
 
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const show = await prompt.confirm({
     title: 'Nothing archived is deleted',
     detail: held === 1 ? '1 archived item inside' : `${held} archived items inside`,

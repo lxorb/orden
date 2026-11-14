@@ -4,7 +4,7 @@
   import UnreadDot from '../ai/UnreadDot.svelte'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../panel-marks'
   import { chatsOn, hiddenKinds } from '../settings.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { viewport } from '../ui-kit/src/api'
   import { workspace } from '../workspace.svelte'
   import { writeNew } from '../write-new'
   import { PHONE_TABS, type PhoneTab } from '../workspace/panels'

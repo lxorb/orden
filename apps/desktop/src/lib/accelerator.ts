@@ -1,4 +1,4 @@
-import { parseCombination, type Platform } from './keys'
+import { parseCombination, type Platform } from './ui-kit/src/api'
 
 const NAMED: Readonly<Record<string, string>> = {
   ' ': 'Space',

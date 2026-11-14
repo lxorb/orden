@@ -1,7 +1,7 @@
 import { chatsFields } from '../chats-settings'
 import { glassesGroups, wordFields } from '../even/settings'
 import { setWord } from '../kind-choice'
-import { prompt } from '../prompt.svelte'
+import { prompt } from '../ui-kit/src/api'
 import {
   APPS_WORD,
   appsOn,

@@ -1,6 +1,14 @@
 import { tapOf } from './double-tap'
-import { matchesCombination, PHYSICAL, parseCombination } from './keys'
-import { DIVIDER, isSubmenu, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
+import {
+  matchesCombination,
+  PHYSICAL,
+  parseCombination,
+  DIVIDER,
+  isSubmenu,
+  type MenuGroup,
+  type MenuItem,
+  type MenuRow,
+} from './ui-kit/src/api'
 import { ran } from './usage/tally'
 
 type SystemItem =

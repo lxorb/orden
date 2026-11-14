@@ -141,7 +141,7 @@ const HISTORY = {
   text: 'PS C:\\work> npm run build\r\nfailed: 3 errors\r\nPS C:\\work> ',
 }
 
-const { localDate } = await import('../../src/lib/region')
+const { localDate } = await import('../../src/lib/platform/src/region')
 const when = localDate(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
 
 function restored(key: string): InstanceType<typeof Tab> {

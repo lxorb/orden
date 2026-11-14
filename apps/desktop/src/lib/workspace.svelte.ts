@@ -50,7 +50,7 @@ import {
   openExternal,
 } from './platform/src/api'
 import { noteId } from './note-id'
-import { busy } from './busy.svelte'
+import { busy, readTint, viewport } from './ui-kit/src/api'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -121,7 +121,6 @@ import { fetchAcross, inFileTurn, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
-import { readTint } from './icons'
 import {
   folderFor,
   folderNote,
@@ -137,7 +136,6 @@ import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } f
 import { rowIds } from './row-ids'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
-import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { pages } from './web-tab/pages.svelte'

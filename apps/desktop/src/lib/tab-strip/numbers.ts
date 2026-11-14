@@ -1,5 +1,5 @@
 import { WITHIN } from '../double-tap'
-import type { Platform } from '../keys'
+import type { Platform } from '../ui-kit/src/api'
 import { underAlt } from './letters'
 
 const PLACES: readonly (readonly [string, number | 'last'])[] = [

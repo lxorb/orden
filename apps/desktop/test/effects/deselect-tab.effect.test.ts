@@ -40,7 +40,7 @@ Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
 const { run } = await import('../../src/lib/canvas/actions')
 const { CanvasStore } = await import('../../src/lib/canvas/store.svelte')

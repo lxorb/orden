@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
-  import Switch from '../Switch.svelte'
+  import { Switch } from '../ui-controls/src/api'
   import { dur, slide } from '../platform/src/api'
   import { workspace } from '../workspace.svelte'
   import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'

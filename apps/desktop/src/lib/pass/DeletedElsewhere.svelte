@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Item } from '@orden/pass/types'
-  import { message } from '../message'
+  import { message } from '../ui-kit/src/api'
   import { said } from '../said.svelte'
   import ItemMark from './ItemMark.svelte'
   import { pass } from './store.svelte'

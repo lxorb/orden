@@ -1,4 +1,4 @@
-import { hexOf } from '../../../legibility'
+import { hexOf } from '../../../ui-controls/src/api'
 import { invoke, isDesktop } from '../../../platform/src/api'
 import { pages } from '../../../web-tab/pages.svelte'
 import { groundSaid, type PageSaid, stripGround } from './colours'

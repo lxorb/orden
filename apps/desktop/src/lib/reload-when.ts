@@ -1,4 +1,4 @@
-import { overlays } from './overlays'
+import { overlays } from './ui-kit/src/api'
 import { keep, storedText, isNative, afterQuiet } from './platform/src/api'
 
 const HANDS_OFF = 3000

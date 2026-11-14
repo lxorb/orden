@@ -1,5 +1,5 @@
 import { SvelteMap } from 'svelte/reactivity'
-import { message } from '../../message'
+import { message } from '../../ui-kit/src/api'
 import type { Grant, Minted } from '../verbs'
 import type { AgentsCrate, Heard } from './crate'
 import { type Call, readCall } from '../ui/session'

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { accentFor } from '../../accents'
-  import { initial } from '../../icons'
+  import { accentFor } from '../../theme/src/api'
+  import { initial } from '../../ui-kit/src/api'
   import { theme } from '../../theme/src/api'
 
   const { name }: { name: string } = $props()

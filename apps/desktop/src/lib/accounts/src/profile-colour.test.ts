@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS, accentColour, accentFor, accentIdFor } from '../../accents'
+import { ACCENTS, accentColour, accentFor, accentIdFor } from '../../theme/src/accents'
 import { readPerson } from './read'
 
 const read = (path: string) => readFileSync(join(import.meta.dirname, path), 'utf8')

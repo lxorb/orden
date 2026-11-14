@@ -5,8 +5,14 @@ import {
   type PaperInks,
   paperFloor,
   percent,
-} from '../../../content-ground'
-import { AA, hexOf, over, type Rgb, rgbOf, SHARP, type Span } from '../../../legibility'
+  AA,
+  hexOf,
+  over,
+  type Rgb,
+  rgbOf,
+  SHARP,
+  type Span,
+} from '../../../ui-controls/src/api'
 import { floorFor, type Palette } from './floors'
 import type { Scheme } from '@orden/contracts'
 import type { Held } from './held'

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Sort } from '@orden/bases'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { displayName, knownProperties } from './columns'
   import { setGroup, setSort, setSubGroup } from './edit'
   import type { Kit } from './kit'

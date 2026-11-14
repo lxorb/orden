@@ -1,7 +1,7 @@
 import { documentOf, type EditorView } from '@orden/editor'
 import { account } from '../../accounts/src/api'
 import type { PlaneSurface } from '../../canvas/shared'
-import { busy } from '../../busy.svelte'
+import { busy } from '../../ui-kit/src/api'
 import { sha256, without } from '../../platform/src/api'
 import { roomKindOf } from './kind'
 import type { PlaneRoom, Room, Seen } from '../../collab-rooms/src/api'

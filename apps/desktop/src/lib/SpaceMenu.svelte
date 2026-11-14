@@ -7,7 +7,7 @@
   import { roving } from './roving'
   import RowMore from './RowMore.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { arrive, letGo, LIST_STEP } from './slide'
+  import { arrive, letGo, LIST_STEP } from './ui-kit/src/api'
   import { newSpace, spaceMenu } from './space-actions'
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
@@ -15,7 +15,7 @@
   import { sharedWithYou } from './sharing.svelte'
   import SpaceBadge from './SpaceBadge.svelte'
   import { spendClick } from './spent-click'
-  import { trap } from './trap'
+  import { trap } from './ui-controls/src/api'
   import { type Space, workspace } from './workspace.svelte'
 
   const { close }: { close: () => void } = $props()

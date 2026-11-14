@@ -58,7 +58,7 @@ window.matchMedia = (query: string) =>
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { theme } = await import('../../src/lib/theme/src/theme.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { chrome } = await import('../../src/lib/theme/src/chrome.svelte')
 const { grounds } = await import('../../src/lib/theme-looks/src/glass/grounds.svelte')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default

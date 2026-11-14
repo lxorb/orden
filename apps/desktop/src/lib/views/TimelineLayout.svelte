@@ -1,7 +1,7 @@
 <script lang="ts">
   import { addDays, cellValue, type Row, rowId, type Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
-  import { localDate } from '../region'
+  import { localDate } from '../platform/src/api'
   import type { RowChange } from '../rows/write'
   import { priorityTone } from '../quick-add/labels'
   import { changeOf } from './columns'

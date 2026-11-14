@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { localDate } from '../region'
+  import { localDate } from '../platform/src/api'
   import Facts from '../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -9,18 +9,18 @@
   import { tauriCrate } from '../agents/settings/crate'
   import { AgentsPane } from '../agents/settings/pane.svelte'
   import { reach } from '../agents/settings/reach.svelte'
-  import { closeOnBack } from '../backstack.svelte'
+  import { closeOnBack } from '../ui-kit/src/api'
   import { connectors } from '../connectors.svelte'
   import { dur, slide } from '../platform/src/api'
   import { settings } from '../settings.svelte'
-  import { arrive, segmented } from '../slide'
+  import { arrive, segmented } from '../ui-kit/src/api'
   import { keep, storedText } from '../platform/src/api'
   import { invoke, isDesktop, platform } from '../platform/src/api'
   import AccountSteps from './AccountSteps.svelte'
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
-  import Hint from '../Hint.svelte'
-  import Switch from '../Switch.svelte'
+  import { Hint } from '../ui-controls/src/api'
+  import { Switch } from '../ui-controls/src/api'
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
 

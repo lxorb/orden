@@ -1,9 +1,9 @@
 import { tick } from 'svelte'
 import { agentMarks } from '../agent-marks.svelte'
-import type { MenuEntry } from '../menu-item'
+import type { MenuEntry } from '../ui-kit/src/api'
 import { keep, storedText } from '../platform/src/api'
 import { pages } from '../web-tab/pages.svelte'
-import { viewport } from '../viewport.svelte'
+import { viewport } from '../ui-kit/src/api'
 import { type Tab, workspace } from '../workspace.svelte'
 import { closedAround } from '../workspace/closing-around'
 import type { TabKind } from '../workspace/tab-kinds'
@@ -56,7 +56,7 @@ async function mayLose(tabs: readonly Tab[]): Promise<boolean> {
   if (!losing.some(Boolean)) return true
 
   const [only] = tabs
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   return prompt.confirm({
     title: tabs.length === 1 && only ? `Unload ${only.shown}?` : 'Unload these tabs?',
     detail: 'Anything typed into a page and not sent, or still being sent, is lost.',

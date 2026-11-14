@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from './Icon.svelte'
   import { iconLibrary } from './icon-library.svelte'
-  import { initial, readIcon } from './icons'
+  import { initial, readIcon } from './ui-kit/src/api'
   import { workspace } from './workspace.svelte'
 
   const {

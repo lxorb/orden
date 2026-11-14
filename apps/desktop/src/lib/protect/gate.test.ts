@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const asked = vi.hoisted(() => ({ answer: true, details: [] as string[] }))
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (options: { detail?: string }) => {
       asked.details.push(options.detail ?? '')

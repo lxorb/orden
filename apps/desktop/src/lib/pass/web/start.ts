@@ -6,7 +6,7 @@ import { settings } from '../../settings.svelte'
 import { shortcuts } from '../../shortcuts.svelte'
 import { hub } from '../../sync-client/src/api'
 import { theme } from '../../theme/src/api'
-import { viewport } from '../../viewport.svelte'
+import { viewport } from '../../ui-kit/src/api'
 import { pass } from '../store.svelte'
 import { startPassSync } from '../syncing.svelte'
 

@@ -16,7 +16,7 @@
   import { type AppContext, runEntry } from './shortcuts/registry'
   import { shortcuts } from './shortcuts.svelte'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
 
   const {
     view,

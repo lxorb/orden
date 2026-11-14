@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Folder, Vault } from '@orden/pass/types'
   import FolderMark from 'lucide/dist/esm/icons/folder.mjs'
-  import Sheet from '../Sheet.svelte'
+  import { Sheet } from '../ui-controls/src/api'
   import Glyph from './Glyph.svelte'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'

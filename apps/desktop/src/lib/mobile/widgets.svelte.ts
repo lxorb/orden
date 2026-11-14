@@ -1,9 +1,15 @@
 import { shownWords } from '@orden/markdown/escapes'
-import { shownName, insideSpace, afterQuiet } from '../platform/src/api'
+import {
+  shownName,
+  insideSpace,
+  afterQuiet,
+  frameWord,
+  method,
+  wordSaid,
+} from '../platform/src/api'
 import { todos } from '../tasks-model/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 import { isTile } from '../workspace/bookmarks.svelte'
-import { frameWord, method, wordSaid } from './bridge'
 
 const MOST = 5
 

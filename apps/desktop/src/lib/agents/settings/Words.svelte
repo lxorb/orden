@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Cross from '../../Cross.svelte'
-  import Hint from '../../Hint.svelte'
+  import { Cross } from '../../ui-kit/src/api'
+  import { Hint } from '../../ui-controls/src/api'
 
   const {
     words,

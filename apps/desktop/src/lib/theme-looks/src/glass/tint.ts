@@ -1,6 +1,7 @@
 import type { Scheme } from '@orden/contracts'
-import { type PaperInks, paperFloor } from '../../../content-ground'
 import {
+  type PaperInks,
+  paperFloor,
   AA,
   hexOf,
   type Lift,
@@ -10,7 +11,7 @@ import {
   scrimFloor,
   SHARP,
   type Span,
-} from '../../../legibility'
+} from '../../../ui-controls/src/api'
 import type { Palette } from '../wallpaper/floors'
 import { along, type Stops } from './pairs'
 

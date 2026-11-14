@@ -157,7 +157,7 @@ const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./accounts/src/account.svelte')
 type RemoteSpace = import('./accounts/src/routes').RemoteSpace
 const { trash } = await import('./trash.svelte')
-const { prompt } = await import('./prompt.svelte')
+const { prompt } = await import('./ui-kit/src/prompt.svelte')
 const { sync } = await import('./sync.svelte')
 const { keptAway } = await import('./web/away.svelte')
 

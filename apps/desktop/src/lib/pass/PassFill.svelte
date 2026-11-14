@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { takeKeyboard } from '../take-keyboard'
   import { isDesktop } from '../platform/src/api'
   import { autofill } from './autofill'

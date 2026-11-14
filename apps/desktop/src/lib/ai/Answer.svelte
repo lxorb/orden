@@ -5,7 +5,7 @@
 </script>
 
 <script lang="ts">
-  import { copyText } from '../clipboard'
+  import { copyText } from '../ui-controls/src/api'
   import { mathsWaiting } from '../markdown-view.svelte'
   import { drawInPieces } from './answer-pieces'
   import { patchHtml } from './patch-html'

@@ -11,7 +11,7 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: (options: { title: string; options: { id: string }[] }) => {
       world.asked.push({ title: options.title, options: options.options.map((one) => one.id) })

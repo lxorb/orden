@@ -16,7 +16,7 @@
   import UsersRound from 'lucide/dist/esm/icons/users-round.mjs'
   import { account } from '../accounts/src/api'
   import Icon from '../Icon.svelte'
-  import { readIcon } from '../icons'
+  import { readIcon } from '../ui-kit/src/api'
   import { menu } from '../menu.svelte'
   import SharedMark from '../SharedMark.svelte'
   import Glyph from './Glyph.svelte'

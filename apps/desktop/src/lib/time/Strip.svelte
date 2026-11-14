@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { localDate } from '../region'
+  import { localDate } from '../platform/src/api'
   import { HOUR, MINUTE, piecesIn } from './days'
   import { bucketsOf } from './lanes'
   import { clock, nameOf, tintOf } from './look'

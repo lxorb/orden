@@ -1,4 +1,4 @@
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import { forget, keep, storedText, invoke, isDesktop } from '../platform/src/api'
 
 type Fit = 'fits' | 'platform' | 'cores' | 'memory'

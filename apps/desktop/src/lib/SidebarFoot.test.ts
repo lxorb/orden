@@ -3,7 +3,7 @@ import { render } from 'svelte/server'
 
 vi.mock('./surfaces.svelte', () => ({ showFeedback: () => undefined }))
 
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const SidebarFoot = (await import('./SidebarFoot.svelte')).default
 
 function drawn(device: typeof viewport.device) {

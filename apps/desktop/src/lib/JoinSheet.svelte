@@ -3,8 +3,8 @@
   import { account } from './accounts/src/api'
   import { joining } from './joining.svelte'
   import { dur, fade, LAYER, scale } from './platform/src/api'
-  import { overlays } from './overlays'
-  import { trap } from './trap'
+  import { overlays } from './ui-kit/src/api'
+  import { trap } from './ui-controls/src/api'
 
   const invitation = $derived(joining.invitation)
   const who = $derived(invitation?.from ?? 'Somebody')

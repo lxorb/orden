@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { shownSite } from './idn'
   import { dur, fly } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { takeKeyboard } from '../take-keyboard'
   import { isDesktop } from '../platform/src/api'
   import type { Asking } from './permissions.svelte'

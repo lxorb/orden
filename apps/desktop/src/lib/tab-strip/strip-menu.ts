@@ -1,4 +1,4 @@
-import { DIVIDER, type MenuEntry } from '../menu-item'
+import { DIVIDER, type MenuEntry } from '../ui-kit/src/api'
 import { shortcuts } from '../shortcuts.svelte'
 import { workspace } from '../workspace.svelte'
 

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { defaultKeyFor } from '@orden/editor'
-import { parseCombination, type Platform, sameCombination } from '../keys'
+import { parseCombination, type Platform, sameCombination } from '../ui-kit/src/keys'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

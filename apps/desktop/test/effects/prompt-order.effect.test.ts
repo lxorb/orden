@@ -29,7 +29,7 @@ afterEach(() => {
 })
 
 test('a Mac puts the default last, at the right edge', async () => {
-  const { prompt } = await import('../../src/lib/prompt.svelte')
+  const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
   const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
   const shown = mount(PromptSheet, { target })
   close = () => void unmount(shown)

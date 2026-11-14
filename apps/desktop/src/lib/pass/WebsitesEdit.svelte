@@ -1,8 +1,8 @@
 <script lang="ts">
   import { MATCH_RULES, type MatchRule, type Website } from '@orden/pass/types'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { FIELD_ICONS } from './field-icons'
   import { matchLabel } from './field-words'
   import Glyph from './Glyph.svelte'

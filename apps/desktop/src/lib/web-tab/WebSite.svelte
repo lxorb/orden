@@ -4,11 +4,11 @@
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
-  import { localDate } from '../region'
+  import { localDate } from '../platform/src/api'
   import { shownSite } from './idn'
   import { invoke } from '../platform/src/api'
   import { dur, fly } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import type { Ask } from './permissions.svelte'
   import { ASKS, grants } from './permissions.svelte'
 

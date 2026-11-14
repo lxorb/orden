@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { closeOnBack } from '../backstack.svelte'
+  import { closeOnBack } from '../ui-kit/src/api'
   import {
     BROWSERS,
     type Brand,

@@ -23,7 +23,7 @@
   import { rooms } from './collab/src/api'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import SharedMark from './SharedMark.svelte'
   import { privateMark, syncMark, soundMark, tabNameField, tabOverview } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
@@ -75,10 +75,10 @@
   import { fitTabs, iconTabs } from './tab-strip/icon-tabs.svelte'
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
-  import { initial } from './icons'
+  import { initial } from './ui-kit/src/api'
   import { SvelteSet } from 'svelte/reactivity'
   import { dur, fade, stillness } from './platform/src/api'
-  import Cross from './Cross.svelte'
+  import { Cross } from './ui-kit/src/api'
 
   const { paneId, caption = false }: { paneId: string; caption?: boolean } = $props()
 

@@ -27,7 +27,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { grants } = await import('../../src/lib/web-tab/permissions.svelte')
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const WebAsk = (await import('../../src/lib/web-tab/WebAsk.svelte')).default
 
 let target: HTMLElement

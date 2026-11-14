@@ -54,7 +54,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
       // Nothing to measure.
     }
   }
-  const { viewport } = await import('../../src/lib/viewport.svelte')
+  const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
   const { fullscreen } = await import('../../src/lib/fullscreen.svelte')
   const { default: Sidebar } = await import('../../src/lib/Sidebar.svelte')
   const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')

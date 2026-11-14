@@ -1,4 +1,4 @@
-import { prompt } from '../prompt.svelte'
+import { prompt } from '../ui-kit/src/api'
 import { invoke } from '../platform/src/api'
 import { restartToUpdate } from '../updater'
 
