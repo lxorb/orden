@@ -1,5 +1,6 @@
 import { renderMarkdown } from '@orden/markdown'
 import { readTask } from '@orden/markdown/task-line'
+import { plainWords } from '@orden/markdown/task-reminders'
 import { describe, expect, test } from 'vitest'
 import {
   type Arrived,
@@ -14,7 +15,6 @@ import {
   sharedMarkdown,
   sharedWords,
 } from './shared'
-import { plain } from '../views/src/inline'
 
 function item(one: Partial<SharedItem>): SharedItem {
   return { name: '', mime: '', size: 0, text: null, ...one }
@@ -159,7 +159,7 @@ describe('a share as a task', () => {
       expect(task?.priority).toBe(4)
       expect(task?.recurrence).toBeUndefined()
       expect(task?.fields).toEqual({})
-      expect(plain(task?.text ?? '').replace(/\u2060/g, '')).toBe(said)
+      expect(plainWords(task?.text ?? '').replace(/\u2060/g, '')).toBe(said)
     }
     const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Read later #tips' })] }))}`
     expect(renderMarkdown(line, { tagHref: (tag) => `#${tag}` })).toContain('Read later #tips</li>')
