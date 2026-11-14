@@ -1,30 +1,6 @@
 import { door } from '@orden/markdown/door'
-import { deviceName } from './device'
-import { isRecord, isString, parsed } from './stored'
-
-export type {
-  Account,
-  SpaceRole,
-  GivenRole,
-  Guest,
-  Member,
-  Sharing,
-  SharedItem,
-  Invitation,
-  Joined,
-  RemoteSpace,
-  FormAnswer,
-  SiteSettings,
-  SiteChanges,
-  RemoteNote,
-  SecondState,
-  RemoteSession,
-  SpaceFile,
-  AccountSettings,
-  KeyState,
-  DnsRecord,
-  DomainStatus,
-} from './api/routes'
+import { deviceName } from '../../device'
+import { isRecord, isString, parsed } from '../../stored'
 
 export const BASE: string = import.meta.env.VITE_ORDEN_API ?? 'https://orden.so'
 
@@ -114,11 +90,11 @@ export async function request<T>(
   return body as T
 }
 
-type Routes = (typeof import('./api/routes'))['routes']
+type Routes = (typeof import('./routes'))['routes']
 
 let table: Routes | null = null
 
-const routes = door(async () => (table = (await import('./api/routes')).routes))
+const routes = door(async () => (table = (await import('./routes')).routes))
 
 export function warmCalls(): Promise<unknown> {
   return routes()

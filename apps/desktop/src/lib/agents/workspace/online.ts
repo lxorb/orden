@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/api'
 import { listed, type Listed, type Refused as Why } from '../../online/calls'
 import { opens, rowOf } from '../../online/listing'
 import { machine } from '../../online/machine.svelte'

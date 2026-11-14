@@ -5,7 +5,7 @@ import {
   catalogueOf,
   type Installed,
 } from '@orden/online/apps'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { canWriteAt } from '../sharing.svelte'
 import { nameOf } from '../space-paths'
 import { joinPath } from '../tauri'
@@ -24,7 +24,7 @@ export async function makeApplication(): Promise<Tab | null> {
   const root = workspace.activeSpace?.root
   if (!root || !canWriteAt(root)) return null
 
-  const { request } = await import('../api')
+  const { request } = await import('../accounts/src/api')
   const { prompt } = await import('../prompt.svelte')
   const listed = await request<{ devices?: Computer[] }>('/v2/devices', { token }).catch(() => null)
   const computers = (listed?.devices ?? []).filter((one) => mayHost(one.platform))
@@ -96,7 +96,7 @@ async function installedOn(host: string, here: boolean, token: string): Promise<
     const listed = await invoke<unknown>('apps_installed').catch(() => null)
     return catalogueOf(listed) ?? []
   }
-  const { request } = await import('../api')
+  const { request } = await import('../accounts/src/api')
   const answered = await request<{ apps?: unknown }>(
     `${CATALOGUE_PATH}/${encodeURIComponent(host)}`,
     { token },

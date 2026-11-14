@@ -1,5 +1,5 @@
 import { padTradeOf, padWire } from '@orden/sync-core'
-import { ApiError, request } from '../api'
+import { ApiError, request } from '../accounts/src/api'
 import type { PadServer } from './sync'
 
 const missing = (error: unknown): boolean =>

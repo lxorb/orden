@@ -1,6 +1,6 @@
 import { readCanvas } from '@orden/markdown/canvas'
 import { pagesOf } from '@orden/markdown/pages'
-import { ApiError } from '../api'
+import { ApiError } from '../accounts/src/api'
 import { nameOf } from '../space-paths'
 import { paperOf } from './held'
 

@@ -70,8 +70,8 @@ const world = vi.hoisted((): World => ({
   showing: [],
 }))
 
-vi.mock('./api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./api')>()
+vi.mock('./accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./accounts/src/client')>()
 
   const answer = (what: string, who = world.sharing) => {
     world.asked.push(what)
@@ -193,7 +193,7 @@ vi.mock('./message', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-import { account } from './account.svelte'
+import { account } from './accounts/src/account.svelte'
 import { rooms } from './collab/src/api'
 import { accentFor } from './accents'
 import {
@@ -218,7 +218,7 @@ import {
   trustAgain,
 } from './sharing.svelte'
 import { pairSpaces, type Pairing } from './space-pairing'
-import type { RemoteSpace, SharedItem } from './api'
+import type { RemoteSpace, SharedItem } from './accounts/src/routes'
 import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { memoryStorage } from '../../test/disk'

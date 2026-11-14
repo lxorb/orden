@@ -1,5 +1,5 @@
-import type { SharedItem } from './api'
-import { account } from './account.svelte'
+import type { SharedItem } from './accounts/src/api'
+import { account } from './accounts/src/api'
 import { sharedWithYou } from './sharing.svelte'
 import { insideSpace, within } from './space-paths'
 import { sync } from './sync.svelte'

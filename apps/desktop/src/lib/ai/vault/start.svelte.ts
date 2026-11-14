@@ -1,6 +1,6 @@
 import { mount, unmount, untrack } from 'svelte'
-import { account } from '../../account.svelte'
-import { request } from '../../api'
+import { account } from '../../accounts/src/api'
+import { request } from '../../accounts/src/api'
 import { deviceName } from '../../device'
 import { forget, keep, keepJson, parsed, storedText } from '../../stored'
 import { hub } from '../../sync-client/src/api'

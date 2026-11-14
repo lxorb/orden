@@ -18,7 +18,7 @@
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { renamed } from './lib/renamed.svelte'
-  import { account } from './lib/account.svelte'
+  import { account } from './lib/accounts/src/api'
   import { joining } from './lib/joining.svelte'
   import { arriving } from './lib/arriving.svelte'
   import { busy } from './lib/busy.svelte'

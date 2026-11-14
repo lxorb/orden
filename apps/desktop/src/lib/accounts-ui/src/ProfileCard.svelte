@@ -1,16 +1,16 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from '../backstack.svelte'
-  import { localDate } from '../region'
-  import { fly, LAYER } from '../motion'
-  import { overlays } from '../overlays'
-  import { settings } from '../settings.svelte'
-  import { openExternal } from '../tauri'
+  import { closeOnBack } from '../../backstack.svelte'
+  import { localDate } from '../../region'
+  import { fly, LAYER } from '../../motion'
+  import { overlays } from '../../overlays'
+  import { settings } from '../../settings.svelte'
+  import { openExternal } from '../../tauri'
   import Avatar from './Avatar.svelte'
   import { card } from './card.svelte'
-  import { people } from './people.svelte'
-  import { stands } from './status'
-  import { farApart } from './zone'
+  import { people } from '../../accounts/src/api'
+  import { stands } from '../../accounts/src/api'
+  import { farApart } from '../../accounts/src/api'
 
   const shown = $derived(card.shown)
   const person = $derived(shown ? people.of(shown.id) : undefined)

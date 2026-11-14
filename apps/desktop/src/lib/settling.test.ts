@@ -18,7 +18,7 @@ const world = vi.hoisted((): World => ({
   settled: 0,
 }))
 
-vi.mock('./account.svelte', () => ({
+vi.mock('./accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',
     user: { id: 'me' },

@@ -2,7 +2,7 @@
   import type { LinkRow } from '@orden/pass/wire'
   import Link from 'lucide/dist/esm/icons/link.mjs'
   import Trash from 'lucide/dist/esm/icons/trash-2.mjs'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import { message } from '../message'
   import { said } from '../said.svelte'
   import Gate from './Gate.svelte'

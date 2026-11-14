@@ -1,5 +1,5 @@
 import type { Context, Row } from '@orden/bases'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 
 interface Lookups {
   byPath: Map<string, Row>

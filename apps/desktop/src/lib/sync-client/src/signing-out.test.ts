@@ -14,8 +14,8 @@ const devices = vi.hoisted(() => ({
   asked: 0,
   answer: (): Promise<unknown> => Promise.resolve({ devices: [] }),
 }))
-vi.mock('../../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../api')>()),
+vi.mock('../../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/client')>()),
   request: () => {
     devices.asked += 1
     return devices.answer()
@@ -143,7 +143,7 @@ describe("a device's name", () => {
     (runner as unknown as { nameOf(device: string): Promise<string> }).nameOf(device)
 
   test('is asked for once by everyone who wants it at once, and a failure is not kept', async () => {
-    const { account } = await import('../../account.svelte')
+    const { account } = await import('../../accounts/src/account.svelte')
     account.token = 't1'
     Object.assign(account, { user: { id: 'u1' } })
     Object.assign(runner, { names: null, accountId: 'u1' })
@@ -166,7 +166,7 @@ describe("a device's name", () => {
   })
 
   test('is asked again of the account signed in after another', async () => {
-    const { account } = await import('../../account.svelte')
+    const { account } = await import('../../accounts/src/account.svelte')
     account.token = 't1'
     Object.assign(account, { user: { id: 'u1' } })
     Object.assign(runner, { names: null, accountId: 'u1' })

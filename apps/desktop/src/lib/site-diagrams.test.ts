@@ -16,7 +16,7 @@ const world = vi.hoisted((): World => ({
   kept: {},
 }))
 
-vi.mock('./api', () => ({
+vi.mock('./accounts/src/client', () => ({
   api: {
     putBlob: (
       _token: string,

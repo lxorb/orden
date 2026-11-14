@@ -53,7 +53,7 @@ vi.mock('../../tauri', () => ({
     return Promise.reject(new Error(`nothing at ${path}`))
   },
 }))
-vi.mock('../../api', () => ({ api: {}, BASE: '' }))
+vi.mock('../../accounts/src/client', () => ({ api: {}, BASE: '' }))
 vi.mock('../../link-index.svelte', () => ({
   links: { noteSaved: (...said: unknown[]) => saved.push(said) },
 }))

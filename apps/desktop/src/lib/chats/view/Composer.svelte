@@ -15,7 +15,7 @@
   import { insideSpace } from '../../space-paths'
   import { workspace } from '../../workspace.svelte'
   import { afterQuiet } from '../../timing'
-  import Avatar from '../../people/Avatar.svelte'
+  import { Avatar } from '../../accounts-ui/src/api'
   import { Attachments } from './attachments.svelte'
   import type { Scheduled } from '../api'
   import { firstLine } from './body'

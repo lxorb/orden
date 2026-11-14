@@ -19,7 +19,7 @@
     keptByAccount,
     pageOfFile,
   } from './canvas/render'
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import CanvasPdf from './CanvasPdf.svelte'
   import { type Box, isLineShape, shapeLine, shapePath } from './canvas/geometry'
   import { shownColour } from './canvas/palette'

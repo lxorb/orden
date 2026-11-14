@@ -8,9 +8,8 @@ export async function syncLook(): Promise<void> {
   if (started) return
   started = true
 
-  const [{ account }, { api }, { hub }] = await Promise.all([
-    import('../../../account.svelte'),
-    import('../../../api'),
+  const [{ account, api }, { hub }] = await Promise.all([
+    import('../../../accounts/src/api'),
     import('../../../sync-client/src/api'),
   ])
 

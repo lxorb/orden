@@ -1,7 +1,7 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { inForeignCopy } from '@orden/sync-core'
 import { isUntouchedAgents } from '../agents-seed'
-import { api } from '../api'
+import { api } from '../accounts/src/api'
 import { sha256 } from '../bytes'
 import { relativeTo } from '../space-paths'
 import { invoke } from '../tauri'

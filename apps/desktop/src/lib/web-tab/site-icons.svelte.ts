@@ -1,5 +1,5 @@
-import { account } from '../account.svelte'
-import { api } from '../api'
+import { account } from '../accounts/src/api'
+import { api } from '../accounts/src/api'
 import type { LoadedSet } from '../icon-sets'
 import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 

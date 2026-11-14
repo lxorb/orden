@@ -1,4 +1,4 @@
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { joining } from './joining.svelte'
 import { workspace } from './workspace.svelte'
 

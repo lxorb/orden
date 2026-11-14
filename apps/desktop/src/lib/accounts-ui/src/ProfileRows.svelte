@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { dropOver } from '../drag-paths'
-  import { account } from '../account.svelte'
-  import { chooseFiles, PICTURES } from '../choose-files'
-  import Glyph from '../chats/view/Glyph.svelte'
-  import type { Box } from '../chats/view/place'
-  import Cross from '../Cross.svelte'
-  import { message } from '../message'
-  import { menu } from '../menu.svelte'
-  import { portal } from '../portal'
-  import Select from '../Select.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { dropOver } from '../../drag-paths'
+  import { account } from '../../accounts/src/api'
+  import { chooseFiles, PICTURES } from '../../choose-files'
+  import Glyph from '../../chats/view/Glyph.svelte'
+  import type { Box } from '../../chats/view/place'
+  import Cross from '../../Cross.svelte'
+  import { message } from '../../message'
+  import { menu } from '../../menu.svelte'
+  import { portal } from '../../portal'
+  import Select from '../../Select.svelte'
+  import { viewport } from '../../viewport.svelte'
   import Avatar from './Avatar.svelte'
   import AvatarSheet from './AvatarSheet.svelte'
-  import type { Status } from './face'
-  import { changeProfile, removeFace } from './mine'
-  import { CLEARS, type Clears, clearsAt, stands } from './status'
-  import Hint from '../Hint.svelte'
-  import Switch from '../Switch.svelte'
+  import type { Status } from '../../accounts/src/api'
+  import { changeProfile, removeFace } from '../../accounts/src/api'
+  import { CLEARS, type Clears, clearsAt, stands } from '../../accounts/src/api'
+  import Hint from '../../Hint.svelte'
+  import Switch from '../../Switch.svelte'
 
   const user = $derived(account.user)
   const status = $derived(user && stands(user.status, Date.now()) ? (user.status ?? null) : null)
@@ -201,7 +201,7 @@
     </div>
 
     {#if picking}
-      {#await Promise.all( [import('../chats/view/Float.svelte'), import('../emoji/EmojiPicker.svelte')] ) then [float, picker]}
+      {#await Promise.all( [import('../../chats/view/Float.svelte'), import('../../emoji/EmojiPicker.svelte')] ) then [float, picker]}
         <div use:portal>
           <float.default at={picking} label="Emoji" onclose={() => (picking = null)}>
             <picker.default

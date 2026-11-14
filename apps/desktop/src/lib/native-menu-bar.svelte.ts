@@ -6,7 +6,7 @@ import type {
   PredefinedMenuItem,
   Submenu,
 } from '@tauri-apps/api/menu'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { fullscreen } from './fullscreen.svelte'
 import { hiddenKinds } from './settings.svelte'
 import type { MenuItem } from './menu-item'

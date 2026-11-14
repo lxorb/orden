@@ -1,5 +1,5 @@
-import { api, request } from '../api'
-import { isRecord, isString } from '../stored'
+import { api, request } from './client'
+import { isRecord, isString } from '../../stored'
 import type { Avatar, Presence, Status } from './face'
 import { type Person, readPerson, readPresence } from './read'
 

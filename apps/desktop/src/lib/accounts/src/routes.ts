@@ -1,8 +1,8 @@
-import { ApiError, BASE, request } from '../api'
-import { isRecord, isString, parsed } from '../stored'
-import type { Bookmark } from '../workspace/bookmarks.svelte'
-import type { GraphSettings } from '../workspace/graph-settings.svelte'
-import type { Avatar, Status } from '../people/face'
+import { ApiError, BASE, request } from './client'
+import { isRecord, isString, parsed } from '../../stored'
+import type { Bookmark } from '../../workspace/bookmarks.svelte'
+import type { GraphSettings } from '../../workspace/graph-settings.svelte'
+import type { Avatar, Status } from './face'
 
 export interface Account {
   id: string

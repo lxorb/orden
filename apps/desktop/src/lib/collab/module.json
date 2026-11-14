@@ -1,10 +1,9 @@
 {
   "name": "collab",
   "layer": "foundation",
-  "dependsOn": ["contracts", "collab-rooms", "editor", "markdown", "theme"],
+  "dependsOn": ["contracts", "collab-rooms", "editor", "markdown", "theme", "accounts"],
   "pending": [
     "apps/desktop/src/lib/accents.ts",
-    "apps/desktop/src/lib/account.svelte.ts",
     "apps/desktop/src/lib/busy.svelte.ts",
     "apps/desktop/src/lib/bytes.ts",
     "apps/desktop/src/lib/canvas/shared.ts",

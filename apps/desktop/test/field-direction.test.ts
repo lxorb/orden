@@ -99,7 +99,8 @@ test('a code, key or address is laid out left to right, so its groups keep their
   )
   const places = [
     ...svelteFiles(join(SOURCE, 'lib', 'pass')),
-    ...['Security', 'Copyable', 'SignIn'].map((name) => join(SOURCE, 'lib', `${name}.svelte`)),
+    join(SOURCE, 'lib', 'Copyable.svelte'),
+    ...['Security', 'SignIn'].map((name) => join(SOURCE, 'lib/accounts-ui/src', `${name}.svelte`)),
   ]
   const turned = places.flatMap((path) =>
     [

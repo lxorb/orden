@@ -1,4 +1,4 @@
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/api'
 import { DIVIDER, menu } from '../../menu.svelte'
 import { pass } from '../store.svelte'
 import type { PassUi } from '../ui.svelte'

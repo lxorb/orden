@@ -17,7 +17,7 @@
   import { agentMarks } from './agent-marks.svelte'
   import { chatsUnread, lookAtLaunch } from './ai/unread.svelte'
   import UnreadDot from './ai/UnreadDot.svelte'
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import {
     ASK_MARK,
     CHATS_MARK,

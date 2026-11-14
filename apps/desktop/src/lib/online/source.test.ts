@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type ClientFrame, IMAGE_PART, type ServerFrame } from '@orden/online/wire'
-import { ApiError } from '../api'
+import { ApiError } from '../accounts/src/client'
 import type { Said } from '../terminal/source'
 import { termSession } from './calls'
 import { OnlineSource } from './source'
@@ -11,7 +11,7 @@ const seen = vi.hoisted((): { words: string | null; written: string[]; passes: n
   passes: 0,
 }))
 
-vi.mock('../account.svelte', () => ({
+vi.mock('../accounts/src/account.svelte', () => ({
   account: { accountToken: 'token', forgetWithSession: () => undefined },
 }))
 vi.mock('../sync.svelte', () => ({ sync: { version: 2 } }))

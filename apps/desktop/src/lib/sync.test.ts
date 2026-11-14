@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 
-const { ApiError } = await import('./api')
+const { ApiError } = await import('./accounts/src/client')
 
 const fake = vi.hoisted(() => {
   interface Entry {
@@ -346,8 +346,8 @@ vi.mock('./tauri', async (importOriginal) => ({
   invoke: fake.invoke,
 }))
 
-vi.mock('./api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./api')>()),
+vi.mock('./accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./accounts/src/client')>()),
   api: fake.api,
 }))
 
@@ -378,12 +378,12 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-let account: typeof import('./account.svelte').account
+let account: typeof import('./accounts/src/account.svelte').account
 let sync: typeof import('./sync.svelte').sync
 let workspace: typeof import('./workspace.svelte').workspace
 
 await Promise.all([
-  import('./account.svelte'),
+  import('./accounts/src/account.svelte'),
   import('./sync.svelte'),
   import('./workspace.svelte'),
 ])
@@ -398,7 +398,7 @@ beforeEach(async () => {
   vi.stubGlobal('localStorage', memoryStorage())
 
   vi.resetModules()
-  ;({ account } = await import('./account.svelte'))
+  ;({ account } = await import('./accounts/src/account.svelte'))
   ;({ sync } = await import('./sync.svelte'))
   ;({ workspace } = await import('./workspace.svelte'))
 
@@ -1574,7 +1574,7 @@ describe('a pass that fails partway through', () => {
     account.settled()
     await sync.pass()
 
-    const { ApiError } = await import('./api')
+    const { ApiError } = await import('./accounts/src/client')
     const real = fake.api.changes
     fake.api.changes = () => Promise.reject(new ApiError(401, 'unauthorized'))
     const me = fake.api.me
@@ -1597,7 +1597,7 @@ describe('a pass that fails partway through', () => {
     account.settled()
     await sync.pass()
 
-    const { ApiError } = await import('./api')
+    const { ApiError } = await import('./accounts/src/client')
     const real = fake.api.changes
     let asked = 0
     const me = fake.api.me

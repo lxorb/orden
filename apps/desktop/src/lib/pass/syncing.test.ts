@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { AccountDouble } from '../account-double'
+import type { AccountDouble } from '../accounts/test/fakes'
 import type { SyncWorld } from './sync-world'
 
-vi.mock('../account.svelte', async () => ({
-  account: (await import('../account-double')).accountDouble(),
+vi.mock('../accounts/src/account.svelte', async () => ({
+  account: (await import('../accounts/test/fakes')).accountDouble(),
 }))
 
 const server = vi.hoisted(() => ({
@@ -11,7 +11,7 @@ const server = vi.hoisted(() => ({
   invites: [] as unknown[],
 }))
 
-vi.mock('../api', () => ({ BASE: '', request: () => Promise.resolve({}) }))
+vi.mock('../accounts/src/client', () => ({ BASE: '', request: () => Promise.resolve({}) }))
 vi.mock('../log', () => ({ log: () => undefined }))
 vi.mock('../settings.svelte', () => ({ passOn: () => true }))
 vi.mock('../sync-client/src/hub.svelte', () => ({ hub: { device: 'device' } }))
@@ -38,7 +38,7 @@ vi.mock('./exchange', () => ({
 
 const { passSync } = await import('./syncing.svelte')
 const { pass } = await import('./store.svelte')
-const account = (await import('../account.svelte')).account as unknown as AccountDouble
+const account = (await import('../accounts/src/account.svelte')).account as unknown as AccountDouble
 
 function hold(): () => void {
   let free: () => void = () => undefined

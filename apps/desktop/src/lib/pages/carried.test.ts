@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { ApiError } from '../api'
+import { ApiError } from '../accounts/src/client'
 import {
   type Carrying,
   carryPapers,

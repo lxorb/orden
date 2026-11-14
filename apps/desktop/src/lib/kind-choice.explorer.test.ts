@@ -13,8 +13,8 @@ vi.mock('./tauri', async (actual) => ({
 }))
 
 const saved = vi.hoisted(() => [] as unknown[])
-vi.mock('./api', async (actual) => ({
-  ...(await actual<typeof import('./api')>()),
+vi.mock('./accounts/src/client', async (actual) => ({
+  ...(await actual<typeof import('./accounts/src/client')>()),
   api: {
     saveSettings: (_token: string, patch: unknown) => {
       saved.push(patch)
@@ -39,7 +39,7 @@ const { kindOfLetter } = await import('./new-kind-keys')
 const { kindsPane } = await import('./settings/kinds-pane')
 const { experimentalPane } = await import('./settings/experimental-pane')
 const { BY_ID } = await import('./shortcuts/registry')
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 const { viewport } = await import('./viewport.svelte')
 
 let token: string | null = null

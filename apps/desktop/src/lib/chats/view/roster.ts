@@ -1,5 +1,5 @@
 import type { Who } from '@orden/chats'
-import type { Presence } from '../../people/face'
+import type { Presence } from '../../accounts/src/api'
 import type { ChatMember } from '../api'
 
 const RANKS = ['owner', 'member', 'bot'] as const

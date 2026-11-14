@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { AccountDouble } from '../account-double'
+import type { AccountDouble } from '../test/fakes'
 
-vi.mock('../account.svelte', async () => ({
-  account: (await import('../account-double')).accountDouble(),
+vi.mock('./account.svelte', async () => ({
+  account: (await import('../test/fakes')).accountDouble(),
 }))
 
 const server = vi.hoisted(() => ({ held: null as Promise<void> | null }))
@@ -21,7 +21,7 @@ vi.mock('./calls', () => ({
 }))
 
 const { changeProfile, nameIn } = await import('./mine')
-const account = (await import('../account.svelte')).account as unknown as AccountDouble
+const account = (await import('./account.svelte')).account as unknown as AccountDouble
 
 function hold(): () => void {
   let free: () => void = () => undefined

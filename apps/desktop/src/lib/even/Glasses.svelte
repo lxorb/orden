@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import { bridge } from './bridge.svelte'
   import { Frame, MOVE } from './frame.svelte'
   import { settings } from '../settings.svelte'

@@ -129,7 +129,7 @@ describe('a note', () => {
 
 describe('a note, with chats to send it to', () => {
   test('offers no Send to chat', async () => {
-    const { account } = await import('./account.svelte')
+    const { account } = await import('./accounts/src/account.svelte')
     Object.defineProperty(account, 'accountToken', { value: 'signed in' })
     expect(labels(loose)).not.toContain('Send to chat')
   })

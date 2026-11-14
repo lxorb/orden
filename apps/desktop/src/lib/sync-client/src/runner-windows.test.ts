@@ -107,7 +107,7 @@ const { other, windows } = (await import('../../windows')) as unknown as {
   windows: import('../../windows').Windows
 }
 const { runner } = await import('./runner.svelte')
-const { account } = await import('../../account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 
 const flush = async () => {
   for (let at = 0; at < 30; at += 1) await Promise.resolve()

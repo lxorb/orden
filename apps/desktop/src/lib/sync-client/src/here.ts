@@ -1,7 +1,7 @@
-import { invoke, isDesktop } from '../tauri'
-import { hub } from '../sync-client/src/api'
-import { Activity, listenForInput, readSystemInput } from '../web-tab/activity'
-import { keepZone } from './mine'
+import { hub } from './api'
+import { Activity, listenForInput, readSystemInput } from '../../web-tab/activity'
+import { keepZone } from '../../accounts/src/api'
+import { invoke, isDesktop } from './ports'
 
 let made: Activity | null = null
 
@@ -9,7 +9,7 @@ export function deviceActivity(): Activity {
   if (made) return made
   made = new Activity({
     now: () => Date.now(),
-    system: async () => (isDesktop ? readSystemInput(await invoke<unknown>('input_idle')) : null),
+    system: async () => (isDesktop() ? readSystemInput(await invoke<unknown>('input_idle')) : null),
     listen: listenForInput,
     every: (ms, tick) => {
       const timer = setInterval(tick, ms)

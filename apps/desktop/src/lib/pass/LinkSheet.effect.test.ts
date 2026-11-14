@@ -25,7 +25,7 @@ const fake = vi.hoisted(() => {
 })
 
 vi.mock('./store.svelte', () => ({ pass: fake.pass }))
-vi.mock('../account.svelte', () => ({ account: fake.account }))
+vi.mock('../accounts/src/account.svelte', () => ({ account: fake.account }))
 vi.mock('./links', async () => ({
   LINK_LIVES: (await import('./link-make')).LINK_LIVES,
   createLink: fake.createLink,

@@ -1,6 +1,6 @@
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@orden/markdown/door'
-import { warmCalls } from './api'
+import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
 import { storedText } from './stored'
@@ -288,7 +288,9 @@ export const contextMenu = latched(() => import('./ContextMenu.svelte'))
 
 export const formatBar = latched(() => import('./FormatBar.svelte'))
 
-export const signInSheet = latched(() => import('./SignIn.svelte'))
+export const signInSheet = latched(() =>
+  import('./accounts-ui/src/api').then((one) => ({ default: one.SignIn })),
+)
 
 export const joinSheet = latched(() => import('./JoinSheet.svelte'))
 

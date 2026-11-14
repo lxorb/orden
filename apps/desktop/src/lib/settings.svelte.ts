@@ -1,5 +1,5 @@
 import { setSnippets } from '@orden/editor'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { modes } from './modes.svelte'
 import { connectors } from './connectors.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'

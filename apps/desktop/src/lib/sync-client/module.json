@@ -11,7 +11,8 @@
     "bases",
     "collab",
     "collab-rooms",
-    "theme"
+    "theme",
+    "accounts"
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
@@ -44,7 +45,6 @@
     "apps/desktop/src/lib/pages/held.ts",
     "apps/desktop/src/lib/parting.ts",
     "apps/desktop/src/lib/pdf/sheets.svelte.ts",
-    "apps/desktop/src/lib/people/here.ts",
     "apps/desktop/src/lib/prompt.svelte.ts",
     "apps/desktop/src/lib/space-owed.ts",
     "apps/desktop/src/lib/space-pairing.ts",
@@ -56,6 +56,7 @@
     "apps/desktop/src/lib/tree-order.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
+    "apps/desktop/src/lib/web-tab/activity.ts",
     "apps/desktop/src/lib/web-tab/settle.ts",
     "apps/desktop/src/lib/web/away.svelte.ts",
     "apps/desktop/src/lib/web/index-store.ts",

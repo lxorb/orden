@@ -1,6 +1,6 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
-import { account } from './account.svelte'
-import { api, type AccountSettings } from './api'
+import { account } from './accounts/src/api'
+import { api, type AccountSettings } from './accounts/src/api'
 import {
   currentPlatform,
   type Keystroke,

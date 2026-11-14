@@ -14,7 +14,7 @@
   import type { PictureStatus } from './picture.svelte'
   import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import { heldLine } from '../online/arrival.svelte'
   import { settings } from '../settings.svelte'
   import Sweep from '../Sweep.svelte'

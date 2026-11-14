@@ -6,7 +6,7 @@ const world = vi.hoisted(() => ({
   answer: (): Promise<unknown> => Promise.resolve({}),
 }))
 
-vi.mock('../account.svelte', () => ({ account: world.account }))
+vi.mock('../accounts/src/account.svelte', () => ({ account: world.account }))
 vi.mock('../workspace.svelte', () => ({ workspace: { spaces: [] } }))
 vi.mock('../bytes', () => ({
   fileBytes: () => Promise.resolve(new Uint8Array(3)),
@@ -18,8 +18,8 @@ vi.mock('../tauri', () => ({
   joinPath: (root: string, path: string) => `${root}/${path}`,
   invoke: () => Promise.resolve({ modified: 1, size: 3 }),
 }))
-vi.mock('../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api')>()),
+vi.mock('../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   api: {
     putBlob: () => {
       world.puts += 1
@@ -29,7 +29,7 @@ vi.mock('../api', async (importOriginal) => ({
   },
 }))
 
-const { ApiError } = await import('../api')
+const { ApiError } = await import('../accounts/src/client')
 const { carryNow } = await import('./carrying')
 
 const NOTES = () => [{ path: '/s/Lecture.pages', id: 'n1', writes: true, space: 'Work' }]

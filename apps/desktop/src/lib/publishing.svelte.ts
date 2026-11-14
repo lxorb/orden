@@ -7,11 +7,11 @@ import {
   type RemoteSpace,
   type SiteChanges,
   type SiteSettings,
-} from './api'
+} from './accounts/src/api'
 import { invoke } from './tauri'
 import { theme } from './theme/src/api'
 import { carriedCss } from './theme/src/api'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { sha256 } from './bytes'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './message'

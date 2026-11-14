@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { ANSWERS_WITHIN, LATE, fetchInTime } from './api'
+import { ANSWERS_WITHIN, LATE, fetchInTime } from './client'
 
 beforeEach(() => vi.useFakeTimers())
 afterEach(() => {

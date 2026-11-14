@@ -4,15 +4,15 @@
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
   import { isShared, share } from './sharing.svelte'
-  import { called } from './person'
-  import type { GivenRole, Member, Sharing } from './api'
+  import { called } from './accounts/src/api'
+  import type { GivenRole, Member, Sharing } from './accounts/src/api'
   import Copyable from './Copyable.svelte'
   import FileMark from './FileMark.svelte'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import { initial } from './icons'
-  import type { Face } from './people/face'
+  import type { Face } from './accounts/src/api'
   import { dur, fade, scale } from './motion'
 
   const ROLES = $derived([
@@ -53,14 +53,14 @@
     return id && !__EVEN_PLUGIN__
       ? (event: MouseEvent) => {
           const from = event.currentTarget as Element
-          void import('./people/card.svelte').then((card) => {
+          void import('./accounts-ui/src/api').then((card) => {
             card.showProfile(id, from, share.spaceId)
           })
         }
       : undefined
   }
 
-  const avatars = __EVEN_PLUGIN__ ? null : import('./people/Avatar.svelte')
+  const avatars = __EVEN_PLUGIN__ ? null : import('./accounts-ui/src/api')
 
   function menuFor(person: Member) {
     return [
@@ -91,7 +91,7 @@
 {#snippet face(worn: Face, press: ((event: MouseEvent) => void) | undefined)}
   {#await avatars then got}
     {#if got}
-      <got.default face={worn} onpress={press} />
+      <got.Avatar face={worn} onpress={press} />
     {:else}
       <span class="orden-badge" aria-hidden="true">{initial(worn.name)}</span>
     {/if}

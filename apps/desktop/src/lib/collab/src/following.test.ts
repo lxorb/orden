@@ -77,7 +77,7 @@ vi.mock('./who', () => ({
 }))
 const session = vi.hoisted(() => ({ token: 'session', name: null, rechecked: 0, listed: 0 }))
 
-vi.mock('../../account.svelte', () => ({
+vi.mock('../../accounts/src/account.svelte', () => ({
   account: Object.assign(session, {
     forgetWithSession: () => undefined,
     recheck: () => {
@@ -228,7 +228,7 @@ describe('a writer made a reader while the note is open in its room', () => {
       answer = done
     })
     const loading = vi
-      .spyOn((await import('../../account.svelte')).account, 'loadSpaces')
+      .spyOn((await import('../../accounts/src/account.svelte')).account, 'loadSpaces')
       .mockImplementation(() => asked)
 
     try {

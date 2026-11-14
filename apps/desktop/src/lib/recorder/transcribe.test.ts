@@ -26,7 +26,7 @@ vi.mock('../ai/keys', async (importOriginal) => ({
 
 const askedAccount: number[] = []
 const likedAccount: string[] = []
-vi.mock('../api', () => ({
+vi.mock('../accounts/src/client', () => ({
   api: {
     askPiece: (_token: string, wav: Uint8Array, like = '') => {
       askedAccount.push(wav.byteLength)
@@ -80,7 +80,7 @@ vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
   })
 })
 
-const { account } = await import('../account.svelte')
+const { account } = await import('../accounts/src/account.svelte')
 const { ai } = await import('../ai/store.svelte')
 const { canTranscribe } = await import('../ai/hears')
 const { heardPiece, transcribedBy, WHISPER } = await import('./transcribe')

@@ -30,7 +30,7 @@ import type { Content, Envelope, Item, Vault, VaultMeta } from '@orden/pass/type
 import type { Invite, Member, MemberState } from '@orden/pass/wire'
 import { rank } from '@orden/pass/urls'
 import { untrack } from 'svelte'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../ai/keys'
 import { message } from '../message'
 import { deviceCan, deviceSays } from '../protect/device'

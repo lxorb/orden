@@ -22,7 +22,7 @@ export class NotHere extends Error {
 }
 
 export async function accountFiles(): Promise<FileApi | null> {
-  const [{ account }, { BASE }] = await Promise.all([import('../account.svelte'), import('../api')])
+  const { account, BASE } = await import('../accounts/src/api')
   return account.user && account.token ? fileApi(BASE, account.token) : null
 }
 

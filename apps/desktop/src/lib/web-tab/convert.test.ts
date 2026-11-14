@@ -25,7 +25,7 @@ vi.mock('../tauri', () => ({
   joinPath: (dir: string, relative: string) => (dir ? `${dir}/${relative}` : relative),
 }))
 
-vi.mock('../account.svelte', () => ({
+vi.mock('../accounts/src/account.svelte', () => ({
   account: {
     get signedIn() {
       return signedIn

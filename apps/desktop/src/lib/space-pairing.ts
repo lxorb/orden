@@ -1,5 +1,5 @@
-import { account } from './account.svelte'
-import { api } from './api'
+import { account } from './accounts/src/api'
+import { api } from './accounts/src/api'
 import { leaveSpaces, leftByAnother } from './left-spaces'
 import { forgetSeedSpace, seedSpaceRoot } from './seeded'
 import { untouchedSeedSpace } from './seed-space'

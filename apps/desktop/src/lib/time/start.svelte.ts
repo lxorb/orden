@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { RECONCILE_INTERVAL } from '../backoff'
 import { forgetSessionOwner, sessionOwner } from '../session-owner'
 import { timeDevice } from './device'

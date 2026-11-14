@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { BYTES_WITHIN, LATE } from '../api'
+import { BYTES_WITHIN, LATE } from '../accounts/src/client'
 import type { FileApi } from './file-api'
 import { FileRefused, fileApi } from './file-api'
 import type { FileWaiting } from './file-queue'

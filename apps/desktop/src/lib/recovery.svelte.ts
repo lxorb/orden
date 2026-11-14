@@ -1,5 +1,5 @@
-import { account } from './account.svelte'
-import { api, type AccountSettings } from './api'
+import { account } from './accounts/src/api'
+import { api, type AccountSettings } from './accounts/src/api'
 import {
   DEFAULT_DAYS,
   DEFAULT_MINUTES,

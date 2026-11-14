@@ -4,7 +4,7 @@
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import Swatches from './Swatches.svelte'
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
@@ -20,7 +20,7 @@
   import { message } from './message'
   import AiPane from './AiPane.svelte'
   import { SEARCH_MARK } from './panel-marks'
-  import Security from './Security.svelte'
+  import { Security } from './accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { holdScroll } from './kept-scroll'
@@ -781,8 +781,8 @@
       </div>
 
       {#if !__EVEN_PLUGIN__}
-        {#await import('./people/ProfileRows.svelte') then rows}
-          <rows.default />
+        {#await import('./accounts-ui/src/api').then((ui) => ui.profileRows()) then rows}
+          {#if rows}<rows.default />{/if}
         {/await}
       {/if}
 
@@ -827,8 +827,8 @@
               : void import('./ai/vault/leaving').then((one) => one.signOut())}>Sign out</button
         >
         {#if leaving}
-          {#await import('./DeleteAccount.svelte') then flow}
-            <flow.default onend={() => (leaving = false)} />
+          {#await import('./accounts-ui/src/api') then ui}
+            <ui.DeleteAccount onend={() => (leaving = false)} />
           {/await}
         {:else}
           <button class="orden-action is-danger" onclick={() => (leaving = true)}

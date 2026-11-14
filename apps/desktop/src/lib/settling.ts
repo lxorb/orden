@@ -1,4 +1,4 @@
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { prompt } from './prompt.svelte'
 import { MIRRORS_KEY, savedRecord } from './sync/mirror'
 import { rootedAt } from './space-paths'

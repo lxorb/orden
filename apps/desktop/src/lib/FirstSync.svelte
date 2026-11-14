@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import { arriving } from './arriving.svelte'
   import Sweep from './Sweep.svelte'
   import { dur, fade } from './motion'

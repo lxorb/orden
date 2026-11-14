@@ -16,8 +16,8 @@ vi.mock('../workspace/write-file', () => ({
   },
 }))
 
-vi.mock('../account.svelte', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../account.svelte')>()
+vi.mock('../accounts/src/account.svelte', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../accounts/src/account.svelte')>()
   Object.defineProperty(real.account, 'accountToken', { get: () => 'token' })
   return real
 })

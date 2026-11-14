@@ -1,5 +1,5 @@
 import { chatLinkOf } from '@orden/chats/links'
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/api'
 import { busy } from '../../busy.svelte'
 import type { OpenHow } from '../../new-tab'
 import { chatsOn } from '../../settings.svelte'

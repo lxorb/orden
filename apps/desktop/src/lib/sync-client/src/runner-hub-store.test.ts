@@ -146,7 +146,7 @@ async function aWindow() {
   const { workspace } = await import('../../workspace.svelte')
   Object.assign(workspace, { spaces: [{ root: '/Notes', name: 'Notes' }] })
   const { runner } = await import('./runner.svelte')
-  const { account } = await import('../../account.svelte')
+  const { account } = await import('../../accounts/src/account.svelte')
   return { runner, account }
 }
 type Window = Awaited<ReturnType<typeof aWindow>>

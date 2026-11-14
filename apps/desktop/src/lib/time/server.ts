@@ -1,5 +1,5 @@
 import { timePageOf } from '@orden/sync-core'
-import { ApiError, request } from '../api'
+import { ApiError, request } from '../accounts/src/api'
 import { isRecord } from '../stored'
 import type { TimeServer } from './exchange'
 

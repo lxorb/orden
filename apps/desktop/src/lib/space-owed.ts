@@ -1,5 +1,5 @@
-import { account } from './account.svelte'
-import { api, fromServer } from './api'
+import { account } from './accounts/src/api'
+import { api, fromServer } from './accounts/src/api'
 import { isRecord, keepJson, recordOf, stored } from './stored'
 import { passing } from './backoff'
 

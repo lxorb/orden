@@ -1,7 +1,7 @@
 import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@orden/markdown'
 import { pageOfSubpath } from '@orden/markdown/canvas'
 import { embedKind } from '@orden/markdown/links'
-import { BASE } from '../api'
+import { BASE } from '../accounts/src/api'
 import { accountAddress } from '../assets'
 import { isPicturePath } from '../space-paths'
 import { assetUrl, joinPath } from '../tauri'

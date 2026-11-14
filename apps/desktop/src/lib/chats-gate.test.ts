@@ -20,7 +20,7 @@ const {
 const { setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
 const { experimentalPane } = await import('./settings/experimental-pane')
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 
 beforeEach(() => {
   store.clear()

@@ -1,5 +1,5 @@
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { busy } from './busy.svelte'
 import { installAiRunner } from './ai/ask'
 import { guardDrops } from './drops'

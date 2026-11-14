@@ -1,5 +1,5 @@
 import { spacesAhead } from './ahead'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke, isDesktop, isNative } from '../tauri'

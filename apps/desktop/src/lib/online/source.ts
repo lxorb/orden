@@ -7,8 +7,8 @@ import {
   INPUT_RATE,
   type ServerFrame,
 } from '@orden/online/wire'
-import { account } from '../account.svelte'
-import { ApiError, BASE } from '../api'
+import { account } from '../accounts/src/api'
+import { ApiError, BASE } from '../accounts/src/api'
 import { toBase64 } from '../bytes'
 import type { Said, Source } from '../terminal/source'
 import { isDesktop, isNative } from '../tauri'

@@ -1,4 +1,4 @@
-import { ApiError, request } from '../api'
+import { ApiError, request } from '../accounts/src/api'
 import { invoke } from '../tauri'
 import { type CrashReport, scrubbedReport } from './scrub'
 

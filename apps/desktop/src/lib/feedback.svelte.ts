@@ -1,5 +1,5 @@
-import { account } from './account.svelte'
-import { request } from './api'
+import { account } from './accounts/src/api'
+import { request } from './accounts/src/api'
 import { scrubbedLog } from './feedback-log'
 import { recentLog } from './log'
 import { invoke, isDesktop, isMobile, isNative, platform } from './tauri'

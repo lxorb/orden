@@ -2,7 +2,7 @@ import type { Logged, Who } from '@orden/chats'
 import { serverFrameOf, socketPath, text, type ClientFrame } from '@orden/chats/wire'
 import { subprotocol } from '@orden/rooms'
 import { BEAT, DEVICE_PROTOCOL, shutOut } from '@orden/sync-core'
-import { BASE } from '../api'
+import { BASE } from '../accounts/src/api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
 
 const SILENT_BEATS = 3

@@ -1,4 +1,4 @@
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/api'
 import { ACCENTS, accentIdFor } from '../../accents'
 import { keep, storedText } from '../../stored'
 import { isNative, platform } from '../../tauri'

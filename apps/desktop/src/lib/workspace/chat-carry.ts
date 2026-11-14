@@ -1,5 +1,5 @@
 import { isChatTarget } from '@orden/markdown/links'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { roleOf } from '../sharing.svelte'
 import { samePath, within } from '../space-paths'
 import { sync } from '../sync.svelte'

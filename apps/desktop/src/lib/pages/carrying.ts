@@ -1,5 +1,5 @@
-import { account } from '../account.svelte'
-import { api } from '../api'
+import { account } from '../accounts/src/api'
+import { api } from '../accounts/src/api'
 import { fileBytes, sha256 } from '../bytes'
 import { rootedAt } from '../space-paths'
 import { keepJson, recordOf, stored, isString } from '../stored'

@@ -9,7 +9,7 @@
   import Glyph from './Glyph.svelte'
   import { makeChat, openChat } from './open'
   import type { Who } from '@orden/chats'
-  import Avatar from '../../people/Avatar.svelte'
+  import { Avatar } from '../../accounts-ui/src/api'
   import { firstLine } from './body'
   import { faceOf, nameOf } from './people'
   import { saved } from './saved.svelte'

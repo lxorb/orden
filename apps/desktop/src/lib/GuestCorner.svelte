@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { accentColour } from './accents'
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import { closeOnBack } from './backstack.svelte'
   import { initial } from './icons'
   import { message } from './message'

@@ -16,7 +16,7 @@ const account = vi.hoisted(() => ({
   signedIn: true,
   spaces: [] as { id: string; role: string }[],
 }))
-vi.mock('../account.svelte', () => ({ account }))
+vi.mock('../accounts/src/account.svelte', () => ({ account }))
 
 const remote = new Map<string, string>()
 let unpushed = new Set<string>()

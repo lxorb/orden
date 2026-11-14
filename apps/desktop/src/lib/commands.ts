@@ -49,7 +49,7 @@ import {
   unfoldEverything,
   upperCase,
 } from '@orden/editor'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { busy } from './busy.svelte'
 import { turnedOff } from './kind-choice'
 import { composerCommands } from './composer-commands'

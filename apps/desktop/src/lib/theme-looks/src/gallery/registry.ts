@@ -1,4 +1,4 @@
-import { BASE } from '../../../api'
+import { BASE } from '../../../accounts/src/api'
 import { isRecord, isString, stringList } from '../../../stored'
 import { carriedToken } from '../../../theme/src/api'
 import { usablePaletteValue } from './validate'

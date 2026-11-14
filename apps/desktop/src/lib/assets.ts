@@ -1,5 +1,5 @@
-import { api, BASE } from './api'
-import { account } from './account.svelte'
+import { api, BASE } from './accounts/src/api'
+import { account } from './accounts/src/api'
 import { attachmentFolder } from './attachments'
 import { sha256 } from './bytes'
 import { links } from './link-index.svelte'

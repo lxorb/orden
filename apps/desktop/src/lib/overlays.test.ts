@@ -314,7 +314,7 @@ describe('what hides a web page', () => {
     'lib/Select.svelte': 'dropdown',
     'lib/Sidebar.svelte': 'the shut file list, out over the note while the pointer is on it',
     'lib/Sheet.svelte': 'sheet',
-    'lib/SignIn.svelte': 'sheet',
+    'lib/accounts-ui/src/SignIn.svelte': 'sheet',
     'lib/SpacePicker.svelte': 'dialog',
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/overview/Overview.svelte': 'dialog',
@@ -328,7 +328,7 @@ describe('what hides a web page', () => {
     'lib/chats/view/Lightbox.svelte': "a message's pictures, one at a time, over everything",
     'lib/chats/view/MembersPanel.svelte':
       "a chat's members as a sheet over the chat, on a narrow window",
-    'lib/people/ProfileCard.svelte': "a person's card, beside the face that was pressed",
+    'lib/accounts-ui/src/ProfileCard.svelte': "a person's card, beside the face that was pressed",
     'lib/quick-add/QuickAddSheet.svelte': 'dialog',
     'lib/quitting/QuitSheet.svelte': 'dialog',
     'lib/remote/HostPicker.svelte': 'dialog',

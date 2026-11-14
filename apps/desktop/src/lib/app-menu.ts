@@ -22,7 +22,7 @@ import {
   unfoldEverything,
 } from '@orden/editor'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
 import { blockCommands, exportCommands } from './commands'

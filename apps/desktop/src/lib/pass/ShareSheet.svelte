@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Member } from '@orden/pass/wire'
   import UserMinus from 'lucide/dist/esm/icons/user-minus.mjs'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import { message } from '../message'
   import { prompt } from '../prompt.svelte'
   import { said } from '../said.svelte'

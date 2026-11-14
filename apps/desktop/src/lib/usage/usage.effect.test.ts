@@ -147,7 +147,7 @@ describe('the queue', () => {
 
   test('keeps the queue while offline and sends it later', async () => {
     const { flush } = await import('./queue')
-    const { ApiError } = await import('../api')
+    const { ApiError } = await import('../accounts/src/client')
     let queue: UsageEvent[] = [daily(TODAY)]
     const how = (post: () => Promise<unknown>) => ({
       queue: () => queue,
@@ -165,7 +165,7 @@ describe('the queue', () => {
 
   test('drops what the server refuses instead of sending it forever', async () => {
     const { flush } = await import('./queue')
-    const { ApiError } = await import('../api')
+    const { ApiError } = await import('../accounts/src/client')
     let queue: UsageEvent[] = [daily(TODAY)]
     const result = await flush({
       queue: () => queue,

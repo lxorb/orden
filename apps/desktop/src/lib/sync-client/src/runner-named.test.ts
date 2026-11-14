@@ -6,8 +6,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const sent = vi.hoisted(() => [] as [string, string][])
 const line = vi.hoisted(() => ({ up: true }))
-vi.mock('../../api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../../api')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
   return {
     ...original,
     api: new Proxy(original.api, {
@@ -24,7 +24,7 @@ vi.mock('../../api', async (importOriginal) => {
 })
 
 const { runner } = await import('./runner.svelte')
-const { account } = await import('../../account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 const { workspace } = await import('../../workspace.svelte')
 const { settleNames } = await import('../../space-owed')
 

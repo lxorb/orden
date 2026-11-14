@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import { ACCENTS } from './accents'
   import { closeOnBack } from './backstack.svelte'
   import Icon from './Icon.svelte'

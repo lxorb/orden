@@ -48,8 +48,8 @@ const world = vi.hoisted((): World => ({
   withdrawFails: null,
 }))
 
-vi.mock('./api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./api')>()
+vi.mock('./accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./accounts/src/client')>()
 
   return {
     ...original,
@@ -161,7 +161,7 @@ vi.stubGlobal('window', {
 })
 
 let joining: typeof import('./joining.svelte').joining
-let account: typeof import('./account.svelte').account
+let account: typeof import('./accounts/src/account.svelte').account
 
 await import('./joining.svelte')
 
@@ -190,7 +190,7 @@ beforeEach(async () => {
 
   vi.resetModules()
   ;({ joining } = await import('./joining.svelte'))
-  ;({ account } = await import('./account.svelte'))
+  ;({ account } = await import('./accounts/src/account.svelte'))
   world.holding = () => !!joining.invitation
 })
 

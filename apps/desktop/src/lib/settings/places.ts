@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { reach } from '../agents/settings/reach.svelte'
 import type { Place } from '../settings-search'
 import { isDesktop } from '../tauri'

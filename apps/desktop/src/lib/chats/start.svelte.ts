@@ -1,6 +1,6 @@
 import { untrack } from 'svelte'
 import { CHAT_EXTENSION } from '@orden/chats'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { hub } from '../sync-client/src/api'
 import { chatsOn } from '../settings.svelte'
 import { isMobile } from '../tauri'

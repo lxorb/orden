@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { MCP_URL } from '../api'
+  import { MCP_URL } from '../accounts/src/api'
   import { connectors } from '../connectors.svelte'
   import Copyable from '../Copyable.svelte'
   import CopyButton from '../CopyButton.svelte'

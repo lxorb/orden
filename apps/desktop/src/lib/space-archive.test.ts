@@ -44,13 +44,13 @@ const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
 const session = vi.hoisted(() => ({ forgets: [] as (() => void)[] }))
 
 vi.mock('./workspace.svelte', () => ({ workspace }))
-vi.mock('./account.svelte', () => ({
+vi.mock('./accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',
     forgetWithSession: (clear: () => void) => session.forgets.push(clear),
   },
 }))
-vi.mock('./api', () => ({
+vi.mock('./accounts/src/client', () => ({
   api: {
     saveSettings: (_token: string, patch: unknown) => {
       if (told.fails) return Promise.reject(new Error('offline'))

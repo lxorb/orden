@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { AccountDouble } from '../account-double'
+import type { AccountDouble } from '../accounts/test/fakes'
 
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -8,8 +8,8 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void kept.delete(key),
 })
 
-vi.mock('../account.svelte', async () => ({
-  account: (await import('../account-double')).accountDouble(),
+vi.mock('../accounts/src/account.svelte', async () => ({
+  account: (await import('../accounts/test/fakes')).accountDouble(),
 }))
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo='
@@ -22,7 +22,7 @@ const server = vi.hoisted(() => ({
   calls: 0,
   held: null as Promise<void> | null,
 }))
-vi.mock('../api', () => ({
+vi.mock('../accounts/src/client', () => ({
   api: {
     siteIcons: async () => {
       server.calls++
@@ -50,7 +50,7 @@ vi.mock('../api', () => ({
 
 const { bounded, labelOf, siteIcons, siteOf, siteSet } = await import('./site-icons.svelte')
 const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../icons')
-const account = (await import('../account.svelte')).account as unknown as AccountDouble
+const account = (await import('../accounts/src/account.svelte')).account as unknown as AccountDouble
 
 beforeEach(async () => {
   account.signInAs('a')

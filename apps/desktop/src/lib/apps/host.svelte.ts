@@ -300,16 +300,14 @@ async function appWorld(): Promise<{
   follow: (changed: () => void) => () => void
 }> {
   const [
-    { account },
-    { ApiError, BASE, request },
+    { account, ApiError, BASE, request },
     { pageWorld },
     { deviceId },
     { workspace },
     native,
     { platform, invoke },
   ] = await Promise.all([
-    import('../account.svelte'),
-    import('../api'),
+    import('../accounts/src/api'),
     import('../online/link'),
     import('../sync-client/src/api'),
     import('../workspace.svelte'),

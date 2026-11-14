@@ -1,4 +1,4 @@
-import type { Account, RemoteSpace } from './api'
+import type { Account, RemoteSpace } from '../src/routes'
 
 type Clear = (kept: boolean) => void
 
