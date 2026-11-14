@@ -16,7 +16,7 @@ const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const { protectEntries } = await import('./entries')
 const { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } = await import('./gate')
 const { turnProtection } = await import('./protection-setting')
-const { generalPane } = await import('../../../settings/general-pane')
+const { generalPane } = await import('../../../settings/src/general-pane')
 
 const ROOT = '/space'
 const DIARY = `${ROOT}/Diary.md`

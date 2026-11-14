@@ -9,13 +9,13 @@
     "glasses-choices",
     "markdown",
     "platform",
-    "ui-kit"
+    "ui-kit",
+    "settings"
   ],
   "pending": [
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/plugin.ts",
-    "apps/desktop/src/lib/preferences.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts",

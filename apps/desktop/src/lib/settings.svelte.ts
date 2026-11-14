@@ -17,7 +17,7 @@ import {
   isNative,
 } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
-import { settingsTab } from './settings/tab-hook'
+import { settingsTab } from './settings-tab'
 
 const PAGE_KEY = 'orden:page'
 const APPEARANCE_KEY = 'orden:export-appearance'

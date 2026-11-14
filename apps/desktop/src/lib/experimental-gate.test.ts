@@ -38,8 +38,8 @@ const {
   timeOn,
 } = settings
 const { receive } = await import('./kind-choice')
-const { experimentalPane } = await import('./settings/experimental-pane')
-const { kindsPane } = await import('./settings/kinds-pane')
+const { experimentalPane } = await import('./settings/src/experimental-pane')
+const { kindsPane } = await import('./settings/src/kinds-pane')
 const { openApplication } = await import('./apps/src/open')
 const { account } = await import('./accounts/src/account.svelte')
 

@@ -424,7 +424,7 @@ const rows = {
   accent: 'violet',
   languages: new Set(['en']),
 }
-vi.mock('../settings/declarations', () => ({
+vi.mock('../settings/src/declarations', () => ({
   declarations: () =>
     Promise.resolve([
       {

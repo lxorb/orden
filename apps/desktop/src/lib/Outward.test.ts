@@ -63,7 +63,7 @@ describe('every link that leaves the app', () => {
 
   test('is a run of text that leaves the end of its line to the mark', () => {
     for (const one of [
-      rule(read('./SettingsPanel.svelte'), '.hint.caption .link'),
+      rule(read('./settings/src/SettingsPanel.svelte'), '.hint.caption .link'),
       rule(read('./agents/src/access/AccountSteps.svelte'), '.link'),
       rule(read('./terminal/src/TerminalTab.svelte'), '.bar .words'),
     ]) {

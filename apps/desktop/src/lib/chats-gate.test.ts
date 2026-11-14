@@ -19,7 +19,7 @@ const {
 } = await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
-const { experimentalPane } = await import('./settings/experimental-pane')
+const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { account } = await import('./accounts/src/account.svelte')
 await import('./chats-client/src/api')
 await (await import('@orden/contracts')).registered()

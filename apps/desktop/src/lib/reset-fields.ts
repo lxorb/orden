@@ -1,4 +1,4 @@
-import type { Field } from './preferences'
+import type { Field } from './settings/src/api'
 
 interface Resettable {
   initial?: boolean | number | string

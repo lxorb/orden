@@ -27,7 +27,7 @@ test('a list hung outside its card is drawn above Settings and sheets, which it 
   expect(hung.map((one) => one.path)).toEqual(
     expect.arrayContaining([
       join('ui-controls', 'src', 'Select.svelte'),
-      join('settings', 'FontPicker.svelte'),
+      join('settings', 'src', 'FontPicker.svelte'),
     ]),
   )
   const low = hung

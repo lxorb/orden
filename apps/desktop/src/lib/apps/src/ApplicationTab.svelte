@@ -10,7 +10,7 @@
     textEvent,
     wheelClicks,
   } from './input'
-  import { clipboardSharing } from '../../settings/apps-clipboard.svelte'
+  import { clipboardSharing } from '../../settings/src/api'
   import type { PictureStatus } from './picture.svelte'
   import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'

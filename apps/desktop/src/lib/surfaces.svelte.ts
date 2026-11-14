@@ -4,6 +4,7 @@ import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@orden/markdown/door'
 import { registered } from '@orden/contracts'
 import { loadPalette } from './palette/src/api'
+import { loadSettingsPanel } from './settings/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
@@ -156,7 +157,7 @@ export const phoneTabsBar = held(() => phone().then((one) => one.loadPhoneTabs()
 export const phoneYou = held(() => phone().then((one) => one.loadPhoneYou()))
 
 export const settingsSurface = held(() =>
-  Promise.all([import('./SettingsPanel.svelte'), registered()]).then(([one]) => one),
+  Promise.all([loadSettingsPanel(), registered()]).then(([one]) => one),
 )
 
 export const pagesNavigator = held(() =>

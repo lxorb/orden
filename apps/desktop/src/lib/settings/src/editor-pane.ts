@@ -1,0 +1,235 @@
+import type { EditorView } from '@orden/editor'
+import { CODE_PALETTES } from '@orden/editor'
+import { paletteName } from '../../highlight'
+import { DEFAULTS, modes } from '../../modes.svelte'
+import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../../note-id'
+import { settings } from '../../settings.svelte'
+import type { Pane } from './fields'
+
+export function editorPane(view: EditorView | undefined, moment: Date): Pane {
+  return {
+    id: 'editor',
+    label: 'Editor',
+    groups: [
+      {
+        title: 'Text',
+        fields: [
+          {
+            kind: 'slider',
+            key: 'editor.textSize',
+            label: 'Text size',
+            hint: 'How large the text of notes is.',
+            words: ['font', 'zoom', 'bigger', 'smaller'],
+            min: 0.8,
+            max: 1.6,
+            step: 0.05,
+            unit: '×',
+            initial: DEFAULTS.zoom,
+            get: () => modes.zoom,
+            set: (value) => modes.setZoom(value),
+          },
+          {
+            kind: 'slider',
+            key: 'editor.lineSpacing',
+            label: 'Line spacing',
+            hint: 'The space between the lines of a note.',
+            words: ['line height', 'leading'],
+            min: 1.3,
+            max: 2.2,
+            step: 0.02,
+            initial: DEFAULTS.lineHeight,
+            get: () => modes.lineHeight,
+            set: (value) => modes.setLineSpacing(value, view),
+          },
+          {
+            kind: 'slider',
+            key: 'editor.lineWidth',
+            label: 'Line width',
+            hint: 'How wide a line of a note grows before it wraps.',
+            words: ['column', 'wide', 'readable width'],
+            min: 30,
+            max: 70,
+            step: 1,
+            unit: 'rem',
+            initial: DEFAULTS.width,
+            get: () => modes.width,
+            set: (value) => modes.setWidth(value, view),
+          },
+        ],
+      },
+      {
+        title: 'Writing',
+        fields: [
+          {
+            kind: 'switch',
+            key: 'editor.closeBrackets',
+            label: 'Close brackets and quotes',
+            hint: 'Typing an opening bracket or quote adds the closing one too.',
+            words: ['auto pair', 'autoclose'],
+            initial: DEFAULTS.closeBrackets,
+            get: () => modes.closeBrackets,
+            set: () => modes.toggleCloseBrackets(view),
+          },
+          {
+            kind: 'switch',
+            key: 'editor.typewriterMode',
+            label: 'Typewriter mode',
+            hint: 'Keeps the line you are writing in the middle of the screen.',
+            words: ['centre', 'center', 'scroll'],
+            initial: DEFAULTS.typewriter,
+            get: () => modes.typewriter,
+            set: () => modes.toggleTypewriter(view),
+          },
+          {
+            kind: 'switch',
+            key: 'editor.focusMode',
+            label: 'Focus mode',
+            hint: 'Dims everything but the paragraph you are writing in.',
+            words: ['zen', 'distraction free', 'dim'],
+            initial: DEFAULTS.focus,
+            get: () => modes.focus,
+            set: () => modes.toggleFocus(view),
+          },
+          {
+            kind: 'select',
+            key: 'editor.ligatures',
+            label: 'Ligatures',
+            hint: 'Joins pairs such as -> or != into one sign, in code only or everywhere.',
+            words: ['font'],
+            options: [
+              { value: 'off', label: 'Off' },
+              { value: 'code', label: 'Code only' },
+              { value: 'all', label: 'Everywhere' },
+            ],
+            initial: DEFAULTS.ligatures,
+            get: () => modes.ligatures,
+            set: (value) => modes.setLigatures(value, view),
+          },
+          {
+            kind: 'select',
+            key: 'editor.attachments',
+            label: 'Attachments',
+            hint: 'Where a picture or file you paste or drop into a note is saved.',
+            words: ['images', 'pictures', 'paste', 'assets'],
+            options: [
+              { value: 'space', label: 'Assets folder of the space' },
+              { value: 'note', label: 'Next to the note' },
+              { value: 'named', label: 'A folder named after the note' },
+            ],
+            initial: DEFAULTS.attachments,
+            get: () => modes.attachments,
+            set: (value) => modes.setAttachments(value),
+          },
+        ],
+      },
+      {
+        title: 'Canvas',
+        fields: [
+          {
+            kind: 'switch',
+            key: 'editor.canvasRotation',
+            label: 'Rotate a canvas with two fingers',
+            hint: 'Turning two fingers on a touchpad or screen rotates the canvas.',
+            words: ['canvas', 'rotate', 'turn', 'two fingers', 'pinch', 'concepts', 'trackpad'],
+            initial: DEFAULTS.canvasTurns,
+            get: () => modes.canvasTurns,
+            set: (on) => modes.setCanvasTurns(on),
+          },
+          {
+            kind: 'switch',
+            key: 'editor.canvasRotationSnaps',
+            label: 'Snap the rotation to right angles',
+            hint: 'A rotation that ends near a right angle settles on it.',
+            words: ['canvas', 'rotate', 'turn', 'snap', 'upright', 'right angle', 'straight'],
+            initial: DEFAULTS.canvasTurnSnaps,
+            get: () => modes.canvasTurnSnaps,
+            set: (on) => modes.setCanvasTurnSnaps(on),
+          },
+        ],
+      },
+      {
+        title: 'Page notes',
+        fields: [
+          {
+            kind: 'select',
+            key: 'editor.newPages',
+            label: 'New pages',
+            hint: 'The paper size a new page note starts with.',
+            options: [
+              { value: 'a4', label: 'A4' },
+              { value: 'letter', label: 'Letter' },
+              { value: 'long', label: 'Long page' },
+            ],
+            initial: DEFAULTS.pagesPaper,
+            get: () => modes.pagesPaper,
+            set: (value) => modes.setPagesPaper(value),
+          },
+        ],
+      },
+      {
+        title: 'Unique note names',
+        fields: [
+          {
+            kind: 'select',
+            key: 'editor.noteName',
+            label: 'Name',
+            hint: 'How the name of a new unique note is made from the date and time.',
+            options: ID_FORMATS.map((format) => ({
+              value: format,
+              label: noteId(format, moment),
+            })),
+            initial: DEFAULT_ID_FORMAT,
+            get: () => settings.noteIdFormat,
+            set: (value) => settings.setNoteIdFormat(value),
+          },
+        ],
+      },
+      {
+        title: 'Links',
+        fields: [
+          {
+            kind: 'select',
+            key: 'editor.newLinks',
+            label: 'New links',
+            hint: 'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',
+            options: [
+              { value: 'wikilink', label: '[[Wikilinks]]' },
+              { value: 'shortest', label: 'Markdown, shortest name' },
+              { value: 'relative', label: 'Markdown, relative path' },
+              { value: 'absolute', label: 'Markdown, path in the space' },
+            ],
+            initial: DEFAULTS.linkFormat,
+            get: () => modes.linkFormat,
+            set: (value) => modes.setLinkFormat(value),
+          },
+        ],
+      },
+      {
+        title: 'Code',
+        fields: [
+          {
+            kind: 'select',
+            key: 'editor.codeHighlighting',
+            label: 'Highlighting',
+            hint: 'The colours code in a note is highlighted in.',
+            words: ['syntax', 'code colours', 'code colors'],
+            options: CODE_PALETTES.map((one) => ({ value: one.id, label: paletteName(one) })),
+            initial: DEFAULTS.codeTheme,
+            get: () => modes.codeTheme,
+            set: (value) => modes.setCodeTheme(value, view),
+          },
+          {
+            kind: 'switch',
+            key: 'editor.codeLineNumbers',
+            label: 'Line numbers',
+            hint: 'Numbers the lines of code blocks.',
+            words: ['gutter'],
+            initial: DEFAULTS.lineNumbers,
+            get: () => modes.lineNumbers,
+            set: () => modes.toggleLineNumbers(view),
+          },
+        ],
+      },
+    ],
+  }
+}

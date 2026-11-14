@@ -5,7 +5,7 @@ import type { Bookmark } from '../../workspace/bookmarks.svelte'
 import type { TabKind } from '../../workspace/documents.svelte'
 import type { Entry } from '../../workspace.svelte'
 import type { NoteToMake } from './new-note'
-import type { Setting } from './settings'
+import type { PaletteSetting } from '@orden/contracts'
 
 export interface OpenTab {
   id: string
@@ -28,7 +28,7 @@ export type Row =
       file: FileMark | null
     }
   | { kind: 'page'; url: string; title: string; address: string }
-  | { kind: 'setting'; setting: Setting }
+  | { kind: 'setting'; setting: PaletteSetting }
   | { kind: 'place'; line: number; text: string; depth: number; hint: string | null }
   | { kind: 'make'; make: NoteToMake }
   | { kind: 'agents' }

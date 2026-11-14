@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
-import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
+import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
 import { settings } from '../../src/lib/settings.svelte'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 

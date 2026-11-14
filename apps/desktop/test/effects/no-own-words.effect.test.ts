@@ -1,7 +1,7 @@
 import { EditorState, EditorView } from '@orden/editor'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
-import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
+import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
 import { showEditorMenu } from '../../src/lib/editor-menu'
 import { menu } from '../../src/lib/menu.svelte'
 import { modes } from '../../src/lib/modes.svelte'

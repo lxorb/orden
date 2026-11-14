@@ -4,7 +4,7 @@ import type { Bookmark } from '../../workspace/bookmarks.svelte'
 import type { Entry } from '../../workspace.svelte'
 import type { World } from './kinds'
 import type { OpenTab, Row } from './rows'
-import type { Setting } from './settings'
+import type { PaletteSetting } from '@orden/contracts'
 
 export const ROOT = '/Space'
 
@@ -42,14 +42,21 @@ export const visit = (url: string, title: string, more: Partial<Visit> = {}): Vi
   ...more,
 })
 
-export const setting = (label: string, where: string, more: Partial<Setting> = {}): Setting => ({
+export const setting = (
+  label: string,
+  where: string,
+  more: Partial<PaletteSetting> = {},
+): PaletteSetting => ({
   section: 'editor',
   label,
   where,
   names: [],
   words: [],
-  field: null,
   row: true,
+  icon: '',
+  switched: () => null,
+  value: () => null,
+  press: null,
   ...more,
 })
 

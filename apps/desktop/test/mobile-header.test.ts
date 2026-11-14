@@ -119,7 +119,7 @@ describe("the sides' buttons on a desktop", () => {
   })
 
   test('have no setting that moves them, and no hint that comes with it', () => {
-    for (const text of [titlebar, sidebar, read('lib/settings/appearance-pane.ts')]) {
+    for (const text of [titlebar, sidebar, read('lib/settings/src/appearance-pane.ts')]) {
       expect(text).not.toMatch(/sideToggles|side-toggles/)
     }
     expect(titlebar).not.toMatch(/hint="edge"/)

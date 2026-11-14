@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PairField, SwatchOption } from './preferences'
+  import type { PairField, SwatchOption } from './settings/src/api'
 
   const {
     options,

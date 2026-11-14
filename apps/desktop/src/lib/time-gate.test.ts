@@ -11,7 +11,7 @@ const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } =
   await import('./settings.svelte')
 const { setWord, receive } = await import('./kind-choice')
 const { runnable } = await import('./shortcuts/registry')
-const { experimentalPane } = await import('./settings/experimental-pane')
+const { experimentalPane } = await import('./settings/src/experimental-pane')
 
 beforeEach(() => {
   store.clear()

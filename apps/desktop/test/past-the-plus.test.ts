@@ -29,9 +29,9 @@ describe('the phone’s + button over Settings', () => {
   test.each(['nav', '.body'])(
     'leaves the end of the list and of a page, %s, scrollable out from under it',
     (scroller) => {
-      expect(roomUnderThePlus(read('lib/SettingsPanel.svelte'), `.sheet.phone ${scroller}`)).toBe(
-        true,
-      )
+      expect(
+        roomUnderThePlus(read('lib/settings/src/SettingsPanel.svelte'), `.sheet.phone ${scroller}`),
+      ).toBe(true)
     },
   )
 })

@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import type { Field } from '../../preferences'
 import { choose, type Hands } from './choose'
 import type { Row } from './rows'
 import { command, file, ROOT, setting, tab } from './world.fixture'
@@ -140,18 +139,12 @@ describe('choosing the rest', () => {
 
   test('a switch is flipped where it stands, and the list stays up', () => {
     let on = false
-    const field: Field = {
-      kind: 'switch',
-      hint: '',
-      label: 'Focus mode',
-      get: () => on,
-      set: (to) => (on = to),
-    }
+    const press = () => (on = !on)
     const { asked, hands: with_ } = hands()
 
     expect(
       choose(
-        { kind: 'setting', setting: setting('Focus mode', 'Editor', { field }) },
+        { kind: 'setting', setting: setting('Focus mode', 'Editor', { press }) },
         key(),
         with_,
       ),
@@ -162,18 +155,11 @@ describe('choosing the rest', () => {
 
   test('a value is copied where it stands, and the list stays up (#490)', () => {
     let pressed = 0
-    const field: Field = {
-      kind: 'value',
-      hint: '',
-      label: 'Version',
-      get: () => '0.16.1-779',
-      does: 'Copy',
-      press: () => (pressed += 1),
-    }
+    const press = () => (pressed += 1)
     const { asked, hands: with_ } = hands()
 
     expect(
-      choose({ kind: 'setting', setting: setting('Version', 'General', { field }) }, key(), with_),
+      choose({ kind: 'setting', setting: setting('Version', 'General', { press }) }, key(), with_),
     ).toBe('stay')
     expect(pressed).toBe(1)
     expect(asked).toEqual([])

@@ -1,6 +1,6 @@
 import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@orden/glasses/choices'
 import { modes } from '../../modes.svelte'
-import type { Field, Group } from '../../preferences'
+import type { SettingField as Field } from '@orden/contracts'
 import { resetFields } from '../../reset-fields'
 import { commandWords, DEFAULT_WORDS } from './commands'
 
@@ -144,8 +144,8 @@ const MARKS_INITIAL: Marks = {
   link: false,
 }
 
-export function glassesGroups(): Group[] {
-  const out: Group[] = []
+export function glassesGroups(): { title: string; fields: Field[] }[] {
+  const out: { title: string; fields: Field[] }[] = []
   for (const setting of glassesSettings()) {
     const last = out.at(-1)
     if (last?.title === setting.group) last.fields.push(setting.field)
