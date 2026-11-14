@@ -37,7 +37,7 @@ $effect.root(() => {
   })
 })
 
-if (!__EVEN_PLUGIN__) void import('../views/runner.svelte')
+if (!__EVEN_PLUGIN__) void import('../views/src/api').then((one) => one.startRunner())
 
 export const rows = {
   of: (space?: string): readonly Row[] => store.of(space),

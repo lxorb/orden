@@ -343,8 +343,8 @@ describe('the switch', () => {
       'lib/import/src/ImportSheet.svelte',
       'lib/pass-ui/src/SwitchRow.svelte',
       'lib/ui-controls/src/Switch.svelte',
-      'lib/views/AutomationsBuilder.svelte',
-      'lib/views/ViewSettings.svelte',
+      'lib/views/src/AutomationsBuilder.svelte',
+      'lib/views/src/ViewSettings.svelte',
       'lib/web-tab/src/WebClear.svelte',
     ])
   })

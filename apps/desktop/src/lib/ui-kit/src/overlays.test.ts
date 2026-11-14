@@ -340,8 +340,8 @@ describe('what hides a web page', () => {
     'lib/settings/FontPicker.svelte': 'dropdown',
     'lib/theme-looks/src/picker/ThemePicker.svelte':
       'the theme picker, over the themes button or the note',
-    'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
-    'lib/views/ToneDot.svelte': "a tone's colours, beside its dot",
+    'lib/views/src/Popover.svelte': 'the filter, sort or group of a view, under its button',
+    'lib/views/src/ToneDot.svelte': "a tone's colours, beside its dot",
     'lib/web-tab/src/AddressField.svelte': 'the suggestions under the address',
     'lib/web-tab/src/WebAsk.svelte': "a site's question, under the bar",
     'lib/web-tab/src/WebDialog.svelte': "a page's own dialog, at the top of the page",

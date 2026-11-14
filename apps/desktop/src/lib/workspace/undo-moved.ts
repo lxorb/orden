@@ -1,5 +1,5 @@
 import { movedTo } from '../platform/src/api'
-import { landing } from '../views/moving'
+import { landing } from './landing'
 import type { FileOp } from './file-ops'
 import type { FileAction } from './undo.svelte'
 

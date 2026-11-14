@@ -9,7 +9,7 @@ import { revOf } from '../agents/src/api'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, needScope, sourceOf } from './call'
 import { indexOf } from './links'
-import { moving } from '../views/moving'
+import { moving } from '../workspace/landing'
 import { Refused } from './problem'
 import {
   judged,

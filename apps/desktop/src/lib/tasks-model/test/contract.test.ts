@@ -8,6 +8,7 @@ import {
   LIMITS,
   MemoryTodoDisk,
   MemoryTodoServer,
+  priorityTone,
   shownTodos,
   SORTS,
   sortedTodos,
@@ -294,5 +295,16 @@ describe('tasks-model contract', () => {
     await one.open('user-3')
     await one.store.exchange()
     expect(one.store.todos).toHaveLength(0)
+  })
+})
+
+describe('a priority', () => {
+  test('is drawn in its own tone from the first to the third, and plain after', () => {
+    expect([1, 2, 3].map(priorityTone)).toEqual([
+      'var(--canvas-1)',
+      'var(--canvas-2)',
+      'var(--canvas-5)',
+    ])
+    expect(priorityTone(4)).toBeUndefined()
   })
 })

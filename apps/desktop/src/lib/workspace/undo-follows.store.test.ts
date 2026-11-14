@@ -13,7 +13,7 @@ const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('../workspace.svelte')
-const { failed } = await import('../views/failed.svelte')
+const { failed } = await import('../failed.svelte')
 
 async function fresh(files: Record<string, string>) {
   await workspace.writesSettled()

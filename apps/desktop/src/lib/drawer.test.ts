@@ -71,7 +71,10 @@ async function opened(device: 'phone' | 'tablet' = 'phone', right: string[] = []
     },
   }
   vi.doMock('./workspace.svelte', () => ({ workspace }))
-  vi.doMock('./ui-kit/src/viewport.svelte', () => ({ viewport: { device } }))
+  vi.doMock('./ui-kit/src/api', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('./ui-kit/src/api')>()),
+    viewport: { device },
+  }))
 
   const { drawer, rightDrawer } = await import('./drawer.svelte')
   const { followDrawers } = await import('./drawer-follow')

@@ -38,7 +38,7 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
     await sets.adopt(moved, space)
   }
   if (refused.length) {
-    const { failed } = await import('../views/failed.svelte')
+    const { failed } = await import('../failed.svelte')
     failed.tell(() => void moveToSpace(refused, space))
   }
   return tabs.every((tab) => moved.includes(tab))

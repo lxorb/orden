@@ -14,7 +14,7 @@ import {
   sharedMarkdown,
   sharedWords,
 } from './shared'
-import { plain } from '../views/inline'
+import { plain } from '../views/src/inline'
 
 function item(one: Partial<SharedItem>): SharedItem {
   return { name: '', mime: '', size: 0, text: null, ...one }

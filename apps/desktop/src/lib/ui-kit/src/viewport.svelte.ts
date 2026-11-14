@@ -168,3 +168,13 @@ export const viewport = new Viewport()
 export function pageHeight(): string | undefined {
   return viewport.touch && viewport.height ? `${viewport.height}px` : undefined
 }
+
+let thumbCarrying = false
+
+export function carryThumb(on: boolean): void {
+  thumbCarrying = on
+}
+
+export function isThumbCarrying(): boolean {
+  return thumbCarrying
+}

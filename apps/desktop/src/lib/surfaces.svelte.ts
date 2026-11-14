@@ -51,9 +51,7 @@ export const canvasSurface = held(() =>
 
 export const graphSurface = held(() => import('./Graph.svelte'))
 
-export const viewSurface = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/ViewTab.svelte'),
-)
+export const viewSurface = held(() => import('./views/src/api').then((one) => one.loadViewTab()))
 export const tasksPanel = held(() =>
   __EVEN_PLUGIN__
     ? new Promise<never>(() => undefined)

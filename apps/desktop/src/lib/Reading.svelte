@@ -56,16 +56,18 @@
       return () => undefined
     let stop: (() => void) | null = null
     let stopped = false
-    void import('./views/mount').then(({ mountBases }) => {
-      if (stopped) return
-      stop = mountBases(
-        page,
-        from,
-        untrack(() => tab.note.shared !== null),
-      )
-      changed()
-      if (untrack(() => finding)) reveal()
-    })
+    void import('./views/src/api')
+      .then((one) => one.baseMounting())
+      .then(({ mountBases }) => {
+        if (stopped) return
+        stop = mountBases(
+          page,
+          from,
+          untrack(() => tab.note.shared !== null),
+        )
+        changed()
+        if (untrack(() => finding)) reveal()
+      })
     return () => {
       stopped = true
       stop?.()

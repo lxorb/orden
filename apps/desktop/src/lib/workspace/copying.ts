@@ -105,7 +105,7 @@ function notesIn(entry: Entry): Entry[] {
 }
 
 async function idsLeftBehind(entry: Entry, path: string) {
-  const { numbersAt, withoutIds } = await import('../views/copied')
+  const { numbersAt, withoutIds } = await (await import('../views/src/api')).rowsCopied()
   if (!numbersAt(path)) return
   for (const note of notesIn(entry)) {
     const at = path + note.path.slice(entry.path.length)

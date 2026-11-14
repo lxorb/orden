@@ -23,10 +23,8 @@ vi.mock('./workspace.svelte', () => ({
     panes: { activate: (pane: string, tab: string) => state.activated.push([pane, tab]) },
   },
 }))
-vi.mock('./views/open', () => ({
-  openTodos: (space?: string) => state.opened.push(space),
-}))
-vi.mock('./views/spec', () => ({
+vi.mock('./views/src/api', () => ({
+  baseOpening: () => Promise.resolve({ openTodos: (space?: string) => state.opened.push(space) }),
   readSpec: (doc: string) => JSON.parse(doc) as unknown,
 }))
 

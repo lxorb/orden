@@ -22,7 +22,7 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
   try {
     await ws.undone.batch(() => again(ws, action))
   } catch {
-    const { failed } = await import('../views/failed.svelte')
+    const { failed } = await import('../failed.svelte')
     failed.tell(() => void redoLastFileAction(ws), true)
     return
   }

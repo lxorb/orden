@@ -74,7 +74,7 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
 }
 
 async function refused(ws: PutsBack, action: FileAction) {
-  const { failed } = await import('../views/failed.svelte')
+  const { failed } = await import('../failed.svelte')
   failed.tell(
     () => void ws.undoFileAction(),
     true,
@@ -373,7 +373,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       ? await (await import('./chat-leaving')).chatsCarried(action.to, folderOf(action.from))
       : null
 
-  const { moving: underWay } = await import('../views/moving')
+  const { moving: underWay } = await import('./landing')
   await underWay(action.from, () =>
     ws.holdingUnder(action.to, async () => {
       await ws.renameOnDisk(action.to, action.from, kind).catch(async (error: unknown) => {

@@ -4,7 +4,6 @@ import { describe, expect, test } from 'vitest'
 import {
   loadQuickAddSheet,
   loadQuickAddWindow,
-  priorityTone,
   quickAdd,
   quickAnywhere,
   quickShortcuts,
@@ -74,16 +73,5 @@ describe('asking for quick add', () => {
     quickAdd.setSmart(true)
     quickAdd.setAnywhere(true)
     expect([quickAdd.smart, quickAdd.anywhere]).toEqual([true, true])
-  })
-})
-
-describe('a priority', () => {
-  test('is drawn in its own tone from the first to the third, and plain after', () => {
-    expect([1, 2, 3].map(priorityTone)).toEqual([
-      'var(--canvas-1)',
-      'var(--canvas-2)',
-      'var(--canvas-5)',
-    ])
-    expect(priorityTone(4)).toBeUndefined()
   })
 })
