@@ -1,11 +1,17 @@
 {
   "name": "accounts-ui",
   "layer": "foundation",
-  "dependsOn": ["contracts", "accounts", "theme", "platform", "ui-controls", "ui-kit", "sharing"],
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "theme",
+    "platform",
+    "ui-controls",
+    "ui-kit",
+    "sharing",
+    "chat-kit"
+  ],
   "pending": [
-    "apps/desktop/src/lib/chats/view/Float.svelte",
-    "apps/desktop/src/lib/chats/view/Glyph.svelte",
-    "apps/desktop/src/lib/chats/view/place.ts",
     "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/emoji/EmojiPicker.svelte",

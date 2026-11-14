@@ -6,7 +6,7 @@
   import { canWriteAt } from '../../sharing/src/api'
   import type { ChatEntry, Hit } from '../api'
   import ChatMark from './ChatMark.svelte'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { makeChat, openChat } from './open'
   import type { Who } from '@orden/chats'
   import { Avatar } from '../../accounts-ui/src/api'

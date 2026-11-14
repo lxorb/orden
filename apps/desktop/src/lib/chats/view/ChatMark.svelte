@@ -2,7 +2,7 @@
   import { chosenIcon, chosenTint } from '../../chosen-icon'
   import Icon from '../../Icon.svelte'
   import { readIcon } from '../../ui-kit/src/api'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
 
   const { path }: { path: string | null | undefined } = $props()
 

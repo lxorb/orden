@@ -3,7 +3,7 @@
   import type { Shown } from '../api'
   import { localDate, localNumber } from '../../platform/src/api'
   import type { ChatPage } from './chat.svelte'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { nameOf } from './people'
   import { tip } from './tips.svelte'
 

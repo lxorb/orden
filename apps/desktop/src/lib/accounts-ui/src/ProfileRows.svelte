@@ -2,8 +2,7 @@
   import { dropOver } from '../../drag-paths'
   import { account } from '../../accounts/src/api'
   import { chooseFiles, PICTURES } from '../../choose-files'
-  import Glyph from '../../chats/view/Glyph.svelte'
-  import type { Box } from '../../chats/view/place'
+  import { type Box, Glyph } from '../../chat-kit/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { message } from '../../ui-kit/src/api'
   import { menu } from '../../menu.svelte'
@@ -201,16 +200,16 @@
     </div>
 
     {#if picking}
-      {#await Promise.all( [import('../../chats/view/Float.svelte'), import('../../emoji/EmojiPicker.svelte')] ) then [float, picker]}
+      {#await Promise.all( [import('../../chat-kit/src/api'), import('../../emoji/EmojiPicker.svelte')] ) then [float, picker]}
         <div use:portal>
-          <float.default at={picking} label="Emoji" onclose={() => (picking = null)}>
+          <float.Float at={picking} label="Emoji" onclose={() => (picking = null)}>
             <picker.default
               onpick={(emoji: string) => {
                 picking = null
                 withStatus({ emoji })
               }}
             />
-          </float.default>
+          </float.Float>
         </div>
       {/await}
     {/if}

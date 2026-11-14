@@ -8,12 +8,10 @@
   import { people } from '../../accounts/src/api'
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ChatPage } from './chat.svelte'
-  import Float from './Float.svelte'
+  import { Float, Glyph, type Box } from '../../chat-kit/src/api'
   import ChatMark from './ChatMark.svelte'
-  import Glyph from './Glyph.svelte'
   import { firstLine } from './body'
   import { accountOf, faceOf, nameOf } from './people'
-  import type { Box } from './place'
   import { store } from './source.svelte'
   import { tip } from './tips.svelte'
 

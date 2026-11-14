@@ -29,7 +29,7 @@
     ordenAsked,
     type Special,
   } from './compose'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import MentionMenu from './MentionMenu.svelte'
   import NoteReach from './NoteReach.svelte'
   import { faceOf, nameOf } from './people'

@@ -8,7 +8,7 @@
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'
   import { estimate } from './estimate'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import HoverBar from './HoverBar.svelte'
   import { messageMenu } from './message-menu'
   import MessageRow from './MessageRow.svelte'
