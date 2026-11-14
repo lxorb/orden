@@ -1,5 +1,6 @@
 import { registerPaletteKind, registerSettingFields, registerSettingsPart } from '@orden/contracts'
 import { isDesktop, platform } from '../../platform/src/api'
+import { partView } from '../../ui-kit/src/api'
 
 export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
 
@@ -18,7 +19,8 @@ if (!__EVEN_PLUGIN__) {
   registerSettingsPart({
     section: 'general',
     title: 'Extensions',
+    card: true,
     shown: () => runsExtensions,
-    load: () => import('./extension-rows').then((one) => one.extensionRows),
+    load: async () => partView((await import('./ExtensionRows.svelte')).default, () => ({})),
   })
 }

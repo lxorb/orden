@@ -66,6 +66,7 @@ export {
 } from './note'
 export {
   type Account,
+  type AccountPorts,
   type Avatar,
   type GivenRole,
   type Guest,
@@ -73,6 +74,7 @@ export {
   type Member,
   type Presence,
   type Space,
+  type SigningOutPort,
   SPACE_ROLES,
   type SpaceRole,
   type Status,
@@ -140,6 +142,7 @@ export {
   type PaletteVisit,
   type PaletteVisits,
   registered,
+  registerFeature,
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
@@ -149,7 +152,9 @@ export {
   type SettingFields,
   settingFieldsIn,
   type SettingOption,
+  type SettingPlace,
   type SettingsPart,
+  type SettingsPartHost,
   type SettingsPartView,
   settingsPartsIn,
 } from './registry'

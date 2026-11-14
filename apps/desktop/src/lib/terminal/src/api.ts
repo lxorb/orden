@@ -9,9 +9,8 @@ export { historyOf, moveHistory } from './history'
 export { openTerminal, shellRows } from './open'
 export { ptyOf, runningTabs, shellRunning } from './running'
 export type { Session } from './sessions.svelte'
-export { shellName, shells, SIZES } from './shells.svelte'
+export { shells } from './shells.svelte'
 export { readSpec, writeSpec } from './spec'
-export { bothName } from './two-ways'
 export type { Listed, Refused } from './online/calls'
 export { opens, rowOf } from './online/listing'
 export { type Destination, destinationOf, type Host, hostFor, said } from './remote/hosts'
@@ -75,9 +74,3 @@ export const loadTerminalMark = () =>
 
 export const loadHostPicker = () =>
   __EVEN_PLUGIN__ ? refused() : import('./remote/HostPicker.svelte')
-
-export const loadOnlinePane = () =>
-  __EVEN_PLUGIN__ ? refused() : import('./online/OnlinePane.svelte')
-
-export const loadRemotePane = () =>
-  __EVEN_PLUGIN__ ? refused() : import('./remote/RemotePane.svelte')

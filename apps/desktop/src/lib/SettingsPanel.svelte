@@ -9,7 +9,13 @@
   import { Glyph } from './ui-controls/src/api'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import FontPicker from './settings/FontPicker.svelte'
-  import { settingFieldsIn, settingsPartsIn } from '@orden/contracts'
+  import {
+    portOf,
+    settingFieldsIn,
+    type SettingsPart,
+    type SettingsPartHost,
+    settingsPartsIn,
+  } from '@orden/contracts'
   import { Hint } from './ui-controls/src/api'
   import { Switch } from './ui-controls/src/api'
   import Outward from './Outward.svelte'
@@ -77,6 +83,13 @@
 
   let query = $state('')
   let accessDetail = $state(false)
+
+  const partHost: SettingsPartHost = { detail: (open) => (accessDetail = open) }
+
+  async function signOut() {
+    const leaving = portOf('account.signingOut')
+    await (leaving.ok ? leaving.value.signOut() : account.signOut('asked'))
+  }
 
   const panes = $derived(preferences())
   const current = $derived(panes.find((one) => one.id === settings.section))
@@ -680,16 +693,26 @@
       {/if}
     {/each}
   </div>
-  {#each settingsPartsIn('general') as part, index (index)}
+  {@render parts('general')}
+{/snippet}
+
+{#snippet parts(section: Section)}
+  {#each settingsPartsIn(section) as part, index (index)}
     {#if part.shown()}
-      <h3>{part.title}</h3>
-      <div class="card">
-        {#await part.load() then view}
-          <div class="part" {@attach (target) => view.show(target)}></div>
-        {/await}
-      </div>
+      {#if part.title}<h3>{part.title}</h3>{/if}
+      {#if part.card}
+        <div class="card">{@render partView(part)}</div>
+      {:else}
+        {@render partView(part)}
+      {/if}
     {/if}
   {/each}
+{/snippet}
+
+{#snippet partView(part: SettingsPart)}
+  {#await part.load() then view}
+    <div class="part" {@attach (target) => view.show(target, partHost)}></div>
+  {/await}
 {/snippet}
 
 {#snippet pane()}
@@ -797,13 +820,7 @@
       <Security />
 
       <div class="card">
-        <button
-          class="orden-action is-danger"
-          onclick={() =>
-            __EVEN_PLUGIN__
-              ? void account.signOut('asked')
-              : void import('./ai-providers/src/api').then((one) => one.signOut())}>Sign out</button
-        >
+        <button class="orden-action is-danger" onclick={() => void signOut()}>Sign out</button>
         {#if leaving}
           {#await import('./accounts-ui/src/api') then ui}
             <ui.DeleteAccount onend={() => (leaving = false)} />
@@ -843,31 +860,17 @@
     <SyncPane />
   {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
     {#if !accessDetail}<AiPane />{/if}
-    {#if !__EVEN_PLUGIN__}
-      {#await import('./agents/src/api').then((one) => one.loadAccess()) then access}
-        <access.default ondetail={(open: boolean) => (accessDetail = open)} />
-      {/await}
-    {/if}
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
-    {#await import('./terminal/src/api').then((one) => one.loadOnlinePane()) then pane}
-      <pane.default />
-    {/await}
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'remote'}
-    {#await import('./terminal/src/api').then((one) => one.loadRemotePane()) then pane}
-      <pane.default />
-    {/await}
+    {@render parts('ai')}
+  {:else if settings.section === 'online' || settings.section === 'remote'}
+    {@render parts(settings.section)}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
     {#await import('./settings/SpacePane.svelte') then pane}
       <pane.default />
     {/await}
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}
-    {#await import('./import/src/api').then((one) => one.loadMigrateRows()) then rows}
-      <div class="card">
-        <rows.default />
-      </div>
-    {/await}
+  {:else if settings.section === 'import'}
+    {@render parts('import')}
   {/if}
 {/snippet}
 

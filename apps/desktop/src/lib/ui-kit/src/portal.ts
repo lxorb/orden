@@ -1,3 +1,6 @@
+import type { SettingsPartHost, SettingsPartView } from '@orden/contracts'
+import { type Component, mount, unmount } from 'svelte'
+
 export function portal(node: HTMLElement) {
   document.body.append(node)
   return { destroy: () => node.remove() }
@@ -156,6 +159,19 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
       for (const one of moved) window.removeEventListener(one, soon, { capture: true })
       sized?.disconnect()
       node.remove()
+    },
+  }
+}
+
+export function partView<Props extends Record<string, unknown>>(
+  component: Component<Props>,
+  props: (host: SettingsPartHost) => Props,
+): SettingsPartView {
+  return {
+    show: (target, host) => {
+      if (!(target instanceof HTMLElement)) return () => undefined
+      const shown = mount(component, { target, props: props(host) })
+      return () => void unmount(shown)
     },
   }
 }

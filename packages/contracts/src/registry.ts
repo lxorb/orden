@@ -41,6 +41,18 @@ export type SettingControl =
       get(): string
       set(value: string): void
     }
+  | {
+      kind: 'slider'
+      min: number
+      max: number
+      step: number
+      unit?: string
+      initial?: number
+      least?: () => number
+      get(): number
+      preview?(value: number): void
+      set(value: number): void
+    }
 
 export type SettingField = SettingCommon & SettingControl
 
@@ -50,14 +62,25 @@ export interface SettingFields {
   load(): Promise<() => readonly SettingField[]>
 }
 
+export interface SettingsPartHost {
+  detail(open: boolean): void
+}
+
 export interface SettingsPartView {
-  show(target: unknown): () => void
+  show(target: unknown, host: SettingsPartHost): () => void
+}
+
+export interface SettingPlace {
+  readonly label: string
+  readonly text: readonly string[]
 }
 
 export interface SettingsPart {
   readonly section: SettingsSectionId
-  readonly title: string
+  readonly title?: string
+  readonly card: boolean
   shown(): boolean
+  places?(): readonly SettingPlace[]
   load(): Promise<SettingsPartView>
 }
 
@@ -151,6 +174,13 @@ const kindsLoaded = new Map<PaletteKindId, PaletteKinds[PaletteKindId]>()
 const fieldSets = new Set<SettingFields>()
 const fieldsLoaded = new Map<SettingFields, () => readonly SettingField[]>()
 const parts = new Set<SettingsPart>()
+const features = new Set<() => Promise<unknown>>()
+const featuresLoaded = new WeakSet<() => Promise<unknown>>()
+
+export function registerFeature(load: () => Promise<unknown>): () => void {
+  features.add(load)
+  return () => void features.delete(load)
+}
 
 export function registerPaletteKind<Id extends PaletteKindId>(
   id: Id,
@@ -188,11 +218,21 @@ export function registerSettingsPart(part: SettingsPart): () => void {
   return () => void parts.delete(part)
 }
 
-export function settingsPartsIn(section: SettingsSectionId): SettingsPart[] {
-  return [...parts].filter((one) => one.section === section)
+export function settingsPartsIn(section?: SettingsSectionId): SettingsPart[] {
+  return [...parts].filter((one) => section === undefined || one.section === section)
 }
 
 export async function registered(): Promise<void> {
+  await Promise.all(
+    [...features]
+      .filter((load) => !featuresLoaded.has(load))
+      .map((load) =>
+        load().then(
+          () => void featuresLoaded.add(load),
+          () => undefined,
+        ),
+      ),
+  )
   await Promise.all([
     ...[...kindLoads].map(async ([id, load]) => {
       if (kindsLoaded.has(id)) return

@@ -1,9 +1,9 @@
-import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats-client/src/api'
-import { priorities } from './chats-client/src/api'
-import { localDate } from './platform/src/api'
-import type { Field } from './preferences'
+import type { SettingField } from '@orden/contracts'
+import { localDate } from '../../platform/src/api'
+import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './hush.svelte'
+import { priorities } from './priorities.svelte'
 
-export function chatsFields(): Field[] {
+export function chatsFields(): SettingField[] {
   const days = hush.hours?.days.join() ?? ''
   const hoursOf = (value: string) =>
     value === 'weekdays' ? WEEKDAYS : value === 'every' ? EVERY_DAY : null
@@ -60,7 +60,7 @@ export function chatsFields(): Field[] {
             get: () => String(hours.to),
             set: (value) => hush.setHours({ ...hours, to: Number(value) }),
           },
-        ] satisfies Field[])
+        ] satisfies SettingField[])
       : []),
     {
       kind: 'switch',

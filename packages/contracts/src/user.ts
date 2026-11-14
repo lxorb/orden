@@ -70,3 +70,11 @@ export interface Space {
   readonly name: string
   readonly root: string
 }
+
+export interface SigningOutPort {
+  signOut(): Promise<void>
+}
+
+export interface AccountPorts {
+  readonly 'account.signingOut': SigningOutPort
+}

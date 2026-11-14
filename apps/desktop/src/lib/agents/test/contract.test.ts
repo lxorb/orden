@@ -1,12 +1,12 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { settingsPartsIn } from '@orden/contracts'
 import {
   AGENT_WINDOW_VERBS,
   agentsUi,
   agentStandIn,
   CAPTURE_AS,
-  loadAccess,
   loadAgentRows,
   loadAgentSession,
   loadTakeoverBar,
@@ -48,15 +48,14 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('the live agents, the stand-in, the access pane and the panels open through doors', () => {
-    for (const one of [
-      agentsUi,
-      agentStandIn,
-      loadAccess,
-      loadAgentRows,
-      loadAgentSession,
-      loadTakeoverBar,
-    ]) {
+  test('the access pane is a part of the AI settings, offered with its place', () => {
+    const [access] = settingsPartsIn('ai')
+    expect(access?.card).toBe(false)
+    expect(typeof access?.load).toBe('function')
+  })
+
+  test('the live agents, the stand-in and the panels open through doors', () => {
+    for (const one of [agentsUi, agentStandIn, loadAgentRows, loadAgentSession, loadTakeoverBar]) {
       expect(typeof one).toBe('function')
     }
   })

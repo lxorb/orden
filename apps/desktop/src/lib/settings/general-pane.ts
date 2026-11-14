@@ -1,6 +1,5 @@
 import { settingFieldsIn } from '@orden/contracts'
 import { method, isDesktop, isMobile, platform } from '../platform/src/api'
-import { crashReports } from '../crash-reports/src/api'
 import { usageChoice } from '../usage/src/api'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { protectionOn, turnProtection } from '../sharing/src/api'
@@ -13,106 +12,14 @@ import { fitTabs, iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
 import { unloadTabs } from '../tab-strip/unloading.svelte'
 import { swipeChoice } from '../back-swipe/src/api'
-import { BY_ID } from '../shortcuts/registry'
-import { asWarning, quitAsk } from '../quitting/src/api'
-import { shellName, shells, SIZES, bothName } from '../terminal/src/api'
 import { asChannel, switchWebChannel, webChannel } from '../updater'
 import { updates } from '../updates.svelte'
 import { hiddenTabs } from '../workspace/hidden-tabs.svelte'
-import { quickAdd } from '../quick-add/src/api'
 import { isHiddenTabs } from '../workspace/sets'
 import type { Field, Group, Pane } from './fields'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 import { keptForGood } from '../web/kept-for-good.svelte'
-
-function twoWayFields(): Field[] {
-  return Object.keys(shells.ways)
-    .filter((command) => BY_ID.has(command))
-    .map((command): Field => ({
-      kind: 'select',
-      label: bothName(command),
-      hint: 'Whether this key goes to Orden or to the program in the terminal, or asks each time.',
-      words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
-      options: [
-        { value: 'ask', label: 'Always ask' },
-        { value: 'app', label: BY_ID.get(command)?.label() ?? command },
-        { value: 'shell', label: 'Terminal' },
-      ],
-      initial: 'ask',
-      get: () => shells.ways[command] ?? 'ask',
-      set: (value) => shells.setWay(command, value === 'app' || value === 'shell' ? value : null),
-    }))
-}
-
-function terminalGroup(): Group {
-  void shells.ask()
-
-  return {
-    title: 'Terminal',
-    fields: [
-      {
-        kind: 'select',
-        key: 'general.shell',
-        open: true,
-        label: 'Shell',
-        hint: 'The shell a new terminal starts.',
-        options: shells.list.map((one) => ({ value: one.id, label: shellName(one) })),
-        get: () => shells.chosen?.id ?? '',
-        set: (id) => shells.choose(id),
-      },
-      {
-        kind: 'slider',
-        key: 'general.terminalTextSize',
-        label: 'Text size',
-        hint: 'How large the text in terminals is.',
-        min: SIZES.least,
-        max: SIZES.most,
-        step: 1,
-        unit: 'px',
-        initial: SIZES.initial,
-        get: () => shells.size,
-        set: (size) => shells.setSize(size),
-      },
-      {
-        kind: 'switch',
-        key: 'general.terminalThemed',
-        label: 'Colours follow the theme',
-        hint: 'Paints terminals in the theme’s colours; off keeps one fixed palette.',
-        words: ['colour', 'color', 'palette', 'ansi', 'theme', 'dark', 'light'],
-        initial: true,
-        get: () => shells.themed,
-        set: (on) => shells.setThemed(on),
-      },
-      {
-        kind: 'switch',
-        key: 'general.restoreTerminalHistory',
-        label: 'Restore history',
-        hint: 'Brings back what each terminal showed after Orden restarts; off forgets it on quit.',
-        words: ['scrollback', 'session', 'restart', 'privacy'],
-        initial: true,
-        get: () => shells.restoring,
-        set: (on) => shells.setRestoring(on),
-      },
-      {
-        kind: 'select',
-        key: 'general.warnBeforeQuitting',
-        label: 'Warn before quitting',
-        hint: 'Asks before Orden quits with terminals open: always, or only while something runs in one.',
-        words: ['quit', 'close', 'exit', 'confirm', 'running', 'process', 'claude'],
-        options: [
-          { value: 'always', label: 'Always' },
-          { value: 'running', label: 'When something runs' },
-          { value: 'never', label: 'Never' },
-        ],
-        initial: 'running',
-        get: () => quitAsk.warning,
-        set: (value) => quitAsk.warnWhen(asWarning(value)),
-      },
-      ...twoWayFields(),
-    ],
-  }
-}
 
 export function relockField(): Field {
   return {
@@ -161,16 +68,7 @@ function privacyGroup(): Group {
   return {
     title: 'Privacy',
     fields: [
-      {
-        kind: 'switch',
-        key: 'general.crashReports',
-        label: 'Send crash and freeze reports',
-        hint: 'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.',
-        words: ['crash', 'freeze', 'hang', 'report', 'diagnostics', 'telemetry', 'privacy'],
-        initial: true,
-        get: () => crashReports.on,
-        set: (on) => crashReports.set(on),
-      },
+      ...settingFieldsIn('general', 'Privacy'),
       {
         kind: 'switch',
         key: 'general.usageData',
@@ -414,16 +312,7 @@ export function generalPane(): Pane {
       {
         title: 'Add task',
         fields: [
-          {
-            kind: 'switch',
-            key: 'general.smartDates',
-            label: 'Smart dates',
-            hint: 'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.',
-            words: ['tasks', 'quick add', 'natural language', 'parse', 'todoist'],
-            initial: true,
-            get: () => quickAdd.smart,
-            set: (on) => quickAdd.setSmart(on),
-          },
+          ...settingFieldsIn('general', 'Add task'),
           {
             kind: 'switch',
             key: 'general.undatedInToday',
@@ -434,20 +323,6 @@ export function generalPane(): Pane {
             get: () => modes.undatedInToday,
             set: (on) => modes.setUndatedInToday(on),
           },
-          ...(isDesktop && !isMobile
-            ? ([
-                {
-                  kind: 'switch',
-                  key: 'general.addTaskFromAnyApp',
-                  label: 'From any app',
-                  hint: 'The Add task shortcut works even while another app is in front.',
-                  words: ['tasks', 'quick add', 'global', 'hotkey', 'shortcut', 'system'],
-                  initial: true,
-                  get: () => quickAdd.anywhere,
-                  set: (on) => quickAdd.setAnywhere(on),
-                },
-              ] satisfies Field[])
-            : []),
         ],
       },
       ...(__EVEN_PLUGIN__
@@ -491,7 +366,9 @@ export function generalPane(): Pane {
 
       ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
 
-      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [terminalGroup()] : []),
+      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
+        ? [{ title: 'Terminal', fields: settingFieldsIn('general', 'Terminal') }]
+        : []),
 
       ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
         ? [gpuGroup()]

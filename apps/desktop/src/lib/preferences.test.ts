@@ -23,6 +23,8 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { preferences, resettable } = await import('./preferences')
 const { theme } = await import('./theme/src/theme.svelte')
 const { DICTIONARIES } = await import('./spell-languages')
+await import('./quick-add/src/api')
+await (await import('@orden/contracts')).registered()
 
 const panes = preferences()
 const pane = (id: string) => {

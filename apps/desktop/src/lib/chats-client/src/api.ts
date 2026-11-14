@@ -1,6 +1,5 @@
 import './shell-parts'
-export { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './hush.svelte'
-export { priorities } from './priorities.svelte'
+export { hush } from './hush.svelte'
 export type { ChatEntry, Chats } from './shapes'
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)

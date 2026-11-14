@@ -1,4 +1,4 @@
-import { chatsFields } from '../chats-settings'
+import { settingFieldsIn } from '@orden/contracts'
 import { glassesGroups, wordFields } from '../glasses-choices/src/api'
 import { setWord } from '../kind-choice'
 import { prompt } from '../ui-kit/src/api'
@@ -82,7 +82,7 @@ function clipboardFields(): Field[] {
 
 function chatFields(): Field[] {
   if (!chatsOn()) return []
-  return isMobile ? [] : chatsFields()
+  return isMobile ? [] : settingFieldsIn('experimental', 'Chats')
 }
 
 function glassesFields(): Field[] {

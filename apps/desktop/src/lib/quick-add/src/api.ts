@@ -1,3 +1,4 @@
+import './shell-parts'
 export { quickAdd } from './asked.svelte'
 export type { Prefill } from './entry'
 

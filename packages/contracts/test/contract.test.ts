@@ -24,6 +24,7 @@ import {
   NO_VISITS,
   paletteKind,
   registered,
+  registerFeature,
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
@@ -350,6 +351,7 @@ describe('registry', () => {
     const part = {
       section: 'general' as const,
       title: 'Part',
+      card: true,
       shown: () => true,
       load: () => Promise.resolve({ show: () => () => undefined }),
     }
@@ -358,5 +360,32 @@ describe('registry', () => {
     expect(settingsPartsIn('sync')).toEqual([])
     unregister()
     expect(settingsPartsIn('general')).toEqual([])
+  })
+
+  it('loads the registered features before what they register, once, and again after a failed load', async () => {
+    let tries = 0
+    let fails = true
+    const unfeature = registerFeature(() => {
+      tries += 1
+      if (fails) return Promise.reject(new Error('offline'))
+      registerSettingsPart({
+        section: 'import',
+        card: true,
+        shown: () => true,
+        places: () => [{ label: 'Bring in', text: ['Notion'] }],
+        load: () => Promise.resolve({ show: () => () => undefined }),
+      })
+      return Promise.resolve()
+    })
+    await registered()
+    expect(settingsPartsIn('import')).toEqual([])
+    fails = false
+    await registered()
+    await registered()
+    expect(tries).toBe(2)
+    expect(settingsPartsIn('import').flatMap((one) => one.places?.() ?? [])).toEqual([
+      { label: 'Bring in', text: ['Notion'] },
+    ])
+    unfeature()
   })
 })

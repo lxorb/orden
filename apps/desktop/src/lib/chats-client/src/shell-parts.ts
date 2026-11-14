@@ -1,4 +1,9 @@
-import { type PaletteMessages, type PaletteOpenHow, registerPaletteKind } from '@orden/contracts'
+import {
+  type PaletteMessages,
+  type PaletteOpenHow,
+  registerPaletteKind,
+  registerSettingFields,
+} from '@orden/contracts'
 
 const messages: PaletteMessages = {
   hits: async (words) => {
@@ -13,4 +18,11 @@ async function openMessage(path: string, message: string, how: PaletteOpenHow) {
   one.openChat(path, how, message)
 }
 
-if (!__EVEN_PLUGIN__) registerPaletteKind('messages', () => Promise.resolve(messages))
+if (!__EVEN_PLUGIN__) {
+  registerPaletteKind('messages', () => Promise.resolve(messages))
+  registerSettingFields({
+    section: 'experimental',
+    group: 'Chats',
+    load: () => import('./setting-fields').then((one) => one.chatsFields),
+  })
+}
