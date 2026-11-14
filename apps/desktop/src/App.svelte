@@ -451,15 +451,9 @@
       ]) => {
         Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
           tasks: () =>
-            Promise.all([
-              import('./lib/rows/rows.svelte'),
-              import('./lib/views/open'),
-              import('./lib/workspace/write-file'),
-            ]).then(([{ rows }, views, { writeFile }]) => ({
-              rows,
-              ...views,
-              writeFile,
-            })),
+            Promise.all([import('./lib/tasks-model/src/api'), import('./lib/views/open')]).then(
+              ([{ todos }, { openTodos }]) => ({ todos, openTodos }),
+            ),
           chats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no chats in the Even Realities plugin'))

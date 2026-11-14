@@ -60,6 +60,7 @@
     tabOverview,
     terminalSurface,
     viewSurface,
+    todosBoard,
     webSurface,
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing.svelte'
@@ -441,6 +442,14 @@
     {#key tab.id}
       {#await webSurface() then WebTab}
         <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'view' && tab.path === null}
+    {#key tab.id}
+      {#await todosBoard() then TodosBoard}
+        <TodosBoard />
       {:catch}
         {@render unreachable()}
       {/await}

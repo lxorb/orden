@@ -1,0 +1,5 @@
+{
+  "name": "tasks-views",
+  "layer": "content",
+  "dependsOn": ["contracts", "tasks-model"]
+}
