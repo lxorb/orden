@@ -5,8 +5,8 @@ const asked: string[] = []
 const busy = new Map<string, boolean>()
 let others: string[] = []
 
-vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/platform/src/tauri')>()),
+vi.mock('../../src/lib/platform/src/api', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/platform/src/api')>()),
   isDesktop: true,
   platform: () => 'windows',
   invoke: (command: string, args?: { id?: string }) => {
@@ -27,10 +27,9 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { quitAsked, mayStop } = await import('../../src/lib/quitting/ask')
-const { quitAsk } = await import('../../src/lib/quitting/state.svelte')
+const { quitAsked, mayStop } = await import('../../src/lib/quit-ports')
+const { quitAsk } = await import('../../src/lib/quitting/src/api')
 const { setPty } = await import('../../src/lib/terminal/src/running')
-const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { anythingRuns } = await import('../../src/lib/parting')
 type Tab = import('../../src/lib/workspace.svelte').Tab
@@ -66,7 +65,7 @@ beforeEach(() => {
   was = workspace.tabs
   asked.length = 0
   others = []
-  shells.setWarning('running')
+  quitAsk.warnWhen('running')
   workspace.tabs = [
     terminal('a', 'claude · orden', 'claude'),
     terminal('b', 'PowerShell · orden', null),
@@ -101,7 +100,7 @@ test('only the busy terminal is named, and Quit anyway goes on', async () => {
   button('Quit anyway')?.click()
   await answered
   expect(asked.at(-1)).toBe('quit_confirmed')
-  expect(shells.warning).toBe('running')
+  expect(quitAsk.warning).toBe('running')
 })
 
 test('Cancel keeps everything running', async () => {
@@ -126,7 +125,7 @@ test("Don't ask again is Settings' Never, and the next quit asks nothing", async
   flushSync()
   button('Quit anyway')?.click()
   await answered
-  expect(shells.warning).toBe('never')
+  expect(quitAsk.warning).toBe('never')
 
   asked.length = 0
   await quitAsked()
@@ -134,7 +133,7 @@ test("Don't ask again is Settings' Never, and the next quit asks nothing", async
 })
 
 test('Always lists the idle shells as well', async () => {
-  shells.setWarning('always')
+  quitAsk.warnWhen('always')
   const { answered } = await quitting()
   expect(names()).toEqual(['claude · orden', 'PowerShell · orden'])
   quitAsk.answer('stay')

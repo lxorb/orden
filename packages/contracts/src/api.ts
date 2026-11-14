@@ -137,6 +137,14 @@ export type {
   WebPagesPort,
   WebPorts,
 } from './web'
+export {
+  type QuittingPorts,
+  type RunningProgram,
+  type Stopping,
+  type StoppingKind,
+  STOPPING_KINDS,
+  type StoppingPort,
+} from './quitting'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
 export type { VoicePort, VoicePorts, VoiceRecording } from './voice'
 export type {

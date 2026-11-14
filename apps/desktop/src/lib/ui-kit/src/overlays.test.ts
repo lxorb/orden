@@ -332,7 +332,7 @@ describe('what hides a web page', () => {
       "a chat's members as a sheet over the chat, on a narrow window",
     'lib/accounts-ui/src/ProfileCard.svelte': "a person's card, beside the face that was pressed",
     'lib/quick-add/src/QuickAddSheet.svelte': 'dialog',
-    'lib/quitting/QuitSheet.svelte': 'dialog',
+    'lib/quitting/src/QuitSheet.svelte': 'dialog',
     'lib/terminal/src/remote/HostPicker.svelte': 'dialog',
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/save-place/src/SavePlace.svelte': 'where a tab with no file is saved, under the tab',

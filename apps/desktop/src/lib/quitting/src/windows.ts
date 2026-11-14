@@ -1,6 +1,6 @@
-import { invoke, waited } from '../platform/src/api'
-import { jump } from './jump'
-import { type Row, rowsHere } from './rows'
+import type { Stopping } from '@orden/contracts'
+import { invoke, waited } from '../../platform/src/api'
+import { rowsHere, showRow } from './rows'
 
 const CHANNEL = 'orden:quitting'
 
@@ -8,18 +8,18 @@ const WAITS = 800
 
 type Message =
   | { kind: 'ask'; asking: string; idle: boolean }
-  | { kind: 'said'; asking: string; window: string; rows: Row[] }
-  | { kind: 'show'; row: Row }
+  | { kind: 'said'; asking: string; window: string; rows: Stopping[] }
+  | { kind: 'show'; row: Stopping }
 
 let own = ''
 
-export async function rowsEverywhere(window: string, idle: boolean): Promise<Row[]> {
+export async function rowsEverywhere(window: string, idle: boolean): Promise<Stopping[]> {
   const others = await invoke<string[]>('quit_others').catch(() => [])
   if (!others.length) return rowsHere(window, idle)
 
   const channel = new BroadcastChannel(CHANNEL)
   const asking = crypto.randomUUID()
-  const heard = new Map<string, Row[]>()
+  const heard = new Map<string, Stopping[]>()
   const all = new Promise<void>((resolve) => {
     channel.onmessage = ({ data }: MessageEvent<Message>) => {
       if (data.kind !== 'said' || data.asking !== asking) return
@@ -34,7 +34,7 @@ export async function rowsEverywhere(window: string, idle: boolean): Promise<Row
   return [...here, ...others.flatMap((one) => heard.get(one) ?? [])]
 }
 
-export function showElsewhere(row: Row) {
+export function showElsewhere(row: Stopping) {
   const channel = new BroadcastChannel(CHANNEL)
   channel.postMessage({ kind: 'show', row } satisfies Message)
   channel.close()
@@ -54,7 +54,7 @@ export function answer(window: string) {
         } satisfies Message),
       )
     } else if (data.kind === 'show' && data.row.window === own) {
-      void jump(data.row)
+      void showRow(data.row)
       void invoke('raise_window', { label: own })
     }
   }

@@ -2,7 +2,6 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
-  asWarning,
   connectTo,
   destinationOf,
   hostFor,
@@ -96,10 +95,6 @@ describe('a terminal file', () => {
     const spec = { shell: 'zsh', folder: '/home/me', key: 'k1', name: 'Build' }
     expect(readSpec(writeSpec(spec))).toMatchObject(spec)
     expect(readSpec('not json')).toBeNull()
-  })
-
-  test('an unknown warning setting falls back to warning about running shells', () => {
-    expect(asWarning('nonsense')).toBe('running')
   })
 })
 

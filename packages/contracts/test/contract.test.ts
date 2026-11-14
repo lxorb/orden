@@ -27,6 +27,7 @@ import {
   portProvided,
   providePort,
   spaceId,
+  STOPPING_KINDS,
   TAB_KINDS,
   unixLines,
   unwrapOr,
@@ -191,6 +192,19 @@ describe('shell extension points', () => {
       settingsSections: [],
       sidebarPanels: [],
     })
+  })
+
+  it('asks a port for each kind of thing quitting would stop', async () => {
+    expect([...STOPPING_KINDS]).toEqual(['terminal', 'thread'])
+    const row = { window: 'main', kind: 'thread', id: 'a', name: 'A', busy: true } as const
+    const unbind = providePort('quit.thread', {
+      rows: () => Promise.resolve([row]),
+      show: () => Promise.resolve(),
+    })
+    const port = portOf('quit.thread')
+    expect(port.ok && (await port.value.rows('main', false))).toEqual([row])
+    expect(portProvided('quit.terminal')).toBe(false)
+    unbind()
   })
 
   it('only takes events under the app scheme', () => {

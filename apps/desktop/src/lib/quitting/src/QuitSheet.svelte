@@ -1,12 +1,10 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { Spark } from '../agents/src/api'
-  import { closeOnBack } from '../ui-kit/src/api'
-  import { fade, LAYER, scale } from '../platform/src/api'
-  import { overlays } from '../ui-kit/src/api'
-  import TickBox from '../TickBox.svelte'
-  import { terminalMark } from '../surfaces.svelte'
-  import { trap } from '../ui-controls/src/api'
+  import { closeOnBack, overlays } from '../../ui-kit/src/api'
+  import { fade, LAYER, scale } from '../../platform/src/api'
+  import TickBox from '../../TickBox.svelte'
+  import { sparkMark, terminalMark } from '../../surfaces.svelte'
+  import { trap } from '../../ui-controls/src/api'
   import { quitAsk } from './state.svelte'
 
   const NAME = 'Orden'
@@ -61,7 +59,9 @@
                 <TerminalMark tab={{ doc: row.doc ?? '', running: row.running }} />
               {/await}
             {:else}
-              <Spark colour="currentColor" turning />
+              {#await sparkMark() then Spark}
+                <Spark colour="currentColor" turning />
+              {/await}
             {/if}
             <span class="name">{row.name}</span>
           </button>

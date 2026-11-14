@@ -109,7 +109,7 @@ export async function discard() {
 }
 
 export async function restartToUpdate(install = true) {
-  if (!__EVEN_PLUGIN__ && !(await (await import('./quitting/ask')).mayStop('restart'))) return
+  if (!__EVEN_PLUGIN__ && !(await (await import('./quit-ports')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
   if (install && !(await installStaged())) return

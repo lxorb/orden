@@ -13,7 +13,7 @@ function notUpdated(value: unknown): { refused: boolean; command: string | null;
 }
 
 export async function updateBySystem(version: string, channel: Channel): Promise<string | null> {
-  if (__EVEN_PLUGIN__ || !(await (await import('./quitting/ask')).mayStop('restart'))) return null
+  if (__EVEN_PLUGIN__ || !(await (await import('./quit-ports')).mayStop('restart'))) return null
   try {
     await invoke('system_update', { channel, version })
   } catch (error) {
