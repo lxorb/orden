@@ -1,4 +1,4 @@
-import { isNumber, isRecord, isString, invoke } from '../platform/src/api'
+import { isNumber, isRecord, isString, invoke } from '../../platform/src/api'
 
 const A_PAPER = 2_000_000
 

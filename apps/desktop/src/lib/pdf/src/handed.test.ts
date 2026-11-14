@@ -20,7 +20,7 @@ const world = vi.hoisted((): World => ({
   readOnly: [],
 }))
 
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces: [
       { id: 'work', name: 'Work', root: 'C:\\Orden\\Work' },
@@ -48,17 +48,17 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../platform/src/tauri', async (actual) => ({
-  ...(await actual<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string) => {
     world.asked.push(command)
     return Promise.resolve(world.waiting)
   },
 }))
 
-vi.mock('../platform/src/log', () => ({ log: () => undefined }))
+vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 
-vi.mock('../sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),
 }))
 

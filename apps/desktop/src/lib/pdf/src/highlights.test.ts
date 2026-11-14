@@ -35,7 +35,7 @@ function mark(over: Partial<Highlight> = {}): Highlight {
 describe('the sidecar', () => {
   test('is named after the PDF, under the name the Rust side writes', () => {
     const paths = readFileSync(
-      fileURLToPath(new URL('../../../src-tauri/src/paths.rs', import.meta.url)),
+      fileURLToPath(new URL('../../../../src-tauri/src/paths.rs', import.meta.url)),
       'utf8',
     )
 

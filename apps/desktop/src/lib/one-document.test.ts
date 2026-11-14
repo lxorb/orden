@@ -5,8 +5,8 @@ let binFull = false
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
-vi.mock('./pdf/document', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./pdf/document')>()),
+vi.mock('./pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./pdf/src/api')>()),
   pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
 }))
 

@@ -46,7 +46,8 @@ vi.mock('../assets', () => ({
   },
 }))
 vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(new Uint8Array([1])) }))
-vi.mock('../pdf/document', () => ({
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
   loading: (library: { getDocument: (source: object) => unknown }, data: Uint8Array) =>
     library.getDocument({ data }),
   pdfjs: () =>

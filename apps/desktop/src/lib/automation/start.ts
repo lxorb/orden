@@ -28,7 +28,7 @@ export async function startAutomation(): Promise<() => void> {
   if (isDesktop) {
     const { hearPages } = await import('../web-tab/handed')
     stopping.push(await hearPages())
-    const { hearPdfs } = await import('../pdf/handed')
+    const { hearPdfs } = await (await import('../pdf/src/api')).handed()
     stopping.push(await hearPdfs())
   }
 

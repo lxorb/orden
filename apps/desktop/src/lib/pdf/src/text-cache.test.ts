@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const store = vi.hoisted(() => ({ records: new Map<string, string>() }))
 
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     const path = args.path as string

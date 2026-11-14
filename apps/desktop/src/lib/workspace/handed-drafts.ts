@@ -11,7 +11,7 @@ import {
 import { CanvasStore } from '../canvas/store.svelte'
 import { asDraft, paperNamed, paperOutside } from '../pages/from-pdf'
 import { paperOf } from '../pages/held'
-import { pageSizes } from '../pdf/document'
+import { pageSizes } from '../pdf/src/api'
 import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
 import { isDraft } from './drafts'
 

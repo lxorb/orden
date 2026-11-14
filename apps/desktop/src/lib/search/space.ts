@@ -31,7 +31,7 @@ export async function searchSpace(
     const open = (one: { path: string }) => !workspace.protection.locked(one.path)
     onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
   }
-  const { papersFor, searchPapers } = await import('../pdf/papers')
+  const { papersFor, searchPapers } = await (await import('../pdf/src/api')).papers()
   await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })

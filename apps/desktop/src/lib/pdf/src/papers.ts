@@ -1,9 +1,9 @@
 import { isPagesTarget } from '@orden/markdown/links'
-import { holderOf, paperOf } from '../pages/held'
+import { holderOf, paperOf } from '../../pages/held'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
-import { warm } from '../search/warm.svelte'
-import { folderOf, pathKey, pathKeys, afterQuiet } from '../platform/src/api'
+import { warm } from '../../search/warm.svelte'
+import { folderOf, pathKey, pathKeys, afterQuiet } from '../../platform/src/api'
 import { forgetPaperText, keepPaperText, paperFiles, paperText, paperTextOf } from './text-cache'
 
 interface Paper {

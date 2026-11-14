@@ -61,8 +61,7 @@ import {
 } from '../platform/src/api'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
-import { loading, pdfjs } from '../pdf/document'
-import { PDF_TO_CSS } from '../pdf/pages'
+import { loading, pdfjs, PDF_TO_CSS } from '../pdf/src/api'
 import { drawScale } from '../pages/paper'
 
 const NUDGE = 1

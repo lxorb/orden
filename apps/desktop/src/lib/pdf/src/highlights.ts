@@ -1,7 +1,7 @@
-import { linkTo } from '../composer'
-import { isRecord, isNumber, isString } from '../platform/src/api'
+import { linkTo } from '../../composer'
+import { isRecord, isNumber, isString } from '../../platform/src/api'
 
-export const SIDECAR = '.highlights.json'
+export { PDF_SIDECAR as SIDECAR } from '@orden/markdown/links'
 
 const VERSION = 1
 

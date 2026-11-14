@@ -63,7 +63,7 @@ export function guardDrops(
 }
 
 async function openPdfs(paths: readonly string[]) {
-  const { showPdfs } = await import('./pdf/handed')
+  const { showPdfs } = await (await import('./pdf/src/api')).handed()
   await showPdfs(paths)
 }
 

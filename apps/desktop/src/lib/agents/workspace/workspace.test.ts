@@ -479,7 +479,10 @@ vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 const openDocument = vi.hoisted(() =>
   vi.fn((_path: string) => Promise.reject(new Error('no PDF here'))),
 )
-vi.mock('../../pdf/document', () => ({ openDocument }))
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
+  openDocument,
+}))
 
 vi.mock('../../terminal/src/shells.svelte', () => ({
   shells: { ask: () => Promise.resolve([]), chosen: { id: 'pwsh', name: 'PowerShell' } },

@@ -24,7 +24,6 @@ import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
 import { forgetIndex, type IndexStore, openIndex } from '../../web/index-store'
 import { followRoots } from './roots'
-import { sheetArrived } from '../../pdf/sheets.svelte'
 import {
   account,
   isDesktop,
@@ -1009,7 +1008,7 @@ class Runner {
     },
     written: (path) => {
       this.treeStale()
-      sheetArrived(path)
+      workspace().fileWritten(path)
     },
     writing: async (path, text, write) => {
       if (windows.alone) {

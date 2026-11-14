@@ -1,9 +1,17 @@
 import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
-import { COLOURS, frozen, type Held, type Highlight } from '../../pdf/highlights'
-import { marksWritten } from '../../pdf/sheets.svelte'
-import { editHighlights, loadHighlights } from '../../pdf/sidecar'
+import {
+  COLOURS,
+  frozen,
+  type Held,
+  type Highlight,
+  marksWritten,
+  editHighlights,
+  loadHighlights,
+  openDocument,
+  paperText,
+} from '../../pdf/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { asked } from './asks'
 import { type Call, done, maybe, need, needScope } from './call'
@@ -33,7 +41,6 @@ function pdfOf(call: Call): { place: Place; relative: string; path: string } {
 }
 
 async function opened(path: string) {
-  const { openDocument } = await import('../../pdf/document')
   return openDocument(path).catch(() => {
     throw new Refused('failed', 'that PDF could not be read')
   })
@@ -49,7 +56,6 @@ export async function readPdf(call: Call): Promise<AgentAnswer> {
     let characters = 0
     let truncated = false
 
-    const { paperText } = await import('../../pdf/text-cache')
     const kept = new Map((await paperText(path, undefined, held.hash))?.pages ?? [])
 
     for (const page of pagesAsked(maybe(call, 'pages'), count)) {

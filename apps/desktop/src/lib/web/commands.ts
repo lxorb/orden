@@ -20,7 +20,6 @@ import {
   isReserved,
 } from '../platform/src/api'
 import { holderOf, paperOf } from '../pages/held'
-import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
@@ -32,6 +31,7 @@ import {
   isChatTarget,
   isTermTarget,
   isWebTarget,
+  PDF_SIDECAR,
 } from '@orden/markdown/links'
 import { keptAway, NOT_HERE } from './away.svelte'
 import { rehomed, unread } from '@orden/scan/indexed'
@@ -133,7 +133,7 @@ function listed(path: string): boolean {
 }
 
 function sidecarOf(path: string): string {
-  return `${normalise(path)}${SIDECAR}`
+  return `${normalise(path)}${PDF_SIDECAR}`
 }
 
 async function tree(root: string, options: TreeOptions = {}, raw = false): Promise<Entry> {
@@ -215,7 +215,7 @@ export function readsAsText(path: string): boolean {
     isMarkdown(path) ||
     isCanvas(path) ||
     isPages(path) ||
-    path.endsWith(SIDECAR) ||
+    path.endsWith(PDF_SIDECAR) ||
     /\.(base|url|webloc|term|chat|application)$/i.test(path)
   )
 }
@@ -748,7 +748,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
     const marks = marked.get(path)
     if (marks) notes.push(markedPlane(relative(path), marks))
-    else if (basename(path) !== KEEP && !path.endsWith(SIDECAR)) beside.push(path)
+    else if (basename(path) !== KEEP && !path.endsWith(PDF_SIDECAR)) beside.push(path)
   }
 
   const learnt: { path: string; modified: number; size: number; plane?: PlaneMarks }[] = []

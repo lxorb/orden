@@ -64,10 +64,7 @@
   import { RightPan } from './canvas/right-pan'
   import { freeScroll, holdFreeScroll } from './canvas/free-scroll'
   import { copyText } from './ui-controls/src/api'
-  import { placesOnPaper } from './pdf/find'
-  import type { Highlight } from './pdf/highlights'
-  import { marksFromOutside } from './pdf/sheets.svelte'
-  import { loadHighlights } from './pdf/sidecar'
+  import { placesOnPaper, type Highlight, marksFromOutside, loadHighlights } from './pdf/src/api'
   import {
     began,
     dragged,

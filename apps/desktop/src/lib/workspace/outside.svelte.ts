@@ -12,7 +12,7 @@ import {
   afterQuiet,
   windows,
 } from '../platform/src/api'
-import { sheetArrived } from '../pdf/sheets.svelte'
+import { sheetArrived } from '../pdf/src/api'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
 import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync-client/src/api'

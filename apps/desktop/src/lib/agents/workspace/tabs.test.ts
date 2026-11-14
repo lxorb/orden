@@ -166,7 +166,10 @@ const settings = { show: vi.fn() }
 vi.mock('../../settings.svelte', () => ({ settings }))
 
 const openDocument = vi.fn((_path: string) => Promise.reject(new Error('no PDF here')))
-vi.mock('../../pdf/document', () => ({ openDocument }))
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
+  openDocument,
+}))
 
 const trash = {
   error: null as string | null,

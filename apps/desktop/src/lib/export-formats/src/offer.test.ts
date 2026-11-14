@@ -133,8 +133,8 @@ function memoryStorage(): Storage {
 
 const CANVAS = '{"nodes":[],"edges":[]}'
 
-vi.mock('../../pdf/document', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../pdf/document')>()),
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
 }))
 

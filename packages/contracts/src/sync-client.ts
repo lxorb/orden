@@ -174,6 +174,7 @@ export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   writesSettled(): Promise<unknown>
   arrived(path: string): Promise<unknown>
   fileCame(path: string, kind: Exclude<SyncFileKind, 'space'>): Promise<void>
+  fileWritten(path: string): void
   fileMoved(from: string, to: string, kind: SyncFileKind): Promise<unknown>
   fileGone(path: string, kind: SyncFileKind, back?: string): Promise<unknown>
   heardMove(from: string, to: string): void

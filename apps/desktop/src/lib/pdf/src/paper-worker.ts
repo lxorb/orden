@@ -1,8 +1,8 @@
 import * as library from 'pdfjs-dist/legacy/build/pdf.mjs'
 import * as engine from 'pdfjs-dist/legacy/build/pdf.worker.mjs'
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
-import { decodesImages } from '../pdf/engine'
-import { streamsIterate } from '../pdf/streams'
+import { decodesImages } from './engine'
+import { streamsIterate } from './streams'
 import type { AwayAsked, AwaySaid } from './paper-away'
 
 Object.assign(globalThis, { pdfjsWorker: engine })

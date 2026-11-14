@@ -19,8 +19,8 @@ vi.mock('../sharing/src/api', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-vi.mock('../pdf/document', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../pdf/document')>()),
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
   pageSizes: () =>
     Promise.resolve([
       { width: 794, height: 1123 },

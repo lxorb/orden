@@ -1,4 +1,4 @@
-import type { Quad } from '../../pdf/highlights'
+import type { Quad } from '../../pdf/src/api'
 import { Refused } from './problem'
 
 const MOST_RANGES = 100

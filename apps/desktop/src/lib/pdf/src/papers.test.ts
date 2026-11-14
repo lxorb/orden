@@ -6,7 +6,7 @@ const store = vi.hoisted(() => ({
   reading: null as ((path: string) => void) | null,
 }))
 
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   platform: () => 'linux',
   invoke: (command: string, args: Record<string, unknown> = {}) => {

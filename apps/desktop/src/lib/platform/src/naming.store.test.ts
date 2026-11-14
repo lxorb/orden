@@ -176,8 +176,8 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../pdf/document', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../pdf/document')>()),
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   pageSizes: (path: string) =>
     (files.get(path) ?? outside.get(path))?.startsWith('%PDF')
       ? Promise.resolve([
@@ -731,7 +731,7 @@ describe('a PDF opened with Orden', () => {
   })
 
   async function opened() {
-    const { showPdfs } = await import('../../pdf/handed')
+    const { showPdfs } = await (await import('../../pdf/src/api')).handed()
     await showPdfs([OUTSIDE])
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
@@ -817,7 +817,7 @@ describe('a PDF opened with Orden', () => {
   test('and nothing at all when it could not be read', async () => {
     outside.set(OUTSIDE, 'not a paper')
 
-    const { showPdfs } = await import('../../pdf/handed')
+    const { showPdfs } = await (await import('../../pdf/src/api')).handed()
     await showPdfs([OUTSIDE])
 
     expect(workspace.tabs).toEqual([])

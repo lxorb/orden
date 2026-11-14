@@ -26,7 +26,10 @@ vi.mock('../assets', () => ({
   },
 }))
 
-vi.mock('../pdf/document', () => ({ pdfjs: () => Promise.reject(new Error('no PDF here')) }))
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+  pdfjs: () => Promise.reject(new Error('no PDF here')),
+}))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
