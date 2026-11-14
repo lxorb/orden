@@ -4,7 +4,7 @@ import { account } from './accounts/src/api'
 import { appsOn, basesOn, hiddenKinds } from './settings.svelte'
 import { settingsTab } from './settings-tab'
 import { arriving } from './arriving.svelte'
-import { keptAway } from './web/away.svelte'
+import { keptAway } from './away/src/api'
 import {
   blockIds,
   isApplicationTarget,

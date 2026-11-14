@@ -33,7 +33,7 @@ import {
   isWebTarget,
   PDF_SIDECAR,
 } from '@orden/markdown/links'
-import { keptAway, NOT_HERE } from './away.svelte'
+import { keptAway, NOT_HERE } from '../away/src/api'
 import { rehomed, unread } from '@orden/scan/indexed'
 import {
   assets,

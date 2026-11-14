@@ -33,7 +33,7 @@ vi.mock('../platform/src/stored', () => ({
 
 const { dropSetext, keepSetextMarked, SETEXT_GONE, SETEXT_KEY } = await import('./setext')
 const { FileActions } = await import('./undo.svelte')
-const { keptAway } = await import('../web/away.svelte')
+const { keptAway } = await import('../away/src/api')
 type HoldsNotes = import('./note-text').HoldsNotes & import('./setext').MarksNotes
 type ItemMeta = import('@orden/sync-core').ItemMeta
 type MetaPatch = import('@orden/sync-core').MetaPatch

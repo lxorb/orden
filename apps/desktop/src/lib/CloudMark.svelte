@@ -2,7 +2,7 @@
   import CloudDownload from 'lucide/dist/esm/icons/cloud-download.mjs'
   import { icloud } from './icloud.svelte'
   import { isNative } from './platform/src/api'
-  import { keptAway } from './web/away.svelte'
+  import { keptAway } from './away/src/api'
 
   const { path }: { path: string } = $props()
 

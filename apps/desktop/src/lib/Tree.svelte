@@ -61,7 +61,7 @@
   import { inside } from './workspace/zones'
   import Twist from './Twist.svelte'
   import { dur } from './platform/src/api'
-  import { keptAway } from './web/away.svelte'
+  import { keptAway } from './away/src/api'
   import { rowIds } from './row-ids'
   import { indexed, settle } from './tree-settle'
 

@@ -159,7 +159,7 @@ type RemoteSpace = import('../../accounts/src/api').RemoteSpace
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('../../ui-kit/src/api')
 const { sync } = await import('../../sync.svelte')
-const { keptAway } = await import('../../web/away.svelte')
+const { keptAway } = await import('../../away/src/api')
 
 beforeEach(() => {
   notes.clear()

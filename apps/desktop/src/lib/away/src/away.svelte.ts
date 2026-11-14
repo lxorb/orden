@@ -2,7 +2,7 @@ import type { Query } from '@orden/scan/search/query'
 import type { Found } from '@orden/scan/search/walk'
 import type { IndexedNote } from '@orden/scan/wire'
 import { SvelteSet } from 'svelte/reactivity'
-import { normalise, under } from '../platform/src/api'
+import { normalise, under } from '../../platform/src/api'
 
 interface Away {
   id: string
