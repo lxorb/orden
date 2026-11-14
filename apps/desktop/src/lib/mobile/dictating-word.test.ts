@@ -3,12 +3,12 @@ import { expect, test, vi } from 'vitest'
 const listen = vi.fn(() => true)
 const held = { on: 0, off: 0 }
 
-vi.mock('./bridge', () => ({
+vi.mock('../platform/src/mobile-bridge', () => ({
   frameWord: () => Promise.resolve(''),
   method: (name: string) => (name === 'listen' ? listen : undefined),
   answer: () => undefined,
 }))
-vi.mock('../busy.svelte', () => ({
+vi.mock('../ui-kit/src/busy.svelte', () => ({
   busy: {
     start: (_label: string, run: () => Promise<void>) => {
       held.on++

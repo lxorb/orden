@@ -1,6 +1,6 @@
 import type { Scheme } from '@orden/contracts'
-import { accentColour } from '../../../accents'
-import { luminance, over, type Rgb, rgbOf } from '../../../legibility'
+import { accentColour } from '../../../theme/src/api'
+import { luminance, over, type Rgb, rgbOf } from '../../../ui-controls/src/api'
 
 export type Stops = readonly [Rgb, Rgb]
 

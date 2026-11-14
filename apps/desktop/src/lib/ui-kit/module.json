@@ -1,0 +1,5 @@
+{
+  "name": "ui-kit",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform", "theme", "markdown", "scan"]
+}

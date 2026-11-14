@@ -2,10 +2,10 @@
   import { cubicOut } from 'svelte/easing'
   import { MCP_URL } from '../accounts/src/api'
   import { connectors } from '../connectors.svelte'
-  import Copyable from '../Copyable.svelte'
-  import CopyButton from '../CopyButton.svelte'
+  import { Copyable } from '../ui-controls/src/api'
+  import { CopyButton } from '../ui-controls/src/api'
   import Outward from '../Outward.svelte'
-  import Switch from '../Switch.svelte'
+  import { Switch } from '../ui-controls/src/api'
   import { openExternal } from '../platform/src/api'
   import { dur, fly, slide } from '../platform/src/api'
 

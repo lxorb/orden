@@ -1,4 +1,4 @@
-import { copyText } from '../../clipboard'
+import { copyText } from '../../ui-controls/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { AutoCompact, Thread, Turn } from '../chat/types'
 import { compactsAt } from '../chat/usage'

@@ -2,7 +2,7 @@ import { account } from '../accounts/src/api'
 import { modes } from '../modes.svelte'
 import type { Section } from '../settings.svelte'
 import { isDesktop } from '../platform/src/api'
-import { viewport } from '../viewport.svelte'
+import { viewport } from '../ui-kit/src/api'
 
 export interface Item {
   id: Section

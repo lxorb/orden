@@ -18,7 +18,9 @@ vi.mock('../../src/lib/views/mount', () => ({
     return () => undefined
   },
 }))
-vi.mock('../../src/lib/scrollbar', () => ({ scrollbar: () => ({ destroy: () => undefined }) }))
+vi.mock('../../src/lib/ui-kit/src/scrollbar', () => ({
+  scrollbar: () => ({ destroy: () => undefined }),
+}))
 vi.mock('../../src/lib/sharing.svelte', () => ({ trustsHtmlIn: () => false }))
 vi.mock('../../src/lib/link-index.svelte', () => ({
   links: { version: 0, index: () => null, locksSeen: () => '' },

@@ -95,7 +95,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { openRemote } = await import('../../src/lib/remote/open')
 const { shells } = await import('../../src/lib/terminal/shells.svelte')
-const { busy } = await import('../../src/lib/busy.svelte')
+const { busy } = await import('../../src/lib/ui-kit/src/busy.svelte')
 const { flushSync } = await import('svelte')
 const { written } = await import('../../src/lib/parting')
 

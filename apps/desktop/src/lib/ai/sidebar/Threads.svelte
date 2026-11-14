@@ -6,7 +6,7 @@
   import { menu } from '../../menu.svelte'
   import { dur, fly } from '../../platform/src/api'
   import type { Place } from '../../row-window'
-  import { scrollbar } from '../../scrollbar'
+  import { scrollbar } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ThreadHead } from '../chat/types'
   import { ordered, stateOf } from '../session-state'

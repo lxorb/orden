@@ -19,7 +19,7 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
 vi.mock('../menu.svelte', () => ({
   menu: { replace: (next: typeof rows) => (rows = next) },
 }))
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (said: { title: string }) => {
       asked.push(said.title)

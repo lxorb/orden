@@ -20,7 +20,7 @@
   import { afterQuiet } from '../platform/src/api'
   import { scratchpad } from './pad'
   import { closeScratchpad, padTab, shown, WIDTH } from './is.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { viewport } from '../ui-kit/src/api'
 
   const { docked = false }: { docked?: boolean } = $props()
 

@@ -2,7 +2,7 @@
   import { pinIn } from '@orden/pass/device'
   import { deliver } from '../export/save'
   import { deviceName } from '../protect/device'
-  import Select from '../Select.svelte'
+  import { Select } from '../ui-controls/src/api'
   import ChangePassword from './ChangePassword.svelte'
   import { copyField } from './copied'
   import {

@@ -1,4 +1,11 @@
-import { type IconNode, keyNamed, loadIcons, LUCIDE, shapeFor, type WrittenIcon } from './icons'
+import {
+  type IconNode,
+  keyNamed,
+  loadIcons,
+  LUCIDE,
+  shapeFor,
+  type WrittenIcon,
+} from './ui-kit/src/api'
 import type { IconShape, LoadedSet } from './icon-sets'
 import { startup } from './startup.svelte'
 

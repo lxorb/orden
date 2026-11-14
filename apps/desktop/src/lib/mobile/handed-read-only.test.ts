@@ -24,7 +24,7 @@ vi.mock('../import/apply', () => ({
   },
 }))
 
-vi.mock('./bridge', () => ({
+vi.mock('../platform/src/mobile-bridge', () => ({
   onTheActivity: () => true,
   frameWord: () => Promise.resolve('word'),
   method: (name: string) =>
@@ -47,7 +47,7 @@ vi.mock('../insert-picture', () => ({
   putPicture: () => undefined,
   writeAtCaret: (_view: unknown, words: string) => void world.typed.push(words),
 }))
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: (question: { options: { id: string }[] }) => {
       world.asked.push(question)

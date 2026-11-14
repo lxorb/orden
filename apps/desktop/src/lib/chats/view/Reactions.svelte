@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Message } from '@orden/chats'
   import { backOut } from 'svelte/easing'
-  import { localNumber } from '../../region'
+  import { localNumber } from '../../platform/src/api'
   import { dur, scale } from '../../platform/src/api'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'

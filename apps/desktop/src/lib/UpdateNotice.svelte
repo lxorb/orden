@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import Cross from './Cross.svelte'
+  import { Cross } from './ui-kit/src/api'
   import { type Channel, restartToUpdate } from './updater'
   import { dur, fly } from './platform/src/api'
   import { log } from './platform/src/api'
@@ -84,7 +84,7 @@
 >
   {#if command}
     <p>To update, run this in a terminal:</p>
-    {#await import('./Copyable.svelte') then { default: Copyable }}
+    {#await import('./ui-controls/src/api') then { Copyable }}
       <Copyable value={command} />
     {/await}
 

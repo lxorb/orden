@@ -1,4 +1,4 @@
-import type { FileMark } from './file-mark'
+import type { FileMark } from '@orden/contracts'
 
 interface Held {
   until?: AbortSignal

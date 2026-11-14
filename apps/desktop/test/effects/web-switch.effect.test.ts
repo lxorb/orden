@@ -131,7 +131,7 @@ let over: Element | null = null
 
 document.elementFromPoint = () => over ?? document.querySelector('.hole')
 
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')

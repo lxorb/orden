@@ -2,9 +2,5 @@
   "name": "theme",
   "layer": "foundation",
   "dependsOn": ["contracts", "sync-core", "themes", "platform"],
-  "pending": [
-    "apps/desktop/src/lib/accents.ts",
-    "apps/desktop/src/lib/insets.ts",
-    "apps/desktop/src/lib/startup.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/startup.svelte.ts"]
 }

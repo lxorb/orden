@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import tokens from '@orden/themes/tokens.css?raw'
 import { contrastCss } from '@orden/themes/contrast'
-import { accentTokens } from '../../../accents'
+import { accentTokens } from '../../../theme/src/accents'
 import { lookOf } from './looks'
 
 describe('the built-in theme', () => {

@@ -1,5 +1,5 @@
 import { account } from '../../accounts/src/api'
-import { prompt } from '../../prompt.svelte'
+import { prompt } from '../../ui-kit/src/api'
 import { vault } from './start.svelte'
 
 export async function signOut(): Promise<void> {

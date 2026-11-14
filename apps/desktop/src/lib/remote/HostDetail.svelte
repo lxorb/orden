@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { prompt } from '../prompt.svelte'
-  import Select from '../Select.svelte'
+  import { prompt } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import Swatches from '../Swatches.svelte'
-  import Switch from '../Switch.svelte'
+  import { Switch } from '../ui-controls/src/api'
   import { invoke } from '../platform/src/api'
   import HostMark from './HostMark.svelte'
   import {

@@ -1,6 +1,6 @@
-import { busy } from '../busy.svelte'
+import { busy } from '../ui-kit/src/api'
 import type { IconNode } from 'lucide'
-import type { MenuItem } from '../menu-item'
+import type { MenuItem } from '../ui-kit/src/api'
 import { samePath, within } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { protectionOn } from './gate'

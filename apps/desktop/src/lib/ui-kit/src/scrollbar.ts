@@ -1,4 +1,4 @@
-import { dur, afterQuiet, onceAFrame } from './platform/src/api'
+import { dur, afterQuiet, onceAFrame } from '../../platform/src/api'
 
 const LEAST = 28
 

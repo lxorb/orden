@@ -1,4 +1,12 @@
-import { AA, type Lift, over, type Rgb, rgbOf, scrimFloor, type Span } from '../../../legibility'
+import {
+  AA,
+  type Lift,
+  over,
+  type Rgb,
+  rgbOf,
+  scrimFloor,
+  type Span,
+} from '../../../ui-controls/src/api'
 
 export interface Palette {
   ink: Rgb

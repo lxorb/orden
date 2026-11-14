@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type Family, installedFamilies, isInstalled, offered } from '../font-families'
-  import { overlays } from '../overlays'
-  import { hang } from '../portal'
+  import { overlays } from '../ui-kit/src/api'
+  import { hang } from '../ui-kit/src/api'
 
   const {
     value,

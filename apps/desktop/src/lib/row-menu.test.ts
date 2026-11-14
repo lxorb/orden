@@ -28,7 +28,7 @@ vi.mock('./sharing.svelte', () => ({
 
 const { bookmarkAll, rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { hiddenKinds } = await import('./settings.svelte')
 const { PROTECTION_WORD } = await import('./protect/gate')
 type Entry = import('./workspace.svelte').Entry

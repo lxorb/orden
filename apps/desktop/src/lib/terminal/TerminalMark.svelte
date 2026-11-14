@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chosenIcon, chosenTint } from '../chosen-icon'
   import Icon from '../Icon.svelte'
-  import { readIcon, takesTint } from '../icons'
+  import { readIcon, takesTint } from '../ui-kit/src/api'
   import { marks } from '../online/marks.svelte'
   import { isTermTarget } from '@orden/markdown/links'
   import { remote } from '../remote/hosts.svelte'

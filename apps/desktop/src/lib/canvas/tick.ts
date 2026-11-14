@@ -1,4 +1,4 @@
-import { viewport } from '../viewport.svelte'
+import { viewport } from '../ui-kit/src/api'
 
 const TICK = 8
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { deliver } from '../export/save'
-  import { message } from '../message'
-  import { segmented } from '../slide'
+  import { message } from '../ui-kit/src/api'
+  import { segmented } from '../ui-kit/src/api'
   import { pass } from './store.svelte'
 
   type Format = 'sealed' | 'json' | 'csv'

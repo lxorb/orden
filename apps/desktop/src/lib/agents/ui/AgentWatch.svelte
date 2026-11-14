@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Sheet from '../../Sheet.svelte'
+  import { Sheet } from '../../ui-controls/src/api'
   import type { Activity } from './activity.svelte'
   import { hostOf } from './session'
   import { LOOK_EVERY, Watching } from './watching.svelte'

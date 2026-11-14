@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { FileRef } from '@orden/chats'
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from '../../backstack.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
   import { downloadStarted } from '../../downloads/started'
   import { fade, LAYER, scale } from '../../platform/src/api'
-  import { overlays } from '../../overlays'
+  import { overlays } from '../../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
   import { isVideo } from './media'
   import { fileUrl } from './urls.svelte'

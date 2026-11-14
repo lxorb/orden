@@ -9,9 +9,9 @@ vi.mock('../../src/lib/sharing.svelte', async (original) => ({
 
 const { default: SpacePicker } = await import('../../src/lib/SpacePicker.svelte')
 const { spacePicker } = await import('../../src/lib/space-picker.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 
 Element.prototype.scrollIntoView = () => undefined

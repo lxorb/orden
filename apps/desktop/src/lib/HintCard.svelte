@@ -1,8 +1,8 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import Cross from './Cross.svelte'
+  import { Cross } from './ui-kit/src/api'
   import { type Hint, hints } from './hints.svelte'
-  import { hang } from './portal'
+  import { hang } from './ui-kit/src/api'
   import { dur, fly } from './platform/src/api'
 
   const {

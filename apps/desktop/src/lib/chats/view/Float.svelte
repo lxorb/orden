@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from '../../backstack.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
   import { fly, LAYER } from '../../platform/src/api'
-  import { overlays } from '../../overlays'
-  import { viewport } from '../../viewport.svelte'
+  import { overlays } from '../../ui-kit/src/api'
+  import { viewport } from '../../ui-kit/src/api'
   import { type Box, placeNear } from './place'
 
   const {

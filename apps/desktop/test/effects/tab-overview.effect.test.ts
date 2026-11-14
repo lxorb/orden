@@ -12,7 +12,7 @@ Element.prototype.scrollIntoView = () => undefined
 const { default: Overview } = await import('../../src/lib/overview/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands')
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { runTap } = await import('../../src/lib/tapped')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')

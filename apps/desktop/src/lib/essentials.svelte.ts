@@ -1,5 +1,5 @@
 import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag } from './drag-paths'
-import { chorded } from './keys'
+import { chorded } from './ui-kit/src/api'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
 import { canWriteAt } from './sharing.svelte'

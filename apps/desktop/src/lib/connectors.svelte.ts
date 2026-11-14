@@ -1,5 +1,5 @@
 import { api, account } from './accounts/src/api'
-import { message } from './message'
+import { message } from './ui-kit/src/api'
 import { isRecord, keep, keepJson, stored, storedText } from './platform/src/api'
 
 const STORAGE_KEY = 'orden:llm'

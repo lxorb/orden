@@ -4,7 +4,7 @@
   import { bridge } from './bridge.svelte'
   import { Frame, MOVE } from './frame.svelte'
   import { settings } from '../settings.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { viewport } from '../ui-kit/src/api'
   import { views } from '../views.svelte'
   import { workspace } from '../workspace.svelte'
 

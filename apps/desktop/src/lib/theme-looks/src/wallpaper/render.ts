@@ -1,4 +1,4 @@
-import { hexOf, type Rgb, rgbOf, type Span } from '../../../legibility'
+import { hexOf, type Rgb, rgbOf, type Span } from '../../../ui-controls/src/api'
 import type { Held } from './held'
 import { blurred, fitted, measured, sideFor, toned, type Toning } from './pixels'
 

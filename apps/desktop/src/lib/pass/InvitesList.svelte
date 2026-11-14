@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { VaultMeta } from '@orden/pass/types'
   import type { Invite } from '@orden/pass/wire'
-  import { message } from '../message'
+  import { message } from '../ui-kit/src/api'
   import { said } from '../said.svelte'
   import { roleName } from './share-words'
   import { pass } from './store.svelte'

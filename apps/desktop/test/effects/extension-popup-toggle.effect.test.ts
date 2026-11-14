@@ -25,7 +25,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { extensions } = await import('../../src/lib/web-tab/extensions.svelte')
 const ExtensionBar = (await import('./ExtensionBar.svelte')).default
 

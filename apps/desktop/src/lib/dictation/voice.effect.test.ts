@@ -78,7 +78,7 @@ vi.mock('../shortcuts.svelte', () => ({
     tooltip: (name: string) => name,
   },
 }))
-vi.mock('../message', () => ({
+vi.mock('../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

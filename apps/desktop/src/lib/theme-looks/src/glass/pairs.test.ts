@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { accentColour } from '../../../accents'
-import { hexOf, luminance, type Rgb } from '../../../legibility'
+import { accentColour } from '../../../theme/src/accents'
+import { hexOf, luminance, type Rgb } from '../../../ui-controls/src/legibility'
 import { ACCENT_PAIR, along, DAWN, isOwn, ownOf, PAIRS, shownOf, stopsOf, swatchOf } from './pairs'
 
 const SCRIM: Rgb = [25, 30, 38]

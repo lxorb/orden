@@ -2,9 +2,9 @@
   import KindCard from './KindCard.svelte'
   import { kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
   import { roving } from './roving'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { workspace } from './workspace.svelte'
 
   const { paneId, chosenOn }: { paneId: string; chosenOn?: string } = $props()

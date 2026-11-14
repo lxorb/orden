@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from '../Icon.svelte'
-  import { brandIcon, readIcon } from '../icons'
-  import { hexOf, inkFor, type Rgb, rgbOf } from '../legibility'
+  import { brandIcon, readIcon } from '../ui-kit/src/api'
+  import { hexOf, inkFor, type Rgb, rgbOf } from '../ui-controls/src/api'
 
   interface Props {
     name: string

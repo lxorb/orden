@@ -15,7 +15,7 @@ import {
   tracksOf,
   undoSomeIn,
 } from '../../agents/docs'
-import { busy } from '../../busy.svelte'
+import { busy } from '../../ui-kit/src/api'
 import { insideSpace, notePath, withinSpace, dur, onDisk, onceAFrame } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'

@@ -9,7 +9,7 @@ import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
 import { isDesktop, isMobile, platform } from './lib/platform/src/api'
 import { watchPresses } from './lib/downloads/started'
-import { holdComposingKeys } from './lib/keys'
+import { holdComposingKeys } from './lib/ui-kit/src/api'
 
 mark('modules evaluated')
 

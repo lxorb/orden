@@ -1,5 +1,5 @@
 import type { Scheme } from '@orden/contracts'
-import { type Rgb, rgbOf } from '../../legibility'
+import { type Rgb, rgbOf } from '../../ui-controls/src/api'
 
 function painted(said: string): Rgb | null {
   const probe = document.createElement('span')

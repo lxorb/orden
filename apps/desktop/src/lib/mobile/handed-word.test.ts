@@ -30,7 +30,7 @@ const said = vi.hoisted(() => {
   return { word: '', spoken, speak: (word: string) => speak(word), asked: [] as string[] }
 })
 
-vi.mock('./bridge', () => ({
+vi.mock('../platform/src/mobile-bridge', () => ({
   onTheActivity: () => true,
   frameWord: () => Promise.resolve(said.word),
   wordSaid: () => said.spoken,
@@ -58,7 +58,7 @@ vi.mock('../insert-picture', () => ({
   putPicture: () => undefined,
   writeAtCaret: (_view: unknown, words: string) => void world.typed.push(words),
 }))
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: (question: { options: { id: string }[] }) => {
       world.asked.push(question)

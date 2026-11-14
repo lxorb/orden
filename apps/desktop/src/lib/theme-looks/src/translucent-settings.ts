@@ -1,5 +1,5 @@
-import { ACCENTS } from '../../accents'
-import { CONTENT_INITIAL, CONTENT_LEVELS, type ContentLevel } from '../../content-ground'
+import { ACCENTS } from '../../theme/src/api'
+import { CONTENT_INITIAL, CONTENT_LEVELS, type ContentLevel } from '../../ui-controls/src/api'
 import type { ThemeSetting } from '../../theme/src/api'
 
 const NAMES: Record<ContentLevel, string> = {

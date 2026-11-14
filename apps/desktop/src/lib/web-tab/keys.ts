@@ -1,4 +1,4 @@
-import { parseCombination, type Platform } from '../keys'
+import { parseCombination, type Platform } from '../ui-kit/src/api'
 import { isRecord } from '../platform/src/api'
 
 export interface Pressed {

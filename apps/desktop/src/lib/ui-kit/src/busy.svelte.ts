@@ -1,4 +1,4 @@
-import { afterQuiet } from './platform/src/api'
+import { afterQuiet } from '../../platform/src/api'
 
 const TROUBLE_SHOWN = 5000
 

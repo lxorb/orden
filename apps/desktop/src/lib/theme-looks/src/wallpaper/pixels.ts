@@ -1,4 +1,4 @@
-import type { Rgb, Span } from '../../../legibility'
+import type { Rgb, Span } from '../../../ui-controls/src/api'
 
 export const LARGEST = 480
 const SMALLEST = 64

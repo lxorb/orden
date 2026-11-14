@@ -1,8 +1,17 @@
 import type { Scheme } from '@orden/contracts'
 import { glassCss } from '@orden/themes/glass'
 import { describe, expect, test } from 'vitest'
-import { linkOf, type PaperInks } from '../../../content-ground'
-import { AA, hexOf, luminance, type Rgb, over, ratio, rgbOf, SHARP } from '../../../legibility'
+import { linkOf, type PaperInks } from '../../../ui-controls/src/content-ground'
+import {
+  AA,
+  hexOf,
+  luminance,
+  type Rgb,
+  over,
+  ratio,
+  rgbOf,
+  SHARP,
+} from '../../../ui-controls/src/legibility'
 import { paletteOf } from '../wallpaper/floors'
 import { along, DAWN, PAIRS, type Stops, stopsOf } from './pairs'
 import {

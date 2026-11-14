@@ -1,5 +1,4 @@
-import { busy } from './busy.svelte'
-import { message } from './message'
+import { busy, message } from './ui-kit/src/api'
 import { applyImport } from './import/apply'
 import { keepPictures, type PandocPicture } from './import/pandoc-pictures'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
@@ -231,7 +230,7 @@ class Importing {
       here: workspace.activeSpace?.root ?? null,
     }).filter((target) => canWriteAt(target.id))
 
-    const { prompt } = await import('./prompt.svelte')
+    const { prompt } = await import('./ui-kit/src/api')
     const into = await prompt.find({ title: 'Import into', options: [...targets] })
     if (!into) return
 

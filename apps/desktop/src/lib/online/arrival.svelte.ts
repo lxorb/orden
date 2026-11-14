@@ -1,5 +1,5 @@
 import type { DownReason } from '@orden/online/wire'
-import { localDate } from '../region'
+import { localDate } from '../platform/src/api'
 import type { Machine } from '../terminal/source'
 import { refusalWords } from './words'
 

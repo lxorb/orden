@@ -122,7 +122,7 @@ describe('the crash report question', () => {
     const first = await launch()
     box()?.click()
     flushSync()
-    const { overlays } = await import('../overlays')
+    const { overlays } = await import('../ui-kit/src/overlays')
     expect(overlays.escape()).toBe(true)
     flushSync()
     expect(first.crashReports.asking).toBe(false)

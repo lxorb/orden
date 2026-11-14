@@ -5,10 +5,10 @@ import { SerializeAddon } from '@xterm/addon-serialize'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { type ITheme, Terminal } from '@xterm/xterm'
 import { chrome } from '../theme/src/api'
-import { busy } from '../busy.svelte'
+import { busy, showCombination } from '../ui-kit/src/api'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import {
   dragged,
   isExplorerDrag,
@@ -17,10 +17,9 @@ import {
   listenOver,
   outsideRows,
 } from '../drag-paths'
-import { localDate } from '../region'
+import { localDate, platform } from '../platform/src/api'
 import { identifier } from '../identifier'
 import { notify } from '../notify'
-import { showCombination } from '../keys'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { tabAsk } from '../new-tab'
 import { owes } from '../parting'
@@ -28,7 +27,6 @@ import { SHORTCUTS, shortcuts } from '../shortcuts.svelte'
 import { hostReached } from '../remote/hosts'
 import { remote } from '../remote/hosts.svelte'
 import { madeNow, markMade } from '../remote/open'
-import { platform } from '../platform/src/api'
 import { isMadeName, isOnlineTab, termName } from '../online/path'
 import { Arrival, type Status } from '../online/arrival.svelte'
 import { LocalEcho } from '../online/echo-view'
@@ -1273,7 +1271,7 @@ class Session {
     if (!text || this.pty === null) return
 
     if (asksFirst(text, this.term.modes.bracketedPasteMode)) {
-      const { prompt } = await import('../prompt.svelte')
+      const { prompt } = await import('../ui-kit/src/api')
       const lines = linesIn(text)
       const sure = await prompt.confirm({
         title: lines === 1 ? 'Paste 1 line?' : `Paste ${lines} lines?`,

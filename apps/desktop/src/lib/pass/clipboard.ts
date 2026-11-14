@@ -1,5 +1,5 @@
 import { sha256Hex } from '@orden/pass/digest'
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { waited } from '../platform/src/api'
 
 export interface Clipboard {

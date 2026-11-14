@@ -156,7 +156,7 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('../../insets', () => ({ tintSystemBars: () => undefined }))
+vi.mock('../../ui-kit/src/insets', () => ({ tintSystemBars: () => undefined }))
 
 const { chosenFirst, theme } = await import('./theme.svelte')
 const { stamped, stampOf } = await import('./stamp')

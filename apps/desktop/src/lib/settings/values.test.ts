@@ -81,7 +81,7 @@ describe('the value box', () => {
   })
 
   test('is the shape the dropdown closes into as well', () => {
-    const select = readFileSync(join(LIB, 'Select.svelte'), 'utf8')
+    const select = readFileSync(join(LIB, 'ui-controls', 'src', 'Select.svelte'), 'utf8')
     expect(select).toMatch(/class="trigger orden-field is-value"/)
     expect(styleOf(select)).not.toMatch(/\n {2}\.trigger \{[^}]*border:/)
   })

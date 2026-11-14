@@ -8,7 +8,7 @@ import {
   type SpaceRole,
   account,
 } from './accounts/src/api'
-import { message } from './message'
+import { message } from './ui-kit/src/api'
 import { rooms } from './collab/src/api'
 import { samePath, forget, keepJson, Shared } from './platform/src/api'
 import { within } from './sync/mirror'

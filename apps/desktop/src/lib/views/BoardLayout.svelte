@@ -12,7 +12,7 @@
   } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import { menu, type MenuEntry } from '../menu.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { viewport } from '../ui-kit/src/api'
   import { asOneUndo, dropRow } from './act'
   import AddRow from './AddRow.svelte'
   import {

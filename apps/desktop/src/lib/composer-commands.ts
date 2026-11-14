@@ -11,7 +11,7 @@ function mergeTargets(exclude: string) {
 }
 
 async function askForNote(exclude: string): Promise<string | null> {
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const options = mergeTargets(exclude).map((note) => ({
     id: note.path,
     label: shownName(note.name),

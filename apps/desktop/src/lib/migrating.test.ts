@@ -99,7 +99,7 @@ vi.mock('./link-index.svelte', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))
 vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
-vi.mock('./viewport.svelte', () => ({ viewport: { drawer: false } }))
+vi.mock('./ui-kit/src/viewport.svelte', () => ({ viewport: { drawer: false } }))
 vi.mock('./settings.svelte', () => ({ settings: { open: true } }))
 vi.mock('./first-visit.svelte', () => ({
   firstVisit: { fresh: false, answered: () => undefined },
@@ -114,7 +114,7 @@ vi.mock('./carry-over', async () => {
 })
 
 const { importAsSpace, arrive } = await import('./migrating.svelte')
-const { busy } = await import('./busy.svelte')
+const { busy } = await import('./ui-kit/src/busy.svelte')
 
 function file(path: string, body: string | Uint8Array = 'x'): Source {
   return sourceOf(path, typeof body === 'string' ? new TextEncoder().encode(body) : body)

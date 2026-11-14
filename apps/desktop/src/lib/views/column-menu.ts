@@ -6,7 +6,7 @@ import {
   readRollup,
   reverseFormula,
 } from '@orden/bases'
-import { region } from '../region'
+import { region } from '../platform/src/api'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { writeEach } from './act'
 import {

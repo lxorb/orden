@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 test('a caller with no answer goes on with no word, within the wait', async () => {
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
   let got: string | undefined
   void frameWord().then((word) => (got = word))
 
@@ -33,7 +33,7 @@ test('a caller with no answer goes on with no word, within the wait', async () =
 })
 
 test('no word is not kept: the next caller asks again', async () => {
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
   void frameWord()
   await vi.advanceTimersByTimeAsync(2000)
 
@@ -42,7 +42,7 @@ test('no word is not kept: the next caller asks again', async () => {
 })
 
 test('a word said after the wait was given up on is the word from then on', async () => {
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
   const first = frameWord()
   await vi.advanceTimersByTimeAsync(5000)
   expect(await first).toBe('')
@@ -54,7 +54,7 @@ test('a word said after the wait was given up on is the word from then on', asyn
 })
 
 test('two callers at once are one question', async () => {
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
   const one = frameWord()
   const two = frameWord()
   say('the word')
@@ -66,7 +66,7 @@ test('two callers at once are one question', async () => {
 
 test('nothing to ask is no word, at once', async () => {
   vi.stubGlobal('__ORDEN_SYSTEM__', undefined)
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
 
   expect(await frameWord()).toBe('')
 })
@@ -80,7 +80,7 @@ test('an ask that throws is no word, and is asked again next time', async () => 
       if (throwing) throw new Error('gone')
     },
   })
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
 
   expect(await frameWord()).toBe('')
   throwing = false
@@ -89,7 +89,7 @@ test('an ask that throws is no word, and is asked again next time', async () => 
 })
 
 test('an empty answer is no answer: the question still waits for the word', async () => {
-  const { frameWord } = await import('./bridge')
+  const { frameWord } = await import('./mobile-bridge')
   const first = frameWord()
   say('')
   void frameWord()
@@ -100,7 +100,7 @@ test('an empty answer is no answer: the question still waits for the word', asyn
 })
 
 test('the word said late is heard by whoever waits for it', async () => {
-  const { frameWord, wordSaid } = await import('./bridge')
+  const { frameWord, wordSaid } = await import('./mobile-bridge')
   let heard: string | undefined
   void wordSaid().then((word) => (heard = word))
 
@@ -121,7 +121,7 @@ test('a method handed out of the bridge is still called on the bridge', async ()
     },
   }
   vi.stubGlobal('__ORDEN_SYSTEM__', bridge)
-  const { method } = await import('./bridge')
+  const { method } = await import('./mobile-bridge')
 
   expect(method('insets')?.()).toBe('{}')
 })

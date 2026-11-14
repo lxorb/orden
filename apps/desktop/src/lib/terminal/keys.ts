@@ -1,4 +1,4 @@
-import type { Platform } from '../keys'
+import type { Platform } from '../ui-kit/src/api'
 
 export type Route =
   | 'shell'

@@ -17,7 +17,7 @@ import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../settings.svel
 import { stepSpace } from '../space-actions'
 import { picks } from '../tab-strip/drag.svelte'
 import { closeWindow, invoke, isDesktop, platform } from '../platform/src/api'
-import type { Platform } from '../keys'
+import type { Platform } from '../ui-kit/src/api'
 import { workspace } from '../workspace.svelte'
 import type { Toward } from '../workspace/pane-tree'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'

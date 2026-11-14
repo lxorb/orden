@@ -1,6 +1,5 @@
 import { storeBeside } from '../assets'
-import { busy } from '../busy.svelte'
-import { message } from '../message'
+import { busy, message } from '../ui-kit/src/api'
 import { links } from '../link-index.svelte'
 import { reloading } from '../reloading.svelte'
 import { settings } from '../settings.svelte'

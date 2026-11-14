@@ -33,7 +33,7 @@ globalThis.ResizeObserver = class {
   disconnect = () => undefined
 }
 
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { asking, QUIET } = await import('../../src/lib/sync-client/src/asking.svelte')
 const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')

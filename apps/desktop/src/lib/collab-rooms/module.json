@@ -1,9 +1,17 @@
 {
   "name": "collab-rooms",
   "layer": "foundation",
-  "dependsOn": ["contracts", "editor", "markdown", "rooms", "sync-core", "accounts", "platform"],
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "markdown",
+    "rooms",
+    "sync-core",
+    "accounts",
+    "platform",
+    "theme"
+  ],
   "pending": [
-    "apps/desktop/src/lib/accents.ts",
     "apps/desktop/src/lib/canvas/format.ts",
     "apps/desktop/src/lib/canvas/geometry.ts",
     "apps/desktop/src/lib/canvas/shared.ts",

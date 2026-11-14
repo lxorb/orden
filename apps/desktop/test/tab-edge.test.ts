@@ -5,7 +5,7 @@ import { contrastCss } from '@orden/themes/contrast'
 import { glassCss } from '@orden/themes/glass'
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS } from '../src/lib/accents'
+import { ACCENTS } from '../src/lib/theme/src/accents'
 import type { Scheme } from '@orden/contracts'
 import {
   frameFor,
@@ -13,7 +13,7 @@ import {
   type Sides,
   spanUnder,
 } from '../src/lib/theme-looks/src/glass/tint'
-import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/legibility'
+import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/ui-controls/src/legibility'
 import { floorFor, paletteOf, sheetColour } from '../src/lib/theme-looks/src/wallpaper/floors'
 
 const FLOOR = 1.5

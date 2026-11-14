@@ -44,13 +44,12 @@ import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
 import { NOTCH, turned, turnOf, zoomed } from '../camera'
-import type { Keystroke } from '../keys'
+import type { Keystroke } from '../ui-kit/src/api'
 import { shortcuts } from '../shortcuts.svelte'
 import { accountAddress, storeImage } from '../assets'
 import { chooseFiles, PICTURES } from '../choose-files'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
-import { prompt } from '../prompt.svelte'
-import { busy } from '../busy.svelte'
+import { prompt, busy } from '../ui-kit/src/api'
 import {
   folderOf,
   insideSpace,

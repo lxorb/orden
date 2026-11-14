@@ -30,8 +30,8 @@ vi.mock('./icon-sets', () => {
   }
 })
 
-vi.mock('./icons', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./icons')>()),
+vi.mock('./ui-kit/src/icons', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./ui-kit/src/icons')>()),
   loadIcons: async () => ({ Rocket: [['path', { d: 'M4 20l6-6' }]] }),
 }))
 

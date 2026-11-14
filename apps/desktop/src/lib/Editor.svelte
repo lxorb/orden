@@ -26,11 +26,11 @@
   import { keptCoverOf, setCoverPosition } from './kept-cover'
   import { mark } from './trace'
   import { modes } from './modes.svelte'
-  import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
+  import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { carriedIntoNotes } from './drag-paths'
   import { type Tab, workspace } from './workspace.svelte'
 

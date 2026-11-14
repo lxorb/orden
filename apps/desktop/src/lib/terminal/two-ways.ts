@@ -1,4 +1,4 @@
-import { prompt } from '../prompt.svelte'
+import { prompt } from '../ui-kit/src/api'
 import { shortcuts } from '../shortcuts.svelte'
 import { BY_ID } from '../shortcuts/registry'
 import { shells, type Way } from './shells.svelte'

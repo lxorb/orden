@@ -9,7 +9,7 @@ vi.stubGlobal('localStorage', {
 vi.mock('./refresh', () => {
   throw new TypeError('Failed to fetch dynamically imported module: /assets/refresh.js')
 })
-vi.mock('./viewport.svelte', () => ({ viewport: { typing: false } }))
+vi.mock('./ui-kit/src/viewport.svelte', () => ({ viewport: { typing: false } }))
 
 const { pull } = await import('./pull.svelte')
 

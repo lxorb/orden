@@ -24,7 +24,7 @@ const rowsIn = (text: string) =>
   [...text.matchAll(/@\+id\/orden_row_(\d+)/g)].map((one) => Number(one[1]))
 
 const commands = read(SOURCE, 'lib', 'commands.ts')
-const bridge = read(SOURCE, 'lib', 'mobile', 'bridge.ts')
+const bridge = read(SOURCE, 'lib', 'platform', 'src', 'mobile-bridge.ts')
 
 function sources(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {

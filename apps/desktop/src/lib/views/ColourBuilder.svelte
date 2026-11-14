@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type ColourRule, colourExpression, colourRules } from '@orden/bases'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { displayName, holdsOf, knownProperties } from './columns'
   import { setViewOrden } from './edit'
   import { expressionOf, type Operator, OPERATORS, rowOf, takesValue } from './filter-rows'

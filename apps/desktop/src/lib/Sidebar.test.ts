@@ -17,7 +17,7 @@ vi.mock('./surfaces.svelte', () => ({
 }))
 
 const { workspace } = await import('./workspace.svelte')
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('./settings.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default

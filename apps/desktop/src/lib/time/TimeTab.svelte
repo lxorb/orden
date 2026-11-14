@@ -1,8 +1,8 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { localDate } from '../region'
+  import { localDate } from '../platform/src/api'
   import { menu } from '../menu.svelte'
-  import { segmented } from '../slide'
+  import { segmented } from '../ui-kit/src/api'
   import type { Tab } from '../workspace/documents.svelte'
   import { counted, isOwn } from './counted'
   import DayLanes from './DayLanes.svelte'

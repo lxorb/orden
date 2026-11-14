@@ -1,6 +1,6 @@
 import { chatLinkOf } from '@orden/chats/links'
 import { account } from '../../accounts/src/api'
-import { busy } from '../../busy.svelte'
+import { busy } from '../../ui-kit/src/api'
 import type { OpenHow } from '../../new-tab'
 import { chatsOn } from '../../settings.svelte'
 import { canWriteAt } from '../../sharing.svelte'

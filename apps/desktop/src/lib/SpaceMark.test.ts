@@ -11,7 +11,7 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
-const { loadIcons } = await import('./icons')
+const { loadIcons } = await import('./ui-kit/src/icons')
 const SpaceMark = (await import('./SpaceMark.svelte')).default
 
 iconLibrary.set = await loadIcons()

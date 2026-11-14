@@ -6,7 +6,7 @@
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { shortcuts } from '../../shortcuts.svelte'
   import { samePath } from '../../platform/src/api'
-  import { viewport } from '../../viewport.svelte'
+  import { viewport } from '../../ui-kit/src/api'
   import { type Tab, workspace } from '../../workspace.svelte'
   import { ChatPage } from './chat.svelte'
   import ChatHead from './ChatHead.svelte'

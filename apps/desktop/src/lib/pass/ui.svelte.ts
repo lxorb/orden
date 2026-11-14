@@ -1,6 +1,6 @@
 import type { Flag } from '@orden/pass/monitor'
 import type { Content, Item } from '@orden/pass/types'
-import { prompt } from '../prompt.svelte'
+import { prompt } from '../ui-kit/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import type { Scope } from './list'
 import { pass } from './store.svelte'

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CopyButton from '../CopyButton.svelte'
-  import { closeOnBack } from '../backstack.svelte'
+  import { CopyButton } from '../ui-controls/src/api'
+  import { closeOnBack } from '../ui-kit/src/api'
   import { importPrompt, MAIN_NOTES, NOTES_APPS, type NotesApp } from './catalog'
   import { matching, phoneBringing, requestKey, typedName } from './flow'
   import RequestRow from './RequestRow.svelte'

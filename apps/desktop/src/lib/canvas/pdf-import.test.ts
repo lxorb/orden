@@ -35,7 +35,7 @@ const paper = {
   },
 }
 
-vi.mock('../prompt.svelte', () => ({ prompt: { choose: () => Promise.resolve('all') } }))
+vi.mock('../ui-kit/src/prompt.svelte', () => ({ prompt: { choose: () => Promise.resolve('all') } }))
 vi.mock('../assets', () => ({
   accountAddress: () => null,
   storeImage: () => {
@@ -160,7 +160,7 @@ test('a long strip of a page is drawn within what a canvas can hold', async () =
 })
 
 test('pages stored before the space runs out are placed, and the reader is told', async () => {
-  const { busy } = await import('../busy.svelte')
+  const { busy } = await import('../ui-kit/src/busy.svelte')
   world.pages = 5
   world.full = 2
   const store = board()
@@ -202,7 +202,7 @@ test('files dropped together are laid one below another, none over the last, and
 })
 
 test('a picture that finds the space full says so instead of vanishing', async () => {
-  const { busy } = await import('../busy.svelte')
+  const { busy } = await import('../ui-kit/src/busy.svelte')
   busy.clear()
   world.full = 1
   world.stored = 1

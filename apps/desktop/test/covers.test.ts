@@ -20,7 +20,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'fixed only as a drawer, which is a phone or a tablet, and those build no native page',
   'App.svelte .panels.right': 'the right drawer: see .panels',
   'App.svelte .scrim': 'the drawers’ scrim, shown only where there are drawers: see .panels',
-  'lib/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
+  'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
   'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
   'lib/overview/Offstage.svelte .offstage': 'drawn off the window, where no page is',

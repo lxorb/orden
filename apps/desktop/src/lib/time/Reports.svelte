@@ -1,9 +1,9 @@
 <script lang="ts">
   import Facts from '../Facts.svelte'
-  import { ACCENTS } from '../accents'
-  import { localDate } from '../region'
+  import { ACCENTS } from '../theme/src/api'
+  import { localDate } from '../platform/src/api'
   import { menu } from '../menu.svelte'
-  import { prompt } from '../prompt.svelte'
+  import { prompt } from '../ui-kit/src/api'
   import { type Place, placesOf } from './counted'
   import { daysAfter, lasting, piecesIn, totalsOf, wholeOf } from './days'
   import { lengthIn } from './goals'

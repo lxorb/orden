@@ -2,7 +2,7 @@
   import type { Message, Notify } from '@orden/chats'
   import { may } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
-  import { localNumber } from '../../region'
+  import { localNumber } from '../../platform/src/api'
   import { Avatar } from '../../accounts-ui/src/api'
   import Bell from '../Bell.svelte'
   import { people } from '../../accounts/src/api'

@@ -189,7 +189,7 @@ vi.mock('../../pdf/document', async (importOriginal) => ({
 
 const sheet = vi.hoisted(() => ({ asked: [] as string[], answer: null as string | null }))
 
-vi.mock('../../prompt.svelte', () => ({
+vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: (options: { title: string }) => {
       sheet.asked.push(options.title)

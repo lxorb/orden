@@ -43,7 +43,7 @@ const { scratchpad } = await import('../../src/lib/scratchpad/pad')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { menu } = await import('../../src/lib/menu.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/menu')
-type MenuEntry = import('../../src/lib/menu-item').MenuEntry
+type MenuEntry = import('../../src/lib/ui-kit/src/menu-item').MenuEntry
 
 let target: HTMLElement
 let undo: (() => void)[] = []
@@ -117,7 +117,7 @@ test('open or shut, the bar has the button and the side none', () => {
 })
 
 test('a phone’s bar has no switch of the scratchpad’s', async () => {
-  const { viewport } = await import('../../src/lib/viewport.svelte')
+  const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
   viewport.device = 'phone'
   undo.push(() => (viewport.device = 'desktop'))
   bar()

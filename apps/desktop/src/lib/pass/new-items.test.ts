@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { DIVIDER, type MenuEntry } from '../menu-item'
+import { DIVIDER, type MenuEntry } from '../ui-kit/src/menu-item'
 import { newItemEntries } from './new-items'
 import type { PassUi } from './ui.svelte'
 

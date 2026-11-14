@@ -1,9 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { region } from '../../region'
-  import { localDate } from '../../region'
+  import { region } from '../../platform/src/api'
+  import { localDate } from '../../platform/src/api'
   import { dur, slide } from '../../platform/src/api'
-  import { prompt } from '../../prompt.svelte'
+  import { prompt } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace.svelte'
   import { keepInNote } from '../ui/keep'
   import { aboutOf, sessionMarkdown } from '../ui/session'

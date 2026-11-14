@@ -23,7 +23,7 @@ const workspace = vi.hoisted(() => ({
 vi.mock('./workspace.svelte', () => ({ workspace }))
 
 const asked = vi.hoisted(() => ({ offered: [] as string[], answer: null as string | null }))
-vi.mock('./prompt.svelte', () => ({
+vi.mock('./ui-kit/src/prompt.svelte', () => ({
   prompt: {
     find: (question: { options: { id: string }[] }) => {
       asked.offered = question.options.map((option) => option.id)

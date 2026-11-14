@@ -43,12 +43,14 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 const failed = vi.hoisted((): string[] => [])
-vi.mock('./busy.svelte', () => ({ busy: { failed: (said: string) => failed.push(said) } }))
+vi.mock('./ui-kit/src/busy.svelte', () => ({
+  busy: { failed: (said: string) => failed.push(said) },
+}))
 
 vi.mock('./surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
 
 const offered: string[] = []
-vi.mock('./prompt.svelte', () => ({
+vi.mock('./ui-kit/src/prompt.svelte', () => ({
   prompt: {
     find: (asked: { options: { id: string }[] }) => {
       offered.push(...asked.options.map((one) => one.id))

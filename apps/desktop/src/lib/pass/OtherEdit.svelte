@@ -7,8 +7,8 @@
     type WifiSecurity,
   } from '@orden/pass/types'
   import { canMakeSshKey, newSshKey, sshPublicOf } from '@orden/pass/ssh'
-  import { message } from '../message'
-  import Select from '../Select.svelte'
+  import { message } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
   import { FIELD_ICONS } from './field-icons'

@@ -1,4 +1,4 @@
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import type { Account } from '../ai/accounts'
 import type { LocalKind, ProviderKind } from '../ai/providers'
 import { invoke, isDesktop, openExternal } from '../platform/src/api'

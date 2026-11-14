@@ -5,7 +5,7 @@ vi.mock('./sync.svelte', () => ({ sync: { remoteIdFor: () => null } }))
 vi.mock('./platform/src/tauri', () => ({ invoke: () => Promise.resolve([]) }))
 vi.mock('./accounts/src/account.svelte', () => ({ account: { accountToken: null } }))
 vi.mock('./accounts/src/client', () => ({ api: {} }))
-vi.mock('./prompt.svelte', () => ({ prompt: {} }))
+vi.mock('./ui-kit/src/prompt.svelte', () => ({ prompt: {} }))
 
 const { doublesOf } = await import('./trash-doubles')
 type Item = Parameters<typeof doublesOf>[0][number]

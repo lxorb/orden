@@ -1,5 +1,5 @@
 import { type Peer, setAgents } from '@orden/editor'
-import { accentColour, accentFor } from '../../accents'
+import { accentColour, accentFor } from '../../theme/src/api'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 
 export interface Agent {

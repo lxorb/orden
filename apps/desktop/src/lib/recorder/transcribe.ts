@@ -2,7 +2,7 @@ import { api, account } from '../accounts/src/api'
 import { roomDelay, waited } from '../platform/src/api'
 import { transcriberNow } from '../ai/hears'
 import type { Provider } from '../ai/providers'
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
 const FILE_SECONDS = 60

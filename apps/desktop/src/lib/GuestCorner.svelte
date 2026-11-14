@@ -1,15 +1,15 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { accentColour } from './accents'
+  import { accentColour } from './theme/src/api'
   import { account } from './accounts/src/api'
-  import { closeOnBack } from './backstack.svelte'
-  import { initial } from './icons'
-  import { message } from './message'
+  import { closeOnBack } from './ui-kit/src/api'
+  import { initial } from './ui-kit/src/api'
+  import { message } from './ui-kit/src/api'
   import { fly, LAYER } from './platform/src/api'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
   import { deviceAccent } from './collab/src/api'
   import { theme } from './theme/src/api'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
 
   let open = $state(false)
   let error = $state<string | null>(null)

@@ -1,9 +1,16 @@
 import { glassCss } from '@orden/themes/glass'
 import { untrack } from 'svelte'
-import { accentColour } from '../../../accents'
-import { hexOf, type Rgb, rgbOf } from '../../../legibility'
+import { accentColour, theme, chrome, type Ground } from '../../../theme/src/api'
+import {
+  hexOf,
+  type Rgb,
+  rgbOf,
+  alphaFor,
+  layered,
+  linkOf,
+  type PaperInks,
+} from '../../../ui-controls/src/api'
 import { isDesktop } from '../../../platform/src/api'
-import { theme, chrome, type Ground } from '../../../theme/src/api'
 import { paletteOf } from '../wallpaper/floors'
 import { pages, siteMark } from '../../../web-tab/pages.svelte'
 import { workspace } from '../../../workspace.svelte'
@@ -11,7 +18,6 @@ import { dominant } from './colours'
 import { grounds } from './grounds.svelte'
 import { pixelsOf } from './pictures'
 import { groundOf } from './reading'
-import { alphaFor, layered, linkOf, type PaperInks } from '../../../content-ground'
 import { contentOf } from '../translucent-settings'
 import { PAPER, schemeTokens } from '../scheme-tokens'
 import { dialsOf, glassValues } from './settings'

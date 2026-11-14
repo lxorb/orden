@@ -34,7 +34,7 @@ vi.mock('./platform/src/stored', async (importOriginal) => ({
 
 vi.mock('./sync/meeting', () => ({ meeting: () => Promise.resolve(world.met) }))
 
-vi.mock('./prompt.svelte', () => ({
+vi.mock('./ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: () => {
       world.asked += 1

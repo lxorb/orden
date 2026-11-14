@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { type Press, tabAsk } from './new-tab'
 import { type LinkPlace, opensLink, placeFor, settingsPane, webHref } from './open-link'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/viewport.svelte'
 
 const PLAIN: Press = { button: 0, ctrlKey: false, metaKey: false, shiftKey: false }
 

@@ -4,8 +4,8 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isMobile: true,
 }))
-vi.mock('../mobile/bridge', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../mobile/bridge')>()),
+vi.mock('../platform/src/mobile-bridge', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/mobile-bridge')>()),
   frameWord: () => Promise.resolve(''),
 }))
 
@@ -16,7 +16,7 @@ const store = {
 }
 vi.stubGlobal('__ORDEN_SYSTEM__', store)
 
-const { NoWord } = await import('../mobile/bridge')
+const { NoWord } = await import('../platform/src/mobile-bridge')
 const keys = await import('./keys')
 
 test('a key written with no word is not taken for saved', async () => {

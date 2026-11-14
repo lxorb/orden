@@ -1,5 +1,5 @@
 import { setWord } from '../kind-choice'
-import { prompt } from '../prompt.svelte'
+import { prompt } from '../ui-kit/src/api'
 import { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } from './gate'
 import { protection } from './protection.svelte'
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { arrive, leave } from './slide'
+  import { arrive, leave } from './ui-kit/src/api'
   import Door from './Door.svelte'
   import NameField from './NameField.svelte'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { commitSpaceName } from './space-actions'
   import SharedMark from './SharedMark.svelte'

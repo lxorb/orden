@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Hint from '../Hint.svelte'
-  import Select from '../Select.svelte'
-  import { viewport } from '../viewport.svelte'
+  import { Hint } from '../ui-controls/src/api'
+  import { Select } from '../ui-controls/src/api'
+  import { viewport } from '../ui-kit/src/api'
   import { type Mode, MODES, modeWord } from './modes'
   import {
     DEFAULT_ASK,

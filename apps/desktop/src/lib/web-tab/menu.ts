@@ -1,4 +1,4 @@
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { openExternal } from '../platform/src/api'

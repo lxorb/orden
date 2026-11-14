@@ -16,7 +16,7 @@ vi.mock('./chosen-icon', () => ({
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
-const { loadIcons } = await import('./icons')
+const { loadIcons } = await import('./ui-kit/src/icons')
 const { MARKS } = await import('./file-mark')
 const { GRAPH_MARK } = await import('./panel-marks')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')

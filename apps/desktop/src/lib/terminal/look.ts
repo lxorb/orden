@@ -1,6 +1,5 @@
 import type { ITheme } from '@xterm/xterm'
-import { TERMINAL_CONTRAST } from '../content-ground'
-import { AA, hexOf, ratio, type Rgb, rgbOf } from '../legibility'
+import { TERMINAL_CONTRAST, AA, hexOf, ratio, type Rgb, rgbOf } from '../ui-controls/src/api'
 
 const ANSI = {
   red: '--canvas-1',

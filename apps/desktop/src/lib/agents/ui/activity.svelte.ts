@@ -1,6 +1,5 @@
-import { accentFor } from '../../accents'
+import { accentFor, theme } from '../../theme/src/api'
 import type { TabAct } from '../../agent-marks.svelte'
-import { theme } from '../../theme/src/api'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'

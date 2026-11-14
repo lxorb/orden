@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const asked = vi.hoisted(() => ({ prompts: 0, stored: 0 }))
 
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     ask: () => {
       asked.prompts += 1

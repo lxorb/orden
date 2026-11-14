@@ -3,7 +3,7 @@ import { Awareness } from 'y-protocols/awareness'
 import { awarenessUpdate, receive, TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { peersIn, relative } from './peers'
-import { accentFor } from '../../accents'
+import { accentFor } from '../../theme/src/accents'
 
 function pair(words: string) {
   const one = new Y.Doc()

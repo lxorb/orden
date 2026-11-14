@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type Automation, readAutomations, withAutomations } from '@orden/bases'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { bare, knownProperties } from './columns'
   import type { Kit } from './kit'
 

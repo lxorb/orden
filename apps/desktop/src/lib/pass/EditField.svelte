@@ -3,7 +3,7 @@
   import type { Snippet } from 'svelte'
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
-  import Cross from '../Cross.svelte'
+  import { Cross } from '../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */

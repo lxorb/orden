@@ -1,8 +1,8 @@
 <script lang="ts">
   import { flushSync } from 'svelte'
   import { guessSource, type Imported, SOURCES, type SourceId } from '@orden/pass/import/index'
-  import { message } from '../message'
-  import Select from '../Select.svelte'
+  import { message } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { importedFrom, isSealed } from './import-file'
   import { kindsOf, markOf, stepsOf } from './import-sources'
   import { pass } from './store.svelte'

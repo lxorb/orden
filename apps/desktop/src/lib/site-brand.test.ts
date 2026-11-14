@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { siteBrand } from './icons'
+import { siteBrand } from './ui-kit/src/icons'
 
 describe('the brand a website belongs to', () => {
   test('is the name the site is registered under', () => {

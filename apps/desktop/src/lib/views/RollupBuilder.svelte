@@ -1,6 +1,6 @@
 <script lang="ts">
   import { readReverse, readRollup, type Rollup, ROLLUPS, rollupFormula } from '@orden/bases'
-  import Select from '../Select.svelte'
+  import { Select } from '../ui-controls/src/api'
   import { relationsOf } from './columns'
   import { freeFormulaName, setColumns, setFormula } from './edit'
   import type { Kit } from './kit'

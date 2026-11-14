@@ -12,7 +12,7 @@ import {
 import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from './platform/src/api'
 import { theme, carriedCss } from './theme/src/api'
 import { isDomainStatus, keepAsking } from './domain-status'
-import { message } from './message'
+import { message } from './ui-kit/src/api'
 import { publishSheet } from './surfaces.svelte'
 import { sync } from './sync.svelte'
 import type { Space } from './workspace.svelte'

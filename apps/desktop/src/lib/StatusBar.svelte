@@ -2,7 +2,7 @@
   import { tooLongToParse, type VimMode } from '@orden/editor'
   import { countText } from './counts'
   import { chrome } from './theme/src/api'
-  import { localNumber } from './region'
+  import { localNumber } from './platform/src/api'
   import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
   import { views } from './views.svelte'

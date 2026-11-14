@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { message } from '../message'
-  import Sheet from '../Sheet.svelte'
+  import { message } from '../ui-kit/src/api'
+  import { Sheet } from '../ui-controls/src/api'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'
 

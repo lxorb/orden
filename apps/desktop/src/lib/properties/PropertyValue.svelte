@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Property } from '@orden/markdown/properties'
   import { type ListItem, withItem, withoutItem } from '@orden/markdown/property-edits'
-  import Cross from '../Cross.svelte'
+  import { Cross } from '../ui-kit/src/api'
 
   const {
     property,

@@ -24,7 +24,7 @@ const { workspace } = await import('../workspace.svelte')
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { pages } = await import('../web-tab/pages.svelte')
 const { agentMarks } = await import('../agent-marks.svelte')
-const { prompt } = await import('../prompt.svelte')
+const { prompt } = await import('../ui-kit/src/prompt.svelte')
 const { tabMenu } = await import('./menu')
 const { mayUnload, unload, unloadEntries, unloadTabs, unloadsAround } =
   await import('./unloading.svelte')

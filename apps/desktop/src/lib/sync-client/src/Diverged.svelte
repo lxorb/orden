@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import Sheet from '../../Sheet.svelte'
+  import { Sheet } from '../../ui-controls/src/api'
   import { withinSpace } from '../../platform/src/api'
   import { readableSize } from '../../usage.svelte'
   import { when } from '../../when'

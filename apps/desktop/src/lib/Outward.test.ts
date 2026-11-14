@@ -85,7 +85,7 @@ describe('the mark', () => {
   })
 
   test('is what the `?` and the arrow are, with no placing of their own', () => {
-    for (const path of ['./Hint.svelte', './Outward.svelte']) {
+    for (const path of ['./ui-controls/src/Hint.svelte', './Outward.svelte']) {
       const text = read(path)
       expect(text, path).toMatch(/class="[^"]*\borden-mark\b/)
       expect(text, path).not.toMatch(/vertical-align|margin-inline-start/)

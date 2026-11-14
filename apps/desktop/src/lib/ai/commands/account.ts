@@ -1,5 +1,4 @@
-import { localDate } from '../../region'
-import { invoke } from '../../platform/src/api'
+import { localDate, invoke } from '../../platform/src/api'
 import { isLocal, KIND_NAMES, type Provider } from '../providers'
 import type { Thread } from '../chat/types'
 import { filled } from '../chat/usage'

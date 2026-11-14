@@ -46,7 +46,7 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { askPlace } = await import('../../src/lib/save-place/ask')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
 

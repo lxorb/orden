@@ -8,7 +8,7 @@ import {
   standardBindings,
   tableBindings,
 } from '@orden/editor'
-import { parseCombination, sameCombination } from './keys'
+import { parseCombination, sameCombination } from './ui-kit/src/keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
 
 function memoryStorage(): Storage {
@@ -887,7 +887,7 @@ describe('what a reader is shown', () => {
 
     const { appCommands } = await import('./commands')
     const { appMenu } = await import('./app-menu')
-    const { isSubmenu } = await import('./menu-item')
+    const { isSubmenu } = await import('./ui-kit/src/menu-item')
 
     const command = appCommands().find((one) => one.id === 'focus')
     expect(command?.hint).toBe('Ctrl+Alt+9')

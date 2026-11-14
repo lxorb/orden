@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Value } from '@orden/bases'
   import { menu } from '../menu.svelte'
-  import Select from '../Select.svelte'
+  import { Select } from '../ui-controls/src/api'
   import { workspace } from '../workspace.svelte'
   import { addNote } from './add'
   import { columnMenu } from './column-menu'

@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { closeOnBack } from './backstack.svelte'
+  import { closeOnBack } from './ui-kit/src/api'
   import { diffCount, lineDiff, trimmed } from './diff'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
   import { KEEP_YEAR, modes } from './modes.svelte'
   import { recovery } from './recovery.svelte'
-  import { scrollbar } from './scrollbar'
+  import { scrollbar } from './ui-kit/src/api'
   import { canWriteIn } from './sharing.svelte'
   import { readableSize } from './usage.svelte'
-  import { localDate } from './region'
+  import { localDate } from './platform/src/api'
   import { when } from './when'
   import { cubicOut } from 'svelte/easing'
   import { type Tab, workspace } from './workspace.svelte'
   import { type Version, versionsOf, versionText } from './versions'
   import { fade, LAYER, scale } from './platform/src/api'
-  import { trap } from './trap'
+  import { trap } from './ui-controls/src/api'
 
   let { open = $bindable(false) }: { open?: boolean } = $props()
 

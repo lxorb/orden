@@ -24,7 +24,7 @@ const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('.
 const { offeredKinds, newKinds } = await import('./new-kinds')
 const { newFileRows } = await import('./row-menu')
 const { account } = await import('./accounts/src/account.svelte')
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 
 let token: string | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })

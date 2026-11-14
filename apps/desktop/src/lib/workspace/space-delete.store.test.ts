@@ -190,7 +190,7 @@ describe('a running shell in the space being deleted, which the sheet says nothi
     if (tab) Object.defineProperty(tab, 'kind', { value: 'terminal' })
     ending.answer = answer
     ending.asked = []
-    const { prompt } = await import('../prompt.svelte')
+    const { prompt } = await import('../ui-kit/src/prompt.svelte')
     vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     const { deleteSpace } = await import('../space-actions')
     await deleteSpace(workspace.spaces[0] ?? WORK)

@@ -92,7 +92,7 @@ afterEach(() => {
 
 async function watching(settled: () => Promise<boolean> = () => Promise.resolve(true)) {
   const { reloading } = await import('./reloading.svelte')
-  const { overlays } = await import('./overlays')
+  const { overlays } = await import('./ui-kit/src/overlays')
   const stop = reloading.watch(settled)
   return { reloading, overlays, stop }
 }

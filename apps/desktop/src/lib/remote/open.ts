@@ -35,7 +35,7 @@ const ASK_FROM = 10
 
 export async function openAll(ids: readonly string[]): Promise<void> {
   if (ids.length >= ASK_FROM) {
-    const { prompt } = await import('../prompt.svelte')
+    const { prompt } = await import('../ui-kit/src/api')
     const sure = await prompt.confirm({
       title: 'Open all',
       detail: ids.length === 1 ? '1 tab' : `${ids.length} tabs`,

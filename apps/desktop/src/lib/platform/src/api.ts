@@ -116,3 +116,6 @@ export {
 } from './web-paths'
 export { oneWriteAt, windows } from './windows'
 export type { Said, Windows } from './windows'
+export { localDate, localNumber, region, systemLocale } from './region'
+export { answer, frameWord, method, NoWord, onTheActivity, wordSaid } from './mobile-bridge'
+export { startInsets, tintSystemBars } from './insets'

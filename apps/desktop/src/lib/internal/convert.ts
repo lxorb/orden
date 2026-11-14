@@ -1,5 +1,5 @@
 import { nameKey } from '@orden/sync-core'
-import { busy } from '../busy.svelte'
+import { busy } from '../ui-kit/src/api'
 import { locksHere, locksWork, log, joinPath, platform, samePath } from '../platform/src/api'
 import { invoke as crate } from '../crate/src/api'
 import type { HoldsSpaces } from '../workspace/spaces'

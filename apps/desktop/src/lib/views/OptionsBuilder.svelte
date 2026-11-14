@@ -1,7 +1,7 @@
 <script lang="ts">
   import { inBase, type SelectOption } from '@orden/bases'
-  import Cross from '../Cross.svelte'
-  import Select from '../Select.svelte'
+  import { Cross } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { writeEach } from './act'
   import { bare } from './columns'
   import { setBaseOrden, setProperty } from './edit'

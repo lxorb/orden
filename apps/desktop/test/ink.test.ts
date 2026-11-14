@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS, accentTokens } from '../src/lib/accents'
+import { ACCENTS, accentTokens } from '../src/lib/theme/src/accents'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))

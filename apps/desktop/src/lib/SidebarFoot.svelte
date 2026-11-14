@@ -8,7 +8,7 @@
   import { settings } from './settings.svelte'
   import { showFeedback } from './surfaces.svelte'
   import { isNative, openExternal } from './platform/src/api'
-  import { viewport } from './viewport.svelte'
+  import { viewport } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { SCRATCHPAD_MARK } from './panel-marks'
   import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'

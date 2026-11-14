@@ -291,7 +291,7 @@ describe('a tab with nowhere to come back to', () => {
   })
 
   test('closed in a space archived since: stays closed, and says so', async () => {
-    const { busy } = await import('../../src/lib/busy.svelte')
+    const { busy } = await import('../../src/lib/ui-kit/src/busy.svelte')
     busy.clear()
     await workspace.showSpace('home')
     await workspace.openEntry(FOOD)

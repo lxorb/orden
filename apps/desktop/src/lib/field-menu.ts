@@ -1,6 +1,5 @@
-import { copySelection, cutSelection } from './clipboard'
-import { showCombination } from './keys'
-import { DIVIDER, type MenuEntry, walkableRows } from './menu-item'
+import { copySelection, cutSelection } from './ui-controls/src/api'
+import { showCombination, DIVIDER, type MenuEntry, walkableRows } from './ui-kit/src/api'
 import { menu, type TextField } from './menu.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { walked } from './walk'

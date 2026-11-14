@@ -18,7 +18,7 @@
   import type { Dictates } from '../dictation/voice.svelte'
   import { longPaste } from '../long-paste'
   import type { Provider } from '../ai/providers'
-  import type { MenuEntry } from '../menu-item'
+  import type { MenuEntry } from '../ui-kit/src/api'
   import type { Entry, Prefill } from './entry'
   import {
     carried,

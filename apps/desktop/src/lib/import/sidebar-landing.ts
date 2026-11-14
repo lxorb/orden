@@ -1,4 +1,4 @@
-import { busy } from '../busy.svelte'
+import { busy } from '../ui-kit/src/api'
 import { relativeTo, invoke, joinPath } from '../platform/src/api'
 import { readShortcut } from '@orden/scan/shortcut'
 import { type Space, workspace } from '../workspace.svelte'

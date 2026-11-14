@@ -5,8 +5,8 @@
 <script lang="ts">
   import { agoShort } from '../../ago'
   import Icon from '../../Icon.svelte'
-  import { brandIcon, readIcon } from '../../icons'
-  import { region } from '../../region'
+  import { brandIcon, readIcon } from '../../ui-kit/src/api'
+  import { region } from '../../platform/src/api'
   import type { Place } from '../../row-window'
   import type { ThreadHead } from '../chat/types'
   import { providerBrand } from '../provider-brand'

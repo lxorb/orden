@@ -94,7 +94,7 @@ vi.mock('../../theme/src/theme.svelte', () => ({ theme: { current: 'dark' } }))
 
 const said: string[] = []
 
-vi.mock('../../busy.svelte', () => ({
+vi.mock('../../ui-kit/src/busy.svelte', () => ({
   busy: {
     failed: (reason: string) => said.push(reason),
     start: () => undefined,

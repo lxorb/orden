@@ -1,4 +1,4 @@
-import type { MenuEntry } from '../menu-item'
+import type { MenuEntry } from '../ui-kit/src/api'
 import { canWriteAt } from '../sharing.svelte'
 import { type Space, type Tab, workspace } from '../workspace.svelte'
 import { mayCarry } from '../workspace/chat-carry'
@@ -25,7 +25,7 @@ export async function toSpace(ids: readonly string[], space: string): Promise<vo
 }
 
 export async function whichSpace(spaces: readonly Space[]): Promise<string | null> {
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   return prompt.find({
     title: 'Move to space',
     options: spaces.map((one) => ({

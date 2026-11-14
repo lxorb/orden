@@ -59,7 +59,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const { startAutomation } = await import('./start')
 
-const { busy } = await import('../busy.svelte')
+const { busy } = await import('../ui-kit/src/busy.svelte')
 vi.spyOn(busy, 'failed').mockImplementation((words: string) => {
   world.said.push(words)
 })

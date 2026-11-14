@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { region } from '../../region'
+  import { region } from '../../platform/src/api'
   import { dur, slide } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
   import { insideSpace } from '../../platform/src/api'

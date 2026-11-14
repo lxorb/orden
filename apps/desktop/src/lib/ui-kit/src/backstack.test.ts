@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 
-const SOURCE = fileURLToPath(new URL('../', import.meta.url))
+const SOURCE = fileURLToPath(new URL('../../../', import.meta.url))
 const app = readFileSync(`${SOURCE}App.svelte`, 'utf8')
 
 test('the drawer is registered on whether a side is covered, not on which panel', () => {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FileRef } from '@orden/chats'
-  import { localNumber } from '../../region'
+  import { localNumber } from '../../platform/src/api'
   import { fitted, gallery, isVideo } from './media'
   import { fileUrl } from './urls.svelte'
 

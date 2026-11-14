@@ -51,7 +51,7 @@ export async function reopening(draft: Draft): Promise<Draft | null> {
   if (owner === null || owner === ws.activeSpaceId) return draft
   if (!ws.shownSpaces.some((one) => one.id === owner)) {
     if (draft.path === null) return { ...draft, space: ws.activeSpaceId ?? undefined }
-    const { busy } = await import('../busy.svelte')
+    const { busy } = await import('../ui-kit/src/api')
     busy.failed('Its space is archived')
     return null
   }

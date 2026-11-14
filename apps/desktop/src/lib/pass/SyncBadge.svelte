@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { localDate } from '../region'
+  import { localDate } from '../platform/src/api'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
   import Cloud from 'lucide/dist/esm/icons/cloud.mjs'
   import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs'

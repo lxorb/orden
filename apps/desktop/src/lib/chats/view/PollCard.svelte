@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Who } from '@orden/chats'
   import type { Shown } from '../api'
-  import { localDate, localNumber } from '../../region'
+  import { localDate, localNumber } from '../../platform/src/api'
   import type { ChatPage } from './chat.svelte'
   import Glyph from './Glyph.svelte'
   import { nameOf } from './people'

@@ -56,7 +56,7 @@ vi.mock('../list-landing.svelte', () => ({ fileClipboard }))
 
 const asked: string[] = []
 let answer: string | null = 'keep'
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: (question: { title: string }) => {
       asked.push(question.title)

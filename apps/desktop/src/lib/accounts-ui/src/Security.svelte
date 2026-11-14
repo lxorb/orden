@@ -1,9 +1,9 @@
 <script lang="ts">
   import { account } from '../../accounts/src/api'
   import { api, type RemoteSession, type SecondState } from '../../accounts/src/api'
-  import Copyable from '../../Copyable.svelte'
-  import CopyButton from '../../CopyButton.svelte'
-  import { localDate } from '../../region'
+  import { Copyable } from '../../ui-controls/src/api'
+  import { CopyButton } from '../../ui-controls/src/api'
+  import { localDate } from '../../platform/src/api'
   import { dur, fade } from '../../platform/src/api'
 
   let factor = $state<SecondState | null>(null)

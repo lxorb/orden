@@ -117,7 +117,7 @@ describe('a database while they are off', () => {
   })
 
   test('says why it does not open when its link is followed', async () => {
-    const { busy } = await import('./busy.svelte')
+    const { busy } = await import('./ui-kit/src/busy.svelte')
     busy.trouble = null
     await workspace.openEntry('/s/B.base')
     expect(opened()).toEqual([])

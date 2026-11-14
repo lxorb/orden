@@ -1,4 +1,4 @@
-import { busy } from '../busy.svelte'
+import { busy } from '../ui-kit/src/api'
 import { pageBytes, invoke } from '../platform/src/api'
 import { type PaperInches, pageSetupFor, paperInches } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { account } from './accounts/src/api'
-  import { ACCENTS } from './accents'
-  import { closeOnBack } from './backstack.svelte'
+  import { ACCENTS } from './theme/src/api'
+  import { closeOnBack } from './ui-kit/src/api'
   import Icon from './Icon.svelte'
   import { iconChoice } from './icon-choice.svelte'
   import { tintOf, wear, wornBy } from './icon-target'
@@ -18,12 +18,12 @@
     SITE_ICONS,
     takesTint,
     writtenIcon,
-  } from './icons'
+  } from './ui-kit/src/api'
   import { dur, fade, LAYER, scale } from './platform/src/api'
-  import { overlays } from './overlays'
-  import { segmented } from './slide'
-  import { trap } from './trap'
-  import { viewport } from './viewport.svelte'
+  import { overlays } from './ui-kit/src/api'
+  import { segmented } from './ui-kit/src/api'
+  import { trap } from './ui-controls/src/api'
+  import { viewport } from './ui-kit/src/api'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
 

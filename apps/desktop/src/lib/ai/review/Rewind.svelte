@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { message } from '../../message'
+  import { message } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
   import type { Thread } from '../chat/types'
   import { checkpoints } from './changes'

@@ -1,7 +1,7 @@
 <script lang="ts">
   import AtSign from 'lucide/dist/esm/icons/at-sign.mjs'
-  import { message } from '../message'
-  import Select from '../Select.svelte'
+  import { message } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import type { AliasAccount } from './alias-account'
   import type { AliasOptions, AliasService } from './aliases'
   import { aliasClient } from './aliases'

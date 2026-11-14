@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'vitest'
-import { holdComposingKeys } from './keys'
+import { holdComposingKeys } from './ui-kit/src/keys'
 
 let release: (() => void) | null = null
 

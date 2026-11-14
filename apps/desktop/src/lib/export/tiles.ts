@@ -11,7 +11,7 @@ import Image from 'lucide/dist/esm/icons/image.mjs'
 import Package from 'lucide/dist/esm/icons/package.mjs'
 import Type from 'lucide/dist/esm/icons/type.mjs'
 import type { IconNode } from 'lucide'
-import type { MenuItem } from '../menu-item'
+import type { MenuItem } from '../ui-kit/src/api'
 import { PANDOC_FORMATS } from '../export-formats'
 import { EXPORT_FORMATS } from './formats'
 

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { closeOnBack } from './backstack.svelte'
-  import { overlays } from './overlays'
+  import { closeOnBack } from './ui-kit/src/api'
+  import { overlays } from './ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import FileMark from './FileMark.svelte'
-  import { rank } from './fuzzy'
+  import { rank } from './ui-kit/src/api'
   import { offsetOf, type Rows, windowFor } from './row-window'
   import { ListView, measuredRow } from './row-window.svelte'
-  import { prompt } from './prompt.svelte'
+  import { prompt } from './ui-kit/src/api'
   import { selectAll } from './select-all'
   import SpaceMark from './SpaceMark.svelte'
   import TickBox from './TickBox.svelte'
   import { fade, LAYER, scale } from './platform/src/api'
-  import { trap } from './trap'
+  import { trap } from './ui-controls/src/api'
   import { isDesktop, platform } from './platform/src/api'
 
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))

@@ -1,8 +1,7 @@
-import { answer, frameWord, method } from '../mobile/bridge'
+import { answer, frameWord, method, systemLocale } from '../platform/src/api'
 import type { Hooks, Listening } from './listening'
 import { speechRecogniser } from './recogniser'
 import { type Field, Spot } from './spot'
-import { systemLocale } from '../region'
 
 interface Result {
   isFinal: boolean

@@ -1,4 +1,4 @@
-import { localDate } from './region'
+import { localDate } from './platform/src/api'
 
 export function when(stamp: number, dateStyle: 'short' | 'medium', now = new Date()): string {
   const at = new Date(stamp)

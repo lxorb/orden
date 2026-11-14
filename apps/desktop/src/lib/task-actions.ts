@@ -47,7 +47,7 @@ export async function addTask(
   }
   const [{ parseQuickAdd }, { region }] = await Promise.all([
     import('@orden/bases/language'),
-    import('./region'),
+    import('./platform/src/api'),
   ])
   const read = parseQuickAdd(said, [region()], new Date())
   const made = await todos.add({

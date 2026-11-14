@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FieldKind, Section } from '@orden/pass/types'
-  import Cross from '../Cross.svelte'
+  import { Cross } from '../ui-kit/src/api'
   import AddField from './AddField.svelte'
   import FieldsEdit from './FieldsEdit.svelte'
   import { newField } from './new-field'

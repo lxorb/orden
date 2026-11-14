@@ -61,6 +61,6 @@ async function refused(why: Refused): Promise<void> {
   }
   const title = refusalWords(why)
   if (title === null) return
-  const { prompt } = await import('../prompt.svelte')
+  const { prompt } = await import('../ui-kit/src/api')
   await prompt.choose({ title, options: [{ id: 'ok', label: 'OK', primary: true }] })
 }

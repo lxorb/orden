@@ -6,8 +6,8 @@
     LONGEST_QUESTION,
     MOST_ANSWERS,
   } from '@orden/chats/limits'
-  import Sheet from '../../Sheet.svelte'
-  import { segmented } from '../../slide'
+  import { Sheet } from '../../ui-controls/src/api'
+  import { segmented } from '../../ui-kit/src/api'
   import { stretch } from './when'
 
   const { onsend, onclose }: { onsend: (poll: Poll) => void; onclose: () => void } = $props()

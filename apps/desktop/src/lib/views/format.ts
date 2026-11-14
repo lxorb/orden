@@ -1,5 +1,5 @@
 import type { Value } from '@orden/bases'
-import { localNumber } from '../region'
+import { localNumber } from '../platform/src/api'
 
 export const FORMATS = [
   'number',

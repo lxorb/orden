@@ -1,5 +1,4 @@
-import { startInsets } from './insets'
-import { isMobile } from './platform/src/api'
+import { isMobile, startInsets } from '../../platform/src/api'
 
 export type Device = 'phone' | 'tablet' | 'desktop'
 

@@ -3,7 +3,7 @@
   import { chosenIcon, chosenTint, faviconFor, sourceMark } from './chosen-icon'
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
-  import { readIcon, takesTint } from './icons'
+  import { readIcon, takesTint } from './ui-kit/src/api'
   import { samePath } from './platform/src/api'
   import { terminalMark } from './surfaces.svelte'
   import { workspace } from './workspace.svelte'

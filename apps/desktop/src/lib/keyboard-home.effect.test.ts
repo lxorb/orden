@@ -24,8 +24,8 @@ vi.mock('./own-window', () => ({
 }))
 
 const { IN_PAGE } = await import('./keyboard-home')
-const { overlays } = await import('./overlays')
-const { IN_A_PAGE } = await import('./trap')
+const { overlays } = await import('./ui-kit/src/overlays')
+const { IN_A_PAGE } = await import('./ui-controls/src/trap')
 
 async function settled() {
   await new Promise((done) => setTimeout(done, 40))

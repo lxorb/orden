@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Alias } from '@orden/pass/types'
-  import { message } from '../message'
-  import Select from '../Select.svelte'
+  import { message } from '../ui-kit/src/api'
+  import { Select } from '../ui-controls/src/api'
   import { defaultAsk } from './alias-make'
   import type { AliasAsk, AliasOptions } from './aliases'
   import EditCard from './EditCard.svelte'

@@ -5,7 +5,7 @@
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import Settings from 'lucide/dist/esm/icons/settings.mjs'
   import { dur, fly } from '../platform/src/api'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { settings } from '../settings.svelte'
   import ExtensionGaps from './ExtensionGaps.svelte'
   import { extensions, type Extension } from './extensions.svelte'

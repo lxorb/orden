@@ -8,7 +8,7 @@ import {
 } from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
 import { saysNothing } from '@orden/scan/note'
-import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
+import { ICON_COLOUR_KEY, ICON_KEY } from './ui-kit/src/api'
 import { isMarkdownPath, noteName, pathKey, within, invoke } from './platform/src/api'
 import { readWebFile } from '@orden/scan/shortcut'
 

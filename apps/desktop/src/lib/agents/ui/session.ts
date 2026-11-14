@@ -1,5 +1,4 @@
-import { localDate } from '../../region'
-import { nameOf } from '../../platform/src/api'
+import { localDate, nameOf } from '../../platform/src/api'
 import { wordFor } from './words'
 
 export interface Call {

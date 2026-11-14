@@ -1,8 +1,8 @@
 <script lang="ts">
   import { dropOver } from '../../drag-paths'
   import { onMount } from 'svelte'
-  import { message } from '../../message'
-  import Sheet from '../../Sheet.svelte'
+  import { message } from '../../ui-kit/src/api'
+  import { Sheet } from '../../ui-controls/src/api'
   import {
     clampOffset,
     clampZoom,

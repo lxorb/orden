@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte'
   import { keyElsewhere } from '../layer-keys'
   import { shortcuts } from '../shortcuts.svelte'
-  import { arrive } from '../slide'
+  import { arrive } from '../ui-kit/src/api'
   import { workspace } from '../workspace.svelte'
   import AddRow from './AddRow.svelte'
   import BoardLayout from './BoardLayout.svelte'

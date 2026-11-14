@@ -3,7 +3,7 @@
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import { onMount, type Snippet, untrack } from 'svelte'
-  import { closeOnBack } from '../backstack.svelte'
+  import { closeOnBack } from '../ui-kit/src/api'
   import { dur, fade } from '../platform/src/api'
   import { reloading } from '../reloading.svelte'
   import { shortcuts } from '../shortcuts.svelte'

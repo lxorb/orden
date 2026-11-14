@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Item } from '@orden/pass/types'
-  import { localDate } from '../region'
-  import { message } from '../message'
-  import { prompt } from '../prompt.svelte'
-  import Sheet from '../Sheet.svelte'
+  import { localDate } from '../platform/src/api'
+  import { message } from '../ui-kit/src/api'
+  import { prompt } from '../ui-kit/src/api'
+  import { Sheet } from '../ui-controls/src/api'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'
 

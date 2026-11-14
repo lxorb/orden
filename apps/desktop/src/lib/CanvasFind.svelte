@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Canvas } from './canvas/format'
   import { type Found, matches } from './canvas/find'
-  import Cross from './Cross.svelte'
+  import { Cross } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
 
   const {

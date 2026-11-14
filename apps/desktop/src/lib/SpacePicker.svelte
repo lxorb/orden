@@ -1,13 +1,13 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from './backstack.svelte'
+  import { closeOnBack } from './ui-kit/src/api'
   import { fade, LAYER, scale } from './platform/src/api'
-  import { overlays } from './overlays'
+  import { overlays } from './ui-kit/src/api'
   import { roving } from './roving'
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
   import { SpaceTyping } from './space-typing.svelte'
-  import { trap } from './trap'
+  import { trap } from './ui-controls/src/api'
   import { type Space, workspace } from './workspace.svelte'
 
   $effect(() => (spacePicker.open ? overlays.show(() => spacePicker.dismiss()) : undefined))

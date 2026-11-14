@@ -1,5 +1,5 @@
 import { account } from './accounts/src/api'
-import { prompt } from './prompt.svelte'
+import { prompt } from './ui-kit/src/api'
 import { MIRRORS_KEY, savedRecord } from './sync/mirror'
 import { rootedAt, stored } from './platform/src/api'
 import { workspace } from './workspace.svelte'

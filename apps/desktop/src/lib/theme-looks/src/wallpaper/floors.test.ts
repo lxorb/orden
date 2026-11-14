@@ -2,8 +2,16 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS } from '../../../accents'
-import { AA, type Lift, over, ratio, type Rgb, rgbOf, type Span } from '../../../legibility'
+import { ACCENTS } from '../../../theme/src/accents'
+import {
+  AA,
+  type Lift,
+  over,
+  ratio,
+  type Rgb,
+  rgbOf,
+  type Span,
+} from '../../../ui-controls/src/legibility'
 import { floorFor, type Palette, paletteOf } from './floors'
 
 const TOKENS = readFileSync(

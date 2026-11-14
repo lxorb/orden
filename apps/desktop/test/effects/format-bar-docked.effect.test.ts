@@ -2,7 +2,7 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import type { EditorView } from '@orden/editor'
 import FormatBar from '../../src/lib/FormatBar.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
 class NoLayout {
   observe() {

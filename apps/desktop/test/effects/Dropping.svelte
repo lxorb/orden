@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { arrive, letGo, LIST_STEP } from '../../src/lib/slide'
+  import { arrive, letGo, LIST_STEP } from '../../src/lib/ui-kit/src/slide'
 </script>
 
 <div class="catch" out:letGo></div>

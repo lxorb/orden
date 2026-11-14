@@ -1,6 +1,6 @@
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './accounts/src/api'
-import { busy } from './busy.svelte'
+import { busy, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai/ask'
 import { guardDrops } from './drops'
 import { joining } from './joining.svelte'
@@ -13,8 +13,8 @@ import {
   isMobile,
   platform,
   waited,
+  onTheActivity,
 } from './platform/src/api'
-import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
 import {
   anythingRuns,
@@ -41,7 +41,6 @@ import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready, settledForInstaller } from './updater'
 import { updates } from './updates.svelte'
-import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
 const DAY = 24 * 60 * 60 * 1000

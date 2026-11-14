@@ -10,11 +10,11 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../message', () => ({
+vi.mock('../ui-kit/src/message', () => ({
   message: (_error: unknown, fallback: string) => fallback,
 }))
 
-const { busy } = await import('../busy.svelte')
+const { busy } = await import('../ui-kit/src/busy.svelte')
 const { writtenPdf } = await import('./print')
 
 const PAGE = { width: 8.27, height: 11.69, margin: 0.5, landscape: false }

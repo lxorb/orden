@@ -12,7 +12,7 @@ vi.mock('./device', () => ({
       : Promise.resolve(owner.says === 'yes'),
 }))
 
-const { busy } = await import('../busy.svelte')
+const { busy } = await import('../ui-kit/src/busy.svelte')
 const { workspace } = await import('../workspace.svelte')
 const { protect } = await import('./unlocking')
 const PromptSheet = (await import('../PromptSheet.svelte')).default

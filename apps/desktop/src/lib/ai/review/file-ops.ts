@@ -1,4 +1,4 @@
-import { busy } from '../../busy.svelte'
+import { busy } from '../../ui-kit/src/api'
 import { shownName, insideSpace, nameOf, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { FileAction } from '../../workspace/undo.svelte'

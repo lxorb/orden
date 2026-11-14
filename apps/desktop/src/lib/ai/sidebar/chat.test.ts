@@ -109,7 +109,7 @@ const ticking = vi.hoisted(() => ({
   answer: null as { id: string; ticked: boolean } | null,
   asked: [] as string[],
 }))
-vi.mock('../../prompt.svelte', () => ({
+vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: () => Promise.resolve(true),
     chooseTicking: (options: { title: string }) => {

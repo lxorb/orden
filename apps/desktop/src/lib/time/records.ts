@@ -1,4 +1,4 @@
-import { readTint } from '../icons'
+import { readTint } from '../ui-kit/src/api'
 
 export const LONGEST_NAME = 80
 

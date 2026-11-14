@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { region } from '../region'
-  import { localDate } from '../region'
+  import { region } from '../platform/src/api'
+  import { localDate } from '../platform/src/api'
   import { menu } from '../menu.svelte'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { dayName, historyRows, hostOf, onScreen, type HistoryRow } from './history-list'

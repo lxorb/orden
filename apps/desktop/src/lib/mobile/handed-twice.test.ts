@@ -11,7 +11,7 @@ vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 vi.mock('../import/apply', () => ({
   applyImport: () => Promise.resolve({ paths: [], stepped: 0 }),
 }))
-vi.mock('./bridge', () => ({
+vi.mock('../platform/src/mobile-bridge', () => ({
   onTheActivity: () => true,
   frameWord: () => Promise.resolve('word'),
   wordSaid: () => new Promise(() => undefined),
@@ -32,7 +32,7 @@ vi.mock('./bridge', () => ({
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
 vi.mock('../commands', () => ({ appCommands: () => [] }))
 vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
-vi.mock('../prompt.svelte', () => ({
+vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: async () => {
       world.asked++

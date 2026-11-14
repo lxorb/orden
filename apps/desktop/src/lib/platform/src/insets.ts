@@ -1,4 +1,4 @@
-import { answer, method } from './mobile/bridge'
+import { answer, method } from './mobile-bridge'
 
 export interface Edges {
   top: number

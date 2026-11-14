@@ -6,7 +6,7 @@ import {
   type SelectOption,
   type Value,
 } from '@orden/bases'
-import { copyText } from '../clipboard'
+import { copyText } from '../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { workspace } from '../workspace.svelte'
 import { asOneUndo, writeEach } from './act'

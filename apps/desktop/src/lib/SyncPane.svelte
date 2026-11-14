@@ -1,13 +1,13 @@
 <script lang="ts">
   import { account } from './accounts/src/api'
   import { api } from './accounts/src/api'
-  import { localNumber } from './region'
+  import { localNumber } from './platform/src/api'
   import { when } from './when'
   import Facts from './Facts.svelte'
   import { log } from './platform/src/api'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
   import { dur, fade } from './platform/src/api'
-  import Select from './Select.svelte'
+  import { Select } from './ui-controls/src/api'
   import { record } from './sync/record.svelte'
   import type { Answer, Clash } from './sync/conflicts'
   import { sync } from './sync.svelte'
@@ -15,7 +15,7 @@
   import { syncedCopies } from './foreign/synced'
   import { asking, scan, type Engine } from './sync-client/src/api'
   import { workspace } from './workspace.svelte'
-  import Hint from './Hint.svelte'
+  import { Hint } from './ui-controls/src/api'
 
   let days = $state(1)
 

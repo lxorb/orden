@@ -25,7 +25,10 @@ test('a list hung outside its card is drawn above Settings and sheets, which it 
       /<ul[^>]*class="[^"]*\blist\b[^"]*"[^>]*role="listbox"[^>]*use:hang/s.test(one.source),
     )
   expect(hung.map((one) => one.path)).toEqual(
-    expect.arrayContaining(['Select.svelte', join('settings', 'FontPicker.svelte')]),
+    expect.arrayContaining([
+      join('ui-controls', 'src', 'Select.svelte'),
+      join('settings', 'FontPicker.svelte'),
+    ]),
   )
   const low = hung
     .filter((one) => layerOfList(one.source) !== 'var(--z-menu)')

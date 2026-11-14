@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { decodePDFRawStream, type PDFArray, PDFDocument, type PDFRawStream } from 'pdf-lib'
 import { emptyPages, pagesFromPdf } from '@orden/markdown/pages'
-import { busy } from '../busy.svelte'
+import { busy } from '../ui-kit/src/busy.svelte'
 import type { Canvas, PageNode } from '../canvas/format'
 
 const PIXEL =

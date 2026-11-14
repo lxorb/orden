@@ -2,7 +2,7 @@
   import type { FileRef } from '@orden/chats'
   import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
   import { onMount } from 'svelte'
-  import { message as errorWords } from '../../message'
+  import { message as errorWords } from '../../ui-kit/src/api'
   import { record, type Recording } from '../../recorder/microphone'
   import { shortcuts } from '../../shortcuts.svelte'
   import Glyph from './Glyph.svelte'

@@ -39,7 +39,7 @@ import {
 import { account } from './accounts/src/api'
 import { chatsOn } from './settings.svelte'
 import { canTranscribe } from './ai/hears'
-import { copySelection, copyText, cutSelection } from './clipboard'
+import { copySelection, copyText, cutSelection } from './ui-controls/src/api'
 import { copyPicture } from './copy-picture'
 import { countText } from './counts'
 import { linkTo } from './composer'
@@ -52,7 +52,7 @@ import { openExternal, isMarkdownPath, noteName, relativeTo } from './platform/s
 import { shortcuts } from './shortcuts.svelte'
 import { workspace } from './workspace.svelte'
 import { unlocks } from './protect/unlocked.svelte'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/api'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
@@ -191,7 +191,7 @@ const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
 ]
 
 async function turnInto(view: EditorView, at: number) {
-  const { prompt } = await import('./prompt.svelte')
+  const { prompt } = await import('./ui-kit/src/api')
   const chosen = await prompt.find({
     title: 'Turn into',
     options: SHAPES.map((one) => ({ id: one.shape, label: one.label() })),

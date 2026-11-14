@@ -2,7 +2,7 @@ import type { LinkPress, NoteJump, NoteOpener } from '@orden/editor'
 import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './platform/src/api'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/api'
 import { isWebAddress } from './web-tab/address'
 import { workspace } from './workspace.svelte'
 

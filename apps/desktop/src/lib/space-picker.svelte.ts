@@ -1,6 +1,6 @@
 import { openSpaces } from './focus'
 import { spacePickerDialog } from './surfaces.svelte'
-import { viewport } from './viewport.svelte'
+import { viewport } from './ui-kit/src/api'
 import { type Space, workspace } from './workspace.svelte'
 
 class SpacePicker {

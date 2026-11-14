@@ -17,7 +17,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const { overlays } = await import('../../src/lib/overlays')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { adrift, pressedThrough } = await import('../../src/lib/keyboard-home')
 
 let editor: EditorView

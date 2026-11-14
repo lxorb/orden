@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Content } from '@orden/pass/types'
   import Icon from '../Icon.svelte'
-  import { readIcon } from '../icons'
+  import { readIcon } from '../ui-kit/src/api'
   import { favicons } from '../web-tab/pages.svelte'
   import Glyph from './Glyph.svelte'
   import { KIND_ICONS } from './icons'

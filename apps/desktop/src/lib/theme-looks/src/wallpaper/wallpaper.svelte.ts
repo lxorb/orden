@@ -1,10 +1,9 @@
 import type { Scheme } from '@orden/contracts'
-import { accentColour } from '../../../accents'
+import { accentColour, theme } from '../../../theme/src/api'
 import { chooseFiles, PICTURES } from '../../../choose-files'
 import { fileBytes, forget, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
-import { message } from '../../../message'
+import { message } from '../../../ui-kit/src/api'
 import { settings } from '../../../settings.svelte'
-import { theme } from '../../../theme/src/api'
 import {
   DARK_KEY,
   type Held,

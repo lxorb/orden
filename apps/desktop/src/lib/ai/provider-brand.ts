@@ -1,4 +1,4 @@
-import { siteBrand } from '../icons'
+import { siteBrand } from '../ui-kit/src/api'
 import type { Provider, ProviderKind } from './providers'
 
 const MAKERS: readonly [RegExp, string][] = [

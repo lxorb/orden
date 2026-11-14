@@ -1,6 +1,5 @@
-import { busy } from './busy.svelte'
+import { busy, message, viewport } from './ui-kit/src/api'
 import { firstVisit } from './first-visit.svelte'
-import { message } from './message'
 import type { FormatId } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
@@ -8,7 +7,6 @@ import type { BrowserProfile, FoundBrowser } from './import/browsers'
 import type { Vault } from './import/vaults'
 import type { ZenProfile } from './import/zen-profiles'
 import { isDesktop } from './platform/src/api'
-import { viewport } from './viewport.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 class Migrating {

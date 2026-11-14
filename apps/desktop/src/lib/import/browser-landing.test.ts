@@ -80,7 +80,9 @@ vi.mock('./apply', () => ({
   },
 }))
 
-vi.mock('../busy.svelte', () => ({ busy: { failed: (line: string) => void said.push(line) } }))
+vi.mock('../ui-kit/src/busy.svelte', () => ({
+  busy: { failed: (line: string) => void said.push(line) },
+}))
 vi.mock('../web-tab/visited', () => ({
   visited: { brought: (book: string, rows: unknown) => void brought.push({ book, rows }) },
 }))

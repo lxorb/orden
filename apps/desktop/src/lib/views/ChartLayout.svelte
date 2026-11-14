@@ -1,7 +1,7 @@
 <script lang="ts">
   import { groupName } from '@orden/bases'
-  import { localNumber } from '../region'
-  import Select from '../Select.svelte'
+  import { localNumber } from '../platform/src/api'
+  import { Select } from '../ui-controls/src/api'
   import {
     CHART_KINDS,
     donutPaths,

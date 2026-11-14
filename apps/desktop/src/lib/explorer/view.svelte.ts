@@ -1,4 +1,4 @@
-import { message } from '../message'
+import { message } from '../ui-kit/src/api'
 import { afterQuiet, isDesktop, joinPath, samePath } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'

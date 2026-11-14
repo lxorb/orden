@@ -49,7 +49,7 @@ vi.mock('../accounts/src/client', () => ({
 }))
 
 const { bounded, labelOf, siteIcons, siteOf, siteSet } = await import('./site-icons.svelte')
-const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../icons')
+const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../ui-kit/src/icons')
 const account = (await import('../accounts/src/account.svelte')).account as unknown as AccountDouble
 
 beforeEach(async () => {

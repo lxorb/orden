@@ -188,14 +188,14 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./message', () => ({
+vi.mock('./ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))
 
 import { account } from './accounts/src/account.svelte'
 import { rooms } from './collab/src/api'
-import { accentFor } from './accents'
+import { accentFor } from './theme/src/accents'
 import {
   addressesIn,
   canShare,

@@ -1,6 +1,6 @@
 import { tick } from 'svelte'
 import { focusEditor } from '../focus'
-import { viewport } from '../viewport.svelte'
+import { viewport } from '../ui-kit/src/api'
 import { workspace } from '../workspace.svelte'
 import { chromeGoes, chromeStays } from './chrome'
 import { mayFill } from './rules'

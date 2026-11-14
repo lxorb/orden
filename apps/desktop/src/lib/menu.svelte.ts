@@ -6,7 +6,7 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
-import { DIVIDER, type MenuEntry } from './menu-item'
+import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { links } from './link-index.svelte'
@@ -15,7 +15,7 @@ import { isMarkdownPath, withinSpace } from './platform/src/api'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 
-export { DIVIDER, type MenuEntry, type MenuItem } from './menu-item'
+export { DIVIDER, type MenuEntry, type MenuItem } from './ui-kit/src/api'
 
 interface MenuOptions {
   title?: string

@@ -40,7 +40,7 @@ const { kindsPane } = await import('./settings/kinds-pane')
 const { experimentalPane } = await import('./settings/experimental-pane')
 const { BY_ID } = await import('./shortcuts/registry')
 const { account } = await import('./accounts/src/account.svelte')
-const { viewport } = await import('./viewport.svelte')
+const { viewport } = await import('./ui-kit/src/viewport.svelte')
 
 let token: string | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })

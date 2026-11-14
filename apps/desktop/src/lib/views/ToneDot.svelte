@@ -1,6 +1,6 @@
 <script lang="ts">
   import CanvasColours from '../CanvasColours.svelte'
-  import { overlays } from '../overlays'
+  import { overlays } from '../ui-kit/src/api'
   import { toneColour } from './chips'
 
   const { tone, ontone }: { tone: string | undefined; ontone: (tone: string | null) => void } =

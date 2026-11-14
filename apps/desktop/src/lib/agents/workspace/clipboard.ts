@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { copyText } from '../../clipboard'
+import { copyText } from '../../ui-controls/src/api'
 import { isPassSecret } from '../../pass/clipboard'
 import { asked } from './asks'
 import { type Call, done, need, text } from './call'

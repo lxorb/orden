@@ -28,7 +28,7 @@ import User from 'lucide/dist/esm/icons/user.mjs'
 import Users from 'lucide/dist/esm/icons/users.mjs'
 import Wallet from 'lucide/dist/esm/icons/wallet.mjs'
 import Wifi from 'lucide/dist/esm/icons/wifi.mjs'
-import { accentColour } from '../accents'
+import { accentColour } from '../theme/src/api'
 
 export const KIND_ICONS: Record<ItemKind, IconNode> = {
   login: User,
