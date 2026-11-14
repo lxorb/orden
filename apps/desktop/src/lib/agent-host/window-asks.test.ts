@@ -40,13 +40,12 @@ vi.mock('../agents/src/api', async (original) => ({
   },
 }))
 
-const revealed: string[] = []
-vi.mock('../focus', () => ({ revealPanel: (panel: string) => revealed.push(panel) }))
+const opened: string[] = []
+vi.mock('../focus', () => ({ openAgentSession: (agent: string) => opened.push(agent) }))
 
 const { clipboard } = await import('./clipboard')
 const { askReader } = await import('./ask')
 const { asking } = await import('../agents/src/api')
-const { agentOpen } = await import('../ai/sidebar/agent-open.svelte')
 
 function call(verb: string, args: Record<string, unknown>, mode = 'unsupervised') {
   return {
@@ -63,8 +62,7 @@ beforeEach(() => {
   asked.length = 0
   copied.length = 0
   shown.length = 0
-  revealed.length = 0
-  agentOpen.id = null
+  opened.length = 0
   answer = { status: 'ok', result: {} }
   pasted = 'what was copied'
 })
@@ -124,8 +122,7 @@ describe('a question put to the reader', () => {
     )
     await vi.waitFor(() => expect(shown).toHaveLength(1))
     shown[0]?.opened?.()
-    expect(agentOpen.id).toBe('claude')
-    expect(revealed).toEqual(['ask'])
+    expect(opened).toEqual(['claude'])
     asking.forget('claude')
     expect(await waiting).toMatchObject({ result: { dismissed: true } })
   })

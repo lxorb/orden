@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { agentOpen } from '../../../ai/sidebar/agent-open.svelte'
-  import { chat } from '../../../ai/sidebar/chat.svelte'
   import { asking } from './asking.svelte'
   import { started } from './live.svelte'
   import { ACTIVE_FOR } from './marks'
   import Spark from './Spark.svelte'
+
+  const { open, onopen }: { open: string | null; onopen: (agent: string) => void } = $props()
 
   const activity = started()
 
@@ -27,11 +27,6 @@
       }
     }),
   )
-
-  function open(agent: string) {
-    agentOpen.id = agent
-    chat.listing = false
-  }
 </script>
 
 {#if rows.length}
@@ -40,9 +35,9 @@
     <li role="presentation">
       <button
         class="orden-row agent"
-        class:is-on={agentOpen.id === one.agent}
+        class:is-on={open === one.agent}
         data-agent={one.agent}
-        onclick={() => open(one.agent)}
+        onclick={() => onopen(one.agent)}
       >
         <Spark colour={one.colour} turning={one.acting} paused={one.stopped} />
         <span class="orden-row-label">

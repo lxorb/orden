@@ -16,6 +16,8 @@ class AgentMarks {
 
   opened = $state<Record<string, string>>({})
 
+  open = $state<string | null>(null)
+
   waiting = $state(0)
 
   takeovers = $state<Record<string, { id: string; reason: string }>>({})

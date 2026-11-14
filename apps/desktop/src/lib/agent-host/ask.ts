@@ -1,7 +1,6 @@
 import type { AgentAnswer } from '../automation/caller'
 import { show } from '../notify'
-import { agentOpen } from '../ai/sidebar/agent-open.svelte'
-import { revealPanel } from '../focus'
+import { openAgentSession } from '../focus'
 import { asking } from '../agents/src/api'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
@@ -34,7 +33,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   }
 
   if (kind === 'notice') {
-    show({ title: agent.name, body: message, opened: () => openSession(agent.id) })
+    show({ title: agent.name, body: message, opened: () => openAgentSession(agent.id) })
     return done({ shown: true })
   }
   if (kind !== 'choice' && kind !== 'text') {
@@ -73,7 +72,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
     title: agent.name,
     body: message,
     tag: `ask-${question.id}`,
-    opened: () => openSession(agent.id),
+    opened: () => openAgentSession(agent.id),
     ...(kind === 'text'
       ? {
           reply: {
@@ -94,9 +93,4 @@ async function heard(call: Call, id: string, patience: number): Promise<AgentAns
   if (said === null) return done({ id, waiting: true })
 
   return said.answer === null ? done({ id, dismissed: true }) : done({ id, answer: said.answer })
-}
-
-function openSession(agent: string): void {
-  agentOpen.id = agent
-  revealPanel('ask')
 }

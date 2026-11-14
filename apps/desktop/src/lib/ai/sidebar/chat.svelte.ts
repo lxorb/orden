@@ -61,6 +61,7 @@ import {
   statesOf,
 } from '../../ai-providers/src/api'
 import type { Provider } from '../../ai-providers/src/api'
+import { agentMarks } from '../../agent-marks.svelte'
 import { tasks } from '../commands/tasks.svelte'
 import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
@@ -84,7 +85,6 @@ import { snapshot } from './snapshot'
 import { tokens } from './numbers'
 import { switchCost } from '../switch-cost'
 import { editMessage, lastMessage, openRewind } from '../review'
-import { agentOpen } from './agent-open.svelte'
 
 const AFTER_RESET = 30_000
 
@@ -439,7 +439,7 @@ class Chat implements Panel {
     const held = await this.held(id)
     if (!held) return
     this.listing = false
-    agentOpen.id = null
+    agentMarks.open = null
     this.show(held)
     if (focus) this.focus()
   }
@@ -447,7 +447,7 @@ class Chat implements Panel {
   newThread(): void {
     this.listing = false
     this.popover = null
-    agentOpen.id = null
+    agentMarks.open = null
     const open = this.open
     if (
       open &&

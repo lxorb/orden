@@ -21,8 +21,6 @@
     "apps/desktop/src/lib/accelerator.ts",
     "apps/desktop/src/lib/agent-host/editor.ts",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/ai/sidebar/agent-open.svelte.ts",
-    "apps/desktop/src/lib/ai/sidebar/chat.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/notify.ts",

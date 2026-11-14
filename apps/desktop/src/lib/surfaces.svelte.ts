@@ -135,11 +135,13 @@ export const lockScreen = held(() =>
 
 export const findBar = held(() => import('./FindBar.svelte'))
 
-export const takeoverBar = held(() =>
-  __EVEN_PLUGIN__
-    ? new Promise<never>(() => undefined)
-    : import('./agents/src/api').then((one) => one.loadTakeoverBar()),
-)
+const agentsApi = () => (__EVEN_PLUGIN__ ? never : import('./agents/src/api'))
+
+export const takeoverBar = held(() => agentsApi().then((one) => one.loadTakeoverBar()))
+
+export const agentRows = held(() => agentsApi().then((one) => one.loadAgentRows()))
+
+export const agentSession = held(() => agentsApi().then((one) => one.loadAgentSession()))
 
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
@@ -256,9 +258,7 @@ export const soundMark = held(() => import('./SoundMark.svelte'))
 
 export const privateMark = held(() => loadPrivateMark())
 
-export const sparkMark = door(() =>
-  __EVEN_PLUGIN__ ? never : import('./agents/src/api').then((one) => one.Spark),
-)
+export const sparkMark = door(() => agentsApi().then((one) => one.Spark))
 
 export const terminalMark = held(() =>
   import('./terminal/src/api').then((one) => one.loadTerminalMark()),

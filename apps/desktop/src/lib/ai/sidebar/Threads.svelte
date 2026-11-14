@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { door } from '@orden/markdown/door'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { agentMarks } from '../../agent-marks.svelte'
@@ -8,6 +7,7 @@
   import type { Place } from '../../row-window'
   import { scrollbar } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts.svelte'
+  import { agentRows } from '../../surfaces.svelte'
   import type { ThreadHead } from '../../ai-providers/src/api'
   import { ordered, stateOf } from '../../ai-providers/src/api'
   import { chat } from './chat.svelte'
@@ -15,8 +15,6 @@
   import ChatWindow from './ChatWindow.svelte'
 
   const { rail = false }: { rail?: boolean } = $props()
-
-  const agentRows = door(() => import('../../agents/src/api').then((one) => one.loadAgentRows()))
 
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
@@ -153,8 +151,14 @@
 
   <ul class="list" role="listbox" use:scrollbar>
     {#if agentMarks.heard && !chat.listQuery}
-      {#await agentRows() then { default: AgentRows }}
-        <AgentRows />
+      {#await agentRows() then AgentRows}
+        <AgentRows
+          open={agentMarks.open}
+          onopen={(agent: string) => {
+            agentMarks.open = agent
+            chat.listing = false
+          }}
+        />
       {/await}
     {/if}
     {#if rows.length}
