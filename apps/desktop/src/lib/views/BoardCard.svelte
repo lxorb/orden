@@ -242,11 +242,6 @@
     text-overflow: ellipsis;
   }
 
-  .meta {
-    gap: var(--space-3);
-    font-variant-numeric: tabular-nums;
-  }
-
   .late {
     color: var(--danger);
   }

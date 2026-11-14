@@ -851,28 +851,6 @@
     color: var(--accent);
   }
 
-  .display-button {
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-1);
-    width: auto;
-    padding-inline: var(--space-2);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-  }
-
-  .display-count {
-    min-width: 16px;
-    padding: 0 5px;
-    border-radius: 8px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
-    line-height: 16px;
-  }
-
   .orden-glyph.open {
     background: var(--surface-press);
   }
