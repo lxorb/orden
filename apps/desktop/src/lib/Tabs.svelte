@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { webPages } from '@orden/contracts'
   import { droppedAddress } from '@orden/scan/web-address'
   import { dropOver } from './drag-paths'
   import { onDestroy, onMount, tick, untrack } from 'svelte'
@@ -81,7 +82,6 @@
   import { insideSpace, nameOf } from './platform/src/api'
   import { shownName } from './platform/src/api'
   import { chosenIcon } from './chosen-icon'
-  import { pages } from './web-tab/src/api'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
   import { isDraft } from './workspace/drafts'
@@ -198,7 +198,7 @@
           name,
           trailing({
             reading: tab.reading,
-            sound: tab.kind === 'web' && pages.of(tab.id).playing,
+            sound: tab.kind === 'web' && webPages().of(tab.id).playing,
             shared: !!tab.note.shared,
             draft: isDraft(tab.note),
             faces: Math.min(seen?.people.length ?? 0, 3),
@@ -247,7 +247,7 @@
       const look = own
         ? null
         : tab.kind === 'web'
-          ? siteLook(tab.address ?? pages.addressOf(tab.id))
+          ? siteLook(tab.address ?? webPages().addressOf(tab.id))
           : tab.kind
       return { id: tab.id, look }
     })
@@ -985,7 +985,7 @@
               {#snippet children(Private)}<Private />{/snippet}
             </Door>
             {#if tab.kind === 'web' && parts.title}
-              {@const heard = pages.of(tab.id)}
+              {@const heard = webPages().of(tab.id)}
               <Door open={heard.playing} load={() => soundMark()}>
                 {#snippet children(Sound)}<Sound muted={heard.muted} />{/snippet}
               </Door>

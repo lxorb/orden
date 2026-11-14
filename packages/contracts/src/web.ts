@@ -9,6 +9,8 @@ export interface WebPageSeen {
   readonly icon: string | null
   readonly live: boolean
   readonly shown: boolean
+  readonly playing: boolean
+  readonly muted: boolean
 }
 
 export interface PressedKey {
@@ -81,6 +83,8 @@ const BLANK: WebPageSeen = {
   icon: null,
   live: false,
   shown: false,
+  playing: false,
+  muted: false,
 }
 
 export const NO_WEB_PAGES: WebPagesPort = {

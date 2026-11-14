@@ -20,6 +20,8 @@ const PAGE = {
   icon: null,
   live: false,
   shown: false,
+  playing: false,
+  muted: false,
 }
 providePort('web.pages', { ...webPages(), of: () => PAGE })
 type Tab = import('../../workspace.svelte').Tab

@@ -304,6 +304,8 @@ describe('ports', () => {
       icon: null,
       live: false,
       shown: false,
+      playing: false,
+      muted: false,
     })
     expect(none.tabs()).toEqual([])
     expect(none.lentOf('t')).toBe(false)
@@ -331,6 +333,8 @@ describe('ports', () => {
       icon: null,
       live: true,
       shown: true,
+      playing: true,
+      muted: false,
     }
     const unbind = providePort('web.pages', { ...none, cuts: true, of: () => page })
     expect(webPages().cuts).toBe(true)
