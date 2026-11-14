@@ -1,0 +1,5 @@
+{
+  "name": "snapshots",
+  "layer": "foundation",
+  "dependsOn": ["contracts"]
+}

@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-import { sha256 } from './platform/src/bytes'
+import { sha256 } from '../../platform/src/api'
 
 const held = vi.hoisted(() => ({
   snapshots: [] as { taken_at: number; size: number; path: string; source?: string }[],
@@ -8,7 +8,8 @@ const held = vi.hoisted(() => ({
   account: [] as { at: number; size: number; by: string; hash?: string }[],
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: (command: string, args: { path: string }) => {
     if (command === 'list_snapshots') return Promise.resolve(held.snapshots)
     if (command === 'read_snapshot' && held.words.has(args.path))
@@ -16,9 +17,10 @@ vi.mock('./platform/src/tauri', () => ({
     return Promise.reject(new Error(command))
   },
 }))
-vi.mock('./accounts/src/account.svelte', () => ({ account: { accountToken: 't' } }))
-vi.mock('./sync.svelte', () => ({ sync: { tracked: () => ({ id: 'n1' }) } }))
-vi.mock('./accounts/src/client', () => ({
+vi.mock('../../sync.svelte', () => ({ sync: { tracked: () => ({ id: 'n1' }) } }))
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
+  account: { accountToken: 't' },
   api: { noteVersions: () => Promise.resolve({ versions: held.account }) },
 }))
 

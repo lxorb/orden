@@ -20,7 +20,7 @@ import {
   isReserved,
 } from '../platform/src/api'
 import { holderOf, paperOf } from '@orden/markdown/pages'
-import { staleSnapshots } from '../recovery'
+import { staleSnapshots } from '../snapshots/src/api'
 import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'

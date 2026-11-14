@@ -33,7 +33,7 @@
   import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
-  import { recovery } from './lib/recovery.svelte'
+  import { recovery } from './lib/history/src/api'
   import { reloading } from './lib/reloading.svelte'
   import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/src/api'

@@ -305,7 +305,7 @@ describe('what hides a web page', () => {
     'lib/graph-view/src/GraphControls.svelte': 'dropdown',
     'lib/FeedbackSheet.svelte': 'dialog',
     'lib/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
-    'lib/History.svelte': 'sheet',
+    'lib/history/src/History.svelte': 'sheet',
     'lib/JoinSheet.svelte': 'sheet',
     'lib/IconPicker.svelte': 'sheet',
     'lib/palette/src/Palette.svelte': 'dialog',

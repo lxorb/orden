@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../automation/caller'
 import { invoke, notePath } from '../platform/src/api'
-import { type Version, versionsOf, versionText } from '../versions'
+import { type Version, versionsOf, versionText } from '../history/src/api'
 import { workspace } from '../workspace.svelte'
 import { notes } from './docs'
 import { asked } from './asks'

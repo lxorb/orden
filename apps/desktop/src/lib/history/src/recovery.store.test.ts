@@ -21,7 +21,8 @@ const sent = vi.hoisted(() => ({
   calls: [] as { command: string; args: Record<string, unknown> }[],
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     sent.calls.push({ command, args })
     return Promise.resolve(0)
@@ -34,7 +35,7 @@ const open = vi.hoisted(() => ({
   notes: [] as { key: string; path: string; text: string; revision: number }[],
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get worthKeeping() {
       return open.notes
@@ -42,10 +43,13 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./accounts/src/account.svelte', () => ({ account: { token: null } }))
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
+  account: { token: null },
+}))
 
 const { recovery } = await import('./recovery.svelte')
-const { DEFAULT_DAYS, DEFAULT_MINUTES } = await import('./recovery')
+const { DEFAULT_DAYS, DEFAULT_MINUTES } = await import('../../snapshots/src/api')
 
 const MINUTE = 60 * 1000
 

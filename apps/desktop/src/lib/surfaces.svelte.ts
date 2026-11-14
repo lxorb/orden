@@ -6,6 +6,7 @@ import { registered } from '@orden/contracts'
 import { loadPalette } from './palette/src/api'
 import { loadSettingsPanel } from './settings/src/api'
 import { loadGraph } from './graph-view/src/api'
+import { loadHistory } from './history/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
@@ -187,7 +188,7 @@ export const archivedStrip = held(() =>
     : import('./ArchivedStrip.svelte'),
 )
 
-export const historySheet = latched(() => import('./History.svelte'))
+export const historySheet = latched(loadHistory)
 
 export const shareSheet = latched(() => import('./ShareSheet.svelte'))
 

@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../automation/caller'
 import { folderOf, insideSpace, within } from '../platform/src/api'
-import type { TrashItem } from '../trash.svelte'
+import type { TrashItem } from '../trash/src/api'
 import { asked } from './asks'
 import { type Call, done, need } from './call'
 import { Refused } from './problem'
@@ -25,7 +25,7 @@ function whereOf(call: Call, item: TrashItem): string | null {
 }
 
 async function listed(call: Call) {
-  const { trash } = await import('../trash.svelte')
+  const { trash } = await import('../trash/src/api')
   await trash.load()
 
   return trash.items.flatMap((item) => {
@@ -56,7 +56,7 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
   const found = rows.find((row) => row.id === id)
   if (!found) throw new Refused('not_found', `nothing called ${id} is in Recently deleted`)
 
-  const { trash } = await import('../trash.svelte')
+  const { trash } = await import('../trash/src/api')
   if (!trash.restorable(found.item)) {
     throw new Refused('read_only', `${found.from} is shared with you to read`)
   }

@@ -218,7 +218,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/maths.ts', 'the formula engine, dressed'],
     ['/markdown/src/eager.ts', "the Worker's pair of engines"],
     ['/glasses/src/mark.ts', "the glasses' text engine"],
-    ['/lib/History.svelte', 'the version list'],
+    ['/lib/history/src/History.svelte', 'the version list'],
     ['/lib/ShareSheet.svelte', 'the share sheet'],
     ['/lib/publishing/src/PublishSheet.svelte', 'the publish sheet'],
     ['/lib/import/src/ImportSheet.svelte', 'the import sheet'],

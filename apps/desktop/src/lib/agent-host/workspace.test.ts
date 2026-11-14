@@ -473,7 +473,8 @@ vi.mock('../web-tab/src/api', async (actual) => ({
   },
 }))
 
-vi.mock('../versions', () => ({
+vi.mock('../history/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../history/src/api')>()),
   versionsOf: () => Promise.resolve([{ at: 1_000, size: 9, path: '/h/1', by: '' }]),
   versionText: () => Promise.resolve('old words'),
 }))
