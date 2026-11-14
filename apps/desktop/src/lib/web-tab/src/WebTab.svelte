@@ -14,7 +14,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { hiddenKinds, passOn, settings } from '../../settings.svelte'
   import { shareThisFile } from '../../sharing/src/api'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { startup } from '../../startup.svelte'
   import { swiping } from '../../back-swipe/src/api'
   import { findBar, passFill, takeoverBar } from '../../surfaces.svelte'

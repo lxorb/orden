@@ -7,6 +7,7 @@
     "agent-docs",
     "dictation",
     "platform",
+    "shortcuts",
     "theme",
     "ui-controls",
     "ui-kit"
@@ -23,7 +24,6 @@
     "apps/desktop/src/lib/notify.ts",
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]

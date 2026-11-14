@@ -2,7 +2,7 @@
   import type { Canvas } from '@orden/markdown/canvas'
   import { type Found, matches } from './find'
   import { Cross } from '../../ui-kit/src/api'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
 
   const {
     canvas,

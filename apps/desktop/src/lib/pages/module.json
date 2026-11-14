@@ -12,6 +12,7 @@
     "plane",
     "platform",
     "sharing",
+    "shortcuts",
     "ui-controls",
     "ui-kit"
   ],
@@ -26,7 +27,6 @@
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/row-window.svelte.ts",
     "apps/desktop/src/lib/said.svelte.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"

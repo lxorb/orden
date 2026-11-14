@@ -19,10 +19,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 let Rebind: typeof import('./rebind.svelte').Rebind
-let shortcuts: typeof import('../../shortcuts.svelte').shortcuts
+let shortcuts: typeof import('../../shortcuts/src/shortcuts.svelte').shortcuts
 let rebind: InstanceType<typeof Rebind>
 
-await Promise.all([import('./rebind.svelte'), import('../../shortcuts.svelte')])
+await Promise.all([import('./rebind.svelte'), import('../../shortcuts/src/shortcuts.svelte')])
 
 function press(key: string, held: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
   return {
@@ -38,7 +38,7 @@ beforeEach(async () => {
   localStorage.clear()
   vi.resetModules()
   ;({ Rebind } = await import('./rebind.svelte'))
-  ;({ shortcuts } = await import('../../shortcuts.svelte'))
+  ;({ shortcuts } = await import('../../shortcuts/src/shortcuts.svelte'))
   shortcuts.restore()
   rebind = new Rebind()
 })

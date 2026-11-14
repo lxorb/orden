@@ -13,7 +13,7 @@
   import { cubicOut } from 'svelte/easing'
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { agentMarks } from './agent-marks.svelte'
   import { chatStore, chatsUnread, lookAtLaunch } from './ai-chat/src/api'
   import { UnreadDot } from './ui-kit/src/api'

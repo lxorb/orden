@@ -1,5 +1,5 @@
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
-import { shortcuts } from '../../shortcuts.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
 import { workspace } from '../../workspace.svelte'
 
 export function stripMenu(paneId: string): MenuEntry[] {

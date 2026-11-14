@@ -29,8 +29,8 @@ import {
   type SeenKey,
   type StandIn,
 } from './native-menu'
-import { shortcuts } from './shortcuts.svelte'
-import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
+import { shortcuts } from './shortcuts/src/api'
+import { type AppContext, BY_ID, runEntry } from './shortcuts/src/api'
 import { appMenuRows } from './surfaces.svelte'
 import { takeKeyboard } from './take-keyboard'
 import { currentWindow, invoke, afterQuiet } from './platform/src/api'

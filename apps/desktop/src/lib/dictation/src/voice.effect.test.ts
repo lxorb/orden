@@ -71,7 +71,7 @@ vi.mock('../../platform/src/stored', () => ({
   forget: (key: string) => world.stored.delete(key),
 }))
 vi.mock('../../settings.svelte', () => ({ settings: { error: null } }))
-vi.mock('../../shortcuts.svelte', () => ({
+vi.mock('../../shortcuts/src/api', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) =>
       id === 'field.dictate' && event.altKey && event.key.toLowerCase() === 'v',

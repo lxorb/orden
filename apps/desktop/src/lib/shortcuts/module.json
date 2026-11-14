@@ -1,0 +1,34 @@
+{
+  "name": "shortcuts",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "editor",
+    "export-formats",
+    "platform",
+    "save-place",
+    "sync-core",
+    "tab-fill",
+    "ui-kit",
+    "usage"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/commands.ts",
+    "apps/desktop/src/lib/focus.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/pane-moves.ts",
+    "apps/desktop/src/lib/random-note.ts",
+    "apps/desktop/src/lib/refresh.ts",
+    "apps/desktop/src/lib/search.svelte.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/space-actions.ts",
+    "apps/desktop/src/lib/space-picker.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/tab-cycle.svelte.ts",
+    "apps/desktop/src/lib/todos-entry.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/closing-around.ts",
+    "apps/desktop/src/lib/workspace/pane-tree.ts"
+  ]
+}

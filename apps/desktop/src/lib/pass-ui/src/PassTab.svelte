@@ -6,7 +6,7 @@
   import { closeOnBack } from '../../ui-kit/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { reloading } from '../../reloading.svelte'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import type { Tab } from '../../workspace/documents.svelte'
   import AdoptSheet from './AdoptSheet.svelte'
   import { asked } from '../../pass-sync/src/api'

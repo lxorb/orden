@@ -39,7 +39,7 @@ import type { IconNode } from 'lucide'
 
 import { type InkTool } from '@orden/markdown/canvas'
 import { type Tool } from './pointer'
-import { shortcuts } from '../../shortcuts.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
 
 export interface Mark {
   icon: IconNode

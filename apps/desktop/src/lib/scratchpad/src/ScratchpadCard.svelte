@@ -16,7 +16,7 @@
   import { links } from '../../link-index.svelte'
   import { modes } from '../../modes.svelte'
   import { followHref, followNoteFrom } from '../../open-link'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { afterQuiet } from '../../platform/src/api'
   import { scratchpad } from './pad'
   import { closeScratchpad, padTab, shown, WIDTH } from './is.svelte'

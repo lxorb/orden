@@ -49,7 +49,7 @@ Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const { picks } = await import('../../src/lib/tab-strip/src/drag.svelte')
 const { tabMenuTitle } = await import('../../src/lib/tab-strip/src/menu')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default

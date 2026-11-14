@@ -93,7 +93,7 @@
   import { rooms } from '../../collab/src/api'
   import { said } from '../../said.svelte'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
 
   import { pages as pagesState } from './showing.svelte'
   import { viewport } from '../../ui-kit/src/api'

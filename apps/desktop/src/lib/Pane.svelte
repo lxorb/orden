@@ -65,7 +65,7 @@
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing/src/api'
   import { noteBehind } from './protect/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
   import { flushFirst } from './tab-strip/src/api'

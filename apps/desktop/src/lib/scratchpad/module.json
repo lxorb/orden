@@ -8,6 +8,7 @@
     "platform",
     "rooms",
     "scan",
+    "shortcuts",
     "sync-core",
     "ui-kit",
     "parting"
@@ -20,7 +21,6 @@
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/open-link.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/unread.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"

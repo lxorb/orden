@@ -24,7 +24,7 @@ const { appMenu } = await import('./app-menu')
 const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./links')
 const { isSubmenu, walkableRows } = await import('./ui-kit/src/menu-item')
 const { appCommands } = await import('./commands')
-const { BY_ID } = await import('./shortcuts/registry')
+const { BY_ID } = await import('./shortcuts/src/registry')
 
 const menu = (): MenuGroup[] => appMenu({ onpalette: () => undefined, onhistory: () => undefined })
 

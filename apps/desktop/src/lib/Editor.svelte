@@ -27,7 +27,7 @@
   import { mark } from './trace'
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { trustsHtmlIn } from './sharing/src/api'
   import { pastesMarkup } from './trust'
   import { viewport } from './ui-kit/src/api'

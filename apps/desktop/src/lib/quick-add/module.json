@@ -10,6 +10,7 @@
     "editor",
     "markdown",
     "platform",
+    "shortcuts",
     "tasks-model",
     "ui-controls",
     "ui-kit"
@@ -22,7 +23,6 @@
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/long-paste.ts",
     "apps/desktop/src/lib/own-window.ts",
-    "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/spent-click.ts",
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/todos-entry.ts"

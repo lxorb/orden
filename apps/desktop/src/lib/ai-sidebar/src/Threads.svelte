@@ -6,7 +6,7 @@
   import { dur, fly } from '../../platform/src/api'
   import type { Place } from '../../row-window'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { agentRows } from '../../surfaces.svelte'
   import type { ThreadHead } from '../../ai-providers/src/api'
   import { ordered, stateOf } from '../../ai-providers/src/api'

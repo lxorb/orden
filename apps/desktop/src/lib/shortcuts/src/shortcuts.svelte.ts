@@ -1,5 +1,5 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
-import { account, api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from '../../accounts/src/api'
 import {
   currentPlatform,
   type Keystroke,
@@ -8,11 +8,19 @@ import {
   sameCombination,
   showCombination,
   viewport,
-} from './ui-kit/src/api'
-import { modes } from './modes.svelte'
-import { knownPreset, type PresetId } from './shortcuts/preset-ids'
-import type { Preset } from './shortcuts/presets'
-import { without, isRecord, keep, keepJson, stored, storedText, isNative } from './platform/src/api'
+} from '../../ui-kit/src/api'
+import { modes } from '../../modes.svelte'
+import { knownPreset, type PresetId } from './preset-ids'
+import type { Preset } from './presets'
+import {
+  without,
+  isRecord,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  isNative,
+} from '../../platform/src/api'
 import {
   type AppContext,
   BROWSER_KEYS,
@@ -22,11 +30,11 @@ import {
   SHORTCUTS,
   type Shortcut,
   SYSTEM_KEYS,
-} from './shortcuts/registry'
-import { saveFront } from './save-place/src/api'
-import { ran } from './usage/src/api'
+} from './registry'
+import { saveFront } from '../../save-place/src/api'
+import { ran } from '../../usage/src/api'
 
-export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
+export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './registry'
 
 const STORAGE_KEY = 'orden:shortcuts'
 

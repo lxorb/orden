@@ -115,7 +115,7 @@ describe('making a folder', () => {
     read('lib/menu.svelte.ts'),
     read('lib/commands.ts'),
     read('lib/app-menu.ts'),
-    read('lib/shortcuts/registry.ts')
+    read('lib/shortcuts/src/registry.ts')
       .split('\n')
       .filter((line) => !line.includes("['explorer."))
       .join('\n'),

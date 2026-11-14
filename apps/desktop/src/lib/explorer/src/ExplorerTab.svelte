@@ -2,7 +2,7 @@
   import { localNumber } from '../../platform/src/api'
   import { keyElsewhere } from '../../layer-keys'
   import { onMount, untrack } from 'svelte'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { fileClipboard } from '../../list-landing.svelte'
   import { readableSize } from '../../usage.svelte'
   import { type Tab, workspace } from '../../workspace.svelte'

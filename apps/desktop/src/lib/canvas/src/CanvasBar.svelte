@@ -20,7 +20,7 @@
   import { nearestDock, pens, upright } from './pens.svelte'
   import { frameOf } from '../../pane-corners.svelte'
   import { type Tool } from './pointer'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { tools } from './tools.svelte'
   import { closeOnBack } from '../../ui-kit/src/api'
   import { overlays } from '../../ui-kit/src/api'

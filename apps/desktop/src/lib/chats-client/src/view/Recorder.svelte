@@ -5,7 +5,7 @@
   import { message as errorWords } from '../../../ui-kit/src/api'
   import type { VoiceRecording } from '@orden/contracts'
   import { recordVoice } from '../voice'
-  import { shortcuts } from '../../../shortcuts.svelte'
+  import { shortcuts } from '../../../shortcuts/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
   import { clock } from './media'
   import { sound } from './prepare'

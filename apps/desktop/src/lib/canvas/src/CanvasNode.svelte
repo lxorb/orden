@@ -26,7 +26,7 @@
   import { shownColour } from '../../plane/src/api'
   import { pickedLink } from '../../composer'
   import { links } from '../../link-index.svelte'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { followHref } from '../../open-link'
 
   const {

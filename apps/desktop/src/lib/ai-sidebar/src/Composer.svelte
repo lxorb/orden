@@ -8,7 +8,7 @@
   import { longPaste } from '../../long-paste'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { overlays } from '../../ui-kit/src/api'
-  import { shortcuts } from '../../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { views } from '../../views.svelte'
   import { workspace, type Entry } from '../../workspace.svelte'
   import { estimateText } from './chat-parts'

@@ -3,7 +3,7 @@
   import Door from './Door.svelte'
   import NameField from './NameField.svelte'
   import { overlays } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { commitSpaceName } from './space-actions'
   import SharedMark from './SharedMark.svelte'
   import SpaceBadge from './SpaceBadge.svelte'

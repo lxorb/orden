@@ -8,8 +8,8 @@ import {
   standardBindings,
   tableBindings,
 } from '@orden/editor'
-import { parseCombination, sameCombination } from './ui-kit/src/keys'
-import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
+import { parseCombination, sameCombination } from '../../ui-kit/src/keys'
+import { BROWSER_KEYS, SYSTEM_KEYS } from './registry'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -33,12 +33,12 @@ let registry: typeof import('./shortcuts.svelte')
 
 await Promise.all([
   import('./shortcuts.svelte'),
-  import('./modes.svelte'),
-  import('./commands'),
-  import('./app-menu'),
+  import('../../modes.svelte'),
+  import('../../commands'),
+  import('../../app-menu'),
 ])
 
-const { PRESETS, presetById } = await import('./shortcuts/presets')
+const { PRESETS, presetById } = await import('./presets')
 const keyboard = (id: string) => {
   const found = presetById(id)
   if (!found) throw new Error(`no keyboard called ${id}`)
@@ -58,7 +58,7 @@ beforeEach(async () => {
 })
 
 async function currentModes() {
-  return (await import('./modes.svelte')).modes
+  return (await import('../../modes.svelte')).modes
 }
 
 function press(
@@ -156,7 +156,7 @@ describe('every shortcut there is', () => {
   })
 
   test('offers nothing only a desktop has where there is no desktop', async () => {
-    const { runnable } = await import('./shortcuts/registry')
+    const { runnable } = await import('./registry')
     expect(runnable('app.new-window')).toBe(false)
     expect(runnable('app.palette')).toBe(true)
   })
@@ -821,7 +821,7 @@ describe('Alt and a digit', () => {
   })
 
   test('is none of the keyboards’ to take', async () => {
-    const { PRESETS } = await import('./shortcuts/presets')
+    const { PRESETS } = await import('./presets')
     const written = PRESETS.flatMap((preset) =>
       Object.entries(preset.keys).flatMap(([id, key]) =>
         key && /^Alt-\d$/.test(key) ? [`${preset.id}: ${id} on ${key}`] : [],
@@ -885,9 +885,9 @@ describe('what a reader is shown', () => {
     const { shortcuts } = registry
     shortcuts.set('app.focus', 'Mod-Alt-9')
 
-    const { appCommands } = await import('./commands')
-    const { appMenu } = await import('./app-menu')
-    const { isSubmenu } = await import('./ui-kit/src/menu-item')
+    const { appCommands } = await import('../../commands')
+    const { appMenu } = await import('../../app-menu')
+    const { isSubmenu } = await import('../../ui-kit/src/menu-item')
 
     const command = appCommands().find((one) => one.id === 'focus')
     expect(command?.hint).toBe('Ctrl+Alt+9')
@@ -1262,7 +1262,7 @@ describe('on a Mac', () => {
   test('the menus and the palette show the Mac keys, in signs', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
     const { shortcuts } = await restarted()
-    const { appCommands } = await import('./commands')
+    const { appCommands } = await import('../../commands')
 
     expect(shortcuts.hint('app.fullscreen')).toBe('⌃⌘F')
     expect(shortcuts.hint('app.note-1')).toBe('⌘1')
@@ -1279,7 +1279,7 @@ describe('on a Mac', () => {
 describe('off a Mac', () => {
   test('the same keys read as they always have', async () => {
     const { shortcuts } = await restarted()
-    const { appCommands } = await import('./commands')
+    const { appCommands } = await import('../../commands')
 
     expect(shortcuts.hint('app.fullscreen')).toBe('F11')
     expect(shortcuts.hint('app.note-1')).toBe('Ctrl+Alt+1')

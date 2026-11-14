@@ -20,8 +20,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { hear, hearTaps, heard, listenForTaps, runTap } = await import('./tapped')
-const { shortcuts } = await import('./shortcuts.svelte')
-const { runEntry } = await import('./shortcuts/registry')
+const { shortcuts } = await import('./shortcuts/src/shortcuts.svelte')
+const { runEntry } = await import('./shortcuts/src/registry')
 
 beforeEach(() => {
   localStorage.clear()

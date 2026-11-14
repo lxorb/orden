@@ -29,6 +29,7 @@ import {
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
+  registerCommand,
   registerTabKind,
   settingFieldsIn,
   settingsPartsIn,
@@ -38,6 +39,7 @@ import {
   portOf,
   portProvided,
   providePort,
+  runCommand,
   spaceId,
   STOPPING_KINDS,
   TAB_KINDS,
@@ -495,5 +497,20 @@ describe('loads', () => {
     unwanted.shut(new Error('unwanted'))
     for (let turn = 0; turn < 5; turn++) await Promise.resolve()
     expect(missed.map((one) => (one as Error).message)).toEqual(['gone'])
+  })
+
+  it('runs a registered command once it loads, and answers false for one nobody registered or whose load fails', async () => {
+    const ran: string[] = []
+    expect(await runCommand('time.start')).toBe(false)
+    const unregister = registerCommand('time.start', () =>
+      Promise.resolve(() => void ran.push('started')),
+    )
+    const broken = registerCommand('time.stop', () => Promise.reject(new Error('offline')))
+    expect(await runCommand('time.start')).toBe(true)
+    expect(await runCommand('time.stop')).toBe(false)
+    expect(ran).toEqual(['started'])
+    unregister()
+    broken()
+    expect(await runCommand('time.start')).toBe(false)
   })
 })

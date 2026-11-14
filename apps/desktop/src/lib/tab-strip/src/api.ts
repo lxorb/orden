@@ -1,3 +1,4 @@
+import './shell-parts'
 import { type TabKind, tabKindLoaded } from '@orden/contracts'
 export type { ClosingWidths } from './closing.svelte'
 export { arrival, handOver, keyOf, picks, register, stripOf, TabDrag } from './drag.svelte'

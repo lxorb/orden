@@ -1,6 +1,6 @@
 import { copyText } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
-import { shortcuts } from '../../shortcuts.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
 import { openExternal } from '../../platform/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
 import type { Page } from './pages.svelte'

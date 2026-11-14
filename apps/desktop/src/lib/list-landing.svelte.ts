@@ -11,7 +11,7 @@ import {
   isTreeDrag,
   landing,
 } from './drag-paths'
-import { shortcuts } from './shortcuts.svelte'
+import { shortcuts } from './shortcuts/src/api'
 import { within } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 

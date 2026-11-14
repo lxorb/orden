@@ -20,7 +20,7 @@
   } from './reading/src/api'
   import { trustsHtmlIn } from './sharing/src/api'
   import { scrollbar } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { followHref, MIDDLE, opensLink } from './open-link'
   import { tabAsk } from './new-tab'
   import { theme } from './theme/src/api'

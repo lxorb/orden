@@ -28,13 +28,19 @@
   import SyncPane from '../../SyncPane.svelte'
   import RecentlyDeleted from '../../RecentlyDeleted.svelte'
   import { holdScroll } from '../../kept-scroll'
+  import { whileHere } from '../../while-here'
   import { scrollbar } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { glassesOn, settings, type Section } from '../../settings.svelte'
-  import { CATEGORIES, SHORTCUTS, shortcuts } from '../../shortcuts.svelte'
-  import { runnable } from '../../shortcuts/registry'
+  import {
+    CATEGORIES,
+    type Preset,
+    runnable,
+    SHORTCUTS,
+    shortcutPresets,
+    shortcuts,
+  } from '../../shortcuts/src/api'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from '../../toolbar.svelte'
-  import { PRESETS, presetById } from '../../shortcuts/presets'
   import { showCombination } from '../../ui-kit/src/api'
   import { prompt } from '../../ui-kit/src/api'
   import { Rebind } from './rebind.svelte'
@@ -232,13 +238,17 @@
 
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
 
+  const here = whileHere()
+  let presets = $state.raw<Preset[]>([])
+  void here(shortcutPresets()).then((one) => (presets = one.PRESETS))
+
   const presetChoices = $derived([
-    ...PRESETS.map((one) => ({ value: one.id, label: one.label() })),
+    ...presets.map((one) => ({ value: one.id, label: one.label() })),
     ...(shortcuts.preset === 'custom' ? [{ value: 'custom', label: 'Custom' }] : []),
   ])
 
   async function choosePreset(id: string) {
-    const preset = presetById(id)
+    const preset = presets.find((one) => one.id === id)
     if (!preset) return
 
     if (shortcuts.preset === 'custom') {

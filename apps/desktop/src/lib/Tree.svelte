@@ -28,7 +28,7 @@
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from './sharing/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  import { shortcuts } from './shortcuts/src/api'
   import { syncMark } from './surfaces.svelte'
   import {
     carried,

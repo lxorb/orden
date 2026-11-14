@@ -1,7 +1,7 @@
 import { account } from './accounts/src/api'
 import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
 import { settings } from './settings.svelte'
-import { shortcuts } from './shortcuts.svelte'
+import { shortcuts } from './shortcuts/src/api'
 
 export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true) {
   const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
