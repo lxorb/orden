@@ -4,13 +4,20 @@ const sent: { command: string; args: Record<string, unknown> }[] = []
 
 let listed: { name: string; path: string }[] = []
 let refuses = false
+let reading: (() => void) | null = null
+let filtering: (() => void) | null = null
+const who = vi.hoisted(() => ({ user: null as { id: string } | null }))
 
 vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push({ command, args: args ?? {} })
 
-    if (command === 'list_spaces') return Promise.resolve(listed)
+    if (command === 'list_spaces') {
+      const shown = [...listed]
+      reading?.()
+      return Promise.resolve(shown)
+    }
     if (refuses) return Promise.reject(new Error('the disk said no'))
 
     if (command === 'create_space' || command === 'rename_space') {
@@ -22,7 +29,24 @@ vi.mock('../platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('../accounts/src/account.svelte', () => ({ account: { signedIn: false } }))
+vi.mock('../accounts/src/account.svelte', () => ({
+  account: {
+    signedIn: false,
+    get user() {
+      return who.user
+    },
+  },
+}))
+
+vi.mock('../left-spaces', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../left-spaces')>()),
+  leftByAnother: () => {
+    const now = filtering
+    filtering = null
+    now?.()
+    return false
+  },
+}))
 
 const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
 const { deleteSpace, renameSpace } = await import('./space-changes')
@@ -65,6 +89,9 @@ beforeEach(() => {
   sent.length = 0
   listed = []
   refuses = false
+  reading = null
+  filtering = null
+  who.user = null
 })
 
 describe('reading the spaces folder', () => {
@@ -111,6 +138,76 @@ describe('reading the spaces folder', () => {
 
     expect(ws.spaces).toEqual([])
     expect(ws.activeSpaceId).toBeNull()
+  })
+})
+
+describe('the spaces folder read while a space comes or goes', () => {
+  const TEAM = { id: 't', name: 'Team', root: '/spaces/Team' }
+
+  test('keeps a space that came in while the listing was being sorted out', async () => {
+    who.user = { id: 'emil' }
+    const { ws } = store([WORK])
+    listed = [{ name: 'Work', path: '/spaces/Work' }]
+    filtering = () => {
+      listed = [...listed, { name: 'Team', path: TEAM.root }]
+      ws.spaces = [...ws.spaces, { ...TEAM }]
+    }
+
+    await loadSpaces(ws)
+
+    expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Work', '/spaces/Team'])
+    expect(ws.spaces[1]?.id).toBe('t')
+  })
+
+  test('keeps the space made during the last of every read that came too late', async () => {
+    const { ws } = store([WORK])
+    listed = [{ name: 'Work', path: '/spaces/Work' }]
+    const made = ['A', 'B', 'C']
+    reading = () => {
+      const name = made.shift()
+      if (!name) return
+      listed = [...listed, { name, path: `/spaces/${name}` }]
+      ws.spaces = [...ws.spaces, { id: name, name, root: `/spaces/${name}` }]
+    }
+
+    await loadSpaces(ws)
+
+    expect(ws.spaces.map((one) => one.name)).toEqual(['Work', 'A', 'B', 'C'])
+  })
+
+  test('does not bring back a space that went while the listing was being sorted out', async () => {
+    who.user = { id: 'emil' }
+    const { ws } = store([WORK, HOME])
+    listed = [
+      { name: 'Home', path: '/spaces/Home' },
+      { name: 'Work', path: '/spaces/Work' },
+    ]
+    filtering = () => {
+      listed = listed.filter((one) => one.name !== 'Home')
+      ws.spaces = ws.spaces.filter((one) => one.id !== 'h')
+    }
+
+    await loadSpaces(ws)
+
+    expect(ws.spaces.map((one) => one.id)).toEqual(['w'])
+  })
+
+  test('takes a space renamed meanwhile under its new name only', async () => {
+    who.user = { id: 'emil' }
+    const { ws } = store([WORK, TEAM])
+    listed = [
+      { name: 'Team', path: TEAM.root },
+      { name: 'Work', path: '/spaces/Work' },
+    ]
+    filtering = () => {
+      ws.spaces = ws.spaces.map((one) =>
+        one.id === 't' ? { ...one, name: 'Crew', root: '/spaces/Crew' } : one,
+      )
+    }
+
+    await loadSpaces(ws)
+
+    expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Work', '/spaces/Crew'])
   })
 })
 

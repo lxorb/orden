@@ -34,8 +34,9 @@ async function withKept(
 
 export async function loadSpaces(ws: HoldsSpaces) {
   let found: { name: string; path: string }[] | null = null
+  let before = ws.spaces
   for (let round = 0; round < 3; round += 1) {
-    const before = ws.spaces
+    before = ws.spaces
     const ahead = await spacesAhead()
     found = ahead
       ? await withKept(ahead)
@@ -49,6 +50,16 @@ export async function loadSpaces(ws: HoldsSpaces) {
     const { leftByAnother } = await import('../left-spaces')
     found = found.filter((one) => !leftByAnother(one.path, who))
   }
+
+  const had = new Set(before.map((space) => space.root))
+  const has = new Set(ws.spaces.map((space) => space.root))
+  const listed = new Set(found.map((entry) => entry.path))
+  found = [
+    ...found.filter((entry) => has.has(entry.path) || !had.has(entry.path)),
+    ...ws.spaces
+      .filter((space) => !had.has(space.root) && !listed.has(space.root))
+      .map((space) => ({ name: space.name, path: space.root })),
+  ]
 
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))
 
