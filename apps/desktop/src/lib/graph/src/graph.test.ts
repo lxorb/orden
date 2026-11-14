@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { buildGraph, type NoteGraph, without, worthAGraph } from './graph'
-import { neighbourhood, neighbours, signature } from './graph-walk'
+import { neighbourhood, neighbours, signature } from './walk'
 import { scanNote, type ScannedNote } from '@orden/scan/note'
 
 const scan = (notes: Record<string, string>) =>

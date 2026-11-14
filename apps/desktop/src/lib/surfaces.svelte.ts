@@ -5,6 +5,7 @@ import { door } from '@orden/markdown/door'
 import { registered } from '@orden/contracts'
 import { loadPalette } from './palette/src/api'
 import { loadSettingsPanel } from './settings/src/api'
+import { loadGraph } from './graph-view/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
@@ -53,7 +54,7 @@ export const canvasSurface = held(() =>
     : import('./canvas/src/api').then((one) => one.loadCanvas()),
 )
 
-export const graphSurface = held(() => import('./Graph.svelte'))
+export const graphSurface = held(loadGraph)
 
 export const viewSurface = held(() => import('./views/src/api').then((one) => one.loadViewTab()))
 export const tasksPanel = held(() =>

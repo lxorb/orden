@@ -1,7 +1,6 @@
 import { ApiError, BASE, request } from './client'
 import { isRecord, isString, parsed } from '../../platform/src/api'
 import type { Bookmark } from '../../workspace/bookmarks.svelte'
-import type { GraphSettings } from '../../workspace/graph-settings.svelte'
 import type { Avatar, Status } from './face'
 
 export interface Account {
@@ -473,7 +472,7 @@ export const routes = {
       { method: 'PUT', token, body: { icons, tints } },
     ),
 
-  saveGraphSettings: (token: string, id: string, graph: GraphSettings) =>
+  saveGraphSettings: (token: string, id: string, graph: unknown) =>
     request<{ graph: unknown }>(`/v1/spaces/${id}/graph`, {
       method: 'PUT',
       token,

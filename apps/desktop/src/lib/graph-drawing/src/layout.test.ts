@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'vitest'
-import type { NoteGraph } from './graph'
-import { Layout } from './graph-layout'
+import type { NoteGraph } from '../../graph/src/api'
+import { Layout } from './layout'
 
 function graph(count: number, edges: [number, number][]): NoteGraph {
   const nodes = Array.from({ length: count }, (_, one) => ({

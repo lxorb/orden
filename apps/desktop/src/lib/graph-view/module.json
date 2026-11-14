@@ -1,0 +1,23 @@
+{
+  "name": "graph-view",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "camera",
+    "graph",
+    "graph-drawing",
+    "markdown",
+    "platform",
+    "scan",
+    "theme",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Twist.svelte",
+    "apps/desktop/src/lib/hints.svelte.ts",
+    "apps/desktop/src/lib/new-tab.ts",
+    "apps/desktop/src/lib/pixel-ratio.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/pushing.ts"
+  ]
+}

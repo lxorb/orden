@@ -10,7 +10,7 @@ import {
   meet,
   readSpaces,
   without,
-} from '../platform/src/api'
+} from '../../platform/src/api'
 
 export const STORAGE_KEY = 'orden:graph'
 
@@ -251,7 +251,7 @@ export class SpaceGraphSettings {
   }
 
   private async push(root: string) {
-    const { push } = await import('./pushing')
+    const { push } = await import('../../workspace/pushing')
     await push(root, (api, token, spaceId) => api.saveGraphSettings(token, spaceId, this.of(root)))
   }
 

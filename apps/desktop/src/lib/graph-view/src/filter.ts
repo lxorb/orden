@@ -1,5 +1,5 @@
 import { backtracksWildly } from '@orden/markdown/pattern-cost'
-import type { GraphNode } from './graph'
+import type { GraphNode } from '../../graph/src/api'
 import { aKindOfLine, type Query } from '@orden/scan/search/query'
 
 export type Keeps = (node: GraphNode) => boolean

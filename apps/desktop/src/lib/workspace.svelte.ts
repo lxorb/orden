@@ -86,7 +86,7 @@ import { Excluded } from './workspace/excluded.svelte'
 import { protection, unlocks } from './protect/src/api'
 import { Archive } from './workspace/archive.svelte'
 import { ArchivedSpaces } from './workspace/archived-spaces.svelte'
-import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
+import { SpaceGraphSettings } from './graph-view/src/api'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
 import {

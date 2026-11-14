@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { GraphNode } from './graph'
-import { graphFilter } from './graph-filter'
+import type { GraphNode } from '../../graph/src/api'
+import { graphFilter } from './filter'
 import { parseQuery } from '@orden/scan/search/query'
 
 const node = (id: string, tags: string[] = []): GraphNode => ({

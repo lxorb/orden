@@ -1,4 +1,4 @@
-import type { NoteGraph } from './graph'
+import type { NoteGraph } from '../../graph/src/api'
 
 const DISTANCE = 36
 const REPULSION = -150

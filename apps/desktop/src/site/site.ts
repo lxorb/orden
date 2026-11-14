@@ -1,8 +1,6 @@
 import { framing, nodeAt } from '../lib/camera/src/api'
-import type { NoteGraph } from '../lib/graph'
-import { neighbours } from '../lib/graph-walk'
-import { Layout } from '../lib/graph-layout'
-import { paint, radiusOf } from '../lib/graph-paint'
+import { neighbours, type NoteGraph } from '../lib/graph/src/api'
+import { Layout, paint, radiusOf } from '../lib/graph-drawing/src/api'
 
 const THEME_KEY = 'orden:site-theme'
 

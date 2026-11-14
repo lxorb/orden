@@ -26,7 +26,7 @@ import {
   withoutBlockIds,
 } from '@orden/markdown/links'
 import { breathe } from './breathe'
-import { buildGraph, type NoteGraph } from './graph'
+import { buildGraph, type NoteGraph } from './graph/src/api'
 import { type Placed, retargetLinks } from './link-rewrite'
 import {
   AGENTS_NAME,
