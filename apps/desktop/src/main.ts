@@ -1,3 +1,4 @@
+import './lib/backend-ports'
 import './lib/former-keys'
 import './lib/renamed.svelte'
 import './lib/sync-ports'

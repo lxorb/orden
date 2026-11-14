@@ -135,6 +135,7 @@ export {
   whenPortProvided,
 } from './ports'
 export type { AgentPorts, AgentWritesPort } from './agents'
+export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'
 export type {

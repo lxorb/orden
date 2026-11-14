@@ -1,5 +1,6 @@
 import { err, failure, ok, type Result } from './result'
 import type { AgentPorts } from './agents'
+import type { BackendPorts } from './backend'
 import type { ChatPorts } from './chats'
 import type { ImportPorts } from './import'
 import type { HeldEditPort, NotePorts } from './note'
@@ -13,6 +14,7 @@ import type { VoicePorts } from './voice'
 import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
 
 export type PortMap = AgentPorts &
+  BackendPorts &
   ChatPorts &
   NotePorts &
   ImportPorts &

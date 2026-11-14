@@ -49,19 +49,14 @@ import { afterQuiet, LATE } from '../src/timing'
 const SRC = join(import.meta.dirname, '../src')
 
 describe('the module stands on its own', () => {
-  test('nothing under src reaches the shell by path, apart from the doors invoke opens', () => {
+  test('nothing under src reaches past it by path but the crate, and the backends come through ports', () => {
     const reaching = readdirSync(SRC)
       .filter((name) => !name.includes('.test.'))
       .flatMap((name) => {
         const text = readFileSync(join(SRC, name), 'utf8')
         return [...text.matchAll(/'(\.\.\/[^']*)'/g)].map((found) => `${name}: ${found[1]}`)
       })
-    expect(reaching).toEqual([
-      'tauri.ts: ../../crate/src/api',
-      'tauri.ts: ../../web/commands',
-      'tauri.ts: ../../internal/route',
-      'tauri.ts: ../../crate/src/api',
-    ])
+    expect(reaching).toEqual(['tauri.ts: ../../crate/src/api', 'tauri.ts: ../../crate/src/api'])
   })
 
   test('loads outside the app as the web build: no native host, no platform name', () => {
