@@ -17,13 +17,19 @@ SIZES = {
 }
 
 CORNER = """
-() => [...document.querySelectorAll('[data-notices] > *, [role="dialog"][aria-label="Personalize"], .fab')]
+() => [...document.querySelectorAll('[data-notices] > *, .fab')]
   .filter((one) => one.checkVisibility())
   .map((one) => {
     const box = one.getBoundingClientRect()
     const name = one.getAttribute('aria-label') || one.textContent.trim().replace(/\\s+/g, ' ').slice(0, 32)
     return { name, left: box.left, top: box.top, right: box.right, bottom: box.bottom }
   })
+"""
+
+MISSING_PIECE = """
+() => dispatchEvent(Object.assign(new Event('vite:preloadError', { cancelable: true }), {
+  payload: new TypeError('Failed to fetch dynamically imported module: /assets/Gone-0.js'),
+}))
 """
 
 def overlap(one: dict[str, Any], other: dict[str, Any]) -> bool:
@@ -47,20 +53,18 @@ def drive(browser: Browser, kind: str) -> None:
 
     if kind == "narrow":
         page.evaluate("() => { window.ordenApp.workspace.showPanel('tree'); window.ordenApp.workspace.showPanel('outline') }")
-    page.evaluate("() => { window.ordenApp.settings.setup = 0; window.ordenApp.updates.ready = '9.9.9' }")
-    wait_for(
-        page,
-        "document.querySelector('[role=\"dialog\"][aria-label=\"Personalize\"]')",
-        "the Personalize card",
-    )
+    page.evaluate("() => { window.ordenApp.updates.ready = '9.9.9' }")
+    page.evaluate(MISSING_PIECE)
+    wait_for(page, "document.querySelector('[data-notices] .reload button')", "Reload on offer")
+    wait_for(page, "document.querySelector('[data-notices] .notice')", "the update notice")
     page.wait_for_timeout(300)
     DRIVE.shot(page, kind)
 
     shown = page.evaluate(CORNER)
     names = [one["name"] for one in shown]
     say(f"[{kind}] in the corner: {names}")
-    if len(shown) < 2:
-        wrong(f"[{kind}] the card and the update notice are not both up: {names}")
+    if len(shown) < (3 if phone else 2):
+        wrong(f"[{kind}] the update notice, Reload and the New note button are not all up: {names}")
     width = SIZES[kind]["width"]
     for one in shown:
         if one["left"] < 0 or one["right"] > width:
@@ -81,19 +85,17 @@ def peek(page) -> None:
     page.mouse.move(0, 400)
     wait_for(page, "document.querySelector('.panels .column')?.classList.contains('floating')", "the shut list out under the pointer")
     page.wait_for_timeout(400)
-    card = page.evaluate(
-        "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Personalize\"]')?.checkVisibility()"
-    )
-    say(f"[desktop] the card while the shut list is out: {'up' if card else 'gone'}")
-    if not card:
-        wrong("[desktop] the Personalize card went away while the shut list peeked out")
+    up = page.evaluate("() => !!document.querySelector('[data-notices] .notice')?.checkVisibility()")
+    say(f"[desktop] the update notice while the shut list is out: {'up' if up else 'gone'}")
+    if not up:
+        wrong("[desktop] the update notice went away while the shut list peeked out")
 
 def main() -> int:
     with DRIVE.session() as browser:
         for kind in SIZES:
             drive(browser, kind)
 
-    return DRIVE.verdict("the Personalize card, the update notice and the New note button keep apart")
+    return DRIVE.verdict("the update notice, Reload and the New note button keep apart")
 
 if __name__ == "__main__":
     raise SystemExit(main())
