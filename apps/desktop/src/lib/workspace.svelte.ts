@@ -231,8 +231,8 @@ function papers(): Promise<typeof import('./pdf/papers')> {
   return import('./pdf/papers')
 }
 
-async function viewOfExplorer(tab: Tab): Promise<import('./explorer/view.svelte').ExplorerView> {
-  const { viewOf } = await import('./explorer/view.svelte')
+async function viewOfExplorer(tab: Tab): Promise<import('./explorer/src/api').ExplorerView> {
+  const { viewOf } = await import('./explorer/src/api')
   return viewOf(tab)
 }
 
@@ -369,7 +369,7 @@ class Workspace {
     })
     this.fileOps.follow((op) => {
       if (__EVEN_PLUGIN__ || op.op !== 'moved') return
-      return import('./explorer/follow').then(({ moved }) => moved(op.from, op.to), unfetched)
+      return import('./explorer/src/api').then(({ moved }) => moved(op.from, op.to), unfetched)
     })
     this.fileOps.follow((op) => {
       if (op.op === 'moved') rowIds.moved(op.from, op.to)

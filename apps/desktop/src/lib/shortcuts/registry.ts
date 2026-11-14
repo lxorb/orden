@@ -910,7 +910,7 @@ const APP_ENTRIES: Shortcut[] = [
     desktop: true,
     run: () => {
       if (!__EVEN_PLUGIN__ && hiddenKinds.offers('explorer'))
-        void import('../explorer/open').then((one) => one.openExplorer())
+        void import('../explorer/src/api').then((one) => one.openExplorer())
     },
   },
   ...(__EVEN_PLUGIN__

@@ -20,7 +20,7 @@ vi.mock('@tauri-apps/plugin-opener', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('./explorer/reveal', () => ({
+vi.mock('./explorer/src/reveal', () => ({
   showInExplorer: (path: string) => {
     shown.push(path)
     return Promise.resolve(state.shows)
@@ -98,7 +98,7 @@ describe('showing a file where it sits', () => {
       .sort()
     expect(callers).toEqual([
       'commands.ts',
-      'explorer/menu.ts',
+      'explorer/src/menu.ts',
       'files-out/src/save.ts',
       'row-menu.ts',
       'web-tab/downloads.svelte.ts',

@@ -69,7 +69,7 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       if (!__EVEN_PLUGIN__) (await import('../archiving')).archiveAgain(action)
       break
     case 'outside':
-      if (!__EVEN_PLUGIN__) await (await import('../explorer/undo')).redoOutside(action)
+      if (!__EVEN_PLUGIN__) await (await import('../explorer/src/api')).redoOutside(action)
       break
     case 'merge':
     case 'split':

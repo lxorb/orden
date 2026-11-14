@@ -37,7 +37,7 @@ class FileClipboard {
     if (outside.length && !__EVEN_PLUGIN__) {
       const cut = this.cut
       if (cut) this.hold([], false)
-      const { carry } = await import('./explorer/changes')
+      const { carry } = await import('./explorer/src/api')
       return carry(null, this.paths, into, cut ? 'move' : 'copy')
     }
     if (!paths.length) return
@@ -65,7 +65,7 @@ export function dropOnList(event: DragEvent, folder: string) {
   const transfer = event.dataTransfer
   if (transfer && isExplorerDrag(transfer) && !isTreeDrag(transfer) && !__EVEN_PLUGIN__) {
     const paths = explorerDragged(transfer)
-    void import('./explorer/changes').then(({ carry }) => carry(null, paths, folder, 'copy'))
+    void import('./explorer/src/api').then(({ carry }) => carry(null, paths, folder, 'copy'))
     return
   }
   if (transfer && isFileDrop(transfer) && !__EVEN_PLUGIN__) {

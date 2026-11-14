@@ -15,7 +15,7 @@ export async function reveal(path: string, how: { system?: boolean } = {}): Prom
   const { diskPathOf } = await import('./internal/work')
   const disk = await diskPathOf(path)
   if (!how.system && explorerReveals()) {
-    const { showInExplorer } = await import('./explorer/reveal')
+    const { showInExplorer } = await import('./explorer/src/api')
     if (await showInExplorer(disk).catch(() => false)) return
   }
   const { revealItemInDir } = await import('@tauri-apps/plugin-opener')

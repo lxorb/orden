@@ -63,11 +63,11 @@ function fakeView(): FakeView {
 }
 
 let view = fakeView()
-vi.mock('../../explorer/view.svelte', () => ({ viewOf: () => view }))
+vi.mock('../../explorer/src/view.svelte', () => ({ viewOf: () => view }))
 
 const trashed: string[][] = []
 const carried: { paths: string[]; to: string; how: string }[] = []
-vi.mock('../../explorer/changes', () => ({
+vi.mock('../../explorer/src/changes', () => ({
   changeable: () => true,
   trash: (_view: unknown, paths: string[]) => {
     trashed.push(paths)
@@ -80,13 +80,13 @@ vi.mock('../../explorer/changes', () => ({
   renamePath: () => Promise.resolve(),
 }))
 
-vi.mock('../../explorer/commands', () => ({
+vi.mock('../../explorer/src/commands', () => ({
   listFolder: (path: string) =>
     Promise.resolve({ path, own: path.includes('.config/orden'), spaces: false, entries: [] }),
   makeIn: (folder: string, name: string) => Promise.resolve(`${folder}/${name}`),
 }))
 
-vi.mock('../../explorer/places.svelte', () => ({
+vi.mock('../../explorer/src/places.svelte', () => ({
   places: { home: () => Promise.resolve('/home/me') },
 }))
 

@@ -24,7 +24,7 @@ vi.mock('./accounts/src/client', async (actual) => ({
 }))
 
 const opened = vi.hoisted(() => [] as unknown[])
-vi.mock('./explorer/open', () => ({
+vi.mock('./explorer/src/open', () => ({
   openExplorer: () => {
     opened.push('explorer')
     return Promise.resolve()

@@ -82,7 +82,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'f',
     make: (paneId) => {
       if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./explorer/open').then((one) => one.openExplorer()))
+        inPane(paneId, () => import('./explorer/src/api').then((one) => one.openExplorer()))
     },
   }),
   pass: () => ({

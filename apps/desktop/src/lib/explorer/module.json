@@ -1,0 +1,26 @@
+{
+  "name": "explorer",
+  "layer": "features",
+  "dependsOn": ["contracts", "markdown", "platform", "ui-controls", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/drag-paths.ts",
+    "apps/desktop/src/lib/file-mark.ts",
+    "apps/desktop/src/lib/identifier.ts",
+    "apps/desktop/src/lib/import/picking.ts",
+    "apps/desktop/src/lib/import/sources.ts",
+    "apps/desktop/src/lib/layer-keys.ts",
+    "apps/desktop/src/lib/list-landing.svelte.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/reveal.ts",
+    "apps/desktop/src/lib/roving.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/tree-order.ts",
+    "apps/desktop/src/lib/usage.svelte.ts",
+    "apps/desktop/src/lib/web-tab/carry-in.ts",
+    "apps/desktop/src/lib/when.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/undo.svelte.ts"
+  ]
+}

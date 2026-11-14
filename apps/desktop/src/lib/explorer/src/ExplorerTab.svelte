@@ -1,0 +1,233 @@
+<script lang="ts">
+  import { localNumber } from '../../platform/src/api'
+  import { keyElsewhere } from '../../layer-keys'
+  import { onMount, untrack } from 'svelte'
+  import { shortcuts } from '../../shortcuts.svelte'
+  import { fileClipboard } from '../../list-landing.svelte'
+  import { readableSize } from '../../usage.svelte'
+  import { type Tab, workspace } from '../../workspace.svelte'
+  import { newFolder, paste, removeForGood, trash } from './changes'
+  import { jobs } from './jobs.svelte'
+  import ExplorerBar from './ExplorerBar.svelte'
+  import ExplorerColumn from './ExplorerColumn.svelte'
+  import { folderName, parentOf } from './crumbs'
+  import ExplorerList from './ExplorerList.svelte'
+  import ExplorerLook from './ExplorerLook.svelte'
+  import ExplorerPlaces from './ExplorerPlaces.svelte'
+  import ExplorerPreview from './ExplorerPreview.svelte'
+  import ExplorerRenameMany from './ExplorerRenameMany.svelte'
+  import { explorerPrefs } from './prefs.svelte'
+  import { viewOf } from './view.svelte'
+
+  const { tab: shown, focused = false }: { tab: Tab; focused?: boolean } = $props()
+  const tab = untrack(() => shown)
+  const view = viewOf(tab)
+
+  const above = $derived(view.folder && !view.search ? parentOf(view.folder) : null)
+  const inside = $derived.by(() => {
+    const cursor = view.picked.cursor
+    const entry = cursor === null ? null : view.rows.find((one) => one.name === cursor)
+    return entry?.folder ? view.pathOf(entry.name) : null
+  })
+
+  let typing = $state(false)
+  let filtering = $state(false)
+  let looking = $state(false)
+  let list = $state<{ focus: () => void; menuHere: () => void }>()
+
+  onMount(() => {
+    void view.appear()
+    return () => {
+      view.stop()
+    }
+  })
+
+  const shownFolder = $derived(view.listing?.path ?? null)
+
+  $effect(() => {
+    if (focused && shownFolder !== null) untrack(() => list?.focus())
+  })
+
+  const counted = $derived.by(() => {
+    const all = view.rows.length === 1 ? '1 item' : `${view.rows.length} items`
+    const picked = view.rows.filter((one) => view.picked.names.has(one.name))
+    if (!picked.length) return all
+    const size = readableSize(picked.reduce((sum, one) => sum + one.size, 0))
+    return picked.length === 1
+      ? `${all}, 1 selected (${size})`
+      : `${all}, ${picked.length} selected (${size})`
+  })
+
+  function onkey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (event.defaultPrevented || event.target instanceof HTMLInputElement) return
+    if (keyElsewhere(event, event.currentTarget)) return
+    const pressed = (id: string) => shortcuts.pressed(id, event)
+    let run: (() => unknown) | null = null
+    const chosen = view.chosen
+    if (event.key === 'Escape' && (view.search || view.filter)) {
+      run = () => {
+        view.filter = ''
+        view.endSearch()
+        filtering = false
+      }
+    } else if (pressed('explorer.filter')) run = () => (filtering = true)
+    else if (pressed('explorer.search')) {
+      run = () => {
+        if (view.filter.trim()) view.searchBelow(view.filter)
+        else filtering = true
+      }
+    } else if (pressed('explorer.look') && view.picked.cursor !== null) run = () => (looking = true)
+    else if (pressed('explorer.preview')) run = () => explorerPrefs.togglePreview()
+    else if (pressed('explorer.list')) run = () => explorerPrefs.show('list')
+    else if (pressed('explorer.grid')) run = () => explorerPrefs.show('grid')
+    else if (pressed('explorer.columns')) run = () => explorerPrefs.show('columns')
+    else if (pressed('explorer.parent') || pressed('explorer.parent.alt')) run = () => view.up()
+    else if (pressed('explorer.location')) run = () => (typing = true)
+    else if (pressed('explorer.hidden')) run = () => explorerPrefs.toggleHidden()
+    else if (pressed('explorer.new-folder')) run = () => newFolder(view)
+    else if (pressed('explorer.delete')) run = () => removeForGood(view, chosen)
+    else if (pressed('tree.delete')) run = () => trash(view, chosen)
+    else if (pressed('tree.rename') && chosen.length > 1) {
+      run = () => {
+        view.renamingMany = chosen
+      }
+    } else if (pressed('tree.rename') && view.picked.cursor !== null)
+      run = () => (view.renaming = view.picked.cursor)
+    else if (pressed('fixed.copy') && chosen.length) run = () => fileClipboard.hold(chosen, false)
+    else if (pressed('fixed.cut') && chosen.length) run = () => fileClipboard.hold(chosen, true)
+    else if (pressed('fixed.paste')) run = () => paste(view)
+    else if (pressed('edit.undo')) run = () => workspace.undoFileAction()
+    else if (pressed('edit.redo') || pressed('edit.redo.alt'))
+      run = () => workspace.redoFileAction()
+    else if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey))
+      run = () => list?.menuHere()
+    if (!run) return
+    event.preventDefault()
+    void run()
+  }
+</script>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="explorer" data-region="editor" onkeydown={onkey}>
+  <ExplorerBar {view} bind:typing bind:filtering onleave={() => list?.focus()} />
+  <div class="body">
+    {#if explorerPrefs.places}
+      <ExplorerPlaces {view} />
+    {/if}
+    {#if explorerPrefs.view === 'columns' && above}
+      <ExplorerColumn {view} folder={above} lit={view.folder ? folderName(view.folder) : null} />
+    {/if}
+    <ExplorerList {view} bind:this={list} />
+    {#if explorerPrefs.view === 'columns' && inside}
+      <ExplorerColumn {view} folder={inside} />
+    {:else if explorerPrefs.preview || explorerPrefs.view === 'columns'}
+      <ExplorerPreview {view} />
+    {/if}
+    {#if view.renamingMany}
+      <ExplorerRenameMany
+        {view}
+        paths={view.renamingMany}
+        onclose={() => {
+          view.renamingMany = null
+          list?.focus()
+        }}
+      />
+    {/if}
+    {#if looking}
+      <ExplorerLook
+        {view}
+        onclose={() => {
+          looking = false
+          list?.focus()
+        }}
+      />
+    {/if}
+  </div>
+  {#each jobs.list.filter((one) => one.shown) as job (job.id)}
+    <div class="job" role="status">
+      <span class="what">{job.label}</span>
+      <div class="orden-meter">
+        <div
+          class="orden-meter-fill"
+          style:width="{job.total ? Math.min(100, (job.bytes / job.total) * 100) : 0}%"
+        ></div>
+      </div>
+      <span class="far">{readableSize(job.bytes)} / {readableSize(job.total)}</span>
+      <button type="button" class="orden-button is-quiet" onclick={() => jobs.cancel(job.id)}
+        >Cancel</button
+      >
+    </div>
+  {/each}
+  <div class="foot" role="status">
+    {#if view.said}
+      <span class="said">{view.said}</span>
+    {:else if view.search && !view.search.done}
+      <span class="cut">Searching…</span>
+    {:else if view.listing?.cut}
+      <span class="cut">Only the first {localNumber(100_000)} are shown.</span>
+    {/if}
+    <span>{counted}</span>
+  </div>
+</div>
+
+<style>
+  .explorer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-family: var(--font-ui);
+    container-type: inline-size;
+  }
+
+  .body {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .foot {
+    display: flex;
+    flex: none;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    padding: var(--space-1) var(--space-3);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cut,
+  .said {
+    margin-inline-end: auto;
+  }
+
+  .said {
+    color: var(--danger);
+  }
+
+  .job {
+    display: grid;
+    flex: none;
+    grid-template-columns: minmax(0, 1fr) minmax(6rem, 14rem) auto auto;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-1) var(--space-3);
+    border-top: 1px solid var(--line);
+    font-size: var(--text-xs);
+  }
+
+  .what {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .far {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
