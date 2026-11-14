@@ -763,13 +763,13 @@
   },
   {
     "name": "list_tasks",
-    "description": "To-dos in every space you reach, or `space`: a `view` (todos, the reader's one list; inbox, today, upcoming, logbook, or a .base path), Todoist's `filter` language (`today & #work | overdue`, `p1`, `7 days`), or both. Each row's `at` is what update_task takes.",
+    "description": "The account's todos, open ones unless `done` is true: every space, or `space` alone; `label` narrows to one label. Each todo's `id` is what update_task takes.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "space": { "type": "string" },
-        "view": { "type": "string" },
-        "filter": { "type": "string" },
+        "label": { "type": "string" },
+        "done": { "type": "boolean" },
         "limit": { "type": "integer" }
       }
     },
@@ -777,60 +777,39 @@
   },
   {
     "name": "add_task",
-    "description": "Add a to-do line to the reader's Inbox or `space`'s, under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+    "description": "Add a todo: `title`, and optionally `description`, `labels`, `space` (none when left out), `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).",
     "inputSchema": {
       "type": "object",
       "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "labels": { "type": "array", "items": { "type": "string" } },
         "space": { "type": "string" },
-        "text": { "type": "string" },
-        "fields": { "type": "object" },
-        "under": { "type": "string" }
+        "start": { "type": "string" },
+        "deadline": { "type": "string" },
+        "priority": { "type": "integer" }
       },
-      "required": ["text"]
+      "required": ["title"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
   {
     "name": "update_task",
-    "description": "Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `\"\"` takes a field off, priority is 1 (p1) to 4, `move_to` {under} moves it with its sub-tasks under a heading. `comment` writes a comment under it.",
+    "description": "Change one todo by its `id`: `done`, `title`, `description`, `labels`, `space` (`\"\"` for none), `start`, `deadline` (`\"\"` takes a day off), `priority` 0 to 3.",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "space": { "type": "string" },
-        "at": { "type": "string" },
+        "id": { "type": "string" },
         "done": { "type": "boolean" },
-        "status": { "type": "string" },
-        "text": { "type": "string" },
-        "due": { "type": "string" },
-        "time": {
-          "type": "string",
-          "description": "HH:MM, a zone after it if fixed"
-        },
-        "scheduled": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "labels": { "type": "array", "items": { "type": "string" } },
+        "space": { "type": "string" },
         "start": { "type": "string" },
         "deadline": { "type": "string" },
-        "priority": { "type": "integer" },
-        "recurrence": {
-          "type": "string",
-          "description": "every week on Monday, every 3 days when done"
-        },
-        "remind": {
-          "type": "string",
-          "description": "15m, 09:00, 2026-10-06 09:00"
-        },
-        "duration": { "type": "string", "description": "45m, 1h30m" },
-        "assignee": { "type": "string" },
-        "tags": { "type": "array", "items": { "type": "string" } },
-        "comment": {
-          "type": "string",
-          "description": "A comment written under the task, as the reader writes one in the task view: what to ask about it, or what was done."
-        },
-        "move_to": {
-          "type": "object",
-          "properties": { "under": { "type": "string" } }
-        }
+        "priority": { "type": "integer" }
       },
-      "required": ["at"]
+      "required": ["id"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },

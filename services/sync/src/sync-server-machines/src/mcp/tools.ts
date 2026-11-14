@@ -1,11 +1,9 @@
 import { untrusted } from '@orden/chats/agent'
-import { isAccountInbox } from '@orden/bases/inbox'
 import { findLinks } from '@orden/markdown'
 import type { ItemMeta } from '@orden/sync-core'
 import {
   byteLength,
   pokeNow,
-  inboxText,
   addNote,
   cleanPath,
   readablePath,
@@ -18,7 +16,6 @@ import {
   noteKind,
   readsAs,
   fits,
-  hashOfBytes,
   spacesFor,
   PROTECTED,
   shutFor,
@@ -313,31 +310,8 @@ async function writeNote(
   return `Saved ${put.path}.`
 }
 
-export function changedWhileWriting(path: string): string {
+function changedWhileWriting(path: string): string {
   return `${path} changed while I was writing it. Read it again first.`
-}
-
-const READS = 3
-
-export async function noteRead(
-  env: Env,
-  spaceId: string,
-  path: string,
-): Promise<{ note: Note; words: string } | null | typeof MOVED> {
-  for (let tries = 0; tries < READS; tries++) {
-    const note = await env.DB.prepare(
-      "select * from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
-    )
-      .bind(spaceId, path)
-      .first<Note>()
-    if (!note) return null
-    const object = await env.NOTES.get(noteKey(spaceId, note.id))
-    const bytes = object ? await object.arrayBuffer() : new ArrayBuffer(0)
-    if ((await hashOfBytes(bytes)) === note.hash) {
-      return { note, words: new TextDecoder().decode(bytes) }
-    }
-  }
-  return MOVED
 }
 
 export async function putNote(
@@ -428,7 +402,6 @@ export async function callTool(
     case 'read_note': {
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space
-      if (isAccountInbox(text(args, 'path') ?? '')) return inboxText(env, userId)
       return readNote(env, space, args, await shutFor(env, userId))
     }
 

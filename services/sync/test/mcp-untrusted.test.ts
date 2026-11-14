@@ -70,15 +70,13 @@ describe('a space somebody else can write in', () => {
     expect(text.indexOf('Home/Finances.md')).toBeLessThan(text.indexOf('<untrusted'))
   })
 
-  test('list_notes, list_backlinks, list_tasks and query_base come marked', async () => {
+  test('list_notes, list_backlinks and query_base come marked', async () => {
     expect(await tool('list_notes', { space: 'Team' })).toMatch(/^<untrusted source=/)
     const bob = await signIn(env, 'bob@example.com')
     await note(bob, team, 'Links.md', 'see [[Plan]]')
     expect(await tool('list_backlinks', { space: 'Team', path: 'Plan.md' })).toMatch(
       /^<untrusted source=/,
     )
-    const tasks = await tool('list_tasks', {})
-    expect(tasks).toMatch(/^<untrusted source="shared space Team[^"]*">/)
     expect(await tool('query_base', { space: 'Team', yaml: 'views:\n  - type: table\n' })).toMatch(
       /^<untrusted source=/,
     )

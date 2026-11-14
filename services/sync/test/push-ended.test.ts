@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { writeInboxText } from '../src/sync-server/src/inbox-text'
 import { forgetAccess } from '../src/sync-server/src/push/fcm'
 import { sendDue } from '../src/sync-server/src/push/reminders'
 import { call, type TestEnv, testEnv } from './harness'
@@ -10,7 +9,6 @@ import { computer, type Hubs, hubs } from './hub-fakes'
 const EMAIL = 'phone@example.com'
 const ZONE = 'Europe/Zurich'
 const AT = momentOf({ date: '2099-01-05', time: '09:00' }, ZONE)
-const TASK = '- [ ] Private task [remind:: 2099-01-05 09:00]\n'
 
 let env: TestEnv
 let running: Hubs
@@ -77,8 +75,15 @@ async function setUp() {
     expect(registered.status).toBe(200)
   }
 
-  await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } })
-  await writeInboxText(env, laptop.user, TASK, new Date().toISOString().slice(0, 10))
+  const made = await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } })
+  const space = (made.json as { space: { id: string } }).space.id
+  env.db
+    .prepare(
+      `insert into push_reminders
+         (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at, tries, retry_at)
+       values (?, 'r1', ?, ?, ?, 'Private task', '', 'todo', 'h', 0, null, 0, null)`,
+    )
+    .run(`inbox:${laptop.user}`, laptop.user, space, AT)
   return { phone, laptop }
 }
 

@@ -63,9 +63,9 @@ describe('an agent reaching the account', () => {
 
   test('cannot reach into it through the to-do tools', async () => {
     const before = await tool('read_note', { space: 'Home', path: 'Plans.md' })
-    expect(
-      await tool('update_task', { space: 'Home', at: 'Diary/Today.md#1:abc', done: true }),
-    ).toContain('is a note')
+    expect(await tool('update_task', { space: 'Home', id: 'abc', done: true })).toContain(
+      'There is no todo abc',
+    )
     expect(await tool('query_base', { space: 'Home', path: 'Diary/Tasks.base' })).toContain(
       'is protected',
     )
