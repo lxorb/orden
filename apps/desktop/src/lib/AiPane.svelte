@@ -23,7 +23,7 @@
   import PlanRows from './ai/PlanRows.svelte'
   import ProviderMark from './ai/ProviderMark.svelte'
   import { firstModel, isLocal, offeredKinds, type Provider } from './ai/providers'
-  import { glassesKey } from './even/key.svelte'
+  import { glassesKey } from './accounts/src/api'
   import { message } from './ui-kit/src/api'
   import { Select } from './ui-controls/src/api'
   import { viewport } from './ui-kit/src/api'

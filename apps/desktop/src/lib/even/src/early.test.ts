@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { settled } from './commands'
+import { settled } from '../../glasses-choices/src/api'
 import { type Ears, type Listening, Utterance, Voice } from './voice'
 
 const FRAME = 640

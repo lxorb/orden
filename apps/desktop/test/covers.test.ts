@@ -46,7 +46,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'the same, stacked over its neighbours: see .closer',
   'lib/overview/src/Overview.svelte .rider.is-front':
     'the same, stacked over its neighbours: see .rider',
-  'lib/even/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
+  'lib/even/src/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
   'lib/tab-strip/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',
   'lib/tab-strip/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',

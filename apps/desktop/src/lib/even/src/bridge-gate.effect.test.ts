@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 const { bridge } = await import('./bridge.svelte')
 const { EXPERIMENTAL_WORD, GLASSES_WORD, glassesOn, hiddenKinds } =
-  await import('../settings.svelte')
+  await import('../../settings.svelte')
 
 describe('the plugin and the glasses (#2027)', () => {
   test('connects only while Glasses is on, and lets go when it goes off', () => {

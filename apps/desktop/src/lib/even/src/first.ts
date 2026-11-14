@@ -1,4 +1,4 @@
-import { markPlugin } from '../plugin'
+import { markPlugin } from '../../plugin'
 import { fillLocal, installLocal } from './local'
 
 markPlugin()

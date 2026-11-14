@@ -1,21 +1,29 @@
 import { untrack } from 'svelte'
 import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@orden/glasses'
-import { account, api } from '../accounts/src/api'
-import { bestOf, type Command, commandIn, commandWords, settled } from './commands'
-import type { Field } from '../preferences'
-import { fileMark } from '../file-mark'
-import { modes } from '../modes.svelte'
-import { shownName } from '../platform/src/api'
+import { account, api } from '../../accounts/src/api'
+import {
+  bestOf,
+  type Command,
+  commandIn,
+  commandWords,
+  settled,
+  glassesSettings,
+  glassesStamp,
+  resetGlasses,
+} from '../../glasses-choices/src/api'
+import type { Field } from '../../preferences'
+import { fileMark } from '../../file-mark'
+import { modes } from '../../modes.svelte'
+import { shownName } from '../../platform/src/api'
 import { quietFor, waitFor } from './pace'
 import { Panel } from './screen'
 import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
-import { glassesSettings, glassesStamp, resetGlasses } from './settings'
 import { type Row, type Settings, Shell, type Wish, type Words, type World } from './shell'
 import { spokenTask, Today } from './today'
 import { type Listening, Voice } from './voice'
-import { rooms } from '../collab/src/api'
-import { type Entry, workspace } from '../workspace.svelte'
+import { rooms } from '../../collab/src/api'
+import { type Entry, workspace } from '../../workspace.svelte'
 
 const SETTLE = 700
 
@@ -102,8 +110,8 @@ class Bridge {
   private panel: Panel | null = null
   private shell: Shell | null = null
   private readonly todayList = new Today({
-    load: async () => (await import('../task-actions')).listed().tasks,
-    tick: async (id, done) => (await import('../task-actions')).tickTask(id, done),
+    load: async () => (await import('../../task-actions')).listed().tasks,
+    tick: async (id, done) => (await import('../../task-actions')).tickTask(id, done),
     redraw: () => this.act('draw'),
   })
   private voice: Voice | null = null
@@ -625,7 +633,7 @@ class Bridge {
   }
 
   private async addSpoken(words: string): Promise<void> {
-    const { addTask } = await import('../task-actions')
+    const { addTask } = await import('../../task-actions')
     const added = await addTask(words).catch(() => null)
     if (added) this.flash('Done')
   }

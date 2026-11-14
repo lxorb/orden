@@ -1,4 +1,4 @@
-import { afterQuiet } from '../platform/src/api'
+import { afterQuiet } from '../../platform/src/api'
 import { hostKeep, cookieOf, writeCookie } from './keep'
 
 const KEY = 'orden:local'

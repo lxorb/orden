@@ -6,7 +6,6 @@ export type {
   GivenRole,
   Invitation,
   Joined,
-  KeyState,
   Member,
   RemoteNote,
   RemoteSession,
@@ -44,6 +43,7 @@ export {
   zoomed,
 } from './crop'
 export { decode, prepared } from './encode'
+export { glassesKey } from './glasses-key.svelte'
 export type { Face, Presence, Status } from './face'
 export { changeProfile, keepZone, nameIn, removeFace, wearFace } from './mine'
 export { people } from './people.svelte'

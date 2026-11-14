@@ -1,0 +1,10 @@
+{
+  "name": "glasses-choices",
+  "layer": "shell",
+  "dependsOn": ["contracts", "accounts", "glasses"],
+  "pending": [
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/preferences.ts",
+    "apps/desktop/src/lib/reset-fields.ts"
+  ]
+}

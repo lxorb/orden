@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import manifest from '../../../even.app.json'
+import manifest from '../../../../even.app.json'
 
 describe('the manifest a build is packed from', () => {
   const ALLOWED = ['g2-microphone', 'phone-microphone', 'album', 'location', 'network', 'camera']

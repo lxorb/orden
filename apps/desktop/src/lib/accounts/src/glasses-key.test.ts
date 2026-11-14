@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { AccountDouble } from '../accounts/test/fakes'
+import type { AccountDouble } from '../test/fakes'
 
 const server = vi.hoisted(() => ({
   set: false,
@@ -10,7 +10,7 @@ const server = vi.hoisted(() => ({
   held: null as Promise<void> | null,
 }))
 
-vi.mock('../accounts/src/client', () => ({
+vi.mock('./client', () => ({
   api: {
     setAskKey: async (_token: string, key: string) => {
       server.asked.push(`put ${key}`)
@@ -37,13 +37,13 @@ vi.mock('../accounts/src/client', () => ({
   },
 }))
 
-vi.mock('../accounts/src/account.svelte', async () => ({
-  account: (await import('../accounts/test/fakes')).accountDouble(),
+vi.mock('./account.svelte', async () => ({
+  account: (await import('../test/fakes')).accountDouble(),
 }))
 
 const chosen = vi.hoisted(() => ({ model: '' }))
 
-vi.mock('../modes.svelte', () => ({
+vi.mock('../../modes.svelte', () => ({
   modes: {
     get glassesModel() {
       return chosen.model
@@ -55,8 +55,8 @@ vi.mock('../modes.svelte', () => ({
 }))
 
 let account: AccountDouble
-let glassesKey: typeof import('./key.svelte').glassesKey
-let Offered: typeof import('./offered.svelte').Offered
+let glassesKey: typeof import('./glasses-key.svelte').glassesKey
+let Offered: typeof import('../../glasses-choices/src/api').Offered
 
 beforeEach(async () => {
   server.set = false
@@ -68,10 +68,10 @@ beforeEach(async () => {
   chosen.model = ''
 
   vi.resetModules()
-  account = (await import('../accounts/src/account.svelte')).account as unknown as AccountDouble
+  account = (await import('./account.svelte')).account as unknown as AccountDouble
   account.signInAs('a')
-  glassesKey = (await import('./key.svelte')).glassesKey
-  Offered = (await import('./offered.svelte')).Offered
+  glassesKey = (await import('./glasses-key.svelte')).glassesKey
+  Offered = (await import('../../glasses-choices/src/api')).Offered
 })
 
 describe('what this machine knows about the account’s key', () => {

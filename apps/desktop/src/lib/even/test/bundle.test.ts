@@ -12,10 +12,10 @@ import {
   type Part,
   partOf,
   sourceOf,
-} from '../../../even-contents'
-import manifest from '../../../even.app.json'
+} from '../../../../even-contents'
+import manifest from '../../../../even.app.json'
 
-const app = resolve(import.meta.dirname, '../../..')
+const app = resolve(import.meta.dirname, '../../../..')
 const staged = mkdtempSync(join(tmpdir(), 'orden-even-'))
 const contents = `${staged}.json`
 
