@@ -198,8 +198,14 @@ describe('what a side shows', () => {
   const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
   const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
     const door = one[1] ?? ''
-    const from = new RegExp(`export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
-    return `lib/${from.exec(surfaces)?.[1] ?? door}`
+    const from = new RegExp(
+      `export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)(?:\\.then\\(\\(api\\) => \\(\\{ default: api\\.(\\w+) \\}\\)\\))?`,
+    )
+    const [, path = door, named] = from.exec(surfaces) ?? []
+    if (!named) return `lib/${path}`
+    const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
+    const file = new RegExp(`default as ${named} \\} from '\\./([^']+)'`).exec(api)?.[1] ?? ''
+    return `lib/${path.replace(/[^/]+$/, '')}${file}`
   })
 
   interface Node {
@@ -234,7 +240,7 @@ describe('what a side shows', () => {
 
   test('finds the panels', () => {
     expect(shown).toContain('lib/scratchpad/ScratchpadCard.svelte')
-    expect(shown).toContain('lib/views/TasksPanel.svelte')
+    expect(shown).toContain('lib/tasks-views/src/TodosPanel.svelte')
     expect(shown).toContain('lib/ai/sidebar/ChatPanel.svelte')
   })
 

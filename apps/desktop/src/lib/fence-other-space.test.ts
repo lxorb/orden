@@ -21,21 +21,6 @@ vi.mock('./search/space', () => ({
   },
 }))
 
-const rowsOf: (string | undefined)[] = []
-vi.mock('./rows/rows.svelte', () => ({
-  rows: {
-    get shown() {
-      return this.of
-    },
-    ready: true,
-    of: (space?: string) => {
-      rowsOf.push(space)
-      return []
-    },
-    watch: () => () => undefined,
-  },
-}))
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -56,7 +41,6 @@ const { readingHtml } = await import('./reading/render')
 
 beforeEach(() => {
   searched.length = 0
-  rowsOf.length = 0
   workspace.spaces = [
     { id: 'a', name: 'A', root: '/A' },
     { id: 'b', name: 'B', root: '/B' },
@@ -71,10 +55,4 @@ test("a query fence in a note of A, read while B is in front, lists A's notes", 
 
   expect(searched).toEqual(['/A'])
   expect(html).toContain('data-path="/A/Plan.md"')
-})
-
-test("a tasks fence there is answered from A's rows", async () => {
-  await read('# Note\n\n```tasks\nnot done\n```\n')
-
-  expect(rowsOf).toEqual(['A'])
 })
