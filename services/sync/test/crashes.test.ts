@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { scriptFrames, titleOf, type CrashReport } from '../src/sync-server/src/crash-shape'
-import { sweepCrashes } from '../src/sync-server/src/crashes'
+import {
+  scriptFrames,
+  titleOf,
+  type CrashReport,
+} from '../src/sync-server-feedback/src/crash-shape'
+import { sweepCrashes } from '../src/sync-server-feedback/src/crashes'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 const READER = 'reader-secret'

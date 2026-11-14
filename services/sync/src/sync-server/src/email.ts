@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import { escape } from './site/head'
 import { now } from './crypto'
 import { note } from './failed'
 import { mailCeilings, mailNotSent, type MailRefusal } from './limits'
@@ -148,14 +149,6 @@ export function goneMessage() {
 
 export function oneLine(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
-}
-
-export function escape(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
 
 function letter(lines: readonly string[], action: { label: string; href: string }) {

@@ -1,6 +1,4 @@
-import { now } from './crypto'
-import { oneLine } from './email'
-import type { Env } from './types'
+import { type Env, ISSUES, now, oneLine } from '../../sync-server/src/api'
 
 const API = 'https://api.github.com'
 
@@ -435,8 +433,6 @@ async function putOnBoard(
       .run()
   }
 }
-
-export const ISSUES = 'issues/'
 
 const WITHDRAWN = {
   title: 'Feedback: withdrawn',

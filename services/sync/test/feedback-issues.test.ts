@@ -7,7 +7,7 @@ import {
   openWaitingIssues,
   platformLabel,
   type Report,
-} from '../src/sync-server/src/feedback-issues'
+} from '../src/sync-server-feedback/src/feedback-issues'
 import { sweepLeftovers } from '../src/sync-server/src/leftovers'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 

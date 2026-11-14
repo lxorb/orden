@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { feedbackMail, feedbackSubject } from '../src/sync-server/src/feedback'
+import { feedbackMail, feedbackSubject } from '../src/sync-server-feedback/src/feedback'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 interface Row {

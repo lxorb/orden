@@ -1,4 +1,4 @@
-import { escape } from './email'
+import { escape } from '../../sync-server/src/api'
 import type { IssueState } from './feedback-issues'
 
 export interface PageReport {

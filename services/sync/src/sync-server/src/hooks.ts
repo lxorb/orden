@@ -58,6 +58,10 @@ interface MachineHooks {
   machinesSignedOut(env: Env, who: string, logins: readonly string[]): Promise<void>
 }
 
+interface FeedbackHooks {
+  withdrawIssues(env: Env, numbers: readonly number[]): Promise<number[]>
+}
+
 interface PassHooks {
   erased: readonly (readonly [table: string, sql: string])[]
 }
@@ -66,6 +70,7 @@ export interface Hooks {
   accounts: AccountHooks
   blog: BlogHooks
   chats: ChatHooks
+  feedback: FeedbackHooks
   machines: MachineHooks
   pass: PassHooks
 }
@@ -78,6 +83,8 @@ export function wire(hooks: Hooks): void {
 
 export function hooks(): Hooks {
   if (!wired)
-    throw new Error('sync-server: wire the accounts, blog, chats, machines and pass hooks first')
+    throw new Error(
+      'sync-server: wire the accounts, blog, chats, feedback, machines and pass hooks first',
+    )
   return wired
 }

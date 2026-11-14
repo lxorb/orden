@@ -1,14 +1,24 @@
 import { Hono } from 'hono'
-import { readBody } from './body'
-import { equals, newId, now, randomToken, sha256 } from './crypto'
-import { escape, mailer, oneLine } from './email'
+import {
+  type Env,
+  equals,
+  escape,
+  machineOf,
+  mailer,
+  newId,
+  now,
+  oneLine,
+  randomToken,
+  readBody,
+  sha256,
+  TRY_IN_AN_HOUR,
+  type Variables,
+  within,
+} from '../../sync-server/src/api'
+import { requireWhoever } from '../../sync-server-accounts/src/api'
 import { MOST_DATA_URL, MOST_IMAGES, type Picture, pictureKey, pictureOf } from './feedback-images'
 import { imagesOf, issueState, openIssue } from './feedback-issues'
 import { reportPage } from './feedback-page'
-import { hooks } from './hooks'
-import { machineOf, within } from './limits'
-import { TRY_IN_AN_HOUR } from './refused'
-import type { Env, Variables } from './types'
 
 const MOST = { text: 10_000, version: 64, platform: 120, log: 64 * 1024 } as const
 
@@ -42,7 +52,7 @@ feedback.post('/', async (context) => {
     pictures.push(picture)
   }
 
-  const who = await hooks().accounts.whoever(context.env, context.req.header('authorization'))
+  const who = await requireWhoever(context.env, context.req.header('authorization'))
   const user = who?.kind === 'user' ? who.user : null
 
   const env = context.env
