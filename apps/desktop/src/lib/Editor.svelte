@@ -22,7 +22,7 @@
   } from '@orden/editor'
   import { pickedLink } from './composer'
   import { EditorStates } from './editor-states'
-  import { firstScreen } from './first-screen.svelte'
+  import { firstScreen } from './first-screen/src/api'
   import { keptCoverOf, setCoverPosition } from './kept-cover'
   import { mark } from './trace'
   import { modes } from './modes.svelte'

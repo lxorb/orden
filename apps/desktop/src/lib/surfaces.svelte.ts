@@ -374,7 +374,7 @@ export async function warmDoors(): Promise<void> {
     () => warmCalls(),
     __EVEN_PLUGIN__
       ? undefined
-      : () => import('./first-screen/keep.svelte').then((one) => one.keepFirstScreens()),
+      : () => import('./first-screen/src/api').then((one) => one.keepFirstScreens()),
     () => import('./reload-when'),
     () => import('./keyboard-home'),
     __EVEN_PLUGIN__
