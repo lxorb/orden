@@ -1,5 +1,5 @@
 import type { hearHere } from '../own-window'
-import { isRecord } from '../stored'
+import { isRecord } from '../platform/src/api'
 import { mute } from './mute'
 import type { Page } from './pages.svelte'
 import { siteOf } from './permissions.svelte'

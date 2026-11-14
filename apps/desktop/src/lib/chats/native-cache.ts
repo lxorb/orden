@@ -1,6 +1,5 @@
 import { chatRowOf, eventOf, messageOf, REFUSALS } from '@orden/chats/wire'
-import { isRecord } from '../stored'
-import { invoke } from '../tauri'
+import { isRecord, invoke } from '../platform/src/api'
 import {
   type CacheChange,
   type CachedChat,

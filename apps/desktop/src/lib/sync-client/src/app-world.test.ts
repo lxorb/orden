@@ -6,7 +6,7 @@ const renames: Record<string, unknown>[] = []
 const trashed: Record<string, unknown>[] = []
 const saved: unknown[][] = []
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   isDesktop: false,
   platform: () => 'web',

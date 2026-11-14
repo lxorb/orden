@@ -51,10 +51,16 @@ import { chooseFiles, PICTURES } from '../choose-files'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { busy } from '../busy.svelte'
-import { folderOf, insideSpace, isPicturePath, relativeTo, withinSpace } from '../space-paths'
+import {
+  folderOf,
+  insideSpace,
+  isPicturePath,
+  relativeTo,
+  withinSpace,
+  fileBytes,
+} from '../platform/src/api'
 import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
-import { fileBytes } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { loading, pdfjs } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'

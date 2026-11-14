@@ -1,4 +1,4 @@
-import { forget, isRecord, isString, keep, stored, storedText } from '../stored'
+import { forget, isRecord, isString, keep, stored, storedText } from '../platform/src/api'
 
 const ACCOUNTS = 'orden:chat-accounts'
 const CLEARED = 'orden:chats-retired'

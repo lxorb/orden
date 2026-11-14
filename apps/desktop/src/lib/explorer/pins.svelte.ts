@@ -1,5 +1,4 @@
-import { movedTo, samePath } from '../space-paths'
-import { keepJson, stored, stringList } from '../stored'
+import { movedTo, samePath, keepJson, stored, stringList } from '../platform/src/api'
 
 const PINNED = 'orden:explorer-pinned'
 

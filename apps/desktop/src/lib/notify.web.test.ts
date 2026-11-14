@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('./tauri', () => ({ isDesktop: false, invoke: () => Promise.resolve(null) }))
+vi.mock('./platform/src/tauri', () => ({ isDesktop: false, invoke: () => Promise.resolve(null) }))
 
 const world = vi.hoisted(() => ({
   refuses: false,

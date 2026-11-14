@@ -1,10 +1,9 @@
-import { joinPath } from '../tauri'
-import { normalise } from '../web/paths'
+import { joinPath, normalise } from '../platform/src/api'
 import type { Trashed } from '../web/store'
 import { type Mounted, mountOf, mounts as mounted, PATH_ARGS } from './roots'
 
 async function crate<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  const { invoke } = await import('../native')
+  const { invoke } = await import('../crate/src/api')
   return invoke<T>(command, args)
 }
 

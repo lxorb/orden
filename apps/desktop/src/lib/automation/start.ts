@@ -1,7 +1,6 @@
 import { busy } from '../busy.svelte'
-import { log } from '../log'
+import { log, invoke, isDesktop, isNative, openExternal } from '../platform/src/api'
 import { hearHere } from '../own-window'
-import { invoke, isDesktop, isNative, openExternal } from '../tauri'
 import { callerOf } from './caller'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'

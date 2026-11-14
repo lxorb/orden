@@ -8,9 +8,18 @@ import {
   relativeTo,
   samePath,
   within,
-} from '../space-paths'
-import { forget, isRecord, keep, keepJson, stored, storedText } from '../stored'
-import { type Folded, type Folding, meet, readSpaces, without } from '../records'
+  forget,
+  isRecord,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  type Folded,
+  type Folding,
+  meet,
+  readSpaces,
+  without,
+} from '../platform/src/api'
 import { carried, moving } from '../workspace/file-ops'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'

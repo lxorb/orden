@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { toBase64 } from '../bytes'
+import { toBase64 } from '../platform/src/bytes'
 import { keepPictures, relinked, type PandocPicture } from './pandoc-pictures'
 
 const picture = (link: string, bytes: number[]): PandocPicture => ({

@@ -3,7 +3,7 @@ import { expect, test, vi } from 'vitest'
 const heard: string[] = []
 const held: (() => void)[] = []
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: { folder: string }) => {
     heard.push(`${command} ${args.folder}`)
     if (command === 'explorer_watch' && args.folder === '/slow') {

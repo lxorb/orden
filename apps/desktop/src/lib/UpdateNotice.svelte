@@ -2,8 +2,8 @@
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
   import { type Channel, restartToUpdate } from './updater'
-  import { dur, fly } from './motion'
-  import { log } from './log'
+  import { dur, fly } from './platform/src/api'
+  import { log } from './platform/src/api'
   import { told } from './said.svelte'
 
   const {

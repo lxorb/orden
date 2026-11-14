@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { fromBase64, parseDataUri, toBase64 } from '../bytes'
+import { fromBase64, parseDataUri, toBase64 } from '../platform/src/bytes'
 import {
   inlinePictures,
   isRemote,

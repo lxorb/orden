@@ -2,7 +2,7 @@
   import Select from '../Select.svelte'
   import Sheet from '../Sheet.svelte'
   import { message } from '../message'
-  import { isDesktop } from '../tauri'
+  import { isDesktop } from '../platform/src/api'
   import { viewport } from '../viewport.svelte'
   import { clearData, DEFAULT_RANGE, type Range } from './clearing'
 

@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { accentFor } from '../../accents'
   import { initial } from '../../icons'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { overlays } from '../../overlays'
   import { theme } from '../../theme/src/api'
   import type { Vault } from './vault.svelte'

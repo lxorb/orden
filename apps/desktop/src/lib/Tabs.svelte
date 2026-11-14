@@ -66,8 +66,8 @@
     worthKeeping,
   } from './tab-strip/layout'
   import { initialOf, siteLook, twins } from './tab-strip/twins'
-  import { insideSpace, nameOf } from './space-paths'
-  import { shownName } from './note-name'
+  import { insideSpace, nameOf } from './platform/src/api'
+  import { shownName } from './platform/src/api'
   import { chosenIcon } from './chosen-icon'
   import { pages } from './web-tab/pages.svelte'
   import { workspace, type Tab } from './workspace.svelte'
@@ -77,7 +77,7 @@
   import { inside } from './workspace/zones'
   import { initial } from './icons'
   import { SvelteSet } from 'svelte/reactivity'
-  import { dur, fade, stillness } from './motion'
+  import { dur, fade, stillness } from './platform/src/api'
   import Cross from './Cross.svelte'
 
   const { paneId, caption = false }: { paneId: string; caption?: boolean } = $props()

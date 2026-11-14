@@ -7,7 +7,7 @@ const world = vi.hoisted(() => ({
   stored: new Map<string, string>(),
 }))
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   get isDesktop() {
     return world.desktop
   },
@@ -17,7 +17,7 @@ vi.mock('../tauri', () => ({
     return answer ? Promise.resolve().then(() => answer(args)) : Promise.resolve(null)
   },
 }))
-vi.mock('../native', () => ({
+vi.mock('../crate/src/native', () => ({
   Channel: class {
     onmessage: ((value: unknown) => void) | null = null
   },
@@ -26,7 +26,7 @@ vi.mock('../message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))
-vi.mock('../stored', () => ({
+vi.mock('../platform/src/stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),

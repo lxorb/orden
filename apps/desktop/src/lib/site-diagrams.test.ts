@@ -33,7 +33,7 @@ vi.mock('./accounts/src/client', () => ({
   },
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'read_tree') {
       const root = String(args.root)
@@ -64,7 +64,7 @@ vi.mock('./tauri', () => ({
   },
 }))
 
-vi.mock('./stored', () => ({
+vi.mock('./platform/src/stored', () => ({
   stored: (key: string) => {
     const held = world.kept[key]
     return held === undefined ? null : (JSON.parse(held) as unknown)

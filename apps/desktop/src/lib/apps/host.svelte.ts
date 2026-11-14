@@ -311,8 +311,8 @@ async function appWorld(): Promise<{
     import('../online/link'),
     import('../sync-client/src/api'),
     import('../workspace.svelte'),
-    import('../native'),
-    import('../tauri'),
+    import('../crate/src/api'),
+    import('../platform/src/api'),
   ])
   const linkWorld: LinkWorld = pageWorld(BASE, () => account.accountToken, deviceId)
 

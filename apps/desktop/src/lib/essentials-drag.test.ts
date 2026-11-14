@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: { command: string; from?: unknown; to?: unknown }[] = []
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push({ command, from: args?.from, to: args?.to })
     if (command === 'read_note') return Promise.resolve('# a')

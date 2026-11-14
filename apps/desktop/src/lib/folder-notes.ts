@@ -1,5 +1,11 @@
-import { folderOf, isMarkdownPath, nameOf, withinSpace, withoutExtension } from './space-paths'
-import { joinPath } from './tauri'
+import {
+  folderOf,
+  isMarkdownPath,
+  nameOf,
+  withinSpace,
+  withoutExtension,
+  joinPath,
+} from './platform/src/api'
 import { entryAt } from './tree-edits'
 import type { Entry } from './workspace.svelte'
 

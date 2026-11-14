@@ -1,13 +1,9 @@
-import { toBase64 } from '../bytes'
-import { holderOf, paperOf } from '../pages/held'
-import { SIDECAR } from '../pdf/highlights'
-import { staleSnapshots } from '../recovery'
-import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
-import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
-import { scanRows } from '@orden/bases/scan'
-import { isNumber, isRecord, isString, parsed } from '../stored'
-import { tagsIn } from '@orden/scan/search/tags'
 import {
+  toBase64,
+  isNumber,
+  isRecord,
+  isString,
+  parsed,
   basename,
   hiddenUnder,
   isCanvas,
@@ -19,8 +15,17 @@ import {
   parent,
   safeName,
   spaceOf,
-  within,
-} from './paths'
+  under,
+  assetType,
+  isReserved,
+} from '../platform/src/api'
+import { holderOf, paperOf } from '../pages/held'
+import { SIDECAR } from '../pdf/highlights'
+import { staleSnapshots } from '../recovery'
+import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
+import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
+import { scanRows } from '@orden/bases/scan'
+import { tagsIn } from '@orden/scan/search/tags'
 import {
   isApplicationTarget,
   isBaseTarget,
@@ -28,10 +33,8 @@ import {
   isTermTarget,
   isWebTarget,
 } from '@orden/markdown/links'
-import { assetType } from './asset-route'
 import { keptAway, NOT_HERE } from './away.svelte'
 import { rehomed, unread } from '@orden/scan/indexed'
-import { isReserved } from '../naming'
 import {
   assets,
   type FileRow,
@@ -135,7 +138,7 @@ function sidecarOf(path: string): string {
 
 async function tree(root: string, options: TreeOptions = {}, raw = false): Promise<Entry> {
   const base = normalise(root)
-  const rows = (await stats.all()).filter((row) => within(base, row.path))
+  const rows = (await stats.all()).filter((row) => under(base, row.path))
   const away = new Set<string>()
   if (!raw) {
     const here = new Set(rows.map((row) => row.path))
@@ -691,16 +694,16 @@ async function spaceList() {
 
 async function spaceTags(root: string) {
   const base = normalise(root)
-  const paths = (await files.paths()).filter((path) => within(base, path))
+  const paths = (await files.paths()).filter((path) => under(base, path))
   const sizes = new Map<string, number>()
   for (const row of await stats.all()) {
-    if (row.size !== undefined && within(base, row.path)) sizes.set(row.path, row.size)
+    if (row.size !== undefined && under(base, row.path)) sizes.set(row.path, row.size)
   }
 
   const counts = new Map<string, number>()
   for (const chunk of chunksOf(paths, sizes, isMarkdown)) {
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
-      if (!within(base, row.path) || !isMarkdown(row.path)) continue
+      if (!under(base, row.path) || !isMarkdown(row.path)) continue
       for (const tag of tagsIn(row.content)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
     }
     await breathe()
@@ -724,12 +727,12 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
   const paths = (await files.paths()).filter(
-    (path) => within(base, path) && !hiddenUnder(base, path),
+    (path) => under(base, path) && !hiddenUnder(base, path),
   )
   const sizes = new Map<string, number>()
   const marked = new Map<string, PlaneMarks>()
   for (const row of await stats.all()) {
-    if (!within(base, row.path)) continue
+    if (!under(base, row.path)) continue
     if (row.size !== undefined) sizes.set(row.path, row.size)
     if (row.plane) marked.set(row.path, row.plane)
   }
@@ -795,7 +798,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   }
 
   const pictures = (await assets.paths()).filter(
-    (path) => within(base, path) && !hiddenUnder(base, path),
+    (path) => under(base, path) && !hiddenUnder(base, path),
   )
 
   return {
@@ -1121,7 +1124,7 @@ export async function webInvoke<T>(
 
       const folder = join(parent(notePath), relative)
       const space = spaceOf(notePath)
-      if (folder !== space && !within(space, folder)) {
+      if (folder !== space && !under(space, folder)) {
         throw new Error(`${relative} is not a folder inside the space`)
       }
 

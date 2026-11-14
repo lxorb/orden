@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { toBase64 } from '../bytes'
+import { toBase64 } from '../platform/src/bytes'
 import { planFor, type AppleNotes } from './apple'
 import { detect, readAs } from './read'
 import { sourceOf, type Source } from './sources'

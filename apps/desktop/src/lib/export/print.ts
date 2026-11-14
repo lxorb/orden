@@ -1,8 +1,7 @@
 import { busy } from '../busy.svelte'
-import { pageBytes } from '../bytes'
+import { pageBytes, invoke } from '../platform/src/api'
 import { type PaperInches, pageSetupFor, paperInches } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
-import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { openTarget, renderOptions } from './context'
 

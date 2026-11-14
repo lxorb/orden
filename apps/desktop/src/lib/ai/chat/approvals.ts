@@ -1,4 +1,4 @@
-import { invoke, isDesktop } from '../../tauri'
+import { invoke, isDesktop } from '../../platform/src/api'
 import type { Thread } from './types'
 
 interface Asked {

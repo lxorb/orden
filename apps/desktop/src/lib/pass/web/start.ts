@@ -1,6 +1,6 @@
 import '../../theme-ports'
 import { account } from '../../accounts/src/api'
-import { collectErrors } from '../../log'
+import { collectErrors } from '../../platform/src/api'
 import { reloading } from '../../reloading.svelte'
 import { settings } from '../../settings.svelte'
 import { shortcuts } from '../../shortcuts.svelte'

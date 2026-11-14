@@ -1,9 +1,16 @@
 import type { EditorView } from '@orden/editor'
-import { log } from '../log'
-import { onDisk } from '../on-disk'
+import {
+  log,
+  onDisk,
+  forget,
+  isRecord,
+  isString,
+  keepJson,
+  stored,
+  storedText,
+  invoke,
+} from '../platform/src/api'
 import { applied, type Edit } from '../search/replace'
-import { forget, isRecord, isString, keepJson, stored, storedText } from '../stored'
-import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { closeScratchpad, shown } from './is.svelte'

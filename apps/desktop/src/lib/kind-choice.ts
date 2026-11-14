@@ -1,5 +1,4 @@
-import { account } from './accounts/src/api'
-import { api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from './accounts/src/api'
 import {
   chosenOn,
   gated,
@@ -9,7 +8,7 @@ import {
   kindsHere,
   shownOf,
 } from './settings.svelte'
-import { forget, isString, keepJson } from './stored'
+import { forget, isString, keepJson } from './platform/src/api'
 
 const MOST_KINDS = 32
 const KIND = /^[a-z][a-z-]{0,23}$/

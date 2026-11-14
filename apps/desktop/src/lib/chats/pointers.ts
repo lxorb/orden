@@ -1,7 +1,6 @@
 import { CHAT_EXTENSION, chatOf, chatText } from '@orden/chats'
-import { nameOf, within } from '../space-paths'
+import { nameOf, within, invoke, joinPath } from '../platform/src/api'
 import { sync } from '../sync.svelte'
-import { invoke, joinPath } from '../tauri'
 import { type Entry, workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { makeChat } from './http'

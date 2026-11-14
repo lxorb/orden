@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { writeTaking } from '../workspace/in-turn'
 
 export class NotWritten extends Error {

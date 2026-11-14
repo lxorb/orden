@@ -1,4 +1,4 @@
-import { folderOf, nameOf } from '../space-paths'
+import { folderOf, nameOf } from '../platform/src/api'
 import { endingOf } from './order'
 
 export interface Renaming {

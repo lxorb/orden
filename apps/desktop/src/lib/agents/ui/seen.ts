@@ -1,4 +1,4 @@
-import { without } from '../../records'
+import { without } from '../../platform/src/api'
 import type { AgentEvent, AgentTab, Approval, Grant, Overview } from '../verbs'
 
 interface Held extends AgentTab {

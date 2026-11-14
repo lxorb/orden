@@ -12,7 +12,7 @@ const said = new Map<string, string>()
 
 const onDisk = new Set<string>()
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'file_stamp') {
       return Promise.resolve(onDisk.has(String(args.path)) ? { modified: 1, len: 1 } : null)
@@ -68,7 +68,7 @@ vi.mock('../sharing.svelte', () => ({
 }))
 
 const { applyImport, restamped } = await import('./apply')
-const { sha256 } = await import('../bytes')
+const { sha256 } = await import('../platform/src/bytes')
 
 beforeEach(() => {
   wrote.length = 0

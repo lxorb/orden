@@ -6,12 +6,9 @@ import {
   type UsageDay,
   type UsageEvent,
 } from '@orden/sync-core'
-import { account } from '../accounts/src/api'
-import { request } from '../accounts/src/api'
+import { account, request } from '../accounts/src/api'
 import { systemLocale } from '../region'
-import { log } from '../log'
-import { keepJson, stored } from '../stored'
-import { isMobile, isNative } from '../tauri'
+import { log, keepJson, stored, isMobile, isNative } from '../platform/src/api'
 import { updates } from '../updates.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
 import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'

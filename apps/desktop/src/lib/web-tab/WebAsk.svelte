@@ -2,10 +2,10 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { shownSite } from './idn'
-  import { dur, fly } from '../motion'
+  import { dur, fly } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { takeKeyboard } from '../take-keyboard'
-  import { isDesktop } from '../tauri'
+  import { isDesktop } from '../platform/src/api'
   import type { Asking } from './permissions.svelte'
   import { grants } from './permissions.svelte'
 

@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-import { sha256 } from './bytes'
+import { sha256 } from './platform/src/bytes'
 
 const held = vi.hoisted(() => ({
   snapshots: [] as { taken_at: number; size: number; path: string; source?: string }[],
@@ -8,7 +8,7 @@ const held = vi.hoisted(() => ({
   account: [] as { at: number; size: number; by: string; hash?: string }[],
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   invoke: (command: string, args: { path: string }) => {
     if (command === 'list_snapshots') return Promise.resolve(held.snapshots)
     if (command === 'read_snapshot' && held.words.has(args.path))

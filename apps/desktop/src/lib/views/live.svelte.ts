@@ -9,7 +9,7 @@ import {
 } from '@orden/bases'
 import { untrack } from 'svelte'
 import { rows as store } from '../rows/rows.svelte'
-import { afterQuiet } from '../timing'
+import { afterQuiet } from '../platform/src/api'
 import { toneColour } from './chips'
 import { columnsOf } from './columns'
 import { contextFor } from './context'

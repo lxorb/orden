@@ -50,8 +50,8 @@ let photo: string | null = null
 let cuts: boolean | 'under' = false
 const cutsOf = new Map<string, boolean | 'under'>()
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     calls.push({ command, args: args ?? {} })

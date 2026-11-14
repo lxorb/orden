@@ -1,5 +1,4 @@
-import { keep, storedText } from '../../stored'
-import { invoke, isDesktop } from '../../tauri'
+import { keep, storedText, invoke, isDesktop } from '../../platform/src/api'
 
 const KEY = 'orden:ground'
 

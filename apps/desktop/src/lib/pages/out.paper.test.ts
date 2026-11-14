@@ -17,7 +17,7 @@ const held = vi.hoisted(() => ({
   zipped: [] as { path: string; body: unknown }[],
 }))
 
-vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(held.bytes) }))
+vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(held.bytes) }))
 vi.mock('./raster', () => ({
   svgToPng: async (
     svg: string,

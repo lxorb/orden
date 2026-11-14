@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { settings } from './settings.svelte'
   import { readableSize, usage } from './usage.svelte'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
   import { told } from './said.svelte'
 
   const words = $derived(`${readableSize(usage.used)} of ${readableSize(usage.limit)} used.`)

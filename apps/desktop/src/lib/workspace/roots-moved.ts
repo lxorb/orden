@@ -1,5 +1,4 @@
-import { movedTo } from '../space-paths'
-import { isRecord, isString, keepJson, stored } from '../stored'
+import { movedTo, isRecord, isString, keepJson, stored } from '../platform/src/api'
 
 export const ROOTS_MOVED = 'orden:roots-moved'
 

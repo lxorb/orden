@@ -3,7 +3,7 @@ import { busy } from '../busy.svelte'
 import { message } from '../message'
 import type { FormatId } from '../import/plan'
 import type { Picked, Source } from '../import/sources'
-import { isDesktop } from '../tauri'
+import { isDesktop } from '../platform/src/api'
 import type { Bringing } from './catalog'
 
 export interface Outcome {

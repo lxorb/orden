@@ -11,7 +11,7 @@ import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { links } from './link-index.svelte'
 import { canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
-import { isMarkdownPath, withinSpace } from './space-paths'
+import { isMarkdownPath, withinSpace } from './platform/src/api'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 

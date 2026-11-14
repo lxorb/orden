@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { basename, isMarkdown, join, normalise, parent, safeName, spaceOf, within } from './paths'
+import {
+  basename,
+  isMarkdown,
+  join,
+  normalise,
+  parent,
+  safeName,
+  spaceOf,
+  under,
+} from './web-paths'
 
 describe('normalising a path', () => {
   test('always starts at the root and never ends in a slash', () => {
@@ -54,20 +63,20 @@ describe('taking a path apart', () => {
 
 describe('containment', () => {
   test('holds for anything below', () => {
-    expect(within('/Notes', '/Notes/a.md')).toBe(true)
-    expect(within('/Notes', '/Notes/deep/a.md')).toBe(true)
+    expect(under('/Notes', '/Notes/a.md')).toBe(true)
+    expect(under('/Notes', '/Notes/deep/a.md')).toBe(true)
   })
 
   test('does not hold for a sibling with a shared prefix', () => {
-    expect(within('/Notes', '/Notes2/a.md')).toBe(false)
+    expect(under('/Notes', '/Notes2/a.md')).toBe(false)
   })
 
   test('does not hold for the folder itself', () => {
-    expect(within('/Notes', '/Notes')).toBe(false)
+    expect(under('/Notes', '/Notes')).toBe(false)
   })
 
   test('the root holds everything', () => {
-    expect(within('/', '/anything.md')).toBe(true)
+    expect(under('/', '/anything.md')).toBe(true)
   })
 })
 

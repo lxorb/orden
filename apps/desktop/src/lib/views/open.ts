@@ -1,5 +1,5 @@
 import type { OpenHow } from '../new-tab'
-import { nameOf, samePath } from '../space-paths'
+import { nameOf, samePath } from '../platform/src/api'
 import { basesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
 import { builtinName, readSpec, sameView, type ViewSpec, writeSpec } from './spec'

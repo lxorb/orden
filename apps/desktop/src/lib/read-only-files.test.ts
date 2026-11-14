@@ -21,8 +21,8 @@ function listing(root: string) {
   return { name: root.slice(1), path: root, is_dir: true, modified: 0, created: 0, children }
 }
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {

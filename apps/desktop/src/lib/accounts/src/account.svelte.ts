@@ -1,10 +1,8 @@
 import { api, ApiError, fromServer } from './client'
 import type { Account, Guest, RemoteSpace } from './routes'
 import { arriving } from '../../arriving.svelte'
-import { pollDelay } from '../../backoff'
+import { pollDelay, forget, keep, storedText, waited } from '../../platform/src/api'
 import { called } from './person'
-import { forget, keep, storedText } from '../../stored'
-import { waited } from '../../timing'
 
 const STORAGE_KEY = 'orden:session'
 

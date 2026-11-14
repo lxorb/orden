@@ -11,7 +11,7 @@ const restores = new Map<string, string>()
 
 const trees = new Map<string, unknown>()
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: true,
   platform: () => 'linux',
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -72,7 +72,7 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     reload: (path: string) => void told.push(`reloaded ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     renameOnDisk: async (from: string, to: string) => {
-      const { invoke } = await import('../tauri')
+      const { invoke } = await import('../platform/src/tauri')
       await invoke('rename_note', { from, to })
     },
     bin: (path: string, folder: boolean) => {
@@ -208,7 +208,7 @@ describe('a replacement put back', () => {
 })
 
 describe('an import taken back', () => {
-  const hashOf = async (words: string) => (await import('../bytes')).sha256(words)
+  const hashOf = async (words: string) => (await import('../platform/src/bytes')).sha256(words)
 
   test('steps over the one file that will not go and removes the rest', async () => {
     refused.add('delete_note /s/b.md')

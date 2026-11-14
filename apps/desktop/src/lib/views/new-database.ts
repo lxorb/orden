@@ -1,8 +1,7 @@
 import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
 import { basesOn } from '../settings.svelte'
-import { samePath } from '../space-paths'
-import { joinPath } from '../tauri'
+import { samePath, joinPath } from '../platform/src/api'
 import { writeFile } from '../workspace/write-file'
 import { workspace } from '../workspace.svelte'
 

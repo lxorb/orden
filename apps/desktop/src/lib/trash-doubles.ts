@@ -1,5 +1,5 @@
 import { sync } from './sync.svelte'
-import { invoke } from './tauri'
+import { invoke } from './platform/src/api'
 import type { TrashItem } from './trash.svelte'
 import { workspace } from './workspace.svelte'
 

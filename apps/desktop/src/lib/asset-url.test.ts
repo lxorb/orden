@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-type Tauri = typeof import('./tauri')
+type Tauri = typeof import('./platform/src/tauri')
 
 const underHttp = (path: string) => `http://asset.localhost/${encodeURIComponent(path)}`
 const underScheme = (path: string) => `asset://localhost/${encodeURIComponent(path)}`
@@ -8,7 +8,7 @@ const underScheme = (path: string) => `asset://localhost/${encodeURIComponent(pa
 async function inBrowser(): Promise<Tauri> {
   vi.resetModules()
   delete (globalThis as { window?: unknown }).window
-  return import('./tauri')
+  return import('./platform/src/tauri')
 }
 
 async function inApp(convertFileSrc: (path: string) => string): Promise<Tauri> {
@@ -17,7 +17,7 @@ async function inApp(convertFileSrc: (path: string) => string): Promise<Tauri> {
     __TAURI_INTERNALS__: { convertFileSrc },
     __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'windows' },
   }
-  return import('./tauri')
+  return import('./platform/src/tauri')
 }
 
 afterEach(() => {

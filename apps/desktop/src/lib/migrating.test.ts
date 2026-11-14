@@ -83,7 +83,7 @@ const ws = {
   showPanel: () => undefined,
 }
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'write_note' || command === 'write_bytes') wrote.add(String(args.path))
     if (command === 'write_note') said.set(String(args.path), String(args.content))

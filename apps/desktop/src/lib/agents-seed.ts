@@ -1,5 +1,4 @@
-import { AGENTS_NAME } from './note-name'
-import { joinPath } from './tauri'
+import { AGENTS_NAME, joinPath } from './platform/src/api'
 import { writeFile } from './workspace/write-file'
 import { workspace } from './workspace.svelte'
 

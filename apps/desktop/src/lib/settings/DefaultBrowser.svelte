@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { message } from '../message'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
   import { settings } from '../settings.svelte'
-  import { invoke } from '../tauri'
+  import { invoke } from '../platform/src/api'
 
   let is = $state<boolean | null>(null)
 

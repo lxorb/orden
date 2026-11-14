@@ -76,8 +76,8 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('./tauri', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./tauri')>()
+vi.mock('./platform/src/tauri', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./platform/src/tauri')>()
   return {
     ...original,
     invoke: (command: string, args?: Record<string, unknown>) =>

@@ -1,7 +1,7 @@
 {
   "name": "accounts-ui",
   "layer": "foundation",
-  "dependsOn": ["contracts", "accounts", "theme"],
+  "dependsOn": ["contracts", "accounts", "theme", "platform"],
   "pending": [
     "apps/desktop/src/lib/CopyButton.svelte",
     "apps/desktop/src/lib/Copyable.svelte",
@@ -23,7 +23,6 @@
     "apps/desktop/src/lib/joining.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/message.ts",
-    "apps/desktop/src/lib/motion.ts",
     "apps/desktop/src/lib/overlays.ts",
     "apps/desktop/src/lib/portal.ts",
     "apps/desktop/src/lib/prompt.svelte.ts",
@@ -31,7 +30,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/settling.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/tauri.ts",
     "apps/desktop/src/lib/trap.ts",
     "apps/desktop/src/lib/viewport.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"

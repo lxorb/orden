@@ -18,7 +18,7 @@ vi.mock('../workspace.svelte', () => ({
 
 const invoked: { command: string; path: string }[] = []
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     invoked.push({ command, path: String(args.path) })
     return Promise.resolve(command === 'read_note' ? 'what is here' : undefined)

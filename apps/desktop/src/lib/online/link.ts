@@ -7,7 +7,7 @@ import {
   socketPath,
 } from '@orden/online/wire'
 import { BEAT, DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core'
-import { BEAT_EVERY, linkDelay } from '../backoff'
+import { BEAT_EVERY, linkDelay } from '../platform/src/api'
 
 export interface LinkSocket {
   readonly open: boolean

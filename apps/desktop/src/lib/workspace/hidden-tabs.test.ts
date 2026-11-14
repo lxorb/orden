@@ -4,8 +4,8 @@ const sent = vi.hoisted(() => [] as { command: string; args: Record<string, unkn
 const answers = vi.hoisted(() => [] as (string | null)[])
 const asked = vi.hoisted(() => ({ count: 0 }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push({ command, args: args ?? {} })

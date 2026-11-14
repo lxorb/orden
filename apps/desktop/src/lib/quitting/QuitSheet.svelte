@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import Spark from '../agents/ui/Spark.svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { fade, LAYER, scale } from '../motion'
+  import { fade, LAYER, scale } from '../platform/src/api'
   import { overlays } from '../overlays'
   import TerminalMark from '../terminal/TerminalMark.svelte'
   import TickBox from '../TickBox.svelte'

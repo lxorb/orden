@@ -1,8 +1,14 @@
 import { links } from '../link-index.svelte'
-import { onDisk } from '../on-disk'
-import { shownName } from '../note-name'
-import { folderOf, isMarkdownPath, nameOf, withoutExtension } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import {
+  onDisk,
+  shownName,
+  folderOf,
+  isMarkdownPath,
+  nameOf,
+  withoutExtension,
+  invoke,
+  joinPath,
+} from '../platform/src/api'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { Entry, Space } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'

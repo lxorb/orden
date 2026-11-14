@@ -398,7 +398,7 @@ describe('what the app evaluates before it draws anything', () => {
     expect(readFileSync(DOOR, 'utf8')).toContain("import('@codemirror/lang-html')")
   })
 
-  const CRATE = join(ROOT, 'apps/desktop/src/lib/native.ts')
+  const CRATE = join(ROOT, 'apps/desktop/src/lib/crate/src/native.ts')
 
   test('and the crate comes through nib’s own door', () => {
     expect(existsSync(CRATE)).toBe(true)

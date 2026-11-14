@@ -16,7 +16,7 @@ const fake = vi.hoisted(() => ({
 
 vi.mock('../accounts/src/account.svelte', () => ({ account: fake.account }))
 vi.mock('../accounts/src/client', () => ({ BASE: 'http://hub.test', request: vi.fn() }))
-vi.mock('../log', () => ({ log: vi.fn() }))
+vi.mock('../platform/src/log', () => ({ log: vi.fn() }))
 vi.mock('../settings.svelte', () => ({ passOn: () => true }))
 vi.mock('../sync-client/src/api', () => ({ hub: fake.hub }))
 vi.mock('./device-rows', () => ({ deviceRows: {} }))

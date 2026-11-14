@@ -1,4 +1,4 @@
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../platform/src/api'
 
 const LOCK_WAYS = ['password', 'pin', 'device'] as const
 export type LockWay = (typeof LOCK_WAYS)[number]

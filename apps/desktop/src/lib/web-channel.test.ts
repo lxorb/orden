@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const where = vi.hoisted(() => ({ native: false }))
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   get isNative() {
     return where.native
   },

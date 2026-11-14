@@ -7,8 +7,8 @@ const world = vi.hoisted(() => ({
   revoked: [] as string[],
 }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => (world.mac ? 'macos' : 'windows'),

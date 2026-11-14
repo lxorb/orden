@@ -1,6 +1,5 @@
 import { lentMoved, pageSizes, warmPdf } from '../pdf/document'
-import { onDisk } from '../on-disk'
-import { invoke } from '../tauri'
+import { onDisk, invoke } from '../platform/src/api'
 import { writeFile } from '../workspace/write-file'
 import type { Turning } from './from-pdf'
 

@@ -11,7 +11,7 @@ import {
   unnesting,
 } from './folder-notes'
 import { rewriteLinks } from './link-rewrite'
-import { noteName } from './space-paths'
+import { noteName } from './platform/src/space-paths'
 import type { Entry } from './workspace.svelte'
 
 function note(path: string): Entry {

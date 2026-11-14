@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('./workspace.svelte', () => ({ workspace: { spaces: [] } }))
 vi.mock('./sync.svelte', () => ({ sync: { remoteIdFor: () => null } }))
-vi.mock('./tauri', () => ({ invoke: () => Promise.resolve([]) }))
+vi.mock('./platform/src/tauri', () => ({ invoke: () => Promise.resolve([]) }))
 vi.mock('./accounts/src/account.svelte', () => ({ account: { accountToken: null } }))
 vi.mock('./accounts/src/client', () => ({ api: {} }))
 vi.mock('./prompt.svelte', () => ({ prompt: {} }))

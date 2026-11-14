@@ -8,8 +8,8 @@ const world = vi.hoisted(() => ({
   chatgpt: null as { email: string } | null,
 }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   openExternal: () => Promise.resolve(),
   invoke: (command: string, args: unknown) => {

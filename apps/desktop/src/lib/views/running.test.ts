@@ -70,8 +70,8 @@ vi.mock('./templates', () => ({
   templatesFolder: async () => 'Templates',
   templateWords: async () => '# Daily\n',
 }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: async () => undefined,
 }))
 vi.mock('../workspace/write-file', () => ({

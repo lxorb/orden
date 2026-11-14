@@ -5,7 +5,7 @@ import { folderNote, isFolderNote } from './folder-notes'
 import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from './icons'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
-import { folderOf, isMarkdownPath, samePath, withinSpace } from './space-paths'
+import { folderOf, isMarkdownPath, samePath, withinSpace } from './platform/src/api'
 import { pages, siteMark } from './web-tab/pages.svelte'
 import { workspace } from './workspace.svelte'
 

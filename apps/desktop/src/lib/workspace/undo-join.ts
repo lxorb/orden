@@ -1,6 +1,6 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { reverse } from '../search/replace'
-import { samePath } from '../space-paths'
+import { samePath } from '../platform/src/api'
 import type { FileAction, FileActions } from './undo.svelte'
 
 type Replaced = Extract<FileAction, { kind: 'replace' }>['notes'][number]

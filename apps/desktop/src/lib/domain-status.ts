@@ -1,5 +1,5 @@
 import type { DomainStatus } from './accounts/src/api'
-import { isRecord, isString } from './stored'
+import { isRecord, isString } from './platform/src/api'
 
 const STATES: DomainStatus['state'][] = [
   'none',

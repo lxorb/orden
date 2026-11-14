@@ -1,4 +1,4 @@
-import { forget, keep, storedText } from './stored'
+import { forget, keep, storedText } from './platform/src/api'
 
 const KEY = 'orden:seeded'
 

@@ -10,7 +10,7 @@ import {
   suggestionAsk,
   suggestionIn,
 } from '@orden/chats/priority'
-import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
+import { isNumber, isRecord, isString, keepJson, stored } from '../platform/src/api'
 
 const KEY = 'orden:chat-priorities'
 const MOST_LESSONS = 50

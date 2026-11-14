@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dur, fade } from '../../motion'
+  import { dur, fade } from '../../platform/src/api'
   import { tips } from './tips.svelte'
 
   let width = $state(0)

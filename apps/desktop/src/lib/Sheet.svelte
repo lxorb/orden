@@ -4,7 +4,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
-  import { fade, LAYER, scale } from './motion'
+  import { fade, LAYER, scale } from './platform/src/api'
   import { trap } from './trap'
   import Cross from './Cross.svelte'
 

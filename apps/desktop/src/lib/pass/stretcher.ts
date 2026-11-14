@@ -1,6 +1,6 @@
 import type { Stretcher } from '@orden/pass/crypto'
 import { stretch, useStretcher } from '@orden/pass/crypto'
-import { isNative } from '../tauri'
+import { isNative } from '../platform/src/api'
 import { nativeStretch } from './stretch'
 
 const nativeStretcher: Stretcher = async (secret, salt, params) => {

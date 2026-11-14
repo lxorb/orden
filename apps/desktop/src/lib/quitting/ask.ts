@@ -1,5 +1,5 @@
 import { mount } from 'svelte'
-import { invoke, platform } from '../tauri'
+import { invoke, platform } from '../platform/src/api'
 import { shells } from '../terminal/shells.svelte'
 import { jump } from './jump'
 import QuitSheet from './QuitSheet.svelte'

@@ -1,5 +1,4 @@
-import { forget, isRecord, keep, stored, storedText } from '../stored'
-import { invoke, isMobile } from '../tauri'
+import { forget, isRecord, keep, stored, storedText, invoke, isMobile } from '../platform/src/api'
 import { noteRootsMoved, ROOTS_MOVED } from './roots-moved'
 import { readSession } from './session'
 

@@ -1,5 +1,4 @@
-import { folderOf, withinSpace } from '../space-paths'
-import { isRecord, isString } from '../stored'
+import { folderOf, withinSpace, isRecord, isString } from '../platform/src/api'
 
 export interface Spec {
   shell: string

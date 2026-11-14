@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { focusEditor } from './focus'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
   import { told } from './said.svelte'
   import { reservedName } from './reserved-name.svelte'
   import { back, unsynced } from './sync-client/src/api'

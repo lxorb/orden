@@ -4,7 +4,7 @@ import { busy } from '../../busy.svelte'
 import type { OpenHow } from '../../new-tab'
 import { chatsOn } from '../../settings.svelte'
 import { canWriteAt } from '../../sharing.svelte'
-import { nameOf as fileName, samePath } from '../../space-paths'
+import { nameOf as fileName, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { store } from './source.svelte'
 

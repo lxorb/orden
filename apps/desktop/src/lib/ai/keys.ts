@@ -1,5 +1,5 @@
 import { frameWord, NoWord } from '../mobile/bridge'
-import { isDesktop, isMobile, isNative, invoke } from '../tauri'
+import { isDesktop, isMobile, isNative, invoke } from '../platform/src/api'
 import type { Provider } from './providers'
 
 interface Secrets {

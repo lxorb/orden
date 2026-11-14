@@ -6,7 +6,7 @@ import { chooseFiles, PICTURES } from './choose-files'
 import { message } from './message'
 import { changeOf } from './search/replace'
 import { settings } from './settings.svelte'
-import { isMarkdownPath } from './space-paths'
+import { isMarkdownPath } from './platform/src/api'
 import { usage } from './usage.svelte'
 import { workspace } from './workspace.svelte'
 

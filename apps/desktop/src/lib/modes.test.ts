@@ -40,8 +40,8 @@ const told = vi.hoisted(() => ({
 
 const crate = vi.hoisted(() => ({ refuses: false, asked: [] as unknown[] }))
 
-vi.mock('./tauri', async (importOriginal) => {
-  const real = await importOriginal<typeof import('./tauri')>()
+vi.mock('./platform/src/tauri', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./platform/src/tauri')>()
   return {
     ...real,
     invoke: (command: string, args?: Record<string, unknown>) => {

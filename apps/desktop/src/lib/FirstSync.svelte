@@ -2,7 +2,7 @@
   import { account } from './accounts/src/api'
   import { arriving } from './arriving.svelte'
   import Sweep from './Sweep.svelte'
-  import { dur, fade } from './motion'
+  import { dur, fade } from './platform/src/api'
   import { workspace } from './workspace.svelte'
 
   const initial = $derived((account.name ?? '?').trim().charAt(0).toUpperCase())

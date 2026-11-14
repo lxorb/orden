@@ -11,9 +11,9 @@
   import { selectAll } from './select-all'
   import SpaceMark from './SpaceMark.svelte'
   import TickBox from './TickBox.svelte'
-  import { fade, LAYER, scale } from './motion'
+  import { fade, LAYER, scale } from './platform/src/api'
   import { trap } from './trap'
-  import { isDesktop, platform } from './tauri'
+  import { isDesktop, platform } from './platform/src/api'
 
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
 

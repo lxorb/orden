@@ -5,7 +5,7 @@ const asked = vi.hoisted(() => {
   return { calls: [] as unknown[], answer }
 })
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: unknown) => {
     asked.calls.push({ command, args })
     return Promise.resolve(asked.answer)

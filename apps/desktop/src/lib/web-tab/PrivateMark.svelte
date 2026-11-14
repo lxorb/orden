@@ -1,6 +1,6 @@
 <script lang="ts">
   import HatGlasses from 'lucide/dist/esm/icons/hat-glasses.mjs'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
 
   const { large = false }: { large?: boolean } = $props()
 </script>

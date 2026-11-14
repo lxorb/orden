@@ -1,4 +1,4 @@
-import { isBoolean, isNumber, isRecord, keepJson, recordOf, stored } from '../../stored'
+import { isBoolean, isNumber, isRecord, keepJson, recordOf, stored } from '../../platform/src/api'
 import { isEffort } from './effort'
 import type { Effort } from './types'
 

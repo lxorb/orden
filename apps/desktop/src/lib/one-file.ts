@@ -1,9 +1,8 @@
 import type { SharedItem } from './accounts/src/api'
 import { account } from './accounts/src/api'
 import { sharedWithYou } from './sharing.svelte'
-import { insideSpace, within } from './space-paths'
+import { insideSpace, within, waited } from './platform/src/api'
 import { sync } from './sync.svelte'
-import { waited } from './timing'
 import { workspace } from './workspace.svelte'
 
 const LOOK = 150

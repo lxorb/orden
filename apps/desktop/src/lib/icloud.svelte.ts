@@ -1,5 +1,5 @@
 import { SvelteSet } from 'svelte/reactivity'
-import { isDesktop } from './tauri'
+import { isDesktop } from './platform/src/api'
 
 interface Fetching {
   path: string

@@ -1,4 +1,4 @@
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../platform/src/api'
 
 export const PROGRESS_KEY = 'orden:setup'
 

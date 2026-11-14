@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
-  import { fade, LAYER, scale } from './motion'
+  import { fade, LAYER, scale } from './platform/src/api'
   import { overlays } from './overlays'
   import { roving } from './roving'
   import SpaceList from './SpaceList.svelte'

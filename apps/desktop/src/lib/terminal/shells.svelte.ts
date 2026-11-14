@@ -1,6 +1,13 @@
-import { withOrWithout } from '../records'
-import { isRecord, keep, keepJson, stored, storedText } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import {
+  withOrWithout,
+  isRecord,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  invoke,
+  isDesktop,
+} from '../platform/src/api'
 
 export interface Shell {
   id: string

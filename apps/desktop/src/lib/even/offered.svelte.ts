@@ -1,5 +1,4 @@
-import { account } from '../accounts/src/api'
-import { api } from '../accounts/src/api'
+import { account, api } from '../accounts/src/api'
 import { modes } from '../modes.svelte'
 import { glassesKey } from './key.svelte'
 import { EFFORTS } from './models'

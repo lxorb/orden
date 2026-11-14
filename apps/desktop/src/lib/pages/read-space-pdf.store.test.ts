@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const readOnly = vi.hoisted(() => new Set<string>())
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {

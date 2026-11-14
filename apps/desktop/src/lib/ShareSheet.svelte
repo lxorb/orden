@@ -1,8 +1,8 @@
 <script lang="ts">
   import Facts from './Facts.svelte'
   import { fileMark } from './file-mark'
-  import { shownName } from './note-name'
-  import { nameOf } from './space-paths'
+  import { shownName } from './platform/src/api'
+  import { nameOf } from './platform/src/api'
   import { isShared, share } from './sharing.svelte'
   import { called } from './accounts/src/api'
   import type { GivenRole, Member, Sharing } from './accounts/src/api'
@@ -13,7 +13,7 @@
   import SpaceMark from './SpaceMark.svelte'
   import { initial } from './icons'
   import type { Face } from './accounts/src/api'
-  import { dur, fade, scale } from './motion'
+  import { dur, fade, scale } from './platform/src/api'
 
   const ROLES = $derived([
     { value: 'write', label: 'can edit' },

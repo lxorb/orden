@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
-  import { dur, scale } from '../motion'
+  import { dur, scale } from '../platform/src/api'
   import { extensions, pinnedOf } from './extensions.svelte'
 
   const {

@@ -37,7 +37,7 @@ vi.mock('./verbs', async () => {
   }
 })
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   isDesktop: false,
   invoke: () => Promise.resolve(null),

@@ -1,7 +1,13 @@
 import { extracted, merged, type Split, splitAt } from '../composer'
 import type { Retargeting } from '../link-index.svelte'
-import { folderOf, isMarkdownPath, samePath, withinSpace } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import {
+  folderOf,
+  isMarkdownPath,
+  samePath,
+  withinSpace,
+  invoke,
+  joinPath,
+} from '../platform/src/api'
 import { type Tab, UNTITLED } from './documents.svelte'
 import type { FileActions } from './undo.svelte'
 import { writeFile } from './write-file'

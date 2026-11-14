@@ -1,4 +1,4 @@
-import { isRecord, isString, keepJson, stored } from '../stored'
+import { isRecord, isString, keepJson, stored } from '../platform/src/api'
 import { SEARCH } from './typed'
 import { engineById, engineHome, isEngineAddress } from './engines'
 

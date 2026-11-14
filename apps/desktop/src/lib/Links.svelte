@@ -5,7 +5,7 @@
   import { chatsOn } from './settings.svelte'
   import { graphSurface, held } from './surfaces.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
-  import { insideSpace } from './space-paths'
+  import { insideSpace } from './platform/src/api'
   import { workspace } from './workspace.svelte'
   import { howFor, type OpenHow, tabAsk } from './new-tab'
   import HitList from './HitList.svelte'

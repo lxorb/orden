@@ -10,8 +10,8 @@ vi.stubGlobal('localStorage', {
 })
 Object.defineProperty(navigator, 'language', { configurable: true, value: 'en-US' })
 
-vi.doMock('../tauri', async (actual) => ({
-  ...(await actual<typeof import('../tauri')>()),
+vi.doMock('../platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   isMobile: false,

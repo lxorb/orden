@@ -8,7 +8,7 @@ const disk = vi.hoisted(() => ({
   kept: new Map<string, string>(),
 }))
 
-vi.mock('../native', () => ({
+vi.mock('../crate/src/native', () => ({
   invoke: (command: string, args: { path?: string; id?: string; content?: string }) => {
     switch (command) {
       case 'shortcuts_added':

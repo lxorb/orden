@@ -1,7 +1,7 @@
 import { links } from '../../link-index.svelte'
 import type { Query } from '@orden/scan/search/query'
 import { protection } from '../../protect/protection.svelte'
-import { samePath } from '../../space-paths'
+import { samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { untrusted } from '../chat/transcript'
 import { NOTE_KEYS, type NoteCommand, type NoteKind, rolesOf } from './notes'

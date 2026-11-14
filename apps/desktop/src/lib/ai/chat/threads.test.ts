@@ -4,7 +4,7 @@ const disk = new Map<string, { head: unknown; body: string }>()
 const writes: string[] = []
 let slowly: Promise<void> = Promise.resolve()
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: async (command: string, args: Record<string, unknown>) => {
@@ -34,8 +34,8 @@ vi.mock('../../tauri', () => ({
   },
 }))
 
-vi.mock('../../windows', async (original) => {
-  const { Windows } = await original<typeof import('../../windows')>()
+vi.mock('../../platform/src/windows', async (original) => {
+  const { Windows } = await original<typeof import('../../platform/src/windows')>()
   const ends: {
     onmessage: ((event: MessageEvent<unknown>) => void) | null
     postMessage(m: unknown): void
@@ -56,8 +56,8 @@ vi.mock('../../windows', async (original) => {
   return { Windows, windows: new Windows(() => mine), other: new Windows(() => theirs) }
 })
 
-const { other } = (await import('../../windows')) as unknown as {
-  other: import('../../windows').Windows
+const { other } = (await import('../../platform/src/windows')) as unknown as {
+  other: import('../../platform/src/windows').Windows
 }
 
 const {

@@ -5,7 +5,7 @@
   import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
   import type { FormatId } from './import/plan'
-  import { dur, fade } from './motion'
+  import { dur, fade } from './platform/src/api'
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
   import { viewport } from './viewport.svelte'

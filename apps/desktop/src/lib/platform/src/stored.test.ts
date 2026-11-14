@@ -98,7 +98,7 @@ describe('writing one down', () => {
   })
 })
 
-const SOURCE = fileURLToPath(new URL('..', import.meta.url))
+const SOURCE = fileURLToPath(new URL('../../..', import.meta.url))
 
 const LEFT = ['site/site.ts']
 

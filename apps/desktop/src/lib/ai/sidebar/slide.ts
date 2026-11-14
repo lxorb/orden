@@ -1,4 +1,4 @@
-import { dur } from '../../motion'
+import { dur } from '../../platform/src/api'
 
 const ENOUGH = 0.22
 const LET_GO = 140

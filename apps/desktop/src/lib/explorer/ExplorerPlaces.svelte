@@ -3,7 +3,7 @@
   import type { IconNode } from 'lucide'
   import { menu } from '../menu.svelte'
   import { roving } from '../roving'
-  import { nameOf, samePath, within } from '../space-paths'
+  import { nameOf, samePath, within } from '../platform/src/api'
   import { dropInto, over } from './drag'
   import { dropOver, isExplorerDrag, explorerDragged } from '../drag-paths'
   import { placeMark, placeName, places } from './places.svelte'

@@ -14,8 +14,8 @@ const fake = vi.hoisted((): Fake => ({
   user: { id: 'u1' },
 }))
 
-vi.mock('../stored', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../stored')>()),
+vi.mock('../platform/src/stored', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/stored')>()),
   stored: () => fake.saved,
 }))
 vi.mock('../accounts/src/account.svelte', () => ({

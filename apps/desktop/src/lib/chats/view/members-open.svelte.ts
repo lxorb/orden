@@ -1,5 +1,5 @@
 import { SidebarWidth } from '../../sidebar-width.svelte'
-import { keepJson, stored } from '../../stored'
+import { keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:chat-members'
 const MOST = 200

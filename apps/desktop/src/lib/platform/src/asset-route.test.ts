@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { ASSET_ROUTE, assetRoute, assetStorePath, assetType } from './asset-route'
-import { MIME_TYPES, mimeOfPath, UNKNOWN_TYPE } from '../mime'
+import { MIME_TYPES, mimeOfPath, UNKNOWN_TYPE } from './mime'
 
-const SW = join(import.meta.dirname, '../../../public/sw.js')
+const SW = join(import.meta.dirname, '../../../../public/sw.js')
 
 describe('the address a picture has in a browser', () => {
   test('a store path becomes a route under the space it is in', () => {

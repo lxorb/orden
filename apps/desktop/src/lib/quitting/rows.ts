@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { ptyOf, runningTabs } from '../terminal/running'
 import type { Warning } from '../terminal/shells.svelte'
 import { type Tab, workspace } from '../workspace.svelte'

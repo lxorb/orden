@@ -4,7 +4,7 @@ const disk = new Map<string, string>()
 const read: string[] = []
 const kept = new Map<string, unknown>()
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   platform: () => 'linux',
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -23,7 +23,7 @@ vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 vi.mock('../protect/protection.svelte', () => ({ protection: { locked: () => true } }))
-vi.mock('../stored', () => ({
+vi.mock('../platform/src/stored', () => ({
   stored: (key: string) => kept.get(key) ?? null,
   keepJson: (key: string, value: unknown) => {
     kept.set(key, value)

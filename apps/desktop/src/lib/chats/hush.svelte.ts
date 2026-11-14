@@ -1,8 +1,6 @@
 import { type Hours, isHours, isKeywords, MUTED_FOR_GOOD } from '@orden/chats/notify'
-import { account } from '../accounts/src/api'
-import { api, type AccountSettings } from '../accounts/src/api'
-import { stands } from '../accounts/src/api'
-import { isBoolean, isRecord, keepJson, stored } from '../stored'
+import { account, api, type AccountSettings, stands } from '../accounts/src/api'
+import { isBoolean, isRecord, keepJson, stored } from '../platform/src/api'
 
 const KEY = 'orden.chat-hush'
 

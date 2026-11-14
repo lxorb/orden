@@ -1,4 +1,4 @@
-import { nameOf } from '../space-paths'
+import { nameOf } from '../platform/src/api'
 import { programTitle } from '../terminal/naming'
 import type { Listed } from './calls'
 import { termName } from './path'

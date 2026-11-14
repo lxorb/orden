@@ -7,9 +7,8 @@ import {
 } from '@orden/markdown/diagrams'
 import { api } from './accounts/src/api'
 import { drawDiagram } from './diagrams'
-import { keepJson, stored } from './stored'
+import { keepJson, stored, invoke } from './platform/src/api'
 import { shapesOnly } from './svg-file'
-import { invoke } from './tauri'
 import type { Entry } from './workspace.svelte'
 
 const MOST = 100

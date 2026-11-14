@@ -6,7 +6,7 @@ const store = vi.hoisted(() => ({
   reading: null as ((path: string) => void) | null,
 }))
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   platform: () => 'linux',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
@@ -49,7 +49,7 @@ const {
   writePapers,
 } = await import('./papers')
 const { parseQuery } = await import('@orden/scan/search/query')
-const { shownName } = await import('../note-name')
+const { shownName } = await import('@orden/markdown/note-name')
 
 const ROOT = '/space'
 

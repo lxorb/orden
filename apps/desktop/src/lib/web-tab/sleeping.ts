@@ -1,5 +1,5 @@
 import { agentMarks } from '../agent-marks.svelte'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import type { Page } from './pages.svelte'
 import { grants, siteOf } from './permissions.svelte'
 import { FROZEN_AFTER, overCap, rest as judged, type Resting } from './resting'

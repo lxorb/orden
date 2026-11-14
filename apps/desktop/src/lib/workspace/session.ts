@@ -2,8 +2,15 @@ import type { FoldLines } from '@orden/editor'
 import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../collab/src/api'
-import { nameOf, samePath } from '../space-paths'
-import { isNumber, isRecord, isString, keepJson, stringList } from '../stored'
+import {
+  nameOf,
+  samePath,
+  isNumber,
+  isRecord,
+  isString,
+  keepJson,
+  stringList,
+} from '../platform/src/api'
 import { builtinName, readSpec } from '../views/spec'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'

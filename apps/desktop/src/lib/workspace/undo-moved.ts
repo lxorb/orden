@@ -1,4 +1,4 @@
-import { movedTo } from '../space-paths'
+import { movedTo } from '../platform/src/api'
 import { landing } from '../views/moving'
 import type { FileOp } from './file-ops'
 import type { FileAction } from './undo.svelte'

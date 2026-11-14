@@ -1,5 +1,4 @@
-import { nameFault, nameToWrite } from '../naming'
-import { isAgentsName } from '../note-name'
+import { nameFault, nameToWrite, isAgentsName } from '../platform/src/api'
 
 export interface NoteToMake {
   folder: string

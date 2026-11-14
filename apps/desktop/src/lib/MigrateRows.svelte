@@ -7,7 +7,7 @@
   import { BROWSER_LOGOS, ZEN_LOGO } from './import/browsers'
   import { migrating } from './migrating.svelte'
   import { takingOver } from './web/taking-over.svelte'
-  import { isDesktop, isMobile } from './tauri'
+  import { isDesktop, isMobile } from './platform/src/api'
 
   const folders = !isMobile
 

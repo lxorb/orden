@@ -10,8 +10,8 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 vi.mock('../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string) =>
     command === 'read_note'
       ? Promise.resolve(

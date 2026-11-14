@@ -9,8 +9,8 @@ const world = vi.hoisted(() => ({
   stopped: 0,
 }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string) => {
     world.asked.push(command)
     if (command === 'default_browser') return Promise.resolve(world.is)

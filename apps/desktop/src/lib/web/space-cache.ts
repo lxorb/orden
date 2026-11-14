@@ -2,11 +2,11 @@ import { lineStarts } from '@orden/scan/search/lines'
 import { fold, type SearchNote } from '@orden/scan/search/match'
 import type { Warmth } from '../search/warmth'
 import { breathe } from '../breathe'
-import { hiddenUnder, isMarkdown, normalise, within } from './paths'
+import { hiddenUnder, isMarkdown, normalise, under } from '../platform/src/api'
 import { type FileRow, files } from './store'
 
 function searched(base: string, path: string): boolean {
-  return within(base, path) && isMarkdown(path) && !hiddenUnder(base, path)
+  return under(base, path) && isMarkdown(path) && !hiddenUnder(base, path)
 }
 
 const CAP = 24_000_000

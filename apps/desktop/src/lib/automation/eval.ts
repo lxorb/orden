@@ -1,7 +1,7 @@
 import { links } from '../link-index.svelte'
 import { search } from '../search.svelte'
 import { settings } from '../settings.svelte'
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { pages } from '../web-tab/pages.svelte'
 

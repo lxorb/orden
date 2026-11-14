@@ -1,5 +1,4 @@
-import { without } from '../records'
-import { invoke } from '../tauri'
+import { without, invoke } from '../platform/src/api'
 import type { Provider, ProviderKind } from './providers'
 
 export interface Weekly {

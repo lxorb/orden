@@ -92,7 +92,7 @@
   } from './drag-paths'
   import { menu } from './menu.svelte'
   import { followNote } from './open-link'
-  import { dur, fade } from './motion'
+  import { dur, fade } from './platform/src/api'
   import { rooms } from './collab/src/api'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'

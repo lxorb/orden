@@ -1,4 +1,4 @@
-import { locksHere, locksWork } from '../../locks'
+import { locksHere, locksWork } from '../../platform/src/api'
 
 const LEADER = 'orden-sync'
 const FORMER_LEADER = 'nib-sync'

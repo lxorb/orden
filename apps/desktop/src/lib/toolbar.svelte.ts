@@ -1,9 +1,8 @@
 import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
-import { account } from './accounts/src/api'
-import { api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from './accounts/src/api'
 import { BY_ID, runnable } from './shortcuts/registry'
-import { forget, isString, keepJson, stored } from './stored'
+import { forget, isString, keepJson, stored } from './platform/src/api'
 
 const STORAGE_KEY = 'orden:toolbar'
 

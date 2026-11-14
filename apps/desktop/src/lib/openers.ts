@@ -8,7 +8,7 @@ import {
   isPdfTarget,
   isWebTarget,
 } from '@orden/markdown/links'
-import { isMarkdownPath } from './space-paths'
+import { isMarkdownPath } from './platform/src/api'
 
 export type Opener =
   'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'application' | 'note'

@@ -8,7 +8,7 @@ import { scanRows } from '@orden/bases/scan'
 const disk = new Map<string, string>()
 const sent: string[] = []
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     if (command === 'read_note') {

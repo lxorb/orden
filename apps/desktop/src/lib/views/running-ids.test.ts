@@ -3,8 +3,8 @@ import { expect, test, vi } from 'vitest'
 vi.mock('../workspace.svelte', () => ({
   workspace: { spaces: [{ id: 'notes', name: 'Notes', root: '/s/Notes' }] },
 }))
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: async (_command: string, args: { path: string }) =>
     args.path.endsWith('Bugs.base')
       ? `filters:

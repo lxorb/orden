@@ -3,8 +3,8 @@ import { afterAll, beforeEach, expect, test, vi } from 'vitest'
 const SITE = '/space/Site.url'
 const MAIL = '/space/Mail.url'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) =>

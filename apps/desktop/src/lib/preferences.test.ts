@@ -208,8 +208,8 @@ describe('the release channel', () => {
 
   beforeAll(async () => {
     vi.resetModules()
-    vi.doMock('./tauri', async (original) => ({
-      ...(await original<typeof import('./tauri')>()),
+    vi.doMock('./platform/src/tauri', async (original) => ({
+      ...(await original<typeof import('./platform/src/tauri')>()),
       isDesktop: true,
       isNative: true,
     }))

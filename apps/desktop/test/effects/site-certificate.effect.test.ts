@@ -7,8 +7,8 @@ interface Answers {
 }
 const answers = vi.hoisted((): Answers => ({ certificate: null, asked: [] }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args: unknown) => {
     if (command !== 'web_certificate') return Promise.resolve(undefined)
     answers.asked.push(args)

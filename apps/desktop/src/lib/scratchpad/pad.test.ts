@@ -11,7 +11,7 @@ const fake = vi.hoisted(() => ({
 
 const PAD = '/app/scratchpad.md'
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string) =>
     command === 'scratchpad_path' ? Promise.resolve(PAD) : Promise.reject(new Error(command)),
 }))
@@ -24,13 +24,13 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../on-disk', () => ({
+vi.mock('../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(fake.disk.has(path)),
 }))
 
-vi.mock('../log', () => ({ log: () => undefined }))
+vi.mock('../platform/src/log', () => ({ log: () => undefined }))
 
-vi.mock('../stored', () => ({
+vi.mock('../platform/src/stored', () => ({
   storedText: (key: string) => fake.kept.get(key) ?? null,
   stored: (key: string): unknown => JSON.parse(fake.kept.get(key) ?? 'null'),
   isRecord: (value: unknown) => typeof value === 'object' && value !== null,

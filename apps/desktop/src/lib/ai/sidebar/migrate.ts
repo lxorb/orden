@@ -1,4 +1,4 @@
-import { isRecord, isString } from '../../stored'
+import { isRecord, isString } from '../../platform/src/api'
 import type { Thread, Turn } from '../chat/types'
 import { newThread } from '../chat/threads'
 import type { Cited, Source } from './citations'

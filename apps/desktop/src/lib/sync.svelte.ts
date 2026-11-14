@@ -1,17 +1,27 @@
 import './sync-ports'
-import { api, type SpaceRole } from './accounts/src/api'
+import { api, type SpaceRole, account } from './accounts/src/api'
 import { arriving } from './arriving.svelte'
-import { without } from './records'
-import { log } from './log'
-import { keep, keepJson, stored, storedText } from './stored'
-import { nudgeDelay, pollDelay, RECONCILE_INTERVAL } from './backoff'
+import {
+  without,
+  log,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  nudgeDelay,
+  pollDelay,
+  RECONCILE_INTERVAL,
+  invoke,
+  isDesktop,
+  joinPath,
+  rootedAt,
+  samePath,
+} from './platform/src/api'
 import type { Pairing } from './space-pairing'
 import { untrack } from 'svelte'
-import { account } from './accounts/src/api'
 import { startup } from './startup.svelte'
 import { rooms } from './collab/src/api'
 import { modes } from './modes.svelte'
-import { invoke, isDesktop, joinPath } from './tauri'
 import {
   MIRRORS_KEY,
   type Mirror,
@@ -28,7 +38,6 @@ import { workspace } from './workspace.svelte'
 import { sayEntryIds } from './workspace/entry-ids'
 import type { FileOp } from './workspace/file-ops'
 import { unixLines } from './workspace/documents.svelte'
-import { rootedAt, samePath } from './space-paths'
 
 export const STORAGE_KEY = MIRRORS_KEY
 

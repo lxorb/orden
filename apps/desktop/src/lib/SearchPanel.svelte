@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { shownName } from './note-name'
+  import { shownName } from './platform/src/api'
   import { ARCHIVE_MARK } from './archive-marks'
   import { SEARCH_MARK } from './panel-marks'
   import { roving } from './roving'
@@ -11,14 +11,14 @@
   import { chosen, completing, naming, nearest, offered } from './search/suggest'
   import type { Hit, Range } from '@orden/scan/search/match'
   import { taskOf } from './search/task'
-  import { relativeTo } from './space-paths'
+  import { relativeTo } from './platform/src/api'
   import Suggest from './Suggest.svelte'
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
   import { isScratchpad } from './scratchpad/is.svelte'
   import { canWriteAt } from './sharing.svelte'
   import { type Entry, workspace } from './workspace.svelte'
-  import { dur, fly } from './motion'
+  import { dur, fly } from './platform/src/api'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
 

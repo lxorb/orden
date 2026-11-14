@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { toBase64 } from '../bytes'
+import { toBase64 } from '../platform/src/bytes'
 import { writeShortcut } from '@orden/scan/shortcut'
 import type { Planned } from './plan'
 import { mozLz4Of, SIDEBAR } from './zen.fixture'
@@ -18,7 +18,7 @@ let sidebar: unknown = SIDEBAR
 let firefoxSession: unknown = null
 let places: unknown = null
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     const packed = (said: unknown) =>
       Promise.resolve(toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(said)))))

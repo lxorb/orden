@@ -1,6 +1,5 @@
 import { SvelteMap } from 'svelte/reactivity'
-import { pathKey } from '../space-paths'
-import { windows } from '../windows'
+import { pathKey, windows } from '../platform/src/api'
 
 const SIDECAR = '.highlights.json'
 

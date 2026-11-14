@@ -4,8 +4,18 @@ import { modes } from './modes.svelte'
 import { connectors } from './connectors.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
-import { isRecord, isString, keep, keepJson, stored, storedText, stringList } from './stored'
-import { invoke, isDesktop, isNative } from './tauri'
+import {
+  isRecord,
+  isString,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  stringList,
+  invoke,
+  isDesktop,
+  isNative,
+} from './platform/src/api'
 import { viewport } from './viewport.svelte'
 import { settingsTab } from './settings/tab-hook'
 

@@ -1,7 +1,6 @@
 import { freeName as freeWhole } from '@orden/markdown/paths'
-import { invoke as crate } from '../native'
-import { joinPath, platform } from '../tauri'
-import { safeName } from '../web/paths'
+import { invoke as crate } from '../crate/src/api'
+import { joinPath, platform, safeName } from '../platform/src/api'
 import { mountOf } from './roots'
 
 export const HOME = '.orden'

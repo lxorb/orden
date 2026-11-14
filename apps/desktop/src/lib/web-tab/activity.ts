@@ -1,4 +1,4 @@
-import { IDLE_AFTER, INPUT_EVERY } from '../backoff'
+import { IDLE_AFTER, INPUT_EVERY } from '../platform/src/api'
 
 export interface SystemInput {
   idleMs: number

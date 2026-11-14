@@ -27,8 +27,8 @@ const OLD = '/Notes'
 const NEW = '/Renamed'
 const NOTE = 'together.md'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {

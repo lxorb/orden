@@ -5,8 +5,8 @@ const cleared: unknown[] = []
 const asked: string[] = []
 let rows: { label: string; run: () => void }[] = []
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'read_note') {
       const text = files.get(String(args.path))

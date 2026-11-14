@@ -5,7 +5,7 @@
   import { cubicOut } from 'svelte/easing'
   import { downloadStarted } from '../../downloads/started'
   import { localNumber } from '../../region'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { followHref } from '../../open-link'
   import { Avatar } from '../../accounts-ui/src/api'
   import { showProfile } from '../../accounts-ui/src/api'

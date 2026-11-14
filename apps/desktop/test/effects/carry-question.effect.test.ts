@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const mac = vi.hoisted(() => ({ on: false }))
 
-vi.mock('../../src/lib/tauri', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => (mac.on ? 'macos' : 'windows'),
 }))

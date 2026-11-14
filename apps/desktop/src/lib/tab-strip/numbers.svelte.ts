@@ -1,7 +1,7 @@
 import { mount, untrack } from 'svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { tabOverview } from '../surfaces.svelte'
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isDesktop } from '../platform/src/api'
 import { viewport } from '../viewport.svelte'
 import { workspace } from '../workspace.svelte'
 import { letterOf } from './letters'

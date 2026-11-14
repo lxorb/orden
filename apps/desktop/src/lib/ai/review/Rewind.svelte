@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { message } from '../../message'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import type { Thread } from '../chat/types'
   import { checkpoints } from './changes'
   import type { Choice } from './plan'

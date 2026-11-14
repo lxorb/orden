@@ -4,8 +4,8 @@ const SITE = '/space/Site.url'
 
 const handed: string[] = []
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   isMobile: true,

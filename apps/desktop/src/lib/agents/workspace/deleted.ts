@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
-import { folderOf, insideSpace, within } from '../../space-paths'
+import { folderOf, insideSpace, within } from '../../platform/src/api'
 import type { TrashItem } from '../../trash.svelte'
 import { asked } from './asks'
 import { type Call, done, need } from './call'

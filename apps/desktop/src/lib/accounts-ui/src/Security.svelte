@@ -4,7 +4,7 @@
   import Copyable from '../../Copyable.svelte'
   import CopyButton from '../../CopyButton.svelte'
   import { localDate } from '../../region'
-  import { dur, fade } from '../../motion'
+  import { dur, fade } from '../../platform/src/api'
 
   let factor = $state<SecondState | null>(null)
   let sessions = $state<RemoteSession[]>([])

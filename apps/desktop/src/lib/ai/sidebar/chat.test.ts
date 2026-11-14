@@ -8,8 +8,8 @@ const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body:
 const deleted = vi.hoisted(() => [] as string[])
 const refusing = vi.hoisted(() => ({ delete: false, after: Promise.resolve() }))
 
-vi.mock('../../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     const space = String(args.space)
@@ -994,7 +994,7 @@ describe('a chat while it answers', () => {
     await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
 
     kept.get('work')?.delete(id)
-    const { windows } = await import('../../windows')
+    const { windows } = await import('../../platform/src/windows')
     ;(windows as unknown as { heard(said: unknown): void }).heard({
       kind: 'thread-deleted',
       from: 'another window',

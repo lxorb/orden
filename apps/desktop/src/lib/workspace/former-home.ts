@@ -1,4 +1,4 @@
-import { isRecord } from '../stored'
+import { isRecord } from '../platform/src/api'
 import type { RootMoved } from './roots-moved'
 
 export const HOME_CARRIED = 'orden:home-carried'
@@ -35,7 +35,7 @@ async function relaunched(): Promise<boolean> {
 
 export async function finishFormerHome(former: Former | null = formerSaid()): Promise<boolean> {
   if (former === null) return false
-  const { invoke } = await import('../tauri')
+  const { invoke } = await import('../platform/src/api')
   if (former.waiting) {
     const kept = await invoke('keep_after_move', {
       text: JSON.stringify(everything(localStorage)),

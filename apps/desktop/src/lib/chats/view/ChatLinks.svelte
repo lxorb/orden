@@ -1,6 +1,6 @@
 <script lang="ts">
   import FileMark from '../../FileMark.svelte'
-  import { nameOf as fileName, relativeTo, withoutExtension } from '../../space-paths'
+  import { nameOf as fileName, relativeTo, withoutExtension } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
   import type { Hit } from '../api'
   import { firstLine } from './body'

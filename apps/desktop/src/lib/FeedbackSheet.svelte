@@ -6,7 +6,7 @@
   import { feedback } from './feedback.svelte'
   import { MOST_PICTURES, type Picture, picturesAmong } from './feedback-pictures'
   import { pictureOf } from './pictures-away'
-  import { fade, LAYER, scale } from './motion'
+  import { fade, LAYER, scale } from './platform/src/api'
   import { followHref } from './open-link'
   import { overlays } from './overlays'
   import { trap } from './trap'

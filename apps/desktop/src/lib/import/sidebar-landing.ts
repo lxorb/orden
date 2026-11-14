@@ -1,6 +1,5 @@
 import { busy } from '../busy.svelte'
-import { relativeTo } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import { relativeTo, invoke, joinPath } from '../platform/src/api'
 import { readShortcut } from '@orden/scan/shortcut'
 import { type Space, workspace } from '../workspace.svelte'
 import { applyImport } from './apply'

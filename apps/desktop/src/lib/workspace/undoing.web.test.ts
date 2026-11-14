@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const files = new Map<string, string>()
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''

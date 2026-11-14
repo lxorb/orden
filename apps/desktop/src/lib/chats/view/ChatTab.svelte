@@ -5,7 +5,7 @@
   import { pages } from '../../web-tab/pages.svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { shortcuts } from '../../shortcuts.svelte'
-  import { samePath } from '../../space-paths'
+  import { samePath } from '../../platform/src/api'
   import { viewport } from '../../viewport.svelte'
   import { type Tab, workspace } from '../../workspace.svelte'
   import { ChatPage } from './chat.svelte'

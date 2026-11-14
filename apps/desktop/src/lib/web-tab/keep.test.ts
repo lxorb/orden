@@ -8,8 +8,8 @@ interface Call {
 const written: Call[] = []
 const told: Call[] = []
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'write_note') {
       written.push({ path: String(args.path), content: String(args.content) })
@@ -31,7 +31,7 @@ vi.mock('../sharing.svelte', () => ({
 }))
 
 const { keepPage, keepNow } = await import('./keep')
-const { SAVE_AT_MOST, SAVE_DELAY } = await import('../backoff')
+const { SAVE_AT_MOST, SAVE_DELAY } = await import('../platform/src/backoff')
 const { settleUp, written: landed } = await import('../parting')
 
 const PATH = '/Notes/Svelte docs.url'

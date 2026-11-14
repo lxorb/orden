@@ -1,5 +1,4 @@
-import { keep, storedText } from '../stored'
-import { invoke, isNative } from '../tauri'
+import { keep, storedText, invoke, isNative } from '../platform/src/api'
 
 const EVENT = 'orden://ai-accounts'
 

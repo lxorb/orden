@@ -6,9 +6,8 @@ import {
   type Term,
   termOf,
 } from '@orden/online'
-import { account } from '../accounts/src/api'
-import { ApiError, request } from '../accounts/src/api'
-import { isNumber, isRecord, isString } from '../stored'
+import { account, ApiError, request } from '../accounts/src/api'
+import { isNumber, isRecord, isString } from '../platform/src/api'
 
 interface ServerInfo {
   type: string

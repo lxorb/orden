@@ -8,7 +8,7 @@ import {
   type Results,
   type StatePage,
 } from '@orden/chats/wire'
-import { roomDelay } from '../backoff'
+import { roomDelay } from '../platform/src/api'
 import type { CacheChange, CachedChat, ChatCache, OutboxRow } from './cache'
 import { foldAll, type Kept, type Lookup, marksOf } from './fold'
 

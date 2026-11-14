@@ -1,4 +1,4 @@
-import { samePath } from './space-paths'
+import { samePath } from './platform/src/api'
 
 export interface LocalSpace {
   name: string

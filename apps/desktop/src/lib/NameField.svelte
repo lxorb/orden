@@ -1,8 +1,8 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { hang } from './portal'
-  import { dur, fly } from './motion'
-  import { type NameFault, nameFault, nameToCommit } from './naming'
+  import { dur, fly } from './platform/src/api'
+  import { type NameFault, nameFault, nameToCommit } from './platform/src/api'
   import { caretAtEnd, selectAll, selectStem } from './select-all'
 
   interface Props {

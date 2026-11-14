@@ -1,11 +1,7 @@
 import { freePath } from '@orden/markdown/paths'
 
-import { insideOnly } from '../automation/inside'
-import { log } from '../log'
-import { onDisk } from '../on-disk'
+import { insideOnly, log, onDisk, joinPath, sha256 } from '../platform/src/api'
 import { holderOf, pairOf, paperOf } from '../pages/held'
-import { joinPath } from '../tauri'
-import { sha256 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 

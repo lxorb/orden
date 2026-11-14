@@ -1,4 +1,4 @@
-import { keep, storedText } from '../stored'
+import { keep, storedText } from '../platform/src/api'
 import { isSaver, type Saver } from './resting'
 
 const KEY = 'orden:memory-saver'

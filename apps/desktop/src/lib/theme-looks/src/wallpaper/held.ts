@@ -1,6 +1,6 @@
 import type { Scheme } from '@orden/contracts'
 import type { Rgb, Span } from '../../../legibility'
-import { isNumber, isRecord, isString, parsed, storedText } from '../../../stored'
+import { isNumber, isRecord, isString, parsed, storedText } from '../../../platform/src/api'
 
 export const WALLPAPER_THEME = 'wallpaper'
 export const WALLPAPER_KEY = 'orden:wallpaper'

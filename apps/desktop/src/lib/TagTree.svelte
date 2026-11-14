@@ -10,7 +10,7 @@
   import { workspace } from './workspace.svelte'
   import TagTree from './TagTree.svelte'
   import Twist from './Twist.svelte'
-  import { dur, slide } from './motion'
+  import { dur, slide } from './platform/src/api'
 
   const { nodes, depth = 0 }: { nodes: TagNode[]; depth?: number } = $props()
 

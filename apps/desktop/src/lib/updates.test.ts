@@ -107,7 +107,7 @@ beforeEach(async () => {
   vi.stubGlobal('localStorage', storage)
 
   vi.resetModules()
-  vi.doMock('./tauri', () => ({ isDesktop: true }))
+  vi.doMock('./platform/src/tauri', () => ({ isDesktop: true }))
   updates = (await import('./updates.svelte')).updates
 })
 
@@ -201,7 +201,7 @@ describe('looking for a new version', () => {
 
   test('looks for nothing at all on the web or a phone', async () => {
     vi.resetModules()
-    vi.doMock('./tauri', () => ({ isDesktop: false }))
+    vi.doMock('./platform/src/tauri', () => ({ isDesktop: false }))
     const web = (await import('./updates.svelte')).updates
 
     const stop = web.start()
@@ -404,7 +404,7 @@ describe('the channel', () => {
     expect(storage.getItem('orden:channel')).toBe('unstable')
 
     vi.resetModules()
-    vi.doMock('./tauri', () => ({ isDesktop: true }))
+    vi.doMock('./platform/src/tauri', () => ({ isDesktop: true }))
     const next = (await import('./updates.svelte')).updates
 
     expect(next.channel).toBe('unstable')
@@ -463,7 +463,7 @@ describe('where a package manager keeps the install', () => {
   async function relaunch() {
     world.announced = null
     vi.resetModules()
-    vi.doMock('./tauri', () => ({ isDesktop: true }))
+    vi.doMock('./platform/src/tauri', () => ({ isDesktop: true }))
     return (await import('./updates.svelte')).updates
   }
 

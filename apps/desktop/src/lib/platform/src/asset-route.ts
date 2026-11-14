@@ -1,5 +1,5 @@
-import { normalise } from './paths'
-import { mimeOfPath, UNKNOWN_TYPE } from '../mime'
+import { normalise } from './web-paths'
+import { mimeOfPath, UNKNOWN_TYPE } from './mime'
 
 export const ASSET_ROUTE = '/asset/'
 

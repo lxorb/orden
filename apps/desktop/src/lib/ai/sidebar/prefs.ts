@@ -2,7 +2,7 @@ import type { Effort } from '../chat/types'
 import { isEffort } from '../chat/effort'
 import type { Provider } from '../providers'
 import { FIRST_MODE, type Mode, modeIn } from '../modes'
-import { isRecord, isString, keepJson, stored } from '../../stored'
+import { isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:ai-sidebar'
 

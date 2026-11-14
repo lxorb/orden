@@ -2,8 +2,8 @@ import { expect, test, vi } from 'vitest'
 
 const asked: { command: string; id: unknown }[] = []
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, id: args.id })
     return Promise.resolve(

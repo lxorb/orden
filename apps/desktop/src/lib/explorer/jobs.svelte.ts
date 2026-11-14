@@ -1,5 +1,5 @@
 import { identifier } from '../identifier'
-import { isDesktop } from '../tauri'
+import { isDesktop } from '../platform/src/api'
 import { cancelJob, PROGRESS } from './commands'
 
 interface Running {

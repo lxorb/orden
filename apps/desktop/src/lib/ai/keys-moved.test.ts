@@ -5,7 +5,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const machine = vi.hoisted(() => ({ os: 'macos', keys: new Set<string>(), signedIn: false }))
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isDesktop: true,
   isNative: true,
   isMobile: false,

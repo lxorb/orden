@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { unarchive } from './archiving'
-  import { dur, slide } from './motion'
+  import { dur, slide } from './platform/src/api'
   import { ARCHIVE_MARK } from './archive-marks'
 
   const { path }: { path: string } = $props()

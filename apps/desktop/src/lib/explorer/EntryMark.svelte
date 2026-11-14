@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
-  import { nameOf } from '../space-paths'
+  import { nameOf } from '../platform/src/api'
   import { kindIcons } from './kind-icons'
   import { ordenOpens } from './open'
 

@@ -8,7 +8,7 @@ import {
 } from '@orden/scan/wire'
 import type { Blobs, Replaced } from './files'
 import type { Account, Route } from './world'
-import { passing } from '../../backoff'
+import { passing } from '../../platform/src/api'
 
 export class Refused extends Error {
   override name = 'Refused'

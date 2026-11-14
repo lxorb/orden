@@ -1,4 +1,4 @@
-import { folderOf, nameOf, samePath, within } from './space-paths'
+import { folderOf, nameOf, samePath, within } from './platform/src/api'
 import type { Entry } from './workspace.svelte'
 
 function under(base: string, path: string): boolean {

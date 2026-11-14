@@ -1,10 +1,15 @@
 import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelte'
-import { isDesktop, platform } from '../tauri'
-import { SCHEME_CHOICES, SCHEME_NAMES } from '../theme-looks/src/api'
-import { appSettings, builtIns, type SchemeChoice, theme } from '../theme/src/api'
-import { SHARED, type ThemeSetting, type ThemeValue } from '../theme/src/api'
-import { WALLPAPER_THEME } from '../theme-looks/src/api'
-import { wallpaper } from '../theme-looks/src/api'
+import { isDesktop, platform } from '../platform/src/api'
+import { SCHEME_CHOICES, SCHEME_NAMES, WALLPAPER_THEME, wallpaper } from '../theme-looks/src/api'
+import {
+  appSettings,
+  builtIns,
+  type SchemeChoice,
+  theme,
+  SHARED,
+  type ThemeSetting,
+  type ThemeValue,
+} from '../theme/src/api'
 import { workspace } from '../workspace.svelte'
 import type { PictureSide, PairField, Field, Group, Pane } from './fields'
 

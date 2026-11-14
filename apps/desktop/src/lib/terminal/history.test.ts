@@ -4,7 +4,7 @@ const said: { command: string; args: Record<string, unknown> }[] = []
 const files = new Map<string, unknown>()
 let holding: Promise<void> | null = null
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: async (command: string, args: Record<string, unknown> = {}) => {
     said.push({ command, args })
     const at = `${String(args.space)}/${String(args.key)}`

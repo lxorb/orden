@@ -1,5 +1,16 @@
-import { isBoolean, isNumber, isRecord, isString, keepJson } from '../stored'
-import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
+import {
+  isBoolean,
+  isNumber,
+  isRecord,
+  isString,
+  keepJson,
+  filledIn,
+  type Folded,
+  type Folding,
+  meet,
+  readSpaces,
+  without,
+} from '../platform/src/api'
 
 export const STORAGE_KEY = 'orden:graph'
 

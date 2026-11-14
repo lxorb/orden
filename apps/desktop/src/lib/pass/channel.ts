@@ -1,4 +1,4 @@
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isDesktop } from '../platform/src/api'
 
 export type FormKind =
   'login' | 'username' | 'password' | 'totp' | 'signup' | 'change' | 'card' | 'identity'

@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import FindBar from '../FindBar.svelte'
   import Outward from '../Outward.svelte'
-  import { dur, fly } from '../motion'
+  import { dur, fly } from '../platform/src/api'
   import { hostOf } from '@orden/online/urls'
   import OnlineStatus from '../online/OnlineStatus.svelte'
   import type { Tab } from '../workspace.svelte'

@@ -2,7 +2,7 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import { searchSpace } from '../search/space'
-import { waited } from '../timing'
+import { waited } from '../platform/src/api'
 import type { Message } from './providers'
 
 export interface Passage {

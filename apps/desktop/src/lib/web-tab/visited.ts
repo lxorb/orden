@@ -1,4 +1,4 @@
-import { forget as forgetStored, Shared } from '../stored'
+import { forget as forgetStored, Shared } from '../platform/src/api'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
 import {

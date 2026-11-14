@@ -5,7 +5,7 @@ const sent: { command: string; args: Record<string, unknown> }[] = []
 let listed: { name: string; path: string }[] = []
 let refuses = false
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push({ command, args: args ?? {} })

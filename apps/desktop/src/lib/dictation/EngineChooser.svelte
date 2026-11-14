@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { transcriberNow } from '../ai/hears'
-  import { dur, fly } from '../motion'
+  import { dur, fly } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { type Engine, engines, whereTo } from './engines.svelte'
   import { local } from './local.svelte'

@@ -5,8 +5,8 @@ const asked: string[] = []
 const busy = new Map<string, boolean>()
 let others: string[] = []
 
-vi.mock('../../src/lib/tauri', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => 'windows',
   invoke: (command: string, args?: { id?: string }) => {

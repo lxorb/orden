@@ -4,7 +4,7 @@
   import CircleAlert from 'lucide/dist/esm/icons/circle-alert.mjs'
   import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { dur, fly } from '../motion'
+  import { dur, fly } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { showLabel } from '../reveal'
   import { downloads, type Download } from './downloads.svelte'

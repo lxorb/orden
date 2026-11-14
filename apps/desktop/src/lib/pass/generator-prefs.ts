@@ -11,7 +11,7 @@ import {
 import type { UsernameRule } from '@orden/pass/username'
 import { DEFAULT_USERNAME, username } from '@orden/pass/username'
 import { WORDS } from '@orden/pass/words'
-import { isRecord, keepJson, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../platform/src/api'
 
 export const MODES = ['random', 'memorable', 'username'] as const
 export type GeneratorMode = (typeof MODES)[number]

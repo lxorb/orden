@@ -13,7 +13,7 @@ const invoke = vi.fn((command: string) => {
   return answers.length ? Promise.resolve(answers.shift()) : Promise.reject(new Error('no crate'))
 })
 
-vi.mock('../tauri', () => ({ isDesktop: true, invoke }))
+vi.mock('../platform/src/tauri', () => ({ isDesktop: true, invoke }))
 
 const { shellName, shells, SIZES, waysOf } = await import('./shells.svelte')
 

@@ -86,12 +86,20 @@ import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
 import { fullscreen } from './fullscreen.svelte'
 import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
-import { closeWindow, internal, invoke, isDesktop, isNative, openExternal } from './tauri'
+import {
+  closeWindow,
+  internal,
+  invoke,
+  isDesktop,
+  isNative,
+  openExternal,
+  isMarkdownPath,
+  samePath,
+} from './platform/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './theme-looks/src/api'
 import { theme } from './theme/src/api'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
-import { isMarkdownPath, samePath } from './space-paths'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'

@@ -1,5 +1,5 @@
-import { insideOnly } from './automation/inside'
-import { endingOf } from './note-name'
+import { insideOnly } from './inside'
+import { endingOf } from '@orden/markdown/note-name'
 import { invoke, isNative, joinPath, platform } from './tauri'
 
 const folding = new Map<string, boolean>()

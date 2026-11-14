@@ -1,9 +1,7 @@
-import { SAVE_AT_MOST, SAVE_DELAY } from '../backoff'
+import { SAVE_AT_MOST, SAVE_DELAY, invoke, afterQuiet, type Later } from '../platform/src/api'
 import { links } from '../link-index.svelte'
 import { owes, writing } from '../parting'
 import { canWriteAt } from '../sharing.svelte'
-import { invoke } from '../tauri'
-import { afterQuiet, type Later } from '../timing'
 import { isWebAddress } from './address'
 import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 

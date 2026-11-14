@@ -3,7 +3,7 @@
   import Select from '../Select.svelte'
   import Swatches from '../Swatches.svelte'
   import Switch from '../Switch.svelte'
-  import { invoke } from '../tauri'
+  import { invoke } from '../platform/src/api'
   import HostMark from './HostMark.svelte'
   import {
     type About,

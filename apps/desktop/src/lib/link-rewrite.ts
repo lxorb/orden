@@ -6,8 +6,7 @@ import {
   wikilinkCannotName,
 } from '@orden/markdown/links'
 import { formatLink } from './link-format'
-import { shownName } from './note-name'
-import { folderOf, nameOf, relativePath } from './space-paths'
+import { shownName, folderOf, nameOf, relativePath } from './platform/src/api'
 
 export { encodeTarget }
 

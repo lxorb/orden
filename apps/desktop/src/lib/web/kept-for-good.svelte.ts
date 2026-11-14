@@ -1,5 +1,4 @@
-import { keep, storedText } from '../stored'
-import { isNative } from '../tauri'
+import { keep, storedText, isNative } from '../platform/src/api'
 
 const ASKED = 'orden:kept-for-good-asked'
 

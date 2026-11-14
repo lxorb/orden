@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({ sent: 0 }))
 
-vi.mock('../tauri', async (original) => ({
-  ...(await original<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
 

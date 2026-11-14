@@ -39,7 +39,7 @@ vi.mock('@tauri-apps/api/window', () => ({
     }
   },
 }))
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: (command: string) => Promise.resolve(command === 'automation_claim' ? world.claims : []),
@@ -48,7 +48,7 @@ vi.mock('../tauri', () => ({
 vi.mock('../web-tab/handed', () => ({ hearPages: () => Promise.resolve(() => undefined) }))
 vi.mock('../pdf/handed', () => ({ hearPdfs: () => Promise.resolve(() => undefined) }))
 vi.mock('../busy.svelte', () => ({ busy: { failed: () => undefined } }))
-vi.mock('../log', () => ({ log: () => undefined }))
+vi.mock('../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('./caller', () => ({ callerOf: () => undefined }))
 vi.mock('./verbs', () => ({
   dispatch: (verb: string) => {

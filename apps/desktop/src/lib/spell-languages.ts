@@ -1,5 +1,5 @@
 import { systemLocale } from './region'
-import { invoke, isDesktop, platform } from './tauri'
+import { invoke, isDesktop, platform } from './platform/src/api'
 
 interface Dictionary {
   id: string

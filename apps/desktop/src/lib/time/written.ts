@@ -1,5 +1,5 @@
 import { TIME_ID, TIME_KIND } from '@orden/sync-core'
-import { isRecord } from '../stored'
+import { isRecord } from '../platform/src/api'
 import type { Activity, Span } from './records'
 
 const HEAD = ['start', 'end', 'minutes', 'activity', 'tags', 'note', 'source', 'place']

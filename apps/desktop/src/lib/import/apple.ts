@@ -1,4 +1,4 @@
-import { fromBase64 } from '../bytes'
+import { fromBase64 } from '../platform/src/api'
 import { folderPlan } from './folder'
 import { dayOf, type Meta } from './meta'
 import { Names, safeParts } from './names'
@@ -33,7 +33,7 @@ export const NO_ACCESS = 'no access'
 export const NO_DATABASE = 'no database'
 
 export async function readMacNotes(): Promise<ImportPlan> {
-  const { invoke } = await import('../tauri')
+  const { invoke } = await import('../platform/src/api')
   return planFor(await invoke<AppleNotes>('read_apple_notes'))
 }
 

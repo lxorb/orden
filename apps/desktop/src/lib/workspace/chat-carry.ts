@@ -1,9 +1,8 @@
 import { isChatTarget } from '@orden/markdown/links'
 import { account } from '../accounts/src/api'
 import { roleOf } from '../sharing.svelte'
-import { samePath, within } from '../space-paths'
+import { samePath, within, invoke } from '../platform/src/api'
 import { sync } from '../sync.svelte'
-import { invoke } from '../tauri'
 import { type Entry, workspace } from '../workspace.svelte'
 
 function pointersUnder(entry: Entry, found: string[] = []): string[] {

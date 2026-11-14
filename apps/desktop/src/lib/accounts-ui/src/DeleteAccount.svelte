@@ -5,7 +5,7 @@
   import { fromServer, request } from '../../accounts/src/api'
   import { region } from '../../region'
   import { message } from '../../message'
-  import { dur, fade } from '../../motion'
+  import { dur, fade } from '../../platform/src/api'
 
   const { onend }: { onend: () => void } = $props()
 

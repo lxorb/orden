@@ -33,7 +33,7 @@ stubs()
 
 const folder = vi.hoisted(() => ({ files: new Map<string, string>() }))
 
-vi.mock('../../../tauri', () => ({
+vi.mock('../../../platform/src/tauri', () => ({
   isDesktop: true,
   isNative: true,
   platform: () => 'linux',

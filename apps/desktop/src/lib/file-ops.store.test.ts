@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -24,7 +24,7 @@ const { undoToast } = await import('./undo-toast.svelte')
 const { failed } = await import('./views/failed.svelte')
 const { LANDS_WITHIN } = await import('./workspace/undo.svelte')
 const { keeping } = await import('./workspace/file-ops')
-const { movedTo, within } = await import('./space-paths')
+const { movedTo, within } = await import('./platform/src/space-paths')
 type FileOp = import('./workspace/file-ops').FileOp
 
 const ROOT = '/space'

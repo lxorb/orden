@@ -2,7 +2,7 @@
   import type { Member } from '@orden/chats'
   import type { Special } from './compose'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { Avatar } from '../../accounts-ui/src/api'
   import { faceOf, nameOf } from './people'
 

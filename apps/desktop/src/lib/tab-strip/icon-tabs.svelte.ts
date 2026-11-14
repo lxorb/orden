@@ -1,4 +1,4 @@
-import { keep, storedText } from '../stored'
+import { keep, storedText } from '../platform/src/api'
 
 const KEY = 'orden:icon-tabs'
 

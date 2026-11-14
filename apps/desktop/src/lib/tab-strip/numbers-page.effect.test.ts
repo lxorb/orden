@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => [] as string[])
 
-vi.mock('../tauri', () => ({ isDesktop: true, invoke: () => Promise.resolve(true) }))
+vi.mock('../platform/src/tauri', () => ({ isDesktop: true, invoke: () => Promise.resolve(true) }))
 const focus = vi.hoisted(() => ({ changed: (_payload: boolean): void => undefined }))
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({

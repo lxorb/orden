@@ -7,8 +7,8 @@ const { told, disk, reads } = vi.hoisted(() => ({
   disk: new Map<string, string>(),
 }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   invoke: async (
     command: string,
     args: { from: string; to: string; path: string; content: string },

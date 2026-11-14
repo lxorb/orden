@@ -18,8 +18,8 @@ vi.mock('../../workspace.svelte', () => ({
 const asked: Record<string, unknown>[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 
-vi.mock('../../tauri', async (original) => ({
-  ...(await original<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     if (command === 'agents_ask') {
       asked.push(args)

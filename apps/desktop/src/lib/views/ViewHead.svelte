@@ -3,7 +3,7 @@
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { ORDER_MARK } from '../panel-marks'
   import { segmented } from '../slide'
-  import { relativeTo } from '../space-paths'
+  import { relativeTo } from '../platform/src/api'
   import { viewport } from '../viewport.svelte'
   import { workspace } from '../workspace.svelte'
   import ArrangeBuilder from './ArrangeBuilder.svelte'

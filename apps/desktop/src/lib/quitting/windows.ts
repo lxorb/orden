@@ -1,5 +1,4 @@
-import { invoke } from '../tauri'
-import { waited } from '../timing'
+import { invoke, waited } from '../platform/src/api'
 import { jump } from './jump'
 import { type Row, rowsHere } from './rows'
 

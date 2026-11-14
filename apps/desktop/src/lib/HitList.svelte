@@ -6,10 +6,10 @@
   import { linkPieces, shownLine } from './link-line'
   import { middleOpens } from './new-tab'
   import { roving } from './roving'
-  import { shownName } from './note-name'
+  import { shownName } from './platform/src/api'
   import { offsetOf, type Rows, windowFor } from './row-window'
   import { ListView, measuredRow } from './row-window.svelte'
-  import { folderOf, insideSpace } from './space-paths'
+  import { folderOf, insideSpace } from './platform/src/api'
   import { workspace } from './workspace.svelte'
 
   type Row = Reference | Outgoing

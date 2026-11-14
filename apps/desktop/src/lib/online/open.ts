@@ -1,7 +1,7 @@
 import { account } from '../accounts/src/api'
 import type { OpenHow } from '../new-tab'
 import { termText } from '@orden/online/term'
-import { nameOf, samePath } from '../space-paths'
+import { nameOf, samePath } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Refused, refusedOf, termSession } from './calls'

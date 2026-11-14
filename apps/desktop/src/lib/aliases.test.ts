@@ -8,8 +8,8 @@ const ROOT = '/space'
 let notes: Record<string, string> = {}
 let written: { path: string; content: string }[] = []
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'scan_links') {
       const found: SpaceLinks = {

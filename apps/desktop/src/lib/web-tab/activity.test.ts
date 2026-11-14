@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { IDLE_AFTER, INPUT_EVERY } from '../backoff'
+import { IDLE_AFTER, INPUT_EVERY } from '../platform/src/backoff'
 import { Activity, readSystemInput, type SystemInput } from './activity'
 
 let now: number

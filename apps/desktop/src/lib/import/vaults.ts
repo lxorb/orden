@@ -1,5 +1,4 @@
-import { fromBase64 } from '../bytes'
-import { invoke, isDesktop } from '../tauri'
+import { fromBase64, invoke, isDesktop } from '../platform/src/api'
 import type { Source } from './sources'
 import { tooMuch } from './sources'
 

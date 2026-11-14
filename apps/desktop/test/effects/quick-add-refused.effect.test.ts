@@ -3,8 +3,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Entry } from '../../src/lib/quick-add/entry'
 
 const invoked: string[] = []
-vi.mock('../../src/lib/tauri', async (original) => ({
-  ...(await original<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: vi.fn((command: string) => {
     invoked.push(command)
     return Promise.resolve(undefined)

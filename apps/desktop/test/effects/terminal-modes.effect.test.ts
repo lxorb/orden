@@ -5,8 +5,8 @@ let output: { onmessage: ((message: unknown) => void) | null } | null = null
 let busy = true
 const files = new Map<string, unknown>()
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => 'windows',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
@@ -23,7 +23,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
   },

@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 const answered: { bytes: number[] } = { bytes: [] }
 const asked: unknown[] = []
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string, args: unknown) => {
     asked.push({ command, args })
     return Promise.resolve(new Uint8Array(answered.bytes).buffer)

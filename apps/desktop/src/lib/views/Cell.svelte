@@ -18,7 +18,7 @@
   } from './columns'
   import { formatted } from './format'
   import { toneColour } from './chips'
-  import { openExternal } from '../tauri'
+  import { openExternal } from '../platform/src/api'
   import type { Kit } from './kit'
   import type { ListChange } from '../rows/write'
   import { isDateValue } from './values'

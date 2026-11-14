@@ -7,8 +7,7 @@ import {
   UNKNOWN_APP,
   type View,
 } from '@orden/online/apps'
-import { account } from '../accounts/src/api'
-import { BASE } from '../accounts/src/api'
+import { account, BASE } from '../accounts/src/api'
 import { pageWorld } from '../online/link'
 import type { Holder } from '../online/arrival.svelte'
 import type { IdAt } from '../sync-client/src/api'
@@ -130,7 +129,7 @@ export interface SessionWorld {
 
 const sessionWorld: SessionWorld = {
   async read(path) {
-    const { invoke } = await import('../tauri')
+    const { invoke } = await import('../platform/src/api')
     return readApp(() => invoke<string>('read_note', { path }))
   },
   moved() {

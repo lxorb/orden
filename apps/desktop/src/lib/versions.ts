@@ -1,8 +1,6 @@
-import { account } from './accounts/src/api'
-import { api } from './accounts/src/api'
-import { sha256 } from './bytes'
+import { account, api } from './accounts/src/api'
+import { sha256, invoke } from './platform/src/api'
 import { sync } from './sync.svelte'
-import { invoke } from './tauri'
 
 interface Snapshot {
   taken_at: number

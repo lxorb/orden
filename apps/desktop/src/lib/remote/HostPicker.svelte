@@ -5,7 +5,7 @@
   import { region } from '../region'
   import { longPress } from '../longpress'
   import { menu } from '../menu.svelte'
-  import { fade, LAYER, scale } from '../motion'
+  import { fade, LAYER, scale } from '../platform/src/api'
   import { overlays } from '../overlays'
   import { pieces } from '../palette/pieces'
   import { roving } from '../roving'

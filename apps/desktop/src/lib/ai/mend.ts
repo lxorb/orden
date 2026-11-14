@@ -1,4 +1,4 @@
-import { log } from '../log'
+import { log } from '../platform/src/api'
 import { type Accounts, resolve } from './accounts'
 import { listModels } from './complete'
 import { firstModel } from './providers'

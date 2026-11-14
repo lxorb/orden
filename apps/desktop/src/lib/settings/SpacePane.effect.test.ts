@@ -13,12 +13,12 @@ const disk = vi.hoisted(() => ({
   held: null as Promise<void> | null,
 }))
 
-vi.mock('../tauri', async (original) => ({
-  ...(await original<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../platform/src/tauri')>()),
   invoke: () => Promise.resolve(null),
 }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: vi.fn() } }))
-vi.mock('../on-disk', () => ({
+vi.mock('../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path) || !path.endsWith('.md')),
 }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => disk.writable }))

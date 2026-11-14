@@ -1,5 +1,4 @@
-import { log } from './log'
-import { asking, isNative } from './tauri'
+import { log, asking, isNative } from './platform/src/api'
 
 const STALL = 1000
 

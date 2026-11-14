@@ -1,5 +1,5 @@
 import { account } from './account.svelte'
-import { PRESENCE_EVERY } from '../../backoff'
+import { PRESENCE_EVERY } from '../../platform/src/api'
 import { fetchNicks, fetchPeople, fetchPresence } from './calls'
 import type { Presence } from './face'
 import type { Person } from './read'

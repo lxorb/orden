@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import type { Page } from './pages.svelte'
 
 export type Sought = 'find' | 'next' | 'previous'

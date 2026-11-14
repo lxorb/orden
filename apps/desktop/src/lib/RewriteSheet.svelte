@@ -2,7 +2,7 @@
   import { rewriting } from './ai/rewriting.svelte'
   import { languageNames, VERBS } from './ai/rewrite'
   import { diffCount, lineDiff, trimmed } from './diff'
-  import { dur, fade } from './motion'
+  import { dur, fade } from './platform/src/api'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'

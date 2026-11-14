@@ -1,4 +1,4 @@
-import { folderOf, relativeTo } from '../space-paths'
+import { folderOf, relativeTo } from '../platform/src/api'
 
 export function spaceRelative(root: string, notePath: string, written: string): string | null {
   const folder = relativeTo(root, folderOf(notePath))

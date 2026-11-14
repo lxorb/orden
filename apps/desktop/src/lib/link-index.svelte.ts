@@ -28,14 +28,9 @@ import {
 import { breathe } from './breathe'
 import { buildGraph, type NoteGraph } from './graph'
 import { type Placed, retargetLinks } from './link-rewrite'
-import { AGENTS_NAME, shownName } from './note-name'
-import type { Hit } from '@orden/scan/search/match'
-import { parseQuery } from '@orden/scan/search/query'
-import { searchSpace } from './search/space'
-import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
-import { startup } from './startup.svelte'
-import { mark } from './trace'
 import {
+  AGENTS_NAME,
+  shownName,
   folderOf,
   insideSpace,
   isHiddenPath,
@@ -45,14 +40,20 @@ import {
   relativePath,
   samePath,
   within,
-} from './space-paths'
+  invoke,
+  log,
+} from './platform/src/api'
+import type { Hit } from '@orden/scan/search/match'
+import { parseQuery } from '@orden/scan/search/query'
+import { searchSpace } from './search/space'
+import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
+import { startup } from './startup.svelte'
+import { mark } from './trace'
 import { elsewhere } from './marks-elsewhere.svelte'
-import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { inFileTurn, keepVersion, readText, writeEdited, writeInTurn } from './workspace/in-turn'
-import { log } from './log'
 
 export interface Reference {
   path: string

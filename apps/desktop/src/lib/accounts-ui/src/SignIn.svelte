@@ -5,7 +5,7 @@
   import { account } from '../../accounts/src/api'
   import { joining } from '../../joining.svelte'
   import { settleLocalNotes } from '../../settling'
-  import { dur, fade, fly, LAYER, scale } from '../../motion'
+  import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { trap } from '../../trap'
 
   const LENGTH = 6

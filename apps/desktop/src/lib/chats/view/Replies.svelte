@@ -4,7 +4,7 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { localNumber } from '../../region'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'
   import Composer from './Composer.svelte'

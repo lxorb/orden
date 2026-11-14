@@ -1,4 +1,4 @@
-import { isRecord, isString, keepJson, stored } from '../stored'
+import { isRecord, isString, keepJson, stored } from '../platform/src/api'
 import { type Layout, readLayout, withoutText } from './session'
 
 const STORAGE_KEY = 'orden:layouts'

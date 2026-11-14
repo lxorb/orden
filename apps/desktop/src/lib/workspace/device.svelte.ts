@@ -9,9 +9,13 @@ import {
   stored,
   storedText,
   stringList,
-} from '../stored'
-import { without, withOrWithout } from '../records'
-import { movedTo, samePath, within, withinSpace } from '../space-paths'
+  without,
+  withOrWithout,
+  movedTo,
+  samePath,
+  within,
+  withinSpace,
+} from '../platform/src/api'
 import type { FileOp } from './file-ops'
 
 export const RECENT_KEY = 'orden:recent'

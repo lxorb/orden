@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
   import Cross from '../../Cross.svelte'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { chat } from './chat.svelte'
 
   const queue = $derived(chat.queue)

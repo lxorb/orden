@@ -1,4 +1,4 @@
-import { movedTo } from '../space-paths'
+import { movedTo } from '../platform/src/api'
 
 export class Selection {
   paths = $state<string[]>([])

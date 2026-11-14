@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { dur, slide } from '../../motion'
-  import { insideSpace } from '../../space-paths'
+  import { dur, slide } from '../../platform/src/api'
+  import { insideSpace } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
   import type { Thread } from '../chat/types'
   import type { Change, NoteChanges } from './changes'

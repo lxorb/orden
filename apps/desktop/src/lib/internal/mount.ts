@@ -1,4 +1,4 @@
-import { inTurn } from '../locks'
+import { inTurn } from '../platform/src/api'
 import { readsAsText } from '../web/commands'
 import { mountRows } from '../web/store'
 import { folderBytes } from './bytes'

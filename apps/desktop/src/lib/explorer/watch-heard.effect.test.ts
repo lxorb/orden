@@ -11,8 +11,8 @@ const ears = vi.hoisted(() => ({
   disk: new Map<string, string[]>(),
 }))
 
-vi.mock('../tauri', async (original) => ({
-  ...(await original<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
 }))
 

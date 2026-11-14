@@ -26,8 +26,8 @@ vi.mock('../sync-client/src/runner.svelte', () => ({
     wrote: () => Promise.resolve(),
   },
 }))
-vi.mock('../tauri', async (real) => ({
-  ...(await real<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (real) => ({
+  ...(await real<typeof import('../platform/src/tauri')>()),
   invoke: () => Promise.resolve(seen.words),
 }))
 vi.mock('../workspace/write-file', () => ({

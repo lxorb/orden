@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../../FileMark.svelte'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { pages, siteMark } from '../../web-tab/pages.svelte'
   import { workspace } from '../../workspace.svelte'
   import type { Approval } from '../verbs'

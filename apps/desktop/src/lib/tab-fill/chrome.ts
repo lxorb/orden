@@ -1,4 +1,4 @@
-import { dur } from '../motion'
+import { dur } from '../platform/src/api'
 
 type Edge = 'start' | 'end' | 'top' | 'bottom'
 

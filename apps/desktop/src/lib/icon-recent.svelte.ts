@@ -1,4 +1,4 @@
-import { forget, keepJson, stored, stringList } from './stored'
+import { forget, keepJson, stored, stringList } from './platform/src/api'
 
 const RECENT_KEY = 'orden:icons-recent'
 

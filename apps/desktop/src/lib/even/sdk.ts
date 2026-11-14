@@ -1,4 +1,4 @@
-import { waited } from '../timing'
+import { waited } from '../platform/src/api'
 
 const CLICK = 0
 const SCROLL_TOP = 1

@@ -1,6 +1,5 @@
-import { log } from '../log'
+import { log, invoke } from '../platform/src/api'
 import { canWriteAt } from '../sharing.svelte'
-import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { arrivalOf } from './arrival'
 

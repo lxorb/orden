@@ -2,8 +2,8 @@ import { expect, test, vi } from 'vitest'
 
 const server = vi.hoisted(() => ({ answers: [] as (Blob | null)[], asked: 0 }))
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isNative: false,
   isDesktop: false,
   invoke: () => Promise.resolve(),

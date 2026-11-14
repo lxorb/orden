@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { refusal } from '../../automation/caller'
-import { invoke } from '../../tauri'
+import { invoke } from '../../platform/src/api'
 import type { Category } from '../verbs'
 import type { Call } from './call'
 import { Refused } from './problem'

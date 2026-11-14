@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { limitSentence } from './local/trouble'
 import { plans } from './local/status.svelte'
 

@@ -1,7 +1,5 @@
-import { account } from './accounts/src/api'
-import { api, fromServer } from './accounts/src/api'
-import { isRecord, keepJson, recordOf, stored } from './stored'
-import { passing } from './backoff'
+import { account, api, fromServer } from './accounts/src/api'
+import { isRecord, keepJson, recordOf, stored, passing } from './platform/src/api'
 
 const MOST = 200
 

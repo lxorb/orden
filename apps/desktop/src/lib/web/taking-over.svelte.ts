@@ -1,7 +1,6 @@
 import { account } from '../accounts/src/api'
 import { firstVisit } from '../first-visit.svelte'
-import { log } from '../log'
-import { isNative } from '../tauri'
+import { log, isNative } from '../platform/src/api'
 import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEB, unpack, WEB } from './handoff'
 
 const WATCH = 500

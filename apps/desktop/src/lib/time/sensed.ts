@@ -1,4 +1,4 @@
-import { isRecord } from '../stored'
+import { isRecord } from '../platform/src/api'
 
 export interface Sensed {
   idleMs: number | null

@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import Thinking from '../Thinking.svelte'
   import { copyText } from '../../clipboard'
-  import { dur, fade, fly } from '../../motion'
+  import { dur, fade, fly } from '../../platform/src/api'
   import type { Place } from '../../row-window'
   import { scrollbar } from '../../scrollbar'
   import { settings } from '../../settings.svelte'

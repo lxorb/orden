@@ -1,6 +1,6 @@
 import type { Query } from '@orden/scan/search/query'
 import { type Found, walkSearch } from '@orden/scan/search/walk'
-import { normalise } from './paths'
+import { normalise } from '../platform/src/api'
 import { space } from './space-cache'
 
 export async function searchRows(

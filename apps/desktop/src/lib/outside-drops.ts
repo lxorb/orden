@@ -1,7 +1,5 @@
-import { fileBytes } from './bytes'
+import { fileBytes, mimeOfPath, UNKNOWN_TYPE, nameOf } from './platform/src/api'
 import { carriedNothing, carryOutside } from './drag-paths'
-import { mimeOfPath, UNKNOWN_TYPE } from './mime'
-import { nameOf } from './space-paths'
 
 export interface Said {
   paths?: string[] | null

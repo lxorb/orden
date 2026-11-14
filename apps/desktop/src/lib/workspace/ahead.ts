@@ -1,6 +1,4 @@
-import { sameSpelling } from '../space-paths'
-import { isRecord, isString } from '../stored'
-import { internal, invoke, isDesktop } from '../tauri'
+import { sameSpelling, isRecord, isString, internal, invoke, isDesktop } from '../platform/src/api'
 import type { Entry, TreeOptions } from '../workspace.svelte'
 
 export interface Plan {

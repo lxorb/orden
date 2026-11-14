@@ -1,5 +1,4 @@
-import { invoke, isDesktop } from '../tauri'
-import { isRecord } from '../stored'
+import { invoke, isDesktop, isRecord } from '../platform/src/api'
 import { plainOrigin } from './address'
 
 const KINDS = ['alert', 'confirm', 'prompt', 'leave'] as const

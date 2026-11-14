@@ -1,5 +1,5 @@
 import { localDate } from '../../region'
-import { nameOf } from '../../space-paths'
+import { nameOf } from '../../platform/src/api'
 import { wordFor } from './words'
 
 export interface Call {

@@ -1,6 +1,4 @@
-import { log } from '../log'
-import { keepJson } from '../stored'
-import { invoke } from '../tauri'
+import { log, keepJson, invoke } from '../platform/src/api'
 import { restate } from './moved'
 import { OUTSIDE } from '../surfaces.svelte'
 import { noteRootsMoved, type RootMoved } from './roots-moved'

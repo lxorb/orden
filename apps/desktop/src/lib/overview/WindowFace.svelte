@@ -5,7 +5,7 @@
 
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
   import { links } from '../link-index.svelte'
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'

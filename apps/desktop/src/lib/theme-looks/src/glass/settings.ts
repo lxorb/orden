@@ -1,8 +1,7 @@
-import { isDesktop, platform } from '../../../tauri'
-import { theme } from '../../../theme/src/api'
+import { isDesktop, platform } from '../../../platform/src/api'
+import { theme, chrome } from '../../../theme/src/api'
 import type { ThemeSetting, ThemeValue } from '../../../theme/src/api'
 import { contentSetting, rangeSetting } from '../translucent-settings'
-import { chrome } from '../../../theme/src/api'
 import { ACCENT_PAIR, DAWN, isOwn, ownOf, PAIRS, shownOf, swatchOf } from './pairs'
 import { DIALS, type Dials } from './tint'
 

@@ -1,7 +1,7 @@
 import { copyText } from '../clipboard'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
-import { openExternal } from '../tauri'
+import { openExternal } from '../platform/src/api'
 import { isWebAddress } from './address'
 import type { Page } from './pages.svelte'
 

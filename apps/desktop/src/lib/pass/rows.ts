@@ -10,7 +10,7 @@ import {
   unwrapVaultKey,
 } from '@orden/pass/keys'
 import type { Content, Envelope, Folder, Item, Vault, VaultMeta } from '@orden/pass/types'
-import { log } from '../log'
+import { log } from '../platform/src/api'
 import { attachmentsUnder } from './item-keys'
 import type { Change, ItemRow, VaultRow, VersionRow } from './local'
 import { readItem, readItems, readVaults, readVersions } from './local'

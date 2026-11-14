@@ -2,17 +2,21 @@ import { untrack } from 'svelte'
 import { links } from '../link-index.svelte'
 import { account } from '../accounts/src/api'
 import { keptShaped } from '../internal/roots'
-import { log } from '../log'
-import { onDisk } from '../on-disk'
+import {
+  log,
+  onDisk,
+  isMarkdownPath,
+  within,
+  withinSpace,
+  invoke,
+  afterQuiet,
+  windows,
+} from '../platform/src/api'
 import { sheetArrived } from '../pdf/sheets.svelte'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
-import { isMarkdownPath, within, withinSpace } from '../space-paths'
 import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync-client/src/api'
-import { invoke } from '../tauri'
-import { afterQuiet } from '../timing'
 import { landing } from '../views/moving'
-import { windows } from '../windows'
 import { workspace } from '../workspace.svelte'
 import { holdsWords, unixLines } from './documents.svelte'
 import type { FileOp } from './file-ops'

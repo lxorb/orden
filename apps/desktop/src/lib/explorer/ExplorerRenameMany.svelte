@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { nameOf, within } from '../space-paths'
+  import { nameOf, within } from '../platform/src/api'
   import { renameMany } from './changes'
   import { inASpace } from './open'
   import { clashing, renamedAll } from './renaming'

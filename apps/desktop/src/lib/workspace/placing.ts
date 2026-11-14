@@ -1,6 +1,4 @@
-import { nameFromTitle, shownName } from '../note-name'
-import { nameOf } from '../space-paths'
-import { invoke, isDesktop, joinPath } from '../tauri'
+import { nameFromTitle, shownName, nameOf, invoke, isDesktop, joinPath } from '../platform/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { sameSite, settleShortcuts } from '../web-tab/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'

@@ -1,6 +1,6 @@
 import { type ImageKind, MOST_IMAGE } from '@orden/online/wire'
 import { busy } from '../busy.svelte'
-import { fileBytes } from '../bytes'
+import { fileBytes } from '../platform/src/api'
 import { imageKindAt, imageKindOf, spokenPaths } from './paste'
 import type { Source } from './source'
 

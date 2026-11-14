@@ -1,6 +1,13 @@
 import { landed } from '../theme/src/api'
-import { isNumber, isRecord, isString, stored, storedText } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import {
+  isNumber,
+  isRecord,
+  isString,
+  stored,
+  storedText,
+  invoke,
+  isDesktop,
+} from '../platform/src/api'
 import { isExtensionPage, isWebAddress, originKey } from './address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'

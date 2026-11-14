@@ -193,7 +193,7 @@ describe('renaming a file whose name the row cannot say back', () => {
 
 describe('the names the crate keeps for devices', () => {
   const paths = readFileSync(
-    fileURLToPath(new URL('../../src-tauri/src/paths.rs', import.meta.url)),
+    fileURLToPath(new URL('../../../../src-tauri/src/paths.rs', import.meta.url)),
     'utf8',
   )
 

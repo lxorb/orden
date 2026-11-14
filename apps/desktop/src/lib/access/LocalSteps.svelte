@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import Copyable from '../Copyable.svelte'
   import CopyButton from '../CopyButton.svelte'
-  import { dur, slide } from '../motion'
+  import { dur, slide } from '../platform/src/api'
   import { type McpClient, mcpLine } from '../agents/mcp'
   import type { AgentsPane } from '../agents/settings/pane.svelte'
 

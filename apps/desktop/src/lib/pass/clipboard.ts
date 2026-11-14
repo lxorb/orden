@@ -1,6 +1,6 @@
 import { sha256Hex } from '@orden/pass/digest'
 import { copyText } from '../clipboard'
-import { waited } from '../timing'
+import { waited } from '../platform/src/api'
 
 export interface Clipboard {
   read(): Promise<string>

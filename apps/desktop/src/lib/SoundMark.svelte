@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dur, fade } from './motion'
+  import { dur, fade } from './platform/src/api'
 
   const { muted = false }: { muted?: boolean } = $props()
 </script>

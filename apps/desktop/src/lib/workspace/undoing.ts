@@ -1,12 +1,17 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
-import { sha256 } from '../bytes'
+import {
+  sha256,
+  onDisk,
+  folderOf,
+  isMarkdownPath,
+  samePath,
+  within,
+  invoke,
+} from '../platform/src/api'
 import { applied, appliedToFile, type Edit, endingsLike } from '../search/replace'
 import { links, type Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
-import { onDisk } from '../on-disk'
-import { folderOf, isMarkdownPath, samePath, within } from '../space-paths'
-import { invoke } from '../tauri'
 import { keptAway } from '../web/away.svelte'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'

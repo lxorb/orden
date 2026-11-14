@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { account } from './accounts/src/api'
   import { joining } from './joining.svelte'
-  import { dur, fade, LAYER, scale } from './motion'
+  import { dur, fade, LAYER, scale } from './platform/src/api'
   import { overlays } from './overlays'
   import { trap } from './trap'
 

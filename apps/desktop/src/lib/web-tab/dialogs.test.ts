@@ -2,8 +2,8 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const told: { id: number; accept: boolean; text: unknown }[] = []
 
-vi.mock('../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../tauri')>()),
+vi.mock('../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
   isDesktop: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'web_dialog_answer') {

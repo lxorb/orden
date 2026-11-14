@@ -1,4 +1,4 @@
-import { invoke } from '../tauri'
+import { invoke } from '../platform/src/api'
 import { placesForgotten } from './place'
 import { siteIcons } from './site-icons.svelte'
 import { visited } from './visited'

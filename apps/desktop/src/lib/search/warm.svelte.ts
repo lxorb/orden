@@ -1,4 +1,4 @@
-import { internal, invoke, isNative } from '../tauri'
+import { internal, invoke, isNative } from '../platform/src/api'
 import { startup } from '../startup.svelte'
 import { mark } from '../trace'
 import { isWarmth, type PapersHeld, said, type Warmth } from './warmth'

@@ -1,5 +1,4 @@
-import { log } from '../log'
-import { invoke } from '../tauri'
+import { log, invoke } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { isExtensionPage, isWebAddress } from './address'
 

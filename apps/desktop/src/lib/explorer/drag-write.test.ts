@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 const written: { under: string; size: number; more: boolean; fresh?: boolean }[] = []
 let refused = ''
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   invoke: (
     command: string,
     args: { under: string; bytes: Uint8Array; more?: boolean; fresh?: boolean },

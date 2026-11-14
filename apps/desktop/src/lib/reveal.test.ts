@@ -6,8 +6,8 @@ const opened: string[] = []
 const shown: string[] = []
 const state = { explorer: false, shows: true }
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
 }))
 vi.mock('./settings.svelte', () => ({

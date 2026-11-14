@@ -17,9 +17,9 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
   return null
 }
 
-vi.mock('../../native', () => ({ Channel: FakeChannel }))
-vi.mock('../../tauri', async (original) => ({
-  ...(await original<typeof import('../../tauri')>()),
+vi.mock('../../crate/src/native', () => ({ Channel: FakeChannel }))
+vi.mock('../../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: fakeInvoke,
 }))
 

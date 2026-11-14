@@ -1,5 +1,4 @@
-import { api, type KeyState } from '../accounts/src/api'
-import { account } from '../accounts/src/api'
+import { api, type KeyState, account } from '../accounts/src/api'
 
 class GlassesKey {
   set = $state(false)

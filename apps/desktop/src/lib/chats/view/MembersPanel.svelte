@@ -5,7 +5,7 @@
   import { copyText } from '../../clipboard'
   import { localNumber } from '../../region'
   import { menu, type MenuEntry } from '../../menu.svelte'
-  import { dur, fly } from '../../motion'
+  import { dur, fly } from '../../platform/src/api'
   import { overlays } from '../../overlays'
   import { Avatar } from '../../accounts-ui/src/api'
   import { showProfile } from '../../accounts-ui/src/api'

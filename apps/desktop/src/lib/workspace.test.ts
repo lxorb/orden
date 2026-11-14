@@ -33,8 +33,8 @@ const holding: { write: Promise<void> | null; read: Promise<void> | null; readPa
 const trash: { id: string; path: string; content: string }[] = []
 const disk: { tree: unknown } = { tree: undefined }
 
-vi.mock('./tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     sent.push({
@@ -143,7 +143,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
-const { answeredCase } = await import('./space-paths')
+const { answeredCase } = await import('./platform/src/space-paths')
 const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')

@@ -107,7 +107,7 @@ const host = vi.hoisted((): Host => ({
   remembered: [],
 }))
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isDesktop: true,
   isNative: true,
   platform: () => host.platform,

@@ -1,10 +1,9 @@
 import { protection } from '../protect/protection.svelte'
 import { canWriteAt } from '../sharing.svelte'
-import { insideSpace, withinSpace } from '../space-paths'
+import { insideSpace, withinSpace, insideOnly } from '../platform/src/api'
 import type { Space } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
 import { said, type Said } from './args'
-import { insideOnly } from './inside'
 
 export interface Note {
   relative: string

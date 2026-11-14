@@ -1,4 +1,4 @@
-import { fromBase64 } from '../bytes'
+import { fromBase64 } from '../platform/src/api'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { dayOf, noteText, type Meta } from './meta'

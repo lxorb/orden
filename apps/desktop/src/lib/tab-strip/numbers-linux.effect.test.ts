@@ -3,7 +3,7 @@ import { expect, test, vi } from 'vitest'
 const opened = vi.hoisted(() => [] as string[])
 const asked = vi.hoisted(() => [] as { command: string; args: unknown }[])
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isDesktop: true,
   invoke: (command: string, args: unknown) => {
     asked.push({ command, args })

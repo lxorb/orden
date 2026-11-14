@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({
   asked: [] as { command: string; args: unknown }[],
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   isDesktop: true,
   invoke: (command: string, args: unknown) => {
     state.asked.push({ command, args })

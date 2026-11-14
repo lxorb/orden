@@ -1,6 +1,6 @@
 import { providePort } from '@orden/contracts'
-import { account } from './accounts/src/api'
 import {
+  account,
   api,
   ApiError,
   BASE,
@@ -10,9 +10,19 @@ import {
   request,
 } from './accounts/src/api'
 import { howFor } from './new-tab'
-import { forget, keep, keepJson, stored, storedText } from './stored'
-import { invoke, isDesktop, isNative, joinPath, platform } from './tauri'
-import { waited } from './timing'
+import {
+  forget,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  invoke,
+  isDesktop,
+  isNative,
+  joinPath,
+  platform,
+  waited,
+} from './platform/src/api'
 import { workspace } from './workspace.svelte'
 import { ROOTS_MOVED, rootsMoved } from './workspace/roots-moved'
 import { hearWrites } from './workspace/write-file'

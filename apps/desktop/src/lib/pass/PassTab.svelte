@@ -4,7 +4,7 @@
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import { onMount, type Snippet, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { dur, fade } from '../motion'
+  import { dur, fade } from '../platform/src/api'
   import { reloading } from '../reloading.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import type { Tab } from '../workspace/documents.svelte'

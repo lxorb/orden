@@ -3,7 +3,7 @@
   import { may } from '@orden/chats'
   import { onMount, untrack } from 'svelte'
   import { localNumber } from '../../region'
-  import { dur, fade } from '../../motion'
+  import { dur, fade } from '../../platform/src/api'
   import { longPress } from '../../longpress'
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'

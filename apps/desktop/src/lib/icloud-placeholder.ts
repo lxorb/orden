@@ -1,4 +1,4 @@
-import { invoke, isNative } from './tauri'
+import { invoke, isNative } from './platform/src/api'
 
 export function placeholderOf(path: string): string {
   const at = path.lastIndexOf('/') + 1

@@ -21,7 +21,7 @@ const sent = vi.hoisted(() => ({
   calls: [] as { command: string; args: Record<string, unknown> }[],
 }))
 
-vi.mock('./tauri', () => ({
+vi.mock('./platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     sent.calls.push({ command, args })
     return Promise.resolve(0)

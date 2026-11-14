@@ -22,7 +22,7 @@ import Server from 'lucide/dist/esm/icons/server.mjs'
 import Cog from 'lucide/dist/esm/icons/settings.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Table from 'lucide/dist/esm/icons/table-2.mjs'
-import { isMarkdownPath } from './space-paths'
+import { isMarkdownPath } from './platform/src/api'
 import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
 
 const PLAIN_TEXT = /\.(txt|text)$/i

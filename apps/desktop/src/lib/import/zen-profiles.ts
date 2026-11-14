@@ -1,5 +1,4 @@
-import { fromBase64 } from '../bytes'
-import { invoke, isDesktop } from '../tauri'
+import { fromBase64, invoke, isDesktop } from '../platform/src/api'
 import { unmozLz4 } from './mozlz4'
 import { type BrowserEngine, mozillaEngine } from './search-engines'
 import type { FolderWords } from './sidebar-made'

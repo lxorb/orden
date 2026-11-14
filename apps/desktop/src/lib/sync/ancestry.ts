@@ -1,6 +1,5 @@
 import { api } from '../accounts/src/api'
-import { sha256 } from '../bytes'
-import { invoke } from '../tauri'
+import { sha256, invoke } from '../platform/src/api'
 
 const AT_ONCE = 100
 

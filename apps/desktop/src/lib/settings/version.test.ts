@@ -12,7 +12,7 @@ const world = vi.hoisted(() => {
   return state
 })
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   get isDesktop() {
     return world.desktop
   },

@@ -1,5 +1,5 @@
 import { fileMark } from '../file-mark'
-import { nameOf, within } from '../space-paths'
+import { nameOf, within } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { openWithSystem } from './commands'

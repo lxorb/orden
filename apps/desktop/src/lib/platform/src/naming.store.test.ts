@@ -176,8 +176,8 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('./pdf/document', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./pdf/document')>()),
+vi.mock('../../pdf/document', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/document')>()),
   pageSizes: (path: string) =>
     (files.get(path) ?? outside.get(path))?.startsWith('%PDF')
       ? Promise.resolve([
@@ -189,7 +189,7 @@ vi.mock('./pdf/document', async (importOriginal) => ({
 
 const sheet = vi.hoisted(() => ({ asked: [] as string[], answer: null as string | null }))
 
-vi.mock('./prompt.svelte', () => ({
+vi.mock('../../prompt.svelte', () => ({
   prompt: {
     choose: (options: { title: string }) => {
       sheet.asked.push(options.title)
@@ -198,7 +198,7 @@ vi.mock('./prompt.svelte', () => ({
   },
 }))
 
-vi.mock('./save-place/door', () => ({
+vi.mock('../../save-place/door', () => ({
   askPlace: () => undefined,
   saveFront: () => undefined,
 }))
@@ -219,12 +219,12 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { nameFault } = await import('./naming')
-const { workspace } = await import('./workspace.svelte')
-const { sync } = await import('./sync.svelte')
-const { unread } = await import('./unread.svelte')
-const { account } = await import('./accounts/src/account.svelte')
-const { isDraft } = await import('./workspace/drafts')
-type RemoteSpace = import('./accounts/src/routes').RemoteSpace
+const { workspace } = await import('../../workspace.svelte')
+const { sync } = await import('../../sync.svelte')
+const { unread } = await import('../../unread.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
+const { isDraft } = await import('../../workspace/drafts')
+type RemoteSpace = import('../../accounts/src/routes').RemoteSpace
 
 const dropped = (path: string, words: string) => ({
   name: path.split('/').pop() ?? path,
@@ -731,7 +731,7 @@ describe('a PDF opened with Orden', () => {
   })
 
   async function opened() {
-    const { showPdfs } = await import('./pdf/handed')
+    const { showPdfs } = await import('../../pdf/handed')
     await showPdfs([OUTSIDE])
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
@@ -817,7 +817,7 @@ describe('a PDF opened with Orden', () => {
   test('and nothing at all when it could not be read', async () => {
     outside.set(OUTSIDE, 'not a paper')
 
-    const { showPdfs } = await import('./pdf/handed')
+    const { showPdfs } = await import('../../pdf/handed')
     await showPdfs([OUTSIDE])
 
     expect(workspace.tabs).toEqual([])

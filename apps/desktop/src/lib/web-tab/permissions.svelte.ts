@@ -1,6 +1,4 @@
-import { invoke, isDesktop } from '../tauri'
-import { withOrWithout } from '../records'
-import { isRecord, Shared } from '../stored'
+import { invoke, isDesktop, withOrWithout, isRecord, Shared } from '../platform/src/api'
 import { originKey } from './address'
 
 const STORAGE_KEY = 'orden:web-grants'

@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const heads = vi.hoisted(() => new Map<string, unknown[]>())
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: (command: string, args: Record<string, unknown>) =>

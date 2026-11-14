@@ -1,5 +1,4 @@
-import { ASSET_ROUTE } from './asset-route'
-import { isNative } from '../tauri'
+import { ASSET_ROUTE, isNative } from '../platform/src/api'
 
 export function serveAssets(): void {
   if (isNative) return

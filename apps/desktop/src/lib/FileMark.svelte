@@ -4,7 +4,7 @@
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { readIcon, takesTint } from './icons'
-  import { samePath } from './space-paths'
+  import { samePath } from './platform/src/api'
   import { terminalMark } from './surfaces.svelte'
   import { workspace } from './workspace.svelte'
 

@@ -16,7 +16,7 @@ vi.mock('./accounts/src/client', () => ({
 vi.mock('./accounts/src/account.svelte', () => ({ account: { token: null } }))
 
 const { feedback } = await import('./feedback.svelte')
-const { log } = await import('./log')
+const { log } = await import('./platform/src/log')
 
 beforeEach(() => {
   api.answer = null

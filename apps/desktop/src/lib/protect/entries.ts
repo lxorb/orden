@@ -1,7 +1,7 @@
 import { busy } from '../busy.svelte'
 import type { IconNode } from 'lucide'
 import type { MenuItem } from '../menu-item'
-import { samePath, within } from '../space-paths'
+import { samePath, within } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { protectionOn } from './gate'
 import { unlocks } from './unlocked.svelte'

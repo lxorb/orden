@@ -1,5 +1,4 @@
-import { nameOf } from './space-paths'
-import { invoke } from './tauri'
+import { nameOf, invoke } from './platform/src/api'
 
 const ASKED = 'orden-dropped-paths'
 const TRIES = 20

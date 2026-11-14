@@ -1,6 +1,5 @@
 import { links } from '../link-index.svelte'
-import { onDisk } from '../on-disk'
-import { invoke } from '../tauri'
+import { onDisk, invoke } from '../platform/src/api'
 import { inFileTurn, writeInTurn, writeTaking, wroteHere } from './in-turn'
 
 export interface Hearing {

@@ -11,7 +11,7 @@ function base64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
 }
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: async (command: string, args: Record<string, unknown>) => {

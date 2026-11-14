@@ -9,8 +9,8 @@ vi.stubGlobal('localStorage', {
 
 const opened: (string | undefined)[] = []
 
-vi.mock('./tauri', async (actual) => ({
-  ...(await actual<typeof import('./tauri')>()),
+vi.mock('./platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
 }))
 vi.mock('./terminal/open', () => ({

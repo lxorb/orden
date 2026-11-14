@@ -1,5 +1,5 @@
 import type { PanelSide } from './workspace.svelte'
-import { forget, isNumber, keepJson, stored } from './stored'
+import { forget, isNumber, keepJson, stored } from './platform/src/api'
 import { viewport } from './viewport.svelte'
 
 const STORAGE_KEY = 'orden:sidebar-width'

@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
-  import { fly, LAYER } from '../motion'
+  import { fly, LAYER } from '../platform/src/api'
   import { overlays } from '../overlays'
 
   const {

@@ -1,5 +1,5 @@
-import { invoke } from '../native'
-import { joinPath } from '../tauri'
+import { invoke } from '../crate/src/api'
+import { joinPath } from '../platform/src/api'
 import type { InternalBytes } from './folder'
 
 export function folderBytes(folder: string): InternalBytes {

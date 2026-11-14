@@ -16,8 +16,8 @@ Element.prototype.animate = () =>
 const told: { id: number; allow: boolean }[] = []
 const focused = vi.fn(() => Promise.resolve())
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'web_answer') told.push({ id: Number(args.id), allow: args.allow === true })

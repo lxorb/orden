@@ -3,7 +3,7 @@ import { chorded } from './keys'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
 import { canWriteAt } from './sharing.svelte'
-import { folderOf, insideSpace, samePath } from './space-paths'
+import { folderOf, insideSpace, samePath } from './platform/src/api'
 import {
   type Bookmark,
   filedUnder,

@@ -8,7 +8,7 @@ const disk = new Map<string, string>()
 
 let holding: { command: string; until: Promise<void> } | null = null
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: false,
   platform: () => 'linux',
   isDesktop: false,

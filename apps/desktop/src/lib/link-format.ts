@@ -1,5 +1,5 @@
 import { encodeTarget, slugify, wikilinkCannotName } from '@orden/markdown/links'
-import { folderOf, nameOf, relativePath } from './space-paths'
+import { folderOf, nameOf, relativePath } from './platform/src/api'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
 

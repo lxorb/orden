@@ -6,7 +6,7 @@ const onDisk = new Set<string>()
 
 let typed = ''
 
-vi.mock('../tauri', () => ({
+vi.mock('../platform/src/tauri', () => ({
   isNative: true,
   isMobile: false,
   isDesktop: true,

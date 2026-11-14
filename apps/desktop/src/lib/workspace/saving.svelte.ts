@@ -1,14 +1,22 @@
 import { flushTableEdits } from '@orden/editor'
 import { freePath } from '@orden/markdown/paths'
-import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
+import {
+  SAVE_AT_MOST,
+  SAVE_DELAY,
+  saveRetryDelay,
+  log,
+  onDisk,
+  movedTo,
+  nameOf,
+  samePath,
+  within,
+  invoke,
+  joinPath,
+  afterQuiet,
+} from '../platform/src/api'
 import { flushCardEdits } from '../canvas/writing'
 import { links } from '../link-index.svelte'
-import { log } from '../log'
-import { onDisk } from '../on-disk'
 import { owesLast, surfacesToWords, writeOwed } from '../parting'
-import { movedTo, nameOf, samePath, within } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
-import { afterQuiet } from '../timing'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
 import type { FileOp } from './file-ops'
 import { isDraft } from './drafts'
@@ -357,7 +365,7 @@ export class Saving {
 
   private async claim(note: NoteDoc, folder: string, file: string): Promise<string | null> {
     const { pairOf } = await import('../pages/held')
-    const { holdIfFree } = await import('../locks')
+    const { holdIfFree } = await import('../platform/src/api')
     const found: string[] = []
     for (;;) {
       const listed = this.ws.nameTaken(folder)

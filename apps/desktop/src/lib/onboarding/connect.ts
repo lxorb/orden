@@ -1,7 +1,7 @@
 import { message } from '../message'
 import type { Account } from '../ai/accounts'
 import type { LocalKind, ProviderKind } from '../ai/providers'
-import { invoke, isDesktop, openExternal } from '../tauri'
+import { invoke, isDesktop, openExternal } from '../platform/src/api'
 import type { Compatible, Plan } from './catalog'
 
 export type Connecting =

@@ -1,5 +1,5 @@
 import { linkTo } from '../composer'
-import { isRecord, isNumber, isString } from '../stored'
+import { isRecord, isNumber, isString } from '../platform/src/api'
 
 export const SIDECAR = '.highlights.json'
 

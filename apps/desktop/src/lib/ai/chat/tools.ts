@@ -1,4 +1,4 @@
-import { isDesktop, invoke } from '../../tauri'
+import { isDesktop, invoke } from '../../platform/src/api'
 import type { Provider } from '../providers'
 import { READER_TABS } from './choices'
 import type { Mode, ToolOutput } from './types'
