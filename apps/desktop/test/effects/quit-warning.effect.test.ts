@@ -33,10 +33,11 @@ const { setPty } = await import('../../src/lib/terminal/src/running')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { anythingRuns } = await import('../../src/lib/parting')
 type Tab = import('../../src/lib/workspace.svelte').Tab
+const aiChat = await import('../../src/lib/ai-chat/src/api')
 await Promise.all([
-  import('../../src/lib/ai/chat/sends'),
+  aiChat.chatSends(),
   import('../../src/lib/ai-providers/src/store.svelte'),
-  import('../../src/lib/ai/sidebar/chat.svelte'),
+  aiChat.chatStore(),
 ])
 
 function terminal(id: string, shown: string, program: string | null): Tab {
@@ -183,7 +184,7 @@ test("an update's restart asks the same way", async () => {
 
 test('an AI turn in flight is a row, named by its thread', async () => {
   busy.set('pty-a', false)
-  const { watching } = await import('../../src/lib/ai/chat/sends')
+  const { watching } = await aiChat.chatSends()
   let finish: () => void = () => undefined
   const engine = watching({
     send: () =>

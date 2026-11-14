@@ -1,4 +1,5 @@
 import { providePort, type Stopping } from '@orden/contracts'
+import { chatSends, chatStore } from './ai-chat/src/api'
 import { invoke } from './platform/src/api'
 import { ptyOf, runningTabs } from './terminal/src/api'
 import { workspace } from './workspace.svelte'
@@ -35,7 +36,7 @@ providePort('quit.terminal', {
 
 providePort('quit.thread', {
   rows: async (window) => {
-    const { answering } = await import('./ai/chat/sends')
+    const { answering } = await chatSends()
     const threads = answering()
     if (!threads.length) return []
 
@@ -55,7 +56,7 @@ providePort('quit.thread', {
   },
   show: async (row) => {
     workspace.showPanel('ask')
-    const { chat } = await import('./ai/sidebar/chat.svelte')
+    const { chat } = await chatStore()
     await chat.openThread(row.id)
   },
 })

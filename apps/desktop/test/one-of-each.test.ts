@@ -337,8 +337,8 @@ describe('the switch', () => {
       'lib/GraphControls.svelte',
       'lib/Palette.svelte',
       'lib/ShareSheet.svelte',
-      'lib/ai/DoWithAiCard.svelte',
-      'lib/ai/sidebar/ModelPicker.svelte',
+      'lib/ai-sidebar/src/DoWithAiCard.svelte',
+      'lib/ai-sidebar/src/ModelPicker.svelte',
       'lib/chats-client/src/view/PollSheet.svelte',
       'lib/import/src/ImportSheet.svelte',
       'lib/pass-ui/src/SwitchRow.svelte',
@@ -606,7 +606,7 @@ describe('the sentence behind a setting', () => {
       'lib/access/Access.svelte',
       'lib/accounts-ui/src/ProfileRows.svelte',
       'lib/agents/src/settings/Words.svelte',
-      'lib/ai/DoWithAiCard.svelte',
+      'lib/ai-sidebar/src/DoWithAiCard.svelte',
     ])
   })
 })

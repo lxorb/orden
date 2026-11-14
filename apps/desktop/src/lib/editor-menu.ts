@@ -37,6 +37,7 @@ import {
   turnBlocksInto,
 } from '@orden/editor/menu'
 import { account } from './accounts/src/api'
+import { rewritingStore } from './ai-chat/src/api'
 import { chatsOn } from './settings.svelte'
 import { canTranscribe } from './ai-providers/src/api'
 import { copySelection, copyText, cutSelection } from './ui-controls/src/api'
@@ -243,7 +244,7 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
 }
 
 async function rewrite(view: EditorView) {
-  const { rewriting } = await import('./ai/rewriting.svelte')
+  const { rewriting } = await rewritingStore()
   rewriting.show(view)
 }
 

@@ -104,7 +104,7 @@ export const APP_FOLDERS = [
   'accounts-ui',
   'agent-docs',
   'agents',
-  'ai',
+  'ai-chat',
   'ai-providers',
   'back-swipe',
   'canvas',

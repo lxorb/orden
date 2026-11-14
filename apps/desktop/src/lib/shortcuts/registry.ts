@@ -11,7 +11,7 @@ import { type ExportId, EXPORT_KEYS, labelOf } from '../export-formats/src/api'
 import { revealPanel, stepRegionFocus } from '../focus'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
-import { askQuickly } from '../ai/quick-door'
+import { askQuickly, chatQuoting } from '../ai-chat/src/api'
 import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/src/api'
 import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../settings.svelte'
@@ -802,7 +802,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Alt-k',
     run: () => {
-      if (!__EVEN_PLUGIN__) void import('../ai/sidebar/quote').then((one) => one.quoteSelection())
+      if (!__EVEN_PLUGIN__) void chatQuoting().then((one) => one.quoteSelection())
     },
   },
   {

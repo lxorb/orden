@@ -1,0 +1,119 @@
+<script lang="ts">
+  import { dropOver } from '../../drag-paths'
+  import { cubicOut } from 'svelte/easing'
+  import { flip } from 'svelte/animate'
+  import { Cross } from '../../ui-kit/src/api'
+  import { dur, fly } from '../../platform/src/api'
+  import { chat } from './chat-parts'
+
+  const queue = $derived(chat.queue)
+  let dragging = $state<number | null>(null)
+
+  function onDrop(event: DragEvent, to: number) {
+    event.preventDefault()
+    if (dragging !== null && dragging !== to) chat.moveQueued(dragging, to)
+    dragging = null
+  }
+</script>
+
+{#if queue.length}
+  <ol class="queue">
+    {#each queue as one, index (one.id)}
+      <li
+        class="queued"
+        class:dragging={dragging === index}
+        draggable="true"
+        ondragstart={() => (dragging = index)}
+        ondragend={() => (dragging = null)}
+        use:dropOver={(event) => event.preventDefault()}
+        ondrop={(event) => onDrop(event, index)}
+        animate:flip={{ duration: dur(150) }}
+        transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
+      >
+        <svg class="grip" viewBox="0 0 13 13" aria-hidden="true"
+          ><path d="M3.5 4h6M3.5 6.5h6M3.5 9h6" /></svg
+        >
+        <button class="words" dir="auto" title="Edit" onclick={() => chat.editQueued(one.id)}
+          >{one.text}</button
+        >
+        <button
+          class="orden-glyph small"
+          title="Send into the running answer"
+          aria-label="Send into the running answer"
+          onclick={() => chat.steerQueued(one.id)}
+        >
+          <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
+        </button>
+        <button
+          class="orden-glyph small"
+          title="Remove"
+          aria-label="Remove"
+          onclick={() => chat.unqueue(one.id)}
+        >
+          <Cross />
+        </button>
+      </li>
+    {/each}
+  </ol>
+{/if}
+
+<style>
+  .queue {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .queued {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding-inline-start: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--ink-wash);
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .queued.dragging {
+    opacity: 0.4;
+  }
+
+  .grip {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    fill: none;
+    stroke: var(--faint);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+  }
+
+  .words {
+    flex: 1;
+    min-width: 0;
+    padding: 3px 4px;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    text-align: start;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  .small {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+  }
+
+  .small svg {
+    stroke-width: 1.3;
+  }
+</style>

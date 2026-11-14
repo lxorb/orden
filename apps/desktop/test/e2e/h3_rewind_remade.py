@@ -9,7 +9,7 @@ async () => {
   const root = ws.activeSpace.root
   const sid = ws.activeSpace.id
   const docs = await import('/src/lib/agent-docs/src/index.ts')
-  const { review } = await import('/src/lib/ai/review/review.svelte.ts')
+  const { review } = await import('/src/lib/ai-chat/src/review/review.svelte.ts')
   const { invoke } = await import('/src/lib/platform/src/api.ts')
   const nap = (ms = 8) => new Promise((go) => setTimeout(go, ms))
   const read = (rel) => invoke('read_note', { path: root + '/' + rel }).catch(() => null)

@@ -55,11 +55,11 @@
   let chatNames = $state.raw<Record<string, string>>({})
   $effect(() => {
     if (!sites.some((one) => one.site.startsWith('chat:'))) return
-    const port = portOf('chats.names')
+    const port = portOf('chats')
     if (!port.ok) return
-    void port.value.names().then((names) => {
+    void port.value.list().then((list) => {
       chatNames = Object.fromEntries(
-        Object.entries(names).map(([id, name]) => [`chat:${id}`, `#${name}`]),
+        list.map((one) => [`chat:${one.id}`, `#${one.name ?? one.id}`]),
       )
     })
   })

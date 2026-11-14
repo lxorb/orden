@@ -126,7 +126,7 @@ export {
   whenPortProvided,
 } from './ports'
 export type { AgentPorts, AgentWritesPort } from './agents'
-export type { ChatNamesPort, ChatPorts } from './chats'
+export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'
 export type { PreviewedTab, PreviewPorts, ScreenPreview, TerminalPreviewPort } from './previews'
 export type { TerminalLinesPort, TerminalPorts, TerminalShell } from './terminal'
@@ -134,6 +134,7 @@ export type {
   EngineTaken,
   OfferedEngine,
   PressedKey,
+  WebClip,
   WebLendingPort,
   WebPageSeen,
   WebPagesPort,

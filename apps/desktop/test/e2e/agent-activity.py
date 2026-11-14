@@ -96,7 +96,7 @@ def drive(page: Page, scheme: str) -> None:
         f"ask('{AGENT}', 'paying', 'Place order on shop.example', 'shop.example', '{tab}')",
     )
     page.evaluate("() => window.ordenApp.workspace.showPanel('ask')")
-    page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
+    page.evaluate("() => import('/src/lib/ai-chat/src/store/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
     wait_for(page, f"document.querySelector('.orden-row.agent[data-agent=\"{AGENT}\"]')", "the agent's row")
     row = page.evaluate(
         f"""() => {{

@@ -1150,6 +1150,7 @@ providePort('web.pages', {
   addressOf: (tab) => pages.addressOf(tab),
   loadingOf: (tab) => pages.loadingOf(tab),
   shoot: (tab) => pages.shoot(tab),
+  clip: (tab, selection) => pages.read(tab, selection),
   faviconOf: (url) => favicons.of(url),
   holdStill: () => pages.holdStill(),
   letGo: () => pages.letGo(),

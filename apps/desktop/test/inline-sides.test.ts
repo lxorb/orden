@@ -20,7 +20,7 @@ function componentFiles(dir: string): string[] {
 const PHYSICAL: Record<string, string> = {
   'lib/Titlebar.svelte': 'the traffic lights sit on the left of a Mac window in every language',
   'lib/CanvasBar.svelte': 'the bar is placed where it was dropped, at a point on the screen',
-  'lib/ai/sidebar/Conversation.svelte': 'half its own width back, to centre it on 50%',
+  'lib/ai-sidebar/src/Conversation.svelte': 'half its own width back, to centre it on 50%',
 }
 
 test('a margin or padding beside the words follows the reading direction', () => {

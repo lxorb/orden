@@ -80,7 +80,7 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
     page.evaluate(SETUP, ORIGIN)
-    page.evaluate("async () => (await import('/src/lib/ai/quick.svelte.ts')).quick.show()")
+    page.evaluate("async () => (await import('/src/lib/ai-chat/src/quick.svelte.ts')).quick.show()")
     wait_for(page, "document.querySelector('.quick textarea')", "the quick question")
     page.locator(".quick textarea").click()
     page.keyboard.type("Tell me a long story")

@@ -246,7 +246,7 @@ describe('what a side shows', () => {
   test('finds the panels', () => {
     expect(shown).toContain('lib/scratchpad/src/ScratchpadCard.svelte')
     expect(shown).toContain('lib/tasks-views/src/TodosPanel.svelte')
-    expect(shown).toContain('lib/ai/sidebar/ChatPanel.svelte')
+    expect(shown).toContain('lib/ai-sidebar/src/ChatPanel.svelte')
   })
 
   test.each(shown.map((name) => [name]))('%s stands in it', (name) => {
@@ -272,7 +272,7 @@ describe('what runs out under something', () => {
   const style = (name: string) => components.find((one) => one.name === name)?.text ?? ''
 
   test('the AI panel’s thread fades by a mask', () => {
-    expect(style('lib/ai/sidebar/Conversation.svelte')).toMatch(
+    expect(style('lib/ai-sidebar/src/Conversation.svelte')).toMatch(
       /\.talk\s*\{[^}]*mask-image:\s*linear-gradient\(to bottom/,
     )
   })
@@ -289,7 +289,7 @@ describe('what runs out under something', () => {
 
 describe('what the AI chat is filled with', () => {
   const chat = components.filter((one) =>
-    /^lib\/(?:ai\/(?:sidebar|review)\/|QuickQuestion\.svelte$)/.test(one.name),
+    /^lib\/ai-sidebar\/src\/(?!(?:Answer|Thinking|DoWithAiCard)\.svelte$)/.test(one.name),
   )
   const style = (name: string) => chat.find((one) => one.name === name)?.text ?? ''
 
@@ -298,10 +298,10 @@ describe('what the AI chat is filled with', () => {
   })
 
   test('the reader’s message is a wash of the ink over whatever it stands on', () => {
-    expect(style('lib/ai/sidebar/Conversation.svelte')).toMatch(
+    expect(style('lib/ai-sidebar/src/Conversation.svelte')).toMatch(
       /\n\s*\.bubble\s*\{[^}]*background:\s*var\(--ink-wash\)/,
     )
-    expect(style('lib/QuickQuestion.svelte')).toMatch(
+    expect(style('lib/ai-sidebar/src/QuickQuestion.svelte')).toMatch(
       /\n\s*\.said\s*\{[^}]*background:\s*var\(--ink-wash\)/,
     )
   })

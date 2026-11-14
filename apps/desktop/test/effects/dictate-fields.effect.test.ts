@@ -6,26 +6,29 @@ const world = vi.hoisted((): { provider: object | null } => ({
 }))
 
 vi.mock('../../src/lib/ai-providers/src/api', () => ({ transcriberNow: () => world.provider }))
-vi.mock('../../src/lib/ai/quick.svelte', () => ({
-  quick: {
-    open: true,
-    ready: true,
-    question: '',
-    turns: [],
-    running: false,
-    trouble: null,
-    context: { kind: 'note', name: 'Quarterly plan' },
-    texts: [],
-    close: () => undefined,
-    ask: () => undefined,
-    stop: () => undefined,
-    drop: () => undefined,
-  },
+vi.mock('../../src/lib/ai-chat/src/api', () => ({
+  sidebarParts: () =>
+    Promise.resolve({
+      quick: {
+        open: true,
+        ready: true,
+        question: '',
+        turns: [],
+        running: false,
+        trouble: null,
+        context: { kind: 'note', name: 'Quarterly plan' },
+        texts: [],
+        close: () => undefined,
+        ask: () => undefined,
+        stop: () => undefined,
+        drop: () => undefined,
+      },
+    }),
 }))
 
 const { engines, voice } = await import('../../src/lib/dictation/src/api')
 const QuickAdd = (await import('../../src/lib/quick-add/src/QuickAdd.svelte')).default
-const QuickQuestion = (await import('../../src/lib/QuickQuestion.svelte')).default
+const QuickQuestion = (await import('../../src/lib/ai-sidebar/src/QuickQuestion.svelte')).default
 
 let target: HTMLElement
 let drawn: ReturnType<typeof mount> | undefined
