@@ -17,7 +17,8 @@
     "sync-client",
     "sync-core",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "emoji"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -33,8 +34,6 @@
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
-    "apps/desktop/src/lib/emoji/EmojiPicker.svelte",
-    "apps/desktop/src/lib/emoji/recent.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/longpress.ts",

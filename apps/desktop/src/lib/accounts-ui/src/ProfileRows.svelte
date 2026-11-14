@@ -200,10 +200,10 @@
     </div>
 
     {#if picking}
-      {#await Promise.all( [import('../../chat-kit/src/api'), import('../../emoji/EmojiPicker.svelte')] ) then [float, picker]}
+      {#await Promise.all( [import('../../chat-kit/src/api'), import('../../emoji/src/api')] ) then [float, picker]}
         <div use:portal>
           <float.Float at={picking} label="Emoji" onclose={() => (picking = null)}>
-            <picker.default
+            <picker.EmojiPicker
               onpick={(emoji: string) => {
                 picking = null
                 withStatus({ emoji })

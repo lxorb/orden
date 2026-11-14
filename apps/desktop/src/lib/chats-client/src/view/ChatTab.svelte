@@ -3,7 +3,7 @@
   import { onDestroy, untrack } from 'svelte'
   import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag } from '../../../drag-paths'
   import { pages } from '../../../web-tab/pages.svelte'
-  import EmojiPicker from '../../../emoji/EmojiPicker.svelte'
+  import { EmojiPicker } from '../../../emoji/src/api'
   import { shortcuts } from '../../../shortcuts.svelte'
   import { samePath } from '../../../platform/src/api'
   import { viewport } from '../../../ui-kit/src/api'

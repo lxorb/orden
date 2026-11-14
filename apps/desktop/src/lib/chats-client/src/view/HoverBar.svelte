@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Message } from '@orden/chats'
   import { dur, fade } from '../../../platform/src/api'
-  import { emojiRecent } from '../../../emoji/recent.svelte'
+  import { emojiRecent } from '../../../emoji/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
   import { tip } from './tips.svelte'
 

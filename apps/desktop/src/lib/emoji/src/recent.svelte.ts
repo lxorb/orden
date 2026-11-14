@@ -1,4 +1,4 @@
-import { isNumber, keepJson, stored, stringList } from '../platform/src/api'
+import { isNumber, keepJson, stored, stringList } from '../../platform/src/api'
 import type { Tone } from './tones'
 
 const RECENT_KEY = 'orden:emoji-recent'
