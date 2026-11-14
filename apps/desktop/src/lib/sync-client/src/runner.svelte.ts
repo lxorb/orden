@@ -13,7 +13,8 @@ import {
   windows,
 } from '../../platform/src/api'
 import { type Pairing, pairSpaces } from '../../space-pairing'
-import { readMirror, type Mirror } from '../../sync/mirror'
+import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
+import { type HoldCheck, spend } from '@orden/sync-core'
 import { isRecord } from './shape'
 import { type SyncFileDoer, type SyncFileOp, whenPortProvided } from '@orden/contracts'
 import { owesAtTheEnd, owesLast, writing } from '../../parting'
@@ -56,7 +57,6 @@ import { type Leadership, leadSync } from './lead'
 import { forgetMadeDeviceId, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
-import { type Holding, spend } from '../../sync/holding'
 import type { Carried } from './papers-carried'
 import { holdsDocument, joinsAs, shapeOf, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
@@ -121,7 +121,7 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
 async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
   const waiting = (path: string) => /^\.(orden|nib)-moving-/.test(path.split('/').pop() ?? '')
   if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
-  const { asidesBack } = await import('../../sync/pass')
+  const { asidesBack } = await notePass()
   return {
     cursor: v1.cursor,
     notes: await asidesBack(root, v1.notes, v1.moving),
@@ -1261,7 +1261,7 @@ class Runner {
     return isIdAt(said) ? said : { none: 'not-running' }
   }
 
-  async holds(path: string, how: Holding = {}): Promise<boolean> {
+  async holds(path: string, how: HoldCheck = {}): Promise<boolean> {
     if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
     if (keptAway.at(path)) return true

@@ -23,17 +23,20 @@ import { startup } from './startup.svelte'
 import { rooms } from './collab/src/api'
 import { modes } from './modes.svelte'
 import {
+  type Folded,
+  type Joined,
   MIRRORS_KEY,
   type Mirror,
+  mirrorHolding,
   newMirror,
+  notePass,
+  record,
   savedRecord,
   type Tracked,
+  type Waiting,
   within,
-} from './sync/mirror'
-import type { Holding } from './sync/holding'
-import type { Joined, Waiting } from './sync/pass'
-import { record } from './sync/record.svelte'
-import type { Folded } from './sync/web-copies'
+} from './sync-mirror/src/api'
+import type { HoldCheck } from '@orden/sync-core'
 import { workspace } from './workspace.svelte'
 import { sayEntryIds } from './workspace/entry-ids'
 import type { FileOp } from './workspace/file-ops'
@@ -291,7 +294,7 @@ class Sync {
     const held = new Set(record.clashes.map((one) => one.id))
 
     try {
-      const { movedHere } = await import('./sync/pass')
+      const { movedHere } = await notePass()
       for (const mirror of Object.values(this.mirrors)) {
         if (await movedHere(mirror, token, from, to, held, (one) => record.clash(one))) this.save()
       }
@@ -528,12 +531,12 @@ class Sync {
     return moving ? { id: moving.id, version: moving.version, hash: moving.hash } : null
   }
 
-  async holds(path: string, how: Holding = {}): Promise<boolean> {
+  async holds(path: string, how: HoldCheck = {}): Promise<boolean> {
     if (V2 && this.v2) return this.v2.holds(path, how)
     for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
       if (relative === null) continue
-      const { mirrorHolds } = await import('./sync/holding')
+      const { mirrorHolds } = await mirrorHolding()
       return mirrorHolds(mirror, relative, path, how)
     }
     return false
@@ -629,7 +632,7 @@ class Sync {
     let shown = false as boolean
 
     try {
-      const { pull, push } = await import('./sync/pass')
+      const { pull, push } = await notePass()
       const { eachDue } = await import('./sync-client/src/api')
       this.respell()
       const mirrors = new Map(Object.values(this.mirrors).map((one) => [one.root, one]))

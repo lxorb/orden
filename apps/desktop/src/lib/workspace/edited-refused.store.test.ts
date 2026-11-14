@@ -23,8 +23,8 @@ const { workspace } = await import('../workspace.svelte')
 const { startAcross } = await import('./across')
 await startAcross()
 const { writeEdited } = await import('./in-turn')
-const { newMirror } = await import('../sync/mirror')
-const { push } = await import('../sync/pass')
+const { newMirror, notePass } = await import('../sync-mirror/src/api')
+const { push } = await notePass()
 
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`

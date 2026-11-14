@@ -1,6 +1,6 @@
 import { account } from './accounts/src/api'
 import { prompt } from './ui-kit/src/api'
-import { MIRRORS_KEY, savedRecord } from './sync/mirror'
+import { meetingAgain, MIRRORS_KEY, returning, savedRecord } from './sync-mirror/src/api'
 import { rootedAt, stored } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 
@@ -10,12 +10,12 @@ export async function settleLocalNotes(): Promise<void> {
     const user = account.user
     if (!token || !user) return
 
-    const { apartName, asksOnReturn, baseFor } = await import('./sync/returning')
+    const { apartName, asksOnReturn, baseFor } = await returning()
 
     const base = baseFor(savedRecord(stored(MIRRORS_KEY)), user.id)
     if (base === 'mine') return
 
-    const { meeting } = await import('./sync/meeting')
+    const { meeting } = await meetingAgain()
     const met = await meeting(token, workspace.spaces, account.spaces)
     if (!asksOnReturn(base, met.length > 0)) return
 

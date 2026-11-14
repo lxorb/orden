@@ -1,0 +1,14 @@
+{
+  "name": "sync-mirror",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "accounts", "markdown", "platform", "scan", "sync-core"],
+  "pending": [
+    "apps/desktop/src/lib/agents-seed.ts",
+    "apps/desktop/src/lib/icloud-placeholder.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/welcome.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/file-ops.ts",
+    "apps/desktop/src/lib/workspace/in-turn.ts"
+  ]
+}

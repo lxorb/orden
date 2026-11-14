@@ -1,5 +1,5 @@
-import { invoke } from '../platform/src/api'
-import { writeTaking } from '../workspace/in-turn'
+import { invoke } from '../../platform/src/api'
+import { writeTaking } from '../../workspace/in-turn'
 
 export class NotWritten extends Error {
   constructor(

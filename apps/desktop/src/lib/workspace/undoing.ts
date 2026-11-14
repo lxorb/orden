@@ -11,7 +11,7 @@ import {
 } from '../platform/src/api'
 import { applied, appliedToFile, type Edit, endingsLike } from '@orden/scan/search/replace'
 import { links, type Retargeting } from '../link-index.svelte'
-import type { Holding } from '../sync/holding'
+import type { HoldCheck } from '@orden/sync-core'
 import { keptAway } from '../web/away.svelte'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
@@ -274,7 +274,7 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
 
 export async function accountHoldsAll(
   path: string,
-  holds: (path: string, how: Holding) => Promise<boolean>,
+  holds: (path: string, how: HoldCheck) => Promise<boolean>,
 ): Promise<boolean> {
   const options = { papers: true, every: true, showHidden: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)

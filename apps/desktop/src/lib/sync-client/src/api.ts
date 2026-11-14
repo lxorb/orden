@@ -10,7 +10,6 @@ export {
 export { aloneHere } from './budget'
 export { connect } from './connect.svelte'
 export type { Core } from './core'
-export { syncDeletes } from './deletes'
 export { default as HeldMark } from './HeldMark.svelte'
 export { deviceId, hub } from './hub.svelte'
 export { type Leadership, leadSync } from './lead'

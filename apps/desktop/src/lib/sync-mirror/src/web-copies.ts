@@ -1,6 +1,6 @@
-import { log, invoke } from '../platform/src/api'
+import { log, invoke } from '../../platform/src/api'
 import { sameWebNote, settleShortcuts } from '@orden/scan/settle'
-import type { Entry } from '../workspace.svelte'
+import type { Entry } from '../../workspace.svelte'
 import { writeDown } from './write-down'
 
 const STAMP = / \(from another device \d{4}-\d{2}-\d{2}\)(?: \d+)?/gu

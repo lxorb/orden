@@ -5,8 +5,8 @@ import {
 } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { conflictPath } from '@orden/markdown/paths'
-import { inForeignCopy, hash32, isEntryId } from '@orden/sync-core'
-import { api, ApiError, fromServer, type RemoteNote, type SpaceFile } from '../accounts/src/api'
+import { inForeignCopy, hash32, isEntryId, syncDeletes } from '@orden/sync-core'
+import { api, ApiError, fromServer, type RemoteNote, type SpaceFile } from '../../accounts/src/api'
 import {
   sha256,
   log,
@@ -22,12 +22,11 @@ import {
   invoke,
   joinPath,
   passing,
-} from '../platform/src/api'
-import { evictedHere } from '../icloud-placeholder'
-import { syncMark } from '../surfaces.svelte'
+} from '../../platform/src/api'
+import { evictedHere } from '../../icloud-placeholder'
+import { syncMark } from '../../surfaces.svelte'
 import { settleShortcuts } from '@orden/scan/settle'
-import { isUntouchedWelcome } from '../welcome'
-import { syncDeletes } from '../sync-client/src/api'
+import { isUntouchedWelcome } from '../../welcome'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import {
@@ -40,7 +39,7 @@ import {
 } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
-import type { Entry } from '../workspace.svelte'
+import type { Entry } from '../../workspace.svelte'
 
 function ordered<T extends { path: string }>(
   notes: readonly T[],

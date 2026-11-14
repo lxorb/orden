@@ -1,5 +1,5 @@
 import { holderOf } from '@orden/markdown/pages'
-import type { Mirror, Moving, Tracked, Untold } from '../../sync/mirror'
+import type { Mirror, Moving, Tracked, Untold } from '../../sync-mirror/src/api'
 import type { Core } from './core'
 import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'

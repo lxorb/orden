@@ -102,7 +102,7 @@ vi.mock('../../ui-kit/src/busy.svelte', () => ({
 }))
 
 const { inRooms, rooms } = await import('./rooms.svelte')
-const { record } = await import('../../sync/record.svelte')
+const { record } = await import('../../sync-mirror/src/api')
 const { NoteDoc } = await import('../../workspace/documents.svelte')
 
 type Doc = InstanceType<typeof NoteDoc>

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { ApiError } = await import('../accounts/src/client')
+const { ApiError } = await import('../../accounts/src/api')
 
 const fake = vi.hoisted(() => {
   interface Entry {
@@ -317,13 +317,13 @@ const fake = vi.hoisted(() => {
   }
 })
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: fake.invoke,
 }))
 
-vi.mock('../accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../accounts/src/client')>()),
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
   api: fake.api,
 }))
 
@@ -1425,7 +1425,7 @@ describe('a note the mirror has no entry for', () => {
   })
 
   test('is simply replaced when what is here is the untouched welcome note', async () => {
-    const { WELCOME, WELCOME_NAME } = await import('../welcome')
+    const { WELCOME, WELCOME_NAME } = await import('../../welcome')
     const { mirror } = unrecorded(WELCOME_NAME, WELCOME, '# the account’s own read me\n')
 
     await pull(mirror, 'token', NOBODY)

@@ -1,22 +1,12 @@
-import { sha256, invoke } from '../platform/src/api'
+import { sha256, invoke } from '../../platform/src/api'
+import { type HoldCheck, spend } from '@orden/sync-core'
 import type { Mirror } from './mirror'
-
-export interface Holding {
-  modified?: number
-  budget?: { left: number }
-}
-
-export function spend(how: Holding, size: number): boolean {
-  if (!how.budget) return true
-  how.budget.left -= size
-  return how.budget.left >= 0
-}
 
 export async function mirrorHolds(
   mirror: Mirror,
   relative: string,
   path: string,
-  how: Holding,
+  how: HoldCheck,
 ): Promise<boolean> {
   const note = mirror.notes[relative]
   if (note) {

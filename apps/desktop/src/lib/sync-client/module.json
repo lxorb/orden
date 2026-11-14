@@ -16,7 +16,8 @@
     "platform",
     "crate",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "sync-mirror"
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
@@ -31,7 +32,6 @@
     "apps/desktop/src/lib/space-pairing.ts",
     "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync/",
     "apps/desktop/src/lib/tree-order.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",

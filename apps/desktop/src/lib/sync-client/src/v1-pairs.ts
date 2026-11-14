@@ -1,4 +1,4 @@
-import { readMirror } from '../../sync/mirror'
+import { readMirror } from '../../sync-mirror/src/api'
 import { samePath } from '../../platform/src/api'
 import { isRecord } from './shape'
 

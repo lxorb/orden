@@ -1,4 +1,4 @@
-import { OWN_FILE as INBOX_PATH } from '@orden/sync-core'
+import { OWN_FILE as INBOX_PATH, syncDeletes } from '@orden/sync-core'
 import { fileBytes, sha256, deviceName, onDisk } from '../../platform/src/api'
 import { keptShaped, mountOf } from '../../internal/roots'
 import { mountedFor } from '../../internal/watch'
@@ -11,7 +11,6 @@ import { invoke, isDesktop, isNative, joinPath, platform, remote } from './ports
 import { classifier } from './classify'
 import { accountOver, type Reading, readingOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
-import { syncDeletes } from './deletes'
 
 export interface Telling {
   holdingWrites(from: string, run: () => Promise<void>, stalled: () => Promise<void>): Promise<void>

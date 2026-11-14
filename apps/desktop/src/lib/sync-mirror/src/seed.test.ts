@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { WELCOME, WELCOME_NAME } from '../welcome'
+import { WELCOME, WELCOME_NAME } from '../../welcome'
 
 const fake = vi.hoisted(() => {
   interface Entry {
@@ -107,7 +107,7 @@ const fake = vi.hoisted(() => {
 
       const taken = [...remote.values()].find((one) => one.path === path && !one.deleted)
       if (taken) {
-        const { ApiError } = await import('../accounts/src/client')
+        const { ApiError } = await import('../../accounts/src/api')
         throw new ApiError(409, 'a note already lives there', {
           note: await present(taken),
           content: taken.content,
@@ -145,13 +145,13 @@ const fake = vi.hoisted(() => {
   return { addRemote, api, calls, disk, invoke, remote, reset }
 })
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: fake.invoke,
 }))
 
-vi.mock('../accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../accounts/src/client')>()),
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
   api: fake.api,
 }))
 

@@ -9,7 +9,7 @@ const spaces = [{ root: '/Work' }]
 
 const reloaded: { path: string; content: string }[] = []
 
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces,
     reload: (path: string, content: string) => void reloaded.push({ path, content }),
@@ -18,7 +18,8 @@ vi.mock('../workspace.svelte', () => ({
 
 const invoked: { command: string; path: string }[] = []
 
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     invoked.push({ command, path: String(args.path) })
     return Promise.resolve(command === 'read_note' ? 'what is here' : undefined)

@@ -83,7 +83,7 @@ MORE_SPACES = """
   // `sync.tracked` whether it is a file shared on its own, and that walks the
   // mirrors and reads each one's root. A mirror without one threw, and an
   // exception in a row takes the whole sidebar with it. See newMirror in
-  // sync/mirror.ts for the shape.
+  // sync-mirror/src/mirror.ts for the shape.
   const stand = (spaceId, root) => ({
     spaceId,
     root,
