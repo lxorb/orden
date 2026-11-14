@@ -1,4 +1,4 @@
-import { carriedOwn } from '@orden/bases/inbox'
+import { isOwnFile as carriedOwn } from '@orden/sync-core'
 import { unstacked } from '@orden/markdown/paths'
 import { fileMade } from './files'
 import {

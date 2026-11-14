@@ -1,4 +1,3 @@
-import { isAccountInbox } from '@orden/bases/inbox'
 import { log } from '../log'
 import { invoke } from '../tauri'
 import type { Across } from './across'
@@ -6,37 +5,21 @@ import type { NoteDoc } from './documents.svelte'
 
 const others = () => import('../windows')
 
-const accountInbox = () =>
-  Promise.all([import('../inbox/account.svelte'), import('../inbox/start.svelte')]).then(
-    ([one]) => one.accountInbox,
-  )
-
 export async function inFileTurn<T>(path: string, run: () => Promise<T>): Promise<T> {
   const { oneWriteAt } = await others()
   return oneWriteAt(path, run)
 }
 
 export async function readText(path: string): Promise<string | null> {
-  if (isAccountInbox(path)) return (await accountInbox()).text().catch(() => null)
   return invoke<string>('read_note', { path }).catch(() => null)
 }
 
 export async function keepVersion(path: string, content: string, source?: string): Promise<void> {
-  if (isAccountInbox(path)) return
   const from = source === undefined ? {} : { source }
   await invoke('snapshot_note', { path, content, ...from }).catch(() => undefined)
 }
 
-export async function writeInTurn(
-  path: string,
-  content: string,
-  arrived = false,
-  over?: string,
-): Promise<void> {
-  if (isAccountInbox(path)) {
-    await (await accountInbox()).write(content, over)
-    return
-  }
+export async function writeInTurn(path: string, content: string, arrived = false): Promise<void> {
   await invoke('write_note', arrived ? { path, content, arrived } : { path, content })
   const { windows } = await others()
   if (!windows.alone) windows.say('words', { path, text: content })

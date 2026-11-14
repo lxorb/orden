@@ -1,9 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../motion'
-  import { insideSpace } from '../../space-paths'
-  import { TaskTurns } from '../../task-turns'
-  import { workspace } from '../../workspace.svelte'
   import type { Listed } from '../commands/todos'
 
   const { said }: { said: string } = $props()
@@ -41,24 +38,20 @@
   const placeOf = (one: Task) => `${one.space}\n${one.at}`
   const isDone = (one: Task) => ticked[placeOf(one)] ?? (one.status === 'x' || one.status === 'X')
 
-  const turns: Record<string, TaskTurns> = {}
-
   function tick(one: Task) {
     const done = !isDone(one)
     const place = placeOf(one)
     ticked = { ...ticked, [place]: done }
-    const held = (turns[place] ??= new TaskTurns(one.at, async (at, now) =>
-      (await import('../../task-actions')).tickTask(at, one.space, now),
-    ))
-    void held.turn(done).then((landed) => {
-      if (!landed && ticked[place] === done) ticked = { ...ticked, [place]: !done }
-    })
+    void import('../../task-actions')
+      .then(({ tickTask }) => tickTask(one.at, done))
+      .catch(() => false)
+      .then((landed) => {
+        if (!landed && ticked[place] === done) ticked = { ...ticked, [place]: !done }
+      })
   }
 
-  function open(one: Task) {
-    const space = workspace.activeSpace
-    if (space?.name !== one.space) return
-    void workspace.open(insideSpace(space.root, one.at.replace(/#\d+:[0-9a-z]+$/, '')))
+  function open() {
+    void import('../../todos-entry').then(({ showTodos }) => showTodos())
   }
 
   const when = (one: Task) => [one.due, one.time].filter(Boolean).join(' ')
@@ -81,7 +74,7 @@
           aria-label="Done"
           onclick={() => tick(one)}
         ></button>
-        <button class="words" title={one.space} onclick={() => open(one)}>{one.text}</button>
+        <button class="words" title={one.space} onclick={open}>{one.text}</button>
         {#if when(one)}
           <span class="when">{when(one)}</span>
         {/if}

@@ -260,7 +260,6 @@ class Importing {
       )
 
       this.stepped = landed.stepped
-      await inboxFrom(plan, root, landed.paths)
       this.stage = 'done'
     } catch (error) {
       this.stage = 'ready'
@@ -273,14 +272,6 @@ function landing(): string | null {
   const open = workspace.activeSpace?.root ?? null
   if (open !== null && canWriteAt(open)) return open
   return workspace.spaces.find((space) => canWriteAt(space.root))?.root ?? null
-}
-
-async function inboxFrom(plan: ImportPlan, root: string, paths: readonly string[]) {
-  const at = plan.inbox === undefined ? -1 : plan.files.findIndex((one) => one.path === plan.inbox)
-  const path = paths[at]
-  if (path === undefined) return
-  const { carryInto } = await import('./rows/inbox-moving.svelte')
-  await carryInto(root, path)
 }
 
 export function onMac(): boolean {

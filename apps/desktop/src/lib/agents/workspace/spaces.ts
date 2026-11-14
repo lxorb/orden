@@ -1,4 +1,3 @@
-import { isInboxPath } from '@orden/bases/inbox'
 import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing.svelte'
@@ -71,7 +70,6 @@ export function judged(asked: string): string {
 
 export function judgedForWriting(asked: string): string {
   const safe = judged(asked)
-  if (isInboxPath(safe)) return safe
   if (safe.split('/').some((step) => step.startsWith('.'))) {
     throw new Refused('bad_arguments', `${asked} is hidden, and an agent leaves it alone`)
   }

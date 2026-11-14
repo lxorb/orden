@@ -123,10 +123,6 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
 
   if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./reminders/start.svelte'))
-  }
-
-  if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
       .then(() => import('./feature-gate.svelte'))

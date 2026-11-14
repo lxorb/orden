@@ -232,7 +232,7 @@ async function writeClosed(
     const down = foreign ? appliedToFile(read, edits) : after
 
     await keep(change.path, read, keeping)
-    await writeInTurn(change.path, down, false, read)
+    await writeInTurn(change.path, down, false)
     return { read, now, same, edits, after, down }
   })
   if (turn === null) return null

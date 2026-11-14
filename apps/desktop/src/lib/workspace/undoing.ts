@@ -333,7 +333,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
         throw new Error(`${note.path} will not read, so nothing is written over it`)
       const now = endingsLike(file, note.after)
       const words = now === note.after ? note.content : carriedPast(note, file, now)
-      await writeInTurn(note.path, words, false, file)
+      await writeInTurn(note.path, words, false)
       return words
     })
     links.noteSaved(note.path, down)

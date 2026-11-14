@@ -1,5 +1,4 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
-import { isAccountInbox } from '@orden/bases/inbox'
 import { account } from './account.svelte'
 import { appsOn, basesOn, hiddenKinds } from './settings.svelte'
 import { arriving } from './arriving.svelte'
@@ -2233,11 +2232,6 @@ class Workspace {
         ([{ moveOwnKeysSoon }]) => moveOwnKeysSoon(root, this, !!account.token),
         unfetched,
       )
-      void import('./rows/unlisted').then(({ dropListKeys }) => {
-        for (const one of [root, ...this.shownSpaces.map((space) => space.root)]) {
-          dropListKeys(one, this.itemMeta)
-        }
-      }, unfetched)
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       const listed = this.files
       const tree = this.tree
@@ -2339,13 +2333,6 @@ class Workspace {
 
   async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
-    if (isAccountInbox(path)) {
-      if (!__EVEN_PLUGIN__ && options.activate !== false) {
-        const { openBuiltin } = await import('./views/open')
-        openBuiltin('inbox')
-      }
-      return
-    }
     if (isScratchpad(path) && !options.asNote && !this.opened.at(path)) {
       const { scratchpad } = await import('./scratchpad/pad')
       scratchpad.show()

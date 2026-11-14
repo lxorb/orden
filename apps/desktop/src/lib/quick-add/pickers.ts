@@ -2,7 +2,6 @@ import { addDays, weekday } from '@orden/bases'
 import type { Priority, Remind } from '@orden/markdown/task-line'
 import { DIVIDER, type MenuEntry } from '../menu-item'
 import { dayWords, durationLabel, remindLabel } from './labels'
-import { nextMonday } from '../views/days'
 
 export interface When {
   due?: string | undefined
@@ -67,7 +66,7 @@ export function dayRows(
     day(today),
     day(addDays(today, 1)),
     ...(weekend > addDays(today, 1) ? [day(weekend)] : []),
-    { ...day(nextMonday(today)), label: 'Next week' },
+    { ...day(addDays(today, (8 - weekday(today)) % 7 || 7)), label: 'Next week' },
     DIVIDER,
     {
       label: 'Pick a date…',

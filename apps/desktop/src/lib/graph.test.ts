@@ -460,9 +460,9 @@ describe('a space worth a graph (#677)', () => {
 describe('a note under a hidden name', () => {
   test('is no node of the graph, as the space read from disk holds none, and a link to it draws nothing', () => {
     const graph = space({
-      'Plan.md': '[[Read me]] [[.orden-inbox]]',
+      'Plan.md': '[[Read me]] [[.hidden]]',
       'Read me.md': '',
-      '.orden-inbox.md': '[[Plan]]',
+      '.hidden.md': '[[Plan]]',
       '.trash/Old.md': '[[Plan]]',
     })
 

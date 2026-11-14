@@ -114,15 +114,14 @@ async function take(): Promise<void> {
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) run(asked.command)
-  if (asked.tick) await ticked(asked.tick, asked.tickSpace)
+  if (asked.tick) await ticked(asked.tick)
 
   await taken(word)
 }
 
-async function ticked(at: string, space: string): Promise<void> {
-  if (!workspace.spaces.some((one) => one.name === space)) return
+async function ticked(at: string): Promise<void> {
   const { tickTask } = await import('../task-actions')
-  await tickTask(at, space, true).catch((error: unknown) => {
+  await tickTask(at, true).catch((error: unknown) => {
     log('error', `handed: a task could not be ticked: ${String(error)}`)
   })
 }

@@ -1,17 +1,15 @@
 import { shownWords } from '@orden/markdown/escapes'
-import { type Ticked, TaskTurns } from '../task-turns'
 import type { Row } from './shell'
 
 interface Held {
   id: string
   text: string
   done: boolean
-  turns: TaskTurns
 }
 
 export interface TodayHost {
-  load: () => Promise<readonly { at: string; space: string; text: string }[]>
-  tick: (at: string, space: string, done: boolean) => Promise<Ticked | null>
+  load: () => Promise<readonly { at: string; text: string }[]>
+  tick: (id: string, done: boolean) => Promise<boolean>
   redraw: () => void
 }
 
@@ -42,12 +40,7 @@ export class Today {
       .load()
       .then((tasks) => {
         if (mine !== this.asked) return
-        this.held = tasks.map((one) => ({
-          id: `${one.space}\n${one.at}`,
-          text: one.text,
-          done: false,
-          turns: new TaskTurns(one.at, (at, done) => this.host.tick(at, one.space, done)),
-        }))
+        this.held = tasks.map((one) => ({ id: one.at, text: one.text, done: false }))
         this.host.redraw()
       })
       .catch(() => undefined)
@@ -58,11 +51,14 @@ export class Today {
     if (!one) return
     one.done = !one.done
     const done = one.done
-    void one.turns.turn(done).then((landed) => {
-      if (landed || one.done !== done) return
-      one.done = !done
-      this.host.redraw()
-    })
+    void this.host
+      .tick(id, done)
+      .catch(() => false)
+      .then((landed) => {
+        if (landed || one.done !== done) return
+        one.done = !done
+        this.host.redraw()
+      })
   }
 }
 

@@ -9,17 +9,11 @@
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
   import { links } from '../link-index.svelte'
-  import { rows } from '../rows/rows.svelte'
-  import { labelsOf } from '../views/task-meta'
+  import { dayOf, labelsOf, todos } from '../tasks-model/src/api'
   import { ai } from '../ai/store.svelte'
   import { addTask } from './write'
 
-  let labels = $state<string[]>([])
-  $effect(() => {
-    if (!quickAdd.open) return
-    labels = labelsOf(rows.shown())
-    return rows.settled(() => (labels = labelsOf(rows.shown())))
-  })
+  const labels = $derived(labelsOf(todos.todos, { onlySpace: false, space: null, today: dayOf() }))
 
   $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
   $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))

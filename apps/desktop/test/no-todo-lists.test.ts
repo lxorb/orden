@@ -6,13 +6,23 @@ import { expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
-const GONE = ['isTodoList', 'Use as todo list', 'todo_list', 'makeList', 'unmakeList', 'LIST_KEY']
+const GONE = [
+  'isTodoList',
+  'Use as todo list',
+  'todo_list',
+  'makeList',
+  'unmakeList',
+  'LIST_KEY',
+  'orden-inbox.md',
+  'inbox-items',
+  'accountInbox',
+]
 
-const SAYING = ['apps/desktop/test/no-todo-lists.test.ts', 'apps/desktop/src/lib/rows/unlisted.ts']
+const SAYING = ['apps/desktop/test/no-todo-lists.test.ts']
 
 const TEXT = /\.(ts|svelte|rs|json|py|md|mjs|js|yml|yaml|toml)$/
 
-test('no note is a todo list: the mark, its menu entry and its tool argument stay gone (#2103)', () => {
+test('no note is a todo list: the mark, its menu entry, its tool argument and the note-shaped inbox stay gone (#2103, #2104)', () => {
   const files = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
     .split('\n')
     .filter((path) => TEXT.test(path) && !SAYING.includes(path))

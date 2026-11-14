@@ -103,8 +103,8 @@ class Bridge {
   private panel: Panel | null = null
   private shell: Shell | null = null
   private readonly todayList = new Today({
-    load: async () => (await import('./today-tasks')).todayHere(),
-    tick: async (at, space, done) => (await import('../task-actions')).tickTask(at, space, done),
+    load: async () => (await import('../task-actions')).listed().tasks,
+    tick: async (id, done) => (await import('../task-actions')).tickTask(id, done),
     redraw: () => this.act('draw'),
   })
   private voice: Voice | null = null
