@@ -7,7 +7,7 @@
   import { untrack } from 'svelte'
   import { dur, fade } from '../../platform/src/api'
   import { links } from '../../link-index.svelte'
-  import { readingHtml, unreadableHtml } from '../../reading/render'
+  import { readingHtml, unreadableHtml } from '../../reading/src/api'
   import { trustsHtmlIn } from '../../sharing/src/api'
   import { noteBehind } from '../../protect/src/api'
   import TabMark from '../../TabMark.svelte'

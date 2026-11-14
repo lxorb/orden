@@ -11,7 +11,7 @@ const bodies: Record<string, string> = {
 
 const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from: [] }
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../../link-index.svelte', () => ({
   links: {
     spaceOf: () => null,
     targetOf: (from: string | null, link: { target: string }) => {
@@ -34,13 +34,13 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-vi.mock('../note-images', () => ({
+vi.mock('../../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 
 const { readingHtml, unreadableHtml } = await import('./render')
 
-await import('../export/src/render')
+await import('../../export/src/render')
 
 const note = (text: string) => ({ text, path: '/space/Notes/Today.md' })
 

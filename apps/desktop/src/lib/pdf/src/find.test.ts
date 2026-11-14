@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { locate, placesOf } from '../../reading/find'
+import { locate, placesOf } from '@orden/scan/search/find'
 import { placesOnPaper, runsOfItems, spansOver, textOfRuns, wordsOfRuns } from './find'
 
 function divs(...runs: (string | null)[]): HTMLElement[] {

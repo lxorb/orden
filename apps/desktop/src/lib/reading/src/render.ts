@@ -2,11 +2,11 @@ import { renderMarkdown, type Wikilink } from '@orden/markdown'
 import { escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
-import { keptCoverOf } from '../kept-cover'
-import { links } from '../link-index.svelte'
-import { notePicture } from '../note-images'
-import { queryRowsHtml } from '../query-block'
-import type { Scheme } from '../theme/src/api'
+import { keptCoverOf } from '../../kept-cover'
+import { links } from '../../link-index.svelte'
+import { notePicture } from '../../note-images'
+import { queryRowsHtml } from '../../query-block'
+import type { Scheme } from '../../theme/src/api'
 
 export interface Note {
   text: string
@@ -36,7 +36,7 @@ export async function readingHtml(
   trusted: boolean,
   tagHref?: TagHref,
 ): Promise<string> {
-  const { prepareEmbeds, prepareFences } = await import('../before-render')
+  const { prepareEmbeds, prepareFences } = await import('../../before-render')
   const root = note.path === null ? null : links.spaceOf(note.path)
 
   const [fence, embed] = await Promise.all([

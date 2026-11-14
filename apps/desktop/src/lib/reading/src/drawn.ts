@@ -1,6 +1,6 @@
 import type { FileDrawing } from '@orden/editor'
 import { decodeTarget } from '@orden/markdown/links'
-import { nameOf, invoke, joinPath } from '../platform/src/api'
+import { nameOf, invoke, joinPath } from '../../platform/src/api'
 
 export interface Drawn extends FileDrawing {
   root: string
@@ -108,7 +108,7 @@ function into(card: HTMLElement): HTMLElement {
 }
 
 async function paperPage(file: Drawn, width: number): Promise<HTMLCanvasElement | null> {
-  const { openDocument, sheetFor } = await import('../pdf/src/api')
+  const { openDocument, sheetFor } = await import('../../pdf/src/api')
   const held = await openDocument(joinPath(file.root, file.path))
 
   try {
@@ -144,9 +144,9 @@ async function plane(file: Drawn): Promise<SVGSVGElement | null> {
   const text = await invoke<string>('read_note', { path: joinPath(file.root, file.path) })
 
   const [{ drawingOf }, { canvasSvg }, { pdfFaces }] = await Promise.all([
-    import('../canvas/drawing'),
-    import('../canvas/picture'),
-    import('../canvas/faces'),
+    import('../../canvas/drawing'),
+    import('../../canvas/picture'),
+    import('../../canvas/faces'),
   ])
 
   const drawing = drawingOf({ text, name: nameOf(file.path), path: file.path, root: file.root })

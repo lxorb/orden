@@ -1,0 +1,5 @@
+export { drawFile, inlineFiles } from './drawn'
+export { paint, rangeOf, wordsOf } from './find'
+export { headingOffsets, positionOf, sectionAt } from './places'
+export type { Section } from './places'
+export { pointer, readingHtml, tagAnchor, unreadableHtml, withPictures } from './render'
