@@ -30,7 +30,7 @@ vi.mock('../platform/src/mobile-bridge', () => ({
   },
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
-vi.mock('../commands', () => ({ appCommands: () => [] }))
+vi.mock('../commands/src/api', () => ({ appCommands: () => [] }))
 vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: {

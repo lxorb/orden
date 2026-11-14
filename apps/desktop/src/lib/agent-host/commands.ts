@@ -1,4 +1,5 @@
-import { appCommands, type Command } from '../commands'
+import { commandRowsLoaded } from '@orden/contracts'
+import { appCommands, type Command } from '../commands/src/api'
 import { invoke } from '../platform/src/api'
 import type { AgentAnswer } from '../automation/caller'
 import { views } from '../views.svelte'
@@ -159,6 +160,7 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   placeFor(call, null)
 
   const id = need(call, 'id')
+  await commandRowsLoaded()
   const found: Command | undefined = appCommands(views.of(workspace.panes.focusedId)).find(
     (one) => one.id === id,
   )

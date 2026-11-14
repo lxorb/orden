@@ -101,7 +101,7 @@ const rows = [
 ]
 const ran: string[] = []
 
-vi.mock('../commands', () => ({ appCommands: () => rows }))
+vi.mock('../commands/src/api', () => ({ appCommands: () => rows }))
 vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
 vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
@@ -192,40 +192,42 @@ describe('a note named rather than pathed', () => {
 })
 
 describe('a row of the palette', () => {
-  test('runs for the command line and for a link alike', () => {
+  test('runs for the command line and for a link alike', async () => {
     ran.length = 0
 
-    expect(runCommand({ id: 'files' }, 'link')).toEqual({ id: 'files', label: 'File list' })
-    expect(runCommand({ id: 'files' }, 'here')).toEqual({ id: 'files', label: 'File list' })
+    expect(await runCommand({ id: 'files' }, 'link')).toEqual({ id: 'files', label: 'File list' })
+    expect(await runCommand({ id: 'files' }, 'here')).toEqual({ id: 'files', label: 'File list' })
     expect(ran).toEqual(['files', 'files'])
   })
 
-  test('unless it is one only somebody at the keyboard may press', () => {
+  test('unless it is one only somebody at the keyboard may press', async () => {
     ran.length = 0
 
-    expect(() => runCommand({ id: 'record' }, 'link')).toThrow(/not something a link may run/)
+    await expect(runCommand({ id: 'record' }, 'link')).rejects.toThrow(
+      /not something a link may run/,
+    )
     expect(ran).toEqual([])
 
-    expect(runCommand({ id: 'record' }, 'here')).toEqual({ id: 'record', label: 'Record' })
+    expect(await runCommand({ id: 'record' }, 'here')).toEqual({ id: 'record', label: 'Record' })
     expect(ran).toEqual(['record'])
   })
 
-  test('and never one that opens a shell, on either road', () => {
+  test('and never one that opens a shell, on either road', async () => {
     ran.length = 0
 
-    expect(() => runCommand({ id: 'new-terminal' }, 'here')).toThrow(
+    await expect(runCommand({ id: 'new-terminal' }, 'here')).rejects.toThrow(
       /not something the command line may run/,
     )
-    expect(() => runCommand({ id: 'new-terminal' }, 'link')).toThrow(/not something/)
+    await expect(runCommand({ id: 'new-terminal' }, 'link')).rejects.toThrow(/not something/)
     expect(ran).toEqual([])
   })
 
-  test('and a row that cannot run just now says so rather than doing nothing', () => {
+  test('and a row that cannot run just now says so rather than doing nothing', async () => {
     ran.length = 0
 
-    expect(() => runCommand({ id: 'shut' }, 'here')).toThrow(/cannot run just now/)
-    expect(() => runCommand({ id: 'nothing' }, 'here')).toThrow(/there is no command/)
-    expect(() => runCommand({}, 'here')).toThrow(/say which command/)
+    await expect(runCommand({ id: 'shut' }, 'here')).rejects.toThrow(/cannot run just now/)
+    await expect(runCommand({ id: 'nothing' }, 'here')).rejects.toThrow(/there is no command/)
+    await expect(runCommand({}, 'here')).rejects.toThrow(/say which command/)
     expect(ran).toEqual([])
   })
 })

@@ -161,7 +161,16 @@ export {
   type SettingsPartView,
   settingsPartsIn,
 } from './registry'
-export { registerCommand, runCommand } from './commands'
+export {
+  type CommandPlace,
+  type CommandRows,
+  commandRows,
+  commandRowsLoaded,
+  registerCommand,
+  registerCommandRows,
+  registerCommands,
+  runCommand,
+} from './commands'
 export {
   NO_TAB_KIND,
   registerTabKind,

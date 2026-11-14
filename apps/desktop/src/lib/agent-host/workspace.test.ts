@@ -387,7 +387,7 @@ vi.mock('../agents/src/api', async (original) => ({
   },
 }))
 
-vi.mock('../commands', () => ({
+vi.mock('../commands/src/api', () => ({
   appCommands: () => [
     { id: 'files', label: 'File list', run: () => ran.push('files') },
     { id: 'record', label: 'Record', byHand: true, run: () => ran.push('record') },

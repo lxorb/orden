@@ -18,7 +18,7 @@ const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesO
   await import('../../settings.svelte')
 const { setWord, receive } = await import('../../kind-choice')
 const { experimentalPane } = await import('../../settings/src/experimental-pane')
-const { appCommands } = await import('../../commands')
+const { appCommands } = await import('../../commands/src/api')
 const { newFileRows } = await import('../../row-menu')
 const { openBaseFile } = await import('./open')
 const { createDatabase } = await import('./new-database')

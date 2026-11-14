@@ -235,7 +235,7 @@ describe('the button that holds a panel on a note', () => {
   })
 
   test('and the palette offers the same hold, by the same rule', async () => {
-    const { appCommands } = await import('./commands')
+    const { appCommands } = await import('./commands/src/api')
     open('# Head\n')
 
     viewport.device = 'desktop'
@@ -423,7 +423,7 @@ describe('the AI panel on a phone and a tablet', () => {
   })
 
   test('and the palette has no row for it', async () => {
-    const { appCommands } = await import('./commands')
+    const { appCommands } = await import('./commands/src/api')
     open('# Head\n')
 
     viewport.device = 'desktop'

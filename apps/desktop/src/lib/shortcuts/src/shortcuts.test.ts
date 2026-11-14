@@ -34,7 +34,7 @@ let registry: typeof import('./shortcuts.svelte')
 await Promise.all([
   import('./shortcuts.svelte'),
   import('../../modes.svelte'),
-  import('../../commands'),
+  import('../../commands/src/api'),
   import('../../app-menu'),
 ])
 
@@ -885,7 +885,7 @@ describe('what a reader is shown', () => {
     const { shortcuts } = registry
     shortcuts.set('app.focus', 'Mod-Alt-9')
 
-    const { appCommands } = await import('../../commands')
+    const { appCommands } = await import('../../commands/src/api')
     const { appMenu } = await import('../../app-menu')
     const { isSubmenu } = await import('../../ui-kit/src/menu-item')
 
@@ -1262,7 +1262,7 @@ describe('on a Mac', () => {
   test('the menus and the palette show the Mac keys, in signs', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
     const { shortcuts } = await restarted()
-    const { appCommands } = await import('../../commands')
+    const { appCommands } = await import('../../commands/src/api')
 
     expect(shortcuts.hint('app.fullscreen')).toBe('⌃⌘F')
     expect(shortcuts.hint('app.note-1')).toBe('⌘1')
@@ -1279,7 +1279,7 @@ describe('on a Mac', () => {
 describe('off a Mac', () => {
   test('the same keys read as they always have', async () => {
     const { shortcuts } = await restarted()
-    const { appCommands } = await import('../../commands')
+    const { appCommands } = await import('../../commands/src/api')
 
     expect(shortcuts.hint('app.fullscreen')).toBe('F11')
     expect(shortcuts.hint('app.note-1')).toBe('Ctrl+Alt+1')

@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
-const { appCommands } = await import('./commands')
+const { appCommands } = await import('./api')
 
 test('the palette offers reloading Orden, with its key, with or without a note open', () => {
   const reload = appCommands().find((one) => one.id === 'reload-app')

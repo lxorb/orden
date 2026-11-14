@@ -1,5 +1,5 @@
 import { foldName } from '@orden/markdown/links'
-import type { Command } from '../../commands'
+import type { Command } from '../../commands/src/api'
 import { fileMark } from '../../file-mark'
 import {
   shownName,

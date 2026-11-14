@@ -1,3 +1,4 @@
+import type { CommandExtension } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { canWriteAt } from '../../../sharing/src/api'
@@ -24,8 +25,20 @@ export function canRecord(view?: EditorView): boolean {
   return canWriteAt(into ?? space.root)
 }
 
-export function recordLabel(): string {
+function recordLabel(): string {
   return woken?.on ? 'Stop recording' : 'Record'
+}
+
+export function recordRows(view?: object): CommandExtension[] {
+  return [
+    {
+      id: 'record',
+      label: recordLabel(),
+      byHand: true,
+      disabled: !canRecord(view as EditorView | undefined),
+      run: () => void record(),
+    },
+  ]
 }
 
 export function recordingAt(view: EditorView, at: number): string | null {
@@ -52,6 +65,6 @@ export async function transcribeEmbed(view: EditorView, at: number) {
   await transcribeInto(view, at, target)
 }
 
-export async function record() {
+async function record() {
   ;(await wake()).toggle()
 }

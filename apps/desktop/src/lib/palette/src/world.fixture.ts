@@ -1,4 +1,4 @@
-import type { Command } from '../../commands'
+import type { Command } from '../../commands/src/api'
 import type { Visit } from '@orden/scan/visits'
 import type { Bookmark } from '../../workspace/bookmarks.svelte'
 import type { Entry } from '../../workspace.svelte'

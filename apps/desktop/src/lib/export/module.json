@@ -12,11 +12,13 @@
     "theme",
     "themes",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "pages",
+    "plane",
+    "shortcuts"
   ],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
-    "apps/desktop/src/lib/commands.ts",
     "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/images.ts",
     "apps/desktop/src/lib/internal/work.ts",
@@ -29,6 +31,7 @@
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/tab-kinds.ts"
   ]
 }

@@ -102,8 +102,6 @@ export const PACKAGES = [
 export const APP_FOLDERS = [
   'accounts',
   'accounts-ui',
-  'agent-docs',
-  'agents',
   'ai-chat',
   'ai-providers',
   'away',
@@ -111,6 +109,7 @@ export const APP_FOLDERS = [
   'camera',
   'collab',
   'collab-rooms',
+  'commands',
   'crate',
   'dictation',
   'downloads',

@@ -91,7 +91,7 @@ export {
 } from './session-state'
 export { ai, FEATURES } from './store.svelte'
 export { sseEvents, sseJson, sseLines } from './stream'
-export { switchableAccounts, switchAccount } from './switching'
+export { accountRows } from './switching'
 export { usage, USAGE_EVERY, type Weekly } from './usage.svelte'
 export { signOut } from './vault/leaving'
 export { browserVault, keepBrowserInVault, vault } from './vault/start.svelte'

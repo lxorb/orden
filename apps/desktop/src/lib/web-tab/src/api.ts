@@ -19,16 +19,8 @@ export const siteDropping = () =>
 export const siteMuting = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./mute')>() : import('./mute')
 
-export const siteClearing = () =>
-  __EVEN_PLUGIN__
-    ? away<typeof import('./clearing-asked.svelte')>()
-    : import('./clearing-asked.svelte')
-
 export const privateWindows = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./private')>() : import('./private')
-
-export const historyOpening = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./history-open')>() : import('./history-open')
 
 export const siteIconSet = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./site-icons.svelte')>() : import('./site-icons.svelte')

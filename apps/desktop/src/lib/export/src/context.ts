@@ -31,6 +31,18 @@ export function openTarget(): Target {
   }
 }
 
+export function openOut() {
+  const target = openTarget()
+  return {
+    text: target.source,
+    name: target.name,
+    path: target.path,
+    root: workspace.rootHolding(target.path),
+    shared: workspace.active?.note.shared ?? null,
+    trusted: target.trusted,
+  }
+}
+
 async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
   const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
   if (settings.exportAppearance !== 'app') return { ...chosen, scheme: settings.exportAppearance }

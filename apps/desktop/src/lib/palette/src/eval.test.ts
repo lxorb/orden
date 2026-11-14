@@ -19,7 +19,9 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-const { paletteCommands } = await import('../../commands')
+await import('../../features')
+await (await import('@orden/contracts')).commandRowsLoaded()
+const { paletteCommands } = await import('../../commands/src/api')
 const { preferences } = await import('../../settings/src/preferences')
 const { places } = await import('../../settings/src/places')
 const { sectionGroups } = await import('../../settings/src/sections')

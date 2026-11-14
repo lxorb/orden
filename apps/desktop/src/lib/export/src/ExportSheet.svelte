@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { exportCommands } from '../../commands'
+  import { exportCommands } from './commands'
   import { Sheet } from '../../ui-controls/src/api'
   import { Switch } from '../../ui-controls/src/api'
   import { picker } from './picker.svelte'

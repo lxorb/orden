@@ -14,7 +14,7 @@ vi.mock('./platform/src/api', async (importOriginal) => ({
 const { SHORTCUTS } = await import('./shortcuts/src/api')
 const { workspace } = await import('./workspace.svelte')
 await import('./tab-strip/src/api')
-const { appCommands } = await import('./commands')
+const { appCommands } = await import('./commands/src/api')
 
 const context = { onpalette: () => undefined, onhistory: () => undefined }
 

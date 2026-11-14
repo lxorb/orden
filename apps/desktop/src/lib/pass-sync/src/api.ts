@@ -1,3 +1,4 @@
+import { lockPass, openPass } from './open'
 export { type AliasAccount } from './alias-account'
 export { aliasStats, switchedAlias } from './alias-live'
 export { defaultAsk } from './alias-make'
@@ -44,7 +45,8 @@ export { aliasOptions, providedAlias } from './new-alias'
 export { fieldShape, newField } from './new-field'
 export { newItemEntries } from './new-items'
 export { noteHtml } from './note-html'
-export { lockPass, openPass, quietPass } from './open'
+export { lockPass, openPass }
+export { quietPass } from './open'
 export { type Person } from './people'
 export { filterName, scopeName, sortName } from './scope-words'
 export { clearWord, pauseWord, relockWord } from './settings-words'
@@ -69,3 +71,10 @@ export { folderEntries, vaultEntries } from './vault-menu'
 export { colorName } from './vault-words'
 export { SETTINGS_TABS, type SettingsTab } from './view'
 export { openSite } from './websites'
+
+export const passCommands = {
+  'pass.open': () => void openPass(),
+  'pass.lock': () => void lockPass(),
+  'pass.new-login': () => void openPass('new-login'),
+  'pass.generate': () => void openPass('generator'),
+}

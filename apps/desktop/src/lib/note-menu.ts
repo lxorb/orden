@@ -1,4 +1,4 @@
-import { appCommands } from './commands'
+import { appCommands } from './commands/src/api'
 import { DIVIDER, type MenuEntry } from './menu.svelte'
 import { views } from './views.svelte'
 

@@ -23,7 +23,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { appMenu } = await import('./app-menu')
 const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./links')
 const { isSubmenu, walkableRows } = await import('./ui-kit/src/menu-item')
-const { appCommands } = await import('./commands')
+const { appCommands } = await import('./commands/src/api')
 const { BY_ID } = await import('./shortcuts/src/registry')
 
 const menu = (): MenuGroup[] => appMenu({ onpalette: () => undefined, onhistory: () => undefined })

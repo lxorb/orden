@@ -1,4 +1,3 @@
-import type { CommandId } from './ids'
 import type { Result } from './result'
 
 export type FileMark =
@@ -72,16 +71,16 @@ export interface TabKindExtension {
 }
 
 export interface CommandExtension {
-  readonly id: CommandId
+  readonly id: string
   readonly label: string
-  readonly hint?: string
+  readonly hint?: string | undefined
   readonly also?: readonly string[]
   readonly byHand?: boolean
   readonly ownWindow?: boolean
   readonly checked?: boolean
   readonly danger?: boolean
   readonly disabled?: boolean
-  readonly run: () => void | Promise<void>
+  readonly run: () => void
 }
 
 export type SettingsSectionId =

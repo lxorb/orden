@@ -1,3 +1,4 @@
+import { commandRows, commandRowsLoaded, runCommand } from '@orden/contracts'
 import {
   CODE_PALETTES,
   deleteLine,
@@ -49,45 +50,22 @@ import {
   unfoldEverything,
   upperCase,
 } from '@orden/editor'
-import { account } from './accounts/src/api'
-import { busy, prompt, viewport } from './ui-kit/src/api'
-import { turnedOff } from './kind-choice'
-import { composerCommands } from './composer-commands'
-import { paletteName } from './highlight'
-import { links } from './link-index.svelte'
-import type { MenuItem } from './ui-kit/src/api'
-import {
-  canPrint,
-  EXPORT_FORMATS,
-  type Exportable,
-  type ExportId,
-  exportKindOf,
-  isNoteFormat,
-  labelOf,
-  offeredBy,
-  PANDOC_FORMATS,
-  printable,
-} from './export-formats/src/api'
-import {
-  exporters,
-  frontShut,
-  openTarget,
-  picker,
-  renderOptions,
-  type RunOptions,
-} from './export/src/api'
-import { openOut, printOpen } from './open-out'
-import { canDictate, dictating, toggleDictation } from './mobile/dictation'
-import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
-import { canRecord, record, recordLabel } from './dictation/src/api'
-import { moveTargets } from './move-targets'
-import { closeAfterLabel } from './workspace/closing-around'
-import { revealPanel, stepRegionFocus } from './focus'
-import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
-import { spacePicker } from './space-picker.svelte'
-import { askQuickly, chatStore } from './ai-chat/src/api'
-import { switchableAccounts, switchAccount } from './ai-providers/src/api'
-import { toggleScratchpad } from './scratchpad/src/api'
+import { account } from '../../accounts/src/api'
+import { busy, prompt, viewport } from '../../ui-kit/src/api'
+import { turnedOff } from '../../kind-choice'
+import { composerCommands } from '../../composer-commands'
+import { paletteName } from '../../highlight'
+import { links } from '../../link-index.svelte'
+import type { MenuItem } from '../../ui-kit/src/api'
+import { canPrint, printable } from '../../export-formats/src/api'
+import { printOpen } from '../../open-out'
+import { canDictate, dictating, toggleDictation } from '../../mobile/dictation'
+import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from '../../insert-picture'
+import { moveTargets } from '../../move-targets'
+import { closeAfterLabel } from '../../workspace/closing-around'
+import { revealPanel, stepRegionFocus } from '../../focus'
+import { newSpace, publishSpace, shareSpace, stepSpace } from '../../space-actions'
+import { spacePicker } from '../../space-picker.svelte'
 import {
   canPublish,
   canShare,
@@ -96,18 +74,16 @@ import {
   shareThisFile,
   lockAllEntry,
   protectEntries,
-} from './sharing/src/api'
-import { archiveEntry, DIVIDER } from './menu.svelte'
-import { updates } from './updates/src/api'
-import { modes } from './modes.svelte'
-import { basesOn, chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
-import { agentsUi } from './agents/src/api'
-import { agentDocs, touchedBy } from './agent-docs/src/api'
-import { agentMarks } from './agent-marks.svelte'
-import { shortcuts } from './shortcuts/src/api'
-import { toggleFill } from './tab-fill/src/api'
-import { fullscreen } from './fullscreen.svelte'
-import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
+} from '../../sharing/src/api'
+import { archiveEntry, DIVIDER } from '../../menu.svelte'
+import { updates } from '../../updates/src/api'
+import { modes } from '../../modes.svelte'
+import { basesOn, type KindName, passOn, settings, timeOn } from '../../settings.svelte'
+import { agentMarks } from '../../agent-marks.svelte'
+import { shortcuts } from '../../shortcuts/src/api'
+import { toggleFill } from '../../tab-fill/src/api'
+import { fullscreen } from '../../fullscreen.svelte'
+import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
 import {
   closeWindow,
   internal,
@@ -117,24 +93,15 @@ import {
   openExternal,
   isMarkdownPath,
   samePath,
-} from './platform/src/api'
-import { SCHEME_CHOICES, SCHEME_NAMES } from './theme-looks/src/api'
-import { theme } from './theme/src/api'
-import { workspace } from './workspace.svelte'
-import { TAB_KINDS } from './workspace/tab-kinds'
-import { isUnsaved } from './workspace/drafts'
-import { askPlace } from './save-place/src/api'
-import { tabOps, tabToSpace } from './tab-strip/src/api'
-import {
-  historyOpening,
-  pages,
-  privateWindows,
-  siteClearing,
-  siteMuting,
-  type Step,
-} from './web-tab/src/api'
-import { openRandomNote, randomChoices } from './random-note'
-import { showFeedback, showQuickAdd, toggleTabOverview } from './surfaces.svelte'
+} from '../../platform/src/api'
+import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
+import { theme } from '../../theme/src/api'
+import { workspace } from '../../workspace.svelte'
+import { isUnsaved } from '../../workspace/drafts'
+import { askPlace } from '../../save-place/src/api'
+import { tabOps, tabToSpace } from '../../tab-strip/src/api'
+import { openRandomNote, randomChoices } from '../../random-note'
+import { showFeedback, showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
 
 async function openCustomCss() {
   if (!isNative) return
@@ -150,182 +117,30 @@ async function openSnippets() {
   await workspace.open(path)
 }
 
-export function exportCommands(): Command[] {
-  if (__EVEN_PLUGIN__) return []
-
-  const note = () => workspace.active
-  const source = () => openTarget().source
-  const name = () => note()?.name ?? 'Untitled.md'
-  const target = openTarget
-  const shut = (rows: Command[]) =>
-    frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows
-
-  const open = note()
-  const kind = exportKindOf(
-    open ? { exports: TAB_KINDS[open.kind].exports, path: open.path } : null,
-  )
-
-  const options = (): Promise<RunOptions> => renderOptions(target())
-
-  const noteOut = async (id: Exportable) => {
-    const m = await exporters()
-    await m.runExport(id, target(), await options())
-  }
-
-  const drawingOut = async (id: ExportId) => {
-    const picture = await import('./plane/src/api')
-    const drawing = picture.drawingOf(openOut())
-
-    if (id === 'png') await picture.exportCanvasPng(drawing)
-    else if (id === 'svg') await picture.exportCanvasSvg(drawing)
-    else if (id === 'pdf') await picture.exportCanvasPdf(drawing)
-  }
-
-  const pagesOut = async (id: ExportId) => {
-    const out = await (await import('./pages/src/api')).pagesOut()
-    const about = out.pagesOutOf(openOut())
-
-    if (id === 'pdf') await out.exportPagesPdf(about)
-    else if (id === 'png') await out.exportPagesPng(about)
-    else if (id === 'svg') await out.exportPagesSvg(about)
-  }
-
-  const copyOut = async () => {
-    const path = target().path
-    if (path === null) return
-
-    const m = await import('./files-out/src/api')
-    await m.saveCopy(path, name())
-  }
-
-  const run = (id: ExportId) => () =>
-    busy.start(
-      'Exporting',
-      async () => {
-        if (kind === 'canvas') await drawingOut(id)
-        else if (kind === 'pages') await pagesOut(id)
-        else if (id === 'copy') await copyOut()
-        else if (isNoteFormat(id)) await noteOut(id)
-      },
-      `export-${id}`,
-    )
-
-  const offered = offeredBy(kind)
-  const nothing = offered.length === 0
-  const asNote = kind === 'note' || nothing
-
-  const commands: Command[] = (nothing ? offeredBy('note') : offered).map((id) => ({
-    id: `export-${id}`,
-    label: labelOf(id),
-    hint: shortcuts.hint(`export.${id}`),
-    disabled: nothing,
-    run: run(id),
-  }))
-
-  if (asNote) {
-    commands.push({
-      id: 'page-setup',
-      label: 'Page setup for export',
-      run: () => settings.show('export'),
-    })
-  }
-
-  if (!settings.pandoc) return shut(commands)
-
-  if (!asNote) return shut(commands)
-
-  for (const format of PANDOC_FORMATS) {
-    commands.push({
-      id: `export-${format.id}`,
-      label: `Export as ${format.label}`,
-      disabled: nothing,
-      run: () =>
-        busy.start(
-          'Exporting',
-          async () => {
-            const m = await exporters()
-            await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
-          },
-          `export-${format.id}`,
-        ),
-    })
-  }
-
-  return shut(commands)
-}
-
-function exportPicker(): Command[] {
-  if (__EVEN_PLUGIN__) return []
-
-  const formats = exportCommands().filter((one) => one.id !== 'page-setup')
-
-  return [
-    {
-      id: 'export',
-      label: 'Export…',
-      also: [
-        ...formats.map((one) => one.label),
-        ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => one.label),
-      ],
-      disabled: formats.every((one) => one.disabled),
-      run: () => picker.show(),
-    },
-  ]
-}
-
 export function paletteCommands(view?: EditorView): Command[] {
-  const folded = new Set(exportCommands().map((one) => one.id))
+  const folded = new Set(commandRows('export', view).map((one) => one.id))
   folded.delete('page-setup')
   return appCommands(view).filter((one) => !folded.has(one.id))
 }
 
-function importCommand(): Command | null {
-  if (__EVEN_PLUGIN__) return null
-
-  return {
-    id: 'import',
-    label: 'Import',
-    run: () => {
-      void import('./import/src/api')
-        .then((one) => one.importingStore())
-        .then(({ importing }) => importing.show())
-    },
-  }
-}
-
-const migrate = () =>
-  import('./import/src/api').then((one) => one.migratingStore()).then((one) => one.migrating)
-
-function migrateCommands(): Command[] {
+function importCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
+  const asked = (id: string) => () => {
+    settings.show('import')
+    void runCommand(id)
+  }
+
   return [
-    {
-      id: 'import-obsidian',
-      label: 'Import from Obsidian',
-      run: () => {
-        settings.show('import')
-        void migrate().then((migrating) => migrating.obsidian())
-      },
-    },
+    { id: 'import', label: 'Import', run: () => void runCommand('import.show') },
+    { id: 'import-obsidian', label: 'Import from Obsidian', run: asked('import.obsidian') },
     {
       id: 'import-notion',
       label: 'Import from Notion',
-      run: () => {
-        void migrate().then((migrating) => migrating.files())
-      },
+      run: () => void runCommand('import.notion'),
     },
     ...(isDesktop
-      ? [
-          {
-            id: 'import-zen',
-            label: 'Import from Zen',
-            run: () => {
-              settings.show('import')
-              void migrate().then((migrating) => migrating.zen())
-            },
-          },
-        ]
+      ? [{ id: 'import-zen', label: 'Import from Zen', run: asked('import.zen') }]
       : []),
   ]
 }
@@ -334,7 +149,7 @@ async function openLog() {
   if (!isDesktop) return
 
   const path = await invoke<string>('log_dir')
-  const { reveal } = await import('./reveal')
+  const { reveal } = await import('../../reveal')
   await reveal(path)
 }
 
@@ -342,7 +157,7 @@ async function openThemesFolder() {
   if (!isDesktop) return
 
   const dir = await invoke<string>('theme_dir')
-  const { reveal } = await import('./reveal')
+  const { reveal } = await import('../../reveal')
   await reveal(dir)
   await theme.reload()
 }
@@ -354,17 +169,6 @@ export interface Command extends MenuItem {
   ownWindow?: boolean
 }
 
-function agentUndoRows(): Command[] {
-  const path = workspace.active?.path
-  if (__EVEN_PLUGIN__ || !path) return []
-
-  return touchedBy(path).map((agent) => ({
-    id: `agent-undo:${agent.id}`,
-    label: `Undo edits by ${agent.name}`,
-    run: () => void agentDocs().then((docs) => docs.undoAgentIn(agent, path)),
-  }))
-}
-
 function agentRows(): Command[] {
   if (__EVEN_PLUGIN__ || !agentMarks.heard) return []
 
@@ -374,7 +178,7 @@ function agentRows(): Command[] {
       label: 'Agents',
       run: () => {
         revealPanel('ask')
-        void chatStore().then(({ chat }) => chat.showThreads())
+        void runCommand('ai.threads')
       },
     },
     {
@@ -382,7 +186,7 @@ function agentRows(): Command[] {
       label: 'Stop agents',
       hint: shortcuts.hint('agents.stop'),
       ownWindow: true,
-      run: () => void agentsUi().then((ui) => ui.stopAgents()),
+      run: () => void runCommand('agents.stop'),
     },
   ]
 }
@@ -457,52 +261,6 @@ function tabCommands(): Command[] {
           },
         ]
       : []),
-  ]
-}
-
-function webCommands(): Command[] {
-  if (__EVEN_PLUGIN__) return []
-
-  const tab = workspace.active
-  if (!isDesktop || tab?.kind !== 'web') return []
-
-  const page = pages.of(tab.id)
-  const rows: [Step, string, string][] = [
-    ['reload', 'Reload', 'web.reload'],
-    ['fresh', 'Hard reload', 'web.fresh'],
-  ]
-  if (page.loading) rows.push(['stop', 'Stop', 'web.stop'])
-  return [
-    ...rows.map(([step, label, key]) => ({
-      id: `web-${step}`,
-      label,
-      hint: shortcuts.hint(key),
-      run: () => void pages.step(tab.id, step),
-    })),
-    {
-      id: 'web-find',
-      label: 'Find',
-      hint: shortcuts.hint('edit.find'),
-      run: () => (page.find.open = true),
-    },
-    {
-      id: 'web-mute',
-      label: page.muted ? 'Unmute site' : 'Mute site',
-      hint: shortcuts.hint('web.mute'),
-      run: () => void siteMuting().then((one) => one.muteSite(tab.id, !page.muted)),
-    },
-    {
-      id: 'web-clear-data',
-      label: 'Delete browsing data',
-      hint: shortcuts.hint('web.clear-data'),
-      run: () => void siteClearing().then((one) => one.clearingAsked.ask(tab.id)),
-    },
-    {
-      id: 'web-devtools',
-      label: 'Developer tools',
-      hint: shortcuts.hint('web.devtools'),
-      run: () => void invoke('web_devtools', { tab: tab.id }).catch(() => undefined),
-    },
   ]
 }
 
@@ -685,7 +443,7 @@ function block(id: string, label: () => string, command: StateCommand): Block {
   return { id, label, apply: on(command) }
 }
 
-const BLOCKS: Block[] = [
+const WRITTEN: Block[] = [
   ...[1, 2, 3, 4, 5, 6].map((level) =>
     block(`paragraph.heading-${level}`, () => `Heading ${level}`, setHeading(level)),
   ),
@@ -734,7 +492,9 @@ const BLOCKS: Block[] = [
     ready: (view) => canDictate(view),
     byHand: true,
   },
-  { id: 'record', label: recordLabel, apply: () => void record(), ready: canRecord, byHand: true },
+]
+
+const LINKED: Block[] = [
   block('format.link', () => 'Link', insertLink),
   block('paragraph.footnote', () => 'Footnote', insertFootnote),
   block('paragraph.toc', () => 'Table of contents', insertToc),
@@ -743,8 +503,22 @@ const BLOCKS: Block[] = [
   block('page-break', () => 'Page break', insertPageBreak),
 ]
 
+function recorded(view?: EditorView): Block[] {
+  return commandRows('record', view).map((row) => ({
+    id: row.id,
+    label: () => row.label,
+    apply: () => row.run(),
+    ready: () => row.disabled !== true,
+    byHand: row.byHand === true,
+  }))
+}
+
+function blocks(view?: EditorView): Block[] {
+  return [...WRITTEN, ...recorded(view), ...LINKED]
+}
+
 export function blockCommands(view?: EditorView): Command[] {
-  return BLOCKS.map((one) => {
+  return blocks(view).map((one) => {
     const hint = shortcuts.hint(one.id)
     const ready = one.ready ? one.ready(view) : !!view && !view.state.readOnly
 
@@ -760,7 +534,7 @@ export function blockCommands(view?: EditorView): Command[] {
 }
 
 export function blockRows(): SlashBlock[] {
-  return BLOCKS.map((one) => ({ label: one.label(), run: one.apply }))
+  return blocks().map((one) => ({ label: one.label(), run: one.apply }))
 }
 
 function moveCommand(): Command | null {
@@ -823,7 +597,7 @@ function spaceCommands(): Command[] {
               busy.start(
                 'Exporting',
                 async () => {
-                  const { exportSpace } = await import('./internal/export')
+                  const { exportSpace } = await import('../../internal/export')
                   const items = workspace.itemMeta.itemsOf(space.root)
                   const metaOf = (path: string) => items[path] ?? null
                   await exportSpace(space.root, space.name, metaOf)
@@ -854,30 +628,13 @@ function spaceCommands(): Command[] {
   ]
 }
 
-function sendToChatCommand(view?: EditorView): Command[] {
-  const tab = workspace.active
-  const note = tab?.kind === 'note' ? tab.path : null
-  if (__EVEN_PLUGIN__ || !note || !account.accountToken || !chatsOn()) return []
-  const run = () => {
-    const range = view?.state.selection.main
-    void import('./chats-client/src/api')
-      .then((one) => one.chatSending())
-      .then(({ sendSelection, sendToChat }) =>
-        view && range && !range.empty
-          ? sendSelection(note, view.state.doc.toString(), range.from, range.to)
-          : sendToChat(note),
-      )
-  }
-  return [{ id: 'send-to-chat', label: 'Send to chat', run }]
-}
-
 export function tidies(path: string | null): boolean {
   return path === null || isMarkdownPath(path)
 }
 
-export function appCommands(view?: EditorView): Command[] {
-  const imported = importCommand()
+const shut = () => workspace.protection.locked(workspace.active?.path)
 
+export function appCommands(view?: EditorView): Command[] {
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
   const space = workspace.activeSpace
   const readOnly = space ? !canWriteAt(space.root) : false
@@ -909,7 +666,7 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => showQuickAdd(),
           },
         ]),
-    ...sendToChatCommand(view),
+    ...commandRows('send', view),
     {
       id: 'new-unique',
       label: 'New unique note',
@@ -934,7 +691,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'new-database',
             label: 'New database',
             disabled: readOnly,
-            run: () => void import('./views/src/api').then((one) => one.createDatabase()),
+            run: () => void runCommand('views.new-database'),
           },
         ]
       : []),
@@ -942,7 +699,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'new-from-template',
       label: 'New note from template',
       disabled: readOnly,
-      run: () => void import('./views/src/api').then((one) => one.pickTemplate()),
+      run: () => void runCommand('views.pick-template'),
     },
     ...(viewport.touch
       ? []
@@ -965,16 +722,13 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'new-terminal',
             label: 'New terminal',
             ownWindow: true,
-            run: () => void import('./terminal/src/api').then(({ openTerminal }) => openTerminal()),
+            run: () => void runCommand('terminal.new'),
           },
           {
             id: 'new-remote',
             label: 'Remote',
             ownWindow: true,
-            run: () =>
-              void import('./terminal/src/api')
-                .then((one) => one.hostPicking())
-                .then(({ hostPicker }) => hostPicker.toggle()),
+            run: () => void runCommand('terminal.remote'),
           },
         ]
       : []),
@@ -985,25 +739,19 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'new-online-terminal',
             label: 'New online terminal',
             ownWindow: true,
-            run: () => void import('./terminal/src/api').then(({ openOnline }) => openOnline()),
+            run: () => void runCommand('terminal.online'),
           },
           {
             id: 'start-online-machine',
             label: 'Start online machine',
             ownWindow: true,
-            run: () =>
-              void import('./terminal/src/api')
-                .then((one) => one.onlineMachine())
-                .then(({ machine }) => machine.startStop(true)),
+            run: () => void runCommand('terminal.machine-start'),
           },
           {
             id: 'stop-online-machine',
             label: 'Stop online machine',
             ownWindow: true,
-            run: () =>
-              void import('./terminal/src/api')
-                .then((one) => one.onlineMachine())
-                .then(({ machine }) => machine.startStop(false)),
+            run: () => void runCommand('terminal.machine-stop'),
           },
         ]),
     ...(links.websiteNotes
@@ -1023,13 +771,12 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !randomChoices().length,
       run: () => openRandomNote(),
     },
-    ...(imported ? [imported] : []),
-    ...migrateCommands(),
+    ...importCommands(),
     {
       id: 'convert-syntax',
       label: 'Convert syntax',
       disabled: readOnly,
-      run: () => void import('./convert-syntax').then((m) => m.convertSyntax()),
+      run: () => void import('../../convert-syntax').then((m) => m.convertSyntax()),
     },
     ...(canPrint
       ? [
@@ -1037,7 +784,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'print',
             label: 'Print',
             hint: shortcuts.hint('app.print'),
-            disabled: !printable(workspace.active?.kind) || frontShut(),
+            disabled: !printable(workspace.active?.kind) || shut(),
             run: () => busy.start('Printing', () => printOpen(), 'print'),
           },
         ]
@@ -1073,7 +820,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.reopenClosed(),
     },
     { id: 'space', label: 'New space', run: () => void newSpace() },
-    ...webCommands(),
+    ...commandRows('web', view),
     ...paneCommands(),
     ...layoutCommands(),
     {
@@ -1095,14 +842,14 @@ export function appCommands(view?: EditorView): Command[] {
       label: 'New private tab',
       hint: shortcuts.hint('app.new-private'),
       disabled: !isDesktop || viewport.touch,
-      run: () => void privateWindows().then(({ openPrivate }) => openPrivate()),
+      run: () => void runCommand('app.new-private'),
     },
     {
       id: 'web-history',
       label: 'Browsing history',
       hint: shortcuts.hint('web.history'),
       disabled: viewport.touch,
-      run: () => void historyOpening().then((one) => one.openHistory()),
+      run: () => void runCommand('web.history'),
     },
     {
       id: 'undo-file',
@@ -1137,10 +884,10 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'history',
       label: 'Version history',
-      disabled: !workspace.active?.path || frontShut(),
+      disabled: !workspace.active?.path || shut(),
       run: () => (settings.historyOpen = true),
     },
-    ...agentUndoRows(),
+    ...commandRows('agent-undo', view),
     ...agentRows(),
     ...(__EVEN_PLUGIN__
       ? []
@@ -1149,12 +896,12 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'copy-uri',
             label: 'Copy link to this note',
             disabled: !workspace.active?.path,
-            run: () => void import('./automation/link').then((m) => m.copyNoteLink()),
+            run: () => void import('../../automation/link').then((m) => m.copyNoteLink()),
           },
         ]),
 
-    ...exportPicker(),
-    ...exportCommands(),
+    ...commandRows('export-picker', view),
+    ...commandRows('export', view),
     ...spaceCommands(),
     { id: 'llm', label: 'Connect an LLM to your notes', run: () => settings.show('llm') },
 
@@ -1163,10 +910,7 @@ export function appCommands(view?: EditorView): Command[] {
           id: 'signout',
           label: account.user.email ? `Sign out ${account.user.email}` : 'Sign out',
           byHand: true,
-          run: () =>
-            __EVEN_PLUGIN__
-              ? void account.signOut('asked')
-              : void import('./ai-providers/src/api').then((one) => one.signOut()),
+          run: () => void account.leave(),
         }
       : { id: 'signin', label: 'Sign in', run: () => (account.open = true) },
 
@@ -1312,7 +1056,7 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'themes',
       label: 'Switch theme',
-      run: () => void import('./theme-looks/src/api').then((one) => one.pickTheme()),
+      run: () => void import('../../theme-looks/src/api').then((one) => one.pickTheme()),
     },
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,
@@ -1320,12 +1064,7 @@ export function appCommands(view?: EditorView): Command[] {
       checked: item.id === theme.id,
       run: () => theme.select(item.id),
     })),
-    ...switchableAccounts().map((one) => ({
-      id: `ai-account:${one.id}`,
-      label: `AI account: ${one.label}`,
-      checked: one.active,
-      run: () => switchAccount(one.id),
-    })),
+    ...commandRows('ai-accounts', view),
     ...SCHEME_CHOICES.map((choice) => ({
       id: `scheme:${choice}`,
       label: `Mode: ${SCHEME_NAMES[choice]}`,
@@ -1430,7 +1169,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'quick-question',
       label: 'Quick question',
       hint: shortcuts.hint('app.quick-question'),
-      run: () => askQuickly(),
+      run: () => void runCommand('app.quick-question'),
     },
     {
       id: 'reload-app',
@@ -1442,7 +1181,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'scratchpad',
       label: 'Scratchpad',
       hint: shortcuts.hint('app.scratchpad'),
-      run: () => toggleScratchpad(),
+      run: () => void runCommand('app.scratchpad'),
     },
     {
       id: 'right-sidebar',
@@ -1471,22 +1210,22 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'pass',
             label: 'Pass',
             hint: shortcuts.hint('app.pass'),
-            run: () => void import('./pass-sync/src/api').then((one) => one.openPass()),
+            run: () => void runCommand('pass.open'),
           },
           {
             id: 'pass-lock',
             label: 'Lock Pass',
-            run: () => void import('./pass-sync/src/api').then((one) => one.lockPass()),
+            run: () => void runCommand('pass.lock'),
           },
           {
             id: 'pass-new-login',
             label: 'New login',
-            run: () => void import('./pass-sync/src/api').then((one) => one.openPass('new-login')),
+            run: () => void runCommand('pass.new-login'),
           },
           {
             id: 'pass-generate',
             label: 'Generate password',
-            run: () => void import('./pass-sync/src/api').then((one) => one.openPass('generator')),
+            run: () => void runCommand('pass.generate'),
           },
         ]),
     ...(__EVEN_PLUGIN__
@@ -1496,7 +1235,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'todos',
             label: 'Todos',
             hint: shortcuts.hint('app.tasks'),
-            run: () => void import('./todos-entry').then(({ showTodos }) => showTodos()),
+            run: () => void import('../../todos-entry').then(({ showTodos }) => showTodos()),
           },
           ...(timeOn()
             ? [
@@ -1504,19 +1243,19 @@ export function appCommands(view?: EditorView): Command[] {
                   id: 'time-tab',
                   label: 'Open time tracker',
                   hint: shortcuts.hint('time.tab'),
-                  run: () => void import('./time/src/api').then(({ openTime }) => openTime()),
+                  run: () => void runCommand('time.tab'),
                 },
                 {
                   id: 'time-start',
                   label: 'Start timer',
                   hint: shortcuts.hint('time.start'),
-                  run: () => void import('./time/src/api').then(({ startTimer }) => startTimer()),
+                  run: () => void runCommand('time.start'),
                 },
                 {
                   id: 'time-stop',
                   label: 'Stop timer',
                   hint: shortcuts.hint('time.stop'),
-                  run: () => void import('./time/src/api').then(({ stopTimer }) => stopTimer()),
+                  run: () => void runCommand('time.stop'),
                 },
               ]
             : []),
@@ -1589,4 +1328,12 @@ function without(rows: Command[]): Command[] {
     const kind = MAKES[row.id]
     return !kind || !turnedOff(kind)
   })
+}
+
+export async function runRow(id: string): Promise<boolean> {
+  await commandRowsLoaded()
+  const row = appCommands().find((one) => one.id === id)
+  if (!row || row.disabled === true) return false
+  row.run()
+  return true
 }

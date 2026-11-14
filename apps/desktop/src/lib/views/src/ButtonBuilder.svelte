@@ -1,6 +1,8 @@
 <script lang="ts">
   import { BUTTON, type Button, readButtons, withButton } from '@orden/bases'
-  import { appCommands } from '../../commands'
+  import { commandRowsLoaded } from '@orden/contracts'
+  import { onMount } from 'svelte'
+  import { appCommands } from '../../commands/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { bare, knownProperties } from './columns'
@@ -22,10 +24,14 @@
           .map(bare)
       : [],
   )
+  let rowsIn = $state(false)
+  onMount(() => void commandRowsLoaded().then(() => (rowsIn = true)))
   const commands = $derived(
-    appCommands()
-      .filter((one) => !one.ownWindow && !one.byHand)
-      .map((one) => ({ value: one.id, label: one.label })),
+    rowsIn
+      ? appCommands()
+          .filter((one) => !one.ownWindow && !one.byHand)
+          .map((one) => ({ value: one.id, label: one.label }))
+      : [],
   )
 
   const blank = (): Button => ({ name, set: {}, kept: {} })

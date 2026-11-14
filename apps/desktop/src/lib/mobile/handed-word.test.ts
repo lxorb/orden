@@ -50,7 +50,7 @@ vi.mock('../platform/src/mobile-bridge', () => ({
   answer: () => undefined,
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
-vi.mock('../commands', () => ({ appCommands: () => [] }))
+vi.mock('../commands/src/api', () => ({ appCommands: () => [] }))
 vi.mock('../views.svelte', () => ({
   views: { of: () => (world.open ? { state: { readOnly: false } } : null) },
 }))

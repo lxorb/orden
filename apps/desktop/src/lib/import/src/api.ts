@@ -41,3 +41,20 @@ export const loadImportSheet = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no import in the Even Realities plugin'))
     : import('./ImportSheet.svelte')
+
+async function showImport() {
+  const { importing } = await importingStore()
+  importing.show()
+}
+
+async function migrate(from: 'obsidian' | 'files' | 'zen') {
+  const { migrating } = await migratingStore()
+  await migrating[from]()
+}
+
+export const importCommands = {
+  'import.show': () => void showImport(),
+  'import.obsidian': () => void migrate('obsidian'),
+  'import.notion': () => void migrate('files'),
+  'import.zen': () => void migrate('zen'),
+}

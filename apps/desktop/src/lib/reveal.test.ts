@@ -97,7 +97,7 @@ describe('showing a file where it sits', () => {
       .map((path) => relative(LIB, path).replaceAll('\\', '/'))
       .sort()
     expect(callers).toEqual([
-      'commands.ts',
+      'commands/src/commands.ts',
       'explorer/src/menu.ts',
       'files-out/src/save.ts',
       'row-menu.ts',

@@ -96,7 +96,7 @@ describe('the path a note sits at', () => {
   const everywhere = [
     ...componentSources(),
     read('lib/menu.svelte.ts'),
-    read('lib/commands.ts'),
+    read('lib/commands/src/commands.ts'),
     read('lib/app-menu.ts'),
   ].join('\n')
 
@@ -113,7 +113,7 @@ describe('making a folder', () => {
     ...componentSources(),
     read('lib/row-menu.ts'),
     read('lib/menu.svelte.ts'),
-    read('lib/commands.ts'),
+    read('lib/commands/src/commands.ts'),
     read('lib/app-menu.ts'),
     read('lib/shortcuts/src/registry.ts')
       .split('\n')

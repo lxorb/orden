@@ -1,4 +1,6 @@
-export interface AccountRow {
+import type { CommandExtension } from '@orden/contracts'
+
+interface AccountRow {
   id: string
   label: string
   active: boolean
@@ -12,10 +14,11 @@ export function accountsAre(rows: () => AccountRow[], choose: (id: string) => vo
   choosing = choose
 }
 
-export function switchableAccounts(): AccountRow[] {
-  return listing?.() ?? []
-}
-
-export function switchAccount(id: string): void {
-  choosing?.(id)
+export function accountRows(): CommandExtension[] {
+  return (listing?.() ?? []).map((one) => ({
+    id: `ai-account:${one.id}`,
+    label: `AI account: ${one.label}`,
+    checked: one.active,
+    run: () => choosing?.(one.id),
+  }))
 }

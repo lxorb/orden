@@ -7,7 +7,7 @@
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
-  import { paletteCommands } from '../../commands'
+  import { paletteCommands } from '../../commands/src/api'
   import { fileMark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
   import { frecency } from '../../frecency'

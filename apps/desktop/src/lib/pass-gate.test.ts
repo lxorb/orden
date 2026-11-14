@@ -12,7 +12,7 @@ const { hiddenKinds, KINDS_KEY, PASS_WORD, EXPERIMENTAL_WORD, passOn, kindsHere 
 const { setKind, setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
-const { appCommands } = await import('./commands')
+const { appCommands } = await import('./commands/src/api')
 const { offeredKinds } = await import('./new-kinds')
 const { openPass } = await import('./pass-sync/src/open')
 const { workspace } = await import('./workspace.svelte')

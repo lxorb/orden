@@ -180,7 +180,7 @@ test('the native drives switch the scheme through the button and the choices dra
 })
 
 test('the palette’s row opens it where the palette stands', async () => {
-  const { appCommands } = await import('../../src/lib/commands')
+  const { appCommands } = await import('../../src/lib/commands/src/api')
   const row = appCommands().find((one) => one.id === 'themes')
   expect(row?.label).toBe('Switch theme')
 

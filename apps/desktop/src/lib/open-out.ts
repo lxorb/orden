@@ -1,17 +1,5 @@
-import { openTarget, printNote } from './export/src/api'
+import { openOut, printNote } from './export/src/api'
 import { workspace } from './workspace.svelte'
-
-export function openOut() {
-  const target = openTarget()
-  return {
-    text: target.source,
-    name: target.name,
-    path: target.path,
-    root: workspace.rootHolding(target.path),
-    shared: workspace.active?.note.shared ?? null,
-    trusted: target.trusted,
-  }
-}
 
 export async function printOpen(): Promise<void> {
   const kind = workspace.active?.kind

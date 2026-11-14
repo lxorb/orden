@@ -2,15 +2,15 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const readOnly = new Set<string>()
 
-vi.mock('./sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./sharing/src/sharing.svelte')>()),
+vi.mock('../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-const { workspace } = await import('./workspace.svelte')
-const { appCommands } = await import('./commands')
-const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('./settings.svelte')
+const { workspace } = await import('../../workspace.svelte')
+const { appCommands } = await import('./api')
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 
 const SPACE = '/Theirs'
@@ -110,7 +110,7 @@ describe('converting syntax', () => {
 
 describe('converting website notes', () => {
   async function offers(): Promise<boolean> {
-    const { links } = await import('./link-index.svelte')
+    const { links } = await import('../../link-index.svelte')
     vi.spyOn(links, 'websiteNotes', 'get').mockReturnValue(true)
     vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
       id: 'theirs',
