@@ -52,6 +52,7 @@ import {
   isNative,
   joinPath,
   openExternal,
+  nextTask,
 } from './platform/src/api'
 import { noteId } from './note-id'
 import { busy, readTint, viewport } from './ui-kit/src/api'
@@ -62,7 +63,6 @@ import { lineOfHeading, scanHeadings } from './outline'
 import type { Change } from '@orden/scan/search/replace'
 import { startup } from './startup.svelte'
 import { tabOverview } from './surfaces.svelte'
-import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
 import { GIVE_UP } from './parting/src/api'
 import { holdsRetiredTab } from './workspace/retired-tabs'

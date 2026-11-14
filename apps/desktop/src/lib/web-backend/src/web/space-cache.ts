@@ -1,8 +1,7 @@
 import { lineStarts } from '@orden/scan/search/lines'
 import { fold, type SearchNote } from '@orden/scan/search/match'
 import type { Warmth } from '@orden/scan/search/warmth'
-import { breathe } from '../../../breathe'
-import { hiddenUnder, isMarkdown, normalise, under } from '../../../platform/src/api'
+import { hiddenUnder, isMarkdown, normalise, under, breathe } from '../../../platform/src/api'
 import { type FileRow, files } from './store'
 
 function searched(base: string, path: string): boolean {

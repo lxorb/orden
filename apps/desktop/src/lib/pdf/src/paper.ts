@@ -5,11 +5,10 @@ import { type PdfHeading, readOutline } from './outline'
 import { PDF_TO_CSS } from './pages'
 import { runsOfItems, textOfRuns } from './find'
 import type { AwayDraw } from './paper-away'
-import { fileBytes, pathKey, placesOf, samePath } from '../../platform/src/api'
+import { fileBytes, pathKey, placesOf, samePath, idle } from '../../platform/src/api'
 import { mark } from '../../trace'
 import { isPagesTarget } from '@orden/markdown/links'
 import { paperOf as ownPaper } from '@orden/markdown/pages'
-import { idle } from '../../breathe'
 import { SvelteMap } from 'svelte/reactivity'
 
 const paperAway = () =>

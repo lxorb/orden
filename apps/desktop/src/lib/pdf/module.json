@@ -3,7 +3,6 @@
   "layer": "content",
   "dependsOn": ["contracts", "markdown", "platform", "scan", "sharing", "sync-client"],
   "pending": [
-    "apps/desktop/src/lib/breathe.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/png-off.ts",
     "apps/desktop/src/lib/startup.svelte.ts",

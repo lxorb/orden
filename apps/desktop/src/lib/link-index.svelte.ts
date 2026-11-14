@@ -25,7 +25,6 @@ import {
   type LinkKind,
   withoutBlockIds,
 } from '@orden/markdown/links'
-import { breathe } from './breathe'
 import { buildGraph, type NoteGraph } from './graph/src/api'
 import { type Placed, retargetLinks } from './link-rewrite'
 import {
@@ -43,6 +42,7 @@ import {
   invoke,
   isVault,
   log,
+  breathe,
 } from './platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
