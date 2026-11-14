@@ -238,7 +238,7 @@ def drive_scheme(browser: Browser, which: str, at: int) -> None:
 def drive_settings(browser: Browser) -> None:
     page = fresh(browser, "settings")
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
-    page.wait_for_selector(".orden-screen.sheet", timeout=15000)
+    page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
     page.wait_for_timeout(600)
     shot(page, "20-appearance")
 
