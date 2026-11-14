@@ -12,8 +12,7 @@
     type Words,
     wordsInto,
   } from './pages/paper'
-  import { boxOf, COLOURS, type Highlight, toViewport } from './pdf/highlights'
-  import { spansOver, wordsOfRuns } from './pdf/find'
+  import { boxOf, COLOURS, type Highlight, toViewport, spansOver, wordsOfRuns } from './pdf/src/api'
   import { wordsEnd } from './pages/words-end'
   import { pixelRatio } from './pixel-ratio.svelte'
 

@@ -3,7 +3,8 @@ import { describe, expect, test, vi } from 'vitest'
 import { readPdfPages } from './pdf-pages'
 import { sourceOf, type Source } from './sources'
 
-vi.mock('../../pdf/document', () => ({
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   pageSizes: (bytes: Uint8Array) =>
     new TextDecoder().decode(bytes.slice(0, 4)) === '%PDF'
       ? Promise.resolve([{ width: 612, height: 792 }])

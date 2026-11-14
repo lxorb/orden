@@ -227,8 +227,16 @@ function emptyMap<T>(): Map<string, T> {
   return new Map<string, T>()
 }
 
-function papers(): Promise<typeof import('./pdf/papers')> {
-  return import('./pdf/papers')
+let paperIndex: ReturnType<typeof import('./pdf/src/api').papers> | null = null
+
+function papers() {
+  paperIndex ??= import('./pdf/src/api')
+    .then((pdf) => pdf.papers())
+    .catch((error: unknown) => {
+      paperIndex = null
+      throw error
+    })
+  return paperIndex
 }
 
 async function viewOfExplorer(tab: Tab): Promise<import('./explorer/src/api').ExplorerView> {
@@ -1635,7 +1643,7 @@ class Workspace {
   private async paperText(path: string): Promise<string | null> {
     const [{ asItself }, { pageSizes }] = await Promise.all([
       import('./pages/from-pdf'),
-      import('./pdf/document'),
+      import('./pdf/src/api'),
     ])
     return asItself(path, pageSizes).catch((error: unknown) => {
       log('error', `open PDF as itself: ${path} - ${String(error)}`)
@@ -2242,7 +2250,7 @@ class Workspace {
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       const listed = this.files
       const tree = this.tree
-      void import('./pdf/extract').then(
+      void import('./pdf/src/api').then(
         ({ readPapers }) => readPapers(root, listed, tree),
         unfetched,
       )

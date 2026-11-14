@@ -1,4 +1,4 @@
-import { type Piece, placesOf, type Words } from '../reading/find'
+import { type Piece, placesOf, type Words } from '../../reading/find'
 
 export function runsOfItems(items: readonly object[]): string[] {
   return items.flatMap((item) => {

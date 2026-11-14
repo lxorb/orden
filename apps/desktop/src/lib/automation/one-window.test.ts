@@ -46,7 +46,10 @@ vi.mock('../platform/src/tauri', () => ({
   openExternal: () => Promise.resolve(),
 }))
 vi.mock('../web-tab/handed', () => ({ hearPages: () => Promise.resolve(() => undefined) }))
-vi.mock('../pdf/handed', () => ({ hearPdfs: () => Promise.resolve(() => undefined) }))
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+  handed: () => Promise.resolve({ hearPdfs: () => Promise.resolve(() => undefined) }),
+}))
 vi.mock('../ui-kit/src/busy.svelte', () => ({ busy: { failed: () => undefined } }))
 vi.mock('../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('./caller', () => ({ callerOf: () => undefined }))

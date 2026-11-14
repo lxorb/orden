@@ -1,4 +1,4 @@
-import { mark } from '../trace'
+import { mark } from '../../trace'
 
 export interface AwayDraw {
   number: number
@@ -33,9 +33,7 @@ const waiting = new Map<number, (drawn: Drawn) => void>()
 
 function opened(): Worker | null {
   if (worker) return worker
-  if (broken || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') {
-    return null
-  }
+  if (broken) return null
   try {
     worker = new Worker(new URL('./paper-worker.ts', import.meta.url), { type: 'module' })
   } catch {

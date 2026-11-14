@@ -21,7 +21,10 @@ vi.mock('../own-window', () => ({
     return Promise.resolve(() => (told = null))
   },
 }))
-vi.mock('../pdf/papers', () => ({ papersFor: () => Promise.resolve(), searchPapers: () => [] }))
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+  papers: () => Promise.resolve({ papersFor: () => Promise.resolve(), searchPapers: () => [] }),
+}))
 vi.mock('./inbox', () => ({ inboxHits: () => Promise.resolve([]) }))
 
 const { workspace } = await import('../workspace.svelte')

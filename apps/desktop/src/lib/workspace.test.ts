@@ -5127,7 +5127,7 @@ describe('an essential asked for in a tab', () => {
 })
 
 describe('the words of the paper a page note holds', () => {
-  const papers = () => import('./pdf/papers')
+  const papers = () => import('./pdf/src/api').then((pdf) => pdf.papers())
   const hits = async (root: string) => {
     const { searchPapers } = await papers()
     const { parseQuery } = await import('@orden/scan/search/query')

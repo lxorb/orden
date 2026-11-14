@@ -6,7 +6,7 @@ const line = vi.hoisted(() => ({
   hearing: new Map<string, (said: { kind: string; path?: unknown }) => void>(),
 }))
 
-vi.mock('../platform/src/windows', () => ({
+vi.mock('../../platform/src/windows', () => ({
   windows: {
     get alone() {
       return line.alone

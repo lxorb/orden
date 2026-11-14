@@ -108,10 +108,7 @@ function into(card: HTMLElement): HTMLElement {
 }
 
 async function paperPage(file: Drawn, width: number): Promise<HTMLCanvasElement | null> {
-  const [{ openDocument }, { sheetFor }] = await Promise.all([
-    import('../pdf/document'),
-    import('../pdf/pages'),
-  ])
+  const { openDocument, sheetFor } = await import('../pdf/src/api')
   const held = await openDocument(joinPath(file.root, file.path))
 
   try {

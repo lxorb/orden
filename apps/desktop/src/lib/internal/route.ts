@@ -1,3 +1,4 @@
+import { PDF_SIDECAR } from '@orden/markdown/links'
 import { joinPath, normalise } from '../platform/src/api'
 import type { Trashed } from '../web/store'
 import { type Mounted, mountOf, mounts as mounted, PATH_ARGS } from './roots'
@@ -81,8 +82,7 @@ async function trash<T>(
 
 async function what(path: string): Promise<{ rest: string; dir: boolean }[]> {
   const kept = mountOf(path)
-  const { SIDECAR } = await import('../pdf/highlights')
-  const beside = [SIDECAR, '.pdf', `.pdf${SIDECAR}`]
+  const beside = [PDF_SIDECAR, '.pdf', `.pdf${PDF_SIDECAR}`]
   if (kept) {
     const top = kept.inside
     const out: { rest: string; dir: boolean }[] = []

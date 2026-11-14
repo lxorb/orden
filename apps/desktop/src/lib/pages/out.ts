@@ -19,7 +19,7 @@ import { pngData } from '../png-off'
 import { fileBytes, isDesktop } from '../platform/src/api'
 import { exporters } from '../export/src/api'
 import { chooseTarget, download, writeFile } from '../files-out/src/api'
-import { PDF_TO_CSS } from '../pdf/pages'
+import { PDF_TO_CSS } from '../pdf/src/api'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
 import { cssColour, paperIsLocked, paperPicture, paperUnder, sharpness, svgToPng } from './raster'
@@ -656,7 +656,7 @@ export async function printPages(out: PagesOut): Promise<void> {
   if (!bytes) return
 
   const [{ loading, pdfjs }, { printInFrame, printsInFrame }] = await Promise.all([
-    import('../pdf/document'),
+    import('../pdf/src/api'),
     exporters(),
   ])
   const linked = printsInFrame()

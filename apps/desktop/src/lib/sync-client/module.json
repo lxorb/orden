@@ -36,7 +36,6 @@
     "apps/desktop/src/lib/pages/carrying.ts",
     "apps/desktop/src/lib/pages/held.ts",
     "apps/desktop/src/lib/parting.ts",
-    "apps/desktop/src/lib/pdf/sheets.svelte.ts",
     "apps/desktop/src/lib/space-owed.ts",
     "apps/desktop/src/lib/space-pairing.ts",
     "apps/desktop/src/lib/space-watch.ts",

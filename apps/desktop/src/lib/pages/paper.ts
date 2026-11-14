@@ -1,16 +1,24 @@
 import type { PDFPageProxy } from 'pdfjs-dist'
-import type { OpenPdf } from '../pdf/document'
+import {
+  type OpenPdf,
+  type AwayDraw,
+  openBytes,
+  openDocument,
+  paperAway,
+  pdfjs,
+  matrixOf,
+  type Transform,
+  type PdfHeading,
+  readOutline,
+  PDF_TO_CSS,
+  runsOfItems,
+  textOfRuns,
+} from '../pdf/src/api'
 import { fileBytes, pathKey } from '../platform/src/api'
 import { mark } from '../trace'
-import { type AwayDraw, closeAway, drawAway, drawsAway, HERE, openAway } from './paper-away'
-import { openBytes, openDocument, pdfjs } from '../pdf/document'
-import { matrixOf, type Transform } from '../pdf/highlights'
-import { type PdfHeading, readOutline } from '../pdf/outline'
-import { PDF_TO_CSS } from '../pdf/pages'
 import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
 import { idle } from '../breathe'
-import { runsOfItems, textOfRuns } from '../pdf/find'
 import { SvelteMap } from 'svelte/reactivity'
 
 const SCALE = 2
@@ -333,7 +341,9 @@ async function draw(one: Held, number: number, density: number): Promise<Paper |
 function awayOf(one: Held): Promise<number | null> {
   one.away ??= one
     .bytes()
-    .then((bytes) => (bytes && !one.gone ? openAway(bytes) : null))
+    .then(async (bytes) =>
+      bytes && !one.gone ? ((await paperAway())?.openAway(bytes) ?? null) : null,
+    )
     .catch(() => null)
   return one.away
 }
@@ -344,10 +354,12 @@ async function rendered(
   asked: AwayDraw,
   signal?: AbortSignal,
 ): Promise<ImageBitmap | null> {
-  const doc = one.local || !drawsAway() ? null : await awayOf(one)
-  if (doc !== null) {
-    const drawn = await drawAway(doc, asked, signal)
-    if (drawn !== HERE) {
+  const door = one.local ? null : paperAway()
+  const away = door ? await door : null
+  const doc = away?.drawsAway() ? await awayOf(one) : null
+  if (away && doc !== null) {
+    const drawn = await away.drawAway(doc, asked, signal)
+    if (drawn !== away.HERE) {
       page.cleanup()
       return drawn
     }
@@ -613,8 +625,8 @@ function forgetKey(key: string) {
     job.settle(null)
   }
   for (const drawing of one.drawn.values()) void drawing.then((paper) => paper?.image.close())
-  void one.away?.then((doc) => {
-    if (doc !== null) closeAway(doc)
+  void one.away?.then(async (doc) => {
+    if (doc !== null) (await paperAway())?.closeAway(doc)
   })
   void one.open.then((opened) => opened.close()).catch(() => undefined)
 }

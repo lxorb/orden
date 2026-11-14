@@ -1,7 +1,6 @@
 import { SvelteMap } from 'svelte/reactivity'
-import { pathKey, windows } from '../platform/src/api'
-
-const SIDECAR = '.highlights.json'
+import { pathKey, windows } from '../../platform/src/api'
+import { SIDECAR } from './highlights'
 
 const SAID = 'marks-written'
 

@@ -1,4 +1,4 @@
-import { pageSizes } from '../../pdf/document'
+import { pageSizes } from '../../pdf/src/api'
 import { isJunk, Names, safeParts } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'

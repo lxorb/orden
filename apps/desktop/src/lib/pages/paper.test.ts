@@ -9,7 +9,8 @@ const held = vi.hoisted(() => ({
   cancelled: 0,
 }))
 
-vi.mock('../pdf/document', () => ({
+vi.mock('../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/src/api')>()),
   openBytes: () => Promise.reject(new Error('no bytes here')),
   openDocument: () => {
     held.opened++
