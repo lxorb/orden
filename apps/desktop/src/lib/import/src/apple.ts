@@ -1,4 +1,5 @@
 import { fromBase64 } from '../../platform/src/api'
+import { message } from '../../ui-kit/src/api'
 import { folderPlan } from './folder'
 import { dayOf, type Meta } from './meta'
 import { Names, safeParts } from './names'
@@ -28,9 +29,18 @@ export interface AppleNotes {
   missing: number
 }
 
-export const NO_ACCESS = 'no access'
+const NO_ACCESS = 'no access'
 
-export const NO_DATABASE = 'no database'
+const NO_DATABASE = 'no database'
+
+export function notesFault(error: unknown): { noAccess: boolean; said: string } {
+  const answered = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
+  if (answered === NO_ACCESS)
+    return { noAccess: true, said: 'macOS keeps those notes behind Full Disk Access.' }
+  if (answered === NO_DATABASE)
+    return { noAccess: false, said: 'There are no notes in Apple Notes on this Mac.' }
+  return { noAccess: false, said: message(error, 'Those notes could not be read.') }
+}
 
 export async function readMacNotes(): Promise<ImportPlan> {
   const { invoke } = await import('../../platform/src/api')

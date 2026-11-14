@@ -431,7 +431,7 @@
     Object.assign(window, { nibApp: (window as unknown as { ordenApp: object }).ordenApp })
 
     void Promise.all([
-      import('./lib/importing.svelte'),
+      import('./lib/import/src/api').then((one) => one.importingStore()),
       import('./lib/publishing/src/api'),
       import('./lib/ai/store.svelte'),
       import('./lib/ai/rewriting.svelte'),

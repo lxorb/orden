@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const readOnly = new Set<string>()
-vi.mock('./sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
@@ -17,7 +17,7 @@ const held = vi.hoisted(
 )
 const NOTES = { id: 'notes', name: 'Notes', root: '/notes' }
 const opened = vi.hoisted((): [string, string, string | null][] => [])
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get spaces() {
       return held.spaces
@@ -43,14 +43,12 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 const failed = vi.hoisted((): string[] => [])
-vi.mock('./ui-kit/src/busy.svelte', () => ({
-  busy: { failed: (said: string) => failed.push(said) },
-}))
-
-vi.mock('./surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
+vi.mock('../../surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
 
 const offered: string[] = []
-vi.mock('./ui-kit/src/prompt.svelte', () => ({
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
+  busy: { failed: (said: string) => failed.push(said) },
   prompt: {
     find: (asked: { options: { id: string }[] }) => {
       offered.push(...asked.options.map((one) => one.id))
@@ -59,7 +57,7 @@ vi.mock('./ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-vi.mock('./export/src/render', () => ({
+vi.mock('./document', () => ({
   importDocument: () =>
     Promise.resolve({
       name: 'Report.md',
@@ -69,7 +67,7 @@ vi.mock('./export/src/render', () => ({
 }))
 
 const storedFor = vi.hoisted((): string[] => [])
-vi.mock('./assets', () => ({
+vi.mock('../../assets', () => ({
   storeBeside: (_: ArrayBuffer, notePath: string, name: string) => {
     storedFor.push(notePath)
     return Promise.resolve(`assets/${name}`)

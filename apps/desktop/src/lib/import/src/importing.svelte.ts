@@ -1,34 +1,22 @@
 import type { PandocPicture, PickedFile } from '@orden/contracts'
-import { busy, message } from './ui-kit/src/api'
-import {
-  applyImport,
-  macNotes,
-  todoistAccount,
-  keepPictures,
-  counts,
-  type Counts,
-  type FormatId,
-  type ImportPlan,
-  detect,
-  readAs,
-  insideFolder,
-  pickedFolder,
-  sourcesFrom,
-  tooMuch,
-  type Source,
-  safeName,
-} from './import/src/api'
-import type { Rows } from './import/src/api'
-import { moveTargets } from './move-targets'
-import { canWriteAt } from './sharing/src/api'
-import { relativeTo, rootedAt, invoke, isDesktop, joinPath, platform } from './platform/src/api'
-import { importSheet } from './surfaces.svelte'
-import { workspace } from './workspace.svelte'
+import { relativeTo, rootedAt, invoke, joinPath } from '../../platform/src/api'
+import { canWriteAt } from '../../sharing/src/api'
+import { busy, message, prompt } from '../../ui-kit/src/api'
+import { moveTargets } from '../../move-targets'
+import { importSheet } from '../../surfaces.svelte'
+import { workspace } from '../../workspace.svelte'
+import { macNotes, todoistAccount } from './api'
+import { applyImport } from './apply'
+import { importDocument } from './document'
+import { folderNameFor, nameOfFormat } from './folder-name'
+import { keepPictures } from './pandoc-pictures'
+import { counts, type Counts, type FormatId, type ImportPlan } from './plan'
+import { detect, readAs } from './read'
+import { insideFolder, sourcesFrom, tooMuch, type Source } from './sources'
+import { safeName } from './names'
+import type { Rows } from './table'
 
 export type Stage = 'waiting' | 'reading' | 'ready' | 'writing' | 'done'
-
-const MACHINE_MADE =
-  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
 
 class Importing {
   open = $state(false)
@@ -122,18 +110,10 @@ class Importing {
       this.plan = plan
       this.stage = 'ready'
     } catch (error) {
-      const answered = saidBy(error)
-
+      const fault = apple.notesFault(error)
       this.stage = 'waiting'
-      this.noAccess = answered === apple.NO_ACCESS
-
-      if (this.noAccess) {
-        this.error = 'macOS keeps those notes behind Full Disk Access.'
-      } else if (answered === apple.NO_DATABASE) {
-        this.error = 'There are no notes in Apple Notes on this Mac.'
-      } else {
-        this.error = message(error, 'Those notes could not be read.')
-      }
+      this.noAccess = fault.noAccess
+      this.error = fault.said
     }
   }
 
@@ -178,7 +158,6 @@ class Importing {
   readonly needsPandoc = $derived(this.format === 'pandoc')
 
   async readWithPandoc() {
-    const { importDocument } = await import('./export/src/api').then((one) => one.exporters())
     const imported = await importDocument()
     if (!imported) return
 
@@ -211,7 +190,7 @@ class Importing {
     notePath: string,
   ): Promise<string> {
     if (!imported.pictures.length) return imported.markdown
-    const { storeBeside } = await import('./assets')
+    const { storeBeside } = await import('../../assets')
     const { markdown, lost } = await keepPictures(
       imported.markdown,
       imported.pictures,
@@ -236,7 +215,6 @@ class Importing {
       here: workspace.activeSpace?.root ?? null,
     }).filter((target) => canWriteAt(target.id))
 
-    const { prompt } = await import('./ui-kit/src/api')
     const into = await prompt.find({ title: 'Import into', options: [...targets] })
     if (!into) return
 
@@ -276,67 +254,6 @@ function landing(): string | null {
   const open = workspace.activeSpace?.root ?? null
   if (open !== null && canWriteAt(open)) return open
   return workspace.spaces.find((space) => canWriteAt(space.root))?.root ?? null
-}
-
-export function onMac(): boolean {
-  return isDesktop && platform() === 'macos'
-}
-
-function saidBy(error: unknown): string {
-  if (typeof error === 'string') return error
-  return error instanceof Error ? error.message : ''
-}
-
-export function folderNameFor(picked: readonly PickedFile[], format: FormatId): string {
-  if (format === 'todoist') return ''
-  const first = picked[0]
-  const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
-  const stripped = (format === 'obsidian' ? named : named.replace(MACHINE_MADE, '')).trim()
-
-  const wordy = /\p{L}{2,}/u.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
-
-  return wordy ? safeName(stripped) : nameOfFormat(format)
-}
-
-function nameOfFormat(format: FormatId): string {
-  switch (format) {
-    case 'notion':
-      return 'Notion'
-    case 'evernote':
-      return 'Evernote'
-    case 'keep':
-      return 'Google Keep'
-    case 'bear':
-      return 'Bear'
-    case 'logseq':
-      return 'Logseq'
-    case 'roam':
-      return 'Roam'
-    case 'craft':
-      return 'Craft'
-    case 'obsidian':
-      return 'Obsidian'
-    case 'onenote':
-      return 'OneNote'
-    case 'tomboy':
-      return 'Tomboy'
-    case 'apple-notes':
-      return 'Apple Notes'
-    case 'journal':
-      return 'Journal'
-    case 'pdf-pages':
-      return 'Papers'
-    case 'todoist':
-      return ''
-    case 'table':
-    case 'markdown':
-    case 'pandoc':
-      return 'Imported'
-  }
-}
-
-function stemOf(picked: PickedFile): string {
-  return picked.name.replace(/\.[^.]+$/, '')
 }
 
 export const importing = new Importing()

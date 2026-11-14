@@ -12,7 +12,7 @@ export interface Outcome {
 }
 
 interface Read {
-  name: string | ((format: FormatId) => Promise<string>)
+  name: string | ((format: FormatId) => string)
   sources: Source[]
 }
 
@@ -50,15 +50,14 @@ async function folder(): Promise<Read | null> {
 }
 
 async function files(): Promise<Read | null> {
-  const [{ pickFiles }, { sourcesFrom }, { folderNameFor }] = await Promise.all([
+  const [{ pickFiles }, { folderNameFor, sourcesFrom }] = await Promise.all([
     import('../picking'),
     import('../import/src/api'),
-    import('../importing.svelte'),
   ])
   const picked: PickedFile[] = await pickFiles()
   if (!picked.length) return null
   return {
-    name: (format) => Promise.resolve(folderNameFor(picked, format)),
+    name: (format) => folderNameFor(picked, format),
     sources: await sourcesFrom(picked),
   }
 }
@@ -79,12 +78,7 @@ async function macNotes(): Promise<boolean> {
   ])
   const apple = await readNotes()
   const plan = await apple.readMacNotes().catch((error: unknown) => {
-    const said = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
-    if (said === apple.NO_ACCESS)
-      throw new Error('macOS keeps those notes behind Full Disk Access.')
-    if (said === apple.NO_DATABASE)
-      throw new Error('There are no notes in Apple Notes on this Mac.')
-    throw new Error(message(error, 'Those notes could not be read.'))
+    throw new Error(apple.notesFault(error).said)
   })
   const space = await workspace.addSpace('Apple Notes')
   if (!space) throw new Error('That import could not be written.')
@@ -95,7 +89,7 @@ async function macNotes(): Promise<boolean> {
 }
 
 export async function bringNotes(how: Bringing): Promise<Outcome> {
-  const { onMac } = await import('../importing.svelte')
+  const { onMac } = await import('../import/src/api')
   return running(async () => {
     switch (how) {
       case 'vault':

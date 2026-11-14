@@ -1,4 +1,3 @@
-import type { PickedFile } from '@orden/contracts'
 import { busy, message, viewport } from './ui-kit/src/api'
 import { firstVisit } from './first-visit.svelte'
 import type { FormatId } from './import/src/api'
@@ -7,6 +6,7 @@ import {
   applyImport,
   carriedBy,
   detect,
+  folderNameFor,
   foundBrowsers,
   insideFolder,
   landBrowser,
@@ -107,14 +107,14 @@ class Migrating {
     if (!picked.length) return
 
     await this.bringing(async () => ({
-      name: (format) => namedFor(picked, format),
+      name: (format) => folderNameFor(picked, format),
       sources: await sourcesFrom(picked),
     }))
   }
 
   private async bringing(
     read: () => Promise<{
-      name: string | ((format: FormatId) => Promise<string>)
+      name: string | ((format: FormatId) => string)
       sources: Source[]
     }>,
   ) {
@@ -144,13 +144,8 @@ class Migrating {
   }
 }
 
-async function namedFor(picked: readonly PickedFile[], format: FormatId): Promise<string> {
-  const { folderNameFor } = await import('./importing.svelte')
-  return folderNameFor(picked, format)
-}
-
 export async function importAsSpace(
-  name: string | ((format: FormatId) => Promise<string>),
+  name: string | ((format: FormatId) => string),
   sources: readonly Source[],
 ): Promise<Space> {
   const format = await detect(sources)
@@ -164,7 +159,7 @@ export async function importAsSpace(
     throw new Error(said.join(' '))
   }
 
-  const space = await workspace.addSpace(typeof name === 'string' ? name : await name(format))
+  const space = await workspace.addSpace(typeof name === 'string' ? name : name(format))
   if (!space) throw new Error('That import could not be written.')
 
   await applyImport(plan, { root: space.root, folder: '' })

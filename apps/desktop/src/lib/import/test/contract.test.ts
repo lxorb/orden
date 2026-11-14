@@ -5,10 +5,13 @@ import { describe, expect, test } from 'vitest'
 import {
   applyImport,
   detect,
+  folderNameFor,
   foundBrowsers,
+  importingStore,
   insideFolder,
   landBrowser,
   landZen,
+  loadImportSheet,
   macNotes,
   pickedFolder,
   readAs,
@@ -63,8 +66,10 @@ describe('the module stands on its own', () => {
       applyImport,
       detect,
       foundBrowsers,
+      importingStore,
       landBrowser,
       landZen,
+      loadImportSheet,
       macNotes,
       readAs,
       sourcesFrom,
@@ -118,5 +123,11 @@ describe('names', () => {
   test('a note is titled by its first heading and named without forbidden characters', () => {
     expect(titleFrom('\n# Plan\nmore')).toBe('Plan')
     expect(safeName('a/b: c?')).not.toMatch(/[/:?]/)
+  })
+
+  test('an import folder is named after what was picked, or the app an export came out of', () => {
+    expect(folderNameFor([picked('Travel.enex', '')], 'evernote')).toBe('Travel')
+    expect(folderNameFor([picked('Export-9f1c2d3e.zip', '')], 'notion')).toBe('Notion')
+    expect(folderNameFor([picked('a.csv', '')], 'todoist')).toBe('')
   })
 })

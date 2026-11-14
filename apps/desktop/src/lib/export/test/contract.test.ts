@@ -76,7 +76,7 @@ describe('the exporters behind their door', () => {
 
   test('name every exporter the shell reaches', async () => {
     const kit = await exporters()
-    for (const one of [kit.runExport, kit.exportPandoc, kit.importDocument, kit.printInFrame]) {
+    for (const one of [kit.runExport, kit.exportPandoc, kit.printInFrame]) {
       expect(typeof one).toBe('function')
     }
   })
