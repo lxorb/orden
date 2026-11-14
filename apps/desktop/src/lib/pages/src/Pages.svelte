@@ -1440,6 +1440,9 @@
   {onpointermove}
   {onpointerup}
   {onpointercancel}
+  onpointerleave={(event) => {
+    if (event.pointerType === 'mouse') pointing = null
+  }}
   {onwheel}
   {onkeydown}
   onkeyup={(event) => tools.released(event)}
