@@ -1,5 +1,5 @@
 {
   "name": "sync-server-chats",
   "layer": "foundation",
-  "dependsOn": ["chats", "rooms", "sync-core", "sync-server"]
+  "dependsOn": ["chats", "rooms", "sync-core", "sync-server", "sync-server-accounts"]
 }

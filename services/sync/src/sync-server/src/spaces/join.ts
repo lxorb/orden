@@ -1,12 +1,11 @@
 import { Hono, type Context } from 'hono'
 import { SPACE_IS_FULL } from '../refused'
-import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoever } from '../auth'
 import { objectBody, readBody } from '../body'
 import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
 import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
 import { forgetEmptyGuest, newGuest, presentGuest } from '../guests'
+import { hooks } from '../hooks'
 import { machineOf, mayTellTheOwner } from '../limits'
-import { asksForSecond, halfWay } from '../second'
 import type { Env, Guest, Space, User, Variables } from '../types'
 import {
   EMAIL_LIMIT,
@@ -292,7 +291,7 @@ join.get('/:token', async (context) => {
 })
 
 join.post('/:token', async (context) => {
-  const who = await requireWhoever(context.env, context.req.header('authorization'))
+  const who = await hooks().accounts.whoever(context.env, context.req.header('authorization'))
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
   if (!found) return context.json({ error: EXPIRED }, 404)
 
@@ -314,7 +313,7 @@ join.post('/:token', async (context) => {
 })
 
 join.delete('/:token', async (context) => {
-  const who = await requireWhoever(context.env, context.req.header('authorization'))
+  const who = await hooks().accounts.whoever(context.env, context.req.header('authorization'))
   if (!who) return context.json({ error: 'sign in first' }, 401)
 
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
@@ -344,20 +343,14 @@ join.delete('/:token', async (context) => {
 async function redeemInvitation(context: Reply, found: Leads) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
-  const user = await accountFor(context.env, found.email)
-
-  await claimWhatWasGuested(context.env, user, null)
-
-  if (await asksForSecond(context.env, user.id)) {
-    return context.json({ second: true, holding: await halfWay(context.env, user) })
-  }
+  const signing = await hooks().accounts.signingIn(context.env, found.email)
+  if ('second' in signing) return context.json(signing)
 
   const role = await takeInvitation(context.env, found)
   if (!role) return context.json({ error: EXPIRED }, 404)
 
   return context.json({
-    token: await openSession(context.env, user.id),
-    user: presentUser(user),
+    ...(await hooks().accounts.sessionFor(context.env, signing.user)),
     ...landedOn(context.env, found, role, await ownerOf(context.env, found.space)),
   })
 }

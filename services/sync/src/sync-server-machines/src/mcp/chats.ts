@@ -2,14 +2,8 @@ import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { EVENTS_A_MINUTE, LONGEST_SEARCH, MOST_BODY } from '@orden/chats/limits'
 import { postEventsOf } from '@orden/chats/wire'
-import {
-  accountById,
-  askInChunks,
-  places,
-  within,
-  type Env,
-  type Whoever,
-} from '../../../sync-server/src/api'
+import { askInChunks, places, within, type Env, type Whoever } from '../../../sync-server/src/api'
+import { accountById } from '../../../sync-server-accounts/src/api'
 import {
   askChat,
   reachChat,

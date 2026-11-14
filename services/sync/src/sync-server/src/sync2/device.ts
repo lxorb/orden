@@ -1,5 +1,5 @@
 import type { Context } from 'hono'
-import { tokenIn } from '../auth'
+import { tokenIn } from '../said'
 import { sha256 } from '../crypto'
 import { deviceOfSession } from '../hub/devices'
 import type { Env, Variables, Whoever } from '../types'

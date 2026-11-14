@@ -1,12 +1,23 @@
 import { Hono } from 'hono'
-import { TOOK_TOO_LONG, WRONG_CODE } from './refused'
-
-import { opened, sealed } from './ai-key'
-import { equals, now, randomBytes, randomToken, sha256 } from './crypto'
-import { readBody } from './body'
-import { rounds } from './rounds'
-import { machineOf, mayTrySecond, mayTrySecondFrom } from './limits'
-import type { Env, User, Variables } from './types'
+import {
+  type Env,
+  equals,
+  machineOf,
+  mayTrySecond,
+  mayTrySecondFrom,
+  now,
+  opened,
+  randomBytes,
+  randomToken,
+  readBody,
+  rounds,
+  sealed,
+  sha256,
+  TOOK_TOO_LONG,
+  type User,
+  type Variables,
+  WRONG_CODE,
+} from '../../sync-server/src/api'
 
 const SALT = 'nib/second-factor/v1'
 

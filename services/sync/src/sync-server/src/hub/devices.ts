@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { tokenIn } from '../auth'
+import { tokenIn } from '../said'
 import { readBody } from '../body'
 import { chunks, places } from '../bound'
 import { now, sha256 } from '../crypto'

@@ -160,6 +160,11 @@ describe('hooks', () => {
   test('the composition root wires the other services; until then the core says so', () => {
     expect(() => hooks()).toThrow(/wire/)
     const wired = {
+      accounts: {
+        whoever: () => Promise.resolve(null),
+        signingIn: () => Promise.resolve({ second: true as const, holding: '' }),
+        sessionFor: () => Promise.resolve({ token: '', user: { id: '', email: '', name: null } }),
+      },
       blog: { publishesFile: () => Promise.resolve(false) },
       chats: {
         askChat: () => Promise.resolve(null),

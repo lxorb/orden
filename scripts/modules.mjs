@@ -124,7 +124,9 @@ function importsOf(text) {
   return specifiers
 }
 
-function standsAlone(module, test, problems) {
+const FAKES = /^test\/(?:fakes|sim)(?:\.ts)?$/
+
+function standsAlone(module, test, problems, modules) {
   if (module.lang !== 'ts') return
   const text = readFileSync(join(module.absolute, test), 'utf8')
   const own = module.packageName
@@ -132,7 +134,13 @@ function standsAlone(module, test, problems) {
     if (specifier === 'vitest' || specifier.startsWith('node:')) continue
     if (specifier.startsWith('.')) {
       const target = resolve(join(module.absolute, dirname(test)), specifier)
-      if (!target.startsWith(module.absolute + sep)) {
+      if (target.startsWith(module.absolute + sep)) continue
+      const other = moduleOf(target, modules)
+      const fake =
+        other &&
+        module.dependsOn.includes(other.name) &&
+        FAKES.test(relative(other.absolute, target).split(sep).join('/'))
+      if (!fake) {
         problems.push(`${module.dir}/${test}: reaches outside the module with '${specifier}'`)
       }
       continue
@@ -263,7 +271,7 @@ export function check(root = ROOT) {
         )
       }
     }
-    if (module.test) standsAlone(module, module.test, problems)
+    if (module.test) standsAlone(module, module.test, problems, [...byName.values()])
     for (const path of module.pending) {
       const inside = moduleOf(join(root, path), [...byName.values()])
       if (inside && inside !== module) {

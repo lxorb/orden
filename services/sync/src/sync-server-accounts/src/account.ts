@@ -1,13 +1,22 @@
 import { Hono } from 'hono'
+import {
+  type Env,
+  eraseAccount,
+  leavingMessage,
+  machineOf,
+  mayLeave,
+  now,
+  randomToken,
+  readBody,
+  refusedMail,
+  sha256,
+  TOOK_TOO_LONG,
+  TRY_IN_AN_HOUR,
+  type Variables,
+  WRONG_CODE,
+} from '../../sync-server/src/api'
 import { checkCode, sendCode, spendCode } from './auth'
-import { readBody } from './body'
-import { now, randomToken, sha256 } from './crypto'
-import { leavingMessage, refusedMail } from './email'
-import { eraseAccount } from './erase'
-import { machineOf, mayLeave } from './limits'
-import { TOOK_TOO_LONG, TRY_IN_AN_HOUR, WRONG_CODE } from './refused'
 import { accepted, asksForSecond } from './second'
-import type { Env, Variables } from './types'
 
 const TICKETS = 'leaving'
 
