@@ -1,0 +1,32 @@
+{
+  "name": "quick-add",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "bases",
+    "crate",
+    "dictation",
+    "editor",
+    "markdown",
+    "platform",
+    "tasks-model",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/accelerator.ts",
+    "apps/desktop/src/lib/ai/complete.ts",
+    "apps/desktop/src/lib/ai/providers.ts",
+    "apps/desktop/src/lib/ai/store.svelte.ts",
+    "apps/desktop/src/lib/focus.ts",
+    "apps/desktop/src/lib/internal/roots.ts",
+    "apps/desktop/src/lib/internal/spaces.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/long-paste.ts",
+    "apps/desktop/src/lib/own-window.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/spent-click.ts",
+    "apps/desktop/src/lib/task-actions.ts",
+    "apps/desktop/src/lib/todos-entry.ts"
+  ]
+}

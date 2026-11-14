@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { Entry } from '../../src/lib/quick-add/entry'
+import type { Entry } from '../../src/lib/quick-add/src/entry'
 
 const invoked: string[] = []
 vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
@@ -11,9 +11,9 @@ vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
   }),
 }))
 
-const { default: QuickAdd } = await import('../../src/lib/quick-add/QuickAdd.svelte')
-const { default: Window } = await import('../../src/lib/quick-add/Window.svelte')
-const { CHANNEL } = await import('../../src/lib/quick-add/channel')
+const { default: QuickAdd } = await import('../../src/lib/quick-add/src/QuickAdd.svelte')
+const { default: Window } = await import('../../src/lib/quick-add/src/Window.svelte')
+const { CHANNEL } = await import('../../src/lib/quick-add/src/channel')
 
 let shown: ReturnType<typeof mount> | undefined
 

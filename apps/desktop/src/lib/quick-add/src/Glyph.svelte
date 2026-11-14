@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IconNode } from '../ui-kit/src/api'
+  import type { IconNode } from '../../ui-kit/src/api'
 
   const { icon, class: kind = '' }: { icon: IconNode; class?: string } = $props()
 </script>

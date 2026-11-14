@@ -29,7 +29,7 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'the marker of an unordered list item',
   },
   {
-    path: 'apps/desktop/src/lib/quick-add/field.ts',
+    path: 'apps/desktop/src/lib/quick-add/src/field.ts',
     holds: '[-*+',
     why: 'pasted list markers are stripped',
   },

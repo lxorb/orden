@@ -21,7 +21,7 @@ const asked = vi.hoisted(() => ({
 
 vi.mock('./ai/quick.svelte', () => ({ quick: asked }))
 
-const QuickAdd = (await import('./quick-add/QuickAdd.svelte')).default
+const QuickAdd = (await import('./quick-add/src/QuickAdd.svelte')).default
 const QuickQuestion = (await import('./QuickQuestion.svelte')).default
 
 let target: HTMLElement

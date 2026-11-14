@@ -1,16 +1,14 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from '../ui-kit/src/api'
-  import { region } from '../platform/src/api'
-  import { fade, LAYER, scale } from '../platform/src/api'
-  import { overlays } from '../ui-kit/src/api'
-  import { trap } from '../ui-controls/src/api'
+  import { closeOnBack, overlays } from '../../ui-kit/src/api'
+  import { fade, LAYER, region, scale } from '../../platform/src/api'
+  import { trap } from '../../ui-controls/src/api'
   import { quickAdd } from './asked.svelte'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
-  import { links } from '../link-index.svelte'
-  import { dayOf, labelsOf, todos } from '../tasks-model/src/api'
-  import { ai } from '../ai/store.svelte'
+  import { links } from '../../link-index.svelte'
+  import { dayOf, labelsOf, todos } from '../../tasks-model/src/api'
+  import { ai } from '../../ai/store.svelte'
   import { addTask } from './write'
 
   const labels = $derived(labelsOf(todos.todos, { onlySpace: false, space: null, today: dayOf() }))

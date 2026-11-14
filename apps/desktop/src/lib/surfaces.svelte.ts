@@ -310,15 +310,13 @@ export function showFeedback(): void {
 }
 
 export const quickAddSheet = latched(() =>
-  __EVEN_PLUGIN__
-    ? new Promise<never>(() => undefined)
-    : import('./quick-add/QuickAddSheet.svelte'),
+  import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
 )
 
-export function showQuickAdd(prefill: import('./quick-add/entry').Prefill = {}): void {
+export function showQuickAdd(prefill: import('./quick-add/src/api').Prefill = {}): void {
   if (!__EVEN_PLUGIN__) {
     void quickAddSheet.ask()
-    void import('./quick-add/asked.svelte').then(({ quickAdd }) => quickAdd.show(prefill))
+    void import('./quick-add/src/api').then(({ quickAdd }) => quickAdd.show(prefill))
   }
 }
 
