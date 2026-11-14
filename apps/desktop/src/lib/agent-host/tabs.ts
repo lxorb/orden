@@ -7,10 +7,9 @@ import { renameTerminal, shellRunning, shells } from '../terminal/src/api'
 import { isOnlineTab } from '../online-terms/src/api'
 import { views } from '../views.svelte'
 import { isWebAddress } from '@orden/scan/web-address'
-import { hostOf } from '../web-tab/src/web-data'
+import { hostOf } from '@orden/scan/visits'
 import { agentMarks } from '../agent-marks.svelte'
-import { lend, unlend } from '../web-tab/src/lending'
-import { pages } from '../web-tab/src/pages.svelte'
+import { pages, webLending } from '../web-tab/src/api'
 import { apartOf } from '@orden/scan/shortcut'
 import { type Tab, workspace } from '../workspace.svelte'
 import { fileNamed, isDraft, isUnsaved } from '../workspace/drafts'
@@ -465,6 +464,7 @@ export async function lendTab(id: string): Promise<null> {
   page.space ??= workspace.spaceOf(tab.note)
   page.path = tab.path
   if (!page.live) page.own = apartOf(tab)
+  const { lend, unlend } = await webLending()
   await lend(tab.id)
   setTimeout(() => {
     if (!(tab.id in agentMarks.on)) unlend(tab.id)

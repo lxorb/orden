@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { agentMarks } from '../../src/lib/agent-marks.svelte'
 import AgentSession from '../../src/lib/agents/src/ui/AgentSession.svelte'
 import { FakeCrate } from '../../src/lib/agents/src/ui/fake'
@@ -32,6 +32,10 @@ beforeEach(async () => {
   const hear = start(fake)
   fake.listen(hear)
   await settled()
+})
+
+afterAll(async () => {
+  await import('../../src/lib/agent-host/editor')
 })
 
 afterEach(() => {

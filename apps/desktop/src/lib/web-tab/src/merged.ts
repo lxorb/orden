@@ -7,7 +7,8 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { hostOf, isWebData, siteOf, storeName, type WebData } from './web-data'
+import { hostOf } from '@orden/scan/visits'
+import { isWebData, siteOf, storeName, type WebData } from './web-data'
 import { HISTORY } from './web-data.svelte'
 import { bounded } from './visits'
 import type { Visit } from '@orden/scan/visits'

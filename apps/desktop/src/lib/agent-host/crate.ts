@@ -1,14 +1,14 @@
 import type { Said } from '../automation/args'
 import { said } from '../automation/args'
 import { READER } from '../automation/caller'
-import { articleOf } from '../web-tab/src/note'
+import { webDataStores, webNotes } from '../web-tab/src/api'
 import type { StoreSaid } from '../agents/src/api'
 import { placeFor } from './spaces'
 import { lendTab, readerTabs } from './tabs'
 
 async function storeFor(args: Said): Promise<StoreSaid> {
   const place = placeFor({ verb: 'agent.store_for', args, caller: READER }, said(args, 'space'))
-  const { webData } = await import('../web-tab/src/web-data.svelte')
+  const { webData } = await webDataStores()
 
   return { space: place.space.name, store: await webData.store(null) }
 }
@@ -18,6 +18,7 @@ async function markdown(args: Said): Promise<string> {
   if (!html.trim()) return ''
 
   const url = said(args, 'url') ?? ''
+  const { articleOf } = await webNotes()
   const [read, { htmlToMarkdown }] = await Promise.all([
     articleOf({ url, title: '', html }),
     import('@orden/markdown/from-html'),

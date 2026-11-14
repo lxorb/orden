@@ -43,13 +43,18 @@ providePort('voice', {
       .then((words) => words.text),
 })
 
+async function unlending(tab: string) {
+  const { webLending } = await import('./web-tab/src/api')
+  ;(await webLending()).unlend(tab)
+}
+
 providePort('web.lending', {
   adopt: (tab, handing) =>
     __EVEN_PLUGIN__
       ? handing()
       : import('./web-tab/src/api').then(({ pages }) => pages.adopt(tab, handing)),
   unlend: (tab) => {
-    if (!__EVEN_PLUGIN__) void import('./web-tab/src/lending').then((one) => one.unlend(tab))
+    if (!__EVEN_PLUGIN__) void unlending(tab)
   },
 })
 

@@ -45,6 +45,9 @@ export const oneWindow = () =>
 export const websiteConverting = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./convert')>() : import('./convert')
 
+export const webLending = () =>
+  __EVEN_PLUGIN__ ? away<typeof import('./lending')>() : import('./lending')
+
 export const webNotes = () => (__EVEN_PLUGIN__ ? away<typeof import('./note')>() : import('./note'))
 
 export const siteMaking = () =>
