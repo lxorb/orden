@@ -16,6 +16,7 @@ export {
   SAVE_DELAY,
   saveRetryDelay,
 } from './backoff'
+export { breathe, idle, nextTask } from './breathe'
 export { decoded, fileBytes, fromBase64, pageBytes, parseDataUri, sha256, toBase64 } from './bytes'
 export { appleHandheld, deviceName, speechRecogniser } from './device'
 export { insideOnly } from './inside'

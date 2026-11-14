@@ -18,6 +18,7 @@ import {
   under,
   assetType,
   isReserved,
+  breathe,
 } from '../../../platform/src/api'
 import { holderOf, paperOf } from '@orden/markdown/pages'
 import { staleSnapshots } from '../../../snapshots/src/api'
@@ -49,7 +50,6 @@ import {
   trees,
 } from './store'
 import { markSeedSpace, markSeeded, wasSeeded } from '../../../seeded'
-import { breathe } from '../../../breathe'
 import { WELCOME, WELCOME_PATH, WELCOME_SPACE } from '../../../welcome'
 
 interface Entry {
