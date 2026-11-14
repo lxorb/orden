@@ -1590,8 +1590,8 @@
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
   onpointercancel={onPointerCancel}
-  onpointerleave={() => {
-    pointing = null
+  onpointerleave={(event) => {
+    if (event.pointerType === 'mouse') pointing = null
     arrow = null
   }}
   onclick={onTapClick}
