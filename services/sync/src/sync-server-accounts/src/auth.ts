@@ -1,30 +1,45 @@
 import { Hono } from 'hono'
-import { NOT_AN_EMAIL, TOOK_TOO_LONG, TRY_IN_AN_HOUR, WRONG_CODE } from './refused'
-import { readBody } from './body'
 import {
+  askHub,
+  claimGuest,
+  claimGuestsAt,
+  codeMessage,
+  deviceIn,
+  devicesEnded,
+  type Env,
   equals,
+  forgetEndedTargets,
+  guestForToken,
+  hooks,
   isEmail,
+  machineOf,
+  mailCeilings,
+  mailer,
+  mailNotSent,
+  makeFirstSpace,
+  mayTryCode,
   newId,
+  NOT_AN_EMAIL,
   normaliseEmail,
   now,
   randomCode,
   randomToken,
+  readBody,
+  refusedMail,
+  roomsSignedOut,
+  said,
+  type Session,
   sha256,
-} from './crypto'
-import { codeMessage, mailer, refusedMail } from './email'
-import { claimGuest, claimGuestsAt, guestForToken } from './guests'
-import { machineOf, mailCeilings, mailNotSent, mayTryCode } from './limits'
+  startingVersion,
+  tokenIn,
+  TOOK_TOO_LONG,
+  TRY_IN_AN_HOUR,
+  type User,
+  type Variables,
+  type Whoever,
+  WRONG_CODE,
+} from '../../sync-server/src/api'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
-import { devicesEnded } from './hub/devices'
-import { askHub } from './hub/reach'
-import { hooks } from './hooks'
-import { forgetEndedTargets } from './push/live'
-import { roomsSignedOut } from './rooms'
-import { makeFirstSpace } from './spaces/first'
-import { startingVersion } from './sync2/rollout'
-import { deviceIn } from './versions'
-import type { Env, User, Variables, Whoever } from './types'
-import { said } from './said'
 
 const CODE_TTL = 10 * 60 * 1000
 const RESEND_GAP = 30 * 1000
@@ -55,11 +70,6 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
 
 const SEEN_EVERY = 60 * 60 * 1000
 
-export function tokenIn(header: string | undefined): string | null {
-  const token = /^bearer\s+(.+)$/i.exec(header ?? '')?.[1]?.trim()
-  return token ?? null
-}
-
 export async function requireWhoever(
   env: Env,
   header: string | undefined,
@@ -80,7 +90,7 @@ export function accountById(env: Env, id: string): Promise<User | null> {
     .first<User>()
 }
 
-export async function openSession(env: Env, userId: string, device = ''): Promise<string> {
+async function openSession(env: Env, userId: string, device = ''): Promise<string> {
   await env.DB.prepare('delete from sessions where expires_at < ?').bind(now()).run()
 
   const token = randomToken()
@@ -94,7 +104,7 @@ export async function openSession(env: Env, userId: string, device = ''): Promis
   return token
 }
 
-export async function accountFor(env: Env, address: string): Promise<User> {
+async function accountFor(env: Env, address: string): Promise<User> {
   const held = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
     .bind(address)
     .first<User>()
@@ -129,15 +139,26 @@ export async function accountFor(env: Env, address: string): Promise<User> {
   return account
 }
 
-export async function claimWhatWasGuested(
-  env: Env,
-  user: User,
-  held: string | null,
-): Promise<void> {
+async function claimWhatWasGuested(env: Env, user: User, held: string | null): Promise<void> {
   const guest = held ? await guestForToken(env, held) : null
   if (guest) await claimGuest(env, guest.id, user)
 
   await claimGuestsAt(env, user)
+}
+
+export async function signingIn(
+  env: Env,
+  address: string,
+  held: string | null = null,
+): Promise<{ second: true; holding: string } | { user: User }> {
+  const user = await accountFor(env, address)
+  await claimWhatWasGuested(env, user, held)
+  if (await asksForSecond(env, user.id)) return { second: true, holding: await halfWay(env, user) }
+  return { user }
+}
+
+export async function sessionFor(env: Env, user: User, device = ''): Promise<Session> {
+  return { token: await openSession(env, user.id, device), user: presentUser(user) }
 }
 
 export async function sendCode(
@@ -280,26 +301,20 @@ auth.post('/verify', async (context) => {
   const held = body.text('guest', TOKEN_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const verified = await verifyCode(context.env, normaliseEmail(email ?? ''), code ?? '')
+  const address = normaliseEmail(email ?? '')
+  const checked = await checkCode(context.env, address, code ?? '')
+  if ('error' in checked) return context.json({ error: checked.error }, checked.status)
+  if (!(await spendCode(context.env, address))) return context.json({ error: WRONG_CODE }, 400)
 
-  if ('error' in verified) return context.json({ error: verified.error }, verified.status)
-  const { user } = verified
+  const signing = await signingIn(context.env, address, held ?? null)
+  if ('second' in signing) return context.json(signing)
 
-  await claimWhatWasGuested(context.env, user, held ?? null)
-
-  if (await asksForSecond(context.env, user.id)) {
-    return context.json({ second: true, holding: await halfWay(context.env, user) })
-  }
-
-  return context.json({
-    token: await openSession(
-      context.env,
-      user.id,
-      deviceIn(said((name) => context.req.header(name), 'device')),
-    ),
-    user: presentUser(user),
-  })
+  return context.json(await sessionFor(context.env, signing.user, deviceOf(context)))
 })
+
+function deviceOf(context: { req: { header(name: string): string | undefined } }): string {
+  return deviceIn(said((name) => context.req.header(name), 'device'))
+}
 
 auth.post('/second', async (context) => {
   const body = await readBody(context)
@@ -319,14 +334,7 @@ auth.post('/second', async (context) => {
 
   await spendHalf(context.env, holding ?? '')
 
-  return context.json({
-    token: await openSession(
-      context.env,
-      user.id,
-      deviceIn(said((name) => context.req.header(name), 'device')),
-    ),
-    user: presentUser(user),
-  })
+  return context.json(await sessionFor(context.env, user, deviceOf(context)))
 })
 
 export function presentUser(user: User) {
@@ -363,24 +371,34 @@ sessions.get('/', async (context) => {
   })
 })
 
+interface Ended {
+  id: string | null
+  token_hash: string
+}
+
+async function sessionsEnded(env: Env, userId: string, ended: readonly Ended[]): Promise<void> {
+  if (ended.length) {
+    await roomsSignedOut(env, userId)
+    const ids = ended.flatMap((one) => (one.id === null ? [] : [one.id]))
+    if (ids.length) await devicesEnded(env, userId, ids)
+    await hooks().machines.machinesSignedOut(
+      env,
+      userId,
+      ended.map((one) => one.token_hash),
+    )
+  }
+  await forgetEndedTargets(env, userId)
+}
+
 sessions.delete('/:id', async (context) => {
   const user = context.get('user')
   const { results: ending } = await context.env.DB.prepare(
-    'delete from sessions where user_id = ? and id = ? returning token_hash',
+    'delete from sessions where user_id = ? and id = ? returning id, token_hash',
   )
     .bind(user.id, context.req.param('id'))
-    .all<{ token_hash: string }>()
+    .all<Ended>()
 
-  if (ending.length) {
-    await roomsSignedOut(context.env, user.id)
-    await devicesEnded(context.env, user.id, [context.req.param('id')])
-    await hooks().machines.machinesSignedOut(
-      context.env,
-      user.id,
-      ending.map((one) => one.token_hash),
-    )
-  }
-  await forgetEndedTargets(context.env, user.id)
+  await sessionsEnded(context.env, user.id, ending)
 
   return context.json({ ok: ending.length > 0 })
 })
@@ -393,22 +411,9 @@ sessions.delete('/', async (context) => {
     'delete from sessions where user_id = ? and token_hash <> ? returning id, token_hash',
   )
     .bind(user.id, mine)
-    .all<{ id: string | null; token_hash: string }>()
+    .all<Ended>()
 
-  if (ending.length) {
-    await roomsSignedOut(context.env, user.id)
-    await devicesEnded(
-      context.env,
-      user.id,
-      ending.flatMap((one) => (one.id === null ? [] : [one.id])),
-    )
-    await hooks().machines.machinesSignedOut(
-      context.env,
-      user.id,
-      ending.map((one) => one.token_hash),
-    )
-  }
-  await forgetEndedTargets(context.env, user.id)
+  await sessionsEnded(context.env, user.id, ending)
 
   return context.json({ ended: ending.length })
 })
@@ -416,31 +421,27 @@ sessions.delete('/', async (context) => {
 auth.post('/signout', async (context) => {
   const token = tokenIn(context.req.header('authorization'))
   if (token) {
+    const hash = await sha256(token)
     const held = await context.env.DB.prepare(
       'delete from sessions where token_hash = ? returning user_id, id',
     )
-      .bind(await sha256(token))
+      .bind(hash)
       .first<{ user_id: string; id: string | null }>()
 
     if (held) {
-      await roomsSignedOut(context.env, held.user_id)
-      if (held.id) await devicesEnded(context.env, held.user_id, [held.id])
-      await hooks().machines.machinesSignedOut(context.env, held.user_id, [await sha256(token)])
-      await forgetEndedTargets(context.env, held.user_id)
+      await sessionsEnded(context.env, held.user_id, [{ id: held.id, token_hash: hash }])
       return context.json({ ok: true })
     }
 
     const guest = await context.env.DB.prepare(
       'delete from guest_sessions where token_hash = ? returning guest_id',
     )
-      .bind(await sha256(token))
+      .bind(hash)
       .first<{ guest_id: string }>()
     if (guest) {
       await roomsSignedOut(context.env, guest.guest_id)
-      await hooks().machines.machinesSignedOut(context.env, guest.guest_id, [await sha256(token)])
-      await askHub(context.env, guest.guest_id, 'revoke', {
-        'x-orden-sessions': await sha256(token),
-      })
+      await hooks().machines.machinesSignedOut(context.env, guest.guest_id, [hash])
+      await askHub(context.env, guest.guest_id, 'revoke', { 'x-orden-sessions': hash })
     }
   }
   return context.json({ ok: true })

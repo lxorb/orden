@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
-import { requireWhoever } from './auth'
 import { readBody } from './body'
 import { equals, newId, now, randomToken, sha256 } from './crypto'
 import { escape, mailer, oneLine } from './email'
 import { MOST_DATA_URL, MOST_IMAGES, type Picture, pictureKey, pictureOf } from './feedback-images'
 import { imagesOf, issueState, openIssue } from './feedback-issues'
 import { reportPage } from './feedback-page'
+import { hooks } from './hooks'
 import { machineOf, within } from './limits'
 import { TRY_IN_AN_HOUR } from './refused'
 import type { Env, Variables } from './types'
@@ -42,7 +42,7 @@ feedback.post('/', async (context) => {
     pictures.push(picture)
   }
 
-  const who = await requireWhoever(context.env, context.req.header('authorization'))
+  const who = await hooks().accounts.whoever(context.env, context.req.header('authorization'))
   const user = who?.kind === 'user' ? who.user : null
 
   const env = context.env

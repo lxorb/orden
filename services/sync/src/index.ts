@@ -3,13 +3,6 @@ import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import {
   SIGN_IN,
   SIGN_IN_TO_DO_THAT,
-  account,
-  left,
-  accountById,
-  auth,
-  presentUser,
-  requireWhoever,
-  sessions,
   readBody,
   blobs,
   publicBlobs,
@@ -35,9 +28,6 @@ import {
   fillFronts,
   sweepLeftovers,
   finishErasing,
-  forgetHalfDone,
-  resealBorrowed,
-  second,
   sweepAnswers,
   sweepVersions,
   expireGuests,
@@ -82,6 +72,18 @@ import {
   type Variables,
   type Whoever,
 } from './sync-server/src/api'
+import {
+  account,
+  accountById,
+  auth,
+  forgetHalfDone,
+  left,
+  presentUser,
+  requireWhoever,
+  resealBorrowed,
+  second,
+  sessions,
+} from './sync-server-accounts/src/api'
 import { cors } from 'hono/cors'
 import {
   ask,

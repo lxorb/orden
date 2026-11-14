@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { codeAt } from '../src/sync-server/src/second'
+import { codeAt } from '../src/sync-server-accounts/src/second'
 import { call, file, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
 
 interface LeavingView {

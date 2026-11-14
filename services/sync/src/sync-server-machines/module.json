@@ -9,6 +9,7 @@
     "rooms",
     "sync-core",
     "sync-server",
+    "sync-server-accounts",
     "sync-server-chats"
   ]
 }

@@ -1,4 +1,5 @@
 import { wire } from './sync-server/src/api'
+import { requireWhoever, sessionFor, signingIn } from './sync-server-accounts/src/api'
 import { publishesFile } from './sync-server-blog/src/api'
 import {
   askChat,
@@ -18,6 +19,7 @@ import {
 import { PASS_ERASED } from './sync-server-pass/src/api'
 
 wire({
+  accounts: { whoever: requireWhoever, signingIn, sessionFor },
   blog: { publishesFile },
   chats: { askChat, chatsRevoked, closeChats, eraseChats, linkPointer },
   machines: { endingTerm, endTerms, eraseMachines, machinesRevoked, machinesSignedOut, tellEnded },

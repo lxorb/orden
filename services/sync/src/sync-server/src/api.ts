@@ -1,15 +1,4 @@
-export { account, left } from './account'
-export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, setKey } from './ai-key'
-export {
-  accountById,
-  auth,
-  presentUser,
-  requireWhoever,
-  sendCode,
-  sessions,
-  tokenIn,
-  verifyCode,
-} from './auth'
+export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
 export { blobs, publicBlobs } from './blobs'
 export { type Body, listIn, objectBody, objectIn, readBody, textAtMost } from './body'
 export { askInChunks, AT_A_TIME, chunks, places } from './bound'
@@ -24,15 +13,26 @@ export {
   newId,
   normaliseEmail,
   now,
+  randomBytes,
+  randomCode,
   randomToken,
   sha256,
 } from './crypto'
-export { finishErasing } from './erase'
+export { codeMessage, leavingMessage, mailer, refusedMail } from './email'
+export { eraseAccount, finishErasing } from './erase'
 export { failed, note } from './failed'
 export { openWaitingIssues } from './feedback-issues'
 export { feedback } from './feedback'
-export { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
-export { type Ended, wire } from './hooks'
+export {
+  claimGuest,
+  claimGuestsAt,
+  expireGuests,
+  guestForToken,
+  guestMayReach,
+  presentGuest,
+  renameGuest,
+} from './guests'
+export { type Ended, hooks, type Session, wire } from './hooks'
 export {
   blogRootOf,
   isAppHost,
@@ -42,7 +42,7 @@ export {
   passHost,
   sameOriginPath,
 } from './hosts'
-export { deviceOfSession, devices } from './hub/devices'
+export { deviceOfSession, devices, devicesEnded } from './hub/devices'
 export { hubDoor } from './hub/door'
 export { DEVICE } from './hub/frames'
 export { AccountHub } from './hub/hub'
@@ -53,13 +53,19 @@ export { inbox } from './inbox'
 export { sweepLeftovers } from './leftovers'
 export {
   machineOf,
+  mailCeilings,
+  mailNotSent,
   mayAsk,
   mayGuess,
   mayInviteToPass,
+  mayLeave,
   mayRegister,
   maySendAnswer,
   mayTakeAnswer,
   mayTranscribe,
+  mayTryCode,
+  mayTrySecond,
+  mayTrySecondFrom,
   mayWritePassItems,
   within,
 } from './limits'
@@ -84,6 +90,7 @@ export { presentOwnProfile } from './people/profile'
 export { ownProfile, people } from './people/routes'
 export { programMayReach } from './programs'
 export { PROTECTED, protectedRoutes, type Shut, shutFor } from './protected'
+export { forgetEndedTargets } from './push/live'
 export { sendDue } from './push/reminders'
 export { push } from './push/targets'
 export {
@@ -102,23 +109,15 @@ export {
   SIGN_IN,
   SIGN_IN_TO_DO_THAT,
   TOO_MANY_CHANGES,
+  TOOK_TOO_LONG,
   TRY_IN_AN_HOUR,
   WRONG_CODE,
 } from './refused'
-export { rooms } from './rooms'
+export { rooms, roomsSignedOut } from './rooms'
+export { rounds } from './rounds'
 export { noteKind, readsAs } from './rooms/kind'
 export { NoteRoom } from './rooms/room'
-export { SAID, said } from './said'
-export {
-  accepted,
-  asksForSecond,
-  forgetHalfDone,
-  halfWay,
-  resealBorrowed,
-  second,
-  spendHalf,
-  whoseHalf,
-} from './second'
+export { SAID, said, tokenIn } from './said'
 export { settings, shownWords } from './settings'
 export { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from './signins'
 export { siteIcons } from './site-icons'
@@ -132,6 +131,7 @@ export { legacyPathsOf, pageOf, pathsOf, rememberedNote, slugFor } from './site/
 export { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './site/site'
 export { keepAnswer, sweepAnswers } from './spaces/answers'
 export { readSpaceFiles, type SpaceFile } from './spaces/files'
+export { makeFirstSpace } from './spaces/first'
 export { spaces } from './spaces'
 export { join } from './spaces/join'
 export { type ListedSpace, spacesFor } from './spaces/listed'
@@ -169,12 +169,12 @@ export {
 } from './sync2/gate'
 export { v2Docs, v2Spaces } from './sync2'
 export { v2Maps } from './sync2/maps'
-export { everyoneBack, isMode, rolloutView, setRollout } from './sync2/rollout'
+export { everyoneBack, isMode, rolloutView, setRollout, startingVersion } from './sync2/rollout'
 export { sweepTreeOps } from './sync2/tree'
 export { themes } from './themes'
 export { time } from './time'
 export { purgeExpired, trash } from './trash'
-export { type Env, type Note, type Space, type Variables, type Whoever } from './types'
+export { type Env, type Note, type Space, type User, type Variables, type Whoever } from './types'
 export { noteChatFiles, noteUnusedBy } from './unused'
 export { usage } from './usage'
 export { deviceIn, sweepVersions } from './versions'

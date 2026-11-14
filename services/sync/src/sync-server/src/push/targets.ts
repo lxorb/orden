@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { readBody } from '../body'
-import { tokenIn } from '../auth'
+import { tokenIn } from '../said'
 import { newId, now, sha256 } from '../crypto'
 import type { Env, Variables } from '../types'
 import { configured, type TargetKind } from './send'
