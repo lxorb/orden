@@ -22,7 +22,6 @@
     "apps/desktop/src/lib/ago.ts",
     "apps/desktop/src/lib/at-its-cost.ts",
     "apps/desktop/src/lib/choose-files.ts",
-    "apps/desktop/src/lib/diff.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/feedback-pictures.ts",
     "apps/desktop/src/lib/focus.ts",

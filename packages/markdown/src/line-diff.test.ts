@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { diffCount, lineDiff, type Row, trimmed, workDone } from './diff'
+import { diffCount, lineDiff, type Row, trimmed, workDone } from './line-diff'
 
 function shown(before: string, after: string): string[] {
   return lineDiff(before, after).map((row) => `${mark(row)}${row.text}`)

@@ -33,6 +33,7 @@
     "./html": "./src/html.ts",
     "./html-block": "./src/html-block.ts",
     "./language-order": "./src/language-order.ts",
+    "./line-diff": "./src/line-diff.ts",
     "./links": "./src/links.ts",
     "./note-name": "./src/note-name.ts",
     "./pages": "./src/pages.ts",
