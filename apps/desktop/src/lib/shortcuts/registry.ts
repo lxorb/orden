@@ -22,7 +22,7 @@ import { workspace } from '../workspace.svelte'
 import type { Toward } from '../workspace/pane-tree'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
 import type { UsageVia } from '@orden/sync-core'
-import { ran } from '../usage/tally'
+import { ran } from '../usage/src/api'
 
 let askAgain: (() => boolean) | null = null
 

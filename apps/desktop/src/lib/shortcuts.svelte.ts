@@ -24,7 +24,7 @@ import {
   SYSTEM_KEYS,
 } from './shortcuts/registry'
 import { saveFront } from './save-place/door'
-import { ran } from './usage/tally'
+import { ran } from './usage/src/api'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 

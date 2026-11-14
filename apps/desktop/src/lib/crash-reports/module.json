@@ -1,0 +1,11 @@
+{
+  "name": "crash-reports",
+  "layer": "features",
+  "dependsOn": ["contracts", "accounts", "platform", "ui-controls", "ui-kit", "usage"],
+  "pending": [
+    "apps/desktop/src/lib/feedback-log.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/updates.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

@@ -252,16 +252,18 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('rooms')
-      .then(() => import('./crash-reports/watch.svelte'))
-      .then((one) => (stopCrashes = one.watchForCrashes(!import.meta.env.DEV)))
+      .then(() => import('./crash-reports/src/api'))
+      .then((one) => one.watchCrashes(!import.meta.env.DEV))
+      .then((stop) => (stopCrashes = stop))
   }
 
   let stopUsage: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('rooms')
-      .then(() => import('./usage/watch.svelte'))
-      .then((one) => (stopUsage = one.watchUsage(!import.meta.env.DEV)))
+      .then(() => import('./usage/src/api'))
+      .then((one) => one.watchUsage(!import.meta.env.DEV))
+      .then((stop) => (stopUsage = stop))
   }
 
   let stopPointer: (() => void) | null = null

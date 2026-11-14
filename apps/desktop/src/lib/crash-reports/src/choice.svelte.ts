@@ -1,5 +1,5 @@
-import { keepJson, stored } from '../platform/src/api'
-import { CRASHES_ASKED, CRASH_REPORTS, crashAskDue } from '../surfaces.svelte'
+import { keepJson, stored } from '../../platform/src/api'
+import { CRASHES_ASKED, CRASH_REPORTS, crashAskDue } from '../../surfaces.svelte'
 
 class CrashReports {
   on = $state(stored(CRASH_REPORTS) !== false)

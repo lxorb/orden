@@ -9,7 +9,7 @@ import {
   type MenuItem,
   type MenuRow,
 } from './ui-kit/src/api'
-import { ran } from './usage/tally'
+import { ran } from './usage/src/api'
 
 type SystemItem =
   | 'About'

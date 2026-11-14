@@ -1,4 +1,4 @@
-import { keepJson, stored } from '../platform/src/api'
+import { keepJson, stored } from '../../platform/src/api'
 
 export const HELP_IMPROVE = 'orden:usage-help'
 export const INSTALL_ID = 'orden:usage-install'

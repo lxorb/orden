@@ -4,7 +4,7 @@ import { howFor, linkAsk, tabAsk } from '../new-tab'
 import type { Section } from '../settings.svelte'
 import type { NoteToMake } from './new-note'
 import type { Row } from './rows'
-import { ran } from '../usage/tally'
+import { ran } from '../usage/src/api'
 
 export interface Hands {
   openEntry(path: string, how: OpenHow): void

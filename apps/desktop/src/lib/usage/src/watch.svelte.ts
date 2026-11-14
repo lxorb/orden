@@ -6,10 +6,10 @@ import {
   type UsageDay,
   type UsageEvent,
 } from '@orden/sync-core'
-import { account, request } from '../accounts/src/api'
-import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../platform/src/api'
-import { updates } from '../updates.svelte'
-import { type Entry, workspace } from '../workspace.svelte'
+import { account, request } from '../../accounts/src/api'
+import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
+import { updates } from '../../updates.svelte'
+import { type Entry, workspace } from '../../workspace.svelte'
 import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
 import { flush, pruned } from './queue'
 import { commonOf } from './system'
@@ -27,7 +27,7 @@ function eventsOf(value: unknown): UsageEvent[] {
   })
 }
 
-export function queuedEvents(): UsageEvent[] {
+function queuedEvents(): UsageEvent[] {
   return eventsOf(stored(USAGE_QUEUE))
 }
 
@@ -94,7 +94,7 @@ function checked(event: UsageEvent): UsageEvent[] {
   return [said]
 }
 
-export function roll(at = Date.now()): void {
+function roll(at = Date.now()): void {
   const today = dayOf(at)
   const added: UsageEvent[] = []
 
@@ -112,7 +112,7 @@ export function roll(at = Date.now()): void {
 
 let going = false
 
-export async function sendQueued(): Promise<void> {
+async function sendQueued(): Promise<void> {
   if (going) return
   going = true
   try {

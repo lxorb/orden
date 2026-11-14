@@ -1,0 +1,6 @@
+{
+  "name": "usage",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "accounts", "platform", "sync-core"],
+  "pending": ["apps/desktop/src/lib/updates.svelte.ts", "apps/desktop/src/lib/workspace.svelte.ts"]
+}

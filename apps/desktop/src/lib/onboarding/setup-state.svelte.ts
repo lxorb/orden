@@ -4,7 +4,7 @@ import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepA
 import { gate } from './gate.svelte'
 import { heardBefore, keepProgress, readProgress } from './kept'
 import { isMobile } from '../platform/src/api'
-import { stepped } from '../usage/tally'
+import { stepped } from '../usage/src/api'
 
 export interface Issue {
   id: number

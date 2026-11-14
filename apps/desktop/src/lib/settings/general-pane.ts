@@ -1,6 +1,6 @@
 import { method, isDesktop, isMobile, platform } from '../platform/src/api'
-import { crashReports } from '../crash-reports/choice.svelte'
-import { usageChoice } from '../usage/choice.svelte'
+import { crashReports } from '../crash-reports/src/api'
+import { usageChoice } from '../usage/src/api'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { protectionOn, turnProtection } from '../sharing/src/api'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/src/api'
