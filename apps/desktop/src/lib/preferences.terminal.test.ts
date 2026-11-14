@@ -15,7 +15,7 @@ vi.mock('./platform/src/tauri', async (actual) => ({
 }))
 
 const { preferences } = await import('./preferences')
-const { shells } = await import('./terminal/src/shells.svelte')
+const { shells } = await import('./terminal/src/api')
 const { shortcuts } = await import('./shortcuts.svelte')
 await import('./web-tab/src/api')
 await (await import('@orden/contracts')).registered()

@@ -1,5 +1,5 @@
+import { settingsPartsIn } from '@orden/contracts'
 import { account } from '../accounts/src/api'
-import { reach } from '../agents/src/api'
 import type { Place } from '../settings-search'
 import { isDesktop } from '../platform/src/api'
 
@@ -53,28 +53,11 @@ export function places(): Place[] {
     all.push({ section: 'general', label: 'Default browser', text: ['Make default'] })
   }
 
-  if (!__EVEN_PLUGIN__ && reach.offered) {
-    all.push({
-      section: 'ai',
-      label: 'Agents',
-      text: ['MCP', 'orden mcp', 'Claude Code', 'Codex', 'token', 'Create a token'],
-    })
-  }
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    all.push({
-      section: 'remote',
-      label: 'Add host',
-      text: ['SSH', 'ssh config', 'Remote', 'Open config'],
-    })
-  }
-
-  if (!__EVEN_PLUGIN__ && account.user) {
-    all.push({
-      section: 'online',
-      label: 'Online terminal',
-      text: ['Machine', 'Start', 'Stop', 'Hours', 'CPU'],
-    })
+  for (const part of settingsPartsIn()) {
+    if (!part.shown()) continue
+    for (const place of part.places?.() ?? []) {
+      all.push({ section: part.section, label: place.label, text: [...place.text] })
+    }
   }
 
   if (account.user) {

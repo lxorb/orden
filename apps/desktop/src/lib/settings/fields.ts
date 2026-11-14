@@ -39,18 +39,6 @@ export type Field = Common &
   (
     | SettingControl
     | {
-        kind: 'slider'
-        min: number
-        max: number
-        step: number
-        unit?: string
-        initial?: number
-        least?: () => number
-        get(): number
-        preview?(value: number): void
-        set(value: number): void
-      }
-    | {
         kind: 'segmented'
         options: Segment[]
         initial?: string

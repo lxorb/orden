@@ -1,3 +1,4 @@
+import './shell-parts'
 export { crashReports } from './choice.svelte'
 
 export const watchCrashes = (send: boolean): Promise<() => void> =>

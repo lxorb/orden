@@ -64,3 +64,10 @@ providePort('import.bring', {
       ? Promise.resolve({ picked: false, trouble: null })
       : bringing().then((one) => one.notes(from)),
 })
+
+providePort('account.signingOut', {
+  signOut: async () => {
+    const { signOut } = await import('./ai-providers/src/api')
+    await signOut()
+  },
+})
