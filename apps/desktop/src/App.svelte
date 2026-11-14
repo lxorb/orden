@@ -126,7 +126,7 @@
     if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
     let stop: (() => void) | null = null
     let gone = false
-    void import('./lib/apps/host.svelte').then(({ hostApps }) => {
+    void import('./lib/apps/src/api').then(({ hostApps }) => {
       if (!gone) stop = hostApps()
     })
     return () => {

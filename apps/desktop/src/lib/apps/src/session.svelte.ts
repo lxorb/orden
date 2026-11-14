@@ -7,13 +7,13 @@ import {
   UNKNOWN_APP,
   type View,
 } from '@orden/online/apps'
-import { account, BASE } from '../accounts/src/api'
-import { pageWorld } from '../online/link'
-import type { Holder } from '../online/arrival.svelte'
-import type { IdAt } from '../sync-client/src/api'
+import { account, BASE } from '../../accounts/src/api'
+import { pageWorld } from '../../online/link'
+import type { Holder } from '../../online/arrival.svelte'
+import type { IdAt } from '../../sync-client/src/api'
 import { untrack } from 'svelte'
-import type { Tab } from '../workspace/documents.svelte'
-import { workspace } from '../workspace.svelte'
+import type { Tab } from '../../workspace/documents.svelte'
+import { workspace } from '../../workspace.svelte'
 import { type AppHeard, AppLink } from './link'
 import { Picture } from './picture.svelte'
 
@@ -129,7 +129,7 @@ export interface SessionWorld {
 
 const sessionWorld: SessionWorld = {
   async read(path) {
-    const { invoke } = await import('../platform/src/api')
+    const { invoke } = await import('../../platform/src/api')
     return readApp(() => invoke<string>('read_note', { path }))
   },
   moved() {
@@ -138,7 +138,7 @@ const sessionWorld: SessionWorld = {
   find: (path, until) => find(path, until),
   token: () => account.accountToken,
   async devices(token) {
-    const { request } = await import('../accounts/src/api')
+    const { request } = await import('../../accounts/src/api')
     const listed = await request<{ devices?: Device[] }>('/v2/devices', { token }).catch(() => null)
     return listed?.devices ?? null
   },
@@ -160,7 +160,7 @@ const sessionWorld: SessionWorld = {
         BASE,
         () => account.accountToken,
         async () => {
-          const { deviceId } = await import('../sync-client/src/api')
+          const { deviceId } = await import('../../sync-client/src/api')
           return deviceId()
         },
       ),
@@ -487,7 +487,7 @@ export async function find(path: string, until: number): Promise<Found> {
     await account.reread()
     if (onOldSync()) return { none: 'old-sync' }
   }
-  const { runner } = await import('../sync-client/src/api')
+  const { runner } = await import('../../sync-client/src/api')
   for (;;) {
     const found = await runner.idAt(path)
     if ('id' in found || Date.now() >= until) return found

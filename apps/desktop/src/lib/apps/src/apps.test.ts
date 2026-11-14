@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { LinkWorld } from '../online/link'
+import type { LinkWorld } from '../../online/link'
 import { type AppHeard, AppLink } from './link'
 import { appName } from './open'
 import { hostChoices, mayHost, programOf } from './words'

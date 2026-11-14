@@ -1,0 +1,27 @@
+{
+  "name": "apps",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "crate",
+    "online",
+    "platform",
+    "sharing",
+    "sync-client",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Sweep.svelte",
+    "apps/desktop/src/lib/new-tab.ts",
+    "apps/desktop/src/lib/online/arrival.svelte.ts",
+    "apps/desktop/src/lib/online/link.ts",
+    "apps/desktop/src/lib/png-off.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/settings/apps-clipboard.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/write-file.ts"
+  ]
+}

@@ -5,12 +5,12 @@ import {
   catalogueOf,
   type Installed,
 } from '@orden/online/apps'
-import { account } from '../accounts/src/api'
-import { canWriteAt } from '../sharing/src/api'
-import { nameOf, joinPath } from '../platform/src/api'
-import type { Tab } from '../workspace/documents.svelte'
-import { workspace } from '../workspace.svelte'
-import { writeFile } from '../workspace/write-file'
+import { account } from '../../accounts/src/api'
+import { canWriteAt } from '../../sharing/src/api'
+import { nameOf, joinPath } from '../../platform/src/api'
+import type { Tab } from '../../workspace/documents.svelte'
+import { workspace } from '../../workspace.svelte'
+import { writeFile } from '../../workspace/write-file'
 import { openApplication } from './open'
 import { type Computer, hostChoices, mayHost, programOf } from './words'
 
@@ -23,8 +23,8 @@ export async function makeApplication(): Promise<Tab | null> {
   const root = workspace.activeSpace?.root
   if (!root || !canWriteAt(root)) return null
 
-  const { request } = await import('../accounts/src/api')
-  const { prompt } = await import('../ui-kit/src/api')
+  const { request } = await import('../../accounts/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const listed = await request<{ devices?: Computer[] }>('/v2/devices', { token }).catch(() => null)
   const computers = (listed?.devices ?? []).filter((one) => mayHost(one.platform))
   if (!computers.length) {
@@ -90,12 +90,12 @@ const ANOTHER = '\u0000another'
 
 async function installedOn(host: string, here: boolean, token: string): Promise<Installed[]> {
   if (here) {
-    const { invoke, isDesktop } = await import('../platform/src/api')
+    const { invoke, isDesktop } = await import('../../platform/src/api')
     if (!isDesktop) return []
     const listed = await invoke<unknown>('apps_installed').catch(() => null)
     return catalogueOf(listed) ?? []
   }
-  const { request } = await import('../accounts/src/api')
+  const { request } = await import('../../accounts/src/api')
   const answered = await request<{ apps?: unknown }>(
     `${CATALOGUE_PATH}/${encodeURIComponent(host)}`,
     { token },
