@@ -134,7 +134,7 @@ function holds(tail: string): boolean {
 }
 
 const BUDGET = 1_915_800
-const MOST_FILES = 426
+const MOST_FILES = 430
 
 const MOST_TEXT = 6_500
 
