@@ -43,7 +43,6 @@
     "apps/desktop/src/lib/shortcuts/registry.ts",
     "apps/desktop/src/lib/startup.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/tab-strip/dropped.ts",
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/typing-pointer.ts",

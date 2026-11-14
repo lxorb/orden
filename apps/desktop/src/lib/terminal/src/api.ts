@@ -6,6 +6,7 @@ import type * as RemoteOpen from './remote/open'
 import type * as Rename from './rename'
 import type * as Sessions from './sessions.svelte'
 export { historyOf, moveHistory } from './history'
+export { setTerminalIcon } from './icon'
 export { openTerminal, shellRows } from './open'
 export { ptyOf, runningTabs, shellRunning } from './running'
 export type { Session } from './sessions.svelte'
@@ -66,6 +67,9 @@ export const openAll = async (...args: Parameters<typeof RemoteOpen.openAll>) =>
 
 export const connectTo = async (...args: Parameters<typeof RemoteOpen.connectTo>) =>
   (await remoteOpening()).connectTo(...args)
+
+export const terminalTabKind = () =>
+  __EVEN_PLUGIN__ ? refused() : import('./tab-kind').then((one) => one.terminalTabKind)
 
 export const loadTerminalTab = () => (__EVEN_PLUGIN__ ? refused() : import('./TerminalTab.svelte'))
 

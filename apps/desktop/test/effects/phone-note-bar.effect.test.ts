@@ -47,11 +47,11 @@ test("a phone's note bar has one More button in place of the search and the side
   }
 })
 
-test('and its menu holds the outline, the links, the history and the tab, each once', () => {
+test('and its menu holds the outline, the links, the history and the tab, each once', async () => {
   viewport.device = 'phone'
   const { host, done } = bar()
   try {
-    showNoteMore(host.querySelector<HTMLButtonElement>('header [data-phone-more]')!)
+    await showNoteMore(host.querySelector<HTMLButtonElement>('header [data-phone-more]')!)
     expect(menu.open).toBe(true)
     const labels = menu.items.flatMap((one) => (one ? [one.label] : []))
 

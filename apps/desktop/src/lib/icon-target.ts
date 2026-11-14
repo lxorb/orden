@@ -1,7 +1,7 @@
 import { chosenIcon, chosenTint } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import type { IconTarget } from './icon-choice.svelte'
-import { readSpec, writeSpec } from './terminal/src/api'
+import { readSpec, setTerminalIcon } from './terminal/src/api'
 import { workspace } from './workspace.svelte'
 
 function terminalTab(id: string) {
@@ -35,20 +35,4 @@ export function wear(target: IconTarget, icon: string | null, colour: string | n
   else if (target.kind === 'folder') workspace.setFolderIcon(target.path, icon, colour)
   else if (target.kind === 'terminal') setTerminalIcon(target.tab, icon, colour)
   else void setFileIcon(target.path, icon, colour)
-}
-
-export function setTerminalIcon(id: string, icon: string | null, colour: string | null): void {
-  const tab = terminalTab(id)
-  const spec = tab ? readSpec(tab.doc) : null
-  if (!tab || !spec) return
-  const plain = {
-    shell: spec.shell,
-    folder: spec.folder,
-    key: spec.key,
-    name: spec.name,
-    ...(spec.via ? { via: spec.via } : {}),
-  }
-  const worn = icon === null ? plain : { ...plain, icon, ...(colour ? { iconColor: colour } : {}) }
-  tab.note.replace(writeSpec(worn), false)
-  workspace.scheduleSession()
 }

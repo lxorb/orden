@@ -50,11 +50,11 @@ Element.prototype.scrollIntoView = () => undefined
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
-const { picks } = await import('../../src/lib/tab-strip/drag.svelte')
-const { tabMenuTitle } = await import('../../src/lib/tab-strip/menu')
+const { picks } = await import('../../src/lib/tab-strip/src/drag.svelte')
+const { tabMenuTitle } = await import('../../src/lib/tab-strip/src/menu')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-await import('../../src/lib/tab-strip/closing.svelte')
-await import('../../src/lib/tab-strip/picking.svelte')
+await import('../../src/lib/tab-strip/src/closing.svelte')
+await import('../../src/lib/tab-strip/src/picking.svelte')
 
 const settles = <T>(check: () => T) => vi.waitFor(check, { timeout: 10_000 })
 

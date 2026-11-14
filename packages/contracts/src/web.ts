@@ -7,6 +7,8 @@ export interface WebPageSeen {
   readonly shot: string | null
   readonly loading: boolean
   readonly icon: string | null
+  readonly live: boolean
+  readonly shown: boolean
 }
 
 export interface PressedKey {
@@ -35,6 +37,11 @@ export interface WebPagesPort {
   tabs(): readonly string[]
   addressOf(tab: string): string | null
   loadingOf(tab: string): boolean
+  lentOf(tab: string): boolean
+  losing(tab: string): Promise<boolean>
+  reload(tab: string): Promise<void>
+  park(tab: string, hidden: boolean): Promise<void>
+  copyPage(from: string, to: string, url: string | null, inPrivate: boolean): void
   shoot(tab: string): Promise<void>
   clip(tab: string, selection: boolean): Promise<WebClip | null>
   faviconOf(url: string | null | undefined): string | null
@@ -67,6 +74,8 @@ const BLANK: WebPageSeen = {
   shot: null,
   loading: false,
   icon: null,
+  live: false,
+  shown: false,
 }
 
 export const NO_WEB_PAGES: WebPagesPort = {
@@ -75,6 +84,11 @@ export const NO_WEB_PAGES: WebPagesPort = {
   tabs: () => [],
   addressOf: () => null,
   loadingOf: () => false,
+  lentOf: () => false,
+  losing: () => Promise.resolve(false),
+  reload: () => Promise.resolve(),
+  park: () => Promise.resolve(),
+  copyPage: () => undefined,
   shoot: () => Promise.resolve(),
   clip: () => Promise.resolve(null),
   faviconOf: () => null,

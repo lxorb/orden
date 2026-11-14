@@ -1,7 +1,7 @@
 import { tick } from 'svelte'
 import { dropTarget, targetFor } from './drop-target.svelte'
 import { dur, folderOf, nameOf } from './platform/src/api'
-import { droppedOnSpace, leftSpaces, overSpaces } from './tab-strip/space-drop'
+import { spaceDropping } from './tab-strip/src/api'
 import { placedBeside, stepped, trimmed } from './tree-arranging'
 import { shownNames } from './tree-order'
 import { entryAt } from './tree-edits'
@@ -19,6 +19,9 @@ const HOLD_TO_LIFT = 250
 const LIFT_SLOP = 8
 
 const DWELL = 400
+
+let drop: Awaited<ReturnType<typeof spaceDropping>> | null = null
+void spaceDropping().then((one) => (drop = one))
 
 export interface Held {
   rows: () => Iterable<HTMLElement>
@@ -285,7 +288,7 @@ function onLiftMove(held: Held, event: TouchEvent) {
 
   ghost.style.transform = `translateY(${touch.clientY - ghostFrom}px) scale(1.03)`
 
-  if (overSpaces({ paths: held.carrying() }, { x: touch.clientX, y: touch.clientY })) {
+  if (drop?.overSpaces({ paths: held.carrying() }, { x: touch.clientX, y: touch.clientY })) {
     slideBack(held)
     dropTarget.clear()
     dwellOver(null, false)
@@ -320,7 +323,7 @@ function onLiftEnd(held: Held, event: TouchEvent) {
   const paths = [...held.carrying()]
 
   if (landed) workspace.arranged.drop()
-  if (!landed && droppedOnSpace({ paths })) {
+  if (!landed && drop?.droppedOnSpace({ paths })) {
     dropLift(held)
     return
   }
@@ -340,7 +343,7 @@ export function dropLift(held: Held): void {
   ghost?.remove()
   ghost = null
   cancelHold()
-  leftSpaces()
+  drop?.leftSpaces()
   dropTarget.clear()
   letGo(held)
   held.edge(null)

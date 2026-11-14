@@ -30,6 +30,7 @@
   import { type Bookmark, isTile, sameBookmark } from './workspace/bookmarks.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
+  import { tabLetters, tabUnloading } from './tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()
 
@@ -226,9 +227,9 @@
     if (path) void reckoning().then((one) => one.keepAsTab(path))
   }
 
-  let letters = $state.raw<typeof import('./tab-strip/letters.svelte') | null>(null)
+  let letters = $state.raw<Awaited<ReturnType<typeof tabLetters>> | null>(null)
   onMount(() => {
-    void import('./tab-strip/letters.svelte').then((one) => (letters = one))
+    void tabLetters().then((one) => (letters = one))
   })
 
   function letterOf(row: Row): { 'data-essential-letter'?: string; 'aria-keyshortcuts'?: string } {
@@ -323,7 +324,7 @@
     }
     event.preventDefault()
     event.stopPropagation()
-    void import('./tab-strip/unloading.svelte').then(({ unloadEntries }) =>
+    void tabUnloading().then(({ unloadEntries }) =>
       menu.show(event, rowMenu(row, unloadEntries(own)), { title: titleOf(row) }),
     )
   }

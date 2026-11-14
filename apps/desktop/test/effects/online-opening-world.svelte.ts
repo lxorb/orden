@@ -12,6 +12,8 @@ class Page {
   readonly shot = null
   readonly loading = false
   readonly icon = null
+  readonly live = false
+  readonly shown = false
 }
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the pages are reactive, not the list

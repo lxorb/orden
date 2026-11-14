@@ -135,7 +135,7 @@ const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
-const { hovering } = await import('../../src/lib/tab-strip/hover-card.svelte')
+const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
 const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
 
 await Promise.all([

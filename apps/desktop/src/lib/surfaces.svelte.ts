@@ -10,6 +10,7 @@ import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
 import { storedText } from './platform/src/api'
+import { loadTabNameField, stripMenus, tabMenus, tabNumbers } from './tab-strip/src/api'
 
 export function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {
   return door(() => load().then((one) => one.default))
@@ -271,7 +272,7 @@ export const terminalMark = held(() =>
   import('./terminal/src/api').then((one) => one.loadTerminalMark()),
 )
 
-export const tabNameField = held(() => import('./tab-strip/TabNameField.svelte'))
+export const tabNameField = held(() => loadTabNameField())
 
 export const syncMark = latched(() =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
@@ -374,12 +375,12 @@ export async function warmDoors(): Promise<void> {
     __EVEN_PLUGIN__ ? undefined : () => undoToastNotice.ask(),
     __EVEN_PLUGIN__ ? undefined : () => import('./field-menu'),
     () => import('./ai-providers/src/api'),
-    () => import('./tab-strip/menu'),
-    () => import('./tab-strip/strip-menu'),
+    () => tabMenus(),
+    () => stripMenus(),
     () => import('./row-menu'),
     () => import('./editor-menu'),
     () => import('./tab-cycle.svelte'),
-    __EVEN_PLUGIN__ ? undefined : () => import('./tab-strip/numbers.svelte'),
+    __EVEN_PLUGIN__ ? undefined : () => tabNumbers(),
     __EVEN_PLUGIN__ ? undefined : () => import('./pane-moves').then((one) => one.followPointer()),
     __EVEN_PLUGIN__ ? undefined : () => fillBar(),
     () => import('./preview-card'),

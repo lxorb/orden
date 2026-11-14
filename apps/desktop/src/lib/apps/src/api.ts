@@ -3,6 +3,7 @@ export { hostApps } from './host.svelte'
 export { makeApplication } from './make'
 export { openApplication } from './open'
 export { type AppSession, appSessionIfAny } from './session.svelte'
+export { applicationTabKind } from './tab-kind'
 
 export const loadApplicationTab = () =>
   __EVEN_PLUGIN__

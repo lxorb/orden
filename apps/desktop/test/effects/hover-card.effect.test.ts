@@ -15,8 +15,8 @@ Element.prototype.animate = () =>
     onfinish: null,
   }) as unknown as Animation
 
-const { hovering } = await import('../../src/lib/tab-strip/hover-card.svelte')
-const { previewDelay } = await import('../../src/lib/tab-strip/preview-delay.svelte')
+const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
+const { previewDelay } = await import('../../src/lib/tab-strip/src/preview-delay.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 type Tab = import('../../src/lib/workspace.svelte').Tab

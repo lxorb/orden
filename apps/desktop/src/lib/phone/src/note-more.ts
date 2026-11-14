@@ -1,7 +1,7 @@
 import { DIVIDER, menu, trim, type MenuEntry } from '../../menu.svelte'
 import { noteMenu } from '../../note-menu'
-import { tabMenu } from '../../tab-strip/menu'
-import { workspace } from '../../workspace.svelte'
+import { tabMenus } from '../../tab-strip/src/api'
+import { type Tab, workspace } from '../../workspace.svelte'
 import { TAB_KINDS, type TabPanel } from '../../workspace/tab-kinds'
 
 const PANEL_WORDS: Record<TabPanel, () => string> = {
@@ -9,14 +9,15 @@ const PANEL_WORDS: Record<TabPanel, () => string> = {
   links: () => 'Links',
 }
 
-export function showNoteMore(from: HTMLElement) {
+export async function showNoteMore(from: HTMLElement) {
   const box = from.getBoundingClientRect()
   const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.bottom })
+  const { tabMenu } = await tabMenus(workspace.active?.kind)
   const title = workspace.active?.shown
-  menu.show(at, noteMore(), title ? { title } : {})
+  menu.show(at, noteMore(tabMenu), title ? { title } : {})
 }
 
-function noteMore(): MenuEntry[] {
+function noteMore(tabMenu: (tab: Tab, paneId: string) => MenuEntry[]): MenuEntry[] {
   const tab = workspace.active
   if (!tab) return []
 

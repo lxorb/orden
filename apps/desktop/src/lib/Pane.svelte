@@ -68,7 +68,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
-  import { flushFirst } from './tab-strip/flush'
+  import { flushFirst } from './tab-strip/src/api'
   import { followHref, followNote } from './open-link'
   import type { OpenHow } from './new-tab'
   import { usage } from './usage.svelte'

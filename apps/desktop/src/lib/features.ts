@@ -1,4 +1,4 @@
-import { registerFeature, registerSettingsPart } from '@orden/contracts'
+import { registerFeature, registerSettingsPart, registerTabKind } from '@orden/contracts'
 import { partView } from './ui-kit/src/api'
 
 registerFeature(() => import('./quick-add/src/api'))
@@ -8,6 +8,8 @@ if (!__EVEN_PLUGIN__) {
   registerFeature(() => import('./chats-client/src/api'))
   registerFeature(() => import('./crash-reports/src/api'))
   registerFeature(() => import('./terminal/src/api'))
+  registerTabKind('terminal', async () => (await import('./terminal/src/api')).terminalTabKind())
+  registerTabKind('application', async () => (await import('./apps/src/api')).applicationTabKind)
   registerSettingsPart({
     section: 'import',
     card: true,

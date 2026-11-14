@@ -9,7 +9,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
-vi.mock('../../src/lib/tab-strip/letters.svelte', () => ({
+vi.mock('../../src/lib/tab-strip/src/letters.svelte', () => ({
   essentialLetters: {
     given: { '/space/Notes.md': 'N' },
     pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null),
@@ -30,7 +30,7 @@ if (typeof globalThis.CSS === 'undefined') {
   vi.stubGlobal('CSS', { escape: (text: string) => text })
 }
 
-const { numbers } = await import('../../src/lib/tab-strip/numbers.svelte')
+const { numbers } = await import('../../src/lib/tab-strip/src/numbers.svelte')
 const { replay } = await import('../../src/lib/ui-kit/src/api')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 type Tab = import('../../src/lib/workspace.svelte').Tab

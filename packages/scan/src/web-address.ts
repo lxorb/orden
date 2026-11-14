@@ -88,3 +88,16 @@ export function keysOf(url: string | null | undefined): [string, string] | null 
     return null
   }
 }
+
+export function droppedAddress(read: (type: string) => string): string | null {
+  const listed = read('text/uri-list')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line && !line.startsWith('#'))
+
+  for (const one of [listed, read('text/plain').trim()]) {
+    if (one && isWebAddress(one)) return one
+  }
+
+  return null
+}
