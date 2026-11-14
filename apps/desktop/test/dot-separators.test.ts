@@ -60,7 +60,7 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'the mark of a nameless thing, alone',
   },
   {
-    path: 'apps/desktop/src/lib/PublishSheet.svelte',
+    path: 'apps/desktop/src/lib/publishing/src/PublishSheet.svelte',
     holds: 'publish.hasPassword ?',
     why: 'a hidden password',
   },

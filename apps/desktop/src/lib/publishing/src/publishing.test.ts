@@ -26,8 +26,8 @@ const world = vi.hoisted((): World => ({
   held: null,
 }))
 
-vi.mock('./accounts/src/client', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./accounts/src/client')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
 
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
@@ -76,8 +76,8 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('./platform/src/tauri', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./platform/src/tauri')>()
+vi.mock('../../platform/src/tauri', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../platform/src/tauri')>()
   return {
     ...original,
     invoke: (command: string, args?: Record<string, unknown>) =>
@@ -85,11 +85,11 @@ vi.mock('./platform/src/tauri', async (importOriginal) => {
   }
 })
 
-vi.mock('./sync.svelte', () => ({
+vi.mock('../../sync.svelte', () => ({
   sync: { remoteIdFor: (root: string) => world.mirrors[root] ?? null },
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get spaces() {
       return Object.keys(world.mirrors).map((root) => ({ id: root, name: root, root }))
@@ -98,16 +98,16 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./ui-kit/src/message', () => ({
+vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))
 
-import { account } from './accounts/src/account.svelte'
+import { account } from '../../accounts/src/account.svelte'
 import { publish } from './publishing.svelte'
-import { canPublish } from './sharing/src/sharing.svelte'
-import { theme } from './theme/src/theme.svelte'
-import type { RemoteSpace } from './accounts/src/routes'
+import { canPublish } from '../../sharing/src/sharing.svelte'
+import { theme } from '../../theme/src/theme.svelte'
+import type { RemoteSpace } from '../../accounts/src/routes'
 
 function remote(id: string, role: 'owner' | 'write' | 'read', blog = {}): RemoteSpace {
   return {

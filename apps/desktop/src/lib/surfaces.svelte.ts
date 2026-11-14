@@ -171,7 +171,9 @@ export const historySheet = latched(() => import('./History.svelte'))
 
 export const shareSheet = latched(() => import('./ShareSheet.svelte'))
 
-export const publishSheet = latched(() => import('./PublishSheet.svelte'))
+export const publishSheet = latched(() =>
+  import('./publishing/src/api').then((one) => one.loadPublishSheet()),
+)
 
 export const exportSheet = latched(() =>
   __EVEN_PLUGIN__

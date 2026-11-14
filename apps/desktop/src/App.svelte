@@ -432,7 +432,7 @@
 
     void Promise.all([
       import('./lib/importing.svelte'),
-      import('./lib/publishing.svelte'),
+      import('./lib/publishing/src/api'),
       import('./lib/ai/store.svelte'),
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync-client/test/fake-engine.svelte'),
