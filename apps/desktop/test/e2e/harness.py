@@ -51,14 +51,6 @@ BUILT_IN = (
     " catch {}"
 )
 
-ANSWERED = (
-    "Object.defineProperty(window, 'ordenApp', { configurable: true, set(app) {"
-    " Object.defineProperty(window, 'ordenApp', { value: app, writable: true, configurable: true, enumerable: true });"
-    " const held = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(app.settings), 'setup');"
-    " Object.defineProperty(app.settings, 'setup', { configurable: true, get: () => held.get.call(app.settings),"
-    " set: (at) => { if (at !== -1) held.set.call(app.settings, at) } }) } })"
-)
-
 PATIENCE = 30
 
 HARMLESS = (
@@ -129,7 +121,6 @@ def answering(browser: Any) -> Any:
     def answered(context: Any, first_look: bool) -> None:
         if not first_look:
             context.add_init_script(BUILT_IN)
-            context.add_init_script(ANSWERED)
 
     def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
         context = made_context(*args, **options)
@@ -580,7 +571,6 @@ class Drive:
         options.setdefault("channel", os.environ.get("ORDEN_BROWSER", "chromium"))
         context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         context.add_init_script(BUILT_IN)
-        context.add_init_script(ANSWERED)
         return context
 
     def page(self, browser: Any, errors: bool = True, **options: Any) -> Any:
