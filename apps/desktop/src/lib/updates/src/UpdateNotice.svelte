@@ -1,11 +1,10 @@
 <script lang="ts">
   import { whenLoaded } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
-  import { Cross } from './ui-kit/src/api'
+  import { Cross } from '../../ui-kit/src/api'
   import { type Channel, restartToUpdate } from './updater'
-  import { dur, fly } from './platform/src/api'
-  import { log } from './platform/src/api'
-  import { told } from './said.svelte'
+  import { dur, fly, log } from '../../platform/src/api'
+  import { told } from '../../said.svelte'
 
   const {
     version,
@@ -88,7 +87,7 @@
 >
   {#if command}
     <p>To update, run this in a terminal:</p>
-    {#await import('./ui-controls/src/api') then { Copyable }}
+    {#await import('../../ui-controls/src/api') then { Copyable }}
       <Copyable value={command} />
     {/await}
 

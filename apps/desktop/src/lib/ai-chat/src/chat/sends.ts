@@ -1,4 +1,4 @@
-import { runs } from '../../../parting'
+import { runs } from '../../../parting/src/api'
 import type { Engine, Thread } from '../../../ai-providers/src/api'
 
 interface Send {

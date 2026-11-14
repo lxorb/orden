@@ -31,7 +31,7 @@ const { quitAsked, mayStop } = await import('../../src/lib/quit-ports')
 const { quitAsk } = await import('../../src/lib/quitting/src/api')
 const { setPty } = await import('../../src/lib/terminal/src/running')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { anythingRuns } = await import('../../src/lib/parting')
+const { anythingRuns } = await import('../../src/lib/parting/src/api')
 type Tab = import('../../src/lib/workspace.svelte').Tab
 const aiChat = await import('../../src/lib/ai-chat/src/api')
 await Promise.all([

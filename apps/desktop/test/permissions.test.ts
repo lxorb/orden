@@ -176,12 +176,14 @@ describe('writing an export', () => {
 describe('looking for a new version', () => {
   test('goes through the app’s own command, which needs no permission of its own', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('updates::check_update')
-    expect(read('../src/lib/updater.ts')).toContain("invoke<unknown>('check_update'")
+    expect(read('../src/lib/updates/src/updater.ts')).toContain("invoke<unknown>('check_update'")
     expect(capabilities.permissions).not.toContain('updater:allow-check')
   })
 
   test('downloads and installs through the plugin, which is granted both', () => {
-    expect(read('../src/lib/updater.ts')).toContain("import('@tauri-apps/plugin-updater')")
+    expect(read('../src/lib/updates/src/updater.ts')).toContain(
+      "import('@tauri-apps/plugin-updater')",
+    )
     expect(capabilities.permissions).toContain('updater:allow-download')
     expect(capabilities.permissions).toContain('updater:allow-install')
   })

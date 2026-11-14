@@ -98,7 +98,7 @@ import {
   protectEntries,
 } from './sharing/src/api'
 import { archiveEntry, DIVIDER } from './menu.svelte'
-import { updates } from './updates.svelte'
+import { updates } from './updates/src/api'
 import { modes } from './modes.svelte'
 import { basesOn, chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
 import { agentsUi } from './agents/src/api'

@@ -17,7 +17,9 @@
     "theme-looks",
     "ui-controls",
     "ui-kit",
-    "usage"
+    "usage",
+    "parting",
+    "updates"
   ],
   "pending": [
     "apps/desktop/src/lib/AiPane.svelte",
@@ -43,7 +45,6 @@
     "apps/desktop/src/lib/note-id.ts",
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/paper.ts",
-    "apps/desktop/src/lib/parting.ts",
     "apps/desktop/src/lib/recovery.svelte.ts",
     "apps/desktop/src/lib/recovery.ts",
     "apps/desktop/src/lib/reset-fields.ts",
@@ -57,8 +58,6 @@
     "apps/desktop/src/lib/tab-cycle.svelte.ts",
     "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/toolbar.svelte.ts",
-    "apps/desktop/src/lib/updater.ts",
-    "apps/desktop/src/lib/updates.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/web/kept-for-good.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",

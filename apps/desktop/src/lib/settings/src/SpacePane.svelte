@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import { owes, writing } from '../../parting'
+  import { owes, writing } from '../../parting/src/api'
   import type { InstructionsField } from './instructions-field.svelte'
 
   let current: InstructionsField | null = null

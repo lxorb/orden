@@ -1505,7 +1505,7 @@ describe('an answer on its way', () => {
     const { written, word } = await answering()
     word('Herons stand')
 
-    const { settleUp } = await import('../../../parting')
+    const { settleUp } = await import('../../../parting/src/api')
     settleUp()
 
     await vi.waitFor(async () =>
@@ -1548,7 +1548,7 @@ describe('an answer on its way', () => {
   test('reads back cut off, in the same thread, after a reload', async () => {
     const { one, word } = await answering()
     word('Herons stand')
-    const { settleUp } = await import('../../../parting')
+    const { settleUp } = await import('../../../parting/src/api')
     settleUp()
     const { readThread } = await import('../chat/threads')
 

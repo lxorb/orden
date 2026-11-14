@@ -1,7 +1,6 @@
 import { copyText } from '../../ui-controls/src/api'
 import { isDesktop } from '../../platform/src/api'
-import { webChannel } from '../../updater'
-import { updates } from '../../updates.svelte'
+import { updates, webChannel } from '../../updates/src/api'
 import type { Field } from './fields'
 
 const SAID_FOR = 1600

@@ -3,14 +3,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const system = vi.hoisted(() => ({ asked: [] as unknown[][], answer: null as string | null }))
 
-vi.mock('../../src/lib/updater', () => ({ restartToUpdate: () => Promise.resolve() }))
-vi.mock('../../src/lib/system-update', () => ({
+vi.mock('./updater', () => ({ restartToUpdate: () => Promise.resolve() }))
+vi.mock('./system-update', () => ({
   updateBySystem: (...args: unknown[]) => {
     system.asked.push(args)
     return Promise.resolve(system.answer)
   },
 }))
-vi.mock('../../src/lib/app-place', () => ({
+vi.mock('./app-place', () => ({
   stuck: () => Promise.resolve(false),
   moveToApplications: () => Promise.resolve(),
 }))
@@ -25,7 +25,7 @@ Element.prototype.animate = () =>
     },
   }) as unknown as Animation
 
-const UpdateNotice = (await import('../../src/lib/UpdateNotice.svelte')).default
+const UpdateNotice = (await import('./UpdateNotice.svelte')).default
 
 let target: HTMLElement
 let app: ReturnType<typeof mount> | null = null

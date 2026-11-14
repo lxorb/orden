@@ -1,6 +1,6 @@
-import { log, isRecord, isString, invoke, waited } from './platform/src/api'
-import { GIVE_UP, settleUp, written } from './parting'
-import type { Channel } from './updater'
+import { mayStop } from '@orden/contracts'
+import { log, isRecord, isString, invoke } from '../../platform/src/api'
+import { type Channel, settled } from './updater'
 
 function notUpdated(value: unknown): { refused: boolean; command: string | null; reason: string } {
   if (!isRecord(value)) return { refused: false, command: null, reason: String(value) }
@@ -13,7 +13,7 @@ function notUpdated(value: unknown): { refused: boolean; command: string | null;
 }
 
 export async function updateBySystem(version: string, channel: Channel): Promise<string | null> {
-  if (__EVEN_PLUGIN__ || !(await (await import('./quit-ports')).mayStop('restart'))) return null
+  if (__EVEN_PLUGIN__ || !(await mayStop('restart'))) return null
   try {
     await invoke('system_update', { channel, version })
   } catch (error) {
@@ -21,8 +21,7 @@ export async function updateBySystem(version: string, channel: Channel): Promise
     log('error', `update: ${not.reason}`)
     return not.refused ? null : not.command
   }
-  settleUp()
-  await Promise.race([written(), waited(GIVE_UP)])
+  await settled()
   try {
     const { relaunch } = await import('@tauri-apps/plugin-process')
     await relaunch()

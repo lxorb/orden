@@ -1,5 +1,5 @@
 <script module lang="ts">
-  import { owes, writing } from '../../parting'
+  import { owes, writing } from '../../parting/src/api'
 
   let owing: (() => void) | null = null
   owes(() => owing?.())

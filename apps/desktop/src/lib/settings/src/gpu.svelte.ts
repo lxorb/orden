@@ -1,6 +1,6 @@
 import { prompt } from '../../ui-kit/src/api'
 import { invoke } from '../../platform/src/api'
-import { restartToUpdate } from '../../updater'
+import { restartToUpdate } from '../../updates/src/api'
 
 class Gpu {
   on = $state(true)

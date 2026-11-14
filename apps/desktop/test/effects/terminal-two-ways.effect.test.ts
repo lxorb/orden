@@ -55,7 +55,7 @@ const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
 const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
 const { flushSync, mount, unmount } = await import('svelte')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 type Opened = ReturnType<typeof sessionOf>
 

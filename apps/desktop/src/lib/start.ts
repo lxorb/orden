@@ -25,7 +25,7 @@ import {
   trayKeeper,
   writeOwed,
   written,
-} from './parting'
+} from './parting/src/api'
 import { warmDoors } from './surfaces.svelte'
 import type { Across } from './workspace/across'
 import { recovery } from './recovery.svelte'
@@ -40,10 +40,16 @@ import { theme } from './theme/src/api'
 import { pull } from './pull.svelte'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
-import { installStaged, ready, settledForInstaller } from './updater'
-import { updates } from './updates.svelte'
+import { installStaged, ready, settledForInstaller, updates } from './updates/src/api'
 import { startRunner } from './views/src/api'
 import { workspace } from './workspace.svelte'
+import { mayStop, providePort } from '@orden/contracts'
+
+if (!__EVEN_PLUGIN__) {
+  providePort('quit.ask', {
+    mayStop: async (why) => (await import('./quit-ports')).mayStop(why),
+  })
+}
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -328,7 +334,7 @@ async function guardClose() {
     })
     await own.listen(
       'orden://quit-ask',
-      () => void import('./quit-ports').then((one) => one.quitAsked()),
+      () => void (async () => (await import('./quit-ports')).quitAsked())(),
     )
     void startup
       .turn('right')
@@ -366,7 +372,7 @@ async function onClose(event: Closing, window: Closable) {
 
   event.preventDefault()
   if (going) return
-  if (!__EVEN_PLUGIN__ && runs && !(await (await import('./quit-ports')).mayStop('window'))) return
+  if (runs && !(await mayStop('window'))) return
   await go()
   await window.destroy()
 }
