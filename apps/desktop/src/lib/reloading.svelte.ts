@@ -1,5 +1,16 @@
 const PRESSES = ['pointerdown', 'pointerup', 'pointercancel']
 
+const UNLOADED = [
+  'dynamically imported module',
+  'Importing a module script failed',
+  'Unable to preload CSS',
+]
+
+function unloaded(error: unknown): boolean {
+  const said = error instanceof Error ? error.message : ''
+  return UNLOADED.some((one) => said.includes(one))
+}
+
 class Reloading {
   offered = $state(false)
 
@@ -16,9 +27,12 @@ class Reloading {
   }
 
   watch(settled: () => Promise<boolean>): () => void {
-    const missed = () => void this.missed(settled)
+    const ask = () => void this.missed(settled)
+    const missed = (event: Event) => {
+      if (unloaded((event as Event & { payload?: unknown }).payload)) ask()
+    }
     const back = () => {
-      if (this.unanswered) missed()
+      if (this.unanswered) ask()
     }
     const press = (event: Event) => {
       this.pressed = event.type === 'pointerdown'
