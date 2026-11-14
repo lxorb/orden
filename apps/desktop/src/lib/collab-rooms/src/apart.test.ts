@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { conflictPath } from '@orden/markdown/paths'
 import { apart } from './apart'
-import { record } from '../../sync/record.svelte'
+import { record } from '../../sync-mirror/src/api'
 
 const wrote: { command: string; path: string; content: string }[] = []
 

@@ -8,8 +8,8 @@ import {
   keepJson,
   stored,
   invoke,
-} from '../platform/src/api'
-import type { FileOp } from '../workspace/file-ops'
+} from '../../platform/src/api'
+import type { FileOp } from '../../workspace/file-ops'
 import type { Answer, Clash } from './conflicts'
 
 const STORAGE_KEY = 'orden:sync-log'
@@ -140,7 +140,7 @@ class Record {
     if (answer === 'theirs') {
       const { writeDown } = await import('./write-down')
       await writeDown(path, clash.theirs)
-      const { workspace } = await import('../workspace.svelte')
+      const { workspace } = await import('../../workspace.svelte')
       workspace.reload(path, clash.theirs)
     }
 
@@ -153,7 +153,7 @@ class Record {
       if (ours !== null) {
         const one = settleShortcuts(path, ours, clash.theirs, false)
         await writeDown(path, one, ours)
-        const { workspace } = await import('../workspace.svelte')
+        const { workspace } = await import('../../workspace.svelte')
         workspace.reload(path, one)
       }
     } else if (answer === 'both') {
@@ -193,7 +193,7 @@ class Record {
 export const record = new Record()
 
 async function placed(path: string): Promise<string | null> {
-  const { workspace } = await import('../workspace.svelte')
+  const { workspace } = await import('../../workspace.svelte')
 
   for (const space of workspace.spaces) {
     const relative = withinSpace(space.root, path)

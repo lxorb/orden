@@ -11,7 +11,7 @@ import {
 import { message } from '../../ui-kit/src/api'
 import { rooms } from '../../collab/src/api'
 import { samePath, forget, keepJson, Shared } from '../../platform/src/api'
-import { within } from '../../sync/mirror'
+import { within } from '../../sync-mirror/src/api'
 import { sync } from '../../sync.svelte'
 import { type Origin, originOf, trustsHtml } from '../../trust'
 import type { NoteDoc } from '../../workspace/documents.svelte'

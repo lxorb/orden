@@ -1,10 +1,10 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { inForeignCopy } from '@orden/sync-core'
-import { isUntouchedAgents } from '../agents-seed'
-import { api } from '../accounts/src/api'
-import { sha256, relativeTo, invoke } from '../platform/src/api'
-import { isUntouchedWelcome } from '../welcome'
-import type { Entry } from '../workspace.svelte'
+import { isUntouchedAgents } from '../../agents-seed'
+import { api } from '../../accounts/src/api'
+import { sha256, relativeTo, invoke } from '../../platform/src/api'
+import { isUntouchedWelcome } from '../../welcome'
+import type { Entry } from '../../workspace.svelte'
 import { behind, unixLines } from './ancestry'
 
 export interface Here {

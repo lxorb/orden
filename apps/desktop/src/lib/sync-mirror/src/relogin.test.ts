@@ -82,12 +82,12 @@ const world = vi.hoisted(() => {
   }
 })
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: world.invoke,
 }))
 
-const SERVICE = new URL('../../../../../services/sync/', import.meta.url).href
+const SERVICE = new URL('../../../../../../services/sync/', import.meta.url).href
 interface Env {
   db: { exec(sql: string): void }
   close(): void

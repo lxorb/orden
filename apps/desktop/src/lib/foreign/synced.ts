@@ -1,7 +1,7 @@
 import { inForeignCopy } from '@orden/sync-core'
 import { account, api, fromServer } from '../accounts/src/api'
 import { log, stored } from '../platform/src/api'
-import { type Mirror, savedRecord } from '../sync/mirror'
+import { type Mirror, savedRecord } from '../sync-mirror/src/api'
 import { STORAGE_KEY, sync } from '../sync.svelte'
 import type { Engine, ForeignCopies } from '../sync-client/src/api'
 

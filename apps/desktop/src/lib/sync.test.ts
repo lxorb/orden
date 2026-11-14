@@ -1553,7 +1553,7 @@ describe('a pass that fails partway through', () => {
     account.settled()
     await sync.pass()
 
-    const { record } = await import('./sync/record.svelte')
+    const { record } = await import('./sync-mirror/src/api')
     const real = fake.api.changes
     fake.api.changes = () => Promise.reject(new Error('the account is having a day'))
     try {

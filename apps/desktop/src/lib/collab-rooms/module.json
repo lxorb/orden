@@ -9,11 +9,7 @@
     "sync-core",
     "accounts",
     "platform",
-    "theme"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/sync/conflicts.ts",
-    "apps/desktop/src/lib/sync/record.svelte.ts",
-    "apps/desktop/src/lib/sync/write-down.ts"
+    "theme",
+    "sync-mirror"
   ]
 }

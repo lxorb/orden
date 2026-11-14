@@ -1,7 +1,5 @@
 import { conflictPath } from '@orden/markdown/paths'
-import { record } from '../../sync/record.svelte'
-import { type ConflictRule } from '../../sync/conflicts'
-import { writeDown } from '../../sync/write-down'
+import { type ConflictRule, record, writingDown } from '../../sync-mirror/src/api'
 
 export type Settling = 'offer' | 'take' | 'wait'
 
@@ -27,6 +25,7 @@ export async function apart(rule: ConflictRule, note: Apart, theirs: string): Pr
     return 'wait'
   }
 
+  const { writeDown } = await writingDown()
   await writeDown(conflictPath(note.path), theirs)
   return 'offer'
 }

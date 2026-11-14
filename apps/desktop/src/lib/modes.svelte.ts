@@ -36,7 +36,7 @@ import { viewport } from './ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
-import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
+import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync-mirror/src/api'
 import {
   type Compaction,
   DEFAULT_COMPACTION,

@@ -12,7 +12,7 @@ import {
   joinPath,
 } from '../../platform/src/api'
 import { isPagesTarget } from '@orden/markdown/links'
-import type { Mirror } from '../../sync/mirror'
+import type { Mirror } from '../../sync-mirror/src/api'
 import { type Carried, type Carrying, carryPapers, forgetLacking, paperFor } from './papers-carried'
 
 const EVERY = 3000

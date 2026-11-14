@@ -32,7 +32,10 @@ vi.mock('./platform/src/stored', async (importOriginal) => ({
   stored: () => world.record,
 }))
 
-vi.mock('./sync/meeting', () => ({ meeting: () => Promise.resolve(world.met) }))
+vi.mock('./sync-mirror/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sync-mirror/src/api')>()),
+  meetingAgain: () => Promise.resolve({ meeting: () => Promise.resolve(world.met) }),
+}))
 
 vi.mock('./ui-kit/src/prompt.svelte', () => ({
   prompt: {
