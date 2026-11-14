@@ -24,6 +24,7 @@ vi.mock('./terminal/src/online/open', () => ({
     return Promise.resolve(null)
   },
 }))
+vi.mock('./pass-sync/src/api', () => ({ openPass: () => undefined }))
 vi.mock('./apps/src/make', () => ({
   makeApplication: () => {
     online.made?.push('application')

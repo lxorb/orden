@@ -5,6 +5,8 @@ import { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
+vi.mock('../../src/lib/pass-sync/src/api', () => ({ openPass: () => undefined }))
+
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
