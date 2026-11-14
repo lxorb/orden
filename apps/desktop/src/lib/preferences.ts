@@ -9,7 +9,7 @@ import { appearancePane } from './settings/appearance-pane'
 import { exportPane } from './settings/export-pane'
 import { experimentalPane } from './settings/experimental-pane'
 import type { Field, Pane } from './settings/fields'
-import { changed } from './usage/tally'
+import { changed } from './usage/src/api'
 
 export type {
   Caption,

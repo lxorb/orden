@@ -1,5 +1,5 @@
-import { ApiError, request } from '../accounts/src/api'
-import { invoke } from '../platform/src/api'
+import { ApiError, request } from '../../accounts/src/api'
+import { invoke } from '../../platform/src/api'
 import { type CrashReport, scrubbedReport } from './scrub'
 
 export interface Sending {

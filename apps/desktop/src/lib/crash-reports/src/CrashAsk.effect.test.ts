@@ -13,7 +13,7 @@ const flushSync = () => svelte.flushSync()
 async function launch() {
   vi.resetModules()
   svelte = await import('svelte')
-  const { crashAskDue } = await import('../surfaces.svelte')
+  const { crashAskDue } = await import('../../surfaces.svelte')
   const { crashReports } = await import('./choice.svelte')
   const due = crashAskDue()
   if (due) {
@@ -69,7 +69,7 @@ describe('the crash report question', () => {
 
   test('turns usage data on only when ticked', async () => {
     await launch()
-    const { usageChoice } = await import('../usage/choice.svelte')
+    const { usageChoice } = await import('../../usage/src/api')
     usageBox()?.click()
     flushSync()
     goOn()
@@ -79,7 +79,7 @@ describe('the crash report question', () => {
 
   test('leaves usage data off when left unticked', async () => {
     await launch()
-    const { usageChoice } = await import('../usage/choice.svelte')
+    const { usageChoice } = await import('../../usage/src/api')
     goOn()
     expect(usageChoice.helping).toBe(false)
     expect(localStorage.getItem(HELPING)).toBeNull()
@@ -122,7 +122,7 @@ describe('the crash report question', () => {
     const first = await launch()
     box()?.click()
     flushSync()
-    const { overlays } = await import('../ui-kit/src/overlays')
+    const { overlays } = await import('../../ui-kit/src/overlays')
     expect(overlays.escape()).toBe(true)
     flushSync()
     expect(first.crashReports.asking).toBe(false)

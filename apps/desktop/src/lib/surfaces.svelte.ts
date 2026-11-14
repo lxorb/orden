@@ -234,7 +234,7 @@ export const crashAskDue = (): boolean =>
 
 export const crashAsk = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no crash reports in the Even Realities plugin')
-  return import('./crash-reports/CrashAsk.svelte')
+  return import('./crash-reports/src/api').then((one) => one.loadCrashAsk())
 })
 
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))

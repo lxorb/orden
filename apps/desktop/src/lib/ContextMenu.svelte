@@ -9,7 +9,7 @@
   import { trap } from './ui-controls/src/api'
   import { viewport } from './ui-kit/src/api'
   import { walked } from './walk'
-  import { ran } from './usage/tally'
+  import { ran } from './usage/src/api'
   import { dur, fade, fly, scale } from './platform/src/api'
 
   let element = $state<HTMLDivElement>()

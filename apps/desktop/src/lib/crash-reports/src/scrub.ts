@@ -1,5 +1,5 @@
-import { scrubbedLog } from '../feedback-log'
-import { tokensOut } from '../platform/src/api'
+import { scrubbedLog } from '../../feedback-log'
+import { tokensOut } from '../../platform/src/api'
 
 interface CrashFrame {
   module: string

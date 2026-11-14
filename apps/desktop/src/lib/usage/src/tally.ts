@@ -1,5 +1,5 @@
 import { dayOf, settingName, usageName, type UsageStartup, type UsageVia } from '@orden/sync-core'
-import { keepJson, stored } from '../platform/src/api'
+import { isRecord, keepJson, stored } from '../../platform/src/api'
 import { USAGE_DAYS, usageChoice } from './choice.svelte'
 
 export interface Tally {
@@ -14,9 +14,6 @@ export interface Tally {
 export type Tallies = Record<string, Tally>
 
 const SAVED_AFTER = 2000
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === 'object' && !Array.isArray(value)
 
 export function emptyTally(): Tally {
   return { commands: {}, features: {}, tabs: {}, settings: {}, onboarding: {}, startup: {} }
