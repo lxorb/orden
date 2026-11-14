@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { pages } from '../../web-tab/pages.svelte'
+import { webPages } from '@orden/contracts'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { TAB_KINDS } from '../../workspace/tab-kinds'
 import {
@@ -119,7 +119,7 @@ $effect.root(() => {
   $effect(() => {
     for (const tab of workspace.tabs) {
       if (tab.kind !== 'web') continue
-      const shot = pages.of(tab.id).shot
+      const shot = webPages().of(tab.id).shot
       if (shot) untrack(() => faces.photographed(tab, shot))
     }
   })

@@ -3,8 +3,9 @@ import type { PreviewPorts } from './previews'
 import type { SharingPorts } from './sharing'
 import type { SyncPorts } from './sync-client'
 import type { ThemePorts } from './theme'
+import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
 
-export type PortMap = PreviewPorts & SharingPorts & SyncPorts & ThemePorts
+export type PortMap = PreviewPorts & SharingPorts & SyncPorts & ThemePorts & WebPorts
 
 export type PortName = keyof PortMap
 
@@ -46,4 +47,8 @@ export function whenPortProvided<Name extends PortName>(
   const uses = waiting.get(name) ?? []
   uses.push(use as (port: unknown) => void)
   waiting.set(name, uses)
+}
+
+export function webPages(): WebPagesPort {
+  return (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
 }

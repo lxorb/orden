@@ -10,7 +10,6 @@
     "apps/desktop/src/lib/reading/render.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/chat-carry.ts",
     "apps/desktop/src/lib/workspace/drafts.ts",

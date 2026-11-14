@@ -12,7 +12,7 @@
   import { noteBehind } from '../../protect/src/api'
   import TabMark from '../../TabMark.svelte'
   import { theme } from '../../theme/src/api'
-  import { pages } from '../../web-tab/pages.svelte'
+  import { webPages } from '@orden/contracts'
   import { type Tab, workspace } from '../../workspace.svelte'
   import { TAB_KINDS } from '../../workspace/tab-kinds'
   import { drawInto, type Face } from './faces'
@@ -87,7 +87,7 @@
   })
 
   const latestShot = $derived(
-    how === 'photograph' ? (pages.of(tab.id).shot ?? face?.shot ?? null) : null,
+    how === 'photograph' ? (webPages().of(tab.id).shot ?? face?.shot ?? null) : null,
   )
   let shot = $state(untrack(() => latestShot))
   $effect.pre(() => {
@@ -150,7 +150,7 @@
   const whence = $derived.by(() => {
     if (tab.kind === 'web') {
       try {
-        return new URL(pages.of(tab.id).url ?? '').host
+        return new URL(webPages().of(tab.id).url ?? '').host
       } catch {
         return ''
       }

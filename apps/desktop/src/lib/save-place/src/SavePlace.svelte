@@ -9,7 +9,7 @@
   import { canWriteAt } from '../../sharing/src/api'
   import SpaceMark from '../../SpaceMark.svelte'
   import { trap } from '../../ui-controls/src/api'
-  import { pages } from '../../web-tab/pages.svelte'
+  import { webPages } from '@orden/contracts'
   import { type Tab, workspace } from '../../workspace.svelte'
   import { offeredName } from '../../workspace/drafts'
   import { isAgentsName } from '../../platform/src/api'
@@ -30,7 +30,7 @@
   const EDGE = 8
 
   // svelte-ignore state_referenced_locally
-  const title = tab.kind === 'web' ? pages.of(tab.id).title : undefined
+  const title = tab.kind === 'web' ? webPages().of(tab.id).title : undefined
   // svelte-ignore state_referenced_locally
   let name = $state(offeredName(tab.note, title))
 

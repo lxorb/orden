@@ -1,7 +1,7 @@
 import { mount, unmount } from 'svelte'
 import { overlays, viewport } from '../../ui-kit/src/api'
 import { dur, isDesktop, isMobile } from '../../platform/src/api'
-import { pages } from '../../web-tab/pages.svelte'
+import { webPages } from '@orden/contracts'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { swipeChoice } from './choice.svelte'
 import { chainOf, taken } from './edge'
@@ -60,7 +60,7 @@ function goes(tab: Tab): Record<Side, boolean> {
   const can = (side: Side) => {
     const way = wayOf(side)
     if (tab.kind === 'web') {
-      const page = pages.of(tab.id)
+      const page = webPages().of(tab.id)
       return way === 'back' ? page.back : page.forward
     }
     return way === 'back' ? tab.canGoBack : tab.canGoForward
@@ -367,7 +367,7 @@ export function pageSaid(said: Said): void {
   }
   const tab = workspace.tabs.find((one) => one.id === said.tab)
   if (tab?.kind !== 'web' || overlays.depth > 0) return
-  const zoom = pages.of(tab.id).zoom || 1
+  const zoom = webPages().of(tab.id).zoom || 1
   heard({
     tab,
     source: said.kind === 'touch' ? 'touch' : 'touchpad',

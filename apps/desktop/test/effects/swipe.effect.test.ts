@@ -1,3 +1,4 @@
+import { providePort, webPages } from '@orden/contracts'
 import { flushSync } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -28,10 +29,6 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../../src/lib/web-tab/pages.svelte', () => ({
-  pages: { of: () => ({ back: true, forward: false, zoom: 2 }) },
-}))
-
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const strip = this.classList.contains('head')
   const rect = { x: 0, y: 0, width: 800, height: strip ? 40 : 600 }
@@ -43,6 +40,9 @@ const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } =
 const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/src/gesture')
 const { swipeChoice } = await import('../../src/lib/back-swipe/src/choice.svelte')
 const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
+
+const PAGE = { url: null, title: '', back: true, forward: false, zoom: 2, shot: null }
+providePort('web.pages', { ...webPages(), of: () => PAGE })
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 
 let stop: () => void

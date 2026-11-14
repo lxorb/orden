@@ -31,6 +31,7 @@ import {
   unixLines,
   unwrapOr,
   userId,
+  webPages,
   whenPortProvided,
   type Result,
   type SpaceId,
@@ -236,5 +237,34 @@ describe('ports', () => {
     ).toBe(2)
     second()
     expect(portProvided('sync.clock')).toBe(false)
+  })
+
+  it('answers the web pages with blank ones and nothing held until the web tab binds them', async () => {
+    const none = webPages()
+    expect(none.cuts).toBe(false)
+    expect(none.of('t')).toEqual({
+      url: null,
+      title: '',
+      back: false,
+      forward: false,
+      zoom: 1,
+      shot: null,
+    })
+    expect(none.holdStill()).toBeNull()
+    await expect(none.letGo()).resolves.toBeUndefined()
+
+    const page = {
+      url: 'https://a.example/',
+      title: 'A',
+      back: true,
+      forward: false,
+      zoom: 2,
+      shot: null,
+    }
+    const unbind = providePort('web.pages', { ...none, cuts: true, of: () => page })
+    expect(webPages().cuts).toBe(true)
+    expect(webPages().of('t')).toBe(page)
+    unbind()
+    expect(webPages().of('t').url).toBeNull()
   })
 })
