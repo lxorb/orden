@@ -56,11 +56,7 @@
       return { words, colour: toneColour(toneOf(base, property, words)) }
     })
   })
-  const writable = $derived(
-    editor !== 'none' &&
-      editor !== 'button' &&
-      kit.writes(row),
-  )
+  const writable = $derived(editor !== 'none' && editor !== 'button' && kit.writes(row))
 
   function write(next: Value | null) {
     const change = changeOf(row, property, next)

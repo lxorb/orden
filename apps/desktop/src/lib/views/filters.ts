@@ -76,4 +76,3 @@ export function counted(
     return { error: error instanceof Error ? error.message : String(error) }
   }
 }
-

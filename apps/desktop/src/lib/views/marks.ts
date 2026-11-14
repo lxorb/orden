@@ -9,7 +9,6 @@ export const LAYOUT_MARKS: Record<Layout, string> = {
   form: 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z',
 }
 
-
 export const FILTER_MARK = 'M1.5 2.5h10l-4 4.6v4l-2-1.1V7.1z'
 
 export const GROUP_MARK = 'M1.5 2.2h10M1.5 4.6h6.5M1.5 8.3h10M1.5 10.7h6.5'

@@ -5,7 +5,6 @@ import { plain } from './inline'
 import { dayWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 
-
 export function valueText(value: Value, today: string): string {
   if (value === null) return ''
   if (typeof value === 'string') return value
@@ -55,4 +54,3 @@ export function toneColour(tone: string | undefined): string | null {
       return null
   }
 }
-
