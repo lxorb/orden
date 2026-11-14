@@ -250,7 +250,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     for section in ["sync", "account"]:
         page.evaluate("() => window.ordenApp.publish.close()")
         page.evaluate(f"() => window.ordenApp.settings.show('{section}')")
-        page.wait_for_selector(".orden-screen.sheet", timeout=15000)
+        page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
 

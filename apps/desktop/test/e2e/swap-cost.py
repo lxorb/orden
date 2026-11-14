@@ -53,7 +53,7 @@ def main() -> int:
         )
 
         page.evaluate("() => window.ordenApp.settings.show()")
-        page.wait_for_selector(".orden-screen.sheet", timeout=15000)
+        page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
         page.wait_for_timeout(500)
         run(
             page,
