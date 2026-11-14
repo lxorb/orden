@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import Spark from '../agents/ui/Spark.svelte'
+  import { Spark } from '../agents/src/api'
   import { closeOnBack } from '../ui-kit/src/api'
   import { fade, LAYER, scale } from '../platform/src/api'
   import { overlays } from '../ui-kit/src/api'

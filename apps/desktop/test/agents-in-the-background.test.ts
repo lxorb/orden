@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-const DIR = fileURLToPath(new URL('../src/lib/agents/workspace', import.meta.url))
+const DIR = fileURLToPath(new URL('../src/lib/agent-host', import.meta.url))
 const DOOR = 'reader-view.ts'
 
 const TAKES = [
@@ -45,7 +45,7 @@ describe('an agent at work, in the background', () => {
 
   test('a tab an agent shows of itself lands behind; only the reader’s press brings it forward', () => {
     const activity = readFileSync(
-      join(import.meta.dirname, '../src/lib/agents/ui/activity.svelte.ts'),
+      join(import.meta.dirname, '../src/lib/agents/src/ui/activity.svelte.ts'),
       'utf8',
     )
     expect(activity).toMatch(/void this\.show\(said\.tab, false\)/)

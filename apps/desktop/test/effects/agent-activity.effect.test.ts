@@ -1,9 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { agentMarks } from '../../src/lib/agent-marks.svelte'
-import AgentSession from '../../src/lib/agents/ui/AgentSession.svelte'
-import { FakeCrate } from '../../src/lib/agents/ui/fake'
-import { ended, start, started } from '../../src/lib/agents/ui/index'
+import AgentSession from '../../src/lib/agents/src/ui/AgentSession.svelte'
+import { FakeCrate } from '../../src/lib/agents/src/ui/fake'
+import { ended, start, started } from '../../src/lib/agents/src/ui/index'
 
 Element.prototype.animate = () =>
   ({

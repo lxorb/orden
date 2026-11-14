@@ -20,7 +20,7 @@ function files(dir: string, found: string[] = []): string[] {
 const FRESH: Record<string, string> = {
   'lib/web-tab/src/new-site.ts': 'a website made from an address',
   'lib/web-tab/src/convert.ts': 'an old `url:` note made into a shortcut',
-  'lib/agents/workspace/new-files.ts': 'a website an agent makes',
+  'lib/agent-host/new-files.ts': 'a website an agent makes',
   'lib/workspace/placing.ts': 'a tab kept as a new web note, settled with any already there',
   'lib/import/src/sidebar-plan.ts': "another browser's tabs, imported",
   'lib/web-tab/src/keep.ts': 'a file that no longer reads as a shortcut, written anew',

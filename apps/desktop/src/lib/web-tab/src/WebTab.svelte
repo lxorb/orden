@@ -16,7 +16,7 @@
   import { shortcuts } from '../../shortcuts.svelte'
   import { startup } from '../../startup.svelte'
   import { swiping } from '../../back-swipe/src/api'
-  import { findBar, passFill } from '../../surfaces.svelte'
+  import { findBar, passFill, takeoverBar } from '../../surfaces.svelte'
   import { invoke, isDesktop, openExternal } from '../../platform/src/api'
   import { takesWords, writes } from '../../typing-pointer'
   import type { Tab } from '../../workspace.svelte'
@@ -737,8 +737,8 @@
   </div>
 
   {#if takeover}
-    {#await import('../../agents/ui/TakeoverBar.svelte') then bar}
-      <bar.default id={takeover.id} reason={takeover.reason} />
+    {#await takeoverBar() then TakeoverBar}
+      <TakeoverBar id={takeover.id} reason={takeover.reason} />
     {/await}
   {/if}
 

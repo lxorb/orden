@@ -137,6 +137,12 @@ export const lockScreen = held(() =>
 
 export const findBar = held(() => import('./FindBar.svelte'))
 
+export const takeoverBar = held(() =>
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./agents/src/api').then((one) => one.loadTakeoverBar()),
+)
+
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
 export const phoneTabsBar = held(() =>

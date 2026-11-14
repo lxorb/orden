@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { AGENT_WINDOW_VERBS } from '../agents/verbs'
+import { AGENT_WINDOW_VERBS } from '../agents/src/verbs'
 import { callerOf, READER } from './caller'
 
 function memoryStorage(): Storage {
@@ -22,7 +22,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const reached: { name: string; agent: string | null }[] = []
 
-vi.mock('../agents/workspace', () => ({
+vi.mock('../agent-host/index', () => ({
   runAgentVerb: (name: string, _args: unknown, caller: { agent: { id: string } | null }) => {
     reached.push({ name, agent: caller.agent?.id ?? null })
     return Promise.resolve({ ok: true, status: 'ok', result: { ran: name } })

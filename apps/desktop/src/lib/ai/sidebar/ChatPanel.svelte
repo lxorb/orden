@@ -35,7 +35,9 @@
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
   const session = $derived(listing ? null : agentOpen.id)
-  const agentSession = door(() => import('../../agents/ui/AgentSession.svelte'))
+  const agentSession = door(() =>
+    import('../../agents/src/api').then((one) => one.loadAgentSession()),
+  )
   $effect(() => {
     if (agentOpen.id !== null) untrack(() => (chat.listing = false))
   })

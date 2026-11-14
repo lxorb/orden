@@ -16,7 +16,7 @@
 
   const { rail = false }: { rail?: boolean } = $props()
 
-  const agentRows = door(() => import('../../agents/ui/AgentRows.svelte'))
+  const agentRows = door(() => import('../../agents/src/api').then((one) => one.loadAgentRows()))
 
   let field = $state<HTMLInputElement>()
   let lit = $state(0)

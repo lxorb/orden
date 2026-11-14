@@ -5,7 +5,7 @@ import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Thread, Turn } from '../chat/types'
 
 const fake = vi.hoisted(() => ({
-  desk: null as unknown as ReturnType<typeof import('../../agents/docs/test-desk').deskWith>,
+  desk: null as unknown as ReturnType<typeof import('../../agents/src/docs/test-desk').deskWith>,
   documents: [] as NoteDoc[],
   removed: [] as string[],
   opened: [] as string[],
@@ -24,7 +24,7 @@ vi.mock('../../automation/acts', () => ({
     if (fake.desk.disk.has(now)) throw new Error(`${to} is taken`)
     fake.desk.disk.delete(was)
     fake.desk.disk.set(now, words)
-    const { tracksMoved } = await import('../../agents/docs/edit')
+    const { tracksMoved } = await import('../../agents/src/docs/edit')
     tracksMoved(was, now)
   },
 }))
@@ -65,7 +65,7 @@ vi.mock('../../workspace.svelte', () => ({
       _back?: string,
       putBack?: boolean,
     ) => {
-      const { tracksCame } = await import('../../agents/docs/edit')
+      const { tracksCame } = await import('../../agents/src/docs/edit')
       await tracksCame(path, (at) => Promise.resolve(fake.desk.disk.get(at) ?? null), putBack)
     },
     open: (path: string) => {
@@ -79,12 +79,12 @@ vi.mock('../../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../../agents/docs', async () => {
-  const edit = await import('../../agents/docs/edit')
-  const { located } = await import('../../agents/docs/desk')
+vi.mock('../../agents/src/api', async (original) => {
+  const edit = await import('../../agents/src/docs/edit')
+  const { located } = await import('../../agents/src/docs/desk')
   const at = (path: string) =>
     located(fake.desk.desk, { path: path.slice('/space/'.length), space: 's1' })
-  return {
+  const docs = {
     onTracks: edit.onTracks,
     trackedAgents: edit.trackedAgents,
     tracksOf: edit.tracksOf,
@@ -98,6 +98,10 @@ vi.mock('../../agents/docs', async () => {
     putBackIn: (agent: { id: string; name: string }, path: string, token: string) =>
       edit.putBackAt(fake.desk.desk, agent, at(path), token),
   }
+  return {
+    ...(await original<typeof import('../../agents/src/api')>()),
+    agentDocs: () => Promise.resolve(docs),
+  }
 })
 
 vi.mock('../../platform/src/on-disk', () => ({
@@ -110,7 +114,7 @@ vi.mock('../chat/sends', () => ({
   onSent: () => () => undefined,
 }))
 
-vi.mock('../../agents/docs/presence', () => ({ showAgent: () => undefined }))
+vi.mock('../../agents/src/docs/presence', () => ({ showAgent: () => undefined }))
 
 vi.mock('./summary', () => ({ summarized: () => Promise.resolve('summary') }))
 
@@ -122,8 +126,8 @@ vi.mock('../../workspace/write-file', () => ({
   },
 }))
 
-const { deskWith } = await import('../../agents/docs/test-desk')
-const { editNote } = await import('../../agents/docs/edit')
+const { deskWith } = await import('../../agents/src/docs/test-desk')
+const { editNote } = await import('../../agents/src/docs/edit')
 const { review } = await import('./review.svelte')
 const { busy } = await import('../../ui-kit/src/busy.svelte')
 
@@ -498,7 +502,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
       () => acts.trash('A.md'),
     ])
-    const { tracksRemoved } = await import('../../agents/docs/edit')
+    const { tracksRemoved } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
     expect(review.notes(thread)).toEqual([])
     expect(review.files(thread)).toHaveLength(1)
@@ -514,7 +518,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
       () => acts.trash('A.md'),
     ])
-    const { tracksRemoved, tracksCame } = await import('../../agents/docs/edit')
+    const { tracksRemoved, tracksCame } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
 
     review.keepAll(thread, review.files(thread))
@@ -530,7 +534,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.trash('A.md'),
       () => acts.make('A.md', 'new'),
     ])
-    const { tracksRemoved } = await import('../../agents/docs/edit')
+    const { tracksRemoved } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
     await review.undoAll(
       thread,
@@ -548,7 +552,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.trash('A.md'),
       () => acts.make('A.md', 'new'),
     ])
-    const { tracksRemoved } = await import('../../agents/docs/edit')
+    const { tracksRemoved } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
     await review.undoFiles(
       thread,
@@ -564,7 +568,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
       () => acts.trash('A.md'),
     ])
-    const { tracksRemoved, tracksCame } = await import('../../agents/docs/edit')
+    const { tracksRemoved, tracksCame } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
     fake.desk.disk.set('/space/A 2.md', 'EDITED')
     await tracksCame('/space/A 2.md', (at) => Promise.resolve(fake.desk.disk.get(at) ?? null))
@@ -578,7 +582,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
       () => acts.trash('A.md'),
     ])
-    const { tracksRemoved, tracksCame } = await import('../../agents/docs/edit')
+    const { tracksRemoved, tracksCame } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
     fake.desk.disk.set('/space/A 2.md', 'something else')
     const read = (at: string) => Promise.resolve(fake.desk.disk.get(at) ?? null)
@@ -593,7 +597,7 @@ describe('a rewind over a thread that did things in any order', () => {
       () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
       () => acts.trash('A.md'),
     ])
-    const { tracksRemoved } = await import('../../agents/docs/edit')
+    const { tracksRemoved } = await import('../../agents/src/docs/edit')
     tracksRemoved('/space/A.md')
     fake.desk.disk.set('/space/A.md', 'mine')
 

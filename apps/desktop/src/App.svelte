@@ -437,7 +437,7 @@
       import('./lib/ai/store.svelte'),
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync-client/test/fake-engine.svelte'),
-      import('./lib/agents/settings/fake'),
+      import('./lib/agents/src/api').then((one) => one.agentStandIn()),
       import('./lib/theme-looks/src/api'),
     ]).then(
       ([

@@ -40,8 +40,14 @@ export interface WebPagesPort {
   replayKey(key: PressedKey): void
 }
 
+export interface WebLendingPort {
+  adopt(tab: string, handing: () => Promise<void>): Promise<void>
+  unlend(tab: string): void
+}
+
 export interface WebPorts {
   readonly 'web.pages': WebPagesPort
+  readonly 'web.lending': WebLendingPort
 }
 
 const BLANK: WebPageSeen = {

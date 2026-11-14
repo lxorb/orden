@@ -19,7 +19,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const asked: { name: string; args: unknown; agent: unknown }[] = []
 
-vi.mock('../agents/workspace', () => ({
+vi.mock('../agent-host/index', () => ({
   runAgentVerb: (name: string, args: unknown, caller: { agent: unknown }) => {
     asked.push({ name, args, agent: caller.agent })
     return Promise.resolve(

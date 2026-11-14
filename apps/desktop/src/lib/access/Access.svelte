@@ -4,11 +4,7 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { account } from '../accounts/src/api'
-  import AgentDetail from '../agents/settings/AgentDetail.svelte'
-  import AgentMark from '../agents/settings/AgentMark.svelte'
-  import { tauriCrate } from '../agents/settings/crate'
-  import { AgentsPane } from '../agents/settings/pane.svelte'
-  import { reach } from '../agents/settings/reach.svelte'
+  import { AgentMark, AgentsPane, loadAgentDetail, reach, tauriCrate } from '../agents/src/api'
   import { closeOnBack } from '../ui-kit/src/api'
   import { connectors } from '../connectors.svelte'
   import { dur, slide } from '../platform/src/api'
@@ -131,7 +127,9 @@
   {#key agent?.id}
     <div class="page" in:arrive>
       {#if agent && pane}
-        <AgentDetail {pane} grant={agent} onback={() => (chosen = null)} />
+        {#await loadAgentDetail() then { default: AgentDetail }}
+          <AgentDetail {pane} grant={agent} onback={() => (chosen = null)} />
+        {/await}
       {:else}
         <h3>Access</h3>
         {#if anything}

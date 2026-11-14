@@ -33,7 +33,9 @@ export async function listenForAgents(): Promise<() => void> {
   if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
 
   const { listen } = await import('@tauri-apps/api/event')
-  const heard = door(() => import('./agents/ui/index').then(({ start }) => start()))
+  const heard = door(() =>
+    import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()),
+  )
 
   return listen<unknown>('orden://agent', ({ payload }) => {
     void heard().then((hear) => hear(payload))

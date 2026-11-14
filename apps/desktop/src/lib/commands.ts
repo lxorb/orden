@@ -101,7 +101,7 @@ import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { basesOn, chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'
-import { touchedBy } from './agents/docs/touched'
+import { agentDocs, agentsUi, touchedBy } from './agents/src/api'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/src/api'
@@ -364,7 +364,7 @@ function agentUndoRows(): Command[] {
   return touchedBy(path).map((agent) => ({
     id: `agent-undo:${agent.id}`,
     label: `Undo edits by ${agent.name}`,
-    run: () => void import('./agents/docs').then((docs) => docs.undoAgentIn(agent, path)),
+    run: () => void agentDocs().then((docs) => docs.undoAgentIn(agent, path)),
   }))
 }
 
@@ -385,7 +385,7 @@ function agentRows(): Command[] {
       label: 'Stop agents',
       hint: shortcuts.hint('agents.stop'),
       ownWindow: true,
-      run: () => void import('./agents/ui/index').then((ui) => ui.stopAgents()),
+      run: () => void agentsUi().then((ui) => ui.stopAgents()),
     },
   ]
 }

@@ -24,8 +24,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 START = """
 async () => {
-  const { FakeCrate } = await import('/src/lib/agents/ui/fake.ts')
-  const { start } = await import('/src/lib/agents/ui/index.ts')
+  const { FakeCrate } = await import('/src/lib/agents/src/ui/fake.ts')
+  const { start } = await import('/src/lib/agents/src/ui/index.ts')
   const fake = new FakeCrate()
   fake.listen(start(fake))
   window.__fake = fake
@@ -122,7 +122,7 @@ def drive(page: Page, scheme: str) -> None:
     page.click(f".orden-row.agent[data-agent='{AGENT}']")
     wait_for(page, "document.querySelector('section.agent .name')", "the agent's session")
     wait_for(page, "document.querySelector('.agent .question')", "the question")
-    page.evaluate("() => import('/src/lib/agents/ui/index.ts').then((ui) => ui.started().readLog())")
+    page.evaluate("() => import('/src/lib/agents/src/ui/index.ts').then((ui) => ui.started().readLog())")
     wait_for(page, "document.querySelectorAll('.agent .call').length >= 3", "the session")
 
     name = page.evaluate("() => document.querySelector('section.agent .name').textContent")

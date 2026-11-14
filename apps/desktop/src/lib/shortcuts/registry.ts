@@ -846,7 +846,10 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-Shift-k',
     mac: 'Mod-Ctrl-Alt-k',
     run: () => {
-      if (!__EVEN_PLUGIN__) void import('../agents/ui/index').then(({ stopAgents }) => stopAgents())
+      if (!__EVEN_PLUGIN__)
+        void import('../agents/src/api')
+          .then((one) => one.agentsUi())
+          .then(({ stopAgents }) => stopAgents())
     },
     desktop: true,
   },

@@ -231,7 +231,7 @@ describe('the ring a keyboard leaves', () => {
       'lib/Canvas.svelte',
       'lib/ContextMenu.svelte',
       'lib/Reading.svelte',
-      'lib/agents/ui/PairingBubble.svelte',
+      'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
@@ -292,8 +292,8 @@ describe('the badge in front of a name', () => {
       'lib/SpaceBadge.svelte',
       'lib/SpaceMenu.svelte',
       'lib/accounts/src/AccountBadge.svelte',
-      'lib/agents/settings/AgentMark.svelte',
-      'lib/agents/ui/PairingBubble.svelte',
+      'lib/agents/src/settings/AgentMark.svelte',
+      'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
       'lib/pass-ui/src/VaultMark.svelte',
       'lib/tab-strip/TabCard.svelte',
@@ -572,7 +572,7 @@ describe('the bubble a sentence appears in', () => {
     expect(own).toEqual([
       'lib/HintCard.svelte',
       'lib/NameField.svelte',
-      'lib/agents/ui/PairingBubble.svelte',
+      'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
       'lib/pass-ui/src/PassFill.svelte',
@@ -605,7 +605,7 @@ describe('the sentence behind a setting', () => {
       'lib/SyncPane.svelte',
       'lib/access/Access.svelte',
       'lib/accounts-ui/src/ProfileRows.svelte',
-      'lib/agents/settings/Words.svelte',
+      'lib/agents/src/settings/Words.svelte',
       'lib/ai/DoWithAiCard.svelte',
     ])
   })
