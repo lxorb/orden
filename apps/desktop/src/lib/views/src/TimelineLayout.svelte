@@ -2,7 +2,7 @@
   import { addDays, cellValue, type Row, rowId, type Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { localDate } from '../../platform/src/api'
-  import type { RowChange } from '../../rows/write'
+  import type { RowChange } from '../../rows/src/api'
   import { priorityTone } from '../../tasks-model/src/api'
   import { changeOf } from './columns'
   import { dateAt } from './days'

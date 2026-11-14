@@ -8,7 +8,7 @@ import {
   type View,
 } from '@orden/bases'
 import { untrack } from 'svelte'
-import { rows as store } from '../../rows/rows.svelte'
+import { rows as store } from '../../rows/src/api'
 import { afterQuiet } from '../../platform/src/api'
 import { toneColour } from './chips'
 import { columnsOf } from './columns'

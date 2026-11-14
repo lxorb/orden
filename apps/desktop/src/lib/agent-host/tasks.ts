@@ -29,7 +29,7 @@ import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } f
 import { notes } from './docs'
 
 async function rowsStore() {
-  const { rows } = await import('../rows/rows.svelte')
+  const { rows } = await import('../rows/src/api')
   for (let waited = 0; !rows.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }

@@ -36,7 +36,7 @@ export {
   shownName,
   TITLE_CHARS,
 } from '@orden/markdown/note-name'
-export { onDisk } from './on-disk'
+export { isVault, onDisk } from './on-disk'
 export { filledIn, meet, readSpaces, withOrWithout, without } from './records'
 export type { Folded, Folding } from './records'
 export {

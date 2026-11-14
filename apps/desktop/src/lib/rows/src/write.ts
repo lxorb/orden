@@ -1,5 +1,5 @@
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@orden/bases'
-import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@orden/bases'
+import { lineOfTask, listAsWritten, noteValues, tick, todayOf } from '@orden/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { type Property, keyCalled, readProperties } from '@orden/markdown/properties'
 import {
@@ -13,7 +13,7 @@ import {
 import { writeTask } from '@orden/markdown/task-edits'
 import { readTask } from '@orden/markdown/task-line'
 import { changeOf } from '@orden/scan/search/replace'
-import { type HoldsNotes, noteText, replaceInNotes } from '../workspace/note-text'
+import { type HoldsNotes, noteText, replaceInNotes } from '../../workspace/note-text'
 
 export interface RowChange {
   note?: Record<string, Value | null>
@@ -61,7 +61,7 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
 
   if (change.task && Object.keys(change.task).length) {
     if (!row.anchor) return null
-    const at = taskLine(after, row.anchor)
+    const at = lineOfTask(after, row.anchor)
     if (at === null) return null
 
     const { done, ...rest } = change.task
@@ -93,33 +93,6 @@ function ticked(text: string, from: number, done: boolean): string {
     )
   }
   return appliedEdits(text, tick(text, text.slice(0, from).split('\n').length - 1, today))
-}
-
-export function taskLine(
-  text: string,
-  anchor: { line: number; hash: string },
-): { from: number; to: number } | null {
-  const lines: { from: number; to: number }[] = []
-  for (let from = 0; from <= text.length;) {
-    const end = text.indexOf('\n', from)
-    const stop = end === -1 ? text.length : end
-    lines.push({ from, to: text[stop - 1] === '\r' ? stop - 1 : stop })
-    if (end === -1) break
-    from = end + 1
-  }
-
-  const names = (at: number) => {
-    const line = lines[at]
-    if (!line) return false
-    const fields = readTask(text.slice(line.from, line.to))
-    return fields !== null && taskHash(fields.text) === anchor.hash
-  }
-
-  for (let distance = 0; distance < lines.length; distance++) {
-    if (names(anchor.line - distance)) return lines[anchor.line - distance] ?? null
-    if (distance && names(anchor.line + distance)) return lines[anchor.line + distance] ?? null
-  }
-  return null
 }
 
 function asList(

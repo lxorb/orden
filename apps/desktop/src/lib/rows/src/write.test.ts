@@ -8,7 +8,7 @@ import { scanRows } from '@orden/bases/scan'
 const disk = new Map<string, string>()
 const sent: string[] = []
 
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     if (command === 'read_note') {
@@ -24,19 +24,20 @@ vi.mock('../platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../../link-index.svelte', () => ({
   links: { noteSaved: (path: string) => void sent.push(`saved ${path}`) },
 }))
 
-vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
 const share = vi.hoisted(() => ({ readOnly: false }))
-vi.mock('../sharing/src/api', () => ({ canWriteAt: () => !share.readOnly }))
+vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => !share.readOnly }))
 
-const { changed, taskLine, writeRow } = await import('./write')
-const { FileActions } = await import('../workspace/undo.svelte')
-const { NoteDoc } = await import('../workspace/documents.svelte')
-type HoldsNotes = import('../workspace/note-text').HoldsNotes
+const { changed, writeRow } = await import('./write')
+const { lineOfTask: taskLine } = await import('@orden/bases')
+const { FileActions } = await import('../../workspace/undo.svelte')
+const { NoteDoc } = await import('../../workspace/documents.svelte')
+type HoldsNotes = import('../../workspace/note-text').HoldsNotes
 
 const PATH = '/space/Plan.md'
 

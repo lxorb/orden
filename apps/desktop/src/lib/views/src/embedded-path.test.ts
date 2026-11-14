@@ -7,7 +7,7 @@ vi.mock('../../workspace.svelte', () => ({
     rootHolding: (path: string | null) => (path?.startsWith('/s/Work/') ? '/s/Work' : '/s/Home'),
   },
 }))
-vi.mock('../../rows/rows.svelte', () => ({ rows: { of: () => [] } }))
+vi.mock('../../rows/src/rows.svelte', () => ({ rows: { of: () => [] } }))
 vi.mock('../../link-index.svelte', () => ({
   links: {
     targetOf: (from: string | null, link: { target: string }) =>

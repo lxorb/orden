@@ -1,5 +1,5 @@
 import { groupName, type Row, type Value } from '@orden/bases'
-import type { RowChange } from '../../rows/write'
+import type { RowChange } from '../../rows/src/api'
 import { bare, isNoteProperty } from './columns'
 
 export interface Drop {

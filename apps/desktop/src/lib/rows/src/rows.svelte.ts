@@ -1,13 +1,12 @@
 import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
-import { breathe } from '../breathe'
-import { links } from '../link-index.svelte'
+import { breathe } from '../../breathe'
+import { links } from '../../link-index.svelte'
 import type { SpaceLinks } from '@orden/scan/note'
-import { insideSpace, invoke } from '../platform/src/api'
-import { workspace } from '../workspace.svelte'
-import { readText } from '../workspace/in-turn'
+import { insideSpace, invoke, isVault } from '../../platform/src/api'
+import { workspace } from '../../workspace.svelte'
+import { readText } from '../../workspace/in-turn'
 import { type RowsListener, RowsStore } from './store'
-import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
 
 const store = new RowsStore({
@@ -36,8 +35,6 @@ $effect.root(() => {
     untrack(() => store.spacesAre(spaces))
   })
 })
-
-if (!__EVEN_PLUGIN__) void import('../views/src/api').then((one) => one.startRunner())
 
 export const rows = {
   of: (space?: string): readonly Row[] => store.of(space),

@@ -41,6 +41,7 @@ import {
   samePath,
   within,
   invoke,
+  isVault,
   log,
 } from './platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
@@ -323,8 +324,8 @@ class Links {
     }
 
     mark('scan_links asked')
-    void import('./rows/vault').then(async ({ isVault }) => {
-      if ((await isVault(root)) && this.scans === mine) {
+    void isVault(root).then((vault) => {
+      if (vault && this.scans === mine) {
         this.vault = true
         this.changed()
       }

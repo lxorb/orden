@@ -1,6 +1,6 @@
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { menu } from '../../menu.svelte'
-import { rows } from '../../rows/rows.svelte'
+import { rows } from '../../rows/src/api'
 import {
   folderOf,
   insideSpace,

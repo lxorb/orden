@@ -455,7 +455,7 @@
             Promise.all([
               import('./lib/tasks-model/src/api'),
               import('./lib/views/src/api').then((one) => one.baseOpening()),
-              import('./lib/rows/rows.svelte'),
+              import('./lib/rows/src/api'),
               import('./lib/workspace/write-file'),
             ]).then(([{ todos }, { openTodos, openBaseFile }, { rows }, { writeFile }]) => ({
               todos,

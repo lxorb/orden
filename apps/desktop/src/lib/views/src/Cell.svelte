@@ -20,7 +20,7 @@
   import { toneColour } from './chips'
   import { openExternal } from '../../platform/src/api'
   import type { Kit } from './kit'
-  import type { ListChange } from '../../rows/write'
+  import type { ListChange } from '../../rows/src/api'
   import { isDateValue } from './values'
 
   const {

@@ -510,7 +510,7 @@ vi.mock('../tasks-model/src/api', async (actual) => {
   return { ...real, todos: store }
 })
 
-vi.mock('../rows/rows.svelte', async () => {
+vi.mock('../rows/src/rows.svelte', async () => {
   const { rowsOfText } = await import('@orden/bases/rows')
   const spaces = [work, home, secret]
   return {

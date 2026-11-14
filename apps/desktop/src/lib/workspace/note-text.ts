@@ -113,8 +113,8 @@ async function toggled(
   const starts = lineStarts(before)
   let line = asked
   if (hash !== undefined) {
-    const { taskLine } = await import('../rows/write')
-    const found = taskLine(before, { line, hash })
+    const { lineOfTask } = await import('@orden/bases')
+    const found = lineOfTask(before, { line, hash })
     if (!found) return false
     line = starts.lastIndexOf(found.from)
   }
