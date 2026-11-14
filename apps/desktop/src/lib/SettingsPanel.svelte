@@ -28,7 +28,6 @@
   import Select from './Select.svelte'
   import { glassesOn, settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
-  import './views/task-keys'
   import { runnable } from './shortcuts/registry'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { PRESETS, presetById } from './shortcuts/presets'

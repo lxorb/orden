@@ -17,11 +17,7 @@
   import type { Kit } from './kit'
   import { switched } from './layout'
   import type { Builder } from './live.svelte'
-  import { ADD_MARK, DISPLAY_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
-  import DisplayBuilder from './DisplayBuilder.svelte'
-  import { changedFrom } from './display'
-  import Sheet from '../Sheet.svelte'
-  import { shippedBase } from './source'
+  import { ADD_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
   import FormulaBuilder from './FormulaBuilder.svelte'
   import NameBuilder from './NameBuilder.svelte'
   import OptionsBuilder from './OptionsBuilder.svelte'
@@ -65,15 +61,8 @@
     { id: 'group', mark: GROUP_MARK, label: 'Group' },
   ] as const
 
-  let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
-  const tasky = $derived(kit.spec.builtin !== undefined || view?.orden.rows === 'tasks')
+  let open = $state<Tool | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
   const tabbed = $derived(kit.spec.builtin === undefined)
-  const displayChanged = $derived.by(() => {
-    if (!view) return 0
-    const original =
-      kit.spec.builtin === undefined ? null : (shippedBase(kit.spec).views[0] ?? null)
-    return changedFrom(view, original).total
-  })
   const notes = $derived((view?.orden.rows ?? 'notes') === 'notes')
 
   const BUILDERS: Record<Builder['kind'], string> = {
@@ -122,11 +111,6 @@
   let renaming = $state(false)
 
   const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
-
-  function reset() {
-    open = null
-    kit.change(() => shippedBase(kit.spec))
-  }
 
   function pick(next: Layout) {
     kit.change((one, at) => switched(one, at, next, live.rows))
@@ -450,40 +434,12 @@
     </div>
   {/each}
 {/snippet}
-{#snippet display()}
-  <div class="tool">
-    <button
-      type="button"
-      class="orden-glyph display-button"
-      class:set={displayChanged > 0}
-      class:open={open === 'display'}
-      data-opens-popover
-      title="Display"
-      aria-label={displayChanged ? `Display: ${displayChanged}` : 'Display'}
-      aria-expanded={open === 'display'}
-      onclick={() => toggle('display')}
-    >
-      <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
-      {#if !kit.compact}<span class="display-word">Display</span>{/if}
-      {#if displayChanged}<span class="display-count">{displayChanged}</span>{/if}
-    </button>
-    {#if viewport.device === 'phone'}
-      <Sheet open={open === 'display'} title="Display" onclose={() => (open = null)}>
-        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
-      </Sheet>
-    {:else}
-      <Popover open={open === 'display'} label="Display" onclose={() => (open = null)}>
-        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
-      </Popover>
-    {/if}
-  </div>
-{/snippet}
 {#snippet plusButton()}
   {#if kit.adds}
     <button
       type="button"
       class="orden-glyph"
-      title={notes ? 'New note' : 'Add task'}
+      title="New note"
       aria-label={notes ? 'New note' : 'Add task'}
       onclick={onadd}
       oncontextmenu={plusMenu}
@@ -581,7 +537,6 @@
       {@render lock()}
       <span class="spring"></span>
       {#if kit.writable}{@render tools(['filter', 'sort'])}{/if}
-      {#if tasky && kit.writable}{@render display()}{/if}
       {@render searchField()}
       {#if kit.writable}<div class="tool">
           <button
@@ -615,7 +570,7 @@
           </Popover>
         </div>{/if}
       <div class="tool">{@render layer(false)}</div>
-      {#if !kit.compact || notes || tasky}{@render plusButton()}{/if}
+      {#if !kit.compact || notes}{@render plusButton()}{/if}
     </div>
     {#if active.filter || active.sort}
       <div class="chips">
@@ -659,7 +614,7 @@
 
     {@render lock()}
 
-    {#if !tasky && kit.writable}
+    {#if kit.writable}
       <div class="orden-segmented layouts" role="tablist" aria-label="Layout" use:segmented>
         {#each offered as one (one)}
           <button
@@ -679,11 +634,9 @@
 
     <span class="spring"></span>
 
-    {#if !tasky && kit.writable}{@render tools(['filter', 'sort', 'group'])}{/if}
+    {#if kit.writable}{@render tools(['filter', 'sort', 'group'])}{/if}
 
     {@render searchField()}
-
-    {#if tasky && kit.writable}{@render display()}{/if}
 
     {@render plusButton()}
   </div>

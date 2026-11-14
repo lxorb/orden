@@ -7,7 +7,7 @@ export interface Carry {
   place: (moving: string, target: string, after: boolean) => void
 }
 
-export function landsAfter(at: number, start: number, size: number): boolean {
+function landsAfter(at: number, start: number, size: number): boolean {
   return at > start + size / 2
 }
 

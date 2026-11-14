@@ -2,7 +2,6 @@ import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { leftGone, leftMoved } from '../left-spaces'
 import { samePath } from '../space-paths'
-import { forgetSpaceViews } from '../views/kept-views'
 import { invoke } from '../tauri'
 import { windows } from '../windows'
 import type { Space } from '../workspace.svelte'
@@ -58,7 +57,6 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   ws.naming = null
 
   const done = { moved: false }
-  const { followSpaceName } = await import('../views/space-follow')
   await ws.holdingUnder(space.root, async () => {
     const renamed = await invoke<{ name: string; path: string }>('rename_space', {
       from: space.root,
@@ -68,15 +66,8 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
     if (!renamed) return
 
     const from = space.root
-    const was = space.name
     space.name = renamed.name
     space.root = renamed.path
-    followSpaceName(
-      was,
-      renamed.name,
-      ws.tabs,
-      ws.spaces.filter((one) => one !== space),
-    )
     leftMoved(from, renamed.path)
     await ws.fileMoved(from, renamed.path, 'space')
     done.moved = true
@@ -126,11 +117,6 @@ async function spaceGone(ws: HoldsSpaces, space: Space) {
   const id = space.id
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
-  if (!ws.spaces.some((entry) => entry.name === space.name)) {
-    forgetSpaceViews(space.name)
-    const { forgetSpaceTabs } = await import('../views/space-follow')
-    forgetSpaceTabs(space.name, ws.tabs)
-  }
   const fetched =
     tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length
       ? (await import('./sets.svelte')).sets

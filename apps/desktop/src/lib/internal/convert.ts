@@ -245,17 +245,7 @@ async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<bool
 
       const root = await mountKept(folder, name, from)
       await crate('delete_note', { path: marker })
-      if (name !== space.name) {
-        const was = space.name
-        space.name = name
-        const { followSpaceName } = await import('../views/space-follow')
-        followSpaceName(
-          was,
-          name,
-          ws.tabs,
-          ws.spaces.filter((one) => one !== space),
-        )
-      }
+      if (name !== space.name) space.name = name
       space.root = root
       await ws.fileMoved(from, root, 'space')
       await crate('rehome_snapshots', { from, to: root }).catch(() => 0)

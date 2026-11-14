@@ -5,9 +5,7 @@
   import { valueText } from './chips'
   import { displayName } from './columns'
   import { draggable, droppable } from './drag.svelte'
-  import { plain } from './inline'
   import { notePath, type Kit } from './kit'
-  import TaskBox from './TaskBox.svelte'
   import { isLinkValue } from './values'
   import { groupLabel, noteNames, propertyName } from './words'
 
@@ -68,7 +66,7 @@
     >
       {#each group.rows as row (`${row.space}:${rowId(row)}`)}
         {@const cover = coverOf(row)}
-        {@const title = row.task ? plain(row.task.text) : row.file.basename}
+        {@const title = row.file.basename}
         {@const tone = live.colourOf(row)}
         <div
           class="card"
@@ -98,12 +96,6 @@
             </div>
           {/if}
           <div class="title">
-            {#if row.task}<TaskBox
-                task={row.task}
-                label={title}
-                ontick={() => kit.tick(row)}
-                disabled={!kit.writes(row)}
-              />{/if}
             <span>{title}</span>
           </div>
           {#each shown as one (one)}

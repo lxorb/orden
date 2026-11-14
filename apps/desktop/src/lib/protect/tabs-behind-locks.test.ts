@@ -24,7 +24,6 @@ describe('a tab shown over a protected note', () => {
     })
     expect(noteBehind({ kind: 'note', path: '/space/Diary.md' })).toBe('/space/Diary.md')
     expect(noteBehind(view({ builtin: 'todos', space: 'Space' }))).toBeNull()
-    expect(noteBehind(view({ builtin: 'label', space: 'Space', tag: 'x' }))).toBeNull()
   })
 
   test('is locked by the note behind it, not by its own path alone', () => {

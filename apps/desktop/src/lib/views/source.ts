@@ -1,69 +1,12 @@
-import {
-  type Base,
-  builtinView,
-  readBase,
-  type Row,
-  todayAs,
-  whenAs,
-  writeBase,
-} from '@orden/bases'
+import { readBase, type Row, writeBase } from '@orden/bases'
 import { CodeBlocks, OPENS } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { links } from '../link-index.svelte'
-import { modes, watchUndated } from '../modes.svelte'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
-import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { EVERY_SPACE, keepTodosView, renamedTo, takeOverTodosView, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
-import { followSpaceTabs, unscoped } from './space-follow'
-import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
-
-function today(): Base {
-  return builtinView('today', { undated: modes.undatedInToday })
-}
-
-export function shippedBase(spec: ViewSpec): Base {
-  if (spec.builtin === 'todos')
-    return builtinView('todos', {
-      ...(spec.space === undefined ? {} : { space: spec.space }),
-      undated: modes.undatedInToday,
-    })
-  return builtinBase(asShipped(spec))
-}
-
-export function builtinBase(spec: ViewSpec): Base {
-  return whenAs(madeBase(spec), modes.undatedInToday)
-}
-
-function madeBase(spec: ViewSpec): Base {
-  if (spec.yaml !== undefined) {
-    const base = readBase(spec.yaml)
-    return spec.builtin === 'today' ? todayAs(base, modes.undatedInToday) : base
-  }
-  switch (spec.builtin) {
-    case 'todos': {
-      const kept = spec.space === undefined ? everyTodosView() : todosView(spec.space)
-      return kept === undefined ? shippedBase(spec) : readBase(kept)
-    }
-    case 'label':
-      return builtinView('label', {
-        tag: spec.tag ?? '',
-        ...(spec.space === undefined ? {} : { space: spec.space }),
-      })
-    case 'inbox':
-      return builtinView('inbox', { inboxes: rows.inboxes() })
-    case 'upcoming':
-    case 'logbook':
-      return builtinView(spec.builtin)
-    case 'today':
-    case undefined:
-      return today()
-  }
-  return today()
-}
 
 function spaceOf(path: string): { name: string; root: string } | null {
   return workspace.spaces.find((one) => within(one.root, path, one.root) !== null) ?? null
@@ -106,82 +49,6 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
       before = after
     },
     watch: watchFile(path),
-  }
-}
-
-function keepChange(spec: ViewSpec, yaml: string): void {
-  if (spec.builtin === 'todos') {
-    const shipped = writeBase(whenAs(shippedBase(spec), false))
-    keepTodosView(spec.space ?? EVERY_SPACE, yaml === shipped ? undefined : yaml)
-  }
-}
-
-function everyTodosView(): string | undefined {
-  const kept = todosView(EVERY_SPACE)
-  if (kept !== undefined) return kept
-  const space = workspace.activeSpace?.name
-  const was = space === undefined ? undefined : todosView(space)
-  if (space === undefined || was === undefined) return undefined
-  const now = unscoped(was, space)
-  takeOverTodosView(now)
-  return now
-}
-
-function everySpace(tab: Tab): void {
-  const spec = readSpec(tab.doc)
-  if (spec?.builtin !== 'todos' || spec.space === undefined) return
-  tab.note.replace(writeSpec({ builtin: 'todos' }), false)
-  workspace.scheduleSession()
-}
-
-function followLost(tab: Tab): void {
-  const name = readSpec(tab.doc)?.space
-  const spaces = workspace.spaces
-  if (name === undefined || !spaces.length || spaces.some((one) => one.name === name)) return
-  const now = renamedTo(name)
-  if (now === undefined || !spaces.some((one) => one.name === now))
-    throw new Error(`no space ${name}`)
-  followSpaceTabs(name, now, workspace.tabs)
-  workspace.scheduleSession()
-}
-
-export function tabSource(tab: Tab): Source {
-  const spec = () => readSpec(tab.doc) ?? {}
-  return {
-    scope: null,
-    load: () => {
-      try {
-        everySpace(tab)
-        followLost(tab)
-        return Promise.resolve(builtinBase(spec()))
-      } catch (error) {
-        return Promise.reject(error instanceof Error ? error : new Error(String(error)))
-      }
-    },
-    save(next) {
-      const now = spec()
-      const yaml = writeBase(whenAs(next, false))
-      tab.note.replace(writeSpec({ ...now, yaml }), false)
-      keepChange(now, yaml)
-      workspace.scheduleSession()
-      return Promise.resolve()
-    },
-    watch: watchUndated,
-  }
-}
-
-export function panelSource(spec: ViewSpec): Source {
-  let now: ViewSpec = spec
-  return {
-    scope: null,
-    load: () => Promise.resolve(builtinBase(now)),
-    save(next) {
-      const yaml = writeBase(whenAs(next, false))
-      now = { ...asShipped(now), yaml }
-      keepChange(now, yaml)
-      return Promise.resolve()
-    },
-    watch: watchUndated,
   }
 }
 

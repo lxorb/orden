@@ -54,7 +54,7 @@ describe('Todos, asked for', () => {
   })
 
   test('brings forward the tab showing it, in whichever pane it is', async () => {
-    state.tabs = [view('a', 'left', { builtin: 'today' }), view('b', 'right', { builtin: 'todos' })]
+    state.tabs = [view('a', 'left', {}), view('b', 'right', { builtin: 'todos' })]
     await showTodos()
     expect(state.activated).toEqual([['right', 'b']])
     expect(state.opened).toEqual([])

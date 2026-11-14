@@ -123,33 +123,12 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
   return out
 }
 
-export function toggled(set: ReadonlySet<string>, key: string): Set<string> {
-  const next = new Set(set)
-  if (next.has(key)) next.delete(key)
-  else next.add(key)
-  return next
-}
-
-export function withPicked(
-  picked: ReadonlySet<string>,
-  order: readonly string[],
-  id: string,
-  from: string | null,
-): ReadonlySet<string> {
-  const at = order.indexOf(id)
-  const start = from === null ? -1 : order.indexOf(from)
-  if (start === -1 || at === -1) return toggled(picked, id)
-  return new Set([...picked, ...order.slice(Math.min(start, at), Math.max(start, at) + 1)])
-}
-
 export function laneKeys(groups: readonly Group[]): Group['key'][] {
   const seen = new Map<string, Group['key']>()
   for (const group of groups)
     for (const one of group.sub ?? []) seen.set(groupName(one.key), one.key)
   return [...seen.values()]
 }
-
-export const EMPTY: ReadonlySet<string> = new Set()
 
 export function withEveryDay(groups: readonly Group[], from: string, through: string): Group[] {
   const days = new Map<string, Group>()

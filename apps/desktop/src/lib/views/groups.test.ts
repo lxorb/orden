@@ -38,15 +38,3 @@ describe('a column renamed, merged or deleted', () => {
     expect(orden?.groups).toEqual(['b', 'c'])
   })
 })
-
-describe('a card of a list carried within its member', () => {
-  test('writes nothing, and keeps the list as it was', async () => {
-    const { dropInto } = await import('./drop')
-    const { noteRow } = await import('./fixture')
-    const row = noteRow('n.md', { tags: ['a', 'b'] })
-    expect(dropInto('note.tags', 'a', row, '2026-10-19', 'a')).toBeNull()
-    expect(dropInto('note.tags', 'c', row, '2026-10-19', 'a')).toEqual({
-      change: { note: { tags: ['b', 'c'] } },
-    })
-  })
-})

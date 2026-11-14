@@ -52,7 +52,7 @@ const TASK_EDITORS: Partial<Record<string, Editor>> = Object.fromEntries([
   ['assignee', 'text'],
 ] satisfies [string, Editor][])
 
-export function defaultColumns(kinds: RowKinds, rows: readonly Row[]): string[] {
+function defaultColumns(kinds: RowKinds, rows: readonly Row[]): string[] {
   if (kinds === 'tasks') return ['task.text', 'file.basename', 'task.due', 'task.priority']
 
   const seen: string[] = []

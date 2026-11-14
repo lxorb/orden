@@ -89,7 +89,7 @@ export function setManualOrder(base: Base, at: number, group: string, ids: strin
   })
 }
 
-export function mergedOrder(stored: readonly string[], shown: readonly string[]): string[] {
+function mergedOrder(stored: readonly string[], shown: readonly string[]): string[] {
   const shownSet = new Set(shown)
   const storedSet = new Set(stored)
   const places = stored.filter((id) => shownSet.has(id)).length

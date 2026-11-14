@@ -3,24 +3,17 @@
   import { keyElsewhere } from '../layer-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { arrive } from '../slide'
-  import { viewport } from '../viewport.svelte'
   import { workspace } from '../workspace.svelte'
   import AddRow from './AddRow.svelte'
-  import AgendaLayout from './AgendaLayout.svelte'
   import BoardLayout from './BoardLayout.svelte'
-  import CalendarLayout from './CalendarLayout.svelte'
   import CardsLayout from './CardsLayout.svelte'
   import ChartLayout from './ChartLayout.svelte'
   import { ghostOwner } from './drag.svelte'
   import DragGhost from './DragGhost.svelte'
   import type { Kit } from './kit'
   import FormLayout from './FormLayout.svelte'
-  import ListLayout from './ListLayout.svelte'
-  import { openTodos } from './open'
-  import PhoneRows from './PhoneRows.svelte'
   import TableLayout from './TableLayout.svelte'
   import TimelineLayout from './TimelineLayout.svelte'
-  import UpcomingLayout from './UpcomingLayout.svelte'
   import ViewHead from './ViewHead.svelte'
   import { layoutOf } from './words'
 
@@ -28,16 +21,12 @@
 
   const live = $derived(kit.live)
   const layout = $derived(layoutOf(live.view?.type ?? 'table'))
-  const phone = $derived(viewport.device === 'phone')
 
   let adding = $state(false)
   let asked = $state(0)
 
   const ghost = ghostOwner()
   onDestroy(ghost.release)
-
-  let going = false
-  let goingTimer: ReturnType<typeof setTimeout> | undefined
 
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     const target = event.target
@@ -58,23 +47,7 @@
       return
     }
     if (event.ctrlKey || event.metaKey || event.altKey) return
-    if (going) {
-      going = false
-      clearTimeout(goingTimer)
-      if (event.key === 't' || event.key === 'u' || event.key === 'i') {
-        event.preventDefault()
-        openTodos()
-      }
-      return
-    }
-    if (event.key === 'g') {
-      going = true
-      goingTimer = setTimeout(() => (going = false), 1200)
-    } else if (
-      shortcuts.pressed('tasks.quick-add', event) &&
-      layout !== 'list' &&
-      !event.defaultPrevented
-    ) {
+    if (shortcuts.pressed('tasks.quick-add', event) && !event.defaultPrevented) {
       event.preventDefault()
       add()
     }
@@ -109,21 +82,15 @@
     {#key layout}
       <div
         class="body"
-        class:fills={layout === 'kanban' || layout === 'calendar' || layout === 'timeline'}
+        class:fills={layout === 'kanban' || layout === 'timeline'}
         in:arrive
       >
-        {#if (layout === 'list' || layout === 'kanban') && kit.spec.builtin === 'upcoming'}
-          <UpcomingLayout {kit} board={layout === 'kanban'} />
-        {:else if layout === 'list' || (layout === 'timeline' && phone)}
-          <ListLayout {kit} />
-        {:else if layout === 'table'}
-          {#if phone}<PhoneRows {kit} />{:else}<TableLayout {kit} />{/if}
+        {#if layout === 'table'}
+          <TableLayout {kit} />
         {:else if layout === 'cards'}
           <CardsLayout {kit} />
         {:else if layout === 'kanban'}
           <BoardLayout {kit} adding={boardAdding} />
-        {:else if layout === 'calendar'}
-          {#if phone}<AgendaLayout {kit} />{:else}<CalendarLayout {kit} />{/if}
         {:else if layout === 'timeline'}
           <TimelineLayout {kit} />
         {:else if layout === 'form'}

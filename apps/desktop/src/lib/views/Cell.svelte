@@ -21,11 +21,7 @@
   import { openExternal } from '../tauri'
   import type { Kit } from './kit'
   import type { ListChange } from '../rows/write'
-  import TaskBox from './TaskBox.svelte'
-  import { dayIn, isDateValue } from './values'
-  import Words from './Words.svelte'
-  import { plain } from './inline'
-  import { priorityName, statusName } from './words'
+  import { isDateValue } from './values'
 
   const {
     row,
@@ -63,11 +59,8 @@
   const writable = $derived(
     editor !== 'none' &&
       editor !== 'button' &&
-      (row.kind === 'task' || !property.startsWith('task.')) &&
       kit.writes(row),
   )
-
-  const stillEditing = () => editing
 
   function write(next: Value | null) {
     const change = changeOf(row, property, next)
@@ -143,39 +136,7 @@
   }
 </script>
 
-{#if property === 'task.text' && row.task}
-  <span class="task">
-    <TaskBox
-      task={row.task}
-      label={plain(row.task.text)}
-      ontick={() => kit.tick(row)}
-      disabled={!kit.writes(row)}
-    />
-    {#if editing && writable}
-      <input
-        class="edit"
-        value={row.task.text}
-        aria-label="Task"
-        use:focusIt
-        onkeydown={(event) => {
-          stopOnKeys(event)
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            write(event.currentTarget.value)
-            onstop?.()
-          }
-        }}
-        onblur={(event) => {
-          if (!stillEditing()) return
-          if (event.currentTarget.value !== row.task?.text) write(event.currentTarget.value)
-          onstop?.()
-        }}
-      />
-    {:else}
-      <span class="words"><Words words={row.task.text} /></span>
-    {/if}
-  </span>
-{:else if editing && writable && editor !== 'checkbox'}
+{#if editing && writable && editor !== 'checkbox'}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <span
     class="editing"
@@ -187,38 +148,7 @@
         onstop?.()
     }}
   >
-    {#if editor === 'priority' && row.task}
-      <select
-        class="edit"
-        aria-label="Priority"
-        value={String(row.task.priority)}
-        use:focusIt
-        onchange={(event) => write(Number(event.currentTarget.value))}
-      >
-        {#each [1, 2, 3, 4] as one (one)}<option value={String(one)}>{priorityName(one)}</option
-          >{/each}
-      </select>
-    {:else if editor === 'status' && row.task}
-      <select
-        class="edit"
-        aria-label="Status"
-        value={row.task.status}
-        use:focusIt
-        onchange={(event) => kit.drop(row, event.currentTarget.value, 'task.status')}
-      >
-        {#each [' ', '/', 'x', '-'] as one (one)}<option value={one}>{statusName(one)}</option
-          >{/each}
-      </select>
-    {:else if editor === 'date' && property.startsWith('task.')}
-      <input
-        class="edit"
-        type="date"
-        aria-label="Date"
-        value={dayIn(value) ?? ''}
-        use:focusIt
-        onchange={(event) => write(event.currentTarget.value || null)}
-      />
-    {:else if editor === 'time'}
+    {#if editor === 'time'}
       <input
         class="edit"
         type="time"
@@ -226,18 +156,6 @@
         value={typeof value === 'string' ? value : ''}
         use:focusIt
         onchange={(event) => write(event.currentTarget.value || null)}
-      />
-    {:else if editor === 'duration'}
-      <input
-        class="edit"
-        type="number"
-        min="0"
-        step="5"
-        aria-label="Duration"
-        value={row.task?.duration ?? ''}
-        use:focusIt
-        onchange={(event) =>
-          write(event.currentTarget.value ? Number(event.currentTarget.value) : null)}
       />
     {:else}
       <PropertyValue
@@ -261,8 +179,7 @@
     disabled={!writable}
     aria-label={bare(property)}
     onchange={(event) => {
-      if (property === 'task.done') void kit.tick(row)
-      else write(event.currentTarget.checked)
+      write(event.currentTarget.checked)
     }}
   />
 {:else if editor === 'button'}

@@ -475,22 +475,8 @@ class _Closing:
 WRITE = """async ([files]) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  const inbox = await window.tasks.rows.inbox()
-  let todos = (await ws.noteText(inbox)) ?? ''
-  for (const [path, text] of files) {
-    if (path === null) todos += text
-    else await window.tasks.writeFile(`${root}/${path}`, text)
-  }
-  if (todos) await window.tasks.writeFile(inbox, todos)
+  for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
   await ws.loadTree()
-}"""
-
-WRITE_TODOS = """async (text) => {
-  const tasks = await window.ordenApp.tasks()
-  const inbox = await tasks.rows.inbox()
-  const before = (await window.ordenApp.workspace.noteText(inbox)) ?? ''
-  await tasks.writeFile(inbox, before + text)
-  return inbox
 }"""
 
 class Drive:
@@ -672,9 +658,6 @@ class Drive:
             """,
             [list(texts), folder],
         )
-
-    def todos(self, page: Any, text: str) -> str:
-        return page.evaluate(WRITE_TODOS, text)  # type: ignore[no-any-return]
 
     def open_note(self, page: Any, starts: str, patience: float = PATIENCE) -> None:
         page.evaluate(
