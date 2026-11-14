@@ -40,8 +40,6 @@ const page = sources(SOURCE)
   .map((path) => readFileSync(path, 'utf8'))
   .join('\n')
 
-const ASKED_OF_NOTHING = new Set(['__ordenReminders'])
-
 describe('what Android may copy out of the app', () => {
   test('nothing: no cloud backup and no transfer to a new phone', () => {
     expect(manifest).toContain('android:allowBackup="false"')
@@ -321,7 +319,7 @@ describe('the bridge the page talks over', () => {
     const called = [...activity.matchAll(/window\.(__orden\w+)/g)].map((one) => one[1])
     expect(called.length).toBeGreaterThan(2)
 
-    for (const name of called.filter((one) => !ASKED_OF_NOTHING.has(one ?? ''))) {
+    for (const name of called) {
       expect(page, name).toContain(`answer('${name}'`)
     }
   })

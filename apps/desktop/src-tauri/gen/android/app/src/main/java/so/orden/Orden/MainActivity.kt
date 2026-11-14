@@ -61,9 +61,6 @@ class MainActivity : TauriActivity() {
 
     @Volatile private var live: java.lang.ref.WeakReference<MainActivity>? = null
 
-    fun reminded() {
-      live?.get()?.tell("window.__ordenReminders?.()")
-    }
   }
 
   override val handleBackNavigation = true
@@ -123,7 +120,6 @@ class MainActivity : TauriActivity() {
     if (ours) {
       Reminders.carried(intent)?.let {
         Reminders.pressed(this, "open", it)
-        reminded()
       }
     }
 
