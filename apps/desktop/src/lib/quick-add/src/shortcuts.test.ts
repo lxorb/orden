@@ -41,7 +41,10 @@ vi.mock('../../crate/src/native', () => ({
   },
 }))
 
-vi.mock('../../own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
+vi.mock('../../windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../windows/src/api')>()),
+  hearHere: () => Promise.resolve(() => undefined),
+}))
 
 vi.mock('../../web-backend/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../web-backend/src/api')>()),

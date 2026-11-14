@@ -114,7 +114,7 @@ function hear(): void {
     stopped = true
     for (const off of offs) off()
   }
-  void import('../../own-window')
+  void import('../../windows/src/api')
     .then(async ({ hearHere }) => {
       const pans = await hearHere<{ dx: number; dy: number }>('orden://touchpad-pan', (event) => {
         freeScroll.pan(event.payload.dx, event.payload.dy, performance.now())

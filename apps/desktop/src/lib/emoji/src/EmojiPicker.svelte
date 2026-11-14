@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { windowFor } from '../../row-window'
+  import { windowFor } from '../../windows/src/api'
   import { emojiData, type EmojiData, findEmoji } from './data'
   import { emojiRecent } from './recent.svelte'
   import { inTone, type Tone, TONES } from './tones'

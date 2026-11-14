@@ -167,6 +167,7 @@ export const APP_FOLDERS = [
   'views',
   'web-backend',
   'web-tab',
+  'windows',
   'workspace',
 ]
 

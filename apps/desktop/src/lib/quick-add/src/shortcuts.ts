@@ -9,7 +9,7 @@ import {
 } from '../../platform/src/api'
 import { keptCameFrom, keptFolder } from '../../web-backend/src/api'
 import { invoke as crate } from '../../crate/src/api'
-import { hearHere } from '../../own-window'
+import { hearHere } from '../../windows/src/api'
 
 const TAKING = 'orden:shortcuts-added'
 

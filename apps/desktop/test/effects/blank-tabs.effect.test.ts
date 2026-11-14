@@ -7,7 +7,10 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
-vi.mock('../../src/lib/own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
+  hearHere: () => Promise.resolve(() => undefined),
+}))
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')

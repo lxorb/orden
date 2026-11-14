@@ -49,8 +49,8 @@
     type Rows,
     slotsFor,
     windowFor,
-  } from './row-window'
-  import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
+  } from './windows/src/api'
+  import { ListView, tokenFloor, tokenRow } from './windows/src/api'
   import { folderOf, samePath } from './platform/src/api'
   import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree-flat'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'

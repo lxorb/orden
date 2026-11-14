@@ -16,7 +16,8 @@ vi.mock('./platform/src/tauri', () => ({
     return crate.inPage
   },
 }))
-vi.mock('./own-window', () => ({
+vi.mock('./windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./windows/src/api')>()),
   hearHere: (name: string, then: () => void) => {
     crate.heard.set(name, then)
     return Promise.resolve(() => undefined)

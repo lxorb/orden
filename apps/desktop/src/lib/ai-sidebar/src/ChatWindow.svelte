@@ -1,7 +1,7 @@
 <script lang="ts" generics="T extends ThreadHead">
   import type { Snippet } from 'svelte'
-  import { offsetOf, type Place, type Rows, windowFor } from '../../row-window'
-  import { ListView } from '../../row-window.svelte'
+  import { offsetOf, type Place, type Rows, windowFor } from '../../windows/src/api'
+  import { ListView } from '../../windows/src/api'
   import type { ThreadHead } from '../../ai-providers/src/api'
 
   const {

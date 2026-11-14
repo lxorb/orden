@@ -15,7 +15,7 @@
   import { densityFor, paperOf } from '../../pdf/src/api'
   import { sameSheet, type SheetDrawn, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
   import { pages as showing } from './showing.svelte'
-  import { ListView } from '../../row-window.svelte'
+  import { ListView } from '../../windows/src/api'
   import { roving } from '../../roving'
   import { workspace } from '../../workspace.svelte'
 

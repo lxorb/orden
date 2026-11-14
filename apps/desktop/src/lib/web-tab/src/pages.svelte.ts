@@ -1029,7 +1029,7 @@ class Pages {
   private listen(): Promise<void> {
     if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
-      const { hearHere: listen } = await import('../../own-window')
+      const { hearHere: listen } = await import('../../windows/src/api')
 
       const { grants, readAsked } = await pagePermissions()
       await listen('orden://web-ask', (event) => {

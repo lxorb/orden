@@ -4,7 +4,7 @@
   import { agentMarks } from '../../agent-marks.svelte'
   import { menu } from '../../menu.svelte'
   import { dur, fly } from '../../platform/src/api'
-  import type { Place } from '../../row-window'
+  import type { Place } from '../../windows/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { agentRows } from '../../surfaces.svelte'

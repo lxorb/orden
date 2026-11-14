@@ -1,7 +1,7 @@
 import { portOf, startHearings } from '@orden/contracts'
 import { busy } from '../../ui-kit/src/api'
 import { log, invoke, isDesktop, isNative, openExternal } from '../../platform/src/api'
-import { hearHere } from '../../own-window'
+import { hearHere } from '../../windows/src/api'
 import { callerOf } from './caller'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'

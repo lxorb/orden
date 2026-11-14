@@ -75,7 +75,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 const heard = new Map<string, (event: { payload: unknown }) => void>()
 
-vi.mock('../../own-window', () => ({
+vi.mock('../../windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../windows/src/api')>()),
   hearHere: (name: string, tell: (event: { payload: unknown }) => void) => {
     heard.set(name, tell)
     return Promise.resolve(() => undefined)

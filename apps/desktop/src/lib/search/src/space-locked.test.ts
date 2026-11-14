@@ -15,7 +15,8 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-vi.mock('../../own-window', () => ({
+vi.mock('../../windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../windows/src/api')>()),
   hearHere: (_event: string, then: typeof told) => {
     told = then
     return Promise.resolve(() => (told = null))

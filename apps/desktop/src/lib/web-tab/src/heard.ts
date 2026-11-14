@@ -1,4 +1,4 @@
-import type { hearHere } from '../../own-window'
+import type { hearHere } from '../../windows/src/api'
 import { isRecord } from '../../platform/src/api'
 import { mute } from './mute'
 import type { Page } from './pages.svelte'

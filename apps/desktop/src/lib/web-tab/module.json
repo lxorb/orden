@@ -17,7 +17,8 @@
     "ui-controls",
     "ui-kit",
     "parting",
-    "web-backend"
+    "web-backend",
+    "windows"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -37,7 +38,6 @@
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/own-window.ts",
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/startup.svelte.ts",

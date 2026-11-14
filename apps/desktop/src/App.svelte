@@ -91,6 +91,7 @@
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/platform/src/api'
   import { storedText } from './lib/platform/src/api'
+  import { windowDocuments } from './lib/windows/src/api'
   import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
@@ -208,14 +209,11 @@
   $effect(() => {
     const active = workspace.active
     const facts = active && { shown: active.shown, path: active.path, draft: isDraft(active.note) }
-    return whenLoaded(
-      () => import('./lib/window-document'),
-      ({ windowDocument }) => {
-        const inWindow = windowDocument(facts, onMac)
-        document.title = inWindow.title
-        if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
-      },
-    )
+    return whenLoaded(windowDocuments, ({ windowDocument }) => {
+      const inWindow = windowDocument(facts, onMac)
+      document.title = inWindow.title
+      if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
+    })
   })
 
   $effect(() => {

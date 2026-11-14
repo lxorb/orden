@@ -58,7 +58,7 @@ export async function searchSpace(
   }
 
   const id = ++asked
-  const { hearHere } = await import('../../own-window')
+  const { hearHere } = await import('../../windows/src/api')
   const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
     const batch = event.payload
     if (batch.id !== id) return
