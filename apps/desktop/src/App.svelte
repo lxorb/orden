@@ -7,6 +7,7 @@
   import { closeOnBack } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
+  import { whenLoaded } from '@orden/contracts'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { currentPlatform } from './lib/ui-kit/src/api'
   import { menu, textFieldOf } from './lib/menu.svelte'
@@ -127,12 +128,12 @@
   $effect(() => {
     if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
     let stop: (() => void) | null = null
-    let gone = false
-    void import('./lib/apps/src/api').then(({ hostApps }) => {
-      if (!gone) stop = hostApps()
-    })
+    const off = whenLoaded(
+      () => import('./lib/apps/src/api'),
+      ({ hostApps }) => (stop = hostApps()),
+    )
     return () => {
-      gone = true
+      off()
       stop?.()
     }
   })
@@ -208,11 +209,14 @@
   $effect(() => {
     const active = workspace.active
     const facts = active && { shown: active.shown, path: active.path, draft: isDraft(active.note) }
-    void import('./lib/window-document').then(({ windowDocument }) => {
-      const inWindow = windowDocument(facts, onMac)
-      document.title = inWindow.title
-      if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
-    })
+    return whenLoaded(
+      () => import('./lib/window-document'),
+      ({ windowDocument }) => {
+        const inWindow = windowDocument(facts, onMac)
+        document.title = inWindow.title
+        if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
+      },
+    )
   })
 
   $effect(() => {
@@ -223,11 +227,20 @@
 
         shortcuts.receive(remote)
         toolbar.receive(remote)
-        void import('./lib/kind-choice').then((one) => one.receive(remote))
+        whenLoaded(
+          () => import('./lib/kind-choice'),
+          (one) => one.receive(remote),
+        )
         recovery.receive(remote)
-        void import('./lib/space-archive').then((one) => one.receive(remote))
+        whenLoaded(
+          () => import('./lib/space-archive'),
+          (one) => void one.receive(remote),
+        )
         if (!__EVEN_PLUGIN__)
-          void import('./lib/chats-client/src/api').then(({ hush }) => hush.receive(remote))
+          whenLoaded(
+            () => import('./lib/chats-client/src/api'),
+            ({ hush }) => hush.receive(remote),
+          )
       })
     }
   })
@@ -360,13 +373,13 @@
     if (!host || !swipeOpens()) return
 
     let stop: (() => void) | null = null
-    let live = true
-    void import('./lib/drawer-follow').then((one) => {
-      if (live) stop = one.followDrawers(host)
-    })
+    const off = whenLoaded(
+      () => import('./lib/drawer-follow'),
+      (one) => (stop = one.followDrawers(host)),
+    )
 
     return () => {
-      live = false
+      off()
       stop?.()
     }
   })

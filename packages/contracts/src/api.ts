@@ -171,6 +171,7 @@ export {
   webPages,
   whenPortProvided,
 } from './ports'
+export { whenLoaded } from './loading'
 export type { AgentPorts, AgentWritesPort } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'

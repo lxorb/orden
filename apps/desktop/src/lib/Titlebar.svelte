@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { whenLoaded } from '@orden/contracts'
   import { swipeOpens } from './swipe-opens'
   import { chrome } from './theme/src/api'
   import { keepFocus } from './focus'
@@ -46,7 +47,10 @@
 
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
-      void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
+      whenLoaded(
+        () => import('./hints.svelte'),
+        ({ hints }) => hints.dismiss('drawer'),
+      )
     }
   })
 

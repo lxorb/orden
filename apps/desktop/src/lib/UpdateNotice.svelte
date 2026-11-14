@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { whenLoaded } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { Cross } from './ui-kit/src/api'
   import { type Channel, restartToUpdate } from './updater'
@@ -56,7 +57,10 @@
 
   $effect(() => {
     if (managed) return
-    void import('./app-place').then(({ stuck }) => stuck()).then((answer) => (moving = answer))
+    return whenLoaded(
+      () => import('./app-place'),
+      ({ stuck }) => void stuck().then((answer) => (moving = answer)),
+    )
   })
 
   async function restart() {
