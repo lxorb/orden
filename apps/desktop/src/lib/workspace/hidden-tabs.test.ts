@@ -26,9 +26,9 @@ const { memoryStorage } = await import('../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { hiddenTabs } = await import('./hidden-tabs.svelte')
-const { pages } = await import('../web-tab/pages.svelte')
+const { pages } = await import('../web-tab/src/pages.svelte')
 const { agentMarks } = await import('../agent-marks.svelte')
-await import('../web-tab/sleeping')
+await import('../web-tab/src/sleeping')
 type Tab = import('../workspace.svelte').Tab
 
 function webTab(id: string, live = true): Tab {

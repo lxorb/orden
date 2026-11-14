@@ -454,9 +454,9 @@ vi.mock('../../settings/declarations', () => ({
 
 const lentPage: Record<string, unknown> = { url: null, space: null }
 const lending = { lend: vi.fn(() => Promise.resolve()), unlend: vi.fn() }
-vi.mock('../../web-tab/lending', () => lending)
+vi.mock('../../web-tab/src/lending', () => lending)
 
-vi.mock('../../web-tab/pages.svelte', () => ({
+vi.mock('../../web-tab/src/pages.svelte', () => ({
   pages: {
     of: () => lentPage,
     addressOf: () => 'https://docs.example/a',
@@ -1374,7 +1374,7 @@ describe('a page into a note', () => {
         untrusted: 'https://docs.example/a',
       })
 
-      const { clipNote } = await import('../../web-tab/note')
+      const { clipNote } = await import('../../web-tab/src/note')
       const clip = await clipNote(PAGE, new Date())
       expect(files.get('/s/Work/A page.md')).toBe(clip)
       expect(clip).toContain('source: https://docs.example/a')

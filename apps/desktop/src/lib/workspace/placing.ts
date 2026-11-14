@@ -1,6 +1,6 @@
 import { nameFromTitle, shownName, nameOf, invoke, isDesktop, joinPath } from '../platform/src/api'
-import { pages } from '../web-tab/pages.svelte'
-import { sameSite, settleShortcuts } from '../web-tab/settle'
+import { pages, webDataStores } from '../web-tab/src/api'
+import { sameSite, settleShortcuts } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 import type { Entry, Space } from '../workspace.svelte'
 import type { ClosedTabs } from './closed.svelte'
@@ -115,7 +115,7 @@ export async function keepTerm(
 
 async function ownFor(tab: Tab, url: string): Promise<string | null> {
   if (!tab.apart) return null
-  const { copyingOut, freshOwn, ownStore } = await import('../web-tab/web-data.svelte')
+  const { copyingOut, freshOwn, ownStore } = await webDataStores()
   const own = freshOwn()
   const from = tab.apart
   if (isDesktop) {

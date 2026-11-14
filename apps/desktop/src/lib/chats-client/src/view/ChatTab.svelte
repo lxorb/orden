@@ -1,8 +1,8 @@
 <script lang="ts">
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
+  import { webPages } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
   import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag } from '../../../drag-paths'
-  import { pages } from '../../../web-tab/pages.svelte'
   import { EmojiPicker } from '../../../emoji/src/api'
   import { shortcuts } from '../../../shortcuts.svelte'
   import { samePath } from '../../../platform/src/api'
@@ -157,7 +157,8 @@
       return
     }
     const web = workspace.tabs.find((one) => one.id === draggedTab(event.dataTransfer))
-    const address = web && (pages.addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
+    const address =
+      web && (webPages().addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
     if (address) {
       event.preventDefault()
       composer?.insert(`${address} `)

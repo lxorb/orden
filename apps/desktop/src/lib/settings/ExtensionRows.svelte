@@ -4,8 +4,8 @@
   import { Switch } from '../ui-controls/src/api'
   import { dur, slide } from '../platform/src/api'
   import { workspace } from '../workspace.svelte'
-  import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'
-  import { extensions } from '../web-tab/extensions.svelte'
+  import ExtensionGaps from '../web-tab/src/ExtensionGaps.svelte'
+  import { extensions } from '../web-tab/src/extensions.svelte'
 
   let opened = $state<string | null>(null)
   let link = $state('')

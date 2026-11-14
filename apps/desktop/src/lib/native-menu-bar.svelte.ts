@@ -144,7 +144,7 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
   const step = (how: 'reload' | 'fresh') => () => {
     const tab = workspace.active
     if (tab?.kind === 'web')
-      void import('./web-tab/pages.svelte').then(({ pages }) => pages.step(tab.id, how))
+      void import('./web-tab/src/api').then(({ pages }) => pages.step(tab.id, how))
   }
   return [
     entryRow('web.reload', context, { disabled: !web, run: step('reload') }),

@@ -18,7 +18,7 @@ vi.mock('./faces', async (real) => ({
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('../../workspace.svelte')
-const { pages } = await import('../../web-tab/pages.svelte')
+const { pages } = await import('../../web-tab/src/pages.svelte')
 const { faces } = await import('./faces.svelte')
 const { places } = await import('./places.svelte')
 

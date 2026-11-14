@@ -23,14 +23,14 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/tab-cycle.svelte.ts': 'a press ends Ctrl+Tab, which has no button',
   'lib/tab-strip/hover-card.svelte.ts': 'a press hushes a card shown by hovering',
   'lib/RenameNotice.svelte': 'a notice nothing opened, gone at the first press or key',
-  'lib/web-tab/WebTab.svelte': 'a press hides the native page before what it opens is drawn',
-  'lib/web-tab/AddressField.svelte': 'a press says where the keyboard goes once it is over',
+  'lib/web-tab/src/WebTab.svelte': 'a press hides the native page before what it opens is drawn',
+  'lib/web-tab/src/AddressField.svelte': 'a press says where the keyboard goes once it is over',
   'lib/downloads/src/api.ts': 'a press says where a download was asked for, to fly from',
   'lib/select-all.ts': 'a press inside a name field leaves its second take of the words alone',
   'lib/workspace/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
 }
 
-const NOT_YET = new Set(['lib/web-tab/WebExtensionPopup.svelte'])
+const NOT_YET = new Set(['lib/web-tab/src/WebExtensionPopup.svelte'])
 
 const PRESS = /(?:window|document)\.addEventListener\(\s*'(?:pointerdown|mousedown|touchstart)'/
 

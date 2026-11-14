@@ -1,5 +1,5 @@
 <script lang="ts">
-  import WebTab from '../../src/lib/web-tab/WebTab.svelte'
+  import WebTab from '../../src/lib/web-tab/src/WebTab.svelte'
   import { workspace } from '../../src/lib/workspace.svelte'
 
   const tab = $derived(workspace.active)

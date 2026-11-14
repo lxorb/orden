@@ -1,5 +1,5 @@
-import { engineFor, isEngineAddress } from '../../web-tab/engines'
-import { WORDS } from '../../web-tab/typed'
+import { engineFor, isEngineAddress } from '@orden/scan/engines'
+import { WORDS } from '@orden/scan/typed'
 import { isObject, list, type Said, text } from './sidebar-made'
 
 export type BrowserEngine = { name: string } & ({ id: string } | { custom: string })

@@ -1,4 +1,4 @@
-import { isWebAddress } from '../../web-tab/address'
+import { isWebAddress } from '@orden/scan/web-address'
 import type { Sidebar, SidebarFolder, SidebarTab } from './sidebar'
 
 export interface FolderWords {

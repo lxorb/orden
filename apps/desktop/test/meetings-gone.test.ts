@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { openerFor } from '../src/lib/openers'
 import { kindOfName } from '../src/lib/sync-client/src/create'
-import { webUrlOf } from '../src/lib/web-tab/note'
+import { webUrlOf } from '../src/lib/web-tab/src/note'
 
 const OLD_MEETING = `---
 date: 2026-09-12

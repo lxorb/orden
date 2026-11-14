@@ -1,3 +1,4 @@
+import { pagesHanded } from '../web-tab/src/api'
 import { busy } from '../ui-kit/src/api'
 import { log, invoke, isDesktop, isNative, openExternal } from '../platform/src/api'
 import { hearHere } from '../own-window'
@@ -26,7 +27,7 @@ export async function startAutomation(): Promise<() => void> {
   const stopping: (() => void)[] = []
 
   if (isDesktop) {
-    const { hearPages } = await import('../web-tab/handed')
+    const { hearPages } = await pagesHanded()
     stopping.push(await hearPages())
     const { hearPdfs } = await (await import('../pdf/src/api')).handed()
     stopping.push(await hearPdfs())

@@ -45,7 +45,9 @@ vi.mock('../platform/src/tauri', () => ({
   invoke: (command: string) => Promise.resolve(command === 'automation_claim' ? world.claims : []),
   openExternal: () => Promise.resolve(),
 }))
-vi.mock('../web-tab/handed', () => ({ hearPages: () => Promise.resolve(() => undefined) }))
+vi.mock('../web-tab/src/api', () => ({
+  pagesHanded: () => Promise.resolve({ hearPages: () => Promise.resolve(() => undefined) }),
+}))
 vi.mock('../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../pdf/src/api')>()),
   handed: () => Promise.resolve({ hearPdfs: () => Promise.resolve(() => undefined) }),

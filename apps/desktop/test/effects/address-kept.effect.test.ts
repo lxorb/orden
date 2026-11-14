@@ -1,13 +1,13 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { HalfTyped } from '../../src/lib/web-tab/typed'
+import type { HalfTyped } from '@orden/scan/typed'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
 
-const AddressField = (await import('../../src/lib/web-tab/AddressField.svelte')).default
+const AddressField = (await import('../../src/lib/web-tab/src/AddressField.svelte')).default
 
 const ADDRESS = 'https://example.com/page'
 

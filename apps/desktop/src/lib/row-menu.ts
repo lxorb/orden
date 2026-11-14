@@ -1,3 +1,4 @@
+import { webDataSheet } from './web-tab/src/api'
 import { foreignCopy } from '@orden/sync-core'
 import { folderNote, nestedIn } from './folder-notes'
 import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
@@ -38,7 +39,7 @@ export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntr
     {
       label: 'Web data',
       keep: true,
-      run: () => void import('./web-tab/own-data').then((one) => one.showWebData(path)),
+      run: () => void webDataSheet().then((one) => one.showWebData(path)),
     },
   ]
 }

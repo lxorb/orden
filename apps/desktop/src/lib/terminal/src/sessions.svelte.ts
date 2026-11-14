@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import type { Usage } from '@orden/online/apps'
 import { FitAddon } from '@xterm/addon-fit'
 import { type ISearchOptions, SearchAddon } from '@xterm/addon-search'
@@ -1190,7 +1191,7 @@ class Session {
     }
     const { whichWay } = await import('./two-ways')
     const way = await whichWay(command)
-    if (way === 'app') (await import('../../web-tab/keys')).replay(pressed)
+    if (way === 'app') webPages().replayKey(pressed)
     else if (way === 'shell') {
       this.focus()
       const typed = typedBy({

@@ -42,8 +42,6 @@
     "apps/desktop/src/lib/space-typing.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/web-tab/keys.ts",
-    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/drafts.ts",

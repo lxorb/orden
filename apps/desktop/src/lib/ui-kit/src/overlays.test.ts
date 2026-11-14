@@ -341,13 +341,13 @@ describe('what hides a web page', () => {
       'the theme picker, over the themes button or the note',
     'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
     'lib/views/ToneDot.svelte': "a tone's colours, beside its dot",
-    'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
-    'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
-    'lib/web-tab/WebDialog.svelte': "a page's own dialog, at the top of the page",
-    'lib/web-tab/WebDownloads.svelte': 'bubble',
-    'lib/web-tab/WebExtensionPopup.svelte': "an extension's popup, under its button",
-    'lib/web-tab/WebExtensions.svelte': 'bubble',
-    'lib/web-tab/WebSite.svelte': 'bubble',
+    'lib/web-tab/src/AddressField.svelte': 'the suggestions under the address',
+    'lib/web-tab/src/WebAsk.svelte': "a site's question, under the bar",
+    'lib/web-tab/src/WebDialog.svelte': "a page's own dialog, at the top of the page",
+    'lib/web-tab/src/WebDownloads.svelte': 'bubble',
+    'lib/web-tab/src/WebExtensionPopup.svelte': "an extension's popup, under its button",
+    'lib/web-tab/src/WebExtensions.svelte': 'bubble',
+    'lib/web-tab/src/WebSite.svelte': 'bubble',
   }
 
   const FURNITURE = [

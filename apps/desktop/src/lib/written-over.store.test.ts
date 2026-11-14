@@ -19,7 +19,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./accounts/src/account.svelte')
 const { links } = await import('./link-index.svelte')
-const { pages } = await import('./web-tab/pages.svelte')
+const { pages } = await import('./web-tab/src/pages.svelte')
 type RemoteSpace = import('./accounts/src/routes').RemoteSpace
 const { sync } = await import('./sync.svelte')
 

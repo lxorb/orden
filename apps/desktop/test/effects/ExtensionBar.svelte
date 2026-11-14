@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ExtensionButtons from '../../src/lib/web-tab/ExtensionButtons.svelte'
-  import WebExtensionPopup from '../../src/lib/web-tab/WebExtensionPopup.svelte'
-  import { extensions } from '../../src/lib/web-tab/extensions.svelte'
+  import ExtensionButtons from '../../src/lib/web-tab/src/ExtensionButtons.svelte'
+  import WebExtensionPopup from '../../src/lib/web-tab/src/WebExtensionPopup.svelte'
+  import { extensions } from '../../src/lib/web-tab/src/extensions.svelte'
 
   let opener = $state<HTMLElement | null>(null)
 </script>

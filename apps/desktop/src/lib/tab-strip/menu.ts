@@ -15,7 +15,7 @@ import { shownName, nameOf, withinSpace } from '../platform/src/api'
 import { toggleFill } from '../tab-fill/fill'
 import { openTerminal, shellRows, readSpec, openOnline } from '../terminal/src/api'
 import { isOnlineTab } from '../online-terms/src/api'
-import { pages } from '../web-tab/pages.svelte'
+import { pages, siteMuting } from '../web-tab/src/api'
 import { viewport } from '../ui-kit/src/api'
 import { workspace, type Tab } from '../workspace.svelte'
 import { protectEntries } from '../sharing/src/api'
@@ -126,7 +126,7 @@ function pageEntries(tab: Tab): MenuEntry[] {
 }
 
 async function muting(tabId: string): Promise<void> {
-  const { muteSite } = await import('../web-tab/mute')
+  const { muteSite } = await siteMuting()
   await muteSite(tabId, !pages.of(tabId).muted)
 }
 

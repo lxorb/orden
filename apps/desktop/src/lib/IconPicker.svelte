@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { siteIconSet } from './web-tab/src/api'
   import { account } from './accounts/src/api'
   import { ACCENTS } from './theme/src/api'
   import { closeOnBack } from './ui-kit/src/api'
@@ -189,7 +190,7 @@
     tint = untrack(() => tintOf(asked))
 
     if (untrack(() => iconLibrary.loaded[SITE_ICONS])) {
-      void import('./web-tab/site-icons.svelte').then((one) => one.siteIcons.refresh())
+      void siteIconSet().then((one) => one.siteIcons.refresh())
     }
 
     clearTimeout(focusing)

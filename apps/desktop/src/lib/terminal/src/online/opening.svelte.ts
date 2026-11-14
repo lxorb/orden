@@ -1,7 +1,7 @@
 import { callbacksIn, isCallbackOf, isWebUrl } from '@orden/online/urls'
 import { untrack } from 'svelte'
 import { openExternal } from '../../../platform/src/api'
-import { pages } from '../../../web-tab/pages.svelte'
+import { webPages } from '@orden/contracts'
 import { workspace } from '../../../workspace.svelte'
 
 export type Where = 'tab' | 'system' | 'offer' | 'none'
@@ -64,7 +64,7 @@ export class Opener {
     let sent = false
     const stop = $effect.root(() => {
       $effect(() => {
-        const at = pages.of(id).url
+        const at = webPages().of(id).url
         const open = workspace.tabs.some((tab) => tab.id === id)
         untrack(() => {
           if (!open) {

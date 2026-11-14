@@ -146,7 +146,7 @@ class Record {
 
     if (answer === 'both' && isWebTarget(path)) {
       const [{ settleShortcuts }, { writeDown }] = await Promise.all([
-        import('../web-tab/settle'),
+        import('@orden/scan/settle'),
         import('./write-down'),
       ])
       const ours = await invoke<string>('read_note', { path }).catch(() => null)

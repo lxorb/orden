@@ -25,8 +25,8 @@ class NoLayout {
 globalThis.ResizeObserver = NoLayout
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
 
 let target: HTMLElement
 

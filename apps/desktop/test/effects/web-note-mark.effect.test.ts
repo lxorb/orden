@@ -18,7 +18,7 @@ vi.mock('../../src/lib/own-window', () => ({
 }))
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
 const { writeShortcut } = await import('@orden/scan/shortcut')
 const FileMark = (await import('../../src/lib/FileMark.svelte')).default

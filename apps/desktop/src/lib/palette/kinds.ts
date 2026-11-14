@@ -9,8 +9,8 @@ import {
   relativeTo,
   withinSpace,
 } from '../platform/src/api'
-import { frecency as visitWeight, shownAddress } from '../web-tab/omnibox'
-import type { Visit } from '../web-tab/visits'
+import { frecency as visitWeight, shownAddress } from '../web-tab/src/omnibox'
+import type { Visit } from '../web-tab/src/api'
 import type { Host } from '../terminal/src/api'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { TabKind } from '../workspace/documents.svelte'

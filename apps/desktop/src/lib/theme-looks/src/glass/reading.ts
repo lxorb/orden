@@ -1,6 +1,6 @@
 import { hexOf } from '../../../ui-controls/src/api'
 import { invoke, isDesktop } from '../../../platform/src/api'
-import { pages } from '../../../web-tab/pages.svelte'
+import { webPages } from '@orden/contracts'
 import { groundSaid, type PageSaid, stripGround } from './colours'
 import { pixelsOf } from './pictures'
 
@@ -92,8 +92,8 @@ async function asked(tab: string): Promise<PageSaid | null> {
 }
 
 async function fromStill(tab: string): Promise<string | null> {
-  await pages.shoot(tab)
-  const still = pages.of(tab).shot
+  await webPages().shoot(tab)
+  const still = webPages().of(tab).shot
   if (!still) return null
 
   const pixels = await pixelsOf(still, STRIP)

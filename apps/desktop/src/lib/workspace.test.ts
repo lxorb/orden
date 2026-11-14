@@ -44,7 +44,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
     })
     given.push({ command, args })
     if (command === 'web_copy') {
-      const { isCopying } = await import('./web-tab/web-data.svelte')
+      const { isCopying } = await import('./web-tab/src/web-data.svelte')
       copyingSeen.push(isCopying(String(args?.from).replace(/^note_/, '')))
     }
 
@@ -145,7 +145,7 @@ const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
 const { answeredCase } = await import('./platform/src/space-paths')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
-const { pages } = await import('./web-tab/pages.svelte')
+const { pages } = await import('./web-tab/src/pages.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
@@ -2912,7 +2912,7 @@ describe('a new tab', () => {
         origins: ['https://example.org'],
       })
       expect(copyingSeen).toEqual([true])
-      const { isCopying } = await import('./web-tab/web-data.svelte')
+      const { isCopying } = await import('./web-tab/src/web-data.svelte')
       expect(isCopying('0123456789abcdef')).toBe(false)
     } finally {
       delete notes['/space/Apart.url']

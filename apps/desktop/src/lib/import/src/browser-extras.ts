@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import { invoke } from '../../platform/src/api'
 import type { BrowserEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
@@ -37,27 +38,15 @@ export async function bringHistory(browser: Browser, profile: string): Promise<v
     .catch(() => null)
   if (!Array.isArray(rows) || !rows.length) return
 
-  const [{ visited }, { webData }] = await Promise.all([
-    import('../../web-tab/visited'),
-    import('../../web-tab/web-data.svelte'),
-  ])
-  visited.brought(webData.history(), rows)
+  await webPages().bringHistory(rows)
 }
 
 export async function takeEngine(engine: BrowserEngine | null, browser: string): Promise<string[]> {
   if (!engine) return []
-  const { CUSTOM, searchEngine } = await import('../../web-tab/search-engine.svelte')
-  const same =
-    'id' in engine
-      ? searchEngine.id === engine.id
-      : searchEngine.id === CUSTOM && searchEngine.custom === engine.custom
-  if (same) return []
-
-  if (!searchEngine.chosen) {
-    if ('id' in engine) searchEngine.choose(engine.id)
-    else searchEngine.setCustom(engine.custom)
-    return []
-  }
+  const taken = await webPages().takeEngine(
+    'id' in engine ? { id: engine.id } : { custom: engine.custom },
+  )
+  if (taken !== 'kept') return []
   return [`${browser} searches with ${engine.name}: choose it in Settings to search with it here`]
 }
 

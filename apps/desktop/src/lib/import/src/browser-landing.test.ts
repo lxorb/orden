@@ -1,3 +1,4 @@
+import { providePort, webPages } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { toBase64 } from '../../platform/src/bytes'
@@ -18,7 +19,7 @@ let marksOf: Record<string, string> = {}
 let history: unknown[] = []
 const asked: string[] = []
 
-const brought: { book: string; rows: unknown }[] = []
+const brought: { rows: unknown }[] = []
 const engine = { id: 'google', custom: '', chosen: false }
 
 const written: { root: string; files: Planned[] }[] = []
@@ -83,34 +84,22 @@ vi.mock('./apply', () => ({
 vi.mock('../../ui-kit/src/busy.svelte', () => ({
   busy: { failed: (line: string) => void said.push(line) },
 }))
-vi.mock('../../web-tab/visited', () => ({
-  visited: { brought: (book: string, rows: unknown) => void brought.push({ book, rows }) },
-}))
-vi.mock('../../web-tab/web-data.svelte', () => ({ webData: { history: () => 'orden:web-visits' } }))
-vi.mock('../../web-tab/search-engine.svelte', () => ({
-  CUSTOM: 'custom',
-  searchEngine: {
-    get id() {
-      return engine.id
-    },
-    get custom() {
-      return engine.custom
-    },
-    get chosen() {
-      return engine.chosen
-    },
-    choose: (id: string) => {
-      engine.id = id
-      engine.chosen = true
-    },
-    setCustom: (url: string) => {
-      engine.id = 'custom'
-      engine.custom = url
-      engine.chosen = true
-      return true
-    },
+providePort('web.pages', {
+  ...webPages(),
+  bringHistory: (rows) => Promise.resolve(void brought.push({ rows })),
+  takeEngine: (offered) => {
+    const same =
+      'id' in offered
+        ? engine.id === offered.id
+        : engine.id === 'custom' && engine.custom === offered.custom
+    if (same) return Promise.resolve('same')
+    if (engine.chosen) return Promise.resolve('kept')
+    if ('id' in offered) engine.id = offered.id
+    else Object.assign(engine, { id: 'custom', custom: offered.custom })
+    engine.chosen = true
+    return Promise.resolve('taken')
   },
-}))
+})
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 
 vi.mock('../../workspace.svelte', () => {
@@ -212,7 +201,7 @@ describe('a Firefox profile brought into Orden', () => {
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe(
       'data:image/png;base64,iVBORw0KGgo=',
     )
-    expect(brought).toEqual([{ book: 'orden:web-visits', rows: history }])
+    expect(brought).toEqual([{ rows: history }])
     expect(engine).toMatchObject({ id: 'duckduckgo', chosen: true })
   })
 

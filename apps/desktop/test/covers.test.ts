@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
-import { COVERS } from '../src/lib/web-tab/covers'
+import { COVERS } from '../src/lib/web-tab/src/covers'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
@@ -25,17 +25,17 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
   'lib/overview/src/Offstage.svelte .offstage': 'drawn off the window, where no page is',
   'lib/overview/src/Overview.svelte .under':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .floor':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .top':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .window':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .closer':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .rider':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .window.is-front':
     'the same, stacked over its neighbours: see .window',
   'lib/overview/src/Overview.svelte .window.is-held':
@@ -208,13 +208,13 @@ test('nothing is excused that is in the registry after all, or is no layer any m
 
 const PLACED_INSIDE: Record<string, string> = {
   'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebAsk.svelte .ask':
+  'lib/web-tab/src/WebAsk.svelte .ask':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',
-  'lib/web-tab/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
 }
 
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {

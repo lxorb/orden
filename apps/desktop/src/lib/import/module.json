@@ -28,12 +28,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/web-tab/address.ts",
-    "apps/desktop/src/lib/web-tab/engines.ts",
-    "apps/desktop/src/lib/web-tab/search-engine.svelte.ts",
-    "apps/desktop/src/lib/web-tab/typed.ts",
-    "apps/desktop/src/lib/web-tab/visited.ts",
-    "apps/desktop/src/lib/web-tab/web-data.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"
   ]

@@ -1,6 +1,6 @@
 import { type Rgb, rgbOf } from '../../../ui-controls/src/api'
 import { isNumber, isRecord, isString, keepJson, stored } from '../../../platform/src/api'
-import { keysOf } from '../../../web-tab/pages.svelte'
+import { keysOf } from '@orden/scan/web-address'
 
 const KEY = 'orden:glass-grounds'
 

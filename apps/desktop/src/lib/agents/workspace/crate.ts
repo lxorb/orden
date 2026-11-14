@@ -1,14 +1,14 @@
 import type { Said } from '../../automation/args'
 import { said } from '../../automation/args'
 import { READER } from '../../automation/caller'
-import { articleOf } from '../../web-tab/note'
+import { articleOf } from '../../web-tab/src/note'
 import type { StoreSaid } from '../verbs'
 import { placeFor } from './spaces'
 import { lendTab, readerTabs } from './tabs'
 
 async function storeFor(args: Said): Promise<StoreSaid> {
   const place = placeFor({ verb: 'agent.store_for', args, caller: READER }, said(args, 'space'))
-  const { webData } = await import('../../web-tab/web-data.svelte')
+  const { webData } = await import('../../web-tab/src/web-data.svelte')
 
   return { space: place.space.name, store: await webData.store(null) }
 }

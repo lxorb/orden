@@ -4,7 +4,7 @@ import { identifier } from '../identifier'
 import { log, without, forget, isRecord, stored, invoke, isDesktop } from '../platform/src/api'
 import { spaceSound } from '../surfaces.svelte'
 import { IN_A_PAGE } from '../ui-controls/src/api'
-import { pages } from '../web-tab/pages.svelte'
+import { pages } from '../web-tab/src/api'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from './pane-tree'
 import {

@@ -2,8 +2,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { settleShortcuts } from '../src/lib/web-tab/settle'
-import { withOwn } from '../src/lib/web-tab/own-file'
+import { settleShortcuts } from '@orden/scan/settle'
+import { withOwn } from '../src/lib/web-tab/src/own-file'
 import { readShortcut, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
@@ -18,13 +18,13 @@ function files(dir: string, found: string[] = []): string[] {
 }
 
 const FRESH: Record<string, string> = {
-  'lib/web-tab/new-site.ts': 'a website made from an address',
-  'lib/web-tab/convert.ts': 'an old `url:` note made into a shortcut',
+  'lib/web-tab/src/new-site.ts': 'a website made from an address',
+  'lib/web-tab/src/convert.ts': 'an old `url:` note made into a shortcut',
   'lib/agents/workspace/new-files.ts': 'a website an agent makes',
   'lib/workspace/placing.ts': 'a tab kept as a new web note, settled with any already there',
   'lib/import/src/sidebar-plan.ts': "another browser's tabs, imported",
-  'lib/web-tab/keep.ts': 'a file that no longer reads as a shortcut, written anew',
-  'lib/web-tab/aimed.ts': 'a file that no longer reads as a shortcut, written anew',
+  'lib/web-tab/src/keep.ts': 'a file that no longer reads as a shortcut, written anew',
+  'lib/web-tab/src/aimed.ts': 'a file that no longer reads as a shortcut, written anew',
 }
 
 describe('a shortcut written again', () => {

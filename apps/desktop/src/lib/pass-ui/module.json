@@ -31,7 +31,6 @@
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/theme-ports.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts"
   ]
 }

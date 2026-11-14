@@ -101,7 +101,7 @@ describe('showing a file where it sits', () => {
       'explorer/src/menu.ts',
       'files-out/src/save.ts',
       'row-menu.ts',
-      'web-tab/downloads.svelte.ts',
+      'web-tab/src/downloads.svelte.ts',
     ])
   })
 

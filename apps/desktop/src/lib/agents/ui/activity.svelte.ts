@@ -1,6 +1,6 @@
 import { accentFor, theme } from '../../theme/src/api'
 import type { TabAct } from '../../agent-marks.svelte'
-import { pages } from '../../web-tab/pages.svelte'
+import { pages } from '../../web-tab/src/pages.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { AgentEvent, Approval, Grant, Picture } from '../verbs'

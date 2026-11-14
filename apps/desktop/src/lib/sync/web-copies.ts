@@ -1,5 +1,5 @@
 import { log, invoke } from '../platform/src/api'
-import { sameWebNote, settleShortcuts } from '../web-tab/settle'
+import { sameWebNote, settleShortcuts } from '@orden/scan/settle'
 import type { Entry } from '../workspace.svelte'
 import { writeDown } from './write-down'
 

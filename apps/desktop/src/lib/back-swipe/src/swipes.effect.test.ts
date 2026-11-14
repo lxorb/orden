@@ -9,7 +9,16 @@ vi.mock('../../workspace.svelte', () => ({
 const { heard } = await import('./swipes')
 const { swiping } = await import('./shown.svelte')
 
-const PAGE = { url: null, title: '', back: true, forward: false, zoom: 1, shot: null }
+const PAGE = {
+  url: null,
+  title: '',
+  back: true,
+  forward: false,
+  zoom: 1,
+  shot: null,
+  loading: false,
+  icon: null,
+}
 providePort('web.pages', { ...webPages(), of: () => PAGE })
 type Tab = import('../../workspace.svelte').Tab
 

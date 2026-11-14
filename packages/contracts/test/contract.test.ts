@@ -249,9 +249,16 @@ describe('ports', () => {
       forward: false,
       zoom: 1,
       shot: null,
+      loading: false,
+      icon: null,
     })
+    expect(none.tabs()).toEqual([])
+    expect(none.addressOf('t')).toBeNull()
+    expect(none.faviconOf('https://a.example/')).toBeNull()
     expect(none.holdStill()).toBeNull()
     await expect(none.letGo()).resolves.toBeUndefined()
+    await expect(none.bringHistory([{ url: 'https://a.example/' }])).resolves.toBeUndefined()
+    await expect(none.takeEngine({ id: 'bing' })).resolves.toBe('same')
 
     const page = {
       url: 'https://a.example/',
@@ -260,6 +267,8 @@ describe('ports', () => {
       forward: false,
       zoom: 2,
       shot: null,
+      loading: false,
+      icon: null,
     }
     const unbind = providePort('web.pages', { ...none, cuts: true, of: () => page })
     expect(webPages().cuts).toBe(true)

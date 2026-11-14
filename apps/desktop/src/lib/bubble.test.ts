@@ -71,9 +71,9 @@ describe('a bubble', () => {
   test('is found where the app draws one, sentences and buttons both', () => {
     expect(bubbles.filter((one) => one.presses).map((one) => one.file)).toEqual(
       expect.arrayContaining([
-        'lib/web-tab/WebAsk.svelte',
-        'lib/web-tab/WebDownloads.svelte',
-        'lib/web-tab/WebSite.svelte',
+        'lib/web-tab/src/WebAsk.svelte',
+        'lib/web-tab/src/WebDownloads.svelte',
+        'lib/web-tab/src/WebSite.svelte',
       ]),
     )
     expect(bubbles.some((one) => !one.presses)).toBe(true)

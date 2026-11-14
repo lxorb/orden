@@ -1,3 +1,4 @@
+import { siteDropping } from './web-tab/src/api'
 import {
   caughtFiles,
   dragged,
@@ -79,9 +80,7 @@ export function dropOnList(event: DragEvent, folder: string) {
   if (transfer && isLinkDrop(transfer) && !__EVEN_PLUGIN__) {
     const list = transfer.getData('text/uri-list')
     const html = transfer.getData('text/html')
-    void import('./web-tab/dropped-site').then(({ siteDropped }) =>
-      siteDropped(workspace, folder, list, html),
-    )
+    void siteDropping().then(({ siteDropped }) => siteDropped(workspace, folder, list, html))
     return
   }
 
