@@ -154,7 +154,7 @@ with sync_playwright() as p:
     page.evaluate("() => { window.__frames = []; new MutationObserver((list) => { for (const m of list) for (const n of m.addedNodes) if (n.tagName === 'IFRAME') window.__frames.push(n) }).observe(document.body, { childList: true, subtree: true }) }")
     for kind, call in [("svg", "exportCanvasSvg"), ("png", "exportCanvasPng")]:
         with page.expect_download(timeout=60000) as got:
-            page.evaluate(f"""async () => {{ const {{ workspace }} = await import('/src/lib/workspace.svelte.ts'); const tab = workspace.tabs.find((one) => one.id === workspace.activeTabId); const d = await import('/src/lib/export/drawing.ts'); const p = await import('/src/lib/canvas/picture.ts'); await p.{call}(d.drawingOf({{ text: tab.note.text, name: 'Board', path: null, root: null }})) }}""")
+            page.evaluate(f"""async () => {{ const {{ workspace }} = await import('/src/lib/workspace.svelte.ts'); const tab = workspace.tabs.find((one) => one.id === workspace.activeTabId); const d = await import('/src/lib/canvas/drawing.ts'); const p = await import('/src/lib/canvas/picture.ts'); await p.{call}(d.drawingOf({{ text: tab.note.text, name: 'Board', path: null, root: null }})) }}""")
         path = got.value.path(); data = open(path, "rb").read()
         if kind == "svg":
             text = data.decode("utf8", "replace")
@@ -163,7 +163,7 @@ with sync_playwright() as p:
             check("export PNG: a picture", data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) > 10000, f"{len(data)} bytes")
     for kind, call in [("print", "printCanvas"), ("pdf", "exportCanvasPdf")]:
         page.evaluate("() => { window.__frames = [] }")
-        page.evaluate(f"""async () => {{ const {{ workspace }} = await import('/src/lib/workspace.svelte.ts'); const tab = workspace.tabs.find((one) => one.id === workspace.activeTabId); const d = await import('/src/lib/export/drawing.ts'); const p = await import('/src/lib/canvas/picture.ts'); void p.{call}(d.drawingOf({{ text: tab.note.text, name: 'Board', path: null, root: null }})) }}""")
+        page.evaluate(f"""async () => {{ const {{ workspace }} = await import('/src/lib/workspace.svelte.ts'); const tab = workspace.tabs.find((one) => one.id === workspace.activeTabId); const d = await import('/src/lib/canvas/drawing.ts'); const p = await import('/src/lib/canvas/picture.ts'); void p.{call}(d.drawingOf({{ text: tab.note.text, name: 'Board', path: null, root: null }})) }}""")
         page.wait_for_timeout(4000)
         sheet = page.evaluate("() => window.__frames.map((one) => { try { return one.contentDocument?.documentElement?.outerHTML ?? one.srcdoc ?? '' } catch { return one.srcdoc ?? '' } }).join('')")
         check(f"{kind}: the sheet holds the plane", sheet.count("card ") >= N - 1, f"{len(sheet)} chars")

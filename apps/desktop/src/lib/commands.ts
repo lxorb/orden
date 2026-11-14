@@ -56,12 +56,27 @@ import { composerCommands } from './composer-commands'
 import { paletteName } from './highlight'
 import { links } from './link-index.svelte'
 import type { MenuItem } from './ui-kit/src/api'
-import { EXPORT_FORMATS, type Exportable } from './export/formats'
-import { frontShut, openTarget, renderOptions } from './export/context'
-import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
-import type { RunOptions } from './export/run'
-import { PANDOC_FORMATS } from './export-formats'
-import { canPrint, printable, printOpen } from './export/print'
+import {
+  canPrint,
+  EXPORT_FORMATS,
+  type Exportable,
+  type ExportId,
+  exportKindOf,
+  isNoteFormat,
+  labelOf,
+  offeredBy,
+  PANDOC_FORMATS,
+  printable,
+} from './export-formats/src/api'
+import {
+  exporters,
+  frontShut,
+  openTarget,
+  picker,
+  renderOptions,
+  type RunOptions,
+} from './export/src/api'
+import { openOut, printOpen } from './open-out'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { canRecord, record, recordLabel } from './recorder/commands'
@@ -105,6 +120,7 @@ import {
 import { SCHEME_CHOICES, SCHEME_NAMES } from './theme-looks/src/api'
 import { theme } from './theme/src/api'
 import { workspace } from './workspace.svelte'
+import { TAB_KINDS } from './workspace/tab-kinds'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
@@ -136,28 +152,24 @@ export function exportCommands(): Command[] {
     frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows
 
   const open = note()
-  const kind = exportKindOf(open ? { kind: open.kind, path: open.path } : null)
+  const kind = exportKindOf(
+    open ? { exports: TAB_KINDS[open.kind].exports, path: open.path } : null,
+  )
 
   const options = (): Promise<RunOptions> => renderOptions(target())
 
   const noteOut = async (id: Exportable) => {
-    const m = await import('./export/run')
+    const m = await exporters()
     await m.runExport(id, target(), await options())
   }
 
   const drawingOut = async (id: ExportId) => {
     const [picture, { drawingOf }] = await Promise.all([
       import('./canvas/picture'),
-      import('./export/drawing'),
+      import('./canvas/drawing'),
     ])
 
-    const drawing = drawingOf({
-      text: source(),
-      name: name(),
-      path: note()?.path ?? null,
-      root: workspace.rootHolding(note()?.path ?? null),
-      trusted: target().trusted,
-    })
+    const drawing = drawingOf(openOut())
 
     if (id === 'png') await picture.exportCanvasPng(drawing)
     else if (id === 'svg') await picture.exportCanvasSvg(drawing)
@@ -166,14 +178,7 @@ export function exportCommands(): Command[] {
 
   const pagesOut = async (id: ExportId) => {
     const out = await import('./pages/out')
-    const about = out.pagesOutOf({
-      text: source(),
-      name: name(),
-      path: note()?.path ?? null,
-      root: workspace.rootHolding(note()?.path ?? null),
-      shared: note()?.note.shared ?? null,
-      trusted: target().trusted,
-    })
+    const about = out.pagesOutOf(openOut())
 
     if (id === 'pdf') await out.exportPagesPdf(about)
     else if (id === 'png') await out.exportPagesPng(about)
@@ -184,7 +189,7 @@ export function exportCommands(): Command[] {
     const path = target().path
     if (path === null) return
 
-    const m = await import('./export/copy')
+    const m = await import('./files-out/src/api')
     await m.saveCopy(path, name())
   }
 
@@ -233,7 +238,7 @@ export function exportCommands(): Command[] {
         busy.start(
           'Exporting',
           async () => {
-            const m = await import('./export')
+            const m = await exporters()
             await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
           },
           `export-${format.id}`,
@@ -258,7 +263,7 @@ function exportPicker(): Command[] {
         ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => one.label),
       ],
       disabled: formats.every((one) => one.disabled),
-      run: () => void import('./export/picker.svelte').then(({ picker }) => picker.show()),
+      run: () => picker.show(),
     },
   ]
 }

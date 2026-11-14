@@ -51,7 +51,7 @@
         ? workspace().spaces.find((one) => withinSpace(one.root, path) !== null)
         : null
       const [{ drawingOf }, { canvasSvg }, { pdfFaces }] = await Promise.all([
-        import('../../export/drawing'),
+        import('../../canvas/drawing'),
         import('../../canvas/picture'),
         import('../../canvas/faces'),
       ])

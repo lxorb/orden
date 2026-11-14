@@ -1,6 +1,6 @@
 import { cellValue, csvText, csvValue, isButton, sheetSafe } from '@orden/bases'
 import { copyText } from '../ui-controls/src/api'
-import { deliver } from '../export/save'
+import { deliver } from '../files-out/src/api'
 import { displayName } from './columns'
 import { everyRow } from './list-items'
 import type { LiveView } from './live.svelte'

@@ -1,0 +1,36 @@
+{
+  "name": "export",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "export-formats",
+    "files-out",
+    "markdown",
+    "platform",
+    "sharing",
+    "theme",
+    "themes",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/before-render.ts",
+    "apps/desktop/src/lib/commands.ts",
+    "apps/desktop/src/lib/dialog-answer.ts",
+    "apps/desktop/src/lib/highlight.ts",
+    "apps/desktop/src/lib/images.ts",
+    "apps/desktop/src/lib/import/pandoc-pictures.ts",
+    "apps/desktop/src/lib/internal/work.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/link-rewrite.ts",
+    "apps/desktop/src/lib/math-fonts.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/own-keys.ts",
+    "apps/desktop/src/lib/page-setup.ts",
+    "apps/desktop/src/lib/paper.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

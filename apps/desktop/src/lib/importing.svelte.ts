@@ -172,7 +172,7 @@ class Importing {
   readonly needsPandoc = $derived(this.format === 'pandoc')
 
   async readWithPandoc() {
-    const { importDocument } = await import('./export')
+    const { importDocument } = await import('./export/src/api').then((one) => one.exporters())
     const imported = await importDocument()
     if (!imported) return
 

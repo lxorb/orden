@@ -40,7 +40,7 @@ vi.mock('../note-images', () => ({
 
 const { readingHtml, unreadableHtml } = await import('./render')
 
-await import('../export')
+await import('../export/src/render')
 
 const note = (text: string) => ({ text, path: '/space/Notes/Today.md' })
 

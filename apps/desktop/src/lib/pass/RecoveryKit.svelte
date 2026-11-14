@@ -2,7 +2,7 @@
   import Copy from 'lucide/dist/esm/icons/copy.mjs'
   import Download from 'lucide/dist/esm/icons/download.mjs'
   import LifeBuoy from 'lucide/dist/esm/icons/life-buoy.mjs'
-  import { deliver } from '../export/save'
+  import { deliver } from '../files-out/src/api'
   import { copyField } from './copied'
   import Gate from './Gate.svelte'
   import Glyph from './Glyph.svelte'

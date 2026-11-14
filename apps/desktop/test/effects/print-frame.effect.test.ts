@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from 'vitest'
 
-import { printInFrame } from '../../src/lib/export'
+import { printInFrame } from '../../src/lib/export/src/render'
 
 interface Shown {
   frame: HTMLIFrameElement

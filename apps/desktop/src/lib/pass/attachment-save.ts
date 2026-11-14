@@ -1,5 +1,5 @@
 import type { Attachment } from '@orden/pass/types'
-import { deliver } from '../export/save'
+import { deliver } from '../files-out/src/api'
 
 function nameParts(name: string): { stem: string; extension: string } {
   const dot = name.lastIndexOf('.')

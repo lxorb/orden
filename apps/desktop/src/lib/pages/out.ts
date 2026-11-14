@@ -17,8 +17,8 @@ import { type Box } from '../canvas/geometry'
 import { busy } from '../ui-kit/src/api'
 import { pngData } from '../png-off'
 import { fileBytes, isDesktop } from '../platform/src/api'
-import { chooseTarget, download, writeFile } from '../export/save'
-import { zipOf } from '../export/zip'
+import { exporters } from '../export/src/api'
+import { chooseTarget, download, writeFile } from '../files-out/src/api'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
@@ -259,6 +259,7 @@ export async function exportPagesSvg(given: PagesOut): Promise<string | undefine
       body: await inlinedSvg(pageSvg(out, page, at + 1, false, await paperBehind(out, page))),
     })
   }
+  const { zipOf } = await exporters()
   const zip = await zipOf(entries)
 
   return handOver(`${name} pages`, 'zip', 'ZIP', zip, 'application/zip')
@@ -284,6 +285,7 @@ export async function exportPagesPng(given: PagesOut): Promise<string | undefine
 
   if (!entries.length) return
 
+  const { zipOf } = await exporters()
   return handOver(`${name} pages`, 'zip', 'ZIP', await zipOf(entries), 'application/zip')
 }
 
@@ -655,7 +657,7 @@ export async function printPages(out: PagesOut): Promise<void> {
 
   const [{ loading, pdfjs }, { printInFrame, printsInFrame }] = await Promise.all([
     import('../pdf/document'),
-    import('../export'),
+    exporters(),
   ])
   const linked = printsInFrame()
   const library = await pdfjs()

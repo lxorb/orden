@@ -213,7 +213,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
     ['/lib/web-tab/handed.ts', 'the pages other programs hand over'],
     ['/lib/web-tab/permissions.svelte.ts', 'what a site may use'],
-    ['/lib/export.ts', 'the exporters'],
+    ['/lib/export/src/render.ts', 'the exporters'],
     ['/editor/src/vim-mode.ts', "the vim mode's own module"],
     ['/markdown/src/maths.ts', 'the formula engine, dressed'],
     ['/markdown/src/eager.ts', "the Worker's pair of engines"],
@@ -278,7 +278,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/pages.ts', 'the pages engine'],
     ['/lib/web-tab/convert.ts', 'the old websites, converted'],
     ['/lib/commands.ts', 'the command list'],
-    ['/lib/export/print.ts', 'printing'],
+    ['/lib/export/src/print.ts', 'printing'],
     ['/lib/mobile/dictation.ts', 'dictation'],
     ['/editor/src/lines.ts', 'the line commands'],
     ['/editor/src/grow.ts', 'the selection a step outwards'],
@@ -286,7 +286,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/block/commands.ts', 'a block duplicated or moved from a key'],
     ['/lib/shortcuts/presets.ts', 'the keyboards'],
     ['/lib/PromptSheet.svelte', 'the question sheet'],
-    ['/lib/export/save.ts', 'the writer behind Save as'],
+    ['/lib/files-out/src/save.ts', 'the writer behind Save as'],
     ['/lib/pdf/papers.ts', "the papers' words"],
     ['/lib/editor-menu.ts', "the editor's menu"],
     ['/editor/src/menu.ts', 'what it asks of the editor'],
@@ -418,7 +418,7 @@ describe('what the app evaluates before it draws anything', () => {
 
 describe('what reading a note fetches', () => {
   const READING = join(import.meta.dirname, '../src/lib/reading/render.ts')
-  const EXPORTER = join(import.meta.dirname, '../src/lib/export.ts')
+  const EXPORTER = join(import.meta.dirname, '../src/lib/export/src/render.ts')
   const RENDERER = join(import.meta.dirname, '../../../packages/markdown/src/index.ts')
 
   function waitedFor(surface: string): string {
@@ -452,11 +452,11 @@ describe('what reading a note fetches', () => {
       expect(ahead.assets, 'stylesheets quoted into the surface').toEqual([])
 
       for (const heavy of [
-        '/export.ts',
-        '/export/save.ts',
-        '/export/pictures.ts',
-        '/export/document.ts',
-        '/export-formats.ts',
+        '/export/src/render.ts',
+        '/files-out/src/save.ts',
+        '/export/src/pictures.ts',
+        '/export/src/document.ts',
+        '/export-formats/src/formats.ts',
         '/math-fonts.ts',
         '/page-setup.ts',
       ]) {

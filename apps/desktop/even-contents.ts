@@ -114,6 +114,8 @@ export const APP_FOLDERS = [
   'downloads',
   'even',
   'export',
+  'export-formats',
+  'files-out',
   'foreign',
   'import',
   'internal',

@@ -1,9 +1,7 @@
 import { escapeAll } from '@orden/markdown/html'
 import { decoded, pageBytes, assetPath, invoke, isDesktop } from '../platform/src/api'
-import { assetsOf, inlineImages, localSources, printsInFrame, SHEET_POLICY } from '../export'
-import { writtenPdf } from '../export/print'
-import { printWithPictures, wholeSheet } from '../export/sheet'
-import { chooseTarget, download, handOver, writeFile } from '../export/save'
+import { exporters, writtenPdf } from '../export/src/api'
+import { chooseTarget, download, handOver, writeFile } from '../files-out/src/api'
 import { type Canvas, type CanvasNode } from './format'
 import { planeBox } from './edits'
 import {
@@ -377,6 +375,7 @@ async function readySvg(
     drawing.trusted,
     await facesOf(drawing),
   )
+  const { wholeSheet } = await exporters()
   return { svg, whole: await wholeSheet(svg, fromAsset) }
 }
 
@@ -395,6 +394,7 @@ const fromAsset = (src: string) => assetPath(src) ?? src
 
 export async function inlinedSvg(svg: string): Promise<string> {
   try {
+    const { assetsOf, inlineImages, localSources } = await exporters()
     const drawn = [...svg.matchAll(DRAWN)].map((match) => `<img src="${match[2] ?? ''}">`)
     const found = await assetsOf(localSources(drawn.join('')), fromAsset)
     return await inlineImages(
@@ -439,7 +439,7 @@ export async function exportCanvasPng(drawing: Drawing) {
   return name
 }
 
-function sheetOf(drawing: Drawing, faces: Faces) {
+function sheetOf(drawing: Drawing, faces: Faces, policy: string) {
   const svg = canvasSvg(
     drawing.canvas,
     paletteOf('light'),
@@ -451,14 +451,15 @@ function sheetOf(drawing: Drawing, faces: Faces) {
   )
   const { width, height } = sizeOf(svg)
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${SHEET_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
   return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
 }
 
 async function printSheet(drawing: Drawing, faces: Faces) {
+  const { printsInFrame, printWithPictures, SHEET_POLICY } = await exporters()
   if (!printsInFrame()) {
-    const { html, page } = sheetOf(drawing, faces)
+    const { html, page } = sheetOf(drawing, faces, SHEET_POLICY)
     await printWithPictures(html, fromAsset, page)
     return
   }
@@ -469,7 +470,7 @@ async function printSheet(drawing: Drawing, faces: Faces) {
       const bytes = await decoded(face)
       links.set(key, URL.createObjectURL(new Blob([bytes.slice()], { type: 'image/png' })))
     }
-    const { html, page } = sheetOf(drawing, links)
+    const { html, page } = sheetOf(drawing, links, SHEET_POLICY)
     await printWithPictures(html, fromAsset, page)
   } finally {
     for (const link of links.values()) URL.revokeObjectURL(link)
@@ -487,7 +488,8 @@ export async function exportCanvasPdf(drawing: Drawing) {
   const faces = await facesOf(drawing)
 
   if (target) {
-    const { html, page } = sheetOf(drawing, faces)
+    const { SHEET_POLICY, wholeSheet } = await exporters()
+    const { html, page } = sheetOf(drawing, faces, SHEET_POLICY)
     if (await writtenPdf(await wholeSheet(html, fromAsset), target, page)) return target
   }
 

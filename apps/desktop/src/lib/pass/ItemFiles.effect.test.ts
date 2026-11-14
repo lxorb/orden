@@ -26,7 +26,7 @@ vi.mock('../ui-kit/src/prompt.svelte', () => ({
   prompt: { confirm: fake.confirm, choose: vi.fn(), ask: vi.fn() },
 }))
 
-vi.mock('../export/save', () => ({
+vi.mock('../files-out/src/save', () => ({
   deliver: (name: string, extension: string, _label: string, payload: { bytes: Uint8Array }) => {
     fake.delivered.push({ name, extension, bytes: payload.bytes })
     return Promise.resolve(name)

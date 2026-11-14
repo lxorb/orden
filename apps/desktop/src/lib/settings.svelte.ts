@@ -85,9 +85,9 @@ class Settings {
       this.exportAppearance = appearance
     }
 
-    void import('./export').then(({ pandocAvailable }) =>
-      pandocAvailable().then((found) => (this.pandoc = found)),
-    )
+    void import('./export/src/api')
+      .then((one) => one.exporters())
+      .then(({ pandocAvailable }) => pandocAvailable().then((found) => (this.pandoc = found)))
 
     void this.loadSnippets()
   }

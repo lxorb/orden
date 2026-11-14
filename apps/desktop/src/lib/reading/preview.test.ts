@@ -83,7 +83,7 @@ const { readingHtml } = await import('./render')
 await import('../modes.svelte')
 const { EditorState, noteIndexExtension, renderNote } = await import('@orden/editor')
 
-await import('../export')
+await import('../export/src/render')
 
 void startup.shown()
 await links.build(ROOT)
