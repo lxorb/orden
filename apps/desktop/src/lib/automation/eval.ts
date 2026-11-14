@@ -3,7 +3,7 @@ import { search } from '../search.svelte'
 import { settings } from '../settings.svelte'
 import { invoke } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
-import { pages } from '../web-tab/pages.svelte'
+import { pages } from '../web-tab/src/api'
 
 async function working(path: string): Promise<string | null> {
   const { workingFolder } = await import('../internal/work')

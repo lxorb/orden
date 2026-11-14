@@ -6,8 +6,8 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-const WebBar = (await import('../../src/lib/web-tab/WebBar.svelte')).default
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+const WebBar = (await import('../../src/lib/web-tab/src/WebBar.svelte')).default
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 
 const ADDRESS = 'https://www.example.com/docs/guide?tab=install#linux'
 

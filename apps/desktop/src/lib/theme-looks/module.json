@@ -10,14 +10,14 @@
     "accounts",
     "platform",
     "ui-kit",
-    "ui-controls"
+    "ui-controls",
+    "scan"
   ],
   "pending": [
     "apps/desktop/src/lib/Swatches.svelte",
     "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/held-database.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

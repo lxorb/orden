@@ -69,7 +69,7 @@
   import { insideSpace, nameOf } from './platform/src/api'
   import { shownName } from './platform/src/api'
   import { chosenIcon } from './chosen-icon'
-  import { pages } from './web-tab/pages.svelte'
+  import { pages } from './web-tab/src/api'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
   import { fitTabs, iconTabs } from './tab-strip/icon-tabs.svelte'

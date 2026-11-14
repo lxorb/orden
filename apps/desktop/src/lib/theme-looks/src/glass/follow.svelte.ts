@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import { glassCss } from '@orden/themes/glass'
 import { untrack } from 'svelte'
 import { accentColour, theme, chrome, type Ground } from '../../../theme/src/api'
@@ -12,7 +13,6 @@ import {
 } from '../../../ui-controls/src/api'
 import { isDesktop } from '../../../platform/src/api'
 import { paletteOf } from '../wallpaper/floors'
-import { pages, siteMark } from '../../../web-tab/pages.svelte'
 import { workspace } from '../../../workspace.svelte'
 import { dominant } from './colours'
 import { grounds } from './grounds.svelte'
@@ -65,11 +65,11 @@ function paper(): Rgb {
 }
 
 function addressOf(tab: string, written: string | undefined): string | null {
-  return pages.addressOf(tab) ?? written ?? null
+  return webPages().addressOf(tab) ?? written ?? null
 }
 
 function groundNow(tab: string, address: string | null): Rgb | null {
-  return grounds.of(tab, address) ?? (pages.loadingOf(tab) ? grounds.last(tab) : null)
+  return grounds.of(tab, address) ?? (webPages().loadingOf(tab) ? grounds.last(tab) : null)
 }
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
@@ -112,13 +112,13 @@ function sourceOf(sides: Sides): Source | Stops {
 
   if (tab?.kind === 'web') {
     const address = addressOf(tab.id, tab.address)
-    const page = pages.of(tab.id)
+    const page = webPages().of(tab.id)
     if (isDesktop && !page.loading && !grounds.heard(tab.id, address)) askOnce(tab.id, address)
 
     const ground = groundNow(tab.id, address)
     if (ground) return { colour: ground, page: true }
 
-    const mark = markColour(siteMark(page.icon, address))
+    const mark = markColour(page.icon ?? webPages().faviconOf(address))
     if (mark) return { colour: mark, page: false }
   }
 
@@ -142,7 +142,7 @@ export function follow(): void {
   if (stop || !SIDES) return
   const sides = SIDES
 
-  for (const [tab] of pages.each()) landed(tab)
+  for (const tab of webPages().tabs()) landed(tab)
 
   stop = $effect.root(() => {
     $effect(() => {

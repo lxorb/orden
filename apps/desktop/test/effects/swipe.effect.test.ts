@@ -41,7 +41,16 @@ const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/src/gesture')
 const { swipeChoice } = await import('../../src/lib/back-swipe/src/choice.svelte')
 const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
 
-const PAGE = { url: null, title: '', back: true, forward: false, zoom: 2, shot: null }
+const PAGE = {
+  url: null,
+  title: '',
+  back: true,
+  forward: false,
+  zoom: 2,
+  shot: null,
+  loading: false,
+  icon: null,
+}
 providePort('web.pages', { ...webPages(), of: () => PAGE })
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 
@@ -325,7 +334,7 @@ test('a finger from the side of the pane goes back when it lifts far enough alon
 })
 
 test('over a web page the arrow comes in over the page s picture, and is a layer of its own', async () => {
-  const { layersOver } = await import('../../src/lib/web-tab/covers')
+  const { layersOver } = await import('../../src/lib/web-tab/src/covers')
   const hole = found('.hole')
   expect(layersOver(hole)).toEqual([])
 

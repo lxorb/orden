@@ -2,7 +2,7 @@ import { Names, safeName } from './names'
 import type { Planned } from './plan'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
 import { zenIcon, zenTint } from './zen-icons'
-import { isWebAddress } from '../../web-tab/address'
+import { isWebAddress } from '@orden/scan/web-address'
 import { writeShortcut } from '@orden/scan/shortcut'
 import { readIcon, takesTint } from '../../ui-kit/src/api'
 

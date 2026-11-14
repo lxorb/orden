@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
@@ -495,7 +496,7 @@
           sync2,
           wallpaper,
           themeStore: store,
-          downloads: () => import('./lib/web-tab/downloads.svelte').then((one) => one.downloads),
+          downloads: () => webDownloads().then((one) => one.downloads),
         })
       },
     )

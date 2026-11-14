@@ -44,8 +44,6 @@
     "apps/desktop/src/lib/tree-order.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/web-tab/activity.ts",
-    "apps/desktop/src/lib/web-tab/settle.ts",
     "apps/desktop/src/lib/web/away.svelte.ts",
     "apps/desktop/src/lib/web/index-store.ts",
     "apps/desktop/src/lib/web/sync-store.ts",

@@ -135,9 +135,17 @@ import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } f
 import { rowIds } from './row-ids'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
-import { plainOrigin } from './web-tab/address'
+import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
-import { pages } from './web-tab/pages.svelte'
+import {
+  oneWindow,
+  pageAiming,
+  pages,
+  pageZoom,
+  siteMaking,
+  webNotes,
+  websiteConverting,
+} from './web-tab/src/api'
 import { agentMarks } from './agent-marks.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 import { settingsTab } from './settings/tab-hook'
@@ -1775,7 +1783,7 @@ class Workspace {
       return
     }
     if (isDesktop) {
-      const windows = await import('./web-tab/one-window.svelte')
+      const windows = await oneWindow()
       if (windows.heldElsewhere(path)) {
         windows.showElsewhere(path)
         return
@@ -1788,7 +1796,7 @@ class Workspace {
     }
     const opening = isWebTarget(path)
       ? path
-      : await import('./web-tab/convert').then(({ asShortcut }) => asShortcut(this, path))
+      : await websiteConverting().then(({ asShortcut }) => asShortcut(this, path))
     if (opening === null) {
       await this.open(path, how)
       return
@@ -1799,7 +1807,7 @@ class Workspace {
 
   private async browseOldWebsite(path: string, how: OpenHow) {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
-    const { webUrlOf } = await import('./web-tab/note')
+    const { webUrlOf } = await webNotes()
     const url = webUrlOf(text)
     if (url === null) {
       await this.open(path, how)
@@ -1856,7 +1864,7 @@ class Workspace {
   async convertWebsites(): Promise<number> {
     const root = this.activeSpace?.root
     if (!root || !(await this.writableAt(root))) return 0
-    const { convertWebsites } = await import('./web-tab/convert')
+    const { convertWebsites } = await websiteConverting()
     return convertWebsites(this)
   }
 
@@ -1923,7 +1931,7 @@ class Workspace {
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('web', dir)) return
 
-    const { newSite } = await import('./web-tab/new-site')
+    const { newSite } = await siteMaking()
     const path = await newSite(this, dir, named)
     this.undone.record({ kind: 'create', path })
     await this.loadTree()
@@ -1936,7 +1944,7 @@ class Workspace {
   }
 
   async webAimed(tab: Tab, url: string) {
-    const { aimed } = await import('./web-tab/aimed')
+    const { aimed } = await pageAiming()
     await aimed(this, tab, url)
   }
 
@@ -2530,7 +2538,7 @@ class Workspace {
     const tab = this.active
     if (tab?.kind !== 'web' || !pages.of(tab.id).live) return false
 
-    void import('./web-tab/zoom').then((one) => one.zoomStep(tab.id, pages.of(tab.id), step))
+    void pageZoom().then((one) => one.zoomStep(tab.id, pages.of(tab.id), step))
     return true
   }
 

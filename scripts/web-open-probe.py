@@ -341,7 +341,7 @@ def main() -> int:
     if said["opened under a layer"] is not True:
         wrong.append(
             "a web tab whose pane was covered when it mounted never showed its page:"
-            " see `look` in lib/web-tab/WebTab.svelte"
+            " see `look` in lib/web-tab/src/WebTab.svelte"
         )
 
     for name, budget in (("cold ms", COLD_MS), ("open ms", OPEN_MS), ("covered ms", COVERED_MS)):

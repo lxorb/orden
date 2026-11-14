@@ -127,7 +127,14 @@ export {
 } from './ports'
 export type { PandocPicture, PickedFile } from './files'
 export type { PreviewedTab, PreviewPorts, ScreenPreview, TerminalPreviewPort } from './previews'
-export type { WebPageSeen, WebPagesPort, WebPorts } from './web'
+export type {
+  EngineTaken,
+  OfferedEngine,
+  PressedKey,
+  WebPageSeen,
+  WebPagesPort,
+  WebPorts,
+} from './web'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
 export type { VoicePort, VoicePorts, VoiceRecording } from './voice'
 export type {

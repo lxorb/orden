@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { webPages } from '@orden/contracts'
   import { keyElsewhere } from './layer-keys'
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -38,7 +39,6 @@
     landing,
     listenOver,
   } from './drag-paths'
-  import { isDesktop } from './platform/src/api'
   import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import {
@@ -457,12 +457,12 @@
     carrying = paths
     workspace.panes.dragged({ tabId: null }, endDrag)
     void import('./tab-strip/space-drop').then((drop) => drop.followTreeDrag(paths))
-    if (isDesktop) void import('./web-tab/carry-in').then((pages) => pages.carryToPages(paths))
+    webPages().carryIn(paths)
   }
 
   function endDrag() {
     workspace.panes.dropped()
-    if (isDesktop) void import('./web-tab/carry-in').then((pages) => pages.carriedToPages())
+    webPages().carriedIn()
     carriedNothing()
     letGo()
     stopRolling()

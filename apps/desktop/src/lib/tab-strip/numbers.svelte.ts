@@ -3,11 +3,11 @@ import { shortcuts } from '../shortcuts.svelte'
 import { tabOverview } from '../surfaces.svelte'
 import { invoke, isDesktop } from '../platform/src/api'
 import { viewport } from '../ui-kit/src/api'
+import { takenOf, type Taken } from '../web-tab/src/keys'
 import { workspace } from '../workspace.svelte'
 import { letterOf } from './letters'
 import { essentialLetters } from './letters.svelte'
 import { AltHold, numerals } from './numbers'
-import { takenOf, type Taken } from '../web-tab/keys'
 import TabNumbers from './TabNumbers.svelte'
 
 export interface Worn {

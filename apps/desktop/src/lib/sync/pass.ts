@@ -25,7 +25,7 @@ import {
 } from '../platform/src/api'
 import { evictedHere } from '../icloud-placeholder'
 import { syncMark } from '../surfaces.svelte'
-import { settleShortcuts } from '../web-tab/settle'
+import { settleShortcuts } from '@orden/scan/settle'
 import { isUntouchedWelcome } from '../welcome'
 import { syncDeletes } from '../sync-client/src/api'
 import { baseOf, behind, unixLines } from './ancestry'

@@ -1,3 +1,4 @@
+import { privateWindows } from '../web-tab/src/api'
 import {
   type BindingSpec,
   type EditorView,
@@ -264,8 +265,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-n',
     run: () => {
-      if (hiddenKinds.offers('private'))
-        void import('../web-tab/private').then((one) => one.openPrivate())
+      if (hiddenKinds.offers('private')) void privateWindows().then((one) => one.openPrivate())
     },
     desktop: true,
   },

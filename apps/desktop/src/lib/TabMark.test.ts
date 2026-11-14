@@ -20,7 +20,7 @@ const { loadIcons } = await import('./ui-kit/src/icons')
 const { MARKS } = await import('./file-mark')
 const { GRAPH_MARK } = await import('./panel-marks')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
-const { pages } = await import('./web-tab/pages.svelte')
+const { pages } = await import('./web-tab/src/pages.svelte')
 const { writeShortcut } = await import('@orden/scan/shortcut')
 const TabMark = (await import('./TabMark.svelte')).default
 

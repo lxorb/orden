@@ -1,3 +1,4 @@
+import { siteIconSet } from './web-tab/src/api'
 import {
   BRANDS,
   EMOJI_OUTLINE,
@@ -366,7 +367,7 @@ export const ICON_SETS: readonly IconSet[] = [
     id: SITE_ICONS,
     label: 'Web icons',
     credit: '',
-    load: async () => (await import('./web-tab/site-icons.svelte')).siteSet(),
+    load: async () => (await siteIconSet()).siteSet(),
   },
   {
     id: BRANDS,

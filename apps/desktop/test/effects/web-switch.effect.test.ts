@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
-import type { Cut } from '../../src/lib/web-tab/covers'
+import type { Cut } from '../../src/lib/web-tab/src/covers'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
@@ -133,17 +133,17 @@ document.elementFromPoint = () => over ?? document.querySelector('.hole')
 
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
 const { hovering } = await import('../../src/lib/tab-strip/hover-card.svelte')
-const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
+const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
 
 await Promise.all([
-  import('../../src/lib/web-tab/visited'),
-  import('../../src/lib/web-tab/web-data.svelte'),
-  import('../../src/lib/web-tab/merged'),
-  import('../../src/lib/web-tab/keys'),
-  import('../../src/lib/web-tab/downloads.svelte'),
+  import('../../src/lib/web-tab/src/visited'),
+  import('../../src/lib/web-tab/src/web-data.svelte'),
+  import('../../src/lib/web-tab/src/merged'),
+  import('../../src/lib/web-tab/src/keys'),
+  import('../../src/lib/web-tab/src/downloads.svelte'),
 ])
 
 let target: HTMLElement

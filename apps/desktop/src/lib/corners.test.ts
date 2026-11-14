@@ -84,5 +84,5 @@ test('every pane is a card rounded at all four corners, with no setting that squ
   const app = read('../App.svelte')
   expect(app).not.toMatch(/grounded|flushBottom/)
   expect(read('./modes.svelte.ts')).not.toContain('flushBottom: boolean')
-  expect(read('./web-tab/WebTab.svelte')).toContain('cardCorner(hole)')
+  expect(read('./web-tab/src/WebTab.svelte')).toContain('cardCorner(hole)')
 })

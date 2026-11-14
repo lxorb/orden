@@ -123,7 +123,14 @@ import { workspace } from './workspace.svelte'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/src/api'
-import { pages, type Step } from './web-tab/pages.svelte'
+import {
+  historyOpening,
+  pages,
+  privateWindows,
+  siteClearing,
+  siteMuting,
+  type Step,
+} from './web-tab/src/api'
 import { openRandomNote, randomChoices } from './random-note'
 import { showFeedback, showQuickAdd, toggleTabOverview } from './surfaces.svelte'
 
@@ -485,14 +492,13 @@ function webCommands(): Command[] {
       id: 'web-mute',
       label: page.muted ? 'Unmute site' : 'Mute site',
       hint: shortcuts.hint('web.mute'),
-      run: () => void import('./web-tab/mute').then((one) => one.muteSite(tab.id, !page.muted)),
+      run: () => void siteMuting().then((one) => one.muteSite(tab.id, !page.muted)),
     },
     {
       id: 'web-clear-data',
       label: 'Delete browsing data',
       hint: shortcuts.hint('web.clear-data'),
-      run: () =>
-        void import('./web-tab/clearing-asked.svelte').then((one) => one.clearingAsked.ask(tab.id)),
+      run: () => void siteClearing().then((one) => one.clearingAsked.ask(tab.id)),
     },
     {
       id: 'web-devtools',
@@ -1092,14 +1098,14 @@ export function appCommands(view?: EditorView): Command[] {
       label: 'New private tab',
       hint: shortcuts.hint('app.new-private'),
       disabled: !isDesktop || viewport.touch,
-      run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
+      run: () => void privateWindows().then(({ openPrivate }) => openPrivate()),
     },
     {
       id: 'web-history',
       label: 'Browsing history',
       hint: shortcuts.hint('web.history'),
       disabled: viewport.touch,
-      run: () => void import('./web-tab/history-open').then((one) => one.openHistory()),
+      run: () => void historyOpening().then((one) => one.openHistory()),
     },
     {
       id: 'undo-file',

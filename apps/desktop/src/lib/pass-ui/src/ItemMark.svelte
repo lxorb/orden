@@ -2,7 +2,7 @@
   import type { Content } from '@orden/pass/types'
   import Icon from '../../Icon.svelte'
   import { readIcon } from '../../ui-kit/src/api'
-  import { favicons } from '../../web-tab/pages.svelte'
+  import { webPages } from '@orden/contracts'
   import Glyph from './Glyph.svelte'
   import { KIND_ICONS } from '../../pass-sync/src/api'
 
@@ -10,7 +10,8 @@
 
   const site = $derived(
     content.kind === 'login'
-      ? (content.websites.map((one) => favicons.of(one.url)).find((one) => one !== null) ?? null)
+      ? (content.websites.map((one) => webPages().faviconOf(one.url)).find((one) => one !== null) ??
+          null)
       : null,
   )
   let broken = $state(false)

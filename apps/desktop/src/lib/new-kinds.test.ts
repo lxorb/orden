@@ -152,7 +152,7 @@ describe('the kinds a new tab can be', () => {
 
   test('a web note opens the search engine this device chose', async () => {
     const made = makers()
-    const { searchEngine } = await import('./web-tab/search-engine.svelte')
+    const { searchEngine } = await import('./web-tab/src/search-engine.svelte')
     searchEngine.choose('duckduckgo')
 
     newKinds()

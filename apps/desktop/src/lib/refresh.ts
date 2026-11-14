@@ -3,7 +3,7 @@ import { workspace } from './workspace.svelte'
 export async function refreshHere(): Promise<void> {
   const tab = workspace.active
   if (tab?.kind === 'web') {
-    const { pages } = await import('./web-tab/pages.svelte')
+    const { pages } = await import('./web-tab/src/api')
     await pages.step(tab.id, 'reload')
     return
   }

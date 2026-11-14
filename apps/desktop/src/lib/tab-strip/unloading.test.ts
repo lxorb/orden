@@ -22,7 +22,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../workspace.svelte')
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
-const { pages } = await import('../web-tab/pages.svelte')
+const { pages } = await import('../web-tab/src/pages.svelte')
 const { agentMarks } = await import('../agent-marks.svelte')
 const { prompt } = await import('../ui-kit/src/prompt.svelte')
 const { tabMenu } = await import('./menu')

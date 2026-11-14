@@ -1,4 +1,4 @@
-import { visitKey } from '../web-tab/visits'
+import { visitKey } from '../web-tab/src/visits'
 import { namesAgents, type NoteToMake, noteToMake } from './new-note'
 import type { Row } from './rows'
 
@@ -10,7 +10,7 @@ export function makeable(term: string, taken: ReadonlySet<string>): NoteToMake |
   return taken.has(at.toLowerCase()) ? null : made
 }
 
-export { typedAddress } from '../web-tab/typed'
+export { typedAddress } from '@orden/scan/typed'
 
 export function withOffers(
   found: readonly Row[],

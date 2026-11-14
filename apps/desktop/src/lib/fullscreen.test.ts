@@ -303,7 +303,7 @@ describe('the shell', () => {
   })
 
   test('a web tab is its page and nothing else', () => {
-    const web = readFileSync(`${SOURCE}lib/web-tab/WebTab.svelte`, 'utf8')
+    const web = readFileSync(`${SOURCE}lib/web-tab/src/WebTab.svelte`, 'utf8')
     expect(web).toContain('<div class="head" class:gone={fullscreen.on}')
     expect(app).toContain("{#if fullscreen.on && workspace.active?.kind !== 'web'}")
   })

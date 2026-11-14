@@ -1,3 +1,4 @@
+import { oneWindow } from './web-tab/src/api'
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './accounts/src/api'
 import { busy, viewport } from './ui-kit/src/api'
@@ -222,7 +223,7 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
+    void startup.turn('rooms').then(() => oneWindow())
   }
 
   if (!__EVEN_PLUGIN__) {

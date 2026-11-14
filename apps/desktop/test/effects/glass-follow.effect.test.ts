@@ -202,7 +202,7 @@ test('the pair is the reader’s to choose, and with the frame not following it 
 })
 
 test('a tab on its way to an address never read keeps its colour, then changes once', async () => {
-  const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+  const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
   const tab = workspace.openPage(BLACK) ?? ''
   grounds.said(tab, BLACK, '#0f0f0f')
   workspace.activate(tab)
@@ -303,7 +303,7 @@ test('the shell, the bar and the open tab ease the colour rather than jump to it
   expect(source('src/App.svelte')).toMatch(
     /background: var\(--shell-ground\);\s*transition: background var\(--dur-/,
   )
-  expect(source('src/lib/web-tab/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
+  expect(source('src/lib/web-tab/src/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
   expect(source('src/lib/Tabs.svelte')).toMatch(/transition:\s+--tab-ground var\(--dur-/)
   expect(source('../../packages/themes/src/glass.css')).toMatch(/@property --tab-ground/)
 })

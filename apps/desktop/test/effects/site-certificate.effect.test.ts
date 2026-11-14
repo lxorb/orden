@@ -16,7 +16,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const WebSite = (await import('../../src/lib/web-tab/WebSite.svelte')).default
+const WebSite = (await import('../../src/lib/web-tab/src/WebSite.svelte')).default
 
 const party = (name: string, ...organization: string[]) => ({ name, organization })
 const link = (to: ReturnType<typeof party>, by: ReturnType<typeof party>, root = false) => ({

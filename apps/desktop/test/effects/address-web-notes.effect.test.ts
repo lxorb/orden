@@ -23,7 +23,7 @@ vi.mock('../../src/lib/link-index.svelte', () => ({
   },
 }))
 
-const AddressField = (await import('../../src/lib/web-tab/AddressField.svelte')).default
+const AddressField = (await import('../../src/lib/web-tab/src/AddressField.svelte')).default
 
 let target: HTMLElement | null = null
 let app: ReturnType<typeof mount> | null = null

@@ -6,7 +6,7 @@ import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from './ui-
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
 import { folderOf, isMarkdownPath, samePath, withinSpace } from './platform/src/api'
-import { pages, siteMark } from './web-tab/pages.svelte'
+import { pages, siteMark } from './web-tab/src/api'
 import { workspace } from './workspace.svelte'
 
 function mapKey(path: string): string {

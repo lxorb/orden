@@ -21,7 +21,7 @@ vi.mock('../../src/lib/own-window', () => ({
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { heldElsewhere } = await import('../../src/lib/web-tab/one-window.svelte')
+const { heldElsewhere } = await import('../../src/lib/web-tab/src/one-window.svelte')
 
 const other = new BroadcastChannel('orden:web-notes')
 const heard: Record<string, unknown>[] = []

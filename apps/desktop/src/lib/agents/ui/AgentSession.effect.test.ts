@@ -3,7 +3,7 @@ import { afterEach, expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => ({ pages: [] as string[] }))
 
-vi.mock('../../web-tab/pages.svelte', () => ({
+vi.mock('../../web-tab/src/pages.svelte', () => ({
   pages: { adopt: (_id: string, handing: () => Promise<void>) => handing() },
 }))
 

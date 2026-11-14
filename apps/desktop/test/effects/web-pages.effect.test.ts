@@ -7,7 +7,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 
 test('a pane can read its page out of a derived the first time it asks', () => {
   let read: (() => unknown) | undefined

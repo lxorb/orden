@@ -1,4 +1,4 @@
-import { hostOf, siteOf } from '../../web-tab/web-data'
+import { hostOf, siteOf } from '../../web-tab/src/web-data'
 
 export type Registrable = (host: string) => string | null
 

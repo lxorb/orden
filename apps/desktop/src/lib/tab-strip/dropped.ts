@@ -1,4 +1,4 @@
-import { isWebAddress } from '../web-tab/address'
+import { isWebAddress } from '@orden/scan/web-address'
 
 const LIST = 'text/uri-list'
 const PLAIN = 'text/plain'

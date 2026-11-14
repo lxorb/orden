@@ -235,7 +235,7 @@ describe('the ring a keyboard leaves', () => {
       'lib/ai/vault/VaultApprove.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
-      'lib/web-tab/WebAsk.svelte',
+      'lib/web-tab/src/WebAsk.svelte',
     ])
   })
 
@@ -345,7 +345,7 @@ describe('the switch', () => {
       'lib/ui-controls/src/Switch.svelte',
       'lib/views/AutomationsBuilder.svelte',
       'lib/views/ViewSettings.svelte',
-      'lib/web-tab/WebClear.svelte',
+      'lib/web-tab/src/WebClear.svelte',
     ])
   })
 })
@@ -578,12 +578,12 @@ describe('the bubble a sentence appears in', () => {
       'lib/pass-ui/src/PassFill.svelte',
       'lib/tab-strip/TabCard.svelte',
       'lib/ui-controls/src/Hint.svelte',
-      'lib/web-tab/WebAsk.svelte',
-      'lib/web-tab/WebDialog.svelte',
-      'lib/web-tab/WebDownloads.svelte',
-      'lib/web-tab/WebExtensionPopup.svelte',
-      'lib/web-tab/WebExtensions.svelte',
-      'lib/web-tab/WebSite.svelte',
+      'lib/web-tab/src/WebAsk.svelte',
+      'lib/web-tab/src/WebDialog.svelte',
+      'lib/web-tab/src/WebDownloads.svelte',
+      'lib/web-tab/src/WebExtensionPopup.svelte',
+      'lib/web-tab/src/WebExtensions.svelte',
+      'lib/web-tab/src/WebSite.svelte',
     ])
   })
 })

@@ -65,7 +65,7 @@ vi.mock('./link-index.svelte', () => ({
 
 const live: Record<string, string> = {}
 
-vi.mock('./web-tab/pages.svelte', () => ({
+vi.mock('./web-tab/src/api', () => ({
   pages: { iconOf: (tab: string) => live[tab] ?? null },
   siteMark: (shown: string | null, _url: string | null, written?: string | null) =>
     shown ?? written ?? null,

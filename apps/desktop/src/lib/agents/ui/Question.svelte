@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../../FileMark.svelte'
   import { dur, fly } from '../../platform/src/api'
-  import { pages, siteMark } from '../../web-tab/pages.svelte'
+  import { pages, siteMark } from '../../web-tab/src/pages.svelte'
   import { workspace } from '../../workspace.svelte'
   import type { Approval } from '../verbs'
   import type { Activity } from './activity.svelte'

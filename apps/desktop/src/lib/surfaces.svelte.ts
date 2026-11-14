@@ -1,3 +1,4 @@
+import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@orden/markdown/door'
 import { warmCalls } from './accounts/src/api'
@@ -93,7 +94,7 @@ export const pagesSurface = held(() =>
 export const webSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no web tab in the Even Realities plugin'))
-    : import('./web-tab/WebTab.svelte'),
+    : loadWebTab(),
 )
 
 export const terminalSurface = held(() =>
@@ -250,7 +251,7 @@ export const spaceSound = latched(() => import('./SpaceSound.svelte'))
 
 export const soundMark = held(() => import('./SoundMark.svelte'))
 
-export const privateMark = held(() => import('./web-tab/PrivateMark.svelte'))
+export const privateMark = held(() => loadPrivateMark())
 
 export const terminalMark = held(() =>
   import('./terminal/src/api').then((one) => one.loadTerminalMark()),

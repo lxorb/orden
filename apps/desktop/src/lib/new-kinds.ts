@@ -123,7 +123,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'w',
     make: (paneId) =>
       inPane(paneId, () =>
-        import('./web-tab/search-engine.svelte').then((one) =>
+        import('./web-tab/src/search-engine.svelte').then((one) =>
           workspace.openPage(one.searchEngine.home),
         ),
       ),

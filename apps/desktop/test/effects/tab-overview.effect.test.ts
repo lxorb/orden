@@ -14,7 +14,7 @@ const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { runTap } = await import('../../src/lib/tapped')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 
 let close: () => void
@@ -314,7 +314,7 @@ test('the canvas is the window’s own ground, its sidebars sliding away, and th
 })
 
 test('every page stands still from before the first frame to after the last, and the canvas is no layer a page has to find', async () => {
-  const { layersOver } = await import('../../src/lib/web-tab/covers')
+  const { layersOver } = await import('../../src/lib/web-tab/src/covers')
   const hole = document.createElement('div')
   document.body.append(hole)
   onTestFinished(() => hole.remove())

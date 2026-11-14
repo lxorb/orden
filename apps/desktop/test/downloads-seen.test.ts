@@ -43,7 +43,7 @@ describe('every file the app hands out', () => {
   })
 
   test("and a web tab's page says it as each download starts", () => {
-    const store = sources.find((one) => one.name === 'lib/web-tab/downloads.svelte.ts')
+    const store = sources.find((one) => one.name === 'lib/web-tab/src/downloads.svelte.ts')
     expect(store?.text).toMatch(/downloadStarted\(one\.name, \{ tab: one\.tab \}\)/)
   })
 })

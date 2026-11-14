@@ -1,7 +1,7 @@
 import { folderNote } from '../folder-notes'
 import { canWriteAt } from '../sharing/src/api'
 import { folderOf, samePath } from '../platform/src/api'
-import { pages } from '../web-tab/pages.svelte'
+import { pages } from '../web-tab/src/api'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { nextPane } from '../workspace/pane-tree'

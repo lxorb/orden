@@ -5,6 +5,13 @@ interface World {
 
 class Page {
   url = $state<string | null>(null)
+  readonly title = ''
+  readonly back = false
+  readonly forward = false
+  readonly zoom = 1
+  readonly shot = null
+  readonly loading = false
+  readonly icon = null
 }
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the pages are reactive, not the list
