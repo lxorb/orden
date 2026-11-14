@@ -1,0 +1,10 @@
+{
+  "name": "tab-fill",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/edge-peek.svelte.ts",
+    "apps/desktop/src/lib/focus.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

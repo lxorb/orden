@@ -321,7 +321,7 @@ export function showQuickAdd(prefill: import('./quick-add/src/api').Prefill = {}
   }
 }
 
-export const fillBar = held(() => import('./tab-fill/FillBar.svelte'))
+export const fillBar = held(() => import('./tab-fill/src/api').then((one) => one.loadFillBar()))
 export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 
 export const guestCorner = held(() => import('./GuestCorner.svelte'))

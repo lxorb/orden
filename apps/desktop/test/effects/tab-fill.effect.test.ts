@@ -61,8 +61,8 @@ const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { STARTS_RIGHT } = await import('../../src/lib/workspace/panels')
 const App = (await import('../../src/App.svelte')).default
-await import('../../src/lib/tab-fill/fill')
-await import('../../src/lib/tab-fill/FillBar.svelte')
+await import('../../src/lib/tab-fill/src/fill')
+await import('../../src/lib/tab-fill/src/FillBar.svelte')
 
 await warmWindow(
   () => {
