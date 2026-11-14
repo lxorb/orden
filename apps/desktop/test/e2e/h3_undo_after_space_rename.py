@@ -6,7 +6,7 @@ say, wrong = DRIVE.say, DRIVE.wrong
 JS = r"""
 async () => {
   const ws = window.ordenApp.workspace
-  const { invoke } = await import('/src/lib/tauri.ts')
+  const { invoke } = await import('/src/lib/platform/src/api.ts')
   const { modes } = await import('/src/lib/modes.svelte.ts')
   const listing = async (base) => {
     const tree = await invoke('read_tree', { root: base, options: { every: true, showHidden: true, papers: true } }).catch(() => ({ children: [] }))

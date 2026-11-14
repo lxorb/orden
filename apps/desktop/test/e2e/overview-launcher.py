@@ -13,7 +13,7 @@ async () => {
   const home = ws.activeSpace
   const other = await ws.addSpace('Other')
   await ws.showSpace(home.id)
-  const { invoke } = await import('/src/lib/tauri.ts')
+  const { invoke } = await import('/src/lib/platform/src/api.ts')
   const near = home.root + '/Near.md'
   await invoke('write_note', { path: near, content: '# Near\n\nwords\n' })
   await ws.loadTree()

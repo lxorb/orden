@@ -10,7 +10,7 @@ async () => {
   const sid = ws.activeSpace.id
   const docs = await import('/src/lib/agents/src/docs/index.ts')
   const { review } = await import('/src/lib/ai/review/review.svelte.ts')
-  const { invoke } = await import('/src/lib/tauri.ts')
+  const { invoke } = await import('/src/lib/platform/src/api.ts')
   const nap = (ms = 8) => new Promise((go) => setTimeout(go, ms))
   const read = (rel) => invoke('read_note', { path: root + '/' + rel }).catch(() => null)
   const write = async (rel, text) => {
