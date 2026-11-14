@@ -1,14 +1,7 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
-import { inboxStamp } from '@orden/sync-core'
 import { base64url, fromBase64url } from '../src/sync-server/src/push/keys'
-import {
-  MOST_TRIES,
-  remindersIn,
-  sendDue,
-  TRY_AGAIN_AFTER,
-} from '../src/sync-server/src/push/reminders'
-import { writeInboxText } from '../src/sync-server/src/inbox-text'
+import { MOST_TRIES, sendDue, TRY_AGAIN_AFTER } from '../src/sync-server/src/push/reminders'
 import { forgetAccess } from '../src/sync-server/src/push/fcm'
 import { encrypted } from '../src/sync-server/src/push/webpush'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -20,7 +13,6 @@ let space: string
 const ZONE = 'Europe/Zurich'
 const WALL = { date: '2099-01-05', time: '09:00' }
 const AT = momentOf(WALL, ZONE)
-const TASK = '- [ ] Call the bank [remind:: 2099-01-05 09:00]\n'
 
 beforeEach(async () => {
   env = testEnv()
@@ -47,11 +39,17 @@ function register(body: Record<string, string>) {
   return call<{ id: string; error?: string }>(env, '/v2/push/targets', { token, body })
 }
 
-async function inbox(content: string) {
+function remind(at: number, title = 'Call the bank', id = 'r1') {
   const user = (
     env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }
   ).user_id
-  await writeInboxText(env, user, content, new Date().toISOString().slice(0, 10))
+  env.db
+    .prepare(
+      `insert into push_reminders
+         (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at, tries, retry_at)
+       values (?, ?, ?, ?, ?, ?, '', 'todo', 'h', 0, null, 0, null)`,
+    )
+    .run(`inbox:${user}`, id, user, space, at, title)
 }
 
 function kept() {
@@ -137,52 +135,6 @@ describe('targets', () => {
   })
 })
 
-describe('reminders kept from the inbox', () => {
-  test('only for an account with somewhere to push to', async () => {
-    await inbox(TASK)
-    expect(kept()).toEqual([])
-
-    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    await inbox('')
-    await inbox(TASK)
-    expect(kept()).toMatchObject([{ at: AT, title: 'Call the bank', sent_at: null }])
-  })
-
-  test('never from a checkbox in a note that is no to-do list (#1229)', async () => {
-    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    await call(env, `/v1/spaces/${space}/notes`, {
-      token,
-      body: { path: 'Meeting.md', content: TASK },
-    })
-    expect(kept()).toEqual([])
-  })
-
-  test('a ticked task takes its reminder away', async () => {
-    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    await inbox(TASK)
-    expect(kept()).toHaveLength(1)
-    await inbox('- [x] Call the bank [remind:: 2099-01-05 09:00] ✅ 2099-01-04\n')
-    expect(kept()).toEqual([])
-  })
-
-  test('read the way the app reads them: no code, no front matter, the same id', () => {
-    const content = ['---', 'title: Plan', '---', '```', TASK.trim(), '```', TASK.trim()].join('\n')
-    const found = remindersIn(content, 'Work', 'Plan.md', ZONE, null, 0)
-    expect(found.map((one) => [one.line, one.at])).toEqual([[6, AT]])
-    expect(found[0]?.id).toMatch(/^[0-9a-f]{16}$/)
-  })
-
-  test('a counted and a written reminder a clock change sets apart are two rows', () => {
-    const content = '- [ ] a [time:: 02:00] [remind:: 30m, 1:30] 🛫 2026-11-01\n'
-    const found = remindersIn(content, 'Work', 'Plan.md', 'America/New_York', null, 0)
-    expect(found.map((one) => one.at)).toEqual([
-      Date.UTC(2026, 10, 1, 5, 30),
-      Date.UTC(2026, 10, 1, 6, 30),
-    ])
-    expect(new Set(found.map((one) => one.id)).size).toBe(2)
-  })
-})
-
 describe('sending', () => {
   async function serviceAccount() {
     const pair = (await crypto.subtle.generateKey(
@@ -202,63 +154,10 @@ describe('sending', () => {
     return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
   }
 
-  function soon() {
-    const day = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10)
-    return {
-      task: `- [ ] Call the bank [remind:: ${day} 09:00]\n`,
-      at: momentOf({ date: day, time: '09:00' }, ZONE),
-    }
-  }
-
-  test('a reminder whose minute has gone by is still sent after the note is saved (#458)', async () => {
-    env.FCM_SERVICE_ACCOUNT = await serviceAccount()
-    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    const { task, at } = soon()
-    await inbox(task)
-    expect(kept()).toHaveLength(1)
-
-    vi.useFakeTimers({ toFake: ['Date'] })
-    try {
-      vi.setSystemTime(at + 2000)
-      await inbox(`${task}- [ ] And another\n`)
-      expect(kept()).toMatchObject([{ at, sent_at: null }])
-
-      const fcm = recorded(
-        () => Response.json({ access_token: 'access', expires_in: 3600 }),
-        () => Response.json({ name: 'projects/orden-test/messages/1' }),
-      )
-      expect(await sendDue(env, at + 5000, fcm.send)).toBe(1)
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  test('but one written for a time already gone, or ticked once due, is not', async () => {
-    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    const { task, at } = soon()
-
-    vi.useFakeTimers({ toFake: ['Date'] })
-    try {
-      vi.setSystemTime(at + 2000)
-      await inbox(task)
-      expect(kept()).toEqual([])
-
-      vi.setSystemTime(at - 60_000)
-      await inbox('')
-      await inbox(task)
-      expect(kept()).toHaveLength(1)
-      vi.setSystemTime(at + 2000)
-      await inbox(task.replace('[ ]', '[x]'))
-      expect(kept()).toEqual([])
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
   test('a due reminder goes to a phone once, as data the app decides on', async () => {
     env.FCM_SERVICE_ACCOUNT = await serviceAccount()
     await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    await inbox(TASK)
+    remind(AT)
 
     const fcm = recorded(
       () => Response.json({ access_token: 'access', expires_in: 3600 }),
@@ -277,49 +176,12 @@ describe('sending', () => {
     expect(sent.message.data).toMatchObject({
       kind: 'reminder',
       title: 'Call the bank',
-      path: '.orden-inbox.md',
+      path: 'todo',
     })
     expect(sent.message.data.id).toBe(kept()[0]?.id)
 
     expect(await sendDue(env, AT + 60_000, fcm.send)).toBe(0)
-    await inbox(`${TASK}- [ ] Another\n`)
     expect(kept().filter((one) => one.sent_at !== null)).toHaveLength(1)
-  })
-
-  test('a reminder of a to-do in the account inbox is kept and sent, with no note behind it (#1576)', async () => {
-    env.FCM_SERVICE_ACCOUNT = await serviceAccount()
-    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-    const stamp = inboxStamp(1, 0, 'one')
-    await call(env, '/v2/inbox', {
-      token,
-      body: {
-        changes: [
-          {
-            id: 'a',
-            fields: { text: 'Call the bank', status: ' ', remind: '2099-01-05 09:00', order: 0 },
-            stamps: { text: stamp, status: stamp, remind: stamp, order: stamp },
-          },
-        ],
-      },
-    })
-    expect(kept().map((one) => [one.at, one.title])).toEqual([[AT, 'Call the bank']])
-
-    const fcm = recorded(
-      () => Response.json({ access_token: 'access', expires_in: 3600 }),
-      () => Response.json({ name: 'projects/orden-test/messages/1' }),
-    )
-    expect(await sendDue(env, AT, fcm.send)).toBe(1)
-    const sent = JSON.parse(fcm.asked[1]?.init?.body as string) as {
-      message: { data: Record<string, string> }
-    }
-    expect(sent.message.data).toMatchObject({ title: 'Call the bank', path: '.orden-inbox.md' })
-
-    const later = inboxStamp(2, 0, 'one')
-    await call(env, '/v2/inbox', {
-      token,
-      body: { changes: [{ id: 'a', fields: { gone: true }, stamps: { gone: later } }] },
-    })
-    expect(kept()).toEqual([])
   })
 
   test('a subscription its service no longer has is dropped', async () => {
@@ -345,7 +207,7 @@ describe('sending', () => {
       auth: base64url(crypto.getRandomValues(new Uint8Array(16))),
       zone: ZONE,
     })
-    await inbox(TASK)
+    remind(AT)
 
     const gone = recorded(() => new Response('', { status: 410 }))
     await sendDue(env, AT, gone.send)
@@ -359,7 +221,7 @@ describe('sending', () => {
 
   test('a service with no keys is left alone, and its target kept', async () => {
     await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
-    await inbox(TASK)
+    remind(AT)
     const none = recorded()
     expect(await sendDue(env, AT, none.send)).toBe(0)
     expect(none.asked).toEqual([])
@@ -386,7 +248,7 @@ describe('sending', () => {
     async function due() {
       env.FCM_SERVICE_ACCOUNT = await serviceAccount()
       await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
-      await inbox(TASK)
+      remind(AT)
     }
 
     test('is tried again after a wait, and rings once', async () => {
@@ -433,7 +295,6 @@ describe('sending', () => {
     test('is not tried again where another device of the account took it', async () => {
       await due()
       await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
-      await inbox(TASK)
 
       const replies = [OK, DOWN]
       const half = service(() => (replies.shift() ?? OK)())
@@ -448,7 +309,6 @@ describe('sending', () => {
     test('nor where a device beside it may have taken it', async () => {
       await due()
       await register({ kind: 'fcm', token: 'other-phone', zone: ZONE })
-      await inbox(TASK)
 
       const replies = [() => new Response('no', { status: 500 }), DOWN]
       await sendDue(env, AT, service(() => (replies.shift() ?? OK)()).send)
@@ -467,19 +327,9 @@ describe('sending', () => {
 
     test('is not tried again where a service has no keys', async () => {
       await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
-      await inbox(TASK)
+      remind(AT)
       expect(await sendDue(env, AT, recorded().send)).toBe(0)
       expect(kept()[0]?.sent_at).toBe(AT)
-    })
-
-    test('keeps its wait through a save of the inbox', async () => {
-      await due()
-      const down = service(DOWN)
-      await sendDue(env, AT, down.send)
-
-      await inbox(`${TASK}- [ ] And a line\n`)
-      await sendDue(env, AT + MINUTE, down.send)
-      expect(down.ids).toHaveLength(1)
     })
 
     test('holds up no reminder due, and the tries of a whole minute stay bounded', async () => {
