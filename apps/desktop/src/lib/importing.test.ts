@@ -1,9 +1,9 @@
+import type { PickedFile } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 
 import { folderNameFor } from './importing.svelte'
-import type { Picked } from './import/sources'
 
-function picked(name: string, inside = ''): Picked {
+function picked(name: string, inside = ''): PickedFile {
   return {
     name,
     webkitRelativePath: inside,
@@ -57,7 +57,7 @@ describe('the folder an import makes for itself', () => {
 })
 
 describe('a folder picked whole', () => {
-  function inFolder(path: string, words: string): Picked {
+  function inFolder(path: string, words: string): PickedFile {
     const bytes = new TextEncoder().encode(words)
     return {
       name: path.split('/').pop() ?? path,

@@ -1,4 +1,4 @@
-import type { BrowserId } from '../import/browsers'
+import type { BrowserId } from '../import/src/api'
 
 export interface Brand {
   id: string

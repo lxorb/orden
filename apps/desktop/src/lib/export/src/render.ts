@@ -1,3 +1,4 @@
+import type { PandocPicture } from '@orden/contracts'
 import { escapeAll } from '@orden/markdown/html'
 import { CODE_PALETTES } from '@orden/editor'
 import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@orden/markdown'
@@ -11,7 +12,6 @@ import { titleOf } from './document'
 import { inlinePictures, type Picture, swapSources } from './pictures'
 import { chooseTarget } from '../../files-out/src/api'
 import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
-import type { PandocPicture } from '../../import/pandoc-pictures'
 import { paletteCss } from '../../highlight'
 import { mathCss } from '../../math-fonts'
 import {

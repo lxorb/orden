@@ -1,4 +1,4 @@
-import type { BrowserId } from '../import/browsers'
+import type { BrowserId } from '../import/src/api'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepAfter } from './flow'
 import { gate } from './gate.svelte'

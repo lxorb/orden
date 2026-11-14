@@ -1,7 +1,8 @@
-import type { BrowserId } from '../import/browsers'
+import type { PickedFile } from '@orden/contracts'
+import type { BrowserId } from '../import/src/api'
 import { busy, message } from '../ui-kit/src/api'
-import type { FormatId } from '../import/plan'
-import type { Picked, Source } from '../import/sources'
+import type { FormatId } from '../import/src/api'
+import type { Source } from '../import/src/api'
 import { isDesktop } from '../platform/src/api'
 import type { Bringing } from './catalog'
 
@@ -39,8 +40,8 @@ async function landed(read: Read | null): Promise<boolean> {
 
 async function folder(): Promise<Read | null> {
   const [{ pickFolder }, { insideFolder, pickedFolder, sourcesFrom }] = await Promise.all([
-    import('../import/picking'),
-    import('../import/sources'),
+    import('../picking'),
+    import('../import/src/api'),
   ])
   const picked = await pickFolder()
   const name = pickedFolder(picked)
@@ -50,11 +51,11 @@ async function folder(): Promise<Read | null> {
 
 async function files(): Promise<Read | null> {
   const [{ pickFiles }, { sourcesFrom }, { folderNameFor }] = await Promise.all([
-    import('../import/picking'),
-    import('../import/sources'),
+    import('../picking'),
+    import('../import/src/api'),
     import('../importing.svelte'),
   ])
-  const picked: Picked[] = await pickFiles()
+  const picked: PickedFile[] = await pickFiles()
   if (!picked.length) return null
   return {
     name: (format) => Promise.resolve(folderNameFor(picked, format)),
@@ -63,7 +64,7 @@ async function files(): Promise<Read | null> {
 }
 
 async function vault(): Promise<Read | null> {
-  const { vaults, vaultSources } = await import('../import/vaults')
+  const { vaults, vaultSources } = await import('../import/src/api')
   const found = isDesktop ? await vaults() : []
   const [only] = found
   if (found.length !== 1 || !only) return folder()
@@ -71,12 +72,12 @@ async function vault(): Promise<Read | null> {
 }
 
 async function macNotes(): Promise<boolean> {
-  const [apple, { applyImport }, { arrive }, { workspace }] = await Promise.all([
-    import('../import/apple'),
-    import('../import/apply'),
+  const [{ applyImport, macNotes: readNotes }, { arrive }, { workspace }] = await Promise.all([
+    import('../import/src/api'),
     import('../migrating.svelte'),
     import('../workspace.svelte'),
   ])
+  const apple = await readNotes()
   const plan = await apple.readMacNotes().catch((error: unknown) => {
     const said = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
     if (said === apple.NO_ACCESS)
@@ -111,10 +112,7 @@ export async function bringNotes(how: Bringing): Promise<Outcome> {
 
 export async function browsersHere(): Promise<Set<BrowserId | 'zen'>> {
   if (!isDesktop) return new Set()
-  const [{ foundBrowsers }, { zenProfiles }] = await Promise.all([
-    import('../import/browsers'),
-    import('../import/zen-profiles'),
-  ])
+  const { foundBrowsers, zenProfiles } = await import('../import/src/api')
   const [found, zen] = await Promise.all([foundBrowsers(), zenProfiles()])
   const here = new Set<BrowserId | 'zen'>(found.map((one) => one.browser))
   if (zen.length) here.add('zen')
@@ -129,7 +127,7 @@ export async function bringBrowser(importer: BrowserId | 'zen'): Promise<string[
   }
 
   if (importer === 'zen') {
-    const { zenProfiles } = await import('../import/zen-landing')
+    const { zenProfiles } = await import('../import/src/api')
     for (const profile of await zenProfiles()) {
       await migrating.zenProfile(profile)
       heard()
@@ -137,7 +135,7 @@ export async function bringBrowser(importer: BrowserId | 'zen'): Promise<string[
     return troubles
   }
 
-  const { foundBrowsers } = await import('../import/browsers')
+  const { foundBrowsers } = await import('../import/src/api')
   const found = (await foundBrowsers()).find((one) => one.browser === importer)
   const profiles = found?.profiles ?? []
   for (const profile of profiles) {

@@ -20,7 +20,6 @@
     "apps/desktop/src/lib/dialog-answer.ts",
     "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/images.ts",
-    "apps/desktop/src/lib/import/pandoc-pictures.ts",
     "apps/desktop/src/lib/internal/work.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/link-rewrite.ts",

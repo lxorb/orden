@@ -1,6 +1,6 @@
 import { oneEdit } from '@orden/markdown/edits'
 
-import { converted } from './import/convert'
+import { converted } from './import/src/api'
 import { protection } from './protect/src/api'
 import type { Change } from './search/apply'
 import { changeOf } from './search/replace'

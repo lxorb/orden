@@ -53,7 +53,7 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     holds: "'\\\\cdot'",
     why: 'the TeX multiplication dot',
   },
-  { path: 'apps/desktop/src/lib/import/sources.ts', holds: "'", why: 'a code page table' },
+  { path: 'apps/desktop/src/lib/import/src/sources.ts', holds: "'", why: 'a code page table' },
   {
     path: 'apps/desktop/src/lib/ui-kit/src/icons.ts',
     holds: "first === undefined ? '",

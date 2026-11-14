@@ -1,11 +1,27 @@
+import type { PickedFile } from '@orden/contracts'
 import { busy, message, viewport } from './ui-kit/src/api'
 import { firstVisit } from './first-visit.svelte'
-import type { FormatId } from './import/plan'
+import type { FormatId } from './import/src/api'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
-import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
-import type { BrowserProfile, FoundBrowser } from './import/browsers'
-import type { Vault } from './import/vaults'
-import type { ZenProfile } from './import/zen-profiles'
+import {
+  applyImport,
+  carriedBy,
+  detect,
+  foundBrowsers,
+  insideFolder,
+  landBrowser,
+  landZen,
+  pickedFolder,
+  readAs,
+  type Source,
+  sourcesFrom,
+  vaults,
+  vaultSources,
+  zenProfiles,
+} from './import/src/api'
+import type { BrowserProfile, FoundBrowser } from './import/src/api'
+import type { Vault } from './import/src/api'
+import type { ZenProfile } from './import/src/api'
 import { isDesktop } from './platform/src/api'
 import { type Space, workspace } from './workspace.svelte'
 
@@ -22,7 +38,6 @@ class Migrating {
 
   async obsidian() {
     if (this.working) return
-    const { vaults } = await import('./import/vaults')
     const found = isDesktop ? await vaults() : []
     if (found.length) this.vaults = found
     else await this.folder()
@@ -36,7 +51,6 @@ class Migrating {
 
   async findBrowsers() {
     if (!isDesktop) return
-    const { foundBrowsers } = await import('./import/browsers')
     this.browsers = await foundBrowsers()
   }
 
@@ -49,7 +63,6 @@ class Migrating {
 
   async browserProfile(profile: BrowserProfile, several = true) {
     await this.running(async () => {
-      const { landBrowser } = await import('./import/browser-landing')
       const space = await landBrowser(profile, several)
       this.browserProfiles = null
       await arrive(space, false)
@@ -58,7 +71,6 @@ class Migrating {
 
   async zen() {
     if (this.working) return
-    const { zenProfiles } = await import('./import/zen-landing')
     const found = await zenProfiles()
     const [only] = found
     if (found.length > 1) this.profiles = found
@@ -68,7 +80,6 @@ class Migrating {
 
   async zenProfile(profile: ZenProfile) {
     await this.running(async () => {
-      const { landZen } = await import('./import/zen-landing')
       const space = await landZen(profile)
       this.profiles = null
       await arrive(space, false)
@@ -77,13 +88,12 @@ class Migrating {
 
   async vault(vault: Vault) {
     await this.bringing(async () => {
-      const { vaultSources } = await import('./import/vaults')
       return { name: vault.name, sources: await vaultSources(vault) }
     })
   }
 
   async folder() {
-    const { pickFolder } = await import('./import/picking')
+    const { pickFolder } = await import('./picking')
     const picked = await pickFolder()
     const name = pickedFolder(picked)
     if (!name) return
@@ -92,7 +102,7 @@ class Migrating {
   }
 
   async files() {
-    const { pickFiles } = await import('./import/picking')
+    const { pickFiles } = await import('./picking')
     const picked = await pickFiles()
     if (!picked.length) return
 
@@ -134,7 +144,7 @@ class Migrating {
   }
 }
 
-async function namedFor(picked: readonly Picked[], format: FormatId): Promise<string> {
+async function namedFor(picked: readonly PickedFile[], format: FormatId): Promise<string> {
   const { folderNameFor } = await import('./importing.svelte')
   return folderNameFor(picked, format)
 }
@@ -143,12 +153,6 @@ export async function importAsSpace(
   name: string | ((format: FormatId) => Promise<string>),
   sources: readonly Source[],
 ): Promise<Space> {
-  const [{ detect, readAs }, { applyImport }, { carriedBy }] = await Promise.all([
-    import('./import/read'),
-    import('./import/apply'),
-    import('./import/carry'),
-  ])
-
   const format = await detect(sources)
   if (!format) throw new Error('Nothing in there can be read as notes.')
 

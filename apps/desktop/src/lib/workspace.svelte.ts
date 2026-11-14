@@ -1,3 +1,4 @@
+import type { PickedFile } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
 import { appsOn, basesOn, hiddenKinds } from './settings.svelte'
@@ -114,7 +115,6 @@ import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
 import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
-import type { Picked } from './import/sources'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
 import { fetchAcross, inFileTurn, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
@@ -2920,7 +2920,7 @@ class Workspace {
     await this.copied(await copyRows(this, rows), null)
   }
 
-  async bringIn(files: readonly Picked[], intoFolder: string) {
+  async bringIn(files: readonly PickedFile[], intoFolder: string) {
     if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, [])
     const { bringIn } = await import('./workspace/copying')

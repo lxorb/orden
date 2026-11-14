@@ -17,7 +17,7 @@ vi.mock('../sharing/src/api', () => ({
 }))
 
 const imported: { target: { root: string } }[] = []
-vi.mock('../import/apply', () => ({
+vi.mock('../import/src/apply', () => ({
   applyImport: (_plan: unknown, target: { root: string }) => {
     imported.push({ target })
     return Promise.resolve({ paths: [], stepped: 0 })

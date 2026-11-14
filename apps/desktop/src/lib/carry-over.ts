@@ -1,4 +1,4 @@
-import type { Carried } from './import/carry'
+import type { Carried } from './import/src/api'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
 
