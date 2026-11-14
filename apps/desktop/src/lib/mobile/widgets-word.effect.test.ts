@@ -28,8 +28,7 @@ vi.mock('../workspace.svelte', () => ({
     protection: { seen: '' },
   },
 }))
-vi.mock('../task-actions', () => ({ listed: () => Promise.resolve({ tasks: [] }) }))
-vi.mock('../rows/rows.svelte', () => ({ rows: { watch: () => () => undefined } }))
+vi.mock('../task-actions', () => ({ listed: () => ({ total: 0, tasks: [] }) }))
 
 const { watchWidgets } = await import('./widgets.svelte')
 
