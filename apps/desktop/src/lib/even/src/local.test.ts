@@ -1,16 +1,16 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { forTheCookie } from './local'
-import { STORAGE_KEY as RECOVERY_KEY } from '../recovery.svelte'
-import { STORAGE_KEY as MIRRORS_KEY } from '../sync.svelte'
-import { STORAGE_KEY as FOLDER_ICONS_KEY } from '../workspace/folder-icons.svelte'
-import { STORAGE_KEY as ARCHIVED_KEY } from '../workspace/archive.svelte'
+import { STORAGE_KEY as RECOVERY_KEY } from '../../recovery.svelte'
+import { STORAGE_KEY as MIRRORS_KEY } from '../../sync.svelte'
+import { STORAGE_KEY as FOLDER_ICONS_KEY } from '../../workspace/folder-icons.svelte'
+import { STORAGE_KEY as ARCHIVED_KEY } from '../../workspace/archive.svelte'
 import {
   EXPANDED_KEY,
   ICON_TINTS_KEY,
   ICONS_KEY,
   RECENT_KEY,
   TAGS_KEY,
-} from '../workspace/device.svelte'
+} from '../../workspace/device.svelte'
 
 const phone = vi.hoisted(() => ({ held: new Map<string, string>(), reachable: false }))
 

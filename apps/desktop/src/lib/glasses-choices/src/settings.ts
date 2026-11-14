@@ -1,7 +1,7 @@
 import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@orden/glasses/choices'
-import { modes } from '../modes.svelte'
-import type { Field, Group } from '../preferences'
-import { resetFields } from '../reset-fields'
+import { modes } from '../../modes.svelte'
+import type { Field, Group } from '../../preferences'
+import { resetFields } from '../../reset-fields'
 import { commandWords, DEFAULT_WORDS } from './commands'
 
 export interface Setting {

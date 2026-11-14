@@ -118,6 +118,7 @@ export const APP_FOLDERS = [
   'files-out',
   'first-screen',
   'foreign',
+  'glasses-choices',
   'import',
   'internal',
   'mobile',

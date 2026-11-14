@@ -1,8 +1,11 @@
-import { api, type KeyState, account } from '../accounts/src/api'
+import { account } from './account.svelte'
+import { api } from './client'
+import type { KeyState } from './routes'
 
 class GlassesKey {
   set = $state(false)
   tail = $state('')
+  private heard = false
 
   forget(): void {
     this.set = false
@@ -12,6 +15,8 @@ class GlassesKey {
   took(state: KeyState | undefined): void {
     if (!state) return
 
+    if (!this.heard) account.forgetWithSession(() => this.forget())
+    this.heard = true
     this.set = state.set
     this.tail = state.tail
   }
@@ -45,5 +50,3 @@ class GlassesKey {
 }
 
 export const glassesKey = new GlassesKey()
-
-account.forgetWithSession(() => glassesKey.forget())

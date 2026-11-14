@@ -1,0 +1,25 @@
+{
+  "name": "even",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "collab",
+    "glasses",
+    "glasses-choices",
+    "markdown",
+    "platform",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/file-mark.ts",
+    "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/plugin.ts",
+    "apps/desktop/src/lib/preferences.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/task-actions.ts",
+    "apps/desktop/src/lib/views.svelte.ts",
+    "apps/desktop/src/lib/web/store.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

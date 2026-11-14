@@ -1,5 +1,5 @@
-import type { Vault } from '../accounts/src/api'
-import { forget as forgetHere, keep as keepHere, storedText, waited } from '../platform/src/api'
+import type { Vault } from '../../accounts/src/api'
+import { forget as forgetHere, keep as keepHere, storedText, waited } from '../../platform/src/api'
 import { connectStore } from './sdk'
 
 export interface Keep {
@@ -57,16 +57,16 @@ const cookie: Keep = {
 const shelf: Keep = {
   name: 'indexedDB',
   async read(key) {
-    const { meta } = await import('../web/store')
+    const { meta } = await import('../../web/store')
     return some(await meta.get(key))
   },
   async write(key, value) {
-    const { meta } = await import('../web/store')
+    const { meta } = await import('../../web/store')
     await meta.put(key, value)
     return true
   },
   async clear(key) {
-    const { meta } = await import('../web/store')
+    const { meta } = await import('../../web/store')
     await meta.remove(key)
   },
 }

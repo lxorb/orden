@@ -1,5 +1,5 @@
 import { chatsFields } from '../chats-settings'
-import { glassesGroups, wordFields } from '../even/settings'
+import { glassesGroups, wordFields } from '../glasses-choices/src/api'
 import { setWord } from '../kind-choice'
 import { prompt } from '../ui-kit/src/api'
 import {

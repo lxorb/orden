@@ -1,9 +1,8 @@
-import { account, api } from '../accounts/src/api'
-import { modes } from '../modes.svelte'
-import { glassesKey } from './key.svelte'
-import { EFFORTS } from './models'
+import type { AskEffort } from '@orden/contracts'
+import { account, api, glassesKey } from '../../accounts/src/api'
+import { modes } from '../../modes.svelte'
 
-export const EFFORT_WORDS: readonly { value: (typeof EFFORTS)[number]; label: string }[] = [
+export const EFFORT_WORDS: readonly { value: AskEffort; label: string }[] = [
   { value: 'none', label: 'No reasoning' },
   { value: 'minimal', label: 'Minimal' },
   { value: 'low', label: 'Low' },

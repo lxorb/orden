@@ -30,7 +30,8 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, type AccountSettings } from './accounts/src/api'
+import { type AskEffort, isAskEffort } from '@orden/contracts'
+import { account, api, type AccountSettings, glassesKey } from './accounts/src/api'
 import { viewport } from './ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -43,8 +44,6 @@ import {
   MARKS,
   type Marks,
 } from '@orden/glasses/choices'
-import { glassesKey } from './even/key.svelte'
-import { type Effort, isEffort } from './even/models'
 import {
   isNumber,
   isRecord,
@@ -245,7 +244,7 @@ export const DEFAULTS = {
   glassesSeen: false,
   mobileSeen: false,
   glassesModel: '',
-  glassesEffort: 'low' as Effort,
+  glassesEffort: 'low' as AskEffort,
   vim: false,
   attachments: 'space' as AttachmentFolder,
   pagesPaper: 'a4' as Paper,
@@ -318,7 +317,7 @@ class Modes {
   glassesSeen = $state(DEFAULTS.glassesSeen)
   mobileSeen = $state(DEFAULTS.mobileSeen)
   glassesModel = $state(DEFAULTS.glassesModel)
-  glassesEffort = $state<Effort>(DEFAULTS.glassesEffort)
+  glassesEffort = $state<AskEffort>(DEFAULTS.glassesEffort)
   vim = $state(DEFAULTS.vim)
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
   attachments = $state<AttachmentFolder>(DEFAULTS.attachments)
@@ -387,7 +386,7 @@ class Modes {
       this.glassesWords = wordsOf(saved.glassesWords)
       stale ||= 'glassesScroll' in saved
       this.glassesModel = text(saved.glassesModel, DEFAULTS.glassesModel)
-      this.glassesEffort = isEffort(saved.glassesEffort)
+      this.glassesEffort = isAskEffort(saved.glassesEffort)
         ? saved.glassesEffort
         : DEFAULTS.glassesEffort
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
@@ -795,7 +794,7 @@ class Modes {
   }
 
   setGlassesEffort(effort: string) {
-    if (!isEffort(effort) || effort === this.glassesEffort) return
+    if (!isAskEffort(effort) || effort === this.glassesEffort) return
 
     this.glassesEffort = effort
     this.persist()
@@ -1064,7 +1063,7 @@ class Modes {
     if (typeof remote.glassesModel === 'string') {
       took(remote.glassesModel, (model) => (this.glassesModel = model))
     }
-    if (isEffort(remote.glassesEffort)) {
+    if (isAskEffort(remote.glassesEffort)) {
       took(remote.glassesEffort, (effort) => (this.glassesEffort = effort))
     }
 

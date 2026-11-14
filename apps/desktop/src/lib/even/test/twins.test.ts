@@ -3,7 +3,7 @@ import { relative, resolve } from 'node:path'
 import { parseSync } from 'vite'
 import { describe, expect, test } from 'vitest'
 
-const repo = resolve(import.meta.dirname, '../../../../..')
+const repo = resolve(import.meta.dirname, '../../../../../..')
 const TWINS = Object.keys(
   import.meta.glob(['/src/**/*.even.{ts,svelte}', '/../../packages/*/src/**/*.even.{ts,svelte}']),
 )
@@ -45,7 +45,7 @@ describe("the plugin's twins", () => {
   })
 
   for (const glob of TWINS) {
-    const twin = resolve(import.meta.dirname, '../../..', glob.slice(1))
+    const twin = resolve(import.meta.dirname, '../../../..', glob.slice(1))
     const real = twin.replace(/\.even\.(ts|svelte)$/, '.$1')
     const name = relative(repo, twin).replace(/\\/g, '/')
 
