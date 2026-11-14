@@ -173,7 +173,7 @@ function held(): string[] {
 }
 
 const ALL_MARKDOWN = WELCOME.replace(
-  '- Every note is a Markdown file you own, with to-dos, bases and boards right inside',
+  '- Every note is a Markdown file you own, with bases and boards right inside',
   '- Everything is markdown, and nothing else',
 )
 

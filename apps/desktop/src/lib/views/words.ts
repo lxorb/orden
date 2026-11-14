@@ -4,14 +4,7 @@ import { dateAt } from './days'
 import { bare } from './columns'
 import { dayWords } from '@orden/editor/task-days'
 import type { ChartKind, Measure } from './chart'
-import type { Builtin } from './spec'
 import { dayIn } from './values'
-
-const BUILTIN_NAMES: Record<Builtin, string> = {
-  todos: 'Todos',
-}
-
-export const builtinName = (builtin: Builtin): string => BUILTIN_NAMES[builtin]
 
 export const LAYOUTS = ['table', 'cards', 'kanban', 'timeline', 'chart', 'form'] as const
 export type Layout = (typeof LAYOUTS)[number]

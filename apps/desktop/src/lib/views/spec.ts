@@ -14,6 +14,12 @@ export interface ViewSpec {
 
 const isBuiltin = (value: unknown): value is Builtin => BUILTINS.some((one) => one === value)
 
+const BUILTIN_NAMES: Record<Builtin, string> = {
+  todos: 'Todos',
+}
+
+export const builtinName = (builtin: Builtin): string => BUILTIN_NAMES[builtin]
+
 export function readSpec(words: string): ViewSpec | null {
   const value = parsed(words)
   if (!isRecord(value)) return null

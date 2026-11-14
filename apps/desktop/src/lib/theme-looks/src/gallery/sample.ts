@@ -120,7 +120,7 @@ export function sampleHtml(full = false): string {
 
   const more = full
     ? `
-<blockquote><p>Every note is a Markdown file you own, with to-dos, bases and boards right inside.</p></blockquote>
+<blockquote><p>Every note is a Markdown file you own, with bases and boards right inside.</p></blockquote>
 <hr>`
     : ''
 

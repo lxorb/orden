@@ -4,6 +4,7 @@ import { identifier } from '../identifier'
 import { roomKind } from '../collab/src/api'
 import { nameOf, samePath } from '../space-paths'
 import { isNumber, isRecord, isString, keepJson, stringList } from '../stored'
+import { builtinName, readSpec } from '../views/spec'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
@@ -136,11 +137,13 @@ export function readDraft(value: unknown): Draft | null {
   if (path !== null && typeof path !== 'string') return null
 
   const shut = readFolds(folds)
+  const builtin =
+    path === null && tabKind(kind, path) === 'view' ? readSpec(doc)?.builtin : undefined
 
   return {
     kind: tabKind(kind, path),
     path,
-    name,
+    name: builtin === undefined ? name : builtinName(builtin),
     doc,
     dirty: dirty === true,
     cursor: isNumber(cursor) ? cursor : 0,
