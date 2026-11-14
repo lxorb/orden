@@ -377,7 +377,9 @@ export async function warmDoors(): Promise<void> {
       : () => import('./first-screen/keep.svelte').then((one) => one.keepFirstScreens()),
     () => import('./reload-when'),
     () => import('./keyboard-home'),
-    __EVEN_PLUGIN__ ? undefined : () => import('./back-swipe/swipes').then((one) => one.listen()),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
   ])
 }
 

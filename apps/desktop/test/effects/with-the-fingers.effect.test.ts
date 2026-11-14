@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import arrowSource from '../../src/lib/back-swipe/SwipeArrow.svelte?raw'
+import arrowSource from '../../src/lib/back-swipe/src/SwipeArrow.svelte?raw'
 import appSource from '../../src/App.svelte?raw'
 import pullSource from '../../src/lib/PullMark.svelte?raw'
 import base from '../../../../packages/themes/src/base.css?raw'
@@ -9,8 +9,8 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
   workspace: { showing: (pane: string) => (pane === 'p' ? { id: 't' } : null) },
 }))
 
-const SwipeArrow = (await import('../../src/lib/back-swipe/SwipeArrow.svelte')).default
-const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
+const SwipeArrow = (await import('../../src/lib/back-swipe/src/SwipeArrow.svelte')).default
+const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
 
 const MOVES = new Set([
   'all',

@@ -1,16 +1,16 @@
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('../platform/src/tauri', () => ({ isDesktop: false, isMobile: false }))
-vi.mock('../web-tab/pages.svelte', () => ({
+vi.mock('../../platform/src/tauri', () => ({ isDesktop: false, isMobile: false }))
+vi.mock('../../web-tab/pages.svelte', () => ({
   pages: { of: () => ({ back: true, forward: false }) },
 }))
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: { tabs: [], goBack: () => undefined, goForward: () => undefined },
 }))
 
 const { heard } = await import('./swipes')
 const { swiping } = await import('./shown.svelte')
-type Tab = import('../workspace.svelte').Tab
+type Tab = import('../../workspace.svelte').Tab
 
 const pane = document.createElement('div')
 pane.dataset.pane = 'p'

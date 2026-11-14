@@ -1,8 +1,8 @@
 import { mount, unmount } from 'svelte'
-import { overlays, viewport } from '../ui-kit/src/api'
-import { dur, isDesktop, isMobile } from '../platform/src/api'
-import { pages } from '../web-tab/pages.svelte'
-import { type Tab, workspace } from '../workspace.svelte'
+import { overlays, viewport } from '../../ui-kit/src/api'
+import { dur, isDesktop, isMobile } from '../../platform/src/api'
+import { pages } from '../../web-tab/pages.svelte'
+import { type Tab, workspace } from '../../workspace.svelte'
 import { swipeChoice } from './choice.svelte'
 import { chainOf, taken } from './edge'
 import { QUIET, SETTLE, type Side, type Source, Swipe, type Turn } from './gesture'
@@ -10,7 +10,7 @@ import { type Room, swiping } from './shown.svelte'
 import { Slid } from './slid'
 import SwipeArrow from './SwipeArrow.svelte'
 
-export const SIDE = 24
+const SIDE = 24
 
 export const PLAYS = 210
 
@@ -52,7 +52,7 @@ let settling = 0
 
 const pad = { known: false, down: false }
 
-export function wayOf(side: Side): 'back' | 'forward' {
+function wayOf(side: Side): 'back' | 'forward' {
   return side === 'left' ? 'back' : 'forward'
 }
 
@@ -228,7 +228,7 @@ function tabUnder(target: EventTarget | null): { tab: Tab; pane: HTMLElement; at
   return { tab, pane, at: target }
 }
 
-export function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
+function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
   if (event.deltaMode !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
     return false
   }
@@ -344,7 +344,7 @@ export interface Said {
   right: boolean
 }
 
-export function readSaid(value: unknown): Said | null {
+function readSaid(value: unknown): Said | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
   const { tab, kind, dx, dy, at, left, right } = said
@@ -406,7 +406,7 @@ export function listen(): () => void {
   let unlisten: (() => void) | null = null
   let stopped = false
   if (isDesktop) {
-    void import('../own-window').then(async ({ hearHere }) => {
+    void import('../../own-window').then(async ({ hearHere }) => {
       const off = await hearHere('orden://web-swipe', (event) => {
         const said = readSaid(event.payload)
         if (said) pageSaid(said)

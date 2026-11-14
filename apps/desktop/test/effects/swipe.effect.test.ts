@@ -39,10 +39,10 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
 }
 
 const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } =
-  await import('../../src/lib/back-swipe/swipes')
-const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/gesture')
-const { swipeChoice } = await import('../../src/lib/back-swipe/choice.svelte')
-const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
+  await import('../../src/lib/back-swipe/src/swipes')
+const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/src/gesture')
+const { swipeChoice } = await import('../../src/lib/back-swipe/src/choice.svelte')
+const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 
 let stop: () => void
