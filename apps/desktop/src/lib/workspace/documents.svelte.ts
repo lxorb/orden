@@ -1,5 +1,5 @@
 import { type FoldLines, SharedDoc } from '@orden/editor'
-import type { Camera } from '../camera'
+import type { Camera } from '../camera/src/api'
 import { identifier } from '../identifier'
 import { draftName, shownName, TITLE_CHARS, samePath } from '../platform/src/api'
 import { oneEdit } from '@orden/markdown/edits'

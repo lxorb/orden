@@ -3,6 +3,7 @@
   "layer": "content",
   "dependsOn": [
     "contracts",
+    "camera",
     "accounts",
     "collab",
     "editor",
@@ -19,7 +20,6 @@
     "apps/desktop/src/lib/alone.svelte.ts",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/breathe.ts",
-    "apps/desktop/src/lib/camera.ts",
     "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",

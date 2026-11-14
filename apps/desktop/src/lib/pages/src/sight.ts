@@ -1,4 +1,4 @@
-import type { Camera } from '../../camera'
+import type { Camera } from '../../camera/src/api'
 
 interface Laid {
   y: number

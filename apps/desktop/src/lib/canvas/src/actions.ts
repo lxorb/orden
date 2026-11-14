@@ -48,7 +48,7 @@ import {
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
-import { NOTCH, turned, turnOf, zoomed } from '../../camera'
+import { NOTCH, turned, turnOf, zoomed } from '../../camera/src/api'
 import type { Keystroke } from '../../ui-kit/src/api'
 import { shortcuts } from '../../shortcuts.svelte'
 import { accountAddress, storeImage } from '../../assets'

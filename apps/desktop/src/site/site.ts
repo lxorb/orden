@@ -1,4 +1,4 @@
-import { framing, nodeAt } from '../lib/camera'
+import { framing, nodeAt } from '../lib/camera/src/api'
 import type { NoteGraph } from '../lib/graph'
 import { neighbours } from '../lib/graph-walk'
 import { Layout } from '../lib/graph-layout'

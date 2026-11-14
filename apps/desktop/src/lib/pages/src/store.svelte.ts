@@ -9,7 +9,7 @@ import {
   pageShowing,
   settled,
 } from '@orden/markdown/pages'
-import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../../camera'
+import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../../camera/src/api'
 import {
   type Canvas,
   canvasRuns,

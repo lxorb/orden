@@ -1,4 +1,4 @@
-import type { Camera } from '../../camera'
+import type { Camera } from '../../camera/src/api'
 import type { InkStroke } from '@orden/markdown/canvas'
 import type { Box } from './geometry'
 import { INK_STYLES, inkOpacity, outlineOf, strokeBox, traceInk } from './ink'

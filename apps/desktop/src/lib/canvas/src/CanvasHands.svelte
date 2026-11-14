@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Camera } from '../../camera'
+  import type { Camera } from '../../camera/src/api'
   import { approach, arrived } from './ease'
   import { ALONE_INSET, heldAtEdge, INSET } from './edge'
   import { alone } from '../../alone.svelte'

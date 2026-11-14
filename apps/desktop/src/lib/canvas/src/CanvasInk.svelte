@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import type { Camera } from '../../camera'
+  import type { Camera } from '../../camera/src/api'
   import type { InkStroke } from '@orden/markdown/canvas'
   import { type InkMode, inkLayer, wantedInkMode } from './backing'
   import { type Palette, paintLive, type View } from '../../plane/src/api'

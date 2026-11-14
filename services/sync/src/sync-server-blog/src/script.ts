@@ -18,4 +18,4 @@ export const THEME_JS_HASH = 'sha256-JBC+lldTBb+36sOtsV7RGJY0twGr7uOPsXwagysVQ9c
 export const SITE_JS_PATH = '/s/21e04812ffac312b.js'
 
 /** What the sources added up to when this was built; see scripts/site-js.ts. */
-export const SITE_JS_SOURCES = '91b84539f95f8dcb'
+export const SITE_JS_SOURCES = '49be344735ee307a'

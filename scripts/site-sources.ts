@@ -6,7 +6,8 @@ const ROOT = new URL('../', import.meta.url)
 
 const SOURCES = [
   'apps/desktop/src/site/site.ts',
-  'apps/desktop/src/lib/camera.ts',
+  'apps/desktop/src/lib/camera/src/api.ts',
+  'apps/desktop/src/lib/camera/src/camera.ts',
   'apps/desktop/src/lib/graph.ts',
   'apps/desktop/src/lib/graph-layout.ts',
   'apps/desktop/src/lib/graph-paint.ts',

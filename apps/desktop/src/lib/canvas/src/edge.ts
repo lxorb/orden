@@ -1,4 +1,4 @@
-import type { Camera } from '../../camera'
+import type { Camera } from '../../camera/src/api'
 import type { Point } from '../../plane/src/api'
 
 export const INSET = { top: 18, right: 18, bottom: 76, left: 18 } as const

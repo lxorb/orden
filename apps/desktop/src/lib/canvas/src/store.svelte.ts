@@ -1,6 +1,6 @@
 import { flushHeldEdits } from '@orden/contracts'
 import { idle } from '../../breathe'
-import { type Camera, clampScale, CLOSEST, framingBox, turnOf } from '../../camera'
+import { type Camera, clampScale, CLOSEST, framingBox, turnOf } from '../../camera/src/api'
 import { owesWords } from '../../parting'
 import {
   type Canvas,
