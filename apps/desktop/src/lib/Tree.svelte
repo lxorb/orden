@@ -57,6 +57,7 @@
   import { viewport } from './ui-kit/src/api'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
+  import { spaceDropping } from './tab-strip/src/api'
   import { inside } from './workspace/zones'
   import Twist from './Twist.svelte'
   import { dur } from './platform/src/api'
@@ -456,7 +457,7 @@
     carry(event.dataTransfer, paths)
     carrying = paths
     workspace.panes.dragged({ tabId: null }, endDrag)
-    void import('./tab-strip/space-drop').then((drop) => drop.followTreeDrag(paths))
+    void spaceDropping().then((drop) => drop.followTreeDrag(paths))
     webPages().carryIn(paths)
   }
 

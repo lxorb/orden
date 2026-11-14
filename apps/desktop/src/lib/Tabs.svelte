@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { droppedAddress } from '@orden/scan/web-address'
   import { dropOver } from './drag-paths'
   import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { whileHere } from './while-here'
@@ -29,50 +30,60 @@
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/src/api'
-  import type { ClosingWidths } from './tab-strip/closing.svelte'
-  import { flushStart } from './tab-strip/flush'
-  import { revealed } from './tab-strip/scroll'
-  import { wheelAlong } from './tab-strip/wheel'
   import {
     arrival,
-    handOver,
-    keyOf,
-    picks,
-    register,
-    stripOf,
-    TabDrag,
-  } from './tab-strip/drag.svelte'
-  import type { Block } from './tab-strip/picking.svelte'
-  import {
+    type Block,
     type Bounds,
+    type ClosingWidths,
     crossTakes,
     endOf,
+    essentialDropping,
+    fitTabs,
     fitted,
+    flushStart,
+    handOver,
     holds,
+    hoverCards,
+    iconTabs,
+    initialOf,
     keptWidths,
+    keyOf,
+    loadTabChip,
     MAGNETISM,
     moved,
     OPENING,
     partsFor,
+    picks,
     placed,
     PLUS,
     PLUS_GAP,
     plusFits,
+    register,
+    revealed,
     separated,
+    siteLook,
     slotAt,
+    stripMenus,
+    stripOf,
+    tabCarrying,
+    tabClosing,
+    TabDrag,
+    tabMenus,
+    tabOps,
+    tabPicking,
     trailing,
+    twins,
+    wheelAlong,
     widened,
     widthsFor,
     worthKeeping,
-  } from './tab-strip/layout'
-  import { initialOf, siteLook, twins } from './tab-strip/twins'
+  } from './tab-strip/src/api'
   import { insideSpace, nameOf } from './platform/src/api'
   import { shownName } from './platform/src/api'
   import { chosenIcon } from './chosen-icon'
   import { pages } from './web-tab/src/api'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
-  import { fitTabs, iconTabs } from './tab-strip/icon-tabs.svelte'
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './ui-kit/src/api'
@@ -95,7 +106,7 @@
   function showTrail(event: MouseEvent, tab: Tab) {
     if (!tab.canGoBack) return
     event.preventDefault()
-    void here(import('./tab-strip/menu')).then(({ trailMenu }) =>
+    void here(tabMenus()).then(({ trailMenu }) =>
       menu.show(event, trailMenu(tab), { title: 'Back' }),
     )
   }
@@ -103,7 +114,7 @@
   function showMenu(event: MouseEvent, tab: Tab) {
     event.preventDefault()
     event.stopPropagation()
-    void here(import('./tab-strip/menu')).then(({ tabMenu, tabMenuTitle }) =>
+    void here(tabMenus(tab.kind)).then(({ tabMenu, tabMenuTitle }) =>
       menu.show(event, tabMenu(tab, paneId), { title: tabMenuTitle(tab, paneId) }),
     )
   }
@@ -120,9 +131,7 @@
 
   function showStripMenu(event: MouseEvent) {
     if (document.elementFromPoint(event.clientX, event.clientY) !== strip) return
-    void here(import('./tab-strip/strip-menu')).then(({ stripMenu }) =>
-      menu.show(event, stripMenu(paneId)),
-    )
+    void here(stripMenus()).then(({ stripMenu }) => menu.show(event, stripMenu(paneId)))
   }
 
   const LEAD = 8
@@ -145,9 +154,7 @@
   const drag = new TabDrag()
   let closing = $state<ClosingWidths | null>(null)
   onMount(() => {
-    void here(import('./tab-strip/closing.svelte')).then(
-      (one) => (closing = new one.ClosingWidths()),
-    )
+    void here(tabClosing()).then((one) => (closing = new one.ClosingWidths()))
   })
   let hovered = $state<string | null>(null)
   let settling = $state<string | null>(null)
@@ -446,8 +453,8 @@
   })
 
   const carriedTab = $derived(tabs.find((one) => one.id === drag.tabId) ?? null)
-  let Chip = $state<typeof import('./tab-strip/TabChip.svelte').default | null>(null)
-  let carry: typeof import('./tab-strip/carrying') | null = null
+  let Chip = $state<Awaited<ReturnType<typeof loadTabChip>>['default'] | null>(null)
+  let carry: Awaited<ReturnType<typeof tabCarrying>> | null = null
 
   function capture(node: HTMLElement, pointerId: number) {
     try {
@@ -463,9 +470,9 @@
       return
     }
     if (event.button !== 0 || drag.pressing) return
-    if (!Chip) void here(import('./tab-strip/TabChip.svelte')).then((one) => (Chip = one.default))
+    if (!Chip) void here(loadTabChip()).then((one) => (Chip = one.default))
     if (!carry) {
-      void here(import('./tab-strip/carrying')).then((one) => {
+      void here(tabCarrying()).then((one) => {
         carry = one
         if (drag.on) one.follow(drag, paneId)
       })
@@ -703,7 +710,7 @@
 
     const mark = workspace.bookmarks.indexOf(draggedBookmark(transfer))
     if (mark !== null) {
-      void here(import('./tab-strip/essential-drop')).then(({ droppedEssential }) =>
+      void here(essentialDropping()).then(({ droppedEssential }) =>
         droppedEssential(mark, paneId, at),
       )
       return
@@ -713,12 +720,10 @@
       const held = new Map(
         ['text/uri-list', 'text/plain'].map((type) => [type, transfer?.getData(type) ?? '']),
       )
-      void here(import('./tab-strip/dropped')).then(({ droppedAddress }) => {
-        const address = droppedAddress((type) => held.get(type) ?? '')
-        const from = workspace.panes.at(paneId)?.activeTabId ?? undefined
-        const id = address === null ? null : workspace.openPage(address, 'plain', from)
-        if (id !== null) workspace.moveTab(id, paneId, at)
-      })
+      const address = droppedAddress((type) => held.get(type) ?? '')
+      const from = workspace.panes.at(paneId)?.activeTabId ?? undefined
+      const id = address === null ? null : workspace.openPage(address, 'plain', from)
+      if (id !== null) workspace.moveTab(id, paneId, at)
       return
     }
 
@@ -754,8 +759,7 @@
     rename(tab.id)
   }
 
-  const rename = (id: string) =>
-    void here(import('./tab-strip/ops')).then((ops) => ops.renameFromTab(id))
+  const rename = (id: string) => void here(tabOps()).then((ops) => ops.renameFromTab(id))
 
   function doubled(tab: Tab) {
     if (tab.kind === 'terminal') rename(tab.id)
@@ -765,8 +769,7 @@
   const picksWith = (event: MouseEvent) =>
     event.shiftKey || (shortcuts.platform === 'mac' ? event.metaKey : event.ctrlKey)
 
-  const loadPicking = () =>
-    here(import('./tab-strip/picking.svelte')).then((one) => (picks.loaded ??= one))
+  const loadPicking = () => here(tabPicking()).then((one) => (picks.loaded ??= one))
 
   function pickWith(loaded: NonNullable<typeof picks.loaded>, event: MouseEvent, tab: Tab) {
     const how = loaded.pickingOf(event, shortcuts.platform === 'mac')
@@ -775,9 +778,9 @@
     return front
   }
 
-  let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
+  let cards: ReturnType<typeof hoverCards> | undefined
   const card = (tab: Tab, node: Element | null, focused = false) =>
-    void (cards ??= here(import('./tab-strip/hover-card.svelte'))).then(({ hovering }) =>
+    void (cards ??= here(hoverCards())).then(({ hovering }) =>
       node ? hovering.restOn(tab, node, focused) : hovering.leave(tab.id),
     )
 </script>

@@ -42,7 +42,7 @@ const { account } = await import('../accounts/src/account.svelte')
 const { sync } = await import('../sync.svelte')
 const { ApiError } = await import('../accounts/src/client')
 const { failed } = await import('../failed.svelte')
-const { spacesOfPaths } = await import('../tab-strip/to-space')
+const { spacesOfPaths } = await import('../tab-strip/src/to-space')
 const { keepOwnPointer } = await import('../chats-client/src/places')
 const { prompt } = await import('../ui-kit/src/prompt.svelte')
 

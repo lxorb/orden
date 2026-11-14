@@ -21,6 +21,7 @@ import {
   LONGEST_ID,
   mapResult,
   noteId,
+  NO_TAB_KIND,
   NO_VISITS,
   paletteKind,
   registered,
@@ -28,6 +29,7 @@ import {
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
+  registerTabKind,
   settingFieldsIn,
   settingsPartsIn,
   notePath,
@@ -38,6 +40,8 @@ import {
   spaceId,
   STOPPING_KINDS,
   TAB_KINDS,
+  tabKindLoaded,
+  tabKindParts,
   unixLines,
   unwrapOr,
   userId,
@@ -275,8 +279,16 @@ describe('ports', () => {
       shot: null,
       loading: false,
       icon: null,
+      live: false,
+      shown: false,
     })
     expect(none.tabs()).toEqual([])
+    expect(none.lentOf('t')).toBe(false)
+    await expect(none.losing('t')).resolves.toBe(false)
+    await expect(none.reload('t')).resolves.toBeUndefined()
+    await expect(none.park('t', true)).resolves.toBeUndefined()
+    none.copyPage('t', 'u', null, false)
+    expect(none.of('u').title).toBe('')
     expect(none.addressOf('t')).toBeNull()
     expect(none.faviconOf('https://a.example/')).toBeNull()
     expect(none.holdStill()).toBeNull()
@@ -294,6 +306,8 @@ describe('ports', () => {
       shot: null,
       loading: false,
       icon: null,
+      live: true,
+      shown: true,
     }
     const unbind = providePort('web.pages', { ...none, cuts: true, of: () => page })
     expect(webPages().cuts).toBe(true)
@@ -388,6 +402,27 @@ describe('registry', () => {
       { label: 'Bring in', text: ['Notion'] },
     ])
     unfeature()
+  })
+
+  it('reads a tab kind once loaded, nothing for a kind no feature registered, and skips a load that fails', async () => {
+    expect(tabKindParts('terminal')).toBe(NO_TAB_KIND)
+    expect(await tabKindLoaded('terminal')).toBe(NO_TAB_KIND)
+    let loads = 0
+    const parts = { menu: () => [{ label: 'Open another', run: () => undefined }, null] }
+    const unregister = registerTabKind('terminal', () => {
+      loads += 1
+      return Promise.resolve(parts)
+    })
+    expect(tabKindParts('terminal')).toBe(NO_TAB_KIND)
+    expect(await tabKindLoaded('terminal')).toBe(parts)
+    expect(await tabKindLoaded('terminal')).toBe(parts)
+    expect(loads).toBe(1)
+    expect(tabKindParts('terminal').menu?.('t')[0]?.label).toBe('Open another')
+    const broken = registerTabKind('application', () => Promise.reject(new Error('gone')))
+    expect(await tabKindLoaded('application')).toBe(NO_TAB_KIND)
+    unregister()
+    broken()
+    expect(tabKindParts('terminal')).toBe(NO_TAB_KIND)
   })
 })
 

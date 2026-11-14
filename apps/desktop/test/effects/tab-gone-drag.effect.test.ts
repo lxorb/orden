@@ -76,7 +76,7 @@ function pointer(type: string, clientX: number, clientY = 20, buttons = 1): Poin
 }
 
 async function carriedOut() {
-  await import('../../src/lib/tab-strip/carrying')
+  await import('../../src/lib/tab-strip/src/carrying')
   workspace.tabs = []
   for (let at = 0; at < 3; at++) workspace.openWebsite()
   const paneId = workspace.panes.focusedId

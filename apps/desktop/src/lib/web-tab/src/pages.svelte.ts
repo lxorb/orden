@@ -1150,6 +1150,16 @@ providePort('web.pages', {
   tabs: () => pages.each().map(([tab]) => tab),
   addressOf: (tab) => pages.addressOf(tab),
   loadingOf: (tab) => pages.loadingOf(tab),
+  lentOf: (tab) => pages.lentOf(tab),
+  losing: (tab) => pages.losing(tab),
+  reload: (tab) => pages.step(tab, 'reload'),
+  park: (tab, hidden) => pages.park(tab, hidden),
+  copyPage: (from, to, url, inPrivate) => {
+    const page = pages.of(to)
+    page.url = url
+    page.title = pages.of(from).title
+    page.inPrivate = inPrivate
+  },
   shoot: (tab) => pages.shoot(tab),
   clip: (tab, selection) => pages.read(tab, selection),
   faviconOf: (url) => favicons.of(url),

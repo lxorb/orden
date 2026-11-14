@@ -206,9 +206,10 @@ describe("what the strip's empty stretch offers", () => {
   const door = () => body(tabs, 'function showStripMenu(')
 
   test('the menu is the strip menu, fetched by the press', () => {
-    expect(door()).toContain("import('./tab-strip/strip-menu')")
+    expect(door()).toContain('here(stripMenus())')
     expect(door()).toContain('menu.show(event, stripMenu(paneId))')
-    expect(read('lib/surfaces.svelte.ts')).toContain("import('./tab-strip/strip-menu')")
+    expect(read('lib/surfaces.svelte.ts')).toContain('() => stripMenus(),')
+    expect(read('lib/tab-strip/src/api.ts')).toContain("stripMenus = () => import('./strip-menu')")
   })
 
   test('asked for on the strip, and only where nothing else is under the point', () => {

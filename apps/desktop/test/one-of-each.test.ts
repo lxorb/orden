@@ -296,7 +296,7 @@ describe('the badge in front of a name', () => {
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/pass-ui/src/VaultMark.svelte',
-      'lib/tab-strip/TabCard.svelte',
+      'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Sheet.svelte',
     ])
   })
@@ -313,7 +313,7 @@ describe('the badge in front of a name', () => {
       'lib/SpaceBadge.svelte',
       'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/src/SavePlace.svelte',
-      'lib/tab-strip/TabCard.svelte',
+      'lib/tab-strip/src/TabCard.svelte',
     ])
   })
 })
@@ -579,7 +579,7 @@ describe('the bubble a sentence appears in', () => {
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
       'lib/pass-ui/src/PassFill.svelte',
-      'lib/tab-strip/TabCard.svelte',
+      'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Hint.svelte',
       'lib/web-tab/src/WebAsk.svelte',
       'lib/web-tab/src/WebDialog.svelte',

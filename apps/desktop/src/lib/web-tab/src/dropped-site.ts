@@ -1,8 +1,7 @@
 import { canWriteAt } from '../../sharing/src/api'
-import { droppedAddress } from '../../tab-strip/dropped'
 import type { Sites } from './new-site'
 import { newSite } from './new-site'
-import { plainOrigin } from '@orden/scan/web-address'
+import { droppedAddress, plainOrigin } from '@orden/scan/web-address'
 
 const ENTITIES: Record<string, string> = {
   amp: '&',

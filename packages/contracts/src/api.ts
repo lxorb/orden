@@ -162,6 +162,18 @@ export {
   settingsPartsIn,
 } from './registry'
 export {
+  NO_TAB_KIND,
+  registerTabKind,
+  type TabFacts,
+  tabKindLoaded,
+  type TabKindParts,
+  tabKindParts,
+  type TabMenuEntry,
+  type TabMenuItem,
+  type TabStream,
+  type TabUsage,
+} from './tab-kinds'
+export {
   flushHeldEdits,
   type PortMap,
   type PortName,

@@ -124,6 +124,7 @@ import { workspace } from './workspace.svelte'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/src/api'
+import { tabOps, tabToSpace } from './tab-strip/src/api'
 import {
   historyOpening,
   pages,
@@ -353,10 +354,6 @@ export interface Command extends MenuItem {
   ownWindow?: boolean
 }
 
-const toSpace = () => import('./tab-strip/to-space')
-
-const tabOps = () => import('./tab-strip/ops')
-
 function agentUndoRows(): Command[] {
   const path = workspace.active?.path
   if (__EVEN_PLUGIN__ || !path) return []
@@ -456,7 +453,7 @@ function tabCommands(): Command[] {
           {
             id: 'move-to-space',
             label: 'Move to space',
-            run: () => void toSpace().then((one) => one.askSpace([id])),
+            run: () => void tabToSpace().then((one) => one.askSpace([id])),
           },
         ]
       : []),
@@ -782,7 +779,7 @@ function moveCommand(): Command | null {
   const moved = async (into: string) => {
     const space = workspace.spaces.find((one) => samePath(one.root, into))
     if (space && space.id !== workspace.activeSpaceId) {
-      return toSpace().then((one) => one.toSpace([note.id], space.id))
+      return tabToSpace().then((one) => one.toSpace([note.id], space.id))
     }
     await workspace.moveMany([path], into)
   }

@@ -150,7 +150,7 @@ export function presetOf(browser: string | null): Preset | null {
 
 export async function applyPreset(preset: Preset): Promise<void> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
-    import('../../tab-strip/icon-tabs.svelte'),
+    import('../../tab-strip/src/api'),
     import('../../tab-cycle.svelte'),
     import('../../back-swipe/src/api'),
   ])
@@ -167,7 +167,7 @@ export async function applyPreset(preset: Preset): Promise<void> {
 
 export async function currentSettings(): Promise<Record<PresetSetting, boolean>> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
-    import('../../tab-strip/icon-tabs.svelte'),
+    import('../../tab-strip/src/api'),
     import('../../tab-cycle.svelte'),
     import('../../back-swipe/src/api'),
   ])

@@ -136,7 +136,7 @@ const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { openRemote } = await import('../../src/lib/terminal/src/remote/open')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
-const { setTerminalIcon } = await import('../../src/lib/icon-target')
+const { setTerminalIcon } = await import('../../src/lib/terminal/src/api')
 const TerminalTab = (await import('../../src/lib/terminal/src/TerminalTab.svelte')).default
 
 const spawns = () => asked.filter((one) => one.command === 'pty_spawn')
@@ -359,7 +359,7 @@ test('a name cleared while it is a host gives the tab the local shell back as it
 
 test('a split or duplicate of a local terminal is a terminal of its own, not the same words', async () => {
   const tab = await adopted()
-  const { duplicateTab } = await import('../../src/lib/tab-strip/ops')
+  const { duplicateTab } = await import('../../src/lib/tab-strip/src/ops')
   duplicateTab(tab.id)
   const copy = workspace.tabs.at(-1)
   if (!copy || copy === tab) throw new Error('no copy')

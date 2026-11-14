@@ -9,6 +9,7 @@ import {
   isFileDrop,
   isLinkDrop,
   landing,
+  mayCarryAddress,
   outsideRows,
 } from './drag-paths'
 
@@ -188,5 +189,18 @@ describe('a row carried by its place in a list', () => {
     expect(here.isPageDrag(sheet)).toBe(false)
     expect(here.draggedPage(sheet)).toBeNull()
     expect(here.landing(drop(mark), 'linux')).toBeNull()
+  })
+})
+
+describe('a link dragged onto the strip from another app', () => {
+  test('may be carried by a browser s list or by plain text', () => {
+    expect(mayCarryAddress(['text/uri-list', 'text/plain'])).toBe(true)
+    expect(mayCarryAddress(['text/plain'])).toBe(true)
+  })
+
+  test('is not a file, nor one of the app s own drags', () => {
+    expect(mayCarryAddress(['Files', 'text/uri-list'])).toBe(false)
+    expect(mayCarryAddress(['text/orden-path', 'text/plain'])).toBe(false)
+    expect(mayCarryAddress(['text/html'])).toBe(false)
   })
 })

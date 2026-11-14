@@ -1,4 +1,9 @@
-import { registerPaletteKind, registerSettingFields, registerSettingsPart } from '@orden/contracts'
+import {
+  registerPaletteKind,
+  registerSettingFields,
+  registerSettingsPart,
+  registerTabKind,
+} from '@orden/contracts'
 import { isDesktop, platform } from '../../platform/src/api'
 import { partView } from '../../ui-kit/src/api'
 
@@ -6,6 +11,7 @@ export const runsExtensions = isDesktop && (platform() === 'windows' || platform
 
 if (!__EVEN_PLUGIN__) {
   registerPaletteKind('visits', () => import('./palette-visits').then((one) => one.visits))
+  registerTabKind('web', () => import('./tab-kind').then((one) => one.webTabKind))
   registerSettingFields({
     section: 'general',
     group: 'Browser',

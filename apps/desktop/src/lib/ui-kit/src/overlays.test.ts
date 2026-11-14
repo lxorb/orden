@@ -335,7 +335,7 @@ describe('what hides a web page', () => {
     'lib/quick-add/src/QuickAddSheet.svelte': 'dialog',
     'lib/quitting/src/QuitSheet.svelte': 'dialog',
     'lib/terminal/src/remote/HostPicker.svelte': 'dialog',
-    'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
+    'lib/tab-strip/src/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/save-place/src/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
     'lib/settings/src/FontPicker.svelte': 'dropdown',
     'lib/theme-looks/src/picker/ThemePicker.svelte':
@@ -372,7 +372,7 @@ describe('what hides a web page', () => {
 
   test('what comes out under a resting pointer is a peek, and nothing opened by a press is', () => {
     const peeks = sources().filter((path) => read(path).includes('overlays.peek('))
-    expect(peeks.sort()).toEqual(['lib/Sidebar.svelte', 'lib/tab-strip/hover-card.svelte.ts'])
+    expect(peeks.sort()).toEqual(['lib/Sidebar.svelte', 'lib/tab-strip/src/hover-card.svelte.ts'])
     for (const path of peeks) expect(read(path), path).not.toContain('overlays.show(')
   })
 

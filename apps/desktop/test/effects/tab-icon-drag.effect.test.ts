@@ -104,8 +104,8 @@ test('a web tab pressed on its favicon and carried along moves the tab', async (
   ).toBe(2)
 
   await Promise.all([
-    import('../../src/lib/tab-strip/TabChip.svelte'),
-    import('../../src/lib/tab-strip/carrying'),
+    import('../../src/lib/tab-strip/src/TabChip.svelte'),
+    import('../../src/lib/tab-strip/src/carrying'),
   ])
   void unmount(app, { outro: false })
 })

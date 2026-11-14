@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { webAddress } from './typed'
-import { favicon, isWebAddress, keysOf, plainOrigin } from './web-address'
+import { droppedAddress, favicon, isWebAddress, keysOf, plainOrigin } from './web-address'
 
 test('the app’s own origins are refused with a trailing dot too', () => {
   for (const url of [
@@ -90,5 +90,26 @@ describe('what a page is kept under', () => {
     for (const url of [null, undefined, '', 'about:blank', 'file:///C:/a.html', 'nonsense']) {
       expect(keysOf(url), String(url)).toBeNull()
     }
+  })
+})
+
+describe('a link dragged onto the strip from another app', () => {
+  const drop = (data: Record<string, string>) => (type: string) => data[type] ?? ''
+
+  test('opens the first address the list holds, past its comments', () => {
+    const read = drop({ 'text/uri-list': '# from a page\r\nhttps://svelte.dev/docs\r\n' })
+    expect(droppedAddress(read)).toBe('https://svelte.dev/docs')
+  })
+
+  test('opens an address written as plain text', () => {
+    expect(droppedAddress(drop({ 'text/plain': '  https://example.com/a  ' }))).toBe(
+      'https://example.com/a',
+    )
+  })
+
+  test('opens nothing that is not a page on the web', () => {
+    expect(droppedAddress(drop({ 'text/plain': 'a sentence out of a note' }))).toBeNull()
+    expect(droppedAddress(drop({ 'text/uri-list': 'file:///C:/notes/a.md' }))).toBeNull()
+    expect(droppedAddress(drop({ 'text/plain': 'javascript:alert(1)' }))).toBeNull()
   })
 })

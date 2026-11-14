@@ -27,7 +27,7 @@ vi.stubGlobal(
   },
 )
 
-const { droppedOnChat, overChat } = await import('../../src/lib/tab-strip/chat-drop')
+const { droppedOnChat, overChat } = await import('../../src/lib/tab-strip/src/chat-drop')
 
 test('a tab let go of on a chat is dropped on it as its file, and the chat itself is not', () => {
   document.body.innerHTML = '<div data-chat-drop="chat"><p id="words"></p></div><p id="away"></p>'

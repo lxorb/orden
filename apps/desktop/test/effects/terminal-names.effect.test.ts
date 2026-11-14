@@ -1,3 +1,4 @@
+import { tabKindLoaded } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -148,12 +149,14 @@ Element.prototype.scrollIntoView = () => undefined
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
-const { tabMenu } = await import('../../src/lib/tab-strip/menu')
+const { tabMenu } = await import('../../src/lib/tab-strip/src/menu')
 const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-await import('../../src/lib/tab-strip/TabNameField.svelte')
+await import('../../src/lib/tab-strip/src/TabNameField.svelte')
 await import('../../src/lib/terminal/src/TerminalMark.svelte')
-await import('../../src/lib/tab-strip/ops')
+await import('../../src/lib/tab-strip/src/ops')
+await import('../../src/lib/features')
+await tabKindLoaded('terminal')
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

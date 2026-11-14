@@ -499,7 +499,7 @@ export async function find(path: string, until: number): Promise<Found> {
 const sessions = new Map<string, AppSession>()
 let watching = false
 
-export function appSessionIfAny(tab: Tab): AppSession | null {
+export function appSessionIfAny(tab: { readonly id: string }): AppSession | null {
   return sessions.get(tab.id) ?? null
 }
 

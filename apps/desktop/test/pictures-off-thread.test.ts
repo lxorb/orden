@@ -7,7 +7,7 @@ const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 
 const SMALL = [
   'overview/src/mirror.ts',
-  'tab-strip/thumb.ts',
+  'tab-strip/src/thumb.ts',
   'theme-looks/src/wallpaper/render.ts',
 ]
 

@@ -16,7 +16,7 @@ import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/src/api'
 import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../settings.svelte'
 import { stepSpace } from '../space-actions'
-import { picks } from '../tab-strip/drag.svelte'
+import { picks, tabOps } from '../tab-strip/src/api'
 import { closeWindow, invoke, isDesktop, platform } from '../platform/src/api'
 import type { Platform } from '../ui-kit/src/api'
 import { workspace } from '../workspace.svelte'
@@ -1355,8 +1355,6 @@ CANVAS_ENTRIES.push({
 function toggleSpacePicker() {
   void import('../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }
-
-const tabOps = () => import('../tab-strip/ops')
 
 let cycling: typeof import('../tab-cycle.svelte') | null = null
 

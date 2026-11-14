@@ -8,6 +8,7 @@
     "back-swipe",
     "platform",
     "sharing",
+    "tab-strip",
     "theme",
     "ui-controls",
     "ui-kit",
@@ -19,7 +20,6 @@
     "apps/desktop/src/lib/icon-library.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/settling.ts",
-    "apps/desktop/src/lib/tab-cycle.svelte.ts",
-    "apps/desktop/src/lib/tab-strip/icon-tabs.svelte.ts"
+    "apps/desktop/src/lib/tab-cycle.svelte.ts"
   ]
 }
