@@ -9,7 +9,7 @@ import {
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from './ui-kit/src/api'
-import { changeOf } from './search/replace'
+import { changeOf } from '@orden/scan/search/replace'
 import { settings } from './settings.svelte'
 import { folderOf, isMarkdownPath } from './platform/src/api'
 import { workspace } from './workspace.svelte'

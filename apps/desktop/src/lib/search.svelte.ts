@@ -1,11 +1,10 @@
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
-import { isScratchpad } from './scratchpad/src/api'
+import { isScratchpad, scratchpadHits } from './scratchpad/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
-import { selectedWords } from './search/seed'
-import { searchSpace } from './search/space'
+import { changesFor, searchSpace, selectedWords } from './search/src/api'
 import {
   isMarkdownPath,
   isBoolean,
@@ -201,12 +200,9 @@ class Search {
       ...(this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)),
       workspace.instructionsName(root),
     ]
-    const { unsavedHits } = await import('./search/unsaved')
+    const { unsavedHits } = await import('./unsaved-hits')
     const unsaved = unsavedHits(this.query, workspace.activeSpaceId, MOST)
-    const pad =
-      this.replacing || __EVEN_PLUGIN__
-        ? []
-        : await import('./search/scratchpad').then((one) => one.scratchpadHits(this.query, MOST))
+    const pad = this.replacing ? [] : await scratchpadHits(this.query, MOST)
     if (round === this.round && (unsaved.length || pad.length)) this.found = [...unsaved, ...pad]
     await searchSpace(
       root,
@@ -230,7 +226,6 @@ class Search {
     const chosen = this.chosen
     if (!root || !chosen.length) return
 
-    const { changesFor } = await import('./search/apply')
     const changes = await changesFor(this.query, chosen, this.replacement, root, (path) =>
       workspace.noteText(path),
     )

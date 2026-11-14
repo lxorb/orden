@@ -4904,7 +4904,7 @@ describe('a search of the space', () => {
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
     tab.note.live.replace('# Plan\n\nbuy milk')
-    const { unsavedHits } = await import('./search/unsaved')
+    const { unsavedHits } = await import('./unsaved-hits')
     const { parseQuery } = await import('@orden/scan/search/query')
 
     expect(unsavedHits(parseQuery('milk'), 's', 10)).toEqual([

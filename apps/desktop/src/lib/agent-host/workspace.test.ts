@@ -325,7 +325,8 @@ vi.mock('@orden/scan/search/query', () => ({ parseQuery: (text: string) => ({ te
 
 const searched: string[] = []
 
-vi.mock('../search/space', () => ({
+vi.mock('../search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../search/src/api')>()),
   searchSpace: (
     root: string,
     query: { text: string },

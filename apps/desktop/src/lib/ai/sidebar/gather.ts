@@ -1,5 +1,5 @@
 import { protection } from '../../protect/src/api'
-import { searchSpace } from '../../search/space'
+import { searchSpace } from '../../search/src/api'
 import { parseQuery } from '@orden/scan/search/query'
 import { pad } from '../../scratchpad/src/api'
 import { insideSpace, relativeTo, within, withinSpace } from '../../platform/src/api'

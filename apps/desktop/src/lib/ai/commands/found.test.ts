@@ -25,7 +25,8 @@ vi.mock('../../workspace.svelte', () => ({
     noteText: (path: string) => Promise.resolve(TEXTS[path] ?? ''),
   },
 }))
-vi.mock('../../search/space', () => ({
+vi.mock('../../search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../search/src/api')>()),
   searchSpace: (
     space: string,
     _query: unknown,

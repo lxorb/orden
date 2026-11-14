@@ -12,7 +12,7 @@ import {
 } from '@orden/markdown/property-edits'
 import { writeTask } from '@orden/markdown/task-edits'
 import { readTask } from '@orden/markdown/task-line'
-import { changeOf } from '../search/replace'
+import { changeOf } from '@orden/scan/search/replace'
 import { type HoldsNotes, noteText, replaceInNotes } from '../workspace/note-text'
 
 export interface RowChange {

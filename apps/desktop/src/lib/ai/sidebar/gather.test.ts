@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { Found } from '../../search/space'
+import type { Found } from '../../search/src/api'
 
 const WORK = { id: 'work', name: 'Work', root: '/notes/Work' }
 const HOME = { id: 'home', name: 'Home', root: '/notes/Home' }
@@ -20,7 +20,8 @@ vi.mock('../../sharing/src/api', () => ({
   reachedByOthersIn: (root: string) => [...othersWrite].some((path) => path.startsWith(`${root}/`)),
 }))
 
-vi.mock('../../search/space', () => ({
+vi.mock('../../search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../search/src/api')>()),
   searchSpace: (
     root: string,
     _query: unknown,

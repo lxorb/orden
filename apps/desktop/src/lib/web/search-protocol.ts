@@ -1,7 +1,7 @@
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
-import type { Warmth } from '../search/warmth'
+import type { Warmth } from '@orden/scan/search/warmth'
 
 export interface Ask {
   kind: 'ask'

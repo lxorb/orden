@@ -17,6 +17,7 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
+import { searchWarmth } from './search/src/api'
 import {
   onDisk,
   insideOnly,
@@ -56,7 +57,7 @@ import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
-import type { Change } from './search/apply'
+import type { Change } from '@orden/scan/search/replace'
 import { startup } from './startup.svelte'
 import { tabOverview } from './surfaces.svelte'
 import { nextTask } from './breathe'
@@ -2256,7 +2257,7 @@ class Workspace {
         ([{ moveOwnKeysSoon }]) => moveOwnKeysSoon(root, this, !!account.token),
         unfetched,
       )
-      void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
+      void searchWarmth().then((warm) => warm.forSpace(root), unfetched)
       const listed = this.files
       const tree = this.tree
       void import('./pdf/src/api').then(

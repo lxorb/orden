@@ -1,11 +1,18 @@
-import type { Change } from './apply'
-import { lineAt, lineStarts } from '@orden/scan/search/lines'
-import type { Span } from '@orden/scan/search/match'
+import { lineAt, lineStarts } from './lines'
+import type { Span } from './match'
 
 export interface Edit {
   from: number
   to: number
   insert: string
+}
+
+export interface Change {
+  path: string
+  before: string
+  after: string
+  edits: Edit[]
+  back: Edit[]
 }
 
 export function expand(

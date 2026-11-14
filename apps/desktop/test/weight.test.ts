@@ -233,8 +233,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/finding.ts', 'what a search is made of'],
     ['/markdown/src/from-html.ts', 'the HTML converter'],
     ['/lib/SearchPanel.svelte', 'the Search panel'],
-    ['/lib/search/fuzzy.ts', 'the ranking engine'],
-    ['/lib/search/suggest.ts', 'the operator values it offers'],
     ['/lib/TagTree.svelte', "the panel's tag tree"],
     ['/lib/FindBar.svelte', 'the find bar'],
     ['/lib/Reading.svelte', 'the reading view'],
@@ -307,7 +305,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/run/run.ts', "the Run button's sandbox"],
     ['/editor/src/run/panel.ts', 'what it prints into'],
     ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
-    ['/lib/search/match.ts', 'the matcher'],
     ['/lib/preview-card.ts', 'the editor in a link card'],
     ['/lib/reading/src/drawn.ts', 'a paper or a plane drawn in a note'],
     ['/lib/query-block.ts', "a query fence's rows"],
@@ -320,7 +317,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/dictation/src/recorder/commands.ts', 'the row that wakes the recorder'],
     ['/lib/dictation/src/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/first-screen/src/keep.svelte.ts', "what keeps a note's first screen"],
-    ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
+    ['/lib/search/src/warm.svelte.ts', "the search's hold on the space"],
     ['/markdown/src/index.ts', 'the renderer'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)

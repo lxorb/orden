@@ -14,17 +14,16 @@ const guess = (path: string, score: number): FuzzyHit => ({
 })
 const hit = (path: string): Hit => ({ path, name: path, line: 1, text: 'tulip', ranges: [] })
 
-vi.mock('../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isNative: false,
   internal: { routed: false },
 }))
-vi.mock('../pdf/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../pdf/src/api')>()),
+vi.mock('../../pdf/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   papers: () => Promise.resolve({ papersFor: () => Promise.resolve(), searchPapers: () => [] }),
 }))
-vi.mock('./inbox', () => ({ inboxHits: () => Promise.resolve([]) }))
-vi.mock('../web/search-client', () => ({
+vi.mock('../../web/search-client', () => ({
   searchInWorker: (_root: string, _query: unknown, _terms: string[], limit: number, told: Told) => {
     told({
       hits: [hit('/space/Here.md')],
@@ -33,7 +32,7 @@ vi.mock('../web/search-client', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('../web/away.svelte', () => ({
+vi.mock('../../web/away.svelte', () => ({
   keptAway: {
     search: (_root: string, _query: unknown, _terms: string[], limit: number, told: Told) => {
       told({
@@ -49,7 +48,7 @@ vi.mock('../web/away.svelte', () => ({
   },
 }))
 
-await import('../workspace.svelte')
+await import('../../workspace.svelte')
 const { searchSpace } = await import('./space')
 
 describe('a search in a browser that keeps some notes away', () => {

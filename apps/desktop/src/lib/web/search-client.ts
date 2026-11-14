@@ -1,6 +1,6 @@
 import type { Found } from '@orden/scan/search/walk'
 import { type Answer, type Ask, isAnswer, type Warm } from './search-protocol'
-import type { Warmth } from '../search/warmth'
+import type { Warmth } from '@orden/scan/search/warmth'
 import type { Query } from '@orden/scan/search/query'
 
 let worker: Worker | null = null

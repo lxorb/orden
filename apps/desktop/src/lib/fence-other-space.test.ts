@@ -6,7 +6,8 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 }))
 
 const searched: string[] = []
-vi.mock('./search/space', () => ({
+vi.mock('./search/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./search/src/api')>()),
   searchSpace: (
     root: string,
     _query: unknown,

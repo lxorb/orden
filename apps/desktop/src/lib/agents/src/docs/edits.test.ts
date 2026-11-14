@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { applied } from '../../../search/replace'
+import { applied } from '@orden/scan/search/replace'
 import { plan, readEdits } from './edits'
 import { DocError } from './problem'
 

@@ -3,17 +3,17 @@ import { isTagName } from '@orden/markdown/tags'
 import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
-import type { Change } from '../search/apply'
 import { lineStarts } from '@orden/scan/search/lines'
 import { isMarkdownPath, samePath } from '../platform/src/api'
 import {
   applied,
   appliedToFile,
+  type Change,
   changeOf,
   type Edit,
   endingsLike,
   reverse,
-} from '../search/replace'
+} from '@orden/scan/search/replace'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'

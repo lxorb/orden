@@ -1,7 +1,6 @@
 import type { Query } from '@orden/scan/search/query'
 import type { ItemMeta, MetaPatch } from '@orden/sync-core'
-import type { Change } from '../search/apply'
-import { changeOf } from '../search/replace'
+import { type Change, changeOf } from '@orden/scan/search/replace'
 import { relativeTo, samePath, keepJson, stored } from '../platform/src/api'
 import { type HoldsNotes, noteText, replaceInNotes } from './note-text'
 

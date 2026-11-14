@@ -6,7 +6,6 @@
     "apps/desktop/src/lib/breathe.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/pages/held.ts",
-    "apps/desktop/src/lib/search/warm.svelte.ts",
     "apps/desktop/src/lib/startup.svelte.ts",
     "apps/desktop/src/lib/trace.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"

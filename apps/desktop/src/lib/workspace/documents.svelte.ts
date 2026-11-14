@@ -3,7 +3,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { draftName, shownName, TITLE_CHARS, samePath } from '../platform/src/api'
 import { oneEdit } from '@orden/markdown/edits'
-import { applied, appliedToFile, type Edit, flatEdits } from '../search/replace'
+import { applied, appliedToFile, type Edit, flatEdits } from '@orden/scan/search/replace'
 import { type TabKind, TAB_KINDS } from './tab-kinds'
 
 export const UNTITLED = 'Untitled'

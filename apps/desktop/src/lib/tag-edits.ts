@@ -1,5 +1,4 @@
-import type { Change } from './search/apply'
-import { changeOf, type Edit } from './search/replace'
+import { type Change, changeOf, type Edit } from '@orden/scan/search/replace'
 import { tagCuts, tagSpans } from '@orden/scan/search/tags'
 
 export function tagChange(
