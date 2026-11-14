@@ -1,18 +1,11 @@
-import { addDays, weekday } from '@orden/bases'
-
 const two = (value: number) => String(value).padStart(2, '0')
 
 function dayOf(at: Date): string {
   return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
 }
 
-export function nowOf(at: Date): string {
+function nowOf(at: Date): string {
   return `${dayOf(at)}T${two(at.getHours())}:${two(at.getMinutes())}:${two(at.getSeconds())}`
-}
-
-export function nextMonday(day: string): string {
-  const offset = (8 - weekday(day)) % 7 || 7
-  return addDays(day, offset)
 }
 
 export const todayHere = (): string => dayOf(new Date())

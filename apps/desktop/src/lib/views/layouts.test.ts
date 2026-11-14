@@ -3,7 +3,6 @@ import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('../collab/src/api', () => ({ rooms: { present: {}, following: null } }))
-vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/s/Home' }))
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
     get shown() {

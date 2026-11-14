@@ -4,7 +4,7 @@ import { frontMatterValue } from '@orden/markdown'
 import { insideOnly } from '../automation/inside'
 import { heldForLife, inTurn } from '../locks'
 import { protection } from '../protect/protection.svelte'
-import { show } from '../reminders/platform'
+import { notify } from '../notify'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
 import { basesOn } from '../settings.svelte'
@@ -166,21 +166,9 @@ async function run(space: string, path: string, removed: readonly Row[]) {
     await workspace.move(insideSpace(root, move.row.path), folder).catch(() => undefined)
   }
   for (const notice of plan.notices) {
-    show(
-      {
-        id: `automation:${notice.row.path}`,
-        title: notice.base,
-        body: notice.words,
-        space,
-        path: notice.row.path,
-        hash: '',
-        line: 0,
-        at: Date.now(),
-      },
-      () => {
-        void workspace.open(insideSpace(root, notice.row.path))
-      },
-    )
+    notify(notice.base, notice.words, `automation:${notice.row.path}`, () => {
+      void workspace.open(insideSpace(root, notice.row.path))
+    })
   }
 }
 
