@@ -70,7 +70,7 @@ export function dropOnList(event: DragEvent, folder: string) {
   }
   if (transfer && isFileDrop(transfer) && !__EVEN_PLUGIN__) {
     const caught = caughtFiles(transfer)
-    void import('./import/picking')
+    void import('./picking')
       .then(({ filesUnder }) => filesUnder(caught))
       .then((files) => workspace.bringIn(files, folder))
     return

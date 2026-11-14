@@ -1,6 +1,6 @@
+import type { PickedFile } from '@orden/contracts'
 import { freePath } from '@orden/markdown/paths'
 import { message, prompt } from '../../ui-kit/src/api'
-import type { Picked as Brought } from '../../import/sources'
 import { fileClipboard } from '../../list-landing.svelte'
 import { folderOf, nameOf, invoke, joinPath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
@@ -246,7 +246,7 @@ async function bringInto(
   moving: boolean,
   tell: (said: string) => void,
 ) {
-  const brought: Brought[] = []
+  const brought: PickedFile[] = []
   const whole: string[] = []
   for (const path of paths) {
     try {
@@ -261,7 +261,7 @@ async function bringInto(
   if (moving && whole.length) record([{ op: 'trashed', tickets: await trashPaths(whole) }])
 }
 
-async function gather(path: string, under: string, into: Brought[]) {
+async function gather(path: string, under: string, into: PickedFile[]) {
   const listing = await listFolder(path).catch(() => null)
   if (!listing) {
     into.push(broughtFile(path, under))
@@ -274,7 +274,7 @@ async function gather(path: string, under: string, into: Brought[]) {
   }
 }
 
-function broughtFile(path: string, under: string): Brought {
+function broughtFile(path: string, under: string): PickedFile {
   const nested = under.includes('/')
   return {
     name: nameOf(under),

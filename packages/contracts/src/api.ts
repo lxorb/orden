@@ -123,6 +123,7 @@ export {
   providePort,
   whenPortProvided,
 } from './ports'
+export type { PandocPicture, PickedFile } from './files'
 export type { PreviewedTab, PreviewPorts, ScreenPreview, TerminalPreviewPort } from './previews'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
 export type {

@@ -3,7 +3,7 @@ import { findLinks } from '@orden/markdown/links'
 import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from './link-format'
 import { linkTo, pickedLink } from './composer'
 import { citation } from './pdf/highlights'
-import { rewriteLinks } from './import/rewrite'
+import { rewriteLinks } from './import/src/rewrite'
 
 const PLAN = { name: 'Plan', path: 'ideas/Plan.md', from: 'journal/Monday.md' }
 

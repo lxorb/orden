@@ -1,0 +1,22 @@
+{
+  "name": "import",
+  "layer": "features",
+  "dependsOn": ["contracts", "bases", "markdown", "platform", "scan", "sharing", "theme", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/attachments.ts",
+    "apps/desktop/src/lib/composer.ts",
+    "apps/desktop/src/lib/link-format.ts",
+    "apps/desktop/src/lib/link-rewrite.ts",
+    "apps/desktop/src/lib/pages/held.ts",
+    "apps/desktop/src/lib/pdf/document.ts",
+    "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/web-tab/address.ts",
+    "apps/desktop/src/lib/web-tab/engines.ts",
+    "apps/desktop/src/lib/web-tab/search-engine.svelte.ts",
+    "apps/desktop/src/lib/web-tab/typed.ts",
+    "apps/desktop/src/lib/web-tab/visited.ts",
+    "apps/desktop/src/lib/web-tab/web-data.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/write-file.ts"
+  ]
+}

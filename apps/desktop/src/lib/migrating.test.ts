@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { sourceOf, type Source } from './import/sources'
+import { sourceOf, type Source } from './import/src/sources'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 
 interface Entry {

@@ -22,7 +22,7 @@ const FRESH: Record<string, string> = {
   'lib/web-tab/convert.ts': 'an old `url:` note made into a shortcut',
   'lib/agents/workspace/new-files.ts': 'a website an agent makes',
   'lib/workspace/placing.ts': 'a tab kept as a new web note, settled with any already there',
-  'lib/import/sidebar-plan.ts': "another browser's tabs, imported",
+  'lib/import/src/sidebar-plan.ts': "another browser's tabs, imported",
   'lib/web-tab/keep.ts': 'a file that no longer reads as a shortcut, written anew',
   'lib/web-tab/aimed.ts': 'a file that no longer reads as a shortcut, written anew',
 }

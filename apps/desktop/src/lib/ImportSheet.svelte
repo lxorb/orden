@@ -3,8 +3,8 @@
 
   import Facts from './Facts.svelte'
   import { importing, onMac } from './importing.svelte'
-  import { droppedFiles, pickFiles } from './import/picking'
-  import type { FormatId } from './import/plan'
+  import { droppedFiles, pickFiles } from './picking'
+  import type { FormatId } from './import/src/api'
   import { dur, fade } from './platform/src/api'
   import { settings } from './settings.svelte'
   import { segmented } from './ui-kit/src/api'

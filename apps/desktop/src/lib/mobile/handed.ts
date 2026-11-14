@@ -13,7 +13,7 @@ import {
   wordSaid,
 } from '../platform/src/api'
 import { appCommands } from '../commands'
-import { applyImport } from '../import/apply'
+import { applyImport } from '../import/src/api'
 import { putPicture, writeAtCaret } from '../insert-picture'
 import { modes } from '../modes.svelte'
 import { views } from '../views.svelte'

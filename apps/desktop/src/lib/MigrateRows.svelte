@@ -4,7 +4,7 @@
   import Globe from 'lucide/dist/esm/icons/globe.mjs'
   import Icon from './Icon.svelte'
   import { brandIcon, type IconNode, readIcon } from './ui-kit/src/api'
-  import { BROWSER_LOGOS, ZEN_LOGO } from './import/browsers'
+  import { BROWSER_LOGOS, ZEN_LOGO } from './import/src/api'
   import { migrating } from './migrating.svelte'
   import { takingOver } from './web/taking-over.svelte'
   import { isDesktop, isMobile } from './platform/src/api'

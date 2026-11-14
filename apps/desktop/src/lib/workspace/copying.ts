@@ -1,6 +1,6 @@
+import type { PickedFile } from '@orden/contracts'
 import { isPdfTarget } from '@orden/markdown/links'
 import { folderNote, isFolderNote } from '../folder-notes'
-import type { Picked } from '../import/sources'
 import { readsWords } from '../link-index.svelte'
 import { copiesInto } from '../move-targets'
 import { copyName, isMarkdownPath, nameOf, invoke, joinPath } from '../platform/src/api'
@@ -116,7 +116,7 @@ async function idsLeftBehind(entry: Entry, path: string) {
   }
 }
 
-function partsOf(file: Picked): string[] {
+function partsOf(file: PickedFile): string[] {
   const inside = (file.webkitRelativePath ?? '').trim()
   return (inside.length ? inside : file.name)
     .split(/[\\/]/)
@@ -125,7 +125,7 @@ function partsOf(file: Picked): string[] {
 
 export async function bringIn(
   ws: Copies,
-  files: readonly Picked[],
+  files: readonly PickedFile[],
   into: string,
 ): Promise<string[]> {
   const landed = new Map<string, Copied>()

@@ -1,18 +1,24 @@
+import type { PandocPicture, PickedFile } from '@orden/contracts'
 import { busy, message } from './ui-kit/src/api'
-import { applyImport } from './import/apply'
-import { keepPictures, type PandocPicture } from './import/pandoc-pictures'
-import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
-import { detect, readAs } from './import/read'
 import {
+  applyImport,
+  macNotes,
+  todoistAccount,
+  keepPictures,
+  counts,
+  type Counts,
+  type FormatId,
+  type ImportPlan,
+  detect,
+  readAs,
   insideFolder,
   pickedFolder,
   sourcesFrom,
   tooMuch,
-  type Picked,
   type Source,
-} from './import/sources'
-import type { Rows } from './import/table'
-import { safeName } from './import/names'
+  safeName,
+} from './import/src/api'
+import type { Rows } from './import/src/api'
 import { moveTargets } from './move-targets'
 import { canWriteAt } from './sharing/src/api'
 import { relativeTo, rootedAt, invoke, isDesktop, joinPath, platform } from './platform/src/api'
@@ -75,7 +81,7 @@ class Importing {
     this.rows = 'table'
   }
 
-  async take(picked: readonly Picked[]) {
+  async take(picked: readonly PickedFile[]) {
     if (!picked.length) return
 
     this.stage = 'reading'
@@ -106,7 +112,7 @@ class Importing {
     this.noAccess = false
     this.sources = []
 
-    const apple = await import('./import/apple')
+    const apple = await macNotes()
 
     try {
       const plan = await apple.readMacNotes()
@@ -139,7 +145,7 @@ class Importing {
     this.sources = []
 
     try {
-      const todoist = await import('./import/todoist')
+      const todoist = await todoistAccount()
       const account = await todoist.readTodoistAccount(fetch, said, { completed })
       const plan = todoist.planOf(account)
       this.format = plan.format
@@ -281,7 +287,7 @@ function saidBy(error: unknown): string {
   return error instanceof Error ? error.message : ''
 }
 
-export function folderNameFor(picked: readonly Picked[], format: FormatId): string {
+export function folderNameFor(picked: readonly PickedFile[], format: FormatId): string {
   if (format === 'todoist') return ''
   const first = picked[0]
   const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
@@ -329,7 +335,7 @@ function nameOfFormat(format: FormatId): string {
   }
 }
 
-function stemOf(picked: Picked): string {
+function stemOf(picked: PickedFile): string {
   return picked.name.replace(/\.[^.]+$/, '')
 }
 

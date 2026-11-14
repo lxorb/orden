@@ -1,3 +1,4 @@
+import type { PickedFile } from '@orden/contracts'
 import {
   caughtFiles,
   carriedNothing,
@@ -9,7 +10,6 @@ import {
   isTreeDrag,
 } from '../../drag-paths'
 import { message } from '../../ui-kit/src/api'
-import type { Picked } from '../../import/sources'
 import { invoke, isDesktop, joinPath, platform } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { OutsideStep } from '../../workspace/undo.svelte'
@@ -58,7 +58,7 @@ export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
   const how = dropHow(event)
   if (isFileDrop(transfer)) {
     const caught = caughtFiles(transfer)
-    void import('../../import/picking')
+    void import('../../picking')
       .then(({ filesUnder }) => filesUnder(caught))
       .then((files) => writeInto(view, files, folder))
     return
@@ -70,7 +70,7 @@ export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
 
 export const WRITTEN_AT_ONCE = 8 * 1024 * 1024
 
-async function* pieces(file: Picked): AsyncGenerator<Uint8Array> {
+async function* pieces(file: PickedFile): AsyncGenerator<Uint8Array> {
   if (!file.slice || file.size === undefined) {
     yield new Uint8Array(await file.arrayBuffer())
     return
@@ -80,7 +80,7 @@ async function* pieces(file: Picked): AsyncGenerator<Uint8Array> {
   }
 }
 
-export async function writeInto(view: ExplorerView, files: readonly Picked[], folder: string) {
+export async function writeInto(view: ExplorerView, files: readonly PickedFile[], folder: string) {
   if (!files.length || !changeable(view)) return
   if (inASpace(folder)) {
     await workspace.bringIn(files, folder)
