@@ -1,5 +1,5 @@
-import { hiddenKinds } from '../settings.svelte'
-import { protection } from './protection.svelte'
+import { hiddenKinds } from '../../../settings.svelte'
+import { protection } from '../../../protect/src/api'
 
 export const PROTECTION_WORD = 'shown-protection'
 export const NO_PROTECTION_WORD = 'hidden-protection'

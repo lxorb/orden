@@ -17,7 +17,7 @@ vi.mock('../../workspace.svelte', () => ({
     open: () => Promise.resolve(),
   },
 }))
-vi.mock('../../sharing.svelte', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
 }))
 vi.mock('./source.svelte', () => ({

@@ -1,5 +1,5 @@
-import { protection } from '../protect/protection.svelte'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
+import { protection } from '../protect/src/api'
 import { insideSpace, withinSpace, insideOnly } from '../platform/src/api'
 import type { Space } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'

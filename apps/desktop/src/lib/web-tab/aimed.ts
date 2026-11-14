@@ -1,5 +1,5 @@
 import { shownName, nameOf } from '../platform/src/api'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'
 import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'

@@ -28,7 +28,7 @@ vi.mock('../ai/keys', () => ({
   },
 }))
 
-vi.mock('../protect/device', () => ({
+vi.mock('../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(fake.can),
   deviceSays: (reason: string) => {
     fake.asked.push(reason)

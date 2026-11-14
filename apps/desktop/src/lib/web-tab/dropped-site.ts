@@ -1,4 +1,4 @@
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { droppedAddress } from '../tab-strip/dropped'
 import type { Sites } from './new-site'
 import { newSite } from './new-site'

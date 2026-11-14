@@ -19,7 +19,7 @@
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { renamed } from './lib/renamed.svelte'
   import { account } from './lib/accounts/src/api'
-  import { joining } from './lib/joining.svelte'
+  import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
   import { arriving } from './lib/arriving.svelte'
   import { busy } from './lib/ui-kit/src/api'
   import FirstSync from './lib/FirstSync.svelte'
@@ -77,7 +77,6 @@
     crashAskDue,
     OUTSIDE,
   } from './lib/surfaces.svelte'
-  import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'

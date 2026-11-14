@@ -29,7 +29,10 @@ vi.mock('../rows/rows.svelte', () => ({
     of: () => [],
   },
 }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => true }))
+vi.mock('../sharing/src/api', () => ({
+  canWriteAt: () => true,
+  trustsHtmlAt: () => true,
+}))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 vi.mock('../workspace/write-file', () => ({ writeFile: async () => undefined }))
 

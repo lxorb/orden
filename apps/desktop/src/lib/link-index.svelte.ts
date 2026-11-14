@@ -861,7 +861,7 @@ class Links {
     const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
       import('./reading/render'),
       import('./theme/src/api'),
-      import('./sharing.svelte'),
+      import('./sharing/src/api'),
     ])
 
     const path = from === null || root === null ? null : insideSpace(root, from)
@@ -1376,7 +1376,7 @@ class Links {
     if (root === null) return null
 
     const absolute = insideSpace(root, relative)
-    const { canWriteAt } = await import('./sharing.svelte')
+    const { canWriteAt } = await import('./sharing/src/api')
     if (!canWriteAt(absolute)) return null
 
     const open = await this.openDocument()
@@ -1428,7 +1428,7 @@ class Links {
   ): Promise<EmbeddedNote | null> {
     const [found, { trustsHtmlAt }] = await Promise.all([
       this.embedded(target, from, inSpaceOf),
-      import('./sharing.svelte'),
+      import('./sharing/src/api'),
     ])
     return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path) }
   }

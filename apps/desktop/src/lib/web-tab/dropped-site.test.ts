@@ -9,7 +9,7 @@ vi.mock('../workspace/write-file', () => ({
 }))
 
 const READ = '/Theirs'
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   canWriteAt: (path: string) => path !== READ && !path.startsWith(`${READ}/`),
 }))
 

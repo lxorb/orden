@@ -48,8 +48,8 @@ const world = vi.hoisted((): World => ({
   withdrawFails: null,
 }))
 
-vi.mock('./accounts/src/client', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./accounts/src/client')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
 
   return {
     ...original,
@@ -101,7 +101,7 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('./sync.svelte', () => ({
+vi.mock('../../sync.svelte', () => ({
   sync: {
     pass: () => {
       world.passes += 1
@@ -111,7 +111,7 @@ vi.mock('./sync.svelte', () => ({
   },
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces: [{ id: 'here', name: 'Plans', root: '/Plans' }],
     fileOps: { follow: () => () => undefined },
@@ -126,12 +126,12 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./ui-kit/src/message', () => ({
+vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))
 
-vi.mock('./collab/src/api', () => ({ deviceName: () => 'Windows' }))
+vi.mock('../../collab/src/api', () => ({ deviceName: () => 'Windows' }))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -161,7 +161,7 @@ vi.stubGlobal('window', {
 })
 
 let joining: typeof import('./joining.svelte').joining
-let account: typeof import('./accounts/src/account.svelte').account
+let account: typeof import('../../accounts/src/account.svelte').account
 
 await import('./joining.svelte')
 
@@ -189,8 +189,9 @@ beforeEach(async () => {
   world.withdrawFails = null
 
   vi.resetModules()
+  await import('../../sharing-ports')
   ;({ joining } = await import('./joining.svelte'))
-  ;({ account } = await import('./accounts/src/account.svelte'))
+  ;({ account } = await import('../../accounts/src/account.svelte'))
   world.holding = () => !!joining.invitation
 })
 

@@ -34,7 +34,7 @@
   import Cells from './Cells.svelte'
   import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
   import { keep, storedText } from '../platform/src/api'
-  import { canWriteAt } from '../sharing.svelte'
+  import { canWriteAt } from '../sharing/src/api'
   import { shortcuts } from '../shortcuts.svelte'
   import { mayCarry } from '../workspace/chat-carry'
   import { TAB_KINDS } from '../workspace/tab-kinds'

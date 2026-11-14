@@ -7,16 +7,16 @@ import {
   type Sharing,
   type SpaceRole,
   account,
-} from './accounts/src/api'
-import { message } from './ui-kit/src/api'
-import { rooms } from './collab/src/api'
-import { samePath, forget, keepJson, Shared } from './platform/src/api'
-import { within } from './sync/mirror'
-import { sync } from './sync.svelte'
-import { type Origin, originOf, trustsHtml } from './trust'
-import type { NoteDoc } from './workspace/documents.svelte'
-import { keeping } from './workspace/file-ops'
-import { type Space, workspace } from './workspace.svelte'
+} from '../../accounts/src/api'
+import { message } from '../../ui-kit/src/api'
+import { rooms } from '../../collab/src/api'
+import { samePath, forget, keepJson, Shared } from '../../platform/src/api'
+import { within } from '../../sync/mirror'
+import { sync } from '../../sync.svelte'
+import { type Origin, originOf, trustsHtml } from '../../trust'
+import type { NoteDoc } from '../../workspace/documents.svelte'
+import { keeping } from '../../workspace/file-ops'
+import { type Space, workspace } from '../../workspace.svelte'
 
 function remoteOf(root: string): RemoteSpace | null {
   const id = sync.remoteIdFor(root)

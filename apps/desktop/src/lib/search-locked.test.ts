@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'vitest'
 import type { Hit } from '@orden/scan/search/match'
 
 const { workspace } = await import('./workspace.svelte')
-const { unlocks } = await import('./protect/unlocked.svelte')
+const { unlocks } = await import('./protect/src/unlocked.svelte')
 const { search } = await import('./search.svelte')
 
 const ROOT = '/space'

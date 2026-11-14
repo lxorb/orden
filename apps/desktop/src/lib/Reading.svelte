@@ -8,7 +8,7 @@
   import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
   import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
   import { readingHtml, tagAnchor, unreadableHtml } from './reading/render'
-  import { trustsHtmlIn } from './sharing.svelte'
+  import { trustsHtmlIn } from './sharing/src/api'
   import { scrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { followHref, MIDDLE, opensLink } from './open-link'

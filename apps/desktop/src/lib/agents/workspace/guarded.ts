@@ -1,4 +1,4 @@
-import { protection } from '../../protect/protection.svelte'
+import { protection } from '../../protect/src/api'
 import { Refused } from './problem'
 
 export function readable(path: string, shown: string): void {

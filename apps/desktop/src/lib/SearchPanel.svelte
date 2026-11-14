@@ -16,7 +16,7 @@
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
   import { isScratchpad } from './scratchpad/is.svelte'
-  import { canWriteAt } from './sharing.svelte'
+  import { canWriteAt } from './sharing/src/api'
   import { type Entry, workspace } from './workspace.svelte'
   import { dur, fly } from './platform/src/api'
 

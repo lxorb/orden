@@ -19,7 +19,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./sharing.svelte', () => ({
+vi.mock('./sharing/src/api', () => ({
   canWriteAt: () => !share.readOnly,
   trustsHtmlAt: () => false,
 }))

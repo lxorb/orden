@@ -1,6 +1,6 @@
 import type { SharedItem } from './accounts/src/api'
 import { account } from './accounts/src/api'
-import { sharedWithYou } from './sharing.svelte'
+import { sharedWithYou } from './sharing/src/api'
 import { insideSpace, within, waited } from './platform/src/api'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'

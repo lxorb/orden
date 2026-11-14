@@ -31,7 +31,7 @@ vi.mock('../link-index.svelte', () => ({
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
 const share = vi.hoisted(() => ({ readOnly: false }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => !share.readOnly }))
+vi.mock('../sharing/src/api', () => ({ canWriteAt: () => !share.readOnly }))
 
 const { changed, taskLine, writeRow } = await import('./write')
 const { FileActions } = await import('../workspace/undo.svelte')

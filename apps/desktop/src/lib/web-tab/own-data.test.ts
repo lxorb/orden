@@ -27,7 +27,7 @@ vi.mock('../ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('../workspace/write-file', () => ({
   writeFile: (path: string, text: string) => {
     files.set(path, text)

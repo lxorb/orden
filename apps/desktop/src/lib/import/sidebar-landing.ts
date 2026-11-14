@@ -28,7 +28,7 @@ async function landSpace(plan: SpacePlan): Promise<Space | null> {
   const held = workspace.spaces.find(
     (one) => nameKey(asFolder(one.name)) === nameKey(asFolder(plan.name)),
   )
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   if (held && !canWriteAt(held.root)) return null
   const space = held ?? (await workspace.addSpace(plan.name))
   if (!space) throw new Error('That import could not be written.')

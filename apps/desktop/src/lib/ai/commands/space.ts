@@ -1,4 +1,4 @@
-import { canWriteAt } from '../../sharing.svelte'
+import { canWriteAt } from '../../sharing/src/api'
 import { samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { writeIfAbsent } from '../../workspace/write-file'

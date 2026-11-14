@@ -1,8 +1,8 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/sharing.svelte', async (original) => ({
-  ...(await original<typeof import('../../src/lib/sharing.svelte')>()),
+vi.mock('../../src/lib/sharing/src/api', async (original) => ({
+  ...(await original<typeof import('../../src/lib/sharing/src/sharing.svelte')>()),
   roleOf: (root: string) => (root === '/spaces/Lab' ? 'read' : 'owner'),
   isShared: (root: string) => root === '/spaces/Lab',
 }))

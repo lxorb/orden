@@ -1,4 +1,4 @@
-import { protection } from '../../protect/protection.svelte'
+import { protection } from '../../protect/src/api'
 import { searchSpace } from '../../search/space'
 import { parseQuery } from '@orden/scan/search/query'
 import { scratchpad } from '../../scratchpad/pad'

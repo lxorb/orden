@@ -1,4 +1,4 @@
-import { protection } from '../protect/protection.svelte'
+import { protection } from '../protect/src/api'
 import type { TextEdit } from '@orden/markdown/edits'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'

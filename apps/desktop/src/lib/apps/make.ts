@@ -6,7 +6,7 @@ import {
   type Installed,
 } from '@orden/online/apps'
 import { account } from '../accounts/src/api'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { nameOf, joinPath } from '../platform/src/api'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'

@@ -67,8 +67,8 @@ vi.mock('./platform/src/tauri', () => ({
 
 vi.mock('./seeded', () => ({ seedSpaceRoot: () => null, forgetSeedSpace: () => undefined }))
 vi.mock('./seed-space', () => ({ untouchedSeedSpace: () => Promise.resolve(null) }))
-vi.mock('./sharing.svelte', () => ({ rememberRoles: () => undefined }))
-vi.mock('./protect/synced', () => ({ pulled: () => undefined }))
+vi.mock('./sharing/src/api', () => ({ rememberRoles: () => undefined }))
+vi.mock('./protect/src/synced', () => ({ pulled: () => undefined }))
 
 vi.mock('./workspace.svelte', () => ({
   workspace: {

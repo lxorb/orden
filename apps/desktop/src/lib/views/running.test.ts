@@ -77,11 +77,14 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
 vi.mock('../workspace/write-file', () => ({
   writeFile: async (path: string, content: string) => void written.set(path, content),
 }))
-vi.mock('../protect/protection.svelte', () => ({
+vi.mock('../protect/src/api', () => ({
   protection: { locked: (path: string) => [...shut].some((one) => path.startsWith(one)) },
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => trusted.yes }))
+vi.mock('../sharing/src/api', () => ({
+  canWriteAt: () => true,
+  trustsHtmlAt: () => trusted.yes,
+}))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../settings.svelte')

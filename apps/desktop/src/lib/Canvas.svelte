@@ -94,7 +94,7 @@
   import { followNote } from './open-link'
   import { dur, fade } from './platform/src/api'
   import { rooms } from './collab/src/api'
-  import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
+  import { canWriteIn, trustsHtmlIn } from './sharing/src/api'
   import { pastesMarkup } from './trust'
   import { shortcuts } from './shortcuts.svelte'
   import { modes } from './modes.svelte'

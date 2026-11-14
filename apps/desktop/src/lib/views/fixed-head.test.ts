@@ -2,7 +2,7 @@ import { readBase } from '@orden/bases'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   canWriteAt: (path: string) => !path.startsWith('/theirs'),
   trustsHtmlAt: () => true,
 }))

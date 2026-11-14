@@ -80,8 +80,7 @@ import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { ItemMetaStore } from './workspace/item-meta.svelte'
 import { Excluded } from './workspace/excluded.svelte'
-import { protection } from './protect/protection.svelte'
-import { unlocks } from './protect/unlocked.svelte'
+import { protection, unlocks } from './protect/src/api'
 import { Archive } from './workspace/archive.svelte'
 import { ArchivedSpaces } from './workspace/archived-spaces.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
@@ -1610,7 +1609,7 @@ class Workspace {
   }
 
   private async mayTurn(path: string): Promise<boolean> {
-    const { canWriteAt } = await import('./sharing.svelte')
+    const { canWriteAt } = await import('./sharing/src/api')
     return canWriteAt(path)
   }
 
@@ -2994,12 +2993,12 @@ class Workspace {
   }
 
   private async writableAt(...paths: string[]): Promise<boolean> {
-    const { canWriteAt } = await import('./sharing.svelte')
+    const { canWriteAt } = await import('./sharing/src/api')
     return paths.every((path) => canWriteAt(path))
   }
 
   private async writableOf(paths: readonly string[]): Promise<string[]> {
-    const { canWriteAt } = await import('./sharing.svelte')
+    const { canWriteAt } = await import('./sharing/src/api')
     return paths.filter((path) => canWriteAt(path))
   }
 

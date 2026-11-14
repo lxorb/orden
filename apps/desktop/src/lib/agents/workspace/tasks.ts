@@ -13,7 +13,7 @@ import {
 } from '@orden/bases/agent'
 import type { AgentAnswer } from '../../automation/caller'
 import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
-import { reachedByOthersIn } from '../../sharing.svelte'
+import { reachedByOthersIn } from '../../sharing/src/api'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
 import { DocError, notes } from '../docs'

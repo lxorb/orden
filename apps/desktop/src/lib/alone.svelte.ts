@@ -1,5 +1,5 @@
 import { account } from './accounts/src/api'
-import { joining } from './joining.svelte'
+import { joining } from './sharing/src/api'
 import { workspace } from './workspace.svelte'
 
 class Alone {

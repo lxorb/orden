@@ -4,7 +4,7 @@ import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
 import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
 import { openTerminal, shellRows } from './terminal/open'
-import { canWriteAt } from './sharing.svelte'
+import { canWriteAt } from './sharing/src/api'
 import { shells } from './terminal/shells.svelte'
 import { workspace } from './workspace.svelte'
 

@@ -1,11 +1,16 @@
 import { mount, unmount } from 'svelte'
-import { busy, prompt } from '../ui-kit/src/api'
-import { workspace } from '../workspace.svelte'
-import { deviceCan, deviceName, deviceSays } from './device'
-import { hashPassword, matches } from './password'
+import { busy, prompt } from '../../../ui-kit/src/api'
+import { workspace } from '../../../workspace.svelte'
+import {
+  deviceCan,
+  deviceName,
+  deviceSays,
+  hashPassword,
+  matches,
+  unlocks,
+} from '../../../protect/src/api'
 import PasswordSheet from './PasswordSheet.svelte'
-import type { Way } from './protection.svelte'
-import { unlocks } from './unlocked.svelte'
+import type { Way } from '../../../protect/src/api'
 
 function asked(choosing: boolean, title: string): Promise<string | null> {
   return new Promise((resolve) => {

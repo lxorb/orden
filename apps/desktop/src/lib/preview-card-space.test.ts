@@ -23,7 +23,7 @@ vi.mock('./workspace.svelte', () => ({
     },
   },
 }))
-vi.mock('./sharing.svelte', () => ({
+vi.mock('./sharing/src/api', () => ({
   canWriteAt: (path: string) => {
     asked.push(path)
     return true

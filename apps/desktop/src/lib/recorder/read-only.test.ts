@@ -4,8 +4,8 @@ const readOnly = vi.hoisted(() => new Set<string>())
 const stored = vi.hoisted(() => [] as string[])
 const editor = vi.hoisted(() => ({ readOnly: false }))
 
-vi.mock('../sharing.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../sharing.svelte')>()),
+vi.mock('../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))

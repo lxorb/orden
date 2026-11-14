@@ -1,7 +1,7 @@
 <script lang="ts">
   import { pinIn } from '@orden/pass/device'
   import { deliver } from '../export/save'
-  import { deviceName } from '../protect/device'
+  import { deviceName } from '../protect/src/api'
   import { Select } from '../ui-controls/src/api'
   import ChangePassword from './ChangePassword.svelte'
   import { copyField } from './copied'

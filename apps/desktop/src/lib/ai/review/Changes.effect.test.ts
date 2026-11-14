@@ -2,7 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 const { workspace } = await import('../../workspace.svelte')
-const { unlocks } = await import('../../protect/unlocked.svelte')
+const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const Changes = (await import('./Changes.svelte')).default
 
 const ROOT = '/space'

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import '../../sharing-ports'
 
 interface Held {
   email: string | null
@@ -70,8 +71,8 @@ const world = vi.hoisted((): World => ({
   showing: [],
 }))
 
-vi.mock('./accounts/src/client', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./accounts/src/client')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
 
   const answer = (what: string, who = world.sharing) => {
     world.asked.push(what)
@@ -151,7 +152,7 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('./sync.svelte', () => ({
+vi.mock('../../sync.svelte', () => ({
   sync: {
     remoteIdFor: (root: string) => world.mirrors[root] ?? null,
     roleKept: (root: string) => world.kept[root] ?? null,
@@ -162,7 +163,7 @@ vi.mock('./sync.svelte', () => ({
   },
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get spaces() {
       return [...Object.keys(world.mirrors), ...world.locals].map((root) => ({
@@ -188,14 +189,14 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./ui-kit/src/message', () => ({
+vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))
 
-import { account } from './accounts/src/account.svelte'
-import { rooms } from './collab/src/api'
-import { accentFor } from './theme/src/accents'
+import { account } from '../../accounts/src/account.svelte'
+import { rooms } from '../../collab/src/api'
+import { accentFor } from '../../theme/src/accents'
 import {
   addressesIn,
   canShare,
@@ -217,11 +218,11 @@ import {
   trustsHtmlIn,
   trustAgain,
 } from './sharing.svelte'
-import { pairSpaces, type Pairing } from './space-pairing'
-import type { RemoteSpace, SharedItem } from './accounts/src/routes'
-import type { NoteDoc } from './workspace/documents.svelte'
-import type { FileOp } from './workspace/file-ops'
-import { memoryStorage } from '../../test/disk'
+import { pairSpaces, type Pairing } from '../../space-pairing'
+import type { RemoteSpace, SharedItem } from '../../accounts/src/routes'
+import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { FileOp } from '../../workspace/file-ops'
+import { memoryStorage } from '../../../../test/disk'
 
 const storage = memoryStorage()
 vi.stubGlobal('localStorage', storage)

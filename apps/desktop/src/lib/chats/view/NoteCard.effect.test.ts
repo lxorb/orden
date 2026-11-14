@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { workspace } = await import('../../workspace.svelte')
 const { links } = await import('../../link-index.svelte')
-const { unlocks } = await import('../../protect/unlocked.svelte')
+const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const NoteCard = (await import('./NoteCard.svelte')).default
 
 const ROOT = '/space'

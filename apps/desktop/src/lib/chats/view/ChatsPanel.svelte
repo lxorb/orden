@@ -3,7 +3,7 @@
   import { localNumber } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
   import { hiddenKinds } from '../../settings.svelte'
-  import { canWriteAt } from '../../sharing.svelte'
+  import { canWriteAt } from '../../sharing/src/api'
   import type { ChatEntry, Hit } from '../api'
   import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'

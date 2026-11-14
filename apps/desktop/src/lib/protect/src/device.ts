@@ -1,4 +1,4 @@
-import { answer, frameWord, method, invoke, isMobile, platform } from '../platform/src/api'
+import { answer, frameWord, method, invoke, isMobile, platform } from '../../platform/src/api'
 
 export function deviceName(): string {
   switch (platform()) {

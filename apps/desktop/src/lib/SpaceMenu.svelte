@@ -12,7 +12,7 @@
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
   import { SpaceTyping } from './space-typing.svelte'
-  import { sharedWithYou } from './sharing.svelte'
+  import { sharedWithYou } from './sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
   import { spendClick } from './spent-click'
   import { trap } from './ui-controls/src/api'

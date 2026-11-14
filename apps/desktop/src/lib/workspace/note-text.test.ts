@@ -43,7 +43,7 @@ vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged')
 
 const readOnly = new Set<string>()
 
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
@@ -55,8 +55,8 @@ const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
 const { NoteDoc } = await import('./documents.svelte')
 const { meetAcross } = await import('./in-turn')
-const { protection } = await import('../protect/protection.svelte')
-const { unlocks } = await import('../protect/unlocked.svelte')
+const { protection } = await import('../protect/src/protection.svelte')
+const { unlocks } = await import('../protect/src/unlocked.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes
 
 const SPACE = '/space'

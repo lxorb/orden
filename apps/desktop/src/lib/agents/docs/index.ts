@@ -1,6 +1,6 @@
 import { documentOf } from '@orden/editor'
 import { links } from '../../link-index.svelte'
-import { protection } from '../../protect/protection.svelte'
+import { protection } from '../../protect/src/api'
 import { isScratchpad } from '../../scratchpad/is.svelte'
 import { scratchpad } from '../../scratchpad/pad'
 import { withinSpace, invoke } from '../../platform/src/api'

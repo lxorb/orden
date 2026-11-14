@@ -23,7 +23,7 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
 
 const { noteFor, relativeIn } = await import('./space')
 

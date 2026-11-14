@@ -63,7 +63,8 @@
     todosBoard,
     webSurface,
   } from './surfaces.svelte'
-  import { canWriteIn } from './sharing.svelte'
+  import { canWriteIn } from './sharing/src/api'
+  import { noteBehind } from './protect/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
@@ -75,7 +76,6 @@
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
   import { keepsScroll, scrollKeyOf } from './kept-scroll'
-  import { noteBehind } from './protect/protection.svelte'
   import { paneCorners } from './pane-corners.svelte'
   import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
 

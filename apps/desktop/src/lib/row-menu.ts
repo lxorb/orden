@@ -22,14 +22,13 @@ import {
   isDesktop,
   joinPath,
 } from './platform/src/api'
-import { canWriteAt } from './sharing.svelte'
+import { canWriteAt, protectEntries } from './sharing/src/api'
 import { shortcuts } from './shortcuts.svelte'
 import { showLabel } from './reveal'
 import { entryAt } from './tree-edits'
 import { viewport } from './ui-kit/src/api'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
-import { protectEntries } from './protect/entries'
 
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []

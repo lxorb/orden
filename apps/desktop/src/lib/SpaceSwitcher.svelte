@@ -8,7 +8,7 @@
   import SharedMark from './SharedMark.svelte'
   import SpaceBadge from './SpaceBadge.svelte'
   import { spacesMenu } from './surfaces.svelte'
-  import { isShared } from './sharing.svelte'
+  import { isShared } from './sharing/src/api'
   import { workspace } from './workspace.svelte'
 
   let open = $state(false)

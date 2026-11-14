@@ -23,7 +23,7 @@ vi.mock('../ai/keys', () => ({
   },
 }))
 
-vi.mock('../protect/device', () => ({
+vi.mock('../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(true),
   deviceSays: () => Promise.resolve(true),
   deviceName: () => 'Touch ID',

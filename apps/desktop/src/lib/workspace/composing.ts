@@ -50,7 +50,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   if (samePath(from, into)) return
 
   const root = ws.activeSpace?.root ?? null
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   if (!mergeable(root, from, canWriteAt) || !mergeable(root, into, canWriteAt)) return
 
   const [fromContent, intoContent] = await Promise.all([
@@ -112,7 +112,7 @@ async function carve(
   cut: (named?: string) => Split | null,
   kind: 'split' | 'extract',
 ) {
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   if (!carvable(path, canWriteAt)) return
 
   const wanted = cut()

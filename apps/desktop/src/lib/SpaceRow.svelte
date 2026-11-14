@@ -3,7 +3,7 @@
   import { account } from './accounts/src/api'
   import { pieces } from './palette/pieces'
   import SharedMark from './SharedMark.svelte'
-  import { isShared, roleOf } from './sharing.svelte'
+  import { isShared, roleOf } from './sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
   import SpacePlace from './SpacePlace.svelte'
   import { isNumber } from './space-pick'

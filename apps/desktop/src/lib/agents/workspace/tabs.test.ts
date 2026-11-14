@@ -149,7 +149,7 @@ vi.mock('../settings/crate', () => ({
 }))
 
 let readOnly = false
-vi.mock('../../sharing.svelte', () => ({
+vi.mock('../../sharing/src/api', () => ({
   isShared: () => false,
   reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
   reachedAs: (path: string | null) => (path !== null && othersWrite.has(path) ? 'space' : null),

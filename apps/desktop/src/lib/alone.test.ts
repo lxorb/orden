@@ -22,7 +22,7 @@ vi.mock('./accounts/src/account.svelte', () => ({
   },
 }))
 
-vi.mock('./joining.svelte', () => ({
+vi.mock('./sharing/src/api', () => ({
   joining: {
     get invitation() {
       return world.invitation

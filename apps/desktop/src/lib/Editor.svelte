@@ -28,7 +28,7 @@
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts.svelte'
-  import { trustsHtmlIn } from './sharing.svelte'
+  import { trustsHtmlIn } from './sharing/src/api'
   import { pastesMarkup } from './trust'
   import { viewport } from './ui-kit/src/api'
   import { carriedIntoNotes } from './drag-paths'

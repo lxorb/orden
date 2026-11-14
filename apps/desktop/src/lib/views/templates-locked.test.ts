@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { workspace } = await import('../workspace.svelte')
-const { unlocks } = await import('../protect/unlocked.svelte')
+const { unlocks } = await import('../protect/src/unlocked.svelte')
 const { templates, templateWords } = await import('./templates')
 
 const ROOT = '/space'

@@ -1,10 +1,10 @@
-import { busy } from '../ui-kit/src/api'
+import { busy } from '../../../ui-kit/src/api'
 import type { IconNode } from 'lucide'
-import type { MenuItem } from '../ui-kit/src/api'
-import { samePath, within } from '../platform/src/api'
-import { workspace } from '../workspace.svelte'
+import type { MenuItem } from '../../../ui-kit/src/api'
+import { samePath, within } from '../../../platform/src/api'
+import { workspace } from '../../../workspace.svelte'
 import { protectionOn } from './gate'
-import { unlocks } from './unlocked.svelte'
+import { unlocks } from '../../../protect/src/api'
 
 const unlocking = () =>
   __EVEN_PLUGIN__

@@ -1,9 +1,9 @@
 <script lang="ts">
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
-  import Icon from '../Icon.svelte'
-  import { nameOf } from '../platform/src/api'
-  import { workspace } from '../workspace.svelte'
-  import { deviceCan, deviceName } from './device'
+  import Icon from '../../../Icon.svelte'
+  import { nameOf } from '../../../platform/src/api'
+  import { workspace } from '../../../workspace.svelte'
+  import { deviceCan, deviceName } from '../../../protect/src/api'
   import { unlockAt, unlockByDevice } from './unlocking'
 
   const { path, focused = false }: { path: string; focused?: boolean } = $props()
