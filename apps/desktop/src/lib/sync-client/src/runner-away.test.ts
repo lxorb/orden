@@ -23,7 +23,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { runner } = await import('./runner.svelte')
-const { keptAway } = await import('../../web/away.svelte')
+const { keptAway } = await import('../../away/src/api')
 const { windows } = await import('../../platform/src/windows')
 
 const ROOT = '/browser/space'

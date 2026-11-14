@@ -44,7 +44,7 @@ function beingWritten(ws: HoldsNotes, path: string): boolean {
 }
 
 async function readable(root: string): Promise<((path: string) => boolean) | null> {
-  const { keptAway } = await import('../web/away.svelte')
+  const { keptAway } = await import('../away/src/api')
   if (!keptAway.under(root).length) return () => true
   const underlined = new Set<string>()
   const whole = await keptAway.search(root, UNDERLINED, [], MOST_UNDERLINED, (found) => {

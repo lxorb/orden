@@ -12,7 +12,7 @@ import {
 import { applied, appliedToFile, type Edit, endingsLike } from '@orden/scan/search/replace'
 import { links, type Retargeting } from '../link-index.svelte'
 import type { HoldCheck } from '@orden/sync-core'
-import { keptAway } from '../web/away.svelte'
+import { keptAway } from '../away/src/api'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
 import type { NoteDoc } from './documents.svelte'

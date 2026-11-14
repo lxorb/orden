@@ -1,3 +1,4 @@
+import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
@@ -37,10 +38,7 @@ export async function searchSpace(
   if (papers.length) onFound({ hits: papers, loose: [] })
 
   if (!isNative) {
-    const [{ searchInWorker }, { keptAway }] = await Promise.all([
-      import('../../web/search-client'),
-      import('../../web/away.svelte'),
-    ])
+    const { searchInWorker } = await import('../../web/search-client')
     let found = 0
     const loose: FuzzyHit[] = []
     const gathered = (batch: Found) => {

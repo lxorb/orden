@@ -29,7 +29,7 @@
   import { dragged, dropOver, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { message } from './ui-kit/src/api'
-  import { keptAway } from './web/away.svelte'
+  import { keptAway } from './away/src/api'
   import { busy } from './ui-kit/src/api'
 
   import { chrome } from './theme/src/api'

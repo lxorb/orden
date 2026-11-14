@@ -150,7 +150,7 @@ const { stamped, stampOf } = await import('../theme/src/stamp')
 const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
 const { openerFor } = await import('../openers')
-const { keptAway, NOT_HERE } = await import('./away.svelte')
+const { keptAway, NOT_HERE } = await import('../away/src/api')
 const { indexed } = await import('@orden/scan/indexed')
 
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })

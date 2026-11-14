@@ -1,4 +1,5 @@
 export { ASSET_ROUTE, assetType } from './asset-route'
+export { serveAssets } from './serve-assets'
 export {
   BEAT_EVERY,
   IDLE_AFTER,

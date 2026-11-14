@@ -32,7 +32,7 @@ vi.mock('../../web/search-client', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('../../web/away.svelte', () => ({
+vi.mock('../../away/src/api', () => ({
   keptAway: {
     search: (_root: string, _query: unknown, _terms: string[], limit: number, told: Told) => {
       told({

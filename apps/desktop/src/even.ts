@@ -13,7 +13,7 @@ import { glassesOn } from './lib/settings.svelte'
 import { recovery } from './lib/history/src/api'
 import { rememberSeedIn } from './lib/seeded'
 import { sync } from './lib/sync.svelte'
-import { serveAssets } from './lib/web/asset-worker'
+import { serveAssets } from './lib/platform/src/api'
 import { workspace } from './lib/workspace.svelte'
 
 serveAssets()
