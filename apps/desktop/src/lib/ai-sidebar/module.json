@@ -14,7 +14,8 @@
     "shortcuts",
     "theme",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "windows"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -35,8 +36,6 @@
     "apps/desktop/src/lib/note-images.ts",
     "apps/desktop/src/lib/open-link.ts",
     "apps/desktop/src/lib/pictures-away.ts",
-    "apps/desktop/src/lib/row-window.svelte.ts",
-    "apps/desktop/src/lib/row-window.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/task-actions.ts",

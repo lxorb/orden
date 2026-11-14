@@ -7,7 +7,7 @@
   import Icon from '../../Icon.svelte'
   import { brandIcon, readIcon } from '../../ui-kit/src/api'
   import { region } from '../../platform/src/api'
-  import type { Place } from '../../row-window'
+  import type { Place } from '../../windows/src/api'
   import { ai, providerBrand, type SessionState, type ThreadHead } from '../../ai-providers/src/api'
   import { UnreadDot } from '../../ui-kit/src/api'
   import { rowName } from './marks'

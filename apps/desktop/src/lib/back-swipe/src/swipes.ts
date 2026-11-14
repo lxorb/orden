@@ -406,7 +406,7 @@ export function listen(): () => void {
   let unlisten: (() => void) | null = null
   let stopped = false
   if (isDesktop) {
-    void import('../../own-window').then(async ({ hearHere }) => {
+    void import('../../windows/src/api').then(async ({ hearHere }) => {
       const off = await hearHere('orden://web-swipe', (event) => {
         const said = readSaid(event.payload)
         if (said) pageSaid(said)

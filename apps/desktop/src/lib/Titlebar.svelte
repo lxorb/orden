@@ -18,7 +18,7 @@
   import { shortcuts } from './shortcuts/src/api'
   import { startup } from './startup.svelte'
   import { viewport } from './ui-kit/src/api'
-  import { WindowState } from './window-state.svelte'
+  import { WindowState } from './windows/src/api'
   import { topRow } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'
 

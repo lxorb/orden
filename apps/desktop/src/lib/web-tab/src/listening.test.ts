@@ -17,7 +17,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 let release: () => void = () => undefined
 const slow = new Promise<void>((go) => (release = go))
 
-vi.mock('../../own-window', () => ({
+vi.mock('../../windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../windows/src/api')>()),
   hearHere: async (name: string) => {
     if (order.length === 0) await slow
     order.push(name)

@@ -74,7 +74,7 @@ class KeyboardHome {
     })
     if (isDesktop) {
       void invoke('keyboard_watch').catch(() => undefined)
-      void import('./own-window')
+      void import('./windows/src/api')
         .then(({ hearHere }) => hearHere(IN_PAGE, () => void this.went()))
         .catch(() => undefined)
     }

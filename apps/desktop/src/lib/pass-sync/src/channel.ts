@@ -77,11 +77,11 @@ export interface FillTarget {
 
 type Unlisten = () => void
 
-let ownWindow: Promise<typeof import('../../own-window')> | undefined
+let ownWindow: Promise<typeof import('../../windows/src/api')> | undefined
 
 async function heard(event: string, then: (said: unknown) => void): Promise<Unlisten> {
   if (!isDesktop) return () => undefined
-  ownWindow ??= import('../../own-window')
+  ownWindow ??= import('../../windows/src/api')
   const { hearHere } = await ownWindow
   return hearHere(event, (said) => then(said.payload))
 }

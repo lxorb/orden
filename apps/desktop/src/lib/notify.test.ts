@@ -13,7 +13,7 @@ vi.mock('./platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('./own-window', () => ({
+vi.mock('./windows/src/api', () => ({
   hearHere: (_name: string, heard: (event: { payload: unknown }) => void) => {
     world.pressed = heard
     return Promise.resolve(() => undefined)

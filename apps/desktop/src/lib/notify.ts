@@ -128,7 +128,7 @@ function plainTag(tag: string): string {
 }
 
 function shownByTheCrate(one: Notice): void {
-  listening ??= import('./own-window').then(({ hearHere }) =>
+  listening ??= import('./windows/src/api').then(({ hearHere }) =>
     hearHere<unknown>(PRESSED, (event) => pressed(event.payload)),
   )
 

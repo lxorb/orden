@@ -11,7 +11,8 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))

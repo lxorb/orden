@@ -4,7 +4,7 @@
   import Thinking from './Thinking.svelte'
   import { copyText } from '../../ui-controls/src/api'
   import { dur, fade, fly } from '../../platform/src/api'
-  import type { Place } from '../../row-window'
+  import type { Place } from '../../windows/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
   import { settings } from '../../settings.svelte'
   import type { ThreadHead } from '../../ai-providers/src/api'

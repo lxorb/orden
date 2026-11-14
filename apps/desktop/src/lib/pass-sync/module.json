@@ -14,12 +14,12 @@
     "sync-client",
     "theme",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "windows"
   ],
   "pending": [
     "apps/desktop/src/lib/icon-choice.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/own-window.ts",
     "apps/desktop/src/lib/said.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",

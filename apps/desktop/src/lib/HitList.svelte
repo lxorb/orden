@@ -7,8 +7,8 @@
   import { middleOpens } from './new-tab'
   import { roving } from './roving'
   import { shownName } from './platform/src/api'
-  import { offsetOf, type Rows, windowFor } from './row-window'
-  import { ListView, measuredRow } from './row-window.svelte'
+  import { offsetOf, type Rows, windowFor } from './windows/src/api'
+  import { ListView, measuredRow } from './windows/src/api'
   import { folderOf, insideSpace } from './platform/src/api'
   import { workspace } from './workspace.svelte'
 
