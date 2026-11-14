@@ -1,0 +1,10 @@
+{
+  "name": "back-swipe",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/own-window.ts",
+    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

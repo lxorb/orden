@@ -154,7 +154,7 @@ export async function applyPreset(preset: Preset): Promise<void> {
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
     import('../tab-strip/icon-tabs.svelte'),
     import('../tab-cycle.svelte'),
-    import('../back-swipe/choice.svelte'),
+    import('../back-swipe/src/api'),
   ])
   const setters: Record<PresetSetting, (on: boolean) => void> = {
     fitTabs: (on) => fitTabs.set(on),
@@ -171,7 +171,7 @@ export async function currentSettings(): Promise<Record<PresetSetting, boolean>>
   const [{ fitTabs, iconTabs }, { tabCycle }, { swipeChoice }] = await Promise.all([
     import('../tab-strip/icon-tabs.svelte'),
     import('../tab-cycle.svelte'),
-    import('../back-swipe/choice.svelte'),
+    import('../back-swipe/src/api'),
   ])
   return {
     fitTabs: fitTabs.on,

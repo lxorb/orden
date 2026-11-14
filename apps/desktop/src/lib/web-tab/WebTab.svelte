@@ -15,7 +15,7 @@
   import { shareThisFile } from '../sharing/src/api'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
-  import { swiping } from '../back-swipe/shown.svelte'
+  import { swiping } from '../back-swipe/src/api'
   import { findBar, passFill } from '../surfaces.svelte'
   import { invoke, isDesktop, openExternal } from '../platform/src/api'
   import { takesWords, writes } from '../typing-pointer'

@@ -1,6 +1,6 @@
 <script lang="ts">
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
-  import { workspace } from '../workspace.svelte'
+  import { workspace } from '../../workspace.svelte'
   import { swipeChoice } from './choice.svelte'
   import { swiping } from './shown.svelte'
 
