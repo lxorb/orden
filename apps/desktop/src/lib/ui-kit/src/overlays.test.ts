@@ -331,7 +331,7 @@ describe('what hides a web page', () => {
     'lib/chats-client/src/view/MembersPanel.svelte':
       "a chat's members as a sheet over the chat, on a narrow window",
     'lib/accounts-ui/src/ProfileCard.svelte': "a person's card, beside the face that was pressed",
-    'lib/quick-add/QuickAddSheet.svelte': 'dialog',
+    'lib/quick-add/src/QuickAddSheet.svelte': 'dialog',
     'lib/quitting/QuitSheet.svelte': 'dialog',
     'lib/terminal/src/remote/HostPicker.svelte': 'dialog',
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',

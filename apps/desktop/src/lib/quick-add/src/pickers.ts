@@ -1,6 +1,6 @@
 import { addDays, weekday } from '@orden/bases'
 import type { Priority, Remind } from '@orden/markdown/task-line'
-import { DIVIDER, type MenuEntry } from '../ui-kit/src/api'
+import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { dayWords, durationLabel, remindLabel } from './labels'
 
 export interface When {

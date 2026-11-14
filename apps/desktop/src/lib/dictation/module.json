@@ -1,6 +1,6 @@
 {
   "name": "dictation",
-  "layer": "features",
+  "layer": "content",
   "dependsOn": [
     "contracts",
     "accounts",

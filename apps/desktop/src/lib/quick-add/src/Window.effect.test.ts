@@ -10,8 +10,8 @@ const world = vi.hoisted(() => {
 
 let visible: DocumentVisibilityState = 'visible'
 
-vi.mock('../platform/src/api', async (original) => ({
-  ...(await original<typeof import('../platform/src/api')>()),
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../platform/src/api')>()),
   invoke: () => Promise.resolve(),
 }))
 

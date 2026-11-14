@@ -1,4 +1,4 @@
-import { keep, storedText } from '../platform/src/api'
+import { keep, storedText } from '../../platform/src/api'
 import type { Prefill } from './entry'
 
 const SMART = 'orden:quick-add-smart'

@@ -8,7 +8,7 @@ const disk = vi.hoisted(() => ({
   kept: new Map<string, string>(),
 }))
 
-vi.mock('../crate/src/native', () => ({
+vi.mock('../../crate/src/native', () => ({
   invoke: (command: string, args: { path?: string; id?: string; content?: string }) => {
     switch (command) {
       case 'shortcuts_added':
@@ -41,15 +41,15 @@ vi.mock('../crate/src/native', () => ({
   },
 }))
 
-vi.mock('../own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
+vi.mock('../../own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
 
-vi.mock('../internal/spaces', () => ({
+vi.mock('../../internal/spaces', () => ({
   HOME: '.orden',
   keptCameFrom: () =>
     Promise.resolve([{ root: '/Orden/.orden/Notes/Notes', from: '/Orden/Notes' }]),
 }))
 
-vi.mock('../internal/roots', () => ({
+vi.mock('../../internal/roots', () => ({
   mountOf: (path: string) =>
     path === '/Orden/.orden/Notes/Notes'
       ? {

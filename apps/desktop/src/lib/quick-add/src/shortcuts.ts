@@ -1,6 +1,6 @@
-import { locksHere, locksWork, log, nameOf, within, joinPath } from '../platform/src/api'
-import { invoke as crate } from '../crate/src/api'
-import { hearHere } from '../own-window'
+import { locksHere, locksWork, log, nameOf, within, joinPath } from '../../platform/src/api'
+import { invoke as crate } from '../../crate/src/api'
+import { hearHere } from '../../own-window'
 
 const TAKING = 'orden:shortcuts-added'
 
@@ -18,7 +18,7 @@ interface Added {
 type Add = (text: string) => Promise<boolean>
 
 async function addedHere(text: string): Promise<boolean> {
-  const { addTask } = await import('../task-actions')
+  const { addTask } = await import('../../task-actions')
   return (await addTask(text, { typed: false })) !== null
 }
 
@@ -71,7 +71,7 @@ export function tasksSince(before: string, now: string): string[] {
 }
 
 async function backupOf(from: string, rest: string): Promise<string | null> {
-  const { HOME } = await import('../internal/spaces')
+  const { HOME } = await import('../../internal/spaces')
   const backups = joinPath(joinPath(await crate<string>('spaces_root'), HOME), '.backups')
   const tree = await crate<{ children?: { name: string; path: string; is_dir: boolean }[] }>(
     'read_tree',
@@ -92,8 +92,8 @@ async function leftBehind(add: Add): Promise<number> {
   const left = await crate<string | null>('shortcuts_left_inbox').catch(() => null)
   if (!left) return 0
   const [{ keptCameFrom }, { mountOf }] = await Promise.all([
-    import('../internal/spaces'),
-    import('../internal/roots'),
+    import('../../internal/spaces'),
+    import('../../internal/roots'),
   ])
   for (const { root, from } of await keptCameFrom()) {
     const rest = within(from, left)

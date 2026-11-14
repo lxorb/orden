@@ -5,8 +5,8 @@ const world = vi.hoisted((): { provider: object | null } => ({
   provider: { id: 'p', kind: 'openai', name: 'OpenAI', model: '' },
 }))
 
-vi.mock('../../ai/hears', () => ({ transcriberNow: () => world.provider }))
-vi.mock('../../ai/quick.svelte', () => ({
+vi.mock('../../src/lib/ai/hears', () => ({ transcriberNow: () => world.provider }))
+vi.mock('../../src/lib/ai/quick.svelte', () => ({
   quick: {
     open: true,
     ready: true,
@@ -23,10 +23,9 @@ vi.mock('../../ai/quick.svelte', () => ({
   },
 }))
 
-const { voice } = await import('./voice.svelte')
-const { engines } = await import('./engines.svelte')
-const QuickAdd = (await import('../../quick-add/QuickAdd.svelte')).default
-const QuickQuestion = (await import('../../QuickQuestion.svelte')).default
+const { engines, voice } = await import('../../src/lib/dictation/src/api')
+const QuickAdd = (await import('../../src/lib/quick-add/src/QuickAdd.svelte')).default
+const QuickQuestion = (await import('../../src/lib/QuickQuestion.svelte')).default
 
 let target: HTMLElement
 let drawn: ReturnType<typeof mount> | undefined

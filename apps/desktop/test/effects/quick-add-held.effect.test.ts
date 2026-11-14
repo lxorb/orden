@@ -15,8 +15,8 @@ Object.defineProperty(navigator, 'locks', {
   value: { request: (_name: string, _how: unknown, held: () => Promise<void>) => held() },
 })
 
-const { listen } = await import('../../src/lib/quick-add/anywhere.svelte')
-const { quickAdd } = await import('../../src/lib/quick-add/asked.svelte')
+const { listen } = await import('../../src/lib/quick-add/src/anywhere.svelte')
+const { quickAdd } = await import('../../src/lib/quick-add/src/asked.svelte')
 
 let stop: (() => void) | undefined
 

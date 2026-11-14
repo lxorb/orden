@@ -100,7 +100,7 @@ describe('every layer in the middle of the window', () => {
       'lib/ThemeStore.svelte',
       'lib/accounts-ui/src/SignIn.svelte',
       'lib/crash-reports/src/CrashAsk.svelte',
-      'lib/quick-add/QuickAddSheet.svelte',
+      'lib/quick-add/src/QuickAddSheet.svelte',
       'lib/quitting/QuitSheet.svelte',
       'lib/terminal/src/remote/HostPicker.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',

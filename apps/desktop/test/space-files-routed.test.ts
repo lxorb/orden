@@ -7,7 +7,7 @@ const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 
 const ROUTERS = new Set(['tauri.ts', 'native.ts', 'native-sync-store.ts'])
 
-const ON_DISK_ON_PURPOSE = new Set(['quick-add/shortcuts.ts'])
+const ON_DISK_ON_PURPOSE = new Set(['quick-add/src/shortcuts.ts'])
 
 function sources(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
