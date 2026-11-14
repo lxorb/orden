@@ -198,7 +198,7 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-vi.mock('../../save-place/door', () => ({
+vi.mock('../../save-place/src/api', () => ({
   askPlace: () => undefined,
   saveFront: () => undefined,
 }))

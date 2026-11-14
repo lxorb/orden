@@ -1,6 +1,6 @@
 import { mount, unmount } from 'svelte'
-import { workspace } from '../workspace.svelte'
-import { isUnsaved } from '../workspace/drafts'
+import { workspace } from '../../workspace.svelte'
+import { isUnsaved } from '../../workspace/drafts'
 import SavePlace from './SavePlace.svelte'
 
 let open: { tab: string; close: () => void } | null = null

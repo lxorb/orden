@@ -15,7 +15,7 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 const askPlace = vi.fn()
-vi.mock('./save-place/ask', () => ({ askPlace }))
+vi.mock('./save-place/src/ask', () => ({ askPlace }))
 
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 vi.stubGlobal('localStorage', {

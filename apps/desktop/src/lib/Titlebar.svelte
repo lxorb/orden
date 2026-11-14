@@ -8,7 +8,7 @@
   import FileMark from './FileMark.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
-  import { askPlace } from './save-place/door'
+  import { askPlace } from './save-place/src/api'
   import { shown as pad } from './scratchpad/src/api'
   import { isDraft } from './workspace/drafts'
   import TopStrips from './TopStrips.svelte'

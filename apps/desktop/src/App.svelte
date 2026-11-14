@@ -93,7 +93,7 @@
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { sidebarKey, used } from './lib/workspace/undo.svelte'
-  import { saveFront } from './lib/save-place/door'
+  import { saveFront } from './lib/save-place/src/api'
   import PadColumn from './lib/PadColumn.svelte'
   import { shown as pad } from './lib/scratchpad/src/api'
   import { isDraft } from './lib/workspace/drafts'

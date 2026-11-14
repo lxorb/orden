@@ -1,19 +1,19 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import FileMark from '../FileMark.svelte'
-  import { rank } from '../ui-kit/src/api'
-  import { LAYER, scale } from '../platform/src/api'
-  import { overlays } from '../ui-kit/src/api'
-  import { selectAll } from '../select-all'
-  import { canWriteAt } from '../sharing/src/api'
-  import SpaceMark from '../SpaceMark.svelte'
-  import { trap } from '../ui-controls/src/api'
-  import { pages } from '../web-tab/pages.svelte'
-  import { type Tab, workspace } from '../workspace.svelte'
-  import { offeredName } from '../workspace/drafts'
-  import { isAgentsName } from '../platform/src/api'
-  import { joinPath } from '../platform/src/api'
+  import FileMark from '../../FileMark.svelte'
+  import { rank } from '../../ui-kit/src/api'
+  import { LAYER, scale } from '../../platform/src/api'
+  import { overlays } from '../../ui-kit/src/api'
+  import { selectAll } from '../../select-all'
+  import { canWriteAt } from '../../sharing/src/api'
+  import SpaceMark from '../../SpaceMark.svelte'
+  import { trap } from '../../ui-controls/src/api'
+  import { pages } from '../../web-tab/pages.svelte'
+  import { type Tab, workspace } from '../../workspace.svelte'
+  import { offeredName } from '../../workspace/drafts'
+  import { isAgentsName } from '../../platform/src/api'
+  import { joinPath } from '../../platform/src/api'
   import { fileFor, placesFor, startingPlace } from './places'
 
   const {
@@ -91,7 +91,7 @@
     if (folder && isAgentsName(file)) {
       const root = workspace.rootHolding(joinPath(folder, file))
       if (root !== null)
-        void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+        void import('../../reserved-name.svelte').then((one) => one.reservedName.tell(root))
       return
     }
     onclose()

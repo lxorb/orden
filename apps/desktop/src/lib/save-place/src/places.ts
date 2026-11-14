@@ -1,8 +1,8 @@
-import { type MoveTarget, moveTargets, type Space } from '../move-targets'
-import { nameFromTitle, samePath } from '../platform/src/api'
-import type { Entry } from '../workspace.svelte'
-import type { NoteDoc } from '../workspace/documents.svelte'
-import { fileNamed, offeredName } from '../workspace/drafts'
+import { type MoveTarget, moveTargets, type Space } from '../../move-targets'
+import { nameFromTitle, samePath } from '../../platform/src/api'
+import type { Entry } from '../../workspace.svelte'
+import type { NoteDoc } from '../../workspace/documents.svelte'
+import { fileNamed, offeredName } from '../../workspace/drafts'
 
 export function fileFor(typed: string, note: NoteDoc, title?: string): string {
   return fileNamed(nameFromTitle(typed) ?? offeredName(note, title), note.kind)

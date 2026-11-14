@@ -1,0 +1,16 @@
+{
+  "name": "save-place",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "sharing", "ui-controls", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/SpaceMark.svelte",
+    "apps/desktop/src/lib/move-targets.ts",
+    "apps/desktop/src/lib/reserved-name.svelte.ts",
+    "apps/desktop/src/lib/select-all.ts",
+    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/drafts.ts"
+  ]
+}

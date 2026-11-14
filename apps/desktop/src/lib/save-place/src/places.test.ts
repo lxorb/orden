@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { NoteDoc, UNTITLED } from '../workspace/documents.svelte'
+import { NoteDoc, UNTITLED } from '../../workspace/documents.svelte'
 import { fileFor, placesFor, startingPlace } from './places'
 
-type Entry = import('../workspace.svelte').Entry
+type Entry = import('../../workspace.svelte').Entry
 
 const row = (path: string, children: Entry[] = []): Entry => ({
   name: path.slice(path.lastIndexOf('/') + 1),

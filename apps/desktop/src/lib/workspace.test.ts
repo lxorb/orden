@@ -116,7 +116,7 @@ const placing = vi.hoisted(() => ({
   asked: [] as { tab: string | null; saved: (() => void) | undefined }[],
 }))
 
-vi.mock('./save-place/door', () => ({
+vi.mock('./save-place/src/api', () => ({
   askPlace: (tab?: string | null, saved?: () => void) => {
     placing.asked.push({ tab: tab ?? null, saved })
   },

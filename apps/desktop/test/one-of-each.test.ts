@@ -312,7 +312,7 @@ describe('the badge in front of a name', () => {
       'lib/ShareSheet.svelte',
       'lib/SpaceBadge.svelte',
       'lib/publishing/src/PublishSheet.svelte',
-      'lib/save-place/SavePlace.svelte',
+      'lib/save-place/src/SavePlace.svelte',
       'lib/tab-strip/TabCard.svelte',
     ])
   })
