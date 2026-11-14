@@ -61,7 +61,7 @@
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
-  import { passBubbles } from '../pass/fill-bubbles.svelte'
+  import { passBubbles } from '../pass-sync/src/api'
   import WebAsk from './WebAsk.svelte'
   import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
@@ -463,7 +463,7 @@
 
   $effect(() => {
     if (isDesktop && passOn())
-      void import('../pass/autofill').then(({ autofill }) => autofill.start())
+      void import('../pass-sync/src/api').then(({ autofill }) => autofill.start())
   })
 
   const passBubble = $derived(passOn() ? passBubbles.of(tab.id) : null)

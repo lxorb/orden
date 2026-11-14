@@ -111,11 +111,13 @@ export const explorerSurface = held(() =>
 export const passSurface = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no Pass in the Even Realities plugin'))
-    : import('./pass/PassTab.svelte'),
+    : import('./pass-ui/src/api').then((one) => one.loadPassTab()),
 )
 
 export const passFill = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./pass/PassFill.svelte'),
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./pass-ui/src/api').then((one) => one.loadPassFill()),
 )
 
 export const emptySurface = held(() => import('./NewHere.svelte'))

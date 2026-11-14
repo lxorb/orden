@@ -1,7 +1,7 @@
 import './lib/former-keys'
 import '@orden/themes'
 import { mount } from 'svelte'
-import PassWeb from './lib/pass/web/PassWeb.svelte'
+import { PassWeb } from './lib/pass-ui/src/api'
 import { serveAssets } from './lib/web/asset-worker'
 
 serveAssets()

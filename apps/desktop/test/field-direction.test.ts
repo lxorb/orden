@@ -98,7 +98,7 @@ test('a code, key or address is laid out left to right, so its groups keep their
     /input:is\(\s*\[type='email'\],\s*\[type='url'\],\s*\[type='tel'\],\s*\[inputmode='numeric'\],\s*\[autocomplete='one-time-code'\]\s*\)\s*\{\s*direction:\s*ltr;/,
   )
   const places = [
-    ...svelteFiles(join(SOURCE, 'lib', 'pass')),
+    ...svelteFiles(join(SOURCE, 'lib', 'pass-ui', 'src')),
     join(SOURCE, 'lib', 'ui-controls', 'src', 'Copyable.svelte'),
     ...['Security', 'SignIn'].map((name) => join(SOURCE, 'lib/accounts-ui/src', `${name}.svelte`)),
   ]

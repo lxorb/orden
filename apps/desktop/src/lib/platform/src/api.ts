@@ -99,7 +99,7 @@ export {
   platform,
   whenScreenGivenBack,
 } from './tauri'
-export { afterQuiet, onceAFrame, waited } from './timing'
+export { afterQuiet, BYTES_WITHIN, fetchInTime, onceAFrame, waited } from './timing'
 export type { Later } from './timing'
 export {
   basename,

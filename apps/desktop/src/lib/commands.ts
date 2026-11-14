@@ -1464,22 +1464,22 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'pass',
             label: 'Pass',
             hint: shortcuts.hint('app.pass'),
-            run: () => void import('./pass/open').then((one) => one.openPass()),
+            run: () => void import('./pass-sync/src/api').then((one) => one.openPass()),
           },
           {
             id: 'pass-lock',
             label: 'Lock Pass',
-            run: () => void import('./pass/open').then((one) => one.lockPass()),
+            run: () => void import('./pass-sync/src/api').then((one) => one.lockPass()),
           },
           {
             id: 'pass-new-login',
             label: 'New login',
-            run: () => void import('./pass/open').then((one) => one.openPass('new-login')),
+            run: () => void import('./pass-sync/src/api').then((one) => one.openPass('new-login')),
           },
           {
             id: 'pass-generate',
             label: 'Generate password',
-            run: () => void import('./pass/open').then((one) => one.openPass('generator')),
+            run: () => void import('./pass-sync/src/api').then((one) => one.openPass('generator')),
           },
         ]),
     ...(__EVEN_PLUGIN__

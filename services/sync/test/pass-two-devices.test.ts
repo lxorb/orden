@@ -66,7 +66,7 @@ async function kit(): Promise<Kit> {
   const loaded = await Promise.all(
     [
       ...['test-device', 'sync', 'exchange', 'adopt', 'synced'].map(
-        (file) => `apps/desktop/src/lib/pass/${file}.ts`,
+        (file) => `apps/desktop/src/lib/pass-sync/src/${file}.ts`,
       ),
       'packages/pass/src/keys.ts',
     ].map((file) => import(/* @vite-ignore */ at(file)) as Promise<object>),

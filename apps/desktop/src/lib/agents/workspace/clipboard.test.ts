@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { READER } from '../../automation/caller'
-import { copySecret } from '../../pass/clipboard'
+import { copySecret } from '../../pass-sync/src/clipboard'
 import { clipboard } from './clipboard'
 
 vi.mock('./asks', () => ({ asked: () => Promise.resolve(null) }))

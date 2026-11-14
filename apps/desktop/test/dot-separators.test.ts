@@ -65,14 +65,22 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'a hidden password',
   },
   {
-    path: 'apps/desktop/src/lib/pass/FieldRow.svelte',
+    path: 'apps/desktop/src/lib/pass-ui/src/FieldRow.svelte',
     holds: 'const dots',
     why: 'a hidden secret',
   },
-  { path: 'apps/desktop/src/lib/pass/TotpRow.svelte', holds: '{shown ||', why: 'a hidden code' },
-  { path: 'apps/desktop/src/lib/pass/link-page.ts', holds: 'const MASK', why: 'a hidden secret' },
   {
-    path: 'apps/desktop/src/lib/pass/list.ts',
+    path: 'apps/desktop/src/lib/pass-ui/src/TotpRow.svelte',
+    holds: '{shown ||',
+    why: 'a hidden code',
+  },
+  {
+    path: 'apps/desktop/src/lib/pass-links/src/link-page.ts',
+    holds: 'const MASK',
+    why: 'a hidden secret',
+  },
+  {
+    path: 'apps/desktop/src/lib/pass-sync/src/list.ts',
     holds: 'four ?',
     why: 'the hidden digits of a card number',
   },

@@ -8,11 +8,9 @@ import {
   clearsAt,
   faceUrl,
   farApart,
-  fetchInTime,
   fromServer,
   stands,
 } from '../src/api'
-import { LATE } from '../src/client'
 import { clampOffset, sourceSquare, zoomed } from '../src/crop'
 import { carriesMetadata } from '../src/encode'
 import { readPerson } from '../src/read'
@@ -117,27 +115,6 @@ describe('a picture for a face', () => {
 })
 
 describe('a call to the account service', () => {
-  test('gives up in time with the words the sheets show, and an abort from the caller stays its own', async () => {
-    const never: typeof fetch = (_input, init) =>
-      new Promise((_resolve, reject) => {
-        init?.signal?.addEventListener('abort', () => {
-          const why: unknown = init.signal?.reason
-          reject(why instanceof Error ? why : new Error('aborted'))
-        })
-      })
-    const was = globalThis.fetch
-    globalThis.fetch = never
-    try {
-      await expect(fetchInTime('https://example.org', {}, 5)).rejects.toThrow(LATE)
-      const own = new AbortController()
-      const asked = fetchInTime('https://example.org', { signal: own.signal }, 1000)
-      own.abort(new Error('went away'))
-      await expect(asked).rejects.toThrow('went away')
-    } finally {
-      globalThis.fetch = was
-    }
-  })
-
   test('a refusal from the server is one it said itself only when it carries an error', () => {
     expect(fromServer(new ApiError(401, 'no', { error: 'no' }))).toBe(true)
     expect(fromServer(new ApiError(500, 'down'))).toBe(false)

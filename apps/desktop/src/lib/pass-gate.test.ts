@@ -14,7 +14,7 @@ const { runnable, SHORTCUTS } = await import('./shortcuts/registry')
 const { experimentalPane } = await import('./settings/experimental-pane')
 const { appCommands } = await import('./commands')
 const { offeredKinds } = await import('./new-kinds')
-const { openPass } = await import('./pass/open')
+const { openPass } = await import('./pass-sync/src/open')
 const { workspace } = await import('./workspace.svelte')
 
 beforeEach(() => {

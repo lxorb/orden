@@ -134,8 +134,8 @@ export function start(): () => void {
       .then(() => import('./feature-gate.svelte'))
       .then(({ whenPassOn }) =>
         whenPassOn(
-          () => void import('./pass/syncing.svelte').then((one) => one.startPassSync()),
-          () => void import('./pass/open').then((one) => one.quietPass()),
+          () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
+          () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
         ),
       )
   }

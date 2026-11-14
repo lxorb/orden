@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { setWord } from './kind-choice'
 import { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from './settings.svelte'
 import { whenChatsOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
-import { openPass } from './pass/open'
+import { openPass } from './pass-sync/src/open'
 import { workspace } from './workspace.svelte'
 
 beforeEach(() => {

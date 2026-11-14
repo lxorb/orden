@@ -1,0 +1,5 @@
+{
+  "name": "pass-links",
+  "layer": "content",
+  "dependsOn": ["contracts", "pass"]
+}

@@ -50,7 +50,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/tab-strip/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',
   'lib/tab-strip/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
-  'lib/pass/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
+  'lib/pass-ui/src/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
 }
 
 const MADE_BY: Record<string, string> = {
@@ -207,7 +207,7 @@ test('nothing is excused that is in the registry after all, or is no layer any m
 })
 
 const PLACED_INSIDE: Record<string, string> = {
-  'lib/pass/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
+  'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
   'lib/web-tab/WebAsk.svelte .ask':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',
   'lib/web-tab/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',

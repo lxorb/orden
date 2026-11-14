@@ -86,3 +86,39 @@ export function onceAFrame(run: () => void): Later {
 
   return soon
 }
+
+export const ANSWERS_WITHIN = 120_000
+
+export const BYTES_WITHIN = 30 * 60_000
+
+export const LATE = 'the account did not answer in time'
+
+const NO_BODY: ReadonlySet<number> = new Set([101, 103, 204, 205, 304])
+
+export async function fetchInTime(
+  input: string | Request,
+  init: RequestInit = {},
+  within: number = ANSWERS_WITHIN,
+): Promise<Response> {
+  const giving = new AbortController()
+  const timer = setTimeout(() => giving.abort(), within)
+  const asked = init.signal ?? (typeof input === 'string' ? null : input.signal)
+  const stopped = () => giving.abort(asked?.reason)
+  if (asked?.aborted) stopped()
+  else asked?.addEventListener('abort', stopped, { once: true })
+  try {
+    const response = await fetch(input, { ...init, signal: giving.signal })
+    const bytes = await response.arrayBuffer()
+    return new Response(NO_BODY.has(response.status) ? null : bytes, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    })
+  } catch (error) {
+    if (giving.signal.aborted && !asked?.aborted) throw new TypeError(LATE, { cause: error })
+    throw error
+  } finally {
+    clearTimeout(timer)
+    asked?.removeEventListener('abort', stopped)
+  }
+}
