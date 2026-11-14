@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { callerOf, type Caller } from '../automation/caller'
+import { callerOf, type Caller } from '../automation/src/api'
 
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 

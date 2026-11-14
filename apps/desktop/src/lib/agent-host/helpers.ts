@@ -1,7 +1,7 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { helperRun } from '../ai-chat/src/api'
 import { type Mode, modeOfGrant } from '../ai-providers/src/api'
-import type { Scope } from '../agents/src/api'
+import type { AgentScope as Scope } from '@orden/contracts'
 import { type Call, done } from './call'
 import { answerOf, Refused } from './problem'
 

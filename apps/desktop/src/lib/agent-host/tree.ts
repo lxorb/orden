@@ -1,6 +1,6 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
-import type { AgentAnswer } from '../automation/caller'
-import { movedIn, movedPath, ONTO_INSTRUCTIONS, ontoInstructions } from '../automation/acts'
+import type { AgentAnswer } from '../automation/src/api'
+import { automationMoving } from '../automation/src/api'
 import { isMarkdownPath, notePath, relativeTo, invoke } from '../platform/src/api'
 import { entryAt } from '../tree-edits'
 import { coveredBy } from '../workspace/archive.svelte'
@@ -106,6 +106,7 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
 export async function moveFile(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const { relative: from, entry } = await named(place, need(call, 'path'))
+  const { movedIn, movedPath, ONTO_INSTRUCTIONS, ontoInstructions } = await automationMoving()
   const to = movedPath(from, judgedForWriting(need(call, 'to')), entry.is_dir)
 
   if (to === from) return done({ from, to, space: place.space.id })

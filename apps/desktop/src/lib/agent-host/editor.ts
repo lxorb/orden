@@ -10,7 +10,7 @@ import {
   type Stretch,
   unfoldLine,
 } from '@orden/editor/agent-hands'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { views } from '../views.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type Call, done, need, needScope } from './call'

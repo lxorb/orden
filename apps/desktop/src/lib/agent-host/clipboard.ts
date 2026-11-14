@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { copyText } from '../ui-controls/src/api'
 import { isPassSecret } from '../pass-sync/src/api'
 import { asked } from './asks'

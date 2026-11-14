@@ -33,7 +33,7 @@ const held = new Map<string, string>()
 const written: { path: string; before: string; after: string }[] = []
 const made: { folder: string; name: string }[] = []
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../../link-index.svelte', () => ({
   links: {
     fileNamed: () => beside,
     targetOf: (_from: string | null, link: { target: string }) =>
@@ -52,7 +52,7 @@ const moves = vi.hoisted(() => ({
   moveMany: vi.fn(() => Promise.resolve(true)),
 }))
 
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces: [space],
     rename: moves.rename,
@@ -101,27 +101,19 @@ const rows = [
 ]
 const ran: string[] = []
 
-vi.mock('../commands/src/api', () => ({ appCommands: () => rows }))
-vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
-vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
+vi.mock('../../commands/src/api', () => ({ appCommands: () => rows }))
+vi.mock('../../views.svelte', () => ({ views: { of: () => undefined } }))
+vi.mock('../../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
 const readOnly = new Set<string>()
-vi.mock('../sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-const {
-  appendNote,
-  deleteFile,
-  moveFile,
-  movedIn,
-  newNote,
-  openNote,
-  runCommand,
-  setProperty,
-  writeFile,
-} = await import('./acts')
+const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
+  await import('./acts')
+const { movedIn } = await import('./moving')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {

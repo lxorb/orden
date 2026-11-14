@@ -1,0 +1,17 @@
+export type { Road, Said } from './args'
+export { said, words, yes } from './args'
+export {
+  type AgentAnswer,
+  answerThreadSpaces,
+  type Caller,
+  callerOf,
+  READER,
+  refusal,
+  threadSpaceOf,
+} from './caller'
+
+export const automationStart = () => import('./start')
+
+export const automationActs = () => import('./acts')
+
+export const automationMoving = () => import('./moving')

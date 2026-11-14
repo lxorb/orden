@@ -99,7 +99,7 @@ export function start(): () => void {
     .then(async () => {
       mark('space restored')
       if (!__EVEN_PLUGIN__) {
-        const { startAutomation } = await import('./automation/start')
+        const { startAutomation } = await (await import('./automation/src/api')).automationStart()
         stopAutomation = await startAutomation()
         stopAgents = await listenForAgents()
       }

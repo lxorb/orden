@@ -17,10 +17,10 @@
     "ui-kit",
     "rows",
     "shortcuts",
-    "commands"
+    "commands",
+    "automation"
   ],
   "pending": [
-    "apps/desktop/src/lib/automation/acts.ts",
     "apps/desktop/src/lib/drawer.svelte.ts",
     "apps/desktop/src/lib/failed.svelte.ts",
     "apps/desktop/src/lib/folder-notes.ts",

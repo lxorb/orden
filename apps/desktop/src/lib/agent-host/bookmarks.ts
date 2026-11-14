@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { notePath } from '../platform/src/api'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../workspace/bookmarks.svelte'
 import { workspace } from '../workspace.svelte'

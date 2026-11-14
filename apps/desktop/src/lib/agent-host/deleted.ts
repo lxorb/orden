@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { folderOf, insideSpace, within } from '../platform/src/api'
 import type { TrashItem } from '../trash/src/api'
 import { asked } from './asks'

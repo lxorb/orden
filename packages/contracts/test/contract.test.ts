@@ -33,6 +33,7 @@ import {
   registerSettingsPart,
   registerCommand,
   registerCommandRows,
+  registerHearing,
   registerCommands,
   registerTabKind,
   settingFieldsIn,
@@ -44,6 +45,7 @@ import {
   portProvided,
   providePort,
   runCommand,
+  startHearings,
   spaceId,
   STOPPING_KINDS,
   TAB_KINDS,
@@ -532,6 +534,23 @@ describe('loads', () => {
     space()
     exact()
     expect(await runCommand('pass.open')).toBe(false)
+  })
+
+  it('starts the registered hearings in the order they came, and hands back how to stop each', async () => {
+    const heard: string[] = []
+    const hearing = (name: string) => () =>
+      Promise.resolve(() => {
+        heard.push(`start ${name}`)
+        return Promise.resolve(() => void heard.push(`stop ${name}`))
+      })
+    const pages = registerHearing(hearing('pages'))
+    const pdfs = registerHearing(hearing('pdfs'))
+    const stops = await startHearings()
+    for (const stop of stops) stop()
+    expect(heard).toEqual(['start pages', 'start pdfs', 'stop pages', 'stop pdfs'])
+    pages()
+    pdfs()
+    expect(await startHearings()).toEqual([])
   })
 
   it('reads command rows of a place once loaded, with the view handed in, and none for a failed load', async () => {

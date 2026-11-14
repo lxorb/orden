@@ -1,5 +1,5 @@
-import type { Said } from '../automation/args'
-import type { AgentAnswer, Caller } from '../automation/caller'
+import type { Said } from '../automation/src/api'
+import type { AgentAnswer, Caller } from '../automation/src/api'
 import { appsOn, basesOn, explorerOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
 import { askReader } from './ask'

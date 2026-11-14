@@ -1,4 +1,5 @@
 import { commandRows, commandRowsLoaded, runCommand } from '@orden/contracts'
+import { copyNoteLink } from './link'
 import {
   CODE_PALETTES,
   deleteLine,
@@ -896,7 +897,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'copy-uri',
             label: 'Copy link to this note',
             disabled: !workspace.active?.path,
-            run: () => void import('../../automation/link').then((m) => m.copyNoteLink()),
+            run: () => void copyNoteLink(),
           },
         ]),
 

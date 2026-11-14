@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { READER } from '../automation/caller'
+import { READER } from '../automation/src/api'
 import { copySecret } from '../pass-sync/src/clipboard'
 import { clipboard } from './clipboard'
 

@@ -3,7 +3,7 @@
 import { EditorState, EditorView } from '@orden/editor'
 import { select } from '@orden/editor/agent-hands'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { callerOf } from '../automation/caller'
+import { callerOf } from '../automation/src/api'
 
 interface FakeTab {
   id: string

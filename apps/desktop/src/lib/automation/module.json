@@ -1,0 +1,29 @@
+{
+  "name": "automation",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "commands",
+    "markdown",
+    "platform",
+    "protect",
+    "sharing",
+    "sync-core",
+    "ui-kit",
+    "web-backend"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/agent-host/index.ts",
+    "apps/desktop/src/lib/counts.ts",
+    "apps/desktop/src/lib/link-index.svelte.ts",
+    "apps/desktop/src/lib/outline.ts",
+    "apps/desktop/src/lib/own-keys.ts",
+    "apps/desktop/src/lib/own-window.ts",
+    "apps/desktop/src/lib/search.svelte.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/views.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts"
+  ]
+}

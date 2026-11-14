@@ -1,5 +1,5 @@
-import { said, type Said, words, yes } from '../automation/args'
-import type { AgentAnswer, Caller } from '../automation/caller'
+import { said, type Said, words, yes } from '../automation/src/api'
+import type { AgentAnswer, Caller } from '../automation/src/api'
 import type { Agent as Writer } from '../agent-docs/src/api'
 import { Refused } from './problem'
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { answerThreadSpaces, callerOf, type Caller, READER } from '../automation/caller'
+import { answerThreadSpaces, callerOf, type Caller, READER } from '../automation/src/api'
 import { AGENT_WINDOW_VERBS } from '../agents/src/verbs'
 import { type FileOp, FileOps, type Kind } from '../workspace/file-ops'
 
@@ -1794,7 +1794,7 @@ describe('to-dos and bases', () => {
   })
 
   test('an agent that may only read cannot add one', async () => {
-    const { dispatch } = await import('../automation/verbs')
+    const { dispatch } = await import('../automation/src/verbs')
     const reader = agent({ scopes: ['notes.read'] })
     expect(await dispatch('add_task', { text: 'x' }, [], 'here', reader)).toMatchObject({
       status: 'error',

@@ -6,7 +6,7 @@ import type { Thread } from '../../../ai-providers/src/api'
 import { type FileChange, spaceNamed } from './files'
 
 async function moved(root: string, from: string, to: string): Promise<void> {
-  const { movedIn } = await import('../../../automation/acts')
+  const { movedIn } = await (await import('../../../automation/src/api')).automationMoving()
   await movedIn(root, from, to, true)
 }
 

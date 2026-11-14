@@ -17,6 +17,7 @@ export interface ChatsPort {
   chatAt(path: string): Promise<string | null>
   part(chat: string, wanted: ChatPartWanted): Promise<ChatPart | null>
   offer(chat: string, text: string, parent?: string): Promise<void>
+  openLink(uri: string): Promise<void>
 }
 
 export interface ChatPorts {

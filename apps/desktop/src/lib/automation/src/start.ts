@@ -1,7 +1,7 @@
-import { pagesHanded } from '../web-tab/src/api'
-import { busy } from '../ui-kit/src/api'
-import { log, invoke, isDesktop, isNative, openExternal } from '../platform/src/api'
-import { hearHere } from '../own-window'
+import { portOf, startHearings } from '@orden/contracts'
+import { busy } from '../../ui-kit/src/api'
+import { log, invoke, isDesktop, isNative, openExternal } from '../../platform/src/api'
+import { hearHere } from '../../own-window'
 import { callerOf } from './caller'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
@@ -26,12 +26,7 @@ export async function startAutomation(): Promise<() => void> {
 
   const stopping: (() => void)[] = []
 
-  if (isDesktop) {
-    const { hearPages } = await pagesHanded()
-    stopping.push(await hearPages())
-    const { hearPdfs } = await (await import('../pdf/src/api')).handed()
-    stopping.push(await hearPdfs())
-  }
+  if (isDesktop) stopping.push(...(await startHearings()))
 
   for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
     await follow(uri)
@@ -99,10 +94,8 @@ async function follow(uri: string, depth = 0): Promise<void> {
   if (isFileUri(uri)) return
 
   if (/^orden:\/\/chat\//i.test(uri.trim())) {
-    const opening = __EVEN_PLUGIN__
-      ? null
-      : import('../chats-client/src/api').then((one) => one.chatOpening())
-    await opening?.then(({ openChatLink }) => openChatLink(uri.trim()))
+    const chats = portOf('chats')
+    if (chats.ok) await chats.value.openLink(uri.trim())
     return
   }
 

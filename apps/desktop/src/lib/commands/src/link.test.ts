@@ -11,7 +11,7 @@ vi.stubGlobal('localStorage', {
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { linkTo } = await import('./link')
-const { readUri } = await import('./uri')
+const { readUri } = await import('../../automation/src/uri')
 
 describe('a link to a note', () => {
   test('says the space and the path', () => {

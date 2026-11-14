@@ -1,4 +1,5 @@
 import {
+  providePort,
   registerCommand,
   registerCommandRows,
   registerPaletteKind,
@@ -8,6 +9,9 @@ import {
 } from '@orden/contracts'
 import { isDesktop, platform } from '../../platform/src/api'
 import { partView } from '../../ui-kit/src/api'
+import { pages } from './pages.svelte'
+
+providePort('web.scripts', { pages })
 
 export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
 

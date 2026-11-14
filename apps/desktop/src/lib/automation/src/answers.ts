@@ -1,12 +1,12 @@
 import { readProperties } from '@orden/markdown/properties'
 import { commandRowsLoaded } from '@orden/contracts'
-import { appCommands } from '../commands/src/api'
-import { countText } from '../counts'
-import { links } from '../link-index.svelte'
-import { scanHeadings } from '../outline'
-import { relativeTo, currentWindow } from '../platform/src/api'
-import { views } from '../views.svelte'
-import { workspace } from '../workspace.svelte'
+import { appCommands } from '../../commands/src/api'
+import { countText } from '../../counts'
+import { links } from '../../link-index.svelte'
+import { scanHeadings } from '../../outline'
+import { relativeTo, currentWindow } from '../../platform/src/api'
+import { views } from '../../views.svelte'
+import { workspace } from '../../workspace.svelte'
 import type { Said } from './args'
 import { noteFor, spaceFor } from './space'
 
@@ -93,7 +93,7 @@ export async function listCommands(): Promise<unknown> {
 }
 
 export async function syncStatus(): Promise<unknown> {
-  const { sync } = await import('../sync.svelte')
+  const { sync } = await import('../../sync.svelte')
 
   return {
     status: sync.status,
@@ -105,8 +105,8 @@ export async function syncStatus(): Promise<unknown> {
 export async function publishStatus(args: Said): Promise<unknown> {
   const space = await spaceFor(args)
   const [{ account }, { sync }] = await Promise.all([
-    import('../accounts/src/api'),
-    import('../sync.svelte'),
+    import('../../accounts/src/api'),
+    import('../../sync.svelte'),
   ])
 
   const id = sync.remoteIdFor(space.root)

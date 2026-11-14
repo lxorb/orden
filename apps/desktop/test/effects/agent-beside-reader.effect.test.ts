@@ -2,7 +2,7 @@ import { EditorState, EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { callerOf } = await import('../../src/lib/automation/caller')
+const { callerOf } = await import('../../src/lib/automation/src/api')
 const { runAgentVerb } = await import('../../src/lib/agent-host/index')
 const { agentMarks } = await import('../../src/lib/agent-marks.svelte')
 

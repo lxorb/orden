@@ -15,8 +15,8 @@ const fake = vi.hoisted(() => ({
   unwritable: new Set<string>(),
 }))
 
-vi.mock('../../../automation/acts', () => ({
-  movedIn: async (root: string, from: string, to: string) => {
+vi.mock('../../../automation/src/api', async (importOriginal) => {
+  const movedIn = async (root: string, from: string, to: string) => {
     fake.moves.push([root, from, to])
     const [was, now] = [`${root}/${from}`, `${root}/${to}`]
     const words = fake.desk.disk.get(was)
@@ -26,8 +26,12 @@ vi.mock('../../../automation/acts', () => ({
     fake.desk.disk.set(now, words)
     const { tracksMoved } = await import('../../../agent-docs/src/edit')
     tracksMoved(was, now)
-  },
-}))
+  }
+  return {
+    ...(await importOriginal<typeof import('../../../automation/src/api')>()),
+    automationMoving: () => Promise.resolve({ movedIn }),
+  }
+})
 
 vi.mock('../../../workspace/undoing', () => ({
   putBack: (step: { path: string; content: string }) => {
@@ -406,7 +410,7 @@ describe('a rewind over a thread that did things in any order', () => {
       return [] as Turn['parts']
     },
     move: async (from: string, to: string) => {
-      const { movedIn } = await import('../../../automation/acts')
+      const { movedIn } = await (await import('../../../automation/src/api')).automationMoving()
       await movedIn('/space', from, to)
       fake.moves = []
       return [row(`m${String(clock)}`, 'move_file', { path: from, to }, { from, to })]
