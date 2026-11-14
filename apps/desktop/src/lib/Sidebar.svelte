@@ -253,7 +253,7 @@
     ...(__EVEN_PLUGIN__
       ? []
       : [
-          { id: 'tasks' as const, label: 'Tasks', path: TASKS_MARK },
+          { id: 'tasks' as const, label: 'Todos', path: TASKS_MARK },
           { id: 'chats' as const, label: 'Chats', path: CHATS_MARK },
           { id: 'time' as const, label: 'Time tracker', path: TIME_MARK },
         ]),
@@ -883,8 +883,8 @@
               </ul>
             {/if}
           {:else if showing === 'tasks'}
-            {#await tasksPanel() then TasksPanel}
-              <TasksPanel {side} />
+            {#await tasksPanel() then TodosPanel}
+              <TodosPanel />
             {/await}
           {:else if showing === 'chats' && chatsOn()}
             {#await chatsPanel() then ChatsPanel}

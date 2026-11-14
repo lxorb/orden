@@ -701,7 +701,7 @@ const APP_ENTRIES: Shortcut[] = [
     : [
         {
           id: 'app.tasks',
-          label: () => 'Tasks',
+          label: () => 'Todos',
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-y',

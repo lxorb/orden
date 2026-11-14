@@ -16,7 +16,7 @@
 
   const LOOKS: Record<PhoneTab, { label: () => string; mark: string }> = {
     tree: { label: () => 'Notes', mark: NOTES_MARK },
-    tasks: { label: () => 'Tasks', mark: TASKS_MARK },
+    tasks: { label: () => 'Todos', mark: TASKS_MARK },
     chats: { label: () => 'Chats', mark: CHATS_MARK },
     search: { label: () => 'Search', mark: SEARCH_MARK },
   }

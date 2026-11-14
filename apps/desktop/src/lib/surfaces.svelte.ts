@@ -54,7 +54,14 @@ export const viewSurface = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/ViewTab.svelte'),
 )
 export const tasksPanel = held(() =>
-  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/TasksPanel.svelte'),
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
+)
+export const todosBoard = held(() =>
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
 )
 export const chatSurface = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatTab.svelte'),

@@ -160,6 +160,13 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
+      .then(() => import('./tasks-model/src/api'))
+      .then(({ startTodos }) => startTodos())
+  }
+
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('right')
       .then(() => import('./feature-gate.svelte'))
       .then(({ whenAppsOn, whenExplorerOn }) => {
         whenAppsOn()

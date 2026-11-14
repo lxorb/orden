@@ -1475,7 +1475,7 @@ export function appCommands(view?: EditorView): Command[] {
       : [
           {
             id: 'todos',
-            label: 'Tasks',
+            label: 'Todos',
             hint: shortcuts.hint('app.tasks'),
             run: () => void import('./todos-entry').then(({ showTodos }) => showTodos()),
           },
