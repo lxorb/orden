@@ -6,6 +6,8 @@ const APP = readFileSync(join(import.meta.dirname, '../src/App.svelte'), 'utf8')
 
 const CONFIG = readFileSync(join(import.meta.dirname, '../vite.config.ts'), 'utf8')
 
+const START = readFileSync(join(import.meta.dirname, '../src/lib/start.ts'), 'utf8')
+
 function handle(): string {
   const opening = 'ordenApp: {'
   const from = APP.indexOf(opening)
@@ -43,6 +45,13 @@ describe('the handle a drive reads the app through', () => {
     for (const way of ways) {
       expect(["command === 'serve'", "mode === 'drive'", "mode === 'development'"]).toContain(way)
     }
+  })
+
+  test('a build that may be driven sends no usage and no crash reports to the real server', () => {
+    expect(START).toContain('const reporting = !import.meta.env.DEV && !__DRIVEABLE__')
+    expect(START).toContain('one.watchUsage(reporting)')
+    expect(START).toContain('one.watchCrashes(reporting)')
+    expect(START.match(/\.watch(Usage|Crashes)\(/gu)).toHaveLength(2)
   })
 
   test.each([
