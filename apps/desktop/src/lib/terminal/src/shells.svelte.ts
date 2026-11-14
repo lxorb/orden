@@ -17,7 +17,6 @@ export interface Shell {
 const SHELL_KEY = 'orden:terminal-shell'
 const SIZE_KEY = 'orden:terminal-size'
 const RESTORE_KEY = 'orden:terminal-restore'
-const WARN_KEY = 'orden:terminal-quit-warn'
 const WAYS_KEY = 'orden:terminal-keys'
 const THEMED_KEY = 'orden:terminal-themed'
 
@@ -31,13 +30,6 @@ export function waysOf(value: unknown): Record<string, Way> {
     if (way === 'app' || way === 'shell') ways[command] = way
   }
   return ways
-}
-
-const WARNINGS = ['always', 'running', 'never'] as const
-export type Warning = (typeof WARNINGS)[number]
-
-export function asWarning(value: unknown): Warning {
-  return WARNINGS.find((one) => one === value) ?? 'running'
 }
 
 export const SIZES = { least: 9, most: 28, initial: 13 } as const
@@ -68,7 +60,6 @@ class Shells {
   size = $state(sizeOf(storedText(SIZE_KEY)))
   restoring = $state(storedText(RESTORE_KEY) !== 'no')
   themed = $state(storedText(THEMED_KEY) !== 'no')
-  warning = $state<Warning>(asWarning(storedText(WARN_KEY)))
   ways = $state<Record<string, Way>>(waysOf(stored(WAYS_KEY)))
 
   private asked: Promise<Shell[]> | null = null
@@ -101,11 +92,6 @@ class Shells {
   setSize(size: number) {
     this.size = sizeOf(String(size))
     keep(SIZE_KEY, String(this.size))
-  }
-
-  setWarning(warning: Warning) {
-    this.warning = warning
-    keep(WARN_KEY, warning)
   }
 
   setWay(command: string, way: Way | null) {

@@ -1,6 +1,7 @@
 import { err, failure, ok, type Result } from './result'
 import type { ChatPorts } from './chats'
 import type { PreviewPorts } from './previews'
+import type { QuittingPorts } from './quitting'
 import type { SharingPorts } from './sharing'
 import type { SyncPorts } from './sync-client'
 import type { ThemePorts } from './theme'
@@ -9,6 +10,7 @@ import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
 
 export type PortMap = ChatPorts &
   PreviewPorts &
+  QuittingPorts &
   SharingPorts &
   SyncPorts &
   ThemePorts &

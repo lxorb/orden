@@ -259,6 +259,10 @@ export const soundMark = held(() => import('./SoundMark.svelte'))
 
 export const privateMark = held(() => loadPrivateMark())
 
+export const sparkMark = door(() =>
+  __EVEN_PLUGIN__ ? never : import('./agents/src/api').then((one) => one.Spark),
+)
+
 export const terminalMark = held(() =>
   import('./terminal/src/api').then((one) => one.loadTerminalMark()),
 )

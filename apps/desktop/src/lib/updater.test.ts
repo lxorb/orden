@@ -17,7 +17,7 @@ const world = vi.hoisted(() => ({
   relaunched: 0,
 }))
 
-vi.mock('./quitting/ask', () => ({ mayStop: () => Promise.resolve(world.mayStop) }))
+vi.mock('./quit-ports', () => ({ mayStop: () => Promise.resolve(world.mayStop) }))
 vi.mock('@tauri-apps/plugin-process', () => ({
   relaunch: () => {
     world.relaunched++

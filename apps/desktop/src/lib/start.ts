@@ -320,11 +320,11 @@ async function guardClose() {
     })
     await own.listen(
       'orden://quit-ask',
-      () => void import('./quitting/ask').then((one) => one.quitAsked()),
+      () => void import('./quit-ports').then((one) => one.quitAsked()),
     )
     void startup
       .turn('right')
-      .then(async () => (await import('./quitting/windows')).answer(own.label))
+      .then(async () => (await import('./quit-ports')).answerQuitting(own.label))
   }
 }
 
@@ -358,8 +358,7 @@ async function onClose(event: Closing, window: Closable) {
 
   event.preventDefault()
   if (going) return
-  if (!__EVEN_PLUGIN__ && runs && !(await (await import('./quitting/ask')).mayStop('window')))
-    return
+  if (!__EVEN_PLUGIN__ && runs && !(await (await import('./quit-ports')).mayStop('window'))) return
   await go()
   await window.destroy()
 }

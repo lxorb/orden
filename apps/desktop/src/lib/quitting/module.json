@@ -1,0 +1,6 @@
+{
+  "name": "quitting",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "ui-controls", "ui-kit"],
+  "pending": ["apps/desktop/src/lib/TickBox.svelte", "apps/desktop/src/lib/surfaces.svelte.ts"]
+}

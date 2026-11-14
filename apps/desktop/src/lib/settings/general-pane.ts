@@ -13,7 +13,8 @@ import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
 import { unloadTabs } from '../tab-strip/unloading.svelte'
 import { swipeChoice } from '../back-swipe/src/api'
 import { BY_ID } from '../shortcuts/registry'
-import { asWarning, shellName, shells, SIZES, bothName } from '../terminal/src/api'
+import { asWarning, quitAsk } from '../quitting/src/api'
+import { shellName, shells, SIZES, bothName } from '../terminal/src/api'
 import { asChannel, switchWebChannel, webChannel } from '../updater'
 import { updates } from '../updates.svelte'
 import { pages } from '../web-tab/src/api'
@@ -107,8 +108,8 @@ function terminalGroup(): Group {
           { value: 'never', label: 'Never' },
         ],
         initial: 'running',
-        get: () => shells.warning,
-        set: (value) => shells.setWarning(asWarning(value)),
+        get: () => quitAsk.warning,
+        set: (value) => quitAsk.warnWhen(asWarning(value)),
       },
       ...twoWayFields(),
     ],

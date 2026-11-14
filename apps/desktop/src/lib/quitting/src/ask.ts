@@ -1,9 +1,7 @@
 import { mount } from 'svelte'
-import { invoke, platform } from '../platform/src/api'
-import { shells } from '../terminal/src/api'
-import { jump } from './jump'
+import { invoke, platform } from '../../platform/src/api'
 import QuitSheet from './QuitSheet.svelte'
-import { asks, rowsHere, type Why } from './rows'
+import { asks, rowsHere, showRow, type Why } from './rows'
 import { quitAsk } from './state.svelte'
 import { rowsEverywhere, showElsewhere } from './windows'
 
@@ -15,7 +13,7 @@ async function label(): Promise<string> {
 }
 
 export async function mayStop(why: Why): Promise<boolean> {
-  const warning = shells.warning
+  const warning = quitAsk.warning
   if (warning === 'never') return true
 
   const window = await label()
@@ -37,7 +35,7 @@ export async function mayStop(why: Why): Promise<boolean> {
   const answer = await quitAsk.ask(alone ? 'quit' : why, rows)
   if (answer === 'go') return true
   if (answer !== 'stay') {
-    if (answer.window === window) void jump(answer)
+    if (answer.window === window) void showRow(answer)
     else showElsewhere(answer)
   }
   return false
