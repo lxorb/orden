@@ -59,3 +59,15 @@ export function shownAddress(url: string): string {
 
   return protocol === 'http:' ? `http://${shown}` : shown
 }
+
+export function hostOf(url: string | null): string | null {
+  if (!url) return null
+
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null
+    return parsed.hostname || null
+  } catch {
+    return null
+  }
+}

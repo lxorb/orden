@@ -458,9 +458,9 @@ vi.mock('../settings/src/declarations', () => ({
 
 const lentPage: Record<string, unknown> = { url: null, space: null }
 const lending = { lend: vi.fn(() => Promise.resolve()), unlend: vi.fn() }
-vi.mock('../web-tab/src/lending', () => lending)
-
-vi.mock('../web-tab/src/pages.svelte', () => ({
+vi.mock('../web-tab/src/api', async (actual) => ({
+  ...(await actual<typeof import('../web-tab/src/api')>()),
+  webLending: () => Promise.resolve(lending),
   pages: {
     of: () => lentPage,
     addressOf: () => 'https://docs.example/a',

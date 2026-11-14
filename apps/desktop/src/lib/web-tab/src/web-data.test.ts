@@ -1,6 +1,7 @@
 import { getDomain } from 'tldts'
 import { describe, expect, test, vi } from 'vitest'
-import { hostOf, isWebData, siteOf, storeName, WEB_DATA } from './web-data'
+import { hostOf } from '@orden/scan/visits'
+import { isWebData, siteOf, storeName, WEB_DATA } from './web-data'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

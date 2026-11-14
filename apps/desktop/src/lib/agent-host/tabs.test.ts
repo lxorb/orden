@@ -162,7 +162,10 @@ vi.mock('../sharing/src/api', () => ({
   canWriteAt: () => !readOnly,
 }))
 const othersWrite = new Set<string>()
-vi.mock('../web-tab/src/pages.svelte', () => ({ pages: { addressOf: () => null } }))
+vi.mock('../web-tab/src/api', async (actual) => ({
+  ...(await actual<typeof import('../web-tab/src/api')>()),
+  pages: { addressOf: () => null },
+}))
 vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))

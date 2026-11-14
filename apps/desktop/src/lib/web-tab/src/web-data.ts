@@ -10,18 +10,6 @@ const UNSAFE = /[^a-z0-9.-]/g
 
 const LONGEST = 160
 
-export function hostOf(url: string | null): string | null {
-  if (!url) return null
-
-  try {
-    const parsed = new URL(url)
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null
-    return parsed.hostname || null
-  } catch {
-    return null
-  }
-}
-
 export function siteOf(host: string, registrable: (host: string) => string | null): string {
   return registrable(host) ?? host
 }

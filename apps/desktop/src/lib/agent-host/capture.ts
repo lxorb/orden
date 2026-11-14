@@ -7,8 +7,7 @@ import { modes } from '../modes.svelte'
 import { paperInches } from '../page-setup'
 import { settings } from '../settings.svelte'
 import { notePath, relativeTo, invoke, decoded } from '../platform/src/api'
-import { pages } from '../web-tab/src/pages.svelte'
-import { clipNote } from '../web-tab/src/note'
+import { pages, webNotes } from '../web-tab/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 import { notes } from './docs'
 import { CAPTURE_AS, type CaptureAs, type Code, type Overview } from '../agents/src/api'
@@ -132,7 +131,7 @@ function pageOf(record: Record<string, unknown>, shape: CaptureAs): Page {
 }
 
 async function wordsFor(page: Page, shape: Shape, embed: string | null): Promise<string> {
-  if (shape === 'clip') return clipNote(page, new Date())
+  if (shape === 'clip') return (await webNotes()).clipNote(page, new Date())
 
   const title = page.title.trim() || page.url
   const shown = embed === null ? `<${page.url}>` : `![[${embed}]]`
