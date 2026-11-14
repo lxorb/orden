@@ -1,5 +1,5 @@
-import { message } from '../ui-kit/src/api'
-import { forget, keep, storedText, invoke, isDesktop } from '../platform/src/api'
+import { message } from '../../ui-kit/src/api'
+import { forget, keep, storedText, invoke, isDesktop } from '../../platform/src/api'
 
 type Fit = 'fits' | 'platform' | 'cores' | 'memory'
 
@@ -60,7 +60,7 @@ class Local {
     this.fetching = { done: 0, total: this.machine?.model.bytes ?? 0 }
     this.trouble = ''
     try {
-      const { Channel } = await import('../crate/src/api')
+      const { Channel } = await import('../../crate/src/api')
       const progress = new Channel<Fetched>()
       progress.onmessage = (fetched) => (this.fetching = fetched)
       await invoke('dictation_local_fetch', { progress })

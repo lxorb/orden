@@ -1,5 +1,14 @@
 <script lang="ts">
-  import { localDate, localNumber } from './platform/src/api'
+  import {
+    localDate,
+    localNumber,
+    NoWord,
+    wordSaid,
+    dur,
+    slide,
+    invoke,
+    isDesktop,
+  } from './platform/src/api'
   import { onMount } from 'svelte'
   import { accountName, vendorName } from './ai/account-words'
   import { type Account, repeatable, vendorOf } from './ai/accounts'
@@ -15,16 +24,12 @@
   import ProviderMark from './ai/ProviderMark.svelte'
   import { firstModel, isLocal, offeredKinds, type Provider } from './ai/providers'
   import { glassesKey } from './even/key.svelte'
-  import { NoWord, wordSaid } from './platform/src/api'
   import { message } from './ui-kit/src/api'
-  import { dur, slide } from './platform/src/api'
   import { Select } from './ui-controls/src/api'
-  import { invoke, isDesktop } from './platform/src/api'
   import { viewport } from './ui-kit/src/api'
   import { Hint } from './ui-controls/src/api'
   import { Switch } from './ui-controls/src/api'
-  import { canDictate, type Engine, engines } from './dictation/engines.svelte'
-  import { local } from './dictation/local.svelte'
+  import { canDictate, type Engine, engines, local } from './dictation/src/api'
 
   let keyed = $state<Record<string, boolean>>({})
   let adding = $state(false)

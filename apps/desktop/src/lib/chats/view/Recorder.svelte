@@ -3,7 +3,7 @@
   import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
   import { onMount } from 'svelte'
   import { message as errorWords } from '../../ui-kit/src/api'
-  import { record, type Recording } from '../../recorder/microphone'
+  import { recordVoice, type Recording } from '../../dictation/src/api'
   import { shortcuts } from '../../shortcuts.svelte'
   import Glyph from './Glyph.svelte'
   import { clock } from './media'
@@ -26,7 +26,7 @@
 
   onMount(() => {
     let gone = false
-    record()
+    recordVoice()
       .then((one) => {
         if (gone) {
           void one.stop()

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { shortcuts } from '../shortcuts.svelte'
+  import { shortcuts } from '../../shortcuts.svelte'
   import EngineChooser from './EngineChooser.svelte'
   import { HOLD } from './keys'
   import { type Dictates, voice } from './voice.svelte'

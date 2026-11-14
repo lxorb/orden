@@ -50,7 +50,7 @@ export function dayOf(at: Date): string {
   return `${at.getFullYear()}-${month}-${day}`
 }
 
-function clockOf(at: Date): string {
+export function clockOf(at: Date): string {
   const hour = String(at.getHours()).padStart(2, '0')
   const minute = String(at.getMinutes()).padStart(2, '0')
   return `${hour}${minute}`

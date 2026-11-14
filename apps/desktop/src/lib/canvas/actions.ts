@@ -57,8 +57,8 @@ import {
   relativeTo,
   withinSpace,
   fileBytes,
+  spaceRelative,
 } from '../platform/src/api'
-import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
 import { loading, pdfjs } from '../pdf/document'

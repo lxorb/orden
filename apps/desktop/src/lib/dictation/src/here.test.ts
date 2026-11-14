@@ -22,7 +22,7 @@ vi.mock('./local.svelte', () => ({
     },
   },
 }))
-vi.mock('../crate/src/native', () => ({
+vi.mock('../../crate/src/native', () => ({
   invoke: (command: string, body: unknown) => {
     world.calls.push({ command, body })
     return Promise.resolve('Hallo Jürgen')

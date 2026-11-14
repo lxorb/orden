@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { spaceRelative } from './paths'
+import { spaceRelative } from './space-relative'
 
 describe('where a recording sits in the space', () => {
   test('for a note at the top of the space', () => {

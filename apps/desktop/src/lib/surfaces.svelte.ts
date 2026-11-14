@@ -205,7 +205,9 @@ export const scratchpadCard = held(() =>
     : import('./scratchpad/src/api').then((one) => one.loadScratchpadCard()),
 )
 
-export const recordingPill = latched(() => import('./RecordingPill.svelte'))
+export const recordingPill = latched(() =>
+  import('./dictation/src/api').then((one) => one.loadRecordingPill()),
+)
 
 export const joinPending = latched(() => import('./JoinPending.svelte'))
 

@@ -1,8 +1,8 @@
-import { api, account } from '../accounts/src/api'
-import { roomDelay, waited } from '../platform/src/api'
-import { transcriberNow } from '../ai/hears'
-import type { Provider } from '../ai/providers'
-import { message } from '../ui-kit/src/api'
+import { api, account } from '../../../accounts/src/api'
+import { roomDelay, waited } from '../../../platform/src/api'
+import { transcriberNow } from '../../../ai/hears'
+import type { Provider } from '../../../ai/providers'
+import { message } from '../../../ui-kit/src/api'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
 const FILE_SECONDS = 60
@@ -48,8 +48,9 @@ async function heardByProvider(
   wav: Uint8Array<ArrayBuffer>,
   prompt: string,
 ): Promise<Words> {
-  const { readKey } = await import('../ai/keys')
-  const { headersWithoutType, heardUrl, reachable, troubleIn } = await import('../ai/providers')
+  const { readKey } = await import('../../../ai/keys')
+  const { headersWithoutType, heardUrl, reachable, troubleIn } =
+    await import('../../../ai/providers')
 
   const apiKey = await readKey(provider)
   if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')

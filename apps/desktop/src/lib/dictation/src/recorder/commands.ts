@@ -1,8 +1,8 @@
 import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
-import { canWriteAt } from '../sharing/src/api'
-import { isMarkdownPath } from '../platform/src/api'
-import { workspace } from '../workspace.svelte'
+import { canWriteAt } from '../../../sharing/src/api'
+import { isMarkdownPath } from '../../../platform/src/api'
+import { workspace } from '../../../workspace.svelte'
 import { canRecordHere } from './container'
 
 type Recorder = (typeof import('./recording.svelte'))['recorder']

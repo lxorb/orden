@@ -1,3 +1,5 @@
+import { clockOf, dayOf } from './transcript'
+
 const CONTAINERS = [
   'audio/webm;codecs=opus',
   'audio/webm',
@@ -40,17 +42,6 @@ export function canRecordHere(): boolean {
   return !!devices && bestContainer() !== null
 }
 
-function padded(value: number): string {
-  return String(value).padStart(2, '0')
-}
-
 export function recordingName(at: Date, extension: string): string {
-  const stamp = [
-    at.getFullYear(),
-    padded(at.getMonth() + 1),
-    padded(at.getDate()),
-    `${padded(at.getHours())}${padded(at.getMinutes())}`,
-  ].join('-')
-
-  return `recording-${stamp}.${extension}`
+  return `recording-${dayOf(at)}-${clockOf(at)}.${extension}`
 }

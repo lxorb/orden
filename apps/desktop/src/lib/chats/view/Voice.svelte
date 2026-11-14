@@ -65,7 +65,9 @@
       const url = fileUrl(chat, file.hash)
       if (!url) return
       const bytes = await (await fetch(url)).arrayBuffer()
-      const { wordsInFile } = await import('../../recorder/transcribe')
+      const { wordsInFile } = await import('../../dictation/src/api').then((one) =>
+        one.transcriber(),
+      )
       words = (await wordsInFile(bytes)).text
     } catch (error) {
       words = errorWords(error, 'Transcribe')

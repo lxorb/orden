@@ -1,6 +1,5 @@
-import { answer, frameWord, method, systemLocale } from '../platform/src/api'
+import { answer, frameWord, method, speechRecogniser, systemLocale } from '../../platform/src/api'
 import type { Hooks, Listening } from './listening'
-import { speechRecogniser } from './recogniser'
 import { type Field, Spot } from './spot'
 
 interface Result {

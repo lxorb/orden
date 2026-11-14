@@ -11,18 +11,18 @@ const world = vi.hoisted(() => ({
   invoked: [] as string[],
 }))
 
-vi.mock('../accounts/src/account.svelte', () => ({
+vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     get accountToken() {
       return world.token
     },
   },
 }))
-vi.mock('../ai/hears', () => ({ transcriberNow: () => world.provider }))
-vi.mock('../platform/src/mobile-bridge', () => ({
+vi.mock('../../ai/hears', () => ({ transcriberNow: () => world.provider }))
+vi.mock('../../platform/src/mobile-bridge', () => ({
   method: (name: string) => (name === 'dictates' && world.phone ? () => true : undefined),
 }))
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   get isNative() {
     return world.native
   },
@@ -35,12 +35,12 @@ vi.mock('../platform/src/tauri', () => ({
     return new Promise(() => undefined)
   },
 }))
-vi.mock('../crate/src/native', () => ({
+vi.mock('../../crate/src/native', () => ({
   Channel: class {
     onmessage: unknown = null
   },
 }))
-vi.mock('../platform/src/stored', () => ({
+vi.mock('../../platform/src/stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),

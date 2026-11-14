@@ -21,10 +21,8 @@
   import { trap } from './ui-controls/src/api'
   import { grow } from './grow'
   import { longPaste } from './long-paste'
-  import DictateButton from './dictation/DictateButton.svelte'
-  import { canDictate } from './dictation/engines.svelte'
-  import { dictating } from './dictation/keys'
-  import type { Dictates } from './dictation/voice.svelte'
+  import { DictateButton, canDictate, dictating } from './dictation/src/api'
+  import type { Dictates } from './dictation/src/api'
   import { workspace } from './workspace.svelte'
 
   let talk = $state<HTMLElement>()

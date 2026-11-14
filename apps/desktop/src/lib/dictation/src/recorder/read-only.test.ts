@@ -4,8 +4,8 @@ const readOnly = vi.hoisted(() => new Set<string>())
 const stored = vi.hoisted(() => [] as string[])
 const editor = vi.hoisted(() => ({ readOnly: false }))
 
-vi.mock('../sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../sharing/src/sharing.svelte')>()),
+vi.mock('../../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
@@ -15,16 +15,16 @@ vi.mock('./container', async (importOriginal) => ({
   canRecordHere: () => true,
 }))
 
-vi.mock('../assets', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../assets')>()),
+vi.mock('../../../assets', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../assets')>()),
   storeBeside: (_bytes: ArrayBuffer, note: string, name: string) => {
     stored.push(`${note} ${name}`)
     return Promise.resolve(`${note.slice(0, note.lastIndexOf('/'))}/${name}`)
   },
 }))
 
-vi.mock('../views.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../views.svelte')>()),
+vi.mock('../../../views.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../views.svelte')>()),
   views: { of: () => ({ state: { readOnly: editor.readOnly } }) },
 }))
 
@@ -37,7 +37,7 @@ vi.mock('./microphone', async (importOriginal) => ({
     }),
 }))
 
-const { workspace } = await import('../workspace.svelte')
+const { workspace } = await import('../../../workspace.svelte')
 const { canRecord } = await import('./commands')
 const { noteToRecordInto } = await import('./note')
 const { recorder } = await import('./recording.svelte')

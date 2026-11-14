@@ -1,9 +1,16 @@
-import { account } from '../accounts/src/api'
-import { transcriberNow } from '../ai/hears'
-import type { Provider } from '../ai/providers'
-import { method, forget, keep, storedText, isNative, platform } from '../platform/src/api'
+import { account } from '../../accounts/src/api'
+import { transcriberNow } from '../../ai/hears'
+import type { Provider } from '../../ai/providers'
+import {
+  method,
+  forget,
+  keep,
+  storedText,
+  isNative,
+  platform,
+  speechRecogniser,
+} from '../../platform/src/api'
 import { local } from './local.svelte'
-import { speechRecogniser } from './recogniser'
 
 export type Engine = 'auto' | 'local' | 'provider' | 'account' | 'device'
 
