@@ -42,6 +42,7 @@ import {
   unwrapOr,
   userId,
   webPages,
+  whenLoaded,
   whenPortProvided,
   type Result,
   type SpaceId,
@@ -387,5 +388,62 @@ describe('registry', () => {
       { label: 'Bring in', text: ['Notion'] },
     ])
     unfeature()
+  })
+})
+
+describe('loads', () => {
+  function gate<T>() {
+    let open: (value: T) => void = () => undefined
+    let shut: (error: unknown) => void = () => undefined
+    const loading = new Promise<T>((resolve, reject) => {
+      open = resolve
+      shut = reject
+    })
+    return { loading, open, shut }
+  }
+
+  it('hand what loaded to its use', async () => {
+    const seen: string[] = []
+    const { loading, open } = gate<string>()
+    whenLoaded(
+      () => loading,
+      (one) => seen.push(one),
+    )
+    open('in')
+    await loading
+    expect(seen).toEqual(['in'])
+  })
+
+  it('use nothing once called off before they are in', async () => {
+    const seen: string[] = []
+    const { loading, open } = gate<string>()
+    const off = whenLoaded(
+      () => loading,
+      (one) => seen.push(one),
+    )
+    off()
+    open('late')
+    await loading
+    expect(seen).toEqual([])
+  })
+
+  it('tell a failed load to whoever still wants it', async () => {
+    const missed: unknown[] = []
+    const wanted = gate<string>()
+    const unwanted = gate<string>()
+    whenLoaded(
+      () => wanted.loading,
+      () => undefined,
+      (error) => missed.push(error),
+    )
+    whenLoaded(
+      () => unwanted.loading,
+      () => undefined,
+      (error) => missed.push(error),
+    )()
+    wanted.shut(new Error('gone'))
+    unwanted.shut(new Error('unwanted'))
+    for (let turn = 0; turn < 5; turn++) await Promise.resolve()
+    expect(missed.map((one) => (one as Error).message)).toEqual(['gone'])
   })
 })

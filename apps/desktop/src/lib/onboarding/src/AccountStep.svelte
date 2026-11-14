@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { whenLoaded } from '@orden/contracts'
   import { account } from '../../accounts/src/api'
   import { joining } from '../../sharing/src/api'
   import Mark from './Mark.svelte'
@@ -41,8 +42,9 @@
         return
       }
       signed = true
-      void import('../../settling').then(({ settleLocalNotes }) =>
-        settleLocalNotes().then(() => joining.walkThrough()),
+      whenLoaded(
+        () => import('../../settling'),
+        ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
       )
       setTimeout(() => setup.next(), 900)
     })

@@ -10,7 +10,7 @@
   import TabMark from '../../TabMark.svelte'
   import { trap } from '../../ui-controls/src/api'
   import { prompt } from '../../ui-kit/src/api'
-  import { webPages } from '@orden/contracts'
+  import { webPages, whenLoaded } from '@orden/contracts'
   import { isDraft } from '../../workspace/drafts'
   import { type Tab, workspace } from '../../workspace.svelte'
   import {
@@ -264,7 +264,11 @@
 
   let sets = $state<{ frameOf: (key: string) => Frame | null } | null>(null)
   $effect(() => {
-    if (all && !sets) void import('../../workspace/sets.svelte').then((one) => (sets = one.sets))
+    if (all && !sets)
+      return whenLoaded(
+        () => import('../../workspace/sets.svelte'),
+        (one) => (sets = one.sets),
+      )
   })
 
   const shownKeys = $derived.by((): string[] => {

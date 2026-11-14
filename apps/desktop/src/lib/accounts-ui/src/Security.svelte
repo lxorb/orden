@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { whenLoaded } from '@orden/contracts'
   import { account } from '../../accounts/src/api'
   import { api, type RemoteSession, type SecondState } from '../../accounts/src/api'
   import { Copyable } from '../../ui-controls/src/api'
@@ -23,19 +24,14 @@
       return
     }
 
-    let current = true
-    void import('uqr')
-      .then(({ renderSVG }) => {
-        if (current) square = renderSVG(uri, { border: 1, pixelSize: 6 })
-      })
-      .catch(() => {
+    return whenLoaded(
+      () => import('uqr'),
+      ({ renderSVG }) => (square = renderSVG(uri, { border: 1, pixelSize: 6 })),
+      () => {
         // The secret underneath is the same secret; a square that could not be
         // drawn costs a reader one paste rather than the setting.
-      })
-
-    return () => {
-      current = false
-    }
+      },
+    )
   })
 
   async function look() {

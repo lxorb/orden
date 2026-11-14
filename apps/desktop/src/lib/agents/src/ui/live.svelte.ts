@@ -2,7 +2,7 @@ import { mount, unmount, untrack } from 'svelte'
 import { openAgentSession } from '../../../focus'
 import { notify, unshow } from '../../../notify'
 import { agentMarks } from '../../../agent-marks.svelte'
-import { portOf } from '@orden/contracts'
+import { portOf, whenLoaded } from '@orden/contracts'
 import { shortcuts } from '../../../shortcuts.svelte'
 import { accelerator } from '../../../accelerator'
 import { Activity } from './activity.svelte'
@@ -82,10 +82,11 @@ export function started(source: Source = crate): Activity {
     $effect(() => {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- handed on at once, never drawn
       const here = new Set(activity.seen.connected.filter((one) => !activity.stopped(one)))
-      untrack(() => {
-        asking.keepOnly(here)
-        void import('../../../agent-host/editor').then(({ keepMarksOf }) => keepMarksOf(here))
-      })
+      untrack(() => asking.keepOnly(here))
+      return whenLoaded(
+        () => import('../../../agent-host/editor'),
+        ({ keepMarksOf }) => keepMarksOf(here),
+      )
     })
 
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn

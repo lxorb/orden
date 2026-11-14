@@ -41,7 +41,7 @@
   import { trap } from '../../ui-controls/src/api'
   import { isDesktop } from '../../platform/src/api'
   import { viewport } from '../../ui-kit/src/api'
-  import { type PaletteHost, paletteKind, webPages } from '@orden/contracts'
+  import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
   import { workspace } from '../../workspace.svelte'
   import { fade, LAYER, scale } from '../../platform/src/api'
@@ -62,7 +62,10 @@
 
   $effect(() => {
     if (!__EVEN_PLUGIN__ && open)
-      void import('../../hints.svelte').then(({ hints }) => hints.dismiss('palette'))
+      whenLoaded(
+        () => import('../../hints.svelte'),
+        ({ hints }) => hints.dismiss('palette'),
+      )
   })
 
   let query = $state('')

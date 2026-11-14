@@ -83,6 +83,52 @@ const noCopyAppend = {
   },
 }
 
+const EFFECTS = new Set(['$effect', '$effect.pre'])
+
+function calleeName(callee) {
+  if (callee.type === 'Identifier') return callee.name
+  if (
+    callee.type === 'MemberExpression' &&
+    callee.object.type === 'Identifier' &&
+    callee.property.type === 'Identifier'
+  )
+    return `${callee.object.name}.${callee.property.name}`
+  return null
+}
+
+const effectImports = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      loose:
+        'An effect starts this import and nothing can call off what it does once loaded: load it through whenLoaded from @orden/contracts and hand back its call-off from the effect when a late load must not land.',
+    },
+  },
+  create(context) {
+    return {
+      ImportExpression(node) {
+        const loader = node.parent
+        const call = loader.parent
+        if (
+          loader.type === 'ArrowFunctionExpression' &&
+          loader.body === node &&
+          call?.type === 'CallExpression' &&
+          call.arguments[0] === loader &&
+          calleeName(call.callee) === 'whenLoaded'
+        )
+          return
+        for (let up = loader; up; up = up.parent) {
+          if (up.type === 'CallExpression' && EFFECTS.has(calleeName(up.callee))) {
+            context.report({ node, messageId: 'loose' })
+            return
+          }
+        }
+      },
+    }
+  },
+}
+
 const MODULES = checkModules().modules.filter((one) => one.lang === 'ts')
 
 const MODULE_FILES = MODULES.map((one) => `${one.dir}/**/*.{ts,svelte}`)
@@ -375,10 +421,11 @@ export default tseslint.config(
           'no-deep-imports': noDeepImports,
           'declared-dependencies': declaredDependencies,
           'pending-imports': pendingImports,
+          'effect-imports': effectImports,
         },
       },
     },
-    rules: { 'orden/no-comments': 'error' },
+    rules: { 'orden/no-comments': 'error', 'orden/effect-imports': 'error' },
   },
   {
     files: MODULE_FILES,

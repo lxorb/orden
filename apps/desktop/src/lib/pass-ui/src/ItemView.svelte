@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { whenLoaded } from '@orden/contracts'
   import { flagsOf, report, type Flag } from '@orden/pass/monitor'
   import type { Item } from '@orden/pass/types'
   import { hostOf } from '@orden/pass/urls'
@@ -52,15 +53,11 @@
       return
     }
     const uri = wifiUri(content.ssid, content.password, content.security)
-    let current = true
-    void import('uqr')
-      .then(({ renderSVG }) => {
-        if (current) qr = renderSVG(uri, { border: 1, pixelSize: 6 })
-      })
-      .catch(() => undefined)
-    return () => {
-      current = false
-    }
+    return whenLoaded(
+      () => import('uqr'),
+      ({ renderSVG }) => (qr = renderSVG(uri, { border: 1, pixelSize: 6 })),
+      () => undefined,
+    )
   })
 
   function flagWord(flag: Flag): string {

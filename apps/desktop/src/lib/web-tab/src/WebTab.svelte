@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { whenLoaded } from '@orden/contracts'
   import { dropOver } from '../../drag-paths'
   import { onMount, untrack } from 'svelte'
   import { agentMarks } from '../../agent-marks.svelte'
@@ -464,7 +465,10 @@
 
   $effect(() => {
     if (isDesktop && passOn())
-      void import('../../pass-sync/src/api').then(({ autofill }) => autofill.start())
+      return whenLoaded(
+        () => import('../../pass-sync/src/api'),
+        ({ autofill }) => void autofill.start(),
+      )
   })
 
   const passBubble = $derived(passOn() ? passBubbles.of(tab.id) : null)
