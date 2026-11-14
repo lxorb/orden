@@ -97,8 +97,14 @@ async function watching(settled: () => Promise<boolean> = () => Promise.resolve(
   return { reloading, overlays, stop }
 }
 
+function preloadError(payload: unknown): Event {
+  const event = Object.assign(new Event('vite:preloadError', { cancelable: true }), { payload })
+  events.dispatchEvent(event)
+  return event
+}
+
 function failedImport() {
-  events.dispatchEvent(new Event('vite:preloadError'))
+  preloadError(new TypeError('Failed to fetch dynamically imported module: /assets/Palette-9f.js'))
 }
 
 describe('a piece that did not arrive', () => {
@@ -289,5 +295,58 @@ describe('a piece that did not arrive', () => {
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
 
     expect(serve).not.toHaveBeenCalled()
+  })
+})
+
+describe('an error thrown inside the first step after a piece arrived', () => {
+  test.each([
+    ['a refusal from the backend', new Error('no such note')],
+    ['a refusal said as text', 'no such note'],
+    ['a fetch that failed', new TypeError('Failed to fetch')],
+    ['a slip in the code', new TypeError("Cannot read properties of undefined (reading 'id')")],
+    ['nothing at all', undefined],
+  ])('is %s, not a missing piece: nothing is asked, offered or reloaded', async (_, error) => {
+    await import('./reload-when')
+    const { reloading } = await watching()
+
+    const event = preloadError(error)
+    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(serve).not.toHaveBeenCalled()
+    expect(reloading.offered).toBe(false)
+    expect(reload).not.toHaveBeenCalled()
+  })
+
+  test('does not stand in for a missing piece when the network comes back', async () => {
+    await import('./reload-when')
+    await watching()
+
+    preloadError(new Error('no such note'))
+    events.dispatchEvent(new Event('online'))
+    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
+
+    expect(serve).not.toHaveBeenCalled()
+  })
+})
+
+describe('a piece that did not arrive, as each engine says it', () => {
+  test.each([
+    [
+      'Chromium',
+      new TypeError('Failed to fetch dynamically imported module: /assets/Palette-9f.js'),
+    ],
+    ['Firefox', new TypeError('error loading dynamically imported module: /assets/Palette-9f.js')],
+    ['WebKit', new TypeError('Importing a module script failed.')],
+    ['a stylesheet', new Error('Unable to preload CSS for /assets/Palette-9f.css')],
+  ])('in %s, is a missing piece', async (_, error) => {
+    await watching()
+
+    preloadError(error)
+    await vi.waitFor(async () => {
+      await vi.advanceTimersByTimeAsync(HANDS_OFF)
+      expect(reload).toHaveBeenCalledOnce()
+    })
+    expect(serve).toHaveBeenCalledOnce()
   })
 })
