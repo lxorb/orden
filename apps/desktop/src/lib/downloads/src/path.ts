@@ -1,4 +1,4 @@
-import type { Press } from './started'
+import type { Press } from './api'
 
 export interface Point {
   x: number

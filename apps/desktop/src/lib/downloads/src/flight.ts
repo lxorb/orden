@@ -1,7 +1,7 @@
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
-import { calm, dur, stillness } from '../platform/src/api'
-import { said } from '../said.svelte'
-import { lastPress, type Origin, type Press } from './started'
+import { calm, dur, stillness } from '../../platform/src/api'
+import { said } from '../../said.svelte'
+import { lastPress, type Origin, type Press } from './api'
 import {
   cornerOf,
   flightMs,
@@ -66,7 +66,7 @@ function pagesInWindow(): boolean {
 
 async function engineCuts(): Promise<boolean> {
   if (!pagesInWindow()) return false
-  const { pages } = await import('../web-tab/pages.svelte')
+  const { pages } = await import('../../web-tab/pages.svelte')
   return pages.cuts
 }
 
