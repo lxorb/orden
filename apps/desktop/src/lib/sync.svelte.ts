@@ -9,7 +9,7 @@ import type { Pairing } from './space-pairing'
 import { untrack } from 'svelte'
 import { account } from './account.svelte'
 import { startup } from './startup.svelte'
-import { rooms } from './rooms.svelte'
+import { rooms } from './collab/src/api'
 import { modes } from './modes.svelte'
 import { invoke, isDesktop, joinPath } from './tauri'
 import {

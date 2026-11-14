@@ -117,7 +117,7 @@ vi.mock('../rows/rows.svelte', () => ({
   },
 }))
 
-vi.mock('../rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
+vi.mock('../collab/src/api', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
 vi.mock('./open', () => ({ openBaseFile: () => undefined }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))

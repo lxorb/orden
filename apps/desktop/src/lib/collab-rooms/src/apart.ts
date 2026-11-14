@@ -1,7 +1,7 @@
 import { conflictPath } from '@orden/markdown/paths'
-import { record } from '../sync/record.svelte'
-import { type ConflictRule } from '../sync/conflicts'
-import { writeDown } from '../sync/write-down'
+import { record } from '../../sync/record.svelte'
+import { type ConflictRule } from '../../sync/conflicts'
+import { writeDown } from '../../sync/write-down'
 
 export type Settling = 'offer' | 'take' | 'wait'
 

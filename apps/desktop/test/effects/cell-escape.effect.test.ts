@@ -2,7 +2,7 @@ import { answer, readBase, type Row } from '@orden/bases'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
+vi.mock('../../src/lib/collab/src/api', () => ({ rooms: { present: {}, following: null } }))
 
 class NoLayout {
   observe() {

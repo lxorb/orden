@@ -9,7 +9,7 @@ import {
 } from './api'
 import { account } from './account.svelte'
 import { message } from './message'
-import { rooms } from './rooms.svelte'
+import { rooms } from './collab/src/api'
 import { samePath } from './space-paths'
 import { forget, keepJson, Shared } from './stored'
 import { within } from './sync/mirror'

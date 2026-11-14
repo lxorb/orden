@@ -20,7 +20,7 @@
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
   import { middleOpens, tabAsk } from './new-tab'
-  import { rooms } from './rooms.svelte'
+  import { rooms } from './collab/src/api'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'

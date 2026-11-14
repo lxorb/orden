@@ -341,7 +341,7 @@ async function deviceName(): Promise<string> {
     const named = await invoke<unknown>('device_name').catch(() => null)
     if (typeof named === 'string' && named.trim()) return named.trim()
   }
-  const { deviceName: platformName } = await import('../../rooms/who')
+  const { deviceName: platformName } = await import('../../collab/src/api')
   return platformName('Browser')
 }
 

@@ -39,7 +39,7 @@
   import { pull } from './pull.svelte'
   import { notePicture } from './note-images'
   import { placement } from './placement.svelte'
-  import { rooms } from './rooms.svelte'
+  import { rooms } from './collab/src/api'
   import { appsOn, explorerOn, settings } from './settings.svelte'
   import {
     applicationSurface,

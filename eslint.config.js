@@ -2,7 +2,7 @@ import js from '@eslint/js'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { dirname, relative, resolve, sep } from 'node:path'
 import { check as checkModules, moduleOf, ROOT } from './scripts/modules.mjs'
 
@@ -92,7 +92,9 @@ const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
 function moduleOfSpecifier(from, specifier) {
   if (specifier.startsWith('.')) {
     const target = resolve(dirname(from), specifier)
-    const file = ENDINGS.map((one) => target + one).find((one) => existsSync(one)) ?? target
+    const file =
+      ENDINGS.map((one) => target + one).find((one) => existsSync(one) && statSync(one).isFile()) ??
+      target
     return { module: moduleOf(file, MODULES), file, subpath: null }
   }
   if (!specifier.startsWith('@orden/')) return null

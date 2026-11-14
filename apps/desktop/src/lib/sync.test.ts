@@ -353,7 +353,7 @@ vi.mock('./api', async (importOriginal) => ({
 
 const lettingGo = vi.hoisted(() => [] as string[])
 
-vi.mock('./rooms.svelte', () => ({
+vi.mock('./collab/src/api', () => ({
   rooms: {
     carries: (noteId: string) => fake.rooms.has(noteId),
     letGoUnreached: (noteId: string) => lettingGo.push(noteId),

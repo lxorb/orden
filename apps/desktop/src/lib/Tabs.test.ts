@@ -14,7 +14,7 @@ vi.mock('./file-mark', async (importOriginal) => {
   }
 })
 
-vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, seen: {}, following: null } }))
+vi.mock('./collab/src/api', () => ({ rooms: { present: {}, seen: {}, following: null } }))
 
 const { workspace } = await import('./workspace.svelte')
 const Tabs = (await import('./Tabs.svelte')).default

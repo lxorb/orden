@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 import { STARTS_RIGHT } from './workspace/panels'
 
-vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
+vi.mock('./collab/src/api', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('./surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),

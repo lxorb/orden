@@ -81,7 +81,7 @@
   } from './pages/pull'
   import { inSight } from './pages/sight'
   import { PagesStore } from './pages/store.svelte'
-  import { rooms } from './rooms.svelte'
+  import { rooms } from './collab/src/api'
   import { said } from './said.svelte'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'

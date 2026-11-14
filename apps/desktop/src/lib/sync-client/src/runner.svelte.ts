@@ -32,7 +32,7 @@ import {
 import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
 import type { PlaneSurface } from '../../canvas/shared'
 import type { Watched } from './watching'
-import { rooms } from '../../rooms.svelte'
+import { rooms } from '../../collab/src/api'
 import { theme } from '../../theme.svelte'
 import * as Y from 'yjs'
 import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'

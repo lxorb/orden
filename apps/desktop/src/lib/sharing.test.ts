@@ -194,7 +194,7 @@ vi.mock('./message', () => ({
 }))
 
 import { account } from './account.svelte'
-import { rooms } from './rooms.svelte'
+import { rooms } from './collab/src/api'
 import { accentFor } from './accents'
 import {
   addressesIn,

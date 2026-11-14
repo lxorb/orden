@@ -1,9 +1,9 @@
 import type { Peer } from '@orden/editor'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import { accentColour, accentFor } from '../accents'
-import { faceUrl } from '../api'
-import { isNumber, isRecord, isString } from '../stored'
+import { accentColour, accentFor } from '../../accents'
+import { faceUrl } from '../../api'
+import { isNumber, isRecord, isString } from '../../stored'
 
 interface Named {
   name: string

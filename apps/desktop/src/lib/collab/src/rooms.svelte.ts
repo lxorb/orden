@@ -1,16 +1,14 @@
 import { documentOf, type EditorView } from '@orden/editor'
-import { account } from './account.svelte'
-import type { PlaneSurface } from './canvas/shared'
-import { busy } from './busy.svelte'
-import { sha256 } from './bytes'
-import { without } from './records'
-import { roomKindOf } from './rooms/kind'
-import type { Seen } from './rooms/peers'
-import type { PlaneRoom } from './rooms/plane'
-import type { Room } from './rooms/room'
-import { deviceName, ownAccent, personFace, personName } from './rooms/who'
-import { type Scheme, theme } from './theme.svelte'
-import type { NoteDoc } from './workspace/documents.svelte'
+import { account } from '../../account.svelte'
+import type { PlaneSurface } from '../../canvas/shared'
+import { busy } from '../../busy.svelte'
+import { sha256 } from '../../bytes'
+import { without } from '../../records'
+import { roomKindOf } from './kind'
+import type { PlaneRoom, Room, Seen } from '../../collab-rooms/src/api'
+import { deviceName, ownAccent, personFace, personName } from './who'
+import { type Scheme, theme } from '../../theme.svelte'
+import type { NoteDoc } from '../../workspace/documents.svelte'
 
 interface Open {
   key: string
@@ -38,8 +36,8 @@ type Joined = {
 } & ({ kind: 'words'; room: Room } | { kind: 'plane'; room: PlaneRoom })
 
 interface Engine {
-  Room: typeof import('./rooms/room').Room
-  PlaneRoom: typeof import('./rooms/plane').PlaneRoom
+  Room: typeof Room
+  PlaneRoom: typeof PlaneRoom
 }
 
 class Rooms {
@@ -130,12 +128,10 @@ class Rooms {
   }
 
   reach(): Promise<void> {
-    return (this.reaching ??= Promise.all([import('./rooms/room'), import('./rooms/plane')]).then(
-      ([words, planes]) => {
-        this.engine = { Room: words.Room, PlaneRoom: planes.PlaneRoom }
-        this.follow(this.open)
-      },
-    ))
+    return (this.reaching ??= import('../../collab-rooms/src/api').then(({ Room, PlaneRoom }) => {
+      this.engine = { Room, PlaneRoom }
+      this.follow(this.open)
+    }))
   }
 
   drawing(key: string, surface: PlaneSurface | null) {
@@ -283,8 +279,8 @@ class Rooms {
       digest: sha256,
       apart: async (theirs) => {
         const [{ apart }, { modes }] = await Promise.all([
-          import('./rooms/apart'),
-          import('./modes.svelte'),
+          import('../../collab-rooms/src/api'),
+          import('../../modes.svelte'),
         ])
 
         return await apart(
