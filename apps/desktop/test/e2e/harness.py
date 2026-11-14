@@ -6,6 +6,7 @@ import faulthandler
 import functools
 import hashlib
 import http.server
+import io
 import json
 import os
 import re
@@ -65,6 +66,7 @@ def harmless(error: Any, origin: str | None = None) -> bool:
 MOD = "Control"
 
 WORKER_PATIENCE = 90
+DROPPED = b"Network connection lost"
 BUILD_PATIENCE = 600
 
 TEARDOWN = 90
@@ -806,6 +808,44 @@ def worker_port() -> int:
 def worker_origin() -> str:
     return f"http://127.0.0.1:{worker_port()}"
 
+def opened(call: urllib.request.Request, timeout: float = 60) -> bytes:
+    tries = 3
+    while True:
+        try:
+            with urllib.request.urlopen(call, timeout=timeout) as answer:
+                return answer.read()
+        except urllib.error.HTTPError as refused:
+            said = refused.read()
+            tries -= 1
+            if not tries or refused.code != 500 or DROPPED not in said:
+                raise urllib.error.HTTPError(
+                    refused.url, refused.code, refused.msg, refused.headers, io.BytesIO(said)
+                ) from None
+        time.sleep(0.5)
+
+def request(
+    path: str,
+    token: str | None = None,
+    body: Any = None,
+    method: str | None = None,
+    timeout: float = 60,
+    refused: bool = False,
+) -> Any:
+    data = None if body is None else json.dumps(body).encode()
+    call = urllib.request.Request(f"{worker_origin()}{path}", data=data, method=method)
+    if token:
+        call.add_header("authorization", f"Bearer {token}")
+    if data is not None:
+        call.add_header("content-type", "application/json")
+    try:
+        said = opened(call, timeout)
+    except urllib.error.HTTPError as answer:
+        if not refused:
+            raise
+        said = answer.read()
+        return {"status": answer.code, **(json.loads(said) if said else {})}
+    return json.loads(said) if said else ({} if refused else None)
+
 class Worker:
 
     def __init__(self, drive: Drive, variables: Mapping[str, str] | None = None) -> None:
@@ -954,18 +994,7 @@ class Worker:
         method: str | None = None,
         timeout: float = 20,
     ) -> Any:
-        data = None if body is None else json.dumps(body).encode()
-        headers = {"content-type": "application/json"} if data is not None else {}
-        if token:
-            headers["authorization"] = f"Bearer {token}"
-        call = urllib.request.Request(
-            f"{self.origin}{path}",
-            data=data,
-            headers=headers,
-            method=method or ("GET" if data is None else "POST"),
-        )
-        with urllib.request.urlopen(call, timeout=timeout) as answer:
-            return json.loads(answer.read() or b"null")
+        return request(path, token, body, method, timeout)
 
     def account(self, email: str) -> str:
         token = uuid.uuid4().hex + uuid.uuid4().hex

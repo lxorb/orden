@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 import sys
 import time
-import urllib.error
-import urllib.request
 
 from playwright.sync_api import Browser, Page
 
@@ -30,24 +28,7 @@ CEILING = 1500
 
 JOIN_CEILING = 6000
 
-def request(
-    path: str, token: str | None = None, body: dict | None = None, method: str | None = None
-):
-    data = None if body is None else json.dumps(body).encode()
-    headers = {}
-    if data is not None:
-        headers["content-type"] = "application/json"
-    if token:
-        headers["authorization"] = f"Bearer {token}"
-
-    call = urllib.request.Request(
-        f"{ORIGIN}{path}",
-        data=data,
-        headers=headers,
-        method=method or ("GET" if data is None else "POST"),
-    )
-    with urllib.request.urlopen(call, timeout=60) as answer:
-        return json.loads(answer.read() or b"null")
+request = harness.request
 
 class Worker(harness.Worker):
 

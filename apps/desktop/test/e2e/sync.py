@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 import base64
+import functools
 import hashlib
 import hmac
-import json
 import os
 import struct
 import subprocess
 import tempfile
 import time
-import urllib.error
-import urllib.request
 import uuid
 from pathlib import Path
 
@@ -34,21 +32,7 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
-    data = None if body is None else json.dumps(body).encode()
-    ask = urllib.request.Request(f"{ORIGIN}{path}", data=data, method=method)
-    if token:
-        ask.add_header("authorization", f"Bearer {token}")
-    if data is not None:
-        ask.add_header("content-type", "application/json")
-
-    try:
-        with urllib.request.urlopen(ask, timeout=30) as answer:
-            said = answer.read().decode()
-            return json.loads(said) if said else {}
-    except urllib.error.HTTPError as refused:
-        said = refused.read().decode()
-        return {"status": refused.code, **(json.loads(said) if said else {})}
+request = functools.partial(harness.request, refused=True)
 
 def totp(secret_hex: str, at: float | None = None) -> str:
     step = int((at if at is not None else time.time()) // 30)

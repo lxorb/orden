@@ -6,8 +6,6 @@ import json
 import re
 import sys
 import time
-import urllib.error
-import urllib.request
 import uuid
 
 from playwright.sync_api import Browser, Page
@@ -34,22 +32,7 @@ FIXTURE = SERVICE / "test" / "everything.md"
 
 PATIENCE = 60
 
-def request(path: str, token: str | None = None, body: dict | None = None, method: str | None = None):
-    data = None if body is None else json.dumps(body).encode()
-    headers = {}
-    if data is not None:
-        headers["content-type"] = "application/json"
-    if token:
-        headers["authorization"] = f"Bearer {token}"
-
-    call = urllib.request.Request(
-        f"{ORIGIN}{path}",
-        data=data,
-        headers=headers,
-        method=method or ("GET" if data is None else "POST"),
-    )
-    with urllib.request.urlopen(call, timeout=20) as answer:
-        return json.loads(answer.read() or b"null")
+request = harness.request
 
 class Worker(harness.Worker):
 

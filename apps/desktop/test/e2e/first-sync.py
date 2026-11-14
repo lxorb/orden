@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 import sys
-import urllib.error
-import urllib.request
 
 from playwright.sync_api import Page
 
@@ -26,17 +24,7 @@ UP = 750_000 / 8
 
 PATIENCE = 240
 
-def request(path: str, token: str | None = None, body: dict | None = None):
-    data = None if body is None else json.dumps(body).encode()
-    headers = {}
-    if data is not None:
-        headers["content-type"] = "application/json"
-    if token:
-        headers["authorization"] = f"Bearer {token}"
-
-    call = urllib.request.Request(f"{ORIGIN}{path}", data=data, headers=headers)
-    with urllib.request.urlopen(call, timeout=30) as answer:
-        return json.loads(answer.read() or b"null")
+request = harness.request
 
 class Worker(harness.Worker):
 

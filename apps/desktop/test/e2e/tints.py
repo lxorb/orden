@@ -1,10 +1,8 @@
 from __future__ import annotations
 
+import functools
 import hashlib
-import json
 import time
-import urllib.error
-import urllib.request
 import uuid
 
 import harness
@@ -13,7 +11,6 @@ from harness import Drive
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
-ORIGIN = harness.worker_origin()
 
 EMAIL = "tints-drive@example.com"
 
@@ -30,21 +27,7 @@ def shows(what: str, saw: object, wanted: object) -> None:
     failures.append(what)
     say(f"NOT  {what}: {saw!r}, wanted {wanted!r}")
 
-def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
-    data = None if body is None else json.dumps(body).encode()
-    ask = urllib.request.Request(f"{ORIGIN}{path}", data=data, method=method)
-    if token:
-        ask.add_header("authorization", f"Bearer {token}")
-    if data is not None:
-        ask.add_header("content-type", "application/json")
-
-    try:
-        with urllib.request.urlopen(ask, timeout=30) as answer:
-            said = answer.read().decode()
-            return json.loads(said) if said else {}
-    except urllib.error.HTTPError as refused:
-        said = refused.read().decode()
-        return {"status": refused.code, **(json.loads(said) if said else {})}
+request = functools.partial(harness.request, refused=True)
 
 class Worker(harness.Worker):
 
