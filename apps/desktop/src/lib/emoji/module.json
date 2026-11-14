@@ -1,0 +1,6 @@
+{
+  "name": "emoji",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "platform", "ui-kit"],
+  "pending": ["apps/desktop/src/lib/icon-sets.ts", "apps/desktop/src/lib/row-window.ts"]
+}
