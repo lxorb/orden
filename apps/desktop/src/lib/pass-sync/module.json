@@ -1,0 +1,28 @@
+{
+  "name": "pass-sync",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "files-out",
+    "markdown",
+    "pass",
+    "pass-links",
+    "platform",
+    "protect",
+    "sync-client",
+    "theme",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/ai/keys.ts",
+    "apps/desktop/src/lib/icon-choice.svelte.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/own-window.ts",
+    "apps/desktop/src/lib/said.svelte.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+  ]
+}

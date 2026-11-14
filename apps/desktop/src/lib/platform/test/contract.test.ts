@@ -5,6 +5,7 @@ import {
   assetType,
   copyName,
   endingOf,
+  fetchInTime,
   filledIn,
   folderOf,
   fromBase64,
@@ -43,7 +44,7 @@ import {
 } from '../src/api'
 import { assetRoute, assetStorePath } from '../src/asset-route'
 import { answeredCase } from '../src/space-paths'
-import { afterQuiet } from '../src/timing'
+import { afterQuiet, LATE } from '../src/timing'
 
 const SRC = join(import.meta.dirname, '../src')
 
@@ -291,5 +292,28 @@ describe('what this machine keeps', () => {
     expect(meet({ account: 'u' }, 'u', 1, 2, folding)).toEqual({ value: 2, tell: false })
     expect(meet({ account: 'u' }, 'u', 2, 2, folding)).toBeNull()
     expect(meet({ account: 'other' }, 'u', 1, 2, folding)).toEqual({ value: 3, tell: true })
+  })
+})
+
+describe('a request in time', () => {
+  test('gives up in time with the words the sheets show, and an abort from the caller stays its own', async () => {
+    const never: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          const why: unknown = init.signal?.reason
+          reject(why instanceof Error ? why : new Error('aborted'))
+        })
+      })
+    const was = globalThis.fetch
+    globalThis.fetch = never
+    try {
+      await expect(fetchInTime('https://example.org', {}, 5)).rejects.toThrow(LATE)
+      const own = new AbortController()
+      const asked = fetchInTime('https://example.org', { signal: own.signal }, 1000)
+      own.abort(new Error('went away'))
+      await expect(asked).rejects.toThrow('went away')
+    } finally {
+      globalThis.fetch = was
+    }
   })
 })

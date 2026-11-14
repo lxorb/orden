@@ -923,7 +923,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: 'Mod-Alt-v',
           shown: () => passOn(),
-          run: () => void import('../pass/open').then((one) => one.openPass()),
+          run: () => void import('../pass-sync/src/api').then((one) => one.openPass()),
         } satisfies Shortcut,
       ]),
   {

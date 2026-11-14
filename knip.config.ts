@@ -70,7 +70,7 @@ export default {
         'src/pass-link.ts',
         'pass.html',
         'src/pass-web.ts',
-        'src/lib/pass/test-device.ts',
+        'src/lib/pass-sync/src/test-device.ts',
         'src/site/site.ts',
         'src/lib/ai/review/index.ts',
       ],

@@ -9,7 +9,7 @@ interface Asked {
 
 const asked: Asked[] = []
 
-vi.mock('../../src/lib/pass/import-file', () => ({
+vi.mock('../../src/lib/pass-sync/src/import-file', () => ({
   isSealed: () => false,
   importedFrom: (_source: string, name: string) =>
     new Promise((resolve, reject) => {
@@ -21,11 +21,11 @@ vi.mock('../../src/lib/pass/import-file', () => ({
     }),
 }))
 
-vi.mock('../../src/lib/pass/store.svelte', () => ({
+vi.mock('../../src/lib/pass-sync/src/store.svelte', () => ({
   pass: { vaults: [], importItems: async () => ({ added: 0 }) },
 }))
 
-const { default: SettingsImport } = await import('../../src/lib/pass/SettingsImport.svelte')
+const { default: SettingsImport } = await import('../../src/lib/pass-ui/src/SettingsImport.svelte')
 
 let shown: ReturnType<typeof mount> | undefined
 

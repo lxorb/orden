@@ -175,7 +175,7 @@ describe('the name a reader sees', () => {
       short_name: string
     }
     expect([manifest.name, manifest.short_name]).toEqual(['Orden Pass', 'Orden Pass'])
-    const gate = readFileSync(join(SOURCE, 'lib/pass/web/PassWeb.svelte'), 'utf8')
+    const gate = readFileSync(join(SOURCE, 'lib/pass-ui/src/web/PassWeb.svelte'), 'utf8')
     expect(gate).toContain('title="Orden Pass"')
   })
 

@@ -92,7 +92,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'k',
     make: (paneId) => {
       if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./pass/open').then((one) => one.openPass()))
+        inPane(paneId, () => import('./pass-sync/src/api').then((one) => one.openPass()))
     },
   }),
   terminal: () => terminalRow(),

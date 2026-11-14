@@ -1,0 +1,37 @@
+{
+  "name": "pass-ui",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "files-out",
+    "pass",
+    "pass-sync",
+    "platform",
+    "protect",
+    "sync-client",
+    "theme",
+    "theme-looks",
+    "ui-controls",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Facts.svelte",
+    "apps/desktop/src/lib/Icon.svelte",
+    "apps/desktop/src/lib/SharedMark.svelte",
+    "apps/desktop/src/lib/SidebarFoot.svelte",
+    "apps/desktop/src/lib/icon-choice.svelte.ts",
+    "apps/desktop/src/lib/layer-keys.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/reloading.svelte.ts",
+    "apps/desktop/src/lib/said.svelte.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/shortcuts.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/take-keyboard.ts",
+    "apps/desktop/src/lib/theme-ports.ts",
+    "apps/desktop/src/lib/usage.svelte.ts",
+    "apps/desktop/src/lib/web-tab/pages.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+  ]
+}
