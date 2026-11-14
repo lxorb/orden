@@ -125,6 +125,27 @@ export {
   type TabPanel,
 } from './shell'
 export {
+  NO_VISITS,
+  type PaletteKindId,
+  type PaletteKinds,
+  paletteKind,
+  type PaletteVisit,
+  type PaletteVisits,
+  registered,
+  registerPaletteKind,
+  registerSettingFields,
+  registerSettingsPart,
+  type SettingCommon,
+  type SettingControl,
+  type SettingField,
+  type SettingFields,
+  settingFieldsIn,
+  type SettingOption,
+  type SettingsPart,
+  type SettingsPartView,
+  settingsPartsIn,
+} from './registry'
+export {
   flushHeldEdits,
   type PortMap,
   type PortName,

@@ -2,6 +2,7 @@ import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
 import { loadRewriteSheet } from './ai-chat/src/api'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { door } from '@orden/markdown/door'
+import { registered } from '@orden/contracts'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
@@ -153,7 +154,9 @@ export const phoneTabsBar = held(() => phone().then((one) => one.loadPhoneTabs()
 
 export const phoneYou = held(() => phone().then((one) => one.loadPhoneYou()))
 
-export const settingsSurface = held(() => import('./SettingsPanel.svelte'))
+export const settingsSurface = held(() =>
+  Promise.all([import('./SettingsPanel.svelte'), registered()]).then(([one]) => one),
+)
 
 export const pagesNavigator = held(() =>
   __EVEN_PLUGIN__
@@ -295,7 +298,9 @@ export const spacesMenu = held(() => import('./SpaceMenu.svelte'))
 
 export const promptSheet = latched(() => import('./PromptSheet.svelte'))
 
-export const paletteDoor = latched(() => import('./Palette.svelte'))
+export const paletteDoor = latched(() =>
+  Promise.all([import('./Palette.svelte'), registered()]).then(([one]) => one),
+)
 
 export const paletteWords = $state<{ words: string | null }>({ words: null })
 

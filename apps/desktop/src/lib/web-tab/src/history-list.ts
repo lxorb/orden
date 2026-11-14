@@ -1,5 +1,5 @@
 import { readable } from '@orden/scan/web-address'
-import type { Visit } from './visits'
+import type { Visit } from '@orden/scan/visits'
 
 export type HistoryRow =
   { kind: 'day'; key: string; day: number } | { kind: 'visit'; key: string; visit: Visit }

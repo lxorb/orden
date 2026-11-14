@@ -1,14 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import {
-  MOST_VISITS,
-  named,
-  typedTo,
-  unvisited,
-  visitKey,
-  visited,
-  visitsFrom,
-  type Visit,
-} from './visits'
+import { MOST_VISITS, named, typedTo, unvisited, visited, visitsFrom } from './visits'
+import { type Visit, visitKey } from '@orden/scan/visits'
 
 const NOW = Date.UTC(2026, 8, 27)
 

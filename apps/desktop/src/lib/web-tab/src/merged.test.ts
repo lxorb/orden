@@ -1,6 +1,6 @@
 import { getDomain } from 'tldts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Visit } from './visits'
+import type { Visit } from '@orden/scan/visits'
 
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {

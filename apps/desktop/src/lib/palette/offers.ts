@@ -1,4 +1,4 @@
-import { visitKey } from '../web-tab/src/visits'
+import { visitKey } from '@orden/scan/visits'
 import { namesAgents, type NoteToMake, noteToMake } from './new-note'
 import type { Row } from './rows'
 

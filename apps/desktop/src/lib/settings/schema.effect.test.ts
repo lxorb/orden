@@ -18,6 +18,7 @@ vi.doMock('../platform/src/tauri', async (actual) => ({
   platform: () => 'linux',
   invoke: () => new Promise(() => undefined),
 }))
+await import('../web-tab/src/api')
 const { declarations } = await import('./declarations')
 const { schemaOf } = await import('./schema')
 const schema = schemaOf(await declarations())

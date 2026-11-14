@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import { completion, suggested } from './omnibox'
-import { MOST_VISITS, type Visit } from './visits'
+import { MOST_VISITS } from './visits'
+import type { Visit } from '@orden/scan/visits'
 
 const CLOCKED = process.env.ORDEN_PERF === '1'
 

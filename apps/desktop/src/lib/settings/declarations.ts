@@ -1,9 +1,8 @@
+import { registered, settingFieldsIn } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import { modes } from '../modes.svelte'
 import { declaredPanes } from '../preferences'
 import { shortcuts, SHORTCUTS } from '../shortcuts.svelte'
-import { CUSTOM, searchEngine } from '../web-tab/src/search-engine.svelte'
-import { enginesFor, isEngineAddress } from '@orden/scan/engines'
 import { themeDeclarations } from './appearance-pane'
 import { relockField } from './general-pane'
 import type { Field } from './fields'
@@ -36,41 +35,14 @@ function shortcutFields(): Field[] {
   ]
 }
 
-function searchFields(): Field[] {
-  return [
-    {
-      kind: 'select',
-      key: 'general.searchEngine',
-      open: true,
-      label: 'Search engine',
-      hint: 'Where words typed into a web tab’s address bar are searched.',
-      options: [
-        ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
-        { value: CUSTOM, label: 'Custom' },
-      ],
-      get: () => searchEngine.id,
-      set: (id) => searchEngine.choose(id),
-    },
-    {
-      kind: 'text',
-      key: 'general.searchEngineAddress',
-      label: 'Search engine',
-      hint: 'The search address, with %s where the words go.',
-      placeholder: 'https://search.example/?q=%s',
-      check: (address) => (isEngineAddress(address) ? null : 'is not an address with %s in it'),
-      get: () => searchEngine.custom,
-      set: (address) => void searchEngine.setCustom(address),
-    },
-  ]
-}
-
 export async function declarations(view?: EditorView): Promise<Field[]> {
+  await registered()
   const rows = declaredPanes(view).flatMap((pane) => pane.groups.flatMap((group) => group.fields))
   const all = [
     ...rows,
     ...(await themeDeclarations()),
     ...shortcutFields(),
-    ...searchFields(),
+    ...settingFieldsIn('general', 'Browser'),
     ...(__EVEN_PLUGIN__ ? [] : [relockField()]),
   ]
   const seen = new Set<string>()

@@ -8,7 +8,7 @@
   import { dayName, historyRows, hostOf, onScreen, type HistoryRow } from './history-list'
   import { siteMark } from './pages.svelte'
   import { visited } from './visited'
-  import type { Visit } from './visits'
+  import type { Visit } from '@orden/scan/visits'
 
   const {
     book,

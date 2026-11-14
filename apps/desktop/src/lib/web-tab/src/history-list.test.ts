@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { answers, dayName, dayOf, historyRows, hostOf, onScreen } from './history-list'
-import type { Visit } from './visits'
+import type { Visit } from '@orden/scan/visits'
 
 const NOW = new Date(2026, 9, 3, 12, 0).getTime()
 const HOUR = 3_600_000

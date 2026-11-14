@@ -9,9 +9,7 @@
   import { Glyph } from './ui-controls/src/api'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import FontPicker from './settings/FontPicker.svelte'
-  import ExtensionRows from './settings/ExtensionRows.svelte'
-  import { CUSTOM, searchEngine } from './web-tab/src/search-engine.svelte'
-  import { enginesFor } from '@orden/scan/engines'
+  import { settingFieldsIn, settingsPartsIn } from '@orden/contracts'
   import { Hint } from './ui-controls/src/api'
   import { Switch } from './ui-controls/src/api'
   import Outward from './Outward.svelte'
@@ -43,7 +41,6 @@
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
   import { isDesktop, openExternal } from './platform/src/api'
-  import { runsExtensions } from './web-tab/src/extensions.svelte'
   import { theme } from './theme/src/api'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './theme-looks/src/api'
@@ -61,7 +58,6 @@
   const offered = new Offered()
 
   let replacingKey = $state(false)
-  let customising = $state(false)
   let customBad = $state(false)
 
   let leaving = $state(false)
@@ -658,60 +654,42 @@
       >
       <DefaultBrowser />
     </div>
-    <div class="orden-setting setting">
-      <span class="name"
-        ><span class="what"
-          >Search engine<Hint
-            text="Where words typed into a web tab’s address bar are searched."
-          /></span
-        ></span
-      >
-      <div class="orden-setting-value">
-        <Select
-          value={customising ? CUSTOM : searchEngine.id}
-          options={[
-            ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
-            { value: CUSTOM, label: 'Custom' },
-          ]}
-          onchange={(value: string) => {
-            customising = value === CUSTOM && !searchEngine.custom
-            searchEngine.choose(value)
-          }}
-          label="Search engine"
-          plain={viewport.touch}
-        />
-      </div>
-    </div>
-    {#if customising || searchEngine.id === CUSTOM}
-      <label class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
-        <span class="name"
-          ><span class="what"
-            >Address<Hint text="The search address, with %s where the words go." /></span
-          ></span
-        >
-        <input
-          class="orden-field is-value"
-          type="url"
-          value={searchEngine.custom}
-          placeholder="https://example.com/search?q=%s"
-          spellcheck="false"
-          autocapitalize="off"
-          autocomplete="off"
-          aria-invalid={customBad}
-          onchange={(event) => {
-            customBad = !searchEngine.setCustom(event.currentTarget.value)
-            if (!customBad) customising = false
-          }}
-        />
-      </label>
-    {/if}
+    {#each settingFieldsIn('general', 'Browser') as field (field.key)}
+      {#if field.kind === 'text'}
+        {#if !field.shown || field.shown()}
+          <label class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
+            {@render named(field)}
+            <input
+              class="orden-field is-value"
+              type="url"
+              value={field.get()}
+              placeholder={field.placeholder}
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              aria-invalid={customBad}
+              onchange={(event) => {
+                customBad = (field.check?.(event.currentTarget.value) ?? null) !== null
+                if (!customBad) field.set(event.currentTarget.value)
+              }}
+            />
+          </label>
+        {/if}
+      {:else}
+        {@render row(field)}
+      {/if}
+    {/each}
   </div>
-  {#if runsExtensions}
-    <h3>Extensions</h3>
-    <div class="card">
-      <ExtensionRows />
-    </div>
-  {/if}
+  {#each settingsPartsIn('general') as part, index (index)}
+    {#if part.shown()}
+      <h3>{part.title}</h3>
+      <div class="card">
+        {#await part.load() then view}
+          <div class="part" {@attach (target) => view.show(target)}></div>
+        {/await}
+      </div>
+    {/if}
+  {/each}
 {/snippet}
 
 {#snippet pane()}
@@ -1326,6 +1304,10 @@
   .pane h3:first-child,
   .pane h2 + h3 {
     margin-top: 0;
+  }
+
+  .part {
+    display: contents;
   }
 
   .card {

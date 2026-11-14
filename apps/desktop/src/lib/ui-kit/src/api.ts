@@ -30,15 +30,18 @@ export type { IconEntry, IconNode, WrittenIcon } from './icons'
 export {
   chorded,
   currentPlatform,
+  fromPage,
   holdComposingKeys,
   matchesCombination,
   parseCombination,
   PHYSICAL,
   readCombination,
+  replay,
   sameCombination,
   showCombination,
+  takenOf,
 } from './keys'
-export type { Keystroke, Platform } from './keys'
+export type { Keystroke, Platform, Taken } from './keys'
 export { opensAt, spelled, walk } from './list-keys'
 export type { Spelling, Walk } from './list-keys'
 export { DIVIDER, isSubmenu, walkableRows } from './menu-item'

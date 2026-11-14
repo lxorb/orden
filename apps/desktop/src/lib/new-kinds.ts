@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import type { IconNode } from 'lucide'
 import type { FileMark } from './file-mark'
 import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
@@ -122,11 +123,10 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'web',
     letter: 'w',
     make: (paneId) =>
-      inPane(paneId, () =>
-        import('./web-tab/src/search-engine.svelte').then((one) =>
-          workspace.openPage(one.searchEngine.home),
-        ),
-      ),
+      inPane(paneId, async () => {
+        const home = await webPages().searchHome()
+        if (home) workspace.openPage(home)
+      }),
   }),
   private: () => ({
     kind: 'private',

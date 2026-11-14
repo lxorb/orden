@@ -1,5 +1,4 @@
-import { matchesCombination, type Platform } from '../../ui-kit/src/api'
-import { fromPage } from './keys'
+import { fromPage, matchesCombination, type Platform } from '../../ui-kit/src/api'
 
 export interface Bindings {
   readonly platform: Platform

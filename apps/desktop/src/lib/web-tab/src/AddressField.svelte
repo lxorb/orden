@@ -32,10 +32,10 @@
   import { links } from '../../link-index.svelte'
   import { pieces } from '../../palette/pieces'
   import { dotCom, type HalfTyped } from '@orden/scan/typed'
-  import { shownAddress } from './omnibox'
+  import { shownAddress } from '@orden/scan/visits'
   import { visited } from './visited'
   import { leads, noteKey, webNotesFor, webNotesOf, type WebNote } from './web-notes'
-  import type { Visit } from './visits'
+  import type { Visit } from '@orden/scan/visits'
 
   type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
 

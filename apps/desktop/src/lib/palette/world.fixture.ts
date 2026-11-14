@@ -1,5 +1,5 @@
 import type { Command } from '../commands'
-import type { Visit } from '../web-tab/src/api'
+import type { Visit } from '@orden/scan/visits'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { Entry } from '../workspace.svelte'
 import type { World } from './kinds'

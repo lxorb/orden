@@ -1,6 +1,6 @@
+import './shell-parts'
 export { pages, siteMark } from './pages.svelte'
 export type { Page, Step } from './pages.svelte'
-export type { Visit } from './visits'
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
 

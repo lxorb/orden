@@ -24,7 +24,7 @@ const OWN: Record<string, RegExp> = {
   'Swatches.svelte': /class="swatch/,
   'SettingsPanel.svelte': /class="(thumb|key|link)"/,
   '*': /role="(radio|tab)"/,
-  'settings/ExtensionRows.svelte': /class="name"/,
+  'web-tab/src/ExtensionRows.svelte': /class="name"/,
   'terminal/src/remote/RemotePane.svelte': /class="(open|link)"/,
   'pass-ui/src/SettingsImport.svelte': /class="source"/,
 }
@@ -74,7 +74,7 @@ describe('a row in Settings', () => {
 })
 
 const SETTINGS =
-  /^((SettingsPanel|AiPane|SyncPane|Security|RecentlyDeleted)\.svelte|(people\/ProfileRows|import\/src\/MigrateRows)\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
+  /^((SettingsPanel|AiPane|SyncPane|Security|RecentlyDeleted)\.svelte|(people\/ProfileRows|import\/src\/MigrateRows|web-tab\/src\/ExtensionRows)\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
 
 describe('an on/off control in Settings', () => {
   test('is the shared switch, never one drawn by hand', () => {
@@ -82,7 +82,7 @@ describe('an on/off control in Settings', () => {
       .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))
       .filter((one) => SETTINGS.test(one.path))
     expect(files.map((one) => one.path)).toEqual(
-      expect.arrayContaining(['SettingsPanel.svelte', 'settings/ExtensionRows.svelte']),
+      expect.arrayContaining(['SettingsPanel.svelte', 'web-tab/src/ExtensionRows.svelte']),
     )
     const own = files
       .filter(({ source }) => /orden-switch|role="switch"/.test(source))

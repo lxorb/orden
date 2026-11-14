@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import { matchesCombination } from '../../ui-kit/src/keys'
+import { matchesCombination, replay } from '../../ui-kit/src/api'
 import { barKey, type Bindings, stops } from './bar-keys'
-import { replay } from './keys'
 
 const DEFAULTS: Record<string, string> = {
   'web.address': 'Mod-l',
