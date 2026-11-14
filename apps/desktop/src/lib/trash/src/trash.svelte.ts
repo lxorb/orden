@@ -1,9 +1,9 @@
-import { account, api } from './accounts/src/api'
-import { message, prompt } from './ui-kit/src/api'
-import { canWriteAt } from './sharing/src/api'
-import { sync } from './sync.svelte'
-import { folderOf, insideSpace, samePath, within, invoke } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { account, api } from '../../accounts/src/api'
+import { message, prompt } from '../../ui-kit/src/api'
+import { canWriteAt } from '../../sharing/src/api'
+import { sync } from '../../sync.svelte'
+import { folderOf, insideSpace, samePath, within, invoke } from '../../platform/src/api'
+import { workspace } from '../../workspace.svelte'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 
@@ -50,7 +50,7 @@ class Trash {
     if (asked !== this.asked) return
     const device =
       remote.length && found.length
-        ? await (await import('./trash-doubles')).withoutDoubles(found, this.remoteNotes)
+        ? await (await import('./doubles')).withoutDoubles(found, this.remoteNotes)
         : found
     if (asked !== this.asked) return
     this.items = [...remote, ...device].sort((a, b) => b.deletedAt - a.deletedAt)

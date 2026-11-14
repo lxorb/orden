@@ -20,7 +20,9 @@
     "ui-kit",
     "usage",
     "parting",
-    "updates"
+    "updates",
+    "history",
+    "snapshots"
   ],
   "pending": [
     "apps/desktop/src/lib/AiPane.svelte",
@@ -46,8 +48,6 @@
     "apps/desktop/src/lib/note-id.ts",
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/paper.ts",
-    "apps/desktop/src/lib/recovery.svelte.ts",
-    "apps/desktop/src/lib/recovery.ts",
     "apps/desktop/src/lib/reset-fields.ts",
     "apps/desktop/src/lib/residency.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

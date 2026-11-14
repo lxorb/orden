@@ -207,7 +207,7 @@ const trash = {
   restore: vi.fn((_item: unknown) => Promise.resolve()),
   restorable: vi.fn((_item: unknown) => true),
 }
-vi.mock('../trash.svelte', () => ({ trash }))
+vi.mock('../trash/src/api', () => ({ trash }))
 
 const showPad = vi.fn()
 vi.mock('../scratchpad/src/api', async (importOriginal) => ({

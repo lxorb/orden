@@ -24,8 +24,8 @@ function onlyTrashed(): Entry {
 let counter = 0
 const calls: string[] = []
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -88,8 +88,8 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 }))
 
 const readOnly = vi.hoisted(() => new Set<string>())
-vi.mock('./sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./sharing/src/sharing.svelte')>()),
+vi.mock('../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sharing/src/api')>()),
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
@@ -107,10 +107,10 @@ const remote = {
 }
 const apiCalls: string[] = []
 
-vi.mock('./accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./accounts/src/client')>()),
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
   api: {
-    ...(await importOriginal<typeof import('./accounts/src/client')>()).api,
+    ...(await importOriginal<typeof import('../../accounts/src/api')>()).api,
     trash: async () => ({ spaces: remote.spaces, notes: remote.notes }),
     restoreNote: async (_token: string, id: string) => {
       apiCalls.push(`restoreNote ${id}`)
@@ -153,13 +153,13 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
-const { account } = await import('./accounts/src/account.svelte')
-type RemoteSpace = import('./accounts/src/routes').RemoteSpace
+const { workspace } = await import('../../workspace.svelte')
+const { account } = await import('../../accounts/src/api')
+type RemoteSpace = import('../../accounts/src/api').RemoteSpace
 const { trash } = await import('./trash.svelte')
-const { prompt } = await import('./ui-kit/src/prompt.svelte')
-const { sync } = await import('./sync.svelte')
-const { keptAway } = await import('./web/away.svelte')
+const { prompt } = await import('../../ui-kit/src/api')
+const { sync } = await import('../../sync.svelte')
+const { keptAway } = await import('../../web/away.svelte')
 
 beforeEach(() => {
   notes.clear()

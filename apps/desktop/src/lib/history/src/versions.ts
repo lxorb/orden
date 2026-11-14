@@ -1,6 +1,6 @@
-import { account, api } from './accounts/src/api'
-import { sha256, invoke } from './platform/src/api'
-import { sync } from './sync.svelte'
+import { account, api } from '../../accounts/src/api'
+import { sha256, invoke } from '../../platform/src/api'
+import { sync } from '../../sync.svelte'
 
 interface Snapshot {
   taken_at: number

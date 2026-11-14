@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../../versions', () => ({
+vi.mock('../../../history/src/versions', () => ({
   versionsOf: () => Promise.resolve([{ at: 1, size: 20, path: null, by: '' }]),
   versionText: () => Promise.resolve('what nobody may read'),
 }))
@@ -14,7 +14,7 @@ const { openTarget } = await import('../../../export/src/context')
 const { settings } = await import('../../../settings.svelte')
 const { menu } = await import('../../../menu.svelte')
 const { DIVIDER } = await import('../../../ui-kit/src/menu-item')
-const History = (await import('../../../History.svelte')).default
+const History = (await (await import('../../../history/src/api')).loadHistory()).default
 type MenuItem = import('../../../ui-kit/src/menu-item').MenuItem
 
 const ROOT = '/space'

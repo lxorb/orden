@@ -1,19 +1,16 @@
 <script lang="ts">
-  import { closeOnBack } from './ui-kit/src/api'
+  import { closeOnBack, overlays, scrollbar } from '../../ui-kit/src/api'
   import { diffCount, lineDiff, trimmed } from '@orden/markdown/line-diff'
-  import { overlays } from './ui-kit/src/api'
-  import { KEEP_YEAR, modes } from './modes.svelte'
+  import { KEEP_YEAR, modes } from '../../modes.svelte'
   import { recovery } from './recovery.svelte'
-  import { scrollbar } from './ui-kit/src/api'
-  import { canWriteIn } from './sharing/src/api'
-  import { readableSize } from './usage.svelte'
-  import { localDate } from './platform/src/api'
-  import { when } from './when'
+  import { canWriteIn } from '../../sharing/src/api'
+  import { readableSize } from '../../usage.svelte'
+  import { fade, LAYER, localDate, scale } from '../../platform/src/api'
+  import { when } from '../../when'
   import { cubicOut } from 'svelte/easing'
-  import { type Tab, workspace } from './workspace.svelte'
+  import { type Tab, workspace } from '../../workspace.svelte'
   import { type Version, versionsOf, versionText } from './versions'
-  import { fade, LAYER, scale } from './platform/src/api'
-  import { trap } from './ui-controls/src/api'
+  import { trap } from '../../ui-controls/src/api'
 
   let { open = $bindable(false) }: { open?: boolean } = $props()
 

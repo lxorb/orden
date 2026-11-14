@@ -1,13 +1,18 @@
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('./workspace.svelte', () => ({ workspace: { spaces: [] } }))
-vi.mock('./sync.svelte', () => ({ sync: { remoteIdFor: () => null } }))
-vi.mock('./platform/src/tauri', () => ({ invoke: () => Promise.resolve([]) }))
-vi.mock('./accounts/src/account.svelte', () => ({ account: { accountToken: null } }))
-vi.mock('./accounts/src/client', () => ({ api: {} }))
-vi.mock('./ui-kit/src/prompt.svelte', () => ({ prompt: {} }))
+vi.mock('../../workspace.svelte', () => ({ workspace: { spaces: [] } }))
+vi.mock('../../sync.svelte', () => ({ sync: { remoteIdFor: () => null } }))
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
+  invoke: () => Promise.resolve([]),
+}))
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
+  account: { accountToken: null },
+  api: {},
+}))
 
-const { doublesOf } = await import('./trash-doubles')
+const { doublesOf } = await import('./doubles')
 type Item = Parameters<typeof doublesOf>[0][number]
 
 describe('a device’s trash entry the account holds too', () => {

@@ -4,7 +4,7 @@
   import { relativeStep } from './ago'
   import { region } from './platform/src/api'
   import { settings } from './settings.svelte'
-  import { trash, type TrashItem } from './trash.svelte'
+  import { trash, type TrashItem } from './trash/src/api'
   import { rowName } from './platform/src/api'
   import { dur, slide } from './platform/src/api'
 
