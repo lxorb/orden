@@ -1,4 +1,4 @@
-import { fetchInTime } from '../api'
+import { fetchInTime } from '../accounts/src/api'
 import type { Fetcher } from '@orden/pass/breach'
 
 export const fetcher: Fetcher = async (url, init) => {

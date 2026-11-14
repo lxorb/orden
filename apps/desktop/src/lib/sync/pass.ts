@@ -6,7 +6,7 @@ import {
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy, hash32, isEntryId } from '@orden/sync-core'
-import { api, ApiError, fromServer, type RemoteNote, type SpaceFile } from '../api'
+import { api, ApiError, fromServer, type RemoteNote, type SpaceFile } from '../accounts/src/api'
 import { sha256 } from '../bytes'
 import { evictedHere } from '../icloud-placeholder'
 import { log } from '../log'

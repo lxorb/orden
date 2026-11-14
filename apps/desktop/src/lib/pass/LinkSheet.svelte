@@ -1,7 +1,7 @@
 <script lang="ts">
   import { MOST_LINK_VIEWS } from '@orden/pass/wire'
   import Copy from 'lucide/dist/esm/icons/copy.mjs'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import { message } from '../message'
   import { said } from '../said.svelte'
   import Select from '../Select.svelte'

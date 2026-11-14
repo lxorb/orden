@@ -1,5 +1,5 @@
-import { api, type KeyState } from '../api'
-import { account } from '../account.svelte'
+import { api, type KeyState } from '../accounts/src/api'
+import { account } from '../accounts/src/api'
 
 class GlassesKey {
   set = $state(false)

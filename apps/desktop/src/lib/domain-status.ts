@@ -1,4 +1,4 @@
-import type { DomainStatus } from './api'
+import type { DomainStatus } from './accounts/src/api'
 import { isRecord, isString } from './stored'
 
 const STATES: DomainStatus['state'][] = [

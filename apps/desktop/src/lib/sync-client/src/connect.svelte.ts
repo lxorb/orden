@@ -1,4 +1,4 @@
-import { startHere } from '../../people/here'
+import { startHere } from './here'
 import { hub } from './hub.svelte'
 
 let connected = false

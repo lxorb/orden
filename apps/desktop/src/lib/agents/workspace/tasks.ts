@@ -43,7 +43,7 @@ function refused(error: unknown): never {
 }
 
 async function contextOf(): Promise<Context> {
-  const { account } = await import('../../account.svelte')
+  const { account } = await import('../../accounts/src/api')
   return { ...clockOf(new Date()), ...(account.name ? { me: account.name } : {}) }
 }
 

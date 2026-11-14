@@ -1,9 +1,10 @@
-import { api, ApiError, fromServer, type Account, type Guest, type RemoteSpace } from './api'
-import { arriving } from './arriving.svelte'
-import { pollDelay } from './backoff'
+import { api, ApiError, fromServer } from './client'
+import type { Account, Guest, RemoteSpace } from './routes'
+import { arriving } from '../../arriving.svelte'
+import { pollDelay } from '../../backoff'
 import { called } from './person'
-import { forget, keep, storedText } from './stored'
-import { waited } from './timing'
+import { forget, keep, storedText } from '../../stored'
+import { waited } from '../../timing'
 
 const STORAGE_KEY = 'orden:session'
 
@@ -223,7 +224,7 @@ class Session {
     this.email = ''
 
     arriving.begin()
-    void import('./web/kept-for-good.svelte').then((one) => one.keptForGood.ask())
+    void import('../../web/kept-for-good.svelte').then((one) => one.keptForGood.ask())
 
     await this.loadSpaces().catch(() => undefined)
   }
@@ -297,12 +298,12 @@ class Session {
     this.deletedSpaces = listed.deleted
     this.listed = true
 
-    const { rememberRoles, sharedWithYou } = await import('./sharing.svelte')
+    const { rememberRoles, sharedWithYou } = await import('../../sharing.svelte')
     if (this.token !== token) return
     rememberRoles()
     await sharedWithYou.load()
 
-    await (await import('./space-archive')).listed()
+    await (await import('../../space-archive')).listed()
   }
 
   private asking?: ReturnType<typeof setTimeout>

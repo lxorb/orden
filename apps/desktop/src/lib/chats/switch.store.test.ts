@@ -12,7 +12,7 @@ vi.mock('../tauri', async (importOriginal) => ({
 }))
 
 vi.mock('./http', async (importOriginal) => {
-  const { account } = await import('../account.svelte')
+  const { account } = await import('../accounts/src/account.svelte')
   return {
     ...(await importOriginal<typeof import('./http')>()),
     listChats: () => Promise.resolve(null),
@@ -27,7 +27,7 @@ vi.mock('./http', async (importOriginal) => {
 })
 
 const { chats } = await import('./store.svelte')
-const { account } = await import('../account.svelte')
+const { account } = await import('../accounts/src/account.svelte')
 
 const signedIn = (id: string) => {
   account.user = { id, email: `${id}@example.com`, name: null }

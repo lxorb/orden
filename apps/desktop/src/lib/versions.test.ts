@@ -16,9 +16,9 @@ vi.mock('./tauri', () => ({
     return Promise.reject(new Error(command))
   },
 }))
-vi.mock('./account.svelte', () => ({ account: { accountToken: 't' } }))
+vi.mock('./accounts/src/account.svelte', () => ({ account: { accountToken: 't' } }))
 vi.mock('./sync.svelte', () => ({ sync: { tracked: () => ({ id: 'n1' }) } }))
-vi.mock('./api', () => ({
+vi.mock('./accounts/src/client', () => ({
   api: { noteVersions: () => Promise.resolve({ versions: held.account }) },
 }))
 

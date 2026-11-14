@@ -1,5 +1,5 @@
-import { api } from './api'
-import { account } from './account.svelte'
+import { api } from './accounts/src/api'
+import { account } from './accounts/src/api'
 
 export const NEARLY_FULL = 0.9
 

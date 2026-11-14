@@ -1,5 +1,5 @@
-import { account } from '../account.svelte'
-import { request } from '../api'
+import { account } from '../accounts/src/api'
+import { request } from '../accounts/src/api'
 import { isRecord } from '../stored'
 import { sync } from '../sync.svelte'
 import { workspace } from '../workspace.svelte'

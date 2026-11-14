@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { account } from './account.svelte'
-  import { api } from './api'
+  import { account } from './accounts/src/api'
+  import { api } from './accounts/src/api'
   import { localNumber } from './region'
   import { when } from './when'
   import Facts from './Facts.svelte'

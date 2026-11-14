@@ -100,9 +100,10 @@ export const PACKAGES = [
 ]
 
 export const APP_FOLDERS = [
+  'accounts',
+  'accounts-ui',
   'agents',
   'ai',
-  'api',
   'automation',
   'back-swipe',
   'canvas',
@@ -123,7 +124,6 @@ export const APP_FOLDERS = [
   'pages',
   'palette',
   'pdf',
-  'people',
   'protect',
   'quick-add',
   'reading',

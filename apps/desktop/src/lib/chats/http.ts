@@ -13,8 +13,8 @@ import {
   statePageOf,
   type StatePage,
 } from '@orden/chats/wire'
-import { account } from '../account.svelte'
-import { ApiError, BASE, fromServer, request } from '../api'
+import { account } from '../accounts/src/api'
+import { ApiError, BASE, fromServer, request } from '../accounts/src/api'
 import { isRecord } from '../stored'
 import type { ChatMember, Hit, Scheduled } from './api'
 

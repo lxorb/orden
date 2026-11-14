@@ -1,5 +1,4 @@
-import { account } from './account.svelte'
-import { api, type AccountSettings } from './api'
+import { account, type AccountSettings, api } from './accounts/src/api'
 import { forget, keepJson, stored } from './stored'
 import { type Space, workspace } from './workspace.svelte'
 

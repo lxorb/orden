@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { ApiError } from '../api'
+import { ApiError } from '../accounts/src/client'
 import type { CrashReport } from './scrub'
 import { type Sending, sendWaiting } from './send'
 

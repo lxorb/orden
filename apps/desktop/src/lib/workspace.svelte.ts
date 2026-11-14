@@ -1,5 +1,5 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { appsOn, basesOn, hiddenKinds } from './settings.svelte'
 import { arriving } from './arriving.svelte'
 import { keptAway } from './web/away.svelte'

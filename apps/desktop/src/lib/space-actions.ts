@@ -1,4 +1,4 @@
-import { account } from './account.svelte'
+import { account } from './accounts/src/api'
 import { iconChoice } from './icon-choice.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
@@ -95,7 +95,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
       ? [
           {
             label: 'Nickname',
-            run: () => void import('./people/nickname').then((one) => one.nameHere(space)),
+            run: () => void import('./accounts-ui/src/api').then((one) => one.nameHere(space)),
           },
         ]
       : []),

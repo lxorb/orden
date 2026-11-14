@@ -11,7 +11,7 @@ const world = vi.hoisted(() => ({
   invoked: [] as string[],
 }))
 
-vi.mock('../account.svelte', () => ({
+vi.mock('../accounts/src/account.svelte', () => ({
   account: {
     get accountToken() {
       return world.token

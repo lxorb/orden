@@ -5,7 +5,7 @@ import {
   diagramKey,
   isDiagram,
 } from '@orden/markdown/diagrams'
-import { api } from './api'
+import { api } from './accounts/src/api'
 import { drawDiagram } from './diagrams'
 import { keepJson, stored } from './stored'
 import { shapesOnly } from './svg-file'

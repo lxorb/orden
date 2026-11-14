@@ -107,7 +107,7 @@ const fake = vi.hoisted(() => {
 
       const taken = [...remote.values()].find((one) => one.path === path && !one.deleted)
       if (taken) {
-        const { ApiError } = await import('../api')
+        const { ApiError } = await import('../accounts/src/client')
         throw new ApiError(409, 'a note already lives there', {
           note: await present(taken),
           content: taken.content,
@@ -150,8 +150,8 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: fake.invoke,
 }))
 
-vi.mock('../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api')>()),
+vi.mock('../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   api: fake.api,
 }))
 

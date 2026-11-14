@@ -1,5 +1,5 @@
-import { account } from '../account.svelte'
-import { api } from '../api'
+import { account } from '../accounts/src/api'
+import { api } from '../accounts/src/api'
 import { sync } from '../sync.svelte'
 
 type Save = (calls: typeof api, token: string, spaceId: string) => Promise<unknown>

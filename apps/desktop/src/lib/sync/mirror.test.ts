@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { ApiError } = await import('../api')
+const { ApiError } = await import('../accounts/src/client')
 
 const fake = vi.hoisted(() => {
   interface Entry {
@@ -322,8 +322,8 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: fake.invoke,
 }))
 
-vi.mock('../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api')>()),
+vi.mock('../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   api: fake.api,
 }))
 

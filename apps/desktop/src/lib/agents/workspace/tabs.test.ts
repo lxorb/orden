@@ -327,8 +327,8 @@ vi.mock('../../terminal/sessions.svelte', () => ({
 }))
 
 const account = { accountToken: 'token' as string | null }
-vi.mock('../../account.svelte', async (original) => {
-  const real = await original<typeof import('../../account.svelte')>()
+vi.mock('../../accounts/src/account.svelte', async (original) => {
+  const real = await original<typeof import('../../accounts/src/account.svelte')>()
   Object.defineProperty(real.account, 'accountToken', { get: () => account.accountToken })
   return real
 })

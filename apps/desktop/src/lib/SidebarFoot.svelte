@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { account } from './account.svelte'
+  import { account } from './accounts/src/api'
   import { showAccount } from './account-menu'
-  import AccountBadge from './AccountBadge.svelte'
+  import { AccountBadge } from './accounts/src/api'
   import { DOWNLOAD_URL } from './links'
   import { arriving } from './arriving.svelte'
   import { dur, fade } from './motion'

@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { linearly } from '../../../../../scripts/growth'
 
 const signed: { name: string | null } = vi.hoisted(() => ({ name: 'Emil' }))
-vi.mock('../account.svelte', () => ({
+vi.mock('../accounts/src/account.svelte', () => ({
   account: {
     get name() {
       return signed.name

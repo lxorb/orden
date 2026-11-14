@@ -34,8 +34,8 @@ const api = vi.hoisted(() => {
   }
 })
 
-vi.mock('./api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./api')>()),
+vi.mock('./accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./accounts/src/client')>()),
   api,
 }))
 

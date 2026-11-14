@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { closeOnBack } from './backstack.svelte'
-  import { overlays } from './overlays'
+  import { closeOnBack } from '../../backstack.svelte'
+  import { overlays } from '../../overlays'
   import { cubicOut } from 'svelte/easing'
-  import { account } from './account.svelte'
-  import { joining } from './joining.svelte'
-  import { settleLocalNotes } from './settling'
-  import { dur, fade, fly, LAYER, scale } from './motion'
-  import { trap } from './trap'
+  import { account } from '../../accounts/src/api'
+  import { joining } from '../../joining.svelte'
+  import { settleLocalNotes } from '../../settling'
+  import { dur, fade, fly, LAYER, scale } from '../../motion'
+  import { trap } from '../../trap'
 
   const LENGTH = 6
 

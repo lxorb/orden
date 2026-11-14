@@ -14,7 +14,7 @@
   import ShieldCheck from 'lucide/dist/esm/icons/shield-check.mjs'
   import Trash from 'lucide/dist/esm/icons/trash-2.mjs'
   import UsersRound from 'lucide/dist/esm/icons/users-round.mjs'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import Icon from '../Icon.svelte'
   import { readIcon } from '../icons'
   import { menu } from '../menu.svelte'

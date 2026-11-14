@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte'
 
-  import { account } from './account.svelte'
-  import { fromServer, request } from './api'
-  import { region } from './region'
-  import { message } from './message'
-  import { dur, fade } from './motion'
+  import { account } from '../../accounts/src/api'
+  import { fromServer, request } from '../../accounts/src/api'
+  import { region } from '../../region'
+  import { message } from '../../message'
+  import { dur, fade } from '../../motion'
 
   const { onend }: { onend: () => void } = $props()
 

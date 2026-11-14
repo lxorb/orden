@@ -1,7 +1,7 @@
 <script lang="ts">
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import { onDestroy } from 'svelte'
-  import { account } from '../../account.svelte'
+  import { account } from '../../accounts/src/api'
   import { menu } from '../../menu.svelte'
   import { overlays } from '../../overlays'
   import { prompt } from '../../prompt.svelte'

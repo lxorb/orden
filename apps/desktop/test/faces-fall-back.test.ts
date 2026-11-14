@@ -20,7 +20,7 @@ test('a person picture address is built in one place, from a checked hash', () =
   const builders = sources(LIB)
     .filter((path) => /\/i\/\$\{[^}]*\}\.webp/.test(read(path)))
     .map((path) => relative(LIB, path).replaceAll('\\', '/'))
-  expect(builders).toEqual(['api.ts'])
+  expect(builders).toEqual(['accounts/src/client.ts'])
 })
 
 test('every person picture falls back when it fails to load, never showing a broken picture', () => {
@@ -36,7 +36,11 @@ test('every person picture falls back when it fails to load, never showing a bro
       return faces.map((tag) => ({ file, tag }))
     })
   expect([...new Set(pictures.map((one) => one.file))]).toEqual(
-    expect.arrayContaining(['AccountBadge.svelte', 'Tabs.svelte', 'people/Avatar.svelte']),
+    expect.arrayContaining([
+      'accounts/src/AccountBadge.svelte',
+      'Tabs.svelte',
+      'accounts-ui/src/Avatar.svelte',
+    ]),
   )
   expect(pictures.filter((one) => !one.tag.includes('onerror'))).toEqual([])
 })

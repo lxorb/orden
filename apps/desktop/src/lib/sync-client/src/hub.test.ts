@@ -1,7 +1,7 @@
 import '../../sync-ports'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { BEAT_EVERY } from '../../backoff'
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/account.svelte'
 import { Hub, type HubWorld, type SocketEvents } from './hub.svelte'
 
 interface Opened {

@@ -1,6 +1,6 @@
 import type { Look } from '@orden/sync-core'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { type AccountDouble, accountDouble } from '../../../account-double'
+import { type AccountDouble, accountDouble } from '../../../accounts/test/fakes'
 import { LookSync } from './look-sync'
 
 const DARK_GLASS: Look = { theme: 'glass', scheme: 'dark', values: { '*': { accent: 'blue' } } }

@@ -1,12 +1,10 @@
 {
   "name": "theme-looks",
   "layer": "foundation",
-  "dependsOn": ["contracts", "theme", "sync-client", "sync-core", "themes"],
+  "dependsOn": ["contracts", "theme", "sync-client", "sync-core", "themes", "accounts"],
   "pending": [
     "apps/desktop/src/lib/Swatches.svelte",
     "apps/desktop/src/lib/accents.ts",
-    "apps/desktop/src/lib/account.svelte.ts",
-    "apps/desktop/src/lib/api.ts",
     "apps/desktop/src/lib/backstack.svelte.ts",
     "apps/desktop/src/lib/bytes.ts",
     "apps/desktop/src/lib/choose-files.ts",

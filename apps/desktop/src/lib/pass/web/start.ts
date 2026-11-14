@@ -1,5 +1,5 @@
 import '../../theme-ports'
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/api'
 import { collectErrors } from '../../log'
 import { reloading } from '../../reloading.svelte'
 import { settings } from '../../settings.svelte'

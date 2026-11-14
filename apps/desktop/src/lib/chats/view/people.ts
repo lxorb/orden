@@ -1,6 +1,6 @@
 import type { Member, Who } from '@orden/chats'
-import type { Face } from '../../people/face'
-import { people } from '../../people/people.svelte'
+import type { Face } from '../../accounts/src/api'
+import { people } from '../../accounts/src/api'
 
 export function accountOf(who: Who): string | null {
   return who.startsWith('user:') ? who.slice(5) : null

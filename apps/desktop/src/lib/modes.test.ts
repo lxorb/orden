@@ -94,8 +94,8 @@ interface Held {
   canvasTurnSnaps?: boolean
 }
 
-vi.mock('./api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./api')>()),
+vi.mock('./accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./accounts/src/client')>()),
   api,
 }))
 
@@ -937,7 +937,7 @@ describe('taking over what the account holds', () => {
     modes.sawGlasses()
     expect(await modes.adopt('first')).toBeNull()
 
-    const { account } = await import('./account.svelte')
+    const { account } = await import('./accounts/src/account.svelte')
     await account.signOut()
 
     api.saveSettings = async (token: string, patch: Held) => {
@@ -955,7 +955,7 @@ describe('taking over what the account holds', () => {
     api.settings = settingsCall
 
     const adopted = modes.adopt('first')
-    const { account } = await import('./account.svelte')
+    const { account } = await import('./accounts/src/account.svelte')
     await account.signOut()
     release()
 

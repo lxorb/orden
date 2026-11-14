@@ -36,7 +36,7 @@ const fake = vi.hoisted(() => {
 })
 
 vi.mock('./store.svelte', () => ({ pass: fake.pass }))
-vi.mock('../account.svelte', () => ({ account: fake.account }))
+vi.mock('../accounts/src/account.svelte', () => ({ account: fake.account }))
 vi.mock('../prompt.svelte', () => ({ prompt: fake.prompt }))
 
 const { PassUi } = await import('./ui.svelte')

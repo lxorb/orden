@@ -1,7 +1,7 @@
 import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
-import { account } from './account.svelte'
-import { api, type AccountSettings } from './api'
+import { account } from './accounts/src/api'
+import { api, type AccountSettings } from './accounts/src/api'
 import { BY_ID, runnable } from './shortcuts/registry'
 import { forget, isString, keepJson, stored } from './stored'
 

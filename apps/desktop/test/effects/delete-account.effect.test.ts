@@ -1,8 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import DeleteAccount from '../../src/lib/DeleteAccount.svelte'
-import { account } from '../../src/lib/account.svelte'
-import { type RemoteSpace, warmCalls } from '../../src/lib/api'
+import DeleteAccount from '../../src/lib/accounts-ui/src/DeleteAccount.svelte'
+import { account } from '../../src/lib/accounts/src/account.svelte'
+import { warmCalls } from '../../src/lib/accounts/src/client'
+import type { RemoteSpace } from '../../src/lib/accounts/src/routes'
 
 await warmCalls()
 

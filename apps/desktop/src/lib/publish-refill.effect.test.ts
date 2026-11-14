@@ -26,8 +26,8 @@ const world = vi.hoisted((): World => ({
   refusePublish: null,
 }))
 
-vi.mock('./api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./api')>()
+vi.mock('./accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./accounts/src/client')>()
 
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
@@ -81,10 +81,10 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 import { flushSync, mount, unmount } from 'svelte'
-import { account } from './account.svelte'
+import { account } from './accounts/src/account.svelte'
 import { publish } from './publishing.svelte'
 import PublishSheet from './PublishSheet.svelte'
-import type { RemoteSpace } from './api'
+import type { RemoteSpace } from './accounts/src/routes'
 
 const nothing = () => undefined
 vi.stubGlobal(

@@ -1,5 +1,5 @@
 import { daysBetween, MOST_USAGE_EVENTS, USAGE_DAYS_KEPT, type UsageEvent } from '@orden/sync-core'
-import { ApiError } from '../api'
+import { ApiError } from '../accounts/src/api'
 
 export const MOST_QUEUED = 2 * (USAGE_DAYS_KEPT + 1)
 

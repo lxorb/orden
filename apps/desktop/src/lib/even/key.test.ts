@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { AccountDouble } from '../account-double'
+import type { AccountDouble } from '../accounts/test/fakes'
 
 const server = vi.hoisted(() => ({
   set: false,
@@ -10,7 +10,7 @@ const server = vi.hoisted(() => ({
   held: null as Promise<void> | null,
 }))
 
-vi.mock('../api', () => ({
+vi.mock('../accounts/src/client', () => ({
   api: {
     setAskKey: async (_token: string, key: string) => {
       server.asked.push(`put ${key}`)
@@ -37,8 +37,8 @@ vi.mock('../api', () => ({
   },
 }))
 
-vi.mock('../account.svelte', async () => ({
-  account: (await import('../account-double')).accountDouble(),
+vi.mock('../accounts/src/account.svelte', async () => ({
+  account: (await import('../accounts/test/fakes')).accountDouble(),
 }))
 
 const chosen = vi.hoisted(() => ({ model: '' }))
@@ -68,7 +68,7 @@ beforeEach(async () => {
   chosen.model = ''
 
   vi.resetModules()
-  account = (await import('../account.svelte')).account as unknown as AccountDouble
+  account = (await import('../accounts/src/account.svelte')).account as unknown as AccountDouble
   account.signInAs('a')
   glassesKey = (await import('./key.svelte')).glassesKey
   Offered = (await import('./offered.svelte')).Offered

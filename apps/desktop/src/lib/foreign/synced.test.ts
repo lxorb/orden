@@ -18,7 +18,7 @@ vi.mock('../stored', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../stored')>()),
   stored: () => fake.saved,
 }))
-vi.mock('../account.svelte', () => ({
+vi.mock('../accounts/src/account.svelte', () => ({
   account: {
     get user() {
       return fake.user
@@ -26,8 +26,8 @@ vi.mock('../account.svelte', () => ({
     accountToken: 'token',
   },
 }))
-vi.mock('../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api')>()),
+vi.mock('../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   api: {
     deleteNote: (_token: string, id: string) => {
       fake.deleted.push(id)

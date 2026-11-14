@@ -1,10 +1,9 @@
 {
   "name": "collab-rooms",
   "layer": "foundation",
-  "dependsOn": ["contracts", "editor", "markdown", "rooms", "sync-core"],
+  "dependsOn": ["contracts", "editor", "markdown", "rooms", "sync-core", "accounts"],
   "pending": [
     "apps/desktop/src/lib/accents.ts",
-    "apps/desktop/src/lib/api.ts",
     "apps/desktop/src/lib/backoff.ts",
     "apps/desktop/src/lib/canvas/format.ts",
     "apps/desktop/src/lib/canvas/geometry.ts",

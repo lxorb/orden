@@ -288,11 +288,11 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/AccountBadge.svelte',
       'lib/ShareSheet.svelte',
       'lib/Sheet.svelte',
       'lib/SpaceBadge.svelte',
       'lib/SpaceMenu.svelte',
+      'lib/accounts/src/AccountBadge.svelte',
       'lib/agents/settings/AgentMark.svelte',
       'lib/agents/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
@@ -604,9 +604,9 @@ describe('the sentence behind a setting', () => {
       'lib/SettingsPanel.svelte',
       'lib/SyncPane.svelte',
       'lib/access/Access.svelte',
+      'lib/accounts-ui/src/ProfileRows.svelte',
       'lib/agents/settings/Words.svelte',
       'lib/ai/DoWithAiCard.svelte',
-      'lib/people/ProfileRows.svelte',
     ])
   })
 })

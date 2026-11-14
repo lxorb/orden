@@ -1,5 +1,5 @@
-import { account } from '../account.svelte'
-import { BASE, request } from '../api'
+import { account } from '../accounts/src/api'
+import { BASE, request } from '../accounts/src/api'
 import { hub } from '../sync-client/src/api'
 import { ShareApi } from './share-api'
 

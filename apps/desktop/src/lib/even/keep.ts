@@ -1,4 +1,4 @@
-import type { Vault } from '../account.svelte'
+import type { Vault } from '../accounts/src/api'
 import { forget as forgetHere, keep as keepHere, storedText } from '../stored'
 import { waited } from '../timing'
 import { connectStore } from './sdk'

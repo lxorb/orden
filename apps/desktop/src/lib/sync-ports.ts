@@ -1,6 +1,14 @@
 import { providePort } from '@orden/contracts'
-import { account } from './account.svelte'
-import { api, ApiError, BASE, BYTES_WITHIN, fetchInTime, fromServer, request } from './api'
+import { account } from './accounts/src/api'
+import {
+  api,
+  ApiError,
+  BASE,
+  BYTES_WITHIN,
+  fetchInTime,
+  fromServer,
+  request,
+} from './accounts/src/api'
 import { howFor } from './new-tab'
 import { forget, keep, keepJson, stored, storedText } from './stored'
 import { invoke, isDesktop, isNative, joinPath, platform } from './tauri'

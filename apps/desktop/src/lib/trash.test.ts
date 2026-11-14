@@ -107,10 +107,10 @@ const remote = {
 }
 const apiCalls: string[] = []
 
-vi.mock('./api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./api')>()),
+vi.mock('./accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./accounts/src/client')>()),
   api: {
-    ...(await importOriginal<typeof import('./api')>()).api,
+    ...(await importOriginal<typeof import('./accounts/src/client')>()).api,
     trash: async () => ({ spaces: remote.spaces, notes: remote.notes }),
     restoreNote: async (_token: string, id: string) => {
       apiCalls.push(`restoreNote ${id}`)
@@ -154,8 +154,8 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
-const { account } = await import('./account.svelte')
-type RemoteSpace = import('./api').RemoteSpace
+const { account } = await import('./accounts/src/account.svelte')
+type RemoteSpace = import('./accounts/src/routes').RemoteSpace
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('./prompt.svelte')
 const { sync } = await import('./sync.svelte')

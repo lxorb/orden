@@ -8,7 +8,7 @@ const world = vi.hoisted(() => ({
   active: null as { note: { shared?: string } } | null,
 }))
 
-vi.mock('./account.svelte', () => ({
+vi.mock('./accounts/src/account.svelte', () => ({
   account: {
     get user() {
       return world.user

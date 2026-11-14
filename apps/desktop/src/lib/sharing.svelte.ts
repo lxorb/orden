@@ -6,8 +6,8 @@ import {
   type SharedItem,
   type Sharing,
   type SpaceRole,
-} from './api'
-import { account } from './account.svelte'
+} from './accounts/src/api'
+import { account } from './accounts/src/api'
 import { message } from './message'
 import { rooms } from './collab/src/api'
 import { samePath } from './space-paths'

@@ -16,7 +16,7 @@ const store = vi.hoisted(() => ({
   tell: vi.fn(),
 }))
 vi.mock('./joining.svelte', () => ({ joining: store }))
-vi.mock('./account.svelte', () => ({ account: { open: false } }))
+vi.mock('./accounts/src/account.svelte', () => ({ account: { open: false } }))
 
 const { overlays } = await import('./overlays')
 const JoinSheet = (await import('./JoinSheet.svelte')).default

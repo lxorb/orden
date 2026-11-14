@@ -3,7 +3,7 @@
   import Facts from '../Facts.svelte'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import AgentDetail from '../agents/settings/AgentDetail.svelte'
   import AgentMark from '../agents/settings/AgentMark.svelte'
   import { tauriCrate } from '../agents/settings/crate'

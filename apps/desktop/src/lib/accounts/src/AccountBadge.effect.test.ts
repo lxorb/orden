@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { accountDouble } from './account-double'
-import type { Face } from './people/face'
+import { accountDouble } from '../test/fakes'
+import type { Face } from './face'
 
 const SMALL = 'a'.repeat(64)
 const LARGE = 'b'.repeat(64)
@@ -13,9 +13,9 @@ vi.mock('./account.svelte', () => ({
   },
 }))
 
-const { BASE } = await import('./api')
+const { BASE } = await import('./client')
 const AccountBadge = (await import('./AccountBadge.svelte')).default
-const Avatar = (await import('./people/Avatar.svelte')).default
+const Avatar = (await import('../../accounts-ui/src/Avatar.svelte')).default
 
 let shown: ReturnType<typeof mount> | undefined
 

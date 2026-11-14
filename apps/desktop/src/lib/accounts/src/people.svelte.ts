@@ -1,5 +1,5 @@
-import { account } from '../account.svelte'
-import { PRESENCE_EVERY } from '../backoff'
+import { account } from './account.svelte'
+import { PRESENCE_EVERY } from '../../backoff'
 import { fetchNicks, fetchPeople, fetchPresence } from './calls'
 import type { Presence } from './face'
 import type { Person } from './read'
@@ -31,11 +31,16 @@ class People {
   private readonly watchers = new Set<() => readonly string[]>()
   private ticking: ReturnType<typeof setInterval> | undefined
 
-  constructor() {
+  private hooked = false
+
+  private hook(): void {
+    if (this.hooked) return
+    this.hooked = true
     account.forgetWithSession(() => this.forget())
   }
 
   of(id: string): Person | undefined {
+    this.hook()
     const mine = this.mine
     if (mine?.id === id) return mine
 
@@ -45,6 +50,7 @@ class People {
   }
 
   refresh(id: string): void {
+    this.hook()
     if (this.mine?.id === id) return
     this.asked.delete(id)
     this.ask(id)
@@ -60,6 +66,7 @@ class People {
   }
 
   nickIn(space: string): Record<string, string> {
+    this.hook()
     if (!this.spacesAsked.has(space)) {
       this.spacesAsked.add(space)
       queueMicrotask(() => void this.askNicks(space))
@@ -68,6 +75,7 @@ class People {
   }
 
   watch(ids: () => readonly string[]): () => void {
+    this.hook()
     this.watchers.add(ids)
     queueMicrotask(() => void this.tick())
     this.ticking ??= setInterval(() => void this.tick(), PRESENCE_EVERY)

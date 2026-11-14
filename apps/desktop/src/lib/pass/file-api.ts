@@ -1,4 +1,4 @@
-import { BYTES_WITHIN, fetchInTime } from '../api'
+import { BYTES_WITHIN, fetchInTime } from '../accounts/src/client'
 export type FileFetcher = (input: string, init: RequestInit) => Promise<Response>
 
 export class FileRefused extends Error {

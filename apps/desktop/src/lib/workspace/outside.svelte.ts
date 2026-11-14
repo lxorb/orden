@@ -1,6 +1,6 @@
 import { untrack } from 'svelte'
 import { links } from '../link-index.svelte'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { keptShaped } from '../internal/roots'
 import { log } from '../log'
 import { onDisk } from '../on-disk'

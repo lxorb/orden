@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { dropOver } from '../drag-paths'
+  import { dropOver } from '../../drag-paths'
   import { onMount } from 'svelte'
-  import { message } from '../message'
-  import Sheet from '../Sheet.svelte'
+  import { message } from '../../message'
+  import Sheet from '../../Sheet.svelte'
   import {
     clampOffset,
     clampZoom,
@@ -12,9 +12,9 @@
     scaleAt,
     wheeledZoom,
     zoomed,
-  } from './crop'
-  import { decode, prepared } from './encode'
-  import { wearFace } from './mine'
+  } from '../../accounts/src/api'
+  import { decode, prepared } from '../../accounts/src/api'
+  import { wearFace } from '../../accounts/src/api'
 
   const {
     source,

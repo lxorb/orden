@@ -8,12 +8,12 @@ vi.stubGlobal('localStorage', {
   clear: () => held.clear(),
 })
 
-vi.mock('../../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../api')>()),
+vi.mock('../../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/client')>()),
   api: { signOut: () => Promise.resolve() },
 }))
 
-const { account } = await import('../../account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 const { saved } = await import('./saved.svelte')
 
 test('one account’s saved messages are gone once it signs out', async () => {

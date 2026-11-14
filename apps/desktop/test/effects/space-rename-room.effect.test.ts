@@ -9,8 +9,8 @@ const answer = vi.hoisted(() => {
   return { held: () => given, release: () => release() }
 })
 
-vi.mock('../../src/lib/api', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../src/lib/api')>()
+vi.mock('../../src/lib/accounts/src/client', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../src/lib/accounts/src/client')>()
   return {
     ...real,
     api: {
@@ -52,7 +52,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-const { account } = await import('../../src/lib/account.svelte')
+const { account } = await import('../../src/lib/accounts/src/account.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sync } = await import('../../src/lib/sync.svelte')
 const { commitSpaceName } = await import('../../src/lib/space-actions')

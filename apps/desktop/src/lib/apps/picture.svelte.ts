@@ -47,10 +47,7 @@ export interface PeerWorld {
 
 const pageWorld: PeerWorld = {
   async servers() {
-    const [{ account }, { request }] = await Promise.all([
-      import('../account.svelte'),
-      import('../api'),
-    ])
+    const { account, request } = await import('../accounts/src/api')
     const token = account.accountToken
     const answer = token
       ? await request<{ iceServers?: unknown }>(ICE_PATH, { token }).catch(() => null)

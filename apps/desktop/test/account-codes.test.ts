@@ -2,9 +2,10 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 
-const SOURCES = ['../src/lib/Security.svelte', '../src/lib/DeleteAccount.svelte'].map((one) =>
-  readFileSync(fileURLToPath(new URL(one, import.meta.url)), 'utf8'),
-)
+const SOURCES = [
+  '../src/lib/accounts-ui/src/Security.svelte',
+  '../src/lib/accounts-ui/src/DeleteAccount.svelte',
+].map((one) => readFileSync(fileURLToPath(new URL(one, import.meta.url)), 'utf8'))
 
 const labels = SOURCES.flatMap((source) =>
   [...source.matchAll(/<input\b[^>]*?aria-label="([^"]+)"[^>]*?one-time-code/g)].map(

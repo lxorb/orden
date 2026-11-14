@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import type { Provider } from './providers'
 
 let asking: (() => Provider | null) | null = null

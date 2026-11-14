@@ -74,7 +74,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { runner } = await import('./runner.svelte')
-const { account } = await import('../../account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 
 describe('the engine kept signed out', () => {
   test('is nobody’s to ask about, and lets go of its store before the account’s opens', async () => {

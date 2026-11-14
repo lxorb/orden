@@ -1,4 +1,4 @@
-import { fetchInTime } from '../api'
+import { fetchInTime } from '../accounts/src/api'
 import { addy } from './alias-addy'
 import type { AliasClient, AliasFetcher, AliasService } from './alias-http'
 import { simpleLogin } from './alias-simplelogin'

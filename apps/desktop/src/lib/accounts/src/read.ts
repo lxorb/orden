@@ -1,4 +1,4 @@
-import { isBoolean, isNumber, isRecord, isString } from '../stored'
+import { isBoolean, isNumber, isRecord, isString } from '../../stored'
 import type { Avatar, Presence, Status } from './face'
 
 export interface Person {

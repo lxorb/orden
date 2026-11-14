@@ -104,7 +104,7 @@ export async function syncStatus(): Promise<unknown> {
 export async function publishStatus(args: Said): Promise<unknown> {
   const space = await spaceFor(args)
   const [{ account }, { sync }] = await Promise.all([
-    import('../account.svelte'),
+    import('../accounts/src/api'),
     import('../sync.svelte'),
   ])
 

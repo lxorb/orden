@@ -108,7 +108,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 const { newKinds, offeredKinds } = await import('./new-kinds')
 const { busy } = await import('./busy.svelte')
 const { makeChat, openChat } = await import('./chats/view/open')

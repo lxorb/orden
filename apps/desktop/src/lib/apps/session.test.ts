@@ -20,8 +20,8 @@ import {
 
 const server = vi.hoisted(() => ({ version: 1, asked: 0 }))
 
-vi.mock('../api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../api')>()
+vi.mock('../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../accounts/src/client')>()
   const me = () => {
     server.asked += 1
     return Promise.resolve({
@@ -271,7 +271,7 @@ describe('an application tab connecting', () => {
 
 describe('finding an application on an account that started on the old sync', () => {
   async function onOldSync(now: number) {
-    const { account } = await import('../account.svelte')
+    const { account } = await import('../accounts/src/account.svelte')
     server.version = now
     server.asked = 0
     vi.doMock('../sync-client/src/runner.svelte', () => ({

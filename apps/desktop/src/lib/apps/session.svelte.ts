@@ -7,8 +7,8 @@ import {
   UNKNOWN_APP,
   type View,
 } from '@orden/online/apps'
-import { account } from '../account.svelte'
-import { BASE } from '../api'
+import { account } from '../accounts/src/api'
+import { BASE } from '../accounts/src/api'
 import { pageWorld } from '../online/link'
 import type { Holder } from '../online/arrival.svelte'
 import type { IdAt } from '../sync-client/src/api'
@@ -139,7 +139,7 @@ const sessionWorld: SessionWorld = {
   find: (path, until) => find(path, until),
   token: () => account.accountToken,
   async devices(token) {
-    const { request } = await import('../api')
+    const { request } = await import('../accounts/src/api')
     const listed = await request<{ devices?: Device[] }>('/v2/devices', { token }).catch(() => null)
     return listed?.devices ?? null
   },

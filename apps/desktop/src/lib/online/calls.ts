@@ -6,8 +6,8 @@ import {
   type Term,
   termOf,
 } from '@orden/online'
-import { account } from '../account.svelte'
-import { ApiError, request } from '../api'
+import { account } from '../accounts/src/api'
+import { ApiError, request } from '../accounts/src/api'
 import { isNumber, isRecord, isString } from '../stored'
 
 interface ServerInfo {

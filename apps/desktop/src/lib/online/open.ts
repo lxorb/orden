@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import type { OpenHow } from '../new-tab'
 import { termText } from '@orden/online/term'
 import { nameOf, samePath } from '../space-paths'

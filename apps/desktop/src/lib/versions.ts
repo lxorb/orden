@@ -1,5 +1,5 @@
-import { account } from './account.svelte'
-import { api } from './api'
+import { account } from './accounts/src/api'
+import { api } from './accounts/src/api'
 import { sha256 } from './bytes'
 import { sync } from './sync.svelte'
 import { invoke } from './tauri'

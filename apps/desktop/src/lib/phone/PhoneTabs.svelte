@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { account } from '../account.svelte'
+  import { account } from '../accounts/src/api'
   import { chatsUnread } from '../ai/unread.svelte'
   import UnreadDot from '../ai/UnreadDot.svelte'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../panel-marks'

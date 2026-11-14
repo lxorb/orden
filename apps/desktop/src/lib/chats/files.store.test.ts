@@ -19,7 +19,7 @@ vi.mock('./http', async (importOriginal) => ({
 }))
 
 const { chats } = await import('./store.svelte')
-const { account } = await import('../account.svelte')
+const { account } = await import('../accounts/src/account.svelte')
 
 test('a failed fetch is not kept, a landed one is', async () => {
   server.answers = [null, new Blob(['x'])]

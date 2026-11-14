@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { transcriberNow } from '../ai/hears'
 import type { Provider } from '../ai/providers'
 import { method } from '../mobile/bridge'

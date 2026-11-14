@@ -22,7 +22,7 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-vi.mock('../account.svelte', () => ({ account: { signedIn: false } }))
+vi.mock('../accounts/src/account.svelte', () => ({ account: { signedIn: false } }))
 
 const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
 const { deleteSpace, renameSpace } = await import('./space-changes')

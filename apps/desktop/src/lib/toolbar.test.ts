@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({ saved: [] as unknown[] }))
 
-vi.mock('./api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./api')>()
+vi.mock('./accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./accounts/src/client')>()
 
   return {
     ...original,

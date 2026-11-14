@@ -16,8 +16,8 @@ const world = vi.hoisted(() => ({
   adopted: [] as { name: string; fresh: boolean }[],
 }))
 
-vi.mock('./api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./api')>()
+vi.mock('./accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./accounts/src/client')>()
   const { ApiError } = original
   return {
     ...original,
@@ -96,7 +96,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('./left-spaces')
 const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } = await import('./space-owed')

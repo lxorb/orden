@@ -32,8 +32,8 @@ describe('a setting', () => {
     expect(PANES.map((one) => one.path)).toEqual(
       expect.arrayContaining([
         'SettingsPanel.svelte',
-        'people/ProfileRows.svelte',
-        'Security.svelte',
+        'accounts-ui/src/ProfileRows.svelte',
+        'accounts-ui/src/Security.svelte',
         'SyncPane.svelte',
         'AiPane.svelte',
       ]),
@@ -63,7 +63,9 @@ describe('a setting', () => {
         .filter((tag) => !NOT_VALUES.some((reason) => reason.test(tag)))
         .map((tag) => `${path}: ${tag.trim().split(/\s+/).slice(0, 3).join(' ')}`),
     )
-    expect(bare).toEqual([expect.stringMatching(/^people\/ProfileRows\.svelte: value=\{status/)])
+    expect(bare).toEqual([
+      expect.stringMatching(/^accounts-ui\/src\/ProfileRows\.svelte: value=\{status/),
+    ])
   })
 })
 
@@ -86,7 +88,7 @@ describe('the value box', () => {
 })
 
 describe('Settings > Account', () => {
-  const rows = readFileSync(join(LIB, 'people/ProfileRows.svelte'), 'utf8')
+  const rows = readFileSync(join(LIB, 'accounts-ui/src/ProfileRows.svelte'), 'utf8')
   const markup = rows.slice(rows.indexOf('</script>'))
 
   test('says what goes in every empty field', () => {

@@ -1,5 +1,5 @@
-import { api, fromServer, type Invitation, type Joined } from './api'
-import { account } from './account.svelte'
+import { api, fromServer, type Invitation, type Joined } from './accounts/src/api'
+import { account } from './accounts/src/api'
 import { passing, pollDelay } from './backoff'
 import { message } from './message'
 import { deviceName } from './collab/src/api'

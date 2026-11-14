@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS, accentColour, accentFor, accentIdFor } from '../accents'
+import { ACCENTS, accentColour, accentFor, accentIdFor } from '../../accents'
 import { readPerson } from './read'
 
 const read = (path: string) => readFileSync(join(import.meta.dirname, path), 'utf8')
@@ -21,8 +21,10 @@ describe('the colour beside a person', () => {
   })
 
   test('has no picker in the profile, and the avatar takes it from the account', () => {
-    expect(read('./ProfileRows.svelte')).not.toMatch(/Swatches|accent/)
-    expect(read('./Avatar.svelte')).toContain('accentFor(face.key ?? face.name, theme.current)')
-    expect(read('../collab/src/who.ts')).toContain('accentIdFor(user.id)')
+    expect(read('../../accounts-ui/src/ProfileRows.svelte')).not.toMatch(/Swatches|accent/)
+    expect(read('../../accounts-ui/src/Avatar.svelte')).toContain(
+      'accentFor(face.key ?? face.name, theme.current)',
+    )
+    expect(read('../../collab/src/who.ts')).toContain('accentIdFor(user.id)')
   })
 })

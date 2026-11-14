@@ -6,8 +6,8 @@ import {
   type UsageDay,
   type UsageEvent,
 } from '@orden/sync-core'
-import { account } from '../account.svelte'
-import { request } from '../api'
+import { account } from '../accounts/src/api'
+import { request } from '../accounts/src/api'
 import { systemLocale } from '../region'
 import { log } from '../log'
 import { keepJson, stored } from '../stored'

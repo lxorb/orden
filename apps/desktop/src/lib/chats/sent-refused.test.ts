@@ -2,14 +2,14 @@ import { expect, test, vi } from 'vitest'
 
 const answer = vi.hoisted(() => ({ refusal: new Error('not yet') }))
 
-vi.mock('../account.svelte', () => ({ account: { token: 'session' } }))
+vi.mock('../accounts/src/account.svelte', () => ({ account: { token: 'session' } }))
 
-vi.mock('../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api')>()),
+vi.mock('../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   request: () => Promise.reject(answer.refusal),
 }))
 
-const { ApiError } = await import('../api')
+const { ApiError } = await import('../accounts/src/client')
 const { sendEvents } = await import('./http')
 
 const CHAT = `c_${'1'.repeat(32)}`

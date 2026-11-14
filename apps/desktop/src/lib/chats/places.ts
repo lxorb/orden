@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { keepJson, stored } from '../stored'
 
 const KEY = 'orden:chat-own-pointers'

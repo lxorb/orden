@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { DomainStatus } from './api'
+import type { DomainStatus } from './accounts/src/routes'
 import { domainNotice, isDomainStatus, keepAsking } from './domain-status'
 
 const status = (state: DomainStatus['state'], detail: string | null = null): DomainStatus => ({

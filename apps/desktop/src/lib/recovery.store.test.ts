@@ -42,7 +42,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-vi.mock('./account.svelte', () => ({ account: { token: null } }))
+vi.mock('./accounts/src/account.svelte', () => ({ account: { token: null } }))
 
 const { recovery } = await import('./recovery.svelte')
 const { DEFAULT_DAYS, DEFAULT_MINUTES } = await import('./recovery')

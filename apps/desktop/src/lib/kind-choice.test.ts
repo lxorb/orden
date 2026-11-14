@@ -8,8 +8,8 @@ vi.stubGlobal('localStorage', {
 })
 
 const saved = vi.hoisted(() => [] as [string, unknown][])
-vi.mock('./api', async (actual) => ({
-  ...(await actual<typeof import('./api')>()),
+vi.mock('./accounts/src/client', async (actual) => ({
+  ...(await actual<typeof import('./accounts/src/client')>()),
   api: {
     saveSettings: (token: string, patch: unknown) => {
       saved.push([token, patch])
@@ -23,7 +23,7 @@ const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownO
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('./new-kinds')
 const { newFileRows } = await import('./row-menu')
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 const { viewport } = await import('./viewport.svelte')
 
 let token: string | null = null

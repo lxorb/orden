@@ -1,5 +1,5 @@
 import { documentOf, type EditorView } from '@orden/editor'
-import { account } from '../../account.svelte'
+import { account } from '../../accounts/src/api'
 import type { PlaneSurface } from '../../canvas/shared'
 import { busy } from '../../busy.svelte'
 import { sha256 } from '../../bytes'

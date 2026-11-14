@@ -1,6 +1,6 @@
-import { account } from '../account.svelte'
-import { sha256 } from '../bytes'
-import { withOrWithout } from '../records'
+import { account } from './account.svelte'
+import { sha256 } from '../../bytes'
+import { withOrWithout } from '../../records'
 import {
   dropAvatar,
   type OwnProfile,

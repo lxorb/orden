@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { newKeyring } from '@orden/pass/keys'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import type { Account } from '../api'
+import type { Account } from '../accounts/src/routes'
 
 vi.mock('../ai/keys', () => ({
   keysAreGuarded: () => false,
@@ -22,7 +22,7 @@ vi.mock('../settings.svelte', async (original) => ({
   passOn: () => true,
 }))
 
-const { account } = await import('../account.svelte')
+const { account } = await import('../accounts/src/account.svelte')
 const { configurePass, pass } = await import('./store.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
 

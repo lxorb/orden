@@ -222,9 +222,9 @@ const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { unread } = await import('./unread.svelte')
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 const { isDraft } = await import('./workspace/drafts')
-type RemoteSpace = import('./api').RemoteSpace
+type RemoteSpace = import('./accounts/src/routes').RemoteSpace
 
 const dropped = (path: string, words: string) => ({
   name: path.split('/').pop() ?? path,

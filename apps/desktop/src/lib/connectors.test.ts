@@ -9,7 +9,7 @@ const server = vi.hoisted(() => ({
 
 const no = () => Promise.reject(new Error('the service said no'))
 
-vi.mock('./api', () => ({
+vi.mock('./accounts/src/client', () => ({
   api: {
     connector: () => {
       server.asked.push('connector')
@@ -45,7 +45,7 @@ vi.mock('./api', () => ({
   },
 }))
 
-vi.mock('./account.svelte', () => ({
+vi.mock('./accounts/src/account.svelte', () => ({
   account: { accountToken: 'session', forgetWithSession: () => undefined },
 }))
 

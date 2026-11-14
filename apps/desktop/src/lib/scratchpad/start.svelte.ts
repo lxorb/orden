@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { RECONCILE_INTERVAL } from '../backoff'
 import { inTurn } from '../locks'
 import { log } from '../log'

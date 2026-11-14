@@ -17,10 +17,10 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
-const { account } = await import('./account.svelte')
+const { account } = await import('./accounts/src/account.svelte')
 const { links } = await import('./link-index.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
-type RemoteSpace = import('./api').RemoteSpace
+type RemoteSpace = import('./accounts/src/routes').RemoteSpace
 const { sync } = await import('./sync.svelte')
 
 function files(): Map<string, string> {

@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { firstVisit } from '../first-visit.svelte'
 import { log } from '../log'
 import { isNative } from '../tauri'

@@ -76,7 +76,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/ai/local/gemini.ts': ['|nib)'],
   'apps/desktop/src/lib/ai/review/changes.test.ts': ['nib-anthropic'],
   'apps/desktop/src/lib/ai/review/changes.ts': ["'nib-'"],
-  'apps/desktop/src/lib/api.ts': ["'x-nib-device'"],
+  'apps/desktop/src/lib/accounts/src/client.ts': ["'x-nib-device'"],
   'apps/desktop/src/lib/apps/host.test.ts': ["'nib."],
   'apps/desktop/src/lib/automation/eval.test.ts': ['nib.'],
   'apps/desktop/src/lib/automation/eval.ts': ["'nib'"],

@@ -1,4 +1,4 @@
-import { ApiError } from '../api'
+import { ApiError } from '../accounts/src/api'
 import { onDisk } from '../on-disk'
 import { nameOf, samePath, within } from '../space-paths'
 import { sync } from '../sync.svelte'

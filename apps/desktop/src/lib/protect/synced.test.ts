@@ -5,8 +5,8 @@ const server = vi.hoisted(() => ({
   sent: [] as { path: string; body: unknown }[],
 }))
 
-vi.mock('../api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api')>()),
+vi.mock('../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../accounts/src/client')>()),
   request: (path: string, options: { method?: string; body?: unknown } = {}) => {
     if (options.method === 'PUT') {
       server.sent.push({ path, body: options.body })

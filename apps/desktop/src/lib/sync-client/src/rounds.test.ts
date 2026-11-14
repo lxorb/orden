@@ -1,6 +1,6 @@
 import '../../sync-ports'
 import { describe, expect, test, vi } from 'vitest'
-import { ApiError } from '../../api'
+import { ApiError } from '../../accounts/src/client'
 import { eachDue, reachable, sentAll } from './rounds'
 import { Refused } from './transport'
 

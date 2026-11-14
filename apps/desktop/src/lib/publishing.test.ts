@@ -26,8 +26,8 @@ const world = vi.hoisted((): World => ({
   held: null,
 }))
 
-vi.mock('./api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./api')>()
+vi.mock('./accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./accounts/src/client')>()
 
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
@@ -103,11 +103,11 @@ vi.mock('./message', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-import { account } from './account.svelte'
+import { account } from './accounts/src/account.svelte'
 import { publish } from './publishing.svelte'
 import { canPublish } from './sharing.svelte'
 import { theme } from './theme/src/theme.svelte'
-import type { RemoteSpace } from './api'
+import type { RemoteSpace } from './accounts/src/routes'
 
 function remote(id: string, role: 'owner' | 'write' | 'read', blog = {}): RemoteSpace {
   return {

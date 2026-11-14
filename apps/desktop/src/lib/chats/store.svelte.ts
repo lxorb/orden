@@ -15,7 +15,7 @@ import {
 } from '@orden/chats'
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
 import { chatPokeOf } from '@orden/chats/wire'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { samePath, within } from '../space-paths'
 import { keep, storedText } from '../stored'
 import { sync } from '../sync.svelte'
@@ -396,7 +396,7 @@ class ChatsStore implements Chats {
       receipts: () => storedText(RECEIPTS) !== 'off',
       profile: (who) => {
         if (!who.startsWith('user:')) return
-        void import('../people/people.svelte').then(({ people }) => people.refresh(who.slice(5)))
+        void import('../accounts/src/api').then(({ people }) => people.refresh(who.slice(5)))
         this.people.clear()
       },
       release: (chat) => {

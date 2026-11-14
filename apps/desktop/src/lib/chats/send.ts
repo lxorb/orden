@@ -1,5 +1,5 @@
 import { may } from '@orden/chats'
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { hiddenKinds } from '../settings.svelte'
 import { prompt } from '../prompt.svelte'
 import { nameOf, samePath, within, withoutExtension } from '../space-paths'

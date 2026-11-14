@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { accentFor } from '../accents'
-  import { faceUrl } from '../api'
-  import { initial } from '../icons'
-  import { theme } from '../theme/src/api'
-  import type { Face, Presence } from './face'
+  import { accentFor } from '../../accents'
+  import { faceUrl } from '../../accounts/src/api'
+  import { initial } from '../../icons'
+  import { theme } from '../../theme/src/api'
+  import type { Face, Presence } from '../../accounts/src/api'
 
   const {
     face,

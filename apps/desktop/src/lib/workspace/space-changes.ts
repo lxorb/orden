@@ -1,4 +1,4 @@
-import { account } from '../account.svelte'
+import { account } from '../accounts/src/api'
 import { identifier } from '../identifier'
 import { leftGone, leftMoved } from '../left-spaces'
 import { samePath } from '../space-paths'
