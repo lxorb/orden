@@ -77,27 +77,3 @@ export function counted(
   }
 }
 
-export async function saveFilter(
-  name: string,
-  query: string,
-  reading: Reading,
-  path: string | null,
-): Promise<string | null> {
-  const root = workspace.activeSpace?.root
-  const words = name
-    .replace(/[\\/:*?"<>|#^[\]]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-  if (root === undefined || !words) return null
-  const yaml = writeBase(filterBase(words, query, reading))
-  const folder = joinPath(root, FILTERS)
-  if (path === null && !canWriteAt(folder)) return null
-  const target = path ?? joinPath(folder, await workspace.freeNameOnDisk(folder, `${words}.base`))
-  if (!canWriteAt(target)) return null
-  await writeFile(target, yaml)
-  if (path === null) {
-    await workspace.loadTree()
-    await workspace.fileCame(target, 'file')
-  }
-  return target
-}

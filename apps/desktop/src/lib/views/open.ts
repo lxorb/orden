@@ -2,7 +2,7 @@ import type { OpenHow } from '../new-tab'
 import { nameOf, samePath } from '../space-paths'
 import { basesOn } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
-import { type Builtin, readSpec, sameView, type ViewSpec, writeSpec } from './spec'
+import { readSpec, sameView, type ViewSpec, writeSpec } from './spec'
 import { builtinName } from './words'
 
 function openAlready(spec: ViewSpec, path: string | null) {
@@ -24,24 +24,8 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeSpec(spec), name, path, how)
 }
 
-export function openTodos(space?: string, how: OpenHow = {}) {
-  return openSpec(
-    space === undefined ? { builtin: 'todos' } : { builtin: 'todos', space },
-    builtinName('todos'),
-    null,
-    how,
-  )
-}
-
-/** @public */
-export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
-  return openSpec({ builtin }, builtinName(builtin), null, how)
-}
-
-export function openLabel(tag: string, how: OpenHow = {}, space?: string) {
-  const spec: ViewSpec =
-    space === undefined ? { builtin: 'label', tag } : { builtin: 'label', space, tag }
-  return openSpec(spec, `#${tag}`, null, how)
+export function openTodos(how: OpenHow = {}) {
+  return openSpec({ builtin: 'todos' }, builtinName('todos'), null, how)
 }
 
 export function openBaseFile(path: string, how: OpenHow = {}, view?: string) {

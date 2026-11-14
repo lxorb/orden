@@ -5,39 +5,6 @@ import { plain } from './inline'
 import { dayWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 
-export interface Chip {
-  kind: 'date' | 'time' | 'repeat' | 'duration' | 'deadline' | 'remind' | 'assignee'
-  text: string
-  late?: boolean
-}
-
-function minutesText(minutes: number): string {
-  const hours = Math.floor(minutes / 60)
-  const rest = minutes % 60
-  if (!hours) return `${localNumber(rest)}m`
-  return rest ? `${localNumber(hours)}h ${localNumber(rest)}m` : `${localNumber(hours)}h`
-}
-
-export function chipsOf(task: TaskRow, today: string, dated = true): Chip[] {
-  const out: Chip[] = []
-  const day = startOf(task, task.dueReads) ?? task.scheduled
-  const open = !task.done && !task.cancelled
-  if (dated && day && day > today) out.push({ kind: 'date', text: dayWords(day, today) })
-  if (task.time) out.push({ kind: 'time', text: task.time })
-  if (task.recurrence) out.push({ kind: 'repeat', text: '↻' })
-  if (task.duration !== undefined) out.push({ kind: 'duration', text: minutesText(task.duration) })
-  const deadline = deadlineOf(task, task.dueReads)
-  if (deadline) {
-    out.push({
-      kind: 'deadline',
-      text: `⚑ ${dayWords(deadline, today)}`,
-      ...(open && deadline < today ? { late: true } : {}),
-    })
-  }
-  if (task.remind.length) out.push({ kind: 'remind', text: '🔔' })
-  if (task.assignee) out.push({ kind: 'assignee', text: `+${task.assignee}` })
-  return out
-}
 
 export function valueText(value: Value, today: string): string {
   if (value === null) return ''
@@ -89,11 +56,3 @@ export function toneColour(tone: string | undefined): string | null {
   }
 }
 
-export function blockerOf(task: TaskRow, rows: readonly Row[]): string | null {
-  for (const row of rows) {
-    const other = row.task
-    if (!other?.id || other.done || other.cancelled) continue
-    if (task.dependsOn.includes(other.id)) return plain(other.text)
-  }
-  return null
-}

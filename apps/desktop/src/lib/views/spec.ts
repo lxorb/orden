@@ -1,6 +1,6 @@
 import { isRecord, isString, parsed } from '../stored'
 
-const BUILTINS = ['todos', 'inbox', 'today', 'upcoming', 'logbook', 'label'] as const
+const BUILTINS = ['todos'] as const
 export type Builtin = (typeof BUILTINS)[number]
 
 export interface ViewSpec {
@@ -48,11 +48,3 @@ export function sameView(a: ViewSpec, b: ViewSpec): boolean {
   )
 }
 
-export function asShipped(spec: ViewSpec): ViewSpec {
-  const out: ViewSpec = {}
-  if (spec.builtin) out.builtin = spec.builtin
-  if (spec.space !== undefined) out.space = spec.space
-  if (spec.path !== undefined) out.path = spec.path
-  if (spec.tag !== undefined) out.tag = spec.tag
-  return out
-}

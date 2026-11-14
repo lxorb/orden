@@ -29,7 +29,7 @@ const askedByNull = (holds: Holds | undefined) => holds === 'truth' || holds ===
 
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
 
-export function literal(value: string): string {
+function literal(value: string): string {
   const trimmed = value.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return trimmed
   if (trimmed === 'true' || trimmed === 'false') return trimmed

@@ -9,7 +9,7 @@ import {
 import { copyText } from '../clipboard'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { workspace } from '../workspace.svelte'
-import { asOneUndo, deleteRows, duplicateRows, linkToRow, writeEach } from './act'
+import { asOneUndo, writeEach } from './act'
 import { grouped } from './column-menu'
 import { bare } from './columns'
 import { forgottenGroup, renamedGroup, setHidden, setProperty } from './edit'
@@ -224,15 +224,13 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
     {
       label: 'Duplicate',
       run: () => {
-        if (row.task) void duplicateRows([row])
-        else if (path) void workspace.duplicate(path)
+        if (path) void workspace.duplicate(path)
       },
     },
     {
       label: 'Copy link',
       run: () => {
-        if (row.task) void linkToRow(row).then((link) => (link ? copyText(link) : undefined))
-        else void copyText(noteLink(row))
+        void copyText(noteLink(row))
       },
     },
     DIVIDER,
@@ -240,8 +238,7 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
       label: 'Delete',
       danger: true,
       run: () => {
-        if (row.task) void deleteRows([row])
-        else if (path) void workspace.remove(path, false)
+        if (path) void workspace.remove(path, false)
       },
     },
   ]

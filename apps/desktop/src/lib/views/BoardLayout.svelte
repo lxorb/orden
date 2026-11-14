@@ -12,7 +12,6 @@
   } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import { menu, type MenuEntry } from '../menu.svelte'
-  import { shortcuts } from '../shortcuts.svelte'
   import { viewport } from '../viewport.svelte'
   import { asOneUndo, dropRow } from './act'
   import AddRow from './AddRow.svelte'
@@ -58,11 +57,6 @@
   import { laneKeys, withEveryDay, withinDays } from './list-items'
   import type { Kit } from './kit'
   import { holdsLists, optionsAt } from './options'
-  import { priorityTone } from '../quick-add/labels'
-  import { theme } from '../theme/src/api'
-  import { labelColour } from './task-meta'
-  import { rowKey } from './row-keys'
-  import { runKey } from './task-actions'
   import { dayHead, groupLabel, noteNames, propertyName, summaryName } from './words'
   import { reorderDrag } from './reorder-drag'
   import { ADD_MARK } from './marks'
@@ -178,11 +172,6 @@
   function toneOfGroup(group: Group): string | null {
     if (!coloured) return null
     const key = group.key
-    if (property === 'task.status' && typeof key === 'string')
-      return key === '/' ? 'var(--canvas-3)' : key.toLowerCase() === 'x' ? 'var(--canvas-4)' : null
-    if (property === 'task.priority' && typeof key === 'number') return priorityTone(key) ?? null
-    if (property === 'task.tags' && typeof key === 'string' && key)
-      return labelColour(key, theme.current)
     if (isWhen(property))
       return key === 'overdue'
         ? 'var(--danger)'
@@ -331,7 +320,6 @@
           {
             change: changes.reduce((one, next) => ({
               note: { ...one.note, ...next.note },
-              task: { ...one.task, ...next.task },
             })),
           },
         ]
@@ -372,10 +360,10 @@
     if (!carries) return
 
     const fromKey = groups.find((one) => groupName(one.key) === from.column)?.key
-    const first = from.column === name ? null : dropInto(by, group.key, row, live.today, fromKey)
+    const first = from.column === name ? null : dropInto(by, group.key, row, fromKey)
     const second =
       toLane !== undefined && sub !== undefined && from.lane !== lane
-        ? dropInto(sub, toLane, row, live.today, laneOf(from.lane))
+        ? dropInto(sub, toLane, row, laneOf(from.lane))
         : null
     const drops = inTurn([first, second])
     if (!drops.length) return
@@ -465,7 +453,7 @@
     return found ? groupName(found.key) : null
   }
 
-  const titleOf = (row: Row) => row.task?.text ?? row.file.basename
+  const titleOf = (row: Row) => row.file.basename
 
   let said = $state('')
   function announce(words: string) {
@@ -613,25 +601,6 @@
       if (next) void focusAt(next.column, next.lane, next.index)
       return
     }
-    const key = rowKey(event, (id) => shortcuts.keyFor(id), shortcuts.platform)
-    if (!key || key.kind === 'step' || key.kind === 'pick' || key.kind === 'unpick') return
-    if (key.kind === 'fold' || key.kind === 'edit' || key.kind === 'indent') return
-    if (key.kind === 'add') {
-      event.preventDefault()
-      event.stopPropagation()
-      if (!pages) return
-      if (notes) askNew(name, laneName)
-      else kit.add(property ? { property, key: group.key } : undefined)
-      return
-    }
-    const box = face.getBoundingClientRect()
-    if (key.kind === 'more') {
-      event.preventDefault()
-      cardMenu(new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom }), row, name)
-      return
-    }
-    if (key.kind === 'move') return
-    if (runKey(kit, [row], key, box)) event.preventDefault()
   }
 
   let showing = $state<string | null>(null)

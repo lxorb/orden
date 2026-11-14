@@ -8,34 +8,18 @@ import type { Builtin } from './spec'
 import { dayIn } from './values'
 
 const BUILTIN_NAMES: Record<Builtin, string> = {
-  todos: 'Tasks',
-  inbox: 'Inbox',
-  today: 'Today',
-  upcoming: 'Upcoming',
-  logbook: 'Completed',
-  label: 'Label',
+  todos: 'Todos',
 }
 
 export const builtinName = (builtin: Builtin): string => BUILTIN_NAMES[builtin]
 
-export const LAYOUTS = [
-  'list',
-  'table',
-  'cards',
-  'kanban',
-  'calendar',
-  'timeline',
-  'chart',
-  'form',
-] as const
+export const LAYOUTS = ['table', 'cards', 'kanban', 'timeline', 'chart', 'form'] as const
 export type Layout = (typeof LAYOUTS)[number]
 
 const LAYOUT_NAMES: Record<Layout, string> = {
-  list: 'List',
   table: 'Table',
   cards: 'Cards',
   kanban: 'Board',
-  calendar: 'Calendar',
   timeline: 'Timeline',
   chart: 'Chart',
   form: 'Form',
@@ -91,7 +75,7 @@ export function propertyName(property: string, displayName?: string): string {
   return bare(property).replace(/^(formula|button)\./, '')
 }
 
-export const priorityName = (priority: number): string => `p${priority}`
+const priorityName = (priority: number): string => `p${priority}`
 
 export type NoteNames = ReadonlyMap<string, number>
 
@@ -153,7 +137,7 @@ export function dayHead(value: Value, today: string): string {
   return day === today || day === addDays(today, 1) ? `${near}, ${date}` : date
 }
 
-export const statusName = (status: string): string => STATUS_NAMES[status] ?? 'To do'
+const statusName = (status: string): string => STATUS_NAMES[status] ?? 'To do'
 
 const CHART_NAMES: Record<ChartKind, string> = {
   bar: 'Bars',

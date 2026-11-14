@@ -3,7 +3,7 @@
   import type { Tab } from '../workspace/documents.svelte'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
-  import { fileSource, tabSource } from './source'
+  import { fileSource } from './source'
   import { readSpec } from './spec'
   import ViewFrame from './ViewFrame.svelte'
 
@@ -22,7 +22,7 @@
   function make(view: string) {
     const spec = readSpec(tab.doc) ?? {}
     const path = tab.path
-    const live = new LiveView(path === null ? tabSource(tab) : fileSource(path, spec.view))
+    const live = new LiveView(fileSource(path ?? '', spec.view))
     return { view, live, kit: kitFor(live, spec, path, false) }
   }
 

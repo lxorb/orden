@@ -7,19 +7,17 @@ export function switched(base: Base, at: number, layout: Layout, rows: readonly 
   let next = setLayout(base, at, layout)
   const view = next.views[at]
   if (!view) return next
-  const kinds = view.orden.rows ?? 'notes'
+  const kinds = 'notes'
 
   if (layout === 'kanban' && !view.groupBy) {
     const property =
-      kinds === 'notes'
-        ? (knownProperties(base, kinds, rows).find(
-            (one) => one.startsWith('note.') && optionsOf(base, one).length,
-          ) ?? 'note.status')
-        : 'task.status'
+      knownProperties(base, kinds, rows).find(
+        (one) => one.startsWith('note.') && optionsOf(base, one).length,
+      ) ?? 'note.status'
     next = setGroup(next, at, { property, direction: 'ASC' })
   }
 
-  if ((layout === 'calendar' || layout === 'timeline') && kinds === 'notes' && !view.orden.date) {
+  if (layout === 'timeline' && !view.orden.date) {
     const date = knownProperties(base, kinds, rows).find(
       (one) => one.startsWith('note.') && editorOf(base, one, rows) === 'date',
     )

@@ -31,7 +31,7 @@
     ),
   )
   const board = $derived(layout === 'kanban')
-  const groups = $derived(layout === 'kanban' || layout === 'list' || layout === 'table')
+  const groups = $derived(layout === 'kanban' || layout === 'table')
   const properties = $derived(
     live.base
       ? knownProperties(live.base, kinds, live.rows).filter(

@@ -123,7 +123,6 @@ describe('the mark that says shared', () => {
       'lib/JoinSheet.svelte',
       'lib/Tabs.svelte',
       'lib/ai/UnreadDot.svelte',
-      'lib/views/DisplayBuilder.svelte',
     ])
   })
 

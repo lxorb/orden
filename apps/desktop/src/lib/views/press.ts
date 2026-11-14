@@ -12,7 +12,7 @@ export async function pressButton(base: Base, name: string, row: Row): Promise<v
     today: now.slice(0, 10),
     time: now.slice(11, 16),
   })
-  await pressRow(row, { note: press.set }, press.task)
+  await pressRow(row, { note: press.set })
   if (press.command !== undefined) {
     const { runCommand } = await import('../automation/acts')
     try {

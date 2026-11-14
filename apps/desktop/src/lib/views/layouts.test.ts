@@ -23,16 +23,11 @@ const { contextFor } = await import('./context')
 const { columnsOf, editorOf } = await import('./columns')
 const { noteRow, taskRow } = await import('./fixture')
 const { kitFor } = await import('./kit')
-const ListLayout = (await import('./ListLayout.svelte')).default
 const TableLayout = (await import('./TableLayout.svelte')).default
 const CardsLayout = (await import('./CardsLayout.svelte')).default
 const BoardLayout = (await import('./BoardLayout.svelte')).default
-const CalendarLayout = (await import('./CalendarLayout.svelte')).default
-const UpcomingLayout = (await import('./UpcomingLayout.svelte')).default
 const TimelineLayout = (await import('./TimelineLayout.svelte')).default
 const ChartLayout = (await import('./ChartLayout.svelte')).default
-const AgendaLayout = (await import('./AgendaLayout.svelte')).default
-const PhoneRows = (await import('./PhoneRows.svelte')).default
 const FormLayout = (await import('./FormLayout.svelte')).default
 const { toneColour } = await import('./chips')
 const ViewFrame = (await import('./ViewFrame.svelte')).default
@@ -94,27 +89,6 @@ const NOTES = [
   noteRow('Bugs/Sync.md', 'status: Doing\ndue: 2026-10-06\npoints: 3'),
   noteRow('Bugs/Glass.md', 'status: To do\ndue: 2026-10-09\npoints: 5'),
 ]
-
-describe('the list', () => {
-  test('draws Today as Overdue and Today, each with its rows and an add row', () => {
-    const html = render(ListLayout, { props: { kit: kitOf(builtinView('today'), TASKS) } }).body
-    expect(html).toContain('Overdue')
-    expect(html.indexOf('Call the bank')).toBeLessThan(html.indexOf('Milk'))
-    expect(html).toContain(timeWords('16:00'))
-    expect(html).toContain('Errands')
-    expect(html.match(/Add task/g)?.length).toBe(2)
-    expect(html).toContain('Reschedule')
-  })
-
-  test('is a tab stop only while it holds a row to land on', () => {
-    const stop = (rows: readonly Row[]) =>
-      /role="listbox" tabindex="(-?\d)"/.exec(
-        render(ListLayout, { props: { kit: kitOf(builtinView('today'), rows) } }).body,
-      )?.[1]
-    expect(stop(TASKS)).toBe('0')
-    expect(stop([])).toBe('-1')
-  })
-})
 
 describe('the table', () => {
   test('has a column per property and a cell per row', () => {
@@ -261,36 +235,6 @@ describe('the board', () => {
     expect(heads).toEqual(['To do', 'Doing', 'Done'])
     expect(html).toContain('Sync')
   })
-
-  test('groups task lines by their box', () => {
-    const base = readBase(
-      'views:\n  - type: kanban\n    groupBy: { property: task.status, direction: ASC }\n    orden: { rows: tasks }\n',
-    )
-    const html = render(BoardLayout, { props: { kit: kitOf(base, TASKS) } }).body
-    expect(html).toContain('To do')
-    expect(html).toContain('Doing')
-  })
-})
-
-describe('the calendar', () => {
-  test('is a month of days with the rows on theirs', () => {
-    const base = readBase('views:\n  - type: calendar\n    orden: { rows: tasks }\n')
-    const html = render(CalendarLayout, { props: { kit: kitOf(base, TASKS) } }).body
-    expect(html).toContain('Milk')
-    expect(html).toContain('Draft the talk')
-    expect(html.match(/class="day /g)?.length).toBeGreaterThanOrEqual(28)
-    expect(html).toMatch(/class="day [^"]*today/)
-  })
-})
-
-describe('Upcoming', () => {
-  test('is a week strip over the days', () => {
-    const html = render(UpcomingLayout, {
-      props: { kit: kitOf(builtinView('upcoming'), TASKS) },
-    }).body
-    expect(html.match(/class="day /g)).toHaveLength(7)
-    expect(html).toContain('Draft the talk')
-  })
 })
 
 describe('the timeline', () => {
@@ -312,38 +256,3 @@ describe('the chart', () => {
   })
 })
 
-describe('on a phone', () => {
-  test('the calendar is an agenda and the table rows with their properties', () => {
-    const base = readBase('views:\n  - type: calendar\n    orden: { rows: tasks }\n')
-    const agenda = render(AgendaLayout, { props: { kit: kitOf(base, TASKS) } }).body
-    expect(agenda).toContain('Today')
-    expect(agenda).toContain('Milk')
-    const rows = render(PhoneRows, { props: { kit: kitOf(BUGS, NOTES) } }).body
-    expect(rows).toContain('Doing')
-  })
-})
-
-describe('the frame', () => {
-  test('wears Todoist’s head over a built-in view, and the database’s tools over a base', () => {
-    const tasks = render(ViewFrame, {
-      props: { kit: kitOf(builtinView('today'), TASKS, { builtin: 'today' }), title: 'Today' },
-    }).body
-    expect(tasks).toContain('aria-label="Display"')
-    expect(tasks).not.toContain('aria-label="Filter"')
-    expect(tasks).toContain('Call the bank')
-
-    const based = render(ViewFrame, {
-      props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
-    }).body
-    expect(based).toContain('role="tab"')
-    expect(based).toContain('aria-label="Filter"')
-    expect(based).toContain('aria-label="Display"')
-
-    const notes = render(ViewFrame, { props: { kit: kitOf(BUGS, NOTES), title: 'Bugs' } }).body
-    expect(notes.match(/role="tab"/g)?.length).toBe(BUGS.views.length)
-    expect(notes).toContain('aria-label="New view"')
-    expect(notes).toContain('aria-label="Filter"')
-    expect(notes).toContain('aria-label="Sort"')
-    expect(notes).toContain('aria-label="Settings"')
-  })
-})

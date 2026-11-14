@@ -4,12 +4,8 @@
   import { cardLine, type CardLine } from './board'
   import { toneColour, valueText } from './chips'
   import { draggable } from './drag.svelte'
-  import { plain } from './inline'
   import type { Kit } from './kit'
   import { optionsAt } from './options'
-  import TaskBox from './TaskBox.svelte'
-  import TaskMeta from './TaskMeta.svelte'
-  import { metaOf } from './task-meta'
 
   const {
     kit,
@@ -38,12 +34,12 @@
   } = $props()
 
   const live = $derived(kit.live)
-  const title = $derived(row.task ? plain(row.task.text) : row.file.basename)
+  const title = $derived(row.file.basename)
   const tone = $derived(live.colourOf(row))
 
   const values = $derived.by((): (CardLine | null)[] => {
     const base = live.base
-    if (!base || row.task) return []
+    if (!base) return []
     return shown.slice(0, lines.props).map((property) => {
       const options = optionsAt(base, property)
       const optionTone = (value: string) => {
@@ -67,8 +63,6 @@
     if (event.target !== event.currentTarget) return
     if (event.key === 'Enter' || event.key === ' ') {
       const modded = event.ctrlKey || event.metaKey
-      if (row.task && modded && event.key === 'Enter') return
-      if (row.task && !modded && event.key === ' ') return
       event.preventDefault()
       event.stopPropagation()
       kit.choose(row, modded)
@@ -125,25 +119,11 @@
     {onfocus}
   >
     <div class="title">
-      {#if row.task}<TaskBox
-          task={row.task}
-          label={title}
-          ontick={() => kit.tick(row)}
-          disabled={!kit.writes(row)}
-        />{/if}
       <span class="name">{title || 'Untitled'}</span>
     </div>
-    {#if row.task}
-      {#if lines.props}
-        <div class="line meta">
-          <TaskMeta {row} meta={metaOf(row.task, live.today, true, undefined)} />
-        </div>
-      {/if}
-    {:else}
-      {#each slots as one, at (at)}
-        {@render line(one, at === 0)}
-      {/each}
-    {/if}
+    {#each slots as one, at (at)}
+      {@render line(one, at === 0)}
+    {/each}
   </div>
   <button
     type="button"

@@ -344,7 +344,6 @@ describe('the switch', () => {
       'lib/chats/view/PollSheet.svelte',
       'lib/pass/SwitchRow.svelte',
       'lib/views/AutomationsBuilder.svelte',
-      'lib/views/DisplayBuilder.svelte',
       'lib/views/ViewSettings.svelte',
       'lib/web-tab/WebClear.svelte',
     ])
@@ -608,7 +607,6 @@ describe('the sentence behind a setting', () => {
       'lib/agents/settings/Words.svelte',
       'lib/ai/DoWithAiCard.svelte',
       'lib/people/ProfileRows.svelte',
-      'lib/views/DisplayBuilder.svelte',
     ])
   })
 })

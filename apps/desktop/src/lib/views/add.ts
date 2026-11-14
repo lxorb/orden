@@ -1,12 +1,4 @@
-import {
-  addDays,
-  type Base,
-  isWhen,
-  nextId,
-  type Priority,
-  rowsInBase,
-  type Value,
-} from '@orden/bases'
+import { type Base, nextId, rowsInBase, type Value } from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
@@ -14,92 +6,11 @@ import { folderOf, insideSpace, within } from '../space-paths'
 import { contextFor } from './context'
 import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
-import { showQuickAdd } from '../surfaces.svelte'
 import { rows } from '../rows/rows.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
-import { addTask } from './act'
 import { bare, isNoteProperty } from './columns'
-import { isPriority } from './drop'
-import { dayIn } from './values'
-import type { Only } from './display'
-import type { ViewSpec } from './spec'
-
-export interface Prefill {
-  due?: string
-  deadline?: string
-  tags?: string[]
-  priority?: Priority
-  status?: string
-  assignee?: string
-}
-
-export function openQuickAdd(prefill: Prefill = {}): boolean {
-  if (
-    prefill.priority !== undefined ||
-    prefill.status !== undefined ||
-    prefill.deadline !== undefined ||
-    prefill.assignee !== undefined
-  )
-    return false
-  showQuickAdd({
-    ...(prefill.tags ? { tags: prefill.tags } : {}),
-    ...(prefill.due ? { due: prefill.due } : {}),
-  })
-  return true
-}
-
-const WHEN_DAYS: Record<string, number> = { overdue: 0, today: 0, tomorrow: 1, later: 2 }
-
-function narrowedBy(out: Prefill, only: Only, today: string) {
-  if (only.label !== undefined) out.tags = [...new Set([...(out.tags ?? []), only.label])]
-  if (only.priority !== undefined) out.priority = only.priority
-  if (only.date === 'today' || only.date === 'week' || only.date === 'overdue') out.due = today
-  if (only.assignee !== undefined && !only.assignee.startsWith(':')) out.assignee = only.assignee
-}
-
-export function prefillOf(
-  spec: ViewSpec,
-  today: string,
-  group?: { property: string; key: Value },
-  only: Only = {},
-): Prefill {
-  const out: Prefill = {}
-  if (spec.builtin === 'today') out.due = today
-  if (spec.builtin === 'label' && spec.tag) out.tags = [spec.tag]
-  narrowedBy(out, only, today)
-  if (!group) return out
-
-  const { property, key } = group
-  if (property === 'task.priority' && isPriority(key)) out.priority = key
-  else if (property === 'task.status' && typeof key === 'string') out.status = key
-  else if (property === 'task.tags' && typeof key === 'string' && key) {
-    out.tags = [...new Set([...(out.tags ?? []), key])]
-  } else if (isWhen(property) && typeof key === 'string' && Object.hasOwn(WHEN_DAYS, key)) {
-    out.deadline = addDays(today, WHEN_DAYS[key] ?? 0)
-  } else if (property === 'formula.day' || /^task\.(due|date|scheduled)$/.test(property)) {
-    const day = key === 'overdue' ? today : dayIn(key)
-    if (day) out.due = day
-  }
-  return out
-}
-
-export async function addTyped(words: string, prefill: Prefill): Promise<boolean> {
-  const text = words.trim()
-  if (!text) return false
-  const path = await rows.inbox()
-  if (path === null || !canWriteAt(path)) return false
-  return addTask(path, {
-    text,
-    ...(prefill.due ? { due: prefill.due } : {}),
-    ...(prefill.deadline ? { deadline: prefill.deadline } : {}),
-    ...(prefill.tags ? { tags: prefill.tags } : {}),
-    ...(prefill.priority ? { priority: prefill.priority } : {}),
-    ...(prefill.status ? { status: prefill.status } : {}),
-    ...(prefill.assignee ? { assignee: prefill.assignee } : {}),
-  })
-}
 
 export interface NewNote {
   title?: string

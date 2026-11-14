@@ -13,7 +13,6 @@ import { afterQuiet } from '../timing'
 import { toneColour } from './chips'
 import { columnsOf } from './columns'
 import { contextFor } from './context'
-import { displayed } from './display'
 import { guardedAt } from './guard'
 import { day } from './day.svelte'
 import { nowHere, todayHere } from './days'
@@ -158,7 +157,7 @@ export class LiveView {
     const base = this.base
     if (!base) return null
     try {
-      return answered(displayed(base, this.at), this.at, this.rows, this.context)
+      return answered(base, this.at, this.rows, this.context)
     } catch {
       return null
     }

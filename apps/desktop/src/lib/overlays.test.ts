@@ -339,8 +339,6 @@ describe('what hides a web page', () => {
       'the theme picker, over the themes button or the note',
     'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
     'lib/views/ToneDot.svelte': "a tone's colours, beside its dot",
-    'lib/views/schedule/SchedulePicker.svelte': "a task's scheduler, beside what asked for it",
-    'lib/views/task-view/TaskSheet.svelte': "a task's own view, over the window",
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
     'lib/web-tab/WebDialog.svelte': "a page's own dialog, at the top of the page",
