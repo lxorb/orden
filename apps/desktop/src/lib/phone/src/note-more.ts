@@ -1,8 +1,8 @@
-import { DIVIDER, menu, trim, type MenuEntry } from '../menu.svelte'
-import { noteMenu } from '../note-menu'
-import { tabMenu } from '../tab-strip/menu'
-import { workspace } from '../workspace.svelte'
-import { TAB_KINDS, type TabPanel } from '../workspace/tab-kinds'
+import { DIVIDER, menu, trim, type MenuEntry } from '../../menu.svelte'
+import { noteMenu } from '../../note-menu'
+import { tabMenu } from '../../tab-strip/menu'
+import { workspace } from '../../workspace.svelte'
+import { TAB_KINDS, type TabPanel } from '../../workspace/tab-kinds'
 
 const PANEL_WORDS: Record<TabPanel, () => string> = {
   outline: () => 'Outline',

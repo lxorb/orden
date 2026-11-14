@@ -1,0 +1,19 @@
+{
+  "name": "phone",
+  "layer": "shell",
+  "dependsOn": ["contracts", "accounts", "platform", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/account-menu.ts",
+    "apps/desktop/src/lib/arriving.svelte.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/note-menu.ts",
+    "apps/desktop/src/lib/panel-marks.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts",
+    "apps/desktop/src/lib/tab-strip/menu.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/panels.ts",
+    "apps/desktop/src/lib/workspace/tab-kinds.ts",
+    "apps/desktop/src/lib/write-new.ts"
+  ]
+}

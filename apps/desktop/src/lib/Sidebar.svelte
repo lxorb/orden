@@ -16,7 +16,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { agentMarks } from './agent-marks.svelte'
   import { chatsUnread, lookAtLaunch } from './ai/unread.svelte'
-  import UnreadDot from './ai/UnreadDot.svelte'
+  import { UnreadDot } from './ui-kit/src/api'
   import { account } from './accounts/src/api'
   import {
     ASK_MARK,
@@ -51,7 +51,7 @@
     tasksPanel,
     timePanel,
   } from './surfaces.svelte'
-  import { shown as pad } from './scratchpad/src/api'
+  import { scratchFromDrawer, shown as pad } from './scratchpad/src/api'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
@@ -570,7 +570,7 @@
         <SpaceSwitcher />
         {#if phoneTabs}
           {#await phoneYou() then PhoneYou}
-            <PhoneYou />
+            <PhoneYou scratchpad={scratchFromDrawer} />
           {/await}
         {/if}
       </div>
@@ -920,7 +920,7 @@
     {/if}
     {#if phoneTabs}
       {#await phoneTabsBar() then PhoneTabs}
-        <PhoneTabs />
+        <PhoneTabs unread={chatsUnread.any} />
       {/await}
     {/if}
   </aside>

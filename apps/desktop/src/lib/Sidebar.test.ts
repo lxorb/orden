@@ -21,8 +21,9 @@ const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('./settings.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
-const PhoneTabs = (await import('./phone/PhoneTabs.svelte')).default
-const PhoneYou = (await import('./phone/PhoneYou.svelte')).default
+const { loadPhoneTabs, loadPhoneYou } = await import('./phone/src/api')
+const PhoneTabs = (await loadPhoneTabs()).default
+const PhoneYou = (await loadPhoneYou()).default
 
 function open(text: string) {
   workspace.tabs = []
@@ -507,7 +508,7 @@ describe('the head of a phone screen', () => {
     }
     viewport.device = 'desktop'
 
-    const you = render(PhoneYou).body
+    const you = render(PhoneYou, { props: { scratchpad: () => undefined } }).body
     expect(you).toContain('data-phone-you')
     expect(you).toContain('aria-label="Sign in"')
     expect(you).toContain('aria-haspopup="menu"')

@@ -12,7 +12,7 @@
   import { providerBrand } from '../provider-brand'
   import type { SessionState } from '../session-state'
   import { ai } from '../store.svelte'
-  import UnreadDot from '../UnreadDot.svelte'
+  import { UnreadDot } from '../../ui-kit/src/api'
   import { rowName } from './marks'
   import StateMark from './StateMark.svelte'
 

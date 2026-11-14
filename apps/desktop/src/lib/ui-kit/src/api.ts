@@ -1,6 +1,7 @@
 export { closeOnBack } from './backstack.svelte'
 export { busy } from './busy.svelte'
 export { default as Cross } from './Cross.svelte'
+export { default as UnreadDot } from './UnreadDot.svelte'
 export { rank, recentFirst, walked } from './fuzzy'
 export {
   brandIcon,
