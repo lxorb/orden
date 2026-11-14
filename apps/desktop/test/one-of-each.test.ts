@@ -309,9 +309,9 @@ describe('the badge in front of a name', () => {
 
     expect(asking).toEqual([
       'lib/PromptSheet.svelte',
-      'lib/PublishSheet.svelte',
       'lib/ShareSheet.svelte',
       'lib/SpaceBadge.svelte',
+      'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/SavePlace.svelte',
       'lib/tab-strip/TabCard.svelte',
     ])

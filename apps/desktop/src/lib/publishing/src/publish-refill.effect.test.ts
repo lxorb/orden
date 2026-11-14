@@ -26,8 +26,8 @@ const world = vi.hoisted((): World => ({
   refusePublish: null,
 }))
 
-vi.mock('./accounts/src/client', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./accounts/src/client')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
 
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
@@ -64,10 +64,10 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
     },
   }
 })
-vi.mock('./sync.svelte', () => ({
+vi.mock('../../sync.svelte', () => ({
   sync: { remoteIdFor: (root: string) => world.mirrors[root] ?? null },
 }))
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     activeSpaceId: 'Notes',
     notes: [],
@@ -81,10 +81,10 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 import { flushSync, mount, unmount } from 'svelte'
-import { account } from './accounts/src/account.svelte'
+import { account } from '../../accounts/src/account.svelte'
 import { publish } from './publishing.svelte'
 import PublishSheet from './PublishSheet.svelte'
-import type { RemoteSpace } from './accounts/src/routes'
+import type { RemoteSpace } from '../../accounts/src/routes'
 
 const nothing = () => undefined
 vi.stubGlobal(

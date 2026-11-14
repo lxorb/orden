@@ -8,14 +8,14 @@ import {
   type SiteChanges,
   type SiteSettings,
   account,
-} from './accounts/src/api'
-import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from './platform/src/api'
-import { theme, carriedCss } from './theme/src/api'
-import { isDomainStatus, keepAsking } from './domain-status'
-import { message } from './ui-kit/src/api'
-import { publishSheet } from './surfaces.svelte'
-import { sync } from './sync.svelte'
-import type { Space } from './workspace.svelte'
+} from '../../accounts/src/api'
+import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from '../../platform/src/api'
+import { theme, carriedCss } from '../../theme/src/api'
+import { isDomainStatus, keepAsking } from '../../domain-status'
+import { message } from '../../ui-kit/src/api'
+import { publishSheet } from '../../surfaces.svelte'
+import { sync } from '../../sync.svelte'
+import type { Space } from '../../workspace.svelte'
 
 type Address = 'subdomain' | 'domain'
 
@@ -203,7 +203,7 @@ class Publish {
       .catch(() => '')
     if (!css) return kept
 
-    const { pageSheet } = await import('./theme-looks/src/api')
+    const { pageSheet } = await import('../../theme-looks/src/api')
     const bytes = new TextEncoder().encode(pageSheet(css))
     const hash = await sha256(bytes)
     if (kept?.hash === hash) return kept
@@ -350,7 +350,7 @@ class Publish {
     const root = this.space?.root
     if (!id || !root || account.accountToken !== token) return
 
-    const { pushDiagrams } = await import('./site-diagrams')
+    const { pushDiagrams } = await import('../../site-diagrams')
     if (account.accountToken !== token) return
     const drawn = await pushDiagrams(token, id, root).catch(() => null)
     if (drawn && (drawn.sent || drawn.refused)) {

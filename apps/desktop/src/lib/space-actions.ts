@@ -134,7 +134,7 @@ export async function shareSpace(space: Space) {
 }
 
 export async function publishSpace(space: Space) {
-  const { publish } = await import('./publishing.svelte')
+  const { publish } = await import('./publishing/src/api')
   publish.show(space)
 }
 

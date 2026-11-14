@@ -128,6 +128,7 @@ export const APP_FOLDERS = [
   'pdf',
   'platform',
   'protect',
+  'publishing',
   'quick-add',
   'reading',
   'recorder',
