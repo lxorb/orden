@@ -15,13 +15,13 @@
     "ui-kit",
     "pages",
     "plane",
-    "shortcuts"
+    "shortcuts",
+    "web-backend"
   ],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
     "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/images.ts",
-    "apps/desktop/src/lib/internal/work.ts",
     "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/link-rewrite.ts",
     "apps/desktop/src/lib/math-fonts.ts",

@@ -20,7 +20,7 @@ function sources(dir: string): string[] {
 }
 
 function fileCommands(): string[] {
-  const roots = readFileSync(join(LIB, 'internal', 'roots.ts'), 'utf8')
+  const roots = readFileSync(join(LIB, 'web-backend/src/internal/roots.ts'), 'utf8')
   const listed = /const FILE_COMMANDS = new Set\(\[([^\]]*)\]\)/.exec(roots)?.[1] ?? ''
   return [...listed.matchAll(/'([a-z_]+)'/g)].map((one) => one[1] ?? '')
 }

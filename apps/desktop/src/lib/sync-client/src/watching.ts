@@ -6,10 +6,9 @@ import {
   watchSpaces,
 } from '../../space-watch'
 import { isOwnFile as carriedOwn } from '@orden/sync-core'
-import { keptShaped } from '../../internal/roots'
-import { hearInternal, listInternal, mountedFor } from '../../internal/watch'
+import { keptMounts } from '../../web-backend/src/api'
 import { inForeignCopy } from '@orden/sync-core'
-import { samePath } from '../../platform/src/api'
+import { keptShaped, samePath } from '../../platform/src/api'
 import { syncMark } from '../../surfaces.svelte'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
@@ -72,7 +71,8 @@ function spaceAt(engine: Engine, root: string) {
   return [...engine.core.spaces.values()].find((one) => samePath(one.row.root, root))
 }
 
-export function watchFolders(how: Watching): Watched {
+export async function watchFolders(how: Watching): Promise<Watched> {
+  const mounts = await keptMounts()
   const queue: (() => Promise<void>)[] = []
   let draining = false
   let stopped = false
@@ -127,11 +127,11 @@ export function watchFolders(how: Watching): Watched {
     }
     for (const root of roots) {
       if (inside.has(root)) continue
-      const stop = hearInternal(root, (changes) => {
+      const stop = mounts.hearInternal(root, (changes) => {
         heard({ root, changes, scan: false, gone: false })
       })
       if (!stop) {
-        if (keptShaped(root)) void mountedFor(root).then((yes) => yes && follow())
+        if (keptShaped(root)) void mounts.mountedFor(root).then((yes) => yes && follow())
         continue
       }
       inside.set(root, stop)
@@ -237,7 +237,8 @@ export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
   const space = spaceAt(engine, root)
   if (!space || !how.ready(space.id)) return
-  const listed = (await listInternal(root)) ?? (keptShaped(root) ? null : await scanSpace(root))
+  const inside = await (await keptMounts()).listInternal(root)
+  const listed = inside ?? (keptShaped(root) ? null : await scanSpace(root))
   if (!listed) return
   const seen = new Set<string>()
   const unread: string[] = []

@@ -10,7 +10,8 @@
     "markdown",
     "platform",
     "ui-kit",
-    "settings"
+    "settings",
+    "web-backend"
   ],
   "pending": [
     "apps/desktop/src/lib/file-mark.ts",
@@ -19,7 +20,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts",
-    "apps/desktop/src/lib/web/store.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

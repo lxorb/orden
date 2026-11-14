@@ -1,4 +1,13 @@
-import { locksHere, locksWork, log, nameOf, within, joinPath } from '../../platform/src/api'
+import {
+  KEPT_HOME,
+  locksHere,
+  locksWork,
+  log,
+  nameOf,
+  within,
+  joinPath,
+} from '../../platform/src/api'
+import { keptCameFrom, keptFolder } from '../../web-backend/src/api'
 import { invoke as crate } from '../../crate/src/api'
 import { hearHere } from '../../own-window'
 
@@ -71,8 +80,7 @@ export function tasksSince(before: string, now: string): string[] {
 }
 
 async function backupOf(from: string, rest: string): Promise<string | null> {
-  const { HOME } = await import('../../internal/spaces')
-  const backups = joinPath(joinPath(await crate<string>('spaces_root'), HOME), '.backups')
+  const backups = joinPath(joinPath(await crate<string>('spaces_root'), KEPT_HOME), '.backups')
   const tree = await crate<{ children?: { name: string; path: string; is_dir: boolean }[] }>(
     'read_tree',
     { root: backups, options: { every: true } },
@@ -91,13 +99,9 @@ async function backupOf(from: string, rest: string): Promise<string | null> {
 async function leftBehind(add: Add): Promise<number> {
   const left = await crate<string | null>('shortcuts_left_inbox').catch(() => null)
   if (!left) return 0
-  const [{ keptCameFrom }, { mountOf }] = await Promise.all([
-    import('../../internal/spaces'),
-    import('../../internal/roots'),
-  ])
   for (const { root, from } of await keptCameFrom()) {
     const rest = within(from, left)
-    const kept = mountOf(root)?.mount.folder
+    const kept = rest ? await keptFolder(root) : null
     if (!rest || !kept) continue
     const now = await textOf(left)
     if (now === null) return 0

@@ -3,6 +3,7 @@ import {
   folderOf,
   insideAnyOf,
   insideItsSpace,
+  keptShaped,
   nameOf,
   noteName,
   notePath,
@@ -216,5 +217,14 @@ describe('the space a folder names', () => {
     expect(rootedAt(spaces, '/Notes/inside')).toBeUndefined()
     expect(rootedAt(spaces, null)).toBeUndefined()
     expect(rootedAt(spaces, undefined)).toBeUndefined()
+  })
+})
+
+describe('a space kept here', () => {
+  test('is the file named as its folder, one under the home folder', () => {
+    expect(keptShaped('/spaces/.orden/Plans/Plans')).toBe(true)
+    expect(keptShaped('C:\\spaces\\.orden\\Plans\\Plans\\')).toBe(true)
+    expect(keptShaped('/spaces/Plans')).toBe(false)
+    expect(keptShaped('/spaces/.orden/Plans/Other')).toBe(false)
   })
 })

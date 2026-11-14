@@ -1,6 +1,7 @@
 import type { PickedFile } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
+import { seed } from './web-backend/src/api'
 import { appsOn, basesOn, hiddenKinds } from './settings.svelte'
 import { settingsTab } from './settings-tab'
 import { arriving } from './arriving.svelte'
@@ -631,7 +632,6 @@ class Workspace {
   private async readSitting() {
     if (!isNative && !isPlugin()) {
       try {
-        const { seed } = await import('./web/commands')
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
           await beginSetup(account.signedIn)

@@ -1,9 +1,8 @@
 import './lib/backend-ports'
-import './lib/former-keys'
+import { serveAssets } from './lib/platform/src/api'
 import '@orden/themes'
 import { mount } from 'svelte'
 import { PassWeb } from './lib/pass-ui/src/api'
-import { serveAssets } from './lib/platform/src/api'
 
 serveAssets()
 

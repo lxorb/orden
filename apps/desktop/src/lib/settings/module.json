@@ -22,7 +22,8 @@
     "parting",
     "updates",
     "history",
-    "snapshots"
+    "snapshots",
+    "kept-for-good"
   ],
   "pending": [
     "apps/desktop/src/lib/AiPane.svelte",
@@ -57,7 +58,6 @@
     "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/toolbar.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/web/kept-for-good.svelte.ts",
     "apps/desktop/src/lib/while-here.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/hidden-tabs.svelte.ts",

@@ -6,7 +6,7 @@
   import { brandIcon, type IconNode, readIcon } from '../../ui-kit/src/api'
   import { BROWSER_LOGOS, ZEN_LOGO } from './browsers'
   import { migrating } from './migrating.svelte'
-  import { takingOver } from '../../web/taking-over.svelte'
+  import { takingOver } from './taking-over.svelte'
   import { isDesktop, isMobile } from '../../platform/src/api'
 
   const folders = !isMobile

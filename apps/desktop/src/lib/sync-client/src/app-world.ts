@@ -1,7 +1,6 @@
 import { OWN_FILE as INBOX_PATH, syncDeletes } from '@orden/sync-core'
 import { fileBytes, sha256, deviceName, onDisk } from '../../platform/src/api'
-import { keptShaped, mountOf } from '../../internal/roots'
-import { mountedFor } from '../../internal/watch'
+import { keptMounts } from '../../web-backend/src/api'
 import { links } from '../../link-index.svelte'
 import { evictedHere } from '../../icloud-placeholder'
 import { holderOf } from '@orden/markdown/pages'
@@ -112,16 +111,8 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
     const at = slashed(path)
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
   }
-  const kept = (await mountedFor(root)) ? mountOf(root) : null
-  if (!kept && keptShaped(root)) throw new Error(`${root} is a space kept here, not mounted`)
-  if (kept) {
-    const top = kept.inside ? `${kept.inside}/` : ''
-    return (await kept.mount.folder.list()).flatMap(({ path, entry }) =>
-      path.startsWith(top) && path !== kept.inside
-        ? [{ path: path.slice(top.length), dir: !entry.key }]
-        : [],
-    )
-  }
+  const kept = await (await keptMounts()).listedUnder(root)
+  if (kept) return kept
   if (isDesktop()) {
     const all = await scanSpace(root).catch(() => null)
     if (all) {

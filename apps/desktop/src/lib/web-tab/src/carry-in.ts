@@ -2,6 +2,7 @@ import { isWebTarget } from '@orden/markdown/links'
 import { readWebFile } from '@orden/scan/shortcut'
 import { isExplorerDrag, isTreeDrag } from '../../drag-paths'
 import { invoke, isDesktop } from '../../platform/src/api'
+import { diskPathOf } from '../../web-backend/src/api'
 import { workspace } from '../../workspace.svelte'
 import { zoneAt } from '../../workspace/zones'
 
@@ -52,7 +53,6 @@ export function carryToPages(paths: readonly string[], look: Looking = looking):
   next(async () => {
     const carrying = await carryingOf(paths, look)
     if (!carrying.files.length && !carrying.addresses.length) return
-    const { diskPathOf } = await import('../../internal/work')
     carrying.files = await Promise.all(carrying.files.map(diskPathOf))
     told = (await invoke<boolean | null>('page_carry', { ...carrying })) ?? false
   })

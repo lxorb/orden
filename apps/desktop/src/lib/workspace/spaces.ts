@@ -2,6 +2,7 @@ import { spacesAhead } from './ahead'
 import { account } from '../accounts/src/api'
 import { identifier } from '../identifier'
 import { samePath, invoke, isDesktop, isNative } from '../platform/src/api'
+import { listedWith } from '../web-backend/src/api'
 import type { Entry, Naming, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
 
@@ -26,10 +27,7 @@ async function withKept(
   ahead: { name: string; path: string }[],
 ): Promise<{ name: string; path: string }[]> {
   if (!isDesktop) return ahead
-  return await import('../internal/spaces').then(
-    ({ listedWith }) => listedWith(ahead),
-    () => ahead,
-  )
+  return await listedWith(ahead).catch(() => ahead)
 }
 
 export async function loadSpaces(ws: HoldsSpaces) {

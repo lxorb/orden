@@ -15,6 +15,7 @@ import { mathCss } from '../../math-fonts'
 import { pageCss, pageSetupFor, runningDate, withRunningText } from '../../page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '../../paper'
 import type { Scheme } from '../../theme/src/api'
+import { diskPathOf } from '../../web-backend/src/api'
 
 export interface HtmlOptions {
   bare?: boolean
@@ -149,7 +150,6 @@ export async function exportPandoc(
   const target = await chooseTarget(name, spec.extension, spec.label)
   if (!target) return
 
-  const { diskPathOf } = await import('../../internal/work')
   const missing = await invoke<string[]>('run_pandoc', {
     source,
     output: target,

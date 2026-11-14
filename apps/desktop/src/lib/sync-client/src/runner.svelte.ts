@@ -23,7 +23,7 @@ import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
 import { links } from '../../link-index.svelte'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
-import { forgetIndex, type IndexStore, openIndex } from '../../web/index-store'
+import { forgetIndex, type IndexStore, openIndex } from './index-store'
 import { followRoots } from './roots'
 import {
   account,
@@ -392,7 +392,7 @@ class Runner {
     this.stops.push(engine.on('placed', () => this.rebind()))
     if (isDesktop()) {
       const { watchFolders } = await import('./watching')
-      const watched = watchFolders({
+      const watched = await watchFolders({
         engine,
         ready: (id) => this.firsts.has(id),
         changed: () => this.nudge(),
@@ -439,7 +439,7 @@ class Runner {
     if (!isDesktop()) this.stops.push(this.hearsWrites())
     if (isDesktop()) {
       const { watchFolders } = await import('./watching')
-      const watched = watchFolders({
+      const watched = await watchFolders({
         engine,
         ready: (id) => this.firsts.has(id),
         changed: () => this.nudge(),

@@ -1,5 +1,5 @@
 import './lib/backend-ports'
-import './lib/former-keys'
+import './lib/platform/src/api'
 import '@orden/themes'
 import { mount } from 'svelte'
 import { holdComposingKeys } from './lib/ui-kit/src/api'

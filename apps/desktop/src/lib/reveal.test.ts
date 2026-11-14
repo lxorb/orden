@@ -13,7 +13,10 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 vi.mock('./settings.svelte', () => ({
   hiddenKinds: { offers: (kind: string) => kind === 'explorer' && state.explorer },
 }))
-vi.mock('./internal/work', () => ({ diskPathOf: (path: string) => Promise.resolve(path) }))
+vi.mock('./web-backend/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./web-backend/src/api')>()),
+  diskPathOf: (path: string) => Promise.resolve(path),
+}))
 vi.mock('@tauri-apps/plugin-opener', () => ({
   revealItemInDir: (path: string) => {
     opened.push(path)

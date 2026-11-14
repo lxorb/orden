@@ -243,3 +243,11 @@ export function relativePath(fromFolder: string, to: string): string {
   const up = Array.from({ length: here.length - shared }, () => '..')
   return [...up, ...there.slice(shared)].join('/')
 }
+
+export const KEPT_HOME = '.orden'
+
+export function keptShaped(root: string): boolean {
+  const parts = steps(root.replace(/\\/g, '/'))
+  const name = parts.at(-1)
+  return parts.length > 2 && parts.at(-3) === KEPT_HOME && !!name && parts.at(-2) === name
+}
