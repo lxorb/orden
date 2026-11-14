@@ -1,4 +1,4 @@
-import { type Dictates, voice } from '../../dictation/voice.svelte'
+import { type Dictates, voice } from '../../dictation/src/api'
 
 class Dictation {
   field: Dictates | null = null

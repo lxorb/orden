@@ -15,7 +15,7 @@ export {
   saveRetryDelay,
 } from './backoff'
 export { decoded, fileBytes, fromBase64, pageBytes, parseDataUri, sha256, toBase64 } from './bytes'
-export { appleHandheld, deviceName } from './device'
+export { appleHandheld, deviceName, speechRecogniser } from './device'
 export { insideOnly } from './inside'
 export { heldForLife, holdIfFree, ifFree, inTurn, locksHere, locksWork } from './locks'
 export { collectErrors, log, recentLog, tokensOut } from './log'
@@ -66,6 +66,7 @@ export {
   withinSpace,
   withoutExtension,
 } from './space-paths'
+export { spaceRelative } from './space-relative'
 export {
   forget,
   isBoolean,

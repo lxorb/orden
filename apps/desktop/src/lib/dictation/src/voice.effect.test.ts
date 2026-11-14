@@ -57,28 +57,28 @@ vi.mock('./device', () => ({
     })
   },
 }))
-vi.mock('../accounts/src/account.svelte', () => ({
+vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     get accountToken() {
       return world.token
     },
   },
 }))
-vi.mock('../ai/hears', () => ({ transcriberNow: () => world.provider }))
-vi.mock('../platform/src/stored', () => ({
+vi.mock('../../ai/hears', () => ({ transcriberNow: () => world.provider }))
+vi.mock('../../platform/src/stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),
 }))
-vi.mock('../settings.svelte', () => ({ settings: { error: null } }))
-vi.mock('../shortcuts.svelte', () => ({
+vi.mock('../../settings.svelte', () => ({ settings: { error: null } }))
+vi.mock('../../shortcuts.svelte', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) =>
       id === 'field.dictate' && event.altKey && event.key.toLowerCase() === 'v',
     tooltip: (name: string) => name,
   },
 }))
-vi.mock('../ui-kit/src/message', () => ({
+vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

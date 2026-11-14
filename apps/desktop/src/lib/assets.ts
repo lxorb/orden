@@ -1,9 +1,8 @@
 import { api, BASE, account } from './accounts/src/api'
 import { attachmentFolder } from './attachments'
-import { sha256, invoke } from './platform/src/api'
+import { sha256, invoke, spaceRelative } from './platform/src/api'
 import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'
-import { spaceRelative } from './recorder/paths'
 import { workspace } from './workspace.svelte'
 
 function extensionFor(type: string, name: string): string {

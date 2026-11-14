@@ -79,7 +79,7 @@ import {
 import { openOut, printOpen } from './open-out'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
-import { canRecord, record, recordLabel } from './recorder/commands'
+import { canRecord, record, recordLabel } from './dictation/src/api'
 import { moveTargets } from './move-targets'
 import { closeAfterLabel } from './workspace/closing-around'
 import { revealPanel, stepRegionFocus } from './focus'

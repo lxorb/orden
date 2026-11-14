@@ -131,7 +131,6 @@ export const APP_FOLDERS = [
   'publishing',
   'quick-add',
   'reading',
-  'recorder',
   'remote',
   'rows',
   'save-place',

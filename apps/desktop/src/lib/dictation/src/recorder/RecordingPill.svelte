@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { recorder } from './recorder/recording.svelte'
-  import { spanOf } from './recorder/transcript'
+  import { recorder } from './recording.svelte'
+  import { spanOf } from './transcript'
 </script>
 
 {#if recorder.on || recorder.saving}

@@ -1,6 +1,6 @@
-import { message } from '../ui-kit/src/api'
-import { heardPiece } from '../recorder/transcribe'
-import { RATE, wavOf } from '../recorder/wav'
+import { message } from '../../ui-kit/src/api'
+import { heardPiece } from './recorder/transcribe'
+import { RATE, wavOf } from './recorder/wav'
 import { type Capture, capture } from './capture'
 import type { Taken } from './engines.svelte'
 import { cleaned, promptOf } from './heard'
@@ -56,7 +56,7 @@ export async function hearsHere(words: readonly string[]): Promise<Hears> {
     throw new Error('The speech model is still downloading.')
   }
   await local.open()
-  const { invoke } = await import('../crate/src/api')
+  const { invoke } = await import('../../crate/src/api')
   const names = new TextEncoder().encode(words.join('\n'))
   return (samples, _prompt, tries) => {
     const said = tries === FINAL_TRIES ? names : new Uint8Array()

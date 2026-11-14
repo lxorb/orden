@@ -1,5 +1,5 @@
-import { openMicrophone } from '../recorder/microphone'
-import { RATE, resampled } from '../recorder/wav'
+import { openMicrophone } from './recorder/microphone'
+import { RATE, resampled } from './recorder/wav'
 
 const BLOCK = 2048
 

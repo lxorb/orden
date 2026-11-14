@@ -1,7 +1,6 @@
 import type { EditorView } from '@orden/editor'
-import { speechRecogniser } from '../dictation/recogniser'
 import { workspace } from '../workspace.svelte'
-import { method } from '../platform/src/api'
+import { method, speechRecogniser } from '../platform/src/api'
 
 export { speechRecogniser }
 
