@@ -1,26 +1,18 @@
 import { describe, expect, test, vi } from 'vitest'
-import { rowsOfText } from '@orden/bases/rows'
 import type { Thread } from '../chat/types'
 import type { Host } from './host'
 
-const NOTE =
-  '# Week\n- [ ] Pay rent ⏫ 📅 2020-01-01\n- [ ] Call mum #family\n- [ ] Someday 📅 2999-01-01\n'
-
-vi.mock('../../rows/rows.svelte', () => {
-  const all = rowsOfText('Home', 'Week.md', NOTE)
-  return {
-    rows: {
-      get shown() {
-        return this.of
-      },
-      of: () => all,
-      inboxes: () => [{ space: 'Home', path: 'Inbox.md' }],
-    },
-  }
-})
+vi.mock('../../task-actions', () => ({
+  listed: () => ({
+    total: 2,
+    tasks: [
+      { at: 't1', space: 'home', text: 'Pay rent', due: '2020-01-01', priority: 1 },
+      { at: 't2', space: '', text: 'Call mum' },
+    ],
+  }),
+}))
 
 const { planDay, showTasks } = await import('./todos')
-const { modes } = await import('../../modes.svelte')
 
 function host(said = '') {
   const ask = vi.fn(() => Promise.resolve(said))
@@ -48,35 +40,18 @@ const shown = (lines: { text: string }[]) =>
   JSON.parse(lines[0]?.text ?? '{}') as { tasks: { text: string }[]; filter?: string }
 
 describe('/tasks', () => {
-  test('Today with nothing after it, as rows the thread draws', async () => {
+  test("today's todos, as rows the thread draws", async () => {
     const { fake, lines } = host()
     await showTasks(fake, thread, '')
     expect(lines[0]?.code).toBe('tasks')
     expect(shown(lines).tasks.map((one) => one.text)).toEqual(['Pay rent', 'Call mum'])
+    expect(shown(lines).filter).toBeUndefined()
   })
 
-  test('Today without the tasks that have no start date, where the setting says (#2017)', async () => {
-    modes.setUndatedInToday(false)
-    try {
-      const { fake, lines } = host()
-      await showTasks(fake, thread, '')
-      expect(shown(lines).tasks.map((one) => one.text)).toEqual(['Pay rent'])
-    } finally {
-      modes.setUndatedInToday(true)
-    }
-  })
-
-  test("Todoist's filter, as written", async () => {
+  test('words after the command are shown above the rows', async () => {
     const { fake, lines } = host()
-    await showTasks(fake, thread, '#family')
-    expect(shown(lines)).toMatchObject({ filter: '#family', tasks: [{ text: 'Call mum' }] })
-  })
-
-  test('words the model turns into a filter, shown above the rows', async () => {
-    const { fake, lines, ask } = host('`p2`')
     await showTasks(fake, thread, 'what is urgent')
-    expect(ask).toHaveBeenCalledOnce()
-    expect(shown(lines)).toMatchObject({ filter: 'p2', tasks: [{ text: 'Pay rent' }] })
+    expect(shown(lines)).toMatchObject({ filter: 'what is urgent' })
   })
 })
 

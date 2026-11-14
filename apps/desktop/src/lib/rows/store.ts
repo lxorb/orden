@@ -6,8 +6,6 @@ import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
-import { datesChanged, type DatesPatch, withDates } from '@orden/bases/done-dates'
-import { todayOf } from '@orden/bases'
 
 export interface SpaceName {
   root: string
@@ -31,25 +29,12 @@ export interface Host {
   open(): { root: string | null; scanned(): Promise<void>; notes(): readonly ScannedNote[] }
   breathe(): Promise<void>
   now(): number
-  own?(root: string): readonly string[]
   vault(root: string): Promise<boolean>
   list?(root: string, path: string): boolean
   meta?(root: string, path: string): Readonly<Record<string, string>> | null
-  dated?(root: string, path: string, patch: DatesPatch): void
 }
 
 const CHUNK = 250
-
-const CARRIED = 10 * 60_000
-
-const MOST_LEFT = 500
-
-interface Left {
-  hash: string
-  cancelled: boolean
-  day: string
-  at: number
-}
 
 interface Held {
   root: string
@@ -137,7 +122,7 @@ export class RowsStore {
     }
   }
 
-  saved(path: string, content: string, settles = true) {
+  saved(path: string, content: string) {
     const held = this.holding(path)
     if (!held) return
     const relative = within(held.root, path, held.root)
@@ -145,7 +130,6 @@ export class RowsStore {
 
     const key = pathKey(relative, held.root)
     const now = this.host.now()
-    const was = held.reading ? undefined : held.files.get(key)
     this.edit(held, key, (before) => {
       const known = before?.[0]?.file.ctime ?? 0
       const ctime = known > 0 ? known : now
@@ -155,64 +139,6 @@ export class RowsStore {
         readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
       )
     })
-    if (!settles) return
-    const settling = { held, key, again: false }
-    this.settling = settling
-    try {
-      this.settle(held, relative, was ?? null, held.files.get(key) ?? [], now)
-    } finally {
-      this.settling = null
-    }
-    if (settling.again) this.saved(path, content, false)
-  }
-
-  private settling: { held: Held; key: string; again: boolean } | null = null
-
-  private settle(held: Held, relative: string, was: Row[] | null, now: Row[], at: number) {
-    if (!this.host.dated) return
-    if (was !== null) this.leaving(was, now, at)
-    const meta = this.host.meta?.(held.root, relative) ?? null
-    const arrived = (hash: string, cancelled: boolean) => this.arrived(hash, cancelled, at)
-    const patch = datesChanged(was, now, meta, todayOf(new Date(at)), arrived)
-    if (patch) this.host.dated(held.root, relative, patch)
-  }
-
-  private left: Left[] = []
-
-  private leaving(was: readonly Row[], now: readonly Row[], at: number) {
-    const closed = (rows: readonly Row[], cancelled: boolean) => {
-      const out = new Map<string, (string | undefined)[]>()
-      for (const row of rows) {
-        const task = row.task
-        const hash = row.anchor?.hash
-        if (!task || hash === undefined || (cancelled ? !task.cancelled : !task.done)) continue
-        const day = cancelled ? task.cancelledOn : task.completed
-        const gathered = out.get(hash)
-        if (gathered) gathered.push(day)
-        else out.set(hash, [day])
-      }
-      return out
-    }
-    for (const cancelled of [false, true]) {
-      const after = closed(now, cancelled)
-      for (const [hash, days] of closed(was, cancelled)) {
-        const gone = days.length - (after.get(hash)?.length ?? 0)
-        for (const day of days.slice(days.length - Math.max(0, gone))) {
-          if (day !== undefined) this.left.push({ hash, cancelled, day, at })
-        }
-      }
-    }
-    this.left = this.left.filter((one) => at - one.at < CARRIED).slice(-MOST_LEFT)
-  }
-
-  private arrived(hash: string, cancelled: boolean, at: number): string | undefined {
-    for (let index = this.left.length - 1; index >= 0; index--) {
-      const one = this.left[index]
-      if (one?.hash !== hash || one.cancelled !== cancelled || at - one.at >= CARRIED) continue
-      this.left.splice(index, 1)
-      return one.day
-    }
-    return undefined
   }
 
   indexed(root: string, scans: readonly ScannedNote[]) {
@@ -234,11 +160,11 @@ export class RowsStore {
     if (op.op === 'moved') {
       if (op.kind === 'space') this.spaceMoved(op.from, op.to)
       else if (this.moved(op.from, op.to)) return undefined
-      else return op.kind === 'folder' ? this.folderCame(op.to) : this.fileCame(op.to, !op.heard)
+      else return op.kind === 'folder' ? this.folderCame(op.to) : this.fileCame(op.to)
       return undefined
     }
 
-    return op.kind === 'folder' ? this.folderCame(op.path) : this.fileCame(op.path, !op.heard)
+    return op.kind === 'folder' ? this.folderCame(op.path) : this.fileCame(op.path)
   }
 
   private flat(held: Held): Row[] {
@@ -249,14 +175,11 @@ export class RowsStore {
   private rowsIn(held: Held, read: NoteRead): Row[] {
     if (samePath(read.path, AGENTS_NAME, held.root)) return []
     const meta = this.host.meta?.(held.root, read.path) ?? null
-    const rows = withDates(
-      rowsOf(held.name, {
-        ...read,
-        tasks: (this.host.list?.(held.root, read.path) ?? true) ? read.tasks : [],
-        meta,
-      }),
+    const rows = rowsOf(held.name, {
+      ...read,
+      tasks: (this.host.list?.(held.root, read.path) ?? true) ? read.tasks : [],
       meta,
-    )
+    })
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
     return rows
   }
@@ -409,20 +332,14 @@ export class RowsStore {
   }
 
   described(path: string): void {
-    const settling = this.settling
-    const relative = settling && within(settling.held.root, path, settling.held.root)
-    if (settling && relative && pathKey(relative, settling.held.root) === settling.key) {
-      settling.again = true
-      return
-    }
-    void this.fileCame(path, false)
+    void this.fileCame(path)
   }
 
-  private async fileCame(path: string, settles = true) {
+  private async fileCame(path: string) {
     const held = this.holding(path)
     if (!held || !isMarkdownPath(path)) return
     const content = await this.host.read(path)
-    if (content !== null) this.saved(path, content, settles)
+    if (content !== null) this.saved(path, content)
   }
 
   private async folderCame(path: string) {
@@ -479,15 +396,6 @@ export class RowsStore {
       if (++counted % CHUNK === 0) await this.host.breathe()
     }
 
-    for (const relative of this.host.own?.(held.root) ?? []) {
-      const content = await this.host.read(insideSpace(held.root, relative))
-      if (content === null || this.spaces.get(pathKey(held.root)) !== held) continue
-      const stamp = { size: content.length, mtime: 0, ctime: 0 }
-      files.set(
-        pathKey(relative, held.root),
-        this.rowsIn(held, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp })),
-      )
-    }
     if (this.spaces.get(pathKey(held.root)) !== held) return
 
     for (const change of held.since) change(files)

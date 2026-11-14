@@ -83,7 +83,6 @@ async function start(): Promise<boolean> {
   return finishFormerHome()
 }
 const { ItemMetaStore } = await import('./item-meta.svelte')
-const { pickedInbox } = await import('../rows/inbox')
 const { ROOTS_MOVED } = await import('./roots-moved')
 
 interface Profile {
@@ -125,7 +124,6 @@ function oldProfile({ base, join }: Profile) {
       },
     }),
   )
-  localStorage.setItem('orden:inbox', JSON.stringify({ [root]: 'Lists/Groceries.md' }))
   localStorage.setItem(
     'orden:workspace',
     JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }),
@@ -183,7 +181,6 @@ describe.each([
     expect(meta.valueOf(profile.join(now, 'Projects', 'Plan.md'), 'done-on', now)).toBe(
       'k3:20261101',
     )
-    expect(pickedInbox(now, [])).toBe('Lists/Groceries.md')
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('orden:item-meta')).not.toContain('former.app.id')
     expect(asked).toContainEqual({ command: 'rehome_snapshots', args: profile.base })
@@ -233,7 +230,6 @@ describe('a browser profile an early start made beside the old one', () => {
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
       expect(meta.itemsOf(now)[path]).toBeDefined()
     }
-    expect(pickedInbox(now, [])).toBe('Lists/Groceries.md')
     expect(localStorage.getItem('orden:font')).toBe('Lato')
   })
 
@@ -262,13 +258,11 @@ describe('carrying the former home', () => {
   })
 
   test('is done by the script the window is given, before any of the app runs', () => {
-    const now = mac.join(mac.base.to, 'Spaces', 'Work')
     oldProfile(mac)
     homes.said = [mac.base]
     pageStarts(said())
 
     expect(formerSaid()?.carried).toBe(true)
-    expect(pickedInbox(now, [])).toBe('Lists/Groceries.md')
     vi.stubGlobal('__ORDEN_FORMER__', undefined)
     expect(formerSaid()).toBeNull()
   })
@@ -281,7 +275,6 @@ describe('carrying the former home', () => {
     expect(localStorage.getItem(HOME_CARRIED)).toBeNull()
     homes.said = [mac.base]
     await start()
-    expect(pickedInbox(mac.join(mac.base.to, 'Spaces', 'Work'), [])).toBe('Lists/Groceries.md')
   })
 
   test('waits for a later start when the app cannot say where the old home was', async () => {

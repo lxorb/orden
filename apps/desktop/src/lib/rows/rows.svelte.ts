@@ -1,17 +1,12 @@
 import type { Row } from '@orden/bases'
-import { isAccountInbox, isInboxPath } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'
 import type { SpaceLinks } from '@orden/scan/note'
-import { insideSpace, samePath } from '../space-paths'
+import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { readText } from '../workspace/in-turn'
-import '../inbox/start.svelte'
-import { INBOX } from './inbox'
-import { inboxNote } from './inbox-note'
-import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
 import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
@@ -26,43 +21,20 @@ const store = new RowsStore({
   }),
   breathe,
   now: () => Date.now(),
-  own: (root) => (samePath(root, homeRoot() ?? '') ? [INBOX] : []),
   vault: isVault,
-  meta: (root, path) =>
-    isAccountInbox(path) ? null : (workspace.itemMeta.itemsOf(root)[path] ?? null),
-  list: (_root, path) => isInboxPath(path),
-  dated: (root, path, patch) => {
-    if (!isAccountInbox(path)) workspace.itemMeta.set(insideSpace(root, path), patch, root)
-  },
+  meta: (root, path) => workspace.itemMeta.itemsOf(root)[path] ?? null,
+  list: () => false,
 })
 
-links.hearSaves((path, content, arrived) => store.saved(path, content, !arrived))
+links.hearSaves((path, content) => store.saved(path, content))
 workspace.itemMeta.hear((path) => store.described(path))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
-
-if (!__EVEN_PLUGIN__) {
-  let moving: Promise<typeof import('./inbox-moving.svelte')> | null = null
-  store.watch(
-    (change) => void (moving ??= import('./inbox-moving.svelte')).then((one) => one.heard(change)),
-  )
-}
 
 $effect.root(() => {
   $effect(() => {
     const spaces = workspace.shownSpaces.map(({ root, name }) => ({ root, name }))
     untrack(() => store.spacesAre(spaces))
-  })
-  let home: string | null = null
-  $effect(() => {
-    const now = homeRoot()
-    untrack(() => {
-      const was = home
-      home = now
-      if (was === null || now === null || samePath(was, now)) return
-      store.again(was)
-      store.again(now)
-    })
   })
 })
 
@@ -85,15 +57,5 @@ export const rows = {
     const root = store.rootOf(row)
     if (root === null) return false
     return writeRow(workspace, insideSpace(root, row.path), row, change)
-  },
-
-  inbox(): Promise<string | null> {
-    return inboxNote()
-  },
-
-  inboxes(): { space: string; path: string }[] {
-    const home = homeRoot()
-    const space = workspace.shownSpaces.find((one) => home !== null && samePath(one.root, home))
-    return space ? [{ space: space.name, path: INBOX }] : []
   },
 }

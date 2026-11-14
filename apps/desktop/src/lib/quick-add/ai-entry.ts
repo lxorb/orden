@@ -3,7 +3,6 @@ import type { QuickFields } from '@orden/bases/language'
 import { isDate } from '@orden/markdown/task-line'
 import { complete } from '../ai/complete'
 import type { Message, Provider } from '../ai/providers'
-import { isPriority } from '../views/drop'
 import type { Entry } from './entry'
 
 const ASK =
@@ -35,8 +34,9 @@ export function entryFrom(reply: string, said: string, tags: readonly string[]):
   const fields: QuickFields = { tags: tags.filter((one) => named.includes(one)), remind: [] }
   if (typeof read.start === 'string' && isDate(read.start)) fields.due = read.start
   if (typeof read.deadline === 'string' && isDate(read.deadline)) fields.deadline = read.deadline
-  if (typeof read.priority === 'number' && isPriority(read.priority))
-    fields.priority = read.priority
+  if (typeof read.priority === 'number' && [1, 2, 3, 4, 5, 6].includes(read.priority)) {
+    fields.priority = read.priority as NonNullable<QuickFields['priority']>
+  }
   const text = typeof read.text === 'string' && read.text.trim() ? read.text.trim() : said
   return { text, fields }
 }

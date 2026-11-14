@@ -1,30 +1,25 @@
 import { describe, expect, test } from 'vitest'
 import { spokenTask, Today, type TodayHost } from './today'
 
-function host(found = true, moves: Record<string, string> = {}, takesBack = false) {
-  const ticked: [string, string, boolean][] = []
-  const backs: string[] = []
+function host(found = true) {
+  const ticked: [string, boolean][] = []
   let drawn = 0
   const answer: TodayHost = {
     load: () =>
       Promise.resolve([
-        { at: 'Inbox.md#0:a1', space: 'Home', text: 'Call Mum' },
-        { at: 'Work.md#3:b2', space: 'Work', text: 'Send the slides' },
-        { at: 'Shop.md#1:c3', space: 'Home', text: 'milk \\$3' },
+        { at: 'a1', text: 'Call Mum' },
+        { at: 'b2', text: 'Send the slides' },
+        { at: 'c3', text: 'milk \\$3' },
       ]),
-    tick: (at, space, done) => {
-      ticked.push([at, space, done])
-      const back = () => {
-        backs.push(at)
-        return Promise.resolve(takesBack)
-      }
-      return Promise.resolve(found ? { at: (done ? moves[at] : undefined) ?? at, back } : null)
+    tick: (id, done) => {
+      ticked.push([id, done])
+      return Promise.resolve(found)
     },
     redraw: () => {
       drawn += 1
     },
   }
-  return { answer, ticked, backs, drawn: () => drawn }
+  return { answer, ticked, drawn: () => drawn }
 }
 
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -43,7 +38,7 @@ describe('today on the glasses', () => {
     expect(drawn()).toBe(1)
   })
 
-  test('a tap fills the box at once and ticks it in its note; a second tap opens it', async () => {
+  test('a tap fills the box at once and ticks the todo; a second tap unticks it', async () => {
     const { answer, ticked } = host()
     const today = new Today(answer)
     today.fresh()
@@ -54,50 +49,13 @@ describe('today on the glasses', () => {
     today.tick(id)
     await settled()
     expect(ticked).toEqual([
-      ['Work.md#3:b2', 'Work', true],
-      ['Work.md#3:b2', 'Work', false],
+      ['b2', true],
+      ['b2', false],
     ])
     expect(today.rows()[1]?.label).toBe('□ Send the slides')
   })
 
-  test('a second tap unticks the task where the tick left it, not the repeat it made', async () => {
-    const { answer, ticked } = host(true, { 'Work.md#3:b2': 'Work.md#4:b2' })
-    const today = new Today(answer)
-    today.fresh()
-    await settled()
-    const id = today.rows()[1]?.id ?? ''
-    today.tick(id)
-    today.tick(id)
-    await settled()
-    today.tick(id)
-    await settled()
-    expect(ticked).toEqual([
-      ['Work.md#3:b2', 'Work', true],
-      ['Work.md#4:b2', 'Work', false],
-      ['Work.md#4:b2', 'Work', true],
-    ])
-    expect(today.rows()[1]?.label).toBe('■ Send the slides')
-  })
-
-  test('a second tap takes the tick back whole when the note is as the tick left it', async () => {
-    const { answer, ticked, backs } = host(true, { 'Work.md#3:b2': 'Work.md#4:b2' }, true)
-    const today = new Today(answer)
-    today.fresh()
-    await settled()
-    const id = today.rows()[1]?.id ?? ''
-    today.tick(id)
-    today.tick(id)
-    await settled()
-    today.tick(id)
-    await settled()
-    expect(backs).toEqual(['Work.md#3:b2'])
-    expect(ticked).toEqual([
-      ['Work.md#3:b2', 'Work', true],
-      ['Work.md#3:b2', 'Work', true],
-    ])
-  })
-
-  test('a task the note no longer has is put back', async () => {
+  test('a todo that is gone is put back', async () => {
     const { answer } = host(false)
     const today = new Today(answer)
     today.fresh()
@@ -107,7 +65,7 @@ describe('today on the glasses', () => {
     expect(today.rows()[0]?.label).toBe('□ Call Mum')
   })
 
-  test('a task that could not be ticked, the note not written, is put back too', async () => {
+  test('a todo that could not be ticked is put back too', async () => {
     const { answer, drawn } = host()
     const today = new Today({ ...answer, tick: () => Promise.reject(new Error('offline')) })
     today.fresh()
@@ -124,17 +82,17 @@ describe('today on the glasses', () => {
   })
 
   test('opened twice quickly, it shows what the later reading found, whichever answers last', async () => {
-    const answers: ((tasks: { at: string; space: string; text: string }[]) => void)[] = []
+    const answers: ((tasks: { at: string; text: string }[]) => void)[] = []
     const today = new Today({
       load: () => new Promise((done) => answers.push(done)),
-      tick: () => Promise.resolve(null),
+      tick: () => Promise.resolve(false),
       redraw: () => undefined,
     })
     today.fresh()
     today.fresh()
-    answers[1]?.([{ at: 'Inbox.md#0:a1', space: 'Home', text: 'Now' }])
+    answers[1]?.([{ at: 'a1', text: 'Now' }])
     await settled()
-    answers[0]?.([{ at: 'Inbox.md#0:b2', space: 'Home', text: 'Before' }])
+    answers[0]?.([{ at: 'b2', text: 'Before' }])
     await settled()
     expect(today.rows().map((one) => one.label)).toEqual(['□ Now'])
   })

@@ -803,17 +803,7 @@ function spaceCommands(): Command[] {
                   const { exportSpace } = await import('./internal/export')
                   const items = workspace.itemMeta.itemsOf(space.root)
                   const metaOf = (path: string) => items[path] ?? null
-                  const { homeRoot } = await import('./rows/home.svelte')
-                  const home = homeRoot()
-                  const inbox =
-                    home !== null && samePath(home, space.root)
-                      ? await (
-                          await import('./inbox/account.svelte')
-                        ).accountInbox
-                          .text()
-                          .catch(() => null)
-                      : null
-                  await exportSpace(space.root, space.name, metaOf, inbox)
+                  await exportSpace(space.root, space.name, metaOf)
                 },
                 'export-space',
               ),

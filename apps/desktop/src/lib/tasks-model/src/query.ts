@@ -23,16 +23,15 @@ export function dayOf(at: number | Date = new Date()): string {
   return `${date.getFullYear()}-${month}-${day}`
 }
 
-export const inSpace = (todo: Todo, filter: Pick<Filter, 'onlySpace' | 'space'>): boolean =>
+const inSpace = (todo: Todo, filter: Pick<Filter, 'onlySpace' | 'space'>): boolean =>
   !filter.onlySpace || todo.space === filter.space
 
-export const started = (todo: Todo, today: string): boolean =>
-  todo.start === null || todo.start <= today
+const started = (todo: Todo, today: string): boolean => todo.start === null || todo.start <= today
 
-export const hasLabel = (todo: Todo, label: string | null): boolean =>
+const hasLabel = (todo: Todo, label: string | null): boolean =>
   label === ALL_LABELS || todo.labels.includes(label)
 
-export const stillShown = (todo: Todo, today: string): boolean =>
+const stillShown = (todo: Todo, today: string): boolean =>
   !todo.done || (todo.doneAt !== null && dayOf(todo.doneAt) === today)
 
 export function shownTodos(todos: readonly Todo[], filter: Filter): Todo[] {

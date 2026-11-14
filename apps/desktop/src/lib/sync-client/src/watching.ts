@@ -5,7 +5,7 @@ import {
   unwatchSpaces,
   watchSpaces,
 } from '../../space-watch'
-import { carriedOwn } from '@orden/bases/inbox'
+import { isOwnFile as carriedOwn } from '@orden/sync-core'
 import { keptShaped } from '../../internal/roots'
 import { hearInternal, listInternal, mountedFor } from '../../internal/watch'
 import { inForeignCopy } from '@orden/sync-core'

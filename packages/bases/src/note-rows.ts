@@ -1,10 +1,8 @@
 import { findLinks } from '@orden/markdown/links'
 import { tagsIn } from '@orden/markdown/task-line'
-import { INBOX_NAME, isInboxPath } from './inbox'
 import { noteValues } from './note-values'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'
-import { DATE_KEYS } from './done-dates'
 import type { FileInfo, Row, Value } from './types'
 
 export interface NoteRead {
@@ -17,24 +15,13 @@ export interface NoteRead {
   meta?: Readonly<Record<string, string>> | null | undefined
 }
 
-function withoutDateKeys(meta: NoteRead['meta']): Record<string, string> {
-  const out: Record<string, string> = {}
-  for (const [name, value] of Object.entries(meta ?? {}))
-    if (!DATE_KEYS.has(name)) out[name] = value
-  return out
-}
-
 export function rowsOf(space: string, read: NoteRead): Row[] {
-  const inbox = isInboxPath(read.path)
-  const file = inbox
-    ? { ...fileInfo(read), name: `${INBOX_NAME}.md`, basename: INBOX_NAME }
-    : fileInfo(read)
+  const file = fileInfo(read)
   const note: Record<string, Value> = {
     ...(read.front === null ? {} : noteValues(read.front)),
-    ...withoutDateKeys(read.meta),
+    ...(read.meta ?? {}),
   }
   const tasks = taskRowsOf(space, read.path, read.tasks, file, note)
-  if (inbox) return tasks
   const own: Row = { kind: 'note', space, path: read.path, file, note }
   return [own, ...tasks]
 }

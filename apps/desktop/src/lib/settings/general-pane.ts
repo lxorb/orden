@@ -7,7 +7,7 @@ import { turnProtection } from '../protect/protection-setting'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unlocked.svelte'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
-import { hasTray, residency } from '../reminders/residency.svelte'
+import { hasTray, residency } from '../residency.svelte'
 import { tabCycle } from '../tab-cycle.svelte'
 import { fitTabs, iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
@@ -219,8 +219,8 @@ function remindersGroup(): Group {
               kind: 'switch',
               key: 'general.stayInTray',
               label: 'Stay in the tray',
-              hint: 'Keeps Orden running in the tray after its window closes, so reminders still ring.',
-              words: ['tray', 'background', 'menu bar', 'close', 'quit', 'reminder'],
+              hint: 'Keeps Orden running in the tray after its window closes, so chat notices still arrive.',
+              words: ['tray', 'background', 'menu bar', 'close', 'quit'],
               get: () => residency.on,
               set: (on) => residency.set(on),
             },

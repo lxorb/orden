@@ -360,7 +360,7 @@ describe('a note saved keeps the index up to date', () => {
   test('a note under a hidden name stays out of the index, as a full scan leaves it', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': '# One' })
 
-    links.noteSaved(at('.orden-inbox.md'), '- [ ] call about [[Plan]] #work')
+    links.noteSaved(at('.hidden.md'), '- [ ] call about [[Plan]] #work')
     links.noteSaved(at('.drafts/Two.md'), 'see [[Plan]] #work')
     links.noteSaved(at('.board.canvas'), '{"nodes":[]}')
     links.fileWritten(ROOT, '.cache/picture.png')
@@ -382,7 +382,7 @@ describe('a note saved keeps the index up to date', () => {
 
     await links.follow({
       op: 'moved',
-      from: at('.orden-inbox.md'),
+      from: at('.hidden.md'),
       to: at('Inbox.md'),
       kind: 'file',
       root: ROOT,

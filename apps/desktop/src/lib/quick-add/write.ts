@@ -1,38 +1,30 @@
-import { changeOf } from '../search/replace'
-import { readIfThere, toldIfUnreadable } from '../read-if-there'
-import { workspace } from '../workspace.svelte'
-import { noteText, replaceInNotes } from '../workspace/note-text'
-import { type Entry, linesOf, placeIn } from './entry'
+import { priorityOf } from '../task-actions'
+import { todos, type Todo } from '../tasks-model/src/api'
+import type { Entry } from './entry'
 
 let adding: Promise<unknown> = Promise.resolve()
 
 export async function addTask(
   entry: Entry,
   options: { open?: boolean } = {},
-): Promise<{ path: string; line: number } | null> {
+): Promise<Todo | null> {
   const added = adding.then(() => addOne(entry))
   adding = added.catch(() => undefined)
   const landed = await added
   if (landed && options.open) {
-    await workspace.open(landed.path)
-    workspace.goto = { ...landed }
+    const { showTodos } = await import('../todos-entry')
+    await showTodos()
   }
   return landed
 }
 
-async function addOne(entry: Entry): Promise<{ path: string; line: number } | null> {
-  const path = await (await import('../rows/inbox-note')).inboxNote()
-  if (path === null) return null
-
-  let before: string
-  try {
-    before = (await noteText(workspace, path)) ?? (await readIfThere(path)) ?? ''
-  } catch (error) {
-    return toldIfUnreadable(error)
-  }
-  const placed = placeIn(before, linesOf(entry))
-  await replaceInNotes(workspace, [
-    changeOf(path, before, [{ from: placed.at, to: placed.at, insert: placed.insert }]),
-  ])
-  return { path, line: placed.line }
+async function addOne(entry: Entry): Promise<Todo | null> {
+  const made = await todos.add({
+    title: entry.text,
+    description: entry.description ?? '',
+    labels: entry.fields.tags,
+    deadline: entry.fields.deadline ?? entry.fields.due ?? null,
+    priority: priorityOf(entry.fields.priority),
+  })
+  return made.ok ? made.value : null
 }

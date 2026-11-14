@@ -41,10 +41,7 @@ export async function readingHtml(
 
   const [fence, embed] = await Promise.all([
     prepareFences(note.text, scheme, {
-      query: async (code, language) =>
-        language === 'tasks' && !__EVEN_PLUGIN__
-          ? (await import('../tasks-block')).tasksRowsHtml(code, 'Nothing found', root, !trusted)
-          : queryRowsHtml(code, 'Nothing found', root),
+      query: (code) => queryRowsHtml(code, 'Nothing found', root),
       base: true,
     }),
     prepareEmbeds(note.text, (target) => links.embedNote(target, note.path)),

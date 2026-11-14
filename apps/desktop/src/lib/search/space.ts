@@ -36,9 +36,6 @@ export async function searchSpace(
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })
 
-  const inbox = await (await import('./inbox')).inboxHits(root, query, limit)
-  if (inbox.length) onFound({ hits: inbox, loose: [] })
-
   if (!isNative) {
     const [{ searchInWorker }, { keptAway }] = await Promise.all([
       import('../web/search-client'),

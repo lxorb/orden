@@ -1,4 +1,4 @@
-import { INBOX_PATH } from '@orden/bases/inbox'
+import { OWN_FILE as INBOX_PATH } from '@orden/sync-core'
 import { fileBytes, sha256 } from '../../bytes'
 import { deviceName } from '../../device'
 import { keptShaped, mountOf } from '../../internal/roots'

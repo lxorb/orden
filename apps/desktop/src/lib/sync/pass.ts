@@ -1,4 +1,8 @@
-import { carriedOwn, INBOX_PATH, withTasksOf } from '@orden/bases/inbox'
+import {
+  isOwnFile as carriedOwn,
+  OWN_FILE as INBOX_PATH,
+  withBlocksOf as withTasksOf,
+} from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy, hash32, isEntryId } from '@orden/sync-core'

@@ -1,4 +1,3 @@
-import { isInboxPath } from '@orden/bases/inbox'
 import {
   type FileDrawing,
   type NoteIndex,
@@ -8,10 +7,8 @@ import {
   resolveRelative,
   type SpaceBlock,
   type SpaceTag,
-  type TaskHelp,
 } from '@orden/editor'
 import type { EmbeddedNote } from '@orden/markdown'
-import { door } from '@orden/markdown/door'
 import { oneEdit } from '@orden/markdown/edits'
 import {
   blockIdOf,
@@ -94,21 +91,6 @@ interface Held {
   notes: ScannedNote[]
   files: readonly string[]
 }
-
-function taskLines(): TaskHelp {
-  let help: TaskHelp | null = null
-  const fetchHelp = door(async () => {
-    help = (await import('./quick-add/task-help')).TASK_HELP
-    return help
-  })
-  return {
-    tick: async (note, line) => (await fetchHelp()).tick(note, line),
-    pick: (...asked) => void fetchHelp().then((one) => one.pick(...asked)),
-    dayAtEnd: (text) => (help ? help.dayAtEnd(text) : (void fetchHelp(), null)),
-  }
-}
-
-const TASKS = __EVEN_PLUGIN__ ? undefined : taskLines()
 
 let queryBlock: typeof import('./query-block') | null = null
 
@@ -720,8 +702,7 @@ class Links {
       this.handed.clear()
     }
 
-    const listed = path !== null && isInboxPath(path)
-    const key = `${listed ? 'listed\n' : ''}${stranger ? 'stranger\n' : (path ?? '')}`
+    const key = stranger ? 'stranger\n' : (path ?? '')
     const known = this.handed.get(key)
     if (known) return known
 
@@ -734,18 +715,11 @@ class Links {
       ...(this.vault ? { dueReads: 'deadline' as const } : {}),
       tags: this.spaceTags,
       searchBlocks: (text, most) => this.searchBlocks(text, most),
-      query: async (code, language) => {
+      query: async (code) => {
         queryBlock ??= await import('./query-block')
-        if (language === 'tasks' && !__EVEN_PLUGIN__) {
-          const { tasksRowsHtml } = await import('./tasks-block')
-          const { trustsHtmlAt } = await import('./sharing.svelte')
-          const here = path === null || this.root === null ? null : insideSpace(this.root, path)
-          return tasksRowsHtml(code, 'Nothing found', null, stranger || !trustsHtmlAt(here))
-        }
         return queryBlock.queryRowsHtml(code, 'Nothing found')
       },
       pressRow: (target) => queryBlock?.pressRow(target) ?? false,
-      tasks: listed ? TASKS : undefined,
       render: (source, from) => this.shownHtml(source, from),
       drawFile: (card, file) => this.drawnFile(card, file),
       mountBase: (host, ask) => this.mountedBase(host, ask, path, stranger),
@@ -1331,7 +1305,7 @@ class Links {
             const edit = oneEdit(before, words)
             if (late && edit) late.edited([edit], words)
             await keepIt(before)
-            await writeInTurn(target, words, false, before)
+            await writeInTurn(target, words, false)
             return words
           }).catch(refused)
       if (after === null) continue
@@ -1429,7 +1403,7 @@ class Links {
         await writeEdited(doc, absolute, after, knew, keepIt)
       } else {
         await keepIt()
-        await writeInTurn(absolute, after, false, before)
+        await writeInTurn(absolute, after, false)
       }
 
       this.noteSaved(absolute, after)

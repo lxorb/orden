@@ -1,33 +1,20 @@
-import { ACCOUNT_INBOX, type Base, type Context, isInboxPath, type Row } from '@orden/bases'
+import type { Base, Context, Row } from '@orden/bases'
 import { readable, seen } from './guarded'
 import {
   AgentError,
   clockOf,
   editedBase,
-  editedTask,
-  listTasks as listed,
-  movedTask,
-  newTask,
-  quickWords,
   noteName,
-  placedEdit,
-  placeIn,
   queryBase as queried,
-  readAt,
   readBase,
   rowPlace,
-  taskChange,
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
-import { appliedEdits } from '@orden/markdown/edits'
-import { taskLine } from '@orden/markdown/task-edits'
-import { taskHash } from '@orden/bases'
-import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
-import { modes } from '../../modes.svelte'
+import type { AgentAnswer } from '../../automation/caller'
 import { onDisk as there } from '../../on-disk'
 import { reachedByOthersIn } from '../../sharing.svelte'
-import { folderOf, nameOf, rootedAt } from '../../space-paths'
+import { folderOf, nameOf } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
@@ -35,21 +22,12 @@ import { DocError, notes } from '../docs'
 import { asked } from './asks'
 import { inTurn } from '../turns'
 import { stopWatch } from './stopping'
-import { nowOf } from '../../views/days'
-import { guardedAt } from '../../views/guard'
-import { withComment } from '../../views/task-body'
-import { type Call, done, flag, maybe, need, short, writerOf } from './call'
-import { at, made, madeOrChanged, noteOf } from './notes'
+import { guardedAt } from './guard'
+import { isPriority, type Priority, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+import { type Call, done, flag, maybe, need, writerOf } from './call'
+import { at, made, noteOf } from './notes'
 import { Refused } from './problem'
-import {
-  judgedForWriting,
-  onDisk,
-  type Place,
-  placeFor,
-  placeOf,
-  reachable,
-  writableAt,
-} from './spaces'
+import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } from './spaces'
 
 async function rowsStore() {
   const { rows } = await import('../../rows/rows.svelte')
@@ -67,13 +45,6 @@ function refused(error: unknown): never {
 async function contextOf(): Promise<Context> {
   const { account } = await import('../../account.svelte')
   return { ...clockOf(new Date()), ...(account.name ? { me: account.name } : {}) }
-}
-
-function spacesOf(call: Call): Place[] {
-  const named = maybe(call, 'space')
-  if (named !== null) return [placeFor(call, named)]
-  const open = workspace.activeSpace?.id
-  return reachable(call).map((space) => ({ space, open: space.id === open }))
 }
 
 function sourceOf(places: readonly Place[]): string | null {
@@ -109,36 +80,114 @@ async function baseToAnswer(call: Call, name = 'path') {
   return { ...found, base }
 }
 
-export async function listTasks(call: Call): Promise<AgentAnswer> {
-  const places = spacesOf(call)
-  const rows = await rowsStore()
-  const all = places.flatMap((place) =>
-    rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path))),
-  )
-  const view = maybe(call, 'view')
-  const base = view && /\.base$/i.test(view) ? await baseToAnswer(call, 'view') : null
-  const names = new Set(
-    all.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
-  )
-  const reached = new Set(places.map((place) => place.space.name))
+async function model() {
+  return import('../../tasks-model/src/api')
+}
 
-  try {
-    const answer = listed(
-      all,
-      {
-        ...(base ? { base: { base: base.base } } : view ? { view } : {}),
-        ...(maybe(call, 'filter') ? { filter: short('filter', need(call, 'filter')) } : {}),
-        ...(typeof call.args.limit === 'number' ? { limit: call.args.limit } : {}),
-        inboxes: rows.inboxes().filter((one) => reached.has(one.space)),
-        undated: modes.undatedInToday,
-        isNote: (name) => names.has(name.toLowerCase()),
-      },
-      await contextOf(),
-    )
-    return done(answer, sourceOf(places))
-  } catch (error) {
-    refused(error)
+function todoOut(todo: Todo) {
+  return {
+    id: todo.id,
+    title: todo.title,
+    done: todo.done,
+    labels: todo.labels,
+    space: todo.space,
+    start: todo.start,
+    deadline: todo.deadline,
+    priority: todo.priority,
+    ...(todo.description ? { description: todo.description } : {}),
+    ...(todo.subtasks.length ? { subtasks: todo.subtasks } : {}),
   }
+}
+
+function spaceIdOf(call: Call): string | null {
+  const named = maybe(call, 'space')
+  if (named !== null) return placeFor(call, named).space.id
+  return workspace.activeSpace?.id ?? null
+}
+
+function textsOf(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  return value.filter((one): one is string => typeof one === 'string')
+}
+
+function dayArg(call: Call, name: string): string | null | undefined {
+  const value = call.args[name]
+  if (value === undefined) return undefined
+  if (value === null || value === '') return null
+  if (typeof value !== 'string')
+    throw new Refused('bad_arguments', `${name} is a day as YYYY-MM-DD`)
+  return value
+}
+
+function priorityArg(call: Call): Priority | undefined {
+  const value = call.args.priority
+  if (value === undefined) return undefined
+  if (!isPriority(value)) throw new Refused('bad_arguments', 'priority is 0, 1, 2 or 3')
+  return value
+}
+
+type Mutable<T> = { -readonly [K in keyof T]: T[K] }
+
+function patchOf(call: Call): TodoPatch {
+  const patch: Mutable<TodoPatch> = {}
+  const title = maybe(call, 'title') ?? maybe(call, 'text')
+  if (title !== null) patch.title = title
+  const description = maybe(call, 'description')
+  if (description !== null) patch.description = description
+  const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
+  if (labels !== undefined) patch.labels = labels
+  if ('space' in call.args) patch.space = spaceIdOf(call)
+  const start = dayArg(call, 'start')
+  if (start !== undefined) patch.start = start
+  const deadline = dayArg(call, 'deadline') ?? dayArg(call, 'due')
+  if (deadline !== undefined) patch.deadline = deadline
+  const priority = priorityArg(call)
+  if (priority !== undefined) patch.priority = priority
+  if ('done' in call.args) patch.done = flag(call, 'done')
+  return patch
+}
+
+export async function listTasks(call: Call): Promise<AgentAnswer> {
+  const { todos, shownTodos, sortedTodos, dayOf } = await model()
+  const only = maybe(call, 'space') !== null
+  const label = maybe(call, 'label')
+  const limit = typeof call.args.limit === 'number' ? Math.max(1, call.args.limit) : 50
+  const shown = sortedTodos(
+    shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
+    'deadline',
+  ).filter((one) => flag(call, 'done') || !one.done)
+  return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
+}
+
+export async function addTask(call: Call): Promise<AgentAnswer> {
+  const { todos } = await model()
+  const title = maybe(call, 'title') ?? need(call, 'text')
+  const question = await asked(call, null, `Add the todo ${title}`)
+  if (question) return question
+  const patch = patchOf(call)
+  const made = await todos.add({
+    ...patch,
+    title,
+    space: 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null),
+  })
+  if (!made.ok) throw new Refused('bad_arguments', made.error.message)
+  return done(todoOut(made.value))
+}
+
+export async function updateTask(call: Call): Promise<AgentAnswer> {
+  const { todos } = await model()
+  const id = maybe(call, 'id') ?? need(call, 'at')
+  const was = todos.todo(id)
+  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
+  const question = await asked(call, null, `Change the todo ${was.title}`)
+  if (question) return question
+  const kept = await todos.update(id, patchOf(call))
+  if (!kept.ok) throw new Refused('bad_arguments', kept.error.message)
+  return done(todoOut(kept.value))
+}
+
+function writableNote(call: Call, path: string) {
+  return noteOf({ ...call, args: { ...call.args, tab: null, path } }, true)
 }
 
 async function rewritten<T>(
@@ -157,134 +206,6 @@ async function rewritten<T>(
       if (!(error instanceof DocError && error.code === 'rev_changed') || tries > 2) throw error
     }
   }
-}
-
-function writableNote(call: Call, path: string) {
-  return noteOf({ ...call, args: { ...call.args, tab: null, path } }, true)
-}
-
-async function inboxPlace(call: Call, place: Place): Promise<Place> {
-  if (maybe(call, 'space') !== null || threadSpaceOf(call.caller)) return place
-  const { homeRoot } = await import('../../rows/home.svelte')
-  const root = homeRoot()
-  const home = rootedAt(reachable(call), root)
-  return home ? { space: home, open: home.id === workspace.activeSpace?.id } : place
-}
-
-export async function addTask(call: Call): Promise<AgentAnswer> {
-  const front = placeOf(call)
-  const { rows } = await import('../../rows/rows.svelte')
-  const { region } = await import('../../region')
-  const { fields } = (() => {
-    try {
-      return newTask(call.args, quickWords([region()], new Date()))
-    } catch (error) {
-      refused(error)
-    }
-  })()
-  const place = await inboxPlace(call, front)
-  const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? ACCOUNT_INBOX
-  const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, inbox)
-  const under = maybe(call, 'under') ?? undefined
-  const line = taskLine(fields)
-
-  const question = await asked(call, null, `Add a task to ${note.relative}`)
-  if (question) return question
-
-  const hash = taskHash(fields.text)
-  const placedAt = await madeOrChanged(
-    note.place,
-    note.relative,
-    async () => {
-      const placed = placeIn('', [line], under)
-      await made(note.place, note.relative, appliedEdits('', [placedEdit(placed)]), null)
-      return placed.line
-    },
-    () =>
-      rewritten(call, note, (text) => {
-        const placed = placeIn(text, [line], under)
-        return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
-      }),
-  )
-  return done({ at: `${note.relative}#${placedAt}:${hash}`, space: place.space.name })
-}
-
-export async function updateTask(call: Call): Promise<AgentAnswer> {
-  const place = placeOf(call)
-  const anchor = (() => {
-    try {
-      return readAt(call.args.at)
-    } catch (error) {
-      refused(error)
-    }
-  })()
-  if (!isInboxPath(anchor.path))
-    throw new Refused('bad_arguments', `${anchor.path} is a note: its checkboxes are not to-dos`)
-  const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, anchor.path)
-  const moveTo = call.args.move_to
-  const ticking = 'done' in call.args ? flag(call, 'done') : undefined
-  const change = (() => {
-    try {
-      return taskChange(call.args)
-    } catch (error) {
-      refused(error)
-    }
-  })()
-
-  const question = await asked(call, null, `Change a task in ${note.relative}`)
-  if (question) return question
-
-  const { today } = clockOf(new Date())
-  const comment = typeof call.args.comment === 'string' ? call.args.comment.trim() : ''
-  try {
-    let said = await rewritten(call, note, (text) => {
-      const edited = editedTask(
-        text,
-        place.space.name,
-        note.relative,
-        anchor,
-        change,
-        ticking,
-        today,
-      )
-      const commented = comment
-        ? withComment(edited.text, readAt(edited.at), comment, nowOf(new Date()).slice(0, 16))
-        : null
-      return {
-        text: commented ?? edited.text,
-        said: { at: edited.at, ...(edited.next ? { next: edited.next } : {}) },
-      }
-    })
-    if (moveTo !== undefined && moveTo !== null) {
-      said = { ...said, ...(await moved(call, place, note, readAt(said.at), moveTo)) }
-    }
-    return done({ ...said, space: place.space.name })
-  } catch (error) {
-    refused(error)
-  }
-}
-
-async function moved(
-  call: Call,
-  place: Place,
-  from: ReturnType<typeof noteOf>,
-  anchor: { line: number; hash: string },
-  moveTo: unknown,
-): Promise<{ at: string }> {
-  if (typeof moveTo !== 'object' || moveTo === null) {
-    throw new Refused('bad_arguments', 'move_to is {under?}')
-  }
-  const { under } = moveTo as { under?: unknown }
-  const heading = typeof under === 'string' && under.trim() ? under.trim() : undefined
-  const line = await rewritten(call, from, (text) => {
-    const result = movedTask(
-      { text, space: place.space.name, path: from.relative, anchor },
-      null,
-      heading,
-    )
-    return { text: result.source, said: result.line }
-  })
-  return { at: `${from.relative}#${line}:${anchor.hash}` }
 }
 
 export async function queryBase(call: Call): Promise<AgentAnswer> {

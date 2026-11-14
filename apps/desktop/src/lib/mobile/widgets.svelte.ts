@@ -2,7 +2,7 @@ import { shownWords } from '@orden/markdown/escapes'
 import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { afterQuiet } from '../timing'
-import { day } from '../views/day.svelte'
+import { todos } from '../tasks-model/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 import { isTile } from '../workspace/bookmarks.svelte'
 import { frameWord, method, wordSaid } from './bridge'
@@ -94,21 +94,16 @@ export function watchWidgets(): () => void {
 
   const read = async () => {
     const { listed } = await import('../task-actions')
-    const tasks = (await listed()).tasks
-    today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.name === space)?.root)
+    const tasks = listed().tasks
+    today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.id === space)?.root)
   }
   const reread = afterQuiet(() => void read(), 600)
-  let unwatch: () => void = () => undefined
-  void import('../rows/rows.svelte').then(({ rows }) => {
-    unwatch = rows.watch(() => {
-      reread()
-    })
-    void read()
-  })
+  void read()
 
   const stop = $effect.root(() => {
     $effect(() => {
-      if (!workspace.protection.seen || !day.today) return
+      void todos.todos
+      if (!workspace.protection.seen) return
       reread()
     })
     $effect(() => {
@@ -133,7 +128,6 @@ export function watchWidgets(): () => void {
   return () => {
     gone = true
     reread.cancel()
-    unwatch()
     stop()
   }
 }
