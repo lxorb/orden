@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Goal, Part, Turn } from '../chat/types'
+import type { Goal, Part, Turn } from '../../ai-providers/src/chat/types'
 import { verdictIn, type Verdict } from './evaluate'
 import {
   fatal,

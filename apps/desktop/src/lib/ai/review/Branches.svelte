@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Thread } from '../chat/types'
+  import type { Thread } from '../../ai-providers/src/api'
   import { forkAt, switchBranch } from './branches'
   import type { ReviewPanel } from './review.svelte'
 

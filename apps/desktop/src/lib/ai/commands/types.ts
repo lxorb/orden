@@ -1,6 +1,6 @@
-import type { Limit } from '../local/heard'
-import type { Provider } from '../providers'
-import type { Command, Effort, Mode, Stop, Thread, Turn, Usage } from '../chat/types'
+import type { Limit } from '../../ai-providers/src/api'
+import type { Provider } from '../../ai-providers/src/api'
+import type { Command, Effort, Mode, Stop, Thread, Turn, Usage } from '../../ai-providers/src/api'
 
 export interface Once {
   mode?: Mode

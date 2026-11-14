@@ -7,7 +7,10 @@ vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../workspace.svelte', () => ({
   workspace: { panelTab: null, panes: { focusedId: '' }, activeSpace: null, offers: () => true },
 }))
-vi.mock('./store.svelte', () => ({ ai: { providerFor: () => ({ id: 'one' }) } }))
+vi.mock('../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../ai-providers/src/api')>()),
+  ai: { providerFor: () => ({ id: 'one' }) },
+}))
 vi.mock('./sidebar/around', () => ({
   noteInFront: () => null,
   selectionHere: () => ({ text: '', picked: null }),

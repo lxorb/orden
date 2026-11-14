@@ -10,7 +10,8 @@ import { accountKeyringOf, cursorOf, keepAccountKeyring, keepCursor } from './sy
 
 const fake = vi.hoisted(() => ({ secrets: new Map<string, string>() }))
 
-vi.mock('../../ai/keys', () => ({
+vi.mock('../../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/api')>()),
   keysAreGuarded: () => true,
   readSecret: (id: string) => Promise.resolve(fake.secrets.get(id) ?? null),
   writeSecret: (id: string, secret: string) => {

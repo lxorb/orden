@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../keys', () => ({ readKey: () => Promise.resolve('sk-test') }))
+vi.mock('../../ai-providers/src/keys', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/keys')>()),
+  readKey: () => Promise.resolve('sk-test'),
+}))
 
 const page = new EventTarget()
 vi.stubGlobal('addEventListener', page.addEventListener.bind(page))
@@ -12,8 +15,8 @@ const { body } = await import('./recorded/read')
 const { watching } = await import('./sends')
 const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
 
-import type { Provider } from '../providers'
-import type { EngineEvent, Mode, Thread, ToolOutput } from './types'
+import type { Provider } from '../../ai-providers/src/providers'
+import type { EngineEvent, Mode, Thread, ToolOutput } from '../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
 
 const PROVIDERS: Record<string, Provider> = {

@@ -4,6 +4,7 @@ import type { PreviewPorts } from './previews'
 import type { QuittingPorts } from './quitting'
 import type { SharingPorts } from './sharing'
 import type { SyncPorts } from './sync-client'
+import type { TerminalPorts } from './terminal'
 import type { ThemePorts } from './theme'
 import type { VoicePorts } from './voice'
 import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
@@ -13,6 +14,7 @@ export type PortMap = ChatPorts &
   QuittingPorts &
   SharingPorts &
   SyncPorts &
+  TerminalPorts &
   ThemePorts &
   VoicePorts &
   WebPorts

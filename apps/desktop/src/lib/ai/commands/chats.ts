@@ -1,6 +1,6 @@
 import { chatsOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/api'
 import type { Host } from './host'
 import type { Attached, Panel } from './types'
 

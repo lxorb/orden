@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Mode } from '../modes'
+  import type { Mode } from '../../ai-providers/src/api'
 
   const { mode }: { mode: Mode } = $props()
 

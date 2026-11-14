@@ -9,8 +9,7 @@ import {
   invoke,
   windows,
 } from '../../platform/src/api'
-import { FIRST_MODE, modeIn } from '../modes'
-import { isSessionState, type SessionState } from '../session-state'
+import { FIRST_MODE, modeIn, isSessionState, type SessionState } from '../../ai-providers/src/api'
 import { isEffort } from './effort'
 import type {
   Compaction,
@@ -24,7 +23,7 @@ import type {
   ToolState,
   Turn,
   Usage,
-} from './types'
+} from '../../ai-providers/src/api'
 import { noUsage } from './usage'
 
 const WORDS = 2_000

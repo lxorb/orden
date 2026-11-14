@@ -79,9 +79,9 @@ const {
   unreadOf,
   writeThread,
 } = await import('./threads')
-const choices = await import('./choices')
+const choices = await import('../../ai-providers/src/chat/choices')
 
-import type { Thread } from './types'
+import type { Thread } from '../../ai-providers/src/chat/types'
 
 function had(): Thread {
   const thread = newThread('space-1', 'anthropic', 'claude-opus-5-5', 'high', 'full')

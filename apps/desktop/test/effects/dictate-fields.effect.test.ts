@@ -5,7 +5,7 @@ const world = vi.hoisted((): { provider: object | null } => ({
   provider: { id: 'p', kind: 'openai', name: 'OpenAI', model: '' },
 }))
 
-vi.mock('../../src/lib/ai/hears', () => ({ transcriberNow: () => world.provider }))
+vi.mock('../../src/lib/ai-providers/src/api', () => ({ transcriberNow: () => world.provider }))
 vi.mock('../../src/lib/ai/quick.svelte', () => ({
   quick: {
     open: true,

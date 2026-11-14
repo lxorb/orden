@@ -323,7 +323,8 @@ describe('what hides a web page', () => {
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/src/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
     'lib/ai/sidebar/Composer.svelte': "the AI's model or context, over its composer",
-    'lib/ai/vault/VaultApprove.svelte': 'another of your devices asking for your AI accounts',
+    'lib/ai-providers/src/vault/VaultApprove.svelte':
+      'another of your devices asking for your AI accounts',
     'lib/dictation/src/EngineChooser.svelte': "where dictation's voice may go, over its microphone",
     'lib/chat-kit/src/Float.svelte': "a chat's small layer: the emoji picker, the pins, the search",
     'lib/chats-client/src/view/Lightbox.svelte':

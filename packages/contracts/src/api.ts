@@ -128,6 +128,7 @@ export {
 export type { ChatNamesPort, ChatPorts } from './chats'
 export type { PandocPicture, PickedFile } from './files'
 export type { PreviewedTab, PreviewPorts, ScreenPreview, TerminalPreviewPort } from './previews'
+export type { TerminalLinesPort, TerminalPorts, TerminalShell } from './terminal'
 export type {
   EngineTaken,
   OfferedEngine,

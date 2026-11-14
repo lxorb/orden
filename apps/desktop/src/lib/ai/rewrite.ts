@@ -1,4 +1,4 @@
-import type { Message } from './providers'
+import type { Message } from '../ai-providers/src/api'
 
 export type Verb = 'shorter' | 'longer' | 'grammar' | 'translate'
 

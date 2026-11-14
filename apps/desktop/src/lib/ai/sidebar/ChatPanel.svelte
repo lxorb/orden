@@ -7,7 +7,7 @@
   import { hearAgain } from '../../shortcuts/registry'
   import { shortcuts } from '../../shortcuts.svelte'
   import { dropOver, isTreeDrag } from '../../drag-paths'
-  import { ai } from '../store.svelte'
+  import { ai } from '../../ai-providers/src/api'
   import { following, toggleFollow } from '../review'
   import { agentOpen } from './agent-open.svelte'
   import { chat } from './chat.svelte'

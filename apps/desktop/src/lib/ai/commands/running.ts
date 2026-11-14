@@ -1,5 +1,5 @@
 import { readOutside } from '../chat/transcript'
-import type { Goal, GoalState, Thread } from '../chat/types'
+import type { Goal, GoalState, Thread } from '../../ai-providers/src/api'
 import { tokens } from './account'
 import { evaluatorMessages, shown, verdictIn } from './evaluate'
 import { goalAsk, guidance, newGoal, pursue, type GoalRoad } from './goal'

@@ -1,5 +1,5 @@
 import { linkedAnswer } from '../retrieve'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/api'
 import { sourcesFor } from './citations'
 
 function quoted(text: string): string {

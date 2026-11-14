@@ -1,6 +1,6 @@
 <script lang="ts">
   import { alwaysOffered, crateAnswers, sayAlways } from '../chat/approvals'
-  import type { Part, Thread } from '../chat/types'
+  import type { Part, Thread } from '../../ai-providers/src/api'
   import Asked from './Asked.svelte'
 
   const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } =

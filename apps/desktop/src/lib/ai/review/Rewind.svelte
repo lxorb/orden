@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { message } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
-  import type { Thread } from '../chat/types'
+  import type { Thread } from '../../ai-providers/src/api'
   import { checkpoints } from './changes'
   import type { Choice } from './plan'
   import { review, type ReviewPanel } from './review.svelte'

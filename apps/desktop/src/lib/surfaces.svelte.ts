@@ -223,7 +223,7 @@ export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 
 export const keysMovedNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no AI keys in the Even Realities plugin')
-  return import('./ai/KeysMoved.svelte')
+  return import('./ai-providers/src/api').then((one) => one.loadKeysMoved())
 })
 
 export const OUTSIDE = 'orden:outside-folder'
@@ -366,7 +366,7 @@ export async function warmDoors(): Promise<void> {
     () => joinSheet.ask(),
     __EVEN_PLUGIN__ ? undefined : () => undoToastNotice.ask(),
     __EVEN_PLUGIN__ ? undefined : () => import('./field-menu'),
-    () => import('./ai/store.svelte'),
+    () => import('./ai-providers/src/api'),
     () => import('./tab-strip/menu'),
     () => import('./tab-strip/strip-menu'),
     () => import('./row-menu'),

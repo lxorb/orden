@@ -1,14 +1,13 @@
 import { expect, test, vi } from 'vitest'
 
 const pieces = ['So \\', '( x^2 \\', ') and\n\\[', '\n\\frac{1}{2}\n\\', ']\n']
-vi.mock('./complete', () => ({
+vi.mock('../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../ai-providers/src/api')>()),
   complete: async (ask: { stream: (piece: string) => void }) => {
     for (const piece of pieces) ask.stream(piece)
     return pieces.join('')
   },
   wasStopped: () => false,
-}))
-vi.mock('./store.svelte', () => ({
   ai: { providerFor: () => ({ id: 'p', model: 'm' }) },
 }))
 

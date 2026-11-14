@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { ProviderKind } from '../providers'
+import type { ProviderKind } from '../../ai-providers/src/providers'
 import { availability } from './available'
 import { GOAL_CLEAR, ROWS, takenNames } from './table'
 

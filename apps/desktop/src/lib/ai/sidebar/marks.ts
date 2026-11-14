@@ -1,4 +1,4 @@
-import { type SessionState, STATE_WORDS } from '../session-state'
+import { type SessionState, STATE_WORDS } from '../../ai-providers/src/api'
 
 export interface Marks {
   unread: boolean

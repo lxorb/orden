@@ -39,7 +39,7 @@ providePort('quit.thread', {
     const threads = answering()
     if (!threads.length) return []
 
-    const { ai } = await import('./ai/store.svelte')
+    const { ai } = await import('./ai-providers/src/api')
     return threads.map((thread) => {
       const kind = ai.provider(thread.provider)?.kind
       const program = kind === 'claude-code' ? 'claude' : kind === 'codex' ? 'codex' : null

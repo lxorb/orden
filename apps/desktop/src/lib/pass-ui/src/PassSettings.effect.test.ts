@@ -2,7 +2,8 @@ import 'fake-indexeddb/auto'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../ai/keys', () => ({
+vi.mock('../../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/api')>()),
   keysAreGuarded: () => false,
   readSecret: () => Promise.resolve(null),
   writeSecret: () => Promise.resolve(),

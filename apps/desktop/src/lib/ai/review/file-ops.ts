@@ -2,7 +2,7 @@ import { busy } from '../../ui-kit/src/api'
 import { shownName, insideSpace, nameOf, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { FileAction } from '../../workspace/undo.svelte'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/api'
 import { type FileChange, spaceNamed } from './files'
 
 async function moved(root: string, from: string, to: string): Promise<void> {

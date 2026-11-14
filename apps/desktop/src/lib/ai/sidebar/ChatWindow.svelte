@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte'
   import { offsetOf, type Place, type Rows, windowFor } from '../../row-window'
   import { ListView } from '../../row-window.svelte'
-  import type { ThreadHead } from '../chat/types'
+  import type { ThreadHead } from '../../ai-providers/src/api'
 
   const {
     heads,

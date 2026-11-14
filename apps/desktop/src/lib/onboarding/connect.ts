@@ -1,6 +1,6 @@
 import { message } from '../ui-kit/src/api'
-import type { Account } from '../ai/accounts'
-import type { LocalKind, ProviderKind } from '../ai/providers'
+import type { Account } from '../ai-providers/src/api'
+import type { LocalKind, ProviderKind } from '../ai-providers/src/api'
 import { invoke, isDesktop, openExternal } from '../platform/src/api'
 import type { Compatible, Plan } from './catalog'
 
@@ -26,7 +26,7 @@ export function signInKind(plan: Plan): ProviderKind | null {
 }
 
 async function accountOf(kind: ProviderKind): Promise<Account> {
-  const { ai } = await import('../ai/store.svelte')
+  const { ai } = await import('../ai-providers/src/api')
   const held = ai.accounts.find((one) => one.kind === kind)
   if (held) return held
   const made = ai.add(kind)
@@ -35,11 +35,7 @@ async function accountOf(kind: ProviderKind): Promise<Account> {
 }
 
 async function withModel(account: Account): Promise<void> {
-  const [{ listModels }, { firstModel }, { ai }] = await Promise.all([
-    import('../ai/complete'),
-    import('../ai/providers'),
-    import('../ai/store.svelte'),
-  ])
+  const { listModels, firstModel, ai } = await import('../ai-providers/src/api')
   const first = firstModel(account.kind, await listModels(account))
   const now = ai.accounts.find((one) => one.id === account.id)
   if (now && !now.model && first) ai.update(account.id, { model: first })
@@ -48,7 +44,7 @@ async function withModel(account: Account): Promise<void> {
 export async function signInWith(plan: Plan): Promise<Connecting> {
   const kind = signInKind(plan)
   if (!kind) return { state: 'failed', said: 'Could not sign in.' }
-  const { plans } = await import('../ai/local/status.svelte')
+  const { plans } = await (await import('../ai-providers/src/api')).localCli()
 
   if (kind === 'chatgpt') {
     try {
@@ -77,14 +73,14 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
     void openExternal(INSTALL[local])
     return { state: 'failed', said: 'Not installed' }
   }
-  const { signIn } = await import('../ai/local/signin')
+  const { signIn } = await (await import('../ai-providers/src/api')).localCli()
   await signIn(local, standing.program, standing.home)
   plans.watch({ id: account.id, kind: local })
   return { state: 'waiting', id: account.id }
 }
 
 async function keyed(account: Account, typed: string): Promise<string | null> {
-  const { writeKey } = await import('../ai/keys')
+  const { writeKey } = await import('../ai-providers/src/api')
   try {
     await writeKey(account.id, typed.trim())
     await withModel(account)
@@ -105,7 +101,7 @@ export async function connectCompatible(
   provider: Compatible,
   typed: string,
 ): Promise<string | null> {
-  const { ai } = await import('../ai/store.svelte')
+  const { ai } = await import('../ai-providers/src/api')
   const made = ai.add('compatible')
   ai.update(made.id, { name: provider.name, baseUrl: provider.baseUrl ?? '' })
   await ai.written()

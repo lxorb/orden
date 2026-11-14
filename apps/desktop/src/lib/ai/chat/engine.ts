@@ -1,4 +1,9 @@
-import { type LocalKind, isLocal, type Provider, type ProviderKind } from '../providers'
+import {
+  type LocalKind,
+  isLocal,
+  type Provider,
+  type ProviderKind,
+} from '../../ai-providers/src/api'
 import { anthropic } from './anthropic'
 import { always, type Answers, crateAnswers } from './approvals'
 import { catalogue, unlisted, windowIn } from './catalogue'
@@ -25,7 +30,7 @@ import type {
   ToolOutput,
   Turn,
   Usage,
-} from './types'
+} from '../../ai-providers/src/api'
 import { added, estimate, shouldCompact } from './usage'
 import type { ToolDef, Wire } from './wire'
 

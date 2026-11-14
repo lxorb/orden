@@ -1,4 +1,4 @@
-import type { Api, Effort } from './types'
+import type { Api, Effort } from '../../ai-providers/src/api'
 
 export const SCALE: readonly Effort[] = [
   'auto',

@@ -2,7 +2,7 @@
   import { Hint } from '../ui-controls/src/api'
   import { Select } from '../ui-controls/src/api'
   import { viewport } from '../ui-kit/src/api'
-  import { type Mode, MODES, modeWord } from './modes'
+  import { type Mode, MODES, modeWord } from '../ai-providers/src/api'
   import {
     DEFAULT_ASK,
     rememberTaskAsk,

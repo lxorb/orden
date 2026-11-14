@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { anthropic, messagesOf, PER_MESSAGE_BETA } from './anthropic'
 import { events } from './recorded/read'
 import type { Ask } from './wire'
-import type { ModelInfo } from './types'
+import type { ModelInfo } from '../../ai-providers/src/chat/types'
 
 const MODEL: ModelInfo = {
   id: 'claude-opus-5-5',

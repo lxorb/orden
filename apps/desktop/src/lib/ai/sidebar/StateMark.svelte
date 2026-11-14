@@ -1,7 +1,12 @@
 <script lang="ts">
   import { accentColour } from '../../theme/src/api'
   import { theme } from '../../theme/src/api'
-  import { type SessionState, STATE_COLOURS, STATE_MARKS, STATE_WORDS } from '../session-state'
+  import {
+    type SessionState,
+    STATE_COLOURS,
+    STATE_MARKS,
+    STATE_WORDS,
+  } from '../../ai-providers/src/api'
 
   const { state }: { state: SessionState } = $props()
 </script>

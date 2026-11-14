@@ -1,5 +1,5 @@
 import { compactsAt, estimate, estimateText, filled } from '../chat/usage'
-import type { AutoCompact, Turn, Usage } from '../chat/types'
+import type { AutoCompact, Turn, Usage } from '../../ai-providers/src/api'
 
 export interface Bands {
   used: number

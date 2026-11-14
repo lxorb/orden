@@ -1,7 +1,6 @@
 import { workspace } from '../../workspace.svelte'
-import type { Effort, Mode, Thread } from '../chat/types'
-import { usable } from '../providers'
-import { ai } from '../store.svelte'
+import type { Effort, Mode, Thread } from '../../ai-providers/src/api'
+import { usable, ai } from '../../ai-providers/src/api'
 import { answerFor, type Helper, helpers } from './helpers.svelte'
 import type { Offered } from './route'
 

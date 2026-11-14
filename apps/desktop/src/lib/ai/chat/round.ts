@@ -1,4 +1,4 @@
-import { sseEvents } from '../stream'
+import { sseEvents } from '../../ai-providers/src/api'
 import {
   nearest,
   ordered,
@@ -10,7 +10,7 @@ import {
 } from './effort'
 import { learn } from './learned'
 import { Refused, refusalIn, request } from './request'
-import type { Effort, Part, Usage } from './types'
+import type { Effort, Part, Usage } from '../../ai-providers/src/api'
 import { type Answer, type Ask, record, type Wire } from './wire'
 
 export interface Round {

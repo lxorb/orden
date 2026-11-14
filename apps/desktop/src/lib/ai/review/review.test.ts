@@ -2,7 +2,7 @@ import { EditorState, type TransactionSpec } from '@orden/editor'
 import { reviewMarks, reviewMarksOf } from '@orden/editor/review'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { NoteDoc } from '../../workspace/documents.svelte'
-import type { Thread, Turn } from '../chat/types'
+import type { Thread, Turn } from '../../ai-providers/src/chat/types'
 
 const fake = vi.hoisted(() => ({
   desk: null as unknown as ReturnType<typeof import('../../agents/src/docs/test-desk').deskWith>,

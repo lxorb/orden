@@ -1,7 +1,7 @@
 import { isBoolean, keepJson, stored } from '../../platform/src/api'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/api'
 import { foundNamed, rootOfSpace, wordsOf } from './found'
-import { actsAlone } from '../modes'
+import { actsAlone } from '../../ai-providers/src/api'
 
 interface Kept {
   style?: string

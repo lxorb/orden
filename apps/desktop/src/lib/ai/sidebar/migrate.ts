@@ -1,5 +1,5 @@
 import { isRecord, isString } from '../../platform/src/api'
-import type { Thread, Turn } from '../chat/types'
+import type { Thread, Turn } from '../../ai-providers/src/api'
 import { newThread } from '../chat/threads'
 import type { Cited, Source } from './citations'
 

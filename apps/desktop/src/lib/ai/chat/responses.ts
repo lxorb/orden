@@ -1,4 +1,4 @@
-import { conversationUrl } from '../providers'
+import { conversationUrl } from '../../ai-providers/src/api'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
 import type { Call, Step } from './transcript'
@@ -15,7 +15,7 @@ import {
   type ToolDef,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from './types'
+import type { Part, ToolOutput, Usage } from '../../ai-providers/src/api'
 
 const NAMESPACE = 'orden'
 

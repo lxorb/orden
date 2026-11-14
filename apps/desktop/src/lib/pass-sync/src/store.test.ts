@@ -15,7 +15,8 @@ const fake = vi.hoisted(() => ({
   asked: [] as string[],
 }))
 
-vi.mock('../../ai/keys', () => ({
+vi.mock('../../ai-providers/src/api', async (original) => ({
+  ...(await original<typeof import('../../ai-providers/src/api')>()),
   keysAreGuarded: () => fake.guarded,
   readSecret: (id: string) => Promise.resolve(fake.secrets.get(id) ?? null),
   writeSecret: (id: string, secret: string) => {

@@ -3,7 +3,7 @@
   import { dur, slide } from '../../platform/src/api'
   import { insideSpace } from '../../platform/src/api'
   import { workspace } from '../../workspace.svelte'
-  import type { Thread } from '../chat/types'
+  import type { Thread } from '../../ai-providers/src/api'
   import type { Change, NoteChanges } from './changes'
   import type { FileChange } from './files'
   import { review } from './review.svelte'

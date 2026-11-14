@@ -1,7 +1,7 @@
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { isEffort } from '../chat/effort'
-import type { Effort } from '../chat/types'
-import { type Mode, modeIn } from '../modes'
+import type { Effort } from '../../ai-providers/src/api'
+import { type Mode, modeIn } from '../../ai-providers/src/api'
 
 export type NoteKind = 'command' | 'agent' | 'output-style'
 

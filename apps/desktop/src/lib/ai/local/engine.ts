@@ -12,34 +12,39 @@ import type {
   Thread,
   Turn,
   Usage,
-} from '../chat/types'
+} from '../../ai-providers/src/api'
 import { always, type Answers, crateAnswers } from '../chat/approvals'
-import { KIND_NAMES, type LocalKind, type Message, type Provider } from '../providers'
-import { agentsOf } from '../review/changes'
-import { PLANS } from './ask'
 import {
+  KIND_NAMES,
+  type Heard,
+  type Level,
+  type LocalKind,
+  type LocalRead as Read,
+  localCli,
+  type Message,
+  type Provider,
+  type Say,
+  type Session,
+} from '../../ai-providers/src/api'
+import { agentsOf } from '../review/changes'
+
+const {
   GOAL_CLEARED,
   goalHeld,
   goalMessage,
   goalSaid,
   goesOn,
-  QUIET,
-  startsItsOwnTurn,
-} from './goal'
-import type { Heard as Read } from './heard'
-import { modelsIn } from './models'
-import { promptFor } from './prompt'
-import { readerOf } from './readers'
-import {
   listedModels,
-  type Heard,
-  type Level,
+  modelsIn,
   openSession,
-  type Say,
-  type Session,
-} from './session'
-import { plans } from './status.svelte'
-import { troubleOf } from './trouble'
+  PLANS,
+  plans,
+  promptFor,
+  QUIET,
+  readerOf,
+  startsItsOwnTurn,
+  troubleOf,
+} = await localCli()
 
 export interface LocalSetup {
   provider(id: string): Provider | null

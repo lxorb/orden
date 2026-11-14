@@ -3,6 +3,7 @@
   "layer": "features",
   "dependsOn": [
     "contracts",
+    "ai-providers",
     "bases",
     "crate",
     "dictation",
@@ -15,9 +16,6 @@
   ],
   "pending": [
     "apps/desktop/src/lib/accelerator.ts",
-    "apps/desktop/src/lib/ai/complete.ts",
-    "apps/desktop/src/lib/ai/providers.ts",
-    "apps/desktop/src/lib/ai/store.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/internal/roots.ts",
     "apps/desktop/src/lib/internal/spaces.ts",

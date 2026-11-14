@@ -4,6 +4,7 @@
   "dependsOn": [
     "contracts",
     "accounts",
+    "ai-providers",
     "files-out",
     "markdown",
     "pass",
@@ -16,7 +17,6 @@
     "ui-kit"
   ],
   "pending": [
-    "apps/desktop/src/lib/ai/keys.ts",
     "apps/desktop/src/lib/icon-choice.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/own-window.ts",

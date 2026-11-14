@@ -1,6 +1,6 @@
 import { localDate, invoke } from '../../platform/src/api'
-import { isLocal, KIND_NAMES, type Provider } from '../providers'
-import type { Thread } from '../chat/types'
+import { isLocal, KIND_NAMES, type Provider } from '../../ai-providers/src/api'
+import type { Thread } from '../../ai-providers/src/api'
 import { filled } from '../chat/usage'
 import { engineFor } from '../chat/engine'
 
@@ -18,7 +18,7 @@ export function tokens(count: number): string {
 }
 
 async function plansOf() {
-  return (await import('../local/status.svelte')).plans
+  return (await (await import('../../ai-providers/src/api')).localCli()).plans
 }
 
 export async function status(thread: Thread | null, provider: Provider | null): Promise<string> {
@@ -109,7 +109,7 @@ export async function sign(provider: Provider | null, out: boolean): Promise<voi
     settings.show('ai')
     return
   }
-  const { signIn, signOut } = await import('../local/signin')
+  const { signIn, signOut } = await (await import('../../ai-providers/src/api')).localCli()
   await (out ? signOut : signIn)(account.kind, plan.program, plan.home)
   plans.watch(account)
 }

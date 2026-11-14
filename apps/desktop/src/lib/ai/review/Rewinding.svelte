@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
-  import type { Thread } from '../chat/types'
+  import type { Thread } from '../../ai-providers/src/api'
   import Rewind from './Rewind.svelte'
   import { review, type ReviewPanel } from './review.svelte'
 

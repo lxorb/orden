@@ -72,7 +72,7 @@ class Setup {
     ])
     this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
     if (this.phone) {
-      const { ai } = await import('../ai/store.svelte')
+      const { ai } = await import('../ai-providers/src/api')
       this.connected = ai.accounts.length > 0
     } else {
       this.here = await browsersHere()

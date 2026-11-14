@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
-import { transcriberNow } from '../../ai/hears'
-import type { Provider } from '../../ai/providers'
+import { transcriberNow } from '../../ai-providers/src/api'
+import type { Provider } from '../../ai-providers/src/api'
 import {
   method,
   forget,

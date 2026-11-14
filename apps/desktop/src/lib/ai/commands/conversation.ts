@@ -1,6 +1,6 @@
 import { copyText } from '../../ui-controls/src/api'
 import { workspace } from '../../workspace.svelte'
-import type { AutoCompact, Thread, Turn } from '../chat/types'
+import type { AutoCompact, Thread, Turn } from '../../ai-providers/src/api'
 import { compactsAt } from '../chat/usage'
 import { tokens } from './account'
 import { shown } from './evaluate'

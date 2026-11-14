@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Draft, Engine, EngineEvent, GoalTo, Thread } from '../chat/types'
-import type { Provider } from '../providers'
+import type { Draft, Engine, EngineEvent, GoalTo, Thread } from '../../ai-providers/src/chat/types'
+import type { Provider } from '../../ai-providers/src/providers'
 
 class FakeChannel {
   onmessage: (value: unknown) => void = () => undefined
@@ -552,7 +552,7 @@ describe('a Codex thread', () => {
 
 describe('a question put to Codex', () => {
   test('is a thread with no tool, answered and closed', async () => {
-    const { askLocal } = await import('./ask')
+    const { askLocal } = await import('../../ai-providers/src/local/ask')
     answer = (_, said) => (said.kind === 'turn' ? codexTurn('Herons wait.') : [])
     const pieces: string[] = []
     const answered = await askLocal({
@@ -574,7 +574,7 @@ describe('a question put to Codex', () => {
   })
 
   test('at the plan’s limit says so in Orden’s words', async () => {
-    const { askLocal } = await import('./ask')
+    const { askLocal } = await import('../../ai-providers/src/local/ask')
     answer = () => [
       JSON.stringify({
         method: 'turn/completed',

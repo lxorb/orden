@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Part } from '../chat/types'
+import type { Part } from '../../ai-providers/src/chat/types'
 import { blocksOf, foldOf } from './steps'
 
 const read = (id: string, path: string): Part => ({

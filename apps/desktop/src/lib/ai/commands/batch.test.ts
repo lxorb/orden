@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest'
 import { Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import { newThread } from '../chat/threads'
-import type { Thread } from '../chat/types'
+import type { Thread } from '../../ai-providers/src/chat/types'
 import type { Host } from './host'
 import type { Ended } from './types'
 

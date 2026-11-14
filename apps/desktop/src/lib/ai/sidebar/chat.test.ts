@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
-import type { Draft, EngineEvent, Part, Thread, Turn } from '../chat/types'
+import type { Draft, EngineEvent, Part, Thread, Turn } from '../../ai-providers/src/chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
@@ -58,7 +58,7 @@ vi.mock('../commands/found', () => ({
   fromOthersIn: () => Promise.resolve(false),
 }))
 
-vi.mock('../store.svelte', () => {
+vi.mock('../../ai-providers/src/store.svelte', () => {
   const provider = { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' }
   return { ai: { providerFor: () => provider, provider: () => provider } }
 })
@@ -640,7 +640,7 @@ describe('the field while a message is changed', () => {
   test('gives a queued message let go back in the field where it cannot be sent', async () => {
     const chat = await asked()
     await heldAfterAnswer(chat)
-    const { ai } = await import('../store.svelte')
+    const { ai } = await import('../../ai-providers/src/store.svelte')
     const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
 
     chat.cancelEdit()
@@ -736,7 +736,7 @@ describe('the field while a message is changed', () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
     await heldAfterAnswer(chat)
-    const { ai } = await import('../store.svelte')
+    const { ai } = await import('../../ai-providers/src/store.svelte')
     const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
 
     chat.newThread()
@@ -1050,7 +1050,7 @@ describe('a chat while it answers', () => {
     chat.here('work')
     chat.know(['work'])
     await chat.openThread(thread.id, false)
-    const { ai } = await import('../store.svelte')
+    const { ai } = await import('../../ai-providers/src/store.svelte')
     const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
 
     chat.retry()

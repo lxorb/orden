@@ -1,4 +1,4 @@
-import { conversationUrl } from '../providers'
+import { conversationUrl } from '../../ai-providers/src/api'
 import { ANTHROPIC_COMPACT_BETA } from './catalogue'
 import { wireEffort } from './effort'
 import type { Call, Step } from './transcript'
@@ -14,7 +14,7 @@ import {
   text,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from './types'
+import type { Part, ToolOutput, Usage } from '../../ai-providers/src/api'
 
 export const PER_MESSAGE_BETA = 'mid-conversation-output-config-2026-07-01'
 const FAST_BETA = 'fast-mode-2026-02-01'

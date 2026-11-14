@@ -1,5 +1,5 @@
 import { untrusted } from '../chat/transcript'
-import type { Goal, GoalState, Thread, Usage } from '../chat/types'
+import type { Goal, GoalState, Thread, Usage } from '../../ai-providers/src/api'
 import { compactsAt } from '../chat/usage'
 import { GOAL_CLEAR } from './table'
 import type { Verdict } from './evaluate'

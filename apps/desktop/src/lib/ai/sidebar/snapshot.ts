@@ -1,4 +1,4 @@
-import type { Turn } from '../chat/types'
+import type { Turn } from '../../ai-providers/src/api'
 
 export function snapshot(
   turns: readonly Turn[],

@@ -1,4 +1,4 @@
-import type { Effort } from '../chat/types'
+import type { Effort } from '../../ai-providers/src/api'
 
 const EFFORTS: Record<Effort, string> = {
   auto: 'Auto',

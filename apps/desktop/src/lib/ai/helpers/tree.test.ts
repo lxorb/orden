@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { ModelInfo, Thread } from '../chat/types'
+import type { ModelInfo, Thread } from '../../ai-providers/src/chat/types'
 import type { Host } from '../commands/host'
 import type { Ended } from '../commands/types'
-import type { Provider } from '../providers'
+import type { Provider } from '../../ai-providers/src/providers'
 
 const written = vi.hoisted(() => [] as string[])
 const lists = vi.hoisted(() => new Map<string, string[]>())

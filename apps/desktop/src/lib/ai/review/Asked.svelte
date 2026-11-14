@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Part } from '../chat/types'
+  import type { Part } from '../../ai-providers/src/api'
   import { workspace } from '../../workspace.svelte'
   import { diffCount } from '../../diff'
   import { type Preview, previewOf } from './preview'

@@ -10,19 +10,38 @@
     isDesktop,
   } from './platform/src/api'
   import { onMount } from 'svelte'
-  import { accountName, vendorName } from './ai/account-words'
-  import { type Account, repeatable, vendorOf } from './ai/accounts'
-  import AddAccount from './ai/AddAccount.svelte'
-  import type { Adding } from './ai/add-paths'
-  import { FEATURES, ai } from './ai/store.svelte'
-  import { listModels } from './ai/complete'
-  import { forgetKey, hasKey, keysAreGuarded, keysInFile, keysMoved, writeKey } from './ai/keys'
-  import { plans } from './ai/local/status.svelte'
-  import { USAGE_EVERY, usage, type Weekly } from './ai/usage.svelte'
-  import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
-  import PlanRows from './ai/PlanRows.svelte'
-  import ProviderMark from './ai/ProviderMark.svelte'
-  import { firstModel, isLocal, offeredKinds, type Provider } from './ai/providers'
+  import {
+    accountName,
+    vendorName,
+    type Account,
+    repeatable,
+    vendorOf,
+    AddAccount,
+    FEATURES,
+    ai,
+    listModels,
+    forgetKey,
+    hasKey,
+    keysAreGuarded,
+    keysInFile,
+    onKeysMoved,
+    writeKey,
+    localCli,
+    loadPlanRows,
+    type LocalPlans,
+    USAGE_EVERY,
+    usage,
+    type Weekly,
+    browserVault,
+    keepBrowserInVault,
+    vault,
+    ProviderMark,
+    firstModel,
+    isLocal,
+    offeredKinds,
+    type Provider,
+  } from './ai-providers/src/api'
+  import type { Adding } from './ai-providers/src/api'
   import { glassesKey } from './accounts/src/api'
   import { message } from './ui-kit/src/api'
   import { Select } from './ui-controls/src/api'
@@ -45,6 +64,11 @@
     ),
   )
 
+  let plans = $state.raw<LocalPlans | null>(null)
+  const plansHeld = __EVEN_PLUGIN__
+    ? Promise.resolve(null)
+    : localCli().then((one) => (plans = one.plans))
+
   onMount(() => {
     for (const account of ai.accounts) void ask(account)
     const lookFile = () => void keysInFile().then((found) => (inFile = found))
@@ -52,7 +76,7 @@
     const measuring = setInterval(() => {
       for (const account of ai.accounts) void usage.look(account)
     }, USAGE_EVERY)
-    const unhear = keysMoved(lookFile)
+    const unhear = onKeysMoved(lookFile)
     return () => {
       clearInterval(measuring)
       unhear()
@@ -62,8 +86,9 @@
   async function ask(account: Provider) {
     if (__EVEN_PLUGIN__) return
     const { kind } = account
-    if (isLocal(kind)) await plans.check({ id: account.id, kind })
-    if (kind === 'chatgpt') await plans.checkChatgpt()
+    const held = await plansHeld
+    if (isLocal(kind)) await held?.check({ id: account.id, kind })
+    if (kind === 'chatgpt') await held?.checkChatgpt()
   }
 
   $effect(() => {
@@ -74,7 +99,7 @@
 
   $effect(() => {
     for (const account of ai.accounts) {
-      if (!__EVEN_PLUGIN__ && isLocal(account.kind) && plans.of(account.id).state === 'in') {
+      if (!__EVEN_PLUGIN__ && isLocal(account.kind) && plans?.of(account.id).state === 'in') {
         void usage.look(account)
       }
     }
@@ -132,10 +157,11 @@
   }
 
   async function add({ kind, key, name, baseUrl }: Adding): Promise<string | null> {
-    if (!__EVEN_PLUGIN__ && kind === 'chatgpt' && !plans.chatgpt) {
+    const held = __EVEN_PLUGIN__ || kind !== 'chatgpt' ? null : await plansHeld
+    if (held && !held.chatgpt) {
       try {
         await invoke('chatgpt_sign_in')
-        await plans.checkChatgpt()
+        await held.checkChatgpt()
       } catch (error) {
         const said = error instanceof Error ? error.message : String(error)
         if (said === 'stopped') return ''
@@ -206,7 +232,8 @@
 
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
-    const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? plans.of(provider.id).account : null
+    const email =
+      !__EVEN_PLUGIN__ && isLocal(provider.kind) ? (plans?.of(provider.id).account ?? null) : null
     return email ?? vault.seen[provider.id] ?? accountName(provider)
   }
 </script>
@@ -362,7 +389,9 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli' || provider.kind === 'chatgpt')}
-        <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
+        {#await loadPlanRows() then { default: PlanRows }}
+          <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
+        {/await}
       {:else}
         <div class="orden-setting setting">
           <span class="name">API key</span>
@@ -416,7 +445,7 @@
         </div>
       {/if}
 
-      {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
+      {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans?.chatgpt}
         <p class="hint">Using ChatGPT plan</p>
       {/if}
       {#if trouble[provider.id]}

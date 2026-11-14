@@ -49,19 +49,19 @@ import type {
   Thread,
   Turn,
   Usage,
-} from '../chat/types'
+} from '../../ai-providers/src/api'
 import { added, noUsage } from '../chat/usage'
-import { nextMode } from '../modes'
-import type { Provider } from '../providers'
-import { ai } from '../store.svelte'
-import { tasks } from '../commands/tasks.svelte'
 import {
+  nextMode,
+  ai,
   FIRST_STATE,
   next as nextState,
   type SessionEvent,
   type SessionState,
   statesOf,
-} from '../session-state'
+} from '../../ai-providers/src/api'
+import type { Provider } from '../../ai-providers/src/api'
+import { tasks } from '../commands/tasks.svelte'
 import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
 import { readOutside } from '../chat/transcript'
