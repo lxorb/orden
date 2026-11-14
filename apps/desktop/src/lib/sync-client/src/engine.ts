@@ -309,6 +309,14 @@ export class Engine implements AskedEngine {
     return out
   }
 
+  awayAt(path: string): Pick<AwayFile, 'id' | 'path' | 'size' | 'modified'> | null {
+    if (this.core.handPaths.length) return null
+    const placed = this.placed(path)
+    const entry = this.entryAt(path)
+    if (!placed || !entry || !away(placed.space, entry)) return null
+    return { id: entry.id, path, size: entry.size ?? 0, modified: entry.mtime ?? 0 }
+  }
+
   fetch(path: string): Promise<boolean> {
     return this.core.use(async () => {
       const placed = this.placed(path)
