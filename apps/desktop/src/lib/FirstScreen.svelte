@@ -1,6 +1,6 @@
 <script lang="ts">
   import { documentOf, parsedOnScreen } from '@orden/editor'
-  import { firstScreen, type Kept, sameNote } from './first-screen.svelte'
+  import { firstScreen, type Kept, sameNote } from './first-screen/src/api'
   import { mark } from './trace'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'

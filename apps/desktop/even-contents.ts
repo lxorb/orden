@@ -116,6 +116,7 @@ export const APP_FOLDERS = [
   'export',
   'export-formats',
   'files-out',
+  'first-screen',
   'foreign',
   'import',
   'internal',

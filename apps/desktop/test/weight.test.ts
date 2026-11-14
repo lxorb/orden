@@ -319,7 +319,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/icon-sets.ts', 'the list of icon sets'],
     ['/lib/dictation/src/recorder/commands.ts', 'the row that wakes the recorder'],
     ['/lib/dictation/src/recorder/container.ts', 'whether this device can record at all'],
-    ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
+    ['/lib/first-screen/src/keep.svelte.ts', "what keeps a note's first screen"],
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
     ['/markdown/src/index.ts', 'the renderer'],
   ])('nor %s (%s)', (tail) => {

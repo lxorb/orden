@@ -7,10 +7,10 @@ import {
   NAMED,
   RENAMED,
   wordsHash,
-} from '../first-screen.svelte'
-import { keep } from '../platform/src/api'
-import { views } from '../views.svelte'
-import { workspace } from '../workspace.svelte'
+} from './first-screen.svelte'
+import { keep } from '../../platform/src/api'
+import { views } from '../../views.svelte'
+import { workspace } from '../../workspace.svelte'
 
 const QUIET = 1500
 

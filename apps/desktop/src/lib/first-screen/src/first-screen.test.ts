@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Draft, Session } from './workspace/session'
+import type { Draft, Session } from '../../workspace/session'
 
 function memoryStorage(): Storage {
   const held = new Map<string, string>()

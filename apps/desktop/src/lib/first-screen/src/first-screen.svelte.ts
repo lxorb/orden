@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
-import { samePath, isNumber, isRecord, isString, stored } from './platform/src/api'
-import { mark } from './trace'
-import type { Draft, Session } from './workspace/session'
+import { samePath, isNumber, isRecord, isString, stored } from '../../platform/src/api'
+import { mark } from '../../trace'
+import type { Draft, Session } from '../../workspace/session'
 
 export const KEY = 'orden:first-screen'
 
