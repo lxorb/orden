@@ -139,9 +139,12 @@ vi.mock('../platform/src/tauri', async (original) => ({
 }))
 
 const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
+vi.mock('../agent-docs/src/api', async (original) => ({
+  ...(await original<typeof import('../agent-docs/src/api')>()),
+  agentDocs: () => Promise.resolve({ notes: docs }),
+}))
 vi.mock('../agents/src/api', async (original) => ({
   ...(await original<typeof import('../agents/src/api')>()),
-  agentDocs: () => Promise.resolve({ notes: docs }),
   tauriCrate: {
     hear: (on: (event: { kind: string; agent: string | null }) => void) => {
       heard.push(on)

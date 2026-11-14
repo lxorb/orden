@@ -1,18 +1,18 @@
 import { describe, expect, test, vi } from 'vitest'
 
-const disk = vi.hoisted(() => ({ current: null as import('../../../../../test/disk').Disk | null }))
-vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../platform/src/tauri')>()),
+const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
 }))
 
-const { Disk, memoryStorage } = await import('../../../../../test/disk')
+const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../workspace.svelte')
 const docs = await import('./index')
 
 async function fresh(files: Record<string, string>) {

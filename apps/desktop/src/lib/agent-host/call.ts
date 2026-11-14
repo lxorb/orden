@@ -1,6 +1,6 @@
 import { said, type Said, words, yes } from '../automation/args'
 import type { AgentAnswer, Caller } from '../automation/caller'
-import type { Agent as Writer } from '../agents/src/api'
+import type { Agent as Writer } from '../agent-docs/src/api'
 import { Refused } from './problem'
 
 export interface Call {

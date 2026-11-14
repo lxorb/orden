@@ -1,3 +1,4 @@
+import { providePort } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { editNote, PATIENCE, undoAgent, writeNote } from './edit'
 import { readNote } from './read'
@@ -39,6 +40,16 @@ describe('an edit to an open note', () => {
     expect(pane.caret).toBe(20)
     expect(answer).toEqual({ path: 'plan.md', rev: revOf(pane.text), edits: 1, lines: [0] })
     expect(pane.note.dirty).toBe(true)
+  })
+
+  test('tells the live agents which tabs show the note it changed', async () => {
+    const told: [string, readonly string[]][] = []
+    const stop = providePort('agents.writes', { wrote: (agent, tabs) => told.push([agent, tabs]) })
+    const { desk } = deskWith({ 'plan.md': 'alpha' }, ['plan.md'])
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { quote: 'alpha' }, replace: 'beta' }])
+    stop()
+    expect(told).toEqual([[agent.id, ['front']]])
   })
 
   test('is one Ctrl+Z of its own, apart from what the reader typed either side', async () => {

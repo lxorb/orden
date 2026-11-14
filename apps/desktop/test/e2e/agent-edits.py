@@ -31,7 +31,7 @@ AGENT = {"id": "drive-agent", "name": "Drive agent"}
 
 START_AGENT = """
 async ([edits, agent]) => {
-  const docs = await import('/src/lib/agents/src/docs/index.ts')
+  const docs = await import('/src/lib/agent-docs/src/index.ts')
   window.__agent = { docs, done: [], failed: [], carets: 0 }
   const run = async () => {
     for (const word of edits) {

@@ -7,7 +7,7 @@ import {
   setReviewMarks,
   setReviewSource,
 } from '@orden/editor/review'
-import { agentDocs } from '../../agents/src/api'
+import { agentDocs } from '../../agent-docs/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { insideSpace, notePath, withinSpace, dur, onDisk, onceAFrame } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'

@@ -7,8 +7,8 @@ import {
   undoEdit,
 } from '@orden/editor'
 import { applied, type Change } from '@orden/scan/search/replace'
-import { NoteDoc } from '../../../workspace/documents.svelte'
-import type { Keeping } from '../../../workspace/note-text'
+import { NoteDoc } from '../../workspace/documents.svelte'
+import type { Keeping } from '../../workspace/note-text'
 import type { Desk, Space } from './desk'
 
 const SPACE: Space = { id: 's1', name: 'Space', root: '/space' }
@@ -119,6 +119,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
       return Promise.resolve()
     },
     scheme: () => 'dark',
+    tabsShowing: () => ['front'],
     agentsMay: (path) => !shut.has(path),
     draftIn: (tab) => drafts.get(tab) ?? null,
     padText: () => Promise.resolve(pad.text),

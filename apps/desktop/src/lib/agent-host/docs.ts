@@ -1,3 +1,3 @@
-import { agentDocs } from '../agents/src/api'
+import { agentDocs } from '../agent-docs/src/api'
 
 export const { notes } = await agentDocs()

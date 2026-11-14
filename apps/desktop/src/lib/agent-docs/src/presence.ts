@@ -1,6 +1,7 @@
+import { portOf } from '@orden/contracts'
 import { type Peer, setAgents } from '@orden/editor'
-import { accentColour, accentFor } from '../../../theme/src/api'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
+import { accentColour, accentFor } from '../../theme/src/api'
+import type { NoteDoc } from '../../workspace/documents.svelte'
 
 export interface Agent {
   id: string
@@ -29,7 +30,13 @@ function numberOf(id: string): number {
   return -1 - sum
 }
 
-export function showAgent(note: NoteDoc, agent: Agent, at: number, scheme: 'dark' | 'light'): void {
+export function showAgent(
+  note: NoteDoc,
+  agent: Agent,
+  at: number,
+  scheme: 'dark' | 'light',
+  tabs: readonly string[],
+): void {
   const here = shown.get(note) ?? follow(note)
   const was = here.carets.get(agent.id)
   if (was) clearTimeout(was.timer)
@@ -48,7 +55,8 @@ export function showAgent(note: NoteDoc, agent: Agent, at: number, scheme: 'dark
   })
 
   announce(note, here)
-  void import('../ui/index').then(({ wrote }) => wrote(note, agent.id))
+  const writes = portOf('agents.writes')
+  if (writes.ok) writes.value.wrote(agent.id, tabs)
 }
 
 function follow(note: NoteDoc): Note {
