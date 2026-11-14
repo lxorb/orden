@@ -2,7 +2,7 @@
   import type { Message } from '@orden/chats'
   import { dur, fade } from '../../platform/src/api'
   import { emojiRecent } from '../../emoji/recent.svelte'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { tip } from './tips.svelte'
 
   const {

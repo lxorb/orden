@@ -1,4 +1,4 @@
-import type { Box } from './place'
+import type { Box } from '../../chat-kit/src/api'
 
 const REST = 350
 

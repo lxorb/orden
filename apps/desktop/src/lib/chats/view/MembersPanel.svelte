@@ -13,7 +13,7 @@
   import { viewport } from '../../ui-kit/src/api'
   import type { ChatPage } from './chat.svelte'
   import { mentionText } from './compose'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { membersOpen } from './members-open.svelte'
   import { accountOf, faceOf, nameOf } from './people'
   import { grouped, linesOf, type Listed, listedOf, placed, type Rank, visible } from './roster'

@@ -15,7 +15,7 @@
   import { drawing } from '../../markdown-view.svelte'
   import type { ChatPage } from './chat.svelte'
   import Gallery from './Gallery.svelte'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { markMentions } from './marks'
   import NoteCard from './NoteCard.svelte'
   import { cardTarget } from './note-card'

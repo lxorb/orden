@@ -5,7 +5,7 @@
   import { downloadStarted } from '../../downloads/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { isVideo } from './media'
   import { fileUrl } from './urls.svelte'
 

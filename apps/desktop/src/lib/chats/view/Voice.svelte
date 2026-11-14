@@ -3,7 +3,7 @@
   import { WAVE_BARS } from '@orden/chats/limits'
   import { message as errorWords } from '../../ui-kit/src/api'
   import { clock, seekAt } from './media'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { fileUrl } from './urls.svelte'
 
   const { chat, file }: { chat: string; file: FileRef } = $props()

@@ -8,7 +8,7 @@
   import { menu } from '../../menu.svelte'
   import type { ChatPage } from './chat.svelte'
   import Composer from './Composer.svelte'
-  import Glyph from './Glyph.svelte'
+  import { Glyph } from '../../chat-kit/src/api'
   import { messageMenu } from './message-menu'
   import MessageRow from './MessageRow.svelte'
   import { rowsOf } from './rows'
