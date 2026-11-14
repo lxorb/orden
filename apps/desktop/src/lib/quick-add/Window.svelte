@@ -27,16 +27,30 @@
 
   const hide = (raise = false) => void invoke('quick_add_hide', { raise }).catch(() => undefined)
 
+  let sending = 0
+  let failed = false
+
   async function added(entry: Entry, open: boolean): Promise<boolean> {
-    const ok = await asked.ask(entry, open)
-    if (ok) hide(open)
-    return ok
+    sending++
+    try {
+      const ok = await asked.ask(entry, open)
+      failed = !ok
+      if (ok) hide(open)
+      return ok
+    } finally {
+      sending--
+    }
+  }
+
+  function closed() {
+    failed = false
+    hide()
   }
 
   onMount(() => {
     const again = () => {
       if (document.visibilityState !== 'visible') return
-      shown++
+      if (!sending && !failed) shown++
       say({ kind: 'hello' })
     }
     again()
@@ -58,7 +72,7 @@
       {smart}
       dictates={false}
       onsubmit={added}
-      onclose={() => hide()}
+      onclose={closed}
       onpicking={(open) => void invoke('quick_add_tall', { tall: open }).catch(() => undefined)}
     />
   {/key}
