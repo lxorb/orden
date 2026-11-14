@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { menu } from '../../menu.svelte'
@@ -8,8 +7,9 @@
   import { shortcuts } from '../../shortcuts.svelte'
   import { dropOver, isTreeDrag } from '../../drag-paths'
   import { ai } from '../../ai-providers/src/api'
+  import { agentMarks } from '../../agent-marks.svelte'
+  import { agentSession } from '../../surfaces.svelte'
   import { following, toggleFollow } from '../review'
-  import { agentOpen } from './agent-open.svelte'
   import { chat } from './chat.svelte'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
@@ -34,12 +34,9 @@
   const head = $derived(chat.head)
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
-  const session = $derived(listing ? null : agentOpen.id)
-  const agentSession = door(() =>
-    import('../../agents/src/api').then((one) => one.loadAgentSession()),
-  )
+  const session = $derived(listing ? null : agentMarks.open)
   $effect(() => {
-    if (agentOpen.id !== null) untrack(() => (chat.listing = false))
+    if (agentMarks.open !== null) untrack(() => (chat.listing = false))
   })
 
   function toggleRail() {
@@ -180,7 +177,7 @@
           </button>
         </header>
       {/if}
-      {#await agentSession() then { default: AgentSession }}
+      {#await agentSession() then AgentSession}
         {#key session}
           <AgentSession agent={session} />
         {/key}

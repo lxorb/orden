@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 const shown = vi.hoisted(() => ({
   notices: [] as { title: string; body: string; tag?: string; opened?: () => void }[],
   taken: [] as string[],
-  revealed: [] as string[],
+  opened: [] as string[],
 }))
 
 vi.mock('../../../notify', () => ({
@@ -15,10 +15,9 @@ vi.mock('../../../notify', () => ({
 }))
 
 vi.mock('../../../focus', () => ({
-  revealPanel: (panel: string) => shown.revealed.push(panel),
+  openAgentSession: (agent: string) => shown.opened.push(agent),
 }))
 
-const { agentOpen } = await import('../../../ai/sidebar/agent-open.svelte')
 const { FakeCrate } = await import('./fake')
 const { ended, start } = await import('./live.svelte')
 
@@ -26,8 +25,7 @@ afterEach(() => {
   ended()
   shown.notices = []
   shown.taken = []
-  shown.revealed = []
-  agentOpen.id = null
+  shown.opened = []
 })
 
 describe("an agent's question", () => {
@@ -58,8 +56,7 @@ describe("an agent's question", () => {
     flushSync()
 
     shown.notices[0]?.opened?.()
-    expect(agentOpen.id).toBe('claude-code')
-    expect(shown.revealed).toEqual(['ask'])
+    expect(shown.opened).toEqual(['claude-code'])
   })
 
   test('is taken back once it has been answered', async () => {

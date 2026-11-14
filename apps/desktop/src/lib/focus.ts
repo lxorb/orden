@@ -1,3 +1,4 @@
+import { agentMarks } from './agent-marks.svelte'
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
 import type { Panel } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
@@ -97,6 +98,11 @@ export function stepRegionFocus(direction: number): boolean {
   }
 
   return false
+}
+
+export function openAgentSession(agent: string): void {
+  agentMarks.open = agent
+  revealPanel('ask')
 }
 
 export function revealPanel(panel: Panel): void {

@@ -1,6 +1,5 @@
 import { mount, unmount, untrack } from 'svelte'
-import { agentOpen } from '../../../ai/sidebar/agent-open.svelte'
-import { revealPanel } from '../../../focus'
+import { openAgentSession } from '../../../focus'
 import { notify, unshow } from '../../../notify'
 import { agentMarks } from '../../../agent-marks.svelte'
 import { portOf } from '@orden/contracts'
@@ -99,7 +98,7 @@ export function started(source: Source = crate): Activity {
           if (told.has(one.id)) continue
           told.add(one.id)
           notify(activity.nameOf(one.agent), one.summary, questionTag(one.id), () =>
-            openSession(one.agent),
+            openAgentSession(one.agent),
           )
         }
         for (const id of told) {
@@ -125,11 +124,6 @@ export function started(source: Source = crate): Activity {
 }
 
 const questionTag = (id: string) => `agent-question-${id}`
-
-function openSession(agent: string): void {
-  agentOpen.id = agent
-  revealPanel('ask')
-}
 
 export function ended(): void {
   unfollow?.()
