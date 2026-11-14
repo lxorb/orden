@@ -14,10 +14,10 @@ const running = vi.hoisted(() => ({
   device: null,
 }))
 
-vi.mock('../notify', () => ({
+vi.mock('../../notify', () => ({
   notify: (_title: string, _body: string, tag: string) => shown.push(tag),
 }))
-vi.mock('../settings.svelte', () => ({ timeOn: () => true }))
+vi.mock('../../settings.svelte', () => ({ timeOn: () => true }))
 vi.mock('./time.svelte', () => ({
   time: {
     ready: true,

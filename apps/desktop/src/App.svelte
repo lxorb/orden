@@ -472,7 +472,7 @@
           time: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no time tracker in the Even Realities plugin'))
-              : import('./lib/time/time.svelte').then(({ time }) => time),
+              : import('./lib/time/src/api').then(({ time }) => time),
           agents: { standIn },
           ai,
           aiChats: () =>

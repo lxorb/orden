@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { linearly } from '../../../../../scripts/growth'
+import { linearly } from '../../../../../../scripts/growth'
 import { HOUR, MINUTE } from './days'
 import { bandsOf, bucketsOf, hoursShown, madeOf, stacked, unsaid, within } from './lanes'
 import type { Minute } from './minutes'

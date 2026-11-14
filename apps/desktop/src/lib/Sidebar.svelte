@@ -343,7 +343,7 @@
     if (id !== 'tree') {
       const making =
         id === 'time' && !__EVEN_PLUGIN__ && timeOn()
-          ? import('./time/menu').then(({ trackingMenu }) => trackingMenu())
+          ? import('./time/src/api').then(({ trackingMenu }) => trackingMenu())
           : Promise.resolve([])
       void Promise.all([own, making]).then(([{ panelMenu }, rows]) =>
         shown(panelMenu(id, side, rows)),

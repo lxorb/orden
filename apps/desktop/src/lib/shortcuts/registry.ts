@@ -732,7 +732,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: null,
           shown: () => timeOn(),
-          run: () => void import('../time/open').then(({ openTime }) => openTime()),
+          run: () => void import('../time/src/api').then(({ openTime }) => openTime()),
         } satisfies Shortcut,
         {
           id: 'time.start',
@@ -741,7 +741,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: null,
           shown: () => timeOn(),
-          run: () => void import('../time/commands').then(({ startTimer }) => startTimer()),
+          run: () => void import('../time/src/api').then(({ startTimer }) => startTimer()),
         } satisfies Shortcut,
         {
           id: 'time.stop',
@@ -750,7 +750,7 @@ const APP_ENTRIES: Shortcut[] = [
           scope: 'app',
           key: null,
           shown: () => timeOn(),
-          run: () => void import('../time/commands').then(({ stopTimer }) => stopTimer()),
+          run: () => void import('../time/src/api').then(({ stopTimer }) => stopTimer()),
         } satisfies Shortcut,
         {
           id: 'chat.jump-new',

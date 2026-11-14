@@ -1,4 +1,4 @@
-import { DIVIDER, type MenuEntry } from '../ui-kit/src/api'
+import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { time } from './time.svelte'
 
 export function trackingMenu(): MenuEntry[] {

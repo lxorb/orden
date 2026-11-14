@@ -1,0 +1,17 @@
+{
+  "name": "time",
+  "layer": "features",
+  "dependsOn": ["contracts", "accounts", "files-out", "platform", "sync-core", "theme", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/Facts.svelte",
+    "apps/desktop/src/lib/choose-files.ts",
+    "apps/desktop/src/lib/held-database.ts",
+    "apps/desktop/src/lib/menu.svelte.ts",
+    "apps/desktop/src/lib/notify.ts",
+    "apps/desktop/src/lib/session-owner.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+  ]
+}

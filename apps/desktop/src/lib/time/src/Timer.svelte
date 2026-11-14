@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { menu } from '../menu.svelte'
+  import { menu } from '../../menu.svelte'
   import { ticking } from './days'
   import { clock, nameOf, tintOf } from './look'
   import { time } from './time.svelte'

@@ -16,7 +16,7 @@ vi.mock('./sense.svelte', () => ({}))
 vi.mock('./reminding', () => ({}))
 
 localStorage.setItem('orden:session-owner', 'u_ana')
-const { account } = await import('../accounts/src/account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 await import('./start.svelte')
 
 test('started offline while signed in, the account’s own time records open, not the signed-out ones', () => {

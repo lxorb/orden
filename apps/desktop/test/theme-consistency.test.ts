@@ -199,9 +199,14 @@ describe('what a side shows', () => {
   const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
     const door = one[1] ?? ''
     const from = new RegExp(
-      `export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)(?:\\.then\\(\\(api\\) => \\(\\{ default: api\\.(\\w+) \\}\\)\\))?`,
+      `export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)(?:\\.then\\(\\(api\\) => \\(\\{ default: api\\.(\\w+) \\}\\)\\)|\\.then\\(\\(one\\) => one\\.(\\w+)\\(\\)\\))?`,
     )
-    const [, path = door, named] = from.exec(surfaces) ?? []
+    const [, path = door, named, loader] = from.exec(surfaces) ?? []
+    if (loader) {
+      const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
+      const loaded = new RegExp(`export const ${loader} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
+      return `lib/${path.replace(/[^/]+$/, '')}${loaded.exec(api)?.[1] ?? ''}`
+    }
     if (!named) return `lib/${path}`
     const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
     const file = new RegExp(`default as ${named} \\} from '\\./([^']+)'`).exec(api)?.[1] ?? ''

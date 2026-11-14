@@ -1,5 +1,5 @@
-import { chooseFiles } from '../choose-files'
-import { deliver } from '../files-out/src/api'
+import { chooseFiles } from '../../choose-files'
+import { deliver } from '../../files-out/src/api'
 import { time } from './time.svelte'
 import { csvOf, jsonOf, recordsIn } from './written'
 
