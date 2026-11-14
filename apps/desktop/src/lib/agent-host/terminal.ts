@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { Channel } from '../crate/src/api'
 import { shells } from '../terminal/src/api'
 import { identifier } from '../identifier'

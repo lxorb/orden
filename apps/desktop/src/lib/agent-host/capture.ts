@@ -1,7 +1,7 @@
 import { freePath } from '@orden/markdown/paths'
 import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
 import { asWords } from '@orden/markdown/words'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { attachmentFolder } from '../attachments'
 import { modes } from '../modes.svelte'
 import { paperInches } from '../page-setup'

@@ -1,5 +1,5 @@
 import { isCanvasTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { shownName, onDisk as exists, nameOf } from '../platform/src/api'
 import { pairOf } from '@orden/markdown/pages'
 import { canWriteAt } from '../sharing/src/api'

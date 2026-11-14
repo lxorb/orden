@@ -275,7 +275,7 @@ describe('the panel’s chats', () => {
     const chat = await launched()
     chat.here('work')
     chat.know(['work', 'home'])
-    const { callerOf, threadSpaceOf } = await import('../../../automation/caller')
+    const { callerOf, threadSpaceOf } = await import('../../../automation/src/api')
     const aside = chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
     const task = chat.running[0] ?? ''
     const agent = { id: 'orden-anthropic', name: 'Claude', built_in: true }

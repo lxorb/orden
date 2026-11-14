@@ -60,9 +60,14 @@ export interface WebLendingPort {
   unlend(tab: string): void
 }
 
+export interface WebScriptsPort {
+  readonly pages: unknown
+}
+
 export interface WebPorts {
   readonly 'web.pages': WebPagesPort
   readonly 'web.lending': WebLendingPort
+  readonly 'web.scripts': WebScriptsPort
 }
 
 const BLANK: WebPageSeen = {

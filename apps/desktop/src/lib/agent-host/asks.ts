@@ -1,5 +1,5 @@
-import type { AgentAnswer } from '../automation/caller'
-import { refusal } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
+import { refusal } from '../automation/src/api'
 import { invoke } from '../platform/src/api'
 import type { Category } from '../agents/src/api'
 import type { Call } from './call'

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { InputEvent } from '@orden/online/apps'
-import { callerOf } from '../automation/caller'
+import { callerOf } from '../automation/src/api'
 
 interface FakeSession {
   holds: boolean

@@ -1,5 +1,6 @@
 import {
   registerCommand,
+  registerHearing,
   registerCommandRows,
   registerCommands,
   registerFeature,
@@ -53,6 +54,8 @@ if (!__EVEN_PLUGIN__) {
   registerCommandRows('agent-undo', async () => (await import('./agent-docs/src/api')).undoRows)
   registerCommandRows('send', async () => (await import('./chats-client/src/api')).sendRows)
   registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
+  registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
+  registerHearing(async () => (await (await import('./pdf/src/api')).handed()).hearPdfs)
   registerTabKind('application', async () => (await import('./apps/src/api')).applicationTabKind)
   registerSettingsPart({
     section: 'import',

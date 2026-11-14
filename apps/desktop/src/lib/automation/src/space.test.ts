@@ -7,7 +7,7 @@ let flushed = 0
 
 const texts: Record<string, string> = { '/Work/notes/Plan.md': '# Plan' }
 
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces: [space],
     activeSpace: space,
@@ -23,7 +23,7 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
+vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 
 const { noteFor, relativeIn } = await import('./space')
 

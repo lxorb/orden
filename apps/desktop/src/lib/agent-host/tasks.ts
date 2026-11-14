@@ -11,7 +11,7 @@ import {
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { onDisk as there, folderOf, nameOf, invoke } from '../platform/src/api'
 import { reachedByOthersIn } from '../sharing/src/api'
 import { workspace } from '../workspace.svelte'

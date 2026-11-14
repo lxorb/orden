@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { show } from '../notify'
 import { openAgentSession } from '../focus'
 import { asking } from '../agents/src/api'

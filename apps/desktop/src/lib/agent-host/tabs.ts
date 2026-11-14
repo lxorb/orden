@@ -1,6 +1,6 @@
 import { documentOf } from '@orden/editor'
 import { seen } from './guarded'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../platform/src/api'
 import type { Section } from '../settings.svelte'
 import { renameTerminal, shellRunning, shells } from '../terminal/src/api'

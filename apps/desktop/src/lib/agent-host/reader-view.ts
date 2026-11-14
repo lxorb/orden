@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { agentMarks } from '../agent-marks.svelte'
 import type { Refused as Why } from '../terminal/src/api'
 import { settings, type Section } from '../settings.svelte'

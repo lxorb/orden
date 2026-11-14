@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { answerThreadSpaces } from '../../../automation/caller'
+import { answerThreadSpaces } from '../../../automation/src/api'
 import {
   region,
   without,

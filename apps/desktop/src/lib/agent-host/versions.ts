@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { invoke, notePath } from '../platform/src/api'
 import { type Version, versionsOf, versionText } from '../history/src/api'
 import { workspace } from '../workspace.svelte'

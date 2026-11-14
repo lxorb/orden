@@ -1,4 +1,4 @@
-import type { Scope } from '../agents/src/api'
+import type { AgentScope as Scope } from '@orden/contracts'
 
 interface Agent {
   id: string

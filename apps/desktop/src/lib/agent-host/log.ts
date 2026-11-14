@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { notePath, invoke } from '../platform/src/api'
 import { notes } from './docs'
 import { asked } from './asks'

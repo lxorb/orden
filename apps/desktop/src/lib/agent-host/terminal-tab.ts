@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { MOST_LINE, plainOf } from './shell-text'
 import { historyOf, sessions, shellRunning, readSpec } from '../terminal/src/api'
 import { isOnlineTab } from '../online-terms/src/api'

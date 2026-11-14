@@ -11,7 +11,6 @@ export {
   type Code,
   type Overview,
   type ReaderTab,
-  type Scope,
   type StoreSaid,
 } from './verbs'
 

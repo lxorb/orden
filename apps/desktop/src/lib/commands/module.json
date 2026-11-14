@@ -16,11 +16,11 @@
     "theme-looks",
     "ui-kit",
     "updates",
-    "web-backend"
+    "web-backend",
+    "ui-controls"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/automation/link.ts",
     "apps/desktop/src/lib/composer-commands.ts",
     "apps/desktop/src/lib/convert-syntax.ts",
     "apps/desktop/src/lib/focus.ts",
@@ -35,6 +35,7 @@
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/open-out.ts",
+    "apps/desktop/src/lib/outline.ts",
     "apps/desktop/src/lib/random-note.ts",
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

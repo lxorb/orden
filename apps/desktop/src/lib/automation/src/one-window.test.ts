@@ -39,21 +39,14 @@ vi.mock('@tauri-apps/api/window', () => ({
     }
   },
 }))
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: (command: string) => Promise.resolve(command === 'automation_claim' ? world.claims : []),
   openExternal: () => Promise.resolve(),
 }))
-vi.mock('../web-tab/src/api', () => ({
-  pagesHanded: () => Promise.resolve({ hearPages: () => Promise.resolve(() => undefined) }),
-}))
-vi.mock('../pdf/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../pdf/src/api')>()),
-  handed: () => Promise.resolve({ hearPdfs: () => Promise.resolve(() => undefined) }),
-}))
-vi.mock('../ui-kit/src/busy.svelte', () => ({ busy: { failed: () => undefined } }))
-vi.mock('../platform/src/log', () => ({ log: () => undefined }))
+vi.mock('../../ui-kit/src/busy.svelte', () => ({ busy: { failed: () => undefined } }))
+vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('./caller', () => ({ callerOf: () => undefined }))
 vi.mock('./verbs', () => ({
   dispatch: (verb: string) => {
@@ -101,7 +94,7 @@ describe('with two windows open', () => {
 })
 
 const here = join(import.meta.dirname, '..')
-const crate = join(here, '../../src-tauri/src')
+const crate = join(here, '../../../src-tauri/src')
 
 function filesUnder(dir: string, ending: RegExp): string[] {
   return readdirSync(dir).flatMap((name) => {

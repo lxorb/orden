@@ -1,16 +1,18 @@
-import { links } from '../link-index.svelte'
-import { search } from '../search.svelte'
-import { settings } from '../settings.svelte'
-import { invoke } from '../platform/src/api'
-import { workspace } from '../workspace.svelte'
-import { pages } from '../web-tab/src/api'
+import { links } from '../../link-index.svelte'
+import { search } from '../../search.svelte'
+import { settings } from '../../settings.svelte'
+import { invoke } from '../../platform/src/api'
+import { workspace } from '../../workspace.svelte'
+import { portOf } from '@orden/contracts'
 
 async function working(path: string): Promise<string | null> {
-  const { workingFolder } = await import('../web-backend/src/api')
+  const { workingFolder } = await import('../../web-backend/src/api')
   return workingFolder(path)
 }
 
 function surface(): Record<string, unknown> {
+  const web = portOf('web.scripts')
+  const pages = web.ok ? web.value.pages : undefined
   return { workspace, links, search, settings, pages, invoke, working }
 }
 

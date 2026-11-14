@@ -14,7 +14,7 @@ export async function pressButton(base: Base, name: string, row: Row): Promise<v
   })
   await pressRow(row, { note: press.set })
   if (press.command !== undefined) {
-    const { runCommand } = await import('../../automation/acts')
+    const { runCommand } = await (await import('../../automation/src/api')).automationActs()
     try {
       await runCommand({ id: press.command }, 'link')
     } catch {

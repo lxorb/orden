@@ -1,7 +1,7 @@
 import type { Who } from '@orden/chats'
 import { MOST_BODY } from '@orden/chats/limits'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { callerOf, type Caller, READER } from '../automation/caller'
+import { callerOf, type Caller, READER } from '../automation/src/api'
 import { FixtureChats } from '../chats-client/src/view/fixture.svelte'
 
 const ME: Who = 'user:me'
@@ -144,7 +144,7 @@ describe('the chats an agent sees', () => {
       path: '/spaces/Secret/thesis.chat',
     })
     store.speak(twin, ME, 'the other thesis')
-    const { answerThreadSpaces } = await import('../automation/caller')
+    const { answerThreadSpaces } = await import('../automation/src/api')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
       id: 'orden-claude',
@@ -176,7 +176,7 @@ describe('the chats an agent sees', () => {
       path: '/spaces/Secret/old/thesis.chat',
     })
     store.speak(twin, ME, 'the other thesis')
-    const { answerThreadSpaces } = await import('../automation/caller')
+    const { answerThreadSpaces } = await import('../automation/src/api')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
       id: 'orden-claude',
@@ -206,7 +206,7 @@ describe('the chats an agent sees', () => {
       root: '/spaces/Secret',
       path: '/spaces/Secret/thesis.chat',
     })
-    const { answerThreadSpaces } = await import('../automation/caller')
+    const { answerThreadSpaces } = await import('../automation/src/api')
     answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
     const grant = {
       id: 'orden-claude',

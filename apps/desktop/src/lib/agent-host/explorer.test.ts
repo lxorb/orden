@@ -1,6 +1,6 @@
 import { linearly } from '../../../../../scripts/growth'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { callerOf } from '../automation/caller'
+import { callerOf } from '../automation/src/api'
 
 const tabs: { id: string; kind: string; path: null }[] = [
   { id: 'e1', kind: 'explorer', path: null },

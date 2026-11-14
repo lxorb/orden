@@ -1,5 +1,5 @@
 import type { InputEvent } from '@orden/online/apps'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { shownName, nameOf } from '../platform/src/api'
 import type { Tab } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'

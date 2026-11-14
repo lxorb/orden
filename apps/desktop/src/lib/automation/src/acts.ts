@@ -1,35 +1,27 @@
-import { protection } from '../protect/src/api'
+import { protection } from '../../protect/src/api'
 import type { TextEdit } from '@orden/markdown/edits'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { commandRowsLoaded } from '@orden/contracts'
-import { appCommands } from '../commands/src/api'
-import { links } from '../link-index.svelte'
+import { appCommands } from '../../commands/src/api'
+import { links } from '../../link-index.svelte'
 import {
-  extensionOf,
-  nameToWrite,
-  AGENTS_NAME,
-  isAgentsName,
-  onDisk,
   folderOf,
   insideSpace,
   isMarkdownPath,
   nameOf,
   relativeTo,
-  samePath,
-  joinPath,
   waited,
-} from '../platform/src/api'
-import { search } from '../search.svelte'
-import { OWN_KEYS } from '../own-keys'
-import { views } from '../views.svelte'
-import { workspace } from '../workspace.svelte'
+} from '../../platform/src/api'
+import { search } from '../../search.svelte'
+import { OWN_KEYS } from '../../own-keys'
+import { views } from '../../views.svelte'
+import { workspace } from '../../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
+import { movedIn, movedPath, withExtension } from './moving'
 import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
-
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 const SEARCH_PATIENCE = 8000
 
@@ -98,7 +90,7 @@ export async function newNote(args: Said): Promise<unknown> {
   const wasShowing = workspace.activeTabId
 
   if (append) {
-    const { sync } = await import('../sync.svelte')
+    const { sync } = await import('../../sync.svelte')
     sync.mergeable(path)
   }
 
@@ -145,10 +137,6 @@ function wanted(args: Said): string {
   if (safe.includes('/')) throw new Error('a name is not a path: use path for that')
 
   return withExtension(safe)
-}
-
-function withExtension(name: string): string {
-  return MARKDOWN.test(name) ? name : `${name}.md`
 }
 
 export async function searchSpace(args: Said): Promise<unknown> {
@@ -237,83 +225,6 @@ export async function moveFile(args: Said): Promise<unknown> {
   return { from, to: await movedIn(space.root, from, movedPath(from, to)) }
 }
 
-export const ONTO_INSTRUCTIONS = 'write_note writes them, and no note is moved onto them'
-
-export function ontoInstructions(root: string, from: string, to: string): boolean {
-  if (samePath(from, to, root) || folderOf(to) || !isAgentsName(nameOf(to))) return false
-  return folderOf(from) !== '' || !isAgentsName(nameOf(from))
-}
-
-export async function movedIn(
-  root: string,
-  from: string,
-  to: string,
-  undoing = false,
-): Promise<string> {
-  if (!undoing && ontoInstructions(root, from, to)) {
-    throw new Error(
-      `${AGENTS_NAME} at the top of a space is its instructions: ${ONTO_INSTRUCTIONS}`,
-    )
-  }
-
-  const folder = folderOf(to)
-  const name = nameOf(to)
-  const source = insideSpace(root, from)
-  if (folder === folderOf(from)) {
-    await workspace.rename(source, name)
-    return to
-  }
-
-  const into = folder ? insideSpace(root, folder) : root
-  const carried = async (path: string) => {
-    if (!(await workspace.moveMany([path], into, undoing))) {
-      throw new Error(`the move of ${from} to ${to} was refused`)
-    }
-  }
-  if (name === nameOf(from)) {
-    await carried(source)
-    return to
-  }
-
-  if (await onDisk(joinPath(into, name))) throw new Error(`${to} is already there`)
-
-  const here = folderOf(source)
-  const free = async (folderAt: string, called: string) =>
-    !(samePath(folderAt, root) && isAgentsName(called)) &&
-    !(await onDisk(joinPath(folderAt, called)))
-
-  if (await free(into, nameOf(from))) {
-    await carried(source)
-    await workspace.rename(joinPath(into, nameOf(from)), name)
-    return to
-  }
-  if (await free(here, name)) {
-    await workspace.rename(source, name)
-    await carried(joinPath(here, name))
-    return to
-  }
-
-  let number = 2
-  const numbered = () => name.replace(/(\.[^.]*)?$/, ` ${number}$1`)
-  while (!(await free(here, numbered())) || !(await free(into, numbered()))) number++
-  const aside = numbered()
-  await workspace.rename(source, aside)
-  await carried(joinPath(here, aside))
-  await workspace.rename(joinPath(into, aside), name)
-
-  return to
-}
-
-export function movedPath(from: string, to: string, folder = false): string {
-  const name = folder
-    ? nameOf(to)
-    : MARKDOWN.test(from)
-      ? withExtension(nameOf(to))
-      : nameToWrite(nameOf(to), extensionOf(nameOf(from), false))
-  const into = folderOf(to)
-  return into ? `${into}/${name}` : name
-}
-
 export async function deleteFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const relative = relativeIn(args)
@@ -388,7 +299,7 @@ export async function setProperty(args: Said): Promise<unknown> {
 }
 
 export async function syncNow(): Promise<unknown> {
-  const { sync } = await import('../sync.svelte')
+  const { sync } = await import('../../sync.svelte')
   const moved = await sync.pass()
 
   return { moved, status: sync.status, lastError: sync.lastError }

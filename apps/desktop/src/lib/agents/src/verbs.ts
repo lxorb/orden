@@ -1,3 +1,4 @@
+import type { AgentScope as Scope } from '@orden/contracts'
 export const AGENT_EVENT = 'orden://agent'
 
 export const BROWSER_VERBS = [
@@ -101,30 +102,7 @@ export const CRATE_ASKS = {
   markdown: 'agent.markdown',
 } as const
 
-export type Scope =
-  | 'context'
-  | 'notes.read'
-  | 'notes.write'
-  | 'chats.read'
-  | 'chats.write'
-  | 'tree'
-  | 'workspace'
-  | 'workspace.focus'
-  | 'browser'
-  | 'browser.reader'
-  | 'browser.script'
-  | 'browser.network'
-  | 'browser.storage'
-  | 'settings'
-  | 'agents'
-  | 'terminal'
-  | 'files'
-  | 'processes'
-  | 'network'
-  | 'clipboard'
-  | 'ask'
-  | 'editor'
-  | 'applications'
+export type { Scope }
 
 export type Category =
   | 'paying'

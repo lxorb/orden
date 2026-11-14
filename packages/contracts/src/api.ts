@@ -195,7 +195,7 @@ export {
   whenPortProvided,
 } from './ports'
 export { whenLoaded } from './loading'
-export type { AgentPorts, AgentWritesPort } from './agents'
+export type { AgentPorts, AgentScope, AgentWritesPort } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'
@@ -225,7 +225,9 @@ export type {
   WebPageSeen,
   WebPagesPort,
   WebPorts,
+  WebScriptsPort,
 } from './web'
+export { type Hearing, registerHearing, startHearings } from './hearing'
 export {
   type QuittingPorts,
   type RunningProgram,

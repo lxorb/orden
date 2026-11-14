@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import { readable as guarded } from './guarded'
 import { type Canvas, readCanvas as parse, writeCanvas } from '@orden/markdown/canvas'
 import { merged, stamped } from '@orden/markdown/canvas-merge'

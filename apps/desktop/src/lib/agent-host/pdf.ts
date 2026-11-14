@@ -1,6 +1,6 @@
 import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
-import type { AgentAnswer } from '../automation/caller'
+import type { AgentAnswer } from '../automation/src/api'
 import {
   COLOURS,
   frozen,
