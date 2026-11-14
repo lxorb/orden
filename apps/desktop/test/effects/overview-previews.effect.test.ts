@@ -18,10 +18,11 @@ vi.mock('../../src/lib/surfaces.svelte', async (original) => {
   }
 })
 
-vi.mock('../../src/lib/terminal/sessions.svelte', () => ({
+vi.mock('../../src/lib/terminal/src/sessions.svelte', () => ({
   screenOf: () => ({ text: '$ make\nall done', cols: 80 }),
 }))
 
+await import('../../src/lib/terminal-ports')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
 const { TAB_KINDS } = await import('../../src/lib/workspace/tab-kinds')

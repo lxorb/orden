@@ -1,10 +1,8 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { MOST_LINE, plainOf } from './shell-text'
-import { historyOf } from '../../terminal/history'
-import { isOnlineTab } from '../../online/path'
-import { shellRunning } from '../../terminal/running'
-import { readSpec } from '../../terminal/spec'
-import type { Session } from '../../terminal/sessions.svelte'
+import { historyOf, sessions, shellRunning, readSpec } from '../../terminal/src/api'
+import { isOnlineTab } from '../../online-terms/src/api'
+import type { Session } from '../../terminal/src/api'
 import { platform } from '../../platform/src/api'
 import type { Tab } from '../../workspace.svelte'
 import { asked } from './asks'
@@ -33,7 +31,7 @@ const OFF_SCREEN =
 const SOURCE = 'terminal output'
 
 async function sessionFor(tab: Tab): Promise<Session> {
-  const { sessionOf } = await import('../../terminal/sessions.svelte')
+  const { sessionOf } = await sessions()
   return sessionOf(tab)
 }
 

@@ -38,7 +38,16 @@
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
-  import { destinationOf, type Host, hostFor, said } from './remote/hosts'
+  import {
+    connectTo,
+    destinationOf,
+    type Host,
+    hostFor,
+    openAll,
+    openRemote,
+    remoteHosts,
+    said,
+  } from './terminal/src/api'
   import { relativeTo, samePath } from './platform/src/api'
   import TabMark from './TabMark.svelte'
   import { theme } from './theme/src/api'
@@ -108,9 +117,7 @@
   let hosts = $state.raw<Host[]>([])
   $effect(() => {
     if (!open || __EVEN_PLUGIN__ || !isDesktop) return
-    void import('./remote/hosts.svelte').then(({ remote }) =>
-      remote.refresh().then(() => (hosts = remote.hosts)),
-    )
+    void remoteHosts().then(({ remote }) => remote.refresh().then(() => (hosts = remote.hosts)))
   })
 
   const world = $derived.by((): World | null => {
@@ -415,11 +422,11 @@
         void workspace.createNote(note.folder ? joinPath(root, note.folder) : root, note.name)
     },
     goto: (line) => ongoto?.(line),
-    openHost: (id) => void import('./remote/open').then(({ openRemote }) => openRemote(id)),
+    openHost: (id) => void openRemote(id),
     openHosts: (ids) => {
-      if (!__EVEN_PLUGIN__) void import('./remote/open').then(({ openAll }) => openAll(ids))
+      if (!__EVEN_PLUGIN__) void openAll(ids)
     },
-    connect: (wanted) => void import('./remote/open').then(({ connectTo }) => connectTo(wanted)),
+    connect: (wanted) => void connectTo(wanted),
     openMessage: (path, message, how) => {
       const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
       void opening?.then(({ openChat }) => openChat(path, how, message))

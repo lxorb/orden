@@ -1,6 +1,6 @@
 import { mount } from 'svelte'
 import { invoke, platform } from '../platform/src/api'
-import { shells } from '../terminal/shells.svelte'
+import { shells } from '../terminal/src/api'
 import { jump } from './jump'
 import QuitSheet from './QuitSheet.svelte'
 import { asks, rowsHere, type Why } from './rows'

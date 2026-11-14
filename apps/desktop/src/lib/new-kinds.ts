@@ -3,9 +3,8 @@ import type { FileMark } from './file-mark'
 import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
 import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
-import { openTerminal, shellRows } from './terminal/open'
+import { hostPicking, openOnline, openTerminal, shellRows, shells } from './terminal/src/api'
 import { canWriteAt } from './sharing/src/api'
-import { shells } from './terminal/shells.svelte'
 import { workspace } from './workspace.svelte'
 
 type KindLine = 'write' | 'run' | 'web'
@@ -157,8 +156,7 @@ function onlineRow(): NewKindRow {
     icon: ONLINE,
     letter: 'o',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./online/open').then(({ openOnline }) => openOnline()))
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => openOnline())
     },
   }
 }
@@ -171,8 +169,7 @@ function remoteRow(): NewKindRow {
     mark: 'remote',
     letter: 's',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__)
-        void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.show(paneId))
+      if (!__EVEN_PLUGIN__) void hostPicking().then(({ hostPicker }) => hostPicker.show(paneId))
     },
   }
 }

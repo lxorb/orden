@@ -13,7 +13,7 @@ vi.mock('./platform/src/tauri', async (actual) => ({
   ...(await actual<typeof import('./platform/src/tauri')>()),
   isDesktop: true,
 }))
-vi.mock('./terminal/open', () => ({
+vi.mock('./terminal/src/open', () => ({
   openTerminal: (shell?: string) => {
     opened.push(shell)
     return Promise.resolve()
@@ -26,7 +26,7 @@ vi.mock('./terminal/open', () => ({
 }))
 
 const shownPicker: (string | undefined)[] = []
-vi.mock('./remote/picker.svelte', () => ({
+vi.mock('./terminal/src/remote/picker.svelte', () => ({
   hostPicker: { show: (paneId?: string) => void shownPicker.push(paneId) },
 }))
 

@@ -25,7 +25,8 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const { Opener, Pace, whereToOpen } = await import('../../src/lib/online/opening.svelte')
+const { Opener, Pace, whereToOpen } =
+  await import('../../src/lib/terminal/src/online/opening.svelte')
 const { land, reset } = await import('./online-opening-world.svelte')
 
 const SIGN_IN =

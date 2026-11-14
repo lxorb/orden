@@ -481,7 +481,7 @@ const openDocument = vi.hoisted(() =>
 )
 vi.mock('../../pdf/document', () => ({ openDocument }))
 
-vi.mock('../../terminal/shells.svelte', () => ({
+vi.mock('../../terminal/src/shells.svelte', () => ({
   shells: { ask: () => Promise.resolve([]), chosen: { id: 'pwsh', name: 'PowerShell' } },
 }))
 

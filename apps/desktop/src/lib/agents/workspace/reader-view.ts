@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { agentMarks } from '../../agent-marks.svelte'
-import type { Refused as Why } from '../../online/calls'
+import type { Refused as Why } from '../../terminal/src/api'
 import { settings, type Section } from '../../settings.svelte'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { panesIn, paneToward, type Toward } from '../../workspace/pane-tree'
@@ -64,7 +64,7 @@ export async function openTerminal(
 ): Promise<Tab | null> {
   const front = asksFront(call, 'a new tab in front')
   const beside = front ? null : workspace.activeTabId
-  const { openTerminal: made } = await import('../../terminal/open')
+  const { openTerminal: made } = await import('../../terminal/src/api')
   const tab = await made(shell, {
     ...(folder === undefined ? {} : { folder }),
     ...(beside ? { beside } : {}),
@@ -75,7 +75,7 @@ export async function openTerminal(
 
 export async function openOnline(call: Call): Promise<Tab | Why | null> {
   const front = asksFront(call, 'a new tab in front')
-  const { madeOnline } = await import('../../online/open')
+  const { madeOnline } = await import('../../terminal/src/api')
   const made = await madeOnline(front ? null : workspace.activeTabId, front)
   return typeof made === 'string' ? made : openedBy(call, made, front)
 }

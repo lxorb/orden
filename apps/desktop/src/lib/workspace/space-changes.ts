@@ -136,7 +136,7 @@ export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean>
       ? ws.tabs
       : []
   if (!tabs.some((tab) => tab.kind === 'terminal')) return true
-  const { mayEnd } = await import('../terminal/closing')
+  const { mayEnd } = await import('../terminal/src/api')
   return await mayEnd(tabs)
 }
 

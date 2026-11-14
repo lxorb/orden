@@ -17,7 +17,7 @@
     tab.naming = false
 
     if (commit && typed.trim() !== was.trim()) {
-      void import('../terminal/rename').then(({ renameTerminal }) => renameTerminal(tab, typed))
+      void import('../terminal/src/api').then(({ renameTerminal }) => renameTerminal(tab, typed))
     }
     focusEditor()
   }

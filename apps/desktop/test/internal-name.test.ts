@@ -93,7 +93,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/former-keys.ts': ["'nib:'", "'nib.'"],
   'apps/desktop/src/lib/modes.svelte.ts': ["'nib'"],
   'apps/desktop/src/lib/modes.test.ts': ["frame: 'nib'"],
-  'apps/desktop/src/lib/online/link.test.ts': ["'nib."],
+  'apps/desktop/src/lib/online-link/src/link.test.ts': ["'nib."],
   'apps/desktop/src/lib/open-link.test.ts': ['NIB://'],
   'apps/desktop/src/lib/open-link.ts': ['|nib)'],
   'apps/desktop/src/lib/collab-rooms/src/carried.test.ts': ["'nib."],

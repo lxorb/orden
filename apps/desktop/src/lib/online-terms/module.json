@@ -1,0 +1,5 @@
+{
+  "name": "online-terms",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "online"]
+}

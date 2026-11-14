@@ -11,7 +11,7 @@ import {
 } from '../platform/src/api'
 import { frecency as visitWeight, shownAddress } from '../web-tab/omnibox'
 import type { Visit } from '../web-tab/visits'
-import type { Host } from '../remote/hosts'
+import type { Host } from '../terminal/src/api'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { TabKind } from '../workspace/documents.svelte'
 import type { Entry } from '../workspace.svelte'

@@ -38,8 +38,8 @@ describe('one press, one tab', () => {
   })
 
   test('the terminal follows a link from the press, never from xterm.js as well', () => {
-    const session = readFileSync(join(SRC, 'lib/terminal/sessions.svelte.ts'), 'utf8')
-    const links = readFileSync(join(SRC, 'lib/terminal/links.ts'), 'utf8')
+    const session = readFileSync(join(SRC, 'lib/terminal/src/sessions.svelte.ts'), 'utf8')
+    const links = readFileSync(join(SRC, 'lib/terminal/src/links.ts'), 'utf8')
     expect(session).toMatch(
       /addEventListener\('mousedown', \(event\) => this\.pressLink\(event\), true\)/,
     )

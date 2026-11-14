@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { hostsOf, NOTHING_KEPT } from '../remote/hosts'
+import { hostsOf, NOTHING_KEPT } from '../terminal/src/remote/hosts'
 import { candidates, headingCandidates, resting, rowKey } from './kinds'
 import { MOST_PLACES, ranked } from './rank'
 import { command, file, named, NOW, ROOT, setting, tab, visit, world } from './world.fixture'

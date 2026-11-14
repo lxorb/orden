@@ -1,9 +1,14 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { account } from '../../accounts/src/api'
-import { listed, type Listed, type Refused as Why } from '../../online/calls'
-import { opens, rowOf } from '../../online/listing'
-import { machine } from '../../online/machine.svelte'
-import { isOnlineTab } from '../../online/path'
+import {
+  type Listed,
+  type Refused as Why,
+  opens,
+  rowOf,
+  onlineCalls,
+  onlineMachine,
+} from '../../terminal/src/api'
+import { isOnlineTab } from '../../online-terms/src/api'
 import { termOf } from '@orden/online/term'
 import { relativeTo, samePath, within } from '../../platform/src/api'
 import { runner } from '../../sync-client/src/api'
@@ -37,6 +42,7 @@ export async function newOnline(call: Call): Promise<Tab | null> {
 
 export async function listOnline(call: Call): Promise<AgentAnswer> {
   if (!account.accountToken) throw refusedOf('signed-out')
+  const [{ machine }, { listed }] = await Promise.all([onlineMachine(), onlineCalls()])
   await machine.refresh()
   if (machine.refused) throw refusedOf(machine.refused)
 

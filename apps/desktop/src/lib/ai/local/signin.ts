@@ -71,10 +71,8 @@ async function typeInTerminal(
   out: boolean,
   home: string | null,
 ): Promise<boolean> {
-  const [{ openTerminal }, { shells }, { ptyOf }, { workspace }] = await Promise.all([
-    import('../../terminal/open'),
-    import('../../terminal/shells.svelte'),
-    import('../../terminal/running'),
+  const [{ openTerminal, shells, ptyOf }, { workspace }] = await Promise.all([
+    import('../../terminal/src/api'),
     import('../../workspace.svelte'),
   ])
 

@@ -5,7 +5,7 @@ import {
   type View,
   type ViewerFrame,
 } from '@orden/online/apps'
-import { Channel, type LinkWorld, type Opened } from '../../online/link'
+import { Channel, type LinkWorld, type Opened } from '../../online-link/src/api'
 
 export type AppHeard = RelayToViewer | Opened
 
