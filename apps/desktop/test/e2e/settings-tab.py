@@ -59,13 +59,13 @@ def desktop(browser: Browser) -> None:
         wrong("no tab in the strip says Settings")
     for side in ("light", "dark"):
         scheme(page, side)
-        shot(page, f"{harness.ENGINE}-desktop-{side}")
+        shot(page, f"chromium-desktop-{side}")
 
     page.locator(f"{SHEET} input").first.fill("font")
     page.wait_for_timeout(300)
     if "Nothing matches" in page.locator(SHEET).inner_text():
         wrong("searching the settings for font finds nothing")
-    shot(page, f"{harness.ENGINE}-desktop-search")
+    shot(page, f"chromium-desktop-search")
     page.locator(f"{SHEET} input").first.fill("")
 
     DRIVE.open_note(page, "Plan")
@@ -79,7 +79,7 @@ def desktop(browser: Browser) -> None:
     one_tab_in_front(page, "a deep link")
     if "Shortcuts" not in page.locator(f"{SHEET} .body h2").first.inner_text():
         wrong("a deep link to Shortcuts shows another page")
-    shot(page, f"{harness.ENGINE}-desktop-deep-link")
+    shot(page, f"chromium-desktop-deep-link")
 
     DRIVE.open_note(page, "Plan")
     page.locator("body").click(position={"x": 700, "y": 400})
@@ -106,12 +106,12 @@ def phone(browser: Browser) -> None:
         scheme(page, side)
         page.evaluate("() => window.ordenApp.settings.show()")
         one_tab_in_front(page, f"phone {side}")
-        shot(page, f"{harness.ENGINE}-phone-{side}-list")
+        shot(page, f"chromium-phone-{side}-list")
         page.locator(f"{SHEET} nav .item").nth(1).click()
         page.wait_for_timeout(300)
         if not page.locator(f"{SHEET} .body").count():
             wrong(f"[phone {side}] a row opened no page")
-        shot(page, f"{harness.ENGINE}-phone-{side}-page")
+        shot(page, f"chromium-phone-{side}-page")
         page.locator(f"{SHEET} header [aria-label=Back]").click()
         page.wait_for_timeout(300)
         if not page.locator(f"{SHEET} nav").count():

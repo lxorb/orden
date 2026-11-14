@@ -59,35 +59,6 @@ ANSWERED = (
     " set: (at) => { if (at !== -1) held.set.call(app.settings, at) } }) } })"
 )
 
-MAC_PLATFORM = (
-    "if (/Macintosh/.test(navigator.userAgent) && navigator.platform !== 'MacIntel')"
-    " Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'MacIntel' })"
-)
-
-WEBKIT_CLIPBOARD = (
-    "(() => { const c = navigator.clipboard; if (!c) return; let kept = '';"
-    " const write = c.writeText.bind(c), read = c.readText.bind(c);"
-    " c.writeText = (text) => { kept = String(text); return write(text).catch(() => undefined) };"
-    " c.readText = () => read().catch(() => kept) })()"
-)
-
-MAC_SELECT_ALL = (
-    "addEventListener('keydown', (event) => { const at = event.target;"
-    " if (!event.metaKey || event.ctrlKey || event.altKey || event.key.toLowerCase() !== 'a') return;"
-    " if (!(at instanceof HTMLInputElement || at instanceof HTMLTextAreaElement)) return;"
-    " setTimeout(() => { if (!event.defaultPrevented) at.select() }) }, true)"
-)
-
-WEBKIT_SOCKETS = (
-    "(() => { const Native = window.WebSocket; if (!Native || window.__nibSockets) return;"
-    " const open = new Set(); window.__nibSockets = open; window.__nibOffline = false;"
-    " window.WebSocket = class extends Native { constructor(url, ...rest) {"
-    " super(window.__nibOffline ? 'ws://offline.invalid/' : url, ...rest);"
-    " open.add(this); this.addEventListener('close', () => open.delete(this)) } } })()"
-)
-
-WEBKIT_WORKERS = "block"
-
 PATIENCE = 30
 
 HARMLESS = (
@@ -95,28 +66,11 @@ HARMLESS = (
     "ResizeObserver loop limit exceeded",
 )
 
-CANCELLED = re.compile(r"^Fetch API cannot load (\w+):/*(\S+) due to access control checks\.$")
-
 def harmless(error: Any, origin: str | None = None) -> bool:
     said = str(getattr(error, "message", None) or error).strip()
-    if said.startswith(HARMLESS):
-        return True
-    if not (WEBKIT and origin):
-        return False
-    name = getattr(error, "name", None)
-    cancelled = CANCELLED.match(f"{name}:{said}" if name else said)
-    if not cancelled:
-        return False
-    return _origin(f"{cancelled.group(1)}://{cancelled.group(2)}") == _origin(origin)
+    return said.startswith(HARMLESS)
 
-def _origin(url: str) -> str:
-    parts = urllib.parse.urlsplit(url)
-    return f"{parts.scheme}://{parts.netloc}"
-
-ENGINE = os.environ.get("ORDEN_ENGINE", "chromium")
-WEBKIT = ENGINE == "webkit"
-
-MOD = "Meta" if WEBKIT else "Control"
+MOD = "Control"
 
 WORKER_PATIENCE = 90
 BUILD_PATIENCE = 600
@@ -173,25 +127,16 @@ def answering(browser: Any) -> Any:
     made_page = browser.new_page
 
     def answered(context: Any, first_look: bool) -> None:
-        if WEBKIT:
-            context.add_init_script(MAC_PLATFORM)
-            context.add_init_script(WEBKIT_CLIPBOARD)
-            context.add_init_script(WEBKIT_SOCKETS)
-            context.add_init_script(MAC_SELECT_ALL)
         if not first_look:
             context.add_init_script(BUILT_IN)
             context.add_init_script(ANSWERED)
 
     def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
-        if WEBKIT:
-            options.setdefault("service_workers", WEBKIT_WORKERS)
         context = made_context(*args, **options)
         answered(context, first_look)
         return context
 
     def new_page(*args: Any, first_look: bool = False, **options: Any) -> Any:
-        if WEBKIT:
-            options.setdefault("service_workers", WEBKIT_WORKERS)
         page = made_page(*args, **options)
         answered(page.context, first_look)
         return page
@@ -199,181 +144,6 @@ def answering(browser: Any) -> Any:
     browser.new_context = new_context
     browser.new_page = new_page
     return browser
-
-REGISTRIES = (
-    APP / "src" / "lib" / "shortcuts" / "registry.ts",
-    ROOT / "packages" / "editor" / "src" / "keymap.ts",
-)
-
-_MODIFIERS = ("Control", "Meta", "Alt", "Shift")
-
-_CHARACTERS = {
-    "Backquote": "`",
-    "BracketLeft": "[",
-    "BracketRight": "]",
-    "Minus": "-",
-    "Equal": "=",
-    "Slash": "/",
-    "Backslash": "\\",
-    "Semicolon": ";",
-    "Quote": "'",
-    "Comma": ",",
-    "Period": ".",
-    **{f"Digit{digit}": str(digit) for digit in range(10)},
-    **{f"Key{chr(letter)}": chr(letter).lower() for letter in range(65, 91)},
-}
-
-TEXT_KEYS = {
-    "ArrowLeft": ("Alt", "ArrowLeft"),
-    "ArrowRight": ("Alt", "ArrowRight"),
-    "Backspace": ("Alt", "Backspace"),
-    "Delete": ("Alt", "Delete"),
-    "Home": ("Meta", "ArrowUp"),
-    "End": ("Meta", "ArrowDown"),
-}
-
-def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
-    parts = re.split(r"[-+](?!$)", written)
-    named = {"mod": mod, "ctrl": "Control", "control": "Control", "cmd": "Meta", "meta": "Meta"}
-    named |= {"alt": "Alt", "option": "Alt", "shift": "Shift"}
-    held = frozenset(named[one.lower()] for one in parts[:-1] if one.lower() in named)
-    key = _CHARACTERS.get(parts[-1], parts[-1])
-    return held, key.lower() if len(key) == 1 else key
-
-def _written(held: frozenset[str], key: str) -> str:
-    return "+".join([*(one for one in _MODIFIERS if one in held), key])
-
-@functools.cache
-def mac_bindings() -> dict[tuple[frozenset[str], str], str]:
-    found: dict[tuple[frozenset[str], str], str] = {}
-    source = "".join(one.read_text(encoding="utf-8") for one in REGISTRIES)
-    for entry in re.finditer(r"\{[^{}]*?\bkey: '([^']+)',[^{}]*?\bmac: '([^']+)'", source):
-        held, key = _chord(entry.group(1), "Control")
-        if not held and key in ("Delete", "Backspace"):
-            continue
-        found[held, key] = _written(*_chord(entry.group(2), "Meta"))
-    found[frozenset({"Control"}), "y"] = "Meta+Shift+z"
-    return found
-
-def mac_key(pressed: str) -> str:
-    if pressed in ("Control", "ControlOrMeta"):
-        return "Meta"
-    chord = _chord(pressed, "Control")
-    if chord in mac_bindings():
-        return mac_bindings()[chord]
-    held, key = chord
-    if "Control" in held and key in TEXT_KEYS:
-        moved, to = TEXT_KEYS[key]
-        return _written((held - {"Control"}) | {moved}, to)
-    if "Control" not in held:
-        return pressed
-    return _written((held - {"Control"}) | {"Meta"}, pressed.rsplit("+", 1)[-1])
-
-def _mac_modifiers(modifiers: Sequence[str] | None) -> list[str] | None:
-    if modifiers is None:
-        return None
-    return ["Meta" if one in ("Control", "ControlOrMeta") else one for one in modifiers]
-
-def _press_as_a_mac() -> None:
-    import weakref
-
-    from playwright.sync_api import (
-        Browser,
-        BrowserContext,
-        ElementHandle,
-        Frame,
-        Keyboard,
-        Locator,
-        Page,
-    )
-
-    other: weakref.WeakSet[Any] = weakref.WeakSet()
-
-    def noted(method: Callable[..., Any]) -> Callable[..., Any]:
-        @functools.wraps(method)
-        def making(*args: Any, **kwargs: Any) -> Any:
-            if "permissions" in kwargs:
-                kwargs["permissions"] = [one for one in kwargs["permissions"] if one != "clipboard-write"]
-            made = method(*args, **kwargs)
-            agent = kwargs.get("user_agent")
-            context = made.context if isinstance(made, Page) else made
-            if (agent and "Mac" not in agent) or context in other:
-                other.add(context)
-                for page in context.pages:
-                    other.add(page.keyboard)
-            if isinstance(made, Page) and made.context in other:
-                other.add(made.keyboard)
-            return made
-
-        return making
-
-    Browser.new_context = noted(Browser.new_context)  # type: ignore[method-assign]
-    Browser.new_page = noted(Browser.new_page)  # type: ignore[method-assign]
-    BrowserContext.new_page = noted(BrowserContext.new_page)  # type: ignore[method-assign]
-
-    def a_mac(owner: Any) -> bool:
-        if isinstance(owner, Keyboard):
-            return owner not in other
-        page = owner if isinstance(owner, Page) else getattr(owner, "page", None)
-        if page is None and isinstance(owner, Frame):
-            page = owner.page
-        return page is None or page.context not in other
-
-    def keyed(method: Callable[..., Any], at: int) -> Callable[..., Any]:
-        @functools.wraps(method)
-        def pressing(*args: Any, **kwargs: Any) -> Any:
-            if a_mac(args[0]):
-                if "key" in kwargs:
-                    kwargs["key"] = mac_key(kwargs["key"])
-                elif len(args) > at:
-                    args = (*args[:at], mac_key(args[at]), *args[at + 1 :])
-            return method(*args, **kwargs)
-
-        return pressing
-
-    def modified(method: Callable[..., Any]) -> Callable[..., Any]:
-        @functools.wraps(method)
-        def clicking(*args: Any, **kwargs: Any) -> Any:
-            if "modifiers" in kwargs and a_mac(args[0]):
-                kwargs["modifiers"] = _mac_modifiers(kwargs["modifiers"])
-            return method(*args, **kwargs)
-
-        return clicking
-
-    for name in ("press", "down", "up"):
-        setattr(Keyboard, name, keyed(getattr(Keyboard, name), 1))
-    for kind in (Page, Frame):
-        kind.press = keyed(kind.press, 2)  # type: ignore[method-assign]
-    for kind in (Locator, ElementHandle):
-        kind.press = keyed(kind.press, 1)  # type: ignore[method-assign]
-    for kind in (Page, Frame, Locator, ElementHandle):
-        for name in ("click", "dblclick", "hover", "tap"):
-            setattr(kind, name, modified(getattr(kind, name)))
-
-if WEBKIT:
-    _press_as_a_mac()
-
-def _offline_as_chromium() -> None:
-    from playwright.sync_api import BrowserContext
-
-    went = BrowserContext.set_offline
-
-    def set_offline(self: Any, offline: bool) -> None:
-        went(self, offline)
-        for page in self.pages:
-            with contextlib.suppress(Exception):
-                page.evaluate(
-                    """(away) => {
-                      window.__nibOffline = away
-                      if (away) for (const one of [...(window.__nibSockets ?? [])]) one.close()
-                    }""",
-                    offline,
-                )
-
-    BrowserContext.set_offline = set_offline  # type: ignore[method-assign]
-
-if WEBKIT:
-    _offline_as_chromium()
 
 def _hear_no_harmless() -> None:
     from playwright.sync_api import Page
@@ -756,7 +526,7 @@ class Drive:
         elif dev:
             self.origin = f"http://{self.name}.localhost:{self.dev_port}"
         elif self.server:
-            self.origin = self.server.origin("127.0.0.1" if WEBKIT else f"{self.name}.localhost")
+            self.origin = self.server.origin(f"{self.name}.localhost")
         else:
             self.origin = ""
 
@@ -810,10 +580,6 @@ class Drive:
         return True
 
     def browser(self, play: Any, **options: Any) -> Any:
-        if WEBKIT:
-            options.pop("channel", None)
-            options.pop("args", None)
-            return answering(play.webkit.launch(**options))
         channel = os.environ.get("ORDEN_BROWSER", "chromium")
         options.setdefault("channel", channel)
         return answering(play.chromium.launch(**options))
@@ -825,18 +591,8 @@ class Drive:
         return context
 
     def persistent(self, play: Any, profile: Path, **options: Any) -> Any:
-        if WEBKIT:
-            options.pop("channel", None)
-            options.pop("args", None)
-            options.setdefault("service_workers", WEBKIT_WORKERS)
-            context = play.webkit.launch_persistent_context(user_data_dir=str(profile), **options)
-        else:
-            options.setdefault("channel", os.environ.get("ORDEN_BROWSER", "chromium"))
-            context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
-        if WEBKIT:
-            context.add_init_script(MAC_PLATFORM)
-            context.add_init_script(WEBKIT_SOCKETS)
-            context.add_init_script(MAC_SELECT_ALL)
+        options.setdefault("channel", os.environ.get("ORDEN_BROWSER", "chromium"))
+        context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         context.add_init_script(BUILT_IN)
         context.add_init_script(ANSWERED)
         return context
@@ -1350,10 +1106,6 @@ def missing(needs: Sequence[str]) -> str:
             exe = Path(os.environ["ORDEN_PROBE_EXE"])
             if why := refused(exe, identifier_of(exe)):
                 return f"refused: {why}"
-        if one == "chromium" and WEBKIT:
-            return f"needs {NEEDS['chromium']}"
-        if one == "tab-stops" and WEBKIT and sys.platform == "darwin":
-            return f"needs {NEEDS['tab-stops']}"
         if one not in NEEDS:
             return f"needs {one}, which the harness does not know"
     return ""

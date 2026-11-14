@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock, PoisonError};
 use std::time::{Duration, Instant};
 
-#[cfg(feature = "cef")]
 use tauri::Manager as _;
 use tauri::{AppHandle, Emitter, Webview};
 
@@ -88,24 +87,8 @@ pub fn start(app: &AppHandle) {
     exit::begin(&dir, &version);
 }
 
-#[cfg(feature = "cef")]
 fn engine(app: &AppHandle) -> String {
     format!("CEF {}", app.webview_version().unwrap_or_default())
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-fn engine(_app: &AppHandle) -> String {
-    format!("WebView2 {}", wry::webview_version().unwrap_or_default())
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-fn engine(_app: &AppHandle) -> String {
-    format!("WKWebView {}", wry::webview_version().unwrap_or_default())
-}
-
-#[cfg(all(not(any(windows, target_os = "macos")), not(feature = "cef")))]
-fn engine(_app: &AppHandle) -> String {
-    "WebKitGTK".to_owned()
 }
 
 fn told() {
@@ -165,12 +148,6 @@ fn whose(label: &str) -> &'static str {
 }
 
 enum Ended {
-    Failed {
-        whose: String,
-        kind: i32,
-        what: String,
-        doing: Option<String>,
-    },
     Gone {
         whose: &'static str,
         doing: Option<String>,
@@ -184,29 +161,6 @@ fn ends() -> &'static std::sync::mpsc::Sender<Ended> {
 
 fn ended_report(ended: Ended) {
     let report = match ended {
-        Ended::Failed {
-            whose,
-            kind,
-            what,
-            doing,
-        } => {
-            let mut report = report::fresh("engine", &format!("{whose} page {what}"));
-            report.process = Some(
-                match kind {
-                    0 => "browser",
-                    3 => "frame",
-                    4 => "utility",
-                    5 => "sandbox",
-                    6 => "gpu",
-                    7 | 8 => "plugin",
-                    _ => "renderer",
-                }
-                .to_owned(),
-            );
-            report.reason = Some("exited".to_owned());
-            report.doing = doing;
-            report
-        }
         Ended::Gone { whose, doing } => {
             let mut report = report::fresh("engine", &format!("{whose} page ended"));
             report.process = Some("renderer".to_owned());
@@ -218,29 +172,6 @@ fn ended_report(ended: Ended) {
     report::keep_now(&report, false);
 }
 
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 says which of its processes failed")
-)]
-pub fn page_failed(whose: &str, kind: i32, what: &str) {
-    if kind == 2 {
-        return;
-    }
-    let _ = ends().send(Ended::Failed {
-        whose: whose.to_owned(),
-        kind,
-        what: what.to_owned(),
-        doing: crate::stall::doing_now(),
-    });
-}
-
-#[cfg_attr(
-    not(any(feature = "cef", target_os = "macos")),
-    allow(
-        dead_code,
-        reason = "only CEF and WKWebView say a page's process ended"
-    )
-)]
 pub fn page_ended(label: &str) {
     let _ = ends().send(Ended::Gone {
         whose: whose(label),

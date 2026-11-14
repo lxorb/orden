@@ -7,8 +7,6 @@ const NEW: &str = "so.orden.Orden";
 
 const PROFILES: [&str; 4] = ["EBWebView", "chromium", "web", "web-stores"];
 
-const SWAPS: bool = cfg!(not(feature = "cef"));
-
 const AFTER_MOVE: &str = "after-move.json";
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
@@ -29,10 +27,9 @@ pub fn carry_home() {
     if env!("ORDEN_IDENTIFIER") != NEW {
         return;
     }
-    let swap = SWAPS && after_move().is_some_and(|file| file.is_file());
     let moved: Vec<(PathBuf, PathBuf)> = places()
         .into_iter()
-        .filter(|(old, new)| merged(old, new, swap))
+        .filter(|(old, new)| merged(old, new))
         .collect();
     let Some(config) = dirs::config_dir().map(|dir| dir.join(NEW)) else {
         return;
@@ -148,13 +145,12 @@ pub(crate) fn former_homes() -> Former {
         };
     }
     let pairs = places();
-    let waiting = profiles_waiting(&pairs);
     let said = after_move().and_then(|file| fs::read_to_string(file).ok());
     Former {
         homes: homes_of(pairs),
-        waiting,
+        waiting: false,
         dumped: said.is_some(),
-        after: if waiting { None } else { said },
+        after: said,
     }
 }
 
@@ -184,23 +180,6 @@ fn homes_of(pairs: Vec<(PathBuf, PathBuf)>) -> Vec<Home> {
             to: new.to_string_lossy().into_owned(),
         })
         .collect()
-}
-
-fn holds_any(dir: &Path) -> bool {
-    fs::read_dir(dir).is_ok_and(|mut children| children.next().is_some())
-}
-
-fn profiles_waiting(pairs: &[(PathBuf, PathBuf)]) -> bool {
-    if !SWAPS {
-        return false;
-    }
-    pairs.iter().any(|(old, new)| {
-        let whole = profile(old) && holds_any(old) && new.is_dir();
-        let inner = PROFILES
-            .iter()
-            .any(|name| holds_any(&old.join(name)) && new.join(name).is_dir());
-        whole || inner
-    })
 }
 
 fn places() -> Vec<(PathBuf, PathBuf)> {
@@ -237,7 +216,7 @@ fn places() -> Vec<(PathBuf, PathBuf)> {
     pairs
 }
 
-fn merged(old: &Path, new: &Path, swap: bool) -> bool {
+fn merged(old: &Path, new: &Path) -> bool {
     if fs::symlink_metadata(old).is_err() {
         return false;
     }
@@ -248,14 +227,14 @@ fn merged(old: &Path, new: &Path, swap: bool) -> bool {
         return false;
     }
     if profile(old) {
-        return swap && swapped(old, new);
+        return false;
     }
     let Ok(children) = fs::read_dir(old) else {
         return false;
     };
     let mut any = false;
     for child in children.flatten() {
-        any |= merged(&child.path(), &new.join(child.file_name()), swap);
+        any |= merged(&child.path(), &new.join(child.file_name()));
     }
     let _ = fs::remove_dir(old);
     any
@@ -271,37 +250,6 @@ fn profile(old: &Path) -> bool {
     let whole = named(Some(old), OLD) && named(parent, "WebKit");
     let inner = named(parent, OLD) && PROFILES.iter().any(|one| named(Some(old), one));
     whole || inner
-}
-
-fn with_retries(mut done: impl FnMut() -> bool) -> bool {
-    for _ in 0..60 {
-        if done() {
-            return true;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(250));
-    }
-    false
-}
-
-fn swapped(old: &Path, new: &Path) -> bool {
-    if !holds_any(old) {
-        let _ = fs::remove_dir(old);
-        return false;
-    }
-    let since = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |time| time.as_secs());
-    let mut name = new.file_name().unwrap_or_default().to_os_string();
-    name.push(format!(".after-move-{since}"));
-    let aside = new.with_file_name(name);
-    if !with_retries(|| crate::carry::rename_new(new, &aside).is_ok()) {
-        return false;
-    }
-    if crate::carry::rename_new(old, new).is_ok() {
-        return true;
-    }
-    let _ = crate::carry::rename_new(&aside, new);
-    false
 }
 
 fn repoint(file: &Path, old: &Path, new: &Path) {
@@ -356,13 +304,13 @@ mod tests {
         fs::create_dir_all(old.join("Spaces/Work")).unwrap();
         fs::write(old.join("Spaces/Work/Plan.md"), "# Plan").unwrap();
 
-        assert!(merged(&old, &new, false));
+        assert!(merged(&old, &new));
         assert_eq!(
             fs::read_to_string(new.join("Spaces/Work/Plan.md")).unwrap(),
             "# Plan"
         );
         assert!(!old.exists());
-        assert!(!merged(&old, &new, false));
+        assert!(!merged(&old, &new));
     }
 
     #[test]
@@ -374,7 +322,7 @@ mod tests {
         fs::create_dir_all(&new).unwrap();
         fs::write(new.join("settings.json"), "new").unwrap();
 
-        assert!(merged(&old, &new, false));
+        assert!(merged(&old, &new));
         assert!(new.join("Spaces").is_dir());
         assert_eq!(
             fs::read_to_string(new.join("settings.json")).unwrap(),
@@ -396,7 +344,7 @@ mod tests {
         fs::create_dir_all(new.join("Spaces/Work")).unwrap();
         fs::write(new.join("Spaces/Work/Same.md"), "new").unwrap();
 
-        assert!(merged(&old, &new, false));
+        assert!(merged(&old, &new));
         assert_eq!(
             fs::read_to_string(new.join("Spaces/Work/Projects/Plan.md")).unwrap(),
             "- [ ] ship"
@@ -419,10 +367,7 @@ mod tests {
             fs::create_dir_all(dir.join("EBWebView/Default")).unwrap();
             fs::write(dir.join("EBWebView/Default/state"), said).unwrap();
         }
-        let pairs = vec![(old.clone(), new.clone())];
-        assert_eq!(profiles_waiting(&pairs), SWAPS);
-
-        assert!(!merged(&old, &new, false));
+        assert!(!merged(&old, &new));
         assert_eq!(
             fs::read_to_string(old.join("EBWebView/Default/state")).unwrap(),
             "old"
@@ -431,55 +376,6 @@ mod tests {
             fs::read_to_string(new.join("EBWebView/Default/state")).unwrap(),
             "new"
         );
-
-        assert!(merged(&old, &new, true));
-        assert!(!profiles_waiting(&pairs));
-    }
-
-    #[test]
-    fn a_browser_profile_made_new_by_an_early_start_steps_aside_for_the_old_one() {
-        let root = tempfile::tempdir().unwrap();
-        let (old, new) = (root.path().join(OLD), root.path().join(NEW));
-        for (dir, said) in [(&old, "old"), (&new, "new")] {
-            fs::create_dir_all(dir.join("EBWebView/Default/Local Storage")).unwrap();
-            fs::write(dir.join("EBWebView/Default/Local Storage/leveldb"), said).unwrap();
-        }
-
-        assert!(merged(&old, &new, true));
-        assert_eq!(
-            fs::read_to_string(new.join("EBWebView/Default/Local Storage/leveldb")).unwrap(),
-            "old"
-        );
-        let aside: Vec<String> = fs::read_dir(&new)
-            .unwrap()
-            .flatten()
-            .map(|one| one.file_name().to_string_lossy().into_owned())
-            .filter(|one| one.starts_with("EBWebView.after-move-"))
-            .collect();
-        assert_eq!(aside.len(), 1);
-        assert_eq!(
-            fs::read_to_string(new.join(&aside[0]).join("Default/Local Storage/leveldb")).unwrap(),
-            "new"
-        );
-        assert!(!old.exists());
-    }
-
-    #[test]
-    fn a_mac_web_store_made_new_by_an_early_start_steps_aside_for_the_old_one() {
-        let root = tempfile::tempdir().unwrap();
-        let webkit = root.path().join("WebKit");
-        let (old, new) = (webkit.join(OLD), webkit.join(NEW));
-        fs::create_dir_all(old.join("WebsiteData/LocalStorage")).unwrap();
-        fs::write(old.join("WebsiteData/LocalStorage/db"), "old").unwrap();
-        fs::create_dir_all(new.join("WebsiteData/LocalStorage")).unwrap();
-        fs::write(new.join("WebsiteData/LocalStorage/db"), "new").unwrap();
-
-        assert!(merged(&old, &new, true));
-        assert_eq!(
-            fs::read_to_string(new.join("WebsiteData/LocalStorage/db")).unwrap(),
-            "old"
-        );
-        assert!(!old.exists());
     }
 
     #[test]
@@ -491,7 +387,7 @@ mod tests {
         fs::create_dir_all(new.join("Spaces/web")).unwrap();
         fs::write(new.join("Spaces/web/b.md"), "b").unwrap();
 
-        assert!(merged(&old, &new, false));
+        assert!(merged(&old, &new));
         assert!(new.join("Spaces/web/a.md").is_file());
         assert!(new.join("Spaces/web/b.md").is_file());
     }

@@ -126,18 +126,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
-        #[cfg(target_os = "ios")]
-        RunEvent::SceneRequested { scene, .. } => {
-            if let Some(main) = objc2::MainThreadMarker::new() {
-                objc2_ui_kit::UIApplication::sharedApplication(main)
-                    .requestSceneSessionDestruction_options_errorHandler(
-                        &scene.session(),
-                        None,
-                        None,
-                    );
-            }
-        }
-
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
         RunEvent::Exit => {
@@ -162,7 +150,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(window) = app.get_window(&label) {
                 crate::keyboard::no_hidden_menu(&window);
             }
-            #[cfg(feature = "cef")]
             crate::keyboard::window_came_back(app, &label);
         }
 
@@ -340,10 +327,7 @@ pub fn quit_now(app: &AppHandle) {
             }
         };
 
-        #[cfg(any(windows, target_os = "macos", feature = "cef"))]
         crate::web_cookies::kept(&window, ask);
-        #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
-        ask();
     }
 }
 
@@ -422,7 +406,6 @@ mod asked_to_quit {
     }
 
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
-        #[cfg(feature = "cef")]
         use tauri::Manager as _;
         if !WAITING.swap(false, Ordering::SeqCst) {
             return false;

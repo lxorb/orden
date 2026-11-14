@@ -123,7 +123,6 @@ objc2-local-authentication = { version = "0.3", default-features = false, featur
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3"
-wry = { version = "0.55", default-features = false }
 libc = "0.2"
 objc2 = "0.6"
 block2 = "0.6"
@@ -196,36 +195,6 @@ objc2-user-notifications = { version = "0.3", default-features = false, features
   "UNNotificationSound",
   "UNNotificationTrigger",
   "UNUserNotificationCenter",
-] }
-objc2-web-kit = { version = "0.3", default-features = false, features = [
-  "std",
-  "objc2-app-kit",
-  "objc2-core-foundation",
-  "block2",
-  "WKContentWorld",
-  "WKNavigation",
-  "WKDownload",
-  "WKDownloadDelegate",
-  "WKOpenPanelParameters",
-  "WKPDFConfiguration",
-  "WKWindowFeatures",
-  "WKFrameInfo",
-  "WKHTTPCookieStore",
-  "WKNavigationAction",
-  "WKNavigationDelegate",
-  "WKNavigationResponse",
-  "WKPreferences",
-  "WKSecurityOrigin",
-  "WKSnapshotConfiguration",
-  "WKUIDelegate",
-  "WKScriptMessage",
-  "WKScriptMessageHandler",
-  "WKUserContentController",
-  "WKUserScript",
-  "WKWebView",
-  "WKWebViewConfiguration",
-  "WKWebsiteDataRecord",
-  "WKWebsiteDataStore",
 ] }
 objc2-screen-capture-kit = { version = "0.3", default-features = false, features = [
   "std",
@@ -326,31 +295,7 @@ windows = { version = "0.58", features = [
   "Security_Credentials_UI",
   "Win32_System_WinRT",
 ] }
-webview2-com = "0.38"
 windows-core = "0.61"
-windows_com = { package = "windows", version = "0.61", features = [
-  "Win32_System_Com",
-  "Win32_System_Com_StructuredStorage",
-  "Win32_System_DataExchange",
-  "Win32_System_Memory",
-  "Win32_Graphics_DirectComposition",
-  "Win32_Graphics_Direct2D_Common",
-  "Win32_Graphics_Dxgi_Common",
-  "Win32_Graphics_Gdi",
-  "Win32_System_Ole",
-  "Win32_System_SystemServices",
-  "Win32_System_Variant",
-  "Win32_UI_Accessibility",
-  "Win32_UI_Input_KeyboardAndMouse",
-  "Win32_UI_Input_Pointer",
-  "Win32_UI_Shell",
-  "Win32_UI_Shell_Common",
-  "Win32_UI_WindowsAndMessaging",
-] }
-wry = { version = "0.55", default-features = false }
-
-[target.'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
-webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 
 [dev-dependencies]
 proc-macro2 = "1"
@@ -375,6 +320,3 @@ opt-level = "s"
 panic = "abort"
 strip = true
 
-[patch.crates-io]
-wry = { path = "windows/wry" }
-tauri-runtime-wry = { path = "windows/tauri-runtime-wry" }

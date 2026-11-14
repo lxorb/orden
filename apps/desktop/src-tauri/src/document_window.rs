@@ -21,7 +21,6 @@ pub fn show_document(
 
 #[cfg(target_os = "macos")]
 fn mark_document(window: &Window, edited: bool, path: String) -> Result<(), String> {
-    #[cfg(feature = "cef")]
     use tauri::Manager as _;
     let on = window.clone();
     window

@@ -30,7 +30,7 @@ pub fn watch(app: &AppHandle) {
 
         #[cfg(desktop)]
         handing(&opened, urls);
-        #[cfg(not(desktop))]
+        #[cfg(mobile)]
         let _ = opened.emit_to("main", OPENED, urls);
     });
 

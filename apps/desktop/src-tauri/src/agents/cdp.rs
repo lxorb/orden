@@ -1,25 +1,9 @@
-#[cfg(all(windows, not(feature = "cef")))]
-use std::cell::Cell;
 use std::collections::{HashMap, HashSet, VecDeque};
-#[cfg(all(windows, not(feature = "cef")))]
-use std::rc::Rc;
 use std::sync::mpsc::{sync_channel, Receiver, RecvTimeoutError};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
-#[cfg(all(windows, not(feature = "cef")))]
-use tauri::webview::PlatformWebview;
-#[cfg(all(windows, not(feature = "cef")))]
-use webview2_com::Microsoft::Web::WebView2::Win32::{
-    ICoreWebView2, ICoreWebView2DevToolsProtocolEventReceivedEventArgs2, ICoreWebView2_11,
-};
-#[cfg(all(windows, not(feature = "cef")))]
-use webview2_com::{
-    CallDevToolsProtocolMethodCompletedHandler, DevToolsProtocolEventReceivedEventHandler,
-};
-#[cfg(all(windows, not(feature = "cef")))]
-use windows_core::{Interface as _, HSTRING, PWSTR};
 
 use super::engines::View;
 use super::verbs::{ConsoleLine, Request};
@@ -84,22 +68,6 @@ fn asked(
     params: &Value,
 ) -> Result<Answering, String> {
     match view {
-        #[cfg(all(windows, not(feature = "cef")))]
-        View::Webview(view) => {
-            let (answered, answer) = sync_channel(1);
-            let asking = (
-                method.to_string(),
-                params.to_string(),
-                session.map(str::to_string),
-            );
-            view.with_webview(move |platform| {
-                let (method, params, session) = asking;
-                send(&platform, session.as_deref(), &method, &params, answered);
-            })
-            .map_err(|error| format!("the page could not be reached: {error}"))?;
-            Ok(answer)
-        }
-        #[cfg(feature = "cef")]
         View::Webview(view) => {
             let (answered, answer) = sync_channel(1);
             let (view, session, method, params) = (
@@ -120,148 +88,7 @@ fn asked(
             });
             Ok(answer)
         }
-        #[cfg(feature = "cef")]
         View::Windowless(page) => page.ask(session, method, params),
-    }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
-)]
-fn send(
-    platform: &PlatformWebview,
-    session: Option<&str>,
-    method: &str,
-    params: &str,
-    answered: std::sync::mpsc::SyncSender<Result<Value, String>>,
-) {
-    let late = answered.clone();
-    let named = method.to_string();
-    let done = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |result, json| {
-        let _ = late.try_send(match result {
-            Ok(()) => parsed(&named, &json),
-            Err(error) => Err(refusal(&json).unwrap_or_else(|| error.message())),
-        });
-        Ok(())
-    }));
-    let (method, params) = (HSTRING::from(method), HSTRING::from(params));
-    let sent = unsafe {
-        platform
-            .controller()
-            .CoreWebView2()
-            .and_then(|core| match session {
-                None => core.CallDevToolsProtocolMethod(&method, &params, &done),
-                Some(session) => core.cast::<ICoreWebView2_11>().and_then(|core| {
-                    core.CallDevToolsProtocolMethodForSession(
-                        &HSTRING::from(session),
-                        &method,
-                        &params,
-                        &done,
-                    )
-                }),
-            })
-    };
-    if let Err(error) = sent {
-        let _ = answered.try_send(Err(error.message()));
-    }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
-    ask(core, method, params, |_| ());
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
-)]
-pub fn ask(
-    core: &ICoreWebView2,
-    method: &str,
-    params: &Value,
-    answered: impl FnOnce(Result<Value, String>) + 'static,
-) {
-    type Answered = Box<dyn FnOnce(Result<Value, String>)>;
-
-    let answered = Rc::new(Cell::new(Some(Box::new(answered) as Answered)));
-    let late = answered.clone();
-    let named = method.to_string();
-    let done = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |result, json| {
-        if let Some(said) = late.take() {
-            said(match result {
-                Ok(()) => parsed(&named, &json),
-                Err(error) => Err(refusal(&json).unwrap_or_else(|| error.message())),
-            });
-        }
-        Ok(())
-    }));
-    let sent = unsafe {
-        core.CallDevToolsProtocolMethod(
-            &HSTRING::from(method),
-            &HSTRING::from(params.to_string()),
-            &done,
-        )
-    };
-    if let Err(error) = sent {
-        if let Some(said) = answered.take() {
-            said(Err(error.message()));
-        }
-    }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-fn parsed(method: &str, text: &str) -> Result<Value, String> {
-    if text.is_empty() {
-        return Ok(Value::Null);
-    }
-    serde_json::from_str(text).map_err(|error| format!("{method}: {error}"))
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-fn refusal(json: &str) -> Option<String> {
-    let said: Value = serde_json::from_str(json).ok()?;
-    said.get("message")?.as_str().map(str::to_string)
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the DevTools Protocol's events are WebView2's own, reached through its COM interfaces"
-)]
-pub fn hear(core: &ICoreWebView2, event: &str, on: impl Fn(&str, Value) + 'static) -> bool {
-    unsafe {
-        let Ok(receiver) = core.GetDevToolsProtocolEventReceiver(&HSTRING::from(event)) else {
-            return false;
-        };
-        let handler =
-            DevToolsProtocolEventReceivedEventHandler::create(Box::new(move |_sender, args| {
-                let Some(args) = args else {
-                    return Ok(());
-                };
-                let mut said = PWSTR::null();
-                args.ParameterObjectAsJson(&raw mut said)?;
-                let said = webview2_com::take_pwstr(said);
-                let session = args
-                    .cast::<ICoreWebView2DevToolsProtocolEventReceivedEventArgs2>()
-                    .ok()
-                    .and_then(|two| {
-                        let mut session = PWSTR::null();
-                        two.SessionId(&raw mut session).ok()?;
-                        Some(webview2_com::take_pwstr(session))
-                    })
-                    .unwrap_or_default();
-                if let Ok(value) = serde_json::from_str(&said) {
-                    on(&session, value);
-                }
-                Ok(())
-            }));
-        let mut token = 0i64;
-        receiver
-            .add_DevToolsProtocolEventReceived(&handler, &raw mut token)
-            .is_ok()
     }
 }
 
@@ -753,36 +580,7 @@ const EVENTS: [&str; 20] = [
     "Target.detachedFromTarget",
 ];
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn follow(core: &ICoreWebView2, label: &str) {
-    let page = heard(label);
-    if std::mem::replace(
-        &mut page.lock().unwrap_or_else(PoisonError::into_inner).followed,
-        true,
-    ) {
-        return;
-    }
-    for event in EVENTS {
-        let page = Arc::clone(&page);
-        hear(core, event, move |session, value| {
-            let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
-            heard_event(&mut held, event, session, value);
-        });
-    }
-}
-
 pub fn follow_view(view: &View, label: &str) {
-    #[cfg(all(windows, not(feature = "cef")))]
-    {
-        let View::Webview(webview) = view;
-        let named = label.to_string();
-        let _ = webview.with_webview(move |platform| {
-            if let Some(core) = core_of(&platform) {
-                follow(&core, &named);
-            }
-        });
-    }
-    #[cfg(feature = "cef")]
     {
         let page = heard(label);
         if std::mem::replace(
@@ -1142,15 +940,6 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
             let _ = call_in(&view, None, method, &json!({}), Duration::from_secs(5));
         }
     }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the engine is reached through WebView2's COM interfaces"
-)]
-pub fn core_of(platform: &PlatformWebview) -> Option<ICoreWebView2> {
-    unsafe { platform.controller().CoreWebView2().ok() }
 }
 
 #[cfg(test)]

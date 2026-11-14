@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -7,19 +6,8 @@ use serde::{Deserialize, Serialize};
 use super::firefox::{self, Gaps};
 use super::link::Store;
 use super::unzip;
-#[cfg(not(feature = "cef"))]
-use super::{crx, manifest};
 
 const LIST: &str = "library.json";
-
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(
-        dead_code,
-        reason = "WebView2 cannot say which version it holds, so only it needs this written down"
-    )
-)]
-const APPLIED: &str = "applied.json";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -54,43 +42,6 @@ pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
     )
 }
 
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(
-        dead_code,
-        reason = "WebView2 cannot say which version it holds, so only it needs this written down"
-    )
-)]
-pub type Applied = BTreeMap<String, BTreeMap<String, String>>;
-
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(
-        dead_code,
-        reason = "WebView2 cannot say which version it holds, so only it needs this written down"
-    )
-)]
-pub fn applied(root: &Path) -> Applied {
-    fs::read_to_string(root.join(APPLIED))
-        .ok()
-        .and_then(|text| serde_json::from_str(&text).ok())
-        .unwrap_or_default()
-}
-
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(
-        dead_code,
-        reason = "WebView2 cannot say which version it holds, so only it needs this written down"
-    )
-)]
-pub fn write_applied(root: &Path, applied: &Applied) -> Result<(), String> {
-    written(
-        &root.join(APPLIED),
-        &serde_json::to_string_pretty(applied).map_err(|e| e.to_string())?,
-    )
-}
-
 fn written(path: &Path, text: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| error.to_string())?;
@@ -107,19 +58,6 @@ pub fn plain_version(version: &str) -> bool {
         && version
             .split('.')
             .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
-}
-
-#[cfg(not(feature = "cef"))]
-pub fn unpack(root: &Path, store: Store, id: &str, bytes: &[u8]) -> Result<String, String> {
-    let checked = crx::checked(bytes, id, Some(store))?;
-    unpack_checked(root, &checked)
-}
-
-#[cfg(not(feature = "cef"))]
-pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String, String> {
-    unpack_with(root, &checked.id, checked.zip, |folder| {
-        manifest::keyed(folder, &checked.key)
-    })
 }
 
 pub fn unpack_firefox(
@@ -197,13 +135,6 @@ pub fn forget(root: &Path, id: &str) {
     }
 }
 
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine that runs extensions leaves folders behind"
-    )
-)]
 pub fn tidy(root: &Path) {
     let list = read(root);
     let Ok(entries) = fs::read_dir(root) else {
@@ -221,7 +152,6 @@ pub fn tidy(root: &Path) {
     }
 }
 
-#[cfg(feature = "cef")]
 pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
     read(root)
         .into_iter()
@@ -231,86 +161,6 @@ pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
             folder.join("manifest.json").is_file() && !folder.to_string_lossy().contains(',')
         })
         .collect()
-}
-
-#[cfg(all(test, not(feature = "cef")))]
-mod tests {
-    use super::super::crx::tests::crx;
-    use super::super::unzip::tests::zip;
-    use super::{folder_of, plain_version, prune, read, unpack_checked, write, Kept, Store};
-
-    fn scratch(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("orden-library-{name}-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        dir
-    }
-
-    #[test]
-    fn an_extension_unpacks_into_its_version_with_its_key_in_the_manifest() {
-        let root = scratch("unpack");
-        let archive = zip(&[
-            (
-                "manifest.json",
-                br#"{"name":"Test","version":"1.2.3","manifest_version":3}"#,
-            ),
-            ("popup.html", b"<p>hi</p>"),
-        ]);
-        let (bytes, id) = crx(&archive);
-        let checked = super::crx::checked(&bytes, &id, None).expect("checked");
-
-        let version = unpack_checked(&root, &checked).expect("unpacked");
-        assert_eq!(version, "1.2.3");
-        let folder = folder_of(&root, &id, &version);
-        let manifest = std::fs::read_to_string(folder.join("manifest.json")).expect("there");
-        assert!(manifest.contains("\"key\""), "{manifest}");
-        assert!(folder.join("popup.html").is_file());
-
-        assert_eq!(unpack_checked(&root, &checked).expect("again"), "1.2.3");
-        prune(&root, &id, "1.2.3");
-        assert!(folder.is_dir());
-        let leftovers = std::fs::read_dir(root.join(&id)).expect("there").count();
-        assert_eq!(leftovers, 1);
-        let _ = std::fs::remove_dir_all(&root);
-    }
-
-    #[test]
-    fn a_version_that_is_not_a_folder_name_is_refused() {
-        let root = scratch("bad-version");
-        let archive = zip(&[("manifest.json", br#"{"name":"x","version":"../1"}"#)]);
-        let (bytes, id) = crx(&archive);
-        let checked = super::crx::checked(&bytes, &id, None).expect("checked");
-        assert!(unpack_checked(&root, &checked).is_err());
-        assert!(!root.join(&id).join("..").join("1").exists());
-        for (version, fine) in [
-            ("1", true),
-            ("2025.1.30.4", true),
-            ("1.2.3.4.5", false),
-            ("1..2", false),
-            ("1a", false),
-            ("", false),
-        ] {
-            assert_eq!(plain_version(version), fine, "{version}");
-        }
-        let _ = std::fs::remove_dir_all(&root);
-    }
-
-    #[test]
-    fn the_list_survives_being_written_and_drops_what_is_not_an_extension() {
-        let root = scratch("list");
-        let one = Kept {
-            id: "ddkjiahejlhfcafbddmgiahcphecmpfh".into(),
-            store: Store::Chrome,
-            version: "1.0".into(),
-            enabled: true,
-            pinned: true,
-            addon: None,
-        };
-        let mut bad = one.clone();
-        bad.id = "../../x".into();
-        write(&root, &[one.clone(), bad]).expect("written");
-        assert_eq!(read(&root), vec![one]);
-        let _ = std::fs::remove_dir_all(&root);
-    }
 }
 
 #[cfg(test)]

@@ -1,7 +1,4 @@
-#[cfg(feature = "cef")]
 pub mod cef;
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub mod webkit;
 
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -20,10 +17,7 @@ use super::verbs::{
 };
 use crate::pdf::PdfPage;
 
-#[cfg(any(windows, feature = "cef"))]
 pub use super::page::Element;
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub use webkit::Element;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ReaderStore {
@@ -54,13 +48,6 @@ pub fn twin_of(reader: Option<&str>) -> String {
     clippy::option_option,
     reason = "no twin, and a twin of the store every space shares, are two different answers"
 )]
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "WKWebView runs no extensions, so its pages need no twin"
-    )
-)]
 pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
     let rest = store?.strip_prefix(TWIN)?;
     if rest.is_empty() {
@@ -74,7 +61,6 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
 #[derive(Clone)]
 pub enum View {
     Webview(Webview),
-    #[cfg(feature = "cef")]
     Windowless(cef::Windowless),
 }
 
@@ -82,7 +68,6 @@ impl View {
     pub fn label(&self) -> String {
         match self {
             View::Webview(view) => view.label().to_string(),
-            #[cfg(feature = "cef")]
             View::Windowless(page) => page.label().to_string(),
         }
     }
@@ -90,7 +75,6 @@ impl View {
     pub fn url(&self) -> String {
         match self {
             View::Webview(view) => view.url().map(|one| one.to_string()).unwrap_or_default(),
-            #[cfg(feature = "cef")]
             View::Windowless(page) => page.url(),
         }
     }
@@ -100,14 +84,12 @@ impl View {
             View::Webview(view) => {
                 let _ = view.close();
             }
-            #[cfg(feature = "cef")]
             View::Windowless(page) => page.close(),
         }
     }
 }
 
 pub fn view(app: &AppHandle, label: &str) -> Option<View> {
-    #[cfg(feature = "cef")]
     if let Some(page) = cef::page(label) {
         return Some(View::Windowless(page));
     }
@@ -115,80 +97,24 @@ pub fn view(app: &AppHandle, label: &str) -> Option<View> {
 }
 
 pub fn forget(label: &str) {
-    #[cfg(any(windows, feature = "cef"))]
     super::cdp::forget(label);
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    webkit::forget(label);
 }
 
 pub fn opened(label: &str, tab: &str) {
-    #[cfg(any(windows, feature = "cef"))]
     super::cdp::heard(label)
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .opened
         .push(tab.to_string());
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    webkit::opened(label, tab);
 }
 
 pub fn sleep_idle(app: &AppHandle) {
-    #[cfg(any(windows, feature = "cef"))]
     super::cdp::sleep_idle(app);
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    let _ = app;
 }
 
-pub const TWINS: bool = cfg!(any(windows, feature = "cef"));
+pub const NAME: &str = "Chromium";
 
-#[cfg(any(windows, feature = "cef"))]
-pub const NAME: &str = if cfg!(windows) {
-    "WebView2"
-} else {
-    "Chromium"
-};
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub const NAME: &str = "WKWebView";
-
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "the other engine's table, which the test reads beside this one's"
-    )
-)]
-pub const CDP_CANNOT: &[(&str, &str)] = &[];
-
-#[cfg_attr(
-    any(windows, feature = "cef"),
-    allow(
-        dead_code,
-        reason = "the other engine's table, which the test reads beside this one's"
-    )
-)]
-pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
-    (
-        "browser_drag",
-        "a drag on WKWebView is the system's own drag session, which only the real pointer starts: an agent's would take the reader's pointer",
-    ),
-    (
-        "browser_upload",
-        "WKWebView gives a file input its files only through the file panel a person picks them in, and Orden never opens one for an agent's page",
-    ),
-    (
-        "browser_console",
-        "WKWebView has no road to a page's console for an app: its Web Inspector's protocol is Safari's alone",
-    ),
-    (
-        "browser_network",
-        "WKWebView says nothing of a page's requests to an app: there is no protocol to its network log",
-    ),
-];
-
-#[cfg(any(windows, feature = "cef"))]
-const CANNOT: &[(&str, &str)] = CDP_CANNOT;
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-const CANNOT: &[(&str, &str)] = WEBKIT_CANNOT;
+const CANNOT: &[(&str, &str)] = &[];
 
 pub fn cannot(verb: &str) -> Option<&'static str> {
     CANNOT
@@ -237,32 +163,12 @@ pub type Gate<'g> = &'g dyn Fn(&Element) -> Result<(), Answer>;
 pub struct Page<'a> {
     pub view: &'a View,
     pub label: String,
-    #[cfg_attr(
-        not(any(windows, feature = "cef")),
-        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
-    )]
     pub own: bool,
     pub since: u64,
-    #[cfg_attr(
-        not(any(windows, feature = "cef")),
-        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
-    )]
     pub limits: Option<(Grant, Store)>,
     pub credentials: AtomicBool,
-    #[cfg_attr(
-        not(any(windows, feature = "cef")),
-        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
-    )]
     pub worlds: Mutex<HashMap<(Option<String>, String), i64>>,
-    #[cfg_attr(
-        not(any(windows, feature = "cef")),
-        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
-    )]
     pub frame_lists: Mutex<HashMap<Option<String>, Vec<String>>>,
-    #[cfg_attr(
-        not(any(windows, feature = "cef")),
-        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
-    )]
     pub worlds_renewed: AtomicBool,
 }
 
@@ -294,10 +200,6 @@ pub fn acts_in(limits: Option<&(Grant, Store)>, facts: &Facts) -> Result<(), Ans
     }
 }
 
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "WKWebView reads no frame by its address")
-)]
 pub fn frame_readable(limits: Option<&(Grant, Store)>, at: &[String]) -> bool {
     limits.is_none_or(|(grant, store)| super::policy::frame_allowed(grant, at, *store).is_ok())
 }
@@ -317,10 +219,6 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
 }
 
 impl Page<'_> {
-    #[cfg_attr(
-        not(any(windows, feature = "cef")),
-        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
-    )]
     pub fn may_touch_credentials(&self) -> bool {
         self.credentials.load(Ordering::Relaxed)
     }
@@ -437,12 +335,10 @@ pub trait Engine {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        acts_in, frame_readable, from_allowed, reader_of, twin_of, CDP_CANNOT, WEBKIT_CANNOT,
-    };
+    use super::{acts_in, frame_readable, from_allowed, reader_of, twin_of};
     use crate::agents::grants::{Grant, SiteRule};
     use crate::agents::policy::Facts;
-    use crate::agents::verbs::{Answer, Code, Store, NAMES};
+    use crate::agents::verbs::{Answer, Code, Store};
 
     fn denying() -> (Grant, Store) {
         let mut grant = Grant::own("a".into(), "A");
@@ -519,23 +415,6 @@ mod tests {
         let open = (Grant::own("a".into(), "A"), Store::Reader);
         assert!(from_allowed(Some(&open), &[]).is_ok());
         assert!(from_allowed(None, &[]).is_ok());
-    }
-
-    #[test]
-    fn every_engine_does_each_browser_verb_or_says_why_not() {
-        for (engine, table) in [("cdp", CDP_CANNOT), ("webkit", WEBKIT_CANNOT)] {
-            for (verb, why) in table {
-                assert!(
-                    NAMES.contains(verb) || *verb == "capture_to_note",
-                    "{engine}: {verb} is no verb"
-                );
-                assert!(why.len() > 20, "{engine}: {verb} says no reason");
-            }
-            let mut names: Vec<&str> = table.iter().map(|(verb, _)| *verb).collect();
-            names.sort_unstable();
-            names.dedup();
-            assert_eq!(names.len(), table.len(), "{engine}: a verb named twice");
-        }
     }
 
     #[test]

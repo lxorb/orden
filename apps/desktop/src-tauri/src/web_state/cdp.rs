@@ -1,7 +1,7 @@
 use serde_json::Value;
 use tauri::Webview;
 
-use super::answer::PATIENCE;
+use super::PATIENCE;
 
 pub(crate) async fn call(view: &Webview, method: &str, params: &Value) -> Result<Value, String> {
     let (view, method, params) = (view.clone(), method.to_owned(), params.clone());

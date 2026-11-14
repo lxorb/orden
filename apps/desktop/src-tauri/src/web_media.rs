@@ -1,5 +1,3 @@
-#![cfg_attr(not(feature = "cef"), allow(dead_code))]
-
 const SCRIPT: &str = include_str!("web_media.js");
 
 pub const UNPLAYABLE: &str = "orden-media-unplayable";

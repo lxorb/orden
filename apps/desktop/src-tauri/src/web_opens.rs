@@ -18,7 +18,7 @@ pub struct Heard {
 }
 
 impl Heard {
-    #[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
+    #[cfg_attr(not(test), allow(dead_code))]
     pub const UNHEARD: Self = Self {
         ours: false,
         said: None,
@@ -29,7 +29,7 @@ impl Heard {
 const WAITING: usize = 64;
 
 #[derive(Debug)]
-#[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
+#[cfg_attr(not(test), allow(dead_code))]
 pub struct Waiting<T> {
     tabs: HashMap<String, VecDeque<(String, T)>>,
 }
@@ -42,7 +42,7 @@ impl<T> Default for Waiting<T> {
     }
 }
 
-#[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
+#[cfg_attr(not(test), allow(dead_code))]
 impl<T> Waiting<T> {
     pub fn heard(&mut self, tab: &str, uri: &str, what: T) {
         let waiting = self.tabs.entry(tab.to_string()).or_default();
@@ -65,7 +65,7 @@ impl<T> Waiting<T> {
     }
 }
 
-#[cfg_attr(not(any(all(windows, not(feature = "cef")), test)), allow(dead_code))]
+#[cfg_attr(not(test), allow(dead_code))]
 fn same_address(heard: &str, url: &str) -> bool {
     heard == url || tauri::Url::parse(heard).is_ok_and(|heard| heard.as_str() == url)
 }
@@ -94,12 +94,10 @@ const TWICE_SHIFT: &str = "orden-twice-shift";
 const TWICE_CTRL: &str = "orden-twice-ctrl";
 const TWICE_ALT: &str = "orden-twice-alt";
 
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 const PASSED: &str = "orden://web-passed";
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub enum Passed {
     Find,
     Next,
@@ -116,28 +114,17 @@ pub enum Passed {
 }
 
 impl Passed {
-    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-    pub const fn is_tap(self) -> bool {
-        matches!(
-            self,
-            Self::ShiftTwice | Self::CtrlTwice | Self::AltTwice | Self::Escape
-        )
-    }
-
-    #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
     pub fn wanted_by(self, window: &str) -> bool {
         self != Self::Escape || crate::full_screen::is_on(window)
     }
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 struct Ask {
     tab: String,
     key: Passed,
 }
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     let ask = Ask {
         tab: tab.to_string(),
@@ -146,12 +133,10 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     told(app, window, PASSED, ask);
 }
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn played(app: &tauri::AppHandle, window: &str, key: Pressed) {
     told(app, window, PRESSED, key);
 }
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str, said: S) {
     use tauri::{Emitter, Manager};
 
@@ -161,10 +146,8 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
     let _ = app.emit_to(window, event, said);
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 const PRESSED_IN: &str = "orden-pressed";
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 const BLOCKED: &str = "orden-popup-blocked";
 
 pub const PAGE_SCRIPT: &str = r"(function () {
@@ -341,12 +324,6 @@ pub const PAGE_SCRIPT: &str = r"(function () {
   guard(window)
 })()";
 
-#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
-pub fn engine_page_script() -> String {
-    PAGE_SCRIPT.replacen("var ours = true", "var ours = false", 1)
-}
-
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
   var windows = window.open.bind(window)
@@ -520,10 +497,6 @@ pub const SCRIPT: &str = r"(function () {
 const STORE_PART: &str = "  var here = typeof location";
 const STORE_END: &str = "    }, true)\n  }\n";
 
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(dead_code, reason = "only Orden's own Chromium leaves it out")
-)]
 fn without_store_button(script: &str) -> String {
     let Some(start) = script.find(STORE_PART) else {
         return script.to_owned();
@@ -534,7 +507,6 @@ fn without_store_button(script: &str) -> String {
     format!("{}{}", &script[..start], &script[end..])
 }
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn chord(name: &str) -> Option<Pressed> {
     match name {
         CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
@@ -547,7 +519,6 @@ pub fn chord(name: &str) -> Option<Pressed> {
     }
 }
 
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn sought(name: &str) -> Option<Passed> {
     match name {
         FIND => Some(Passed::Find),
@@ -563,20 +534,10 @@ pub fn sought(name: &str) -> Option<Passed> {
     }
 }
 
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub fn actual(name: &str) -> bool {
     name == ACTUAL
 }
 
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const LATELY_MS: u32 = 1000;
-
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-pub fn taken_as_a_person_s(key: Passed, user: bool, since: u32, focused: bool) -> bool {
-    user || (key.is_tap() && focused && since <= LATELY_MS)
-}
-
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     match name {
         BEHIND => return Some(Asked::Behind),
@@ -600,238 +561,8 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     menu.then_some(Asked::Behind)
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub use heard::{closing, heard, listen};
-
-#[cfg(all(windows, not(feature = "cef")))]
-mod heard {
-    use std::cell::RefCell;
-    use std::collections::HashMap;
-
-    use tauri::webview::PlatformWebview;
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2NewWindowRequestedEventArgs2, ICoreWebView2_11,
-    };
-    use webview2_com::{
-        ContextMenuRequestedEventHandler, NewWindowRequestedEventHandler,
-        WindowCloseRequestedEventHandler,
-    };
-    use windows::Win32::Foundation::HWND;
-    use windows::Win32::System::SystemInformation::GetTickCount;
-    use windows::Win32::UI::Input::KeyboardAndMouse::{
-        GetAsyncKeyState, GetFocus, GetKeyState, GetLastInputInfo, LASTINPUTINFO, VIRTUAL_KEY,
-        VK_CONTROL, VK_SHIFT,
-    };
-    use windows::Win32::UI::WindowsAndMessaging::IsChild;
-    use windows_core::Interface;
-
-    use super::{
-        actual, chord, passed, placed, played, sought, taken_as_a_person_s, Heard, Held, Waiting,
-        BLOCKED,
-    };
-
-    thread_local! {
-        static HEARD: RefCell<Waiting<Heard>> = RefCell::new(Waiting::default());
-        static MENU: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
-    }
-
-    fn noted(tab: &str, uri: &str, what: Heard) {
-        HEARD.with_borrow_mut(|heard| heard.heard(tab, uri, what));
-    }
-
-    pub fn heard(tab: &str, url: &tauri::Url) -> Heard {
-        HEARD
-            .with_borrow_mut(|heard| heard.taken(tab, url.as_str()))
-            .unwrap_or(Heard::UNHEARD)
-    }
-
-    fn ordens_own(name: &str) -> bool {
-        crate::web_swipe::named(name).is_some()
-            || sought(name).is_some()
-            || chord(name).is_some()
-            || actual(name)
-            || name == BLOCKED
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a page closing itself is one of WebView2's own events, and its objects are reached through COM"
-    )]
-    pub fn closing(webview: &PlatformWebview, window: tauri::WebviewWindow) {
-        unsafe {
-            let Ok(core) = webview.controller().CoreWebView2() else {
-                return;
-            };
-            let closed = WindowCloseRequestedEventHandler::create(Box::new(move |_, _| {
-                let _ = window.close();
-                Ok(())
-            }));
-            let mut token = 0i64;
-            let _ = core.add_WindowCloseRequested(&closed, &raw mut token);
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "the last input and the window with the keyboard are Win32's to say"
-    )]
-    fn typing_here(host: HWND) -> (u32, bool) {
-        let mut last = LASTINPUTINFO {
-            cbSize: u32::try_from(std::mem::size_of::<LASTINPUTINFO>()).unwrap_or(8),
-            dwTime: 0,
-        };
-
-        unsafe {
-            let since = if GetLastInputInfo(&raw mut last).as_bool() {
-                GetTickCount().wrapping_sub(last.dwTime)
-            } else {
-                u32::MAX
-            };
-            let focus = GetFocus();
-            let here = !focus.is_invalid() && (focus == host || IsChild(host, focus).as_bool());
-            (since, here)
-        }
-    }
-
-    fn by_name(
-        app: &tauri::AppHandle,
-        window: &str,
-        asking: &str,
-        host: HWND,
-        name: &str,
-        user: bool,
-        uri: &str,
-    ) {
-        if name == BLOCKED {
-            crate::web_tabs::popup_blocked(app, window, asking, uri);
-        } else if let Some(payload) = crate::web_swipe::named(name) {
-            crate::web_swipe::heard(app, window, asking, payload);
-        } else if let Some(key) = sought(name) {
-            let (since, focused) = typing_here(host);
-            if key.wanted_by(window) && taken_as_a_person_s(key, user, since, focused) {
-                passed(app, window, asking, key);
-            }
-        } else if let Some(key) = chord(name) {
-            if user {
-                played(app, window, key);
-            }
-        } else if actual(name) && user {
-            crate::web_page::actual_size(app, window, asking);
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a page asking for a window is one of WebView2's own events, and its objects are reached through COM"
-    )]
-    pub fn listen(webview: &PlatformWebview, app: tauri::AppHandle, tab: String, window: String) {
-        let held = |key: VIRTUAL_KEY| {
-            let code = i32::from(key.0);
-            unsafe { GetKeyState(code) < 0 || GetAsyncKeyState(code) < 0 }
-        };
-
-        unsafe {
-            let Ok(core) = webview.controller().CoreWebView2() else {
-                return;
-            };
-
-            let mut parent = windows_com::Win32::Foundation::HWND::default();
-            let _ = webview.controller().ParentWindow(&raw mut parent);
-            let host = HWND(parent.0);
-
-            let asking = tab.clone();
-            let requested = NewWindowRequestedEventHandler::create(Box::new(move |_, args| {
-                let Some(args) = args else {
-                    return Ok(());
-                };
-
-                let mut uri = windows_core::PWSTR::null();
-                args.Uri(&raw mut uri)?;
-                let uri = webview2_com::take_pwstr(uri);
-
-                let mut user = windows_core::BOOL::default();
-                let _ = args.IsUserInitiated(&raw mut user);
-
-                let name = args
-                    .cast::<ICoreWebView2NewWindowRequestedEventArgs2>()
-                    .ok()
-                    .and_then(|named| {
-                        let mut name = windows_core::PWSTR::null();
-                        named.Name(&raw mut name).ok()?;
-                        Some(webview2_com::take_pwstr(name))
-                    })
-                    .unwrap_or_default();
-
-                if ordens_own(&name) {
-                    noted(
-                        &asking,
-                        &uri,
-                        Heard {
-                            ours: true,
-                            ..Heard::default()
-                        },
-                    );
-                    by_name(&app, &window, &asking, host, &name, user.as_bool(), &uri);
-                    return Ok(());
-                }
-
-                let menu = MENU
-                    .with_borrow_mut(|menu| menu.remove(&asking).is_some_and(|link| link == uri));
-
-                let keys = Held {
-                    ctrl: held(VK_CONTROL),
-                    shift: held(VK_SHIFT),
-                    alt: false,
-                };
-                noted(
-                    &asking,
-                    &uri,
-                    Heard {
-                        ours: false,
-                        said: placed(&name, user.as_bool(), keys, menu),
-                        unasked: !user.as_bool(),
-                    },
-                );
-                Ok(())
-            }));
-            let mut token = 0i64;
-            let _ = core.add_NewWindowRequested(&requested, &raw mut token);
-
-            let Ok(core) = core.cast::<ICoreWebView2_11>() else {
-                return;
-            };
-            let menu = ContextMenuRequestedEventHandler::create(Box::new(move |_, args| {
-                let Some(args) = args else {
-                    return Ok(());
-                };
-
-                let target = args.ContextMenuTarget()?;
-                let mut has = windows_core::BOOL::default();
-                target.HasLinkUri(&raw mut has)?;
-                let link = if has.as_bool() {
-                    let mut link = windows_core::PWSTR::null();
-                    target.LinkUri(&raw mut link)?;
-                    Some(webview2_com::take_pwstr(link))
-                } else {
-                    None
-                };
-
-                MENU.with_borrow_mut(|menu| match link {
-                    Some(link) => menu.insert(tab.clone(), link),
-                    None => menu.remove(&tab),
-                });
-                Ok(())
-            }));
-            let mut token = 0i64;
-            let _ = core.add_ContextMenuRequested(&menu, &raw mut token);
-        }
-    }
-}
-
-#[cfg(feature = "cef")]
 pub const BINDING: &str = "ordenAsked";
 
-#[cfg(feature = "cef")]
 pub fn script() -> String {
     without_store_button(SCRIPT)
         .replacen(
@@ -847,10 +578,8 @@ pub fn script() -> String {
         .replacen(STOPPED_ENGINE_KEYS, "/^$/", 1)
 }
 
-#[cfg(feature = "cef")]
 const STOPPED_ENGINE_KEYS: &str = "/^orden-(find|actual)/";
 
-#[cfg(feature = "cef")]
 pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     let Ok((url, name)) = serde_json::from_str::<(String, String)>(payload) else {
         return;
@@ -886,30 +615,6 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
     }
 }
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the runtime hands the page over as a bare pointer, and WebKit's preferences are set through it"
-)]
-pub fn listen(
-    webview: &tauri::webview::PlatformWebview,
-    _app: tauri::AppHandle,
-    _tab: String,
-    _window: String,
-) {
-    use objc2::rc::Retained;
-    use objc2_web_kit::WKWebView;
-
-    if let Some(view) = unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) } {
-        unsafe {
-            view.configuration()
-                .preferences()
-                .setJavaScriptCanOpenWindowsAutomatically(false);
-        }
-    }
-}
-
-#[cfg(any(all(not(windows), not(target_os = "macos")), feature = "cef"))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: tauri::AppHandle,
@@ -918,7 +623,6 @@ pub fn listen(
 ) {
 }
 
-#[cfg(any(not(windows), feature = "cef"))]
 pub fn heard(_tab: &str, _url: &tauri::Url) -> Heard {
     Heard::default()
 }
@@ -926,8 +630,7 @@ pub fn heard(_tab: &str, _url: &tauri::Url) -> Heard {
 #[cfg(test)]
 mod tests {
     use super::{
-        actual, chord, placed, sought, taken_as_a_person_s, Ask, Asked, Heard, Held, Passed,
-        Waiting, SCRIPT, WAITING,
+        actual, chord, placed, sought, Ask, Asked, Heard, Held, Passed, Waiting, SCRIPT, WAITING,
     };
 
     const UNASKED: Heard = Heard {
@@ -935,24 +638,6 @@ mod tests {
         said: None,
         unasked: true,
     };
-
-    #[test]
-    fn a_page_without_the_reader_s_press_never_reaches_the_engine_s_window_open() {
-        let gate = super::PAGE_SCRIPT.find("if (!active) {").expect("the gate");
-        let engine = super::PAGE_SCRIPT
-            .rfind("return apply(engine, self, args)")
-            .expect("the engine");
-        assert!(gate < engine);
-        assert!(super::PAGE_SCRIPT[gate..engine].contains("return null"));
-        let active = super::PAGE_SCRIPT
-            .find("var active = spent('open')")
-            .expect("the press");
-        assert!(active < gate);
-        assert!(super::PAGE_SCRIPT.contains("if (event.isTrusted) pressed = apply(now, Date, [])"));
-        assert!(super::PAGE_SCRIPT.contains("if (fresh && engine) spending[kind] = pressed"));
-        assert!(super::engine_page_script().contains("var ours = false"));
-        assert!(SCRIPT.contains("else open(event.detail, 'orden-popup-blocked')"));
-    }
 
     #[test]
     fn a_storm_of_opens_keeps_each_request_s_own_verdict() {
@@ -1036,7 +721,6 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "cef")]
     #[test]
     fn on_chromium_the_script_asks_through_the_binding_where_there_is_one() {
         let script = super::script();
@@ -1269,27 +953,6 @@ mod tests {
     }
 
     #[test]
-    fn escape_the_page_let_go_by_gives_back_a_screen_the_app_holds_and_nothing_else() {
-        assert_eq!(sought("orden-escape"), Some(Passed::Escape));
-        assert_eq!(placed("orden-escape", true, NONE, false), None);
-        assert!(SCRIPT.contains(
-            "if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'orden-escape')"
-        ));
-        let keys = SCRIPT.find("last('keydown'").expect("the keys");
-        assert!(SCRIPT.find("code === 27").is_some_and(|at| at > keys));
-
-        assert!(taken_as_a_person_s(Passed::Escape, false, 40, true));
-        assert!(!taken_as_a_person_s(Passed::Escape, false, 40, false));
-
-        assert!(!Passed::Escape.wanted_by("escape-test"));
-        crate::full_screen::noted_for_test("escape-test", true);
-        assert!(Passed::Escape.wanted_by("escape-test"));
-        crate::full_screen::noted_for_test("escape-test", false);
-        assert!(!Passed::Escape.wanted_by("escape-test"));
-        assert!(Passed::Find.wanted_by("escape-test"));
-    }
-
-    #[test]
     fn ctrl_0_asks_by_a_name_of_its_own() {
         assert!(actual("orden-actual-size"));
         assert_eq!(sought("orden-actual-size"), None);
@@ -1304,21 +967,6 @@ mod tests {
             assert!(!actual(name), "{name:?}");
         }
         assert!(SCRIPT.contains("ctrl && (code === 48 || code === 96) && !back"));
-    }
-
-    #[test]
-    fn a_tap_is_a_person_s_when_a_key_just_went_and_the_page_has_the_keyboard() {
-        let tap = Passed::ShiftTwice;
-        assert!(taken_as_a_person_s(tap, false, 40, true));
-        assert!(!taken_as_a_person_s(tap, false, 5000, true));
-        assert!(!taken_as_a_person_s(tap, false, 40, false));
-        assert!(taken_as_a_person_s(tap, true, u32::MAX, false));
-    }
-
-    #[test]
-    fn the_other_asks_still_want_the_engine_s_word() {
-        assert!(!taken_as_a_person_s(Passed::Find, false, 40, true));
-        assert!(taken_as_a_person_s(Passed::Address, true, 40, false));
     }
 
     #[test]

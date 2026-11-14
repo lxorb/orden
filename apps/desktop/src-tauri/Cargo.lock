@@ -3712,7 +3712,6 @@ dependencies = [
  "objc2-screen-capture-kit",
  "objc2-ui-kit",
  "objc2-user-notifications",
- "objc2-web-kit",
  "orden-web-engine",
  "percent-encoding",
  "plist",
@@ -3746,14 +3745,10 @@ dependencies = [
  "tempfile",
  "tokio",
  "trash",
- "webkit2gtk",
- "webview2-com",
  "window-vibrancy",
  "windows 0.58.0",
- "windows 0.61.3",
  "windows-core 0.61.2",
  "windows-registry 0.6.1",
- "wry",
  "x11rb",
  "zbus 5.19.0",
  "zeroize",
@@ -5872,6 +5867,8 @@ dependencies = [
 [[package]]
 name = "tauri-runtime-wry"
 version = "2.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e6fac707727b7a2f48e4ded90976324267371073edbb415ffb73bb0458d203f"
 dependencies = [
  "gtk",
  "http",
@@ -7398,6 +7395,8 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 [[package]]
 name = "wry"
 version = "0.55.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "186f9871daa55fd9c016578b810d149de58367113db7fb72b462d2323ce19514"
 dependencies = [
  "base64 0.22.1",
  "block2",

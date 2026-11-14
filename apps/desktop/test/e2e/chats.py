@@ -4,7 +4,7 @@ import sys
 
 from playwright.sync_api import Page
 
-from harness import WEBKIT, Drive
+from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -209,7 +209,7 @@ def big(page: Page) -> None:
     say(f"scrolling: {measured}")
     if measured["rows"] > 120:
         wrong(f"{measured['rows']} rows in the page; the window should hold about sixty")
-    if measured["median"] > 20 and not WEBKIT:
+    if measured["median"] > 20:
         wrong(f"a median frame of {measured['median']:.1f} ms while scrolling")
 
 def phone(page: Page, scheme: str) -> None:

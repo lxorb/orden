@@ -9,20 +9,18 @@ pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const BINDING: &str = "ordenSwiped";
 
-#[cfg(any(not(feature = "cef"), test))]
+#[cfg(test)]
 const NAMED: &str = "orden-swipe:";
 
-#[cfg(any(not(feature = "cef"), test))]
+#[cfg(test)]
 pub fn named(name: &str) -> Option<&str> {
     name.strip_prefix(NAMED)
 }
 
 const SWIPED: &str = "orden://web-swipe";
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn binding() -> Value {
     json!({ "name": BINDING, "executionContextName": crate::web_worlds::WORLD })
 }

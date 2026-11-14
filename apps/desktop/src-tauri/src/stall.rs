@@ -78,10 +78,7 @@ pub fn start(app: &AppHandle) {
             loop {
                 std::thread::sleep(LOOK);
                 let answers = watch_once(&app, &watched);
-                #[cfg(desktop)]
                 crate::crashes::tick(answers);
-                #[cfg(not(desktop))]
-                let _ = answers;
             }
         });
 }
@@ -108,7 +105,6 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     let marker = marker_dir(app).map(|dir| dir.join(MARKER));
     let since = crate::clock::now().saturating_sub(millis(asked.elapsed()));
     let mut written = false;
-    #[cfg(desktop)]
     let mut freeze: Option<crate::crashes::freeze::Freeze> = None;
     while matches!(watched.answers(STALL), Answer::Late(_)) {
         let held = asked.elapsed();
@@ -117,14 +113,12 @@ fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
                 let _ = std::fs::write(marker, marked(since, held, &what));
             }
             written = true;
-            #[cfg(desktop)]
             match freeze.as_mut() {
                 Some(freeze) => freeze.still(held),
                 None => freeze = Some(crate::crashes::freeze::began(&what, held)),
             }
         }
     }
-    #[cfg(desktop)]
     if let Some(freeze) = freeze {
         freeze.ended(asked.elapsed());
     }
@@ -412,126 +406,9 @@ fn pumps(thread: u32, within: Duration) -> Answer {
     }
 }
 
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 tells why a page's process failed")
-)]
-pub fn failed_words(kind: i32, reason: Option<i32>, exit: Option<i32>, process: &str) -> String {
-    let what = match kind {
-        0 => "lost its browser process",
-        1 => "ended",
-        2 => "stopped responding",
-        3 => "lost a frame's process",
-        4 => "lost a utility process",
-        5 => "lost its sandbox helper",
-        6 => "lost its GPU process",
-        7 => "lost a plugin process",
-        8 => "lost a plugin broker",
-        _ => "lost a process",
-    };
-    let why = reason.map(|reason| match reason {
-        1 => "unresponsive".to_owned(),
-        2 => "terminated".to_owned(),
-        3 => "crashed".to_owned(),
-        4 => "could not start".to_owned(),
-        5 => "out of memory".to_owned(),
-        6 => "its profile was deleted".to_owned(),
-        0 => "unexpectedly".to_owned(),
-        other => format!("reason {other}"),
-    });
-    let how = exit.map(|code| format!("exit {:#x}", u32::from_ne_bytes(code.to_ne_bytes())));
-    let process = (!process.is_empty()).then(|| process.to_owned());
-    let told: Vec<String> = [why, how, process].into_iter().flatten().collect();
-    if told.is_empty() {
-        what.to_owned()
-    } else {
-        format!("{what}: {}", told.join(", "))
-    }
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "why a process failed is told through WebView2's own event arguments"
-)]
-pub fn failure_of(
-    args: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2ProcessFailedEventArgs,
-) -> (
-    webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_PROCESS_FAILED_KIND,
-    String,
-) {
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2ProcessFailedEventArgs2, COREWEBVIEW2_PROCESS_FAILED_KIND,
-        COREWEBVIEW2_PROCESS_FAILED_REASON,
-    };
-    use windows_core::{Interface as _, PWSTR};
-
-    let mut kind = COREWEBVIEW2_PROCESS_FAILED_KIND::default();
-    let (reason, exit, process) = unsafe {
-        let _ = args.ProcessFailedKind(&raw mut kind);
-        match args.cast::<ICoreWebView2ProcessFailedEventArgs2>() {
-            Ok(two) => {
-                let mut reason = COREWEBVIEW2_PROCESS_FAILED_REASON::default();
-                let reason = two.Reason(&raw mut reason).ok().map(|()| reason.0);
-                let mut code = 0i32;
-                let exit = two.ExitCode(&raw mut code).ok().map(|()| code);
-                let mut named = PWSTR::null();
-                let process = if two.ProcessDescription(&raw mut named).is_ok() {
-                    webview2_com::take_pwstr(named)
-                } else {
-                    String::new()
-                };
-                (reason, exit, process)
-            }
-            Err(_) => (None, None, String::new()),
-        }
-    };
-    (kind, failed_words(kind.0, reason, exit, &process))
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "a webview's processes are WebView2's own event, reached through its COM interfaces"
-)]
-pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str) {
-    use webview2_com::ProcessFailedEventHandler;
-
-    let app = app.clone();
-    let _ = webview.with_webview(move |platform| unsafe {
-        let Ok(core) = platform.controller().CoreWebView2() else {
-            return;
-        };
-        let handler = ProcessFailedEventHandler::create(Box::new(move |_, args| {
-            let Some(args) = args else { return Ok(()) };
-            let (kind, what) = failure_of(&args);
-            say(
-                &app,
-                "error",
-                &format!("stall: {whose} page {what} ({})", now_doing()),
-            );
-            crate::crashes::page_failed(whose, kind.0, &what);
-            Ok(())
-        }));
-        let mut token = 0i64;
-        let _ = core.add_ProcessFailed(&handler, &raw mut token);
-    });
-}
-
-#[cfg(not(all(windows, not(feature = "cef"))))]
 pub fn watch_page(_app: &AppHandle, _webview: &tauri::Webview, _whose: &'static str) {}
 
 static GONE: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
-
-#[allow(
-    dead_code,
-    reason = "no engine Orden runs on notes its page gone yet; WebKitGTK's did, and CEF's will"
-)]
-fn gone(label: &str) {
-    GONE.lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .insert(label.to_owned());
-}
 
 pub fn page_gone(label: &str) -> bool {
     GONE.lock()
@@ -541,7 +418,7 @@ pub fn page_gone(label: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{doing, failed_words, held, last_run, marked, now_doing, seconds};
+    use super::{doing, held, last_run, marked, now_doing, seconds};
     use std::time::Duration;
 
     #[test]
@@ -572,23 +449,6 @@ mod tests {
         assert_eq!(now_doing(), "web_open");
         drop(outer);
         assert_eq!(now_doing(), "nothing of Orden's own");
-    }
-
-    #[test]
-    fn a_failed_process_is_said_with_why_and_how_it_ended() {
-        assert_eq!(
-            failed_words(0, Some(3), Some(-1_073_741_819), "msedgewebview2"),
-            "lost its browser process: crashed, exit 0xc0000005, msedgewebview2"
-        );
-        assert_eq!(
-            failed_words(1, Some(5), Some(1), ""),
-            "ended: out of memory, exit 0x1"
-        );
-        assert_eq!(failed_words(2, None, None, ""), "stopped responding");
-        assert_eq!(
-            failed_words(42, Some(9), None, ""),
-            "lost a process: reason 9"
-        );
     }
 
     #[test]

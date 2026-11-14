@@ -72,13 +72,6 @@ fn store_of(url: &Url) -> Option<Store> {
     }
 }
 
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(
-        dead_code,
-        reason = "only Orden's own Chromium installs through the store's own page"
-    )
-)]
 pub fn page_of(store: Store, id: &str) -> String {
     match store {
         Store::Chrome => format!("https://chromewebstore.google.com/detail/{id}"),

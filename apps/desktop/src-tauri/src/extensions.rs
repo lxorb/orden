@@ -6,26 +6,20 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter as _, Url};
 
 mod amo;
-#[cfg(not(feature = "cef"))]
-mod crx;
 mod fetch;
 mod firefox;
-#[cfg(any(all(windows, not(feature = "cef")), test))]
+#[cfg(test)]
 mod given;
 pub mod library;
 pub mod link;
 mod manifest;
 pub mod popup;
 mod unzip;
-#[cfg(any(all(windows, not(feature = "cef")), test))]
+#[cfg(test)]
 pub mod welcome;
 
-#[cfg(feature = "cef")]
 mod chromium;
-#[cfg(feature = "cef")]
 pub mod tabs;
-#[cfg(all(windows, not(feature = "cef")))]
-pub mod webview2;
 
 use firefox::Gaps;
 use library::Kept;
@@ -42,44 +36,10 @@ static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
 
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only what Orden hands WebView2 can fail to load")
-)]
-fn went_wrong(id: &str, why: &str) {
-    let mut problems = PROBLEMS.lock().unwrap_or_else(PoisonError::into_inner);
-    problems.retain(|(one, _)| one != id);
-    problems.push((id.to_owned(), why.to_owned()));
-}
-
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only what Orden hands WebView2 can fail to load")
-)]
-fn went_right(id: &str) {
-    PROBLEMS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .retain(|(one, _)| one != id);
-}
-
-pub const SUPPORTED: bool = cfg!(any(feature = "cef", windows));
-
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = crate::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
     Ok(dir)
-}
-
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(
-        dead_code,
-        reason = "an environment option of WebView2's; Orden's own Chromium keeps agents' stores apart by profile"
-    )
-)]
-pub fn in_store(store: Option<&str>) -> bool {
-    SUPPORTED && !store.is_some_and(|name| name.starts_with("agent_"))
 }
 
 pub fn ours(url: &Url) -> bool {
@@ -107,7 +67,6 @@ pub fn kept(app: &AppHandle) -> Vec<Kept> {
 }
 
 fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
-    #[cfg(feature = "cef")]
     let list: Vec<(Kept, PathBuf)> = {
         static TIDIED: std::sync::Once = std::sync::Once::new();
         if let Ok(root) = root(app) {
@@ -141,17 +100,6 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
             }
         }
         list
-    };
-    #[cfg(not(feature = "cef"))]
-    let list: Vec<(Kept, PathBuf)> = match root(app) {
-        Ok(root) => library::read(&root)
-            .into_iter()
-            .map(|one| {
-                let folder = library::folder_of(&root, &one.id, &one.version);
-                (one, folder)
-            })
-            .collect(),
-        Err(_) => Vec::new(),
     };
     *KNOWN.write().unwrap_or_else(PoisonError::into_inner) =
         list.iter().map(|(one, _)| one.id.clone()).collect();
@@ -225,15 +173,10 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
 
 fn changed(app: &AppHandle) {
     let _ = app.emit(CHANGED, ());
-    #[cfg(all(windows, not(feature = "cef")))]
-    webview2::apply(app);
 }
 
 #[tauri::command]
 pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
-    if !SUPPORTED {
-        return Ok(Vec::new());
-    }
     tauri::async_runtime::spawn_blocking(move || {
         listed(&app)
             .into_iter()
@@ -248,20 +191,8 @@ pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
 #[serde(untagged)]
 pub enum Done {
     Installed(Box<Shown>),
-    #[cfg_attr(
-        not(feature = "cef"),
-        allow(
-            dead_code,
-            reason = "only Orden's own Chromium sends the reader to the store"
-        )
-    )]
-    Store {
-        store: String,
-    },
-    Asks {
-        name: String,
-        asks: Gaps,
-    },
+    Store { store: String },
+    Asks { name: String, asks: Gaps },
 }
 
 #[tauri::command]
@@ -270,26 +201,15 @@ pub async fn extensions_install(
     link: String,
     anyway: Option<bool>,
 ) -> Result<Done, String> {
-    if !SUPPORTED {
-        return Err("this engine runs no extensions".into());
-    }
     let (store, id) = link::named(&link).ok_or("that is not a link to an extension")?;
     if store == Store::Firefox {
         return from_amo(app, &id, anyway == Some(true)).await;
     }
-    #[cfg(feature = "cef")]
     {
         let _ = app;
         Ok(Done::Store {
             store: link::page_of(store, &id),
         })
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        let bytes = fetch::crx(store, &id).await?;
-        installed(app, store, id, bytes)
-            .await
-            .map(|one| Done::Installed(Box::new(one)))
     }
 }
 
@@ -361,22 +281,6 @@ fn listed_as(
     Ok(shown(one, &folder))
 }
 
-#[cfg(not(feature = "cef"))]
-async fn installed(
-    app: AppHandle,
-    store: Store,
-    id: String,
-    bytes: Vec<u8>,
-) -> Result<Shown, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let root = root(&app)?;
-        let version = library::unpack(&root, store, &id, &bytes)?;
-        listed_as(&app, &root, store, &id, version, None)
-    })
-    .await
-    .map_err(|error| error.to_string())?
-}
-
 #[tauri::command]
 pub async fn extensions_set(
     app: AppHandle,
@@ -386,7 +290,6 @@ pub async fn extensions_set(
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        #[cfg(feature = "cef")]
         if let Some(on) = enabled {
             let firefox = kept(&app)
                 .iter()
@@ -427,7 +330,6 @@ pub async fn extensions_set(
 pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        #[cfg(feature = "cef")]
         {
             let firefox = kept(&app)
                 .iter()
@@ -453,9 +355,6 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
 
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
-    if !SUPPORTED {
-        return Ok(0);
-    }
     let mut moved = 0;
     for one in kept(&app)
         .into_iter()
@@ -465,29 +364,7 @@ pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
             moved += 1;
         }
     }
-    #[cfg(feature = "cef")]
     {
-        Ok(moved)
-    }
-    #[cfg(not(feature = "cef"))]
-    {
-        for one in kept(&app)
-            .into_iter()
-            .filter(|one| one.store != Store::Firefox)
-        {
-            let Ok(Some((_, file))) = fetch::newer(one.store, &one.id, &one.version).await else {
-                continue;
-            };
-            let Ok(bytes) = fetch::download(&file).await else {
-                continue;
-            };
-            if installed(app.clone(), one.store, one.id.clone(), bytes)
-                .await
-                .is_ok()
-            {
-                moved += 1;
-            }
-        }
         Ok(moved)
     }
 }
@@ -534,19 +411,9 @@ fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
 
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {
-    if !SUPPORTED {
-        return None;
-    }
     link::named(&link)
         .filter(|_| link.contains("://"))
-        .filter(|(store, _)| *store == Store::Firefox || !cfg!(feature = "cef"))
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn tidy(app: &AppHandle) {
-    if let Ok(root) = root(app) {
-        library::tidy(&root);
-    }
+        .filter(|(store, _)| *store == Store::Firefox)
 }
 
 #[cfg(test)]

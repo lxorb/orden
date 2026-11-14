@@ -1,6 +1,5 @@
 use orden_web_engine::Edge;
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("window_drag.js");
 
 #[tauri::command]
@@ -12,7 +11,6 @@ pub async fn window_move_resize(
     crate::lane::off_the_runtime(move || -> Result<(), String> {
         let direction = Edge::parse(edge.as_deref())
             .ok_or_else(|| format!("{} is not an edge", edge.unwrap_or_default()))?;
-        #[cfg(feature = "cef")]
         {
             use tauri::Manager as _;
             let window = webview.window();
@@ -42,25 +40,12 @@ pub async fn window_move_resize(
             );
             done.map(|_| ())
         }
-        #[cfg(not(feature = "cef"))]
-        {
-            let _ = (webview, direction, at);
-            Ok(())
-        }
     })
     .await
 }
 
 #[tauri::command(async)]
-#[cfg_attr(
-    not(feature = "cef"),
-    allow(
-        clippy::unnecessary_wraps,
-        reason = "a command's answer, the same on every engine"
-    )
-)]
 pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
-    #[cfg(feature = "cef")]
     {
         let window = webview.window();
         if !window.is_resizable().unwrap_or(false) {
@@ -75,21 +60,14 @@ pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
             .frame(id, scale)
             .map_err(|error| error.to_string())
     }
-    #[cfg(not(feature = "cef"))]
-    {
-        let _ = webview;
-        Ok(())
-    }
 }
 
 #[derive(Clone, Copy, Debug, serde::Deserialize)]
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub struct Pressed {
     x: i32,
     y: i32,
 }
 
-#[cfg(feature = "cef")]
 fn by_the_runtime(window: &tauri::Window<crate::Engine>, edge: Edge) -> Result<String, String> {
     use tauri_runtime::ResizeDirection;
 

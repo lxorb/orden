@@ -1,22 +1,20 @@
-#[cfg(feature = "cef")]
 use orden_web_engine::NativeWindow;
 use orden_web_engine::WindowSystem;
 
-#[cfg(all(feature = "cef", target_os = "linux"))]
+#[cfg(target_os = "linux")]
 mod x11;
 
 pub(crate) fn system() -> &'static dyn WindowSystem {
-    #[cfg(all(feature = "cef", target_os = "linux"))]
+    #[cfg(target_os = "linux")]
     {
         &x11::X11
     }
-    #[cfg(not(all(feature = "cef", target_os = "linux")))]
+    #[cfg(not(target_os = "linux"))]
     {
         &orden_web_engine::Plain
     }
 }
 
-#[cfg(feature = "cef")]
 #[allow(
     clippy::cast_sign_loss,
     clippy::useless_conversion,
@@ -36,7 +34,6 @@ pub(crate) fn window_id(window: &tauri::Window<crate::Engine>) -> Option<NativeW
     (raw != 0).then_some(NativeWindow(raw))
 }
 
-#[cfg(feature = "cef")]
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,
@@ -56,7 +53,6 @@ pub(crate) fn page_id(webview: &tauri::webview::PlatformWebview) -> Option<Nativ
     (raw != 0).then_some(NativeWindow(raw))
 }
 
-#[cfg(feature = "cef")]
 pub(crate) fn x11_page(webview: &tauri::webview::PlatformWebview) -> Option<u32> {
     page_id(webview).and_then(NativeWindow::as_x11)
 }

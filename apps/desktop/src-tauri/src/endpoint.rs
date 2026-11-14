@@ -404,10 +404,6 @@ pub(crate) fn dispatch(
     }
 }
 
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2's agent verbs ask the window")
-)]
 pub(crate) fn ask(
     app: &AppHandle,
     verb: &str,

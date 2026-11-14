@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import WEBKIT, Drive
+from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -104,7 +104,7 @@ def closing(page: Page, look: str, icons: bool) -> None:
                 wrong(f"[{scheme}] frame {at}: {one['name']} went from {held} to {one['width']} wide")
                 return
     say(f"[{scheme}] the closed tab's edge and the next one's: at most {worst:.1f} px apart")
-    if worst > PARTED and not WEBKIT:
+    if worst > PARTED:
         wrong(f"[{scheme}] the closed tab and the next one parted by {worst:.1f} px")
 
     if icons:

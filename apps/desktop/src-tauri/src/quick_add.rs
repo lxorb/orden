@@ -54,7 +54,6 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
         Some(window) => window,
         None => match quick_window(app) {
             Ok(window) => {
-                #[cfg(feature = "cef")]
                 if let Some(id) = crate::host::window_id(&window.as_ref().window()) {
                     let _ = crate::host::system().float(id);
                 }
@@ -84,18 +83,13 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
         .always_on_top(true)
         .skip_taskbar(true)
         .visible(false);
-    #[cfg(not(all(any(target_os = "macos", windows), feature = "cef")))]
+    #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.additional_browser_args(&crate::engine::browser_args(app));
-
-    #[cfg(feature = "cef")]
     let builder = builder
         .min_inner_size(WIDTH, HEIGHT)
         .max_inner_size(WIDTH, HEIGHT);
 
-    #[cfg(feature = "cef")]
     let builder = crate::engine::own_profile(builder);
 
     crate::placement::built(builder)

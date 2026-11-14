@@ -7,7 +7,7 @@ use tauri::{
     LogicalPosition, LogicalSize, Manager as _, Url, Webview, WebviewBuilder, WebviewUrl, Window,
 };
 
-use super::answer::PATIENCE;
+use super::PATIENCE;
 
 pub(crate) const PATH: &str = "/__orden_restore";
 
@@ -88,98 +88,6 @@ impl Drop for Hidden {
     }
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-mod engine {
-    use tauri::{Url, Webview};
-    use webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL;
-    use webview2_com::WebResourceRequestedEventHandler;
-    use windows_core::HSTRING;
-
-    use super::super::answer::{answer, Reply};
-    use super::PATH;
-
-    #[allow(
-        unsafe_code,
-        reason = "WebView2's request interception is reached through its COM interfaces, which have no safe wrapper"
-    )]
-    pub(super) async fn prepared(view: &Webview) -> Result<(), String> {
-        answer("the restore page", |reply: Reply<()>| {
-            view.with_webview(move |platform| {
-                let environment = platform.environment();
-                let handler =
-                    WebResourceRequestedEventHandler::create(Box::new(move |_sender, args| {
-                        let Some(args) = args else {
-                            return Ok(());
-                        };
-                        unsafe {
-                            let response = environment.CreateWebResourceResponse(
-                                None::<&windows_com::Win32::System::Com::IStream>,
-                                200,
-                                &HSTRING::from("OK"),
-                                &HSTRING::from("Content-Type: text/html; charset=utf-8"),
-                            )?;
-                            args.SetResponse(&response)
-                        }
-                    }));
-
-                let installed = unsafe {
-                    platform.controller().CoreWebView2().and_then(|core| {
-                        core.AddWebResourceRequestedFilter(
-                            &HSTRING::from(format!("*{PATH}")),
-                            COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
-                        )?;
-                        let mut token = 0i64;
-                        core.add_WebResourceRequested(&handler, &raw mut token)
-                    })
-                };
-                reply.say(installed.map_err(|error| error.message()));
-            })
-            .map_err(|error| error.to_string())
-        })
-        .await
-    }
-
-    pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {
-        let url: Url = address
-            .parse()
-            .map_err(|_| format!("{address} is not an address"))?;
-        view.navigate(url).map_err(|error| error.to_string())
-    }
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod engine {
-    use objc2::rc::Retained;
-    use objc2_foundation::{NSString, NSURL};
-    use objc2_web_kit::WKWebView;
-    use tauri::Webview;
-
-    #[allow(
-        clippy::unused_async,
-        reason = "one signature for every engine; WebView2's has something to wait for"
-    )]
-    pub(super) async fn prepared(_view: &Webview) -> Result<(), String> {
-        Ok(())
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "loading a string as an origin is WKWebView's Objective-C interface, from the pointer wry hands out"
-    )]
-    pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {
-        let address = address.to_owned();
-        view.with_webview(move |platform| unsafe {
-            let Some(web) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
-                return;
-            };
-            let base = NSURL::URLWithString(&NSString::from_str(&address));
-            let _ = web.loadHTMLString_baseURL(&NSString::from_str(""), base.as_deref());
-        })
-        .map_err(|error| error.to_string())
-    }
-}
-
-#[cfg(feature = "cef")]
 mod engine {
     use serde_json::{json, Value};
     use tauri::{Url, Webview};

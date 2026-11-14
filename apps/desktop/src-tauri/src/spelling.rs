@@ -22,7 +22,6 @@ fn tag(said: &str) -> bool {
         && parts.next().is_none()
 }
 
-#[cfg(feature = "cef")]
 mod engine {
     use cef::{
         CefString, ImplBrowser as _, ImplBrowserHost as _, ImplListValue as _,
@@ -63,11 +62,6 @@ mod engine {
             eprintln!("spelling: the engine's thread could not be reached");
         }
     }
-}
-
-#[cfg(not(feature = "cef"))]
-mod engine {
-    pub fn use_dictionaries(_platform: &tauri::webview::PlatformWebview, _languages: &[String]) {}
 }
 
 #[cfg(test)]

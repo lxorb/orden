@@ -7,7 +7,6 @@ use std::sync::{Mutex, OnceLock, PoisonError};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 const SCRIPT: &str = include_str!("kept.js");
 
 const EMPTY: &str = "/* kept */ { values: {}, gone: [] }";
@@ -122,7 +121,6 @@ fn read_back(folder: &Path) -> Kept {
     kept
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn read_kept(app: &AppHandle) {
     let kept = kept_folder(app)
         .map(|folder| read_back(&folder))
@@ -130,7 +128,6 @@ pub fn read_kept(app: &AppHandle) {
     *READ.lock().unwrap_or_else(PoisonError::into_inner) = Some(kept);
 }
 
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn kept_script() -> String {
     let kept = READ
         .lock()

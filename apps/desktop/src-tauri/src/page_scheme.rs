@@ -2,7 +2,6 @@ use std::sync::Mutex;
 
 use tauri::{Manager as _, Webview};
 
-#[cfg_attr(not(any(feature = "cef", windows)), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("page_scheme.js");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
@@ -43,7 +42,6 @@ pub fn wear(page: &Webview<crate::Engine>) {
     let _ = page.with_webview(move |platform| engine::wear(&platform, scheme));
 }
 
-#[cfg(feature = "cef")]
 mod engine {
     use cef::{ImplBrowser as _, ImplBrowserHost as _, ImplRequestContext as _, ImplView as _};
 
@@ -73,46 +71,6 @@ mod engine {
     }
 
     const WHITE: u32 = 0xFFFF_FFFF;
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-mod engine {
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2_13, COREWEBVIEW2_PREFERRED_COLOR_SCHEME_DARK,
-        COREWEBVIEW2_PREFERRED_COLOR_SCHEME_LIGHT,
-    };
-    use windows_core::Interface as _;
-
-    use super::Scheme;
-
-    #[allow(
-        unsafe_code,
-        reason = "the page's profile is reached through WebView2's COM interfaces"
-    )]
-    pub fn wear(platform: &tauri::webview::PlatformWebview, scheme: Scheme) {
-        unsafe {
-            let Ok(core) = platform.controller().CoreWebView2() else {
-                return;
-            };
-            let Ok(profile) = core
-                .cast::<ICoreWebView2_13>()
-                .and_then(|one| one.Profile())
-            else {
-                return;
-            };
-            let _ = profile.SetPreferredColorScheme(match scheme {
-                Scheme::Light => COREWEBVIEW2_PREFERRED_COLOR_SCHEME_LIGHT,
-                Scheme::Dark => COREWEBVIEW2_PREFERRED_COLOR_SCHEME_DARK,
-            });
-        }
-    }
-}
-
-#[cfg(not(any(feature = "cef", windows)))]
-mod engine {
-    use super::Scheme;
-
-    pub fn wear(_platform: &tauri::webview::PlatformWebview, _scheme: Scheme) {}
 }
 
 #[cfg(test)]

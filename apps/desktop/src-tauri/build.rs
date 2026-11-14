@@ -5,9 +5,7 @@ fn main() {
     tauri_build::build();
     identity::say();
     if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
-        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("windows")
-            .join("tests.manifest");
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests.manifest");
         println!("cargo:rerun-if-changed={}", manifest.display());
         println!("cargo:rustc-link-arg-tests=/MANIFEST:EMBED");
         println!(

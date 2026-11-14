@@ -212,7 +212,6 @@ mod platform {
     }
 
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
-        #[cfg(feature = "cef")]
         use tauri::Manager as _;
 
         let exe =

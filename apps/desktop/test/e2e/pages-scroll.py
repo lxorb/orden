@@ -14,7 +14,6 @@ PAGES = int(os.environ.get("ORDEN_SCROLL_PAGES", "120"))
 LINES = 70
 FRAMES = int(os.environ.get("ORDEN_SCROLL_FRAMES", "360"))
 RATIO = 12.0
-CHROMIUM = os.environ.get("ORDEN_ENGINE", "chromium") == "chromium"
 THROTTLE = float(os.environ.get("ORDEN_SCROLL_THROTTLE", "4"))
 
 SEED = """
@@ -129,7 +128,7 @@ def drive(browser: Browser) -> None:
         wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 60", "the first page's words", 30)
     page.wait_for_timeout(1500)
 
-    cdp = context.new_cdp_session(page) if CHROMIUM else None
+    cdp = context.new_cdp_session(page)
     if cdp:
         cdp.send("Performance.enable")
         cdp.send("Emulation.setCPUThrottlingRate", {"rate": THROTTLE})

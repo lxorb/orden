@@ -1,122 +1,30 @@
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs reads a grant's spaces"
-    )
-)]
 pub mod grants;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "most answers are given by an engine with agent tabs"
-    )
-)]
 pub mod verbs;
 
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs asks about a tab")
-)]
 mod approvals;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs reads a page to capture"
-    )
-)]
 mod capture;
 pub(crate) mod files;
 mod http;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs presses keys into a page"
-    )
-)]
 mod keys;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs opens agent tabs")
-)]
 mod limits;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs types into a page")
-)]
 mod log;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs has a page to judge"
-    )
-)]
 mod policy;
 mod process;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs has a tree to write"
-    )
-)]
 mod snapshot;
-#[cfg_attr(
-    not(any(windows, feature = "cef")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs has a call to stop"
-    )
-)]
 pub(crate) mod stop;
 mod system;
 
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 pub mod engines;
 pub mod shell;
 
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod browser;
-#[cfg(any(windows, feature = "cef"))]
 pub(crate) mod cdp;
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod memory;
-#[cfg(any(windows, feature = "cef"))]
 mod page;
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
-#[cfg_attr(
-    all(target_os = "macos", not(feature = "cef")),
-    allow(
-        dead_code,
-        reason = "WKWebView's dialogs, windows and downloads are built in #1092's next steps"
-    )
-)]
 mod quiet;
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod reader;
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
-#[cfg_attr(
-    any(windows, feature = "cef"),
-    allow(
-        dead_code,
-        reason = "the DevTools page runs its own copies of the reads the hunt hardened (page.rs); WKWebView runs these"
-    )
-)]
 mod scripts;
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
-#[cfg_attr(
-    all(target_os = "macos", not(feature = "cef")),
-    allow(
-        dead_code,
-        reason = "WKWebView's agent pages are built in #1092's next steps"
-    )
-)]
 mod tabs;
-#[cfg(any(windows, feature = "cef"))]
 mod twin;
 pub(crate) mod working;
 
@@ -233,7 +141,6 @@ pub fn logged(
 }
 
 fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
-    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     tabs::back(caller.id());
     match verb {
         Verb::Status(_) => status(app, caller),
@@ -249,7 +156,6 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
         }
         Verb::Pair(pair) => pair_client(app, caller, &pair),
         Verb::Bye(_) => {
-            #[cfg(any(windows, feature = "cef", target_os = "macos"))]
             tabs::bye(caller.id());
             shell::bye(app, caller.id());
             process::end_all(Some(caller.id()));
@@ -290,29 +196,10 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
     }
 }
 
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     browser::answer(app, caller, verb, since)
 }
 
-#[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer {
-    Answer::error(
-        Code::UnsupportedOnThisEngine,
-        format!(
-            "{} is not available here: an agent's browser runs on a desktop",
-            verb.name()
-        ),
-    )
-}
-
-#[cfg_attr(
-    not(any(windows, feature = "cef", target_os = "macos")),
-    allow(
-        dead_code,
-        reason = "only an engine with agent tabs navigates an agent's page"
-    )
-)]
 fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     match limits::wait_for_room(
         caller.id(),
@@ -348,10 +235,7 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
         .grants
         .by_id(app, &grant.id)
         .unwrap_or_else(|| grant.as_ref().clone());
-    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     let tabs = tabs::of(&grant.id).iter().map(tabs::Tab::listed).collect();
-    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-    let tabs = Vec::new();
     Answer::ok(verbs::Status {
         stopped: stop::stopped_for(&grant.id),
         tabs,
@@ -570,7 +454,6 @@ pub fn agents_ask(
 pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview, String> {
     from_the_app(&webview)?;
     let agents = state(&app).grants.all(&app)?;
-    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     let tabs = agents
         .iter()
         .flat_map(|grant| {
@@ -580,8 +463,6 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
                 .collect::<Vec<_>>()
         })
         .collect();
-    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-    let tabs = Vec::new();
     Ok(Overview {
         agents,
         tabs,
@@ -647,19 +528,7 @@ pub fn agents_adopt(
     tab: String,
 ) -> Result<(), String> {
     from_the_app(&webview)?;
-    #[cfg(all(windows, not(feature = "cef")))]
-    if !shell::hosts(&app, &webview.window()) {
-        return Err(
-            "an agent's page lives in Orden's first window: this one loads its address".into(),
-        );
-    }
-    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
-    return tabs::adopt(&app, &agent_tab, &tab);
-    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-    {
-        let _ = (app, agent_tab, tab);
-        Err("agent tabs are not available on this engine yet".into())
-    }
+    tabs::adopt(&app, &agent_tab, &tab)
 }
 
 #[tauri::command(async)]
@@ -669,13 +538,7 @@ pub fn agents_peek(
     tab: String,
 ) -> Result<verbs::Picture, String> {
     from_the_app(&webview)?;
-    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
-    return browser::peek(&app, &tab);
-    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-    {
-        let _ = (app, tab);
-        Err("agent tabs are not available on this engine yet".into())
-    }
+    browser::peek(&app, &tab)
 }
 
 #[tauri::command]

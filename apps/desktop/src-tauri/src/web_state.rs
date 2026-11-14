@@ -1,5 +1,3 @@
-mod answer;
-#[cfg(any(windows, feature = "cef"))]
 mod cdp;
 pub(crate) mod cookies;
 mod isolated;
@@ -7,6 +5,8 @@ mod merge;
 mod restore_view;
 
 use tauri::{Manager as _, Webview};
+
+pub(super) const PATIENCE: std::time::Duration = std::time::Duration::from_secs(60);
 
 const DUMP: &str = include_str!("web_state/scripts/dump.js");
 

@@ -6,7 +6,7 @@ import json
 from PIL import Image
 from playwright.sync_api import Browser, Page
 
-from harness import WEBKIT, Drive
+from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -187,9 +187,6 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     context.close()
 
 def drive(browser: Browser) -> None:
-    if WEBKIT:
-        say("WebKit has no forced colours to emulate")
-        return
     for scheme in ("dark", "light"):
         drive_scheme(browser, scheme)
 

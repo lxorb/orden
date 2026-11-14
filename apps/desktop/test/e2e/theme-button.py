@@ -49,7 +49,7 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(200)
         kept = page.evaluate(THEME)
         opened(page)
-        shot(page, f"{harness.ENGINE}-{side}-open")
+        shot(page, f"chromium-{side}-open")
 
         card(page, "Contrast").hover()
         page.wait_for_timeout(300)
@@ -57,7 +57,7 @@ def drive(browser: Browser) -> None:
             wrong(f"[{side}] pointing at Contrast did not try it")
         if page.locator(PICKER).get_attribute("data-seeing") != "id":
             wrong(f"[{side}] the picker stays solid while a theme is tried")
-        shot(page, f"{harness.ENGINE}-{side}-trying")
+        shot(page, f"chromium-{side}-trying")
         if page.locator(PICKER).get_attribute("data-seeing") != "id":
             wrong(f"[{side}] the picker went solid while the shot was taken")
 
@@ -73,7 +73,7 @@ def drive(browser: Browser) -> None:
         tried = page.evaluate(THEME)
         if tried == kept:
             wrong(f"[{side}] the arrow tried nothing")
-        shot(page, f"{harness.ENGINE}-{side}-arrow")
+        shot(page, f"chromium-{side}-arrow")
         page.wait_for_timeout(300)
         if page.evaluate(FOCUS_SHOWN) < 0.9:
             wrong(f"[{side}] the search field fades while the arrow tries a theme")
@@ -83,7 +83,7 @@ def drive(browser: Browser) -> None:
             wrong(f"[{side}] typing Con did not try Contrast")
         if page.evaluate(FOCUS_SHOWN) < 0.9:
             wrong(f"[{side}] the search field fades while typing, the words can hardly be read")
-        shot(page, f"{harness.ENGINE}-{side}-typing")
+        shot(page, f"chromium-{side}-typing")
         page.keyboard.press("Control+a")
         page.keyboard.press("Backspace")
         page.wait_for_timeout(300)
