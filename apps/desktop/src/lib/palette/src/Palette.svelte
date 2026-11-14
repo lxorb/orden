@@ -1,67 +1,57 @@
 <script lang="ts">
-  import Facts from './Facts.svelte'
+  import Facts from '../../Facts.svelte'
   import { tick, untrack } from 'svelte'
-  import { typeAhead } from './palette/type-ahead'
+  import { typeAhead } from './type-ahead'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@orden/editor'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
-  import { paletteCommands } from './commands'
-  import { fileMark } from './file-mark'
-  import FileMark from './FileMark.svelte'
-  import { frecency } from './frecency'
-  import { recentFirst } from './ui-kit/src/api'
-  import Icon from './Icon.svelte'
-  import { links } from './link-index.svelte'
-  import { middleOpens } from './new-tab'
-  import { AGENTS_NAME, shownName } from './platform/src/api'
-  import { scanHeadings } from './outline'
-  import { overlays } from './ui-kit/src/api'
-  import { OUTLINE_MARK, GRAPH_MARK, SEARCH_MARK } from './panel-marks'
-  import { browse, RECENT } from './palette/browse'
-  import { candidates, headingCandidates, resting, rowKey, type World } from './palette/kinds'
-  import { lineAsked, modeOf } from './palette/mode'
-  import { choose, type Hands } from './palette/choose'
-  import { makeable, typedAddress, withOffers } from './palette/offers'
-  import { pieces } from './palette/pieces'
-  import { MOST_PLACES, ranked } from './palette/rank'
-  import type { OpenTab, Row } from './palette/rows'
-  import UnsavedDot from './UnsavedDot.svelte'
-  import { isDraft } from './workspace/drafts'
-  import { settingsOf, settingValue } from './palette/settings'
-  import { lookOf } from './palette/trying'
-  import { preferences } from './preferences'
-  import { search } from './search.svelte'
-  import { paletteWords } from './surfaces.svelte'
-  import { chatsOn, hiddenKinds, settings } from './settings.svelte'
-  import { landing } from './settings/landing.svelte'
-  import { places } from './settings/places'
-  import { ICONS, sectionGroups } from './settings/sections'
-  import {
-    connectTo,
-    destinationOf,
-    type Host,
-    hostFor,
-    openAll,
-    openRemote,
-    remoteHosts,
-    said,
-  } from './terminal/src/api'
-  import { relativeTo, samePath } from './platform/src/api'
-  import TabMark from './TabMark.svelte'
-  import { theme } from './theme/src/api'
-  import { canWriteAt } from './sharing/src/api'
-  import { joinPath } from './platform/src/api'
-  import { trap } from './ui-controls/src/api'
-  import { isDesktop } from './platform/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import { paletteKind, webPages } from '@orden/contracts'
+  import { paletteCommands } from '../../commands'
+  import { fileMark } from '../../file-mark'
+  import FileMark from '../../FileMark.svelte'
+  import { frecency } from '../../frecency'
+  import { recentFirst } from '../../ui-kit/src/api'
+  import Icon from '../../Icon.svelte'
+  import { links } from '../../link-index.svelte'
+  import { middleOpens } from '../../new-tab'
+  import { AGENTS_NAME, shownName } from '../../platform/src/api'
+  import { scanHeadings } from '../../outline'
+  import { overlays } from '../../ui-kit/src/api'
+  import { OUTLINE_MARK, GRAPH_MARK, SEARCH_MARK } from '../../panel-marks'
+  import { browse, RECENT } from './browse'
+  import { candidates, headingCandidates, resting, rowKey, type World } from './kinds'
+  import { lineAsked, modeOf } from './mode'
+  import { choose, type Hands } from './choose'
+  import { makeable, typedAddress, withOffers } from './offers'
+  import { pieces } from '../../matching/src/api'
+  import { MOST_PLACES, ranked } from '../../matching/src/api'
+  import type { OpenTab, Row } from './rows'
+  import UnsavedDot from '../../UnsavedDot.svelte'
+  import { isDraft } from '../../workspace/drafts'
+  import { settingsOf, settingValue } from './settings'
+  import { lookOf } from './trying'
+  import { preferences } from '../../preferences'
+  import { search } from '../../search.svelte'
+  import { paletteWords } from '../../surfaces.svelte'
+  import { chatsOn, hiddenKinds, settings } from '../../settings.svelte'
+  import { landing } from '../../settings/landing.svelte'
+  import { places } from '../../settings/places'
+  import { ICONS, sectionGroups } from '../../settings/sections'
+  import { relativeTo, samePath } from '../../platform/src/api'
+  import TabMark from '../../TabMark.svelte'
+  import { theme } from '../../theme/src/api'
+  import { canWriteAt } from '../../sharing/src/api'
+  import { joinPath } from '../../platform/src/api'
+  import { trap } from '../../ui-controls/src/api'
+  import { isDesktop } from '../../platform/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import { type PaletteHost, paletteKind, webPages } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { workspace } from './workspace.svelte'
-  import { fade, LAYER, scale } from './platform/src/api'
-  import { scrollbar } from './ui-kit/src/api'
-  import { wholeRows } from './whole-rows'
+  import { workspace } from '../../workspace.svelte'
+  import { fade, LAYER, scale } from '../../platform/src/api'
+  import { scrollbar } from '../../ui-kit/src/api'
+  import { wholeRows } from '../../whole-rows'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */
   let {
@@ -77,7 +67,7 @@
 
   $effect(() => {
     if (!__EVEN_PLUGIN__ && open)
-      void import('./hints.svelte').then(({ hints }) => hints.dismiss('palette'))
+      void import('../../hints.svelte').then(({ hints }) => hints.dismiss('palette'))
   })
 
   let query = $state('')
@@ -111,10 +101,12 @@
 
   const root = $derived(workspace.activeSpace?.root ?? null)
 
-  let hosts = $state.raw<Host[]>([])
+  let hosts = $state.raw<readonly PaletteHost[]>([])
   $effect(() => {
     if (!open || __EVEN_PLUGIN__ || !isDesktop) return
-    void remoteHosts().then(({ remote }) => remote.refresh().then(() => (hosts = remote.hosts)))
+    void paletteKind('hosts')
+      .list()
+      .then((list) => (hosts = list))
   })
 
   const world = $derived.by((): World | null => {
@@ -187,9 +179,8 @@
   function hostRows(): Row[] {
     const list = all.filter((one) => one.kind === 'host')
     const found = term ? ranked(term, list) : list.map((one) => one.item)
-    const wanted = destinationOf(term)
-    if (!wanted || hostFor(hosts, wanted) || !isDesktop || __EVEN_PLUGIN__) return found
-    return [...found, { kind: 'connect', wanted, said: said(wanted) }]
+    const offer = __EVEN_PLUGIN__ ? null : paletteKind('hosts').wanted(term)
+    return offer ? [...found, { kind: 'connect', ...offer }] : found
   }
 
   let messages = $state.raw<{ rows: Row[]; only: boolean; term: string }>({
@@ -205,13 +196,13 @@
     }
     let current = true
     const timer = setTimeout(() => {
-      const finding = __EVEN_PLUGIN__
-        ? null
-        : import('./chats-client/src/api').then((one) => one.chatPaletteHits())
-      void finding
-        ?.then(({ messageHits }) => messageHits(words))
+      void paletteKind('messages')
+        .hits(words)
         .then((found) => {
-          if (current) messages = { ...found, term: words }
+          if (current) {
+            const rows = found.rows.map((one): Row => ({ kind: 'message', ...one }))
+            messages = { rows, only: found.only, term: words }
+          }
         })
     }, 150)
     return () => {
@@ -414,24 +405,17 @@
       landing.label = label
     },
     agents: () => {
-      if (root) void import('./reserved-name.svelte').then((one) => one.openInstructions(root))
+      if (root) void import('../../reserved-name.svelte').then((one) => one.openInstructions(root))
     },
     make: (note) => {
       if (root)
         void workspace.createNote(note.folder ? joinPath(root, note.folder) : root, note.name)
     },
     goto: (line) => ongoto?.(line),
-    openHost: (id) => void openRemote(id),
-    openHosts: (ids) => {
-      if (!__EVEN_PLUGIN__) void openAll(ids)
-    },
-    connect: (wanted) => void connectTo(wanted),
-    openMessage: (path, message, how) => {
-      const opening = __EVEN_PLUGIN__
-        ? null
-        : import('./chats-client/src/api').then((one) => one.chatOpening())
-      void opening?.then(({ openChat }) => openChat(path, how, message))
-    },
+    openHost: (id) => paletteKind('hosts').open(id),
+    openHosts: (ids) => paletteKind('hosts').openAll(ids),
+    connect: (wanted) => paletteKind('hosts').connect(wanted),
+    openMessage: (path, message, how) => paletteKind('messages').open(path, message, how),
   }
 
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {

@@ -308,7 +308,7 @@ describe('what hides a web page', () => {
     'lib/History.svelte': 'sheet',
     'lib/JoinSheet.svelte': 'sheet',
     'lib/IconPicker.svelte': 'sheet',
-    'lib/Palette.svelte': 'dialog',
+    'lib/palette/src/Palette.svelte': 'dialog',
     'lib/PromptSheet.svelte': 'dialog',
     'lib/ai-sidebar/src/QuickQuestion.svelte': 'dialog',
     'lib/ui-controls/src/Select.svelte': 'dropdown',

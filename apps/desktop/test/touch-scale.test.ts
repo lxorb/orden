@@ -35,7 +35,6 @@ const SURFACES = [
   'lib/ContextMenu.svelte',
   'lib/FindBar.svelte',
   'lib/Links.svelte',
-  'lib/Palette.svelte',
   'lib/SearchPanel.svelte',
   'lib/Sidebar.svelte',
   'lib/SidebarFoot.svelte',
@@ -43,6 +42,7 @@ const SURFACES = [
   'lib/TagTree.svelte',
   'lib/Titlebar.svelte',
   'lib/Tree.svelte',
+  'lib/palette/src/Palette.svelte',
 ]
 
 const FINGER_HEIGHT = 40

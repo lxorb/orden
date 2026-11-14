@@ -122,6 +122,7 @@ export const APP_FOLDERS = [
   'glasses-choices',
   'import',
   'internal',
+  'matching',
   'mobile',
   'onboarding',
   'online-terms',

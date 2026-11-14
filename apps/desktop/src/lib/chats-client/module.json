@@ -39,7 +39,6 @@
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/notify.ts",
     "apps/desktop/src/lib/open-link.ts",
-    "apps/desktop/src/lib/palette/rows.ts",
     "apps/desktop/src/lib/residency.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/shortcuts.svelte.ts",

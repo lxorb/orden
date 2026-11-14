@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { hostsOf, NOTHING_KEPT } from '../terminal/src/remote/hosts'
 import { candidates, headingCandidates, resting, rowKey } from './kinds'
-import { MOST_PLACES, ranked } from './rank'
+import { MOST_PLACES, ranked } from '../../matching/src/api'
 import { command, file, named, NOW, ROOT, setting, tab, visit, world } from './world.fixture'
 
 const FILES = [
@@ -284,14 +283,15 @@ describe('a website of the space', () => {
 })
 
 describe('hosts', () => {
-  const hosts = hostsOf(
-    [
-      { id: 'pi', also: [], group: 'Home' },
-      { id: 'nas', also: [], group: 'Home' },
-      { id: 'build', also: [] },
-    ],
-    NOTHING_KEPT,
-  )
+  const host = (id: string, group: string | null) => ({
+    id,
+    name: id,
+    also: [],
+    detail: null,
+    group,
+    colour: null,
+  })
+  const hosts = [host('pi', 'Home'), host('nas', 'Home'), host('build', null)]
 
   test('a group is a row of its own that opens all of it, found by its name', () => {
     const all = candidates(world({ hosts }))

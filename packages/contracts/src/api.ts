@@ -125,7 +125,15 @@ export {
   type TabPanel,
 } from './shell'
 export {
+  NO_HOSTS,
+  NO_MESSAGES,
   NO_VISITS,
+  type PaletteDestination,
+  type PaletteHost,
+  type PaletteHosts,
+  type PaletteMessage,
+  type PaletteMessages,
+  type PaletteOpenHow,
   type PaletteKindId,
   type PaletteKinds,
   paletteKind,

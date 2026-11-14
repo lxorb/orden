@@ -1,7 +1,7 @@
 <script lang="ts">
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import { account } from './accounts/src/api'
-  import { pieces } from './palette/pieces'
+  import { pieces } from './matching/src/api'
   import SharedMark from './SharedMark.svelte'
   import { isShared, roleOf } from './sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'

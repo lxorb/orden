@@ -1,4 +1,4 @@
-import { takesWords } from '../typing-pointer'
+import { takesWords } from '../../typing-pointer'
 
 export const TYPED_AHEAD_FOR = 400
 

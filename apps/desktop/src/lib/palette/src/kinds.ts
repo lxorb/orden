@@ -1,6 +1,6 @@
 import { foldName } from '@orden/markdown/links'
-import type { Command } from '../commands'
-import { fileMark } from '../file-mark'
+import type { Command } from '../../commands'
+import { fileMark } from '../../file-mark'
 import {
   shownName,
   rowName,
@@ -8,14 +8,14 @@ import {
   insideSpace,
   relativeTo,
   withinSpace,
-} from '../platform/src/api'
+} from '../../platform/src/api'
 import { frecency as visitWeight, shownAddress } from '@orden/scan/visits'
 import type { Visit } from '@orden/scan/visits'
-import type { Host } from '../terminal/src/api'
-import type { Bookmark } from '../workspace/bookmarks.svelte'
-import type { TabKind } from '../workspace/documents.svelte'
-import type { Entry } from '../workspace.svelte'
-import type { Candidate, Kind } from './rank'
+import type { PaletteHost } from '@orden/contracts'
+import type { Bookmark } from '../../workspace/bookmarks.svelte'
+import type { TabKind } from '../../workspace/documents.svelte'
+import type { Entry } from '../../workspace.svelte'
+import type { Candidate, Kind } from '../../matching/src/api'
 import type { OpenTab, Row } from './rows'
 import type { Setting } from './settings'
 
@@ -30,7 +30,7 @@ export interface World {
   commands: readonly Command[]
   pages: readonly Visit[]
   settings: readonly Setting[]
-  hosts: readonly Host[]
+  hosts: readonly PaletteHost[]
   worth: (key: string) => number
   now: number
   addressOf?: (path: string) => string | null

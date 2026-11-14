@@ -1,4 +1,4 @@
-import { nameFault, nameToWrite, isAgentsName } from '../platform/src/api'
+import { nameFault, nameToWrite, isAgentsName } from '../../platform/src/api'
 
 export interface NoteToMake {
   folder: string

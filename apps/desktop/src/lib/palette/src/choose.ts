@@ -1,10 +1,10 @@
-import type { OpenHow, Press, TabAsk } from '../new-tab'
-import type { Destination } from '../terminal/src/api'
-import { howFor, linkAsk, tabAsk } from '../new-tab'
-import type { Section } from '../settings.svelte'
+import type { OpenHow, Press, TabAsk } from '../../new-tab'
+import type { PaletteDestination } from '@orden/contracts'
+import { howFor, linkAsk, tabAsk } from '../../new-tab'
+import type { Section } from '../../settings.svelte'
 import type { NoteToMake } from './new-note'
 import type { Row } from './rows'
-import { ran } from '../usage/src/api'
+import { ran } from '../../usage/src/api'
 
 export interface Hands {
   openEntry(path: string, how: OpenHow): void
@@ -22,7 +22,7 @@ export interface Hands {
   goto(line: number): void
   openHost(id: string): void
   openHosts(ids: readonly string[]): void
-  connect(wanted: Destination): void
+  connect(wanted: PaletteDestination): void
   openMessage(path: string, message: string, how: OpenHow): void
 }
 

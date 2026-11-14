@@ -1,3 +1,4 @@
+import './shell-parts'
 export { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './hush.svelte'
 export { priorities } from './priorities.svelte'
 export type { ChatEntry, Chats } from './shapes'
@@ -9,9 +10,6 @@ export const chatStore = () =>
 
 export const chatOpening = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./view/open')>() : import('./view/open')
-
-export const chatPaletteHits = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./view/palette-hits')>() : import('./view/palette-hits')
 
 export const chatSending = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./send')>() : import('./send')
