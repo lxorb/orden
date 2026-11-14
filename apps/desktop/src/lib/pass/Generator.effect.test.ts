@@ -8,7 +8,7 @@ vi.mock('../ai/keys', () => ({
   forgetKey: () => Promise.resolve(),
 }))
 
-vi.mock('../protect/device', () => ({
+vi.mock('../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(false),
   deviceSays: () => Promise.resolve(false),
   deviceName: () => 'Touch ID',

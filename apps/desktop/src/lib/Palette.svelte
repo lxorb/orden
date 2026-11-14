@@ -42,7 +42,7 @@
   import { relativeTo, samePath } from './platform/src/api'
   import TabMark from './TabMark.svelte'
   import { theme } from './theme/src/api'
-  import { canWriteAt } from './sharing.svelte'
+  import { canWriteAt } from './sharing/src/api'
   import { joinPath } from './platform/src/api'
   import { trap } from './ui-controls/src/api'
   import { isDesktop } from './platform/src/api'

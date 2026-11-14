@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const owner = vi.hoisted(() => ({ can: true, says: true, asked: 0 }))
 
-vi.mock('./device', () => ({
+vi.mock('../../../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(owner.can),
   deviceName: () => 'Touch ID',
   deviceSays: () => {
@@ -12,8 +12,8 @@ vi.mock('./device', () => ({
   },
 }))
 
-const { workspace } = await import('../workspace.svelte')
-const { unlocks } = await import('./unlocked.svelte')
+const { workspace } = await import('../../../workspace.svelte')
+const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const LockScreen = (await import('./LockScreen.svelte')).default
 
 const ROOT = '/space'

@@ -1,0 +1,18 @@
+{
+  "name": "sharing",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "accounts", "collab", "platform", "protect", "ui-controls", "ui-kit"],
+  "pending": [
+    "apps/desktop/src/lib/Icon.svelte",
+    "apps/desktop/src/lib/kind-choice.ts",
+    "apps/desktop/src/lib/one-file.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
+    "apps/desktop/src/lib/settling.ts",
+    "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/sync/mirror.ts",
+    "apps/desktop/src/lib/trust.ts",
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/documents.svelte.ts",
+    "apps/desktop/src/lib/workspace/file-ops.ts"
+  ]
+}

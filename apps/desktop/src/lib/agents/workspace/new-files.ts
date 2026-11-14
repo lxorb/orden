@@ -2,7 +2,7 @@ import { isCanvasTarget, isPagesTarget, isWebTarget } from '@orden/markdown/link
 import type { AgentAnswer } from '../../automation/caller'
 import { shownName, onDisk as exists, nameOf } from '../../platform/src/api'
 import { pairOf } from '../../pages/held'
-import { canWriteAt } from '../../sharing.svelte'
+import { canWriteAt } from '../../sharing/src/api'
 import { isWebAddress } from '../../web-tab/address'
 import { workspace } from '../../workspace.svelte'
 import { fileNamed } from '../../workspace/drafts'

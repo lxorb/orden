@@ -26,8 +26,7 @@
   import { rowName } from './platform/src/api'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
-  import { LOCK_MARK } from './protect/entries'
-  import { canWriteAt, isSharedItem, othersIn } from './sharing.svelte'
+  import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from './sharing/src/api'
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
   import {

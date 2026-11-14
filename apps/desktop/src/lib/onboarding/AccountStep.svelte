@@ -1,6 +1,6 @@
 <script lang="ts">
   import { account } from '../accounts/src/api'
-  import { joining } from '../joining.svelte'
+  import { joining } from '../sharing/src/api'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'

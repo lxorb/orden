@@ -1,21 +1,21 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../versions', () => ({
+vi.mock('../../../versions', () => ({
   versionsOf: () => Promise.resolve([{ at: 1, size: 20, path: null, by: '' }]),
   versionText: () => Promise.resolve('what nobody may read'),
 }))
 
-const { workspace } = await import('../workspace.svelte')
-const { unlocks } = await import('./unlocked.svelte')
-const { appCommands, exportCommands } = await import('../commands')
-const { appMenu } = await import('../app-menu')
-const { openTarget } = await import('../export/context')
-const { settings } = await import('../settings.svelte')
-const { menu } = await import('../menu.svelte')
-const { DIVIDER } = await import('../ui-kit/src/menu-item')
-const History = (await import('../History.svelte')).default
-type MenuItem = import('../ui-kit/src/menu-item').MenuItem
+const { workspace } = await import('../../../workspace.svelte')
+const { unlocks } = await import('../../../protect/src/unlocked.svelte')
+const { appCommands, exportCommands } = await import('../../../commands')
+const { appMenu } = await import('../../../app-menu')
+const { openTarget } = await import('../../../export/context')
+const { settings } = await import('../../../settings.svelte')
+const { menu } = await import('../../../menu.svelte')
+const { DIVIDER } = await import('../../../ui-kit/src/menu-item')
+const History = (await import('../../../History.svelte')).default
+type MenuItem = import('../../../ui-kit/src/menu-item').MenuItem
 
 const ROOT = '/space'
 const NOTE = `${ROOT}/Diary.md`
@@ -73,7 +73,7 @@ describe('a shut note in front', () => {
 
   test('takes away the editor menu that was open when it locked', async () => {
     unlocks.unlock([LOCK])
-    const { showEditorMenu } = await import('../editor-menu')
+    const { showEditorMenu } = await import('../../../editor-menu')
     showEditorMenu(new MouseEvent('contextmenu'), undefined, NOTE)
     expect(menu.open).toBe(true)
     unlocks.close([LOCK])

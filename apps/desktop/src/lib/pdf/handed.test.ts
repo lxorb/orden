@@ -58,7 +58,7 @@ vi.mock('../platform/src/tauri', async (actual) => ({
 
 vi.mock('../platform/src/log', () => ({ log: () => undefined }))
 
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),
 }))
 

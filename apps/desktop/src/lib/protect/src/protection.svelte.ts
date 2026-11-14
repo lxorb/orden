@@ -19,8 +19,8 @@ import {
   meet,
   readSpaces,
   without,
-} from '../platform/src/api'
-import { carried, moving } from '../workspace/file-ops'
+} from '../../platform/src/api'
+import { carried, moving } from '../../workspace/file-ops'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
 

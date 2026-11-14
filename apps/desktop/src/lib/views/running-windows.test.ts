@@ -29,7 +29,10 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
   invoke: async () => undefined,
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => true }))
+vi.mock('../sharing/src/api', () => ({
+  canWriteAt: () => true,
+  trustsHtmlAt: () => true,
+}))
 
 function sharedLocks(): LockManager {
   const holders = new Set<string>()

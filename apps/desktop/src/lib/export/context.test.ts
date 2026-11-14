@@ -17,7 +17,7 @@ vi.mock('../workspace.svelte', () => ({
     protection: { locked: () => false },
   },
 }))
-vi.mock('../sharing.svelte', () => ({ trustsHtmlIn: () => world.trusts }))
+vi.mock('../sharing/src/api', () => ({ trustsHtmlIn: () => world.trusts }))
 vi.mock('../settings.svelte', () => ({ settings: { page: undefined, exportAppearance: 'light' } }))
 vi.mock('../theme/src/theme.svelte', () => ({
   theme: { accent: 'violet', active: { path: null } },

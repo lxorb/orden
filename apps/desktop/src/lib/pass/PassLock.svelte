@@ -1,6 +1,6 @@
 <script lang="ts">
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
-  import { deviceName } from '../protect/device'
+  import { deviceName } from '../protect/src/api'
   import Gate from './Gate.svelte'
   import { pass, PIN_TRIES, type Unlock } from './store.svelte'
 

@@ -7,7 +7,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-vi.mock('./sharing.svelte', () => ({
+vi.mock('./sharing/src/api', () => ({
   canShareItem: () => false,
   canWriteAt: () => true,
   shareThisFile: () => undefined,

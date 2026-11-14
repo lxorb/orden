@@ -26,7 +26,7 @@ vi.mock('../link-index.svelte', () => ({
 
 const readOnly = new Set<string>()
 
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   canWriteAt: (path: string) => !readOnly.has(path),
 }))
 

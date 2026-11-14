@@ -26,7 +26,7 @@ export function pairSpaces(token: string, pairing: Pairing): Promise<void> {
 }
 
 async function rolesPaired(): Promise<void> {
-  ;(await import('./sharing.svelte')).rememberRoles()
+  ;(await import('./sharing/src/api')).rememberRoles()
 }
 
 async function untouchedDefault(): Promise<string | null> {
@@ -180,7 +180,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
 
   if (accountId !== null && !__EVEN_PLUGIN__) {
     const pairs = paired()
-    void import('./protect/synced').then(
+    void import('./protect/src/api').then(
       (one) => one.pulled(token, accountId, pairs),
       () => undefined,
     )

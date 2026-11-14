@@ -94,7 +94,7 @@ vi.mock('./platform/src/tauri', () => ({
   isDesktop: true,
 }))
 vi.mock('./workspace.svelte', () => ({ workspace: ws }))
-vi.mock('./sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('./sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('./link-index.svelte', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))

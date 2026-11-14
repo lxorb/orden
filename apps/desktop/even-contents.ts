@@ -135,6 +135,7 @@ export const APP_FOLDERS = [
   'scratchpad',
   'search',
   'settings',
+  'sharing',
   'shortcuts',
   'sync',
   'sync-client',

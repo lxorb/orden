@@ -1,7 +1,7 @@
 import { oneEdit } from '@orden/markdown/edits'
 
 import { converted } from './import/convert'
-import { protection } from './protect/protection.svelte'
+import { protection } from './protect/src/api'
 import type { Change } from './search/apply'
 import { changeOf } from './search/replace'
 import { isMarkdownPath } from './platform/src/api'

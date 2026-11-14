@@ -1,3 +1,4 @@
+import { portOf } from '@orden/contracts'
 import { api, ApiError, fromServer } from './client'
 import type { Account, Guest, RemoteSpace } from './routes'
 import { arriving } from '../../arriving.svelte'
@@ -296,10 +297,9 @@ class Session {
     this.deletedSpaces = listed.deleted
     this.listed = true
 
-    const { rememberRoles, sharedWithYou } = await import('../../sharing.svelte')
+    const sharing = portOf('sharing.spaces')
+    if (sharing.ok) await sharing.value.listed(() => this.token === token)
     if (this.token !== token) return
-    rememberRoles()
-    await sharedWithYou.load()
 
     await (await import('../../space-archive')).listed()
   }

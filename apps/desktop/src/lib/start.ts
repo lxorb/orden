@@ -3,7 +3,7 @@ import { account } from './accounts/src/api'
 import { busy, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai/ask'
 import { guardDrops } from './drops'
-import { joining } from './joining.svelte'
+import { joining } from './sharing/src/api'
 import {
   collectErrors,
   log,

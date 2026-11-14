@@ -21,7 +21,7 @@ vi.mock('../sync.svelte', () => ({ sync: { nudge: vi.fn() } }))
 vi.mock('../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path) || !path.endsWith('.md')),
 }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => disk.writable }))
+vi.mock('../sharing/src/api', () => ({ canWriteAt: () => disk.writable }))
 vi.mock('../link-index.svelte', () => ({
   links: {
     hearSaves: (hear: (path: string, words: string) => void) => {

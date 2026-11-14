@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const asked = vi.hoisted(() => ({ answer: true, details: [] as string[] }))
-vi.mock('../ui-kit/src/prompt.svelte', () => ({
+vi.mock('../../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (options: { detail?: string }) => {
       asked.details.push(options.detail ?? '')
@@ -10,13 +10,13 @@ vi.mock('../ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-const { workspace } = await import('../workspace.svelte')
-const { hiddenKinds } = await import('../settings.svelte')
-const { unlocks } = await import('./unlocked.svelte')
+const { workspace } = await import('../../../workspace.svelte')
+const { hiddenKinds } = await import('../../../settings.svelte')
+const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const { protectEntries } = await import('./entries')
 const { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } = await import('./gate')
 const { turnProtection } = await import('./protection-setting')
-const { generalPane } = await import('../settings/general-pane')
+const { generalPane } = await import('../../../settings/general-pane')
 
 const ROOT = '/space'
 const DIARY = `${ROOT}/Diary.md`

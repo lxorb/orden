@@ -106,7 +106,7 @@ vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
 vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
 const readOnly = new Set<string>()
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))

@@ -1,6 +1,6 @@
 import { menu } from '../menu.svelte'
 import { prompt } from '../ui-kit/src/api'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { samePath, invoke } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'

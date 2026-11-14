@@ -1,5 +1,5 @@
 import { basesOn } from '../settings.svelte'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { joinPath } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'

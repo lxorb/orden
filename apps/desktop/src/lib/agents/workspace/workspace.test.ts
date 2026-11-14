@@ -246,7 +246,7 @@ vi.mock('../../crate/src/native', async (original) => ({
   },
 }))
 
-vi.mock('../../sharing.svelte', () => ({
+vi.mock('../../sharing/src/api', () => ({
   trustsHtmlAt: () => true,
   isShared: (root: string) => root === '/s/Home',
   reachedByOthers: (path: string | null) =>
@@ -2155,7 +2155,7 @@ describe('run_agent from a narrower grant', () => {
 
 describe('a note the reader protected', () => {
   test('is no row of a base, no template of one, and no folder a row is made in', async () => {
-    const { protection } = await import('../../protect/protection.svelte')
+    const { protection } = await import('../../protect/src/protection.svelte')
     const books = 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n'
     files.set('/s/Home/Books.base', books)
     files.set('/s/Home/Shelf.base', `${books}orden:\n  template: '[[Books/Dune]]'\n`)
@@ -2186,7 +2186,7 @@ describe('a note the reader protected', () => {
   })
 
   test('lends no line of its own as a backlink, in this space or another', async () => {
-    const { protection } = await import('../../protect/protection.svelte')
+    const { protection } = await import('../../protect/src/protection.svelte')
     files.set('/s/Home/Soup.md', '# Soup\n')
     files.set('/s/Home/Recipes.md', '# Recipes\n\nSee [[Soup]] tonight.\n')
     expect(await call('list_backlinks', { space: 'Home', path: 'Soup' })).toMatchObject({
@@ -2203,8 +2203,8 @@ describe('a note the reader protected', () => {
   })
 
   test('is refused to an agent until it is unlocked and agents are let read it', async () => {
-    const { protection } = await import('../../protect/protection.svelte')
-    const { unlocks } = await import('../../protect/unlocked.svelte')
+    const { protection } = await import('../../protect/src/protection.svelte')
+    const { unlocks } = await import('../../protect/src/unlocked.svelte')
     protection.set('/s/Home', '/s/Home/Soup.md', 'password')
     try {
       expect(await call('read_note', { space: 'Home', path: 'Soup' })).toMatchObject({

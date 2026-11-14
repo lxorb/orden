@@ -3,7 +3,7 @@
   import { fileMark } from './file-mark'
   import { shownName } from './platform/src/api'
   import { nameOf } from './platform/src/api'
-  import { isShared, share } from './sharing.svelte'
+  import { isShared, share } from './sharing/src/api'
   import { called } from './accounts/src/api'
   import type { GivenRole, Member, Sharing } from './accounts/src/api'
   import { Copyable } from './ui-controls/src/api'

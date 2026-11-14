@@ -1,5 +1,5 @@
 import { folderNote } from '../folder-notes'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { folderOf, samePath } from '../platform/src/api'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'

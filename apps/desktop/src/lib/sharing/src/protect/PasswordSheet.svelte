@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Sheet } from '../ui-controls/src/api'
+  import { Sheet } from '../../../ui-controls/src/api'
 
   const {
     choosing,

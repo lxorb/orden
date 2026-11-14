@@ -4,7 +4,7 @@
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { search } from './search.svelte'
-  import { canWriteAt } from './sharing.svelte'
+  import { canWriteAt } from './sharing/src/api'
   import { renameTag, removeTag } from './tag-actions'
   import type { TagNode } from './tag-tree'
   import { workspace } from './workspace.svelte'

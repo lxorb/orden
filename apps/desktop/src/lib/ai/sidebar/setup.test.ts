@@ -20,7 +20,7 @@ vi.mock('../commands/found', () => ({
   fromOthers: (path: string) => Promise.resolve(path.startsWith('/team/')),
 }))
 const shut = new Set<string>()
-vi.mock('../../protect/protection.svelte', () => ({
+vi.mock('../../protect/src/api', () => ({
   protection: { agentsMay: (path: string) => !shut.has(path) },
 }))
 vi.mock('../commands/instructions', () => ({ instructionsFor: () => Promise.resolve('') }))

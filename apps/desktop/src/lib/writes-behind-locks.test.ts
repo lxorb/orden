@@ -3,7 +3,7 @@ import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-const SOURCE = fileURLToPath(new URL('..', import.meta.url))
+const SOURCE = fileURLToPath(new URL('.', import.meta.url))
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

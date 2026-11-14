@@ -30,7 +30,7 @@ export async function applyImport(
   target: ImportTarget,
   options: Writing = {},
 ): Promise<Landed> {
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   const into = target.folder ? joinPath(target.root, target.folder) : target.root
   if (!canWriteAt(into)) throw new Error(UNWRITABLE)
 

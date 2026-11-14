@@ -12,7 +12,7 @@
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../ui-kit/src/api'
   import { hiddenKinds, passOn, settings } from '../settings.svelte'
-  import { shareThisFile } from '../sharing.svelte'
+  import { shareThisFile } from '../sharing/src/api'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
   import { swiping } from '../back-swipe/shown.svelte'

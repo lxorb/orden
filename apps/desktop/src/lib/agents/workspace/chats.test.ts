@@ -37,7 +37,7 @@ vi.mock('../../chats/store.svelte', () => ({
 }))
 
 const opened: { path: string; how: unknown }[] = []
-vi.mock('../../sharing.svelte', () => ({ isShared: () => false }))
+vi.mock('../../sharing/src/api', () => ({ isShared: () => false }))
 
 vi.mock('../../chats/view/open', () => ({
   openChat: (path: string, how: unknown) => opened.push({ path, how }),

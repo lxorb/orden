@@ -5,7 +5,7 @@
   import { KEEP_YEAR, modes } from './modes.svelte'
   import { recovery } from './recovery.svelte'
   import { scrollbar } from './ui-kit/src/api'
-  import { canWriteIn } from './sharing.svelte'
+  import { canWriteIn } from './sharing/src/api'
   import { readableSize } from './usage.svelte'
   import { localDate } from './platform/src/api'
   import { when } from './when'

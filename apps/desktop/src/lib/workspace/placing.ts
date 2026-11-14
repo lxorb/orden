@@ -48,7 +48,7 @@ export async function keepWeb(
   dir: string,
   file?: string,
 ): Promise<string | null> {
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   if (!canWriteAt(dir)) return null
   const title = file ? shownName(file) : (pages.of(tab.id).title || tab.name || UNTITLED).trim()
   const named = file ?? `${nameFromTitle(title) ?? UNTITLED}.url`
@@ -87,7 +87,7 @@ export async function keepTerm(
   dir: string,
   file?: string,
 ): Promise<string | null> {
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   if (!canWriteAt(dir)) return null
   const name =
     shownName(file ?? tab.name)
@@ -160,7 +160,7 @@ export async function trashWords(ws: Places, note: NoteDoc): Promise<void> {
   const own = ws.spaces.find((one) => one.id === note.home) ?? ws.activeSpace
   if (!own) return
 
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   const file = draftFile(note)
   const roots = [own, ws.activeSpace, ...ws.spaces].flatMap((one) => (one ? [one.root] : []))
   const root = roots.find((one) => canWriteAt(joinPath(one, file))) ?? own.root

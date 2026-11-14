@@ -1,5 +1,5 @@
 import { log, isAgentsName, nameOf, samePath } from '../platform/src/api'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { moveHistory } from '../terminal/history'
 import { readSpec } from '../terminal/spec'
 import type { Tab } from '../workspace.svelte'

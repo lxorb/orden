@@ -11,10 +11,10 @@ import {
   roleOf,
   share,
   trustAgain,
-} from './sharing.svelte'
+  protectEntries,
+} from './sharing/src/api'
 import { settings } from './settings.svelte'
 import { type Space, workspace } from './workspace.svelte'
-import { protectEntries } from './protect/entries'
 
 const archiving = () => import('./space-archive')
 

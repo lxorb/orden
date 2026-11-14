@@ -2,10 +2,10 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { writeSpec } from '../views/spec'
-import { noteBehind } from './protection.svelte'
+import { writeSpec } from './views/spec'
+import { noteBehind } from './protect/src/protection.svelte'
 
-const SOURCE = fileURLToPath(new URL('..', import.meta.url))
+const SOURCE = fileURLToPath(new URL('.', import.meta.url))
 
 function views(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

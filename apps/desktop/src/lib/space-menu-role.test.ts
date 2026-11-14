@@ -26,7 +26,10 @@ vi.mock('./workspace.svelte', () => {
   }
 })
 
-vi.mock('./protect/entries', () => ({ protectEntries: () => [] }))
+vi.mock('./sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing/src/api')>()),
+  protectEntries: () => [],
+}))
 
 const { account } = await import('./accounts/src/account.svelte')
 const { spaceMenu } = await import('./space-actions')

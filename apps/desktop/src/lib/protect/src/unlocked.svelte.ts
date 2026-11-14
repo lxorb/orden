@@ -1,4 +1,4 @@
-import { movedTo, relativeTo, samePath, keep, storedText, isDesktop } from '../platform/src/api'
+import { movedTo, relativeTo, samePath, keep, storedText, isDesktop } from '../../platform/src/api'
 import type { Lock } from './protection.svelte'
 
 const RELOCK_KEY = 'orden:protect-relock'

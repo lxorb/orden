@@ -29,7 +29,7 @@ vi.mock('../../workspace/write-file', () => ({
 vi.mock('../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path)),
 }))
-vi.mock('../../sharing.svelte', () => ({ canWriteAt: () => disk.writable }))
+vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => disk.writable }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: vi.fn() } }))
 vi.mock('./found', () => ({
   found: () => Promise.resolve([]),

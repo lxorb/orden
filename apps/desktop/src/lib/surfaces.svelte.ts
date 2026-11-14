@@ -125,7 +125,7 @@ export const readingSurface = held(() => import('./Reading.svelte'))
 export const lockScreen = held(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
-    : import('./protect/LockScreen.svelte'),
+    : import('./sharing/src/api').then((one) => one.loadLockScreen()),
 )
 
 export const findBar = held(() => import('./FindBar.svelte'))

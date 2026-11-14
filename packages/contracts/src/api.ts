@@ -123,6 +123,7 @@ export {
   providePort,
   whenPortProvided,
 } from './ports'
+export type { SharingPorts, SharingSpacesPort } from './sharing'
 export type {
   SyncAccountPort,
   SyncApiPort,

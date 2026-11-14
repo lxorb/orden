@@ -14,7 +14,7 @@ import {
 import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
-import { canWriteAt } from './sharing.svelte'
+import { canWriteAt } from './sharing/src/api'
 import { relativeTo, rootedAt, invoke, isDesktop, joinPath, platform } from './platform/src/api'
 import { importSheet } from './surfaces.svelte'
 import { workspace } from './workspace.svelte'

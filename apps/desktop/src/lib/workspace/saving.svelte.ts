@@ -340,7 +340,7 @@ export class Saving {
 
   async place(note: NoteDoc, folder: string, file: string): Promise<string | null> {
     if (note.path !== null) return null
-    const { canWriteAt } = await import('../sharing.svelte')
+    const { canWriteAt } = await import('../sharing/src/api')
     if (!canWriteAt(folder)) return null
 
     const path = await this.claim(note, folder, file)

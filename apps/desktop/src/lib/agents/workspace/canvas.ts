@@ -1,7 +1,7 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { readable as guarded } from './guarded'
 import { type Canvas, merged, readCanvas as parse, stamped, writeCanvas } from '../../canvas/format'
-import { canWriteAt } from '../../sharing.svelte'
+import { canWriteAt } from '../../sharing/src/api'
 import { invoke } from '../../platform/src/api'
 import { writeFile } from '../../workspace/write-file'
 import { workspace } from '../../workspace.svelte'

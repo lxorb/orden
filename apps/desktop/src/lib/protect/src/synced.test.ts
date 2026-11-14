@@ -5,8 +5,8 @@ const server = vi.hoisted(() => ({
   sent: [] as { path: string; body: unknown }[],
 }))
 
-vi.mock('../accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../accounts/src/client')>()),
+vi.mock('../../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/client')>()),
   request: (path: string, options: { method?: string; body?: unknown } = {}) => {
     if (options.method === 'PUT') {
       server.sent.push({ path, body: options.body })
@@ -18,7 +18,7 @@ vi.mock('../accounts/src/client', async (importOriginal) => ({
   },
 }))
 
-const { workspace } = await import('../workspace.svelte')
+const { workspace } = await import('../../workspace.svelte')
 const { pulled } = await import('./synced')
 
 const ROOT = '/space'

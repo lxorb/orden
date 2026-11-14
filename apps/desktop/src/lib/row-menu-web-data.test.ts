@@ -7,7 +7,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   isDesktop: true,
 }))
 
-vi.mock('./sharing.svelte', () => ({
+vi.mock('./sharing/src/api', () => ({
   canShareItem: () => false,
   canWriteAt: () => writable.yes,
   shareThisFile: () => undefined,

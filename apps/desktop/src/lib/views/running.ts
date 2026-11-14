@@ -11,12 +11,12 @@ import {
   invoke,
   joinPath,
 } from '../platform/src/api'
-import { protection } from '../protect/protection.svelte'
+import { canWriteAt } from '../sharing/src/api'
+import { protection } from '../protect/src/api'
 import { notify } from '../notify'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
 import { basesOn } from '../settings.svelte'
-import { canWriteAt } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { writeEach } from './act'

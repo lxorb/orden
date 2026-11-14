@@ -25,7 +25,7 @@ vi.mock('../pdf/papers', () => ({ papersFor: () => Promise.resolve(), searchPape
 vi.mock('./inbox', () => ({ inboxHits: () => Promise.resolve([]) }))
 
 const { workspace } = await import('../workspace.svelte')
-const { unlocks } = await import('../protect/unlocked.svelte')
+const { unlocks } = await import('../protect/src/unlocked.svelte')
 const { searchSpace } = await import('./space')
 
 const ROOT = '/space'

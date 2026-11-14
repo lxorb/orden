@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const owner = vi.hoisted(() => ({ says: 'yes' }))
 
-vi.mock('./device', () => ({
+vi.mock('../../../protect/src/device', () => ({
   deviceCan: () => Promise.resolve(true),
   deviceName: () => 'Windows Hello',
   deviceSays: () =>
@@ -12,10 +12,10 @@ vi.mock('./device', () => ({
       : Promise.resolve(owner.says === 'yes'),
 }))
 
-const { busy } = await import('../ui-kit/src/busy.svelte')
-const { workspace } = await import('../workspace.svelte')
+const { busy } = await import('../../../ui-kit/src/busy.svelte')
+const { workspace } = await import('../../../workspace.svelte')
 const { protect } = await import('./unlocking')
-const PromptSheet = (await import('../PromptSheet.svelte')).default
+const PromptSheet = (await import('../../../PromptSheet.svelte')).default
 
 const ROOT = '/space'
 const NOTE = `${ROOT}/Plans.md`

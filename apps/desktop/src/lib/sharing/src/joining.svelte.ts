@@ -1,9 +1,9 @@
-import { api, fromServer, type Invitation, type Joined, account } from './accounts/src/api'
-import { passing, pollDelay, forget, keep, storedText } from './platform/src/api'
-import { message } from './ui-kit/src/api'
-import { deviceName } from './collab/src/api'
-import { sync } from './sync.svelte'
-import { workspace } from './workspace.svelte'
+import { api, fromServer, type Invitation, type Joined, account } from '../../accounts/src/api'
+import { passing, pollDelay, forget, keep, storedText } from '../../platform/src/api'
+import { message } from '../../ui-kit/src/api'
+import { deviceName } from '../../collab/src/api'
+import { sync } from '../../sync.svelte'
+import { workspace } from '../../workspace.svelte'
 
 const PATH = /^\/join\/([a-f0-9]{16,128})$/
 
@@ -92,7 +92,7 @@ class Joining {
   private async resume() {
     const held = storedText(WAITING_KEY)
     if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) {
-      if (account.guest) await (await import('./one-file')).backToTheFile()
+      if (account.guest) await (await import('../../one-file')).backToTheFile()
       return
     }
 
@@ -156,7 +156,7 @@ class Joining {
     if (joined.token) await account.arrive(joined.token, joined)
     else if (joined.guest) account.guest = joined.guest
 
-    if (joined.user) await (await import('./settling')).settleLocalNotes()
+    if (joined.user) await (await import('../../settling')).settleLocalNotes()
 
     if (joined.waiting) {
       this.wait()
@@ -172,7 +172,7 @@ class Joining {
 
     if (joined.item) {
       this.stopAsking()
-      await (await import('./one-file')).landOn(joined.item)
+      await (await import('../../one-file')).landOn(joined.item)
       this.arrived()
       return
     }

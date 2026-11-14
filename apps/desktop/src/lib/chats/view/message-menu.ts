@@ -1,7 +1,7 @@
 import { may, type Message, type Role } from '@orden/chats'
 import { copyText } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
-import { canWriteAt } from '../../sharing.svelte'
+import { canWriteAt } from '../../sharing/src/api'
 import type { ChatPage } from './chat.svelte'
 
 export interface MessageGestures {

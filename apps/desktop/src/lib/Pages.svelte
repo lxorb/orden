@@ -83,7 +83,7 @@
   import { PagesStore } from './pages/store.svelte'
   import { rooms } from './collab/src/api'
   import { said } from './said.svelte'
-  import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
+  import { canWriteIn, trustsHtmlIn } from './sharing/src/api'
   import { shortcuts } from './shortcuts.svelte'
 
   import { pages as pagesState } from './pages/showing.svelte'

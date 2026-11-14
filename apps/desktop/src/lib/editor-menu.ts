@@ -51,7 +51,7 @@ import { recordingAt, transcribeEmbed } from './recorder/commands'
 import { openExternal, isMarkdownPath, noteName, relativeTo } from './platform/src/api'
 import { shortcuts } from './shortcuts.svelte'
 import { workspace } from './workspace.svelte'
-import { unlocks } from './protect/unlocked.svelte'
+import { unlocks } from './protect/src/api'
 import { viewport } from './ui-kit/src/api'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {

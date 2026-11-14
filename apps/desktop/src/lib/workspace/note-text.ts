@@ -171,8 +171,8 @@ export async function replaceInNotes(
   if (!notes.length) return 0
 
   const [{ canWriteAt }, { protection }] = await Promise.all([
-    import('../sharing.svelte'),
-    import('../protect/protection.svelte'),
+    import('../sharing/src/api'),
+    import('../protect/src/api'),
   ])
   const writable = notes.filter(
     (change) =>

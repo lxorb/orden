@@ -1,6 +1,6 @@
 import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly, insideSpace, nameOf, relativeTo, within } from '../../platform/src/api'
-import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing.svelte'
+import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing/src/api'
 import { type Space, type Tab, workspace } from '../../workspace.svelte'
 import { type Call, maybe } from './call'
 import { Refused } from './problem'

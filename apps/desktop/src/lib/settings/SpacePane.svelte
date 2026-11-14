@@ -13,7 +13,7 @@
   import { links } from '../link-index.svelte'
   import { AGENTS_NAME } from '../platform/src/api'
   import { onDisk } from '../platform/src/api'
-  import { canWriteAt } from '../sharing.svelte'
+  import { canWriteAt } from '../sharing/src/api'
   import { settings } from '../settings.svelte'
   import { folderOf, rootedAt, samePath } from '../platform/src/api'
   import { joinPath } from '../platform/src/api'

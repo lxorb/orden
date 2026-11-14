@@ -20,7 +20,8 @@ const shareable = { yes: false }
 
 const writable = { yes: true }
 
-vi.mock('./sharing.svelte', () => ({
+vi.mock('./sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing/src/api')>()),
   canShareItem: () => shareable.yes,
   canWriteAt: () => writable.yes,
   shareThisFile: () => undefined,
@@ -30,7 +31,7 @@ const { bookmarkAll, rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { hiddenKinds } = await import('./settings.svelte')
-const { PROTECTION_WORD } = await import('./protect/gate')
+const { PROTECTION_WORD } = await import('./sharing/src/protect/gate')
 type Entry = import('./workspace.svelte').Entry
 
 function note(path: string): Entry {

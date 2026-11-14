@@ -2,7 +2,7 @@ import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag } from './drag
 import { chorded } from './ui-kit/src/api'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
-import { canWriteAt } from './sharing.svelte'
+import { canWriteAt } from './sharing/src/api'
 import { folderOf, insideSpace, samePath } from './platform/src/api'
 import {
   type Bookmark,

@@ -105,7 +105,7 @@ vi.mock('./ui-kit/src/message', () => ({
 
 import { account } from './accounts/src/account.svelte'
 import { publish } from './publishing.svelte'
-import { canPublish } from './sharing.svelte'
+import { canPublish } from './sharing/src/sharing.svelte'
 import { theme } from './theme/src/theme.svelte'
 import type { RemoteSpace } from './accounts/src/routes'
 

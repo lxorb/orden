@@ -42,7 +42,7 @@ vi.mock('../../search/space', () => ({
   },
 }))
 const shut = new Set<string>()
-vi.mock('../../protect/protection.svelte', () => ({
+vi.mock('../../protect/src/api', () => ({
   protection: {
     get any() {
       return shut.size > 0
@@ -50,7 +50,7 @@ vi.mock('../../protect/protection.svelte', () => ({
     agentsMay: (path: string) => !shut.has(path),
   },
 }))
-vi.mock('../../sharing.svelte', () => ({
+vi.mock('../../sharing/src/api', () => ({
   reachedByOthers: (path: string | null) => others.reach(path),
 }))
 

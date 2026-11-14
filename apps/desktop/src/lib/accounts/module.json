@@ -5,7 +5,6 @@
   "pending": [
     "apps/desktop/src/lib/arriving.svelte.ts",
     "apps/desktop/src/lib/camera.ts",
-    "apps/desktop/src/lib/sharing.svelte.ts",
     "apps/desktop/src/lib/space-archive.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/web/kept-for-good.svelte.ts",

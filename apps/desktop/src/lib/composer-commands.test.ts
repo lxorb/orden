@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const readOnly = new Set<string>()
 const writable = (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`))
 
-vi.mock('./sharing.svelte', () => ({
+vi.mock('./sharing/src/api', () => ({
   canWriteAt: writable,
   canWriteIn: (note: { path: string | null } | null) => !note?.path || writable(note.path),
 }))

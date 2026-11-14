@@ -78,8 +78,8 @@ describe('what Convert syntax would rewrite', () => {
 
 describe('Convert syntax beside a protected note', () => {
   test('neither rewrites nor counts what is in it while it is shut', async () => {
-    const { protection } = await import('./protect/protection.svelte')
-    const { unlocks } = await import('./protect/unlocked.svelte')
+    const { protection } = await import('./protect/src/protection.svelte')
+    const { unlocks } = await import('./protect/src/unlocked.svelte')
     protection.set('/space', '/space/Diary.md', 'password')
     try {
       const said = syntaxChanges(

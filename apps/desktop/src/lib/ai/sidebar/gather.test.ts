@@ -15,7 +15,7 @@ const disk = vi.hoisted(
 const searched = vi.hoisted(() => [] as string[])
 const othersWrite = vi.hoisted(() => new Set<string>())
 
-vi.mock('../../sharing.svelte', () => ({
+vi.mock('../../sharing/src/api', () => ({
   reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
   reachedByOthersIn: (root: string) => [...othersWrite].some((path) => path.startsWith(`${root}/`)),
 }))

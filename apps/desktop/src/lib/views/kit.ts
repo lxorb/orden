@@ -1,6 +1,6 @@
 import { type Base, BUTTON, groupName, type Row, type Value } from '@orden/bases'
 import type { RowChange } from '../rows/write'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { insideSpace } from '../platform/src/api'
 import { workspace } from '../workspace.svelte'
 import { dropRow, writeRow } from './act'

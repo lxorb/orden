@@ -86,7 +86,7 @@ vi.mock('../../ui-kit/src/message', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-vi.mock('../../sharing.svelte', () => ({
+vi.mock('../../sharing/src/api', () => ({
   sharedWithYou: { load: () => Promise.resolve() },
 }))
 

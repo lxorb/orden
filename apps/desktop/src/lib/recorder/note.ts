@@ -1,5 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import { canWriteAt } from '../sharing.svelte'
+import { canWriteAt } from '../sharing/src/api'
 import { isMarkdownPath } from '../platform/src/api'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'

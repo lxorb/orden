@@ -1671,7 +1671,7 @@ describe('a v2 space whose role is not known yet', () => {
   }
 
   test('is never deleted from the account when it is let go of', async () => {
-    const { roleOf } = await import('./sharing.svelte')
+    const { roleOf } = await import('./sharing/src/sharing.svelte')
     const { forgotten, done } = await unknown()
     try {
       const role = roleOf('/Plan')
@@ -1686,7 +1686,7 @@ describe('a v2 space whose role is not known yet', () => {
   })
 
   test('is deleted from the account once the listing is in and this device made it', async () => {
-    const { roleOf } = await import('./sharing.svelte')
+    const { roleOf } = await import('./sharing/src/sharing.svelte')
     const { done } = await unknown('owner')
     try {
       account.listed = true
@@ -1701,7 +1701,7 @@ describe('a v2 space whose role is not known yet', () => {
   })
 
   test('is never deleted with the next session when the account changes while it is let go of', async () => {
-    const { roleOf } = await import('./sharing.svelte')
+    const { roleOf } = await import('./sharing/src/sharing.svelte')
     const { done } = await unknown('owner')
     const v2 = (sync as unknown as { v2: { forget: (root: string) => Promise<void> } }).v2
     const gate: { free: (() => void) | null } = { free: null }
@@ -1726,7 +1726,7 @@ describe('a v2 space whose role is not known yet', () => {
   })
 
   test('is not deleted from the account when the listing leaves it out and it was not this device’s', async () => {
-    const { roleOf } = await import('./sharing.svelte')
+    const { roleOf } = await import('./sharing/src/sharing.svelte')
     const { forgotten, done } = await unknown('write')
     try {
       account.listed = true

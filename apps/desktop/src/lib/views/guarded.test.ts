@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 let shared = false
 
-vi.mock('../sharing.svelte', () => ({
+vi.mock('../sharing/src/api', () => ({
   trustsHtmlAt: () => !shared,
   canWriteAt: () => true,
 }))

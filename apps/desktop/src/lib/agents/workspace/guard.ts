@@ -1,5 +1,5 @@
 import { type Base, refusedPattern } from '@orden/bases'
-import { trustsHtmlAt } from '../../sharing.svelte'
+import { trustsHtmlAt } from '../../sharing/src/api'
 
 const copies = new WeakMap<Base, Base>()
 

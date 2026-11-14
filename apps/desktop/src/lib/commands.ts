@@ -73,9 +73,16 @@ import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
 import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
-import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
+import {
+  canPublish,
+  canShare,
+  canShareItem,
+  canWriteAt,
+  shareThisFile,
+  lockAllEntry,
+  protectEntries,
+} from './sharing/src/api'
 import { archiveEntry, DIVIDER } from './menu.svelte'
-import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { basesOn, chatsOn, type KindName, passOn, settings, timeOn } from './settings.svelte'

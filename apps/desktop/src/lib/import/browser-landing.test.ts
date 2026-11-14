@@ -111,7 +111,7 @@ vi.mock('../web-tab/search-engine.svelte', () => ({
     },
   },
 }))
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
 
 vi.mock('../workspace.svelte', () => {
   let active: string | null = null

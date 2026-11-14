@@ -1,6 +1,6 @@
 import { links } from '../../link-index.svelte'
 import type { Query } from '@orden/scan/search/query'
-import { protection } from '../../protect/protection.svelte'
+import { protection } from '../../protect/src/api'
 import { samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import { untrusted } from '../chat/transcript'
@@ -86,9 +86,9 @@ export async function fromOthersIn(root: string): Promise<boolean> {
   return (await sharing()).reachedByOthersIn(root)
 }
 
-let fetched: Promise<typeof import('../../sharing.svelte')> | null = null
-function sharing(): Promise<typeof import('../../sharing.svelte')> {
-  fetched ??= import('../../sharing.svelte').catch((error: unknown) => {
+let fetched: Promise<typeof import('../../sharing/src/api')> | null = null
+function sharing(): Promise<typeof import('../../sharing/src/api')> {
+  fetched ??= import('../../sharing/src/api').catch((error: unknown) => {
     fetched = null
     throw error
   })

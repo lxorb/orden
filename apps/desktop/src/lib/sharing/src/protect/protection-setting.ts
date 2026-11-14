@@ -1,7 +1,7 @@
-import { setWord } from '../kind-choice'
-import { prompt } from '../ui-kit/src/api'
+import { setWord } from '../../../kind-choice'
+import { prompt } from '../../../ui-kit/src/api'
 import { NO_PROTECTION_WORD, PROTECTION_WORD, protectionOn } from './gate'
-import { protection } from './protection.svelte'
+import { protection } from '../../../protect/src/api'
 
 function turned(on: boolean): void {
   setWord(on ? NO_PROTECTION_WORD : PROTECTION_WORD, false)

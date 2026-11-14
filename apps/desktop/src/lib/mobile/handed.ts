@@ -193,7 +193,7 @@ async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint
 }
 
 async function landing(): Promise<string | null> {
-  const { canWriteAt } = await import('../sharing.svelte')
+  const { canWriteAt } = await import('../sharing/src/api')
   const open = workspace.activeSpace?.root
   if (open !== undefined && canWriteAt(open)) return open
   return workspace.spaces.find((one) => canWriteAt(one.root))?.root ?? null

@@ -6,7 +6,7 @@
   import { LAYER, scale } from '../platform/src/api'
   import { overlays } from '../ui-kit/src/api'
   import { selectAll } from '../select-all'
-  import { canWriteAt } from '../sharing.svelte'
+  import { canWriteAt } from '../sharing/src/api'
   import SpaceMark from '../SpaceMark.svelte'
   import { trap } from '../ui-controls/src/api'
   import { pages } from '../web-tab/pages.svelte'
