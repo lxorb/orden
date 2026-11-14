@@ -1,6 +1,6 @@
-import { lentMoved, pageSizes, warmPdf } from '../pdf/src/api'
-import { onDisk, invoke } from '../platform/src/api'
-import { writeFile } from '../workspace/write-file'
+import { lentMoved, pageSizes, warmPdf } from '../../pdf/src/api'
+import { onDisk, invoke } from '../../platform/src/api'
+import { writeFile } from '../../workspace/write-file'
 import type { Turning } from './from-pdf'
 
 export function turningIn(

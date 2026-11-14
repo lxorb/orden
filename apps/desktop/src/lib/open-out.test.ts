@@ -29,7 +29,7 @@ vi.mock('./plane/src/picture', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('./pages/out', () => ({
+vi.mock('./pages/src/out', () => ({
   pagesOutOf: (open: unknown) => open,
   printPages: (out: unknown) => {
     world.printed.push(out)

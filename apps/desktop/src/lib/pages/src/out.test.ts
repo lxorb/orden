@@ -5,7 +5,7 @@ import type { Canvas, PageNode } from '@orden/markdown/canvas'
 
 const paper = vi.hoisted(() => ({ bytes: null as Uint8Array | null }))
 
-vi.mock('../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(paper.bytes) }))
+vi.mock('../../platform/src/bytes', () => ({ fileBytes: () => Promise.resolve(paper.bytes) }))
 
 const { pagesPdf } = await import('./out')
 

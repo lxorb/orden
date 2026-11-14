@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { keyElsewhere } from './layer-keys'
+  import { keyElsewhere } from '../../layer-keys'
   import { untrack } from 'svelte'
   import {
     CanvasBar,
@@ -22,7 +22,7 @@
     toolPressed,
     tools,
     wordsAt,
-  } from './canvas/src/api'
+  } from '../../canvas/src/api'
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
@@ -34,7 +34,7 @@
     NOTCH,
     pinching,
     turnOf,
-  } from './camera'
+  } from '../../camera'
   import {
     cardsInLasso,
     coloured,
@@ -57,13 +57,13 @@
     Stylus,
     tidied,
     withText,
-  } from './plane/src/api'
+  } from '../../plane/src/api'
   import { freshId, type InkPoint, type InkStroke } from '@orden/markdown/canvas'
-  import { copyText, tick } from './ui-controls/src/api'
+  import { copyText, tick } from '../../ui-controls/src/api'
   import { pageAt } from '@orden/markdown/pages'
-  import { longPress } from './longpress'
-  import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
-  import { samePath, stillness } from './platform/src/api'
+  import { longPress } from '../../longpress'
+  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { samePath, stillness } from '../../platform/src/api'
   import {
     type Highlight,
     loadHighlights,
@@ -75,8 +75,8 @@
     PapersHeld,
     placesOnPaper,
     textsOf,
-  } from './pdf/src/api'
-  import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
+  } from '../../pdf/src/api'
+  import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './choose'
   import {
     began,
     dragged,
@@ -87,17 +87,17 @@
     riseOf,
     startedNearEnd,
     wheeled,
-  } from './pages/pull'
-  import { inSight } from './pages/sight'
-  import { PagesStore } from './pages/store.svelte'
-  import { rooms } from './collab/src/api'
-  import { said } from './said.svelte'
-  import { canWriteIn, trustsHtmlIn } from './sharing/src/api'
-  import { shortcuts } from './shortcuts.svelte'
+  } from './pull'
+  import { inSight } from './sight'
+  import { PagesStore } from './store.svelte'
+  import { rooms } from '../../collab/src/api'
+  import { said } from '../../said.svelte'
+  import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
+  import { shortcuts } from '../../shortcuts.svelte'
 
-  import { pages as pagesState } from './pages/showing.svelte'
-  import { viewport } from './ui-kit/src/api'
-  import { workspace, type Tab } from './workspace.svelte'
+  import { pages as pagesState } from './showing.svelte'
+  import { viewport } from '../../ui-kit/src/api'
+  import { workspace, type Tab } from '../../workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -826,7 +826,7 @@
     return {
       label,
       run: () =>
-        void import('./commands').then(({ appCommands, exportCommands }) => {
+        void import('../../commands').then(({ appCommands, exportCommands }) => {
           const row = [...exportCommands(), ...appCommands()].find((one) => one.id === id)
           if (row && !row.disabled) row.run()
         }),

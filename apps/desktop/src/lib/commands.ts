@@ -181,7 +181,7 @@ export function exportCommands(): Command[] {
   }
 
   const pagesOut = async (id: ExportId) => {
-    const out = await import('./pages/out')
+    const out = await (await import('./pages/src/api')).pagesOut()
     const about = out.pagesOutOf(openOut())
 
     if (id === 'pdf') await out.exportPagesPdf(about)

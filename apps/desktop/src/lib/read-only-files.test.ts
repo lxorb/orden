@@ -294,7 +294,7 @@ describe('an open note in a space shared to be read', () => {
 
 describe('a PDF opened with the app from outside', () => {
   test('is not saved into a space shared to be read', async () => {
-    const { asDraft } = await import('./pages/from-pdf')
+    const { asDraft } = await import('./pages/src/from-pdf')
     const sizes = () => Promise.resolve([{ width: 794, height: 1123 }])
     const tab = workspace.openUnsaved('pages', await asDraft('/elsewhere/paper.pdf', sizes))
     readOnly.add('/theirs')

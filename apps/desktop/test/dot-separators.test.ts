@@ -24,7 +24,7 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'a markdown list item drawn with its bullet',
   },
   {
-    path: 'apps/desktop/src/lib/pages/laid.ts',
+    path: 'apps/desktop/src/lib/pages/src/laid.ts',
     holds: 'ordered ?',
     why: 'the marker of an unordered list item',
   },

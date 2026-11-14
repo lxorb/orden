@@ -9,7 +9,7 @@ import {
   pageShowing,
   settled,
 } from '@orden/markdown/pages'
-import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../camera'
+import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../../camera'
 import {
   type Canvas,
   canvasRuns,
@@ -17,12 +17,12 @@ import {
   readCanvas,
   takeParsed,
 } from '@orden/markdown/canvas'
-import { strokeBox } from '../plane/src/api'
-import type { KeptView } from '../canvas/src/api'
-import { CanvasStore } from '../canvas/src/api'
-import type { Highlight, PdfHeading } from '../pdf/src/api'
-import { stillness } from '../platform/src/api'
-import type { Tab } from '../workspace/documents.svelte'
+import { strokeBox } from '../../plane/src/api'
+import type { KeptView } from '../../canvas/src/api'
+import { CanvasStore } from '../../canvas/src/api'
+import type { Highlight, PdfHeading } from '../../pdf/src/api'
+import { stillness } from '../../platform/src/api'
+import type { Tab } from '../../workspace/documents.svelte'
 
 const MARGIN = 28
 

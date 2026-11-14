@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fade, scale as growing } from './platform/src/api'
+  import { dur, fade, scale as growing } from '../../platform/src/api'
 
   const { zoom }: { zoom: number } = $props()
 

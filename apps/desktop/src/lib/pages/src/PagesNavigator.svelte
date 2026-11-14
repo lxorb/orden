@@ -8,23 +8,16 @@
     type Pattern,
     PATTERNS,
   } from '@orden/markdown/canvas'
-  import { paintSketch, readPalette } from './plane/src/api'
-  import { carryPage, draggedPage, dropOver, isPageDrag } from './drag-paths'
-  import { longPress } from './longpress'
-  import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
-  import { densityFor, paperOf } from './pdf/src/api'
-  import {
-    sameSheet,
-    type SheetDrawn,
-    sheetDrawn,
-    shelvesOf,
-    shownOf,
-    thumbSize,
-  } from './pages/thumbs'
-  import { pages as showing } from './pages/showing.svelte'
-  import { ListView } from './row-window.svelte'
-  import { roving } from './roving'
-  import { workspace } from './workspace.svelte'
+  import { paintSketch, readPalette } from '../../plane/src/api'
+  import { carryPage, draggedPage, dropOver, isPageDrag } from '../../drag-paths'
+  import { longPress } from '../../longpress'
+  import { DIVIDER, type MenuEntry, menu } from '../../menu.svelte'
+  import { densityFor, paperOf } from '../../pdf/src/api'
+  import { sameSheet, type SheetDrawn, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
+  import { pages as showing } from './showing.svelte'
+  import { ListView } from '../../row-window.svelte'
+  import { roving } from '../../roving'
+  import { workspace } from '../../workspace.svelte'
 
   const WIDE = 104
 

@@ -24,7 +24,7 @@ export async function laidOut(
 
   const [{ mount, tick, unmount }, { CanvasNode: Card }] = await Promise.all([
     import('svelte'),
-    import('../canvas/src/api'),
+    import('../../canvas/src/api'),
   ])
 
   const stage = document.createElement('div')

@@ -4,7 +4,7 @@ import { blankPages } from '@orden/markdown/pages'
 import CanvasBar from '../../src/lib/canvas/src/CanvasBar.svelte'
 import { blankCanvas, type CanvasNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
-import { PagesStore } from '../../src/lib/pages/store.svelte'
+import { PagesStore } from '../../src/lib/pages/src/store.svelte'
 import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
 
 function card(id: string): CanvasNode {

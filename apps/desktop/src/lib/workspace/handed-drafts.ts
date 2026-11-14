@@ -9,7 +9,7 @@ import {
   invoke,
 } from '../platform/src/api'
 import { CanvasStore } from '../canvas/src/api'
-import { asDraft, paperNamed, paperOutside } from '../pages/from-pdf'
+import { fromPdf } from '../pages/src/api'
 import { paperOf } from '@orden/markdown/pages'
 import { pageSizes } from '../pdf/src/api'
 import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
@@ -25,6 +25,7 @@ const inSomeSpace = (ws: Drafts) => (path: string) =>
   ws.spaces.some((one) => within(one.root, path) !== null)
 
 export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
+  const { asDraft, paperOutside } = await fromPdf()
   const open = ws.tabs.find((tab) => {
     if (tab.kind !== 'pages' || !isDraft(tab.note)) return false
     const paper = paperOutside(tab.note.text, inSomeSpace(ws))
@@ -46,6 +47,7 @@ export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
 }
 
 export async function keepPaper(ws: Drafts, note: NoteDoc, path: string): Promise<void> {
+  const { paperNamed, paperOutside } = await fromPdf()
   const from = paperOutside(note.text, inSomeSpace(ws))
   if (!from) return
 

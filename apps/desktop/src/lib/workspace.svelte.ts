@@ -1615,7 +1615,7 @@ class Workspace {
 
   private async heldBy(path: string): Promise<string | null> {
     const [{ noteHolding }, { onDisk }] = await Promise.all([
-      import('./pages/from-pdf'),
+      import('./pages/src/api').then((one) => one.fromPdf()),
       import('./platform/src/api'),
     ])
     return noteHolding(path, {
@@ -1651,7 +1651,7 @@ class Workspace {
 
   private async paperText(path: string): Promise<string | null> {
     const [{ asItself }, { pageSizes }] = await Promise.all([
-      import('./pages/from-pdf'),
+      import('./pages/src/api').then((one) => one.fromPdf()),
       import('./pdf/src/api'),
     ])
     return asItself(path, pageSizes).catch((error: unknown) => {
@@ -1678,10 +1678,8 @@ class Workspace {
 
   private async turning(path: string) {
     if (!(await this.mayTurn(path))) throw new Error(`${path} is in a space shared to be read`)
-    const [from, { turningIn }] = await Promise.all([
-      import('./pages/from-pdf'),
-      import('./pages/turning'),
-    ])
+    const { fromPdf, turning } = await import('./pages/src/api')
+    const [from, { turningIn }] = await Promise.all([fromPdf(), turning()])
     const how = turningIn(this.rootHolding(path), (one, to) =>
       this.renameFile(one, to, false, true),
     )
