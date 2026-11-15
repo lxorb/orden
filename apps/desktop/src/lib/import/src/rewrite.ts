@@ -235,6 +235,12 @@ export function linksFollowed(
       if (now !== undefined) return relativePath(here, now)
       return dotted || known.has(foldName(beside)) ? null : byName(path)
     }
+    if (!path.startsWith('/')) {
+      const landing = landed(top)
+      const from = folderOf(landed(was))
+      const near = joined(from, landing)
+      if (near !== landing && holds(near, space)) return relativePath(from, landing)
+    }
     const now = movedTo(top) ?? (under && known.has(foldName(top)) ? top : undefined)
     if (now === undefined) return null
     if (path.startsWith('/') && !under) return relativePath(here, now)

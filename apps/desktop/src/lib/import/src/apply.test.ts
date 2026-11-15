@@ -668,6 +668,30 @@ describe('a vault landed in a folder of a space that holds notes of the same nam
     )
   })
 
+  test('has a markdown link to a file at the top of the vault reach it, not the namesake beside the link', () => {
+    const out = restamped(
+      planOf([
+        note('Plan.md', '# mine'),
+        file('cat.png'),
+        note('Daily/Day.md', 'See [the plan](Plan.md) and ![](cat.png).'),
+      ]),
+      new Set(['Daily/Plan.md', 'Daily/cat.png']),
+      '',
+    )
+    const text = textAt(out.files, 'Daily/Day.md')
+    const index = spaceIndex(
+      ['Plan.md', 'Daily/Plan.md', 'Daily/Day.md'],
+      ['cat.png', 'Daily/cat.png'],
+      'Daily/Day.md',
+    )
+    const targets = [...text.matchAll(/\]\(<?([^)>]+)>?\)/g)].map((one) =>
+      decodeURIComponent(one[1] ?? ''),
+    )
+
+    expect(resolveRelative(index, targets[0] ?? '')?.path).toBe('Plan.md')
+    expect(resolveFile(index, targets[1] ?? '', 'markdown')).toBe('cat.png')
+  })
+
   test('has a markdown link by name reach the note it came with, not the namesake at the top', () => {
     const out = restamped(
       planOf([
