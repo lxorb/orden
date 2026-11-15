@@ -128,7 +128,7 @@ describe('a file changed on another device', () => {
 
   test('nor over a file another program puts at its place while its bytes come down', async () => {
     const { disk, entry, space, core } = fixture('old')
-    await disk.remove(`${ROOT}/App.application`, 'file')
+    await disk.remove(`${ROOT}/App.application`)
     const down = core.world.blobs.down
     core.world.blobs.down = async (spaceId: string, id: string) => {
       await disk.writeBytes(`${ROOT}/App.application`, new TextEncoder().encode('made here'))
