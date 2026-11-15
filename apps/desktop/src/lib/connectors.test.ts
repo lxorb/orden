@@ -46,7 +46,11 @@ vi.mock('./accounts/src/client', () => ({
 }))
 
 vi.mock('./accounts/src/account.svelte', () => ({
-  account: { accountToken: 'session', forgetWithSession: () => undefined },
+  account: {
+    accountToken: 'session',
+    forgetWithSession: () => undefined,
+    holdsNoAccount: () => undefined,
+  },
 }))
 
 vi.mock('./ui-kit/src/message', () => ({

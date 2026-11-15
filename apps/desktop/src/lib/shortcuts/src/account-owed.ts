@@ -6,6 +6,9 @@ export class AccountOwed {
 
   constructor(private readonly key: string) {
     account.forgetWithSession(() => forget(this.key))
+    account.holdsNoAccount(() => {
+      if (this.owner === null) forget(this.key)
+    })
   }
 
   private get owner(): string | null | undefined {

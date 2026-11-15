@@ -7,6 +7,7 @@ const world = vi.hoisted(() => ({
   user: null as { id: string } | null,
   token: null as string | null,
   leaving: [] as (() => void)[],
+  unowned: [] as (() => void)[],
 }))
 
 vi.mock('../../accounts/src/api', async (importOriginal) => {
@@ -24,6 +25,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => {
         return world.user ? 'token' : null
       },
       forgetWithSession: (clear: () => void) => void world.leaving.push(clear),
+      holdsNoAccount: (clear: () => void) => void world.unowned.push(clear),
     },
     api: {
       saveSettings: (_token: string, patch: unknown) => {
@@ -62,6 +64,7 @@ function signedOut() {
 async function relaunched() {
   vi.resetModules()
   world.leaving = []
+  world.unowned = []
   const [{ shortcuts }, { toolbar }] = await Promise.all([
     import('./shortcuts.svelte'),
     import('./toolbar.svelte'),
@@ -185,6 +188,23 @@ describe('signing out', () => {
 
     expect(world.saved).toEqual([])
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+  })
+})
+
+describe('a shortcut changed while the session is read, in a session with no account', () => {
+  test('is not sent over the account signed in to later', async () => {
+    world.user = null
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.italic', 'Mod-Alt-k')
+    for (const clear of world.unowned) clear()
+
+    world.user = { id: 'u1' }
+    world.saved = []
+    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+    await settled()
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+    expect(world.saved).toEqual([])
   })
 })
 

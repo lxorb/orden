@@ -555,6 +555,29 @@ describe('a session a share link handed out', () => {
     expect(account.name).toBe('Windows wren')
   })
 
+  test('tells what was owed meanwhile that no account will hear it', async () => {
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    server.meIsAGuest = true
+    localStorage.setItem('orden:session', 'guest-session')
+
+    await account.restore()
+
+    expect(told).toBe(1)
+  })
+
+  test('tells it too when no session is saved, and not when an account answers', async () => {
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    await account.restore()
+    expect(told).toBe(1)
+
+    localStorage.setItem('orden:session', 'session')
+    await account.restore()
+    expect(account.user).not.toBeNull()
+    expect(told).toBe(1)
+  })
+
   test('holds no account for sure, so nothing it changes is owed to the one it signs in to', async () => {
     server.meIsAGuest = true
     localStorage.setItem('orden:session', 'guest-session')

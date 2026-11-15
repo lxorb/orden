@@ -1067,6 +1067,10 @@ class Modes {
     this.owed = {}
   }
 
+  forgetUnowned(): void {
+    if (this.owedTo?.who === null) this.owed = {}
+  }
+
   private share(patch: AccountSettings) {
     this.sent++
     if (account.noAccountForSure) return
@@ -1262,3 +1266,4 @@ export function watchUndated(changed: () => void): () => void {
 }
 
 account.forgetWithSession(() => modes.forgetSession())
+account.holdsNoAccount(() => modes.forgetUnowned())

@@ -87,6 +87,16 @@ class Session {
     this.alsoForget.add(clear)
   }
 
+  private readonly unheard = new Set<() => void>()
+
+  holdsNoAccount(clear: () => void) {
+    this.unheard.add(clear)
+  }
+
+  private heardNoAccount() {
+    for (const clear of this.unheard) clear()
+  }
+
   private mayLeave: () => Promise<boolean> = () => Promise.resolve(true)
 
   askBeforeLeaving(ask: () => Promise<boolean>) {
@@ -105,7 +115,10 @@ class Session {
 
   private async lookForSession() {
     const saved = (await this.vault?.read()) ?? storedText(STORAGE_KEY)
-    if (!saved) return
+    if (!saved) {
+      this.heardNoAccount()
+      return
+    }
 
     keep(STORAGE_KEY, saved)
     this.token = saved
@@ -124,6 +137,7 @@ class Session {
       if (this.token !== token) return true
       this.user = who.user ?? null
       this.guest = who.guest ?? null
+      if (!this.user) this.heardNoAccount()
     } catch (error) {
       if (!rejected(error)) return false
       if (this.token === token) this.forget()

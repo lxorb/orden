@@ -2,6 +2,7 @@ export interface OwedAccount {
   readonly noAccountForSure: boolean
   readonly user: { id: string } | null
   forgetWithSession(clear: () => void): void
+  holdsNoAccount(clear: () => void): void
 }
 
 export interface OwedStore {
@@ -19,6 +20,9 @@ export class OwedMark {
     private readonly store: OwedStore,
   ) {
     account.forgetWithSession(() => store.drop(key))
+    account.holdsNoAccount(() => {
+      if (this.owner === null) store.drop(key)
+    })
   }
 
   private get owner(): string | null | undefined {

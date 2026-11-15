@@ -8,7 +8,11 @@ const world = vi.hoisted(() => ({
 
 vi.mock('../../accounts/src/api', async (original) => ({
   ...(await original<typeof import('../../accounts/src/api')>()),
-  account: { accountToken: 'token', forgetWithSession: () => undefined },
+  account: {
+    accountToken: 'token',
+    forgetWithSession: () => undefined,
+    holdsNoAccount: () => undefined,
+  },
   api: {
     rollback: (_token: string, space: string, at: number, _path = '', preview = false) => {
       world.rolled.push({ space, at, preview })

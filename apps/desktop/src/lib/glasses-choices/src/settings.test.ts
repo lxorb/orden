@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../../accounts/src/client', () => ({ api: {} }))
 vi.mock('../../accounts/src/account.svelte', () => ({
-  account: { accountToken: null, forgetWithSession: () => undefined },
+  account: {
+    accountToken: null,
+    forgetWithSession: () => undefined,
+    holdsNoAccount: () => undefined,
+  },
 }))
 
 function memoryStorage(): Storage {
