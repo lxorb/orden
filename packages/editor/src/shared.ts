@@ -226,6 +226,7 @@ export class SharedDoc {
     }
 
     this.state = documentState(text)
+    this.held = null
     this.recent = []
     this.ownUndo = 0
     this.ownRedo = 0

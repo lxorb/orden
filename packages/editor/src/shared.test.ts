@@ -652,6 +652,23 @@ describe('words from the room while somebody composes (#544)', () => {
     expect(note.text.toString()).toBe(room.words)
   })
 
+  test('are let go of when the note takes on another note while they wait', () => {
+    const note = new SharedDoc('hello world')
+    const pane = new Composing(note, 11)
+
+    pane.composing = true
+    pane.type(11, 'に')
+    note.arrived([{ from: 0, to: 0, insert: 'a long word from the room ' }])
+    note.takeOn('hi')
+    pane.composing = false
+
+    expect(() => {
+      note.settle()
+    }).not.toThrow()
+    expect(note.text.toString()).toBe('hi')
+    expect(pane.text).toBe('hi')
+  })
+
   test('wait inside the word too, and land where the room has them', () => {
     const note = new SharedDoc('hello world')
     const pane = new Composing(note, 8)
