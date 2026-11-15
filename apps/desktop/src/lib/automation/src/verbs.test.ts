@@ -68,6 +68,13 @@ describe('the table', () => {
     }
   })
 
+  test('refuses words past a move’s two paths rather than guessing where one ends', async () => {
+    expect(await dispatch('files', { yes: true }, ['move', 'My', 'plan.md', 'Later.md'])).toEqual({
+      ok: false,
+      error: 'files.move takes path and to, one word each: quote a path with spaces in it',
+    })
+  })
+
   test('answers rather than throwing when a verb says no', async () => {
     const answered = await dispatch('files.read', { path: '../outside.md' })
     expect(answered).toEqual({ ok: false, error: 'there is no space open' })

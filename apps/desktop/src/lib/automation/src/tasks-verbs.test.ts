@@ -56,6 +56,16 @@ describe('the to-dos from a terminal and a link', () => {
     ])
   })
 
+  test('the words after a verb are all its last argument, not only the first', async () => {
+    asked.length = 0
+    await dispatch('tasks', {}, ['add', 'Call', 'the', 'dentist'])
+    await dispatch('base', {}, ['query', 'Reading', 'list.base'])
+    expect(asked).toEqual([
+      { name: 'add_task', args: { text: 'Call the dentist' }, agent: null },
+      { name: 'query_base', args: { path: 'Reading list.base' }, agent: null },
+    ])
+  })
+
   test('says why in a sentence where the verb refused', async () => {
     expect(await dispatch('tasks', {}, ['done', 'gone'])).toEqual({
       ok: false,

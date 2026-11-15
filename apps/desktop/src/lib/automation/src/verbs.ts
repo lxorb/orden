@@ -33,6 +33,7 @@ import { type AgentAnswer, type Caller, holds, READER, refusal } from './caller'
 
 interface Verb {
   takes?: readonly string[]
+  oneWordEach?: boolean
   byLink?: 'quiet' | 'back'
   confirms?: boolean
   run?: (args: Said, road: Road) => unknown
@@ -79,7 +80,7 @@ const VERBS: Record<string, Verb> = {
   verbs: { run: () => ({ verbs: verbNames() }) },
 
   'files.write': { takes: ['path', 'content'], confirms: true, run: writeFile },
-  'files.move': { takes: ['path', 'to'], confirms: true, run: moveFile },
+  'files.move': { takes: ['path', 'to'], oneWordEach: true, confirms: true, run: moveFile },
   'files.delete': { takes: ['path'], confirms: true, run: deleteFile },
   'properties.set': { takes: ['key', 'value'], confirms: true, run: setProperty },
 
@@ -202,7 +203,15 @@ export async function dispatch(
     return refusal('not_granted', `${name} is not a verb an agent may call`)
   }
 
-  const said = { ...withPositions(found, words), ...args }
+  const takes = found.takes ?? []
+  if (found.oneWordEach === true && words.length > takes.length) {
+    return {
+      ok: false,
+      error: `${name} takes ${takes.join(' and ')}, one word each: quote a path with spaces in it`,
+    }
+  }
+
+  const said = { ...withPositions(takes, words), ...args }
 
   if (found.confirms === true && !yes(said, 'yes')) {
     return { ok: false, error: `${name} changes something: say yes to go ahead` }
@@ -257,11 +266,11 @@ function twoWords(verb: string, rest: readonly string[]): [string, readonly stri
   return `${verb}.${next}` in VERBS ? [`${verb}.${next}`, after] : [verb, rest]
 }
 
-function withPositions(verb: Verb, rest: readonly string[]): Said {
+function withPositions(takes: readonly string[], rest: readonly string[]): Said {
   const out: Said = {}
-  for (const [at, name] of (verb.takes ?? []).entries()) {
-    const value = rest[at]
-    if (value !== undefined) out[name] = value
+  for (const [at, name] of takes.entries()) {
+    if (at >= rest.length) break
+    out[name] = at === takes.length - 1 ? rest.slice(at).join(' ') : rest[at]
   }
 
   return out
