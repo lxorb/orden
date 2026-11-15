@@ -3,6 +3,14 @@ import type { Draft, EngineEvent, Part, Thread, Turn } from '../../../ai-provide
 
 const { memoryStorage } = await import('../../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal(
+  'BroadcastChannel',
+  class {
+    onmessage = null
+    postMessage = () => undefined
+    close = () => undefined
+  },
+)
 
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
