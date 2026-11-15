@@ -125,6 +125,7 @@ export const noteOpener = Facet.define<NoteOpener, NoteOpener>({
 
 export interface LinkWrite {
   name: string
+  markdown?: string | null
   path?: string | null
   from?: string | null
   fragment?: string | null
@@ -246,6 +247,15 @@ export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
 
   const named = lookup.aliases.get(wanted)
   return named ? nearest(named, index.path) : null
+}
+
+export function shortestReaching(path: string, reaches: (written: string) => boolean): string {
+  const parts = path.split('/')
+  for (let from = parts.length - 1; from >= 0; from--) {
+    const written = parts.slice(from).join('/')
+    if (reaches(written)) return written
+  }
+  return `/${path}`
 }
 
 export function resolveRelative(index: NoteIndex, target: string): NoteRef | null {

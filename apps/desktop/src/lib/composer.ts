@@ -24,6 +24,7 @@ export function linkTo(
 
 export function pickedLink(target: LinkWrite): string {
   return linkTo(target.name, null, {
+    markdown: target.markdown ?? null,
     path: target.path ?? null,
     from: target.from ?? null,
     fragment: target.fragment ?? null,

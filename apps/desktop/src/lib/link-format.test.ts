@@ -48,6 +48,15 @@ describe('the three markdown spellings', () => {
     expect(formatLink(PLAN, 'absolute')).toBe('[Plan](ideas/Plan.md)')
   })
 
+  test('take the path the picker found to reach the note read from the linking note', () => {
+    expect(
+      formatLink(
+        { name: 'b/c', markdown: '/b/c.md', path: 'b/c.md', from: 'a/new.md' },
+        'shortest',
+      ),
+    ).toBe('[b/c](/b/c.md)')
+  })
+
   test('write the path from the top, slash and all, when only that says which', () => {
     expect(formatLink({ ...PLAN, name: '/ideas/Plan' }, 'shortest')).toBe(
       '[ideas/Plan](/ideas/Plan.md)',

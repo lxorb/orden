@@ -21,6 +21,7 @@ export function linkWriting(): LinkFormat {
 
 export interface LinkTarget {
   name: string
+  markdown?: string | null
   path?: string | null
   from?: string | null
   fragment?: string | null
@@ -56,6 +57,7 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
   if (format === 'shortest') {
+    if (target.markdown) return target.markdown
     if (target.name.startsWith('/')) return `/${path.replace(/^\/+/, '')}`
     return target.name.includes('/') ? path : withExtension(nameOf(path))
   }

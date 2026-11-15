@@ -10,6 +10,8 @@ import {
   noteIndex,
   type NoteRef,
   resolveNote,
+  resolveRelative,
+  shortestReaching,
   type SpaceBlock,
 } from './notes'
 
@@ -74,7 +76,11 @@ function tailOf(kept: string, fragment: string | null): string {
 }
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
-  return { name: nameFor(index, note), path: note.path, from: index.path }
+  const markdown = shortestReaching(
+    note.path,
+    (written) => resolveRelative(index, written)?.path === note.path,
+  )
+  return { name: nameFor(index, note), markdown, path: note.path, from: index.path }
 }
 
 function nameFor(index: NoteIndex, note: NoteRef): string {
