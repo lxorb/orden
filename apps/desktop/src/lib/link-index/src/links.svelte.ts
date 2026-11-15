@@ -1184,11 +1184,18 @@ class Links {
     const { was, now, root, open, how, files, listed } = asked
     const { moved = false, only, touched: told } = how
 
-    const name = comparable(nameOf(was))
-    const named = (link: { target: string }) =>
-      !!link.target && comparable(link.target).split('/').includes(name)
     const moving = (path: string) =>
       path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
+    const names = new Set(
+      [was, ...notes.map((one) => one.path), ...files]
+        .filter((path) => moving(path) !== null)
+        .map((path) => comparable(nameOf(path))),
+    )
+    const named = (link: { target: string }) =>
+      !!link.target &&
+      comparable(link.target)
+        .split('/')
+        .some((part) => names.has(part))
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
     const calledAs = (path: string): { notes: NoteRef[]; files: string[] } => {
