@@ -213,10 +213,8 @@ function scan(
             return false
           }
 
-          if (node.to - node.from > TOC_MAX) return false
-          if (!/\[toc\]/i.test(doc.sliceString(node.from, node.to))) return false
           const line = doc.lineAt(node.from)
-          if (!/\[toc\]/i.test(line.text)) return false
+          if (line.length > TOC_MAX || !/\[toc\]/i.test(line.text)) return false
 
           const span = found(line.from, line.to)
           if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
@@ -380,6 +378,15 @@ function touched(regions: readonly Span[], from: number, to: number) {
 
 const MOST_SETTLED = 64
 
+function withNeighbourLines(doc: Text, from: number, to: number): Span {
+  const first = doc.lineAt(from)
+  const last = doc.lineAt(to)
+  return {
+    from: first.number > 1 ? doc.line(first.number - 1).from : first.from,
+    to: last.number < doc.lines ? doc.line(last.number + 1).to : last.to,
+  }
+}
+
 function fewer(wanted: Span[]): Span[] {
   if (wanted.length <= MOST_SETTLED) return wanted
 
@@ -403,7 +410,9 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   if (!transaction.docChanged && oldTree !== newTree && oldEnd === newTree.length) return null
 
   const wanted: Span[] = []
-  changes.iterChangedRanges((_fromA, _toA, fromB, toB) => wanted.push({ from: fromB, to: toB }))
+  changes.iterChangedRanges((_fromA, _toA, fromB, toB) =>
+    wanted.push(withNeighbourLines(state.doc, fromB, toB)),
+  )
   if (oldEnd !== newTree.length) {
     const from = Math.min(oldEnd, newTree.length)
     wanted.push({ from, to: state.doc.length })
@@ -477,6 +486,12 @@ function insideALine(doc: Text, at: number): boolean {
   return /\p{L}/u.test(line.text.slice(0, at - line.from))
 }
 
+function mayMakeATable(doc: Text, at: number): boolean {
+  const line = doc.lineAt(at)
+  const next = line.number < doc.lines ? doc.line(line.number + 1).text : ''
+  return line.text.includes('|') || next.includes('|')
+}
+
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
   if (value.toc) return false
 
@@ -503,6 +518,7 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       ordinary =
         PUNCTUATION.test(written) && !BLOCK_MARKS.test(written) && insideALine(after, fromB)
     }
+    ordinary = ordinary && !mayMakeATable(after, fromB)
   })
 
   return ordinary

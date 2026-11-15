@@ -6,13 +6,11 @@ import {
   type SelectionRange,
   type StateCommand,
 } from '@codemirror/state'
+import { type HighlightColour, readHighlight, writeHighlight } from '@orden/markdown/highlights'
 import { blockIdOf, ownLine } from '@orden/markdown/links'
 import { verbatimLines } from './block/verbatim'
 import { inCode } from './code'
-import { inside } from './commands'
-
-const OPENING =
-  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/u
+import { inside, OPENING } from './commands'
 
 const BLOCKS_APART = /\n[ \t]*\n|\n[ \t]*(?:[-*+]|\d+[.)])[ \t]/u
 
@@ -76,6 +74,45 @@ export function marksAcross(mark: string): StateCommand {
     const update = state.changeByRange((range) => {
       const held = inside(state, range.from, range.to)
       return wrapEach(state, partsOf(state, held.from, held.to), held, mark)
+    })
+
+    dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
+    return true
+  }
+}
+
+const HIGHLIGHT = '=='
+
+export function highlightAcross(colour: HighlightColour): StateCommand {
+  return ({ state, dispatch }) => {
+    const update = state.changeByRange((range) => {
+      const held = inside(state, range.from, range.to)
+      const parts = partsOf(state, held.from, held.to)
+      const words = parts.map((part) => state.doc.sliceString(part.from, part.to))
+      const size = HIGHLIGHT.length
+      const lit = words.every(
+        (text) => text.length >= size * 2 && text.startsWith(HIGHLIGHT) && text.endsWith(HIGHLIGHT),
+      )
+
+      const changes = state.changes(
+        parts.flatMap((part, at): ChangeSpec[] => {
+          if (!lit) {
+            return [
+              { from: part.from, insert: HIGHLIGHT + writeHighlight('', colour) },
+              { from: part.to, insert: HIGHLIGHT },
+            ]
+          }
+          const inner = (words[at] ?? '').slice(size, -size)
+          return [
+            { from: part.from, to: part.from + size + readHighlight(inner).from },
+            { from: part.to - size, to: part.to },
+          ]
+        }),
+      )
+      return {
+        changes,
+        range: EditorSelection.range(changes.mapPos(held.from, -1), changes.mapPos(held.to, 1)),
+      }
     })
 
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))

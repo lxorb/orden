@@ -122,9 +122,19 @@ function runAround(
   return null
 }
 
-function spansLines(state: EditorState, range: SelectionRange): boolean {
+export function spansLines(state: EditorState, range: SelectionRange): boolean {
   const { from, to } = inside(state, range.from, range.to)
   return state.doc.lineAt(from).number !== state.doc.lineAt(to).number
+}
+
+export const OPENING =
+  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/u
+
+function pastOpening(state: EditorState, start: number, end: number): number {
+  const first = state.doc.lineAt(start)
+  if (inCode(state, first.from)) return start
+  const words = first.from + (OPENING.exec(first.text)?.[0].length ?? 0)
+  return start <= words && end > words ? words : start
 }
 
 export function inside(state: EditorState, from: number, to: number): { from: number; to: number } {
@@ -132,8 +142,8 @@ export function inside(state: EditorState, from: number, to: number): { from: nu
   const kept = text.trim()
   if (!kept) return { from, to }
 
-  const start = from + text.indexOf(kept)
-  const end = start + kept.length
+  const end = from + text.indexOf(kept) + kept.length
+  const start = pastOpening(state, from + text.indexOf(kept), end)
   const line = state.doc.lineAt(end)
   const id = blockIdOf(line.text)
   if (!id || end !== line.from + line.text.trimEnd().length) return { from: start, to: end }
@@ -189,9 +199,16 @@ function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
   return state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' })
 }
 
+function headingLines(state: EditorState): Words[] {
+  const lines = selectedLines(state).map(wordsOfLine)
+  if (lines.length < 2) return lines
+  const written = lines.filter((line) => line.text.trim() !== '')
+  return written.length ? written : lines
+}
+
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
-    const lines = selectedLines(state).map(wordsOfLine)
+    const lines = headingLines(state)
     const already = level > 0 && lines.every((line) => headingOf(line.text).level === level)
     const insert = level && !already ? `${'#'.repeat(level)} ` : ''
 
@@ -209,18 +226,17 @@ const ITEM_MARKER = /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/
 
 export function shiftHeading(delta: number): StateCommand {
   return ({ state, dispatch }) => {
-    const changes: ChangeSpec[] = selectedLines(state)
-      .map(wordsOfLine)
-      .map((line) => {
-        const existing = headingOf(line.text)
-        const next = Math.min(6, Math.max(0, existing.level + delta))
+    const changes: ChangeSpec[] = headingLines(state).map((line) => {
+      const existing = headingOf(line.text)
+      const next = Math.min(6, Math.max(0, existing.level + delta))
+      const item = next && !existing.level ? (ITEM_MARKER.exec(line.text)?.[0].length ?? 0) : 0
 
-        return {
-          from: line.from,
-          to: line.from + existing.length,
-          insert: next ? `${'#'.repeat(next)} ` : '',
-        }
-      })
+      return {
+        from: line.from,
+        to: line.from + (item || existing.length),
+        insert: next ? `${'#'.repeat(next)} ` : '',
+      }
+    })
 
     dispatch(withCaretAfter(state, changes))
     return true

@@ -13,6 +13,7 @@ import {
   selectSelectionMatches as librarySelectMatches,
   setSearchQuery,
 } from '@codemirror/search'
+import { foldedRanges, unfoldEffect } from '@codemirror/language'
 import {
   type EditorState,
   type Extension,
@@ -313,9 +314,23 @@ export function asked(state: EditorState): boolean {
   return getSearchQuery(state).valid
 }
 
-export const next: Command = libraryNext
-export const previous: Command = libraryPrevious
-export const replaceOne: Command = libraryReplaceNext
+function unfolding(command: Command): Command {
+  return (view) => {
+    if (!command(view)) return false
+    const shut: StateEffect<{ from: number; to: number }>[] = []
+    for (const range of view.state.selection.ranges) {
+      foldedRanges(view.state).between(range.from, range.to, (from, to) => {
+        if (from < range.to && to > range.from) shut.push(unfoldEffect.of({ from, to }))
+      })
+    }
+    if (shut.length) view.dispatch({ effects: shut })
+    return true
+  }
+}
+
+export const next: Command = unfolding(libraryNext)
+export const previous: Command = unfolding(libraryPrevious)
+export const replaceOne: Command = unfolding(libraryReplaceNext)
 export const replaceEvery: Command = libraryReplaceAll
 export const gotoLine: Command = libraryGotoLine
 export const selectEvery: Command = librarySelectEvery

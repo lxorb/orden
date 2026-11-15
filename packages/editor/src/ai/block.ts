@@ -32,8 +32,13 @@ export function answerSpan(
   if (!OPENS.has(bare(lines[at]))) return null
   const opened = at
 
-  while (at < lines.length && !CLOSES.has(bare(lines[at]))) at++
-  const closed = Math.min(at, lines.length - 1)
+  at++
+  while (at < lines.length && !CLOSES.has(bare(lines[at]))) {
+    if (OPENS.has(bare(lines[at]))) return null
+    at++
+  }
+  if (at >= lines.length) return null
+  const closed = at
 
   return {
     from: offsetOf(lines, opened),

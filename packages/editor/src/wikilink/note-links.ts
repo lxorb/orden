@@ -1,6 +1,6 @@
 import { isAudioTarget, isImageTarget, isVideoTarget } from '@orden/markdown/links'
 import { about } from './complete'
-import type { LinkWrite, NoteIndex } from './notes'
+import { fileLinkName, type LinkWrite, type NoteIndex } from './notes'
 
 export function noteLinks(
   index: NoteIndex,
@@ -15,8 +15,10 @@ function linkFor(index: NoteIndex, path: string, write: (target: LinkWrite) => s
   if (note) return write(about(index, note))
 
   const file = index.files.includes(path)
-  const name = path.slice(path.lastIndexOf('/') + 1)
-  const link = write({ name: file ? name : name.replace(/\.[^.]+$/, ''), path, from: index.path })
+  const name = file
+    ? fileLinkName(index, path)
+    : path.slice(path.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '')
+  const link = write({ name, path, from: index.path })
   const shown = isImageTarget(path) || isAudioTarget(path) || isVideoTarget(path)
 
   return file && shown ? `!${link}` : link

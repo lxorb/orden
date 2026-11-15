@@ -1,3 +1,4 @@
+import { syntaxTree } from '@codemirror/language'
 import {
   type ChangeSpec,
   EditorSelection,
@@ -6,6 +7,7 @@ import {
   type Line,
   type StateCommand,
 } from '@codemirror/state'
+import type { SyntaxNode } from '@lezer/common'
 import { type Lines, linesOf } from './commands'
 import { frontMatterSpan } from './live-preview/front-matter'
 
@@ -17,8 +19,40 @@ function firstOfBody(state: EditorState, number: number): number {
 
 const blank = (line: Line) => line.text.trim() === ''
 
-function runAround(state: EditorState, number: number): Lines {
+interface Run extends Lines {
+  items?: readonly Lines[]
+  ordered?: boolean
+}
+
+const LISTS = new Set(['BulletList', 'OrderedList'])
+
+function listAround(state: EditorState, line: Line): Run | null {
   const doc = state.doc
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.to, -1);
+    node;
+    node = node.parent
+  ) {
+    const list = node.parent
+    if (node.name !== 'ListItem' || !list || !LISTS.has(list.name)) continue
+
+    const items = list.getChildren('ListItem').map((item) => ({
+      first: doc.lineAt(item.from).number,
+      last: doc.lineAt(item.to).number,
+    }))
+    const first = items[0]?.first ?? line.number
+    const last = items.at(-1)?.last ?? line.number
+    return { first, last, items, ordered: list.name === 'OrderedList' }
+  }
+  return null
+}
+
+function runAround(state: EditorState, number: number): Run {
+  const doc = state.doc
+  const line = doc.line(number)
+  const list = blank(line) ? null : listAround(state, line)
+  if (list) return list
+
   const top = firstOfBody(state, number)
   let first = number
   let last = number
@@ -27,18 +61,19 @@ function runAround(state: EditorState, number: number): Lines {
   return { first, last }
 }
 
-function blocksOf(state: EditorState, around: boolean): Lines[] {
-  const found = state.selection.ranges
+function blocksOf(state: EditorState, around: boolean): Run[] {
+  const found: Run[] = state.selection.ranges
     .map((range) => {
       const lines = linesOf(state, range.from, range.to)
       return around && lines.first === lines.last ? runAround(state, lines.first) : lines
     })
     .sort((one, other) => one.first - other.first)
 
-  const merged: Lines[] = []
+  const merged: Run[] = []
   for (const lines of found) {
     const previous = merged.at(-1)
     if (previous && lines.first <= previous.last) {
+      if (lines.first !== previous.first || lines.last !== previous.last) delete previous.items
       previous.last = Math.max(previous.last, lines.last)
     } else {
       merged.push({ ...lines })
@@ -56,20 +91,47 @@ function compare(one: string, other: string): number {
   return collator.compare(one.replace(LEAD, ''), other.replace(LEAD, ''))
 }
 
+const ORDINAL = /^([ \t]*(?:>[ \t]?)*[ \t]*)(\d+)(?=[.)])/
+
+function renumbered(items: readonly string[], start: number): string[] {
+  return items.map((item, i) =>
+    item.replace(ORDINAL, (_all, lead: string) => `${lead}${start + i}`),
+  )
+}
+
+function entriesOf(run: Run): readonly Lines[] {
+  if (run.items) return run.items
+  return Array.from({ length: run.last - run.first + 1 }, (_, i) => ({
+    first: run.first + i,
+    last: run.first + i,
+  }))
+}
+
 function reordered(reorder: (lines: string[]) => string[]): StateCommand {
   return ({ state, dispatch }) => {
     const doc = state.doc
-    const blocks = blocksOf(state, true).filter((lines) => lines.last > lines.first)
+    const text = (from: number, to: number) => state.sliceDoc(doc.line(from).from, doc.line(to).to)
+    const blocks = blocksOf(state, true)
+      .map((run) => ({ run, entries: entriesOf(run) }))
+      .filter(({ entries }) => entries.length > 1)
     if (!blocks.length) return false
 
     const changes: ChangeSpec[] = []
-    const ranges = blocks.map(({ first, last }) => {
-      const from = doc.line(first).from
-      const to = doc.line(last).to
-      const lines: string[] = []
-      for (let number = first; number <= last; number++) lines.push(doc.line(number).text)
+    const ranges = blocks.map(({ run, entries }) => {
+      const from = doc.line(run.first).from
+      const to = doc.line(run.last).to
+      const items = entries.map(({ first, last }) => text(first, last))
+      const gapBefore = (i: number) => {
+        const before = entries[i - 1]
+        const entry = entries[i]
+        return before && entry
+          ? state.sliceDoc(doc.line(before.last).to, doc.line(entry.first).from)
+          : ''
+      }
+      const start = Number(ORDINAL.exec(items[0] ?? '')?.[2] ?? 1)
+      const order = run.ordered ? renumbered(reorder(items), start) : reorder(items)
 
-      changes.push({ from, to, insert: reorder(lines).join(state.lineBreak) })
+      changes.push({ from, to, insert: order.map((item, i) => gapBefore(i) + item).join('') })
       return EditorSelection.range(from, to)
     })
 

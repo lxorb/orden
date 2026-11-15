@@ -10,6 +10,7 @@ function inlineMark(node: SyntaxNode): boolean {
   const parent = node.parent?.name ?? ''
   if (BLOCK_PARENTS.has(parent)) return false
   if (concealable(node)) return true
+  if (node.name === 'WikilinkMark') return true
   return node.name === 'CodeMark' && parent === 'InlineCode'
 }
 

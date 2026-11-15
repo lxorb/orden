@@ -1,8 +1,8 @@
 import { EditorSelection, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { embedKind, encodeTarget, foldName, formatWikilink } from '@orden/markdown/links'
+import { embedKind, encodeTarget, formatWikilink } from '@orden/markdown/links'
 import { later } from './shared'
-import { type NoteIndex, noteIndex, spacePathOf } from './wikilink/notes'
+import { fileLinkName, type NoteIndex, noteIndex, spacePathOf } from './wikilink/notes'
 
 export type ImageSink = (file: File) => Promise<string | null>
 
@@ -23,19 +23,10 @@ function isKept(file: File): boolean {
   return isImage(file) || embedKind(file.name) !== null
 }
 
-const nameOf = (path: string) => foldName(path.slice(path.lastIndexOf('/') + 1))
-
-const LINK_MARKS = /[#|[\]^]/
-
 function markdownFor(file: File, path: string, index: NoteIndex): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`
 
-  const name = path.slice(path.lastIndexOf('/') + 1)
-  const own = spacePathOf(index, path)
-  const shared = index.files.some(
-    (other) => foldName(other) !== foldName(own) && nameOf(other) === foldName(name),
-  )
-  const target = shared && own && !LINK_MARKS.test(own) ? own : name
+  const target = fileLinkName(index, spacePathOf(index, path))
   return formatWikilink({ target, heading: null, block: null, alias: null, embed: true })
 }
 

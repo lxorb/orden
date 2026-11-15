@@ -1,7 +1,7 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { blockDecorations } from './blocks'
+import { blockDecorations, buildBlockDecorations } from './blocks'
 import { keptCoverEffect, keptCoverExtension } from './kept-cover'
 import { ChartWidget, DiagramWidget, MathWidget } from './render'
 import { dragFreeze, setDragging } from './dragging'
@@ -46,6 +46,13 @@ describe('block decorations', () => {
     expect(spans('$$\nx = 1\n$$')).toEqual(['$$\nx = 1\n$$'])
     expect(spans('```mermaid\ngraph TD\n```')).toEqual(['```mermaid\ngraph TD\n```'])
     expect(spans('[toc]')).toEqual(['[toc]'])
+  })
+
+  test('a toc with a line of words right under it is drawn, however long the words', () => {
+    for (const words of ['see below', 'The plan for this week']) {
+      const doc = `[toc]\n${words}\n\n# One\n\nx`
+      expect(drawn(state(doc, doc.length).field(blockDecorations), doc), words).toEqual(['[toc]'])
+    }
   })
 
   test('prose is not a place the caret changes anything', () => {
@@ -299,6 +306,29 @@ describe('prose typed away from every construct', () => {
   test('a bar could make a table row, so it is looked at properly', () => {
     const found = afterTyping(`${PROSE}| a | b |\n| - | - |\n`, 0, '| c |\n')
     expect(found.is.decorations.size).toBe(1)
+  })
+
+  test('words typed into a header that make the table whole draw it once the caret leaves', () => {
+    const doc = '| Name |\n| --- | --- |\n| Ann | 30 |\n\nend'
+    let at = doc.indexOf('\n')
+    let now = state(doc, at)
+    for (const key of ' Age') {
+      now = parsed(
+        now.update({
+          changes: { from: at, insert: key },
+          selection: EditorSelection.cursor(at + 1),
+          userEvent: 'input.type',
+        }).state,
+      )
+      at += 1
+    }
+    now = parsed(
+      now.update({ selection: EditorSelection.cursor(now.doc.length), userEvent: 'select' }).state,
+    )
+    const text = now.doc.toString()
+    const table = '| Name | Age\n| --- | --- |\n| Ann | 30 |'
+    expect(drawn({ decorations: buildBlockDecorations(now) }, text), 'reopened').toEqual([table])
+    expect(drawn(now.field(blockDecorations), text)).toEqual([table])
   })
 
   test('a construct typed into is rebuilt, not shifted', () => {

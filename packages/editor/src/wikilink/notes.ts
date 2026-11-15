@@ -215,6 +215,18 @@ export function spacePathOf(index: NoteIndex, written: string): string {
   return relativeParts(index, written).join('/')
 }
 
+const LINK_MARKS = /[#|[\]^]/
+
+const fileNameOf = (path: string) => path.slice(path.lastIndexOf('/') + 1)
+
+export function fileLinkName(index: NoteIndex, path: string): string {
+  const name = fileNameOf(path)
+  const shared = index.files.some(
+    (other) => foldName(other) !== foldName(path) && foldName(fileNameOf(other)) === foldName(name),
+  )
+  return shared && path && !LINK_MARKS.test(path) ? path : name
+}
+
 function relativeParts(index: NoteIndex, target: string): string[] {
   const written = target.replace(/\\/g, '/')
   const parts =

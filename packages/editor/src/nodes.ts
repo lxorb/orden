@@ -15,3 +15,9 @@ export function enclosingNamed(
 
   return null
 }
+
+export function linkBrackets(node: SyntaxNode): { open: SyntaxNode; close: SyntaxNode } | null {
+  const [open, close] = node.getChildren('LinkMark')
+  if (!open || !close || open.from !== node.from) return null
+  return { open, close }
+}

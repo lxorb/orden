@@ -265,3 +265,56 @@ describe('the blocks drawn after an edit', () => {
     expect(growth(replaced, 400)).toBeLessThan(GROWS_AT_MOST)
   })
 })
+
+describe('a note embed whose neighbour line changes', () => {
+  const shownAndReopened = (doc: string, cursor: number, ...specs: TransactionSpec[]) => {
+    let current = state(doc, cursor)
+    for (const spec of specs) current = parsed(current.update(spec).state)
+    const text = current.doc.toString()
+    const words = (set: DecorationSet) => {
+      const out: string[] = []
+      set.between(0, text.length, (from, to) => {
+        out.push(text.slice(from, to))
+      })
+      return out
+    }
+    return {
+      shown: words(current.field(blockDecorations).decorations),
+      reopened: words(buildBlockDecorations(current)),
+    }
+  }
+
+  test('is drawn once Enter opens a blank line between it and a list below', () => {
+    const doc = '![[Other]]\n- item\n\nend'
+    const start = doc.indexOf('- item')
+    const { shown, reopened } = shownAndReopened(
+      doc,
+      start,
+      {
+        changes: { from: start, insert: '\n' },
+        selection: EditorSelection.cursor(start + 1),
+        userEvent: 'input',
+      },
+      { selection: EditorSelection.cursor(doc.length + 1), userEvent: 'select' },
+    )
+    expect(reopened).toEqual(['![[Other]]'])
+    expect(shown).toEqual(reopened)
+  })
+
+  test('is no longer drawn once the blank line under it is taken out from below', () => {
+    const doc = '![[Other]]\n\n- item\n\nend'
+    const start = doc.indexOf('- item')
+    const { shown, reopened } = shownAndReopened(
+      doc,
+      start,
+      {
+        changes: { from: start - 1, to: start },
+        selection: EditorSelection.cursor(start - 1),
+        userEvent: 'delete.backward',
+      },
+      { selection: EditorSelection.cursor(doc.length - 1), userEvent: 'select' },
+    )
+    expect(reopened).toEqual([])
+    expect(shown).toEqual(reopened)
+  })
+})

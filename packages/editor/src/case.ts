@@ -1,4 +1,6 @@
-import { EditorSelection, type StateCommand } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
+import { blockIdOf } from '@orden/markdown/links'
 
 const WORD_START = /(^|[^\p{L}\p{N}'’])(\p{L})/gu
 
@@ -6,6 +8,52 @@ function titled(text: string): string {
   return text
     .toLocaleLowerCase()
     .replace(WORD_START, (_, before: string, letter: string) => before + letter.toLocaleUpperCase())
+}
+
+interface Span {
+  from: number
+  to: number
+}
+
+const ADDRESSES = new Set(['URL', 'WikilinkMark'])
+
+function keptSpans(state: EditorState, from: number, to: number): Span[] {
+  const kept: Span[] = []
+  syntaxTree(state).iterate({
+    from,
+    to,
+    enter: (node) => {
+      if (ADDRESSES.has(node.name)) kept.push({ from: node.from, to: node.to })
+    },
+  })
+
+  const last = state.doc.lineAt(to).number
+  for (let number = state.doc.lineAt(from).number; number <= last; number++) {
+    const line = state.doc.line(number)
+    const id = blockIdOf(line.text)
+    if (!id) continue
+    const at = line.from + line.text.lastIndexOf(`^${id}`)
+    kept.push({ from: at, to: at + id.length + 1 })
+  }
+  return kept.sort((one, other) => one.from - other.from)
+}
+
+function changedAround(
+  state: EditorState,
+  from: number,
+  to: number,
+  change: (text: string) => string,
+): string {
+  let out = ''
+  let at = from
+  for (const span of keptSpans(state, from, to)) {
+    const start = Math.min(Math.max(span.from, at), to)
+    const end = Math.min(span.to, to)
+    if (end <= at) continue
+    out += change(state.sliceDoc(at, start)) + state.sliceDoc(start, end)
+    at = end
+  }
+  return out + change(state.sliceDoc(at, to))
 }
 
 function recased(change: (text: string) => string): StateCommand {
@@ -20,7 +68,7 @@ function recased(change: (text: string) => string): StateCommand {
         )
           return []
         const text = state.sliceDoc(word.from, word.to)
-        const insert = change(text)
+        const insert = changedAround(state, word.from, word.to, change)
         return insert === text ? [] : [{ from: word.from, to: word.to, insert }]
       }),
     )
@@ -31,8 +79,11 @@ function recased(change: (text: string) => string): StateCommand {
       if (!word) return range.map(changes)
       const from = changes.mapPos(word.from)
       return range.empty
-        ? EditorSelection.cursor(from + change(state.sliceDoc(word.from, range.head)).length)
-        : EditorSelection.range(from, from + change(state.sliceDoc(word.from, word.to)).length)
+        ? EditorSelection.cursor(from + changedAround(state, word.from, range.head, change).length)
+        : EditorSelection.range(
+            from,
+            from + changedAround(state, word.from, word.to, change).length,
+          )
     })
     dispatch(
       state.update({

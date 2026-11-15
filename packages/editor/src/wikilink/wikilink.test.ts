@@ -555,6 +555,13 @@ describe('an embed', () => {
     expect(blocks('one\n![[Plan]]\ntwo')).toEqual([])
   })
 
+  test('beside another embed on its line stays a link, not one note named across both', () => {
+    expect(blocks('![[Note A]] ![[Note B]]')).toEqual([])
+    expect(blocks('![[photo.png]] and ![[Note]]')).toEqual([])
+    const doc = '![[Note A|first]] then ![[Note B]]'
+    expect(embedOfBlock(state(doc, 0), 0, doc.length)).toBeNull()
+  })
+
   test('is source again while the caret is in it', () => {
     expect(blocks('one\n\n![[Plan]]\n\ntwo', 8)).toEqual([])
   })

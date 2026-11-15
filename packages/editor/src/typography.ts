@@ -92,7 +92,19 @@ const STRAIGHT = new Set([
   'LinkTitle',
 ])
 
+function inOpenFrontMatter(state: EditorState, pos: number): boolean {
+  const doc = state.doc
+  const at = doc.lineAt(pos).number
+  if (at < 2 || doc.line(1).text.trimEnd() !== '---') return false
+  for (let number = 2; number < at; number++) {
+    const text = doc.line(number).text.trimEnd()
+    if (text === '' || text === '---' || text === '...') return false
+  }
+  return true
+}
+
 export function keepsStraightQuotes(state: EditorState, pos: number): boolean {
+  if (inOpenFrontMatter(state, pos)) return true
   const line = state.doc.lineAt(pos)
   const inner = syntaxTree(state).resolveInner(pos, -1)
   const inItem = enclosingNamed(inner, 'ListItem') !== null

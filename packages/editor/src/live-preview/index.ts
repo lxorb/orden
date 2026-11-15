@@ -9,6 +9,7 @@ import { runExtension } from '../run/door'
 import { dropSpacing, pointerSnap } from './snap'
 import { tableWrites } from '../table/navigation'
 import { tableTracking } from '../table/widget'
+import { itemStart } from './item-start'
 
 export function livePreview(): Extension {
   return [
@@ -16,6 +17,7 @@ export function livePreview(): Extension {
     dragFreeze,
     footnoteReading,
     pointerSnap,
+    itemStart,
     dropSpacing,
     livePreviewDecorations,
     blockDecorations,

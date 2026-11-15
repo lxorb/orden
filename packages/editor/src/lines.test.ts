@@ -71,6 +71,28 @@ describe('sorting and reversing lines', () => {
   })
 })
 
+describe('sorting and reversing the list the caret is in', () => {
+  test('sorts only the list and leaves the line that introduces it on top', () => {
+    expect(note(sortLines, 'Groceries:\n- pear|\n- apple')).toBe('Groceries:\n«- apple\n- pear»')
+  })
+
+  test('sorting keeps each child under its own item', () => {
+    expect(note(sortLines, '- b|\n  - x\n- a\n  - y')).toBe('«- a\n  - y\n- b\n  - x»')
+  })
+
+  test('reversing keeps each child under its own item', () => {
+    expect(note(reverseLines, '- a|\n  - a1\n- b')).toBe('«- b\n- a\n  - a1»')
+  })
+
+  test('sorts the items beside the caret’s in a list inside another', () => {
+    expect(note(sortLines, '- top\n  - z|\n  - y\n- after')).toBe('- top\n«  - y\n  - z»\n- after')
+  })
+
+  test('a sorted numbered list still counts up from its first number', () => {
+    expect(note(sortLines, '1. pear|\n2. apple\n3. fig')).toBe('«1. apple\n2. fig\n3. pear»')
+  })
+})
+
 describe('joining lines', () => {
   test('pulls the next line up with one space, the caret at the seam', () => {
     expect(note(joinLines, 'one|\n   two')).toBe('one| two')

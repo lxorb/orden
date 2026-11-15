@@ -19,7 +19,7 @@ import { emojiFor } from '../emoji'
 import { HEADING_LEVEL } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
-import { enclosingNamed } from '../nodes'
+import { enclosingNamed, linkBrackets } from '../nodes'
 import { tagTitle } from '../tag-press'
 import { calloutOf } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
@@ -207,9 +207,9 @@ class Decorator {
   }
 
   private link(node: SyntaxNode) {
-    const open = node.firstChild
-    const close = open?.nextSibling
-    if (!open || !close || open.name !== 'LinkMark' || close.name !== 'LinkMark') return
+    const brackets = linkBrackets(node)
+    if (!brackets) return
+    const { open, close } = brackets
 
     const note = noteLinkOfNode(this.state, node)
     if (note) {

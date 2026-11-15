@@ -54,7 +54,11 @@ const Highlight: MarkdownConfig = {
       after: 'Emphasis',
       parse(cx, next, pos) {
         if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1
-        return cx.addDelimiter(HIGHLIGHT_DELIMITER, pos, pos + 2, true, true)
+        const before = cx.slice(pos - 1, pos)
+        const after = cx.slice(pos + 2, pos + 3)
+        const opens = /\S/u.test(after) && after !== '='
+        const closes = /\S/u.test(before) && before !== '='
+        return cx.addDelimiter(HIGHLIGHT_DELIMITER, pos, pos + 2, opens, closes)
       },
     },
   ],

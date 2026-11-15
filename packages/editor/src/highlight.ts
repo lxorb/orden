@@ -6,6 +6,8 @@ import {
   readHighlight,
   writeHighlight,
 } from '@orden/markdown/highlights'
+import { inside, spansLines } from './commands'
+import { highlightAcross } from './line-door'
 
 const MARK = '=='
 
@@ -46,9 +48,14 @@ function highlighted(
 }
 
 export function toggleHighlight(colour: HighlightColour): StateCommand {
-  return ({ state, dispatch }) => {
+  return (target) => {
+    const { state, dispatch } = target
+    if (state.selection.ranges.some((range) => spansLines(state, range))) {
+      return highlightAcross(colour)(target)
+    }
+
     const update = state.changeByRange((range) => {
-      const { from, to } = range
+      const { from, to } = inside(state, range.from, range.to)
       const already = highlighted(state.doc, from, to)
 
       if (already) {

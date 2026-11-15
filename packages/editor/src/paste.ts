@@ -138,13 +138,11 @@ export function richPaste(): Extension {
         return true
       }
 
-      if (copiedHere(html, text)) return false
-
-      const table = delimitedToTable(text)
-      if (table) {
+      const ready = copiedHere(html, text) ?? delimitedToTable(text)
+      if (ready) {
         event.preventDefault()
         const land = later(view)
-        void loadLineCommands().then(({ placed }) => land((state) => placed(state, table)))
+        void loadLineCommands().then(({ placed }) => land((state) => placed(state, ready)))
         return true
       }
 

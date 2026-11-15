@@ -39,7 +39,10 @@ export function embedOfBlock(state: EditorState, from: number, to: number): Link
 
   if (!text.startsWith('![[') || !text.endsWith(']]')) return null
 
-  const link = parseWikilink(text.slice(3, -2), true)
+  const inner = text.slice(3, -2)
+  if (/[[\]]/.test(inner)) return null
+
+  const link = parseWikilink(inner, true)
   return link && { ...link, kind: 'wikilink', from, to }
 }
 
