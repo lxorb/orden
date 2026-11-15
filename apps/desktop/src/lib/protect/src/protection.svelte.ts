@@ -381,6 +381,13 @@ export class Protection {
     this.revision++
     keepJson(STORAGE_KEY, this.spaces)
   }
+
+  heard(): void {
+    this.spaces = read()
+    this.hashed = hashedOf(stored(PASSWORD_KEY))
+    this.owner = storedText(OWNER_KEY)
+    this.revision++
+  }
 }
 
 export function noteBehind(tab: { kind: string; path: string | null }): string | null {
@@ -388,3 +395,11 @@ export function noteBehind(tab: { kind: string; path: string | null }): string |
 }
 
 export const protection = new Protection()
+
+const KEPT: ReadonlySet<string> = new Set([STORAGE_KEY, PASSWORD_KEY, OWNER_KEY])
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== null && KEPT.has(event.key)) protection.heard()
+  })
+}

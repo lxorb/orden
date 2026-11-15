@@ -61,6 +61,7 @@ class Unlocks {
   private proven = false
   private grace: ReturnType<typeof setTimeout> | null = null
   private watching = false
+  private gone = false
 
   get any(): boolean {
     return this.open.size > 0
@@ -148,8 +149,17 @@ class Unlocks {
     )
   }
 
+  heardRelock(): void {
+    const minutes = readRelock()
+    if (minutes === this.relock) return
+    this.relock = minutes
+    if (this.proven) this.prove()
+    if (this.gone) this.away()
+  }
+
   away(): void {
     this.settle()
+    this.gone = true
     if (!this.open.size || this.relock === NEVER) return
     if (this.relock === 0) {
       this.lockAll()
@@ -160,6 +170,7 @@ class Unlocks {
 
   back(): void {
     this.settle()
+    this.gone = false
   }
 
   private settle(): void {
@@ -187,3 +198,9 @@ class Unlocks {
 }
 
 export const unlocks = new Unlocks()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === RELOCK_KEY) unlocks.heardRelock()
+  })
+}
