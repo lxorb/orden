@@ -2750,3 +2750,34 @@ describe('a note the reader protected', () => {
     }
   })
 })
+
+describe('a command on the protected note in front', () => {
+  test('is refused to an agent the reader did not let read that note', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
+    protection.set('/s/Work', '/s/Work/Plan.md', 'password')
+    unlocks.unlock(protection.covering('/s/Work/Plan.md'))
+    ran.length = 0
+    try {
+      expect(await call('read_note', { space: 'Work', path: 'Plan.md' })).toMatchObject({
+        code: 'protected',
+      })
+      answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
+      for (const command of [
+        { id: 'export-pdf', path: '~/out.pdf' },
+        { id: 'reformat' },
+        { id: 'edit.delete-line' },
+        { id: 'undo-file' },
+      ]) {
+        expect(await call('run_command', command), command.id).toMatchObject({
+          code: 'protected',
+        })
+      }
+      expect(await call('run_command', { id: 'graph' })).toMatchObject({ status: 'ok' })
+      expect(ran).toEqual(['graph'])
+    } finally {
+      protection.set('/s/Work', '/s/Work/Plan.md', null)
+      unlocks.lockAll()
+    }
+  })
+})

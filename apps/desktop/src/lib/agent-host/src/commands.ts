@@ -1,7 +1,14 @@
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands, type Command } from '../../commands/src/api'
 import { invoke, answerNextDialog } from '../../platform/src/api'
-import type { AgentAnswer } from '../../automation/src/api'
+import {
+  actsOnFrontNote,
+  type AgentAnswer,
+  FRONT_KEPT,
+  NOTE_TREE,
+  NOTE_WRITES,
+} from '../../automation/src/api'
+import { seen } from './guarded'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
@@ -105,28 +112,6 @@ const MAKES_NOTE = new Set([
 
 const MAKES_SPACE = new Set(['new-space', 'space'])
 
-const WRITES = new Set([
-  'ai-block',
-  'convert-syntax',
-  'extract-selection',
-  'merge-into',
-  'page-break',
-  'picture',
-  'reformat',
-  'save',
-  'split-at-caret',
-])
-
-const TREE = new Set([
-  'archive',
-  'convert-website-notes',
-  'move-note',
-  'move-to-space',
-  'redo-file',
-  'rename',
-  'undo-file',
-])
-
 const PANELS = new Set([
   'ask-panel',
   'files',
@@ -152,8 +137,8 @@ function scopesOf(id: string): readonly Scope[] | null {
   if (SCREEN.has(id) || id.startsWith('space:') || id.startsWith('layout:')) {
     return ['workspace.focus']
   }
-  if (TREE.has(id)) return ['tree']
-  if (WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
+  if (NOTE_TREE.has(id)) return ['tree']
+  if (NOTE_WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
   return null
 }
 
@@ -175,6 +160,9 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   )
   if (!found) throw new Refused('no_such_command', `there is no command called ${id}`)
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
+  if (actsOnFrontNote(id) && !seen(workspace.active?.path ?? '')) {
+    throw new Refused('protected', FRONT_KEPT(id))
+  }
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }

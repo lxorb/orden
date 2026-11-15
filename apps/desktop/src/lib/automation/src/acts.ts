@@ -24,6 +24,7 @@ import { views } from '../../views.svelte'
 import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
+import { actsOnFrontNote, FRONT_KEPT } from './front'
 import { movedIn, movedPath, withExtension } from './moving'
 import { insidePath, noteFor, openToAgents, relativeIn, spaceFor, spaceToWrite } from './space'
 
@@ -195,6 +196,9 @@ export async function runCommand(args: Said, road: Road = 'here'): Promise<unkno
   const found = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
   if (!found) throw new Error(`there is no command called ${id}`)
   if (found.disabled === true) throw new Error(`${id} cannot run just now`)
+  if (actsOnFrontNote(id) && !protection.agentsMay(workspace.active?.path)) {
+    throw new Error(FRONT_KEPT(id))
+  }
   if (found.ownWindow === true) throw new Error(`${id} is not something the command line may run`)
   if (found.byHand === true && road === 'link') {
     throw new Error(`${id} is not something a link may run`)

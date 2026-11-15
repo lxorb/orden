@@ -111,6 +111,7 @@ const rows = [
   { id: 'record', label: 'Record', byHand: true, run: () => ran.push('record') },
   { id: 'shut', label: 'Shut', disabled: true, run: () => ran.push('shut') },
   { id: 'new-terminal', label: 'New terminal', ownWindow: true, run: () => ran.push('shell') },
+  { id: 'reformat', label: 'Tidy up', run: () => ran.push('reformat') },
 ]
 const ran: string[] = []
 
@@ -599,5 +600,24 @@ describe('links, backlinks and orphans asked while the index is still being buil
     expect(await listOrphans({})).toEqual({ orphans: [{ path: 'Lonely.md', name: 'Lonely' }] })
 
     scanning = Promise.resolve()
+  })
+})
+
+describe('a command on the note in front', () => {
+  test('is refused while that note is kept from agents', async () => {
+    const { protection } = await import('../../protect/src/api')
+    const { workspace } = await import('../../workspace/src/api')
+    const front = workspace as { active: { path: string } | null }
+    ran.length = 0
+    front.active = { path: '/Work/Secret/Diary.md' }
+    protection.set('/Work', '/Work/Secret', 'password')
+    try {
+      await expect(runCommand({ id: 'reformat' }, 'here')).rejects.toThrow(/is protected/)
+      expect(await runCommand({ id: 'files' }, 'here')).toEqual({ id: 'files', label: 'File list' })
+      expect(ran).toEqual(['files'])
+    } finally {
+      protection.set('/Work', '/Work/Secret', null)
+      front.active = null
+    }
   })
 })
