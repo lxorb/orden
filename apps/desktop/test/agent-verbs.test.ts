@@ -1332,6 +1332,46 @@ describe('the notes, on the road', () => {
     )
   })
 
+  test('a task written twice is not picked for the agent, which names the one it means', async () => {
+    files.set('/s/Home/Plants.md', '# Plants\n\n- [x] water plants\n- [ ] water plants\n')
+    const twice = (path: string) =>
+      Promise.resolve({
+        path,
+        space: 'home',
+        rev: 'r1',
+        open: false,
+        typing: false,
+        text: files.get('/s/Home/Plants.md') ?? '',
+        tasks: [
+          { anchor: { task: 'water plants', nth: 1 }, done: true, line: 2 },
+          { anchor: { task: 'water plants', nth: 2 }, done: false, line: 3 },
+        ],
+      })
+    docs.readNote.mockImplementationOnce((at) => twice(at.path))
+    expect(
+      await call('set_task', {
+        space: 'Home',
+        path: 'Plants',
+        at: { task: 'water plants' },
+        done: true,
+      }),
+    ).toMatchObject({ code: 'ambiguous' })
+    expect(docs.editNote).not.toHaveBeenCalled()
+    docs.readNote.mockImplementationOnce((at) => twice(at.path))
+    await call('set_task', {
+      space: 'Home',
+      path: 'Plants',
+      at: { task: 'water plants', nth: 2 },
+      done: true,
+    })
+    expect(docs.editNote).toHaveBeenCalledWith(
+      expect.anything(),
+      { path: 'Plants.md', space: 'home' },
+      [{ at: { task: 'water plants', nth: 2 }, replace: '- [x] water plants' }],
+      'r1',
+    )
+  })
+
   test('an edit says the AI panel thread that asked for it', async () => {
     const asker = callerOf(
       {
