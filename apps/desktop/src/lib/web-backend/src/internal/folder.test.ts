@@ -30,6 +30,28 @@ describe('a folder Orden keeps', () => {
     expect(await folder.readText('work/plan.md')).toBe('ship it')
   })
 
+  test('a write that lands while its note is renamed goes into the renamed note and leaves no second name on it', async () => {
+    let release = (): void => undefined
+    const held = new Promise<void>((done) => (release = done))
+    class Slow extends MemoryBytes {
+      override async writeText(key: string, text: string) {
+        if (text === 'two') await held
+        return super.writeText(key, text)
+      }
+    }
+    const folder = await opened(new Slow())
+    await folder.write('A.md', 'one')
+
+    const writing = folder.write('A.md', 'two')
+    await folder.move('A.md', 'B.md')
+    release()
+    await writing
+
+    expect(await folder.at('A.md')).toBeNull()
+    expect(await folder.readText('B.md')).toBe('two')
+    expect((await folder.list()).map((one) => one.path)).toEqual(['B.md'])
+  })
+
   test('moves a folder named in another Unicode spelling with everything inside it', async () => {
     const folder = await opened()
     await folder.write('Caf\u00e9/Menu.md', 'soup')

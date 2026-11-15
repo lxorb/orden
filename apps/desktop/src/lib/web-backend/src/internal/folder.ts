@@ -276,6 +276,13 @@ export class InternalFolder {
     return this.paths.get(this.keyOf(path))?.entry ?? null
   }
 
+  private namedFor(path: string, key: string): { path: string; entry: InternalEntry } | null {
+    const asked = this.paths.get(this.keyOf(path))
+    if (asked?.entry.key === key) return asked
+    for (const one of this.paths.values()) if (one.entry.key === key) return one
+    return null
+  }
+
   private spelled(path: string): string {
     return this.paths.get(this.keyOf(path))?.path ?? path
   }
@@ -357,9 +364,11 @@ export class InternalFolder {
     else await this.bytes.write(key, what)
 
     if (there) {
-      const spelled = this.spelled(path)
-      const entry = { ...there, modified: at, size }
-      this.paths.set(this.keyOf(path), { path: spelled, entry })
+      const now = this.namedFor(path, key)
+      if (!now) return
+      const spelled = now.path
+      const entry = { ...now.entry, modified: at, size }
+      this.paths.set(this.keyOf(spelled), { path: spelled, entry })
       this.stamps.set(spelled, { modified: at, size })
       const change: InternalChange = {
         kind: 'modified',
