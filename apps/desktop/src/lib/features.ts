@@ -56,18 +56,19 @@ registerCommand(
   'app.scratchpad',
   async () => (await import('./scratchpad/src/api')).toggleScratchpad,
 )
-registerCommand('app.random-note', async () => {
-  const { runRow } = await import('./commands/src/api')
-  return () => void runRow('random-note')
+for (const row of ['random-note', 'print']) {
+  registerCommand(`app.${row}`, async () => {
+    const { runRow } = await import('./commands/src/api')
+    return () => void runRow(row)
+  })
+}
+registerSettingsPart({
+  section: 'ai',
+  card: false,
+  shown: () => true,
+  load: async () => (await import('./ai-sidebar/src/api')).aiPane(),
 })
-registerCommand('import.convert-syntax', async () => {
-  const { convertSyntax } = await import('./import/src/api')
-  return () => void convertSyntax()
-})
-registerCommand('app.print', async () => {
-  const { runRow } = await import('./commands/src/api')
-  return () => void runRow('print')
-})
+registerCommands('import.', async () => (await import('./import/src/api')).importCommands)
 registerCommands('views.', async () => (await import('./views/src/api')).viewCommands)
 registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
@@ -93,7 +94,6 @@ if (!__EVEN_PLUGIN__) {
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
-  registerCommands('import.', async () => (await import('./import/src/api')).importCommands)
   registerCommand('ai.threads', async () => {
     const { chat } = await (await import('./ai-chat/src/api')).chatStore()
     return () => chat.showThreads()

@@ -1,7 +1,7 @@
-import type { PaperInches } from './files-out/src/api'
+import type { PaperInches } from './frame'
 import { escapeAll } from '@orden/markdown/html'
 import { frontMatter, frontMatterValue } from '@orden/markdown'
-import { DEFAULT_PAGE_SETUP, type PageSetup, type Paper, PAPER_SIZES } from './paper'
+import { DEFAULT_PAGE_SETUP, type PageSetup, type Paper, PAPER_SIZES } from '../../paper'
 
 const PER_INCH = { mm: 25.4, cm: 2.54, in: 1, pt: 72, px: 96 } as const
 type Unit = keyof typeof PER_INCH

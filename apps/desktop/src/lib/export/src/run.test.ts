@@ -1,5 +1,5 @@
 import { expect, test, vi } from 'vitest'
-import type { Payload } from '../../files-out/src/save'
+import type { Payload } from '../../files-out/src/api'
 
 const handed: Payload[] = []
 

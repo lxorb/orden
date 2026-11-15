@@ -13,7 +13,7 @@
   import SpacePlace from '../../../SpacePlace.svelte'
   import { ListTyping } from '../../../space-typing.svelte'
   import { trap } from '../../../ui-controls/src/api'
-  import { relativeStep } from '../../../ago'
+  import { relativeStep } from '../../../ui-controls/src/api'
   import HostMark from './HostMark.svelte'
   import {
     destinationOf,

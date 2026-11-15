@@ -1,6 +1,6 @@
 export { chooseTarget, deliver, download, handOver, type Payload, writeFile } from './save'
 export { saveCopy } from './copy'
-export { type PaperInches, printInFrame, printsInFrame } from './frame'
+export { printInFrame, printsInFrame } from './frame'
 export { claimName, fileNameFor, stemOf } from './naming'
 export {
   assetsOf,
@@ -15,3 +15,13 @@ export {
   writtenPdf,
 } from './sheet'
 export { type Entry as ZipEntry, zipOf } from './zip'
+export {
+  pageCss,
+  pageSetupFor,
+  paperInches,
+  type PaperTwips,
+  paperTwips,
+  runningDate,
+  TWIPS_PER_INCH,
+  withRunningText,
+} from './page-setup'

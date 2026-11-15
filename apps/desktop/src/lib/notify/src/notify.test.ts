@@ -5,7 +5,7 @@ const world = vi.hoisted(() => ({
   pressed: null as ((event: { payload: unknown }) => void) | null,
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/api', () => ({
   isDesktop: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
     world.asked.push({ command, args })
@@ -13,7 +13,7 @@ vi.mock('./platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('./windows/src/api', () => ({
+vi.mock('../../windows/src/api', () => ({
   hearHere: (_name: string, heard: (event: { payload: unknown }) => void) => {
     world.pressed = heard
     return Promise.resolve(() => undefined)

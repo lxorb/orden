@@ -35,7 +35,7 @@ describe('a setting', () => {
         'accounts-ui/src/ProfileRows.svelte',
         'accounts-ui/src/Security.svelte',
         'settings/src/SyncPane.svelte',
-        'AiPane.svelte',
+        'ai-sidebar/src/AiPane.svelte',
       ]),
     )
   })

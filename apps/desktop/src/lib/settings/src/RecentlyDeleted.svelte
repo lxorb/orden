@@ -1,7 +1,7 @@
 <script lang="ts">
   import Facts from '../../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
-  import { relativeStep } from '../../ago'
+  import { relativeStep } from '../../ui-controls/src/api'
   import { region } from '../../platform/src/api'
   import { settings } from '../../settings.svelte'
   import { trash, type TrashItem } from '../../trash/src/api'

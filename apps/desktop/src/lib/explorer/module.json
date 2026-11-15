@@ -27,7 +27,6 @@
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/when.ts"
+    "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

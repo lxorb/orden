@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-  import { agoShort } from '../../ago'
+  import { agoShort } from '../../ui-controls/src/api'
   import Icon from '../../Icon.svelte'
   import { brandIcon, readIcon } from '../../ui-kit/src/api'
   import { region } from '../../platform/src/api'

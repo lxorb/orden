@@ -34,10 +34,8 @@
     "workspace"
   ],
   "pending": [
-    "apps/desktop/src/lib/AiPane.svelte",
     "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/ago.ts",
     "apps/desktop/src/lib/double-tap.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
@@ -57,7 +55,6 @@
     "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/toolbar.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/when.ts",
     "apps/desktop/src/lib/while-here.ts"
   ]
 }

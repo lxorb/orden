@@ -19,7 +19,7 @@ import {
   outsideRows,
 } from '../../drag-paths'
 import { identifier, localDate, platform } from '../../platform/src/api'
-import { notify } from '../../notify'
+import { notify } from '../../notify/src/api'
 import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
 import { tabAsk } from '../../new-tab'
 import { owes } from '../../parting/src/api'

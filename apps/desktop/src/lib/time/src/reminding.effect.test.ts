@@ -14,7 +14,7 @@ const running = vi.hoisted(() => ({
   device: null,
 }))
 
-vi.mock('../../notify', () => ({
+vi.mock('../../notify/src/api', () => ({
   notify: (_title: string, _body: string, tag: string) => shown.push(tag),
 }))
 vi.mock('../../settings.svelte', () => ({ timeOn: () => true }))

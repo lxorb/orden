@@ -1,4 +1,4 @@
-import { unshow } from '../../notify'
+import { unshow } from '../../notify/src/api'
 
 const looking = new Map<string, number>()
 

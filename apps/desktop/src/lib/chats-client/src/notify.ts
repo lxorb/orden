@@ -1,6 +1,6 @@
 import type { Message, Notify, Who } from '@orden/chats'
 import { decide, type Hush } from '@orden/chats/notify'
-import type { Notice } from '../../notify'
+import type { Notice } from '../../notify/src/api'
 
 export interface Told {
   place: string | null

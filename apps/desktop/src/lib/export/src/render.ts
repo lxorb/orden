@@ -8,11 +8,18 @@ import { invoke, isDesktop } from '../../platform/src/api'
 import { type Fence, prepareEmbeds, prepareFences } from '../../before-render'
 import { titleOf } from './document'
 import { inlinePictures, type Picture } from './pictures'
-import { chooseTarget, CONTENT_POLICY, inlineImages } from '../../files-out/src/api'
+import {
+  pageCss,
+  pageSetupFor,
+  runningDate,
+  withRunningText,
+  chooseTarget,
+  CONTENT_POLICY,
+  inlineImages,
+} from '../../files-out/src/api'
 import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
 import { paletteCss } from '../../highlight'
 import { mathCss } from '../../math-fonts'
-import { pageCss, pageSetupFor, runningDate, withRunningText } from '../../page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '../../paper'
 import type { Scheme } from '../../theme/src/api'
 import { diskPathOf } from '../../web-backend/src/api'

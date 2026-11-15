@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { loadChatPanel, loadDoWithAiCard, loadQuickQuestion } from '../src/api'
+import { aiPane, loadChatPanel, loadQuickQuestion } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -39,8 +39,8 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('the panel, the quick question and the card open through doors', () => {
-    for (const one of [loadChatPanel, loadQuickQuestion, loadDoWithAiCard]) {
+  test('the panel, the quick question and the AI settings open through doors', () => {
+    for (const one of [loadChatPanel, loadQuickQuestion, aiPane]) {
       expect(typeof one).toBe('function')
     }
   })

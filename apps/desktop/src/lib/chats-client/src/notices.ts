@@ -1,5 +1,5 @@
 import { account, people } from '../../accounts/src/api'
-import { show, unshow } from '../../notify'
+import { show, unshow } from '../../notify/src/api'
 import { residency } from '../../quitting/src/api'
 import { deviceActivity, hub } from '../../sync-client/src/api'
 import { dndUntil, hush } from './hush.svelte'

@@ -4,7 +4,7 @@
   import { Sheet } from '../../ui-controls/src/api'
   import { withinSpace } from '../../platform/src/api'
   import { readableSize } from '../../usage.svelte'
-  import { when } from '../../when'
+  import { when } from '../../ui-controls/src/api'
   import { workspace } from './ports'
   import { asking, type Held, type HeldAnswer, type Side } from './asking.svelte'
   import { runsOf } from './runs'

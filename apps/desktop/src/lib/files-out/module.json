@@ -2,5 +2,5 @@
   "name": "files-out",
   "layer": "foundation",
   "dependsOn": ["contracts", "downloads", "markdown", "platform", "ui-kit", "file-writes"],
-  "pending": ["apps/desktop/src/lib/reveal.ts"]
+  "pending": ["apps/desktop/src/lib/paper.ts", "apps/desktop/src/lib/reveal.ts"]
 }

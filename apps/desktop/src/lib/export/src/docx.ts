@@ -30,7 +30,7 @@ import {
   WidthType,
 } from 'docx'
 import { fromBase64 } from '../../platform/src/api'
-import { type PaperTwips, TWIPS_PER_INCH } from '../../page-setup'
+import { type PaperTwips, TWIPS_PER_INCH } from '../../files-out/src/api'
 import type { Align, Block, Doc, Entry, Item, Span } from './document'
 import { ommlFor } from './omml'
 import type { Picture } from './pictures'

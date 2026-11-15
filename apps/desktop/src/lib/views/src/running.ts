@@ -13,7 +13,7 @@ import {
 } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { protection } from '../../protect/src/api'
-import { notify } from '../../notify'
+import { notify } from '../../notify/src/api'
 import { rows } from '../../rows/src/api'
 import { noteRowsOf, type RowsChange } from '../../rows/src/api'
 import { basesOn } from '../../settings.svelte'
