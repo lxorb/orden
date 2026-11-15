@@ -1,5 +1,5 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import type { Entry } from './workspace.svelte'
 import {
   byName,
   isSortMode,

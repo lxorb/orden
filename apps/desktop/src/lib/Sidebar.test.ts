@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
-import { STARTS_RIGHT } from './workspace/panels'
+import { panels } from './session/src/api'
 
 vi.mock('./collab/src/api', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('./surfaces.svelte', () => ({
@@ -66,7 +66,7 @@ describe('the panel tabs', () => {
     expect(strip('right')).toEqual(['Links', 'Ask', 'Todos', 'Scratchpad'])
     workspace.movePanel('outline', 'right')
     expect(strip('right')).toEqual(['Links', 'Ask', 'Todos', 'Outline', 'Scratchpad'])
-    workspace.right = [...STARTS_RIGHT]
+    workspace.right = [...panels.STARTS_RIGHT]
   })
 
   test('hold the time tracker only once Settings turns it on', () => {

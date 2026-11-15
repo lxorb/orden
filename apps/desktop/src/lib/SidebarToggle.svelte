@@ -1,8 +1,9 @@
 <script lang="ts">
+  import type { PanelSide } from './session/src/api'
   import { tick } from 'svelte'
   import { intoSide } from './focus'
   import { shortcuts } from './shortcuts/src/api'
-  import { type PanelSide, workspace } from './workspace.svelte'
+  import { workspace } from './workspace.svelte'
 
   const {
     side = 'left',

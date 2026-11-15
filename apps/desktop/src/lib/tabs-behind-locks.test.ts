@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { writeSpec } from './views/src/api'
+import { writeViewSpec } from './tab-kinds/src/api'
 import { noteBehind } from './protect/src/protection.svelte'
 
 const SOURCE = fileURLToPath(new URL('.', import.meta.url))
@@ -17,10 +17,10 @@ function views(dir: string): string[] {
 
 describe('a tab shown over a protected note', () => {
   test('is the note itself, never a task view', () => {
-    const view = (spec: Parameters<typeof writeSpec>[0]) => ({
+    const view = (spec: Parameters<typeof writeViewSpec>[0]) => ({
       kind: 'view',
       path: null,
-      doc: writeSpec(spec),
+      doc: writeViewSpec(spec),
     })
     expect(noteBehind({ kind: 'note', path: '/space/Diary.md' })).toBe('/space/Diary.md')
     expect(noteBehind(view({ builtin: 'todos', space: 'Space' }))).toBeNull()

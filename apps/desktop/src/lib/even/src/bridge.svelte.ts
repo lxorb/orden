@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import { untrack } from 'svelte'
 import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@orden/glasses'
 import { account, api } from '../../accounts/src/api'
@@ -23,7 +24,7 @@ import { type Row, type Settings, Shell, type Wish, type Words, type World } fro
 import { spokenTask, Today } from './today'
 import { type Listening, Voice } from './voice'
 import { rooms } from '../../collab/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace.svelte'
 
 const SETTLE = 700
 

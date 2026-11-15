@@ -1,6 +1,6 @@
-import { folderFor, folderNote } from './folder-notes'
+import type { Entry } from '@orden/contracts'
+import { folderFor, folderNote } from './tree/src/api'
 import { folderOf, isMarkdownPath, relativeTo, rootedAt, samePath } from './platform/src/api'
-import type { Entry } from './workspace.svelte'
 
 export interface MoveTarget {
   id: string

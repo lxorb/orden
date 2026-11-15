@@ -1,10 +1,11 @@
+import type { Entry } from '@orden/contracts'
 import { untrack } from 'svelte'
 import { CHAT_EXTENSION } from '@orden/chats'
 import { account } from '../../accounts/src/api'
 import { hub } from '../../sync-client/src/api'
 import { chatsOn } from '../../settings.svelte'
 import { isMobile } from '../../platform/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace.svelte'
 import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
 

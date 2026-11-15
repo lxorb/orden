@@ -1,6 +1,6 @@
 import type { FoldLines } from '@orden/editor'
-import { movedTo, samePath } from '../platform/src/api'
-import type { FileOp } from '../file-ops/src/api'
+import { movedTo, samePath } from '../../platform/src/api'
+import type { FileOp } from '../../file-ops/src/api'
 import type { Position } from './session'
 
 const KEPT = 300

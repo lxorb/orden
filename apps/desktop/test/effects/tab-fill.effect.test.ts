@@ -59,7 +59,7 @@ Range.prototype.getBoundingClientRect = () => new DOMRect()
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
-const { STARTS_RIGHT } = await import('../../src/lib/workspace/panels')
+const { STARTS_RIGHT } = (await import('../../src/lib/session/src/api')).panels
 const App = (await import('../../src/App.svelte')).default
 await import('../../src/lib/tab-fill/src/fill')
 await import('../../src/lib/tab-fill/src/FillBar.svelte')

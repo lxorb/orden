@@ -35,7 +35,7 @@
   import { startup } from './startup.svelte'
   import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './ui-kit/src/api'
-  import { splitTabs, tabsShown } from './workspace/panels'
+  import { panels, type Panel, type PanelSide } from './session/src/api'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/src/api'
   import {
@@ -54,7 +54,6 @@
   import { scratchFromDrawer, shown as pad } from './scratchpad/src/api'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
-  import type { Panel, PanelSide } from './workspace.svelte'
   import { pullable } from './pull.svelte'
   import { scrollbar } from './ui-kit/src/api'
   import { workspace } from './workspace.svelte'
@@ -308,8 +307,8 @@
   })
   const strip = $derived.by(() => {
     const room = rowWidth - 8 - (toolsWidth ? toolsWidth + 4 : 0)
-    const shown = tabsShown(mine.length, room, Math.max(markWidth + 8, floorWidth))
-    return splitTabs(mine, shown, (item) => item.id === showing)
+    const shown = panels.tabsShown(mine.length, room, Math.max(markWidth + 8, floorWidth))
+    return panels.splitTabs(mine, shown, (item) => item.id === showing)
   })
 
   function showBehind(event: MouseEvent) {

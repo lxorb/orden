@@ -1,4 +1,4 @@
-import type { PanelSide } from './workspace.svelte'
+import type { PanelSide } from './session/src/api'
 import { forget, isNumber, keepJson, stored } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
 

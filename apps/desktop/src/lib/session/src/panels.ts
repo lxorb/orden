@@ -1,4 +1,6 @@
-import type { Panel, PanelSide } from '../workspace.svelte'
+export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
+
+export type PanelSide = 'left' | 'right'
 
 export interface Sides {
   panel: Panel | null

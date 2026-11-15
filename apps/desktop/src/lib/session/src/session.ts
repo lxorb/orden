@@ -9,14 +9,13 @@ import {
   isString,
   keepJson,
   stringList,
-} from '../platform/src/api'
-import { roomKind } from '../collab/src/api'
-import { builtinName, readSpec } from '../views/src/api'
-import type { Panel, Space } from '../workspace.svelte'
-import { isRetiredTab, type TabKind } from '../documents/src/api'
-import { type Along, type Frame, pane } from '../panes/src/api'
-import { PANELS } from './panels'
-import { isTabKind } from '../tab-kinds/src/api'
+} from '../../platform/src/api'
+import { roomKind } from '../../collab/src/api'
+import type { WorkspaceSpace } from '@orden/contracts'
+import { isRetiredTab, type TabKind } from '../../documents/src/api'
+import { type Along, type Frame, pane } from '../../panes/src/api'
+import { type Panel, PANELS } from './panels'
+import { builtinName, isTabKind, readViewSpec } from '../../tab-kinds/src/api'
 
 const VERSION = 2
 
@@ -77,7 +76,7 @@ export interface ClosedTab {
 }
 
 export interface Session {
-  spaces: Space[]
+  spaces: WorkspaceSpace[]
   activeSpace: string | null
   positions?: Record<string, Position>
   layout?: Layout
@@ -111,7 +110,7 @@ function tabKind(value: unknown, path: unknown): TabKind {
   return said === 'canvas' || said === 'pages' ? 'note' : said
 }
 
-function isSpace(value: unknown): value is Space {
+function isSpace(value: unknown): value is WorkspaceSpace {
   return isRecord(value) && isString(value.id) && isString(value.name) && isString(value.root)
 }
 
@@ -144,7 +143,7 @@ export function readDraft(value: unknown): Draft | null {
 
   const shut = readFolds(folds)
   const builtin =
-    path === null && tabKind(kind, path) === 'view' ? readSpec(doc)?.builtin : undefined
+    path === null && tabKind(kind, path) === 'view' ? readViewSpec(doc)?.builtin : undefined
 
   return {
     kind: tabKind(kind, path),

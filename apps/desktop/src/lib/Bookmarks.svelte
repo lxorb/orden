@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Bookmark } from '@orden/contracts'
+  import type { Bookmark, Entry } from '@orden/contracts'
   import { dropOver } from './drag-paths'
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
@@ -9,7 +9,7 @@
   import BookmarkTile from './BookmarkTile.svelte'
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { folderNote } from './folder-notes'
+  import { folderNote } from './tree/src/api'
   import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from './menu.svelte'
   import { dur, scale } from './platform/src/api'
   import Twist from './Twist.svelte'
@@ -29,7 +29,6 @@
   import { basesOn } from './settings.svelte'
   import { insideSpace, samePath } from './platform/src/api'
   import { isTile, sameBookmark } from './space-kept/src/api'
-  import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { tabLetters, tabUnloading } from './tab-strip/src/api'
 
@@ -60,7 +59,7 @@
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const found = new Map<string, Entry>()
 
-    const walk = (entries: Entry[]) => {
+    const walk = (entries: readonly Entry[]) => {
       for (const entry of entries) {
         if (workspace.instructionsAt(entry.path)) continue
         found.set(entry.path, entry)

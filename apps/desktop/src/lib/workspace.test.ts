@@ -141,7 +141,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
-const { panesOf } = await import('./workspace/session')
+const { panesOf } = await import('./session/src/api')
 const { noteId } = await import('./note-id')
 const { answeredCase } = await import('./platform/src/space-paths')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
@@ -154,7 +154,7 @@ const { flushFirst, flushStart } = await import('./tab-strip/src/flush')
 const { Tab } = await import('./documents/src/api')
 const { isDraft } = await import('./documents/src/api')
 const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('@orden/scan/shortcut')
-const { STARTS_RIGHT } = await import('./workspace/panels')
+const { STARTS_RIGHT } = (await import('./session/src/api')).panels
 const {
   shown: pad,
   toggleScratchpad,

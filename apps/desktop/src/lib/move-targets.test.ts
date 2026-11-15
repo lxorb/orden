@@ -1,6 +1,6 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { copiesInto, movesInto, moveTargets, type Space } from './move-targets'
-import type { Entry } from './workspace.svelte'
 
 function folder(path: string, children: Entry[] = []): Entry {
   return {

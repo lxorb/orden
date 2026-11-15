@@ -1,5 +1,5 @@
 {
   "name": "tab-kinds",
   "layer": "foundation",
-  "dependsOn": ["contracts"]
+  "dependsOn": ["contracts", "platform"]
 }

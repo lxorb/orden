@@ -2,14 +2,20 @@ import type { OpenHow } from '../../new-tab'
 import { nameOf, samePath } from '../../platform/src/api'
 import { basesOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'
-import { builtinName, readSpec, sameView, type ViewSpec, writeSpec } from './spec'
+import {
+  builtinName,
+  readViewSpec,
+  sameView,
+  type ViewSpec,
+  writeViewSpec,
+} from '../../tab-kinds/src/api'
 
 function openAlready(spec: ViewSpec, path: string | null) {
   const paneId = workspace.panes.focusedId
   return workspace.tabs.find((tab) => {
     if (tab.kind !== 'view' || tab.paneId !== paneId) return false
     if (path !== null || tab.path !== null) return samePath(tab.path, path)
-    const there = readSpec(tab.doc)
+    const there = readViewSpec(tab.doc)
     return there !== null && sameView(there, spec)
   })
 }
@@ -20,7 +26,7 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
     if (how.activate !== false) workspace.panes.activate(there.paneId, there.id)
     return there
   }
-  return workspace.openView(writeSpec(spec), name, path, how)
+  return workspace.openView(writeViewSpec(spec), name, path, how)
 }
 
 export function openTodos(how: OpenHow = {}) {

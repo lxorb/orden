@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import { codeBlocks } from '@orden/markdown'
 import {
   DIAGRAM_SCHEMES,
@@ -9,7 +10,6 @@ import { api } from './accounts/src/api'
 import { drawDiagram } from './diagrams'
 import { keepJson, stored, invoke } from './platform/src/api'
 import { shapesOnly } from './svg-file'
-import type { Entry } from './workspace.svelte'
 
 const MOST = 100
 

@@ -310,3 +310,5 @@ const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
 export function kindsWhere(trait: (traits: TabKindTraits) => boolean): TabKind[] {
   return KINDS.filter((kind) => trait(TAB_KINDS[kind]))
 }
+
+export { builtinName, readViewSpec, sameView, type ViewSpec, writeViewSpec } from './view-spec'

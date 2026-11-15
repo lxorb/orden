@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import { protection } from '../../protect/src/api'
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { menu } from '../../menu.svelte'
@@ -11,7 +12,7 @@ import {
   invoke,
   joinPath,
 } from '../../platform/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../file-writes/src/api'
 import { nowHere } from './days'
 

@@ -1,5 +1,5 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import type { Entry } from './workspace.svelte'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree } from './tree-order'
 

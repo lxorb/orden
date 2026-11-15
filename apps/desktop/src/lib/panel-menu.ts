@@ -1,8 +1,8 @@
 import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
 import { hasTab, openAsTab } from './panel-tab'
 import { search, type SearchSort } from './search.svelte'
-import { mayLiveOn } from './workspace/panels'
-import { type Panel, type PanelSide, workspace } from './workspace.svelte'
+import { panels, type Panel, type PanelSide } from './session/src/api'
+import { workspace } from './workspace.svelte'
 
 function sortMenu(making: MenuEntry[]): MenuEntry[] {
   return [
@@ -52,7 +52,7 @@ export function panelMenu(
   const own = [...asTab, ...(asTab.length && sorts.length ? [DIVIDER] : []), ...sorts]
   const there: PanelSide = side === 'right' ? 'left' : 'right'
 
-  if (!mayLiveOn(id, there)) return own
+  if (!panels.mayLiveOn(id, there)) return own
   return [
     ...own,
     ...(own.length ? [DIVIDER] : []),

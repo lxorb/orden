@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { resolveNote } from '@orden/editor'
 import {
@@ -10,9 +11,8 @@ import {
   renameSteps,
   unnesting,
 } from './folder-notes'
-import { rewriteLinks } from './link-index/src/api'
-import { noteName } from './platform/src/space-paths'
-import type { Entry } from './workspace.svelte'
+import { rewriteLinks } from '../../link-index/src/api'
+import { noteName } from '../../platform/src/space-paths'
 
 function note(path: string): Entry {
   return {

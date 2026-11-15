@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import {
   dayOf,
   sizeOf,
@@ -9,7 +10,7 @@ import {
 import { account, request } from '../../accounts/src/api'
 import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace.svelte'
 import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
 import { flush, pruned } from './queue'
 import { commonOf } from './system'

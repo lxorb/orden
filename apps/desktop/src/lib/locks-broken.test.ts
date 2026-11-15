@@ -3,7 +3,9 @@ import { leadSync } from './sync-client/src/lead'
 import { heldForLife, holdIfFree, ifFree, inTurn, locksWork } from './platform/src/locks'
 import { aloneHere } from './sync-client/src/budget'
 import { oneWriteAt } from './platform/src/windows'
-import { takeSlot } from './workspace/slot'
+import { loadSlots } from './session/src/api'
+
+const { takeSlot } = await loadSlots()
 
 const BROKEN = {
   missing: undefined,

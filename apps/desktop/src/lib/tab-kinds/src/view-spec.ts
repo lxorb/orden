@@ -20,7 +20,7 @@ const BUILTIN_NAMES: Record<Builtin, string> = {
 
 export const builtinName = (builtin: Builtin): string => BUILTIN_NAMES[builtin]
 
-export function readSpec(words: string): ViewSpec | null {
+export function readViewSpec(words: string): ViewSpec | null {
   const value = parsed(words)
   if (!isRecord(value)) return null
 
@@ -33,7 +33,7 @@ export function readSpec(words: string): ViewSpec | null {
   return spec
 }
 
-export function writeSpec(spec: ViewSpec): string {
+export function writeViewSpec(spec: ViewSpec): string {
   const ordered: ViewSpec = {}
   if (spec.builtin) ordered.builtin = spec.builtin
   if (spec.space !== undefined) ordered.space = spec.space

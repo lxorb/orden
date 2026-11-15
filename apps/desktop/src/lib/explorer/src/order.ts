@@ -1,5 +1,5 @@
 import { folderOf, nameOf } from '../../platform/src/api'
-import { byName } from '../../tree-order'
+import { byName } from '../../tree/src/api'
 import type { Entry } from './commands'
 
 export type SortKey = 'name' | 'modified' | 'created' | 'size' | 'kind' | 'folder'

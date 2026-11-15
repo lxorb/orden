@@ -1,4 +1,5 @@
-import { type Panel, type PanelSide, workspace } from './workspace.svelte'
+import type { Panel, PanelSide } from './session/src/api'
+import { workspace } from './workspace.svelte'
 import { TAB_KINDS } from './tab-kinds/src/api'
 
 class Drawer {

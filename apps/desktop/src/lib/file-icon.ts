@@ -7,7 +7,7 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
-import { isFolderNote } from './folder-notes'
+import { isFolderNote } from './tree/src/api'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from './ui-kit/src/api'
 import { changeOf } from '@orden/scan/search/replace'
 import { settings } from './settings.svelte'

@@ -1,5 +1,5 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
-import type { Entry } from '../workspace.svelte'
 
 const { told, disk, reads } = vi.hoisted(() => ({
   reads: [] as string[],

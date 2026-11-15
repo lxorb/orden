@@ -1,5 +1,5 @@
+import type { Panel } from './session/src/api'
 import { chatReveal } from './ai-chat/src/api'
-import type { Panel } from './workspace.svelte'
 import { TAB_KINDS, type TabKind, type TabPanel } from './tab-kinds/src/api'
 
 export type PanelTab = Panel | 'scratchpad'

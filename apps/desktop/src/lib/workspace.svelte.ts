@@ -1,4 +1,4 @@
-import { type PickedFile, providePort } from '@orden/contracts'
+import { type Entry, type PickedFile, providePort } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
 import { seed } from './web-backend/src/api'
@@ -97,7 +97,17 @@ import {
   readSession,
   type Session,
   writeSession,
-} from './workspace/session'
+  ClosedTabs,
+  Layouts,
+  Positions,
+  panels,
+  type Panel,
+  type PanelSide,
+  type Sides,
+  loadSlots,
+  loadSessionsLeft,
+  loadUnwritten,
+} from './session/src/api'
 import type { Across } from './workspace/across'
 import {
   Bookmarks,
@@ -109,10 +119,8 @@ import {
 } from './space-kept/src/api'
 import { protection, unlocks } from './protect/src/api'
 import { SpaceGraphSettings } from './graph-view/src/api'
-import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
 import { writeFile } from './file-writes/src/api'
-import { Layouts } from './workspace/layouts.svelte'
 import {
   type Along,
   type Frame,
@@ -127,12 +135,9 @@ import {
   madeFirst,
   type Side,
 } from './panes/src/api'
-import { Positions } from './workspace/positions'
 import { FileOps, inFlight, keeping, type Kind } from './file-ops/src/api'
 import * as composing from './workspace/composing'
-import * as panels from './workspace/panels'
 import { type Filling, fills } from './panel-tab'
-import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as ahead from './workspace/ahead'
 import { firstScreen } from './first-screen/src/api'
@@ -141,7 +146,7 @@ import { Saving } from './workspace/saving.svelte'
 import { TAB_KINDS, type TabKind } from './tab-kinds/src/api'
 import { type Binning, type FileAction, FileActions, type Kept } from './file-undo/src/api'
 import { isScratchpad, pad as padNow, shown as pad } from './scratchpad/src/api'
-import { outermost, Selection } from './workspace/selection.svelte'
+import { outermost, Selection } from './tree/src/api'
 import {
   folderFor,
   folderNote,
@@ -150,13 +155,13 @@ import {
   linkedFiles,
   noteToNest,
   unnesting,
-} from './folder-notes'
+} from './tree/src/api'
 import { carriedRows } from './drag-paths'
-import { anyOpen, flatRows, standsOpen } from './tree-flat'
-import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
-import { rowIds } from './row-ids'
-import { orderedTree, type SortMode } from './tree-order'
-import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
+import { anyOpen, flatRows, standsOpen } from './tree/src/api'
+import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree/src/api'
+import { rowIds } from './tree/src/api'
+import { orderedTree, type SortMode } from './tree/src/api'
+import { Arranged, SpaceSorting } from './tree/src/api'
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import {
@@ -177,18 +182,6 @@ function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
 }
 
-export interface Entry {
-  name: string
-  path: string
-  is_dir: boolean
-  modified: number
-  created: number
-  children: Entry[]
-  evicted?: boolean
-  unlisted?: boolean
-  paper?: boolean
-}
-
 export interface TreeOptions {
   showHidden: boolean
 }
@@ -201,9 +194,7 @@ export interface Space {
 
 export type { NoteDoc, Tab, TabKind } from './documents/src/api'
 
-export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
-
-export type PanelSide = 'left' | 'right'
+export type { Entry } from '@orden/contracts'
 
 export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
 
@@ -665,7 +656,7 @@ class Workspace {
       }
     }
 
-    const slots = await import('./workspace/slot').catch(() => null)
+    const slots = await loadSlots().catch(() => null)
     const slot = (await slots?.takeSlot().catch(() => 0)) ?? 0
     this.sessionKey = slots?.sessionOf(slot) ?? STORAGE_KEY
     this.slot = slot
@@ -770,9 +761,9 @@ class Workspace {
 
   private async takeWhatWasLeft(slot: number) {
     try {
-      const { LEAVING_GRACE, othersInStorage } = await import('./workspace/slot')
+      const { LEAVING_GRACE, othersInStorage } = await loadSlots()
       if (!othersInStorage(slot)) return
-      const { asDrafts, takeSessionsLeft } = await import('./workspace/sessions-left')
+      const { asDrafts, takeSessionsLeft } = await loadSessionsLeft()
       const waiting = await takeSessionsLeft(slot, async (drafts) => {
         const says = async (path: string) =>
           this.opened.at(path)?.latest ??
@@ -905,7 +896,7 @@ class Workspace {
     if (path === null || !draft.dirty || !holdsWords(open.kind)) return open
     if (unixLines(open.latest) === words) return open
 
-    const { wordsOnto } = await import('./workspace/unwritten')
+    const { wordsOnto } = await loadUnwritten()
     for (;;) {
       const holds = unixLines(open.latest)
       const merged = await wordsOnto(draft, open.kind, holds)
@@ -937,7 +928,7 @@ class Workspace {
   private async unwrittenBack(draft: Draft): Promise<NoteDoc | null> {
     const path = draft.path
     if (path === null) return null
-    const { cameBack } = await import('./workspace/unwritten')
+    const { cameBack } = await loadUnwritten()
     const back = await cameBack(
       { ...draft, path },
       {

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { pane } from '../panes/src/api'
+import { pane } from '../../panes/src/api'
 import {
   type Draft,
   frameDraft,

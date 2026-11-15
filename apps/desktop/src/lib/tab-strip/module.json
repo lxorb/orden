@@ -13,7 +13,8 @@
     "ui-kit",
     "space-kept",
     "panes",
-    "documents"
+    "documents",
+    "tree"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -25,7 +26,6 @@
     "apps/desktop/src/lib/drop-target.svelte.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/folder-notes.ts",
     "apps/desktop/src/lib/keytip.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",

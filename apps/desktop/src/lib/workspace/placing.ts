@@ -1,9 +1,10 @@
+import type { Entry } from '@orden/contracts'
 import { nameFromTitle, shownName, nameOf, invoke, isDesktop, joinPath } from '../platform/src/api'
 import { pages, webDataStores } from '../web-tab/src/api'
 import { sameSite, settleShortcuts } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
-import type { Entry, Space } from '../workspace.svelte'
-import type { ClosedTabs } from './closed.svelte'
+import type { Space } from '../workspace.svelte'
+import type { ClosedTabs } from '../session/src/api'
 import { type NoteDoc, type Tab, UNTITLED, draftFile } from '../documents/src/api'
 import { writeFile } from '../file-writes/src/api'
 

@@ -22,7 +22,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-const { SpaceSorting, SORT_KEY: STORAGE_KEY } = await import('./arranged.svelte')
+const { SpaceSorting, SORT_KEY: STORAGE_KEY } = await import('../tree/src/api')
 
 const ROOT = '/spaces/Notes'
 const made = () => new SpaceSorting(() => ROOT)

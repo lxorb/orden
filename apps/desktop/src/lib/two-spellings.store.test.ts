@@ -23,7 +23,7 @@ const ROOT = '/space'
 
 function rows(): string[] {
   const out: string[] = []
-  const walk = (one: { children: { path: string; children: unknown[] }[] }) => {
+  const walk = (one: { children: readonly { path: string; children: readonly unknown[] }[] }) => {
     for (const child of one.children) {
       out.push(child.path)
       walk(child as never)

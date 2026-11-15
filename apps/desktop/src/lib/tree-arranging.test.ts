@@ -1,6 +1,6 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import type { Entry } from './workspace.svelte'
-import { shownNames } from './tree-order'
+import { shownNames } from './tree/src/api'
 import { movedTo, placedBeside, stepped, trimmed } from './tree-arranging'
 
 function file(name: string): Entry {

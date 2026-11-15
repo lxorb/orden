@@ -1,5 +1,5 @@
 import { webPages } from '@orden/contracts'
-import { folderNote } from '../../folder-notes'
+import { folderNote } from '../../tree/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { folderOf, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'

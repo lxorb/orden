@@ -1,5 +1,5 @@
-import { folderOf, nameOf, samePath, within } from './platform/src/api'
-import type { Entry } from './workspace.svelte'
+import type { Entry } from '@orden/contracts'
+import { folderOf, nameOf, samePath, within } from '../../platform/src/api'
 
 function under(base: string, path: string): boolean {
   if (!path.startsWith(base)) return false
@@ -112,7 +112,7 @@ export function withoutRows(tree: Entry, leaving: (entry: Entry) => boolean): En
   return kept === tree.children ? tree : { ...tree, children: kept }
 }
 
-function pruned(children: Entry[], leaving: (entry: Entry) => boolean): Entry[] {
+function pruned(children: readonly Entry[], leaving: (entry: Entry) => boolean): readonly Entry[] {
   let touched = false
   const out: Entry[] = []
 

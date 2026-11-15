@@ -281,10 +281,10 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
 }
 
 export function applicationFiles(
-  tree: { path: string; is_dir: boolean; children?: unknown[] } | null,
+  tree: { path: string; is_dir: boolean; children?: readonly unknown[] } | null,
 ): string[] {
   const found: string[] = []
-  const walk = (entry: { path: string; is_dir: boolean; children?: unknown[] }) => {
+  const walk = (entry: { path: string; is_dir: boolean; children?: readonly unknown[] }) => {
     if (!entry.is_dir) {
       if (/\.application$/i.test(entry.path)) found.push(entry.path)
       return
