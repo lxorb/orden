@@ -1163,7 +1163,7 @@ bases and boards, onboarding, settings UI, web and PWA client code). Tests on No
 
 - Full suite on Node 24, one package at a time, before F37: all green except the two known container failures (`@orden/pass` ssh-keygen missing, `@orden/machine` fork bomb under root). `packages/editor` `drag-start.test.ts` failed once and passed in 8 reruns since; handed to the editor core thread as a Low lead.
 - After F37 to F39: clock sweep, `pnpm lint`, `pnpm check` (one package at a time), `pnpm format:check` and `pnpm knip` all green, after making `PASTE_TEXT` private.
-- After merging `unstable` (#2101): targeted tests for every file the merge touched (workspace, list landing, pane tree, editor menu, commands, shortcuts, weight) and lint on those files are green. The full suite and every check run again in the cloud tonight.
+- After merging `unstable` (#2101), at `2a093c00`: full suite one package at a time without `@orden/machine` (desktop 17,677 passed, editor 2,078, bases 1,052, sync 3,063, every other package green) with only the known `@orden/pass` ssh-keygen failure; `pnpm lint`, `pnpm check`, `pnpm format:check` and `pnpm knip` green.
 
 ### Frontend Lows left
 
