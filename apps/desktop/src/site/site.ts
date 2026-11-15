@@ -281,9 +281,9 @@ function graphs() {
       { passive: true },
     )
 
-    canvas.addEventListener('pointermove', (event) => {
+    const nodeUnder = (event: MouseEvent) => {
       const box = canvas.getBoundingClientRect()
-      const at = nodeAt(
+      return nodeAt(
         layout.x,
         layout.y,
         radii,
@@ -293,7 +293,10 @@ function graphs() {
         event.clientX - box.left,
         event.clientY - box.top,
       )
+    }
 
+    canvas.addEventListener('pointermove', (event) => {
+      const at = nodeUnder(event)
       if (at === hovered) return
       hovered = at
 
@@ -313,8 +316,9 @@ function graphs() {
       draw()
     })
 
-    canvas.addEventListener('click', () => {
-      const where = hovered >= 0 ? graph.nodes[hovered]?.path : null
+    canvas.addEventListener('click', (event) => {
+      const at = nodeUnder(event)
+      const where = at >= 0 ? graph.nodes[at]?.path : null
       if (where) location.assign(where)
     })
   }

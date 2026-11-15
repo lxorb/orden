@@ -1111,3 +1111,13 @@ The reviews found many bugs in the fixes, folded above, and older ones with thei
 No Critical, High or Medium is wholly open. Left in part or as a limit: a typed reply with no window on macOS (B683); plain `<a href=/delete-account>` and a listener on a link's ancestor stay free, and a button that says nothing goes (B713, B717); a secret field shown and gone inside 70 ms between two scans (B702); an app killed in a pull batch can double those notes, up to `PULL_BATCH` (B705); a kill after the crate's write and before the session's persist writes old words back (B737); a fold's first stall in WebKit, cause not found (hunt-known 8); wayland deb's "a click on another tab" until `f645b7fb6` reaches this branch (hunt4-integ).
 Needs a decision: H1-TAURI2-17, H1-TAURI2-18, H4-SYNC-L3 (B770, B780); `write_note`'s whole-text replace (B773).
 Not run on platform or at all: B607, B620 to B622, B665, B666, B683 to B685; the windows rows of rounds 3 and 4 ran on the web build only.
+
+## Web app and PWA
+
+Started 2026-11-15 on `claude/project-thread-xe1yxs`, from `unstable`. Scope: the web
+backend in the browser, the service worker, offline, storage and install, the published
+site's own script, and phone layouts. Same method and severities as above.
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| W1 | Medium | On a phone, tapping a note in a published page's graph did nothing | Fixed | The click opened the `hovered` node, which only `pointermove` sets; a tap sends no move, and `pointerleave` clears it before the click | The click asks which node is under its own point | `site.effect.test.ts` (failed before); Playwright on a Pixel 7 profile: a tap stayed on `/a` before, opens `/b` after; sync `site-script`, `site`, `graph` 94 passed |
