@@ -49,16 +49,18 @@ class Remote {
 
   private config: ConfigHost[] = []
   private asking: Promise<void> | null = null
+  private changes = 0
 
   refresh(): Promise<void> {
     if (!isDesktop) return Promise.resolve()
 
+    const changes = this.changes
     this.asking ??= invoke<unknown>('remote_hosts')
       .then((answer) => {
         const { config, kept, file } = readAnswer(answer)
         this.config = config
         this.file = file
-        this.take(kept)
+        this.take(changes === this.changes ? kept : this.kept)
       })
       .catch(() => undefined)
       .finally(() => {
@@ -83,9 +85,11 @@ class Remote {
 
   async keep(change: (kept: Kept) => Kept): Promise<void> {
     const next = change(this.kept)
+    const turn = ++this.changes
     this.take(next)
     try {
-      this.take(readKept(await invoke<unknown>('remote_keep', { kept: next })))
+      const kept = readKept(await invoke<unknown>('remote_keep', { kept: next }))
+      if (turn === this.changes) this.take(kept)
     } catch {
       await this.refresh()
     }
