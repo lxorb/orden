@@ -48,6 +48,7 @@ struct Program {
     steps: Vec<Step>,
     classes: Vec<Class>,
     cells: usize,
+    backward: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -70,7 +71,7 @@ enum Step {
     },
     Jump(usize),
     Look {
-        behind: Option<usize>,
+        behind: bool,
         negated: bool,
         after: usize,
     },
@@ -92,7 +93,7 @@ struct Run<'a> {
     choices: Vec<Resume>,
     pc: usize,
     pos: usize,
-    stop: Option<usize>,
+    back: bool,
 }
 
 #[derive(Clone)]
@@ -178,6 +179,7 @@ impl Pattern {
             steps: Vec::new(),
             classes: Vec::new(),
             cells: groups.checked_add(1)?.checked_mul(2)?,
+            backward: false,
         };
 
         program.push(Step::Save(0))?;
@@ -231,7 +233,7 @@ impl Pattern {
 
     fn attempt(&self, text: &str, start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
         let cells = vec![UNSET; self.program.cells];
-        self.attempt_from(text, start, 0, cells, None, budget)
+        self.attempt_from(text, start, 0, cells, false, budget)
     }
 
     fn attempt_from(
@@ -240,7 +242,7 @@ impl Pattern {
         start: usize,
         pc: usize,
         cells: Vec<usize>,
-        stop: Option<usize>,
+        back: bool,
         budget: &Cell<usize>,
     ) -> Option<Vec<usize>> {
         let mut run = Run {
@@ -250,7 +252,7 @@ impl Pattern {
             choices: Vec::new(),
             pc,
             pos: start,
-            stop,
+            back,
         };
 
         loop {
@@ -273,14 +275,19 @@ impl Pattern {
 
             match step {
                 Step::Char(_) | Step::Any | Step::Class(_) => {
-                    let Some(letter) = letter_at(run.text, run.pos) else {
+                    let read = if run.back { letter_before } else { letter_at };
+                    let Some(letter) = read(run.text, run.pos) else {
                         return Some(false);
                     };
                     if !self.accepts(step, letter) {
                         return Some(false);
                     }
 
-                    run.pos += letter.len_utf8();
+                    if run.back {
+                        run.pos -= letter.len_utf8();
+                    } else {
+                        run.pos += letter.len_utf8();
+                    }
                     run.pc += 1;
                 }
                 Step::Start | Step::End | Step::Boundary(_) => {
@@ -343,37 +350,15 @@ impl Pattern {
                     run.pos = to;
                     run.pc += 1;
                 }
-                Step::Done => return Some(run.stop.is_none_or(|stop| stop == run.pos)),
+                Step::Done => return Some(true),
             }
         }
     }
 
-    fn looks(&self, run: &Run, behind: Option<usize>, budget: &Cell<usize>) -> Option<Seen> {
+    fn looks(&self, run: &Run, behind: bool, budget: &Cell<usize>) -> Option<Seen> {
         let body = run.pc.checked_add(1)?;
-        let Some(longest) = behind else {
-            let seen = self.attempt_from(run.text, run.pos, body, run.cells.clone(), None, budget);
-            return unless_spent(seen, budget);
-        };
-
-        let head = run.text.get(..run.pos)?;
-        let starts = std::iter::once(run.pos).chain(head.char_indices().rev().map(|(at, _)| at));
-        let reach = longest.saturating_add(1);
-
-        for start in starts.take(reach) {
-            let seen = self.attempt_from(
-                run.text,
-                start,
-                body,
-                run.cells.clone(),
-                Some(run.pos),
-                budget,
-            );
-            if let Seen::Found(cells) = unless_spent(seen, budget)? {
-                return Some(Seen::Found(cells));
-            }
-        }
-
-        Some(Seen::Missed)
+        let seen = self.attempt_from(run.text, run.pos, body, run.cells.clone(), behind, budget);
+        unless_spent(seen, budget)
     }
 
     fn called(&self, run: &Run, group: usize) -> Option<usize> {
@@ -381,11 +366,23 @@ impl Pattern {
             return Some(run.pos);
         };
         let wanted = run.text.get(from..to)?;
-        let rest = run.text.get(run.pos..)?;
+        let (mut letters, mut wants): (
+            Box<dyn Iterator<Item = char>>,
+            Box<dyn Iterator<Item = char>>,
+        ) = if run.back {
+            (
+                Box::new(run.text.get(..run.pos)?.chars().rev()),
+                Box::new(wanted.chars().rev()),
+            )
+        } else {
+            (
+                Box::new(run.text.get(run.pos..)?.chars()),
+                Box::new(wanted.chars()),
+            )
+        };
 
         let mut taken = 0;
-        let mut letters = rest.chars();
-        for want in wanted.chars() {
+        for want in wants.by_ref() {
             let got = letters.next()?;
             let same = if self.fold {
                 folded(got) == folded(want)
@@ -398,7 +395,11 @@ impl Pattern {
             taken += got.len_utf8();
         }
 
-        run.pos.checked_add(taken)
+        if run.back {
+            run.pos.checked_sub(taken)
+        } else {
+            run.pos.checked_add(taken)
+        }
     }
 
     fn accepts(&self, step: Step, c: char) -> bool {
@@ -1194,22 +1195,6 @@ fn called_back(node: &mut Node, names: &[(String, usize)], groups: usize) -> Opt
     Some(())
 }
 
-fn longest(node: &Node) -> Option<usize> {
-    match node {
-        Node::Char(_) | Node::Any | Node::Class(_) => Some(1),
-        Node::Start | Node::End | Node::Boundary(_) | Node::Look(..) => Some(0),
-        Node::Group(_, inner) => longest(inner),
-        Node::Seq(nodes) => nodes
-            .iter()
-            .try_fold(0usize, |sum, inner| sum.checked_add(longest(inner)?)),
-        Node::Alt(nodes) => nodes
-            .iter()
-            .try_fold(0usize, |most, inner| Some(most.max(longest(inner)?))),
-        Node::Repeat(inner, limits) => longest(inner)?.checked_mul(limits.max?),
-        Node::Backref(_) | Node::Named(_) => None,
-    }
-}
-
 fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
     if class.negated {
         return None;
@@ -1310,17 +1295,24 @@ impl Program {
                 if let Some(index) = number {
                     let open = index.checked_add(1)?.checked_mul(2)?;
                     let close = open.checked_add(1)?;
-                    self.push(Step::Save(open))?;
+                    let (first, last) = if self.backward {
+                        (close, open)
+                    } else {
+                        (open, close)
+                    };
+                    self.push(Step::Save(first))?;
                     self.emit(inner)?;
-                    self.push(Step::Save(close))?;
+                    self.push(Step::Save(last))?;
                 } else {
                     self.emit(inner)?;
                 }
             }
             Node::Look(look, inner) => {
-                let behind = look.behind.then(|| longest(inner).unwrap_or(usize::MAX));
+                let behind = look.behind;
                 let at = self.push(Step::Jump(0))?;
+                let outer = std::mem::replace(&mut self.backward, behind);
                 self.emit(inner)?;
+                self.backward = outer;
                 self.push(Step::Done)?;
                 let after = self.steps.len();
                 self.patch(
@@ -1337,8 +1329,14 @@ impl Program {
             }
             Node::Named(_) => return None,
             Node::Seq(nodes) => {
-                for inner in nodes {
-                    self.emit(inner)?;
+                if self.backward {
+                    for inner in nodes.iter().rev() {
+                        self.emit(inner)?;
+                    }
+                } else {
+                    for inner in nodes {
+                        self.emit(inner)?;
+                    }
                 }
             }
             Node::Alt(branches) => self.emit_alt(branches)?,
@@ -1832,6 +1830,27 @@ mod tests {
         assert_eq!(caught("(?=(a+))a", "aaa"), Some(words(&["aaa"])));
         assert_eq!(caught("(?!(b))a", "a"), Some(words(&[""])));
         assert_eq!(folding("(?<=X)y", "xY").as_deref(), Some("Y"));
+    }
+
+    #[test]
+    fn a_look_behind_of_any_length_reads_back_only_as_far_as_it_needs() {
+        let pattern = Pattern::compile(r"(?<=status:\s*)\w+", false);
+        assert!(pattern.is_some());
+        let Some(pattern) = pattern else {
+            return;
+        };
+        let note = "status: open some text here and more\n".repeat(400);
+        let budget = Cell::new(super::budget_for(note.len()));
+        let mut found = 0;
+        let mut at = 0;
+        while let Some(hit) = pattern.find_within(&note, at, &budget) {
+            found += 1;
+            at = hit.to.max(hit.from + 1);
+        }
+        assert_eq!(found, 400);
+        assert_eq!(caught(r"(?<=(\d+))x\1", "123x123"), Some(words(&["123"])));
+        assert_eq!(first(r"(?<=(\d+))x\1", "123x123").as_deref(), Some("x123"));
+        assert_eq!(caught(r"(?<=(a+)(a+))b", "aaab"), Some(words(&["a", "aa"])));
     }
 
     #[test]
