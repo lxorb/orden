@@ -440,6 +440,39 @@ test('a page that lands is photographed once, not once per report', async () => 
   expect(commands().filter((one) => one === 'web_shot')).toHaveLength(1)
 })
 
+describe('while the address is being typed', () => {
+  async function typing() {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+    const moved = await hearing('orden://web-tab')
+    const went = (url: string) =>
+      moved({ payload: { tab: 'a', url, title: '', back: true, forward: false, loading: false } })
+    pages.typing('a', true)
+    return went
+  }
+
+  test('a page that moves on its own is where the tab is once the typing ends', async () => {
+    const went = await typing()
+    went('https://example.com/b')
+    expect(pages.of('a').url).toBe(SITE)
+
+    pages.typing('a', false)
+    expect(pages.of('a').url).toBe('https://example.com/b')
+  })
+
+  test('an address gone to keeps its place when the typing ends', async () => {
+    const went = await typing()
+    went('https://example.com/b')
+    await pages.go('a', 'https://example.org/')
+
+    pages.typing('a', false)
+    expect(pages.of('a').url).toBe('https://example.org/')
+  })
+})
+
 describe("a page's mark", () => {
   const PLAIN = 'data:image/png;base64,cGxhaW4='
   const BADGED = 'data:image/png;base64,YmFkZ2Vk'

@@ -330,7 +330,7 @@
       window.removeEventListener('keydown', pressed, true)
 
       const held = pages.peek(tab.id)
-      if (held) held.typing = false
+      pages.typing(tab.id, false)
 
       if (held?.filling) {
         held.filling = false
@@ -636,7 +636,7 @@
         showingExtensions = false
       }}
       ontyping={(on: boolean) => {
-        pages.of(tab.id).typing = on
+        pages.typing(tab.id, on)
       }}
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
       onbrowser={(which: 'history' | 'clear') =>

@@ -307,6 +307,8 @@ class Pages {
 
   private readonly goingTo = new WeakMap<Page, string>()
 
+  private readonly movedWhileTyping = new WeakSet<Page>()
+
   private listening: Promise<void> | null = null
 
   each(): [string, Page][] {
@@ -852,9 +854,20 @@ class Pages {
     ;(await sleeping()).bound(this)
   }
 
+  typing(tabId: string, on: boolean) {
+    const page = this.held.get(tabId)
+    if (!page) return
+    page.typing = on
+    if (on || !this.movedWhileTyping.has(page)) return
+    this.movedWhileTyping.delete(page)
+    if (page.at) page.url = page.at
+  }
+
   async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
+
+    this.movedWhileTyping.delete(page)
 
     page.upgrade = upgrade
     page.url = url
@@ -1132,6 +1145,7 @@ class Pages {
         page.forward = said.forward
         if (said.url) page.at = said.url
         if (said.url && !page.typing) page.url = said.url
+        else if (said.url && said.url !== page.url) this.movedWhileTyping.add(page)
         if (said.title) {
           page.title = said.title
           page.titled = true
