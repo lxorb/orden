@@ -71,7 +71,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       return !live.fixed && reachable()
     },
     get adds() {
-      if (!reachable()) return false
+      if (!reachable() || live.view?.orden.rows === 'tasks') return false
       const to = kit.home ?? workspace.activeSpace?.root
       return to === undefined || canWriteAt(to)
     },
