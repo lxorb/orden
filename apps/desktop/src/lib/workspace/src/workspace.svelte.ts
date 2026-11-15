@@ -1133,10 +1133,7 @@ class Workspace {
             const at = ids.indexOf(id)
             return at < 0 ? [] : [at]
           }),
-          active: Math.max(
-            0,
-            tabs.findIndex((tab) => tab.id === shown),
-          ),
+          active: tabs.findIndex((tab) => tab.id === shown),
         }
       }),
       focused,

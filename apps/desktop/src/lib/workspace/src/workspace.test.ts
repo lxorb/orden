@@ -4951,6 +4951,18 @@ describe('an essential', () => {
     expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
   })
 
+  test('in front at a restart gives the strip the tab used last, not the first', async () => {
+    keep('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const written = workspace.layout()
+
+    onePane()
+    await workspace.applyLayout(written, false)
+
+    expect(workspace.active?.path).toBe('/space/c.md')
+  })
+
   test('duplicated, puts its copy at the end of the strip', async () => {
     keep('/space/a.md')
     for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
