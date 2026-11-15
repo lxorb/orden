@@ -26,3 +26,14 @@ export function setLive(tabId: string, on: boolean): void {
 export function shellRunning(tabId: string): boolean {
   return running.has(tabId) || live.has(tabId)
 }
+
+const ended = new Set<string>()
+
+export function setEnded(tabId: string, on: boolean): void {
+  if (on) ended.add(tabId)
+  else ended.delete(tabId)
+}
+
+export function sessionEnded(tabId: string): boolean {
+  return ended.has(tabId)
+}

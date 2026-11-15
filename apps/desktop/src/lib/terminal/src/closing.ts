@@ -3,7 +3,7 @@ import { isOnlineTab } from '../../online-terms/src/api'
 import { invoke } from '../../platform/src/api'
 import type { Tab } from '../../workspace.svelte'
 import { isUnsaved } from '../../workspace/drafts'
-import { ptyOf } from './running'
+import { ptyOf, sessionEnded } from './running'
 
 export async function mayEnd(
   closing: readonly Tab[],
@@ -37,6 +37,7 @@ function unkeptOnline(closing: readonly Tab[], every: readonly Tab[]): Tab[] {
     (tab) =>
       isOnlineTab(tab) &&
       isUnsaved(tab.note) &&
+      !sessionEnded(tab.id) &&
       !every.some((other) => !going.has(other.id) && other.note === tab.note),
   )
 }

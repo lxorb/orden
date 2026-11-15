@@ -52,7 +52,7 @@ import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
 import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPaths } from './paste'
-import { setLive, setPty } from './running'
+import { setEnded, setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { type Machine, PtySource, remoteShell, type Said, type Source } from './source'
@@ -607,6 +607,7 @@ class Session {
     if (this.exited === null || this.offline) return
     if (this.online) {
       this.exited = null
+      setEnded(this.tab.id, false)
       this.term.write('\r\n')
       this.source?.again?.()
       return
@@ -666,6 +667,7 @@ class Session {
     this.arrival.stop()
     setPty(this.tab.id, null)
     setLive(this.tab.id, false)
+    setEnded(this.tab.id, false)
     marks.delete(this.tab.id)
     clearTimeout(this.resting)
     this.watching.disconnect()
@@ -724,6 +726,7 @@ class Session {
     const id = `${this.tab.id}-${this.started}`
     this.pty = id
     this.exited = null
+    setEnded(this.tab.id, false)
     this.offline = false
     if (this.online) this.arrival.begin()
     if (!this.online) setPty(this.tab.id, id)
@@ -830,6 +833,7 @@ class Session {
       if (this.live) this.say(what.note)
       else this.notes.push(what.note)
     } else if (this.online && (!this.live || what.gone === true)) {
+      if (what.gone === true) setEnded(this.tab.id, true)
       this.live = false
       this.arrival.fail(what.refused, what.gone === true)
     } else {
@@ -947,6 +951,7 @@ class Session {
 
   private exitedWith(code: number) {
     if (this.online) {
+      setEnded(this.tab.id, true)
       this.front = new Front(false)
       this.named()
       this.exited = code

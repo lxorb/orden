@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({
@@ -117,6 +118,33 @@ describe('an online terminal saved nowhere, closed', () => {
     await workspace.closePane(again.paneId)
     expect(world.asked).toHaveLength(2)
     expect(open(again.id)).toBe(true)
+  })
+})
+
+describe('an online terminal whose session has ended, closed', () => {
+  test('closes without a word, and asks again once the session runs anew', async () => {
+    const { setEnded } = await import('./running')
+    const tab = online('s-9', 'Done')
+    setEnded(tab.id, true)
+    await workspace.closeAsking(tab.id)
+    expect(world.asked).toEqual([])
+    expect(open(tab.id)).toBe(false)
+    expect(world.ended).toEqual([])
+
+    const again = online('s-10', 'Again')
+    setEnded(again.id, true)
+    setEnded(again.id, false)
+    world.answer = 'keep'
+    await workspace.closeAsking(again.id)
+    expect(world.asked).toEqual([{ title: 'End Again?', options: ['cancel', 'end', 'keep'] }])
+  })
+
+  test('is marked ended when its shell exits or the machine says it is gone', () => {
+    const sessions = readFileSync(join(import.meta.dirname, 'sessions.svelte.ts'), 'utf8')
+    expect(sessions).toMatch(
+      /exitedWith\(code: number\) \{\s*if \(this\.online\) \{\s*setEnded\(this\.tab\.id, true\)/,
+    )
+    expect(sessions).toMatch(/if \(what\.gone === true\) setEnded\(this\.tab\.id, true\)/)
   })
 })
 
