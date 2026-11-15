@@ -679,6 +679,10 @@ class Links {
     if (op.op === 'moved' && this.cameOut(op.from, op.to)) {
       return this.cameBack(op.to, op.kind === 'folder')
     }
+    if (op.op === 'moved' && op.kind === 'file' && heldAs(op.from) !== heldAs(op.to)) {
+      this.noteGone(op.from)
+      return this.cameBack(op.to, false)
+    }
     if (op.op === 'moved') this.notesMoved(op.from, op.to)
     else if (op.op === 'removed') this.noteGone(op.path)
     else return this.cameBack(op.path, op.kind === 'folder')
@@ -1109,8 +1113,8 @@ class Links {
     if (!was || !now || was === now) return 0
 
     const here = () => this.root !== null && samePath(root, this.root)
-    if (here()) await this.scanned()
-    if (here()) {
+    if (here() && this.scanning && startup.reached('index')) await this.scanned()
+    if (here() && !this.scanning) {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's notes, thrown away after it
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(
@@ -1510,6 +1514,14 @@ class Links {
 }
 
 const nothing = () => Promise.resolve(null)
+
+function heldAs(path: string): 'note' | 'plane' | 'web' | 'elsewhere' | 'file' {
+  if (isMarkdownPath(path)) return 'note'
+  if (isCanvasTarget(path) || isPagesTarget(path)) return 'plane'
+  if (isWebTarget(path)) return 'web'
+  if (isChatTarget(path) || isTermTarget(path)) return 'elsewhere'
+  return 'file'
+}
 
 function standsAlone(line: string, name: string): boolean {
   const word = /[\p{L}\p{N}]/u

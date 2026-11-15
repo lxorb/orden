@@ -1666,3 +1666,56 @@ describe('a rename while the space is still being read', () => {
     expect(notes['One.md']).toBe('see [[Roadmap]]\n')
   })
 })
+
+describe('a file renamed across the note extension', () => {
+  test('becomes a note when it takes the extension and stops being one when it drops it', async () => {
+    await space(
+      { 'Other.md': 'see [[Draft]]\n', 'Plan.md': 'see [[Target]]\n', 'Target.md': '# t' },
+      ['Draft.txt'],
+    )
+    notes['Draft.md'] = '# Draft'
+    await links.follow({
+      op: 'moved',
+      from: at('Draft.txt'),
+      to: at('Draft.md'),
+      kind: 'file',
+      root: ROOT,
+    })
+    notes['Plan.txt'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+    await links.follow({
+      op: 'moved',
+      from: at('Plan.md'),
+      to: at('Plan.txt'),
+      kind: 'file',
+      root: ROOT,
+    })
+
+    expect(links.backlinks(at('Draft.md')).map((one) => one.path)).toEqual(['Other.md'])
+    expect(links.backlinks(at('Target.md'))).toEqual([])
+    expect(
+      links
+        .held()
+        .map((one) => one.path)
+        .sort(),
+    ).toEqual(['Draft.md', 'Other.md', 'Target.md'])
+    expect(links.index(null).files).toEqual(['Plan.txt'])
+  })
+})
+
+describe('a rename before the space is read at all', () => {
+  test('rewrites the links from what the disk holds, waiting for nothing', async () => {
+    const { spaceLinks } = await import('./link-index/src/links.svelte')
+    const early = spaceLinks()
+    notes = { 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]\n' }
+    files = []
+    const reached = vi.spyOn(startup, 'reached').mockReturnValue(false)
+    void early.build(ROOT)
+
+    const touched = await early.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+    reached.mockRestore()
+
+    expect(touched).toBe(1)
+    expect(notes['One.md']).toBe('see [[Roadmap]]\n')
+  })
+})
