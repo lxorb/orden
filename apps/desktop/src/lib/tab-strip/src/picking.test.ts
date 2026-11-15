@@ -35,7 +35,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { chosen, gathered, pick, pickingOf, placeBlock, runOf } = await import('./picking.svelte')
 const { moved, nearestSlot } = await import('./layout')
 const { tabMenu, tabMenuTitle } = await import('./menu')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { runEntry } = await import('../../shortcuts/src/registry')
 const { picks } = await import('./drag.svelte')
 

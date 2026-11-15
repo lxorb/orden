@@ -6,7 +6,7 @@ const home = { name: 'Home', root: '/s/Home' }
 const share = vi.hoisted(() => ({ readOnly: false }))
 const written = vi.hoisted(() => [] as string[])
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     spaces: [home],
     activeSpace: home,

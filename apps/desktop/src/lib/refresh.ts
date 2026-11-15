@@ -1,4 +1,4 @@
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export async function refreshHere(): Promise<void> {
   const tab = workspace.active

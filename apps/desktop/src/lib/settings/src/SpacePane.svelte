@@ -17,8 +17,7 @@
   import { settings } from '../../settings.svelte'
   import { folderOf, rootedAt, samePath } from '../../platform/src/api'
   import { joinPath } from '../../platform/src/api'
-  import { workspace } from '../../workspace.svelte'
-  import { noteText, writeNoteText } from '../../workspace/note-text'
+  import { noteText, workspace, writeNoteText } from '../../workspace/src/api'
   import { writeFile } from '../../file-writes/src/api'
   import { type FieldHands, InstructionsField as Field } from './instructions-field.svelte'
 

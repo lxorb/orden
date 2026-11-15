@@ -1,6 +1,6 @@
 import { AGENTS_NAME, joinPath } from './platform/src/api'
 import { writeFile } from './file-writes/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export { AGENTS_NAME }
 

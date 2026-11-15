@@ -21,7 +21,7 @@
   import { invoke, isDesktop, openExternal } from '../../platform/src/api'
   import { takesWords, writes } from '../../typing-pointer'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { favicon, plainOrigin } from '@orden/scan/web-address'
   import { HISTORY_MARK, isOwnPage } from '@orden/scan/own-pages'
   import { searchEngine } from './search-engine.svelte'

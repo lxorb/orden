@@ -83,7 +83,7 @@ vi.mock('./pointers', async (importOriginal) => ({
 }))
 
 const { chats } = await import('./store.svelte')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { chatsCarried } = await import('./leaving')
 const { prompt } = await import('../../ui-kit/src/prompt.svelte')
 

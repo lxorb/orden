@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AssetRow, FileRow, SnapshotRow } from './store'
-import type { Opener } from '../../../openers'
+import type { Opener } from '../../../workspace/src/openers'
 import type { SpaceLinks } from '@orden/scan/note'
 
 const disk = vi.hoisted(() => {
@@ -149,7 +149,7 @@ const { MOST_NOTE_BYTES, SCANNED_AT_ONCE, TOO_LARGE, seed, webInvoke } = await i
 const { stamped, stampOf } = await import('../../../theme/src/stamp')
 const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../../../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../../../welcome')
-const { openerFor } = await import('../../../openers')
+const { openerFor } = await import('../../../workspace/src/openers')
 const { keptAway, NOT_HERE } = await import('../../../away/src/api')
 const { indexed } = await import('@orden/scan/indexed')
 

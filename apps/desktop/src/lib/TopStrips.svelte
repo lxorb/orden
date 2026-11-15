@@ -2,7 +2,7 @@
   import Tabs from './Tabs.svelte'
   import TopStrips from './TopStrips.svelte'
   import { type Frame, tracks } from './panes/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const {
     frame,

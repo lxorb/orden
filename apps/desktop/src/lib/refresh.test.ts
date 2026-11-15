@@ -4,7 +4,7 @@ const place = vi.hoisted(() => ({ active: null as { id: string; kind: string } |
 const steps = vi.hoisted(() => [] as string[])
 const syncing = vi.hoisted(() => ({ passes: 0, status: 'idle', lastError: null as string | null }))
 
-vi.mock('./workspace.svelte', () => ({ workspace: place }))
+vi.mock('./workspace/src/api', () => ({ workspace: place }))
 vi.mock('./web-tab/src/api', () => ({
   pages: {
     step: (id: string, how: string) => {

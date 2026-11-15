@@ -154,7 +154,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { exportCommands } = await import('../../export/src/api')
 const { appMenu } = await import('../../app-menu')

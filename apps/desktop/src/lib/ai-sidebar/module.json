@@ -17,7 +17,8 @@
     "ui-kit",
     "windows",
     "link-index",
-    "protect"
+    "protect",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -39,7 +40,6 @@
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/todos-entry.ts",
     "apps/desktop/src/lib/views.svelte.ts",
-    "apps/desktop/src/lib/when.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/when.ts"
   ]
 }

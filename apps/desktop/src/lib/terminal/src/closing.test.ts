@@ -43,8 +43,8 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../../workspace.svelte')
-const { serveWorkspace } = await import('../../workspace/services')
+const { workspace } = await import('../../workspace/src/api')
+const { serveWorkspace } = await import('../../workspace/src/services')
 serveWorkspace({ mayEnd: (await import('./closing')).mayEnd })
 
 function online(session: string, name = 'Terminal') {
@@ -163,7 +163,7 @@ describe('an online terminal saved in the sidebar, closed', () => {
 
 test("the strip's, the overview's and the keys' closes all ask through the store", () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
-  const store = read('../../workspace.svelte.ts')
+  const store = read('../../workspace/src/workspace.svelte.ts')
   expect(store).toMatch(/async closeAsking[\s\S]{0,200}this\.mayClose\(\[tab\]\)/)
   expect(store).toMatch(/async closeMany[\s\S]{0,200}this\.mayClose\(going\)/)
   expect(store).toMatch(/mayEnd\(closing, this\.tabs\)/)

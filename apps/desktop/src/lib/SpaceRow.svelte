@@ -9,7 +9,7 @@
   import { isNumber } from './space-pick'
   import { spaceSound } from './surfaces.svelte'
   import { sync } from './sync.svelte'
-  import type { Space } from './workspace.svelte'
+  import type { Space } from './workspace/src/api'
 
   const {
     space,

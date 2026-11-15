@@ -2,7 +2,7 @@ import { chosenIcon, chosenTint } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import type { IconTarget } from './icon-choice.svelte'
 import { readSpec, setTerminalIcon } from './terminal/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 function terminalTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)

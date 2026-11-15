@@ -9,7 +9,8 @@
     "ui-kit",
     "tab-kinds",
     "documents",
-    "session"
+    "session",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/account-menu.ts",
@@ -19,7 +20,6 @@
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/write-new.ts"
   ]
 }

@@ -14,7 +14,7 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
 vi.mock('../../shortcuts/src/api', () => ({
   shortcuts: { keyFor: () => null, platform: 'win' },
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
 }))
 vi.mock('./letters.svelte', () => ({

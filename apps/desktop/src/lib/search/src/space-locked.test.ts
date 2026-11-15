@@ -27,7 +27,7 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
   papers: () => Promise.resolve({ papersFor: () => Promise.resolve(), searchPapers: () => [] }),
 }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { unlocks } = await import('../../protect/src/api')
 const { searchSpace } = await import('./space')
 

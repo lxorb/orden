@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Entry } from '../../workspace.svelte'
+import type { Entry } from '../../workspace/src/api'
 import { todayRows, widgetRows } from './widgets.svelte'
 
 function note(name: string, modified: number, path = `/Notes/${name}`): Entry {

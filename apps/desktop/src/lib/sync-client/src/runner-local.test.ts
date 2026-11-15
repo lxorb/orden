@@ -136,9 +136,9 @@ describe('the engine kept signed out', () => {
         deleted: false,
       }),
     ])
-    const { noteRootsMoved, rootsMoved } = await import('../../workspace/roots-moved')
+    const { noteRootsMoved, rootsMoved } = await import('../../workspace/src/roots-moved')
     noteRootsMoved([{ from: '/Vault/Notes', to: '/Spaces/Notes' }])
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     workspace.spaces = [{ id: 'w9', name: 'Notes', root: '/Spaces/Notes' }]
 
     try {

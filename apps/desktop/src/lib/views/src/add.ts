@@ -6,7 +6,7 @@ import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
 import { rows } from '../../rows/src/api'
 import { canWriteAt } from '../../sharing/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { bare, isNoteProperty } from './columns'
 

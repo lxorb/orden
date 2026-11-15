@@ -56,7 +56,7 @@
   import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree/src/api'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './ui-kit/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { spaceDropping } from './tab-strip/src/api'
   import { inside } from './panes/src/api'
   import Twist from './Twist.svelte'

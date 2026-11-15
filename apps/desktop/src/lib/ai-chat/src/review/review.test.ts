@@ -33,15 +33,15 @@ vi.mock('../../../automation/src/api', async (importOriginal) => {
   }
 })
 
-vi.mock('../../../workspace/undoing', () => ({
-  putBack: (step: { path: string; content: string }) => {
-    const path = fake.desk.disk.has(step.path) ? step.path.replace('.md', ' 2.md') : step.path
-    fake.desk.disk.set(path, step.content)
-    return Promise.resolve(path)
-  },
-}))
-
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
+  fileUndoing: () =>
+    Promise.resolve({
+      putBack: (step: { path: string; content: string }) => {
+        const path = fake.desk.disk.has(step.path) ? step.path.replace('.md', ' 2.md') : step.path
+        fake.desk.disk.set(path, step.content)
+        return Promise.resolve(path)
+      },
+    }),
   workspace: {
     get documents() {
       return fake.documents

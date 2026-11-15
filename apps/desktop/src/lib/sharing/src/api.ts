@@ -11,6 +11,7 @@ export {
   canWriteIn,
   isShared,
   isSharedItem,
+  mayCarryBetween,
   othersIn,
   reachedAs,
   reachedByOthers,

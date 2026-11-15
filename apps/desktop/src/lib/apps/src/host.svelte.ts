@@ -308,7 +308,7 @@ async function appWorld(): Promise<{
   ] = await Promise.all([
     import('../../accounts/src/api'),
     import('../../sync-client/src/api'),
-    import('../../workspace.svelte'),
+    import('../../workspace/src/api'),
     import('../../crate/src/api'),
     import('../../platform/src/api'),
   ])

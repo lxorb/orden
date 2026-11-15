@@ -6,7 +6,7 @@ const disk = vi.hoisted(() => ({
   opened: [] as string[],
 }))
 
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 's', name: 'Plans', root: '/space' }],
     activeSpace: { root: '/space' },

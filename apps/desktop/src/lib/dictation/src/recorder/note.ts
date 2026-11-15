@@ -2,7 +2,7 @@ import type { EditorView } from '@orden/editor'
 import { canWriteAt } from '../../../sharing/src/api'
 import { isMarkdownPath } from '../../../platform/src/api'
 import { views } from '../../../views.svelte'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { recordingNoteName } from './transcript'
 
 export function viewFor(path: string): EditorView | null {

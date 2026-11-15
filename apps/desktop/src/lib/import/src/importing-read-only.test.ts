@@ -17,7 +17,7 @@ const held = vi.hoisted(
 )
 const NOTES = { id: 'notes', name: 'Notes', root: '/notes' }
 const opened = vi.hoisted((): [string, string, string | null][] => [])
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get spaces() {
       return held.spaces

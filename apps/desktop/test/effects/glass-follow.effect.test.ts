@@ -56,7 +56,7 @@ window.matchMedia = (query: string) =>
     removeEventListener: () => undefined,
   }) as unknown as MediaQueryList
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { theme } = await import('../../src/lib/theme/src/theme.svelte')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { chrome } = await import('../../src/lib/theme/src/chrome.svelte')

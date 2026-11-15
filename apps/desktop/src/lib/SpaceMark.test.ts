@@ -3,7 +3,7 @@ import { render } from 'svelte/server'
 
 const icons: Record<string, string | null> = {}
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     iconFor: (id: string) => icons[id] ?? null,
     tintFor: () => null,

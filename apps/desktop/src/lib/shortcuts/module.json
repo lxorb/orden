@@ -12,7 +12,8 @@
     "tab-fill",
     "ui-kit",
     "usage",
-    "panes"
+    "panes",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/focus.ts",
@@ -25,7 +26,6 @@
     "apps/desktop/src/lib/space-picker.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/tab-cycle.svelte.ts",
-    "apps/desktop/src/lib/todos-entry.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/todos-entry.ts"
   ]
 }

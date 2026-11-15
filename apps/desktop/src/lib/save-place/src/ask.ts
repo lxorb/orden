@@ -1,5 +1,5 @@
 import { mount, unmount } from 'svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'
 import SavePlace from './SavePlace.svelte'
 

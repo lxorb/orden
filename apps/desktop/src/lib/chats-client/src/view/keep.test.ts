@@ -10,7 +10,7 @@ vi.mock('../../../file-writes/src/api', async (original) => ({
     return Promise.resolve()
   },
 }))
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     freeName: (_folder: string, wanted: string) => wanted,
     freeNameOnDisk: (_folder: string, wanted: string) => Promise.resolve(wanted),

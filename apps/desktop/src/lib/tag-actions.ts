@@ -2,7 +2,7 @@ import { message } from './ui-kit/src/api'
 import { settings } from './settings.svelte'
 import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 function refusedAsTag(name: string): boolean {
   if (isTagName(name)) return false

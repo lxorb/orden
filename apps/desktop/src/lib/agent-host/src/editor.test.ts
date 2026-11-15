@@ -16,7 +16,7 @@ const tabs: FakeTab[] = [
   { id: 'n2', kind: 'note', paneId: 'p1', note: { path: '/s/Work/Other.md' } },
 ]
 const showing: Record<string, string> = { p1: 'n1' }
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get tabs() {
       return tabs

@@ -43,7 +43,7 @@ const workspace = vi.hoisted(() => ({
 const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
 const session = vi.hoisted(() => ({ forgets: [] as (() => void)[] }))
 
-vi.mock('./workspace.svelte', () => ({ workspace }))
+vi.mock('./workspace/src/api', () => ({ workspace }))
 vi.mock('./accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',

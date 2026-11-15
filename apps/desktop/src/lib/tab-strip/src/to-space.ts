@@ -1,9 +1,14 @@
 import type { MenuEntry } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
-import { type Space, workspace } from '../../workspace.svelte'
-import { mayCarry } from '../../workspace/chat-carry'
-import { movingOf, spacesFor } from '../../workspace/space-move'
+import {
+  mayCarry,
+  movingOf,
+  type Space,
+  spaceMoving,
+  spacesFor,
+  workspace,
+} from '../../workspace/src/api'
 
 const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.includes(one.id))
 
@@ -21,7 +26,7 @@ export function spacesOfPaths(paths: readonly string[]): Space[] {
 }
 
 export async function toSpace(ids: readonly string[], space: string): Promise<void> {
-  const { moveToSpace } = await import('../../workspace/moving-space')
+  const { moveToSpace } = await spaceMoving()
   await moveToSpace(ids, space)
 }
 

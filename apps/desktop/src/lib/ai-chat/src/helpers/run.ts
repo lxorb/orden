@@ -1,4 +1,4 @@
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import type { Effort, Mode, Thread } from '../../../ai-providers/src/api'
 import { usable, ai } from '../../../ai-providers/src/api'
 import { answerFor, type Helper, helpers } from './helpers.svelte'

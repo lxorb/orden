@@ -77,7 +77,7 @@ vi.mock('./commands', async (original) => ({
   cancelJob: () => Promise.resolve(),
 }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { menu } = await import('../../menu.svelte')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')

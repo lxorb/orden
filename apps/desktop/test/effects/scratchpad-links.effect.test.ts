@@ -40,7 +40,7 @@ const { loadScratchpadCard, pad } = await import('../../src/lib/scratchpad/src/a
 const { default: ScratchpadCard } = await loadScratchpadCard()
 const scratchpad = await pad()
 const { links } = await import('../../src/lib/link-index/src/api')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { startup } = await import('../../src/lib/startup.svelte')
 
 let target: HTMLElement

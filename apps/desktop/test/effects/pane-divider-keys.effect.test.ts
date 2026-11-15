@@ -5,7 +5,7 @@ vi.mock('../../src/lib/Pane.svelte', () => ({ default: () => undefined }))
 
 HTMLElement.prototype.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 800)
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const PaneTree = (await import('../../src/lib/PaneTree.svelte')).default
 
 let shown: ReturnType<typeof mount> | null = null

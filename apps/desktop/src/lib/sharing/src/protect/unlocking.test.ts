@@ -9,7 +9,7 @@ vi.mock('../../../protect/src/device', () => ({
 }))
 
 const { prompt } = await import('../../../ui-kit/src/prompt.svelte')
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const { protect, unprotect } = await import('./unlocking')
 

@@ -27,15 +27,15 @@ describe('the words of a note written by anything but its own editor', () => {
       'documents/src/documents.svelte.ts',
       'file-writes/src/api.ts',
       'link-index/src/links.svelte.ts',
-      'workspace/note-text.ts',
-      'workspace/undoing.ts',
+      'workspace/src/note-text.ts',
+      'workspace/src/undoing.ts',
     ])
   })
 
   test('and only a change made for every note alike may go through its lock', () => {
     expect(using(/throughLocks: true/)).toEqual([
-      'workspace/own-keys-moved.ts',
-      'workspace/setext.ts',
+      'workspace/src/own-keys-moved.ts',
+      'workspace/src/setext.ts',
     ])
   })
 })

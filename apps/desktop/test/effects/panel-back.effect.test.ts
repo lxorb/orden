@@ -2,7 +2,7 @@ import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { closeOnBack } from '../../src/lib/ui-kit/src/backstack.svelte'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 import { panels } from '../../src/lib/session/src/api'
 import { computed, root, watch } from './runes.svelte'
 

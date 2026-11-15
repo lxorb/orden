@@ -5,7 +5,7 @@
   import { graphSurface, held } from './surfaces.svelte'
   import { links, type Outgoing, type Reference } from './link-index/src/api'
   import { insideSpace } from './platform/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { howFor, type OpenHow, tabAsk } from './new-tab'
   import HitList from './HitList.svelte'
 

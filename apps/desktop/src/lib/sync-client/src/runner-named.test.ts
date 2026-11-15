@@ -25,7 +25,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
 
 const { runner } = await import('./runner.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { settleNames } = await import('../../space-owed')
 
 interface Open {

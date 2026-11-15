@@ -195,7 +195,7 @@ describe("an agent's session", () => {
 
 describe('Full permissions', () => {
   test('an agent that asks nothing has its tab shown without a question, behind the reader', async () => {
-    const { workspace } = await import('../../src/lib/workspace.svelte')
+    const { workspace } = await import('../../src/lib/workspace/src/api')
     workspace.openBlank('Reading', '# Reading')
     const reading = workspace.activeTabId
     fake.connect('claude', 'Claude Code')

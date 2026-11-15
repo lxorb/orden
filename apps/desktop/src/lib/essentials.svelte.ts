@@ -6,7 +6,7 @@ import { moving } from './list-landing.svelte'
 import { canWriteAt } from './sharing/src/api'
 import { folderOf, insideSpace, samePath } from './platform/src/api'
 import { filedUnder, MOST_BOOKMARKS, sameBookmark } from './space-kept/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 class Landing {
   at = $state<number | null>(null)

@@ -33,7 +33,7 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
 await import('../../pdf/src/api')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 
 const ROOT = '/theirs'

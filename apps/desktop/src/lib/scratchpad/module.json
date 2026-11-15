@@ -13,7 +13,8 @@
     "ui-kit",
     "parting",
     "link-index",
-    "file-writes"
+    "file-writes",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/composer.ts",
@@ -22,7 +23,6 @@
     "apps/desktop/src/lib/keyboard-home.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/open-link.ts",
-    "apps/desktop/src/lib/unread.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/unread.svelte.ts"
   ]
 }

@@ -3,7 +3,7 @@ import { freePath } from '@orden/markdown/paths'
 import { message, prompt } from '../../ui-kit/src/api'
 import { fileClipboard } from '../../list-landing.svelte'
 import { folderOf, nameOf, invoke, joinPath } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { OutsideStep } from '../../file-undo/src/api'
 import {
   type Clash,

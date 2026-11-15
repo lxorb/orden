@@ -1,4 +1,4 @@
-import type { Space } from '../../workspace.svelte'
+import type { Space } from '../../workspace/src/api'
 import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
 import { landSpaces } from './sidebar-landing'
 import { zenSession, type ZenProfile } from './zen-profiles'

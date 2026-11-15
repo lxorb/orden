@@ -18,7 +18,7 @@
   import { roving } from '../../roving'
   import { folderOf, insideSpace } from '../../platform/src/api'
   import Twist from '../../Twist.svelte'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
 
   interface Row {
     entry: Entry

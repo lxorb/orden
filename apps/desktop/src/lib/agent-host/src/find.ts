@@ -4,7 +4,7 @@ import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from '../../search/src/api'
 import { notePath, relativeTo } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import {
   type Call,
   count,

@@ -51,7 +51,7 @@ import { webHref } from './open-link'
 import { recordingAt, transcribeEmbed } from './dictation/src/api'
 import { openExternal, isMarkdownPath, noteName, relativeTo } from './platform/src/api'
 import { shortcuts } from './shortcuts/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 import { unlocks } from './protect/src/api'
 import { viewport } from './ui-kit/src/api'
 

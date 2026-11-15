@@ -98,7 +98,7 @@ import {
 import { exportSpace } from '../../web-backend/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
 import { theme } from '../../theme/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'
 import { askPlace } from '../../save-place/src/api'
 import { tabOps, tabToSpace } from '../../tab-strip/src/api'

@@ -8,7 +8,7 @@ import { settings } from '../../src/lib/settings.svelte'
 import { theme } from '../../src/lib/theme/src/theme.svelte'
 import { store } from '../../src/lib/theme-looks/src/gallery/store.svelte'
 import { picking, pickTheme } from '../../src/lib/theme-looks/src/picker/picking.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 import '../../src/lib/theme-ports'
 
 await Promise.all([

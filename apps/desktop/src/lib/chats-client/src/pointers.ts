@@ -2,7 +2,7 @@ import type { Entry } from '@orden/contracts'
 import { CHAT_EXTENSION, chatOf, chatText } from '@orden/chats'
 import { nameOf, within, invoke, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { makeChat } from './http'
 

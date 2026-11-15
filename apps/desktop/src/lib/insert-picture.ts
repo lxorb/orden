@@ -5,7 +5,7 @@ import { busy, message, viewport } from './ui-kit/src/api'
 import { chooseFiles, PICTURES } from './choose-files'
 import { settings } from './settings.svelte'
 import { usage } from './usage.svelte'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export function canInsertPicture(view?: EditorView): boolean {
   return !!view && !view.state.readOnly && !!workspace.active

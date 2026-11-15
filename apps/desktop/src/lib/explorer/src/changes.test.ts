@@ -49,7 +49,7 @@ const workspace = {
   bringIn: vi.fn(() => Promise.resolve()),
   loadTree: vi.fn(() => Promise.resolve()),
 }
-vi.mock('../../workspace.svelte', () => ({ workspace }))
+vi.mock('../../workspace/src/api', () => ({ workspace }))
 
 const fileClipboard = { paths: [] as string[], cut: false, hold: vi.fn() }
 vi.mock('../../list-landing.svelte', () => ({ fileClipboard }))

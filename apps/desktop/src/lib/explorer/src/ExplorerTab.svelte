@@ -6,7 +6,7 @@
   import { fileClipboard } from '../../list-landing.svelte'
   import { readableSize } from '../../usage.svelte'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { newFolder, paste, removeForGood, trash } from './changes'
   import { jobs } from './jobs.svelte'
   import ExplorerBar from './ExplorerBar.svelte'

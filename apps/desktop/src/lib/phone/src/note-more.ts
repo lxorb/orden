@@ -2,7 +2,7 @@ import { DIVIDER, menu, trim, type MenuEntry } from '../../menu.svelte'
 import { noteMenu } from '../../note-menu'
 import { tabMenus } from '../../tab-strip/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS, type TabPanel } from '../../tab-kinds/src/api'
 
 const PANEL_WORDS: Record<TabPanel, () => string> = {

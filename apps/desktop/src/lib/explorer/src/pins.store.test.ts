@@ -38,7 +38,7 @@ const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { places } = await import('./places.svelte')
 const { put, renameTo, transfer } = await import('./commands')

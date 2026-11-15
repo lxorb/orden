@@ -33,7 +33,7 @@ import { LocalEcho } from './online/echo-view'
 import { marks } from './online/marks.svelte'
 import { resumeCommand } from './online/resume'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import {
   dropHistory,
   fitted,

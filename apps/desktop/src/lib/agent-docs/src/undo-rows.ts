@@ -1,5 +1,5 @@
 import type { CommandExtension } from '@orden/contracts'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { Agent } from './presence'
 import { touchedBy } from './touched'
 

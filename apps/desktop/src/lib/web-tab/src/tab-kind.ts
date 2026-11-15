@@ -1,7 +1,7 @@
 import type { TabKindParts, TabMenuEntry } from '@orden/contracts'
 import { shortcuts } from '../../shortcuts/src/api'
 import { copyText } from '../../ui-controls/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { muteSite } from './mute'
 import { pages } from './pages.svelte'
 

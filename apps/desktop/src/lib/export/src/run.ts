@@ -35,7 +35,7 @@ import {
 import { type Picture, readPictures, sourcesIn } from './pictures'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export interface Note {
   source: string

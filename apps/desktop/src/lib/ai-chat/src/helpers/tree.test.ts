@@ -16,7 +16,7 @@ vi.mock('../chat/threads', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'Notes', root: '/n' }],
     activeSpace: null,

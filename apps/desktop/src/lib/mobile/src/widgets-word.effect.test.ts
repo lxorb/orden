@@ -19,7 +19,7 @@ vi.mock('../../platform/src/api', async (original) => ({
         }
       : undefined,
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     tabs: [],
     notes: [],

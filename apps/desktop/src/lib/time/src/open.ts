@@ -1,5 +1,5 @@
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../settings.svelte'
 import { type Spec, writeSpec } from './spec'
 

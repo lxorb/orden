@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '@orden/contracts'
 import { basesOn } from '../../settings.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { askReader } from './ask'
 import { bookmarks } from './bookmarks'
 import { type Call, done, gatedBy, reachable, type Verb, verbsOf } from '../../agent-verbs/src/api'

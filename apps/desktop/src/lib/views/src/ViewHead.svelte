@@ -5,7 +5,7 @@
   import { segmented } from '../../ui-kit/src/api'
   import { relativeTo } from '../../platform/src/api'
   import { viewport } from '../../ui-kit/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
   import AutomationsBuilder from './AutomationsBuilder.svelte'
   import ButtonBuilder from './ButtonBuilder.svelte'

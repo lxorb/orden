@@ -2,7 +2,7 @@ import { providePort, type Stopping } from '@orden/contracts'
 import { chatSends, chatStore } from './ai-chat/src/api'
 import { invoke } from './platform/src/api'
 import { ptyOf, runningTabs } from './terminal/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 providePort('quit.terminal', {
   rows: async (window, idle) => {

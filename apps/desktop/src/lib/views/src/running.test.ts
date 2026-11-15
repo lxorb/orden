@@ -36,7 +36,7 @@ vi.mock('./act', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./act')>()),
   writeEach: async () => writing.changed,
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'shared', name: 'Shared', root: '/s/Shared' }],
     move: async (from: string, to: string) => void moved.push(`${from} -> ${to}`),

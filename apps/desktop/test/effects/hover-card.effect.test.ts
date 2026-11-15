@@ -19,7 +19,7 @@ const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte
 const { previewDelay } = await import('../../src/lib/tab-strip/src/preview-delay.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
-type Tab = import('../../src/lib/workspace.svelte').Tab
+type Tab = import('../../src/lib/workspace/src/api').Tab
 
 function tab(id: string, shown: string): Tab {
   return { id, shown, kind: 'note', path: null, paneId: 'nowhere' } as unknown as Tab
@@ -134,7 +134,7 @@ test('comes at once for a tab the keyboard arrives at', async () => {
 })
 
 test('says the space a page of another space is from, and nothing for the space on screen', async () => {
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   workspace.spaces = [
     { id: 'work', name: 'Work', root: '/spaces/Work' },
     { id: 'home', name: 'Home', root: '/spaces/Home' },

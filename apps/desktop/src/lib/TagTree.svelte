@@ -7,7 +7,7 @@
   import { canWriteAt } from './sharing/src/api'
   import { renameTag, removeTag } from './tag-actions'
   import type { TagNode } from './tag-tree'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import TagTree from './TagTree.svelte'
   import Twist from './Twist.svelte'
   import { dur, slide } from './platform/src/api'

@@ -143,7 +143,7 @@ const settle = (ms = 50) => new Promise((done) => setTimeout(done, ms))
 async function aWindow() {
   vi.resetModules()
   await import('../../sync-ports')
-  const { workspace } = await import('../../workspace.svelte')
+  const { workspace } = await import('../../workspace/src/api')
   Object.assign(workspace, { spaces: [{ root: '/Notes', name: 'Notes' }] })
   const { runner } = await import('./runner.svelte')
   const { account } = await import('../../accounts/src/account.svelte')

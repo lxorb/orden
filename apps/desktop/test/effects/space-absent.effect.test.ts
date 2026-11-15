@@ -17,7 +17,7 @@ const { Disk, memoryStorage } = await import('../disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 
 test('a set out of sight stays when its space leaves the list', async () => {
   workspace.spaces = [
@@ -25,7 +25,7 @@ test('a set out of sight stays when its space leaves the list', async () => {
     { id: 'food', name: 'Food', root: '/spaces/Food' },
   ]
   workspace.activeSpaceId = 'work'
-  await import('../../src/lib/workspace/sets.svelte')
+  await import('../../src/lib/workspace/src/sets.svelte')
   flushSync()
   workspace.openWebsite()
   await workspace.selectSpace('food')

@@ -102,7 +102,7 @@ providePort('web.pages', {
 })
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 
-vi.mock('../../workspace.svelte', () => {
+vi.mock('../../workspace/src/api', () => {
   let active: string | null = null
   return {
     workspace: {

@@ -14,7 +14,7 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')
 const SyncPane = (await import('../../src/lib/settings/src/SyncPane.svelte')).default
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import SpaceMark from './SpaceMark.svelte'
-  import type { Space } from './workspace.svelte'
+  import type { Space } from './workspace/src/api'
 
   const { space, on = false }: { space: Space; on?: boolean } = $props()
 </script>

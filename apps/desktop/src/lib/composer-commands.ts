@@ -3,8 +3,8 @@ import type { Command } from './commands/src/api'
 import type { MenuEntry } from './menu.svelte'
 import { shownName, isMarkdownPath } from './platform/src/api'
 import { canWriteAt, canWriteIn } from './sharing/src/api'
-import { carvable, mergeable } from './workspace/composing'
-import { workspace } from './workspace.svelte'
+import { carvable, mergeable } from './workspace/src/composing'
+import { workspace } from './workspace/src/api'
 
 function mergeTargets(exclude: string) {
   return workspace.notes.filter((note) => note.path !== exclude && isMarkdownPath(note.path))

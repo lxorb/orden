@@ -10,7 +10,7 @@
   import { when } from '../../when'
   import { cubicOut } from 'svelte/easing'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { type Version, versionsOf, versionText } from './versions'
   import { trap } from '../../ui-controls/src/api'
 

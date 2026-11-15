@@ -99,7 +99,7 @@ function engineWithSpaces(waiting: ReadonlySet<string>) {
 
 describe('a browser signed out of', () => {
   test('drops the spaces whose every change reached the account and keeps the rest for it alone', async () => {
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     const { leftBy, leftByAnother } = await import('../../left-spaces')
     workspace.spaces = [
       { id: '1', name: 'Notes', root: '/Notes' },
@@ -123,7 +123,7 @@ describe('a browser signed out of', () => {
   })
 
   test('keeps every space, as nobody’s, when the account itself was deleted', async () => {
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     const { leaveSpaces, leftBy } = await import('../../left-spaces')
     workspace.spaces = [{ id: '1', name: 'Notes', root: '/Notes' }]
     leaveSpaces('u3', ['/Notes'])

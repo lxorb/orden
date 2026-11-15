@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Part } from '../../../ai-providers/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { diffCount } from '@orden/markdown/line-diff'
   import { type Preview, previewOf } from './preview'
   import Tally from './Tally.svelte'

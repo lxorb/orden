@@ -12,7 +12,7 @@ vi.mock('./platform/src/api', async (importOriginal) => ({
 }))
 
 const { SHORTCUTS } = await import('./shortcuts/src/api')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 await import('./tab-strip/src/api')
 const { appCommands } = await import('./commands/src/api')
 

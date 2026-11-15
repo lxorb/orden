@@ -10,7 +10,7 @@ vi.mock('../../../ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 const { hiddenKinds } = await import('../../../settings.svelte')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const { protectEntries } = await import('./entries')

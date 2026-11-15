@@ -41,7 +41,7 @@ const { loadScratchpadCard, pad, shown, toggleScratchpad } =
   await import('../../src/lib/scratchpad/src/api')
 const { default: ScratchpadCard } = await loadScratchpadCard()
 const scratchpad = await pad()
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 await import('../../src/lib/workspace-ports')
 const { menu } = await import('../../src/lib/menu.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/src/menu')

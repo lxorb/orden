@@ -10,7 +10,7 @@ import {
   onDisk,
   samePath,
 } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 

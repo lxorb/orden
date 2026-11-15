@@ -8,7 +8,7 @@ import {
 } from '@orden/bases'
 import { copyText } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { asOneUndo, writeEach } from './act'
 import { grouped } from './column-menu'
 import { bare } from './columns'

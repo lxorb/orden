@@ -41,7 +41,7 @@ vi.mock('../../../search/src/api', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [WORK, HOME],
     activeSpace: HOME,

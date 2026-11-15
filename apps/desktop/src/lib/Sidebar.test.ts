@@ -16,7 +16,7 @@ vi.mock('./surfaces.svelte', () => ({
   tabOverview: { open: false },
 }))
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('./settings.svelte')

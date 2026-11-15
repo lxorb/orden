@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({ trusted: true }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get active() {
       return {

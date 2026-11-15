@@ -1,5 +1,5 @@
 import { openOut, printNote } from './export/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export async function printOpen(): Promise<void> {
   const kind = workspace.active?.kind

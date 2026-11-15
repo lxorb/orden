@@ -43,7 +43,7 @@
   import { viewport } from '../../ui-kit/src/api'
   import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
   import { wholeRows } from './whole-rows'

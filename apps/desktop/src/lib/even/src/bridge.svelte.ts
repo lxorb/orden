@@ -24,7 +24,7 @@ import { type Row, type Settings, Shell, type Wish, type Words, type World } fro
 import { spokenTask, Today } from './today'
 import { type Listening, Voice } from './voice'
 import { rooms } from '../../collab/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 const SETTLE = 700
 

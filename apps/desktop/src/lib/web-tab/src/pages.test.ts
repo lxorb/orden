@@ -1305,7 +1305,7 @@ describe('a page a person presses in or types into', () => {
   beforeEach(async () => {
     did = []
     inFront = 'a'
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     vi.spyOn(workspace, 'activeTabId', 'get').mockImplementation(() => inFront)
     vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([{ id: 'a' }, { id: 'b' }] as Tab[])
     vi.spyOn(workspace, 'activate').mockImplementation((id) => {
@@ -1354,7 +1354,7 @@ describe('a tab that closes itself when its download starts', () => {
   beforeEach(async () => {
     did = []
     inFront = 'b'
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     vi.spyOn(workspace, 'activeTabId', 'get').mockImplementation(() => inFront)
     vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([{ id: 'a' }, { id: 'b' }] as Tab[])
     vi.spyOn(workspace, 'openPage').mockImplementation((_url, _ask, opener) => {

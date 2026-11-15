@@ -13,7 +13,7 @@ import {
 } from '../../../ui-controls/src/api'
 import { isDesktop } from '../../../platform/src/api'
 import { paletteOf } from '../wallpaper/floors'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { dominant } from './colours'
 import { grounds } from './grounds.svelte'
 import { pixelsOf } from './pictures'

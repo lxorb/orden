@@ -15,7 +15,7 @@ const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { appCommands } = await import('./commands/src/api')
 const { offeredKinds } = await import('./new-kinds')
 const { openPass } = await import('./pass-sync/src/open')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 
 beforeEach(() => {
   store.clear()

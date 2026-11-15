@@ -19,7 +19,7 @@ const NOTES: Record<string, string> = {
   'Data/real.md': 'real',
 }
 
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'space', root: ROOT }],
     activeSpace: null,

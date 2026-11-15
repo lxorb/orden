@@ -82,7 +82,7 @@
   import { usage } from './usage.svelte'
   import { viewport } from './ui-kit/src/api'
   import { views } from './views.svelte'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { keepsScroll, scrollKeyOf } from './kept-scroll'
   import { paneCorners } from './pane-corners.svelte'
 

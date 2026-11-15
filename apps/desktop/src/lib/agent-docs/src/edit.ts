@@ -1,6 +1,6 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { applied, changeOf, type Edit } from '@orden/scan/search/replace'
-import type { Keeping } from '../../workspace/note-text'
+import type { Keeping } from '../../workspace/src/api'
 import { waited, folderOf, movedTo, nameOf, samePath, within } from '../../platform/src/api'
 import type { NoteDoc } from '../../documents/src/api'
 import type { Selected } from './anchors'

@@ -2,7 +2,7 @@ import { account } from './accounts/src/api'
 import { prompt } from './ui-kit/src/api'
 import { meetingAgain, MIRRORS_KEY, returning, savedRecord } from './sync-mirror/src/api'
 import { rootedAt, stored } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export async function settleLocalNotes(): Promise<void> {
   try {

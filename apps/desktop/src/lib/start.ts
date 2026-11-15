@@ -27,7 +27,7 @@ import {
   written,
 } from './parting/src/api'
 import { warmDoors } from './surfaces.svelte'
-import type { Across } from './workspace/across'
+import type { Across } from './workspace/src/across'
 import { recovery } from './history/src/api'
 import { reloading } from './reloading.svelte'
 import { record } from './sync-mirror/src/api'
@@ -43,7 +43,7 @@ import { toolbar } from './toolbar.svelte'
 import { trash } from './trash/src/api'
 import { installStaged, ready, settledForInstaller, updates } from './updates/src/api'
 import { startRunner } from './views/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 import { mayStop, providePort } from '@orden/contracts'
 
 if (!__EVEN_PLUGIN__) {
@@ -202,7 +202,7 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./workspace/blank-tabs.svelte'))
+    void startup.turn('right').then(() => import('./workspace/src/blank-tabs.svelte'))
   }
 
   if (!__EVEN_PLUGIN__)
@@ -237,7 +237,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     let fetched: Promise<Across> | null = null
     const across = () =>
-      (fetched ??= import('./workspace/across').then(({ startAcross }) => startAcross()))
+      (fetched ??= import('./workspace/src/across').then(({ startAcross }) => startAcross()))
     workspace.acrossWhenWriting(across)
     void startup.turn('rooms').then(across)
   }
@@ -245,7 +245,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('rooms')
-      .then(() => import('./workspace/outside.svelte').then(({ hearOutside }) => hearOutside()))
+      .then(() => import('./workspace/src/outside.svelte').then(({ hearOutside }) => hearOutside()))
   }
 
   let stopAnywhere: (() => void) | null = null

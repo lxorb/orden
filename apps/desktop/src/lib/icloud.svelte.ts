@@ -28,7 +28,7 @@ class ICloud {
     }
 
     this.coming.delete(one.path)
-    void import('./workspace.svelte').then(({ workspace }) => workspace.loadTree())
+    void import('./workspace/src/api').then(({ workspace }) => workspace.loadTree())
   }
 }
 

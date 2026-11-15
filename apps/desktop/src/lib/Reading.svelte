@@ -25,7 +25,7 @@
   import { tabAsk } from './new-tab'
   import { theme } from './theme/src/api'
   import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
   import {
     blockIds,

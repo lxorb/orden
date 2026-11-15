@@ -1,4 +1,4 @@
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { plainOrigin } from '@orden/scan/web-address'
 import { clipNote, clipSource } from './note'
 import { pages } from './pages.svelte'

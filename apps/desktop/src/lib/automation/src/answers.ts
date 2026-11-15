@@ -6,7 +6,7 @@ import { links } from '../../link-index/src/api'
 import { scanHeadings } from '../../outline'
 import { relativeTo, currentWindow } from '../../platform/src/api'
 import { views } from '../../views.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { Said } from './args'
 import { noteFor, spaceFor } from './space'
 

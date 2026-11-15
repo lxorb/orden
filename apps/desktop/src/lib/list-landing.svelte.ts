@@ -13,7 +13,7 @@ import {
 } from './drag-paths'
 import { shortcuts } from './shortcuts/src/api'
 import { within } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 class FileClipboard {
   paths = $state<string[]>([])

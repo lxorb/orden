@@ -11,7 +11,7 @@ vi.mock('../../src/lib/tab-strip/src/to-space', () => ({
   },
 }))
 
-vi.mock('../../src/lib/workspace.svelte', () => ({
+vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     tabs: [{ id: 't1' }],
     spaces: [

@@ -33,9 +33,9 @@ vi.mock('./sharing/src/api', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { place, unkeepInto } = await import('./essentials.svelte')
-type Entry = import('./workspace.svelte').Entry
+type Entry = import('./workspace/src/api').Entry
 
 const file = (path: string): Entry => ({
   name: path.split('/').pop() ?? path,

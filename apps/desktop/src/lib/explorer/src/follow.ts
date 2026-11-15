@@ -1,4 +1,4 @@
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { folderName } from './crumbs'
 import { pins } from './pins.svelte'
 import { readSpec, specMoved, writeSpec } from './spec'

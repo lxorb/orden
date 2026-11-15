@@ -5,7 +5,7 @@ vi.mock('../../link-index/src/api', () => ({ links: { name: 'links' } }))
 vi.mock('../../search.svelte', () => ({ search: {} }))
 vi.mock('../../settings.svelte', () => ({ settings: {} }))
 vi.mock('../../platform/src/tauri', () => ({ invoke: () => Promise.resolve(null) }))
-vi.mock('../../workspace.svelte', () => ({ workspace: {} }))
+vi.mock('../../workspace/src/api', () => ({ workspace: {} }))
 
 const { evaluate } = await import('./eval')
 

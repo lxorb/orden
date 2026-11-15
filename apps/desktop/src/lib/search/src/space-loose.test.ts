@@ -50,7 +50,7 @@ vi.mock('../../away/src/api', () => ({
   },
 }))
 
-await import('../../workspace.svelte')
+await import('../../workspace/src/api')
 const { searchSpace } = await import('./space')
 
 describe('a search in a browser that keeps some notes away', () => {

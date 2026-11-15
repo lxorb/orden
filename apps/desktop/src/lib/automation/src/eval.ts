@@ -2,7 +2,7 @@ import { links } from '../../link-index/src/api'
 import { search } from '../../search.svelte'
 import { settings } from '../../settings.svelte'
 import { invoke } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { portOf } from '@orden/contracts'
 
 async function working(path: string): Promise<string | null> {

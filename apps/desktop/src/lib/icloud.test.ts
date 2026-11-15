@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vitest'
 
 const loadTree = vi.fn(() => Promise.resolve())
-vi.mock('./workspace.svelte', () => ({ workspace: { loadTree } }))
+vi.mock('./workspace/src/api', () => ({ workspace: { loadTree } }))
 
 const { icloud } = await import('./icloud.svelte')
 

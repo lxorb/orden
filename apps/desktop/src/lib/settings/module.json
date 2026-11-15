@@ -30,7 +30,8 @@
     "sync-client",
     "sync-mirror",
     "trash",
-    "quitting"
+    "quitting",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/AiPane.svelte",
@@ -57,10 +58,6 @@
     "apps/desktop/src/lib/toolbar.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/when.ts",
-    "apps/desktop/src/lib/while-here.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/hidden-tabs.svelte.ts",
-    "apps/desktop/src/lib/workspace/note-text.ts",
-    "apps/desktop/src/lib/workspace/sets.ts"
+    "apps/desktop/src/lib/while-here.ts"
   ]
 }

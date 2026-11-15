@@ -1,7 +1,7 @@
 import { copyText } from '../../ui-controls/src/api'
 import { headingAt, lineOf, scanHeadings } from '../../outline'
 import { relativeTo } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export function linkTo(space: string, path: string, heading?: string | null): string {
   const said = new URLSearchParams({ space, path })

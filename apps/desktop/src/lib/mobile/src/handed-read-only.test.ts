@@ -69,7 +69,7 @@ vi.mock('../../task-actions', () => ({
     return Promise.resolve({ path: `${options.root}/Inbox.md`, line: 0 })
   },
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get spaces() {
       return world.spaces

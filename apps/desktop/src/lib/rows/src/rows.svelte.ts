@@ -4,7 +4,7 @@ import { untrack } from 'svelte'
 import { links } from '../../link-index/src/api'
 import type { SpaceLinks } from '@orden/scan/note'
 import { insideSpace, invoke, isVault, breathe, readText } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { type RowsListener, RowsStore } from './store'
 import { type RowChange, writeRow } from './write'
 

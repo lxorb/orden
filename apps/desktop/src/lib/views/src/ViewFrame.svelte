@@ -3,7 +3,7 @@
   import { keyElsewhere } from '../../layer-keys'
   import { shortcuts } from '../../shortcuts/src/api'
   import { arrive } from '../../ui-kit/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import AddRow from './AddRow.svelte'
   import BoardLayout from './BoardLayout.svelte'
   import CardsLayout from './CardsLayout.svelte'

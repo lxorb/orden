@@ -8,7 +8,7 @@ import { modes } from '../../modes.svelte'
 import { paperInches } from '../../page-setup'
 import { settings } from '../../settings.svelte'
 import { notePath, relativeTo, invoke, decoded } from '../../platform/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { type Entry, workspace } from '../../workspace/src/api'
 import { notes } from './docs'
 import { CAPTURE_AS, type CaptureAs, type Code, type Overview } from '../../agent-protocol/src/api'
 import {

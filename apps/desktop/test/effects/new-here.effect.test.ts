@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import NewHere from '../../src/lib/NewHere.svelte'
 import { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/lib/settings.svelte'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 
 vi.mock('../../src/lib/pass-sync/src/api', () => ({ openPass: () => undefined }))
 

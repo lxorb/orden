@@ -6,7 +6,7 @@
   import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/src/api'
   import { views } from './views.svelte'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const {
     doc = '',

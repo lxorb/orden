@@ -1,6 +1,6 @@
 import { keepAsTab } from '../../essentials.svelte'
 import { insideSpace } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export async function droppedEssential(
   index: number,

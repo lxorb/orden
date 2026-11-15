@@ -16,7 +16,7 @@
   import SpaceBadge from './SpaceBadge.svelte'
   import { spendClick } from './spent-click'
   import { trap } from './ui-controls/src/api'
-  import { type Space, workspace } from './workspace.svelte'
+  import { type Space, workspace } from './workspace/src/api'
 
   const { close }: { close: () => void } = $props()
 

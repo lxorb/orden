@@ -24,7 +24,7 @@ const { newFileRows } = await import('../../row-menu')
 const { openBaseFile } = await import('./open')
 const { createDatabase } = await import('./new-database')
 const { copiesToBase } = await import('./save')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 
 beforeEach(() => {
   store.clear()

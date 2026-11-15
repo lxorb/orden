@@ -13,7 +13,14 @@
   import { webPages, whenLoaded } from '@orden/contracts'
   import { isDraft } from '../../documents/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import {
+    mayCarry,
+    movingOf,
+    spaceMoving,
+    spaceSets,
+    spacesFor,
+    workspace,
+  } from '../../workspace/src/api'
   import {
     aimed,
     boxToCanvas,
@@ -37,10 +44,8 @@
   import { keep, storedText } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { mayCarry } from '../../workspace/chat-carry'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import type { Frame } from '../../panes/src/api'
-  import { movingOf, spacesFor } from '../../workspace/space-move'
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
@@ -265,11 +270,7 @@
 
   let sets = $state<{ frameOf: (key: string) => Frame | null } | null>(null)
   $effect(() => {
-    if (all && !sets)
-      return whenLoaded(
-        () => import('../../workspace/sets.svelte'),
-        (one) => (sets = one.sets),
-      )
+    if (all && !sets) return whenLoaded(spaceSets, (one) => (sets = one.sets))
   })
 
   const shownKeys = $derived.by((): string[] => {
@@ -1334,7 +1335,7 @@
 
   function drop(ids: readonly string[], landing: Landing) {
     if (landing.kind === 'space') {
-      void import('../../workspace/moving-space')
+      void spaceMoving()
         .then((one) => one.moveToSpace(ids, landing.key))
         .then((went) => {
           if (!went) for (const one of ids) places.forgetWindow(one, workspace.tabs)

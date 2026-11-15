@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 const { noteMenu } = await import('./note-menu')
 const { picker } = await import('./export/src/picker.svelte')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 
 const labels = (rows: readonly ({ label: string } | null)[]) =>
   rows.map((row) => (row ? row.label : '-'))

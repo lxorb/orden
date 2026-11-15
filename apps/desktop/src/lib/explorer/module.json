@@ -13,7 +13,8 @@
     "tree",
     "agent-protocol",
     "agent-verbs",
-    "automation"
+    "automation",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -27,7 +28,6 @@
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/when.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/when.ts"
   ]
 }

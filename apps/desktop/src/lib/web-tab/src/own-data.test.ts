@@ -48,7 +48,7 @@ vi.mock('./web-data.svelte', () => ({
 
 const tabs: { kind: string; path: string | null; apart: string | null; id: string }[] = []
 const listed: { path: string; name: string }[] = []
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     documentAt: () => null,
     get tabs() {

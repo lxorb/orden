@@ -3,7 +3,7 @@
   import { tick } from 'svelte'
   import { intoSide } from './focus'
   import { shortcuts } from './shortcuts/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const {
     side = 'left',

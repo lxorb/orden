@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('./Diverged.svelte', () => ({ default: () => undefined }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const { asking } = await import('./asking.svelte')
 type Engine = import('./asking.svelte').Engine

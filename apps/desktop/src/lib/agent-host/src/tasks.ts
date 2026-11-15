@@ -14,7 +14,7 @@ import {
 import type { AgentAnswer } from '../../automation/src/api'
 import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
 import { reachedByOthersIn } from '../../sharing/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { DocError } from '../../agent-docs/src/api'
 import {

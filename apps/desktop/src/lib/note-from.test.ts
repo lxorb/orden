@@ -64,7 +64,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { keepInNote } = await import('./agents/src/ui/keep')
 
 beforeEach(() => {

@@ -21,7 +21,7 @@ const tabs = [
   { id: 'n1', kind: 'note', path: '/s/Work/Plan.md' },
   { id: 'a2', kind: 'application', path: '/s/Work/Blender.application' },
 ]
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get tabs() {
       return tabs

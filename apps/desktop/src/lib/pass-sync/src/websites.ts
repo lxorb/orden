@@ -1,6 +1,6 @@
 import { normalizeUrl } from '@orden/pass/urls'
 import { openExternal } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export function openSite(url: string): void {
   const address = normalizeUrl(url)

@@ -1,7 +1,7 @@
 import type { CommandExtension } from '@orden/contracts'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { pages, type Step } from './pages.svelte'
 
 async function mute(tab: string, muted: boolean) {

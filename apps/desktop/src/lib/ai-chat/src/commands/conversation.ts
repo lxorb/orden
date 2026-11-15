@@ -1,5 +1,5 @@
 import { copyText } from '../../../ui-controls/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import type { AutoCompact, Thread, Turn } from '../../../ai-providers/src/api'
 import { compactsAt } from '../chat/usage'
 import { tokens } from './account'

@@ -2,7 +2,7 @@
   import Icon from './Icon.svelte'
   import { iconLibrary } from './icon-library.svelte'
   import { initial, readIcon } from './ui-kit/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const {
     id,

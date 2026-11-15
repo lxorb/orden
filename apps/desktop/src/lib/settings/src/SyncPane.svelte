@@ -13,7 +13,7 @@
   import { nameOf, rootedAt } from '../../platform/src/api'
   import { syncedCopies } from '../../foreign/src/api'
   import { asking, scan, type Engine } from '../../sync-client/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { Hint } from '../../ui-controls/src/api'
 
   let days = $state(1)

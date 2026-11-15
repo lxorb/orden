@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { nameToWrite } from './naming'
-import { type Opener, openerFor } from '../../openers'
+import { type Opener, openerFor } from '../../workspace/src/openers'
 import {
   draftName,
   endingOf,

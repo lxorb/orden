@@ -146,7 +146,7 @@ Element.prototype.animate = () =>
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/src/menu')

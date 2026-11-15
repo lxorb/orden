@@ -13,7 +13,7 @@ import {
 import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../views.svelte'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { type Call, done, need, needScope, Refused, namedTab } from '../../agent-verbs/src/api'
 import { readable } from './guarded'
 

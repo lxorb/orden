@@ -36,7 +36,7 @@ window.matchMedia = ((query: string) => ({
   removeEventListener: () => undefined,
 })) as unknown as typeof window.matchMedia
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { writeNew } = await import('../../src/lib/write-new')
 const { isDraft } = await import('../../src/lib/documents/src/api')
 const Pane = (await import('../../src/lib/Pane.svelte')).default

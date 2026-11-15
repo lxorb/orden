@@ -63,7 +63,7 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
     }),
   )
 
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   await workspace.restore()
   flushSync()
 

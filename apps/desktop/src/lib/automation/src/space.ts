@@ -1,8 +1,7 @@
 import { canWriteAt } from '../../sharing/src/api'
 import { protection } from '../../protect/src/api'
 import { insideSpace, withinSpace, insideOnly } from '../../platform/src/api'
-import type { Space } from '../../workspace.svelte'
-import { workspace } from '../../workspace.svelte'
+import { type Space, workspace } from '../../workspace/src/api'
 import { said, type Said } from './args'
 
 export interface Note {

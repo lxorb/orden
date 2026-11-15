@@ -3,7 +3,7 @@
   import { firstScreen, type Kept, sameNote } from './first-screen/src/api'
   import { mark } from './trace'
   import { views } from './views.svelte'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const kept = $derived(firstScreen.showing)
 

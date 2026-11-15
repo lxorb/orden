@@ -6,7 +6,7 @@ import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
 import { hostPicking, openOnline, openTerminal, shellRows, shells } from './terminal/src/api'
 import { canWriteAt } from './sharing/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 type KindLine = 'write' | 'run' | 'web'
 

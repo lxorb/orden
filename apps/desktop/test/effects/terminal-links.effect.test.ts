@@ -84,7 +84,7 @@ globalThis.ResizeObserver = class {
 }
 
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 
 afterEach(() => {

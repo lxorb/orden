@@ -1,4 +1,4 @@
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { nameOf } from '../../../platform/src/api'
 import type { Edit } from '../chat-parts'
 

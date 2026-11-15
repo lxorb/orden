@@ -180,7 +180,7 @@ export function readChosen(value: unknown): string | null {
 }
 
 export async function chooseTab(tab: string): Promise<void> {
-  const { workspace } = await import('../../workspace.svelte')
+  const { workspace } = await import('../../workspace/src/api')
   if (workspace.activeTabId === tab || !workspace.tabs.some((one) => one.id === tab)) return
   workspace.activate(tab)
 }
@@ -1012,7 +1012,7 @@ class Pages {
   }
 
   private async openAsked(said: Opening): Promise<void> {
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     const opened = workspace.openPage(said.url, said.behind ? 'behind' : 'front', said.tab)
     if (opened !== null) this.asked.set(opened, said.tab)
   }

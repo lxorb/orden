@@ -14,7 +14,7 @@
   import { followHref, followNoteFrom } from '../../../open-link'
   import { shortcuts } from '../../../shortcuts/src/api'
   import { insideSpace } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { afterQuiet } from '../../../platform/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { Attachments } from './attachments.svelte'

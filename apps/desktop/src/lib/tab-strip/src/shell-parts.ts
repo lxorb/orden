@@ -1,6 +1,6 @@
 import { registerCommand } from '@orden/contracts'
 import { closeWindow, isDesktop, platform } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { picks } from './drag.svelte'
 
 const active = () => workspace.activeTabId ?? ''

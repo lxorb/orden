@@ -35,7 +35,7 @@ import { appMenuRows } from './surfaces.svelte'
 import { takeKeyboard } from './take-keyboard'
 import { currentWindow, invoke, afterQuiet } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export interface MenuBarContext {
   view?: EditorView | undefined

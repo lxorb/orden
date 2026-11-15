@@ -6,7 +6,7 @@ const tabs: { id: string; kind: string; path: null }[] = [
   { id: 'e1', kind: 'explorer', path: null },
 ]
 const recorded: unknown[] = []
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get tabs() {
       return tabs

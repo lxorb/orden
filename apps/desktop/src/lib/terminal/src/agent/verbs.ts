@@ -10,7 +10,7 @@ import {
   Refused,
   verbsOf,
 } from '../../../agent-verbs/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { openTerminal } from '../open'
 import { shellRunning } from '../running'
 import { shells } from '../shells.svelte'

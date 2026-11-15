@@ -1,6 +1,6 @@
 import { account, type AccountSettings, api } from './accounts/src/api'
 import { forget, keepJson, stored } from './platform/src/api'
-import { type Space, workspace } from './workspace.svelte'
+import { type Space, workspace } from './workspace/src/api'
 
 const OWED_KEY = 'orden:archived-spaces-owed'
 

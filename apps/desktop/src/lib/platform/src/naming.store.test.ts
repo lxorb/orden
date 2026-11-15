@@ -219,7 +219,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { nameFault } = await import('./naming')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { sync } = await import('../../sync.svelte')
 const { unread } = await import('../../unread.svelte')

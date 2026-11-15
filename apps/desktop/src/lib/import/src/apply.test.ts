@@ -38,7 +38,7 @@ const came: string[] = []
 
 const described: [string, unknown][] = []
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     files: [],
     undone: { record: (action: unknown) => void recorded.push(action) },

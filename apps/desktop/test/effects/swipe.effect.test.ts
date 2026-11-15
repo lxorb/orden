@@ -17,7 +17,7 @@ const note = { id: 'n1', kind: 'note', paneId: 'p1', canGoBack: true, canGoForwa
 const site = { id: 'w1', kind: 'web', paneId: 'p2', canGoBack: false, canGoForward: false }
 const shownIn = new SvelteMap<string, unknown>()
 
-vi.mock('../../src/lib/workspace.svelte', () => ({
+vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     tabs: [note, site],
     showing: (pane: string) => shownIn.get(pane) ?? null,

@@ -44,7 +44,7 @@ vi.mock('../../insert-picture', () => ({
   putPicture: () => undefined,
   writeAtCaret: () => undefined,
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'mine', name: 'Mine', root: '/mine' }],
     activeSpace: { id: 'mine', name: 'Mine', root: '/mine' },

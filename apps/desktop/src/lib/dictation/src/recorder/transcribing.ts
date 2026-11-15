@@ -3,7 +3,7 @@ import { busy, message } from '../../../ui-kit/src/api'
 import { region, assetUrl, joinPath } from '../../../platform/src/api'
 import { links } from '../../../link-index/src/api'
 import { settings } from '../../../settings.svelte'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { transcribedBy, wordsInFile } from './transcribe'
 import { languageName, transcriptCallout } from './transcript'
 

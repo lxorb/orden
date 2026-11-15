@@ -5,7 +5,7 @@
   import { localDate } from '../../../platform/src/api'
   import { dur, slide } from '../../../platform/src/api'
   import { afterQuiet } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
   import { asking } from './asking.svelte'
   import Question from './Question.svelte'

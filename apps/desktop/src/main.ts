@@ -36,7 +36,7 @@ document.documentElement.toggleAttribute('data-skips-unseen', 'userAgentData' in
 const target = document.getElementById('app')
 if (!target) throw new Error('index.html has no #app to mount into')
 
-if (isMobile && (await (await import('./lib/workspace/moved')).spacesMoved())) {
+if (isMobile && (await (await import('./lib/workspace/src/moved')).spacesMoved())) {
   location.reload()
   await new Promise<never>(() => undefined)
 }
@@ -45,13 +45,13 @@ const outside: unknown = await (window as { ordenOutside?: Promise<unknown> }).o
 if (
   isDesktop &&
   typeof outside === 'string' &&
-  (await (await import('./lib/workspace/outside')).takeIn())
+  (await (await import('./lib/workspace/src/outside')).takeIn())
 ) {
   location.reload()
   await new Promise<never>(() => undefined)
 }
 
-if (isDesktop && (await (await import('./lib/workspace/former-home')).finishFormerHome())) {
+if (isDesktop && (await (await import('./lib/workspace/src/former-home')).finishFormerHome())) {
   location.reload()
   await new Promise<never>(() => undefined)
 }

@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../../platform/src/api'
   import { insideSpace } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import type { Thread } from '../../../ai-providers/src/api'
   import type { Change, NoteChanges } from '../chat-parts'
   import type { FileChange } from '../chat-parts'

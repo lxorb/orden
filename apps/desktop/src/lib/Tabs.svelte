@@ -83,7 +83,7 @@
   import { shownName } from './platform/src/api'
   import { chosenIcon } from './chosen-icon'
   import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { type Landing, inside } from './panes/src/api'
   import { isDraft } from './documents/src/api'
   import { initial } from './ui-kit/src/api'

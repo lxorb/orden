@@ -27,7 +27,7 @@ vi.mock('./commands', () => ({
 }))
 
 const recorded: FileAction[] = []
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { tabs: [], undone: { record: (one: FileAction) => recorded.push(one) } },
 }))
 

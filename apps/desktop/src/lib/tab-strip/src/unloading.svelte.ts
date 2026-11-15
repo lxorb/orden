@@ -4,7 +4,7 @@ import { agentMarks } from '../../agent-marks.svelte'
 import type { MenuEntry } from '../../ui-kit/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { closedAround } from '../../panes/src/api'
 
 import { unloadTabs } from './unload-choice.svelte'

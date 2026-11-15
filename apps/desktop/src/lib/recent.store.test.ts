@@ -22,7 +22,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 
 test('the recent list is the notes in a space', () => {
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]

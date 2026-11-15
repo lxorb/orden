@@ -1,6 +1,6 @@
 import type { Bookmark } from '@orden/contracts'
 import { landing, place } from '../../essentials.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 const ATTRIBUTE = 'data-bookmark-drop'
 

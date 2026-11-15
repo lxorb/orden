@@ -2,7 +2,7 @@ import { type Base, BUTTON, groupName, type Row, type Value } from '@orden/bases
 import type { RowChange } from '../../rows/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { insideSpace } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { dropRow, writeRow } from './act'
 import { addNote } from './add'
 import { dropInto } from './drop'

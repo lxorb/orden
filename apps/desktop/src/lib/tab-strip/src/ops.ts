@@ -2,7 +2,7 @@ import { webPages } from '@orden/contracts'
 import { folderNote } from '../../tree/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { folderOf, samePath } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { Tab } from '../../documents/src/api'
 import { nextPane } from '../../panes/src/api'
 

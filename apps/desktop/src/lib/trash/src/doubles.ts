@@ -1,7 +1,7 @@
 import { sync } from '../../sync.svelte'
 import { invoke } from '../../platform/src/api'
 import type { TrashItem } from './trash.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export interface AccountNote {
   spaceId: string

@@ -6,7 +6,7 @@ const world = vi.hoisted(() => ({
   asked: 0,
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     wordsNow: () => {
       world.asked += 1

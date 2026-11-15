@@ -2,7 +2,7 @@ import type { EditorView } from '@orden/editor'
 
 import { focusEditor } from '../../focus'
 import { nameOf, isRecord, keepJson, stored } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export const SCRATCHPAD = 'Scratchpad.md'
 export const WIDTH = 320

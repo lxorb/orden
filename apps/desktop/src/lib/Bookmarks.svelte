@@ -29,7 +29,7 @@
   import { basesOn } from './settings.svelte'
   import { insideSpace, samePath } from './platform/src/api'
   import { isTile, sameBookmark } from './space-kept/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { tabLetters, tabUnloading } from './tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()

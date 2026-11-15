@@ -1,5 +1,5 @@
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { HISTORY, isOwnPage } from '@orden/scan/own-pages'
 import { pages } from './pages.svelte'
 

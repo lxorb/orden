@@ -11,7 +11,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { views } from '../../views.svelte'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { estimateText } from './chat-parts'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'

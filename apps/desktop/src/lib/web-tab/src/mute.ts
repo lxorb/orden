@@ -21,7 +21,7 @@ export async function muteSite(tabId: string, muted: boolean): Promise<void> {
   }
 
   setMuted(site, muted)
-  const { workspace } = await import('../../workspace.svelte')
+  const { workspace } = await import('../../workspace/src/api')
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web' || siteOf(pages.addressOf(tab.id)) !== site) continue
     const one = pages.of(tab.id)

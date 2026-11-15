@@ -4,7 +4,7 @@ import * as focusing from '../../src/lib/focus'
 import { said } from '../../src/lib/said.svelte'
 import UndoToast from '../../src/lib/UndoToast.svelte'
 import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.animate = () =>
   ({

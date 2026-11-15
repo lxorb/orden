@@ -3,7 +3,7 @@ import { busy } from '../../../ui-kit/src/api'
 import { writeAtCaret } from '../../../insert-picture'
 import { log, systemLocale, answer, frameWord, method } from '../../../platform/src/api'
 import { views } from '../../../views.svelte'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { spaced, speechRecogniser } from './dictation'
 
 interface Alternative {

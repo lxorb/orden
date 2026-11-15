@@ -14,7 +14,7 @@ vi.mock('../../platform/src/tauri', async (original) => ({
 
 const { KindIcons, kindOf } = await import('./kind-icons')
 const EntryMark = (await import('./EntryMark.svelte')).default
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 
 const settled = async () => {
   for (let turn = 0; turn < 10; turn++) await Promise.resolve()

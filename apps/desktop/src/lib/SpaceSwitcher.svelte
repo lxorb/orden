@@ -9,7 +9,7 @@
   import SpaceBadge from './SpaceBadge.svelte'
   import { spacesMenu } from './surfaces.svelte'
   import { isShared } from './sharing/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   let open = $state(false)
 

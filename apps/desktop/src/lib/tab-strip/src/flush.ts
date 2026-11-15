@@ -1,5 +1,5 @@
 import { panesIn, topRow } from '../../panes/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export function flushStart(paneId: string): boolean {
   const { panes } = workspace

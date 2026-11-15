@@ -2,7 +2,7 @@ import { links } from '../../../link-index/src/api'
 import type { Query } from '@orden/scan/search/query'
 import { protection } from '../../../protect/src/api'
 import { samePath } from '../../../platform/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { untrusted } from '../chat/transcript'
 import { NOTE_KEYS, type NoteCommand, type NoteKind, rolesOf } from './notes'
 

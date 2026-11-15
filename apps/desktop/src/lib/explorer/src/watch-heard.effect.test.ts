@@ -56,7 +56,7 @@ vi.mock('./commands', () => ({
   },
 }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const ExplorerColumn = (await import('./ExplorerColumn.svelte')).default
 const { viewOf } = await import('./view.svelte')
 

@@ -1,5 +1,5 @@
 import { keep, storedText } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 import type { Tab } from './documents/src/api'
 import { Walk } from './panes/src/api'
 

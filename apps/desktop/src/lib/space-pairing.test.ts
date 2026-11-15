@@ -72,7 +72,7 @@ vi.mock('./seed-space', () => ({ untouchedSeedSpace: () => Promise.resolve(null)
 vi.mock('./sharing/src/api', () => ({ rememberRoles: () => undefined }))
 vi.mock('./protect/src/api', () => ({ pulled: () => Promise.resolve() }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     get spaces() {
       return world.spaces

@@ -30,7 +30,7 @@ import { shortcuts } from './shortcuts/src/api'
 import { showLabel } from './reveal'
 import { entryAt } from './tree/src/api'
 import { viewport } from './ui-kit/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 import { archive, showArchive } from './archive/src/api'
 
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {

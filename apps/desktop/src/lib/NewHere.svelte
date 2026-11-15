@@ -5,7 +5,7 @@
   import { overlays } from './ui-kit/src/api'
   import { roving } from './roving'
   import { viewport } from './ui-kit/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const { paneId, chosenOn }: { paneId: string; chosenOn?: string } = $props()
 

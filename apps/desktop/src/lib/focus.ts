@@ -1,7 +1,7 @@
 import type { Panel } from './session/src/api'
 import { agentMarks } from './agent-marks.svelte'
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 const FOCUSABLE =
   '[tabindex="0"], button, input, select, textarea, a[href], summary, [contenteditable="true"]'

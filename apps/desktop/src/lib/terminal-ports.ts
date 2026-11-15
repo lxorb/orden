@@ -11,7 +11,7 @@ providePort('terminal.lines', {
   typeIn: async (line, pick) => {
     const [{ openTerminal, shells, ptyOf }, { workspace }] = await Promise.all([
       import('./terminal/src/api'),
-      import('./workspace.svelte'),
+      import('./workspace/src/api'),
     ])
     const shell = pick(await shells.ask(), shells.chosen)
     if (!shell) return false

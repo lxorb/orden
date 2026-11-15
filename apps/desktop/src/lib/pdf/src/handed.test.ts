@@ -20,7 +20,7 @@ const world = vi.hoisted((): World => ({
   readOnly: [],
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [
       { id: 'work', name: 'Work', root: 'C:\\Orden\\Work' },

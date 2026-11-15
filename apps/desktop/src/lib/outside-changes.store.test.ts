@@ -18,11 +18,11 @@ const { Disk, memoryStorage } = await import('../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 await import('./workspace-ports')
-const { startAcross } = await import('./workspace/across')
+const { startAcross } = await import('./workspace/src/across')
 await startAcross()
-const { heardChange, heardNews } = await import('./workspace/outside.svelte')
+const { heardChange, heardNews } = await import('./workspace/src/outside.svelte')
 
 const SPACE = '/s'
 

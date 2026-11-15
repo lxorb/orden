@@ -44,7 +44,7 @@ Element.prototype.scrollIntoView = () => undefined
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { views } = await import('../../src/lib/views.svelte')
 const App = (await import('../../src/App.svelte')).default

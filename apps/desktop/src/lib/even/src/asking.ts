@@ -1,6 +1,6 @@
 import { parseQuery } from '@orden/scan/search/query'
 import type { Hit } from '@orden/scan/search/match'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 const PROMPT = [
   "You answer questions about the person's own notes, out loud, on a pair of",

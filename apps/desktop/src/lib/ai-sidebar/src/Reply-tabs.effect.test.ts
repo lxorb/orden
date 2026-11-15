@@ -19,7 +19,7 @@ vi.mock('../../ai-chat/src/store/chat.svelte', () => ({
   chat: { unfolded: false, root: '/n/Work', head: null, provider: null, models: {}, resets: {} },
 }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const Reply = (await import('./Reply.svelte')).default
 
 test('an answer is not drawn again when another tab comes to the front', () => {

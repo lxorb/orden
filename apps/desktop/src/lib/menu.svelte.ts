@@ -12,7 +12,7 @@ import { iconChoice } from './icon-choice.svelte'
 import { links } from './link-index/src/api'
 import { canShareItem, canWriteAt, shareThisFile } from './sharing/src/api'
 import { isMarkdownPath, withinSpace } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 import { archive, unarchive } from './archive/src/api'
 
 export { DIVIDER, type MenuEntry, type MenuItem } from './ui-kit/src/api'

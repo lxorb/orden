@@ -3,7 +3,7 @@ import { appCommands, type Command } from '../../commands/src/api'
 import { invoke, answerNextDialog } from '../../platform/src/api'
 import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../views.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
 import type { Category } from '../../agent-protocol/src/api'
 import {

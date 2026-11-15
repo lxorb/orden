@@ -16,7 +16,7 @@ vi.mock('../../platform/src/tauri', () => ({
     command === 'scratchpad_path' ? Promise.resolve(PAD) : Promise.reject(new Error(command)),
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     noteText: (path: string) =>
       Promise.resolve(fake.unreadable.has(path) ? null : (fake.disk.get(path) ?? null)),

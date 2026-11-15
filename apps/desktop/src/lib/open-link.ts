@@ -4,7 +4,7 @@ import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export type LinkPlace = 'here' | 'behind' | 'system' | 'nowhere'
 

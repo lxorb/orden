@@ -3,6 +3,7 @@ import { archiveAgain, showArchive } from './archive/src/api'
 import { beginSetup } from './onboarding/src/api'
 import { pdfTabs } from './pages/src/api'
 import { askPlace } from './save-place/src/api'
+import { mayCarryBetween } from './sharing/src/api'
 import { isScratchpad, pad, shown } from './scratchpad/src/api'
 import { searchWarmth } from './search/src/api'
 import { rowsCopied } from './views/src/api'
@@ -16,7 +17,7 @@ import {
   webNotes,
   websiteConverting,
 } from './web-tab/src/api'
-import { serveWorkspace } from './workspace/services'
+import { serveWorkspace } from './workspace/src/services'
 
 serveWorkspace({
   scratchpad: {
@@ -34,6 +35,7 @@ serveWorkspace({
   showArchive: (path) => void showArchive(path),
   archiveAgain,
   rowsCopied,
+  mayCarryBetween,
   papers: async () => (await import('./pdf/src/api')).papers(),
   readPapers: async (root, files, tree) =>
     (await import('./pdf/src/api')).readPapers(root, files, tree),

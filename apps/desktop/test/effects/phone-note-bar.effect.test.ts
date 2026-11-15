@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { menu } = await import('../../src/lib/menu.svelte')
 const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')

@@ -1,4 +1,4 @@
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'
 
 export function askPlace(tabId?: string | null, saved?: () => void): void {

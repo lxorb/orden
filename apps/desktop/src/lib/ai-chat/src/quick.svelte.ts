@@ -1,7 +1,7 @@
 import { documentOf, type EditorView, type SharedDoc, type Text } from '@orden/editor'
 import { quickSheet } from '../../surfaces.svelte'
 import { views } from '../../views.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { carried, type ContextKind, insertion } from './quick'
 import type { Thread, Turn } from '../../ai-providers/src/api'
 import type { Ended } from './commands/types'

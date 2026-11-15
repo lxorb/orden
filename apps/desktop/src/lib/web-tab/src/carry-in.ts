@@ -4,7 +4,7 @@ import { readWebFile } from '@orden/scan/shortcut'
 import { isExplorerDrag, isTreeDrag } from '../../drag-paths'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { diskPathOf } from '../../web-backend/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { zoneAt } from '../../panes/src/api'
 
 export interface Carrying {

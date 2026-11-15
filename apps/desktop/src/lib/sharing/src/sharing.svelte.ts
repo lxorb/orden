@@ -25,6 +25,18 @@ function remoteOf(root: string): RemoteSpace | null {
   return account.spaces.find((one) => one.id === id) ?? null
 }
 
+function ownerIn(root: string): string | null {
+  const remote = remoteOf(root)
+  if (!remote || remote.role === 'owner') return account.user?.id ?? null
+  return remote.people?.[0] ?? null
+}
+
+export function mayCarryBetween(from: string, to: string): boolean {
+  if (roleOf(from) === 'owner') return true
+  const owner = ownerIn(from)
+  return owner !== null && owner === ownerIn(to)
+}
+
 export function roleOf(root: string): SpaceRole | null {
   const id = sync.remoteIdFor(root)
   const listed = id ? account.spaces.find((one) => one.id === id) : undefined

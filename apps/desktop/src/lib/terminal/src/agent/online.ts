@@ -15,7 +15,7 @@ import {
   Refused,
   tabsInReach,
 } from '../../../agent-verbs/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 
 const WHY: Record<Why, [Refused['code'], string]> = {
   'signed-out': ['not_granted', 'the reader is signed out; an online terminal is their account’s'],

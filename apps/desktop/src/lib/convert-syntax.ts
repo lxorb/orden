@@ -4,7 +4,7 @@ import { converted } from './import/src/api'
 import { protection } from './protect/src/api'
 import { type Change, changeOf } from '@orden/scan/search/replace'
 import { isMarkdownPath } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export function syntaxChanges(
   notes: readonly { path: string; text: string }[],

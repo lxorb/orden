@@ -10,7 +10,7 @@
   import { Avatar } from '../../../accounts-ui/src/api'
   import { showProfile } from '../../../accounts-ui/src/api'
   import { links } from '../../../link-index/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import { drawing } from '../../../markdown-view.svelte'
   import type { ChatPage } from './chat.svelte'

@@ -4,7 +4,7 @@
   import { SvelteSet } from 'svelte/reactivity'
   import { without } from '../../graph/src/api'
   import { links } from '../../link-index/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import {
     askPanel,
     canvasSurface,

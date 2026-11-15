@@ -4,7 +4,7 @@ import { shownName, onDisk as exists, nameOf } from '../../platform/src/api'
 import { pairOf } from '@orden/markdown/pages'
 import { canWriteAt } from '../../sharing/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { fileNamed } from '../../documents/src/api'
 import {
   asked,

@@ -34,7 +34,7 @@ vi.mock('../../shortcuts/src/api', () => ({
     platform: 'linux',
   },
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
 }))
 vi.mock('./letters.svelte', () => ({

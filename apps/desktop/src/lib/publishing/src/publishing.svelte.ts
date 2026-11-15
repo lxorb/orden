@@ -15,7 +15,7 @@ import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from '../../ui-kit/src/api'
 import { publishSheet } from '../../surfaces.svelte'
 import { sync } from '../../sync.svelte'
-import type { Space } from '../../workspace.svelte'
+import type { Space } from '../../workspace/src/api'
 
 type Address = 'subdomain' | 'domain'
 
