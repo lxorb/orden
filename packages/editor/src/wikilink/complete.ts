@@ -1,4 +1,5 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
+import type { Text } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
@@ -149,15 +150,28 @@ async function blockOptions(
     }))
 }
 
+function movedBy(now: Text, typed: string, start: number, reach: number): number | null {
+  for (let step = 0; step <= reach; step++) {
+    for (const shift of step ? [step, -step] : [0]) {
+      const at = start + shift
+      if (at >= 0 && now.sliceString(at, at + typed.length) === typed) return shift
+    }
+  }
+  return null
+}
+
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
     const before = view.state.doc
-    const above = path === target.from && line + 1 < before.lineAt(from).number
+    const start = opened(view, from)
+    const typed = before.sliceString(start, to)
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
         if (!id) return
-        const shift = above ? view.state.doc.length - before.length : 0
+        const now = view.state.doc
+        const shift = movedBy(now, typed, start, Math.abs(now.length - before.length))
+        if (shift === null) return
         insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
       })
       .catch(() => undefined)

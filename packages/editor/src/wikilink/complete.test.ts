@@ -3,6 +3,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
+import { namedBlock } from '@orden/markdown/block-names'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer } from './block-namer'
 import { wikilinkCompletions } from './complete'
@@ -492,4 +493,73 @@ test('naming a block above, in the note being written, links it where the link w
   row.apply(view, row, found.from, doc.length)
   await new Promise((settle) => setTimeout(settle, 0))
   expect(built.doc.toString()).toBe('first block ^abc\n\n[[#^abc]]')
+})
+
+describe('naming a block in the note being written, as the note is written', () => {
+  const changed = (was: string, now: string) => {
+    let start = 0
+    while (start < was.length && was[start] === now[start]) start++
+    let end = 0
+    while (end < was.length - start && was[was.length - 1 - end] === now[now.length - 1 - end])
+      end++
+    return { from: start, to: was.length - end, insert: now.slice(start, now.length - end) }
+  }
+
+  const picked = async (doc: string, label: string, at = doc.length, typed = '') => {
+    const index: NoteIndex = {
+      notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }],
+      files: [],
+      path: 'Plan.md',
+      read: () => Promise.resolve(doc),
+    }
+    let built: EditorState
+    const view = {
+      get state() {
+        return built
+      },
+      dispatch: (spec: TransactionSpec) => {
+        built = built.update(spec).state
+      },
+    } as unknown as EditorView
+    built = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(at),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          noteIndex.of(index),
+          blockNamer.of((_path, line) => {
+            const was = built.doc.toString()
+            const named = namedBlock(was, line, () => 'abc')
+            if (!named) return Promise.resolve(null)
+            if (named.source !== was) view.dispatch({ changes: changed(was, named.source) })
+            if (typed) view.dispatch({ changes: { from: built.doc.length, insert: typed } })
+            return Promise.resolve(named.id)
+          }),
+        ],
+      }),
+    )
+    const found = await wikilinkCompletions(new CompletionContext(built, at, false))
+    const row = found?.options.find((one) => one.label === label)
+    if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
+    row.apply(view, row, found.from, at)
+    await new Promise((settle) => setTimeout(settle, 0))
+    return built.doc.toString()
+  }
+
+  test('links a block that runs onto the line being typed', async () => {
+    expect(await picked('first block\n[[#^', 'first block')).toBe('first block\n[[#^abc]] ^abc')
+  })
+
+  test('links a block the link sits inside', async () => {
+    expect(await picked('one\ntwo [[#^\nthree', 'one', 'one\ntwo [[#^'.length)).toBe(
+      'one\ntwo [[#^abc]]\nthree ^abc',
+    )
+  })
+
+  test('keeps what the reader typed while the block was named', async () => {
+    expect(await picked('first block\n\n[[#^', 'first block', undefined, ' and')).toBe(
+      'first block ^abc\n\n[[#^abc]] and',
+    )
+  })
 })
