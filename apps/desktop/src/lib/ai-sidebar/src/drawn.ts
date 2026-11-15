@@ -1,5 +1,5 @@
 import type { RenderOptions } from '@orden/markdown'
-import { escape } from '@orden/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import { viewHtml } from '../../chat-kit/src/api'
 import { notePicture } from '../../link-index/src/api'
 
@@ -36,19 +36,28 @@ export function withCodeBars(html: string, copy: string, sized = false): string 
   })
 }
 
+const WRITTEN = /&(amp|lt|gt|quot|#39);/g
+
+const WRITTEN_AS: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
+
+function unwritten(attribute: string): string {
+  return attribute.replace(WRITTEN, (whole, name: string) => WRITTEN_AS[name] ?? whole)
+}
+
 function pictures(html: string, from: string | null, shown: ReadonlySet<string>): string {
   return html.replace(PICTURE, (whole, attributes: string) => {
-    const src = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
+    const written = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
+    const src = unwritten(written)
     if (!src) return ''
     if (!ELSEWHERE.test(src)) {
       if (/^data:/i.test(src)) return whole
-      return `<img${attributes.replace(`src="${src}"`, () => `src="${escape(notePicture(src, from, ''))}"`)}>`
+      return `<img${attributes.replace(`src="${written}"`, () => `src="${escapeAll(notePicture(src, from, ''))}"`)}>`
     }
     if (shown.has(src)) return whole
     const alt = /\balt="([^"]*)"/.exec(attributes)?.[1] ?? ''
-    const host = /^(?:[a-z][a-z\d+.-]*:)?\/\/([^/?#]+)/i.exec(src)?.[1] ?? src
+    const host = escapeAll(/^(?:[a-z][a-z\d+.-]*:)?\/\/([^/?#]+)/i.exec(src)?.[1] ?? src)
     return (
-      `<button type="button" class="picture-held" data-picture="${src}" title="${src}">` +
+      `<button type="button" class="picture-held" data-picture="${written}" title="${written}">` +
       `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || host}</span></button>`
     )
   })
