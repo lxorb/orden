@@ -999,7 +999,10 @@ mod tests {
     fn a_pattern_the_page_refused_finds_nothing() {
         let refused = r#"{"kind":"regex","source":"(\\d+\\.?)+","fold":false,"refused":true}"#;
         assert!(!answers(refused, "Version 1.2.3 shipped"));
-        assert!(answers(&pattern(r"(\\d+\\.?)+", false), "Version 1.2.3 shipped"));
+        assert!(answers(
+            &pattern(r"(\\d+\\.?)+", false),
+            "Version 1.2.3 shipped"
+        ));
         let not = format!(r#"{{"kind":"not","of":{refused}}}"#);
         assert!(answers(&not, "Version 1.2.3 shipped"));
     }
