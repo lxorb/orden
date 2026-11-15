@@ -60,7 +60,6 @@ import { links } from '../../link-index/src/api'
 import type { MenuItem } from '../../ui-kit/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
 import { printOpen } from '../../open-out'
-import { canDictate, dictating, toggleDictation } from '../../mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from '../../insert-picture'
 import { moveTargets } from '../../move-targets'
 import { closeAfterLabel } from '../../workspace/closing-around'
@@ -483,15 +482,6 @@ const WRITTEN: Block[] = [
       if (view) void takePhoto(view)
     },
     ready: (view) => canTakePhoto(view),
-    byHand: true,
-  },
-  {
-    id: 'dictate',
-    label: () => (dictating() ? 'Stop' : 'Dictate'),
-    apply: (view) => {
-      if (view) void toggleDictation(view)
-    },
-    ready: (view) => canDictate(view),
     byHand: true,
   },
 ]

@@ -1,9 +1,9 @@
 import type { EditorView } from '@orden/editor'
-import { busy } from '../ui-kit/src/api'
-import { writeAtCaret } from '../insert-picture'
-import { log, systemLocale, answer, frameWord, method } from '../platform/src/api'
-import { views } from '../views.svelte'
-import { workspace } from '../workspace.svelte'
+import { busy } from '../../../ui-kit/src/api'
+import { writeAtCaret } from '../../../insert-picture'
+import { log, systemLocale, answer, frameWord, method } from '../../../platform/src/api'
+import { views } from '../../../views.svelte'
+import { workspace } from '../../../workspace.svelte'
 import { spaced, speechRecogniser } from './dictation'
 
 interface Alternative {

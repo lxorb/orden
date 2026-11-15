@@ -1,6 +1,6 @@
 import type { EditorView } from '@orden/editor'
-import { workspace } from '../workspace.svelte'
-import { method, speechRecogniser } from '../platform/src/api'
+import { workspace } from '../../../workspace.svelte'
+import { method, speechRecogniser } from '../../../platform/src/api'
 
 export { speechRecogniser }
 
