@@ -31,18 +31,46 @@ function typing(context: CompletionContext) {
   return context.matchBefore(/\[\[[^[\]\n]*/)
 }
 
+const REST_OF_LINK = /^([^[\]\n]*)\]\]/
+
 function insert(target: LinkWrite) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
-    const closed = view.state.doc.sliceString(to, to + 2) === ']]'
-    const text = view.state.facet(linkWriter)(target)
+    const line = view.state.doc.lineAt(to)
+    const rest = REST_OF_LINK.exec(view.state.doc.sliceString(to, line.to))?.[1] ?? null
+    const kept = rest === null ? '' : keptOf(rest, !!target.fragment)
+    const fragment = target.fragment ?? (kept.startsWith('#') ? headingOf(kept) : null)
+    const written = view.state.facet(linkWriter)({ ...target, fragment })
+    const wiki = written.startsWith('[[') && written.endsWith(']]')
+    const text = wiki && kept ? `${written.slice(0, -2)}${tailOf(kept, fragment)}]]` : written
 
     view.dispatch({
-      changes: { from: start, to: closed ? to + 2 : to, insert: text },
+      changes: { from: start, to: rest === null ? to : to + rest.length + 2, insert: text },
       selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
   }
+}
+
+function keptOf(rest: string, fragmentChosen: boolean): string {
+  const marks = fragmentChosen ? ['|'] : ['#', '|']
+  const at = marks
+    .map((mark) => rest.indexOf(mark))
+    .filter((one) => one !== -1)
+    .reduce((first, one) => Math.min(first, one), rest.length)
+  return rest.slice(at)
+}
+
+function headingOf(kept: string): string | null {
+  const bar = kept.indexOf('|')
+  const heading = (bar === -1 ? kept : kept.slice(0, bar)).slice(1)
+  return heading || null
+}
+
+function tailOf(kept: string, fragment: string | null): string {
+  if (!kept.startsWith('#') || fragment === null) return kept
+  const bar = kept.indexOf('|')
+  return bar === -1 ? '' : kept.slice(bar)
 }
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
@@ -51,7 +79,14 @@ export function about(index: NoteIndex, note: NoteRef): LinkWrite {
 
 function nameFor(index: NoteIndex, note: NoteRef): string {
   const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
-  return (same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
+  if (same.length <= 1) return note.name.normalize('NFC')
+
+  const parts = note.path.replace(MARKDOWN, '').split('/')
+  for (let from = parts.length - 1; from >= 0; from--) {
+    const written = parts.slice(from).join('/')
+    if (resolveNote(index, written)?.path === note.path) return written.normalize('NFC')
+  }
+  return `/${parts.join('/')}`.normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {

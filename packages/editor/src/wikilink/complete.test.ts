@@ -419,3 +419,75 @@ describe('a note the space has archived', () => {
     expect(labels(await rowsFor('[[^^ab', asked))).toEqual(['^abd'])
   })
 })
+
+async function pickedAt(doc: string, caret: number, asked: Asked, label: string): Promise<string> {
+  let built = state(doc, asked.index, caret)
+  const found = await wikilinkCompletions(new CompletionContext(built, caret, false))
+  const row = found?.options.find((one) => one.label === label)
+  if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
+  const view = {
+    get state() {
+      return built
+    },
+    dispatch: (spec: TransactionSpec) => {
+      built = built.update(spec).state
+    },
+  } as unknown as EditorView
+  row.apply(view, row, found.from, caret)
+  return built.doc.toString()
+}
+
+describe('a name picked inside a link already written', () => {
+  const asked = () => space([note('Plan.md', ['Goals'])])
+  const caretAfter = (doc: string, typed: string) => doc.indexOf(typed) + typed.length
+
+  test('keeps the words it is shown as', async () => {
+    const doc = 'see [[Pl|the plan]] end'
+    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe(
+      'see [[Plan|the plan]] end',
+    )
+  })
+
+  test('keeps the heading it names', async () => {
+    const doc = 'see [[Pl#Goals]] end'
+    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe(
+      'see [[Plan#Goals]] end',
+    )
+  })
+
+  test('takes the place of the rest of the old name', async () => {
+    const doc = 'see [[Plxx]] end'
+    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe('see [[Plan]] end')
+  })
+
+  test('a heading picked keeps the words the link is shown as', async () => {
+    const doc = '[[Plan#Go|alias]]'
+    expect(await pickedAt(doc, caretAfter(doc, '#Go'), asked(), 'Goals')).toBe(
+      '[[Plan#Goals|alias]]',
+    )
+  })
+})
+
+describe('a name two notes share, picked', () => {
+  test('is written so that it reaches the note picked from where the link is', async () => {
+    const asked = space([note('Plan.md'), note('ideas/Plan.md'), note('ideas/One.md')], {
+      path: 'ideas/One.md',
+    })
+    const found = await rowsFor('[[Pla', asked)
+    const rows = found?.options.filter((one) => one.label === 'Plan') ?? []
+    const written = rows.map((row) => {
+      let built = state('[[Pla', asked.index)
+      const view = {
+        get state() {
+          return built
+        },
+        dispatch: (spec: TransactionSpec) => {
+          built = built.update(spec).state
+        },
+      } as unknown as EditorView
+      if (typeof row.apply === 'function') row.apply(view, row, found?.from ?? 0, '[[Pla'.length)
+      return built.doc.toString()
+    })
+    expect(written.sort()).toEqual(['[[/Plan]]', '[[Plan]]'])
+  })
+})
