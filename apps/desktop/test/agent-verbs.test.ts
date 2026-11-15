@@ -1924,6 +1924,46 @@ describe('to-dos and bases', () => {
     expect(files.get('/s/Home/Books.base')).toContain('name: Board')
   })
 
+  test('a row added from a template is filled, drops its own keys and takes the view’s template first', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 9, 8, 5, 0))
+    try {
+      files.set(
+        '/s/Home/Templates/Book.md',
+        '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\n\nAdded {{date}} at {{time}}\n',
+      )
+      files.set('/s/Home/Templates/Shelf.md', '# {{title}} on the shelf\n')
+      files.set(
+        '/s/Home/Books.base',
+        [
+          'filters: file.inFolder("Books")',
+          'orden:',
+          '  template: "[[Templates/Book]]"',
+          'views:',
+          '  - type: table',
+          '    name: All',
+          '  - type: cards',
+          '    name: Shelf',
+          '    orden:',
+          '      template: "[[Templates/Shelf|shelf]]"',
+          '',
+        ].join('\n'),
+      )
+      expect(
+        await call('add_row', { space: 'Home', base: 'Books.base', title: 'Emma' }),
+      ).toMatchObject({ result: { path: 'Books/Emma.md', created: true } })
+      expect(files.get('/s/Home/Books/Emma.md')).toBe(
+        '---\nstatus: new\n---\n# Emma\n\nAdded 2026-10-08 at 05:00\n',
+      )
+      expect(
+        await call('add_row', { space: 'Home', base: 'Books.base', view: 'Shelf', title: 'Emma' }),
+      ).toMatchObject({ result: { path: 'Books/Emma 2.md', created: true } })
+      expect(files.get('/s/Home/Books/Emma 2.md')).toBe('# Emma 2 on the shelf\n')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('edits asked at once all land, none written over another', async () => {
     files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
     files.set('/s/Home/board.canvas', '{"nodes":[],"edges":[]}')

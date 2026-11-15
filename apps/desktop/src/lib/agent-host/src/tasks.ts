@@ -4,6 +4,7 @@ import {
   AgentError,
   clockOf,
   editedBase,
+  filledTemplate,
   noteName,
   queryBase as queried,
   readBase,
@@ -256,11 +257,11 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
 
-async function templateOf(place: Place, base: Base, rows: readonly Row[]): Promise<string> {
-  const link = base.orden.template
-    ?.replace(/^\[\[|\]\]$/g, '')
-    .split('|')[0]
-    ?.trim()
+async function templateOf(
+  place: Place,
+  link: string | undefined,
+  rows: readonly Row[],
+): Promise<string> {
   if (!link) return ''
   const wanted = link.toLowerCase().replace(/\.md$/i, '')
   const found = rows.find(
@@ -283,7 +284,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
   const folder = judgedForWriting(where.folder ?? folderOf(relative)).replace(/^\.$/, '')
   const rows = await rowsStore()
-  const template = await templateOf(place, base, rows.of(place.space.name))
+  const template = await templateOf(place, where.template, rows.of(place.space.name))
   const name = noteName(maybe(call, 'title') ?? 'Untitled')
   const path = await freePath(place, folder === '.' ? '' : folder, name)
   readable(onDisk(place, path), path)
@@ -293,10 +294,13 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   try {
-    const words = withProperties(template, {
-      ...where.properties,
-      ...(properties as Record<string, unknown>),
-    })
+    const words = withProperties(
+      filledTemplate(template, nameOf(path).replace(/\.md$/i, ''), clockOf(new Date())),
+      {
+        ...where.properties,
+        ...(properties as Record<string, unknown>),
+      },
+    )
     return done(await made(place, path, words, null))
   } catch (error) {
     refused(error)
