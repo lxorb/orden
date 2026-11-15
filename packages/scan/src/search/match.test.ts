@@ -270,6 +270,16 @@ describe('regular expressions', () => {
   test('that will not compile match nothing rather than complaining', () => {
     expect(answers('/([a-/')).toBe(false)
   })
+
+  test('take a character outside the basic plane whole', () => {
+    expect(marked('/x./', { body: 'x😀 end' })).toEqual(['x😀'])
+    expect(marked('/[^a]/', { body: '😀' })).toEqual(['😀'])
+  })
+
+  test('still read the escapes and braces a looser reading allows', () => {
+    expect(marked('/a\\-b/', { body: 'a-b' })).toEqual(['a-b'])
+    expect(marked('/{x/', { body: 'a{x' })).toEqual(['{x'])
+  })
 })
 
 describe('nearness', () => {

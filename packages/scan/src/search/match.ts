@@ -297,6 +297,18 @@ function clip(one: Range, other: Range): Range | null {
   return from <= to ? { from, to } : null
 }
 
+function compiled(source: string, flags: string): RegExp | null {
+  try {
+    return new RegExp(source, `${flags}u`)
+  } catch {
+    try {
+      return new RegExp(source, flags)
+    } catch {
+      return null
+    }
+  }
+}
+
 export class Matcher {
   private readonly patterns = new Map<string, RegExp | null>()
   private readonly needles = new Map<string, string>()
@@ -474,12 +486,7 @@ export class Matcher {
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 
-    let made: RegExp | null
-    try {
-      made = backtracksWildly(source) ? null : new RegExp(source, folded ? 'gi' : 'g')
-    } catch {
-      made = null
-    }
+    const made = backtracksWildly(source) ? null : compiled(source, folded ? 'gi' : 'g')
 
     this.patterns.set(key, made)
     return made
@@ -502,7 +509,8 @@ export class Matcher {
       const to = from + found[0].length
 
       if (to === from) {
-        pattern.lastIndex = from + 1
+        pattern.lastIndex =
+          from + (pattern.unicode && (text.codePointAt(from) ?? 0) > 0xffff ? 2 : 1)
         continue
       }
 
