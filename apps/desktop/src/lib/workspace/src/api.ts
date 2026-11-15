@@ -58,3 +58,7 @@ export {
   opensLink,
   webHref,
 } from './open-link'
+
+export { alone, swipeOpens } from './alone.svelte'
+
+export { scratchpadOn } from './services'

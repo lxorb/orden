@@ -1,3 +1,4 @@
+import { hinting } from './hints/src/api'
 import { oneWindow } from './web-tab/src/api'
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './accounts/src/api'
@@ -80,7 +81,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) gate.restore()
   const settling = setTimeout(() => {
     startup.settled = true
-    if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.settle())
+    if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.settle())
   }, 20_000)
   installAiRunner()
   recovery.restore()

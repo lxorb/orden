@@ -1,0 +1,5 @@
+{
+  "name": "hints",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "modes", "platform", "ui-kit"]
+}

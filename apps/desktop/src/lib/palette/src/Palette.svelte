@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { hinting } from '../../hints/src/api'
   import {
     middleOpens,
     OUTLINE_MARK,
@@ -61,11 +62,7 @@
   /* eslint-enable prefer-const */
 
   $effect(() => {
-    if (!__EVEN_PLUGIN__ && open)
-      whenLoaded(
-        () => import('../../hints.svelte'),
-        ({ hints }) => hints.dismiss('palette'),
-      )
+    if (!__EVEN_PLUGIN__ && open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
   })
 
   let query = $state('')

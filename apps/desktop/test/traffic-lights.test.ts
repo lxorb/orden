@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest'
 const src = join(dirname(fileURLToPath(import.meta.url)), '../src')
 const read = (path: string) => readFileSync(join(src, path), 'utf8')
 
-const titlebar = read('lib/Titlebar.svelte')
+const titlebar = read('lib/titlebar/src/Titlebar.svelte')
 const sidebar = read('lib/sidebar/src/Sidebar.svelte')
 
 describe('the room left for the traffic lights', () => {

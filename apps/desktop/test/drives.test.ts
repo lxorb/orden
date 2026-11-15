@@ -166,7 +166,9 @@ function drawnBy(path: string, found = new Set<string>()): Set<string> {
 }
 
 const bar = new Set<string>()
-for (const path of drawnBy(join(ROOT, 'apps', 'desktop', 'src', 'lib', 'Titlebar.svelte')))
+for (const path of drawnBy(
+  join(ROOT, 'apps', 'desktop', 'src', 'lib', 'titlebar', 'src', 'Titlebar.svelte'),
+))
   classesIn(path, read(path), bar)
 
 describe('the names a drive looks for in the top bar', () => {

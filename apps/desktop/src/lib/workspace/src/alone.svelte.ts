@@ -1,6 +1,8 @@
-import { account } from './accounts/src/api'
-import { joining } from './sharing/src/api'
-import { workspace } from './workspace/src/api'
+import { account } from '../../accounts/src/api'
+import { fullscreen } from '../../platform/src/api'
+import { joining } from '../../sharing/src/api'
+import { viewport } from '../../ui-kit/src/api'
+import { workspace } from './workspace.svelte'
 
 class Alone {
   on = $derived(
@@ -13,3 +15,7 @@ class Alone {
 }
 
 export const alone = new Alone()
+
+export function swipeOpens(): boolean {
+  return viewport.drawer && !fullscreen.on && !alone.on
+}

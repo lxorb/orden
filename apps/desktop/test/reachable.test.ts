@@ -24,7 +24,7 @@ function branch(text: string, condition: string): string {
 }
 
 describe('the window buttons', () => {
-  const titlebar = read('lib/Titlebar.svelte')
+  const titlebar = read('lib/titlebar/src/Titlebar.svelte')
   const desktop = branch(titlebar, 'isDesktop && !mac')
 
   test.each(['Minimize', 'Maximize', 'Restore', 'Close'])(

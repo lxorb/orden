@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { hinting } from '../../hints/src/api'
   import type { OpenHow } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
@@ -38,8 +39,7 @@
     onescape?: (() => void) | undefined
   } = $props()
 
-  if (!__EVEN_PLUGIN__)
-    void import('../../hints.svelte').then(({ hints }) => hints.dismiss('graph'))
+  if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.dismiss('graph'))
 
   const A_FRAME = 6
 

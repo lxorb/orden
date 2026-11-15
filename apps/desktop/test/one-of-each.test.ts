@@ -400,7 +400,7 @@ describe('the cross that shuts something', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(drawing).toEqual(['lib/Titlebar.svelte', 'lib/ui-kit/src/Cross.svelte'])
+    expect(drawing).toEqual(['lib/titlebar/src/Titlebar.svelte', 'lib/ui-kit/src/Cross.svelte'])
   })
 
   test('and no button spells one as a letter', () => {
@@ -580,10 +580,10 @@ describe('the bubble a sentence appears in', () => {
       .sort()
 
     expect(own).toEqual([
-      'lib/HintCard.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
+      'lib/hints/src/HintCard.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',

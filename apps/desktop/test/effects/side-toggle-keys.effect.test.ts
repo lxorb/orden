@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import SidebarToggle from '../../src/lib/SidebarToggle.svelte'
+import { SidebarToggle } from '../../src/lib/titlebar/src/api'
 import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList

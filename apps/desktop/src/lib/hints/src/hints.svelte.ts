@@ -1,5 +1,5 @@
-import { modes } from './modes/src/api'
-import { keepJson, stored, stringList } from './platform/src/api'
+import { modes } from '../../modes/src/api'
+import { keepJson, stored, stringList } from '../../platform/src/api'
 
 export const HINTS = ['drawer', 'graph', 'palette'] as const
 export type Hint = (typeof HINTS)[number]

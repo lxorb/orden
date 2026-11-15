@@ -29,7 +29,7 @@
     viewport,
     paneCorners,
   } from '../../ui-kit/src/api'
-  import { alone } from '../../alone.svelte'
+  import { alone, followHref, followNote, tabOverview, workspace } from '../../workspace/src/api'
   import type { Tab } from '../../documents/src/api'
   import {
     type Pane,
@@ -79,7 +79,6 @@
     viewSurface,
     webSurface,
   } from '../../surfaces/src/api'
-  import { followHref, followNote, tabOverview, workspace } from '../../workspace/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'

@@ -34,7 +34,7 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
     '../App.svelte': ['--card-inset', '--chrome-ground'],
     'sidebar/src/Sidebar.svelte': ['--side-ground', '--chrome-seam'],
     'sidebar/src/SidebarFoot.svelte': ['--chrome-seam'],
-    'Titlebar.svelte': ['--chrome-seam'],
+    'titlebar/src/Titlebar.svelte': ['--chrome-seam'],
     'tab-strip/src/Tabs.svelte': ['--strip-line'],
     'StatusBar.svelte': ['--card-room'],
     'overview/src/Overview.svelte': ['--card-radius'],

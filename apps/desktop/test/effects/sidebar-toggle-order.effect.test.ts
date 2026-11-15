@@ -8,7 +8,7 @@ vi.mock('../../src/lib/workspace/src/api', async (importOriginal) => ({
   intoSide: into.side,
 }))
 
-const SidebarToggle = (await import('../../src/lib/SidebarToggle.svelte')).default
+const { SidebarToggle } = await import('../../src/lib/titlebar/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 
 let shown: ReturnType<typeof mount>
