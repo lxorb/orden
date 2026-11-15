@@ -93,7 +93,10 @@ vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   isDesktop: true,
 }))
-vi.mock('../../workspace/src/api', () => ({ workspace: ws }))
+vi.mock('../../workspace/src/api', () => ({
+  workspace: ws,
+  firstVisiting: () => Promise.resolve({ firstVisit: { fresh: false, answered: () => undefined } }),
+}))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
@@ -104,9 +107,6 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   viewport: { drawer: false },
 }))
 vi.mock('../../settings.svelte', () => ({ settings: { open: true } }))
-vi.mock('../../first-visit.svelte', () => ({
-  firstVisit: { fresh: false, answered: () => undefined },
-}))
 vi.mock('./carry-over', async () => {
   const { setLinkWriting } = await import('../../link-format/src/api')
   return {

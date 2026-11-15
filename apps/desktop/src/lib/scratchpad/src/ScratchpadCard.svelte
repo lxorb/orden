@@ -11,6 +11,7 @@
   import { createEditor, EditorView, setNoteIndex } from '@orden/editor'
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../../platform/src/api'
+  import { notices } from '../../workspace/src/api'
   import { pickedLink } from '../../composer'
   import { adrift, pressedThrough } from '../../keyboard-home'
   import { links } from '../../link-index/src/api'
@@ -52,7 +53,7 @@
       if (text === null) {
         path = null
         shown.hide()
-        void import('../../unread.svelte').then((one) => one.unread.there(at))
+        void notices().then((one) => one.unread.there(at))
         return
       }
 

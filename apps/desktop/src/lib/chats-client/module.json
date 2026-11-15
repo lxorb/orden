@@ -42,7 +42,6 @@
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
-    "apps/desktop/src/lib/failed.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",

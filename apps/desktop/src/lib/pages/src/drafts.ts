@@ -12,6 +12,7 @@ import { CanvasStore } from '../../canvas/src/api'
 import { paperOf } from '@orden/markdown/pages'
 import { pageSizes } from '../../pdf/src/api'
 import { type NoteDoc, type Tab, UNTITLED, isDraft } from '../../documents/src/api'
+import { notices } from '../../workspace/src/api'
 import { asDraft, paperNamed, paperOutside } from './from-pdf'
 
 export interface Drafts {
@@ -36,7 +37,7 @@ export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
     return null
   })
   if (text === null) {
-    const { unread } = await import('../../unread.svelte')
+    const { unread } = await notices()
     await unread.there(from)
     return null
   }

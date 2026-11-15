@@ -1,8 +1,7 @@
 import { busy, message, viewport } from '../../ui-kit/src/api'
-import { firstVisit } from '../../first-visit.svelte'
 import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format/src/api'
 import { isDesktop } from '../../platform/src/api'
-import { type Space, workspace } from '../../workspace/src/api'
+import { firstVisiting, type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
 import { landBrowser } from './browser-landing'
 import { type BrowserProfile, type FoundBrowser, foundBrowsers } from './browsers'
@@ -201,6 +200,7 @@ async function spelledAs<T>(format: LinkFormat | undefined, read: () => Promise<
 }
 
 export async function arrive(space: Space, open = true) {
+  const { firstVisit } = await firstVisiting()
   if (firstVisit.fresh) firstVisit.answered()
   if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
   const note = open ? firstNote() : null

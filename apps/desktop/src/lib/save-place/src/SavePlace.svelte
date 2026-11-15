@@ -11,7 +11,7 @@
   import { trap } from '../../ui-controls/src/api'
   import { webPages } from '@orden/contracts'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { notices, workspace } from '../../workspace/src/api'
   import { offeredName } from '../../documents/src/api'
   import { isAgentsName } from '../../platform/src/api'
   import { joinPath } from '../../platform/src/api'
@@ -91,8 +91,7 @@
     const file = fileFor(name, tab.note, title)
     if (folder && isAgentsName(file)) {
       const root = workspace.rootHolding(joinPath(folder, file))
-      if (root !== null)
-        void import('../../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+      if (root !== null) void notices().then((one) => one.reservedName.tell(root))
       return
     }
     onclose()

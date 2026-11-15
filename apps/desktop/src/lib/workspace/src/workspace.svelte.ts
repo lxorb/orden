@@ -218,7 +218,7 @@ const WORDS_KEPT = 1_000_000
 
 const TRAIL = 30
 
-const unread = (path: string) => import('../../unread.svelte').then((one) => one.unread.there(path))
+const unread = (path: string) => import('./notices.svelte').then((one) => one.unread.there(path))
 const changes = () => import('./space-changes')
 const essentials = () => import('../../essentials.svelte')
 const paneStays = (strip: number, showing: Tab | null) =>
@@ -626,7 +626,7 @@ class Workspace {
     if (!isNative && !isPlugin()) {
       try {
         if (await seed()) {
-          ;(await import('../../first-visit.svelte')).firstVisit.seeded()
+          ;(await import('./first-visit.svelte')).firstVisit.seeded()
           await services().beginSetup(account.signedIn)
         }
       } catch (error) {
@@ -642,7 +642,7 @@ class Workspace {
     const state =
       readSession(kept) ?? (slot === 0 || !slots ? null : slots.freshWindow(stored(STORAGE_KEY)))
     if (isRecord(kept) && holdsRetiredTab(kept.layout))
-      void import('../../gate-note.svelte').then(({ gateNote }) =>
+      void import('./notices.svelte').then(({ gateNote }) =>
         gateNote.show('Chats from other services are gone, so their tabs were closed'),
       )
     this.layouts.restore()
@@ -2321,7 +2321,7 @@ class Workspace {
     if (this.instructionsAt(path) && !this.opened.at(path)) {
       if (options.activate !== false) {
         const root = this.rootHolding(path)
-        if (root !== null) (await import('../../reserved-name.svelte')).openInstructions(root)
+        if (root !== null) (await import('./notices.svelte')).openInstructions(root)
       }
       return
     }
@@ -2835,8 +2835,7 @@ class Workspace {
     const refused =
       paths.some((path) => isAgentsName(nameOf(path))) &&
       this.spaces.some((one) => samePath(one.root, intoFolder))
-    if (refused)
-      void import('../../reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+    if (refused) void import('./notices.svelte').then((one) => one.reservedName.tell(intoFolder))
     return refused
   }
 
@@ -2862,7 +2861,7 @@ class Workspace {
     this.clearSelection()
     if (!stayed.length) return true
 
-    const { failed } = await import('../../failed.svelte')
+    const { failed } = await import('./notices.svelte')
     failed.tell(() => void this.moveMany(stayed, intoFolder, undoing))
     return false
   }
@@ -2958,7 +2957,7 @@ class Workspace {
     })
     if (!stayed.length) return
 
-    const { failed } = await import('../../failed.svelte')
+    const { failed } = await import('./notices.svelte')
     failed.tell(() => void this.removeMany(stayed))
   }
 
@@ -3590,7 +3589,7 @@ class Workspace {
 
   private async landedFor(again: () => void): Promise<boolean> {
     if (await this.undone.landed()) return true
-    const { failed } = await import('../../failed.svelte')
+    const { failed } = await import('./notices.svelte')
     failed.tell(again, true)
     return false
   }
@@ -3734,7 +3733,7 @@ class Workspace {
 
     if (!(await this.writableAt(path))) return null
     if (isAgentsName(nameOf(path))) {
-      void import('../../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+      void import('./notices.svelte').then((one) => one.reservedName.tell(root))
       return null
     }
     const content = `# ${noteName(relative)}\n\n`

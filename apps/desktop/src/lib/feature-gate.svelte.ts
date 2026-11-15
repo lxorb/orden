@@ -1,8 +1,8 @@
+import { whenLoaded } from '@orden/contracts'
 import { untrack } from 'svelte'
-import { gateNote } from './gate-note.svelte'
 import { appsOn, chatsOn, explorerOn, passOn, timeOn } from './settings.svelte'
 import type { TabKind } from './tab-kinds/src/api'
-import { workspace } from './workspace/src/api'
+import { notices, workspace } from './workspace/src/api'
 
 interface Gate {
   on: () => boolean
@@ -32,7 +32,10 @@ export function whenOn(
       untrack(() => {
         for (const tab of open) workspace.close(tab.id, false)
         if (left) off()
-        else if (open.length) gateNote.show(`${gate.name()} is turned off, so its tabs were closed`)
+        else if (open.length)
+          whenLoaded(notices, ({ gateNote }) =>
+            gateNote.show(`${gate.name()} is turned off, so its tabs were closed`),
+          )
       })
     })
   })

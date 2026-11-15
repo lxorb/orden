@@ -10,7 +10,6 @@
   import { paletteCommands } from '../../commands/src/api'
   import { fileMark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
-  import { frecency } from '../../frecency'
   import { recentFirst } from '../../ui-kit/src/api'
   import Icon from '../../Icon.svelte'
   import { links } from '../../link-index/src/api'
@@ -24,7 +23,7 @@
   import { choose, type Hands } from './choose'
   import { makeable, typedAddress, withOffers } from './offers'
   import { pieces } from '../../matching/src/api'
-  import { MOST_PLACES, ranked } from '../../matching/src/api'
+  import { frecency, MOST_PLACES, ranked } from '../../matching/src/api'
   import type { OpenTab, Row } from './rows'
   import { UnsavedDot } from '../../ui-kit/src/api'
   import { isDraft, scanHeadings } from '../../documents/src/api'
@@ -42,7 +41,7 @@
   import { viewport } from '../../ui-kit/src/api'
   import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { workspace } from '../../workspace/src/api'
+  import { notices, workspace } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
   import { wholeRows } from './whole-rows'
@@ -397,7 +396,7 @@
     },
     showSetting: (section, label) => paletteKind('settings').show(section, label),
     agents: () => {
-      if (root) void import('../../reserved-name.svelte').then((one) => one.openInstructions(root))
+      if (root) void notices().then((one) => one.openInstructions(root))
     },
     make: (note) => {
       if (root)

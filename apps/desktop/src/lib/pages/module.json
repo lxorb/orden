@@ -26,7 +26,6 @@
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/roving.ts",
-    "apps/desktop/src/lib/unread.svelte.ts"
+    "apps/desktop/src/lib/roving.ts"
   ]
 }

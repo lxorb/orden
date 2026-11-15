@@ -796,7 +796,7 @@ describe('selecting several rows', () => {
   })
 
   test('every picked row goes at once, waiting on saving once, even past one that will not go', async () => {
-    const { failed } = await import('../../failed.svelte')
+    const { failed } = await import('./notices.svelte')
     const told = vi.spyOn(failed, 'tell').mockImplementation(() => undefined)
     const { Saving } = await import('./saving.svelte')
     const settling = vi.spyOn(Saving.prototype, 'settled')
@@ -5379,7 +5379,7 @@ describe('a space and its AGENTS.md', () => {
   })
 
   test('a link to a note of the name makes none, and a hint says where it is', async () => {
-    const { reservedName } = await import('../../reserved-name.svelte')
+    const { reservedName } = await import('./notices.svelte')
     Reflect.deleteProperty(notes, AGENTS)
     await workspace.followLink(
       { target: 'AGENTS', path: null, heading: null, block: null, page: null },
@@ -5392,7 +5392,7 @@ describe('a space and its AGENTS.md', () => {
   })
 
   test('a note of the name dropped on the top of the space stays where it was', async () => {
-    const { reservedName } = await import('../../reserved-name.svelte')
+    const { reservedName } = await import('./notices.svelte')
     await workspace.moveMany([NESTED], '/space')
     await vi.waitFor(() => expect(reservedName.root).toBe('/space'))
     expect(sent.filter((one) => one.command === 'rename_note')).toEqual([])
