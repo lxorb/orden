@@ -579,17 +579,17 @@ function codeOnly(text: string): [number, number][] {
         indented = null
       }
 
-      if (indented) {
-        // Still in the block.
-      } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
-        spans(text, prose, at, ranges)
-        fence = { mark, from: at, loose, depth }
-        if (!INDENTED.test(line)) listed = item !== null
-      } else if (!empty && INDENTED.test(line) && blank && !listed) {
-        spans(text, prose, at, ranges)
-        indented = { from: at, to: at + whole.length }
-      } else if (!empty && !INDENTED.test(line)) {
-        listed = LIST_ITEM.test(line)
+      if (!indented) {
+        if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
+          spans(text, prose, at, ranges)
+          fence = { mark, from: at, loose, depth }
+          if (!INDENTED.test(line)) listed = item !== null
+        } else if (!empty && INDENTED.test(line) && blank && !listed) {
+          spans(text, prose, at, ranges)
+          indented = { from: at, to: at + whole.length }
+        } else if (!empty && !INDENTED.test(line)) {
+          listed = LIST_ITEM.test(line)
+        }
       }
     }
 
