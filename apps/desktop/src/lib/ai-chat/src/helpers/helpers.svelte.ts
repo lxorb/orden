@@ -169,12 +169,19 @@ class Helpers {
     return helper
   }
 
-  async wait(id: string, ms: number): Promise<Helper | null> {
+  async wait(id: string, ms: number, until?: AbortSignal): Promise<Helper | null> {
     const end = this.ends.get(id)
-    if (end) {
+    if (end && !until?.aborted) {
       let timer: ReturnType<typeof setTimeout> | undefined
-      await Promise.race([end, new Promise((done) => (timer = setTimeout(done, ms)))])
+      let stop: () => void = () => undefined
+      const waiting = new Promise<void>((done) => {
+        stop = done
+        timer = setTimeout(done, ms)
+        until?.addEventListener('abort', stop, { once: true })
+      })
+      await Promise.race([end, waiting])
       clearTimeout(timer)
+      until?.removeEventListener('abort', stop)
     }
     return this.get(id)
   }
