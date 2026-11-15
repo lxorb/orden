@@ -1,6 +1,6 @@
 import { foldName, isAudioTarget, isImageTarget, isVideoTarget } from '@orden/markdown/links'
 import { about } from './complete'
-import type { LinkWrite, NoteIndex } from './notes'
+import { fromTheTop, type LinkWrite, type NoteIndex } from './notes'
 
 export function noteLinks(
   index: NoteIndex,
@@ -18,7 +18,7 @@ function linkFor(index: NoteIndex, path: string, write: (target: LinkWrite) => s
   const name = path.slice(path.lastIndexOf('/') + 1)
   const folded = foldName(name)
   const twin = file && index.files.some((one) => one !== path && foldName(nameOf(one)) === folded)
-  const said = twin ? path : file ? name : name.replace(/\.[^.]+$/, '')
+  const said = twin ? fromTheTop(path) : file ? name : name.replace(/\.[^.]+$/, '')
   const link = write({ name: said, path, from: index.path })
   const shown = isImageTarget(path) || isAudioTarget(path) || isVideoTarget(path)
 

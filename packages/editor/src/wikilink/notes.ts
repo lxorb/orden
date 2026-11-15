@@ -297,7 +297,12 @@ const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i
 
 export function nameFor(index: NoteIndex, note: NoteRef): string {
   const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
-  return (same.length > 1 ? note.path.replace(MARKDOWN_NAME, '') : note.name).normalize('NFC')
+  if (same.length < 2) return note.name.normalize('NFC')
+  return fromTheTop(note.path.replace(MARKDOWN_NAME, '')).normalize('NFC')
+}
+
+export function fromTheTop(path: string): string {
+  return path.includes('/') ? path : `/${path}`
 }
 
 export function linkNameAt(state: EditorState, path: string): string | null {
