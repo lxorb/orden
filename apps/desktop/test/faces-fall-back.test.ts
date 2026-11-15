@@ -38,7 +38,7 @@ test('every person picture falls back when it fails to load, never showing a bro
   expect([...new Set(pictures.map((one) => one.file))]).toEqual(
     expect.arrayContaining([
       'accounts/src/AccountBadge.svelte',
-      'Tabs.svelte',
+      'tab-strip/src/Tabs.svelte',
       'accounts-ui/src/Avatar.svelte',
     ]),
   )

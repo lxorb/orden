@@ -151,7 +151,7 @@ const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/src/menu')
 const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/src/TabNameField.svelte')
 await import('../../src/lib/terminal/src/TerminalMark.svelte')
 await import('../../src/lib/tab-strip/src/ops')

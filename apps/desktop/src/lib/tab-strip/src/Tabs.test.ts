@@ -3,8 +3,8 @@ import { render } from 'svelte/server'
 
 const asked: string[] = []
 
-vi.mock('./file-mark', async (importOriginal) => {
-  const real = await importOriginal<typeof import('./file-mark')>()
+vi.mock('../../file-mark', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../file-mark')>()
   return {
     ...real,
     markOf: (kind: string) => {
@@ -14,9 +14,9 @@ vi.mock('./file-mark', async (importOriginal) => {
   }
 })
 
-vi.mock('./collab/src/api', () => ({ rooms: { present: {}, seen: {}, following: null } }))
+vi.mock('../../collab/src/api', () => ({ rooms: { present: {}, seen: {}, following: null } }))
 
-const { workspace } = await import('./workspace/src/api')
+const { workspace } = await import('../../workspace/src/api')
 const Tabs = (await import('./Tabs.svelte')).default
 
 function strip(count: number) {

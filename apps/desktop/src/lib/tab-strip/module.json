@@ -17,13 +17,20 @@
     "tree",
     "workspace",
     "scan",
-    "ui-controls"
+    "ui-controls",
+    "collab",
+    "theme"
   ],
   "pending": [
+    "apps/desktop/src/lib/Door.svelte",
     "apps/desktop/src/lib/Facts.svelte",
+    "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/SpaceMark.svelte",
     "apps/desktop/src/lib/TabMark.svelte",
+    "apps/desktop/src/lib/UnsavedDot.svelte",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
+    "apps/desktop/src/lib/caret.ts",
+    "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/double-tap.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/drop-target.svelte.ts",
@@ -31,8 +38,13 @@
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/new-tab.ts",
+    "apps/desktop/src/lib/note-menu.ts",
+    "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts"
+    "apps/desktop/src/lib/usage.svelte.ts",
+    "apps/desktop/src/lib/views.svelte.ts",
+    "apps/desktop/src/lib/while-here.ts"
   ]
 }

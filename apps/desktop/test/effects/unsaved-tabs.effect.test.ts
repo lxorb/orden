@@ -48,7 +48,7 @@ Element.prototype.animate = () =>
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { askPlace } = await import('../../src/lib/save-place/src/ask')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 
 let target: HTMLElement
 let app: ReturnType<typeof mount> | null = null

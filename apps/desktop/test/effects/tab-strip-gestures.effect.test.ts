@@ -52,7 +52,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const { picks } = await import('../../src/lib/tab-strip/src/drag.svelte')
 const { tabMenuTitle } = await import('../../src/lib/tab-strip/src/menu')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/src/closing.svelte')
 await import('../../src/lib/tab-strip/src/picking.svelte')
 

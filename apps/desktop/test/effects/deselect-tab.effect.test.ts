@@ -46,7 +46,7 @@ const { run } = await import('../../src/lib/canvas/src/actions')
 const { CanvasStore } = await import('../../src/lib/canvas/src/store.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { panesOf } = await import('../../src/lib/session/src/api')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 const Pane = (await import('../../src/lib/Pane.svelte')).default
 await import('../../src/lib/NewHere.svelte')
 

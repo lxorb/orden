@@ -206,7 +206,7 @@ describe('what a row of the file list offers', () => {
 })
 
 describe("what the strip's empty stretch offers", () => {
-  const tabs = read('lib/Tabs.svelte')
+  const tabs = read('lib/tab-strip/src/Tabs.svelte')
   const door = () => body(tabs, 'function showStripMenu(')
 
   test('the menu is the strip menu, fetched by the press', () => {
@@ -228,7 +228,7 @@ describe("what the strip's empty stretch offers", () => {
 })
 
 describe('what the plus in the tab strip offers', () => {
-  const tabs = read('lib/Tabs.svelte')
+  const tabs = read('lib/tab-strip/src/Tabs.svelte')
 
   const plus = tabs.slice(
     tabs.indexOf('class="new"'),

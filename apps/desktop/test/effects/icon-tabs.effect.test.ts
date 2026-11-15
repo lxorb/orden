@@ -51,7 +51,7 @@ Element.prototype.scrollIntoView = () => undefined
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { iconTabs } = await import('../../src/lib/tab-strip/src/icon-tabs.svelte')
 const { OPENED_LEAST, WIDTH } = await import('../../src/lib/tab-strip/src/layout')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/src/closing.svelte')
 
 let target: HTMLElement

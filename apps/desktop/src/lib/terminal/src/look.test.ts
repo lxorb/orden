@@ -150,7 +150,7 @@ describe("the ground a terminal's open tab stands on", () => {
   })
 
   test("is what the strip wears on a terminal's open tab", () => {
-    const tabs = readFileSync(join(import.meta.dirname, '../../Tabs.svelte'), 'utf8')
+    const tabs = readFileSync(join(import.meta.dirname, '../../tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/\.tab\.onterminal \{\s*--tab-ground: var\(--terminal-paper,/)
     expect(tabs).toContain(
       "style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}",
