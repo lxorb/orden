@@ -1158,7 +1158,7 @@ test`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` on th
 The open Medium is the Linux file drop below, which needs a real drag on a Linux build to
 confirm. The last pass (a review of the second-round fixes and a re-audit of the areas the
 first passes read in part) found no Critical or High; its Mediums are fixed above. Full
-`cargo test` on the CEF manifest: 1917 passed before the last four fixes, whose modules' tests passed after them, 6 ignored, the one root-only permission test
+`cargo test` on the CEF manifest at the last fix: 1919 passed, 6 ignored, the one root-only permission test
 passing as an ordinary user. Clippy and fmt clean. `pnpm test`: three failures outside this
 crate, all of the container (no `ssh-keygen`, the machine service's fork-bomb limit, and
 `tab-fill.effect` under load, which passes alone). This is what the audit checked, not a claim
