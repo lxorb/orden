@@ -48,7 +48,8 @@
     "files-out",
     "notify",
     "sync-store",
-    "modes"
+    "modes",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",

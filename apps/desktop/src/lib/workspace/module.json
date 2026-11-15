@@ -37,7 +37,8 @@
     "matching",
     "undo-toast",
     "crate",
-    "left-spaces"
+    "left-spaces",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",

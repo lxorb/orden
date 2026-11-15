@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { localNumber } from '../../../platform/src/api'
   import { workspace } from '../../../workspace/src/api'
-  import { hiddenKinds } from '../../../settings.svelte'
+  import { hiddenKinds } from '../../../gates/src/api'
   import { canWriteAt } from '../../../sharing/src/api'
   import type { ChatEntry, Hit } from '../shapes'
   import ChatMark from './ChatMark.svelte'

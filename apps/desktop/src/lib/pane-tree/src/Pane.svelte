@@ -48,7 +48,8 @@
   import { notePicture } from '../../note-images'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { appsOn, explorerOn, settings } from '../../settings.svelte'
+  import { settings } from '../../settings.svelte'
+  import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
     archivedStrip,

@@ -40,7 +40,7 @@ vi.mock('../../file-writes/src/api', async (original) => ({
 }))
 
 const { readHeld } = await import('./running')
-const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 const { withoutIds } = await import('./copied')
 

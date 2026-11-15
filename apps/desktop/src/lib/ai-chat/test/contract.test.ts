@@ -20,7 +20,7 @@ import {
 } from '../src/api'
 
 vi.mock('../../workspace/src/api', () => ({ workspace: { active: null } }))
-vi.mock('../../settings.svelte', () => ({ chatsOn: () => true }))
+vi.mock('../../gates/src/api', () => ({ chatsOn: () => true }))
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')

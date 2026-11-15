@@ -128,6 +128,7 @@ export const APP_FOLDERS = [
   'files-out',
   'first-screen',
   'foreign',
+  'gates',
   'glasses-choices',
   'graph',
   'graph-drawing',

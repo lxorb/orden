@@ -30,7 +30,7 @@ vi.mock('./sharing/src/api', async (importOriginal) => ({
 const { bookmarkAll, rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace/src/api')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
-const { hiddenKinds } = await import('./settings.svelte')
+const { hiddenKinds } = await import('./gates/src/api')
 const { PROTECTION_WORD } = await import('./sharing/src/protect/gate')
 type Entry = import('./workspace/src/api').Entry
 

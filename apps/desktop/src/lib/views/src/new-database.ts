@@ -1,6 +1,6 @@
 import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../../tree/src/api'
-import { basesOn } from '../../settings.svelte'
+import { basesOn } from '../../gates/src/api'
 import { samePath, joinPath } from '../../platform/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { workspace } from '../../workspace/src/api'

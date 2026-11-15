@@ -16,7 +16,7 @@ const {
   PASS_WORD,
   chatsOn,
   kindsHere,
-} = await import('./settings.svelte')
+} = await import('./gates/src/api')
 const { setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')

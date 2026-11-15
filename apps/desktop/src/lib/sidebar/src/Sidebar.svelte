@@ -63,7 +63,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { fullscreen } from '../../fullscreen.svelte'
   import { alone } from '../../alone.svelte'
-  import { chatsOn, hiddenKinds, timeOn } from '../../settings.svelte'
+  import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'

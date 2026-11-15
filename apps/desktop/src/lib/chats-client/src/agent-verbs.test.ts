@@ -47,7 +47,7 @@ vi.mock('./view/open', () => ({
 vi.mock('../../sharing/src/api', () => ({ isShared: () => false }))
 
 const verbs = await import('./agent-verbs')
-const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../gates/src/api')
 const { answerOf } = await import('../../agent-verbs/src/api')
 
 const VERBS: Record<

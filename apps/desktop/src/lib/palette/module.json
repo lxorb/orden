@@ -16,7 +16,8 @@
     "commands",
     "link-index",
     "documents",
-    "workspace"
+    "workspace",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",

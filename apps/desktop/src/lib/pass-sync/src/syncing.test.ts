@@ -13,7 +13,7 @@ const server = vi.hoisted(() => ({
 
 vi.mock('../../accounts/src/client', () => ({ BASE: '', request: () => Promise.resolve({}) }))
 vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
-vi.mock('../../settings.svelte', () => ({ passOn: () => true }))
+vi.mock('../../gates/src/api', () => ({ passOn: () => true }))
 vi.mock('../../sync-client/src/hub.svelte', () => ({ hub: { device: 'device' } }))
 vi.mock('./device-rows', () => ({ deviceRows: {} }))
 vi.mock('./sync', () => ({ PassApi: vi.fn() }))

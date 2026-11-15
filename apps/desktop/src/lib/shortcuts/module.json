@@ -16,7 +16,8 @@
     "workspace",
     "modes",
     "double-tap",
-    "tab-cycle"
+    "tab-cycle",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/focus.ts",

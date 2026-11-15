@@ -4,7 +4,7 @@ import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@o
 import type { AgentAnswer } from '@orden/contracts'
 import { threadSpaceOf } from '../../automation/src/api'
 import type { ChatEntry, Chats } from './shapes'
-import { chatsOn } from '../../settings.svelte'
+import { chatsOn } from '../../gates/src/api'
 import { rootedAt } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import {

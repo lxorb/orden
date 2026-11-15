@@ -16,7 +16,7 @@ vi.mock('../../file-writes/src/api', async (original) => ({
 }))
 
 const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesOn } =
-  await import('../../settings.svelte')
+  await import('../../gates/src/api')
 const { setWord, receive } = await import('../../kind-choice')
 const { experimentalPane } = await import('../../settings/src/experimental-pane')
 const { appCommands } = await import('../../commands/src/api')

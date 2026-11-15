@@ -3,7 +3,7 @@ import { webDataSheet } from './web-tab/src/api'
 import { foreignCopy } from '@orden/sync-core'
 import { isChatTarget } from '@orden/markdown/links'
 import { folderNote, nestedIn } from './tree/src/api'
-import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
+import { basesOn, hiddenKinds, type KindName } from './gates/src/api'
 import { kindLabel } from './kind-words'
 import {
   archiveEntry,

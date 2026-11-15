@@ -23,7 +23,7 @@ vi.mock('./ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-const settings = await import('./settings.svelte')
+const settings = await import('./gates/src/api')
 const {
   appsOn,
   basesOn,

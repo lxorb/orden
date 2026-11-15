@@ -17,11 +17,8 @@
     "ui-kit",
     "windows",
     "documents",
-    "workspace"
+    "workspace",
+    "gates"
   ],
-  "pending": [
-    "apps/desktop/src/lib/icon-choice.svelte.ts",
-    "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/settings.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/icon-choice.svelte.ts", "apps/desktop/src/lib/menu.svelte.ts"]
 }

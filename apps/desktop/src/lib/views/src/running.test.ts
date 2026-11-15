@@ -88,7 +88,7 @@ vi.mock('../../sharing/src/api', () => ({
 }))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
-const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 const { inFlight: moving } = await import('../../file-ops/src/api')
 

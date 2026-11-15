@@ -1,5 +1,5 @@
 import { type ChatsPort, portOf } from '@orden/contracts'
-import { chatsOn } from '../../../settings.svelte'
+import { chatsOn } from '../../../gates/src/api'
 import { workspace } from '../../../workspace/src/api'
 import type { Thread } from '../../../ai-providers/src/api'
 import type { Host } from './host'

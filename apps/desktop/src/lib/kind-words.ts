@@ -1,4 +1,4 @@
-import { type KindName } from './settings.svelte'
+import { type KindName } from './gates/src/api'
 
 export function kindLabel(kind: KindName): string {
   return {

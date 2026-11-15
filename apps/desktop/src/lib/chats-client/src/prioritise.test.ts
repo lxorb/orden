@@ -47,7 +47,7 @@ vi.mock('./view/source.svelte', () => ({
 }))
 
 const { priorities } = await import('./priorities.svelte')
-const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
 const { heardOf, startPriorities } = await import('./prioritise')
 

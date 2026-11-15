@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '@orden/contracts'
-import { basesOn } from '../../settings.svelte'
+import { basesOn } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { askReader } from './ask'
 import { bookmarks } from './bookmarks'

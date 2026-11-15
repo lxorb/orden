@@ -33,7 +33,8 @@
     "workspace",
     "notify",
     "sync-store",
-    "modes"
+    "modes",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -47,7 +48,6 @@
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/open-link.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/sidebar-width.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"

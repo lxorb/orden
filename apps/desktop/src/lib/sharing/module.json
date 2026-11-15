@@ -11,11 +11,8 @@
     "ui-kit",
     "sync-mirror",
     "file-ops",
-    "documents"
+    "documents",
+    "gates"
   ],
-  "pending": [
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/kind-choice.ts",
-    "apps/desktop/src/lib/settings.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/Icon.svelte", "apps/desktop/src/lib/kind-choice.ts"]
 }

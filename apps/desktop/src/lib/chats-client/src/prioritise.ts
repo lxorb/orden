@@ -1,7 +1,7 @@
 import { todayOf } from '@orden/bases'
 import type { Message, Who } from '@orden/chats'
 import { complete, ai } from '../../ai-providers/src/api'
-import { chatsOn } from '../../settings.svelte'
+import { chatsOn } from '../../gates/src/api'
 import { type Asker, type Heard, priorities } from './priorities.svelte'
 import { store } from './view/source.svelte'
 

@@ -443,7 +443,7 @@ class Pages {
 
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
-      const pass = (await import('../../settings.svelte')).passOn()
+      const pass = (await import('../../gates/src/api')).passOn()
       const said = await invoke<boolean | 'under' | undefined>('web_open', {
         tab: tabId,
         url: page.url,

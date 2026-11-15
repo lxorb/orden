@@ -1,6 +1,6 @@
 import type { OpenHow } from '../../new-tab'
 import { nameOf, samePath } from '../../platform/src/api'
-import { basesOn } from '../../settings.svelte'
+import { basesOn } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
 import {
   builtinName,

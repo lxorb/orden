@@ -33,7 +33,7 @@ import type { Flow, Step } from './sign-in-flow'
 import { FLOW_WINDOW, flowGoes, isSignInKind, pageOf } from './sign-in-flow'
 import type { PassStore } from './store.svelte'
 import { pass } from './store.svelte'
-import { passOn } from '../../settings.svelte'
+import { passOn } from '../../gates/src/api'
 
 const STEP_PAUSE = 700
 const SIGNING_SHOWN = 4000

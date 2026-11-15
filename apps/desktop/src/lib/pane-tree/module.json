@@ -21,7 +21,8 @@
     "tab-strip",
     "theme",
     "ui-kit",
-    "workspace"
+    "workspace",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",

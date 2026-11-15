@@ -3,7 +3,7 @@ import type { AgentAnswer } from '@orden/contracts'
 import { shownName, nameOf } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import { appsOn } from '../../settings.svelte'
+import { appsOn } from '../../gates/src/api'
 import { asked, type Call, done, gatedBy, need, Refused, verbsOf } from '../../agent-verbs/src/api'
 import type { AppSession as Session } from './session.svelte'
 

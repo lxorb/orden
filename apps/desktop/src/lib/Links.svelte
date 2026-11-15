@@ -1,7 +1,7 @@
 <script lang="ts">
   import { neighbourhood, type NoteGraph, without } from './graph/src/api'
   import { account } from './accounts/src/api'
-  import { chatsOn } from './settings.svelte'
+  import { chatsOn } from './gates/src/api'
   import { graphSurface, held } from './surfaces.svelte'
   import { links, type Outgoing, type Reference } from './link-index/src/api'
   import { insideSpace } from './platform/src/api'

@@ -30,7 +30,7 @@
   import { lookOf } from './trying'
   import { search } from '../../search.svelte'
   import { paletteWords } from '../../surfaces.svelte'
-  import { chatsOn, hiddenKinds } from '../../settings.svelte'
+  import { chatsOn, hiddenKinds } from '../../gates/src/api'
   import { relativeTo, samePath } from '../../platform/src/api'
   import TabMark from '../../TabMark.svelte'
   import { theme } from '../../theme/src/api'

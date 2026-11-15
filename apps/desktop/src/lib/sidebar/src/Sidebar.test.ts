@@ -19,7 +19,7 @@ vi.mock('../../surfaces.svelte', () => ({
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('../../agent-marks.svelte')
-const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('../../gates/src/api')
 const Sidebar = (await import('./Sidebar.svelte')).default
 await (await import('../../../../test/sidebar-parts')).registerSidebarParts()
 const { loadPhoneTabs, loadPhoneYou } = await import('../../phone/src/api')

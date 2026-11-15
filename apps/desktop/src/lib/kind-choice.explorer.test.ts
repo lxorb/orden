@@ -32,7 +32,7 @@ vi.mock('./explorer/src/api', () => ({
 }))
 
 const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } =
-  await import('./settings.svelte')
+  await import('./gates/src/api')
 const { receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds } = await import('./new-kinds')
 const { kindOfLetter } = await import('./new-kind-keys')

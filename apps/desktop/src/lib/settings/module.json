@@ -37,7 +37,8 @@
     "modes",
     "double-tap",
     "tab-cycle",
-    "spelling"
+    "spelling",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",

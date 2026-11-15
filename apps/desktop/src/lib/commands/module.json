@@ -26,7 +26,8 @@
     "markdown",
     "highlight",
     "modes",
-    "files-out"
+    "files-out",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",

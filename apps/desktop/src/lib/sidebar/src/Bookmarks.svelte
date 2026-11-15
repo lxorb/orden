@@ -26,7 +26,7 @@
     draggedBookmark,
     isTreeDrag,
   } from '../../drag-paths'
-  import { basesOn } from '../../settings.svelte'
+  import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'
   import { isTile, sameBookmark } from '../../space-kept/src/api'
   import { workspace } from '../../workspace/src/api'

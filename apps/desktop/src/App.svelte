@@ -39,7 +39,8 @@
   import { said } from './lib/ui-kit/src/api'
   import { search } from './lib/search.svelte'
   import { prompt } from './lib/ui-kit/src/api'
-  import { hiddenKinds, settings } from './lib/settings.svelte'
+  import { settings } from './lib/settings.svelte'
+  import { hiddenKinds } from './lib/gates/src/api'
   import {
     contextMenu,
     fillBar,

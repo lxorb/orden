@@ -6,7 +6,7 @@
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
   import { fileMark, type FileMark as Mark } from '../../file-mark'
-  import { hiddenKinds } from '../../settings.svelte'
+  import { hiddenKinds } from '../../gates/src/api'
   import FileMark from '../../FileMark.svelte'
   import {
     folderFor,

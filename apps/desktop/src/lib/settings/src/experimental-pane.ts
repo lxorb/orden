@@ -16,7 +16,7 @@ import {
   hiddenKinds,
   PASS_WORD,
   TIME_WORD,
-} from '../../settings.svelte'
+} from '../../gates/src/api'
 import { isDesktop, isMobile } from '../../platform/src/api'
 import { clipboardSharing } from './apps-clipboard.svelte'
 import type { Field, Group, Pane } from './fields'
