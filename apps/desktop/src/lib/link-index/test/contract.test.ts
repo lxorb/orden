@@ -52,6 +52,7 @@ describe('the module stands on its own', () => {
   test('reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
     expect([...new Set(reachedApis())].sort()).toEqual([
       'graph',
+      'launch',
       'link-format',
       'platform',
       'sharing',
