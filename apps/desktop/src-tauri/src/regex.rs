@@ -523,7 +523,7 @@ fn is_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
-fn is_space(c: char) -> bool {
+pub(crate) fn is_space(c: char) -> bool {
     let breaks = matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}');
     let blanks = matches!(c, '\t' | '\u{b}' | '\u{c}' | ' ' | '\u{a0}' | '\u{feff}');
     let wide = matches!(c, '\u{1680}' | '\u{202f}' | '\u{205f}' | '\u{3000}');

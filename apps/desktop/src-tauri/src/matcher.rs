@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
-use crate::regex::{budget_for, Pattern};
+use crate::regex::{budget_for, is_space, Pattern};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -806,8 +806,8 @@ fn line_text<'a>(body: &'a str, starts: &[usize], line: usize) -> &'a str {
 fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
     let from = starts.get(line).copied().unwrap_or_default();
     let raw = line_text(note.body, starts, line);
-    let lead = raw.len() - raw.trim_start().len();
-    let trimmed = raw.trim();
+    let lead = raw.len() - raw.trim_start_matches(is_space).len();
+    let trimmed = raw.trim_matches(is_space);
     let text: String = trimmed.chars().take(LINE).collect();
 
     let mut ranges = Vec::new();
@@ -1011,6 +1011,18 @@ mod tests {
         let body = "a done\r\nb\r\n";
         assert!(answers(&scope("line", &pattern("done$", false)), body));
         assert!(!answers(&scope("line", &pattern("b.$", false)), body));
+    }
+
+    #[test]
+    fn a_line_is_shown_without_the_marks_the_web_trims_off_it() {
+        assert_eq!(
+            lines(&text("alpha"), "\u{feff}alpha one\n"),
+            vec!["alpha one"]
+        );
+        assert_eq!(
+            lines(&text("alpha"), "\u{85}alpha\u{a0}\n"),
+            vec!["\u{85}alpha"]
+        );
     }
 
     #[test]
