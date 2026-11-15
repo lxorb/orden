@@ -63,7 +63,7 @@ export class TableWidget extends OrdenWidget {
     const table = views.get(dom)
     if (!table) return false
 
-    const model = parseTable(this.source)
+    const model = table.modelFor(this.source)
     if (!model) return false
 
     const moved = previous.from !== this.from && previous.source !== this.source

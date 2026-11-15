@@ -27,7 +27,19 @@ import {
   selectionIn,
   textRows,
 } from './caret'
-import { type Align, type Order, type TableModel, serializeTable, setCell } from './model'
+import {
+  type Align,
+  columnWidth,
+  columnWidths,
+  displayWidth,
+  type Order,
+  parseTable,
+  sameModel,
+  serializeRow,
+  serializeTable,
+  setCell,
+  type TableModel,
+} from './model'
 import {
   type CellAddress,
   type Side,
@@ -40,6 +52,7 @@ import {
   lineBeside,
   type TableSpan,
   tableAt,
+  tableWrite,
 } from './navigation'
 import {
   alignedColumn,
@@ -103,6 +116,8 @@ export class TableView {
 
   private pending: { at: CellAddress; value: string } | null = null
   private start: number | null = null
+  private aligned: number[] | null = null
+  private expected: { source: string; model: TableModel; widths: number[] } | null = null
 
   private focusAfter: Focus | null = null
 
@@ -224,41 +239,41 @@ export class TableView {
     return this.model.header.every((text, column) => model.header[column] === text)
   }
 
-  private agrees(model: TableModel): boolean {
+  private placeOf(model: TableModel): CellAddress | null {
     const { pending } = this
-    if (!pending) return false
+    if (!pending) return null
     const { row, column } = pending.at
-    const cells = row < 0 ? model.header : model.rows[row]
     const written = setCell(this.model, row, column, pending.value)
-    const mine = (row < 0 ? written.header : written.rows[row])?.[column]
-    return mine !== undefined && cells?.[column] === mine.trim()
-  }
+    const mine = (row < 0 ? written.header : written.rows[row]) ?? []
+    const cell = mine[column]?.trim()
+    if (cell === undefined) return null
+    if (row < 0) return model.header[column] === cell ? pending.at : null
 
-  private elsewhere(model: TableModel): CellAddress | null {
-    const { pending } = this
-    if (!pending || pending.at.row < 0) return null
-    const { column } = pending.at
-    const mine = setCell(this.model, pending.at.row, column, pending.value).rows[pending.at.row]
-    const text = mine?.[column]?.trim()
-    if (!text) return null
-    const found = model.rows.flatMap((cells, row) => (cells[column] === text ? [row] : []))
-    return found.length === 1 && found[0] !== undefined ? { row: found[0], column } : null
+    const whole = (cells: string[] | undefined) =>
+      cells?.length === mine.length &&
+      cells.every((text, at) => text === (at === column ? cell : mine[at]))
+    if (whole(model.rows[row])) return pending.at
+    const found = model.rows.flatMap((cells, at) => (whole(cells) ? [at] : []))
+    if (found.length === 1 && found[0] !== undefined) return { row: found[0], column }
+    if (found.length > 1) return null
+    return model.rows[row]?.[column] === cell ? pending.at : null
   }
 
   adopt(text: TableSource, model: TableModel) {
-    let kept = this.agrees(model)
-    const moved = !kept && this.pending ? this.elsewhere(model) : null
-    if (moved && this.pending) {
+    const place = this.placeOf(model)
+    const kept = place !== null
+    if (place && this.pending && !sameCell(place, this.pending.at)) {
       const focused = this.focusedCell()
-      if (focused && !this.focusAfter) this.focusAfter = { at: moved, offset: focused.offset }
-      this.pending = { at: moved, value: this.pending.value }
-      kept = true
+      if (focused && !this.focusAfter) this.focusAfter = { at: place, offset: focused.offset }
+      this.pending = { at: place, value: this.pending.value }
     }
     const pending = kept ? this.pending : null
     const incoming = pending
       ? setCell(model, pending.at.row, pending.at.column, pending.value)
       : model
-    const shown = serializeTable(incoming) === serializeTable(this.current())
+    const shown = sameModel(incoming, this.current())
+    const expected = this.expected?.source === text.source ? this.expected : null
+    this.aligned = expected ? expected.widths : null
     this.source = text.source
     this.start = text.from
     this.model = model
@@ -270,6 +285,10 @@ export class TableView {
     }
     this.editable = !this.editor.state.readOnly
     this.render()
+  }
+
+  modelFor(source: string): TableModel | null {
+    return this.expected?.source === source ? this.expected.model : parseTable(source)
   }
 
   focusState(): { at: CellAddress; offset: number } | null {
@@ -364,19 +383,63 @@ export class TableView {
     }
 
     this.focusAfter = focus ?? null
-    this.write(serializeTable(next), 'input')
+    const widths = columnWidths(next)
+    this.write(serializeTable(next, widths), 'input', next, widths)
     this.clearPending()
     this.focusAfter = null
   }
 
-  private write(text: string, userEvent: string): boolean {
+  private write(text: string, userEvent: string, model: TableModel, widths: number[]): boolean {
     const { editor } = this
     const from = this.span()?.from ?? this.start
-    if (from === null || text === this.source) return false
+    if (from === null) return false
+    if (text === this.source) {
+      this.aligned = widths
+      return false
+    }
     if (editor.state.doc.sliceString(from, from + this.source.length) !== this.source) return false
 
-    editor.dispatch({ changes: lineChanges(from, this.source, text), userEvent })
+    this.expected = { source: text, model, widths }
+    try {
+      editor.dispatch({
+        changes: lineChanges(from, this.source, text),
+        userEvent,
+        annotations: tableWrite.of(true),
+      })
+    } finally {
+      this.expected = null
+    }
     return true
+  }
+
+  private typeIn(at: CellAddress) {
+    const next = this.current()
+    const widths = this.aligned
+    if (!widths) {
+      const fresh = columnWidths(next)
+      this.write(serializeTable(next, fresh), 'input.type', next, fresh)
+      return
+    }
+
+    const { row, column } = at
+    const before = (row < 0 ? this.model.header : this.model.rows[row])?.[column] ?? ''
+    const cells = (row < 0 ? next.header : next.rows[row]) ?? []
+    const now = cells[column] ?? ''
+    const width = widths[column] ?? 0
+    let wide = width
+    if (displayWidth(now) > width) wide = displayWidth(now)
+    else if (displayWidth(before) >= width) wide = columnWidth(next, column)
+
+    const sized = widths.slice()
+    sized[column] = wide
+    if (wide !== width) {
+      this.write(serializeTable(next, sized), 'input.type', next, sized)
+      return
+    }
+
+    const lines = this.source.split('\n')
+    lines[row < 0 ? 0 : row + 2] = serializeRow(cells, sized)
+    this.write(lines.join('\n'), 'input.type', next, sized)
   }
 
   private clearPending() {
@@ -670,7 +733,7 @@ export class TableView {
 
     this.pending = { at, value: cell.textContent }
     holdsEdit(this)
-    this.write(serializeTable(this.current()), 'input.type')
+    this.typeIn(at)
   }
 
   private left(cell: HTMLElement, at: CellAddress) {

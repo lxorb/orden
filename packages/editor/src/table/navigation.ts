@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import type { ChangeSpec, EditorState } from '@codemirror/state'
+import { Annotation, type ChangeSpec, type EditorState } from '@codemirror/state'
 import { enclosingNamed } from '../nodes'
 import { overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
@@ -111,3 +111,5 @@ export function cellBelow(model: TableModel, at: CellAddress): CellAddress | 'be
 export function cellAbove(at: CellAddress): CellAddress | 'above' {
   return at.row > -1 ? { row: at.row - 1, column: at.column } : 'above'
 }
+
+export const tableWrite = Annotation.define<boolean>()

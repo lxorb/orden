@@ -149,3 +149,35 @@ test('typed words stay when a sync changes the note around the table and another
   expect(shared.text.toString()).toContain('Bob')
   expect(shared.text.toString()).toContain('Column 9')
 })
+
+test('a table under the caret stays drawn while a cell is typed in', () => {
+  const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
+  const view = createEditor({ parent: document.body, doc, selection: { anchor: 0 } })
+  open.push(view)
+  forceParsing(view, doc.length, 10_000)
+
+  typed(cellAt(view, 0, 0), '1x')
+  expect(view.dom.querySelectorAll('table')).toHaveLength(1)
+  expect(document.activeElement).toBe(cellAt(view, 0, 0))
+  typed(cellAt(view, 0, 0), '1xy')
+
+  expect(view.state.doc.toString()).toContain('| 1xy |')
+})
+
+test('the caret follows its whole row, not another row that shares the cell', async () => {
+  const shared = new SharedDoc('words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend')
+  const view = sharedTable(shared)
+  typed(cellAt(view, 0, 0), '1x')
+
+  const at = shared.text.toString().indexOf('| 1x')
+  shared.edit([{ from: at, to: at, insert: '| 1x | 9 |\n' }])
+  await Promise.resolve()
+  const focused = document.activeElement as HTMLElement
+  typed(focused, '1xy')
+
+  const rows = shared.text.toString().split('\n').slice(4, 6)
+  expect(rows.map((row) => row.split('|').map((cell) => cell.trim()))).toEqual([
+    ['', '1x', '9', ''],
+    ['', '1xy', '2', ''],
+  ])
+})

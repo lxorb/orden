@@ -251,9 +251,9 @@ describe('line prefixes', () => {
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n  - b\n- c')
   })
 
-  test('takes off a nested bullet and a task box without the indent', () => {
+  test('takes off a nested bullet and a task box, its lines going back with their parent', () => {
     const doc = '- a\n  - [ ] b\n  - c'
-    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n  b\n  c')
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\nb\nc')
   })
 
   test('leaves the line a selection ends in front of', () => {
@@ -322,9 +322,7 @@ describe('line prefixes', () => {
   test('carries a blank line of a quote inside an item along with the item', () => {
     const doc = '- a\n  > x\n  >\n  > y'
     expect(at(toggleOrderedList, doc, 0)).toBe('1. a\n   > x\n   >\n   > y')
-    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe(
-      '1. a\n   > 1. x\n   >\n   > 2. y',
-    )
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. a\n   > x\n   >\n   > y')
   })
 
   test('takes an item off without taking its children or its later paragraphs out of the list', () => {
@@ -350,6 +348,36 @@ describe('line prefixes', () => {
     let next = state
     toggleOrderedList({ state, dispatch: (made: Transaction) => (next = made.state) })
     expect(next.doc.toString()).toBe('1. a\n- b\n1. c')
+  })
+
+  test('moves the children of a task taken off by its marker, not its box', () => {
+    expect(
+      at(toggleBulletList, '- [ ] project\n  - [ ] step\n    - [ ] substep\n- [ ] other', 18),
+    ).toBe('- [ ] project\n  step\n  - [ ] substep\n- [ ] other')
+    expect(at(toggleBulletList, '- [ ] a\n\n      code', 0)).toBe('a\n\n    code')
+  })
+
+  test('numbers the items again after a middle item whose children move out with it', () => {
+    expect(at(toggleOrderedList, '1. a\n2. b\n\n   more\n3. c', 5)).toBe('1. a\nb\n\nmore\n1. c')
+    expect(at(toggleOrderedList, '1. a\n2. b\n3. c', 5)).toBe('1. a\nb\n3. c')
+  })
+
+  test('keeps the other kind of numbers apart when it numbers again', () => {
+    expect(at(toggleOrderedList, '1) a\n2) b\n1. x\n2. y', 0)).toBe('a\n1) b\n1. x\n2. y')
+  })
+
+  test('takes off a whole loose nested list without making code of its deeper items', () => {
+    const doc = '- a\n\n    - b'
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n\n  b')
+  })
+
+  test('leaves the code, tables and wrapped lines inside items alone', () => {
+    const fenced = '- a\n  ```\n  x\n  ```\n- b'
+    expect(apply(toggleBulletList, fenced, 0, fenced.length).doc).toBe('a\n```\nx\n```\nb')
+    const wrapped = '- a long\n  wraps\n- b'
+    expect(apply(toggleOrderedList, wrapped, 0, wrapped.length).doc).toBe(
+      '1. a long\n   wraps\n2. b',
+    )
   })
 
   test('leaves blank lines in the selection blank', () => {
@@ -378,9 +406,9 @@ describe('line prefixes', () => {
     expect(run(toggleOrderedList, '> > 1. |one')).toBe('> > one')
   })
 
-  test('takes the numbers off a nested ordered list without the indent', () => {
+  test('takes the numbers off a nested ordered list, its lines going back with their parent', () => {
     const doc = '1. a\n   1. b\n2. c'
-    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('a\n   b\nc')
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('a\nb\nc')
     expect(at(toggleOrderedList, '1. [ ] a', 7)).toBe('a')
   })
 })

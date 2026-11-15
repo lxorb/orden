@@ -106,23 +106,39 @@ function delimiterCell(align: Align, width: number): string {
   }
 }
 
-export function serializeTable(model: TableModel): string {
-  const columns = Math.max(model.header.length, model.align.length)
-  const widths = Array.from({ length: columns }, (_, i) =>
-    model.rows.reduce(
-      (most, row) => Math.max(most, displayWidth(row[i] ?? '')),
-      Math.max(MIN_CELL, displayWidth(model.header[i] ?? '')),
-    ),
+export function columnWidth(model: TableModel, column: number): number {
+  return model.rows.reduce(
+    (most, row) => Math.max(most, displayWidth(row[column] ?? '')),
+    Math.max(MIN_CELL, displayWidth(model.header[column] ?? '')),
   )
+}
 
-  const row = (cells: readonly string[]) =>
-    `| ${widths.map((width, i) => padCell(cells[i] ?? '', width)).join(' | ')} |`
+export function columnWidths(model: TableModel): number[] {
+  const columns = Math.max(model.header.length, model.align.length)
+  return Array.from({ length: columns }, (_, column) => columnWidth(model, column))
+}
 
+export function serializeRow(cells: readonly string[], widths: readonly number[]): string {
+  return `| ${widths.map((width, i) => padCell(cells[i] ?? '', width)).join(' | ')} |`
+}
+
+export function serializeTable(model: TableModel, widths = columnWidths(model)): string {
   return [
-    row(model.header),
+    serializeRow(model.header, widths),
     `| ${widths.map((width, i) => delimiterCell(model.align[i] ?? null, width)).join(' | ')} |`,
-    ...model.rows.map(row),
+    ...model.rows.map((cells) => serializeRow(cells, widths)),
   ].join('\n')
+}
+
+export function sameModel(one: TableModel, other: TableModel): boolean {
+  const same = (a: readonly unknown[], b: readonly unknown[]) =>
+    a.length === b.length && a.every((value, at) => value === b[at])
+  return (
+    same(one.header, other.header) &&
+    same(one.align, other.align) &&
+    one.rows.length === other.rows.length &&
+    one.rows.every((row, at) => same(row, other.rows[at] ?? []))
+  )
 }
 
 export function insertColumn(model: TableModel, at: number): TableModel {

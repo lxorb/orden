@@ -23,7 +23,7 @@ import { keptCover, keptCoverChanged } from './kept-cover'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
-import { standsAlone } from '../table/navigation'
+import { standsAlone, tableWrite } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
 import { noReveal, overlaps } from './reveal'
@@ -522,7 +522,8 @@ export const blockDecorations = StateField.define<Blocks>({
     const moved =
       transaction.selection !== undefined &&
       !transaction.startState.selection.eq(transaction.state.selection)
-    const chosen = value.chosen || transaction.docChanged || moved
+    const typed = transaction.docChanged && !transaction.annotation(tableWrite)
+    const chosen = value.chosen || typed || moved
 
     if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
 

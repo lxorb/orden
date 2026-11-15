@@ -457,19 +457,43 @@ function siblingAbove(state: EditorState, number: number, levels: number[]): boo
   return false
 }
 
+function carriedIn(state: EditorState, line: Quoted): boolean {
+  const tree = ensureSyntaxTree(state, line.start + line.text.length, 50) ?? syntaxTree(state)
+  const at = line.from + line.space.length
+  for (let node: SyntaxNode | null = tree.resolveInner(at, 1); node; node = node.parent) {
+    if (node.name !== 'ListItem') continue
+    if (node.from >= line.start) return false
+    const item = quotedLine(state.doc.lineAt(node.from))
+    const content = columnOf(MARKER.exec(item.text)?.[0] ?? item.space)
+    if (line.depth < item.depth) return false
+    const column = line.depth === item.depth ? line.column : (line.levels[item.depth] ?? 0)
+    return column >= content
+  }
+  return false
+}
+
+interface Restart {
+  levels: number[]
+  count: number
+  delimiter: string
+  active: boolean
+}
+
 function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
   return ({ state, dispatch }) => {
     const chosen = selectedLines(state)
     const quoted = chosen.map(quotedLine)
     const written = quoted.filter((line) => line.text.trim())
+    const listed = written.filter((line) => !carriedIn(state, line))
+    const items = listed.length ? listed : written
     const skipsBlank = written.length > 0
-    const lines = skipsBlank ? written : quoted
+    const lines = skipsBlank ? items : quoted
     const off = lines.every((line) => own.test(line.text))
 
-    const picked = new Set(chosen.map((line) => line.number))
+    const picked = new Set(lines.map((line) => line.start))
     const last = chosen.at(-1)?.number ?? 0
     const counts = new Map<string, { levels: number[]; count: number }>()
-    const restarts = new Map<string, { levels: number[]; count: number }>()
+    const restarts = new Map<string, Restart>()
     const parents: Parent[] = []
     const changes: ChangeSpec[] = []
     const drop = (held: Map<string, { levels: number[] }>, line: Quoted, orSibling: boolean) => {
@@ -480,7 +504,8 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
     const first = chosen[0]?.number ?? 1
     for (let number = first; number <= state.doc.lines; number++) {
       const line = quotedLine(state.doc.line(number))
-      if (!line.text.trim() && (skipsBlank || !picked.has(number))) {
+      const chose = picked.has(line.start)
+      if (!line.text.trim() && (skipsBlank || !chose)) {
         const shifts = leadShifts(parents, line)
         if (shifts.slice(0, line.depth).some(Boolean)) {
           changes.push({ from: line.start, to: line.from, insert: quotePrefix(line, shifts) })
@@ -489,21 +514,26 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
       }
 
       const key = line.levels.join(',')
-      if (!picked.has(number)) {
+      if (!chose) {
         drop(counts, line, false)
         drop(restarts, line, true)
+        for (const one of restarts.values())
+          if (encloses(one.levels, line.levels, false)) one.active = true
         const restart = restarts.get(key)
-        const numbered = restart && NUMBERED.exec(line.text)
+        const numbered = restart ? NUMBERED.exec(line.text) : null
+        const renumbered =
+          restart && numbered && restart.active && numbered[0].trim().endsWith(restart.delimiter)
+        if (restart && !renumbered) restarts.delete(key)
         const shifts = shiftsOf(parents, line)
-        if (!parents.length && number > last && !numbered) break
+        if (!parents.length && number > last && !renumbered) break
         if (own.test(line.text)) counts.set(key, { levels: line.levels, count: 1 })
 
         let widened = 0
         let marker = ''
         let to = line.from + line.space.length
-        if (restart && numbered) {
+        if (renumbered) {
           restart.count++
-          marker = `${restart.count}. `
+          marker = `${restart.count}${restart.delimiter} `
           widened = marker.length - (numbered[0].length - line.space.length)
           to = line.from + numbered[0].length
         }
@@ -524,19 +554,26 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
       counts.set(key, { levels: line.levels, count })
 
       const shifts = shiftsOf(parents, line)
-      const listed = MARKER.exec(line.text)?.[0] ?? ''
+      const written_marker = MARKER.exec(line.text)?.[0] ?? ''
       const task = off ? taskAt(line.text) : null
-      const matched = task ? line.text.slice(0, Math.max(task.marker, listed.length)) : listed
+      const matched = task ? Math.max(task.marker, written_marker.length) : written_marker.length
       const marker = off ? '' : markerFor(count)
-      const widened = matched ? marker.length - (matched.length - line.space.length) : 0
-      if (off) shifts[line.depth] = 0
+      const widened = written_marker
+        ? marker.length - (written_marker.length - line.space.length)
+        : 0
       const shift = (shifts[line.depth] ?? 0) + widened
       parents.push({ depth: line.depth, levels: line.levels, shift })
-      if (off && NUMBERED.test(line.text) && !siblingAbove(state, number, line.levels)) {
-        restarts.set(key, { levels: line.levels, count: 0 })
+      const numbered_here = off ? NUMBERED.exec(line.text) : null
+      if (numbered_here) {
+        restarts.set(key, {
+          levels: line.levels,
+          count: 0,
+          delimiter: numbered_here[0].trim().slice(-1),
+          active: !siblingAbove(state, number, line.levels),
+        })
       }
 
-      const to = line.from + Math.max(matched.length, line.space.length)
+      const to = line.from + Math.max(matched, line.space.length)
       changes.push({ from: line.start, to, insert: prefixOf(line, shifts) + marker })
     }
 
