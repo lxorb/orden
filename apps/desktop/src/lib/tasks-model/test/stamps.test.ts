@@ -1,0 +1,50 @@
+import { inboxStamp } from '@orden/sync-core'
+import { describe, expect, test } from 'vitest'
+import { MemoryTodoDisk, MemoryTodoServer, type StoreWorld, TodoStore } from '../src/api'
+
+const NOON = Date.parse('2026-11-14T12:00:00')
+
+function device(server: MemoryTodoServer, owner: string, now: () => number) {
+  const world: StoreWorld = {
+    openDisk: () => Promise.resolve(new MemoryTodoDisk()),
+    now,
+    channel: () => null,
+    warn: () => undefined,
+    later: () => () => undefined,
+  }
+  const store = new TodoStore(world)
+  return {
+    store,
+    open: () => store.opened({ owner, server: server.forUser(owner), device: 'laptop' }),
+  }
+}
+
+describe('a todo changed on a device whose clock is behind', () => {
+  test('keeps the change over one stamped later by the account', async () => {
+    const server = new MemoryTodoServer()
+    const ahead = NOON + 5 * 60_000
+    const stamp = inboxStamp(ahead, 0, 'mcp')
+    await server.forUser('u').push([
+      {
+        id: 'tclaude',
+        fields: { kind: 'todo', title: 'Call Ann', done: false, priority: 0 },
+        stamps: { kind: stamp, title: stamp, done: stamp, priority: stamp },
+      },
+    ])
+    let clock = NOON
+    const laptop = device(server, 'u', () => (clock += 1))
+    await laptop.open()
+    await laptop.store.exchange()
+    expect(laptop.store.todo('tclaude')?.done).toBe(false)
+
+    const ticked = await laptop.store.update('tclaude', { done: true, priority: 3 })
+    expect(ticked.ok && ticked.value).toMatchObject({ done: true, priority: 3 })
+    await laptop.store.exchange()
+
+    let other = NOON
+    const phone = device(server, 'u', () => (other += 1))
+    await phone.open()
+    await phone.store.exchange()
+    expect(phone.store.todo('tclaude')).toMatchObject({ done: true, priority: 3 })
+  })
+})
