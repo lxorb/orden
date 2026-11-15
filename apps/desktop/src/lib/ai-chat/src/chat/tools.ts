@@ -87,17 +87,17 @@ export const crateTools: Tools = {
   },
 
   async call(provider, mode, name, args, thread) {
-    if (name === 'run_agent' || name === 'agent_result') {
-      const { answerText, helperHere } = await import('../helpers/run')
-      const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
-      return {
-        text: answerText(answered),
-        images: [],
-        error: 'refused' in answered,
-        ...('agent' in answered ? { agent: answered.agent } : {}),
-      }
-    }
     try {
+      if (name === 'run_agent' || name === 'agent_result') {
+        const { answerText, helperHere } = await import('../helpers/run')
+        const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
+        return {
+          text: answerText(answered),
+          images: [],
+          error: 'refused' in answered,
+          ...('agent' in answered ? { agent: answered.agent } : {}),
+        }
+      }
       const answered = await invoke<unknown>('ai_agent_call', {
         agent: agentOf(provider),
         mode,

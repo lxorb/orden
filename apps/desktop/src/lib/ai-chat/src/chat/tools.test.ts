@@ -12,6 +12,11 @@ vi.mock('../../../platform/src/tauri', () => ({
   },
 }))
 
+vi.mock('../helpers/run', () => ({
+  answerText: () => '',
+  helperHere: () => Promise.reject(new Error('the helpers could not start')),
+}))
+
 const { crateTools, outputIn } = await import('./tools')
 
 const CLAUDE = { id: 'anthropic', kind: 'anthropic' as const, name: 'Claude', model: '' }
@@ -74,6 +79,16 @@ describe('the crate is asked', () => {
     })
     expect(output).toEqual({
       text: 'edit_note is not a tool in this mode',
+      images: [],
+      error: true,
+    })
+  })
+})
+
+describe('a helper call', () => {
+  test('that fails is an answer the model reads, not a failed turn', async () => {
+    expect(await crateTools.call(CLAUDE, 'full', 'run_agent', { prompt: 'go' }, 't1')).toEqual({
+      text: 'the helpers could not start',
       images: [],
       error: true,
     })
