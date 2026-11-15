@@ -22,6 +22,8 @@ import {
   NOT_AN_EMAIL,
   normaliseEmail,
   now,
+  ownProfile,
+  presentOwnProfile,
   randomCode,
   randomToken,
   readBody,
@@ -158,7 +160,14 @@ export async function signingIn(
 }
 
 export async function sessionFor(env: Env, user: User, device = ''): Promise<Session> {
-  return { token: await openSession(env, user.id, device), user: presentUser(user) }
+  const [token, profile] = await Promise.all([
+    openSession(env, user.id, device),
+    ownProfile(env, user.id),
+  ])
+  return {
+    token,
+    user: { ...presentUser(user), ...(profile ? presentOwnProfile(profile, Date.now()) : {}) },
+  }
 }
 
 export async function sendCode(

@@ -22,6 +22,8 @@ export interface Who {
   face?: string | undefined
 }
 
+export type Worn = Pick<Who, 'id' | 'face'>
+
 export interface Opening {
   noteId: string
   token: string
@@ -87,13 +89,14 @@ export class RoomDoor {
     this.sayLater()
   }
 
-  rename(person: string | undefined) {
-    if (person === this.who.person) return
+  rename(person: string | undefined, worn: Worn = {}) {
+    const { name, accent } = this.who
+    const who: Who = person === undefined ? { name, accent } : { name, accent, person, ...worn }
+    if (who.person === this.who.person && who.id === this.who.id && who.face === this.who.face) {
+      return
+    }
 
-    this.who =
-      person === undefined
-        ? { name: this.who.name, accent: this.who.accent }
-        : { ...this.who, person }
+    this.who = who
     this.awareness.setLocalStateField('who', this.who)
   }
 

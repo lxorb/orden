@@ -1,4 +1,4 @@
-import { type Opening, RoomDoor, type Who } from './door'
+import { type Opening, RoomDoor, type Who, type Worn } from './door'
 import type { Seen } from './peers'
 
 export interface Entering {
@@ -45,8 +45,8 @@ export abstract class JoinedRoom {
     return new RoomDoor(opening)
   }
 
-  rename(person: string | undefined) {
-    this.door.rename(person)
+  rename(person: string | undefined, worn?: Worn) {
+    this.door.rename(person, worn)
   }
 
   repaint(scheme: 'dark' | 'light') {

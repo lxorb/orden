@@ -289,7 +289,8 @@ class Session {
 
     const who = await api.rename(token, name)
     if (this.token !== token) return
-    if (who.user) this.user = who.user
+    if (who.user)
+      this.user = this.user?.id === who.user.id ? { ...this.user, ...who.user } : who.user
     if (who.guest) this.guest = who.guest
   }
 
