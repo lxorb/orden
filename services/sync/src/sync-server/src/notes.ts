@@ -607,14 +607,17 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
   const folder = under.replace(/^\/+/, '')
-  const found = await versionsAt(context.env, space.id, folder, at)
   const shut = await programShut(context.env, context.get('who'))
-  const changed = shut ? found.filter((one) => !shut(space.id, one.path)) : found
+  const changed = await versionsAt(
+    context.env,
+    space.id,
+    folder,
+    at,
+    (path) => !shut?.(space.id, path),
+  )
 
-  const cut = found.length >= ROLLBACK_AT_ONCE
-  const held =
-    (cut ? await countVersionsAt(context.env, space.id, folder, at) : found.length) -
-    (found.length - changed.length)
+  const cut = changed.length >= ROLLBACK_AT_ONCE
+  const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
 
   if (dry) {
     return context.json({

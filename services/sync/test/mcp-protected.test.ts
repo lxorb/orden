@@ -194,6 +194,31 @@ describe('an agent’s token on the routes a token may use', () => {
     expect((await call(env, `/v1/notes/${id}`, { token })).text).toContain('the newer words')
   })
 
+  test('turns back what comes after more protected notes than one rollback takes', async () => {
+    const at = Date.now() - 60 * 1000
+    const insert = env.db.prepare(
+      `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+       values (?, ?, ?, ?, 1, ?, 0, 4, 'now')`,
+    )
+    const version = env.db.prepare(
+      "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
+    )
+    for (let made = 0; made <= 400; made++) {
+      const id = crypto.randomUUID()
+      insert.run(id, home, `Diary/${String(made).padStart(3, '0')}.md`, 100 + made, Date.now())
+      version.run(id, at - 1000)
+    }
+    const later = crypto.randomUUID()
+    insert.run(later, home, 'Later.md', 600, Date.now())
+    version.run(later, at - 1000)
+
+    const dry = await call<{ paths: string[] }>(env, `/v1/spaces/${home}/rollback`, {
+      token: key,
+      body: { at, dry: true },
+    })
+    expect(dry.json.paths).toEqual(['Later.md'])
+  })
+
   test('pulls no document of it on sync v2', async () => {
     await call(env, `/v2/spaces/${home}/prepare`, { token, method: 'POST' })
     const asked = { docs: [{ id: diaryId(), epoch: 1, sv: new Uint8Array([0]) }] }
