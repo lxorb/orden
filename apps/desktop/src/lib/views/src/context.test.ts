@@ -71,3 +71,31 @@ describe('the notes that link to a note', () => {
     expect(linking).toHaveLength(16_000)
   })
 })
+
+describe('a link in a base', () => {
+  const rows = [
+    ...rowsOfText('Mine', 'Plan.md', '# Top plan\n'),
+    ...rowsOfText('Mine', 'Work/Plan.md', '# Work plan\n'),
+    ...rowsOfText('Mine', 'Work/Journal.md', 'See [[Plan]]\n'),
+    ...rowsOfText('Mine', 'Other.md', 'See [[Work/Plan]]\n'),
+    ...rowsOfText('Mine', 'Work/Notes.md', 'See [the plan](../Plan.md)\n'),
+  ]
+  const note = (path: string) => {
+    const found = rows.find((one) => one.kind === 'note' && one.path === path)
+    if (!found) throw new Error(`no row for ${path}`)
+    return found
+  }
+  const context = contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' })
+
+  test('reaches the namesake the editor opens, not the first note of that name', () => {
+    expect(context.resolve?.('Plan', note('Work/Journal.md'))).toBe('Work/Plan.md')
+    expect(context.resolve?.('Work/Plan', note('Other.md'))).toBe('Work/Plan.md')
+    expect(context.resolve?.('Plan', note('Other.md'))).toBe('Plan.md')
+    expect(context.resolve?.('../Plan.md', note('Work/Notes.md'))).toBe('Plan.md')
+  })
+
+  test('counts as a backlink of the note it reaches', () => {
+    expect(context.backlinks?.(note('Work/Plan.md'))).toEqual(['Work/Journal.md', 'Other.md'])
+    expect(context.backlinks?.(note('Plan.md'))).toEqual(['Work/Notes.md'])
+  })
+})
