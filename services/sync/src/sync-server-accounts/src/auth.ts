@@ -410,7 +410,10 @@ sessions.delete('/', async (context) => {
     .bind(user.id, mine)
     .all<Ended>()
 
-  await context.env.DB.prepare('delete from oauth_grants where user_id = ?').bind(user.id).run()
+  await context.env.DB.batch([
+    context.env.DB.prepare('delete from oauth_grants where user_id = ?').bind(user.id),
+    context.env.DB.prepare('delete from oauth_codes where user_id = ?').bind(user.id),
+  ])
   await sessionsEnded(context.env, user.id, ending)
 
   return context.json({ ended: ending.length })
