@@ -2,6 +2,8 @@ import { readTint } from '../../ui-kit/src/api'
 
 export const LONGEST_NAME = 80
 
+export const activityName = (name: string): string => name.trim().slice(0, LONGEST_NAME).trim()
+
 const LONGEST_NOTE = 1000
 
 const MOST_TAGS = 12
