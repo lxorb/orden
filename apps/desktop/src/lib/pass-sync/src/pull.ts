@@ -6,7 +6,12 @@ import {
   sealVersion,
   unwrapVaultKey,
 } from '@orden/pass/keys'
-import type { Changes, ItemRow as WireItem, VaultRow as WireVault } from '@orden/pass/wire'
+import type {
+  Accepted,
+  Changes,
+  ItemRow as WireItem,
+  VaultRow as WireVault,
+} from '@orden/pass/wire'
 import type { Change, ItemRow, VaultRow, VersionRow } from './local'
 import { KEPT_AFTER_DELETE } from './local'
 import { rekeyed } from './rekey'
@@ -66,7 +71,7 @@ function deviceVaultOf(
   row: WireVault,
   key: string,
   pub: string,
-  local: VaultRow | undefined,
+  accepted: Accepted | null,
 ): VaultRow {
   return {
     id: row.id,
@@ -80,7 +85,7 @@ function deviceVaultOf(
     pending: false,
     deleted: false,
     proof: row.proof,
-    accepted: keptPin(row, local),
+    accepted,
     handovers: row.handovers,
   }
 }
@@ -188,7 +193,7 @@ async function appliedVault(
       return 'pulled'
     }
   }
-  const next = deviceVaultOf(row, row.key, doing.pub, local)
+  const next = deviceVaultOf(row, row.key, doing.pub, await keptPin(doing.me, row, local))
   doing.change.vaults.push(next)
   await keepVaultBase(rows, row.id, { rev: row.rev, meta: row.meta })
   if (!local) doing.fresh.push(row.id)

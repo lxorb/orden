@@ -93,13 +93,27 @@ describe('a vault key the account hands over', () => {
 
 describe('the pin a device keeps', () => {
   test('stays when the account sends the vault without it', async () => {
-    const { accepted, local, wire } = await world()
-    expect(keptPin(wire({ accepted: null }), local)).toEqual(accepted)
+    const { me, accepted, local, wire } = await world()
+    expect(await keptPin(me.pub, wire({ accepted: null }), local)).toEqual(accepted)
   })
 
   test('is the one the account sends when this device had none', async () => {
-    const { accepted, local, wire } = await world()
-    expect(keptPin(wire({}), { ...local, accepted: null })).toEqual(accepted)
-    expect(keptPin(wire({ accepted: null }), undefined)).toBeNull()
+    const { me, accepted, local, wire } = await world()
+    expect(await keptPin(me.pub, wire({}), { ...local, accepted: null })).toEqual(accepted)
+    expect(await keptPin(me.pub, wire({ accepted: null }), undefined)).toBeNull()
+  })
+
+  test('is a newer one the reader signed on another device, over the one kept here', async () => {
+    const { me, local, wire } = await world()
+    const owner = await newSigner()
+    const newer = await acceptedOf(me, VAULT, owner.pub)
+    expect(await keptPin(me.pub, wire({ accepted: newer }), local)).toEqual(newer)
+  })
+
+  test('is never one the reader did not sign, whichever side brings it', async () => {
+    const { me, accepted, local, wire, server } = await world()
+    const forged = await acceptedOf(server, VAULT, server.pub)
+    expect(await keptPin(me.pub, wire({ accepted: forged }), local)).toEqual(accepted)
+    expect(await keptPin(me.pub, wire({}), { ...local, accepted: forged })).toEqual(accepted)
   })
 })

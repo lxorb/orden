@@ -15,7 +15,7 @@ export async function vaultDistrust(
   if (local?.keyVersion === row.keyVersion && held !== undefined) {
     return same(key, held) ? null : 'swapped'
   }
-  const pinned = me === null ? null : await pinnedOwnerOf(me, row.id, keptPin(row, local))
+  const pinned = me === null ? null : await pinnedOwnerOf(me, row.id, await keptPin(me, row, local))
   if (pinned === null) {
     if (!local) return 'unasked'
     if (row.proof === null) return 'unproven'
@@ -35,7 +35,16 @@ export async function ownersOf(
   return pinned === null ? [] : await ownersFrom(vault, pinned, row.handovers ?? [])
 }
 
-export function keptPin(row: WireVault, local: VaultRow | undefined): Accepted | null {
+export async function keptPin(
+  me: string | null,
+  row: WireVault,
+  local: VaultRow | undefined,
+): Promise<Accepted | null> {
   const mine = local && !local.deleted ? (local.accepted ?? null) : null
+  if (me !== null) {
+    for (const one of [row.accepted, mine]) {
+      if (one !== null && (await pinnedOwnerOf(me, row.id, one)) !== null) return one
+    }
+  }
   return mine ?? row.accepted
 }
