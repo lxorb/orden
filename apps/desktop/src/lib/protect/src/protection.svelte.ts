@@ -72,10 +72,14 @@ export function hashedOf(value: unknown): Hashed | null {
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 
+export const fitted = (key: string) =>
+  key.length > 300 ? key.slice(0, 300).replace(/\/?[^/]*$/, '') : key
+
 export function protectedMap(value: unknown): Record<string, Way> {
   if (!isRecord(value)) return {}
   const out: Record<string, Way> = {}
-  for (const [path, way] of Object.entries(value)) {
+  for (const [key, way] of Object.entries(value)) {
+    const path = fitted(key)
     if (Object.keys(out).length >= MOST_PROTECTED) break
     if ((path === SPACE || insideItsSpace(path)) && isWay(way)) out[path] = way
   }

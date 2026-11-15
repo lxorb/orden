@@ -158,7 +158,7 @@ class Trash {
       }
       const spaceId = item.note?.spaceId ?? item.ref
       const space = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === spaceId)
-      if (space) await protection.unbury(null, space.root, landed, was)
+      if (space) await protection.unbury(item.ref, space.root, landed, was)
       sync.nudge()
     })
   }

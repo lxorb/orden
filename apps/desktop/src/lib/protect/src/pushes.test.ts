@@ -2,22 +2,22 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const server = vi.hoisted(() => ({
   stored: {},
-  puts: [] as { body: unknown; land: () => void; fail: () => void }[],
+  puts: [] as { body: unknown; land: (answer?: unknown) => void; fail: () => void }[],
   holdGet: false,
   gets: [] as (() => void)[],
 }))
 
 vi.mock('../../accounts/src/api', () => ({
   account: { token: 'token', user: { id: 'u1' } },
-  request: (path: string, options: { method?: string; body?: unknown } = {}) => {
+  request: (_path: string, options: { method?: string; body?: unknown } = {}) => {
     if (options.method === 'PUT') {
       return new Promise((resolve, reject) => {
         const body = options.body as { protected: unknown }
         server.puts.push({
           body,
-          land: () => {
+          land: (answer?: unknown) => {
             server.stored = { s1: body.protected }
-            resolve({})
+            resolve(answer ?? {})
           },
           fail: () => reject(new Error('offline')),
         })
@@ -33,6 +33,22 @@ vi.mock('@orden/contracts', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/contracts')>()),
   syncStore: () => ({ remoteIdFor: () => 's1' }),
 }))
+
+function memoryStorage(): Storage {
+  const store = new Map<string, string>()
+  return {
+    get length() {
+      return store.size
+    },
+    key: (index) => [...store.keys()][index] ?? null,
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => void store.set(key, value),
+    removeItem: (key) => void store.delete(key),
+    clear: () => store.clear(),
+  }
+}
+
+vi.stubGlobal('localStorage', memoryStorage())
 
 const { protection } = await import('./protection.svelte')
 const { pulled } = await import('./synced')
@@ -62,7 +78,7 @@ describe('the locks a space sends the account', () => {
     expect(server.puts).toHaveLength(1)
     server.puts[0]?.land()
     await settle()
-    expect(server.puts.map((one) => one.body)).toEqual([
+    expect(server.puts.map((one) => one.body)).toMatchObject([
       { protected: { 'A.md': 'password' } },
       { protected: { 'A.md': 'password', 'B.md': 'password' } },
     ])
@@ -100,5 +116,26 @@ describe('the locks a space sends the account', () => {
     await pulling
     await settle()
     expect(protection.locked(`${ROOT}/Diary.md`)).toBe(true)
+  })
+
+  test('carry what the account last held, and take the map it merged them into', async () => {
+    server.stored = { s1: { 'Plans.md': 'password' } }
+    await pulled('token', 'u1', PAIRS)
+    await settle()
+    protection.set(ROOT, `${ROOT}/Taxes.md`, 'password')
+    await settle()
+    expect(server.puts.at(-1)?.body).toEqual({
+      protected: { 'Plans.md': 'password', 'Taxes.md': 'password' },
+      base: { 'Plans.md': 'password' },
+    })
+    const merged = { 'Plans.md': 'password', 'Diary.md': 'device', 'Taxes.md': 'password' }
+    server.puts.at(-1)?.land({ password: null, spaces: { s1: merged } })
+    await settle()
+    expect(protection.ways(ROOT)).toEqual(merged)
+    protection.set(ROOT, `${ROOT}/Plans.md`, null)
+    await settle()
+    expect(server.puts.at(-1)?.body).toMatchObject({ base: merged })
+    server.puts.at(-1)?.land()
+    await settle()
   })
 })

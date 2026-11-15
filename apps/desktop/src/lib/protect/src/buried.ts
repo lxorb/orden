@@ -8,7 +8,8 @@ import {
   within,
   without,
 } from '../../platform/src/api'
-import type { Way } from './protection.svelte'
+import { syncStore } from '@orden/contracts'
+import { fitted, type Way } from './protection.svelte'
 
 const BURIED_KEY = 'orden:protected-buried'
 const MOST_BURIED = 1000
@@ -19,7 +20,7 @@ type Buried = Record<string, Record<string, Way>>
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 
-const inSpace = (at: string) => at === '' || insideItsSpace(at)
+const inSpace = (at: string) => at === '' || insideItsSpace(fitted(at))
 
 function readBuried(): Buried {
   const saved = stored(BURIED_KEY)
@@ -27,7 +28,9 @@ function readBuried(): Buried {
   const out: Buried = {}
   for (const [back, ways] of Object.entries(saved)) {
     if (!isRecord(ways)) continue
-    const kept = Object.entries(ways).filter(([rest, way]) => inSpace(rest) && isWay(way))
+    const kept = Object.entries(ways)
+      .map(([rest, way]) => [fitted(rest), way] as const)
+      .filter(([rest, way]) => inSpace(rest) && isWay(way))
     if (kept.length) out[back] = Object.fromEntries(kept) as Record<string, Way>
   }
   return out
@@ -81,7 +84,9 @@ export async function bury(
   if (!Object.keys(ways).length) return
   const id = crypto.randomUUID()
   const away = `${HISTORY_AWAY}/${id}`
-  for (const name of [`${placeOf(root, at)}\n${id}`, back ?? null]) {
+  const sync = syncStore()
+  const account = at ? sync?.idOf(pathOf(root, at)) : sync?.remoteIdFor(root)
+  for (const name of [`${placeOf(root, at)}\n${id}`, back ?? null, account ?? null]) {
     if (name === null) continue
     keepBuried(name, ways)
     keepHistory(name, away)
@@ -112,7 +117,7 @@ async function exactly(
   keepJson(BURIED_KEY, Object.fromEntries(Object.entries(buried).filter(([name]) => !twins(name))))
   const came: Record<string, Way> = {}
   for (const [rest, way] of Object.entries(ways ?? {})) {
-    const landed = landedAt(at, rest)
+    const landed = fitted(landedAt(at, rest))
     if (inSpace(landed) && !(landed in held)) came[landed] = way
   }
   return came
@@ -133,7 +138,7 @@ async function under(
     for (const [rest, way] of Object.entries(ways)) {
       const key = landedAt(folder, rest)
       const inside = within(was, key, root)
-      const landed = inside === null ? key : landedAt(at, inside)
+      const landed = fitted(inside === null ? key : landedAt(at, inside))
       const near = inside !== null || within(key, was, root) !== null
       if (near && inSpace(landed) && !(landed in held)) came[landed] = way
     }
@@ -153,7 +158,10 @@ export async function unburied(
 ): Promise<Record<string, Way> | null> {
   if (!inSpace(at) || !inSpace(was)) return null
   const buried = Object.keys(readBuried())
-  const place = buried.filter((name) => folderIn(name, root) === was).at(-1) ?? null
+  const histories = readHistories()
+  const alone = (name: string) =>
+    back === null || buried.every((one) => one === name || histories[one] !== histories[name])
+  const place = buried.filter((name) => folderIn(name, root) === was && alone(name)).at(-1) ?? null
   const named = back !== null && buried.includes(back) ? back : place
   const came = {
     ...(await under(root, was, at, held)),
