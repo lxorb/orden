@@ -197,3 +197,29 @@ describe('what keeps its straight quotes', () => {
     expect(at('```js\nhe said| something\n')).toBe(false)
   })
 })
+
+describe('markdown being typed', () => {
+  test("a table's divider row stays hyphens", () => {
+    expect(type('| -', '-')).toBe('| --')
+    expect(type('| --', '-')).toBe('| ---')
+    expect(type('| --- | :-', '-')).toBe('| --- | :--')
+    expect(type('|--', '-')).toBe('|---')
+  })
+
+  test('an HTML comment opens and closes as written', () => {
+    expect(type('a <!-', '-')).toBe('a <!--')
+    expect(type('<!-- note -', '-')).toBe('<!-- note --')
+    expect(type('<!-- don', "'")).toBe("<!-- don'")
+  })
+
+  test("a wiki link's name keeps its straight quotes", () => {
+    expect(type('[[Bob', "'")).toBe("[[Bob'")
+    expect(type('see [[Q3 -', '-')).toBe('see [[Q3 --')
+  })
+
+  test('but prose after a closed link or comment still gets them', () => {
+    expect(type('[[Bob]] can', "'")).toBe('[[Bob]] can’')
+    expect(type('<!-- x --> a -', '-')).toBe('<!-- x --> a –')
+    expect(type('a | b -', '-')).toBe('a | b –')
+  })
+})

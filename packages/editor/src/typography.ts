@@ -24,8 +24,25 @@ export function typingBreak(before: string): boolean {
   return BREAK.test(before)
 }
 
+const DIVIDER_ROW = /^[ \t]*(?:>[ \t]*)*\|?[ \t:|-]*$/
+const COMMENT_OPENING = /<!-?-?$/
+
+function withinOpen(before: string, opening: string, closing: string): boolean {
+  const opened = before.lastIndexOf(opening)
+  return opened >= 0 && !before.includes(closing, opened + opening.length)
+}
+
+function writingMarkup(before: string): boolean {
+  return (
+    withinOpen(before, '[[', ']]') ||
+    withinOpen(before, '<!--', '-->') ||
+    COMMENT_OPENING.test(before.slice(0, -1))
+  )
+}
+
 export function smartReplacement(before: string): Replacement | null {
-  const markup = typingBreak(before)
+  if (writingMarkup(before)) return null
+  const markup = typingBreak(before) || (before.includes('|') && DIVIDER_ROW.test(before))
 
   for (const rule of RULES) {
     if (markup && rule.dash) continue
