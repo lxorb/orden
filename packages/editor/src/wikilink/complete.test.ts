@@ -454,3 +454,42 @@ describe('the name a copied link to a note is written with', () => {
     expect(linkNameAt(built, 'Gone.md')).toBeNull()
   })
 })
+
+test('naming a block above, in the note being written, links it where the link was typed', async () => {
+  const doc = 'first block\n\n[[#^'
+  const index: NoteIndex = {
+    notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }],
+    files: [],
+    path: 'Plan.md',
+    read: () => Promise.resolve('first block\n\n'),
+  }
+  let built: EditorState
+  const view = {
+    get state() {
+      return built
+    },
+    dispatch: (spec: TransactionSpec) => {
+      built = built.update(spec).state
+    },
+  } as unknown as EditorView
+  built = parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(doc.length),
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+        noteIndex.of(index),
+        blockNamer.of((_path, line) => {
+          view.dispatch({ changes: { from: built.doc.line(line + 1).to, insert: ' ^abc' } })
+          return Promise.resolve('abc')
+        }),
+      ],
+    }),
+  )
+  const found = await wikilinkCompletions(new CompletionContext(built, doc.length, false))
+  const row = found?.options.find((one) => one.label === 'first block')
+  if (!found || !row || typeof row.apply !== 'function') throw new Error('no row for the block')
+  row.apply(view, row, found.from, doc.length)
+  await new Promise((settle) => setTimeout(settle, 0))
+  expect(built.doc.toString()).toBe('first block ^abc\n\n[[#^abc]]')
+})

@@ -151,10 +151,14 @@ async function blockOptions(
 
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
+    const before = view.state.doc
+    const above = path === target.from && line + 1 < before.lineAt(from).number
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (id) insert({ ...target, fragment: `^${id}` })(view, completion, from, to)
+        if (!id) return
+        const shift = above ? view.state.doc.length - before.length : 0
+        insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
       })
       .catch(() => undefined)
   }
