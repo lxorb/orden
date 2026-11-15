@@ -1,9 +1,11 @@
 <script lang="ts">
   import type { Camera } from '../../camera/src/api'
-  import { paintFar } from './far'
+  import { FarSheets, type FarPicture, farPictures, paintFar } from './far'
   import type { CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
   import type { Box } from '../../plane/src/api'
   import type { Palette } from '../../plane/src/api'
+  import { fileUrl } from '../../plane/src/api'
+  import { account } from '../../accounts/src/api'
   import { pixelRatio } from '../../ui-controls/src/api'
 
   const {
@@ -19,6 +21,7 @@
     width,
     height,
     palette,
+    root,
   }: {
     nodes: readonly CanvasNode[]
     edges: readonly CanvasEdge[]
@@ -32,14 +35,32 @@
     width: number
     height: number
     palette: Palette
+    root: string | null
   } = $props()
 
   let element = $state<HTMLCanvasElement>()
   const ratio = $derived(Math.min(2, pixelRatio.now))
 
+  let arrived = $state(0)
+  const shelf = farPictures(
+    () => (arrived += 1),
+    () => !!account.accountToken,
+  )
+
+  const sheets = new FarSheets((wide, tall) => {
+    const paper = document.createElement('canvas')
+    paper.width = wide
+    paper.height = tall
+    return paper
+  })
+
+  function picture(file: string): FarPicture | null {
+    return shelf(fileUrl(file, root), file)
+  }
+
   function paint() {
     if (!element) return
-    paintFar(element, {
+    const waiting = paintFar(element, {
       nodes,
       edges,
       picked,
@@ -53,10 +74,27 @@
       height,
       palette,
       ratio,
+      font,
+      picture,
+      sheets,
+    })
+    if (waiting) later()
+  }
+
+  function later() {
+    if (frame) cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => {
+      frame = 0
+      paint()
     })
   }
 
   const follows = (..._values: unknown[]) => undefined
+
+  const font = $derived.by(() => {
+    follows(palette)
+    return element ? getComputedStyle(element).fontFamily || 'sans-serif' : 'sans-serif'
+  })
 
   let frame = 0
   let painted = false
@@ -75,6 +113,8 @@
       height,
       palette,
       ratio,
+      font,
+      arrived,
     )
     if (!element) return
     if (!painted) {
@@ -82,11 +122,7 @@
       paint()
       return
     }
-    if (frame) cancelAnimationFrame(frame)
-    frame = requestAnimationFrame(() => {
-      frame = 0
-      paint()
-    })
+    later()
   })
 
   $effect(() => () => {
@@ -109,5 +145,6 @@
     left: 0;
     top: 0;
     pointer-events: none;
+    font-family: var(--font-content);
   }
 </style>

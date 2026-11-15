@@ -1649,6 +1649,7 @@
         width={spanX}
         height={spanY}
         {palette}
+        root={workspace.rootHolding(tab.path)}
       />
     {/if}
 
