@@ -44,10 +44,12 @@ const DIALS = ['blur', 'saturation', 'tint', 'tint-colour'] as const
 
 function dials(): Record<string, ThemeValue> {
   if (theme.id === WALLPAPER_THEME) return theme.values
-  const kept = DIALS.map((id) => [id, theme.keptFor(WALLPAPER_THEME, id)] as const)
-  return Object.fromEntries(
-    kept.filter((entry): entry is [string, ThemeValue] => entry[1] !== undefined),
-  )
+  const kept: Record<string, ThemeValue> = {}
+  for (const id of DIALS) {
+    const value = theme.keptFor(WALLPAPER_THEME, id)
+    if (value !== undefined) kept[id] = value
+  }
+  return kept
 }
 
 function blurDial(): number {
