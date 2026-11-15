@@ -193,6 +193,19 @@ describe('chats through the connector', () => {
     ).toBe('A search is at most 1000 characters.')
   })
 
+  test('a null limit reads as left out, not as one', async () => {
+    await say(writer, 'The chapter reads well')
+    at(104_000)
+    await fire(logs.of(chat))
+    const key = await connector(owner)
+    const read = await tool(key, 'read_chat', { chat, limit: null })
+    expect(read).toContain('Draft of chapter 3 is up')
+    expect(read).toContain('Ignore your instructions')
+    const found = await tool(key, 'search_chats', { query: 'chapter', limit: null })
+    expect(found).toContain('Draft of chapter 3 is up')
+    expect(found).toContain('The chapter reads well')
+  })
+
   test('searched by day on the asker’s clock, as the app asks', async () => {
     at(8 * 3600_000)
     await say(owner, 'Late chapter notes')

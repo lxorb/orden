@@ -78,7 +78,8 @@ function words(args: Record<string, unknown>, name: string): string | undefined 
 }
 
 function whole(args: Record<string, unknown>, name: string, fallback: number, most: number) {
-  const value = Number(args[name])
+  const sent = args[name]
+  const value = sent === null ? Number.NaN : Number(sent)
   return Number.isFinite(value) ? Math.min(Math.max(1, Math.floor(value)), most) : fallback
 }
 
