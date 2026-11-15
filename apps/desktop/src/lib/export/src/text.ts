@@ -7,14 +7,24 @@ const CHECKS = { true: '[x] ', false: '[ ] ' }
 function spanText(span: Span): string {
   if (span.picture !== undefined) return span.text ? `[${span.text}]` : '[picture]'
   if (span.note !== undefined) return `[${span.note}]`
-
-  if (span.href !== undefined && span.href !== span.text) return `${span.text} (${span.href})`
-
   return span.text
 }
 
+function linked(span: Span): string | undefined {
+  return span.picture === undefined && span.note === undefined ? span.href : undefined
+}
+
 function textOf(spans: readonly Span[]): string {
-  return spans.map(spanText).join('')
+  const runs: { href: string | undefined; words: string }[] = []
+  for (const span of spans) {
+    const href = linked(span)
+    const last = runs.at(-1)
+    if (href !== undefined && last?.href === href) last.words += spanText(span)
+    else runs.push({ href, words: spanText(span) })
+  }
+  return runs
+    .map(({ href, words }) => (href !== undefined && href !== words ? `${words} (${href})` : words))
+    .join('')
 }
 
 const GRAPHEMES = new Intl.Segmenter()
