@@ -17,7 +17,7 @@ import { type Space, spaceChanges, workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { AGENTS_NAME, joinPath } from '../../platform/src/api'
 
-const archiving = () => import('../../space-archive')
+export const spaceArchiving = () => import('./space-archive')
 
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
@@ -117,7 +117,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
       ? [
           {
             label: 'Archive',
-            run: () => void archiving().then((one) => one.archiveSpace(space)),
+            run: () => void spaceArchiving().then((one) => one.archiveSpace(space)),
           },
         ]
       : []),

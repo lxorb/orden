@@ -1,4 +1,4 @@
-import { whenPortProvided } from '@orden/contracts'
+import { providePort, whenPortProvided } from '@orden/contracts'
 import { archiveAgain, showArchive } from './archive/src/api'
 import { beginSetup } from './onboarding/src/api'
 import { pdfTabs } from './pages/src/api'
@@ -6,6 +6,7 @@ import { askPlace } from './save-place/src/api'
 import { mayCarryBetween } from './sharing/src/api'
 import { isScratchpad, pad, shown } from './scratchpad/src/api'
 import { searchWarmth } from './search/src/api'
+import { spaceArchiving } from './spaces/src/api'
 import { rowsCopied } from './views/src/api'
 import {
   oneWindow,
@@ -84,3 +85,7 @@ if (!__EVEN_PLUGIN__) {
     }),
   )
 }
+
+providePort('spaces.archived', {
+  listed: async () => (await spaceArchiving()).listed(),
+})

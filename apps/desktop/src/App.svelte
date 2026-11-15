@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { spaceArchiving } from './lib/spaces/src/api'
   import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
   import { moveSection } from './lib/sections'
@@ -238,10 +239,7 @@
           (one) => one.receive(remote),
         )
         recovery.receive(remote)
-        whenLoaded(
-          () => import('./lib/space-archive'),
-          (one) => void one.receive(remote),
-        )
+        whenLoaded(spaceArchiving, (one) => void one.receive(remote))
         if (!__EVEN_PLUGIN__)
           whenLoaded(
             () => import('./lib/chats-client/src/api'),
