@@ -24,7 +24,7 @@ import {
   keepVaultBase,
 } from './synced'
 import type { TrustReason } from './trust-problem'
-import { vaultDistrust } from './vault-trust'
+import { keptPin, vaultDistrust } from './vault-trust'
 
 export type Pulled = 'pulled' | 'conflict' | 'deferred'
 
@@ -62,7 +62,12 @@ function deviceItemOf(row: WireItem): ItemRow {
   return { ...row, pending: false }
 }
 
-function deviceVaultOf(row: WireVault, key: string, pub: string): VaultRow {
+function deviceVaultOf(
+  row: WireVault,
+  key: string,
+  pub: string,
+  local: VaultRow | undefined,
+): VaultRow {
   return {
     id: row.id,
     rev: row.rev,
@@ -75,7 +80,7 @@ function deviceVaultOf(row: WireVault, key: string, pub: string): VaultRow {
     pending: false,
     deleted: false,
     proof: row.proof,
-    accepted: row.accepted,
+    accepted: keptPin(row, local),
     handovers: row.handovers,
   }
 }
@@ -183,7 +188,7 @@ async function appliedVault(
       return 'pulled'
     }
   }
-  const next = deviceVaultOf(row, row.key, doing.pub)
+  const next = deviceVaultOf(row, row.key, doing.pub, local)
   doing.change.vaults.push(next)
   await keepVaultBase(rows, row.id, { rev: row.rev, meta: row.meta })
   if (!local) doing.fresh.push(row.id)

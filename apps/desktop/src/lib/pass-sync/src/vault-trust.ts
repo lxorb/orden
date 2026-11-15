@@ -1,6 +1,6 @@
 import { same } from '@orden/pass/bytes'
 import { isProven, ownersFrom, pinnedOwnerOf } from '@orden/pass/trust'
-import type { VaultRow as WireVault } from '@orden/pass/wire'
+import type { Accepted, VaultRow as WireVault } from '@orden/pass/wire'
 import type { VaultRow } from './local'
 import type { TrustReason } from './trust-problem'
 
@@ -12,10 +12,10 @@ export async function vaultDistrust(
   held: Uint8Array<ArrayBuffer> | undefined,
 ): Promise<TrustReason | null> {
   if (local && row.keyVersion < local.keyVersion) return 'older'
-  if (local?.keyVersion === row.keyVersion) {
-    return held === undefined || same(key, held) ? null : 'swapped'
+  if (local?.keyVersion === row.keyVersion && held !== undefined) {
+    return same(key, held) ? null : 'swapped'
   }
-  const pinned = me === null ? null : await pinnedOwnerOf(me, row.id, row.accepted)
+  const pinned = me === null ? null : await pinnedOwnerOf(me, row.id, keptPin(row, local))
   if (pinned === null) {
     if (!local) return 'unasked'
     if (row.proof === null) return 'unproven'
@@ -33,4 +33,9 @@ export async function ownersOf(
 ): Promise<string[]> {
   const pinned = me === null ? null : await pinnedOwnerOf(me, vault, row.accepted ?? null)
   return pinned === null ? [] : await ownersFrom(vault, pinned, row.handovers ?? [])
+}
+
+export function keptPin(row: WireVault, local: VaultRow | undefined): Accepted | null {
+  const mine = local && !local.deleted ? (local.accepted ?? null) : null
+  return mine ?? row.accepted
 }
