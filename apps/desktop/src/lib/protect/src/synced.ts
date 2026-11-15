@@ -59,7 +59,7 @@ async function pushNow(root: string): Promise<void> {
   protection.said(root, answer !== null && now)
   if (!answer) return
   const held = protectedMap(answer.spaces[spaceId])
-  keepBase(root, held)
+  if (now || !base) keepBase(root, held)
   const accountId = account.user?.id
   if (now && accountId && !alike(held, ways)) protection.adopt(root, held, accountId)
 }

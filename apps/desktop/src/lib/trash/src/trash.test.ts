@@ -520,7 +520,9 @@ describe('signed in', () => {
   })
 
   test('a protected note the account put back is protected again', async () => {
-    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n1', version: 1, hash: '' })
+    vi.spyOn(sync, 'tracked').mockImplementation(() =>
+      calls.includes('delete_note') ? null : { id: 'n1', version: 1, hash: '' },
+    )
     protection.set('/space', '/space/Idea.md', 'password')
     await workspace.remove('/space/Idea.md', false)
     expect(protection.own('/space', '/space/Idea.md')).toBeNull()
@@ -562,7 +564,9 @@ describe('signed in', () => {
   })
 
   test('a protected note the account puts back under another name is protected there', async () => {
-    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n3', version: 1, hash: '' })
+    vi.spyOn(sync, 'tracked').mockImplementation(() =>
+      calls.includes('delete_note') ? null : { id: 'n3', version: 1, hash: '' },
+    )
     protection.set('/space', '/space/Idea.md', 'password')
     await workspace.remove('/space/Idea.md', false)
     const at = Date.now()

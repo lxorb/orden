@@ -3571,7 +3571,8 @@ class Workspace {
     } as const
     try {
       if (toAccount) {
-        const back = crypto.randomUUID()
+        const { sync } = await import('../../sync-store/src/api')
+        const back = sync.tracked(path)?.id ?? crypto.randomUUID()
         await this.fileOps.doing({ ...gone, back }, () =>
           oneWriteAt(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
         )
