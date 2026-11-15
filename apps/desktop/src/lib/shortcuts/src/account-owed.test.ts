@@ -5,6 +5,7 @@ const world = vi.hoisted(() => ({
   failing: false,
   refusing: false,
   user: null as { id: string } | null,
+  token: null as string | null,
   leaving: [] as (() => void)[],
 }))
 
@@ -15,6 +16,9 @@ vi.mock('../../accounts/src/api', async (importOriginal) => {
     account: {
       get user() {
         return world.user
+      },
+      get signedOutForSure() {
+        return world.token === null
       },
       get accountToken() {
         return world.user ? 'token' : null
@@ -52,6 +56,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 function signedOut() {
   for (const clear of world.leaving) clear()
   world.user = null
+  world.token = null
 }
 
 async function relaunched() {
@@ -74,6 +79,7 @@ beforeEach(() => {
   world.failing = false
   world.refusing = false
   world.user = { id: 'u1' }
+  world.token = 'token'
 })
 
 describe('a shortcut changed while the account could not hear it', () => {
@@ -179,6 +185,23 @@ describe('signing out', () => {
 
     expect(world.saved).toEqual([])
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+  })
+})
+
+describe('a shortcut changed while signed out', () => {
+  test('stays on this device, and the account’s own are taken at the next sign-in', async () => {
+    signedOut()
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.italic', 'Mod-Alt-k')
+
+    world.token = 'token'
+    world.user = { id: 'u1' }
+    world.saved = []
+    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+    await settled()
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+    expect(world.saved).toEqual([])
   })
 })
 

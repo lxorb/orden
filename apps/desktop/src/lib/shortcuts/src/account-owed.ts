@@ -22,6 +22,7 @@ export class AccountOwed {
   }
 
   send(patch: AccountSettings): void {
+    if (account.signedOutForSure) return
     const who = account.user?.id ?? (this.standing ? this.owner : null) ?? null
     keepJson(this.key, { who })
 

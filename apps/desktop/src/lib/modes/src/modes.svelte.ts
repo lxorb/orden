@@ -1069,6 +1069,7 @@ class Modes {
 
   private share(patch: AccountSettings) {
     this.sent++
+    if (account.signedOutForSure) return
     this.owed = { ...this.owed, ...patch }
 
     const token = account.accountToken

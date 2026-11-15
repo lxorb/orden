@@ -1,5 +1,5 @@
 export interface OwedAccount {
-  readonly token: string | null
+  readonly signedOutForSure: boolean
   readonly user: { id: string } | null
   forgetWithSession(clear: () => void): void
 }
@@ -35,7 +35,7 @@ export class OwedMark {
   }
 
   mark(): number {
-    if (!this.account.token) return 0
+    if (this.account.signedOutForSure) return 0
     const who = this.account.user?.id ?? (this.standing ? this.owner : null) ?? null
     this.store.write(this.key, { who })
     return ++this.latest

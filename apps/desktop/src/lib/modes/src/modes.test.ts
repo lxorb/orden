@@ -657,9 +657,12 @@ describe('taking over what the account holds', () => {
     const sent: Held[] = []
     let server: Held = { ligatures: 'all' }
     const was = { settings: api.settings, saveSettings: api.saveSettings }
+    const accounts = await import('../../accounts/src/api')
+    accounts.account.token = 'token'
     modes.setLigatures('code')
 
     const store = await restarted()
+    ;(await import('../../accounts/src/api')).account.token = 'token'
     api.saveSettings = async (_token: string, patch: Held) => {
       sent.push(patch)
       server = { ...server, ...patch }
@@ -683,11 +686,16 @@ describe('taking over what the account holds', () => {
     const was = { settings: api.settings, saveSettings: api.saveSettings }
     const signedIn = async (id: string | null) => {
       const { account } = await import('../../accounts/src/api')
+      account.token = 'token'
       account.user = id === null ? null : ({ id } as typeof account.user)
     }
 
     await signedIn('u1')
+    api.saveSettings = async () => {
+      throw new Error('offline')
+    }
     modes.setVimKeys(true)
+    await new Promise((resolve) => setTimeout(resolve, 0))
 
     const store = await restarted()
     await signedIn(null)
@@ -704,7 +712,29 @@ describe('taking over what the account holds', () => {
     expect(sent).toEqual([{ vim: true, ligatures: 'code' }])
     expect(store.vim).toBe(true)
     expect(store.ligatures).toBe('code')
-    await signedIn(null)
+    const { account } = await import('../../accounts/src/api')
+    account.token = null
+    account.user = null
+    Object.assign(api, was)
+  })
+
+  test('keeps a change made while signed out on this device, and takes the account’s at sign-in', async () => {
+    const sent: Held[] = []
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    const { account } = await import('../../accounts/src/api')
+    await account.restore()
+    modes.setLigatures('code')
+
+    const store = await restarted()
+    api.saveSettings = async (_token: string, patch: Held) => {
+      sent.push(patch)
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: { ligatures: 'all' } })
+    await store.adopt('token')
+
+    expect(sent).toEqual([])
+    expect(store.ligatures).toBe('all')
     Object.assign(api, was)
   })
 
@@ -719,8 +749,11 @@ describe('taking over what the account holds', () => {
     }
     api.settings = async () => ({ settings: server })
 
+    const { account } = await import('../../accounts/src/api')
+    account.token = 'token'
     modes.setLigatures('code')
     await modes.adopt('token')
+    account.token = null
 
     server = { ...server, vim: true }
     const store = await restarted()

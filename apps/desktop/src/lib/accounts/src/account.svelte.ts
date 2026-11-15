@@ -57,9 +57,18 @@ class Session {
 
   private lookedFor: () => void = () => undefined
 
+  private sessionLookedFor = $state(false)
+
   readonly looked = new Promise<void>((done) => {
-    this.lookedFor = done
+    this.lookedFor = () => {
+      this.sessionLookedFor = true
+      done()
+    }
   })
+
+  get signedOutForSure(): boolean {
+    return this.sessionLookedFor && !this.token
+  }
 
   readonly signedIn = $derived(!!this.token && (!!this.user || !!this.guest))
   readonly accountToken = $derived(this.user ? this.token : null)
