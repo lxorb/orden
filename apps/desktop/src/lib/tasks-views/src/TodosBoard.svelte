@@ -8,6 +8,7 @@
     type TodoPatch,
   } from '../../tasks-model/src/api'
   import { addTodo, patchTodo, removeTodo } from './acts'
+  import { dropAt } from './drop-at'
   import Filters from './Filters.svelte'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
@@ -100,7 +101,8 @@
                 }}
                 ondrop={(event) => {
                   event.preventDefault()
-                  dropped(group.todos, at)
+                  const box = event.currentTarget.getBoundingClientRect()
+                  dropped(group.todos, dropAt(at, event.clientY, box))
                 }}
               >
                 <TodoRow
