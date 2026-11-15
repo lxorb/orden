@@ -330,16 +330,15 @@ fn front_matter(body: &str) -> HashMap<String, Vec<String>> {
             continue;
         }
 
-        let Some((name, _)) = line.split_once(':') else {
+        let Some((name, _)) = crate::front_matter::key_of(line) else {
             continue;
         };
-        let name = name.trim();
         if name.is_empty() {
             continue;
         }
 
         out.entry(name.to_lowercase())
-            .or_insert_with(|| crate::front_matter::list(body, &block, name));
+            .or_insert_with(|| crate::front_matter::list(body, &block, &name));
     }
 
     out
@@ -753,7 +752,7 @@ fn order(value: &str, asked: &str) -> Ordering {
 
 fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) -> bool {
     match compare {
-        Compare::Has => holds(value, asked, true),
+        Compare::Has => holds(value, &asked.to_lowercase(), true),
         Compare::Is => value.trim().to_lowercase() == asked.trim().to_lowercase(),
         Compare::Lt => order(value, asked) == Ordering::Less,
         Compare::Lte => order(value, asked) != Ordering::Greater,
@@ -854,9 +853,9 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
             needs.front = true;
             Term::Property {
                 name: name.to_lowercase(),
-                value: value.map(|one| one.to_lowercase()),
+                value,
                 compare,
-                upto: upto.map(|one| one.to_lowercase()),
+                upto,
             }
         }
 
@@ -1136,6 +1135,32 @@ mod tests {
         assert!(answers(&pair("status", "done", "is"), quoted));
         assert!(answers(&pair("next", "done", "is"), quoted));
         assert!(answers(&missing("empty"), quoted));
+    }
+
+    #[test]
+    fn front_matter_keys_and_lists_are_read_as_the_web_search_reads_them() {
+        let pair = |one: &str, said: &str, compare: &str| {
+            format!(
+                r#"{{"kind":"property","name":"{one}","value":"{said}","compare":"{compare}"}}"#
+            )
+        };
+
+        let written = "---\n\"status\": done\nauthors: ['Doe, Jane', Other]\n---\n";
+        assert!(answers(&pair("status", "done", "is"), written));
+        assert!(answers(&pair("authors", "Doe, Jane", "is"), written));
+        assert!(!answers(&pair("authors", "Jane'", "is"), written));
+    }
+
+    #[test]
+    fn a_date_and_time_asked_for_is_held_against_one_written_with_a_space() {
+        let pair = |said: &str, compare: &str| {
+            format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
+        };
+        let note = "---\ndue: 2024-01-01 11:00\n---\n";
+
+        assert!(answers(&pair("2024-01-01T10:00", "gt"), note));
+        assert!(!answers(&pair("2024-01-01T12:00", "gt"), note));
+        assert!(answers(&pair("DUE", "has"), "---\ndue: Due soon\n---\n"));
     }
 
     #[test]
