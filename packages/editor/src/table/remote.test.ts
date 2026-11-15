@@ -144,6 +144,55 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     expect(shared.text.toString()).toBe(`words\n\n${second}\n`)
   })
 
+  test('keeps its words when another pane writes the whole table again, its widths too', async () => {
+    const shared = new SharedDoc(TABLE)
+    const view = note(shared)
+    typeInCell(view)
+
+    const from = TABLE.indexOf('| a')
+    const to = TABLE.indexOf('\n\nend')
+    shared.edit([{ from, to, insert: '| a   | b   |\n| --- | --- |\n| 1   | 2y  |' }])
+    await settled()
+
+    expect(firstCell(view)?.textContent).toBe('1x')
+    flushTableEdits()
+    expect(shared.text.toString()).toBe(
+      'words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
+    )
+  })
+
+  test('keeps its words when the note is rewritten from above the table into it', async () => {
+    const shared = new SharedDoc(TABLE)
+    const view = note(shared)
+    typeInCell(view)
+
+    shared.replace(TABLE.replace('words', 'more words').replace('| 2 |', '| 2y |'))
+    await settled()
+
+    flushTableEdits()
+    expect(shared.text.toString()).toBe(
+      'more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
+    )
+  })
+
+  test('never moves its words to a row above that only shares the cell it was typed in', async () => {
+    const two = 'words\n\n| a | b |\n| --- | --- |\n| 0 | 0 |\n| 1 | 2 |\n\nend'
+    const shared = new SharedDoc(two)
+    const view = note(shared)
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: two } })
+    forceParsing(view, view.state.doc.length, 10_000)
+    typeInCell(view)
+
+    const at = two.indexOf('| 1 |')
+    shared.edit([{ from: at, to: at, insert: '| 1 | 9 |\n' }])
+    await settled()
+
+    flushTableEdits()
+    expect(shared.text.toString()).toBe(
+      'words\n\n| a   | b   |\n| --- | --- |\n| 0   | 0   |\n| 1   | 9   |\n| 1x  | 2   |\n\nend',
+    )
+  })
+
   test('gives way to the other words when that very cell was written', async () => {
     const view = note()
     typeInCell(view)

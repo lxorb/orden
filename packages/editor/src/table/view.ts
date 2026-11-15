@@ -1,8 +1,9 @@
 import {
-  type ChangeDesc,
+  type ChangeSet,
   EditorSelection,
   type EditorState,
   MapMode,
+  type Text,
   type StateCommand,
   type TransactionSpec,
 } from '@codemirror/state'
@@ -108,6 +109,7 @@ export class TableView {
   private idle: number | undefined
   private land: ReturnType<typeof later> | null = null
   private start: number | null = null
+  private rewritten = false
 
   private focusAfter: Focus | null = null
 
@@ -194,8 +196,33 @@ export class TableView {
     return this.pendingPlace(text, model) !== null
   }
 
-  track(changes: ChangeDesc) {
-    if (this.start !== null) this.start = changes.mapPos(this.start, 1, MapMode.TrackAfter)
+  track(changes: ChangeSet, doc: Text) {
+    const { start } = this
+    if (start === null) return
+    const exact = changes.mapPos(start, 1, MapMode.TrackAfter)
+    if (exact !== null) {
+      this.start = exact
+      return
+    }
+
+    this.start = null
+    const header = headerOf(this.source)
+    changes.iterChanges((fromA, toA, fromB, toB) => {
+      if (start < fromA || start >= toA) return
+      const aimed = fromB + (start - fromA)
+      let nearest: number | null = null
+      for (let pos = fromB; pos < toB;) {
+        const line = doc.lineAt(pos)
+        if (line.to <= toB && headerOf(line.text) === header) {
+          if (nearest === null || Math.abs(line.from - aimed) < Math.abs(nearest - aimed)) {
+            nearest = line.from
+          }
+        }
+        pos = line.to + 1
+      }
+      this.start = nearest
+      this.rewritten = nearest !== null
+    })
   }
 
   sameTable(model: TableModel): boolean {
@@ -211,15 +238,23 @@ export class TableView {
     const before = textIn(this.model, pending.at)
     if (row < 0) return model.header[column] === before ? pending.at : null
 
-    const old = this.model.rows[row] ?? []
+    const rows = this.model.rows
+    const old = rows[row] ?? []
     const same = (cells: string[] | undefined, loose: boolean) =>
       cells?.length === old.length &&
       cells[column] === before &&
       cells.every((text, at) => loose || at === column || text === old[at])
 
-    if (same(model.rows[row], true)) return pending.at
+    if (same(model.rows[row], false)) return pending.at
     const found = model.rows.flatMap((cells, at) => (same(cells, false) ? [at] : []))
-    return found.length === 1 && found[0] !== undefined ? { row: found[0], column } : null
+    if (found.length === 1 && found[0] !== undefined) return { row: found[0], column }
+
+    const othersKept = model.rows.every(
+      (cells, at) => at === row || cells.join('|') === rows[at]?.join('|'),
+    )
+    const shapeKept = model.rows.length === rows.length
+    const loose = shapeKept && (!this.rewritten || othersKept)
+    return loose && same(model.rows[row], true) ? pending.at : null
   }
 
   adopt(text: TableSource, model: TableModel) {
@@ -234,6 +269,7 @@ export class TableView {
     this.source = text.source
     this.from = text.from
     this.start = text.from
+    this.rewritten = false
     this.model = model
     if (kept) this.land = later(this.editor)
 
@@ -1088,6 +1124,16 @@ function around(row: number, rows: number): { from: number; to: number } {
     from: Math.max(0, Math.floor((row - AROUND) / STEP) * STEP),
     to: Math.min(rows, Math.ceil((row + 1 + AROUND) / STEP) * STEP),
   }
+}
+
+function headerOf(text: string): string {
+  const [first = ''] = text.split('\n', 1)
+  return first
+    .trim()
+    .replace(/^\||\|$/g, '')
+    .split('|')
+    .map((cell) => cell.trim())
+    .join('|')
 }
 
 function textIn(model: TableModel, at: CellAddress): string {

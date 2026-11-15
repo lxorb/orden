@@ -1,6 +1,6 @@
 import { EditorSelection, type EditorState } from '@codemirror/state'
 import type { Command } from '@codemirror/view'
-import { blockDecorations } from './blocks'
+import { blockDecorations, openBlocksHere } from './blocks'
 import { noReveal } from './reveal'
 
 interface Drawn {
@@ -50,6 +50,10 @@ function step(down: boolean): Command {
 
     const edge = edgeBeside(view.state, range.head, down)
     if (edge === null) return false
+    if (edge === range.head && !view.state.facet(noReveal)) {
+      view.dispatch({ effects: openBlocksHere.of(null) })
+      return true
+    }
 
     view.dispatch({
       selection: EditorSelection.cursor(edge),
@@ -60,7 +64,11 @@ function step(down: boolean): Command {
   }
 }
 
+export const stepDown = step(true)
+
+export const stepUp = step(false)
+
 export const steppingKeymap = [
-  { key: 'ArrowDown', run: step(true) },
-  { key: 'ArrowUp', run: step(false) },
+  { key: 'ArrowDown', run: stepDown },
+  { key: 'ArrowUp', run: stepUp },
 ]

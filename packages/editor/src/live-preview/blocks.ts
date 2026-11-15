@@ -6,6 +6,7 @@ import {
   Facet,
   type Range,
   type SelectionRange,
+  StateEffect,
   StateField,
   type Text,
   type Transaction,
@@ -512,6 +513,8 @@ function settingsChanged(transaction: Transaction): boolean {
   )
 }
 
+export const openBlocksHere = StateEffect.define()
+
 export const blockDecorations = StateField.define<Blocks>({
   create: (state) => buildBlocks(state, false),
 
@@ -522,6 +525,10 @@ export const blockDecorations = StateField.define<Blocks>({
     const chosen = value.chosen || transaction.docChanged || moved
 
     if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
+
+    if (transaction.effects.some((effect) => effect.is(openBlocksHere))) {
+      return buildBlocks(transaction.state, true)
+    }
 
     if (isExternal(transaction)) return buildBlocks(transaction.state, false)
 

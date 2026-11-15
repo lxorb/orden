@@ -11,7 +11,8 @@ const live = new Set<TableView>()
 export const tableTracking = ViewPlugin.define(() => ({
   update(update) {
     if (!update.docChanged) return
-    for (const table of live) if (table.editor === update.view) table.track(update.changes)
+    for (const table of live)
+      if (table.editor === update.view) table.track(update.changes, update.state.doc)
   },
 }))
 

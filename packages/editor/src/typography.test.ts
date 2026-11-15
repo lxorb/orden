@@ -239,6 +239,8 @@ describe('markdown being typed', () => {
     expect(type('<img src="a.png"> she said ', '"')).toBe('<img src="a.png"> she said “')
     expect(type('[a](https://x.com) she said ', '"')).toBe('[a](https://x.com) she said “')
     expect(type('a < b ', '"')).toBe('a < b “')
+    expect(type('a <b and it', "'")).toBe('a <b and it’')
+    expect(type('`$HOME` isn', "'")).toBe('`$HOME` isn’')
   })
 
   test('but prose after a closed link or comment still gets them', () => {

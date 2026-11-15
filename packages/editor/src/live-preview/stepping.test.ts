@@ -1,8 +1,9 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState } from '@codemirror/state'
+import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
-import { edgeBeside } from './stepping'
+import { edgeBeside, stepDown } from './stepping'
 import { dragFreeze } from './dragging'
 import { noReveal } from './reveal'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
@@ -53,6 +54,26 @@ describe('a press onto a block that draws itself', () => {
     const doc = FORMULA
     const top = at(doc, '$$')
     expect(edgeBeside(state(doc, top), top, true)).not.toBe(at(doc, '$$\n\nbelow') + 2)
+  })
+
+  test('opens that block on the press instead of pressing in place', () => {
+    const doc = FORMULA
+    const top = at(doc, '$$')
+    let now = state(doc, top)
+    const view = {
+      get state() {
+        return now
+      },
+      dispatch: (spec: TransactionSpec) => {
+        now = now.update(spec).state
+      },
+    } as unknown as EditorView
+    const drawn = () => now.field(blockDecorations).decorations.size
+
+    expect(drawn()).toBeGreaterThan(0)
+    expect(stepDown(view)).toBe(true)
+    expect(drawn()).toBe(0)
+    expect(edgeBeside(now, top, true)).toBeNull()
   })
 
   test('nothing where the line it aims at is ordinary text', () => {

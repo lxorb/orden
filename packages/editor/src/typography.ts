@@ -26,10 +26,12 @@ export function typingBreak(before: string): boolean {
 
 const DIVIDER_ROW = /^[ \t]*(?:>[ \t]*)*\|?[ \t:|-]*$/
 const COMMENT_OPENING = /<!-?-?$/
-const TAG_OPEN = /<[A-Za-z][\w-]*\s[^>]*$/
+const TAG_OPEN =
+  /<[A-Za-z][\w-]*(?:\s+[\w:-]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s+[\w:-]+\s*=\s*(?:"[^"]*|'[^']*)?$/
 
 function withinMaths(before: string): boolean {
-  return (before.replace(/\\./g, '').match(/\$/g)?.length ?? 0) % 2 === 1
+  const bare = before.replace(/\\./g, '').replace(/(`+)[\s\S]*?\1/g, '')
+  return (bare.match(/\$/g)?.length ?? 0) % 2 === 1
 }
 
 function withinOpen(before: string, opening: string, closing: string): boolean {
@@ -42,7 +44,7 @@ function writingMarkup(before: string): boolean {
     withinOpen(before, '[[', ']]') ||
     withinOpen(before, '<!--', '-->') ||
     withinOpen(before, '](', ')') ||
-    TAG_OPEN.test(before) ||
+    TAG_OPEN.test(before.slice(0, -1)) ||
     withinMaths(before) ||
     COMMENT_OPENING.test(before.slice(0, -1))
   )
