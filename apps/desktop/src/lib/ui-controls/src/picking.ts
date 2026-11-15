@@ -1,7 +1,10 @@
 import type { PickedFile } from '@orden/contracts'
-import { chooseFiles } from './ui-controls/src/api'
-import { caughtFiles, type CaughtFiles } from './ui-kit/src/api'
-import { tidyPath } from './import/src/api'
+import { chooseFiles } from './choose-files'
+import { caughtFiles, type CaughtFiles } from '../../ui-kit/src/api'
+
+export function tidyPath(path: string): string {
+  return path.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')
+}
 
 export function pickFiles(): Promise<PickedFile[]> {
   return chooseFiles({ multiple: true })

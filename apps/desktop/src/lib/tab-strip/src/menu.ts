@@ -1,8 +1,13 @@
 import { tabKindParts, webPages } from '@orden/contracts'
 import { agentMarks } from '../../agent-marks.svelte'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
-import { archiveEntry, shareEntry, stackEntries } from '../../menu-entries'
-import { bookmarkAll, webDataEntry } from '../../row-menu'
+import {
+  archiveEntry,
+  bookmarkAll,
+  shareEntry,
+  stackEntries,
+  webDataEntry,
+} from '../../row-menu/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { shownName, nameOf, withinSpace } from '../../platform/src/api'
 import { toggleFill } from '../../tab-fill/src/api'

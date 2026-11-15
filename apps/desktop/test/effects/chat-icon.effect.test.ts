@@ -25,7 +25,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { openChat } = await import('../../src/lib/chats-client/src/view/open')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../src/lib/gates/src/api')
 const { setFileIcon } = await import('../../src/lib/file-icon')
-const { iconEntries } = await import('../../src/lib/menu-entries')
+const { iconEntries } = await import('../../src/lib/row-menu/src/api')
 const { iconLibrary } = await import('../../src/lib/icon-library.svelte')
 const { loadIcons } = await import('../../src/lib/ui-kit/src/icons')
 

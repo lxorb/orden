@@ -18,6 +18,7 @@ export interface ChatsPort {
   part(chat: string, wanted: ChatPartWanted): Promise<ChatPart | null>
   offer(chat: string, text: string, parent?: string): Promise<void>
   openLink(uri: string): Promise<void>
+  mayDelete(paths: readonly string[]): Promise<boolean>
 }
 
 export interface ChatPorts {

@@ -26,7 +26,7 @@
   import { fileMark, type FileMark as Mark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
   import { folderNote } from '../../tree/src/api'
-  import { bookmarkEntry, iconEntries } from '../../menu-entries'
+  import { bookmarkEntry, iconEntries } from '../../row-menu/src/api'
   import { dur, scale } from '../../platform/src/api'
   import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
   import { rowName } from '../../platform/src/api'

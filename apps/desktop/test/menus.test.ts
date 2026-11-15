@@ -95,7 +95,7 @@ describe('what a space offers', () => {
 describe('the path a note sits at', () => {
   const everywhere = [
     ...componentSources(),
-    read('lib/menu-entries.ts'),
+    read('lib/row-menu/src/api.ts'),
     read('lib/commands/src/commands.ts'),
     read('lib/app-menu.ts'),
   ].join('\n')
@@ -111,8 +111,8 @@ describe('the path a note sits at', () => {
 describe('making a folder', () => {
   const everywhere = [
     ...componentSources(),
-    read('lib/row-menu.ts'),
-    read('lib/menu-entries.ts'),
+    read('lib/row-menu/src/row-menu.ts'),
+    read('lib/row-menu/src/api.ts'),
     read('lib/commands/src/commands.ts'),
     read('lib/app-menu.ts'),
     read('lib/shortcuts/src/registry.ts')
@@ -137,9 +137,9 @@ describe('making a folder', () => {
 
 describe('what a row of the file list offers', () => {
   const tree = read('lib/sidebar/src/Tree.svelte')
-  const source = read('lib/row-menu.ts')
+  const source = read('lib/row-menu/src/row-menu.ts')
   const row = moduleBody(source, 'export function rowMenu(entry: Entry)')
-  const entries = moduleBody(read('lib/menu-entries.ts'), 'export function iconEntries(')
+  const entries = moduleBody(read('lib/row-menu/src/api.ts'), 'export function iconEntries(')
 
   test('its name, and where it goes', () => {
     for (const entry of ["'Rename'", 'moveEntry(entry)']) {
@@ -199,9 +199,9 @@ describe('what a row of the file list offers', () => {
       tree.indexOf('function openRowAt('),
     )
 
-    expect(door).toContain("import('../../row-menu')")
+    expect(door).toContain('rowMenus().then(({ rowMenu })')
     expect(door).toContain('menu.show(event, rowMenu(entry), { title })')
-    expect(read('lib/features.ts')).toContain("import('./row-menu')")
+    expect(read('lib/features.ts')).toContain('one.rowMenus()')
   })
 })
 

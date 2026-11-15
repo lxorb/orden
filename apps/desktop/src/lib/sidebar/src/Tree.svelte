@@ -50,7 +50,7 @@
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { syncMark } from '../../surfaces/src/api'
-  import { dropOnList, fileClipboard, listMotion } from '../../list-landing.svelte'
+  import { dropOnList, fileClipboard, listMotion, workspace } from '../../workspace/src/api'
   import {
     autoScrollBy,
     heightOf,
@@ -63,11 +63,11 @@
   import { ListView, tokenFloor, tokenRow } from '../../windows/src/api'
   import { folderOf, samePath } from '../../platform/src/api'
   import { onTwist, treeStep, TREE_MOVES } from '../../tree-keys'
-  import { workspace } from '../../workspace/src/api'
   import { spaceDropping } from '../../tab-strip/src/api'
   import { inside } from '../../panes/src/api'
   import { dur } from '../../platform/src/api'
   import { keptAway } from '../../away/src/api'
+  import { rowMenus } from '../../row-menu/src/api'
   import { indexed, settle } from './tree-settle'
 
   const { tree }: { tree: Entry } = $props()
@@ -303,7 +303,7 @@
       keyedOn = true
       const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
       const going = workspace.selection
-      void import('../../row-menu').then((one) => {
+      void rowMenus().then((one) => {
         void one.removeAsking(going)
         if (kept.length) void one.refuseDeleting(kept)
       })
@@ -618,7 +618,7 @@
   function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
     event.preventDefault()
     event.stopPropagation()
-    void import('../../row-menu').then(({ rowMenu }) => menu.show(event, rowMenu(entry), { title }))
+    void rowMenus().then(({ rowMenu }) => menu.show(event, rowMenu(entry), { title }))
   }
 
   function openRowAt(event: MouseEvent, entry: Entry) {

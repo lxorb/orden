@@ -1,4 +1,4 @@
-import { siteDropping } from './web-tab/src/api'
+import { portOf } from '@orden/contracts'
 import {
   caughtFiles,
   dragged,
@@ -9,11 +9,11 @@ import {
   isFileDrop,
   isLinkDrop,
   isTreeDrag,
+  currentPlatform,
   landing,
-} from './ui-kit/src/api'
-import { shortcuts } from './shortcuts/src/api'
-import { within } from './platform/src/api'
-import { workspace } from './workspace/src/api'
+} from '../../ui-kit/src/api'
+import { within } from '../../platform/src/api'
+import { workspace } from './workspace.svelte'
 
 class FileClipboard {
   paths = $state<string[]>([])
@@ -35,11 +35,11 @@ class FileClipboard {
     const outside = this.paths.filter(
       (one) => !workspace.spaces.some((space) => within(space.root, one) !== null),
     )
-    if (outside.length && !__EVEN_PLUGIN__) {
+    const explorer = portOf('explorer.carry')
+    if (outside.length && explorer.ok) {
       const cut = this.cut
       if (cut) this.hold([], false)
-      const { carry } = await import('./explorer/src/api')
-      return carry(null, this.paths, into, cut ? 'move' : 'copy')
+      return explorer.value.carry(this.paths, into, cut ? 'move' : 'copy')
     }
     if (!paths.length) return
     if (!this.cut) return workspace.copyMany(paths, into)
@@ -64,36 +64,39 @@ export function moving(change: () => void): void {
 
 export function dropOnList(event: DragEvent, folder: string) {
   const transfer = event.dataTransfer
-  if (transfer && isExplorerDrag(transfer) && !isTreeDrag(transfer) && !__EVEN_PLUGIN__) {
-    const paths = explorerDragged(transfer)
-    void import('./explorer/src/api').then(({ carry }) => carry(null, paths, folder, 'copy'))
+  const explorer = portOf('explorer.carry')
+  if (transfer && isExplorerDrag(transfer) && !isTreeDrag(transfer) && explorer.ok) {
+    void explorer.value.carry(explorerDragged(transfer), folder, 'copy')
     return
   }
   if (transfer && isFileDrop(transfer) && !__EVEN_PLUGIN__) {
     const caught = caughtFiles(transfer)
-    void import('./picking')
+    void import('../../ui-controls/src/api')
       .then(({ filesUnder }) => filesUnder(caught))
       .then((files) => workspace.bringIn(files, folder))
     return
   }
 
-  if (transfer && isLinkDrop(transfer) && !__EVEN_PLUGIN__) {
-    const list = transfer.getData('text/uri-list')
-    const html = transfer.getData('text/html')
-    void siteDropping().then(({ siteDropped }) => siteDropped(workspace, folder, list, html))
+  const sites = portOf('web.sites')
+  if (transfer && isLinkDrop(transfer) && sites.ok) {
+    void sites.value.dropped(
+      folder,
+      transfer.getData('text/uri-list'),
+      transfer.getData('text/html'),
+    )
     return
   }
 
-  const tile = landing(event, shortcuts.platform) && isBookmarkDrag(transfer)
+  const tile = landing(event, currentPlatform()) && isBookmarkDrag(transfer)
   const at = tile ? workspace.bookmarks.indexOf(draggedBookmark(transfer)) : null
   if (at !== null) {
-    void import('./essentials.svelte').then((one) => one.unkeepInto(at, folder))
+    void import('../../essentials.svelte').then((one) => one.unkeepInto(at, folder))
     return
   }
 
   const paths = dragged(transfer)
   if (!paths.length) return
 
-  if (landing(event, shortcuts.platform) === 'copy') void workspace.copyMany(paths, folder)
+  if (landing(event, currentPlatform()) === 'copy') void workspace.copyMany(paths, folder)
   else void workspace.moveMany(paths, folder)
 }

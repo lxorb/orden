@@ -74,7 +74,7 @@ import {
   lockAllEntry,
   protectEntries,
 } from '../../sharing/src/api'
-import { archiveEntry } from '../../menu-entries'
+import { archiveEntry } from '../../row-menu/src/api'
 import { updates } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'

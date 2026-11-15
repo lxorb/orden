@@ -28,8 +28,8 @@ import { hiddenKinds } from './gates/src/api'
 import { loadSettingsPanel, settings } from './settings/src/api'
 import { paletteDoor } from './palette/src/api'
 import { loadGraph } from './graph-view/src/api'
-import { loadArchive, loadArchivedStrip } from './archive/src/api'
-import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
+import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from './archive/src/api'
+import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './platform/src/api'
 import { focusEditor } from './focus'
@@ -219,6 +219,21 @@ if (!__EVEN_PLUGIN__) {
     offered: () => hiddenKinds.offers('explorer'),
     show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
   })
+  providePort('explorer.carry', {
+    carry: async (paths, into, how) =>
+      (await import('./explorer/src/api')).carry(null, paths, into, how),
+  })
+  providePort('web.sites', {
+    dropped: async (folder, list, html) => {
+      const [{ siteDropped }, { workspace }] = await Promise.all([
+        siteDropping(),
+        import('./workspace/src/api'),
+      ])
+      return siteDropped(workspace, folder, list, html)
+    },
+    showData: async (path) => (await webDataSheet()).showWebData(path),
+  })
+  providePort('archive', { archive, unarchive, show: showArchive })
   providePort('web.siteIcons', {
     held: async () => (await (await import('./web-tab/src/api')).siteIconSet()).siteIcons,
   })
@@ -292,7 +307,7 @@ export async function warmDoors(): Promise<void> {
     () => import('./ai-providers/src/api'),
     () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
-    () => import('./row-menu'),
+    () => import('./row-menu/src/api').then((one) => one.rowMenus()),
     () => import('./editor-menu'),
     () => import('./tab-cycle/src/api'),
     __EVEN_PLUGIN__

@@ -25,13 +25,13 @@
     "notify",
     "sync-store",
     "space-pick",
-    "reading"
+    "reading",
+    "row-menu"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/icon-choice.svelte.ts",
-    "apps/desktop/src/lib/menu-entries.ts",
     "apps/desktop/src/lib/new-tab.ts"
   ]
 }

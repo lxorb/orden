@@ -104,11 +104,17 @@ export interface SiteIconsPort {
   held(): Promise<SiteIconsHeld>
 }
 
+export interface WebSitesPort {
+  dropped(folder: string, list: string, html: string): Promise<string | null>
+  showData(path: string): Promise<void>
+}
+
 export interface WebPorts {
   readonly 'web.pages': WebPagesPort
   readonly 'web.lending': WebLendingPort
   readonly 'web.scripts': WebScriptsPort
   readonly 'web.siteIcons': SiteIconsPort
+  readonly 'web.sites': WebSitesPort
 }
 
 const BLANK: WebPageSeen = {

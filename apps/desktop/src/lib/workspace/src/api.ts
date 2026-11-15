@@ -14,6 +14,7 @@ export {
   workspace,
 } from './workspace.svelte'
 export { mayCarry, pointersMoving, spaceHolding } from './chat-carry'
+export { dropOnList, fileClipboard, listMotion, moving } from './list-landing.svelte'
 export { hiddenTabs } from './hidden-tabs.svelte'
 export { keptCoverOf, setCoverPosition } from './kept-cover'
 export { type HoldsNotes, type Keeping, noteText, replaceInNotes, writeNoteText } from './note-text'

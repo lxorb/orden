@@ -31,7 +31,7 @@
     UnreadDot,
     viewport,
   } from '../../ui-kit/src/api'
-  import { dropOnList } from '../../list-landing.svelte'
+  import { dropOnList, workspace } from '../../workspace/src/api'
   import { movesSection } from '../../sections'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -56,9 +56,8 @@
     tasksPanel,
     timePanel,
   } from '../../surfaces/src/api'
-  import { bookmarkEntry } from '../../menu-entries'
+  import { bookmarkEntry, rowMenus } from '../../row-menu/src/api'
   import { pullable } from '../../pull.svelte'
-  import { workspace } from '../../workspace/src/api'
   import { links } from '../../link-index/src/api'
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
@@ -345,7 +344,7 @@
       return
     }
 
-    void Promise.all([import('./order-menu'), import('../../row-menu'), own]).then(
+    void Promise.all([import('./order-menu'), rowMenus(), own]).then(
       ([{ orderMenu }, { newFileRows }, { panelMenu }]) =>
         shown([...orderMenu(), DIVIDER, ...panelMenu(id, side, newFileRows())]),
     )
@@ -354,9 +353,7 @@
   function showSpaceMenu(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
-    void import('../../row-menu').then(({ newFileRows }) =>
-      menu.show(event, newFileRows(), titleOfSpace()),
-    )
+    void rowMenus().then(({ newFileRows }) => menu.show(event, newFileRows(), titleOfSpace()))
   }
 
   function titleOfSpace(): { title?: string } {

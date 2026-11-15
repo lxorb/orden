@@ -20,7 +20,7 @@ const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesO
 const { setWord, receive } = await import('../../kind-choice')
 const { experimentalPane } = await import('../../settings/src/experimental-pane')
 const { appCommands } = await import('../../commands/src/api')
-const { newFileRows } = await import('../../row-menu')
+const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
 const { openBaseFile } = await import('./open')
 const { createDatabase } = await import('./new-database')
 const { copiesToBase } = await import('./save')

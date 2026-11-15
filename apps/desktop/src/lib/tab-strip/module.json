@@ -23,7 +23,8 @@
     "markdown",
     "modes",
     "double-tap",
-    "surfaces"
+    "surfaces",
+    "row-menu"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -34,10 +35,8 @@
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/menu-entries.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/note-menu.ts",
-    "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]

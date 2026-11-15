@@ -1,6 +1,6 @@
 import type { TabKindParts, TabMenuEntry } from '@orden/contracts'
 import { iconChoice } from '../../icon-choice.svelte'
-import { iconEntries } from '../../menu-entries'
+import { iconEntries } from '../../row-menu/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { workspace } from '../../workspace/src/api'
 import { openOnline, openTerm, renameTerminal, usageOfTab } from './api'
