@@ -10,6 +10,7 @@ import {
   calloutSign,
   closeFence,
   continueInCode,
+  continueLists,
   insertAiBlock,
   insertCallout,
   insertCodeFence,
@@ -32,7 +33,7 @@ import {
   tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
-import { continueLists, indentItems, moveLineOver, outdentItems } from './list-keys'
+import { indentItems, moveLineOver, outdentItems } from './list-keys'
 import { clearFormatting, marksAcross } from './marks'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
@@ -288,6 +289,34 @@ describe('line prefixes', () => {
     )
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n- b\n  - c\n      - d')
     expect(apply(toggleBulletList, 'a\n  b', 0, 5).doc).toBe('- a\n  - b')
+  })
+
+  test('keeps tab-indented children nested when the markers change width', () => {
+    const tabs = '- a\n\t- b'
+    expect(apply(toggleOrderedList, tabs, 0, tabs.length).doc).toBe('1. a\n\t 1. b')
+    const back = '1. a\n\t- b'
+    expect(apply(toggleBulletList, back, 0, back.length).doc).toBe('- a\n\t- b')
+  })
+
+  test('carries children that are not selected along with their parent', () => {
+    expect(at(toggleOrderedList, '- a\n  - b\n    c\nd', 0)).toBe('1. a\n   - b\n     c\nd')
+  })
+
+  test('leaves a child whose own parent did not change where it is', () => {
+    const doc = '1. a\n2. w\n   - x'
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.create([EditorSelection.cursor(0), EditorSelection.cursor(12)]),
+      extensions: [markdown({ base: markdownLanguage })],
+    })
+    let next = state
+    toggleBulletList({ state, dispatch: (made: Transaction) => (next = made.state) })
+    expect(next.doc.toString()).toBe('- a\n2. w\n   - x')
+  })
+
+  test('numbers each quote apart from the list around it', () => {
+    const doc = '> - a\n- b'
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('> 1. a\n1. b')
   })
 
   test('puts the list inside a quote, and takes it off again', () => {

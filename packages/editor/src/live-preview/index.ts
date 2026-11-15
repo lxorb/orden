@@ -7,6 +7,7 @@ import { footnoteReading } from './footnotes'
 import { imageExtension } from './image'
 import { runExtension } from '../run/door'
 import { dropSpacing, pointerSnap } from './snap'
+import { tableTracking } from '../table/widget'
 
 export function livePreview(): Extension {
   return [
@@ -17,6 +18,7 @@ export function livePreview(): Extension {
     dropSpacing,
     livePreviewDecorations,
     blockDecorations,
+    tableTracking,
     imageExtension,
     runExtension(),
   ]

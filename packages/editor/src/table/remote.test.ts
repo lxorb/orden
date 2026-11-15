@@ -94,12 +94,16 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     )
   })
 
-  test('keeps its words when a shared note is rewritten above the table and in another cell', async () => {
+  test('keeps its words when another pane writes above the table and in another cell', async () => {
     const shared = new SharedDoc(TABLE)
     const view = note(shared)
     typeInCell(view)
 
-    shared.replace(TABLE.replace('words', 'more words').replace('| 2 |', '| 2y |'))
+    const at = TABLE.indexOf('| 2 |') + 2
+    shared.edit([
+      { from: 0, to: 0, insert: 'more ' },
+      { from: at, to: at + 1, insert: '2y' },
+    ])
     await settled()
 
     expect(firstCell(view)?.textContent).toBe('1x')
@@ -107,6 +111,37 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     expect(shared.text.toString()).toBe(
       'more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
     )
+  })
+
+  test('keeps its words and its row when another pane puts a row above it', async () => {
+    const shared = new SharedDoc(TABLE)
+    const view = note(shared)
+    typeInCell(view)
+
+    shared.replace(TABLE.replace('| --- | --- |\n', '| --- | --- |\n| 0 | 0 |\n'))
+    await settled()
+
+    flushTableEdits()
+    expect(shared.text.toString()).toBe(
+      'words\n\n| a   | b   |\n| --- | --- |\n| 0   | 0   |\n| 1x  | 2   |\n\nend',
+    )
+  })
+
+  test('never puts its words into another table that took its place', async () => {
+    const second = '| a | b |\n| --- | --- |\n| 1 | 3 |'
+    const doc = `${TABLE}\n\n${second}\n`
+    const shared = new SharedDoc(doc)
+    const view = note(shared)
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: doc } })
+    forceParsing(view, view.state.doc.length, 10_000)
+    typeInCell(view)
+
+    const start = doc.indexOf('| a')
+    shared.edit([{ from: start, to: doc.lastIndexOf('| a'), insert: '' }])
+    await settled()
+
+    flushTableEdits()
+    expect(shared.text.toString()).toBe(`words\n\n${second}\n`)
   })
 
   test('gives way to the other words when that very cell was written', async () => {

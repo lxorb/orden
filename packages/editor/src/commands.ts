@@ -1,12 +1,15 @@
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
+import { insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import {
+  ChangeSet,
   type ChangeSpec,
   type EditorState,
   EditorSelection,
   type Line,
   type SelectionRange,
   type StateCommand,
+  type TransactionSpec,
 } from '@codemirror/state'
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { blockIdOf } from '@orden/markdown/links'
@@ -349,44 +352,103 @@ const NUMBERED = /^\s*\d+[.)]\s+/
 const BULLETED = /^\s*[-*+]\s+/
 
 interface Parent {
-  indent: number
+  quote: string
+  column: number
   shift: number
+}
+
+interface Quoted {
+  from: number
+  quote: string
+  text: string
+  space: string
+  column: number
+}
+
+function quotedLine(line: Line): Quoted {
+  const quote = QUOTED.exec(line.text)?.[0] ?? ''
+  const text = line.text.slice(quote.length)
+  const space = INDENT.exec(text)?.[0] ?? ''
+  return { from: line.from + quote.length, quote, text, space, column: columnOf(space) }
+}
+
+function columnOf(space: string): number {
+  let column = 0
+  for (const character of space)
+    column = character === '\t' ? column + 4 - (column % 4) : column + 1
+  return column
+}
+
+function shiftedSpace(space: string, shift: number): string {
+  if (shift > 0) return space + ' '.repeat(shift)
+  if (shift === 0) return space
+  const trailing = /[ ]*$/.exec(space)?.[0].length ?? 0
+  return space.slice(0, space.length - Math.min(trailing, -shift))
+}
+
+function parentOf(parents: Parent[], line: Quoted): number {
+  for (let top = parents.at(-1); top; top = parents.at(-1)) {
+    if (top.quote === line.quote && top.column < line.column) return top.shift
+    parents.pop()
+  }
+  return 0
 }
 
 function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
   return ({ state, dispatch }) => {
-    const lines = selectedLines(state).map((line) => {
-      const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
-      return { from: line.from + quote, text: line.text.slice(quote) }
-    })
+    const chosen = selectedLines(state)
+    const lines = chosen.map(quotedLine)
     const allListed = lines.every((line) => own.test(line.text))
-    const counts = new Map<number, number>()
-    const parents: Parent[] = []
 
-    const changes: ChangeSpec[] = lines.map((line) => {
-      const indent = (INDENT.exec(line.text)?.[0] ?? '').length
-      const matched = MARKER.exec(line.text)?.[0] ?? ''
-
-      if (allListed) {
+    if (allListed) {
+      const changes: ChangeSpec[] = lines.map((line) => {
+        const matched = MARKER.exec(line.text)?.[0] ?? ''
         const task = taskAt(line.text)
         const end = task ? Math.max(task.marker, matched.length) : matched.length
-        return { from: line.from + indent, to: line.from + end, insert: '' }
+        return { from: line.from + line.space.length, to: line.from + end, insert: '' }
+      })
+      dispatch(state.update({ changes, userEvent: 'input' }))
+      return true
+    }
+
+    const picked = new Set(chosen.map((line) => line.number))
+    const last = chosen.at(-1)?.number ?? 0
+    const counts = new Map<string, number>()
+    const parents: Parent[] = []
+    const changes: ChangeSpec[] = []
+
+    const first = chosen[0]?.number ?? 1
+    for (let number = first; number <= state.doc.lines; number++) {
+      const line = quotedLine(state.doc.line(number))
+      if (!picked.has(number)) {
+        if (!line.text.trim()) continue
+        const inherited = parentOf(parents, line)
+        if (!parents.length && number > last) break
+        parents.push({ quote: line.quote, column: line.column, shift: inherited })
+        if (inherited) {
+          const end = line.from + line.space.length
+          changes.push({ from: line.from, to: end, insert: shiftedSpace(line.space, inherited) })
+        }
+        continue
       }
 
-      for (const depth of counts.keys()) if (depth > indent) counts.delete(depth)
-      const count = (counts.get(indent) ?? 0) + 1
-      counts.set(indent, count)
+      const key = `${line.quote}\u0000${line.column}`
+      for (const held of counts.keys()) {
+        const [quote, column] = held.split('\u0000')
+        if (quote !== line.quote || Number(column) > line.column) counts.delete(held)
+      }
+      const count = (counts.get(key) ?? 0) + 1
+      counts.set(key, count)
 
-      while (parents.length && (parents.at(-1)?.indent ?? 0) >= indent) parents.pop()
-      const inherited = parents.at(-1)?.shift ?? 0
+      const inherited = parentOf(parents, line)
+      const matched = MARKER.exec(line.text)?.[0] ?? ''
       const marker = markerFor(count)
-      const widened = matched ? marker.length - (matched.length - indent) : 0
-      parents.push({ indent, shift: inherited + widened })
+      const widened = matched ? marker.length - (matched.length - line.space.length) : 0
+      parents.push({ quote: line.quote, column: line.column, shift: inherited + widened })
 
-      const to = line.from + Math.max(matched.length, indent)
-      if (!inherited) return { from: line.from + indent, to, insert: marker }
-      return { from: line.from, to, insert: ' '.repeat(Math.max(0, indent + inherited)) + marker }
-    })
+      const to = line.from + Math.max(matched.length, line.space.length)
+      changes.push({ from: line.from, to, insert: shiftedSpace(line.space, inherited) + marker })
+    }
 
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
@@ -745,3 +807,65 @@ function wrapped(bang: '' | '!'): StateCommand {
 
 export const insertLink = wrapped('')
 export const insertImage = wrapped('!')
+
+const continueMarkup = insertNewlineContinueMarkupCommand({ nonTightLists: false })
+
+const ORDERED_TASK = /^(?:[ \t]*>[ \t]?)*[ \t]*\d{1,9}[.)][ \t]+\[.\]/u
+const FRESH_NUMBER = /^(?:[ \t]*>[ \t]?)*[ \t]*\d{1,9}[.)] $/u
+
+const EMPTY_ORDERED_TASK = /^((?:[ \t]*>[ \t]?)*)[ \t]*\d{1,9}[.)][ \t]+\[.\][ \t]*$/u
+
+function endEmptyTask(state: EditorState): TransactionSpec | null {
+  const range = state.selection.main
+  if (state.selection.ranges.length > 1 || !range.empty) return null
+
+  const line = state.doc.lineAt(range.head)
+  const quote = EMPTY_ORDERED_TASK.exec(line.text)?.[1]
+  if (quote === undefined || range.head !== line.to || inCode(state, line.from)) return null
+
+  return {
+    changes: { from: line.from, to: line.to, insert: quote },
+    selection: { anchor: line.from + quote.length },
+    userEvent: 'input',
+  }
+}
+
+export const continueLists: StateCommand = ({ state, dispatch }) => {
+  const ended = endEmptyTask(state)
+  if (ended) {
+    dispatch(state.update(ended))
+    return true
+  }
+
+  return continueMarkup({
+    state,
+    dispatch: (made) => {
+      const boxes: number[] = []
+      made.newSelection.ranges.forEach((range, at) => {
+        const before = state.selection.ranges[at]
+        if (!before || !ORDERED_TASK.test(state.doc.lineAt(before.head).text)) return
+
+        const line = made.newDoc.lineAt(range.head)
+        if (FRESH_NUMBER.test(made.newDoc.sliceString(line.from, range.head)))
+          boxes.push(range.head)
+      })
+      if (!boxes.length) {
+        dispatch(made)
+        return
+      }
+
+      const boxed = ChangeSet.of(
+        boxes.map((at) => ({ from: at, insert: '[ ] ' })),
+        made.newDoc.length,
+      )
+      dispatch(
+        state.update({
+          changes: made.changes.compose(boxed),
+          selection: made.newSelection.map(boxed, 1),
+          scrollIntoView: true,
+          userEvent: 'input',
+        }),
+      )
+    },
+  })
+}

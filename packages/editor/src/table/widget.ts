@@ -1,4 +1,4 @@
-import type { EditorView } from '@codemirror/view'
+import { type EditorView, ViewPlugin } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { parseTable } from './model'
 import { TableView } from './view'
@@ -7,6 +7,13 @@ export { flushTableEdits } from './view'
 
 const views = new WeakMap<HTMLElement, TableView>()
 const live = new Set<TableView>()
+
+export const tableTracking = ViewPlugin.define(() => ({
+  update(update) {
+    if (!update.docChanged) return
+    for (const table of live) if (table.editor === update.view) table.track(update.changes)
+  },
+}))
 
 export function tableViewAt(editor: EditorView, from: number): TableView | null {
   for (const table of live) {
@@ -59,7 +66,7 @@ export class TableWidget extends OrdenWidget {
     if (!model) return false
 
     const moved = previous.from !== this.from && previous.source !== this.source
-    if (moved && !(table.continues(model) && table.sameTable(model))) return false
+    if (moved && !(table.continues(this, model) && table.sameTable(model))) return false
 
     table.adopt(this, model)
     return true

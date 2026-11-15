@@ -1,6 +1,8 @@
 import {
+  type ChangeDesc,
   EditorSelection,
   type EditorState,
+  MapMode,
   type StateCommand,
   type TransactionSpec,
 } from '@codemirror/state'
@@ -105,6 +107,7 @@ export class TableView {
   private pending: { at: CellAddress; value: string } | null = null
   private idle: number | undefined
   private land: ReturnType<typeof later> | null = null
+  private start: number | null = null
 
   private focusAfter: Focus | null = null
 
@@ -148,6 +151,7 @@ export class TableView {
     this.model = model
     this.source = text.source
     this.from = text.from
+    this.start = text.from
     this.widths = model.header.map(() => null)
     this.editable = !editor.state.readOnly
 
@@ -186,25 +190,50 @@ export class TableView {
     return tableAt(editor.state, editor.state.doc.lineAt(at).to)
   }
 
-  continues(model: TableModel): boolean {
-    const { pending } = this
-    if (!pending || this.editor.state.readOnly) return false
+  continues(text: TableSource, model: TableModel): boolean {
+    return this.pendingPlace(text, model) !== null
+  }
 
-    const { header, rows } = this.model
-    const sameShape = model.header.length === header.length && model.rows.length === rows.length
-    return sameShape && textIn(model, pending.at) === this.textOf(pending.at)
+  track(changes: ChangeDesc) {
+    if (this.start !== null) this.start = changes.mapPos(this.start, 1, MapMode.TrackAfter)
   }
 
   sameTable(model: TableModel): boolean {
     return this.model.header.every((text, column) => model.header[column] === text)
   }
 
+  private pendingPlace(text: TableSource, model: TableModel): CellAddress | null {
+    const { pending } = this
+    if (!pending || this.editor.state.readOnly || this.start !== text.from) return null
+    if (model.header.length !== this.model.header.length) return null
+
+    const { row, column } = pending.at
+    const before = textIn(this.model, pending.at)
+    if (row < 0) return model.header[column] === before ? pending.at : null
+
+    const old = this.model.rows[row] ?? []
+    const same = (cells: string[] | undefined, loose: boolean) =>
+      cells?.length === old.length &&
+      cells[column] === before &&
+      cells.every((text, at) => loose || at === column || text === old[at])
+
+    if (same(model.rows[row], true)) return pending.at
+    const found = model.rows.flatMap((cells, at) => (same(cells, false) ? [at] : []))
+    return found.length === 1 && found[0] !== undefined ? { row: found[0], column } : null
+  }
+
   adopt(text: TableSource, model: TableModel) {
-    const kept = this.continues(model) ? this.pending : null
+    const place = this.pendingPlace(text, model)
+    const kept = place && this.pending ? { at: place, value: this.pending.value } : null
+    if (kept && this.pending && !sameCell(kept.at, this.pending.at)) {
+      this.focusAfter = { at: kept.at, offset: this.focusedCell()?.offset ?? kept.value.length }
+      this.pending = kept
+    }
     const incoming = kept ? setCell(model, kept.at.row, kept.at.column, kept.value) : model
     const shown = serializeTable(incoming) === serializeTable(this.current())
     this.source = text.source
     this.from = text.from
+    this.start = text.from
     this.model = model
     if (kept) this.land = later(this.editor)
 
@@ -336,6 +365,7 @@ export class TableView {
     const span = this.span()
     if (span && editor.state.doc.sliceString(span.from, span.to) === this.source) {
       this.from = span.from
+      this.start = span.from
     }
     this.land = later(editor)
   }
