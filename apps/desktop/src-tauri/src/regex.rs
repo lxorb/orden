@@ -37,6 +37,18 @@ pub struct Pattern {
     groups: usize,
     fold: bool,
     first: Option<First>,
+    lead: Option<Lead>,
+}
+
+struct Lead {
+    prefix: Vec<Letter>,
+    run: Letter,
+}
+
+enum Letter {
+    Any,
+    Char(char),
+    Class(Class),
 }
 
 struct First {
@@ -192,6 +204,7 @@ impl Pattern {
             groups,
             fold,
             first: first_of(&node, fold).and_then(|chars| First::new(&chars)),
+            lead: lead_of(&node),
         })
     }
 
@@ -210,11 +223,42 @@ impl Pattern {
                 return None;
             }
 
-            let step = letter_at(text, start).map_or(1, char::len_utf8);
-            start = start.checked_add(step)?;
+            start = self.past_lead(text, start)?;
         }
 
         None
+    }
+
+    fn past_lead(&self, text: &str, start: usize) -> Option<usize> {
+        let next = letter_at(text, start).map_or(Some(start + 1), |letter| {
+            start.checked_add(letter.len_utf8())
+        });
+        let Some(lead) = &self.lead else {
+            return next;
+        };
+
+        let mut letters = text.get(start..)?.chars();
+        for wanted in &lead.prefix {
+            if !letters
+                .next()
+                .is_some_and(|letter| self.holds(wanted, letter))
+            {
+                return next;
+            }
+        }
+        let run = letters
+            .take_while(|&letter| self.holds(&lead.run, letter))
+            .count();
+        advanced(text, start, run.checked_add(1)?)
+    }
+
+    fn holds(&self, wanted: &Letter, letter: char) -> bool {
+        match wanted {
+            Letter::Any => letter != '\n',
+            Letter::Char(one) if self.fold => folded(letter) == folded(*one),
+            Letter::Char(one) => letter == *one,
+            Letter::Class(class) => class.holds(letter, self.fold),
+        }
     }
 
     fn next_start(&self, text: &str, from: usize) -> Option<usize> {
@@ -1160,6 +1204,46 @@ fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
     }
 }
 
+const LONGEST_LEAD: usize = 16;
+
+fn lead_of(node: &Node) -> Option<Lead> {
+    let nodes = match node {
+        Node::Group(None, inner) => return lead_of(inner),
+        Node::Seq(nodes) => nodes.as_slice(),
+        one => std::slice::from_ref(one),
+    };
+
+    let mut prefix = Vec::new();
+    for one in nodes.iter().take(LONGEST_LEAD) {
+        if let Node::Repeat(inner, Limits { max: None, .. }) = one {
+            return Some(Lead {
+                prefix,
+                run: one_letter(inner)?,
+            });
+        }
+        prefix.push(one_letter(one)?);
+    }
+    None
+}
+
+fn one_letter(node: &Node) -> Option<Letter> {
+    match node {
+        Node::Any => Some(Letter::Any),
+        Node::Char(c) => Some(Letter::Char(*c)),
+        Node::Class(class) => Some(Letter::Class(class.clone())),
+        Node::Group(None, inner) => one_letter(inner),
+        _ => None,
+    }
+}
+
+fn advanced(text: &str, from: usize, letters: usize) -> Option<usize> {
+    let rest = text.get(from..)?;
+    match rest.char_indices().nth(letters) {
+        Some((at, _)) => from.checked_add(at),
+        None => (rest.chars().count() == letters).then_some(text.len()),
+    }
+}
+
 fn repeatable(atom: &Node) -> bool {
     !matches!(
         atom,
@@ -1855,6 +1939,103 @@ mod tests {
         assert_eq!(caught(r"(?<=(\d+))x\1", "123x123"), Some(words(&["123"])));
         assert_eq!(first(r"(?<=(\d+))x\1", "123x123").as_deref(), Some("x123"));
         assert_eq!(caught(r"(?<=(a+)(a+))b", "aaab"), Some(words(&["a", "aa"])));
+    }
+
+    fn every_hit(pattern: &Pattern, text: &str, budget: usize) -> Vec<(usize, usize)> {
+        let budget = Cell::new(budget);
+        let mut out = Vec::new();
+        let mut at = 0;
+        while at <= text.len() {
+            let Some(hit) = pattern.find_within(text, at, &budget) else {
+                break;
+            };
+            out.push((hit.from, hit.to));
+            let step = text[hit.to..].chars().next().map_or(1, char::len_utf8);
+            at = if hit.to == hit.from {
+                hit.to + step
+            } else {
+                hit.to
+            };
+        }
+        out
+    }
+
+    #[test]
+    fn a_pattern_led_by_a_long_run_finds_every_hit_on_long_lines() {
+        let paragraphs = format!(
+            "{}note TODO\n",
+            format!("{}\n", "word ".repeat(400)).repeat(4)
+        );
+        let pairs = format!("{}\n{}TODO\n", "word ".repeat(60), "word ".repeat(59)).repeat(100);
+        for (source, text, hits) in [
+            (".*TODO", &paragraphs, 1),
+            (r".*\bTODO", &paragraphs, 1),
+            (".*TODO", &pairs, 100),
+            (".+TODO", &pairs, 100),
+            ("[^.]*TODO", &pairs, 1),
+            (r"[^.\n]*TODO", &pairs, 100),
+            (".*?TODO", &pairs, 100),
+            (r"\w.*TODO", &pairs, 100),
+            (r"\w.*TODO", &paragraphs, 1),
+            (r"(?:wo)rd.*TODO", &pairs, 100),
+        ] {
+            let pattern = Pattern::compile(source, false);
+            assert!(pattern.is_some(), "{source}");
+            let Some(pattern) = pattern else {
+                return;
+            };
+            let found = every_hit(&pattern, text, super::budget_for(text.len()));
+            assert_eq!(found.len(), hits, "{source}");
+        }
+    }
+
+    #[test]
+    fn skipping_past_a_leading_run_finds_what_trying_every_start_finds() {
+        let texts = [
+            "aab ab b\nxaab\n\nbba",
+            "TODO x TODO\nword TODO word\n",
+            "ccd abcd xyzd\nd",
+            "ab\u{e9}\u{1d49c}b a\u{1d49c}b",
+        ];
+        for source in [
+            ".*b",
+            ".+?b",
+            "[^x]*b",
+            "a*b",
+            "(?:.)*d",
+            "[a-c]{2,}d",
+            "x*$",
+            ".*(?<=a)b",
+            r".*\bTODO",
+            r"(.*)\1",
+            "(?:a|b)*b",
+            ".*",
+            r"\w*\u{1d49c}b",
+            r"\w.*b",
+            "ab+c",
+            "[ab]x*b",
+            r"a\w*?b",
+            r"(?:a\u{1d49c}).+b",
+            r"\u{e9}.*b",
+        ] {
+            for fold in [false, true] {
+                let led = Pattern::compile(source, fold);
+                let plain = Pattern::compile(source, fold).map(|mut one| {
+                    one.lead = None;
+                    one
+                });
+                let (Some(led), Some(plain)) = (led, plain) else {
+                    panic!("{source} should compile");
+                };
+                for text in texts {
+                    assert_eq!(
+                        every_hit(&led, text, super::BUDGET),
+                        every_hit(&plain, text, super::BUDGET),
+                        "{source} on {text:?}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
