@@ -1,9 +1,5 @@
 use tauri::{AppHandle, Manager, Window};
 
-fn ours(app: &AppHandle) -> Vec<Window> {
-    app.windows().into_values().collect()
-}
-
 pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
     builder: tauri::WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::WebviewWindowBuilder<'_, R, M> {
@@ -21,7 +17,7 @@ pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
 
 #[tauri::command]
 pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
-    for window in ours(&app) {
+    for window in crate::launch::document_windows(&app) {
         #[cfg(target_os = "macos")]
         let changed = window.set_title_bar_style(if system {
             tauri::TitleBarStyle::Visible
