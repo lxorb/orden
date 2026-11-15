@@ -8,6 +8,7 @@ import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
 import { noteIndex } from '../wikilink/notes'
+import { later } from '../shared'
 
 export class BulletWidget extends OrdenWidget {
   constructor(private readonly depth: number) {
@@ -309,6 +310,7 @@ export class FenceHeaderWidget extends OrdenWidget {
     field.spellcheck = false
 
     const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
+    const land = later(view)
     let done = false
     const commit = () => {
       if (done) return
@@ -318,8 +320,11 @@ export class FenceHeaderWidget extends OrdenWidget {
 
       if (next === this.language) return
       queueMicrotask(() => {
-        if (view.state.sliceDoc(this.infoFrom, this.infoTo) !== written) return
-        view.dispatch({ changes: { from: this.infoFrom, to: this.infoTo, insert: next } })
+        land((state) =>
+          state.sliceDoc(this.infoFrom, this.infoTo) === written
+            ? { changes: { from: this.infoFrom, to: this.infoTo, insert: next } }
+            : null,
+        )
       })
     }
 

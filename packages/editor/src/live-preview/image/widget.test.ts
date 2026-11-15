@@ -7,6 +7,7 @@ import '@orden/markdown/eager'
 import { parsed } from '../../../test/parsed'
 import { ordenMarkdownExtensions } from '../../markdown/extensions'
 import { livePreview } from '..'
+import { SharedDoc } from '../../shared'
 
 const DOC = 'words\n\n![A cat](cat.png)\n\nend'
 const errors: unknown[] = []
@@ -101,5 +102,24 @@ test('a corner pressed and let go without a drag leaves a sized picture as it wa
   handle?.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true }))
   handle?.dispatchEvent(new MouseEvent('pointerup', { button: 0, bubbles: true }))
   expect(view.state.doc.toString()).toBe(doc)
+  view.destroy()
+})
+
+test('goes to its own note when the pane has moved to another note before it was left', async () => {
+  const mine = new SharedDoc(DOC)
+  const elsewhere = DOC.replace('words', 'wordz')
+  const other = new SharedDoc(elsewhere)
+  const view = typedAlt('A dog')
+  mine.join(view)
+  const alt = view.contentDOM.querySelector('input')
+  alt?.dispatchEvent(new FocusEvent('focus'))
+  if (alt) alt.value = 'A dog'
+
+  other.join(view)
+  await Promise.resolve()
+  await Promise.resolve()
+
+  expect(view.state.doc.toString()).toBe(elsewhere)
+  expect(mine.text.toString()).toBe(DOC.replace('A cat', 'A dog'))
   view.destroy()
 })

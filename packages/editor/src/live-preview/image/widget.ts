@@ -1,6 +1,7 @@
-import { EditorSelection } from '@codemirror/state'
+import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { imageResolver } from '../../images'
+import { later } from '../../shared'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
 import {
@@ -85,19 +86,28 @@ function select(view: EditorView, image: ImageSpan, extend = false) {
   view.focus()
 }
 
-function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
+function rewritten(
+  state: EditorState,
+  image: ImageSpan,
+  next: ImageSpec,
+  userEvent: string,
+): TransactionSpec {
   const insert = imageMarkup(next, image.tag !== undefined)
-  const wasSelected = selectedImage(view.state)?.from === image.from
+  const wasSelected = selectedImage(state)?.from === image.from
   const written = image.tag ?? image
-  const changes = view.state.changes({ from: written.from, to: written.to, insert })
+  const changes = state.changes({ from: written.from, to: written.to, insert })
 
-  view.dispatch({
+  return {
     changes,
     selection: wasSelected
       ? EditorSelection.range(image.from, changes.mapPos(image.to, 1))
       : undefined,
     userEvent,
-  })
+  }
+}
+
+function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
+  view.dispatch(rewritten(view.state, image, next, userEvent))
 }
 
 function remove(view: EditorView, image: ImageSpan) {
@@ -261,17 +271,32 @@ export class ImageWidget extends OrdenWidget {
     alt.spellcheck = false
     alt.setAttribute('aria-label', 'Describe the image')
 
-    let held: { image: ImageSpan; text: string } | null = null
-    const stillThere = () => {
+    let held: {
+      image: ImageSpan
+      text: string
+      land: ReturnType<typeof later>
+    } | null = null
+    const stillThere = (state: EditorState) => {
       if (!held) return null
-      return view.state.sliceDoc(held.image.from, held.image.to) === held.text ? held.image : null
+      return state.sliceDoc(held.image.from, held.image.to) === held.text ? held.image : null
     }
     const commitAlt = () => {
-      const current = imageOfFrame(view, frame) ?? stillThere()
-      if (!current) return
       const next = alt.value.trim()
-      if (next === current.alt) return
-      rewrite(view, current, { ...current, alt: next }, 'input.image.alt')
+      const landing = held?.land
+      if (!landing) {
+        const current = imageOfFrame(view, frame)
+        if (current && next !== current.alt) {
+          rewrite(view, current, { ...current, alt: next }, 'input.image.alt')
+        }
+        return
+      }
+
+      landing((state) => {
+        const current =
+          (state === view.state ? imageOfFrame(view, frame) : null) ?? stillThere(state)
+        if (!current || next === current.alt) return null
+        return rewritten(state, current, { ...current, alt: next }, 'input.image.alt')
+      })
     }
 
     alt.addEventListener('keydown', (event) => {
@@ -287,7 +312,9 @@ export class ImageWidget extends OrdenWidget {
     })
     alt.addEventListener('focus', () => {
       const image = imageOfFrame(view, frame)
-      held = image ? { image, text: view.state.sliceDoc(image.from, image.to) } : null
+      held = image
+        ? { image, text: view.state.sliceDoc(image.from, image.to), land: later(view) }
+        : null
     })
     alt.addEventListener('blur', () => queueMicrotask(commitAlt))
     this.onDestroy(frame, () => queueMicrotask(commitAlt))
