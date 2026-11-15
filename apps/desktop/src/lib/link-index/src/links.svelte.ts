@@ -1197,7 +1197,7 @@ class Links {
     const named = (link: { target: string }) => {
       if (!link.target) return false
       const parts = comparable(link.target).split('/')
-      return parts.includes(name) || movingNames.has(parts[parts.length - 1])
+      return parts.includes(name) || movingNames.has(parts.at(-1) ?? '')
     }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()

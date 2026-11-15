@@ -80,6 +80,7 @@ function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
   let at = 0
   while (at < edits.length) {
     const edit = edits[at]
+    if (edit === undefined) break
     const scalar = edit.from < matter.close ? scalarAround(text, edit.from) : null
     if (!scalar || edit.to > scalar.close) {
       out.push(edit)
@@ -87,7 +88,7 @@ function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
       continue
     }
     let last = at
-    while (last + 1 < edits.length && edits[last + 1].to <= scalar.close) last++
+    while ((edits[last + 1]?.to ?? Infinity) <= scalar.close) last++
     out.push(...requoted(text, scalar, edits.slice(at, last + 1)))
     at = last + 1
   }
@@ -104,7 +105,7 @@ function scalarAround(text: string, offset: number): Scalar | null {
   for (let at = start; at < end; at++) {
     const character = text[at]
     if (quote === null) {
-      if (character === '#' && (at === start || /\s/.test(text[at - 1]))) return null
+      if (character === '#' && (at === start || /\s/.test(text[at - 1] ?? ''))) return null
       if (character === "'" || character === '"') {
         quote = character
         open = at
