@@ -16,6 +16,7 @@ export interface Copies {
   readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved' | 'set'>
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
+  heardGone(path: string): void
   freshEntry(path: string, isFolder: boolean): Entry
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
@@ -80,7 +81,10 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
   const landed = await copyPath(entry.path, path)
     .then(() => true)
     .catch(() => false)
-  if (!landed) return false
+  if (!landed) {
+    ws.heardGone(path)
+    return false
+  }
   await idsLeftBehind(entry, path)
   ws.itemMeta.copied(entry.path, path)
   ws.protection.copied(entry.path, path, ws.rootHolding(entry.path), ws.rootHolding(path))
