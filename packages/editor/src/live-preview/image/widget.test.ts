@@ -74,3 +74,32 @@ test('in a picture wrapped in HTML, is written to its img tag and leaves the wra
   )
   view.destroy()
 })
+
+test('a corner pressed and let go without a drag leaves a sized picture as it was', () => {
+  Object.defineProperty(HTMLImageElement.prototype, 'naturalWidth', {
+    configurable: true,
+    get: () => 800,
+  })
+  Element.prototype.hasPointerCapture = () => false
+  Element.prototype.releasePointerCapture = () => undefined
+  const doc = 'words\n\n![A cat|300](cat.png)\n\nend'
+  const view = new EditorView({
+    state: parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(doc.length),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          livePreview(),
+        ],
+      }),
+    ),
+    parent: document.body,
+  })
+  const handle = view.contentDOM.querySelector<HTMLElement>('.orden-image-handle')
+  expect(handle).not.toBeNull()
+  handle?.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true }))
+  handle?.dispatchEvent(new MouseEvent('pointerup', { button: 0, bubbles: true }))
+  expect(view.state.doc.toString()).toBe(doc)
+  view.destroy()
+})

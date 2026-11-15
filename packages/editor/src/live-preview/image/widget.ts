@@ -393,6 +393,7 @@ export class ImageWidget extends OrdenWidget {
     const lineWidth = frame.closest('.cm-line')?.getBoundingClientRect().width ?? natural
     const sign = handle.dataset.corner?.endsWith('e') ? 1 : -1
     let zoom = image.zoom
+    let dragged = false
 
     frame.classList.add('is-resizing')
     frame.dataset.corner = handle.dataset.corner
@@ -404,6 +405,7 @@ export class ImageWidget extends OrdenWidget {
     }
 
     const move = (moved: PointerEvent) => {
+      dragged = true
       zoom = resizeTo(
         startWidth,
         sign * (moved.clientX - startX),
@@ -426,7 +428,7 @@ export class ImageWidget extends OrdenWidget {
 
       const current = imageOfFrame(view, frame)
       if (!current) return
-      if (zoom === current.zoom && !current.width) {
+      if (!dragged || (zoom === current.zoom && !current.width)) {
         this.sync(frame, current)
         return
       }
