@@ -75,6 +75,16 @@ describe('a row that is listening', () => {
     expect(shortcuts.keyFor('format.bold')).toBeNull()
   })
 
+  test('takes Backspace or Delete held with Ctrl or Alt as the key', () => {
+    rebind.listen('format.bold')
+    rebind.record(press('Delete', { ctrl: true }))
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Delete')
+
+    rebind.listen('format.italic')
+    rebind.record(press('Backspace', { ctrl: true, shift: true }))
+    expect(shortcuts.keyFor('format.italic')).toBe('Mod-Shift-Backspace')
+  })
+
   test('is stopped by asking for it again', () => {
     rebind.listen('format.bold')
     rebind.listen('format.bold')

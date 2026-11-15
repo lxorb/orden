@@ -1,5 +1,5 @@
 import { type Modifier, writeTap } from '../../double-tap/src/api'
-import { readCombination } from '../../ui-kit/src/api'
+import { chorded, readCombination } from '../../ui-kit/src/api'
 import { type Shortcut, shortcuts } from '../../shortcuts/src/api'
 import { BY_ID } from '../../shortcuts/src/api'
 
@@ -40,7 +40,7 @@ export class Rebind {
       return
     }
 
-    if (event.key === 'Backspace' || event.key === 'Delete') {
+    if ((event.key === 'Backspace' || event.key === 'Delete') && !chorded(event)) {
       shortcuts.set(id, null)
       this.listening = null
       return
