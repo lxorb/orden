@@ -18,8 +18,8 @@
     setReadOnlyMode,
   } from '@orden/editor'
   import { untrack } from 'svelte'
-  import Door from '../../Door.svelte'
   import {
+    Door,
     dragged,
     dropOver,
     isTreeDrag,

@@ -36,8 +36,6 @@
   "pending": [
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/composer-commands.ts",
-    "apps/desktop/src/lib/kind-choice.ts",
-    "apps/desktop/src/lib/links.ts",
-    "apps/desktop/src/lib/open-out.ts"
+    "apps/desktop/src/lib/kind-choice.ts"
   ]
 }

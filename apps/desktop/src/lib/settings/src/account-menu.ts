@@ -1,7 +1,7 @@
-import { account } from './accounts/src/api'
-import { DIVIDER, menu, type MenuEntry } from './ui-kit/src/api'
+import { account } from '../../accounts/src/api'
+import { DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
 import { settingsWindow } from '@orden/contracts'
-import { shortcuts } from './shortcuts/src/api'
+import { shortcuts } from '../../shortcuts/src/api'
 
 export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true) {
   const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -9,10 +9,6 @@ export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true
     clientX: up ? box.left : box.right,
     clientY: up ? box.top : box.bottom,
   })
-  const leave = () =>
-    __EVEN_PLUGIN__
-      ? void account.signOut('asked')
-      : void import('./ai-providers/src/api').then((one) => one.signOut())
   menu.show(
     at,
     [
@@ -25,7 +21,7 @@ export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true
       ...more,
       DIVIDER,
       account.user
-        ? { label: 'Sign out', run: leave }
+        ? { label: 'Sign out', run: () => void account.leave() }
         : { label: 'Sign in', run: () => (account.open = true) },
     ],
     { title: account.user?.email ?? 'Account', up },

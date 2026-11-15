@@ -6,14 +6,15 @@ const world = vi.hoisted(() => ({
   printed: [] as unknown[],
 }))
 
-vi.mock('./workspace/src/api', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get active() {
       return { kind: world.kind, note: {} }
     },
   },
 }))
-vi.mock('./export/src/api', () => ({
+vi.mock('./context', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./context')>()),
   openOut: () => ({
     text: '{}',
     name: 'Board.canvas',
@@ -22,26 +23,29 @@ vi.mock('./export/src/api', () => ({
     shared: null,
     trusted: world.trusted,
   }),
-  printNote: () => Promise.resolve(),
 }))
-vi.mock('./plane/src/picture', () => ({
+vi.mock('./print', () => ({ printNote: () => Promise.resolve() }))
+vi.mock('../../plane/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../plane/src/api')>()),
+  drawingOf: (open: unknown) => open,
   printCanvas: (drawing: unknown) => {
     world.printed.push(drawing)
     return Promise.resolve()
   },
 }))
-vi.mock('./pages/src/out', () => ({
-  pagesOutOf: (open: unknown) => open,
-  printPages: (out: unknown) => {
-    world.printed.push(out)
-    return Promise.resolve()
-  },
-}))
-vi.mock('./plane/src/drawing', () => ({
-  drawingOf: (open: unknown) => open,
+vi.mock('../../pages/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../pages/src/api')>()),
+  pagesOut: () =>
+    Promise.resolve({
+      pagesOutOf: (open: unknown) => open,
+      printPages: (out: unknown) => {
+        world.printed.push(out)
+        return Promise.resolve()
+      },
+    }),
 }))
 
-const { printOpen } = await import('./open-out')
+const { printOpen } = await import('./print-open')
 
 beforeEach(() => {
   world.printed = []

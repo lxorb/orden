@@ -218,6 +218,7 @@ export {
   type SearchPanel,
   type SearchPort,
   type SearchSort,
+  type AppCommandsPort,
   type ShellFocusPort,
   registerSurfaces,
   type SheetId,

@@ -32,6 +32,5 @@
     "surfaces",
     "new-here",
     "marks"
-  ],
-  "pending": ["apps/desktop/src/lib/Door.svelte", "apps/desktop/src/lib/layer-keys.ts"]
+  ]
 }

@@ -66,6 +66,10 @@ export { claimsGesture, drawer, isFinger, rightDrawer } from './drawer.svelte'
 
 export const drawerFollowing = () => import('./drawer-follow')
 
+export { writeNew } from './write-new'
+
+export { onTwist, treeStep, TREE_MOVES } from './tree-keys'
+
 export { scratchpadOn } from './services'
 
 export type { Across } from './across'

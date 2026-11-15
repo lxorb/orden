@@ -2,8 +2,7 @@
   import { account } from '../../accounts/src/api'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK, UnreadDot, viewport } from '../../ui-kit/src/api'
   import { chatsOn, hiddenKinds } from '../../gates/src/api'
-  import { workspace } from '../../workspace/src/api'
-  import { writeNew } from '../../write-new'
+  import { workspace, writeNew } from '../../workspace/src/api'
   import { panels, type PhoneTab } from '../../session/src/api'
 
   const { unread = false }: { unread?: boolean } = $props()

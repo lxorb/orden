@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { scanHeadings } from './documents/src/api'
+import { scanHeadings } from './api'
 import { moveSection, movesSection, sectionSpan } from './sections'
 
 const NOTE = ['# One', 'first', '', '## Under one', 'nested', '', '# Two', 'second', ''].join('\n')

@@ -28,10 +28,5 @@
     "accounts",
     "spaces",
     "marks"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/caret.ts",
-    "apps/desktop/src/lib/note-menu.ts"
   ]
 }

@@ -18,6 +18,5 @@
     "ui-kit",
     "views",
     "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/layer-keys.ts"]
+  ]
 }

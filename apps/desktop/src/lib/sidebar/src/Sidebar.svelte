@@ -33,18 +33,16 @@
     viewport,
     fullscreen,
   } from '../../ui-kit/src/api'
-  import { alone, swipeOpens, dropOnList, workspace } from '../../workspace/src/api'
-  import { movesSection } from '../../sections'
+  import { alone, swipeOpens, dropOnList, workspace, agentMarks } from '../../workspace/src/api'
+  import { movesSection, headingAt, lineOf } from '../../documents/src/api'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { landsIn, dropTarget } from '../../tree/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { agentMarks } from '../../workspace/src/api'
   import { searching, sidebarPart } from '@orden/contracts'
   import { account, arriving } from '../../accounts/src/api'
   import { newSpace } from '../../spaces/src/api'
   import { panels, type Panel, type PanelSide } from '../../session/src/api'
-  import { headingAt, lineOf } from '../../documents/src/api'
   import {
     archiveSection,
     askPanel,
