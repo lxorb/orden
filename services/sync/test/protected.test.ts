@@ -22,6 +22,12 @@ const ways = (space: string, protectedWays: unknown, as = token) =>
     token: as,
     body: { protected: protectedWays },
   })
+const since = (space: string, base: unknown, protectedWays: unknown) =>
+  call(env, `/v1/protected/spaces/${space}`, {
+    method: 'PUT',
+    token,
+    body: { protected: protectedWays, base },
+  })
 const password = (body: unknown) =>
   call(env, '/v1/protected/password', { method: 'PUT', token, body: { password: body } })
 
@@ -47,6 +53,32 @@ describe('what a reader protected', () => {
     expect((await read()).json.spaces).toEqual({ s1: { Work: 'device' } })
     await ways('s1', {})
     expect((await read()).json.spaces).toEqual({})
+  })
+
+  test('sent with what the device last had, keeps what another device locked meanwhile', async () => {
+    await ways('s1', { Plans: 'password' })
+    await ways('s1', { Plans: 'password', Diary: 'password' })
+    const answer = await since('s1', { Plans: 'password' }, { Plans: 'password', Taxes: 'device' })
+    const merged = { Plans: 'password', Diary: 'password', Taxes: 'device' }
+    expect((answer.json as unknown as { spaces: Record<string, unknown> }).spaces.s1).toEqual(
+      merged,
+    )
+    expect((await read()).json.spaces).toEqual({ s1: merged })
+  })
+
+  test('sent with what the device last had, takes away only what that device took away', async () => {
+    await ways('s1', { Plans: 'password', Diary: 'password', Work: 'device' })
+    await since('s1', { Plans: 'password', Diary: 'password' }, { Diary: 'password' })
+    expect((await read()).json.spaces).toEqual({ s1: { Diary: 'password', Work: 'device' } })
+    await ways('s1', { Work: 'device' })
+    await since('s1', { Diary: 'password', Work: 'device' }, { Diary: 'password', Work: 'device' })
+    expect((await read()).json.spaces).toEqual({ s1: { Work: 'device' } })
+  })
+
+  test('keeps a path too long to hold as the folder above it that fits', async () => {
+    const deep = `${'a'.repeat(200)}/${'b'.repeat(150)}/Diary.md`
+    await ways('s1', { [deep]: 'password' })
+    expect((await read()).json.spaces).toEqual({ s1: { ['a'.repeat(200)]: 'password' } })
   })
 
   test('takes a password hash, and keeps the newer of two', async () => {
