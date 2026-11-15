@@ -217,7 +217,7 @@ mod tests {
 
     #[test]
     fn the_rungs_are_the_ones_settings_offers() {
-        let modes = include_str!("../../src/lib/modes.svelte.ts");
+        let modes = include_str!("../../src/lib/modes/src/modes.svelte.ts");
         let listed = RUNGS.map(|one| one.to_string()).join(", ");
         assert!(
             modes.contains(&format!("INTERFACE_ZOOMS = [{listed}]")),
