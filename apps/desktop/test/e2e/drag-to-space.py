@@ -68,6 +68,9 @@ def carry_to_switcher(page: Page, start: str) -> tuple[float, float]:
         page.wait_for_timeout(HOLD // 6)
     return bx, by
 
+def shut(page: Page, what: str) -> bool:
+    return DRIVE.waited(page, f"!{LIST}", what, 2)
+
 def lit(page: Page, space: str) -> bool:
     return bool(
         page.evaluate(
@@ -97,8 +100,7 @@ def moved(page: Page, label: str, ids: dict, name: str) -> None:
         wrong(f"[{label}] {name} is not in Work")
     else:
         say(f"ok   [{label}] {name} moved to Work, and is not in Home")
-    if page.evaluate(f"() => {LIST}"):
-        wrong(f"[{label}] the list of spaces stayed open after the drop")
+    shut(page, f"[{label}] the list of spaces to close after the drop")
 
 def desktop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
@@ -138,9 +140,7 @@ def desktop(browser: Browser) -> None:
     py = max(py, foot + 40)
     glide(page, px, py)
     glide(page, px + 2, py)
-    if page.evaluate(f"() => {LIST}"):
-        wrong("[leaving] the list stayed open once the drag left it")
-    else:
+    if shut(page, "[leaving] the list to close once the drag left it"):
         say("ok   [leaving] leaving the list closes it")
     glide(page, bx, by)
     page.wait_for_timeout(HOLD)
@@ -149,8 +149,7 @@ def desktop(browser: Browser) -> None:
     page.mouse.up()
     DRIVE.settled(page)
     page.wait_for_timeout(400)
-    if page.evaluate(f"() => {LIST}"):
-        wrong("[escape] the list stayed open after Escape")
+    shut(page, "[escape] the list to close after Escape")
     if not there(page, join(home, "Plan.md")) or there(page, join(ids["work"]["root"], "Plan.md")):
         wrong("[escape] Plan moved, with no space let go of on")
     else:
