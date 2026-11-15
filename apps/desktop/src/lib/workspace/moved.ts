@@ -1,6 +1,6 @@
 import { forget, isRecord, keep, stored, storedText, invoke, isMobile } from '../platform/src/api'
 import { noteRootsMoved, ROOTS_MOVED } from './roots-moved'
-import { readSession } from './session'
+import { readSession } from '../session/src/api'
 
 export const SPACES_ROOT = 'orden:spaces-root'
 

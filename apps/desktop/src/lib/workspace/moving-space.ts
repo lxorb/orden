@@ -4,7 +4,7 @@ import { moveHistory, readSpec } from '../terminal/src/api'
 import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
 import { mayCarry } from './chat-carry'
-import type { Draft } from './session'
+import type { Draft } from '../session/src/api'
 import { ownerOf } from './sets'
 import { carried, movingOf, spacesFor } from './space-move'
 

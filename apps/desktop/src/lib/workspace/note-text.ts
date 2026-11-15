@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import { oneEdit } from '@orden/markdown/edits'
 import { isTagName } from '@orden/markdown/tags'
 import { taskAt } from '@orden/markdown/tasks'
@@ -21,7 +22,7 @@ import {
   endingsLike,
   reverse,
 } from '@orden/scan/search/replace'
-import type { Entry, Space } from '../workspace.svelte'
+import type { Space } from '../workspace.svelte'
 import { type NoteDoc, writeEdited } from '../documents/src/api'
 import type { FileAction, FileActions } from '../file-undo/src/api'
 

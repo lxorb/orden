@@ -1,6 +1,6 @@
+import type { Entry } from '@orden/contracts'
 import { type MoveTarget, moveTargets, type Space } from '../../move-targets'
 import { nameFromTitle, samePath } from '../../platform/src/api'
-import type { Entry } from '../../workspace.svelte'
 import { type NoteDoc, fileNamed, offeredName } from '../../documents/src/api'
 
 export function fileFor(typed: string, note: NoteDoc, title?: string): string {

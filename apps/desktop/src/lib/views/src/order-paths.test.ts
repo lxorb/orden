@@ -1,6 +1,6 @@
+import type { Entry } from '@orden/contracts'
 import { readBase } from '@orden/bases'
 import { describe, expect, test, vi } from 'vitest'
-import type { Entry } from '../../workspace.svelte'
 import { movedWords, orderMoved } from './order-paths'
 
 const notes = new Map<string, string>()

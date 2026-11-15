@@ -25,7 +25,6 @@ vi.mock('./workspace.svelte', () => ({
 }))
 vi.mock('./views/src/api', () => ({
   baseOpening: () => Promise.resolve({ openTodos: (space?: string) => state.opened.push(space) }),
-  readSpec: (doc: string) => JSON.parse(doc) as unknown,
 }))
 
 const { showTodos } = await import('./todos-entry')

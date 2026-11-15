@@ -1,4 +1,4 @@
-import { shownNames } from '../../tree-order'
+import { shownNames } from '../../tree/src/api'
 import type { Entry, SyncPositioned } from '@orden/contracts'
 import { joinPath } from './ports'
 import type { Engine } from './engine'

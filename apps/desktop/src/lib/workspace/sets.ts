@@ -1,7 +1,6 @@
 import { isRecord, within } from '../platform/src/api'
-import type { Panel } from '../workspace.svelte'
 import { type Frame, paneIn, panesIn, withoutPane } from '../panes/src/api'
-import { isPanel, type Layout, readLayout } from './session'
+import { isPanel, type Layout, readLayout, type Panel } from '../session/src/api'
 
 export const GLOBAL = 'global'
 

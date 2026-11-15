@@ -5,7 +5,7 @@
   import { UnreadDot, viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace.svelte'
   import { writeNew } from '../../write-new'
-  import { PHONE_TABS, type PhoneTab } from '../../workspace/panels'
+  import { panels, type PhoneTab } from '../../session/src/api'
 
   const { unread = false }: { unread?: boolean } = $props()
 
@@ -22,7 +22,7 @@
   }
 
   const tabs = $derived(
-    PHONE_TABS.filter(
+    panels.PHONE_TABS.filter(
       (one) =>
         workspace.offers(one) &&
         workspace.fills(one) &&

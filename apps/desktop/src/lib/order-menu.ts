@@ -1,5 +1,5 @@
 import { DIVIDER, type MenuEntry } from './menu.svelte'
-import { SORT_MODES, type SortMode } from './tree-order'
+import { SORT_MODES, type SortMode } from './tree/src/api'
 import { workspace } from './workspace.svelte'
 
 const WORDS: Record<SortMode, () => string> = {

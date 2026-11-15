@@ -8,7 +8,8 @@
     "tab-strip",
     "ui-kit",
     "tab-kinds",
-    "documents"
+    "documents",
+    "session"
   ],
   "pending": [
     "apps/desktop/src/lib/account-menu.ts",
@@ -19,7 +20,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/panels.ts",
     "apps/desktop/src/lib/write-new.ts"
   ]
 }

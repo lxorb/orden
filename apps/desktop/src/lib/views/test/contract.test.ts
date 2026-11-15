@@ -4,15 +4,12 @@ import { describe, expect, test } from 'vitest'
 import {
   baseMounting,
   baseOpening,
-  builtinName,
   createDatabase,
   loadViewTab,
   orderMoved,
   pickTemplate,
-  readSpec,
   rowsCopied,
   startRunner,
-  writeSpec,
 } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
@@ -51,10 +48,10 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('loads only the spec a view tab holds with it, and the rest through doors', () => {
+  test('loads nothing with it, and the rest through doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
     const loaded = [...api.matchAll(/^export \{[^}]*\} from '([^']+)'/gm)].map((one) => one[1])
-    expect(loaded).toEqual(['./spec'])
+    expect(loaded).toEqual([])
     const doors = [
       loadViewTab,
       startRunner,
@@ -66,24 +63,5 @@ describe('the module stands on its own', () => {
       orderMoved,
     ]
     for (const one of doors) expect(typeof one).toBe('function')
-  })
-})
-
-describe('the spec a view tab holds', () => {
-  test('is read back as it was written, in a fixed order and with nothing unknown', () => {
-    const spec = { yaml: 'views: []', path: '/s/Tasks.base', space: 's', view: 'Board' }
-    const words = writeSpec(spec)
-    expect(words).toBe('{"space":"s","path":"/s/Tasks.base","view":"Board","yaml":"views: []"}')
-    expect(readSpec(words)).toEqual(spec)
-    expect(readSpec('{"builtin":"todos","odd":1,"tag":3}')).toEqual({ builtin: 'todos' })
-  })
-
-  test('is nothing when the words are not a record', () => {
-    expect(readSpec('not json')).toBeNull()
-    expect(readSpec('[1]')).toBeNull()
-  })
-
-  test('names the built-in views', () => {
-    expect(builtinName('todos')).toBe('Todos')
   })
 })

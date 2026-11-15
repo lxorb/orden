@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import { links } from '../../link-index/src/api'
 import {
   onDisk,
@@ -11,7 +12,7 @@ import {
 } from '../../platform/src/api'
 import { type NoteDoc } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
-import type { Entry, Space } from '../../workspace.svelte'
+import type { Space } from '../../workspace.svelte'
 import { keptBody, webTitleOf, webUrlOf } from './note'
 import { sameSite } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'

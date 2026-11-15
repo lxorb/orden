@@ -1,7 +1,8 @@
+import type { Entry } from '@orden/contracts'
 import { type Base, readBase, writeBase } from '@orden/bases'
-import { folderNotePath } from '../../folder-notes'
+import { folderNotePath } from '../../tree/src/api'
 import { folderOf, relativeTo } from '../../platform/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace.svelte'
 import { noteText, writeNoteText } from '../../workspace/note-text'
 
 function movedId(id: string, from: string, to: string): string {

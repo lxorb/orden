@@ -1,13 +1,12 @@
 {
   "name": "archive",
   "layer": "features",
-  "dependsOn": ["contracts", "platform", "file-undo"],
+  "dependsOn": ["contracts", "platform", "file-undo", "tree"],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/Twist.svelte",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/folder-notes.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",

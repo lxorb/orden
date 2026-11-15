@@ -1,6 +1,6 @@
-import { push } from '../space-kept/src/api'
+import { push } from '../../space-kept/src/api'
 import { arrangedMap, type Arranged } from './arranged.svelte'
-import { type Folding, meet } from '../platform/src/api'
+import { type Folding, meet } from '../../platform/src/api'
 
 function same(one: Record<string, string[]>, other: Record<string, string[]>): boolean {
   const keys = Object.keys(one)

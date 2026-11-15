@@ -1,7 +1,7 @@
 import { isChatTarget, isPagesTarget, isTermTarget } from '@orden/markdown/links'
 import type { ItemMeta } from '@orden/sync-core'
 import type { FileMark } from './file-mark'
-import { folderNote, isFolderNote } from './folder-notes'
+import { folderNote, isFolderNote } from './tree/src/api'
 import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from './ui-kit/src/api'
 import { links } from './link-index/src/api'
 import { elsewhere } from './link-index/src/api'

@@ -1,6 +1,6 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { anyOpen, flatRows, heldRows, rowIndex, standsOpen } from './tree-flat'
-import type { Entry } from './workspace.svelte'
 
 const file = (path: string): Entry => ({
   name: path.slice(path.lastIndexOf('/') + 1),

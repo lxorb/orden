@@ -1,0 +1,17 @@
+{
+  "name": "session",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "collab",
+    "documents",
+    "editor",
+    "file-ops",
+    "markdown",
+    "panes",
+    "platform",
+    "rooms",
+    "sync-core",
+    "tab-kinds"
+  ]
+}

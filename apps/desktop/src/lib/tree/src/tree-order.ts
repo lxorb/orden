@@ -1,4 +1,4 @@
-import type { Entry } from './workspace.svelte'
+import type { Entry } from '@orden/contracts'
 
 type Shown = Pick<Entry, 'name' | 'is_dir' | 'modified' | 'created'>
 

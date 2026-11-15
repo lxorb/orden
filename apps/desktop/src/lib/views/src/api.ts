@@ -1,5 +1,3 @@
-export { builtinName, readSpec, writeSpec } from './spec'
-
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
 
 export const loadViewTab = () =>

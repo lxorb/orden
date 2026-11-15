@@ -1,9 +1,10 @@
+import type { Entry } from '@orden/contracts'
 import { isChatTarget } from '@orden/markdown/links'
 import { account } from '../accounts/src/api'
 import { roleOf } from '../sharing/src/api'
 import { samePath, within, invoke } from '../platform/src/api'
 import { sync } from '../sync.svelte'
-import { type Entry, workspace } from '../workspace.svelte'
+import { workspace } from '../workspace.svelte'
 
 function pointersUnder(entry: Entry, found: string[] = []): string[] {
   if (!entry.is_dir) {

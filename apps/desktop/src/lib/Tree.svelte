@@ -1,6 +1,6 @@
 <script lang="ts">
   import { protection } from './protect/src/api'
-  import { webPages } from '@orden/contracts'
+  import { webPages, type Entry } from '@orden/contracts'
   import { keyElsewhere } from './layer-keys'
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -15,7 +15,7 @@
     isFolderNote,
     nestedIn,
     renameSteps,
-  } from './folder-notes'
+  } from './tree/src/api'
   import { staysOn } from './caret'
   import { focusList } from './focus'
   import { menu } from './menu.svelte'
@@ -53,17 +53,16 @@
   } from './windows/src/api'
   import { ListView, tokenFloor, tokenRow } from './windows/src/api'
   import { folderOf, samePath } from './platform/src/api'
-  import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree-flat'
+  import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree/src/api'
   import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './ui-kit/src/api'
-  import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { spaceDropping } from './tab-strip/src/api'
   import { inside } from './panes/src/api'
   import Twist from './Twist.svelte'
   import { dur } from './platform/src/api'
   import { keptAway } from './away/src/api'
-  import { rowIds } from './row-ids'
+  import { rowIds } from './tree/src/api'
   import { indexed, settle } from './tree-settle'
 
   const { tree }: { tree: Entry } = $props()

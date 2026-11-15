@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Entry } from '@orden/contracts'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { standing } from './archive-plan'
@@ -7,7 +8,7 @@
   import { carriedRows, dropOver, isTreeDrag } from '../../drag-paths'
   import { fileMark, type FileMark as Mark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
-  import { folderNote, nestedIn } from '../../folder-notes'
+  import { folderNote, nestedIn } from '../../tree/src/api'
   import { longPress } from '../../longpress'
   import { DIVIDER, type MenuEntry, menu } from '../../menu.svelte'
   import { dur, slide } from '../../platform/src/api'
@@ -17,7 +18,6 @@
   import { roving } from '../../roving'
   import { folderOf, insideSpace } from '../../platform/src/api'
   import Twist from '../../Twist.svelte'
-  import type { Entry } from '../../workspace.svelte'
   import { workspace } from '../../workspace.svelte'
 
   interface Row {

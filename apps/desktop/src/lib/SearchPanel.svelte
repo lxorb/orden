@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Entry } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { shownName } from './platform/src/api'
   import { ARCHIVE_MARK } from './archive/src/api'
@@ -17,7 +18,7 @@
   import TagTree from './TagTree.svelte'
   import { isScratchpad, pad } from './scratchpad/src/api'
   import { canWriteAt } from './sharing/src/api'
-  import { type Entry, workspace } from './workspace.svelte'
+  import { workspace } from './workspace.svelte'
   import { dur, fly } from './platform/src/api'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()

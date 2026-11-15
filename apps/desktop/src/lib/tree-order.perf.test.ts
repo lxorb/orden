@@ -1,10 +1,14 @@
+import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import type { Entry } from './workspace.svelte'
-import { orderedTree, shownNames, type SortMode } from './tree-order'
+import { orderedTree, shownNames, type SortMode } from './tree/src/api'
 import { placedBeside } from './tree-arranging'
 
+interface Built extends Entry {
+  readonly children: Entry[]
+}
+
 function space(many: number): Entry {
-  const root: Entry = {
+  const root: Built = {
     name: 'N',
     path: '/N',
     is_dir: true,
@@ -13,7 +17,7 @@ function space(many: number): Entry {
     children: [],
   }
 
-  let folder: Entry = root
+  let folder: Built = root
   for (let index = 0; index < many; index++) {
     if (index % 40 === 0) {
       folder = {

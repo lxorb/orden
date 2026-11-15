@@ -8,7 +8,7 @@ import { addNote } from './add'
 import { dropInto } from './drop'
 import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
-import type { ViewSpec } from './spec'
+import type { ViewSpec } from '../../tab-kinds/src/api'
 import { layoutOf } from './words'
 
 export interface Kit {

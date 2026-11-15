@@ -1,5 +1,6 @@
+import type { Entry } from '@orden/contracts'
 import { sameSpelling, isRecord, isString, internal, invoke, isDesktop } from '../platform/src/api'
-import type { Entry, TreeOptions } from '../workspace.svelte'
+import type { TreeOptions } from '../workspace.svelte'
 
 export interface Plan {
   root: string | null

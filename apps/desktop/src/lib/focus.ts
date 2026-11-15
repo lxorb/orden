@@ -1,6 +1,6 @@
+import type { Panel } from './session/src/api'
 import { agentMarks } from './agent-marks.svelte'
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
-import type { Panel } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
 const FOCUSABLE =

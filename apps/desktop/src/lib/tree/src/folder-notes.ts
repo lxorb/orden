@@ -1,3 +1,4 @@
+import type { Entry } from '@orden/contracts'
 import {
   folderOf,
   isMarkdownPath,
@@ -5,9 +6,8 @@ import {
   withinSpace,
   withoutExtension,
   joinPath,
-} from './platform/src/api'
+} from '../../platform/src/api'
 import { entryAt } from './tree-edits'
-import type { Entry } from './workspace.svelte'
 
 const INDEX = /^_?index$/i
 
@@ -35,7 +35,7 @@ export function folderNote(entry: Entry): Entry | null {
   )
 }
 
-export function nestedIn(entry: Entry): Entry[] {
+export function nestedIn(entry: Entry): readonly Entry[] {
   const own = folderNote(entry)
   return own ? entry.children.filter((child) => child.path !== own.path) : entry.children
 }

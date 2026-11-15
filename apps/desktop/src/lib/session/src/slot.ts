@@ -1,4 +1,4 @@
-import { ifFree, locksHere, locksWork, forget, keep } from '../platform/src/api'
+import { ifFree, locksHere, locksWork, forget, keep } from '../../platform/src/api'
 import { readSession, type Session } from './session'
 
 export const FIRST_SESSION = 'orden:workspace'

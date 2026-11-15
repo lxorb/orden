@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Entry } from '@orden/contracts'
   import Facts from '../../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
   import { region, dur, fly, samePath, withinSpace } from '../../platform/src/api'
@@ -10,7 +11,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { views } from '../../views.svelte'
-  import { workspace, type Entry } from '../../workspace.svelte'
+  import { workspace } from '../../workspace.svelte'
   import { estimateText } from './chat-parts'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'

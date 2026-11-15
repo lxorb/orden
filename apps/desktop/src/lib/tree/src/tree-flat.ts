@@ -1,5 +1,5 @@
+import type { Entry } from '@orden/contracts'
 import { folderNote, nestedIn } from './folder-notes'
-import type { Entry } from './workspace.svelte'
 
 export interface FlatRow {
   entry: Entry

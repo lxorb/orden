@@ -1,7 +1,7 @@
+import type { Entry } from '@orden/contracts'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { carriedNothing, carriedRows, carry } from './drag-paths'
-import { linkedFiles } from './folder-notes'
-import type { Entry } from './workspace.svelte'
+import { linkedFiles } from './tree/src/api'
 
 function note(path: string): Entry {
   return {

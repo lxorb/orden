@@ -1,7 +1,8 @@
+import type { Entry } from '@orden/contracts'
 import { webDataSheet } from './web-tab/src/api'
 import { foreignCopy } from '@orden/sync-core'
 import { isChatTarget } from '@orden/markdown/links'
-import { folderNote, nestedIn } from './folder-notes'
+import { folderNote, nestedIn } from './tree/src/api'
 import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
 import {
@@ -27,9 +28,8 @@ import {
 import { canWriteAt, protectEntries } from './sharing/src/api'
 import { shortcuts } from './shortcuts/src/api'
 import { showLabel } from './reveal'
-import { entryAt } from './tree-edits'
+import { entryAt } from './tree/src/api'
 import { viewport } from './ui-kit/src/api'
-import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 import { archive, showArchive } from './archive/src/api'
 
