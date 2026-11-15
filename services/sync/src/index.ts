@@ -175,14 +175,14 @@ const guard: MiddlewareHandler<{ Bindings: Env; Variables: Variables }> = async 
   context.set('who', who)
 
   if (who.kind === 'guest') {
-    const path = new URL(context.req.url).pathname
+    const path = context.req.path
     if (!guestMayReach(context.req.method, path)) {
       return context.json({ error: SIGN_IN_TO_DO_THAT }, 403)
     }
     context.set('guest', who.guest)
   } else {
     if (who.program) {
-      const path = new URL(context.req.url).pathname
+      const path = context.req.path
       if (!programMayReach(context.req.method, path, who.readOnly === true)) {
         return context.json({ error: 'that is not something a token can do' }, 403)
       }

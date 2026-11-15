@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { tryDecodeURIComponent } from 'hono/utils/url'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
@@ -106,6 +107,9 @@ const SPACE_ROUTE = /^\/v[12]\/spaces\/([^/]+)\/(?:changes|notes|rollback|feed)$
 
 const NOTE_ROUTE = /^\/v1\/notes\/([^/]+)(?:\/|$)/
 
+const routed = (segment: string | undefined) =>
+  segment === undefined ? undefined : tryDecodeURIComponent(segment)
+
 const KEPT_FROM_TOKENS = 'This space keeps notes from agents, so a token cannot reach it.'
 
 export async function keptFromProgram(
@@ -118,10 +122,10 @@ export async function keptFromProgram(
   if (!Object.keys(spaces).length) return null
   if (path === '/v2/docs/pull') return KEPT_FROM_TOKENS
 
-  const space = SPACE_ROUTE.exec(path)?.[1]
+  const space = routed(SPACE_ROUTE.exec(path)?.[1])
   if (space !== undefined) return spaces[space] ? KEPT_FROM_TOKENS : null
 
-  const id = NOTE_ROUTE.exec(path)?.[1]
+  const id = routed(NOTE_ROUTE.exec(path)?.[1])
   if (id === undefined) return null
   const note = await env.DB.prepare('select space_id, path from notes where id = ?')
     .bind(id)

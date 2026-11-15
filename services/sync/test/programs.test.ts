@@ -326,4 +326,27 @@ describe('a token, in an account that keeps notes from agents', () => {
     expect((await call(env, `/v1/notes/${plan}`, { token: key })).status).toBe(200)
     expect((await call(env, `/v1/spaces/${work}/changes?since=0`, { token: key })).status).toBe(200)
   })
+
+  test('is not let through by an id written with escapes', async () => {
+    const escaped = (id: string) =>
+      id.replace(/./g, (one) => `%${one.charCodeAt(0).toString(16).padStart(2, '0')}`)
+
+    expect((await call(env, `/v1/notes/${escaped(diary)}`, { token: key })).status).toBe(403)
+    expect(
+      (
+        await call(env, `/v1/notes/${escaped(diary)}`, {
+          method: 'PUT',
+          token: key,
+          body: { content: 'overwritten', baseVersion: 1 },
+        })
+      ).status,
+    ).toBe(403)
+    expect(
+      (await call(env, `/v1/spaces/${escaped(home)}/changes?since=0`, { token: key })).status,
+    ).toBe(403)
+    expect((await call(env, `/v2/spaces/${escaped(home)}/feed`, { token: key })).status).toBe(403)
+    expect((await call(env, `/v1/notes/${diary}`, { token })).json).toMatchObject({
+      content: 'the secret words',
+    })
+  })
 })
