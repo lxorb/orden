@@ -45,9 +45,19 @@ if (typeof window !== 'undefined') {
   })
 }
 
+const SAID_AGAIN = 60_000
+
+function saidAgain(from: string, to: string, at: number): boolean {
+  const last = [...kept()]
+    .reverse()
+    .find((one) => [one.from, one.to].some((id) => id === from || id === to))
+  return !!last && last.from === from && last.to === to && Math.abs(at - last.at) < SAID_AGAIN
+}
+
 export function keepMoves(moved: Record<string, string>, at = Date.now()): void {
+  ledger = null
   const added = Object.entries(moved)
-    .filter(([from, to]) => !kept().some((one) => one.from === from && one.to === to))
+    .filter(([from, to]) => !saidAgain(from, to, at))
     .map(([from, to]) => ({ from, to, at }))
   if (!added.length) return
   ledger = [...kept(), ...added]

@@ -45,3 +45,30 @@ test('the rights an account goes by stay the same after a launch', async () => {
   expect(after.rightsKey('anthropic-2')).toBe('anthropic')
   expect(after.rightsKey('anthropic')).toBe(fresh)
 })
+
+test('the same move said again much later is a move of its own, so the rights of each account stay apart', async () => {
+  const { keepMoves, movedSince, rightsKey } = await moves()
+  keepMoves({ openai: 'openai-2' }, 5)
+  const first = rightsKey('openai')
+
+  keepMoves({ openai: 'openai-2' }, 5 + 3_600_000)
+
+  expect(rightsKey('openai-2')).toBe(first)
+  expect(rightsKey('openai')).not.toBe(first)
+  expect(rightsKey('openai')).not.toBe('openai')
+  expect(movedSince('openai', 5 + 1)).toBe('openai-2')
+})
+
+test('a move another window already kept is not kept again from a copy read before it', async () => {
+  const { keepMoves, rightsKey, movesAfter } = await moves()
+  movesAfter(0)
+  localStorage.setItem(
+    'orden:ai-moves',
+    JSON.stringify([{ from: 'openai', to: 'openai-2', at: 5 }]),
+  )
+
+  keepMoves({ openai: 'openai-2' }, 7)
+
+  expect(movesAfter(0)).toEqual([{ from: 'openai', to: 'openai-2', at: 5 }])
+  expect(rightsKey('openai')).toBe('openai_5')
+})
