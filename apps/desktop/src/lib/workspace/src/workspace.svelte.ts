@@ -3708,6 +3708,11 @@ class Workspace {
       return
     }
 
+    if (jump.path && this.opensOwnKind(jump.path)) {
+      await this.openEntry(insideSpace(root, jump.path), how)
+      return
+    }
+
     const path = jump.path
       ? insideSpace(root, jump.path)
       : await this.linkedOrMade(jump, root, source)
@@ -3720,6 +3725,12 @@ class Workspace {
 
     await this.open(path, how)
     this.landOn(path, jump)
+  }
+
+  private opensOwnKind(path: string): boolean {
+    const isUrlNote = (one: string) => links.urlOf(one) !== null
+    const opener = openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() })
+    return opener === 'view' || opener === 'chat' || opener === 'term' || opener === 'application'
   }
 
   private opensInNoTab(path: string): boolean {
@@ -3737,6 +3748,10 @@ class Workspace {
   private async followAside(jump: NoteJump, root: string, source: string | null) {
     if (jump.path && this.opensInNoTab(jump.path)) {
       await this.revealLinked(insideSpace(root, jump.path))
+      return
+    }
+    if (jump.path && this.opensOwnKind(jump.path)) {
+      await this.openEntry(insideSpace(root, jump.path), { beside: true })
       return
     }
     const path = jump.path

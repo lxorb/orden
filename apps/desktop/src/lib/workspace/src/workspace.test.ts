@@ -3958,6 +3958,14 @@ describe('following a link to a note the space has not got', () => {
     expect(shown).toEqual(['/space/files/spec.docx', '/space/files/spec.docx'])
   })
 
+  test('opens a linked database as a database, never as its text', async () => {
+    notes['/space/Tasks.base'] = 'views:\n  - type: table\n'
+    await workspace.followLink({ ...asked('Tasks.base'), path: 'Tasks.base' })
+    await workspace.followLink({ ...asked('Tasks.base'), path: 'Tasks.base' }, 'aside')
+
+    expect(workspace.tabs.filter((tab) => tab.kind === 'note').map((tab) => tab.path)).toEqual([])
+  })
+
   test('opens a linked plain text file in a tab rather than showing it where it lies', async () => {
     const shown: string[] = []
     const stop = providePort('explorer.show', {
