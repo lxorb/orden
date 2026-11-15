@@ -24,6 +24,7 @@ import {
   isWebTarget,
   type LinkKind,
   withoutBlockIds,
+  withoutCode,
 } from '@orden/markdown/links'
 import { buildGraph, type NoteGraph } from '../../graph/src/api'
 import { type Placed, retargetLinks } from './link-rewrite'
@@ -1092,7 +1093,7 @@ class Links {
       }))
       .filter((hit) => hit.path !== relative)
       .filter((hit) => !linked.has(`${hit.path}\0${hit.line}`))
-      .filter((hit) => needles.some((needle) => standsAlone(foldName(hit.text), needle)))
+      .filter((hit) => needles.some((needle) => standsAlone(foldName(prose(hit.text)), needle)))
       .filter((hit) => {
         const key = `${hit.path}\0${hit.line}`
         if (seen.includes(key)) return false
@@ -1521,6 +1522,12 @@ function heldAs(path: string): 'note' | 'plane' | 'web' | 'elsewhere' | 'file' {
   if (isWebTarget(path)) return 'web'
   if (isChatTarget(path) || isTermTarget(path)) return 'elsewhere'
   return 'file'
+}
+
+const LINKED_TEXT = /!?\[\[[^\]\n]*\]\]|!?\[[^\]\n]*\]\([^)\n]*\)/g
+
+function prose(line: string): string {
+  return withoutCode(line).replace(LINKED_TEXT, ' ')
 }
 
 function standsAlone(line: string, name: string): boolean {

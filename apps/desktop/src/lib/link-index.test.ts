@@ -332,6 +332,19 @@ describe('mentions', () => {
     expect(found).toHaveLength(1)
   })
 
+  test('a name only inside a link to another note or inside code is no mention', async () => {
+    await space({
+      'Plan.md': '# Plan',
+      'One.md': 'see [[Plan B]] here',
+      'Two.md': 'the `Plan` key',
+      'Three.md': 'a [Plan](Other.md) too',
+      'Four.md': 'the Plan and [[Plan B]]',
+    })
+
+    const found = await links.unlinked(at('Plan.md'), ROOT)
+    expect(found.map((one) => one.path)).toEqual(['Four.md'])
+  })
+
   test('a name too short to search for finds nothing', async () => {
     await space({ 'A.md': '# A', 'One.md': 'A is a letter' })
     expect(await links.unlinked(at('A.md'), ROOT)).toEqual([])
