@@ -56,3 +56,48 @@ describe('a screen on its way out', () => {
     expect(setup.step).toBe('heard')
   })
 })
+
+describe('skipping the appearance question', () => {
+  test('keeps a look the account brought while the question was shown', async () => {
+    const { theme } = await import('../../theme/src/api')
+    theme.setScheme('system')
+    setup.begin(true)
+    const target = document.createElement('div')
+    document.body.append(target)
+    const made = mount(AppearanceStep, { target })
+    close = () => void unmount(made)
+    flushSync()
+
+    theme.setScheme('dark')
+    const skip = [...target.querySelectorAll('button')].find(
+      (one) => one.textContent.trim() === 'Skip',
+    )
+    skip?.click()
+    flushSync()
+
+    expect(theme.scheme).toBe('dark')
+    expect(setup.step).toBe('heard')
+  })
+})
+
+describe('skipping after picking a look', () => {
+  test('puts back the look from before the question', async () => {
+    const { theme } = await import('../../theme/src/api')
+    theme.setScheme('system')
+    setup.begin(true)
+    const target = document.createElement('div')
+    document.body.append(target)
+    const made = mount(AppearanceStep, { target })
+    close = () => void unmount(made)
+    flushSync()
+
+    const buttons = [...target.querySelectorAll('button')]
+    buttons.find((one) => one.textContent.trim() === 'Dark')?.click()
+    flushSync()
+    expect(theme.scheme).toBe('dark')
+    buttons.find((one) => one.textContent.trim() === 'Skip')?.click()
+    flushSync()
+
+    expect(theme.scheme).toBe('system')
+  })
+})

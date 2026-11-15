@@ -12,8 +12,15 @@
     { id: 'system', name: 'Auto' },
   ]
 
+  let picked: SchemeChoice | null = null
+
+  function pick(id: SchemeChoice) {
+    picked = id
+    theme.setScheme(id)
+  }
+
   function skip() {
-    if (theme.scheme !== was) theme.setScheme(was)
+    if (picked !== null && theme.scheme === picked && picked !== was) theme.setScheme(was)
     setup.next('appearance')
   }
 </script>
@@ -37,7 +44,7 @@
         type="button"
         role="radio"
         aria-checked={theme.scheme === look.id}
-        onclick={() => theme.setScheme(look.id)}
+        onclick={() => pick(look.id)}
       >
         {#if look.id === 'system'}
           <span class="mini auto">
