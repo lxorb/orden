@@ -3,10 +3,11 @@ import type { IconNode } from 'lucide'
 import { account, api, type AccountSettings } from '../../accounts/src/api'
 import { BY_ID, runnable } from './registry'
 import { forget, isString, keepJson, stored } from '../../platform/src/api'
-import { owes, saveOwing } from './owed'
+import { owedUntilSignOut, owes, saveOwing } from './owed'
 
 const STORAGE_KEY = 'orden:toolbar'
 const OWED_KEY = 'orden:toolbar-owed'
+owedUntilSignOut(OWED_KEY)
 
 const MOST_BUTTONS = 24
 
