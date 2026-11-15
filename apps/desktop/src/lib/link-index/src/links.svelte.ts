@@ -166,7 +166,11 @@ interface FilesNamed {
   last: ReadonlyMap<string, readonly string[]>
 }
 
+const byFiles = new WeakMap<readonly string[], FilesNamed>()
+
 function filesByName(files: readonly string[]): FilesNamed {
+  const known = byFiles.get(files)
+  if (known) return known
   const whole = new Map<string, string[]>()
   const last = new Map<string, string[]>()
   const add = (map: Map<string, string[]>, key: string, path: string) => {
@@ -178,14 +182,16 @@ function filesByName(files: readonly string[]): FilesNamed {
     add(whole, foldName(path), path)
     add(last, foldName(nameOf(path)), path)
   }
+  byFiles.set(files, { whole, last })
   return { whole, last }
 }
 
 function fileNamed(
-  named: FilesNamed,
-  source: string,
+  all: readonly string[],
+  source: string | null,
   link: { kind: LinkKind; target: string },
 ): string | null {
+  const named = filesByName(all)
   const slashed = link.target.replace(/\\/g, '/')
   const written = slashed.trim()
   const whole = (from: string) => {
@@ -200,7 +206,7 @@ function fileNamed(
   const files =
     link.kind !== 'markdown'
       ? last
-      : (whole(slashed.startsWith('/') ? '' : folderOf(source)) ??
+      : (whole(slashed.startsWith('/') ? '' : folderOf(source ?? '')) ??
         (/^\.{0,2}\//.test(written) ? undefined : (whole('') ?? last)))
   if (!files) return null
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
@@ -913,8 +919,6 @@ class Links {
     () => new Map(this.notes.map((one) => [one.path, one])),
   )
 
-  private readonly filesNamed = $derived.by(() => filesByName(this.files))
-
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
     const other = from === null ? null : this.otherHolding(from)
     if (from !== null && other !== null) return this.otherTarget(other, from, link)
@@ -1116,8 +1120,7 @@ class Links {
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(
         this.notes,
-        (source, link) =>
-          this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
+        (source, link) => this.resolveFrom(source, link) ?? fileNamed(this.files, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
         {
           was,
@@ -1153,11 +1156,10 @@ class Links {
       path: null,
       read: nothing,
     }
-    const named = filesByName(index.files)
     const touched = await this.retargetIn(
       notes,
       (source, link) =>
-        resolvedIn({ ...index, path: source }, link) ?? fileNamed(named, source, link),
+        resolvedIn({ ...index, path: source }, link) ?? fileNamed(index.files, source, link),
       () => undefined,
       { was, now, root, open, how, files: index.files },
     )
@@ -1473,7 +1475,11 @@ class Links {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null
-    const found = resolveFile(this.index(notePath), decodeTarget(name), 'markdown')
+    const { files, path } = this.index(notePath)
+    const found = fileNamed(files, path, {
+      kind: 'markdown',
+      target: decodeTarget(name),
+    })
     return found === null ? null : insideSpace(root, found)
   }
 
