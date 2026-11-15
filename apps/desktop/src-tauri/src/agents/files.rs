@@ -287,10 +287,10 @@ fn question(
     if !grant.asks(category) {
         return None;
     }
-    let folder = folder_of(path, asked.op);
     if category == Category::Files && always_allowed(grant, asked.op, path, to) {
         return None;
     }
+    let folder = asked_about(grant, asked.op, path, to);
     let key = approvals::key(
         "files",
         None,
@@ -318,11 +318,20 @@ fn question(
     ))
 }
 
+fn covered(grant: &Grant, folder: &Path) -> bool {
+    ancestors(folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
+}
+
 fn always_allowed(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> bool {
-    let covered = |folder: PathBuf| {
-        ancestors(&folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
-    };
-    covered(folder_of(path, op)) && to.is_none_or(|to| covered(folder_of(to, op)))
+    covered(grant, &folder_of(path, op)) && to.is_none_or(|to| covered(grant, &folder_of(to, op)))
+}
+
+fn asked_about(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> PathBuf {
+    let from = folder_of(path, op);
+    match to.map(|to| folder_of(to, op)) {
+        Some(into) if covered(grant, &from) && !covered(grant, &into) => into,
+        _ => from,
+    }
 }
 
 fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
@@ -749,6 +758,19 @@ mod tests {
             Path::new("/b/x.txt"),
             Some(Path::new("/a/x.txt"))
         ));
+        assert_eq!(
+            asked_about(&grant, FilesOp::Copy, from, Some(Path::new("/b/x.txt"))),
+            Path::new("/b")
+        );
+        assert_eq!(
+            asked_about(
+                &grant,
+                FilesOp::Copy,
+                Path::new("/c/x.txt"),
+                Some(Path::new("/b/x.txt"))
+            ),
+            Path::new("/c")
+        );
     }
 
     fn temp() -> PathBuf {
