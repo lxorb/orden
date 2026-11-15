@@ -27,7 +27,7 @@ vi.mock('../../sync.svelte', () => ({
   },
 }))
 
-const { BOOKMARK_KINDS } = await import('@orden/contracts')
+const { BOOKMARK_KINDS, providePort } = await import('@orden/contracts')
 const {
   Bookmarks,
   bookmarkList,
@@ -37,7 +37,6 @@ const {
   MOST_BOOKMARKS,
   sameBookmark,
 } = await import('./bookmarks.svelte')
-const { sayEntryIds } = await import('./entry-ids')
 
 type Bookmark = import('@orden/contracts').Bookmark
 
@@ -333,12 +332,18 @@ describe('changing the list around a graph view', () => {
 
 describe('a bookmark found by the id of what it points at (#1068)', () => {
   const ROOT = '/spaces/Work'
-  beforeEach(() => sayEntryIds(ids))
-  afterEach(() => sayEntryIds(null))
+  let stop: () => void = () => undefined
+  beforeEach(() => {
+    stop = providePort('sync.notes', ids)
+  })
+  afterEach(() => stop())
   const ids = {
-    idOf: (_root: string, path: string) =>
+    pathOf: () => null,
+    idOf: () => null,
+    moved: () => undefined,
+    entryIdAt: (_root: string, path: string) =>
       (({ 'Notes/Plan.md': 'p', Notes: 'n' }) as Record<string, string>)[path] ?? null,
-    pathOf: (_root: string, id: string) =>
+    entryPathOf: (_root: string, id: string) =>
       (({ p: 'Notes/Plan.md', n: 'Notes' }) as Record<string, string>)[id] ?? null,
   }
 

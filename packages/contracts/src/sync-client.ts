@@ -195,6 +195,14 @@ export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   forgetRootMoves(): void
 }
 
+export interface SyncNotesPort {
+  pathOf(id: string): string | null
+  idOf(path: string): string | null
+  moved(from: string, to: string): unknown
+  entryIdAt(root: string, path: string): string | null
+  entryPathOf(root: string, id: string): string | null
+}
+
 export interface SyncPorts {
   readonly 'sync.host': SyncHostPort
   readonly 'sync.storage': SyncStoragePort
@@ -202,4 +210,5 @@ export interface SyncPorts {
   readonly 'sync.account': SyncAccountPort
   readonly 'sync.api': SyncApiPort
   readonly 'sync.workspace': SyncWorkspacePort
+  readonly 'sync.notes': SyncNotesPort
 }

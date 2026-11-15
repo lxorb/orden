@@ -1,4 +1,4 @@
-import { workspaceView } from '@orden/contracts'
+import { syncNotes, workspaceView } from '@orden/contracts'
 import { isWebTarget } from '@orden/markdown/links'
 import {
   log,
@@ -75,12 +75,6 @@ class Record {
     this.persist()
   }
 
-  notes: {
-    at(id: string): string | null
-    of(path: string): string | null
-    moved?(from: string, to: string): unknown
-  } | null = null
-
   follow(op: FileOp) {
     if (op.op === 'created') return
     const from = op.op === 'moved' ? op.from : op.path
@@ -104,19 +98,20 @@ class Record {
   readonly held = $derived(new Set(this.clashes.map((one) => one.path)))
 
   async settle(clash: Clash, answer: Answer): Promise<void> {
-    const recorded = this.notes?.at(clash.id) ?? null
+    const notes = syncNotes()
+    const recorded = notes?.pathOf(clash.id) ?? null
     const judged = placed(clash.path)
     const followed =
       recorded !== null &&
       judged !== null &&
       recorded !== judged &&
-      this.notes?.of(judged) === null &&
+      notes?.idOf(judged) === null &&
       (await invoke<string>('read_note', { path: judged }).then(
         () => true,
         () => false,
       ))
     const now = followed ? null : recorded
-    const there = now === null && !followed ? (this.notes?.of(clash.path) ?? null) : null
+    const there = now === null && !followed ? (notes?.idOf(clash.path) ?? null) : null
     const elsewhere = there !== null && there !== clash.id
     const path = placed(now ?? clash.path)
     if (path === null) {
@@ -164,7 +159,7 @@ class Record {
     }
 
     this.forget(clash.path)
-    if (followed) void this.notes?.moved?.(recorded, path)
+    if (followed) void notes.moved(recorded, path)
   }
 
   forget(path: string) {

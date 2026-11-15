@@ -1,5 +1,5 @@
 import { conflictPath } from '@orden/markdown/paths'
-import { providePort, workspaceView } from '@orden/contracts'
+import { providePort, type SyncNotesPort, workspaceView } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { Clash } from './conflicts'
@@ -33,6 +33,15 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
 }))
 
 const { record } = await import('./record.svelte')
+
+function said(notes: Pick<SyncNotesPort, 'pathOf' | 'idOf'> & Partial<SyncNotesPort>) {
+  return providePort('sync.notes', {
+    moved: () => undefined,
+    entryIdAt: () => null,
+    entryPathOf: () => null,
+    ...notes,
+  })
+}
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -163,10 +172,10 @@ describe('a note waiting to be settled', () => {
 
   test('is settled where its note is now, found by its id', async () => {
     held([aClash('/Work/Plan.md')])
-    record.notes = { at: () => '/Work/Goals.md', of: () => 'another-id' }
+    const stop = said({ pathOf: () => '/Work/Goals.md', idOf: () => 'another-id' })
 
     await record.settle(record.clashes[0]!, 'theirs')
-    record.notes = null
+    stop()
 
     expect(invoked.map((one) => one.path)).not.toContain('/Work/Plan.md')
     expect(invoked).toContainEqual({ command: 'write_note', path: '/Work/Goals.md' })
@@ -175,14 +184,14 @@ describe('a note waiting to be settled', () => {
   test('is settled where it followed its file when the record is behind', async () => {
     held([aClash('/Work/Goals.md')])
     const told: string[] = []
-    record.notes = {
-      at: () => '/Work/Plan.md',
-      of: () => null,
+    const stop = said({
+      pathOf: () => '/Work/Plan.md',
+      idOf: () => null,
       moved: (from, to) => void told.push(`${from} ${to}`),
-    }
+    })
 
     await record.settle(record.clashes[0]!, 'theirs')
-    record.notes = null
+    stop()
 
     expect(invoked).toContainEqual({ command: 'write_note', path: '/Work/Goals.md' })
     expect(invoked).not.toContainEqual({ command: 'write_note', path: '/Work/Plan.md' })
@@ -191,10 +200,10 @@ describe('a note waiting to be settled', () => {
 
   test('never writes over another note that has its old name by now', async () => {
     held([aClash('/Work/Plan.md')])
-    record.notes = { at: () => null, of: () => 'another-id' }
+    const stop = said({ pathOf: () => null, idOf: () => 'another-id' })
 
     await record.settle(record.clashes[0]!, 'theirs')
-    record.notes = null
+    stop()
 
     expect(invoked).not.toContainEqual({ command: 'write_note', path: '/Work/Plan.md' })
     expect(invoked).toContainEqual({ command: 'write_note', path: conflictPath('/Work/Plan.md') })
