@@ -2,7 +2,7 @@ import js from '@eslint/js'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, relative, resolve, sep } from 'node:path'
 import { check as checkModules, moduleOf, ROOT } from './scripts/modules.mjs'
 
@@ -187,6 +187,53 @@ const noDeepImports = {
           messageId: 'deep',
           data: { name: module.name, api: `${module.dir}/${module.api}`, what: specifier },
         })
+      }
+    })
+  },
+}
+
+const STATIC_IMPORTS =
+  /(?:^|[\n;}])[^\S\n]*(?:import|export)\s+(?!type\b)[^'"]*?\bfrom\s*['"](\.[^'"]*)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"](\.[^'"]*)['"]/g
+
+const evaluatedWithApi = new Map()
+
+function withApi(module) {
+  const known = evaluatedWithApi.get(module.absolute)
+  if (known) return known
+  const reached = new Set()
+  const queue = [resolve(module.absolute, module.api)]
+  while (queue.length > 0) {
+    const file = queue.shift()
+    if (reached.has(file) || !existsSync(file)) continue
+    reached.add(file)
+    for (const match of readFileSync(file, 'utf8').matchAll(STATIC_IMPORTS)) {
+      const target = resolve(dirname(file), match[1] ?? match[2])
+      const found = ENDINGS.map((one) => target + one).find(
+        (one) => existsSync(one) && statSync(one).isFile(),
+      )
+      if (found && moduleOf(found, MODULES) === module) queue.push(found)
+    }
+  }
+  evaluatedWithApi.set(module.absolute, reached)
+  return reached
+}
+
+const ownApi = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      own: "Module '{{own}}' evaluates this file while its api loads, so importing its own api ({{what}}) here reads names not yet there; import the file that holds them.",
+    },
+  },
+  create(context) {
+    return eachImport(context, (node, specifier, own, found) => {
+      if (found.module !== own || node.type === 'ImportExpression' || node.importKind === 'type')
+        return
+      const api = resolve(own.absolute, own.api)
+      if (found.file !== api || context.filename === api) return
+      if (withApi(own).has(context.filename)) {
+        context.report({ node, messageId: 'own', data: { own: own.name, what: specifier } })
       }
     })
   },
@@ -421,6 +468,7 @@ export default tseslint.config(
           'no-deep-imports': noDeepImports,
           'declared-dependencies': declaredDependencies,
           'pending-imports': pendingImports,
+          'own-api': ownApi,
           'effect-imports': effectImports,
         },
       },
@@ -434,6 +482,7 @@ export default tseslint.config(
       'orden/no-deep-imports': 'error',
       'orden/declared-dependencies': 'error',
       'orden/pending-imports': 'error',
+      'orden/own-api': 'error',
     },
   },
   {

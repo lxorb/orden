@@ -1,5 +1,5 @@
 import type { Entry } from '@orden/contracts'
-import { folderFor, folderNote } from './api'
+import { folderFor, folderNote } from './folder-notes'
 import { folderOf, isMarkdownPath, relativeTo, rootedAt, samePath } from '../../platform/src/api'
 
 export interface MoveTarget {

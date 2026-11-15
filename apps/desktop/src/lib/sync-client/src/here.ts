@@ -1,4 +1,4 @@
-import { hub } from './api'
+import { hub } from './hub.svelte'
 import { Activity, listenForInput, readSystemInput } from './activity'
 import { keepZone } from '../../accounts/src/api'
 import { invoke, isDesktop } from './ports'

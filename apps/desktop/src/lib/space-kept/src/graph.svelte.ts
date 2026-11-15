@@ -1,4 +1,3 @@
-import { push } from './api'
 import {
   isBoolean,
   isNumber,
@@ -252,6 +251,7 @@ export class SpaceGraphSettings {
   }
 
   private async push(root: string) {
+    const { push } = await import('./pushing')
     await push(root, (api, token, spaceId) => api.saveGraphSettings(token, spaceId, this.of(root)))
   }
 
