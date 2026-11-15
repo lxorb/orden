@@ -1,4 +1,6 @@
+import { providePort } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { readShared } from '../../import/src/api'
 
 const world = vi.hoisted(() => ({
   readOnly: ['/theirs'] as string[],
@@ -12,20 +14,24 @@ const world = vi.hoisted(() => ({
   tasks: [] as { root?: string; typed?: boolean }[],
 }))
 
-vi.mock('../sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),
 }))
 
 const imported: { target: { root: string } }[] = []
-vi.mock('../import/src/api', async (original) => ({
-  ...(await original<typeof import('../import/src/api')>()),
-  applyImport: (_plan: unknown, target: { root: string }) => {
-    imported.push({ target })
-    return Promise.resolve({ paths: [], stepped: 0 })
+providePort('import.bring', {
+  here: () => Promise.resolve(new Set()),
+  browser: () => Promise.resolve([]),
+  notes: () => Promise.resolve({ picked: false, trouble: null }),
+  shared: (json) => Promise.resolve(readShared(json)),
+  landShared: (_shared, _bytes, root) => {
+    imported.push({ target: { root } })
+    return Promise.resolve(null)
   },
-}))
+})
 
-vi.mock('../platform/src/mobile-bridge', () => ({
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../platform/src/api')>()),
   onTheActivity: () => true,
   frameWord: () => Promise.resolve('word'),
   method: (name: string) =>
@@ -40,15 +46,16 @@ vi.mock('../platform/src/mobile-bridge', () => ({
   answer: () => undefined,
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
-vi.mock('../commands/src/api', () => ({ appCommands: () => [] }))
-vi.mock('../views.svelte', () => ({
+vi.mock('../../commands/src/api', () => ({ appCommands: () => [] }))
+vi.mock('../../views.svelte', () => ({
   views: { of: () => (world.open ? { state: { readOnly: false } } : null) },
 }))
-vi.mock('../insert-picture', () => ({
+vi.mock('../../insert-picture', () => ({
   putPicture: () => undefined,
   writeAtCaret: (_view: unknown, words: string) => void world.typed.push(words),
 }))
-vi.mock('../ui-kit/src/prompt.svelte', () => ({
+vi.mock('../../ui-kit/src/api', async (original) => ({
+  ...(await original<typeof import('../../ui-kit/src/api')>()),
   prompt: {
     choose: (question: { options: { id: string }[] }) => {
       world.asked.push(question)
@@ -56,13 +63,13 @@ vi.mock('../ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-vi.mock('../task-actions', () => ({
+vi.mock('../../task-actions', () => ({
   addTask: (_text: string, options: { root?: string; typed?: boolean } = {}) => {
     world.tasks.push(options)
     return Promise.resolve({ path: `${options.root}/Inbox.md`, line: 0 })
   },
 }))
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get spaces() {
       return world.spaces

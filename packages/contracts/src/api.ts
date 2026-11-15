@@ -200,12 +200,15 @@ export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'
 export type {
+  Arrived,
   BrowserId,
   ImportBringPort,
   Importer,
   ImportPorts,
   NotesBrought,
   NotesFrom,
+  Shared,
+  SharedItem,
 } from './import'
 export type {
   PlanePicturePort,

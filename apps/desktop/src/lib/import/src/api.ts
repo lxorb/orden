@@ -58,14 +58,4 @@ export const importCommands = {
   'import.notion': () => void migrate('files'),
   'import.zen': () => void migrate('zen'),
 }
-export {
-  type Arrived,
-  arrivedFrom,
-  isPicture,
-  type SharedItem,
-  sharedMarkdown,
-  sharedPlan,
-  sharedTask,
-  sharedTitle,
-  sharedWords,
-} from './shared'
+export { landShared, readShared } from './shared'

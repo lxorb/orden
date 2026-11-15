@@ -104,7 +104,7 @@ export function start(): () => void {
         stopAgents = await listenForAgents()
       }
       if (onTheActivity()) {
-        const { startHanded } = await import('./mobile/handed')
+        const { startHanded } = await import('./mobile/src/api')
         stopHanded = startHanded()
       }
     })

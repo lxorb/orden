@@ -6,10 +6,10 @@ import {
   frameWord,
   method,
   wordSaid,
-} from '../platform/src/api'
-import { todos } from '../tasks-model/src/api'
-import { type Entry, workspace } from '../workspace.svelte'
-import { isTile } from '../workspace/bookmarks.svelte'
+} from '../../platform/src/api'
+import { todos } from '../../tasks-model/src/api'
+import { type Entry, workspace } from '../../workspace.svelte'
+import { isTile } from '../../workspace/bookmarks.svelte'
 
 const MOST = 5
 
@@ -97,7 +97,7 @@ export function watchWidgets(): () => void {
   let today = $state<TodayRow[]>([])
 
   const read = async () => {
-    const { listed } = await import('../task-actions')
+    const { listed } = await import('../../task-actions')
     const tasks = listed().tasks
     today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.id === space)?.root)
   }

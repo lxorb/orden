@@ -1,23 +1,13 @@
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
+import type { Arrived, Shared, SharedItem } from '@orden/contracts'
+import { busy } from '../../ui-kit/src/api'
 import { isPicturePath } from '../../platform/src/api'
+import { applyImport } from './apply'
 import { dayOf, noteText } from './meta'
 import { safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
-
-export interface SharedItem {
-  name: string
-  mime: string
-  size: number
-  text: string | null
-}
-
-export interface Arrived {
-  action: string
-  subject: string
-  items: SharedItem[]
-}
 
 const NOTES = /\.(md|markdown|mdown|mkd|txt|text)$/i
 
@@ -195,4 +185,31 @@ export function sharedPlan(
   }
 
   return { format: 'markdown', files: [...about, ...notes, ...beside], lost: [] }
+}
+
+export function readShared(json: string): Shared | null {
+  const arrived = arrivedFrom(json)
+  if (!arrived) return null
+
+  return {
+    ...arrived,
+    title: sharedTitle(arrived),
+    words: sharedWords(arrived),
+    markdown: sharedMarkdown(arrived),
+    task: sharedTask(arrived),
+    fitsInNote: arrived.items.every((one) => one.text !== null || isPicture(one)),
+  }
+}
+
+export async function landShared(
+  shared: Shared,
+  bytes: ReadonlyMap<number, Uint8Array>,
+  root: string,
+  folder: string,
+): Promise<string | null> {
+  const plan = sharedPlan(shared, bytes, new Date(), folder)
+  if (!plan.files.length) return null
+
+  const landed = await busy.run('Importing', () => applyImport(plan, { root, folder: '' }))
+  return landed.paths[0] ?? null
 }

@@ -8,7 +8,8 @@ const said = vi.hoisted(() => {
 })
 const pushed: string[] = []
 
-vi.mock('../platform/src/mobile-bridge', () => ({
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../platform/src/api')>()),
   frameWord: () => Promise.resolve(said.word),
   wordSaid: () => said.spoken,
   method: (name: string) =>
@@ -18,7 +19,7 @@ vi.mock('../platform/src/mobile-bridge', () => ({
         }
       : undefined,
 }))
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     tabs: [],
     notes: [],
@@ -28,7 +29,7 @@ vi.mock('../workspace.svelte', () => ({
     protection: { seen: '' },
   },
 }))
-vi.mock('../task-actions', () => ({ listed: () => ({ total: 0, tasks: [] }) }))
+vi.mock('../../task-actions', () => ({ listed: () => ({ total: 0, tasks: [] }) }))
 
 const { watchWidgets } = await import('./widgets.svelte')
 
