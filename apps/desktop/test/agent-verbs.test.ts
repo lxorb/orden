@@ -2375,7 +2375,7 @@ describe('a note the reader protected', () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
     const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
-    const front = workspace.active.path
+    const front = tabs[0]?.path ?? ''
     protection.set('/s/Work', front, 'password')
     unlocks.unlock(protection.covering(front))
     try {
