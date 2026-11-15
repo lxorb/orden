@@ -4,10 +4,11 @@ import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
 import { edgeBeside } from './stepping'
 import { dragFreeze } from './dragging'
+import { noReveal } from './reveal'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-function state(doc: string, cursor = 0) {
+function state(doc: string, cursor = 0, readOnly = false) {
   return parsed(
     EditorState.create({
       doc,
@@ -16,6 +17,7 @@ function state(doc: string, cursor = 0) {
         markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dragFreeze,
         blockDecorations,
+        noReveal.of(readOnly),
       ],
     }),
   )
@@ -71,5 +73,51 @@ describe('a press onto a block that draws itself', () => {
   test('nothing for front matter, which is written out as it is and has nothing to open', () => {
     const blank = at(META, '\nwords')
     expect(edgeBeside(state(META, blank), blank, false)).toBe(null)
+  })
+})
+
+describe('a press across a block that never opens, as in read-only mode', () => {
+  const doc = 'above\n\n$$\nx\n$$\n\nbelow'
+  const top = at(doc, '$$')
+  const bottom = at(doc, '$$\n\nbelow') + 2
+
+  const pressed = (head: number, down: boolean) => edgeBeside(state(doc, head, true), head, down)
+
+  test('still stops at the top of it on the way down', () => {
+    expect(pressed(top - 1, true)).toBe(top)
+  })
+
+  test('crosses from its top to its bottom on the next press down', () => {
+    expect(pressed(top, true)).toBe(bottom)
+  })
+
+  test('then leaves it to the ordinary press below', () => {
+    expect(pressed(bottom, true)).toBe(null)
+  })
+
+  test('crosses from its bottom to its top on the next press up', () => {
+    expect(pressed(bottom + 1, false)).toBe(bottom)
+    expect(pressed(bottom, false)).toBe(top)
+  })
+
+  test('then leaves it to the ordinary press above', () => {
+    expect(pressed(top, false)).toBe(null)
+  })
+
+  test('walks the whole note without ever pressing in place', () => {
+    const stops = (start: number, down: boolean) => {
+      const seen = [start]
+      let head = start
+      for (let press = 0; press < 10; press++) {
+        const edge = pressed(head, down)
+        if (edge === null) break
+        expect(edge).not.toBe(head)
+        head = edge
+        seen.push(head)
+      }
+      return seen
+    }
+    expect(stops(top - 1, true)).toEqual([top - 1, top, bottom])
+    expect(stops(bottom + 1, false)).toEqual([bottom + 1, bottom, top])
   })
 })

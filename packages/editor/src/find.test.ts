@@ -1,8 +1,25 @@
 import { getSearchQuery, SearchQuery, setSearchQuery } from '@codemirror/search'
-import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  type StateEffect,
+  type TransactionSpec,
+} from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { findExtensions, findTally, loadFind, NO_FIND, selectEveryMatch, termAt } from './find'
+import {
+  type FindAsk,
+  findExtensions,
+  type FindSpec,
+  findTally,
+  loadFind,
+  NO_FIND,
+  openFind,
+  replaceEverywhere,
+  selectEveryMatch,
+  termAt,
+} from './find'
+import { queryFor } from './finding'
 
 beforeAll(async () => {
   await loadFind()
@@ -130,5 +147,122 @@ describe('selecting every match', () => {
 
   test('does nothing where nothing is being looked for', () => {
     expect(selected(stateOf(NOTE))).toBe(false)
+  })
+})
+
+function viewOn(state: EditorState) {
+  let now = state
+  const sent: TransactionSpec[] = []
+  const view = {
+    get state() {
+      return now
+    },
+    dispatch: (spec: TransactionSpec) => {
+      sent.push(spec)
+      now = now.update(spec).state
+    },
+  } as unknown as EditorView
+  return { view, sent }
+}
+
+function asking(state: EditorState, spec: Partial<FindSpec>) {
+  return state.update({ effects: setSearchQuery.of(queryFor({ ...NO_FIND, ...spec })) }).state
+}
+
+function matched(state: EditorState): string[] {
+  const texts: string[] = []
+  const cursor = getSearchQuery(state).getCursor(state)
+  for (let step = cursor.next(); !step.done; step = cursor.next())
+    texts.push(state.sliceDoc(step.value.from, step.value.to))
+  return texts
+}
+
+function seededOn(doc: string, selected: string, regexp: boolean): string[] {
+  const at = doc.indexOf(selected)
+  const state = stateOf(doc, { anchor: at, head: at + selected.length })
+  return matched(asking(state, { query: termAt(state, regexp), regexp }))
+}
+
+describe('the term the bar opens on finds just what was selected', () => {
+  const FORMULA = 'a.b(c) and axbc'
+  const QUOTED = 'say "\\n" then a\nnew line'
+  const PATH = 'C:\\\\Users or C:\\Users'
+
+  for (const regexp of [false, true]) {
+    const mode = regexp ? 'as a regular expression' : 'as plain text'
+
+    test(`a backslash and an n, ${mode}`, () => {
+      expect(seededOn(QUOTED, '"\\n"', regexp)).toEqual(['"\\n"'])
+    })
+
+    test(`two backslashes, ${mode}`, () => {
+      expect(seededOn(PATH, 'C:\\\\Users', regexp)).toEqual(['C:\\\\Users'])
+    })
+
+    test(`one backslash, ${mode}`, () => {
+      expect(seededOn(PATH, 'or C:\\Users', regexp)).toEqual(['or C:\\Users'])
+    })
+
+    test(`characters a pattern would read as its own, ${mode}`, () => {
+      expect(seededOn(FORMULA, 'a.b(c)', regexp)).toEqual(['a.b(c)'])
+    })
+
+    test(`a selection over two lines, ${mode}`, () => {
+      expect(seededOn('one\ntwo, one two', 'one\ntwo', regexp)).toEqual(['one\ntwo'])
+    })
+  }
+
+  test('a pattern seeded from a selection replaces only that selection', () => {
+    const at = FORMULA.indexOf('a.b(c)')
+    const state = stateOf(FORMULA, { anchor: at, head: at + 6 })
+    const { view } = viewOn(
+      asking(state, { query: termAt(state, true), regexp: true, replace: 'y' }),
+    )
+
+    expect(replaceEverywhere(view)).toBe(true)
+    expect(view.state.doc.toString()).toBe('y and axbc')
+  })
+
+  test('the ask that opens the bar carries the term for either mode', () => {
+    const at = FORMULA.indexOf('a.b(c)')
+    const { view, sent } = viewOn(stateOf(FORMULA, { anchor: at, head: at + 6 }))
+
+    expect(openFind(view)).toBe(true)
+    const effects = sent.flatMap((spec) => spec.effects ?? []) as StateEffect<FindAsk>[]
+    expect(effects.map((effect) => effect.value)).toEqual([
+      { replace: false, seed: 'a.b(c)', pattern: 'a\\.b\\(c\\)' },
+    ])
+  })
+})
+
+describe('a typed query and replacement', () => {
+  test('still read a typed \\n as a new line when looking', () => {
+    const state = asking(stateOf('one\ntwo'), { query: 'one\\ntwo' })
+    expect(matched(state)).toEqual(['one\ntwo'])
+  })
+
+  test('write a plain replacement exactly as it was typed', () => {
+    const { view } = viewOn(
+      asking(stateOf('the wind'), { query: 'wind', replace: 'C:\\new\\table' }),
+    )
+
+    expect(replaceEverywhere(view)).toBe(true)
+    expect(view.state.doc.toString()).toBe('the C:\\new\\table')
+  })
+
+  test('and two typed backslashes as two', () => {
+    const { view } = viewOn(asking(stateOf('the wind'), { query: 'wind', replace: 'a\\\\b' }))
+
+    expect(replaceEverywhere(view)).toBe(true)
+    expect(view.state.doc.toString()).toBe('the a\\\\b')
+  })
+
+  test('while a pattern replacement still writes \\n as a new line', () => {
+    const { view } = viewOn(
+      asking(stateOf('the wind'), { query: 'w(i)nd', regexp: true, replace: '$1\\n' }),
+    )
+
+    expect(replaceEverywhere(view)).toBe(true)
+    expect(view.state.doc.toString()).toBe('the i\n')
   })
 })

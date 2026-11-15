@@ -276,10 +276,14 @@ export function searching(): Extension {
   return [search(), vetting, findHighlighter, highlightSelectionMatches()]
 }
 
+function keptAsTyped(replacement: string): string {
+  return replacement.replace(/\\/g, '\\\\')
+}
+
 export function queryFor(spec: FindSpec): SearchQuery {
   return new SearchQuery({
     search: spec.query,
-    replace: spec.replace,
+    replace: spec.regexp ? spec.replace : keptAsTyped(spec.replace),
     caseSensitive: spec.caseSensitive,
     regexp: spec.regexp,
     wholeWord: spec.wholeWord,

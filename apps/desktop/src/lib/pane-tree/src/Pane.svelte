@@ -168,7 +168,7 @@
 
   function openFinding(ask: FindAsk) {
     replacing = ask.replace
-    void look(ask.seed ? { ...spec, query: ask.seed } : spec)
+    void look(ask.seed ? { ...spec, query: spec.regexp ? ask.pattern : ask.seed } : spec)
     finding = true
   }
 

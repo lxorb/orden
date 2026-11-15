@@ -2,25 +2,43 @@ import { EditorSelection, type EditorState } from '@codemirror/state'
 import type { Command } from '@codemirror/view'
 import { blockDecorations } from './blocks'
 
-export function edgeBeside(state: EditorState, head: number, down: boolean): number | null {
+interface Drawn {
+  from: number
+  to: number
+}
+
+function drawnBlocks(state: EditorState, from: number, to: number): Drawn[] {
   const blocks = state.field(blockDecorations, false)
-  if (!blocks) return null
+  if (!blocks) return []
+
+  const found: Drawn[] = []
+  blocks.decorations.between(from, to, (start, end, value) => {
+    const spec = value.spec as { widget?: unknown } | null
+    if (end > start && spec?.widget) found.push({ from: start, to: end })
+  })
+  return found
+}
+
+function farEdge(state: EditorState, head: number, down: boolean): number | null {
+  const crossing = drawnBlocks(state, head, head).find((block) =>
+    down ? block.from <= head && head < block.to : block.from < head && head <= block.to,
+  )
+  if (!crossing) return null
+  return down ? crossing.to : crossing.from
+}
+
+export function edgeBeside(state: EditorState, head: number, down: boolean): number | null {
+  const far = farEdge(state, head, down)
+  if (far !== null) return far
 
   const line = state.doc.lineAt(head)
   const number = down ? line.number + 1 : line.number - 1
   if (number < 1 || number > state.doc.lines) return null
 
   const aim = state.doc.line(number)
-  let edge: number | null = null
-  blocks.decorations.between(aim.from, aim.to, (from, to, value) => {
-    const spec = value.spec as { widget?: unknown } | null
-    if (to <= from || !spec?.widget) return undefined
-
-    edge = down ? from : to
-    return false
-  })
-
-  return edge
+  const [first] = drawnBlocks(state, aim.from, aim.to)
+  if (!first) return null
+  return down ? first.from : first.to
 }
 
 function step(down: boolean): Command {
