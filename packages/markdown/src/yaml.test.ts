@@ -109,6 +109,12 @@ describe('a list item', () => {
     expect(listItem('-2')).toBeNull()
   })
 
+  test('read the same from a line that ends in a carriage return', () => {
+    expect(listItem('  - One\r')).toBe('One')
+    expect(listItem('-\r')).toBe('')
+    expect(listItem('-One\r')).toBeNull()
+  })
+
   test('and a line that is not a list item at all is nothing', () => {
     expect(listItem('key: value')).toBeNull()
     expect(listItem('')).toBeNull()

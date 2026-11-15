@@ -25,6 +25,10 @@ describe('reading a note for the index', () => {
       'The plan',
     ])
     expect(aliases('---\naliases:\n- Roadmap\n---\n')).toEqual(['Roadmap'])
+    expect(aliases('---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n')).toEqual([
+      'Foo',
+      'Bar',
+    ])
     expect(aliases('---\naliases: Roadmap\n---\n')).toEqual(['Roadmap'])
     expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
   })
