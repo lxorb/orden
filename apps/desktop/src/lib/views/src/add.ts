@@ -26,6 +26,17 @@ function idFor(base: Base, space: { name: string }): Record<string, string> {
   return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }
 
+export function groupProperties(group?: { property: string; key: Value }): Record<string, unknown> {
+  if (!group || !isNoteProperty(group.property)) return {}
+  const key = group.key
+  const kept =
+    typeof key === 'string' ||
+    typeof key === 'number' ||
+    typeof key === 'boolean' ||
+    (key !== null && typeof key === 'object' && 'kind' in key && key.kind === 'date')
+  return kept ? { [bare(group.property)]: plainValue(key) } : {}
+}
+
 export async function addNote(
   base: Base,
   at: number,
@@ -47,14 +58,7 @@ export async function addNote(
   if (!canWriteAt(dir)) return null
 
   const props: Record<string, unknown> = { ...place.properties }
-  const key = group?.key
-  if (
-    group &&
-    isNoteProperty(group.property) &&
-    (typeof key === 'string' || typeof key === 'number')
-  ) {
-    props[bare(group.property)] = key
-  }
+  Object.assign(props, groupProperties(group))
   for (const [name, value] of Object.entries(made.properties ?? {})) props[name] = plainValue(value)
   Object.assign(props, idFor(base, space))
 
