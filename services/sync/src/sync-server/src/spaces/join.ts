@@ -6,6 +6,7 @@ import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
 import { forgetEmptyGuest, newGuest, presentGuest } from '../guests'
 import { hooks } from '../hooks'
 import { machineOf, mayTellTheOwner } from '../limits'
+import { tokenIn } from '../said'
 import type { Env, Guest, Space, User, Variables } from '../types'
 import {
   EMAIL_LIMIT,
@@ -302,7 +303,7 @@ join.post('/:token', async (context) => {
       return context.json({ error: 'that invitation was sent to another address' }, 403)
     }
 
-    return await redeemInvitation(context, found)
+    return await redeemInvitation(context, found, tokenIn(context.req.header('authorization')))
   }
 
   if (who?.kind === 'user') return await asAnAccount(context, found, who.user)
@@ -340,10 +341,10 @@ join.delete('/:token', async (context) => {
   return context.json({ ok: true })
 })
 
-async function redeemInvitation(context: Reply, found: Leads) {
+async function redeemInvitation(context: Reply, found: Leads, held: string | null = null) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
-  const signing = await hooks().accounts.signingIn(context.env, found.email)
+  const signing = await hooks().accounts.signingIn(context.env, found.email, held)
   if ('second' in signing) return context.json(signing)
 
   const role = await takeInvitation(context.env, found)

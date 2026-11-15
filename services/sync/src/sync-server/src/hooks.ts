@@ -16,7 +16,11 @@ export interface Session {
 
 interface AccountHooks {
   whoever(env: Env, header: string | undefined): Promise<Whoever | null>
-  signingIn(env: Env, address: string): Promise<{ second: true; holding: string } | { user: User }>
+  signingIn(
+    env: Env,
+    address: string,
+    held?: string | null,
+  ): Promise<{ second: true; holding: string } | { user: User }>
   sessionFor(env: Env, user: User, device?: string): Promise<Session>
 }
 

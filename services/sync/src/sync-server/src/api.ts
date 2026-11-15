@@ -21,7 +21,6 @@ export { eraseAccount, finishErasing } from './erase'
 export { failed, note } from './failed'
 export {
   claimGuest,
-  claimGuestsAt,
   expireGuests,
   guestForToken,
   guestMayReach,

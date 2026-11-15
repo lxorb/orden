@@ -172,14 +172,6 @@ export async function claimGuest(env: Env, guestId: string, user: User): Promise
   await forgetEmptyGuest(env, guestId)
 }
 
-export async function claimGuestsAt(env: Env, user: User): Promise<void> {
-  const { results } = await env.DB.prepare('select id from guests where email = ? limit 50')
-    .bind(user.email)
-    .all<{ id: string }>()
-
-  for (const one of results) await claimGuest(env, one.id, user)
-}
-
 export async function forgetEmptyGuest(env: Env, guestId: string): Promise<void> {
   await env.DB.prepare(
     'delete from guests where id = ? and not exists (select 1 from guest_members where guest_id = ?)',

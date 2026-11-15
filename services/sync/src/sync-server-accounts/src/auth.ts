@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import {
   askHub,
   claimGuest,
-  claimGuestsAt,
   codeMessage,
   deviceIn,
   devicesEnded,
@@ -142,8 +141,6 @@ async function accountFor(env: Env, address: string): Promise<User> {
 async function claimWhatWasGuested(env: Env, user: User, held: string | null): Promise<void> {
   const guest = held ? await guestForToken(env, held) : null
   if (guest) await claimGuest(env, guest.id, user)
-
-  await claimGuestsAt(env, user)
 }
 
 export async function signingIn(
