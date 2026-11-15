@@ -19,12 +19,12 @@ function caseless(name: string): string {
   let out = ''
   for (const one of name) {
     const upper = one.toUpperCase()
-    if ([...upper].length !== 1) {
+    if (Array.from(upper).length !== 1) {
       out += one
       continue
     }
     const lower = upper.toLowerCase()
-    out += [...lower].length === 1 ? lower : upper
+    out += Array.from(lower).length === 1 ? lower : upper
   }
   return out
 }

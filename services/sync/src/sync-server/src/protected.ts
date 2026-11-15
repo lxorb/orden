@@ -83,7 +83,7 @@ function folded(path: string): string {
   for (const one of path.normalize('NFC')) {
     const upper = one.toUpperCase()
     const lower = upper.toLowerCase()
-    out += [...upper].length !== 1 ? one : [...lower].length === 1 ? lower : upper
+    out += Array.from(upper).length !== 1 ? one : Array.from(lower).length === 1 ? lower : upper
   }
   return out
 }
