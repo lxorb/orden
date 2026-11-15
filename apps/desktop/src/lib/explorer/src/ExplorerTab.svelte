@@ -1,6 +1,6 @@
 <script lang="ts">
   import { localNumber } from '../../platform/src/api'
-  import { keyElsewhere } from '../../layer-keys'
+  import { keyElsewhere } from '../../ui-kit/src/api'
   import { onMount, untrack } from 'svelte'
   import { shortcuts } from '../../shortcuts/src/api'
   import { fileClipboard, workspace } from '../../workspace/src/api'

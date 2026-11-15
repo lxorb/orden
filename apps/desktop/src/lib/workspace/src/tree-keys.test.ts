@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { treeStep, type TreeRow, TREE_MOVES } from './tree-keys'
-import { BY_ID } from './shortcuts/src/registry'
+import { BY_ID } from '../../shortcuts/src/registry'
 
 const ROWS: TreeRow[] = [
   { path: '/s/Work', folder: true, open: true },

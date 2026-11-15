@@ -19,6 +19,5 @@
     "gates",
     "accounts",
     "marks"
-  ],
-  "pending": ["apps/desktop/src/lib/layer-keys.ts"]
+  ]
 }

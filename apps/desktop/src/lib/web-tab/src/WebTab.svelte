@@ -1,12 +1,18 @@
 <script lang="ts">
   import { whenLoaded, settingsWindow } from '@orden/contracts'
-  import { dropOver, Cross, overlays, menu, fullscreen } from '../../ui-kit/src/api'
+  import {
+    dropOver,
+    Cross,
+    overlays,
+    menu,
+    fullscreen,
+    Door,
+    keyElsewhere,
+  } from '../../ui-kit/src/api'
   import { onMount, untrack } from 'svelte'
-  import { agentMarks } from '../../workspace/src/api'
-  import Door from '../../Door.svelte'
+  import { agentMarks, workspace, tabAsk, type TabAsk } from '../../workspace/src/api'
   import { dur, fade, invoke, isDesktop, openExternal } from '../../platform/src/api'
   import { chrome, landed } from '../../theme/src/api'
-  import { keyElsewhere } from '../../layer-keys'
   import { startup } from '../../launch/src/api'
   import { hiddenKinds, passOn } from '../../gates/src/api'
   import { shareThisFile } from '../../sharing/src/api'
@@ -15,7 +21,6 @@
   import { findBar, passFill, takeoverBar } from '../../surfaces/src/api'
   import { takesWords, writes } from '../../ui-controls/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace, tabAsk, type TabAsk } from '../../workspace/src/api'
   import { favicon, plainOrigin } from '@orden/scan/web-address'
   import { HISTORY_MARK, isOwnPage } from '@orden/scan/own-pages'
   import { searchEngine } from './search-engine.svelte'

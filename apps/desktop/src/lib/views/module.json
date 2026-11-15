@@ -31,6 +31,5 @@
     "notify",
     "undo-toast",
     "gates"
-  ],
-  "pending": ["apps/desktop/src/lib/layer-keys.ts"]
+  ]
 }

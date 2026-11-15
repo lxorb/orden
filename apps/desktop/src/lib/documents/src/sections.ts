@@ -1,4 +1,4 @@
-import type { Heading } from './documents/src/api'
+import type { Heading } from './outline'
 
 function offsetOf(text: string, line: number): number {
   if (line <= 0) return 0

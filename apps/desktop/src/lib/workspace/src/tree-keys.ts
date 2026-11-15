@@ -1,4 +1,4 @@
-import { stepped } from './ui-kit/src/api'
+import { stepped } from '../../ui-kit/src/api'
 
 export interface TreeRow {
   path: string

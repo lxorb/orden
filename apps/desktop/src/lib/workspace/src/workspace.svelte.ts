@@ -69,7 +69,7 @@ import {
 import { startup } from '../../launch/src/api'
 import { besideAt, howFor, type LinkAsk, type TabAsk } from './new-tab'
 import { carriedRows, busy, readTint, viewport } from '../../ui-kit/src/api'
-import type { TreeRow } from '../../tree-keys'
+import type { TreeRow } from './tree-keys'
 import { scanFootnotes } from './footnotes'
 import type { Change } from '@orden/scan/search/replace'
 import { GIVE_UP } from '../../parting/src/api'
