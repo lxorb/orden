@@ -69,3 +69,25 @@ test('nothing is kept as moved when the keys of a merge could not be written', a
   expect(movedSince('openai', 0)).toBe('openai')
   expect(adopt).not.toHaveBeenCalled()
 })
+
+test('a move is kept with the account it moved, so the same move said by another window is kept once', async () => {
+  const mine = {
+    accounts: {
+      accounts: [{ id: 'openai', kind: 'openai' as const, name: 'OpenAI', model: '' }],
+      active: {},
+      defaultVendor: '',
+      uses: {},
+    },
+    keys: {},
+    seen: {},
+  }
+  vi.spyOn(ai, 'adopt').mockImplementation(() => undefined)
+
+  await world.apply(mine, mine, { openai: 'openai-9' })
+  await world.apply(mine, mine, { openai: 'openai-9' })
+
+  const { movesAfter } = await import('../moves')
+  expect(movesAfter(0).filter((one) => one.to === 'openai-9')).toEqual([
+    expect.objectContaining({ from: 'openai', to: 'openai-9', who: 'openai||' }),
+  ])
+})

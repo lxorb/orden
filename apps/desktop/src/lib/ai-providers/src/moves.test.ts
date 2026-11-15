@@ -58,26 +58,18 @@ test('the same move said again by a window that heard of it late is still one mo
   expect(rightsKey('openai')).toBe(first)
 })
 
-test('the same move made again after the moved account was taken away is a move of its own', async () => {
-  const { keepGone, keepMoves, movedSince, rightsKey } = await moves()
-  keepMoves({ openai: 'openai-2' }, 5)
+test('the same move made later for another account is a move of its own', async () => {
+  const { keepMoves, movedSince, rightsKey } = await moves()
+  keepMoves({ openai: 'openai-2' }, 5, { openai: 'openai||print-1' })
   const first = rightsKey('openai')
-  keepGone(['openai-2'], 6)
 
-  keepMoves({ openai: 'openai-2' }, 7)
+  keepMoves({ openai: 'openai-2' }, 7, { openai: 'openai||print-2' })
+  keepMoves({ openai: 'openai-2' }, 9, { openai: 'openai||print-2' })
 
   expect(rightsKey('openai-2')).toBe(first)
   expect(rightsKey('openai')).not.toBe(first)
+  expect(rightsKey('openai')).toBe('openai_7')
   expect(movedSince('openai', 6)).toBe('openai-2')
-})
-
-test('an account made again on the id of one taken away starts on rights of its own', async () => {
-  const { keepGone, keepMoves, rightsKey } = await moves()
-  keepMoves({ openai: 'openai-2' }, 5)
-  keepGone(['openai-2'], 6)
-
-  expect(rightsKey('openai-2')).not.toBe('openai')
-  expect(rightsKey('openai-2')).toMatch(/^[A-Za-z0-9_-]{1,48}$/)
 })
 
 test('a move another window kept is told along with this window’s own, so nothing is missed', async () => {

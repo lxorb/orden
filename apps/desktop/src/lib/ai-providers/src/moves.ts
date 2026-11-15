@@ -6,6 +6,7 @@ export interface Move {
   from: string
   to: string
   at: number
+  who?: string
 }
 
 type Heard = (moves: readonly Move[]) => void
@@ -15,7 +16,13 @@ const heard = new Set<Heard>()
 let ledger: Move[] | null = null
 
 function isMove(value: unknown): value is Move {
-  return isRecord(value) && isString(value.from) && isString(value.to) && isNumber(value.at)
+  return (
+    isRecord(value) &&
+    isString(value.from) &&
+    isString(value.to) &&
+    isNumber(value.at) &&
+    (value.who === undefined || isString(value.who))
+  )
 }
 
 function kept(): Move[] {
@@ -45,46 +52,25 @@ if (typeof window !== 'undefined') {
   })
 }
 
-const isGone = (one: Move) => one.from === one.to
-
-function saidAgain(from: string, to: string): boolean {
-  for (const one of [...kept()].reverse()) {
-    if (isGone(one) && (one.from === from || one.from === to)) return false
-    if (one.from === from && one.to === to) return true
-  }
-  return false
+function saidAgain(move: Move): boolean {
+  return kept().some((one) => one.from === move.from && one.to === move.to && one.who === move.who)
 }
 
-function keepAdded(added: Move[]): void {
+export function keepMoves(
+  moved: Record<string, string>,
+  at = Date.now(),
+  who: Record<string, string> = {},
+): void {
+  ledger = null
+  const added = Object.entries(moved)
+    .filter(([from, to]) => from !== to)
+    .map(([from, to]): Move => ({ from, to, at, ...(who[from] ? { who: who[from] } : {}) }))
+    .filter((one) => !saidAgain(one))
   if (!added.length) return
   const before = known
   ledger = [...kept(), ...added]
   keepJson(KEY, ledger)
-  const news = [...movesAfter(before), ...added.filter((one) => one.at <= before)]
-  told(news)
-}
-
-export function keepMoves(moved: Record<string, string>, at = Date.now()): void {
-  ledger = null
-  keepAdded(
-    Object.entries(moved)
-      .filter(([from, to]) => from !== to && !saidAgain(from, to))
-      .map(([from, to]) => ({ from, to, at })),
-  )
-}
-
-export function keepGone(ids: readonly string[], at = Date.now()): void {
-  ledger = null
-  const all = kept()
-  const touched = (id: string) => all.filter((one) => one.from === id || one.to === id)
-  keepAdded(
-    ids
-      .filter((id) => {
-        const last = touched(id).at(-1)
-        return last !== undefined && !isGone(last)
-      })
-      .map((id) => ({ from: id, to: id, at })),
-  )
+  told([...movesAfter(before), ...added.filter((one) => one.at <= before)])
 }
 
 export function onMoves(listener: Heard): () => void {
@@ -134,7 +120,7 @@ function rightsKeys(): Map<string, string> {
   for (const one of kept()) {
     const had = keys.get(one.from) ?? one.from
     keys.set(one.from, freshKey(one))
-    if (!isGone(one)) keys.set(one.to, had)
+    keys.set(one.to, had)
   }
   return keys
 }

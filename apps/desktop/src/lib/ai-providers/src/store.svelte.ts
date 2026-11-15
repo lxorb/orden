@@ -26,7 +26,6 @@ import {
 import { accountName, vendorName } from './account-words'
 import { COPY, hearChanges, readKept, STALE, writeKept } from './accounts-file'
 import { transcribersAre } from './hears'
-import { keepGone } from './moves'
 import { accountsAre } from './switching'
 import { type Provider, type ProviderKind, transcribes, usable } from './providers'
 import { stuck } from './stuck'
@@ -149,16 +148,8 @@ class Ai {
     keep(MOVED, '1')
   }
 
-  private now(state: Accounts) {
-    const gone = this.state.accounts
-      .map((one) => one.id)
-      .filter((id) => !state.accounts.some((one) => one.id === id))
-    this.state = state
-    if (gone.length) keepGone(gone)
-  }
-
   private took(state: Accounts) {
-    this.now(state)
+    this.state = state
     keep(COPY, accountsText(state))
     if (!__EVEN_PLUGIN__ && state.accounts.some(stuck)) {
       void import('./mend').then(({ mend }) => mend(this, state))
@@ -184,7 +175,7 @@ class Ai {
   }
 
   private changed(make: (state: Accounts) => Accounts, quiet = false) {
-    this.now(make(this.state))
+    this.state = make(this.state)
     const before = this.writing
     this.writing = (async () => {
       await this.synced

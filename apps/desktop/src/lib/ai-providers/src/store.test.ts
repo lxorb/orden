@@ -184,18 +184,3 @@ describe('an account kept on a model nobody can talk to', () => {
     expect(ai.accounts.find((one) => one.id === 'openai')?.model).toBe('davinci-002')
   })
 })
-
-describe('an account the vault once moved', () => {
-  test('is marked gone when it is taken away, here or by another window', async () => {
-    const profile = storage({ 'orden:ai': EARLIER })
-    const ai = await windowOn(profile)
-    await settled()
-    const { keepMoves, rightsKey } = await import('./moves')
-    keepMoves({ claude: 'anthropic' }, 5)
-
-    ai.remove('anthropic')
-    await settled()
-
-    expect(rightsKey('anthropic')).not.toBe('claude')
-  })
-})
