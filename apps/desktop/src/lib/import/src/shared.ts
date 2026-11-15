@@ -1,10 +1,10 @@
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
-
-import { dayOf, noteText, safeName, titleFrom } from '../import/src/api'
-import { isPicturePath } from '../platform/src/api'
-import type { ImportPlan, Planned } from '../import/src/api'
+import { isPicturePath } from '../../platform/src/api'
+import { dayOf, noteText } from './meta'
+import { safeName, titleFrom } from './names'
+import type { ImportPlan, Planned } from './plan'
 
 export interface SharedItem {
   name: string

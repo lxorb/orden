@@ -4,6 +4,7 @@ import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { canWriteAt } from '../../../sharing/src/api'
 import { isMarkdownPath } from '../../../platform/src/api'
 import { workspace } from '../../../workspace.svelte'
+import { canDictate, dictating, toggleDictation } from '../phone/dictation'
 import { canRecordHere } from './container'
 
 type Recorder = (typeof import('./recording.svelte'))['recorder']
@@ -30,12 +31,22 @@ function recordLabel(): string {
 }
 
 export function recordRows(view?: object): CommandExtension[] {
+  const editor = view as EditorView | undefined
   return [
+    {
+      id: 'dictate',
+      label: dictating() ? 'Stop' : 'Dictate',
+      byHand: true,
+      disabled: !canDictate(editor),
+      run: () => {
+        if (editor) void toggleDictation(editor)
+      },
+    },
     {
       id: 'record',
       label: recordLabel(),
       byHand: true,
-      disabled: !canRecord(view as EditorView | undefined),
+      disabled: !canRecord(editor),
       run: () => void record(),
     },
   ]

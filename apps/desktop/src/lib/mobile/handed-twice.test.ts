@@ -8,7 +8,8 @@ const world = vi.hoisted(() => ({
 }))
 
 vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
-vi.mock('../import/src/apply', () => ({
+vi.mock('../import/src/api', async (original) => ({
+  ...(await original<typeof import('../import/src/api')>()),
   applyImport: () => Promise.resolve({ paths: [], stepped: 0 }),
 }))
 vi.mock('../platform/src/mobile-bridge', () => ({

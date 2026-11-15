@@ -3,12 +3,14 @@ import { expect, test, vi } from 'vitest'
 const listen = vi.fn(() => true)
 const held = { on: 0, off: 0 }
 
-vi.mock('../platform/src/mobile-bridge', () => ({
+vi.mock('../../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../../platform/src/api')>()),
   frameWord: () => Promise.resolve(''),
   method: (name: string) => (name === 'listen' ? listen : undefined),
   answer: () => undefined,
 }))
-vi.mock('../ui-kit/src/busy.svelte', () => ({
+vi.mock('../../../ui-kit/src/api', async (original) => ({
+  ...(await original<typeof import('../../../ui-kit/src/api')>()),
   busy: {
     start: (_label: string, run: () => Promise<void>) => {
       held.on++
@@ -16,9 +18,9 @@ vi.mock('../ui-kit/src/busy.svelte', () => ({
     },
   },
 }))
-vi.mock('../insert-picture', () => ({ writeAtCaret: () => undefined }))
-vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
-vi.mock('../workspace.svelte', () => ({ workspace: { panes: { focusedId: 'a' } } }))
+vi.mock('../../../insert-picture', () => ({ writeAtCaret: () => undefined }))
+vi.mock('../../../views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../../../workspace.svelte', () => ({ workspace: { panes: { focusedId: 'a' } } }))
 
 const { dictating, toggle } = await import('./dictating')
 

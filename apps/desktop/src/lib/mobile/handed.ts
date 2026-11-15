@@ -14,12 +14,12 @@ import {
 } from '../platform/src/api'
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands } from '../commands/src/api'
-import { applyImport } from '../import/src/api'
 import { putPicture, writeAtCaret } from '../insert-picture'
 import { modes } from '../modes.svelte'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import {
+  applyImport,
   type Arrived,
   arrivedFrom,
   isPicture,
@@ -29,7 +29,7 @@ import {
   sharedMarkdown,
   sharedWords,
   type SharedItem,
-} from './shared'
+} from '../import/src/api'
 import { watchWidgets } from './widgets.svelte'
 
 const SLICE = 256 * 1024
