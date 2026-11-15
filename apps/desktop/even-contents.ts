@@ -174,6 +174,7 @@ export const APP_FOLDERS = [
   'snapshots',
   'space-kept',
   'space-pick',
+  'spelling',
   'sync-client',
   'sync-mirror',
   'sync-store',

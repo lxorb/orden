@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const told = vi.hoisted(() => ({ lists: [] as string[][] }))
 
-vi.mock('../../spell-languages', async (original) => ({
-  ...(await original<typeof import('../../spell-languages')>()),
+vi.mock('../../spelling/src/api', async (original) => ({
+  ...(await original<typeof import('../../spelling/src/api')>()),
   choosable: true,
   tellEngine: (languages: string[]) => void told.lists.push([...languages]),
 }))
@@ -26,7 +26,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { modes } = await import('../../modes/src/api')
 const { spellingPane } = await import('./spelling-pane')
-const { inForceNow } = await import('../../spell-languages')
+const { inForceNow } = await import('../../spelling/src/api')
 
 const row = (name: string) => {
   const found = spellingPane(undefined)
