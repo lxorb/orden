@@ -1111,3 +1111,12 @@ The reviews found many bugs in the fixes, folded above, and older ones with thei
 No Critical, High or Medium is wholly open. Left in part or as a limit: a typed reply with no window on macOS (B683); plain `<a href=/delete-account>` and a listener on a link's ancestor stay free, and a button that says nothing goes (B713, B717); a secret field shown and gone inside 70 ms between two scans (B702); an app killed in a pull batch can double those notes, up to `PULL_BATCH` (B705); a kill after the crate's write and before the session's persist writes old words back (B737); a fold's first stall in WebKit, cause not found (hunt-known 8); wayland deb's "a click on another tab" until `f645b7fb6` reaches this branch (hunt4-integ).
 Needs a decision: H1-TAURI2-17, H1-TAURI2-18, H4-SYNC-L3 (B770, B780); `write_note`'s whole-text replace (B773).
 Not run on platform or at all: B607, B620 to B622, B665, B666, B683 to B685; the windows rows of rounds 3 and 4 ran on the web build only.
+
+## Frontend
+
+Burn-down of 2026-11-15 from `unstable` at `7282b83a`, frontend only (editor, tabs, sidebar,
+bases and boards, onboarding, settings UI, web and PWA client code). Tests on Node 24.
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| F1 | Low | `vault/start.test.ts` "a hub open again reads the vault again" failed on a cold module cache (reported by the CLI/MCP thread) | Fixed | `startVault` imports the whole sync-client api lazily; the first transform of it took over the 1 s `vi.waitFor` budget, so `opened` was still empty | The test loads the sync-client api before starting the vault, so the lazy import resolves at once | Cold cache (vitest cache removed) failed 1/1 before, passed 3/3 after |

@@ -13,6 +13,7 @@ vi.mock('../../../sync-client/src/api', async (original) => ({
   },
 }))
 
+await import('../../../sync-client/src/api')
 await import('../store.svelte')
 const { startVault, vault } = await import('./start.svelte')
 
