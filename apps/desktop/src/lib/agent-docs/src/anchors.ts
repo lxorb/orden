@@ -243,24 +243,29 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   )
   const row = one(marked, anchor, undefined)
 
-  const words = (at: number) => {
+  const filled = (at: number, code: boolean) => {
     const near = rows[at]
-    return near !== undefined && !near.matter && (near.code || near.text.trim() !== '')
+    return (
+      near !== undefined && !near.matter && near.code === code && (code || near.text.trim() !== '')
+    )
   }
   const alone = row.text.trim() === `^${anchor.block}`
   let keep = alone ? `\n^${anchor.block}` : ` ^${anchor.block}`
   let first = row.line
   let last = row.line
-  if (alone && !words(first - 1)) {
+  let code = false
+  if (alone) {
     let above = first - 1
-    while (above > 0 && rows[above]?.text.trim() === '' && !rows[above]?.matter) above--
-    if (words(above)) {
+    while (above > 0 && !filled(above, false) && !filled(above, true) && !rows[above]?.matter)
+      above--
+    code = filled(above, true)
+    if (code || filled(above, false)) {
+      if (above < first - 1) keep = `\n\n^${anchor.block}`
       first = above
-      keep = `\n\n^${anchor.block}`
     }
   }
-  while (words(first - 1)) first--
-  while (words(last + 1)) last++
+  while (filled(first - 1, code)) first--
+  while (filled(last + 1, false)) last++
 
   const start = rows[first] ?? row
   const end = rows[last] ?? row
