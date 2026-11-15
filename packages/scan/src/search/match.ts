@@ -1,6 +1,7 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import { taskAt } from '@orden/markdown/tasks'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { lineAt, lineStarts } from './lines'
 import { isEmpty, type Query, type Unit } from './query'
 import { tagsIn } from './tags'
@@ -118,6 +119,7 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   }
 
   const out: Range[] = []
+  const code = new CodeBlocks()
   let open: number | null = null
 
   const close = (to: number) => {
@@ -135,7 +137,7 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
       continue
     }
 
-    if (HEADING.test(text)) {
+    if (code.line(text) === WORDS && HEADING.test(text)) {
       close(ends[index - 1] ?? start)
       open = start
     } else open ??= start

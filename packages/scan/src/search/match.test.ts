@@ -311,6 +311,11 @@ describe('nearness', () => {
     expect(answers('section:(beta gamma)', { body })).toBe(false)
   })
 
+  test('does not end at a comment inside a code fence', () => {
+    const body = '# One\nalpha\n```sh\n# comment\n```\nbeta\n'
+    expect(answers('section:(alpha beta)', { body })).toBe(true)
+  })
+
   test('excludes within the line it is given', () => {
     expect(answers('line:(alpha -beta)', { body: CLOSE })).toBe(true)
     expect(answers('line:(beta -alpha)', { body: 'alpha beta\n' })).toBe(false)
