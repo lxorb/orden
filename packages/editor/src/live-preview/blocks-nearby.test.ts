@@ -99,11 +99,38 @@ describe('the blocks drawn after an edit', () => {
     const before = widgetsIn(current.field(blockDecorations).decorations)
     const at = doc.indexOf('| 1 |', doc.indexOf('para 30')) + 3
 
-    current = parsed(current.update({ changes: { from: at, insert: 'z' } }).state)
+    const edited = current.update({ changes: { from: at, insert: 'z' } }).state
+    const parsedWhole = syntaxTree(edited).length === edited.doc.length
+    current = parsed(edited)
 
     const after = widgetsIn(current.field(blockDecorations).decorations)
     expect(after).toHaveLength(60)
-    expect(after.filter((widget, index) => widget === before[index])).toHaveLength(59)
+    expect(after.slice(0, 30).filter((widget, index) => widget === before[index])).toHaveLength(30)
+    if (parsedWhole) {
+      expect(after.filter((widget, index) => widget === before[index])).toHaveLength(59)
+    }
+    expect(described(current.field(blockDecorations).decorations, current.doc.toString())).toEqual(
+      described(buildBlockDecorations(current), current.doc.toString()),
+    )
+  })
+
+  test('an edit whose parse runs out of time on a busy machine keeps the blocks before it', () => {
+    const doc = Array.from({ length: 60 }, (_, i) => `para ${i}\n\n${TABLE}\n`).join('')
+    let current = state(doc, 2)
+    current = current.update({ selection: EditorSelection.cursor(3) }).state
+    const before = widgetsIn(current.field(blockDecorations).decorations)
+    const at = doc.indexOf('| 1 |', doc.indexOf('para 30')) + 3
+
+    let clock = Date.now()
+    const busy = vi.spyOn(Date, 'now').mockImplementation(() => (clock += 50))
+    const edited = current.update({ changes: { from: at, insert: 'z' } }).state
+    busy.mockRestore()
+    expect(syntaxTree(edited).length).toBeLessThan(edited.doc.length)
+    current = parsed(edited)
+
+    const after = widgetsIn(current.field(blockDecorations).decorations)
+    expect(after).toHaveLength(60)
+    expect(after.slice(0, 30).filter((widget, index) => widget === before[index])).toHaveLength(30)
     expect(described(current.field(blockDecorations).decorations, current.doc.toString())).toEqual(
       described(buildBlockDecorations(current), current.doc.toString()),
     )
