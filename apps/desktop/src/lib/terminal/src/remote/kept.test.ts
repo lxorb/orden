@@ -32,3 +32,18 @@ test('a list asked for before a change is kept does not take the change back', a
 
   expect(remote.kept.order).toEqual(['pi', 'nas'])
 })
+
+test('a change that could not be saved is taken back by the list on disk', async () => {
+  const listing = remote.refresh()
+  const keeping = remote.keep((kept) => ({ ...kept, order: ['build'] }))
+
+  const at = asked.answers.findIndex((one) => one.command === 'remote_keep')
+  asked.answers.splice(at, 1)[0]?.answer(Promise.reject(new Error('disk full')))
+  answered('remote_hosts', { config: [], kept: { order: ['nas'] }, file: null })
+  await listing
+  await settled()
+  answered('remote_hosts', { config: [], kept: { order: ['nas'] }, file: null })
+  await keeping
+
+  expect(remote.kept.order).toEqual(['nas'])
+})

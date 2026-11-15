@@ -91,6 +91,7 @@ class Remote {
       const kept = readKept(await invoke<unknown>('remote_keep', { kept: next }))
       if (turn === this.changes) this.take(kept)
     } catch {
+      await this.asking
       await this.refresh()
     }
   }
