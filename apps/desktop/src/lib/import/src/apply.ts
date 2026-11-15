@@ -242,7 +242,7 @@ export function restamped(
     return under ? now.slice(under.length + 1) : now
   }
   const paths = plan.files.map((file) => file.path)
-  const space = calledBy([...taken])
+  const space = calledBy([...taken, ...placed.values()])
   const files = plan.files.map((file) => {
     const was = file.path
     const now = placed.get(file) ?? was

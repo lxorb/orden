@@ -210,17 +210,25 @@ export function linksFollowed(
   const movedTo = (path: string) => moved.get(path) ?? movedFolded.get(foldName(path))
   const landed = (path: string) => `${under ? `${under}/` : ''}${movedTo(path) ?? path}`
 
+  let notesCalled: ReadonlyMap<string, string[]> | null = null
+  const alongFolder = (said: string) => {
+    notesCalled ??= calledBy(paths.filter(namesNote))
+    return nearest(joined(here, said), was, notesCalled)
+  }
+
   const byName = (said: string): string | null => {
-    const meant = nearest(said, was, called)
+    const meant = alongFolder(said) ?? nearest(said, was, called)
     if (meant === undefined) return null
     const landing = landed(meant)
     const from = landed(was)
     const held = (path: string) => path !== landing && holds(path, space)
+    const along = fitting(joined(folderOf(from), said), space)
+    const reachedAlong = namesNote(landing) && along.includes(landing)
     const taken =
       movedTo(meant) !== undefined ||
-      fitting(joined(folderOf(from), said), space).some((path) => path !== landing) ||
+      along.some((path) => path !== landing) ||
       held(said) ||
-      captured(said, landing, from, space)
+      (!reachedAlong && captured(said, landing, from, space))
     return taken ? relativePath(folderOf(from), landing) : null
   }
 

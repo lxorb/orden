@@ -790,6 +790,84 @@ describe('a vault landed in a folder of a space that holds notes of the same nam
   })
 })
 
+describe('a vault landed in a folder named like one of its own folders', () => {
+  const landedIn = (files: Planned[], folder: string, from: string, taken: string[] = []) => {
+    const out = restamped(planOf(files), new Set(taken), folder).files
+    const paths = [...taken, ...out.map((one) => one.path)]
+    const index = spaceIndex(
+      paths.filter((path) => path.endsWith('.md')),
+      paths.filter((path) => !path.endsWith('.md')),
+      from,
+    )
+    return { text: textAt(out, from), index }
+  }
+
+  test('has a wikilink with a folder reach its note, not another note of the import', () => {
+    const { text, index } = landedIn(
+      [
+        note('Plan.md', '# top plan'),
+        note('Projects/Plan.md', '# project plan'),
+        note('Home.md', 'See [[Projects/Plan]]'),
+      ],
+      'Projects',
+      'Projects/Home.md',
+    )
+
+    expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Projects/Projects/Plan.md')
+  })
+
+  test('has a markdown link with a folder reach its note, not another note of the import', () => {
+    const { text, index } = landedIn(
+      [
+        note('Plan.md', '# top plan'),
+        note('Work/Projects/Plan.md', '# project plan'),
+        note('Home.md', 'See [x](Projects/Plan.md)'),
+      ],
+      'Projects',
+      'Projects/Home.md',
+    )
+    const target = decodeURIComponent(/\]\(<?([^)>]+)>?\)/.exec(text)?.[1] ?? '')
+
+    expect(resolveRelative(index, target)?.path).toBe('Projects/Work/Projects/Plan.md')
+  })
+
+  test('has a picture with a folder show its file, not another file of the import', () => {
+    const { text, index } = landedIn(
+      [file('cover.png'), file('A/cover.png'), note('Home.md', '![[A/cover.png]]')],
+      'A',
+      'A/Home.md',
+    )
+
+    expect(resolveFile(index, targetsIn(text)[0] ?? '', 'wikilink')).toBe('A/A/cover.png')
+  })
+
+  test('has a markdown link by name reach its note, not one of the import ending in the folder and name', () => {
+    const { text, index } = landedIn(
+      [note('B.md', 'See [x](A.md)'), note('B/A.md', '# a'), note('In/A/A.md', '# deep')],
+      'A',
+      'A/B.md',
+    )
+    const target = decodeURIComponent(/\]\(<?([^)>]+)>?\)/.exec(text)?.[1] ?? '')
+
+    expect(resolveRelative(index, target)?.path).toBe('A/B/A.md')
+  })
+
+  test('keeps a markdown link by name that reaches its note by the path from its folder', () => {
+    const { text } = landedIn(
+      [
+        note('A/B/Plan.md', '# far'),
+        note('In/Plan.md', '# near'),
+        note('B/A.md', 'See [x](Plan.md)'),
+      ],
+      '',
+      'B/A.md',
+      ['A/B/A.md'],
+    )
+
+    expect(text).toBe('See [x](Plan.md)')
+  })
+})
+
 describe('an import into a space that is not the one open', () => {
   test('has a link by name reach the note it came with, not that space’s namesake', async () => {
     listed.set('/Other', ['Ideas.md', 'cover.png'])
