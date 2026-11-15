@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { forceParsing } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
-import { afterEach, beforeAll, expect, test } from 'vitest'
+import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import { createEditor, editorState } from '../editor'
 import { HeldState } from '../held'
 import { SharedDoc } from '../shared'
@@ -106,4 +106,27 @@ test('words typed in a cell, then words written below the table, both stay when 
   await settled()
 
   expect(first.text.toString()).toBe(`${TYPED}!`)
+})
+
+test('a switch to a note with a table in the same place leaves the focus out of that table', async () => {
+  const first = new SharedDoc(TABLE)
+  const second = new SharedDoc('other\n\n| x | y |\n| --- | --- |\n| 7 | 8 |\n\nend')
+  const view = createEditor({ parent: document.body, shared: first, selection: { anchor: 0 } })
+  open.push(view)
+  const firstHeld = HeldState.shownIn(first, view)
+  const secondHeld = HeldState.waiting(second, editorState({ shared: second }))
+  const focus = vi.spyOn(HTMLTableCellElement.prototype, 'focus').mockImplementation(function (
+    this: HTMLTableCellElement,
+  ) {
+    this.tabIndex = 0
+    HTMLElement.prototype.focus.call(this)
+  })
+
+  typeInCell(view)
+  firstHeld.take(view)
+  secondHeld.give(view)
+  await settled()
+  focus.mockRestore()
+
+  expect(document.activeElement?.closest('table')).toBeNull()
 })

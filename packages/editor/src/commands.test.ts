@@ -43,12 +43,13 @@ function apply(
   doc: string,
   from: number,
   to = from,
+  extensions: typeof ordenMarkdownExtensions = [],
 ): { took: boolean; doc: string; selection: [number, number] } {
   const state = parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.range(from, to),
-      extensions: [markdown({ base: markdownLanguage })],
+      extensions: [markdown({ base: markdownLanguage, extensions })],
     }),
   )
 
@@ -1120,5 +1121,46 @@ describe('moving a line past a table, with a line beside it', () => {
 
   test('going down, the line over it is not left on its head', () => {
     expect(at(moveLineOver(1), `a\nb\n\n${TABLE}`, 2)).toBe(`a\n\n${TABLE}\n\nb`)
+  })
+})
+
+describe('lines a list command leaves to their block', () => {
+  const all = (command: StateCommand, doc: string, extensions = ordenMarkdownExtensions) =>
+    apply(command, doc, 0, doc.length, extensions).doc
+
+  test('the task list carries wrapped lines and code with their item', () => {
+    expect(all(toggleTaskList, '- [ ] a\n  more\n- [ ] b')).toBe('a\nmore\nb')
+    expect(all(toggleTaskList, '- a\n  ```\n  x\n  ```\n- b')).toBe(
+      '- [ ] a\n  ```\n  x\n  ```\n- [ ] b',
+    )
+  })
+
+  test('the task list leaves blank lines blank', () => {
+    expect(all(toggleTaskList, 'a\n\nb')).toBe('- [ ] a\n\n- [ ] b')
+    expect(all(toggleTaskList, '> a\n>\n> b')).toBe('> - [ ] a\n>\n> - [ ] b')
+  })
+
+  test('a box is not put on code inside an item', () => {
+    expect(apply(toggleTask, '- a\n  ```\n  x\n  ```', 9).doc).toBe('- a\n  ```\n  x\n  ```')
+    expect(apply(toggleTask, '- a\n\n      code', 10).doc).toBe('- a\n\n      code')
+  })
+
+  test('a box goes on the items of a selection, not their wrapped or blank lines', () => {
+    expect(all(toggleTask, '- [ ] a\n  more')).toBe('- [x] a\n  more')
+    expect(all(toggleTask, 'a\n\nb')).toBe('- [ ] a\n\n- [ ] b')
+  })
+
+  test('a quote inside a list item keeps to the item', () => {
+    expect(at(toggleQuote, '- a\n  > q', 8)).toBe('- a\n  q')
+    expect(at(toggleQuote, '- a\n\n  b', 7)).toBe('- a\n\n  > b')
+    expect(at(toggleQuote, '- a\n\n      code', 10)).toBe('- a\n\n  >     code')
+    expect(at(toggleQuote, '  > a', 4)).toBe('  a')
+  })
+
+  test('a list leaves code, tables and front matter outside items as they are', () => {
+    expect(all(toggleBulletList, 'a\n```\n1. x\n```\nb')).toBe('- a\n```\n1. x\n```\n- b')
+    expect(all(toggleBulletList, '- a\n```\n- x\n```\n- b')).toBe('a\n```\n- x\n```\nb')
+    expect(all(toggleOrderedList, '| a |\n| - |\n| 1 |')).toBe('| a |\n| - |\n| 1 |')
+    expect(all(toggleBulletList, '---\nt: 1\n---\na')).toBe('---\nt: 1\n---\n- a')
   })
 })

@@ -7,14 +7,19 @@ export { flushTableEdits } from './view'
 
 const views = new WeakMap<HTMLElement, TableView>()
 const live = new Set<TableView>()
+const showing = new WeakMap<EditorView, object>()
+const drawnIn = new WeakMap<TableView, object | undefined>()
 
-export const tableTracking = ViewPlugin.define(() => ({
-  update(update) {
-    if (!update.docChanged) return
-    for (const table of live)
-      if (table.editor === update.view) table.track(update.changes, update.state.doc)
-  },
-}))
+export const tableTracking = ViewPlugin.define((view) => {
+  showing.set(view, {})
+  return {
+    update(update) {
+      if (!update.docChanged) return
+      for (const table of live)
+        if (table.editor === update.view) table.track(update.changes, update.state.doc)
+    },
+  }
+})
 
 export function tableViewAt(editor: EditorView, from: number): TableView | null {
   for (const table of live) {
@@ -56,6 +61,7 @@ export class TableWidget extends OrdenWidget {
     const table = new TableView(view, this, model)
     views.set(table.dom, table)
     live.add(table)
+    drawnIn.set(table, showing.get(view))
     return table.dom
   }
 
@@ -78,8 +84,12 @@ export class TableWidget extends OrdenWidget {
     if (table) {
       const focus = table.focusState()
       const start = table.tracked
+      const shown = drawnIn.get(table)
       if (focus && start !== null) {
-        queueMicrotask(() => tableViewAt(table.editor, start)?.focusCell(focus.at, focus.offset))
+        queueMicrotask(() => {
+          if (showing.get(table.editor) !== shown) return
+          tableViewAt(table.editor, start)?.focusCell(focus.at, focus.offset)
+        })
       }
       table.destroy()
       views.delete(dom)

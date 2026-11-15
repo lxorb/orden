@@ -68,8 +68,9 @@ export function smartReplacement(before: string): Replacement | null {
   return null
 }
 
-export function inCodeSpan(lineText: string, offset: number): boolean {
-  if (/^(\s{4,}|\s*(```|~~~))/.test(lineText)) return true
+export function inCodeSpan(lineText: string, offset: number, inItem = false): boolean {
+  if (/^\s*(```|~~~)/.test(lineText)) return true
+  if (!inItem && /^\s{4,}/.test(lineText)) return true
   return (lineText.slice(0, offset).match(/`/g)?.length ?? 0) % 2 === 1
 }
 
@@ -93,9 +94,11 @@ const STRAIGHT = new Set([
 
 export function keepsStraightQuotes(state: EditorState, pos: number): boolean {
   const line = state.doc.lineAt(pos)
-  if (inCodeSpan(line.text, pos - line.from)) return true
+  const inner = syntaxTree(state).resolveInner(pos, -1)
+  const inItem = enclosingNamed(inner, 'ListItem') !== null
+  if (inCodeSpan(line.text, pos - line.from, inItem)) return true
 
-  return enclosingNamed(syntaxTree(state).resolveInner(pos, -1), STRAIGHT) !== null
+  return enclosingNamed(inner, STRAIGHT) !== null
 }
 
 export function smartPunctuation(): Extension {

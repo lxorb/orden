@@ -53,6 +53,7 @@ import {
   type TableSpan,
   tableAt,
   tableWrite,
+  writingTable,
 } from './navigation'
 import {
   alignedColumn,
@@ -120,6 +121,7 @@ export class TableView {
   private expected: { source: string; model: TableModel; widths: number[] } | null = null
 
   private focusAfter: Focus | null = null
+  private composing = false
 
   private widths: (number | null)[]
 
@@ -260,6 +262,7 @@ export class TableView {
   }
 
   adopt(text: TableSource, model: TableModel) {
+    const before = this.model
     const place = this.placeOf(model)
     const kept = place !== null
     if (place && this.pending && !sameCell(place, this.pending.at)) {
@@ -283,8 +286,31 @@ export class TableView {
       this.focusAfter = null
       return
     }
+    if (this.composing && !this.focusAfter && this.editable === !this.editor.state.readOnly) {
+      if (this.patch(before)) return
+    }
     this.editable = !this.editor.state.readOnly
     this.render()
+  }
+
+  private patch(before: TableModel): boolean {
+    const { model } = this
+    const same =
+      before.header.length === model.header.length &&
+      before.rows.length === model.rows.length &&
+      before.align.every((align, column) => model.align[column] === align)
+    if (!same) return false
+
+    const focused = this.focusedCell()?.at
+    for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
+      const at = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) }
+      if (sameCell(at, focused)) continue
+      const text = this.shownText(at, textIn(model, at))
+      if (cell.dataset.source === text) continue
+      cell.dataset.source = text
+      showRendered(cell)
+    }
+    return true
   }
 
   modelFor(source: string): TableModel | null {
@@ -713,11 +739,18 @@ export class TableView {
     })
 
     cell.addEventListener('focus', () => showSource(cell))
-    cell.addEventListener('blur', () => queueMicrotask(() => this.left(cell, at)))
+    cell.addEventListener('blur', () => {
+      this.composing = false
+      queueMicrotask(() => this.left(cell, at))
+    })
     cell.addEventListener('input', (event) => {
       if (!(event as InputEvent).isComposing) this.edited(cell, at)
     })
-    cell.addEventListener('compositionend', () => this.edited(cell, at))
+    cell.addEventListener('compositionstart', () => (this.composing = true))
+    cell.addEventListener('compositionend', () => {
+      this.composing = false
+      this.edited(cell, at)
+    })
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
@@ -845,7 +878,7 @@ export class TableView {
     event.preventDefault()
     this.flush()
     this.focusAfter = { at, offset: caretOffset(cell) }
-    command(this.editor)
+    writingTable(() => command(this.editor))
     this.focusAfter = null
   }
 
@@ -893,17 +926,23 @@ export class TableView {
   }
 
   private sortBy(column: number) {
-    const order = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
-    const edit = sortedColumn(this.current(), column, order, this.focusedCell() ?? undefined)
-    if (edit.next === this.current()) return
-
-    this.sortedAs = { column, order }
-    this.apply(edit)
+    const current = this.current()
+    const focus = this.focusedCell() ?? undefined
+    const asked = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
+    const other = asked === 'up' ? 'down' : 'up'
+    for (const order of [asked, other] as const) {
+      const edit = sortedColumn(current, column, order, focus)
+      if (edit.next === current) continue
+      this.sortedAs = { column, order }
+      this.apply(edit)
+      return
+    }
   }
 
   private moveColumnBy(column: number, step: number) {
-    const edit = movedColumn(this.current(), column, step, this.focusedCell() ?? undefined)
-    if (edit.next === this.current()) return
+    const current = this.current()
+    const edit = movedColumn(current, column, step, this.focusedCell() ?? undefined)
+    if (edit.next === current) return
 
     const [width] = this.widths.splice(column, 1)
     this.widths.splice(column + step, 0, width ?? null)
@@ -916,8 +955,9 @@ export class TableView {
   }
 
   private deleteColumn(column: number) {
-    const edit = removedColumn(this.current(), column, this.focusedCell() ?? undefined)
-    if (edit.next === this.current()) return
+    const current = this.current()
+    const edit = removedColumn(current, column, this.focusedCell() ?? undefined)
+    if (edit.next === current) return
 
     this.widths.splice(column, 1)
     this.apply(edit)

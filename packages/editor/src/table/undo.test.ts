@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { forceParsing } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { createEditor } from '../editor'
@@ -7,6 +8,10 @@ import { SharedDoc } from '../shared'
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
+  HTMLTableCellElement.prototype.focus = function (this: HTMLTableCellElement, options) {
+    this.tabIndex = 0
+    HTMLElement.prototype.focus.call(this, options)
+  }
 })
 
 const open: EditorView[] = []
@@ -52,6 +57,29 @@ function press(cell: HTMLElement, shiftKey = false) {
 }
 
 describe('undo in a table cell', () => {
+  test('keeps a table under the caret of the note drawn, and the cell focused', async () => {
+    const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
+    const view = createEditor({ parent: document.body, doc, selection: { anchor: 0 } })
+    open.push(view)
+    forceParsing(view, doc.length, 10_000)
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
+      (one) => one.textContent === '1',
+    )
+    if (!cell) throw new Error('the table drew no cell holding 1')
+    cell.focus()
+    for (const text of ['1x', '1xy']) {
+      cell.textContent = text
+      cell.dispatchEvent(new InputEvent('input', { bubbles: true }))
+    }
+
+    press(cell)
+    for (let round = 0; round < 3; round++) await Promise.resolve()
+
+    expect(view.state.doc.toString()).toBe(doc)
+    expect(view.dom.querySelector('table')).not.toBeNull()
+    expect(document.activeElement?.tagName).toBe('TD')
+  })
+
   test('takes back what was typed there, in a note shared between views', () => {
     const shared = new SharedDoc(TABLE)
     const view = note({ shared })

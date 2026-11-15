@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import { Annotation, type ChangeSpec, type EditorState } from '@codemirror/state'
+import { Annotation, type ChangeSpec, EditorState } from '@codemirror/state'
 import { enclosingNamed } from '../nodes'
 import { overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
@@ -113,3 +113,18 @@ export function cellAbove(at: CellAddress): CellAddress | 'above' {
 }
 
 export const tableWrite = Annotation.define<boolean>()
+
+let writing = 0
+
+export function writingTable<T>(run: () => T): T {
+  writing++
+  try {
+    return run()
+  } finally {
+    writing--
+  }
+}
+
+export const tableWrites = EditorState.transactionExtender.of(() =>
+  writing ? { annotations: tableWrite.of(true) } : null,
+)

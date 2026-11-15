@@ -222,62 +222,47 @@ export function shiftHeading(delta: number): StateCommand {
   }
 }
 
-function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
-  return ({ state, dispatch }) => {
-    const lines = selectedLines(state)
-    const allPrefixed = lines.every((line) => pattern.test(line.text))
+const QUOTE_MARK = /^([ \t]*)>[ \t]?/
 
-    const changes: ChangeSpec[] = lines.map((line) => {
-      const existing = pattern.exec(line.text)
-      const matched = existing?.[0] ?? ''
-      const indent = matched.length - matched.trimStart().length
-
-      if (allPrefixed && existing) {
-        const task = taskAt(line.text)
-        const end = task ? Math.max(task.marker, matched.length) : matched.length
-        return { from: line.from + indent, to: line.from + end, insert: '' }
-      }
-      return { from: line.from + indent, to: line.from + matched.length, insert: prefix }
-    })
-
-    dispatch(state.update({ changes, userEvent: 'input' }))
-    return true
+function quoteAt(state: EditorState, line: Line): number {
+  const space = INDENT.exec(line.text)?.[0] ?? ''
+  const content = itemContent(state, quotedLine(line))
+  if (content === null) return 0
+  let column = 0
+  let at = 0
+  while (at < space.length && column < content) {
+    column = space[at] === '\t' ? column + 4 - (column % 4) : column + 1
+    at++
   }
+  return at
 }
 
-const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
-
-export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
-const INDENT = /^\s*/
-
-const QUOTED = /^(?:[ \t]*>[ \t]?)*/
-
-export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
-  const lines = selectedLines(state).map((line) => {
-    const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
-    return { from: line.from + quote, text: line.text.slice(quote) }
-  })
-  const allTasks = lines.every((line) => taskAt(line.text) !== null)
+export const toggleQuote: StateCommand = ({ state, dispatch }) => {
+  const lines = selectedLines(state)
+  const allQuoted = lines.every((line) => QUOTE_MARK.test(line.text))
 
   const changes: ChangeSpec[] = lines.map((line) => {
-    const task = taskAt(line.text)
-    const indent = task?.indent ?? (INDENT.exec(line.text)?.[0] ?? '').length
-
-    if (allTasks && task) {
-      return { from: line.from + indent, to: line.from + task.marker, insert: '' }
+    const existing = QUOTE_MARK.exec(line.text)
+    if (existing) {
+      const lead = existing[1]?.length ?? 0
+      const end = existing[0].length
+      return allQuoted
+        ? { from: line.from + lead, to: line.from + end, insert: '' }
+        : { from: line.from + lead, to: line.from + end, insert: '> ' }
     }
-
-    const marker = task ? task.marker : MARKER.exec(line.text)?.[0].length
-    return {
-      from: line.from + indent,
-      to: line.from + (marker ?? indent),
-      insert: '- [ ] ',
-    }
+    const at = line.from + quoteAt(state, line)
+    return { from: at, insert: '> ' }
   })
 
   dispatch(state.update({ changes, userEvent: 'input' }))
   return true
 }
+
+const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
+
+const INDENT = /^\s*/
+
+const QUOTED = /^(?:[ \t]*>[ \t]?)*/
 
 const NO_TASK_HERE = new Set([
   'Table',
@@ -290,12 +275,24 @@ const NO_TASK_HERE = new Set([
   'HorizontalRule',
 ])
 
+const CODE_BLOCKS = new Set(['FencedCode', 'CodeBlock'])
+
 function taskable(state: EditorState, line: Line): boolean {
-  if (inCode(state, line.from)) return false
-  for (const node of enclosing(syntaxTree(state).resolveInner(line.from, 1))) {
+  const quoted = quotedLine(line)
+  const start = quoted.from + quoted.space.length
+  for (const node of enclosing(syntaxTree(state).resolveInner(start, 1))) {
+    if (CODE_BLOCKS.has(node.name)) return false
     if (NO_TASK_HERE.has(node.name) || headingLevel(node.name) !== null) return false
   }
   return true
+}
+
+function taskLines(state: EditorState): Line[] {
+  const chosen = selectedLines(state)
+  const written = chosen.filter((line) => line.text.trim())
+  if (!written.length) return chosen
+  const own = written.filter((line) => !carriedIn(state, quotedLine(line)))
+  return own.length ? own : written
 }
 
 export const toggleTask: StateCommand = (target) => {
@@ -304,7 +301,7 @@ export const toggleTask: StateCommand = (target) => {
   const help = target instanceof EditorView ? state.facet(noteIndex).tasks : undefined
   const ticking: number[] = []
 
-  for (const line of selectedLines(state)) {
+  for (const line of taskLines(state)) {
     if (!taskable(state, line)) continue
 
     const task = taskAt(line.text)
@@ -457,19 +454,38 @@ function siblingAbove(state: EditorState, number: number, levels: number[]): boo
   return false
 }
 
-function carriedIn(state: EditorState, line: Quoted): boolean {
+function itemContent(state: EditorState, line: Quoted): number | null {
   const tree = ensureSyntaxTree(state, line.start + line.text.length, 50) ?? syntaxTree(state)
   const at = line.from + line.space.length
   for (let node: SyntaxNode | null = tree.resolveInner(at, 1); node; node = node.parent) {
     if (node.name !== 'ListItem') continue
-    if (node.from >= line.start) return false
+    if (node.from >= line.start) return null
     const item = quotedLine(state.doc.lineAt(node.from))
+    if (line.depth < item.depth) return null
     const content = columnOf(MARKER.exec(item.text)?.[0] ?? item.space)
-    if (line.depth < item.depth) return false
     const column = line.depth === item.depth ? line.column : (line.levels[item.depth] ?? 0)
-    return column >= content
+    return column >= content ? content : null
   }
-  return false
+  return null
+}
+
+function carriedIn(state: EditorState, line: Quoted): boolean {
+  return itemContent(state, line) !== null
+}
+
+const HELD = new Set([
+  'FencedCode',
+  'CodeBlock',
+  'Table',
+  'BlockMath',
+  'HTMLBlock',
+  'CommentBlock',
+  'FrontMatter',
+])
+
+function inBlock(state: EditorState, line: Quoted): boolean {
+  const tree = ensureSyntaxTree(state, line.start + line.text.length, 50) ?? syntaxTree(state)
+  return enclosingNamed(tree.resolveInner(line.from + line.space.length, 1), HELD) !== null
 }
 
 interface Restart {
@@ -479,13 +495,19 @@ interface Restart {
   active: boolean
 }
 
-function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
+function toggleList(
+  own: RegExp,
+  markerFor: (count: number) => string,
+  boxed = false,
+): StateCommand {
   return ({ state, dispatch }) => {
     const chosen = selectedLines(state)
     const quoted = chosen.map(quotedLine)
     const written = quoted.filter((line) => line.text.trim())
-    const listed = written.filter((line) => !carriedIn(state, line))
-    const items = listed.length ? listed : written
+    const free = written.filter((line) => !inBlock(state, line))
+    const listed = free.filter((line) => !carriedIn(state, line))
+    const items = listed.length ? listed : free
+    if (written.length && !items.length) return false
     const skipsBlank = written.length > 0
     const lines = skipsBlank ? items : quoted
     const off = lines.every((line) => own.test(line.text))
@@ -515,18 +537,19 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
 
       const key = line.levels.join(',')
       if (!chose) {
+        const held = inBlock(state, line)
         drop(counts, line, false)
         drop(restarts, line, true)
         for (const one of restarts.values())
           if (encloses(one.levels, line.levels, false)) one.active = true
         const restart = restarts.get(key)
-        const numbered = restart ? NUMBERED.exec(line.text) : null
+        const numbered = restart && !held ? NUMBERED.exec(line.text) : null
         const renumbered =
           restart && numbered && restart.active && numbered[0].trim().endsWith(restart.delimiter)
         if (restart && !renumbered) restarts.delete(key)
         const shifts = shiftsOf(parents, line)
         if (!parents.length && number > last && !renumbered) break
-        if (own.test(line.text)) counts.set(key, { levels: line.levels, count: 1 })
+        if (!held && own.test(line.text)) counts.set(key, { levels: line.levels, count: 1 })
 
         let widened = 0
         let marker = ''
@@ -555,11 +578,11 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
 
       const shifts = shiftsOf(parents, line)
       const written_marker = MARKER.exec(line.text)?.[0] ?? ''
-      const task = off ? taskAt(line.text) : null
+      const task = off || boxed ? taskAt(line.text) : null
       const matched = task ? Math.max(task.marker, written_marker.length) : written_marker.length
       const marker = off ? '' : markerFor(count)
       const widened = written_marker
-        ? marker.length - (written_marker.length - line.space.length)
+        ? (MARKER.exec(marker)?.[0].length ?? 0) - (written_marker.length - line.space.length)
         : 0
       const shift = (shifts[line.depth] ?? 0) + widened
       parents.push({ depth: line.depth, levels: line.levels, shift })
@@ -585,6 +608,10 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
 export const toggleBulletList = toggleList(BULLETED, () => '- ')
 
 export const toggleOrderedList = toggleList(NUMBERED, (count) => `${count}. `)
+
+const TASK_ITEM = /^\s*(?:[-*+]|\d+[.)])[ \t]+\[.\](?:[ \t]|$)/
+
+export const toggleTaskList = toggleList(TASK_ITEM, () => '- [ ] ', true)
 
 interface Block {
   text: string

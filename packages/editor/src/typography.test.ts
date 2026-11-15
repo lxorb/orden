@@ -193,6 +193,12 @@ describe('what keeps its straight quotes', () => {
     expect(at('see [it](https://x.dev) and| more\n')).toBe(false)
   })
 
+  test('and not the deeper lines of a list, which are indented but still prose', () => {
+    expect(at('- a\n  - b\n    - c |\n')).toBe(false)
+    expect(at('- a\n  - b\n    wraps |\n')).toBe(false)
+    expect(at('- a\n\n      code |\n')).toBe(true)
+  })
+
   test('and not a fence that nothing closes, which is a paragraph', () => {
     expect(at('```js\nhe said| something\n')).toBe(false)
   })

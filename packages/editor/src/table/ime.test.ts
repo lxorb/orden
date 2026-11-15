@@ -59,4 +59,29 @@ describe('an input method in a table cell', () => {
       '| a     | b   |\n| ----- | --- |\n| 1中文 | 2   |\n\nend',
     )
   })
+
+  test('keeps the words being composed when another cell is written meanwhile', () => {
+    const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nend'
+    const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
+    open.push(view)
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
+      (one) => one.textContent === '1',
+    )
+    if (!cell) throw new Error('the table drew no cell holding 1')
+    cell.tabIndex = 0
+    cell.focus()
+    cell.textContent = '1x'
+    cell.dispatchEvent(new InputEvent('input', { bubbles: true }))
+
+    cell.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    compose(cell, '1xか')
+    const three = view.state.doc.toString().indexOf('| 3') + 3
+    view.dispatch({ changes: { from: three, insert: 'Z' } })
+    cell.dispatchEvent(new CompositionEvent('compositionend', { data: 'か', bubbles: true }))
+
+    expect(cell.isConnected).toBe(true)
+    expect(cell.textContent).toBe('1xか')
+    expect(view.state.doc.toString()).toContain('| 1xか |')
+    expect(view.state.doc.toString()).toContain('3Z')
+  })
 })
