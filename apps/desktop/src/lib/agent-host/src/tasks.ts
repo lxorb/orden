@@ -182,7 +182,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const space = 'space' in call.args ? (patch.space ?? null) : spaceIdOf(call)
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
-  const made = await todos.add({ ...patch, title, space })
+  const made = await todos.add({ ...patch, title, space, done: false })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }

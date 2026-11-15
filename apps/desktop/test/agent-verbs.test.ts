@@ -1767,6 +1767,16 @@ describe('to-dos and bases', () => {
     })
   })
 
+  test('a new todo starts not done, as the hosted server makes it', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const added = await call('add_task', { text: 'Call mum', done: true })
+    const id = (added as { result: { id: string } }).result.id
+    const made = todos.todo(id)
+    await todos.remove(id)
+    expect(added).toMatchObject({ result: { done: false } })
+    expect({ done: made?.done, doneAt: made?.doneAt }).toEqual({ done: false, doneAt: null })
+  })
+
   test('a priority sent as the words a terminal types is still a priority', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const added = await call('add_task', { text: 'Call mum', priority: '2' })
