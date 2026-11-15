@@ -6,7 +6,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
-const refusing = vi.hoisted(() => ({ delete: false, after: Promise.resolve() }))
+const refusing = vi.hoisted(() => ({ delete: false, write: false, after: Promise.resolve() }))
 
 vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../platform/src/tauri')>()),
@@ -20,6 +20,7 @@ vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
     if (command === 'ai_thread_read')
       return Promise.resolve(shelf.get(String(args.id))?.body ?? null)
     if (command === 'ai_thread_write') {
+      if (refusing.write) return Promise.reject(new Error('the disk is full'))
       shelf.set(String(args.id), { head: args.head, body: String(args.body) })
       return Promise.resolve(null)
     }
@@ -1059,6 +1060,24 @@ describe('a chat while it answers', () => {
     expect(chat.thread?.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
     expect(chat.trouble).toBeTruthy()
     expect(engine.send).not.toHaveBeenCalled()
+  })
+
+  test('a branch the disk will not keep still opens, and its refusal is handled', async () => {
+    const chat = await asked()
+    const from = chat.thread!.id
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    onTestFinished(() => {
+      process.off('unhandledRejection', unhandled)
+      refusing.write = false
+    })
+    refusing.write = true
+
+    chat.branch()
+    await settled()
+
+    expect(chat.thread?.id).not.toBe(from)
+    expect(unhandled).not.toHaveBeenCalled()
   })
 
   test('Ask again sends the message at its first time, so what the first try changed is its own', async () => {

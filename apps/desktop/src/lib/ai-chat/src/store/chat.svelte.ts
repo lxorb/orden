@@ -1447,7 +1447,9 @@ class Chat implements Panel {
     this.show(copy)
     this.relist()
     rememberOpen(copy.id)
-    void keepThread(copy).then(() => this.refreshHeads())
+    void keepThread(copy)
+      .catch(() => undefined)
+      .then(() => this.refreshHeads())
     this.focus()
   }
 
