@@ -25,7 +25,7 @@ import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
 import { movedIn, movedPath, withExtension } from './moving'
-import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
+import { insidePath, noteFor, openToAgents, relativeIn, spaceFor, spaceToWrite } from './space'
 
 const SEARCH_PATIENCE = 8000
 
@@ -69,6 +69,7 @@ export async function newNote(args: Said): Promise<unknown> {
 
   const relative = wanted(args)
   const path = insideSpace(space.root, relative)
+  openToAgents(path, relative)
   const before = await workspace.noteText(path)
 
   if (before !== null) {
@@ -207,6 +208,7 @@ export async function writeFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
+  openToAgents(path, relative)
   const content = words(args, 'content')
   if (content === null) throw new Error('say the content')
 
@@ -244,6 +246,7 @@ async function madeFile(args: Said, relative: string, content: string): Promise<
   }
 
   const space = await spaceToWrite(args)
+  openToAgents(insideSpace(space.root, named), named)
   if (!(await writeIfAbsent(insideSpace(space.root, named), content))) {
     throw new Error(`${named} is already there`)
   }
@@ -257,19 +260,22 @@ async function madeFile(args: Said, relative: string, content: string): Promise<
 export async function moveFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const from = relativeIn(args, 'path')
-  const to = relativeIn(args, 'to')
+  const to = movedPath(from, relativeIn(args, 'to'))
+  openToAgents(insideSpace(space.root, from), from)
+  openToAgents(insideSpace(space.root, to), to)
 
   if ((await workspace.noteText(insideSpace(space.root, from))) === null) {
     throw new Error(`there is no note at ${from}`)
   }
 
-  return { from, to: await movedIn(space.root, from, movedPath(from, to)) }
+  return { from, to: await movedIn(space.root, from, to) }
 }
 
 export async function deleteFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
+  openToAgents(path, relative)
 
   if ((await workspace.noteText(path)) === null) {
     throw new Error(`there is no note at ${relative}`)

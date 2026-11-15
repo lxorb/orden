@@ -51,6 +51,10 @@ export function insidePath(asked: string): string {
   return safe
 }
 
+export function openToAgents(path: string, relative: string): void {
+  if (!protection.agentsMay(path)) throw new Error(`${relative} is protected`)
+}
+
 export async function noteFor(args: Said, name = 'path', writing = false): Promise<Note> {
   const space = await (writing ? spaceToWrite : spaceFor)(args)
 
@@ -61,7 +65,7 @@ export async function noteFor(args: Said, name = 'path', writing = false): Promi
 
     const relative = withinSpace(space.root, path)
     if (relative === null) throw new Error('no note of this space is open, so say which path')
-    if (!protection.agentsMay(path)) throw new Error(`${relative} is protected`)
+    openToAgents(path, relative)
 
     workspace.flush()
     return { relative, path, text: open.doc }
@@ -69,7 +73,7 @@ export async function noteFor(args: Said, name = 'path', writing = false): Promi
 
   const relative = relativeIn(args, name)
   const path = insideSpace(space.root, relative)
-  if (!protection.agentsMay(path)) throw new Error(`${relative} is protected`)
+  openToAgents(path, relative)
   const text = await workspace.noteText(path)
   if (text === null) throw new Error(`there is no note at ${relative}`)
 

@@ -425,6 +425,39 @@ describe('a space shared to be read', () => {
   })
 })
 
+describe('a note or folder kept from agents', () => {
+  test('is never written, moved, moved into or deleted by a verb, as it is never read', async () => {
+    const { protection } = await import('../../protect/src/api')
+    held.clear()
+    held.set('/Work/Secret/Diary.md', '# Diary\nthe merger')
+    held.set('/Work/Plan.md', '# Plan')
+    written.length = 0
+    made.length = 0
+    moves.moveMany.mockClear()
+    moves.rename.mockClear()
+    protection.set('/Work', '/Work/Secret', 'password')
+
+    const asked = [
+      () => moveFile({ path: 'Secret/Diary.md', to: 'Diary.md' }),
+      () => moveFile({ path: 'Plan.md', to: 'Secret/Plan.md' }),
+      () => deleteFile({ path: 'Secret/Diary.md' }),
+      () => writeFile({ path: 'Secret/Diary.md', content: 'Gone.' }),
+      () => writeFile({ path: 'Secret/Planted.md', content: 'planted' }),
+      () => writeFile({ path: 'Secret/drawing.canvas', content: '{}' }),
+      () => newNote({ path: 'Secret/Fresh.md' }),
+      () => appendNote({ path: 'Secret/Diary.md', content: 'More.' }),
+    ]
+    for (const one of asked) await expect(one()).rejects.toThrow(/is protected/)
+
+    expect(written).toEqual([])
+    expect(made).toEqual([])
+    expect(moves.moveMany).not.toHaveBeenCalled()
+    expect(moves.rename).not.toHaveBeenCalled()
+    expect(held.get('/Work/Secret/Diary.md')).toBe('# Diary\nthe merger')
+    protection.set('/Work', '/Work/Secret', null)
+  })
+})
+
 describe('the space’s instructions, which a move does not make', () => {
   test('refused with what to do instead, whatever note it was', async () => {
     held.clear()
