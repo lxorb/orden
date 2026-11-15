@@ -195,11 +195,6 @@ describe('the glasses settings', () => {
     expect(modes.glassesVoice).toBe(false)
   })
 
-  test('start with no model, because there is nothing to guess', () => {
-    expect(modes.glassesModel).toBe('')
-    expect(modes.glassesEffort).toBe('low')
-  })
-
   test('take a heading level and write it down', () => {
     modes.setGlassesBreak('3')
     expect(modes.glassesBreak).toBe(3)
@@ -233,18 +228,11 @@ describe('the glasses settings', () => {
     expect(saved().glassesVoice).toBe(true)
   })
 
-  test('take a model and an effort the API knows', () => {
-    modes.setGlassesModel('gpt-6-astra')
-    modes.setGlassesEffort('high')
-
-    expect(saved().glassesModel).toBe('gpt-6-astra')
-    expect(saved().glassesEffort).toBe('high')
-  })
-
-  test('ignore an effort the API does not take', () => {
-    modes.setGlassesEffort('medium')
-    modes.setGlassesEffort('banana')
-    expect(modes.glassesEffort).toBe('medium')
+  test('keep no model or effort of their own, since they ask the default AI account', () => {
+    modes.setGlassesVoice(false)
+    expect(saved()).not.toHaveProperty('glassesModel')
+    expect(saved()).not.toHaveProperty('glassesEffort')
+    expect(modes).not.toHaveProperty('glassesModel')
   })
 })
 
@@ -674,6 +662,26 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.quietMarks).toBe(true)
+  })
+
+  test('deletes the OpenAI key the glasses kept on the account before they asked the default AI account', async () => {
+    const removed: string[] = []
+    const was = api.settings
+    api.settings = async () => ({
+      settings: {},
+      key: { set: true, tail: '4f2a' },
+    })
+    Object.assign(api, { removeAskKey: async (token: string) => void removed.push(token) })
+    await modes.adopt('token')
+    expect(removed).toEqual(['token'])
+
+    api.settings = async () => ({
+      settings: {},
+      key: { set: false, tail: '' },
+    })
+    await modes.adopt('token')
+    expect(removed).toEqual(['token'])
+    api.settings = was
   })
 
   test('brings Silent mode', async () => {

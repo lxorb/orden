@@ -11,7 +11,10 @@
     "platform",
     "ui-kit",
     "settings",
-    "web-backend"
+    "web-backend",
+    "ai-providers",
+    "scan",
+    "search"
   ],
   "pending": [
     "apps/desktop/src/lib/file-mark.ts",

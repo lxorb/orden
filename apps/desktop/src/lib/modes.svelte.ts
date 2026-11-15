@@ -30,8 +30,7 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { type AskEffort, isAskEffort } from '@orden/contracts'
-import { account, api, type AccountSettings, glassesKey } from './accounts/src/api'
+import { account, api, type AccountSettings } from './accounts/src/api'
 import { viewport } from './ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -137,8 +136,6 @@ interface Saved {
   glassesWords: Record<string, unknown>
   glassesSeen: boolean
   mobileSeen: boolean
-  glassesModel: string
-  glassesEffort: string
   vim: boolean
   attachments: string
   pagesPaper: string
@@ -243,8 +240,6 @@ export const DEFAULTS = {
   glassesCompaction: DEFAULT_COMPACTION,
   glassesSeen: false,
   mobileSeen: false,
-  glassesModel: '',
-  glassesEffort: 'low' as AskEffort,
   vim: false,
   attachments: 'space' as AttachmentFolder,
   pagesPaper: 'a4' as Paper,
@@ -316,8 +311,6 @@ class Modes {
   glassesWords = $state<Record<string, string>>({})
   glassesSeen = $state(DEFAULTS.glassesSeen)
   mobileSeen = $state(DEFAULTS.mobileSeen)
-  glassesModel = $state(DEFAULTS.glassesModel)
-  glassesEffort = $state<AskEffort>(DEFAULTS.glassesEffort)
   vim = $state(DEFAULTS.vim)
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
   attachments = $state<AttachmentFolder>(DEFAULTS.attachments)
@@ -385,10 +378,6 @@ class Modes {
       this.glassesMarks = marksOf(saved.glassesMarks)
       this.glassesWords = wordsOf(saved.glassesWords)
       stale ||= 'glassesScroll' in saved
-      this.glassesModel = text(saved.glassesModel, DEFAULTS.glassesModel)
-      this.glassesEffort = isAskEffort(saved.glassesEffort)
-        ? saved.glassesEffort
-        : DEFAULTS.glassesEffort
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
       if (saved.translucent === true) theme.adoptTranslucency()
       stale ||= 'translucent' in saved
@@ -785,22 +774,6 @@ class Modes {
     this.share({ glassesSeen: true })
   }
 
-  setGlassesModel(model: string) {
-    if (model === this.glassesModel) return
-
-    this.glassesModel = model
-    this.persist()
-    this.share({ glassesModel: model })
-  }
-
-  setGlassesEffort(effort: string) {
-    if (!isAskEffort(effort) || effort === this.glassesEffort) return
-
-    this.glassesEffort = effort
-    this.persist()
-    this.share({ glassesEffort: effort })
-  }
-
   toggleVim(view?: EditorView) {
     this.setVimKeys(!this.vim, view)
   }
@@ -895,7 +868,7 @@ class Modes {
       const answer = await api.settings(token)
       if (this.session !== session) return null
       remote = answer.settings
-      glassesKey.took(answer.key)
+      if (answer.key?.set) void api.removeAskKey(token).catch(() => undefined)
     } catch {
       return null
     }
@@ -1059,12 +1032,6 @@ class Modes {
     if (remote.glassesSeen === true) {
       took(true, (seen) => (this.glassesSeen = seen))
       this.toldOfGlasses = true
-    }
-    if (typeof remote.glassesModel === 'string') {
-      took(remote.glassesModel, (model) => (this.glassesModel = model))
-    }
-    if (isAskEffort(remote.glassesEffort)) {
-      took(remote.glassesEffort, (effort) => (this.glassesEffort = effort))
     }
 
     if (moved) this.persist()
@@ -1239,8 +1206,6 @@ class Modes {
       glassesWords: this.glassesWords,
       glassesSeen: this.glassesSeen,
       mobileSeen: this.mobileSeen,
-      glassesModel: this.glassesModel,
-      glassesEffort: this.glassesEffort,
       vim: this.vim,
       attachments: this.attachments,
       pagesPaper: this.pagesPaper,

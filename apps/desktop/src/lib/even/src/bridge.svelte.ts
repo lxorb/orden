@@ -646,14 +646,9 @@ class Bridge {
     this.answer = ''
     this.act(shell.asking(question))
 
-    const token = account.accountToken
-    if (!token) {
-      this.act(shell.answered(question, 'Sign in to ask a question.'))
-      return
-    }
-
     try {
-      const { answer } = await api.ask(token, question, modes.glassesModel, modes.glassesEffort)
+      const { answerOf } = await import('./asking')
+      const answer = await answerOf(question)
       this.answer = answer
       this.act(shell.answered(question, answer))
     } catch (error) {

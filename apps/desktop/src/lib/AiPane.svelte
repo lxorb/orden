@@ -42,7 +42,6 @@
     type Provider,
   } from './ai-providers/src/api'
   import type { Adding } from './ai-providers/src/api'
-  import { glassesKey } from './accounts/src/api'
   import { message } from './ui-kit/src/api'
   import { Select } from './ui-controls/src/api'
   import { viewport } from './ui-kit/src/api'
@@ -568,17 +567,6 @@
   <p class="hint caption" role="note">
     No keyring was found on this device, so your keys are kept in a file only you can read.
   </p>
-{/if}
-
-{#if glassesKey.set}
-  <h3>OpenAI key</h3>
-  <div class="card">
-    <div class="orden-setting setting">
-      <span class="name">Used by the glasses</span>
-      <span class="hint">set, ends in …{glassesKey.tail}</span>
-    </div>
-  </div>
-  <p class="hint caption">Kept encrypted on your account, and never shown again.</p>
 {/if}
 
 <style>
