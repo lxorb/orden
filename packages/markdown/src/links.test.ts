@@ -502,6 +502,16 @@ describe('the headings a note holds', () => {
     expect(headingsOf('```\n# Not one\n```\n# One\n')).toEqual(['One'])
   })
 
+  test('and none from a comment in the front matter', () => {
+    expect(headingsOf('---\n# my comment\ntitle: x\n---\n# Real\n')).toEqual(['Real'])
+  })
+
+  test('and none from a lone hash or one with a space that does not break the line', () => {
+    expect(headingsOf('a\r\n#\r\nb\r\n')).toEqual([])
+    expect(headingsOf('#\u00a0Title\n')).toEqual([])
+    expect(headingsOf('# One\r\n')).toEqual(['One'])
+  })
+
   test('and none from a fence inside a list item', () => {
     const note = '- a\n  ```\n  # Not one\n  ```\n\n# One\n\nwords\n'
     expect(headingsOf(note)).toEqual(['One'])

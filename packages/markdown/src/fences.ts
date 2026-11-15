@@ -21,7 +21,7 @@ export function closesFence(line: string, mark: string): boolean {
 
   const run = found[1] ?? ''
   if (!run.startsWith(mark.charAt(0)) || run.length < mark.length) return false
-  return /^ {0,3}[`~]+[ \t]*\r?$/.test(line) || fenceName(line) !== null
+  return /^ {0,3}(?:`+|~+)[ \t]*\r?$/.test(line) || fenceName(line) !== null
 }
 
 export function fenceName(line: string): string | null {

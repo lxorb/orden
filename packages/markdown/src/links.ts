@@ -496,7 +496,7 @@ export function slugify(text: string): string {
   )
 }
 
-const HEADING = /^\s{0,3}(#{1,6})\s+(.*)\r?$/
+const HEADING = /^[ \t]{0,3}(#{1,6})[ \t]+(.*)\r?$/
 
 const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 
@@ -513,7 +513,7 @@ export function headingsOf(text: string): string[] {
   const found: string[] = []
 
   for (const row of lines(text)) {
-    if (row.code) continue
+    if (row.code || row.matter) continue
     if (HEADING.test(row.text)) found.push(headingText(row.text))
   }
 
