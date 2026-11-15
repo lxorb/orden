@@ -35,7 +35,7 @@ async () => {
   const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => /Scratchpad\\.md$/.test(one.path ?? ''))
   if (tab) return tab.note.latest
-  return (await ws.noteText('/.nib/Scratchpad.md')) ?? ''
+  return (await ws.noteText('/.orden/Scratchpad.md')) ?? ''
 }
 """
 FOCUS_NOTE = "() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()"
@@ -205,7 +205,7 @@ def asked(page: Page) -> None:
     shot(page, "06-answered")
     request = Model.seen[-1] if Model.seen else {}
     rules = [one.get("content", "") for one in request.get("messages", []) if one.get("role") == "system"]
-    if not rules or "agent inside nib" not in rules[0]:
+    if not rules or "agent inside Orden" not in rules[0]:
         wrong(f"the quick question was not told the panel's rules: {rules[:1]}")
     if page.evaluate(CHATS + ".then((chat) => chat.thread?.id ?? null)") != open_before:
         wrong("the quick question took the panel's open chat away")
