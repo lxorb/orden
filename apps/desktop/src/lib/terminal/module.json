@@ -19,7 +19,8 @@
     "ui-kit",
     "parting",
     "documents",
-    "file-writes"
+    "file-writes",
+    "agent-verbs"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",

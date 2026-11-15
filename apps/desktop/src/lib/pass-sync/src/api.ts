@@ -14,7 +14,7 @@ export { savedAttachment } from './attachment-save'
 export { type Picked } from './attachments'
 export { autofill } from './autofill'
 export { fetcher } from './breach-fetch'
-export { isPassSecret } from './clipboard'
+export { copySecret, isPassSecret } from './clipboard'
 export { copyField } from './copied'
 export { FIELD_ICONS, fieldKindIcon } from './field-icons'
 export {

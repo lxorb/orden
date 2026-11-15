@@ -1,3 +1,4 @@
+import { type AgentVerb, agentRefusal, registerAgentVerbs } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -19,16 +20,21 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const asked: { name: string; args: unknown; agent: unknown }[] = []
 
-vi.mock('../../agent-host/index', () => ({
-  runAgentVerb: (name: string, args: unknown, caller: { agent: unknown }) => {
-    asked.push({ name, args, agent: caller.agent })
-    return Promise.resolve(
-      name === 'update_task' && (args as { at?: string }).at === 'gone'
-        ? { ok: false, status: 'error', code: 'not_found', message: 'that task is not there' }
-        : { ok: true, status: 'ok', result: { at: 'Inbox.md#0:abc' } },
-    )
-  },
-}))
+const ask: AgentVerb = (name, args, caller) => {
+  asked.push({ name, args, agent: caller.agent })
+  return Promise.resolve(
+    name === 'update_task' && (args as { at?: string }).at === 'gone'
+      ? agentRefusal('not_found', 'that task is not there')
+      : { ok: true, status: 'ok', result: { at: 'Inbox.md#0:abc' } },
+  )
+}
+registerAgentVerbs(() =>
+  Promise.resolve(
+    Object.fromEntries(
+      ['add_task', 'list_tasks', 'update_task', 'query_base'].map((verb) => [verb, ask]),
+    ),
+  ),
+)
 
 const { dispatch, verbForAction } = await import('./verbs')
 

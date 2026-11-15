@@ -70,6 +70,8 @@ export const openAll = async (...args: Parameters<typeof RemoteOpen.openAll>) =>
 export const connectTo = async (...args: Parameters<typeof RemoteOpen.connectTo>) =>
   (await remoteOpening()).connectTo(...args)
 
+export const terminalAgent = () => (__EVEN_PLUGIN__ ? refused() : import('./agent/verbs'))
+
 export const terminalTabKind = () =>
   __EVEN_PLUGIN__ ? refused() : import('./tab-kind').then((one) => one.terminalTabKind)
 

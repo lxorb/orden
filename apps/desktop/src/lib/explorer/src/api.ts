@@ -11,3 +11,8 @@ export const loadExplorerTab = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no file explorer in the Even Realities plugin'))
     : import('./ExplorerTab.svelte')
+
+export const explorerVerbs = () =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no file explorer in the Even Realities plugin'))
+    : import('./agent-verbs').then((one) => one.explorerVerbs)

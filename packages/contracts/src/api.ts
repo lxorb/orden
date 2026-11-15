@@ -197,14 +197,29 @@ export {
   workspaceView,
 } from './ports'
 export { whenLoaded } from './loading'
-export type {
-  AgentHeard,
-  AgentMarksPort,
-  AgentPorts,
-  AgentQuestion,
-  AgentReaderPort,
-  AgentScope,
-  AgentWritesPort,
+export {
+  type AgentAnswer,
+  type AgentCaller,
+  type AgentCrateAnswers,
+  type AgentGrant,
+  type AgentHeard,
+  type AgentMarksPort,
+  type AgentPorts,
+  type AgentQuestion,
+  type AgentReaderPort,
+  type AgentSaid,
+  type AgentScope,
+  type AgentTabKind,
+  type AgentVerb,
+  type AgentVerbs,
+  type AgentWritesPort,
+  agentRefusal,
+  agentTabKindLoaded,
+  agentTabKindParts,
+  agentVerbNames,
+  registerAgentTabKind,
+  registerAgentVerbs,
+  runAgentVerb,
 } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'

@@ -10,7 +10,10 @@
     "ui-kit",
     "file-undo",
     "documents",
-    "tree"
+    "tree",
+    "agent-protocol",
+    "agent-verbs",
+    "automation"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -22,6 +25,7 @@
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/roving.ts",
+    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/when.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
