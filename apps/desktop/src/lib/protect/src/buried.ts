@@ -5,12 +5,13 @@ import {
   isRecord,
   keepJson,
   stored,
+  within,
   without,
 } from '../../platform/src/api'
 import type { Way } from './protection.svelte'
 
 const BURIED_KEY = 'orden:protected-buried'
-const MOST_BURIED = 200
+const MOST_BURIED = 1000
 const HISTORY_KEY = 'orden:protected-buried-history'
 const HISTORY_AWAY = '/.orden-locked-history'
 
@@ -63,16 +64,71 @@ export async function bury(
   root: string,
   at: string,
   back: string | undefined,
-  ways: Record<string, Way>,
+  held: Record<string, Way>,
 ): Promise<void> {
+  const ways: Record<string, Way> = {}
+  for (const [key, way] of Object.entries(held)) {
+    const rest = at ? (key ? within(at, key, root) : null) : key
+    if (rest !== null) ways[rest] = way
+  }
   if (!Object.keys(ways).length) return
   const away = `${HISTORY_AWAY}/${crypto.randomUUID()}`
-  for (const name of [at ? placeOf(root, at) : null, back ?? null]) {
+  for (const name of [placeOf(root, at), back ?? null]) {
     if (name === null) continue
     keepBuried(name, ways)
     keepHistory(name, away)
   }
   await rehome(pathOf(root, at), away)
+}
+
+function landedAt(at: string, rest: string): string {
+  return at && rest ? `${at}/${rest}` : at || rest
+}
+
+async function exactly(
+  named: string,
+  root: string,
+  at: string,
+  held: Record<string, Way>,
+): Promise<Record<string, Way> | null> {
+  const histories = readHistories()
+  const away = histories[named]
+  if (away !== undefined) {
+    keepJson(HISTORY_KEY, without(histories, named))
+    await rehome(away, pathOf(root, at))
+  }
+  const buried = readBuried()
+  const ways = buried[named]
+  keepJson(BURIED_KEY, without(buried, named))
+  const came: Record<string, Way> = {}
+  for (const [rest, way] of Object.entries(ways ?? {})) {
+    const landed = landedAt(at, rest)
+    if (inSpace(landed) && !(landed in held)) came[landed] = way
+  }
+  return came
+}
+
+async function under(
+  root: string,
+  at: string,
+  held: Record<string, Way>,
+): Promise<Record<string, Way>> {
+  const came: Record<string, Way> = {}
+  const histories = readHistories()
+  const here = pathOf(root, at)
+  for (const [name, ways] of Object.entries(readBuried())) {
+    if (!name.startsWith(`${root}\n`)) continue
+    const folder = name.slice(root.length + 1)
+    if (folder === at || within(folder, at, root) === null) continue
+    for (const [rest, way] of Object.entries(ways)) {
+      const key = landedAt(folder, rest)
+      const near = within(key, at, root) !== null || within(at, key, root) !== null
+      if (near && inSpace(key) && !(key in held)) came[key] = way
+    }
+    const away = histories[name]
+    if (away !== undefined) await rehome(`${away}${here.slice(pathOf(root, folder).length)}`, here)
+  }
+  return came
 }
 
 export async function unburied(
@@ -81,22 +137,17 @@ export async function unburied(
   at: string,
   held: Record<string, Way>,
 ): Promise<Record<string, Way> | null> {
-  const named = back ?? placeOf(root, at)
-  const histories = readHistories()
-  const away = histories[named]
-  if (away !== undefined) {
-    keepJson(HISTORY_KEY, without(histories, named))
-    if (inSpace(at)) await rehome(away, pathOf(root, at))
-  }
-  const buried = readBuried()
-  const ways = buried[named]
-  if (!ways) return null
-  keepJson(BURIED_KEY, without(buried, named))
   if (!inSpace(at)) return null
-  const came: Record<string, Way> = {}
-  for (const [rest, way] of Object.entries(ways)) {
-    const landed = at && rest ? `${at}/${rest}` : at || rest
-    if (inSpace(landed) && !(landed in held)) came[landed] = way
+  const buried = readBuried()
+  const place = placeOf(root, at)
+  const named = [back, place].find((one) => one !== null && one in buried) ?? null
+  const came = {
+    ...(await under(root, at, held)),
+    ...(named === null ? {} : await exactly(named, root, at, held)),
+  }
+  if (named !== null && named !== place && place in buried) {
+    keepJson(BURIED_KEY, without(readBuried(), place))
+    keepJson(HISTORY_KEY, without(readHistories(), place))
   }
   return Object.keys(came).length ? came : null
 }

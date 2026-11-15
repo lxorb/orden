@@ -153,11 +153,10 @@ class Trash {
         await account.loadSpaces()
       } else {
         await api.restoreNote(token, item.ref)
-        const { note } = item
-        const space =
-          note && workspace.spaces.find((one) => sync.remoteIdFor(one.root) === note.spaceId)
-        if (note && space) await protection.restoredAt(space.root, note.path)
       }
+      const spaceId = item.note?.spaceId ?? item.ref
+      const space = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === spaceId)
+      if (space) await protection.restoredAt(space.root, item.note?.path ?? '')
       sync.nudge()
     })
   }

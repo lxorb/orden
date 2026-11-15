@@ -57,17 +57,17 @@ function failed(op: FileOp, error: unknown) {
 
 export interface KeptByPath {
   moved?(from: string, to: string, root: string | null, into?: string | null): void
-  gone?(path: string, root: string | null, back?: string): void
+  gone?(path: string, root: string | null, back?: string): unknown
   cameBack?(path: string, root: string | null, back: string): unknown
   spaceMoved?(from: string, to: string): void
-  forget?(root: string, back?: string): void
+  forget?(root: string, back?: string): unknown
 }
 
 export function keeping(store: KeptByPath): Follower {
   return (op): unknown => {
     if (op.op === 'removed') {
-      if (op.kind === 'space') store.forget?.(op.path, op.back)
-      else store.gone?.(op.path, op.root, op.back)
+      if (op.kind === 'space') return store.forget?.(op.path, op.back)
+      return store.gone?.(op.path, op.root, op.back)
     } else if (op.op === 'moved') {
       if (op.kind === 'space') store.spaceMoved?.(op.from, op.to)
       else store.moved?.(op.from, op.to, op.root, op.into === undefined ? op.root : op.into)

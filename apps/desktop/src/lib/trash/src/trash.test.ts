@@ -262,7 +262,7 @@ describe('signed out', () => {
     if (!only) throw new Error('the deleted space is not in the list')
     await trash.restore(only)
     expect(protection.ways('/space')).toEqual({ '': 'password', 'Idea.md': 'device' })
-    protection.forget('/space')
+    await protection.forget('/space')
   })
 
   test('undoing a deletion the trash no longer holds falls back to the snapshot', async () => {
@@ -536,6 +536,26 @@ describe('signed in', () => {
     await trash.restore(trash.items.find((item) => item.id === 'note:n1')!)
     expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
     protection.set('/space', '/space/Idea.md', null)
+  })
+
+  test('a protected note the account put back from a deleted folder is protected again', async () => {
+    protection.set('/space', '/space/Private', 'password')
+    await protection.gone('/space/Private', '/space')
+    const at = Date.now()
+    remote.notes = [
+      {
+        id: 'n2',
+        spaceId: 'remote',
+        spaceName: 'space',
+        path: 'Private/Diary.md',
+        deletedAt: at,
+        purgeAt: at,
+      },
+    ]
+    await trash.load()
+    await trash.restore(trash.items.find((item) => item.id === 'note:n2')!)
+    expect(protection.own('/space', '/space/Private')?.way).toBe('password')
+    await protection.forget('/space')
   })
 
   test('purging a note asks the account to forget it', async () => {

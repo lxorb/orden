@@ -355,20 +355,16 @@ export class Protection {
     if (Object.keys(came).length) this.put(into, { ...this.ways(into), ...came })
   }
 
-  gone(path: string, root: string | null, back?: string): void {
+  async gone(path: string, root: string | null, back?: string): Promise<void> {
     if (root === null) return
     const at = relativeTo(root, path)
-    const held = this.ways(root)
-    const next: Record<string, Way> = {}
-    const went: Record<string, Way> = {}
-    for (const [key, way] of Object.entries(held)) {
-      const rest = key === SPACE ? null : within(at, key, root)
-      if (rest === null) next[key] = way
-      else went[rest] = way
-    }
-    if (!Object.keys(went).length) return
-    this.put(root, next)
-    void buried().then((one) => one.bury(root, at, back, went))
+    const went = (key: string) => key !== SPACE && within(at, key, root) !== null
+    if (!Object.keys(this.ways(root)).some(went)) return
+    await (await buried()).bury(root, at, back, this.ways(root))
+    this.put(
+      root,
+      Object.fromEntries(Object.entries(this.ways(root)).filter(([key]) => !went(key))),
+    )
   }
 
   cameBack(path: string, root: string | null, back: string): Promise<void> | undefined {
@@ -395,10 +391,9 @@ export class Protection {
     this.write()
   }
 
-  forget(root: string, back?: string): void {
+  async forget(root: string, back?: string): Promise<void> {
     if (!(root in this.spaces)) return
-    const ways = this.ways(root)
-    if (back) void buried().then((one) => one.bury(root, SPACE, back, ways))
+    await (await buried()).bury(root, SPACE, back, this.ways(root))
     this.spaces = without(this.spaces, root)
     this.write()
   }
