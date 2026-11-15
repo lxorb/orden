@@ -232,7 +232,8 @@ export function restamped(
             : file.bytes
       return { ...file, path: now, bytes }
     }
-    const linked = moved.size ? linksFollowed(file.text, was, moved, paths) : file.text
+    const linked =
+      moved.size || under ? linksFollowed(file.text, was, moved, paths, under) : file.text
     const text = under ? basesFollowed(linked, under) : linked
     return { ...file, path: now, text }
   })

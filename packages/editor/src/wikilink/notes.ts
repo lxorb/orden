@@ -208,10 +208,21 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   if (!parts.length) return null
   const whole = resolveNote(index, `/${parts.join('/')}`)
   if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
-  return resolveNote(index, parts.join('/'))
+  const top = fromTop(target)?.join('/') ?? null
+  if (top === null) return resolveNote(index, parts.join('/'))
+  return (
+    resolveNote(index, `/${top}`) ?? resolveNote(index, parts.join('/')) ?? resolveNote(index, top)
+  )
 }
 
-function relativeParts(index: NoteIndex, target: string): string[] {
+function fromTop(target: string): string[] | null {
+  const written = target.replace(/\\/g, '/')
+  if (/^\.{1,2}(\/|$)/.test(written)) return null
+  const parts = relativeParts({ path: null }, written)
+  return parts.length ? parts : null
+}
+
+function relativeParts(index: Pick<NoteIndex, 'path'>, target: string): string[] {
   const written = target.replace(/\\/g, '/')
   const parts =
     index.path === null || written.startsWith('/')
@@ -228,19 +239,21 @@ function relativeParts(index: NoteIndex, target: string): string[] {
 }
 
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const { wanted, anchored } = targetOf(
-    foldName(
-      kind === 'markdown'
-        ? relativeParts(index, target).join('/')
-        : target.trim().replace(/\\/g, '/'),
-    ),
+  if (kind !== 'markdown') return fileAt(index, target.trim().replace(/\\/g, '/'), false)
+  const top = fromTop(target)
+  return (
+    fileAt(index, relativeParts(index, target).join('/'), true) ??
+    (top && fileAt(index, top.join('/'), true))
   )
+}
+
+function fileAt(index: NoteIndex, target: string, whole: boolean): string | null {
+  const { wanted, anchored } = targetOf(foldName(target))
   if (!wanted) return null
 
-  const whole = kind === 'markdown' || anchored
   const found = index.files.filter((path) => {
     const held = foldName(path)
-    return held === wanted || (!whole && held.endsWith(`/${wanted}`))
+    return held === wanted || (!whole && !anchored && held.endsWith(`/${wanted}`))
   })
 
   return (

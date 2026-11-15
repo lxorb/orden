@@ -341,6 +341,21 @@ describe('a name that is already taken', () => {
     )
   })
 
+  test('a markdown link written from the top follows its note when it steps aside', () => {
+    const stamped = restamped(
+      planOf([
+        note('Notes/Day.md', 'See [p](Projects/Plan.md) and [q](/Projects/Plan.md).'),
+        note('Projects/Plan.md', '# P'),
+      ]),
+      new Set(['projects/plan.md']),
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Notes/Day.md')).toBe(
+      'See [p](Projects/Plan%202.md) and [q](../Projects/Plan%202.md).',
+    )
+  })
+
   test('a folder the space already fills moves its folder note aside with it', () => {
     const stamped = restamped(
       planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
@@ -410,6 +425,33 @@ describe('a vault landed beside notes of the same name', () => {
     )
 
     expect(textAt(files, 'Inbox/Home.md')).toBe('See [[Projects/Plan 2]].\n')
+  })
+
+  test('has a link written from the top of the vault still name its note from the top of the space', async () => {
+    const { setLinkWriting } = await import('../../link-format/src/api')
+    for (const format of ['absolute', 'shortest'] as const) {
+      setLinkWriting(format)
+      try {
+        const files = await vaultLanded(
+          ['inbox/projects/plan.md'],
+          ['Projects/Plan.md', '# The project plan'],
+          ['Areas/Plan.md', '# The area plan'],
+          ['Notes/Near.md', '# Near'],
+          [
+            'Notes/Sub/Day.md',
+            'See [[Projects/Plan]], [[Near]] and [x](../Near.md).\n\n[r]: /Notes/Near.md\n',
+          ],
+        )
+
+        expect(textAt(files, 'Inbox/Notes/Sub/Day.md')).toBe(
+          format === 'absolute'
+            ? 'See [Projects/Plan](Inbox/Projects/Plan%202.md), [Near](Inbox/Notes/Near.md) and [x](Inbox/Notes/Near.md).\n\n[r]: ../Near.md\n'
+            : 'See [Projects/Plan](Inbox/Projects/Plan%202.md), [Near](Near.md) and [x](Near.md).\n\n[r]: ../Near.md\n',
+        )
+      } finally {
+        setLinkWriting('wikilink')
+      }
+    }
   })
 
   test('has a link written in another case follow its note, in the case it was written', async () => {

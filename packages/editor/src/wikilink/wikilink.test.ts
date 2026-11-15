@@ -352,6 +352,28 @@ describe('which note a name means', () => {
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
   })
 
+  test('a path written from the top of the space, as Obsidian writes one, still names it', () => {
+    const here = index([note('Projects/Plan.md'), note('Notes/Plan.md')], 'Notes/Day/x.md', {}, [
+      'assets/pic.png',
+    ])
+    expect(resolveRelative(here, 'Projects/Plan.md')?.path).toBe('Projects/Plan.md')
+    expect(resolveFile(here, 'assets/pic.png', 'markdown')).toBe('assets/pic.png')
+    expect(resolveRelative(here, '../Plan.md')?.path).toBe('Notes/Plan.md')
+    expect(resolveRelative(here, './Projects/Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Projects/Plan.md')).toBeNull()
+    expect(resolveFile(here, './assets/pic.png', 'markdown')).toBeNull()
+
+    const beside = index([note('Projects/Plan.md'), note('Notes/Projects/Plan.md')], 'Notes/x.md')
+    expect(resolveRelative(beside, 'Projects/Plan.md')?.path).toBe('Notes/Projects/Plan.md')
+  })
+
+  test('a name alone, as the shortest link is written, names the note of that name', () => {
+    const here = index([note('Projects/Plan.md'), note('Inbox/Vault/Trips/Kit.md')], 'Notes/x.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('Projects/Plan.md')
+    expect(resolveRelative(here, 'Trips/Kit.md')?.path).toBe('Inbox/Vault/Trips/Kit.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+  })
+
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()

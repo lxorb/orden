@@ -199,11 +199,30 @@ export function linksFollowed(
   was: string,
   moved: ReadonlyMap<string, string>,
   paths: readonly string[],
+  under = '',
 ): string {
   const here = folderOf(was)
   const movedFolded = new Map([...moved].map(([from, to]) => [foldName(from), to] as const))
   const called = calledBy(paths)
   const code = withMath(text, codeRanges(text))
+  const known = new Set(paths.map(foldName))
+  const movedTo = (path: string) => moved.get(path) ?? movedFolded.get(foldName(path))
+
+  const follow = (path: string): string | null => {
+    const top = path.replace(/^\/+/, '')
+    const beside = joined(here, path)
+    const fromTop =
+      path.startsWith('/') ||
+      (!/^\.{1,2}(\/|$)/.test(path) && !known.has(foldName(beside)) && known.has(foldName(top)))
+    if (!fromTop) {
+      const now = movedTo(beside)
+      return now === undefined ? null : relativePath(here, now)
+    }
+    const now = movedTo(top) ?? (under && known.has(foldName(top)) ? top : undefined)
+    if (now === undefined) return null
+    if (path.startsWith('/') && !under) return relativePath(here, now)
+    return `${path.startsWith('/') ? '/' : ''}${under ? `${under}/` : ''}${now}`
+  }
 
   function markdownLink(
     whole: string,
@@ -222,13 +241,11 @@ export function linksFollowed(
     const { target, title } = splitTarget(inside)
     if (!target || isAddress(target)) return kept
     const { path: written, fragment } = splitFragment(target)
-    const path = decoded(written)
-    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
-    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
-    if (now === undefined) return kept
+    const now = follow(decoded(written))
+    if (now === null) return kept
 
     const anchor = fragment === null ? '' : `#${fragment}`
-    return `${bang}[${words}](${encodeTarget(relativePath(here, now))}${anchor}${title})`
+    return `${bang}[${words}](${encodeTarget(now)}${anchor}${title})`
   }
 
   const linked = text.replace(LINK, markdownLink)
@@ -255,11 +272,7 @@ export function linksFollowed(
     },
   )
 
-  return definitionsFollowed(wikilinked, (path) => {
-    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
-    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
-    return now === undefined ? null : relativePath(here, now)
-  })
+  return definitionsFollowed(wikilinked, follow)
 }
 
 function calledBy(paths: readonly string[]): Map<string, string[]> {
