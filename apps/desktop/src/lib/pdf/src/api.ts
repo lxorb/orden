@@ -28,6 +28,7 @@ export {
   paperPlaces,
   paperRewritten,
   PapersHeld,
+  paperBytesOf,
   type PaperView,
   type Part,
   sharpness,
