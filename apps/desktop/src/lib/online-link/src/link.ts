@@ -131,7 +131,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
               if (this.socket !== socket || !socket) return
               this.opening?.()
               this.opening = null
-              this.tries = 0
               this.quiet = 0
               this.beat(socket)
               this.hello()
@@ -184,6 +183,7 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
         this.drop(socket)
         return
       }
+      this.tries = 0
       this.send(socket, BEAT)
     })
   }

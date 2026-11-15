@@ -342,6 +342,41 @@ describe('the socket to an online session', () => {
     expect(Math.max(...waits)).toBeLessThanOrEqual(6_500)
   })
 
+  test('waits longer each time a socket is closed as soon as it opens', async () => {
+    const found = fakeWorld()
+    new Link('t1', found.world, () => undefined, 80, 24).open()
+    await settle()
+    const waits: number[] = []
+    for (let tried = 0; tried < 8; tried++) {
+      opened(found).events.closed(1011)
+      const retry = waiting(found).find((one) => one.ms !== OPEN_WITHIN && one.ms !== BEAT_EVERY)
+      if (!retry) throw new Error('no retry')
+      waits.push(retry.ms)
+      retry.run()
+      await settle()
+    }
+    expect(Math.max(...waits)).toBeGreaterThan(3_000)
+  })
+
+  test('waits its first wait again once a socket has outlived a beat', async () => {
+    const found = fakeWorld()
+    new Link('t1', found.world, () => undefined, 80, 24).open()
+    await settle()
+    for (let tried = 0; tried < 5; tried++) {
+      opened(found).events.closed(1011)
+      waiting(found)
+        .find((one) => one.ms !== OPEN_WITHIN && one.ms !== BEAT_EVERY)
+        ?.run()
+      await settle()
+    }
+
+    const kept = opened(found)
+    pass(found, BEAT_EVERY)
+    kept.events.closed(1011)
+    const retry = waiting(found).find((one) => one.ms !== OPEN_WITHIN && one.ms !== BEAT_EVERY)
+    expect(retry?.ms).toBeLessThan(400)
+  })
+
   test('gives up on a socket that never opens and makes another', async () => {
     const found = fakeWorld()
     const heard: Heard[] = []
