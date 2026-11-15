@@ -170,38 +170,82 @@ function targetOf(folded: string): { wanted: string; anchored: boolean } {
   return { wanted: anchored ? folded.slice(1) : folded, anchored }
 }
 
-function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef | null {
-  const here = from === null ? null : folderOf(from)
-  const depth = (path: string) => path.split('/').length
-  const beside = (note: NoteRef) => (folderOf(note.path) === here ? 0 : 1)
+interface Lookup {
+  size: number
+  paths: Map<string, NoteRef[]>
+  ends: Map<string, NoteRef[]>
+  aliases: Map<string, NoteRef[]>
+}
 
-  return (
-    [...candidates].sort(
-      (one, other) =>
-        beside(one) - beside(other) ||
-        depth(one.path) - depth(other.path) ||
-        (one.path < other.path ? -1 : 1),
-    )[0] ?? null
+interface Order {
+  top: NoteRef | null
+  byFolder: Map<string, NoteRef>
+}
+
+const lookups = new WeakMap<readonly NoteRef[], Lookup>()
+
+const orders = new WeakMap<readonly NoteRef[], Order>()
+
+function filed(map: Map<string, NoteRef[]>, key: string, note: NoteRef) {
+  const held = map.get(key)
+  if (!held) map.set(key, [note])
+  else if (held.at(-1) !== note) held.push(note)
+}
+
+function lookupOf(notes: readonly NoteRef[]): Lookup {
+  const kept = lookups.get(notes)
+  if (kept?.size === notes.length) return kept
+
+  const made: Lookup = { size: notes.length, paths: new Map(), ends: new Map(), aliases: new Map() }
+  for (const note of notes) {
+    const path = comparable(note.path)
+    filed(made.paths, path, note)
+    filed(made.ends, path, note)
+    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
+      filed(made.ends, path.slice(at + 1), note)
+    }
+    for (const alias of note.aliases) filed(made.aliases, comparable(alias), note)
+  }
+  lookups.set(notes, made)
+  return made
+}
+
+function orderOf(candidates: readonly NoteRef[]): Order {
+  const kept = orders.get(candidates)
+  if (kept) return kept
+
+  const depth = (path: string) => path.split('/').length
+  const sorted = [...candidates].sort(
+    (one, other) => depth(one.path) - depth(other.path) || (one.path < other.path ? -1 : 1),
   )
+  const byFolder = new Map<string, NoteRef>()
+  for (const note of sorted) {
+    const folder = folderOf(note.path)
+    if (!byFolder.has(folder)) byFolder.set(folder, note)
+  }
+
+  const made: Order = { top: sorted[0] ?? null, byFolder }
+  orders.set(candidates, made)
+  return made
+}
+
+function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef | null {
+  const order = orderOf(candidates)
+  const beside = from === null ? undefined : order.byFolder.get(folderOf(from))
+  return beside ?? order.top
 }
 
 export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
   const { wanted, anchored } = targetOf(comparable(target.trim()))
   if (!wanted) return null
 
-  const found = index.notes.filter((note) => {
-    const path = comparable(note.path)
-    return path === wanted || (!anchored && path.endsWith(`/${wanted}`))
-  })
-
-  if (found.length) return nearest(found, index.path)
+  const lookup = lookupOf(index.notes)
+  const found = (anchored ? lookup.paths : lookup.ends).get(wanted)
+  if (found) return nearest(found, index.path)
   if (anchored) return null
 
-  const named = index.notes.filter((note) =>
-    note.aliases.some((alias) => comparable(alias) === wanted),
-  )
-
-  return named.length ? nearest(named, index.path) : null
+  const named = lookup.aliases.get(wanted)
+  return named ? nearest(named, index.path) : null
 }
 
 export function resolveRelative(index: NoteIndex, target: string): NoteRef | null {

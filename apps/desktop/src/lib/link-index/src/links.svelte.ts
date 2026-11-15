@@ -978,9 +978,7 @@ class Links {
   private noteFrom(source: string | null, link: { kind: LinkKind; target: string }): string | null {
     const whole = comparable(link.target)
     const last = whole.split('/').pop() ?? ''
-    const named = this.byName.get(last) ?? []
-    const aliased = whole === last ? [] : (this.byName.get(whole) ?? [])
-    const candidates = aliased.length ? [...new Set([...named, ...aliased])] : named
+    const candidates = this.calledBy(whole, last)
     this.examined += candidates.length
 
     const index: NoteIndex = {
@@ -995,6 +993,23 @@ class Links {
         : resolveNote(index, link.target)
 
     return found?.path ?? null
+  }
+
+  private readonly unions = new WeakMap<Map<string, NoteRef[]>, Map<string, NoteRef[]>>()
+
+  private calledBy(whole: string, last: string): readonly NoteRef[] {
+    const named = this.byName.get(last) ?? []
+    const aliased = whole === last ? [] : (this.byName.get(whole) ?? [])
+    if (!aliased.length) return named
+
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- answers kept for one build of the names, never rendered
+    const kept = this.unions.get(this.byName) ?? new Map<string, NoteRef[]>()
+    this.unions.set(this.byName, kept)
+    const held = kept.get(whole)
+    if (held) return held
+    const both = [...new Set([...named, ...aliased])]
+    kept.set(whole, both)
+    return both
   }
 
   private spaceFiles(source: string | null): NoteIndex {
@@ -1242,6 +1257,8 @@ class Links {
       )
     }
     let namedAfter: Map<string, NoteRef[]> | null = null
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
+    const unionsAfter = new Map<string, NoteRef[]>()
     const calledAfterMove = (written: string): NoteRef[] => {
       if (!namedAfter) {
         // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
@@ -1257,8 +1274,13 @@ class Links {
       const whole = comparable(written)
       const last = whole.split('/').at(-1) ?? ''
       const byLast = namedAfter.get(last) ?? []
-      if (whole === last) return byLast
-      return [...new Set([...byLast, ...(namedAfter.get(whole) ?? [])])]
+      const byWhole = whole === last ? [] : (namedAfter.get(whole) ?? [])
+      if (!byWhole.length) return byLast
+      const held = unionsAfter.get(whole)
+      if (held) return held
+      const both = [...new Set([...byLast, ...byWhole])]
+      unionsAfter.set(whole, both)
+      return both
     }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const filesAfter = new Map<string, string[]>()
