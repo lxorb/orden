@@ -1,6 +1,4 @@
-import { internal, invoke, isNative } from '../../platform/src/api'
-import { startup } from '../../startup.svelte'
-import { mark } from '../../trace'
+import { internal, invoke, isNative, startup, mark } from '../../platform/src/api'
 import { warmInternal, warmSpace } from '../../web-backend/src/api'
 import { isWarmth, type PapersHeld, said, type Warmth } from '@orden/scan/search/warmth'
 

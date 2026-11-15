@@ -1,6 +1,10 @@
 {
   "name": "theme",
   "layer": "foundation",
-  "dependsOn": ["contracts", "sync-core", "themes", "platform"],
-  "pending": ["apps/desktop/src/lib/startup.svelte.ts"]
+  "dependsOn": [
+    "contracts",
+    "sync-core",
+    "themes",
+    "platform"
+  ]
 }

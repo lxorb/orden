@@ -17,7 +17,7 @@
   import { agentMarks } from './agent-marks.svelte'
   import { chatStore, chatsUnread, lookAtLaunch } from './ai-chat/src/api'
   import { UnreadDot } from './ui-kit/src/api'
-  import { account } from './accounts/src/api'
+  import { account, arriving } from './accounts/src/api'
   import {
     ASK_MARK,
     CHATS_MARK,
@@ -32,8 +32,6 @@
     TIME_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
-  import { startup } from './startup.svelte'
-  import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './ui-kit/src/api'
   import { panels, type Panel, type PanelSide } from './session/src/api'
   import { headingAt, lineOf } from './outline'
@@ -76,7 +74,7 @@
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
-  import { dur, fade, fly } from './platform/src/api'
+  import { dur, fade, fly, startup } from './platform/src/api'
 
   const {
     side = 'left',

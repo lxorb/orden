@@ -45,7 +45,6 @@
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/startup.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/tapped.ts",

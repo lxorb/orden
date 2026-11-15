@@ -34,7 +34,6 @@
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/arriving.svelte.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
@@ -56,10 +55,8 @@
     "apps/desktop/src/lib/settings-tab.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/space-watch.ts",
-    "apps/desktop/src/lib/startup.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/trace.ts",
     "apps/desktop/src/lib/tree-keys.ts",
     "apps/desktop/src/lib/unread.svelte.ts",
     "apps/desktop/src/lib/welcome.ts"

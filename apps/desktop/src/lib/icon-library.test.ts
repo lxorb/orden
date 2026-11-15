@@ -36,7 +36,7 @@ vi.mock('./ui-kit/src/icons', async (importOriginal) => ({
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
-const { startup } = await import('./startup.svelte')
+const { startup } = await import('./platform/src/api')
 
 void startup.shown()
 

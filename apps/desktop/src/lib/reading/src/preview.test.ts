@@ -78,7 +78,7 @@ vi.mock('../../note-images', () => ({
 }))
 
 const { links } = await import('../../link-index/src/api')
-const { startup } = await import('../../startup.svelte')
+const { startup } = await import('../../platform/src/api')
 const { readingHtml } = await import('./render')
 await import('../../modes.svelte')
 const { EditorState, noteIndexExtension, renderNote } = await import('@orden/editor')

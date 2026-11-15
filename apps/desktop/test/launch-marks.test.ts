@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest'
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const SRC = join(ROOT, 'apps', 'desktop', 'src')
 
-const TRACE = readFileSync(join(SRC, 'lib', 'trace.ts'), 'utf8')
+const TRACE = readFileSync(join(SRC, 'lib', 'platform', 'src', 'trace.ts'), 'utf8')
 const PREFIX = /performance\.mark\(`([^`$]*)\$\{step\}`\)/.exec(TRACE)?.[1] ?? ''
 
 function walk(dir: string, keep: (name: string) => boolean): string[] {
@@ -17,7 +17,9 @@ function walk(dir: string, keep: (name: string) => boolean): string[] {
 
 const marking = walk(SRC, (name) => /\.(ts|svelte)$/.test(name) && !name.includes('.test.'))
   .map((path) => readFileSync(path, 'utf8'))
-  .filter((text) => /from '[./]*(lib\/)?trace'/.test(text))
+  .filter((text) =>
+    /import \{[^}]*\bmark(?:Painted)?\b[^}]*\} from '[./]*(?:lib\/)?(?:platform\/src\/api|trace)'/.test(text),
+  )
 
 const STEPS = new Set(
   marking.flatMap((text) =>

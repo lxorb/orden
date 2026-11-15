@@ -5,17 +5,7 @@ import { busy, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai-chat/src/api'
 import { guardDrops } from './drops'
 import { joining } from './sharing/src/api'
-import {
-  collectErrors,
-  log,
-  currentWindow,
-  internal,
-  isDesktop,
-  isMobile,
-  platform,
-  waited,
-  onTheActivity,
-} from './platform/src/api'
+import { collectErrors, log, currentWindow, internal, isDesktop, isMobile, platform, waited, onTheActivity, startup, factsOfLaunch, mark } from './platform/src/api'
 import { modes } from './modes.svelte'
 import {
   anythingRuns,
@@ -33,9 +23,7 @@ import { reloading } from './reloading.svelte'
 import { record } from './sync-mirror/src/api'
 import { hiddenKinds, settings } from './settings.svelte'
 import { gate } from './onboarding/src/api'
-import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts/src/api'
-import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme/src/api'
 import { pull } from './pull.svelte'
 import { convertAll, keepWorking } from './web-backend/src/api'

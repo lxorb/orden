@@ -41,7 +41,7 @@ const { default: ScratchpadCard } = await loadScratchpadCard()
 const scratchpad = await pad()
 const { links } = await import('../../src/lib/link-index/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
-const { startup } = await import('../../src/lib/startup.svelte')
+const { startup } = await import('../../src/lib/platform/src/api')
 
 let target: HTMLElement
 let undo: (() => void)[] = []

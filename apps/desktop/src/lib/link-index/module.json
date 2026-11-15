@@ -13,6 +13,5 @@
     "scan",
     "sharing",
     "ui-kit"
-  ],
-  "pending": ["apps/desktop/src/lib/startup.svelte.ts", "apps/desktop/src/lib/trace.ts"]
+  ]
 }
