@@ -73,4 +73,59 @@ describe('what an older version kept in this browser under nib', () => {
     ])
     expect(await names()).not.toContain('carry-from')
   })
+
+  test('takes what the older store changed later, and keeps a snapshot whose number the new store gave to another', async () => {
+    const now = await opened('split-to', 2, notes)
+    await written(now, 'files', [{ path: '/a.md', content: 'carried', modified: 1, created: 1 }])
+    await written(now, 'snapshots', [
+      { id: 1, notePath: '/a.md', content: 'new tab', taken_at: 5, size: 7 },
+    ])
+    now.close()
+    const old = await opened('split-from', 2, notes)
+    await written(old, 'files', [
+      { path: '/a.md', content: 'edited in the older tab', modified: 9, created: 1 },
+    ])
+    await written(old, 'snapshots', [
+      { id: 1, notePath: '/a.md', content: 'older tab', taken_at: 8, size: 9 },
+    ])
+    old.close()
+
+    await carryDatabase('split-from', 'split-to', () => Promise.resolve(true))
+    await carryDatabase('split-from', 'split-to')
+
+    const db = await opened('split-to', 2, () => undefined)
+    const [rows, snapshots] = await Promise.all(
+      ['files', 'snapshots'].map(
+        (store) =>
+          new Promise<unknown[]>((resolve) => {
+            const asked = db.transaction(store).objectStore(store).getAll()
+            asked.onsuccess = () => resolve(asked.result)
+          }),
+      ),
+    )
+    db.close()
+    expect(rows).toMatchObject([{ path: '/a.md', content: 'edited in the older tab' }])
+    expect(snapshots?.map((one) => (one as { content: string }).content).sort()).toEqual([
+      'new tab',
+      'older tab',
+    ])
+    expect(await names()).not.toContain('split-from')
+  })
+})
+
+describe('a carry that does not finish', () => {
+  test('leaves the app on the older store, where the notes are', async () => {
+    const old = await opened('stuck-from', 2, notes)
+    await written(old, 'files', [{ path: '/kept.md', content: 'kept', modified: 1, created: 1 }])
+    old.close()
+    const holding = await opened('stuck-to', 1, () => undefined)
+    holding.onversionchange = () => undefined
+
+    const { databaseName } = await import('./carry-database')
+    const name = await databaseName('stuck-from', 'stuck-to', 'stuck-from')
+    holding.close()
+
+    expect(name).toBe('stuck-from')
+    expect(await names()).toContain('stuck-from')
+  })
 })

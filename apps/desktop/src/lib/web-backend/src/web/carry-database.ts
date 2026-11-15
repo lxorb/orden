@@ -45,8 +45,8 @@ export async function databaseName(
     answerAs(channel)
     return from
   }
-  await carryDatabase(from, to, () => askedFormer(channel)).catch(() => undefined)
-  return to
+  const carried = await carryDatabase(from, to, () => askedFormer(channel)).catch(() => false)
+  return carried ? to : from
 }
 
 function answerAs(channel: string): void {
@@ -68,16 +68,17 @@ export async function carryDatabase(
   from: string,
   to: string,
   inUse: () => Promise<boolean> = () => Promise.resolve(false),
-): Promise<void> {
-  if (from === to || typeof indexedDB === 'undefined') return
+): Promise<boolean> {
+  if (from === to || typeof indexedDB === 'undefined') return true
   const old = await dump(from)
-  if (!old) return
+  if (!old) return true
   if (old.stores.some((store) => store.keys.length > 0)) {
     await merged(old, to)
-    if (!(await holdsAll(old, to))) return
+    if (!(await holdsAll(old, to))) return false
   }
-  if (await inUse()) return
+  if (await inUse()) return true
   await removed(from)
+  return true
 }
 
 async function holdsAll(old: DatabaseDump, to: string): Promise<boolean> {
@@ -115,11 +116,18 @@ async function merged(old: DatabaseDump, to: string): Promise<void> {
       if (!names.includes(shape.name)) continue
       const store = writing.objectStore(shape.name)
       shape.keys.forEach((key, at) => {
-        const held = store.count(key)
+        const value = shape.values[at]
+        const held = store.get(key)
         held.onsuccess = () => {
-          if (held.result > 0) return
-          if (shape.keyPath === null) store.put(shape.values[at], key)
-          else store.put(shape.values[at])
+          const there: unknown = held.result
+          if (there === undefined) {
+            if (shape.keyPath === null) store.put(value, key)
+            else store.put(value)
+          } else if (shape.autoIncrement && !sameRow(there, value)) {
+            keptBeside(store, shape.indexes, withoutKey(value, shape.keyPath), shape.keyPath)
+          } else if (shape.keyPath !== null && changedLater(value, there)) {
+            store.put(value)
+          }
         }
       })
     }
@@ -127,6 +135,53 @@ async function merged(old: DatabaseDump, to: string): Promise<void> {
   } finally {
     db.close()
   }
+}
+
+function keptBeside(
+  store: IDBObjectStore,
+  indexes: readonly { name: string; keyPath: string | string[] }[],
+  row: unknown,
+  keyPath: string | string[] | null,
+): void {
+  const by = indexes.find((one) => typeof one.keyPath === 'string')
+  const near = by ? valueAt(row, by.keyPath as string) : undefined
+  if (!by || near === undefined) {
+    store.put(row)
+    return
+  }
+
+  const asked = store.index(by.name).getAll(near as IDBValidKey)
+  asked.onsuccess = () => {
+    const already = (asked.result as unknown[]).some((one) =>
+      sameRow(withoutKey(one, keyPath), row),
+    )
+    if (!already) store.put(row)
+  }
+}
+
+function valueAt(row: unknown, key: string): unknown {
+  return typeof row === 'object' && row !== null ? (row as Record<string, unknown>)[key] : undefined
+}
+
+function changedLater(value: unknown, than: unknown): boolean {
+  const at = modifiedOf(value)
+  const other = modifiedOf(than)
+  return at !== null && other !== null && at > other
+}
+
+function modifiedOf(row: unknown): number | null {
+  if (typeof row !== 'object' || row === null) return null
+  const modified = (row as { modified?: unknown }).modified
+  return typeof modified === 'number' ? modified : null
+}
+
+function sameRow(one: unknown, other: unknown): boolean {
+  return JSON.stringify(one) === JSON.stringify(other)
+}
+
+function withoutKey(value: unknown, keyPath: string | string[] | null): unknown {
+  if (typeof keyPath !== 'string' || typeof value !== 'object' || value === null) return value
+  return Object.fromEntries(Object.entries(value).filter(([name]) => name !== keyPath))
 }
 
 function removed(name: string): Promise<void> {
