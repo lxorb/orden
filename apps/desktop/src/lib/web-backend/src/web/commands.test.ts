@@ -1317,6 +1317,22 @@ describe('reading a whole space for the link index', () => {
     expect(found.files).toEqual(['Book.pages'])
   })
 
+  test('reads a page note written before as a plane, and keeps it among the files', async () => {
+    await write('/Notes/Idea.md', '# idea')
+    const card = { id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'Idea.md' }
+    await write('/Notes/Book.pages', JSON.stringify({ nodes: [card], edges: [] }))
+    disk.planes.delete('/Notes/Book.pages')
+
+    const found = await webInvoke<{
+      notes: { path: string; links: { target: string }[] }[]
+      files: string[]
+    }>('scan_links', { root: '/Notes' })
+
+    const book = found.notes.find((one) => one.path === 'Book.pages')
+    expect(book?.links.map((link) => link.target)).toEqual(['/Idea.md'])
+    expect(found.files).toEqual(['Book.pages'])
+  })
+
   test('reads a plane written before once, and learns what it wants of it', async () => {
     await write('/Notes/Idea.md', '# idea')
     await write('/Notes/Board.canvas', drawn('rocket'))

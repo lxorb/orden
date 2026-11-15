@@ -1371,10 +1371,8 @@ class Links {
       const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
       const rewrite = plane ? await import('./canvas-rewrite') : null
       const card = rewrite?.cardsMoving(note.path, moving) ?? null
-      const worth = card
-        ? isCanvasTarget(note.path) ||
-          note.links.some((link) => card(link.target.replace(/^\/+/, '')) !== null)
-        : note.links.some((link) => (named(link) || shifted) && to(link) !== null)
+      const worth =
+        plane || note.links.some((link) => (named(link) || shifted) && to(link) !== null)
       if (!worth) continue
 
       const absolute = insideSpace(root, note.path)

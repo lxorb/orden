@@ -801,6 +801,27 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.backlinks(at('Other.md'))).toEqual([])
   })
 
+  test.each(['Book.pages', 'x/Book.pages'])(
+    'a link in a text card of %s follows its note',
+    async (book) => {
+      const card = { x: 0, y: 0, width: 10, height: 10 }
+      const plane = JSON.stringify({
+        nodes: [{ id: 'b', type: 'text', text: 'see [[Plan]]', ...card }],
+        edges: [],
+      })
+      await import('@orden/scan/canvas')
+      await space({ 'Plan.md': '# Plan' }, [book])
+      notes[book] = plane
+      links.canvasRead(at(book), plane)
+      await vi.waitFor(() => expect(links.held().map((one) => one.path)).toContain(book))
+
+      expect(await links.retarget(at('Plan.md'), at('Later.md'), ROOT)).toBe(1)
+
+      const after = JSON.parse(notes[book] ?? '') as { nodes: Record<string, string>[] }
+      expect(after.nodes.map((one) => one.text)).toEqual(['see [[Later]]'])
+    },
+  )
+
   test('a card read before cards named their file from the top still does', async () => {
     const { scanCanvas } = await import('@orden/scan/canvas')
     notes = { 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }

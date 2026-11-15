@@ -7,7 +7,7 @@ use tauri::AppHandle;
 use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use crate::notes::{words_of, words_stamped};
-use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
+use crate::paths::{files_in, in_spaces, is_canvas, is_pages, is_shortcut, relative_to};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -165,7 +165,10 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         out.push(note);
     }
 
-    for path in others.iter().filter(|path| is_canvas(path)) {
+    for path in others
+        .iter()
+        .filter(|path| is_canvas(path) || is_pages(path))
+    {
         let Ok(body) = words_of(path) else {
             continue;
         };

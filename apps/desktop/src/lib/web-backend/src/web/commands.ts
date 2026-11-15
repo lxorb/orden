@@ -277,7 +277,7 @@ async function writeNote(path: string, content: string) {
     normalise(path),
     content,
     now(),
-    isCanvas(path) ? planeMarks(content) : undefined,
+    isCanvas(path) || isPages(path) ? planeMarks(content) : undefined,
   )
 }
 
@@ -741,14 +741,17 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   }
 
   const read = (path: string) =>
-    isMarkdown(path) || isWebTarget(path) || (isCanvas(path) && !marked.has(path))
+    isMarkdown(path) ||
+    isWebTarget(path) ||
+    ((isCanvas(path) || isPages(path)) && !marked.has(path))
 
   for (const path of paths) {
     if (read(path)) continue
 
     const marks = marked.get(path)
     if (marks) notes.push(markedPlane(relative(path), marks))
-    else if (basename(path) !== KEEP && !path.endsWith(PDF_SIDECAR)) beside.push(path)
+    const kept = marks ? isPages(path) : basename(path) !== KEEP && !path.endsWith(PDF_SIDECAR)
+    if (kept) beside.push(path)
   }
 
   const learnt: { path: string; modified: number; size: number; plane?: PlaneMarks }[] = []
@@ -757,10 +760,11 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
       const found = { path: row.path, modified: row.modified, size: row.content.length }
 
-      if (isCanvas(row.path) && read(row.path)) {
+      if ((isCanvas(row.path) || isPages(row.path)) && read(row.path)) {
         const marks = planeMarks(row.content)
         notes.push(markedPlane(relative(row.path), marks))
         learnt.push({ ...found, plane: marks })
+        if (isPages(row.path)) beside.push(row.path)
         continue
       }
 
