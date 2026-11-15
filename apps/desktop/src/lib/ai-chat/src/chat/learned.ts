@@ -11,7 +11,7 @@ import { lastMove, movedKeys, movesAfter, type Effort } from '../../../ai-provid
 
 const STORAGE_KEY = 'orden:ai-chat'
 
-const MOVED_KEY = 'orden:ai-chat-moved'
+const MOVED = 'moved'
 
 export interface Learnt {
   refused?: Effort[]
@@ -42,9 +42,10 @@ let held: Record<string, Learnt> | null = null
 let moved = 0
 
 function read(): Record<string, Learnt> {
-  const kept = stored(MOVED_KEY)
-  moved = isNumber(kept) ? kept : 0
-  const read = recordOf(stored(STORAGE_KEY), learntIn)
+  const kept = stored(STORAGE_KEY)
+  const cursor = isRecord(kept) ? kept[MOVED] : undefined
+  moved = isNumber(cursor) ? cursor : 0
+  const read = recordOf(kept, learntIn)
   return Object.fromEntries(Object.entries(read).map(([key, one]) => [key, cleaned(one)]))
 }
 
@@ -72,8 +73,7 @@ export function learn(provider: string, model: string, change: Learnt): void {
   const refused = [...new Set([...(before.refused ?? []), ...(change.refused ?? [])])]
   const next = { ...before, ...change, ...(refused.length ? { refused } : {}) }
   held = { ...all(), [key]: next }
-  keepJson(STORAGE_KEY, held)
-  keepJson(MOVED_KEY, moved)
+  keepJson(STORAGE_KEY, { ...held, [MOVED]: moved })
 }
 
 export function forgetLearnt(): void {
