@@ -4,7 +4,7 @@ import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import { createEditor } from '../editor'
 import { selectIn } from './caret'
-import { editableCellAt, pasteIntoCell } from './menu-paste'
+import { editableCellAt, pasteIntoCell } from './view'
 import { flushTableEdits } from './widget'
 
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
