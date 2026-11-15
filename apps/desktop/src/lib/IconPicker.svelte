@@ -4,6 +4,7 @@
   import { ACCENTS } from './theme/src/api'
   import { closeOnBack } from './ui-kit/src/api'
   import Icon from './Icon.svelte'
+  import TickBox from './TickBox.svelte'
   import { iconChoice } from './icon-choice.svelte'
   import { tintOf, wear, wornBy } from './icon-target'
   import { iconLibrary } from './icon-library.svelte'
@@ -22,7 +23,6 @@
   } from './ui-kit/src/api'
   import { dur, fade, LAYER, scale } from './platform/src/api'
   import { overlays } from './ui-kit/src/api'
-  import { segmented } from './ui-kit/src/api'
   import { trap } from './ui-controls/src/api'
   import { viewport } from './ui-kit/src/api'
   import { untrack } from 'svelte'
@@ -39,7 +39,7 @@
   let query = $state('')
   let field = $state<HTMLInputElement>()
   let scroller = $state<HTMLElement>()
-  let width = $state(0)
+  let box = $state<DOMRectReadOnly>()
   let height = $state(0)
   let top = $state(0)
   let at = $state(0)
@@ -94,7 +94,7 @@
     }))
   })
 
-  const columns = $derived(Math.max(1, Math.floor((width || cell * 8) / cell)))
+  const columns = $derived(Math.max(1, Math.floor((box?.width ?? cell * 8) / cell)))
 
   const siteRow = $derived(sites.slice(0, columns * SITE_ROWS))
 
@@ -232,6 +232,14 @@
     iconChoice.close()
   }
 
+  function remove() {
+    const asked = iconChoice.target
+    if (!asked) return
+
+    wear(asked, null, null)
+    iconChoice.close()
+  }
+
   function paint(colour: string | null) {
     tint = colour
 
@@ -292,6 +300,7 @@
     aria-modal="true"
     aria-label="Choose an icon"
     style:--cell="{cell}px"
+    style:--columns={columns}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <input
@@ -304,6 +313,10 @@
       autocapitalize="off"
       autocorrect="off"
     />
+
+    {#if !iconLibrary.absent[EMOJI_OUTLINE]}
+      <TickBox label="One colour" checked={outlined} onchange={(on: boolean) => (outlined = on)} />
+    {/if}
 
     {#if iconRecent.list.length}
       <div class="recent">
@@ -325,7 +338,7 @@
     <div
       class="grid"
       bind:this={scroller}
-      bind:clientWidth={width}
+      bind:contentRect={box}
       bind:clientHeight={height}
       onscroll={() => (top = scroller?.scrollTop ?? 0)}
     >
@@ -366,29 +379,6 @@
       {/if}
     </div>
 
-    {#if !iconLibrary.absent[EMOJI_OUTLINE]}
-      <div class="orden-segmented variant" role="radiogroup" aria-label="Emoji" use:segmented>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={!outlined}
-          class:on={!outlined}
-          onclick={() => (outlined = false)}
-        >
-          Colour
-        </button>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={outlined}
-          class:on={outlined}
-          onclick={() => (outlined = true)}
-        >
-          One colour
-        </button>
-      </div>
-    {/if}
-
     {#if target.kind !== 'pass'}
       <div class="tints" role="group" aria-label="Colour">
         <button
@@ -413,9 +403,14 @@
       </div>
     {/if}
 
-    <button class="clear" onclick={() => chose(null)}>
-      {target.kind === 'space' ? 'Use the first letter instead' : 'Use the plain mark instead'}
-    </button>
+    <div class="ends">
+      <button class="clear" onclick={() => chose(null)}>
+        {target.kind === 'space' ? 'Use the first letter instead' : 'Use the plain mark instead'}
+      </button>
+      {#if target.kind !== 'pass' && (worn !== null || tint !== null)}
+        <button class="clear" onclick={remove}>Remove icon</button>
+      {/if}
+    </div>
 
     <p class="credit">{pickerCredit()}</p>
   </div>
@@ -432,11 +427,25 @@
     padding: var(--space-4);
   }
 
-  .grid {
+  .sheet > * {
+    flex: none;
+  }
+
+  .sheet > .grid {
+    flex: 0 1 auto;
     min-height: 0;
     max-height: 46vh;
+    margin-inline: calc(-1 * var(--space-4));
+    padding-inline: var(--space-4);
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+
+  .tall,
+  .recent {
+    width: calc(var(--columns) * var(--cell));
+    max-width: 100%;
+    margin-inline: auto;
   }
 
   .tall {
@@ -532,10 +541,6 @@
     gap: 6px;
   }
 
-  .variant {
-    align-self: flex-start;
-  }
-
   .tint {
     width: 18px;
     height: 18px;
@@ -556,8 +561,13 @@
       0 0 0 3px var(--accent);
   }
 
+  .ends {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
   .clear {
-    align-self: flex-start;
     padding: 6px 10px;
     border: none;
     border-radius: var(--radius-md);

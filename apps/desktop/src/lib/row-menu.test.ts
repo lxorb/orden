@@ -222,7 +222,11 @@ describe('a file with nowhere of its own to write an icon', () => {
       iconChoice.close()
       expect(chosenIcon(path), path).toBe('rocket')
 
-      press(path, path.endsWith('.webloc') ? 'Reset to site icon' : 'Remove icon')
+      expect(labels(note(path)), path).not.toContain('Remove icon')
+      press(path, 'Choose an icon')
+      const again = iconChoice.target
+      if (again) wear(again, null, null)
+      iconChoice.close()
       expect(chosenIcon(path), path).toBeNull()
     }
   })
@@ -311,7 +315,6 @@ describe('a space shared to be read', () => {
     'Rename',
     'Move',
     'Choose an icon',
-    'Remove icon',
     'Set cover',
     'Change cover',
     'Remove cover',

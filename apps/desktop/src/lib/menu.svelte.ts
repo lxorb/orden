@@ -7,7 +7,6 @@ import {
 } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
 import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
-import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { links } from './link-index/src/api'
 import { canShareItem, canWriteAt, shareThisFile } from './sharing/src/api'
@@ -149,19 +148,11 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
     chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   const mapped = folder || !kept
 
-  const take = () =>
-    mapped
-      ? workspace.setFolderIcon(path, null)
-      : void import('./file-icon').then((one) => one.setFileIcon(path, null))
-
   return [
     {
       label: 'Choose an icon',
       run: () => (mapped ? iconChoice.folder(path) : iconChoice.file(path)),
     },
-    ...(chosenIcon(path) === null
-      ? []
-      : [{ label: isWebTarget(path) ? 'Reset to site icon' : 'Remove icon', run: take }]),
   ]
 }
 

@@ -105,7 +105,7 @@ def walk(page: Page) -> None:
     say(f"choosing for {page.evaluate(SEED)}")
     sheet = page.locator(".sheet")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
-    sheet.locator(".variant button").nth(1).click()
+    sheet.locator("label.tick input").check()
     sheet.locator("button.cell:has(svg.drawn)").first.wait_for(timeout=PATIENCE * 1000)
     page.wait_for_timeout(500)
 

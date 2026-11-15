@@ -495,6 +495,13 @@ describe('the segmented control', () => {
     expect(draw(/\.orden-segmented|\.segmented\b/)).toEqual([])
   })
 
+  test('keeps its height in a column that runs short, though it scrolls sideways', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    const rule = /\n\.orden-segmented \{([^}]*)\}/.exec(shared)?.[1] ?? ''
+    expect(rule).toContain('overflow-x: auto')
+    expect(rule).toContain('min-height: min-content')
+  })
+
   test('is the class every one of them wears', () => {
     const own = components
       .filter((one) => one.text.includes('class="segmented"'))

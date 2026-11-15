@@ -4,7 +4,6 @@ import { iconEntries } from '../../menu.svelte'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { workspace } from '../../workspace.svelte'
 import { openOnline, renameTerminal, usageOfTab } from './api'
-import { setTerminalIcon } from './icon'
 import { openTerminal, shellRows } from './open'
 import { readSpec } from './spec'
 
@@ -27,14 +26,7 @@ function menu(id: string): TabMenuEntry[] {
       run: () => void openTerminal(spec?.shell, beside),
       more: () => shellRows((shell) => void openTerminal(shell.id, beside)),
     },
-    ...(spec
-      ? [
-          { label: 'Choose an icon', run: () => iconChoice.terminal(tab.id) },
-          ...(spec.icon
-            ? [{ label: 'Remove icon', run: () => setTerminalIcon(tab.id, null, null) }]
-            : []),
-        ]
-      : []),
+    ...(spec ? [{ label: 'Choose an icon', run: () => iconChoice.terminal(tab.id) }] : []),
   ]
 }
 
