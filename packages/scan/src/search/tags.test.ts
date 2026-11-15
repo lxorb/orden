@@ -150,6 +150,19 @@ describe('the tags in the front matter', () => {
     expect(tagsIn('---\r\ntags:\r\n  - project # active\r\n---\r\n')).toEqual(['#project'])
   })
 
+  test('and from items past a blank line or a comment between them', () => {
+    expect(front('tags:\n  - a\n\n  - b')).toEqual(['#a', '#b'])
+    expect(front('tags:\n  - a\n  # c\n  - b\nother: x')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n')).toEqual(['#a', '#b'])
+  })
+
+  test('and a tag cut from before a comment keeps the comment a comment', () => {
+    const note = '---\ntags: [a, # c\n  b]\n---\n'
+    const [cut] = tagCuts(note, 'a')
+    const after = cut ? note.slice(0, cut.from) + note.slice(cut.to) : note
+    expect(after).toBe('---\ntags: [ # c\n  b]\n---\n')
+  })
+
   test('and both halves of a note count', () => {
     expect(tagsIn('---\ntags: [work]\n---\n\nwords #orden\n')).toEqual(['#work', '#orden'])
   })

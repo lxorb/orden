@@ -81,6 +81,14 @@ fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) ->
             .min(front);
         let line = &body[at..end];
 
+        if line.trim().is_empty() || line.trim_start().starts_with('#') {
+            if end >= front {
+                return front;
+            }
+            at = end + 1;
+            continue;
+        }
+
         let Some(item) = line.trim_start().strip_prefix('-') else {
             return at;
         };
@@ -327,6 +335,22 @@ mod tests {
         assert_eq!(
             tags_in("#work/orden/canvas/deep/deeper"),
             vec!["#work/orden/canvas/deep/deeper"]
+        );
+    }
+
+    #[test]
+    fn reads_items_past_a_blank_line_or_a_comment_between_them() {
+        assert_eq!(
+            tags_in("---\ntags:\n  - a\n\n  - b\n---\n"),
+            vec!["#a", "#b"]
+        );
+        assert_eq!(
+            tags_in("---\ntags:\n  - a\n  # c\n  - b\nother: x\n---\n"),
+            vec!["#a", "#b"]
+        );
+        assert_eq!(
+            tags_in("---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n"),
+            vec!["#a", "#b"]
         );
     }
 

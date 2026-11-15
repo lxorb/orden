@@ -112,7 +112,9 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
   const gap = spaces(body, to, after)
   if (body.charAt(to + gap) === ',') {
     if (body.charAt(to + gap + 1) === '#') return { from, to: to + gap }
-    return { from, to: to + gap + 1 + spaces(body, to + gap + 1, after) }
+    const past = spaces(body, to + gap + 1, after)
+    if (past && body.charAt(to + gap + 1 + past) === '#') return { from, to: to + gap + 1 }
+    return { from, to: to + gap + 1 + past }
   }
 
   const before = /(,?[ \t]+|,)$/.exec(body.slice(line, from))
@@ -174,6 +176,11 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
     const line = body.slice(at, stop).replace(/\r$/, '')
+    if (!line.trim() || line.trimStart().startsWith('#')) {
+      if (end === -1) return front.close
+      at = end + 1
+      continue
+    }
     const item = ITEM.exec(line)
     if (!item) return at
 
