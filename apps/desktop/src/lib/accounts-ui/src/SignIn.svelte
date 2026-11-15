@@ -4,7 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { account } from '../../accounts/src/api'
   import { joining } from '../../sharing/src/api'
-  import { settleLocalNotes } from '../../settling'
+  import { settling } from '../../sync-mirror/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
 
@@ -41,7 +41,9 @@
     submitted = entered
     void account.code(entered).then((accepted) => {
       if (accepted) {
-        void settleLocalNotes().then(() => joining.walkThrough())
+        void settling()
+          .then((one) => one.settleLocalNotes())
+          .then(() => joining.walkThrough())
         return
       }
 

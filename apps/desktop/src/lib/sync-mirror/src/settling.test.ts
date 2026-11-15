@@ -1,3 +1,4 @@
+import { providePort, workspaceView } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 interface World {
@@ -18,7 +19,7 @@ const world = vi.hoisted((): World => ({
   settled: 0,
 }))
 
-vi.mock('./accounts/src/account.svelte', () => ({
+vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     accountToken: 'token',
     user: { id: 'me' },
@@ -27,17 +28,14 @@ vi.mock('./accounts/src/account.svelte', () => ({
   },
 }))
 
-vi.mock('./platform/src/stored', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/stored')>()),
+vi.mock('../../platform/src/stored', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/stored')>()),
   stored: () => world.record,
 }))
 
-vi.mock('./sync-mirror/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./sync-mirror/src/api')>()),
-  meetingAgain: () => Promise.resolve({ meeting: () => Promise.resolve(world.met) }),
-}))
+vi.mock('./meeting', () => ({ meeting: () => Promise.resolve(world.met) }))
 
-vi.mock('./ui-kit/src/prompt.svelte', () => ({
+vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     choose: () => {
       world.asked += 1
@@ -46,18 +44,17 @@ vi.mock('./ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-vi.mock('./workspace/src/api', () => ({
-  workspace: {
-    spaces: [
-      { id: 'a', name: 'Plans', root: '/Plans' },
-      { id: 'b', name: 'Plans 2', root: '/Plans 2' },
-    ],
-    renameSpace: (id: string, name: string) => {
-      world.renamed.push([id, name])
-      return Promise.resolve()
-    },
+providePort('workspace.view', {
+  ...workspaceView(),
+  spaces: [
+    { id: 'a', name: 'Plans', root: '/Plans' },
+    { id: 'b', name: 'Plans 2', root: '/Plans 2' },
+  ],
+  renameSpace: (id: string, name: string) => {
+    world.renamed.push([id, name])
+    return Promise.resolve()
   },
-}))
+})
 
 const { settleLocalNotes } = await import('./settling')
 

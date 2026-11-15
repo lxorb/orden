@@ -1,15 +1,15 @@
-import type { SharedItem } from './accounts/src/api'
-import { account } from './accounts/src/api'
-import { sharedWithYou } from './sharing/src/api'
-import { insideSpace, within, waited } from './platform/src/api'
-import { sync } from './sync.svelte'
-import { workspace } from './workspace/src/api'
+import { workspaceView } from '@orden/contracts'
+import type { SharedItem } from '../../accounts/src/api'
+import { account } from '../../accounts/src/api'
+import { insideSpace, within, waited } from '../../platform/src/api'
+import { sync } from '../../sync.svelte'
+import { sharedWithYou } from './sharing.svelte'
 
 const LOOK = 150
 const PATIENCE = 20_000
 
 function keptAt(item: SharedItem): string | null {
-  const space = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === item.space.id)
+  const space = workspaceView().spaces.find((one) => sync.remoteIdFor(one.root) === item.space.id)
   const path = space ? insideSpace(space.root, item.path) : null
   return path && sync.tracked(path)?.id === item.id ? path : null
 }
@@ -30,9 +30,10 @@ async function openWhereKept(item: SharedItem): Promise<boolean> {
   }
   if (!path) return false
 
-  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
-  if (space) await workspace.showSpace(space.id)
-  await workspace.openEntry(path)
+  const view = workspaceView()
+  const space = view.spaces.find((one) => within(one.root, path) !== null)
+  if (space) await view.showSpace(space.id)
+  await view.openEntry(path)
   return true
 }
 
