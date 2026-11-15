@@ -134,8 +134,9 @@ function dayArg(call: Call, name: string): string | null | undefined {
 }
 
 function priorityArg(call: Call): Priority | undefined {
-  const value = call.args.priority
-  if (value === undefined) return undefined
+  const sent = call.args.priority
+  if (sent === undefined) return undefined
+  const value = typeof sent === 'string' && /^\s*\d+\s*$/.test(sent) ? Number(sent) : sent
   if (!isPriority(value)) throw new Refused('bad_arguments', 'priority is 0, 1, 2 or 3')
   return value
 }

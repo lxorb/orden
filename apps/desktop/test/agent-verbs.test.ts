@@ -1767,6 +1767,22 @@ describe('to-dos and bases', () => {
     })
   })
 
+  test('a priority sent as the words a terminal types is still a priority', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const added = await call('add_task', { text: 'Call mum', priority: '2' })
+    const id = (added as { result: { id: string } }).result.id
+    const changed = await call('update_task', { id, priority: ' 3 ' })
+    const refused = [
+      await call('update_task', { id, priority: '2.5' }),
+      await call('update_task', { id, priority: 'high' }),
+      await call('update_task', { id, priority: '' }),
+    ]
+    await todos.remove(id)
+    expect(added).toMatchObject({ result: { priority: 2 } })
+    expect(changed).toMatchObject({ result: { priority: 3 } })
+    for (const one of refused) expect(one).toMatchObject({ code: 'bad_arguments' })
+  })
+
   test('a limit sent as the words a terminal types is still a limit', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const made: unknown[] = []
