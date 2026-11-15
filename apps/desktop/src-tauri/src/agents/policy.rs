@@ -140,10 +140,16 @@ pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String
 
 pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), String> {
     let Some(host) = at.iter().find_map(|one| {
-        tauri::Url::parse(one)
+        let url = tauri::Url::parse(one).ok()?;
+        let web = if url.scheme() == "blob" {
+            url.path().to_owned()
+        } else {
+            one.clone()
+        };
+        tauri::Url::parse(&web)
             .ok()
             .filter(|url| matches!(url.scheme(), "http" | "https"))
-            .and_then(|_| host_of(one))
+            .and_then(|_| host_of(&web))
     }) else {
         return Ok(());
     };
@@ -2856,6 +2862,18 @@ mod tests {
         assert!(frame_allowed(
             &owner,
             &at(&["about:blank", "https://a.example"]),
+            Store::Agent
+        )
+        .is_ok());
+        assert!(frame_allowed(
+            &owner,
+            &at(&["blob:https://denied.example/1f2e", "https://a.example/"]),
+            Store::Agent
+        )
+        .is_err());
+        assert!(frame_allowed(
+            &owner,
+            &at(&["blob:https://a.example/1f2e", "https://denied.example/"]),
             Store::Agent
         )
         .is_ok());
