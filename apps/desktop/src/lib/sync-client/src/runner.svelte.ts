@@ -79,7 +79,7 @@ import {
 import { deviceOfSyncStore, forgetSyncStore, get, openSyncStore, put, remove } from './store'
 import { eachDue, reachable, sentAll } from './rounds'
 import { pairsFromV1 } from './v1-pairs'
-import { usage } from '../../usage.svelte'
+import { usage } from '../../accounts/src/api'
 import { forgetAccount, leaveSpaces } from '../../left-spaces/src/api'
 import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
 

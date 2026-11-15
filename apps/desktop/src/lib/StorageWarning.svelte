@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { settingsWindow } from '@orden/contracts'
-  import { readableSize, usage } from './usage.svelte'
+  import { readableSize, usage } from './accounts/src/api'
   import { dur, fly } from './platform/src/api'
   import { told } from './ui-kit/src/api'
 

@@ -24,7 +24,8 @@
     "workspace",
     "gates",
     "surfaces",
-    "editor-menu"
+    "editor-menu",
+    "accounts"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -35,8 +36,6 @@
     "apps/desktop/src/lib/open-link.ts",
     "apps/desktop/src/lib/preview-card.ts",
     "apps/desktop/src/lib/pull.svelte.ts",
-    "apps/desktop/src/lib/tag-search.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
+    "apps/desktop/src/lib/tag-search.ts"
   ]
 }

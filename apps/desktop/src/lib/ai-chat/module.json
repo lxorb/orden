@@ -29,11 +29,8 @@
     "tasks-model",
     "sync-store",
     "modes",
-    "gates"
+    "gates",
+    "panes"
   ],
-  "pending": [
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/agent-marks.svelte.ts", "apps/desktop/src/lib/focus.ts"]
 }

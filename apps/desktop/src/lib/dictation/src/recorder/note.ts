@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { canWriteAt } from '../../../sharing/src/api'
 import { isMarkdownPath } from '../../../platform/src/api'
-import { views } from '../../../views.svelte'
+import { views } from '../../../panes/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { recordingNoteName } from './transcript'
 

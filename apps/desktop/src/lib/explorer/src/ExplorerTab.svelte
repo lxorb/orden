@@ -4,7 +4,7 @@
   import { onMount, untrack } from 'svelte'
   import { shortcuts } from '../../shortcuts/src/api'
   import { fileClipboard, workspace } from '../../workspace/src/api'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import type { Tab } from '../../documents/src/api'
   import { newFolder, paste, removeForGood, trash } from './changes'
   import { jobs } from './jobs.svelte'

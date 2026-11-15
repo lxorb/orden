@@ -12,7 +12,7 @@
   import { siteIcon } from './site-icon'
   import { isDesktop, openExternal } from '../../platform/src/api'
   import SpaceMark from '../../SpaceMark.svelte'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import { dur, slide } from '../../platform/src/api'

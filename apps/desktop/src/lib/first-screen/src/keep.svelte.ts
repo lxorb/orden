@@ -9,7 +9,7 @@ import {
   wordsHash,
 } from './first-screen.svelte'
 import { keep } from '../../platform/src/api'
-import { views } from '../../views.svelte'
+import { views } from '../../panes/src/api'
 import type { Tab } from '../../documents/src/api'
 import type { Frame } from '../../panes/src/api'
 

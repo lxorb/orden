@@ -23,8 +23,8 @@ vi.mock('../../../assets', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../../views.svelte', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../views.svelte')>()),
+vi.mock('../../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../panes/src/api')>()),
   views: { of: () => ({ state: { readOnly: editor.readOnly } }) },
 }))
 

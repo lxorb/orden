@@ -5,7 +5,7 @@
   import { localNumber } from './platform/src/api'
   import { VIM_WORDS } from './modes/src/api'
   import { pages } from './pages/src/api'
-  import { views } from './views.svelte'
+  import { views } from './panes/src/api'
   import { workspace } from './workspace/src/api'
 
   const {

@@ -22,7 +22,7 @@
   import { accountOf, faceOf, nameOf } from './people'
   import PollCard from './PollCard.svelte'
   import Reactions from './Reactions.svelte'
-  import { readableSize } from '../../../usage.svelte'
+  import { readableSize } from '../../../accounts/src/api'
   import { fileUrl } from './urls.svelte'
   import { tip } from './tips.svelte'
   import Voice from './Voice.svelte'

@@ -15,7 +15,7 @@ import {
 } from '../../platform/src/api'
 import { appCommands, putPicture, writeAtCaret } from '../../commands/src/api'
 import { modes } from '../../modes/src/api'
-import { views } from '../../views.svelte'
+import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { watchWidgets } from './widgets.svelte'
 

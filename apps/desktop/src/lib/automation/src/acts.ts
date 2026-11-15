@@ -16,7 +16,7 @@ import {
 } from '../../platform/src/api'
 import { search } from '../../search.svelte'
 import { OWN_KEYS } from '../../own-keys'
-import { views } from '../../views.svelte'
+import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'

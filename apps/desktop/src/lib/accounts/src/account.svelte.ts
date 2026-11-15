@@ -2,6 +2,7 @@ import { portOf } from '@orden/contracts'
 import { api, ApiError, fromServer } from './client'
 import type { Account, Guest, RemoteSpace } from './routes'
 import { arriving } from './arriving.svelte'
+import { usage } from './usage.svelte'
 import { pollDelay, forget, keep, storedText, waited } from '../../platform/src/api'
 import { called } from './person'
 
@@ -325,6 +326,7 @@ class Session {
   private forget(kept = false) {
     clearTimeout(this.asking)
     arriving.reset()
+    usage.reset()
     forget(STORAGE_KEY)
     void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()
