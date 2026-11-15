@@ -106,6 +106,11 @@ describe('case', () => {
     expect(answers('case: ALPHA')).toBe(false)
     expect(answers('case: Alpha')).toBe(true)
   })
+
+  test('folds a capital sigma the same wherever it sits in a word', () => {
+    expect(answers('ΟΔΟΣ', { body: 'οδοστρωμα\n' })).toBe(true)
+    expect(answers('οδοσ', { body: 'ΟΔΟΣ\n' })).toBe(true)
+  })
 })
 
 describe('path and file', () => {

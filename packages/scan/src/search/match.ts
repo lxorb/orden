@@ -72,7 +72,8 @@ export function workDone(): Work {
   return done
 }
 
-export function fold(text: string): string {
+export function fold(written: string): string {
+  const text = written.includes('Σ') ? written.replaceAll('Σ', 'σ') : written
   const lowered = text.toLowerCase()
   if (lowered.length === text.length) return lowered
 
