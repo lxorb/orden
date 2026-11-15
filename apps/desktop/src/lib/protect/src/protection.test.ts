@@ -1,6 +1,13 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Protection, protectedMap, SPACE, STORAGE_KEY } from './protection.svelte'
 import { unlocks } from './unlocked.svelte'
+
+const os = vi.hoisted(() => ({ name: '' }))
+
+vi.mock('../../platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../platform/src/tauri')>()),
+  platform: () => os.name,
+}))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -251,5 +258,44 @@ describe('a copy an outside sync tool left of a protected note', () => {
       { root: ROOT, key: 'Inside', way: 'device' },
       { root: ROOT, key: 'Inside/Diary.md', way: 'password' },
     ])
+  })
+})
+
+describe('a path Windows reads as a protected one', () => {
+  const WINDOWS = 'C:\\Notes'
+  const inside = (relative: string) => `${WINDOWS}\\${relative}`
+
+  beforeEach(() => {
+    os.name = 'windows'
+  })
+
+  afterEach(() => {
+    os.name = ''
+  })
+
+  test('with a dot or space Windows drops from a name is still protected', () => {
+    protection.set(WINDOWS, inside('Private'), 'password')
+    protection.set(WINDOWS, inside('Diary.md'), 'password')
+    for (const path of [
+      'Private.\\Diary.md',
+      'Private\\Diary.md.',
+      'Private.',
+      'Private. . ',
+      'Diary.md.',
+      'Diary.md .',
+    ]) {
+      expect(protection.agentsMay(inside(path)), path).toBe(false)
+      expect(protection.locked(inside(path)), path).toBe(true)
+    }
+    expect(protection.agentsMay(inside('Private..\\Diary.md'))).toBe(true)
+    expect(protection.agentsMay(inside('Private \\Diary.md'))).toBe(true)
+    expect(protection.agentsMay(inside('Diary.md.x'))).toBe(true)
+  })
+
+  test('elsewhere names a different folder', () => {
+    os.name = 'linux'
+    protection.set(ROOT, at('Private'), 'password')
+    expect(protection.agentsMay(at('Private./Diary.md'))).toBe(true)
+    expect(protection.locked(at('Private./Diary.md'))).toBe(false)
   })
 })
