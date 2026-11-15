@@ -159,7 +159,7 @@ function linesOf(
 
     const embedded = ALONE.exec(said)?.[1]
     const shown = embedded && graph.known.has(embedded) && !here.has(embedded) ? embedded : null
-    const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []))
+    const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []), pageLink)
     const indent = '  '.repeat(depth)
 
     const heading = depth === 0 && typeof block.heading === 'number' ? block.heading : 0
@@ -193,17 +193,22 @@ function itemText(words: string, indent: string): string {
     .join('\n')
 }
 
+function asWritten(name: string, shown: string | null = null, embed = false): string {
+  return `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
+}
+
 export function roamText(
   said: string,
   known: ReadonlyMap<string, string> = new Map(),
   counted: () => void = () => undefined,
   showing: ReadonlySet<string> = new Set(),
+  link: typeof pageLink = asWritten,
 ): string {
   const block = (whole: string, uid: string, as?: () => string) => {
     const words = known.get(uid)
     if (words === undefined || showing.has(uid)) return whole
     counted()
-    return as ? as() : roamText(words, known, counted, new Set([...showing, uid]))
+    return as ? as() : roamText(words, known, counted, new Set([...showing, uid]), link)
   }
   const page = (name: string) => dayName(name.trim()) ?? name
 
@@ -214,16 +219,16 @@ export function roamText(
       .replace(/\^\^([^^]+)\^\^/g, '==$1==')
       .replace(/(?<![\w_])__(?=\S)([^_\n]+?)__(?![\w_])/g, '*$1*')
       .replace(BLOCK_EMBED, (whole, uid: string) => block(whole, uid))
-      .replace(PAGE_EMBED, (_whole, name: string) => pageLink(page(name), null, true))
+      .replace(PAGE_EMBED, (_whole, name: string) => link(page(name), null, true))
       .replace(/\[([^\]\n]+)\]\(\(\(([^()\s]+)\)\)\)/g, (whole, words: string, uid: string) =>
         block(whole, uid, () => words),
       )
       .replace(/\(\(([^()\s]+)\)\)/g, (whole, uid: string) => block(whole, uid))
       .replace(/\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g, (_whole, words: string, name: string) =>
-        pageLink(page(name), words),
+        link(page(name), words),
       )
       .replace(/(?<!\{)\[\[([^[\]\n]+)\]\](?!\})/g, (whole, name: string) =>
-        name.includes('|') ? whole : pageLink(page(name)),
+        name.includes('|') ? whole : link(page(name)),
       )
       .replace(/\{\{\[\[([^\]]+)\]\]\}\}/g, '$1'),
   )

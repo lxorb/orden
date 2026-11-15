@@ -35,6 +35,16 @@ describe("Bear's closed tags", () => {
   })
 })
 
+describe('Roam marks converted in a note of the space', () => {
+  test('keep its heading, block and embed links as written', () => {
+    const text =
+      '- {{[[TODO]]}} read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ^^key^^\n'
+    expect(convertRoam(text).text).toBe(
+      '- [ ] read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ==key==\n',
+    )
+  })
+})
+
 describe('a Zettelkasten id link', () => {
   const ids = idsIn(['202201011200 The first note.md', '202301011200.md', 'Ordinary note.md'])
 
