@@ -1,5 +1,6 @@
 import { webDataSheet } from './web-tab/src/api'
 import { foreignCopy } from '@orden/sync-core'
+import { isChatTarget } from '@orden/markdown/links'
 import { folderNote, nestedIn } from './folder-notes'
 import { basesOn, hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
@@ -132,7 +133,7 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
       label: count === 1 ? 'Delete 1 item' : `Delete ${count} items`,
       danger: true,
       disabled: count === 0,
-      run: () => void workspace.removeMany(paths),
+      run: () => void removeAsking(paths),
     },
   ]
 }
@@ -238,6 +239,7 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   }
 
   if (!inside) {
+    if (await chatsKept([entry.path])) return
     await workspace.remove(entry.path, entry.is_dir)
     return
   }
@@ -251,6 +253,18 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   })
 
   if (sure) await workspace.remove(entry.path, true)
+}
+
+async function chatsKept(paths: readonly string[]): Promise<boolean> {
+  if (__EVEN_PLUGIN__ || !paths.some((path) => isChatTarget(path))) return false
+  const { chatDeleting } = await import('./chats-client/src/api')
+  const { mayDelete } = await chatDeleting()
+  return !(await mayDelete(paths))
+}
+
+export async function removeAsking(paths: readonly string[]) {
+  if (await chatsKept(paths)) return
+  await workspace.removeMany([...paths])
 }
 
 export async function refuseDeleting(paths: readonly string[]) {
