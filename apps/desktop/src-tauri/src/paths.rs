@@ -544,7 +544,8 @@ pub fn below_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 
 fn judged_below(root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = judged(root, path)?;
-    if inside(&target, root) || inside(&root.join(ORDEN_DIR), &target) {
+    let kept = root.join(ORDEN_DIR);
+    if inside(&target, root) || inside(&target, &kept) {
         return Err(format!("{path} is not a folder to take away"));
     }
     Ok(target)
@@ -1209,7 +1210,8 @@ mod tests {
         assert!(said(&["Documents", "Orden"]).is_err());
         assert!(said(&["Documents", "Orden", "Work", ".."]).is_err());
         assert!(said(&["Documents", "Orden", ".orden"]).is_err());
-        assert!(said(&["Documents", "Orden", ".orden", "kept"]).is_err());
+        assert!(said(&["Documents", "Orden", ".orden", "Work", "Work"]).is_ok());
+        assert!(said(&["Documents", "Orden", ".orden", ".work", "Work"]).is_ok());
         assert!(said(&["Documents", "Orden", "Work"]).is_ok());
         assert!(said(&["Documents", "Orden", "Work", "Old"]).is_ok());
     }
