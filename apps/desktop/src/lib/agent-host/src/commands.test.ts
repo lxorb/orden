@@ -29,7 +29,12 @@ vi.mock('@orden/contracts', async (original) => ({
 }))
 
 vi.mock('../../commands/src/api', () => ({
-  appCommands: () => [row('export-space'), row('export-pdf'), row('reformat'), row('protect.let-agents')],
+  appCommands: () => [
+    row('export-space'),
+    row('export-pdf'),
+    row('reformat'),
+    row('protect.let-agents'),
+  ],
 }))
 
 vi.mock('../../agent-verbs/src/api', async (original) => ({
