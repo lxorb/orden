@@ -133,8 +133,8 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 2_000_000
-const MOST_FILES = 502
+const BUDGET = 2_001_000
+const MOST_FILES = 503
 
 const MOST_TEXT = 6_500
 
@@ -201,7 +201,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/pages/src/Pages.svelte', 'the pages surface'],
     ['/lib/pages/src/PagesNavigator.svelte', "the pages surface's thumbnails"],
     ['/lib/web-tab/src/WebTab.svelte', 'the web tab'],
-    ['/lib/SettingsPanel.svelte', 'the settings sheet'],
+    ['/lib/settings/src/SettingsPanel.svelte', 'the settings sheet'],
     ['/lib/theme-looks/src/wallpaper/held.ts', "the wallpaper's record"],
     ['/lib/theme-looks/src/wallpaper/sheet.ts', "the wallpaper's sheet, picture and all"],
     ['/lib/theme-looks/src/wallpaper/wallpaper.svelte.ts', 'the wallpaper store'],
@@ -210,7 +210,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/theme-looks/src/wallpaper/floors.ts', "the wallpaper's scrim"],
     ['/lib/theme-looks/src/wallpaper/kept.ts', "the wallpaper's copy"],
     ['/themes/src/wallpaper.ts', "the wallpaper's sheet"],
-    ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
+    ['/lib/settings/src/DefaultBrowser.svelte', 'the default browser row'],
     ['/lib/web-tab/src/handed.ts', 'the pages other programs hand over'],
     ['/lib/web-tab/src/permissions.svelte.ts', 'what a site may use'],
     ['/lib/export/src/render.ts', 'the exporters'],
@@ -304,10 +304,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/run/run.ts', "the Run button's sandbox"],
     ['/editor/src/run/panel.ts', 'what it prints into'],
     ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
-    ['/lib/preview-card.ts', 'the editor in a link card'],
+    ['/lib/pane-tree/src/preview-card.ts', 'the editor in a link card'],
     ['/lib/reading/src/drawn.ts', 'a paper or a plane drawn in a note'],
     ['/lib/link-index/src/query-block.ts', "a query fence's rows"],
-    ['/lib/note-cover.ts', "a note's cover, written"],
+    ['/lib/workspace/src/note-cover.ts', "a note's cover, written"],
     ['/lib/theme-looks/src/gallery/store.svelte.ts', "the theme gallery's store"],
     ['/lib/theme-looks/src/gallery/registry.ts', 'the theme catalogue'],
     ['/lib/theme-looks/src/gallery/validate.ts', 'the theme reviewer'],

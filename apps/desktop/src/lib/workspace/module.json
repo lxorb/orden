@@ -38,7 +38,8 @@
     "undo-toast",
     "crate",
     "left-spaces",
-    "gates"
-  ],
-  "pending": ["apps/desktop/src/lib/composer.ts", "apps/desktop/src/lib/own-keys.ts"]
+    "gates",
+    "link-format",
+    "updates"
+  ]
 }

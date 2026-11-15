@@ -31,16 +31,22 @@
   import { OUTSIDE_FOLDER, whenLoaded } from '@orden/contracts'
   import { iconChoice } from './lib/icon-picker/src/api'
   import { PaneTree } from './lib/pane-tree/src/api'
-  import FirstScreen from './lib/FirstScreen.svelte'
+  import {
+    FirstScreen,
+    SizeBadge,
+    StorageWarning,
+    FirstSync,
+    Progress,
+    StatusBar,
+    PadColumn,
+    PullMark,
+  } from './lib/frame/src/api'
   import { Sidebar } from './lib/sidebar/src/api'
-  import SizeBadge from './lib/SizeBadge.svelte'
-  import StorageWarning from './lib/StorageWarning.svelte'
   import { UpdateNotice, updates } from './lib/updates/src/api'
-  import { renamed } from './lib/renamed.svelte'
+  import { startup } from './lib/launch/src/api'
+  import { renamed } from './lib/launch/src/renamed.svelte'
   import { account, arriving, usage } from './lib/accounts/src/api'
   import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
-  import FirstSync from './lib/FirstSync.svelte'
-  import Progress from './lib/Progress.svelte'
   import {
     drawer,
     drawerFollowing,
@@ -52,6 +58,7 @@
     tabOverview,
     workspace,
     writeNew,
+    pull,
   } from './lib/workspace/src/api'
   import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
   import { chrome, theme } from './lib/theme/src/api'
@@ -97,21 +104,16 @@
   import { start } from './lib/start'
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
-  import StatusBar from './lib/StatusBar.svelte'
   import { Titlebar } from './lib/titlebar/src/api'
   import { choices, modes, watchTextSize } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
-  import { startup } from './lib/launch/src/api'
   import { windowDocuments } from './lib/windows/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/panes/src/api'
   import { sidebarKey, used } from './lib/file-undo/src/api'
   import { saveFront } from './lib/save-place/src/api'
-  import PadColumn from './lib/PadColumn.svelte'
   import { shown as pad } from './lib/scratchpad/src/api'
   import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
   import { doubleTaps, shortcuts, toolbar } from './lib/shortcuts/src/api'
-  import { pull } from './lib/pull.svelte'
-  import PullMark from './lib/PullMark.svelte'
   import type { AppContext } from './lib/shortcuts/src/api'
   import { firstSpaceDoor, gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
 
@@ -231,7 +233,7 @@
         shortcuts.receive(remote)
         toolbar.receive(remote)
         whenLoaded(
-          () => import('./lib/kind-choice'),
+          () => import('./lib/gates/src/api'),
           (one) => one.receive(remote),
         )
         recovery.receive(remote)
@@ -935,7 +937,7 @@
     {/if}
     {#if renamed.showing && renameNotice.asked}
       {#await renameNotice.asked then RenameNotice}
-        <RenameNotice />
+        <RenameNotice ongone={() => renamed.dismiss()} />
       {/await}
     {/if}
     {#if updates.ready}

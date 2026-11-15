@@ -21,7 +21,7 @@
     shortcutEffect,
     trustedMarkupEffect,
   } from '@orden/editor'
-  import { pickedLink } from '../../composer'
+  import { pickedLink } from '../../link-format/src/api'
   import { EditorStates } from './editor-states'
   import { firstScreen } from '../../first-screen/src/api'
   import { mark } from '../../platform/src/api'
@@ -75,7 +75,7 @@
     const from = tab.path
     let release: (() => void) | null = null
     let gone = false
-    void import('../../preview-card').then(({ mountPreview }) => {
+    void import('./preview-card').then(({ mountPreview }) => {
       if (!gone) release = mountPreview(host, note, from)
     })
 

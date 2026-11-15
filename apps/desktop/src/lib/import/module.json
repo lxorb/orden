@@ -23,10 +23,5 @@
     "modes",
     "tree",
     "glyphs"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/attachments.ts",
-    "apps/desktop/src/lib/composer.ts"
   ]
 }

@@ -1,3 +1,4 @@
+import { ownKeys } from '../../web-backend/src/api'
 import { loadFor } from '@orden/markdown/engines'
 import { numbered } from '@orden/markdown/paths'
 import type { FoundLink } from '@orden/markdown/links'
@@ -252,7 +253,7 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
 
 async function withKept(note: Note): Promise<Note> {
   if (note.path === null) return note
-  const { withOwnKeys } = await import('../../own-keys')
+  const { withOwnKeys } = await ownKeys()
   const source = withOwnKeys(note.source, workspace.itemMeta.of(note.path))
   return source === note.source ? note : { ...note, source }
 }

@@ -31,7 +31,8 @@ import { loadGraph } from './graph-view/src/api'
 import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from './archive/src/api'
 import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
-import { focusEditor } from './workspace/src/api'
+import { focusEditor, noteCovers, paneMoves } from './workspace/src/api'
+import { previewCards } from './pane-tree/src/api'
 import { startup } from './launch/src/api'
 import {
   contextMenu,
@@ -330,10 +331,10 @@ export async function warmDoors(): Promise<void> {
     __EVEN_PLUGIN__
       ? undefined
       : () => import('./tab-strip/src/api').then((one) => one.tabNumbers()),
-    __EVEN_PLUGIN__ ? undefined : () => import('./pane-moves').then((one) => one.followPointer()),
+    __EVEN_PLUGIN__ ? undefined : () => paneMoves().then((one) => one.followPointer()),
     __EVEN_PLUGIN__ ? undefined : () => fillBar(),
-    () => import('./preview-card'),
-    () => import('./note-cover'),
+    previewCards,
+    noteCovers,
     () => warmCalls(),
     __EVEN_PLUGIN__
       ? undefined

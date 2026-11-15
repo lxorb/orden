@@ -10,7 +10,7 @@
     "sync-client",
     "workspace",
     "sync-store",
-    "launch"
-  ],
-  "pending": ["apps/desktop/src/lib/composer.ts"]
+    "launch",
+    "link-format"
+  ]
 }

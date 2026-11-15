@@ -15,6 +15,5 @@
     "workspace",
     "notify",
     "marks"
-  ],
-  "pending": ["apps/desktop/src/lib/connectors.svelte.ts"]
+  ]
 }

@@ -90,3 +90,19 @@ export {
   type TabAsk,
   tabAsk,
 } from './new-tab'
+
+export { carvable, mergeable } from './composing'
+
+export { accountAddress, storeAttachment, storeBeside, storeImage } from './assets'
+
+export { pull, pullable, REACH } from './pull.svelte'
+
+export const paneMoves = () => import('./pane-moves')
+
+export const noteCovers = () => import('./note-cover')
+
+export const featureGates = () => import('./feature-gate.svelte')
+
+export const refreshing = () => import('./refresh')
+
+export const closing = () => import('./closing')

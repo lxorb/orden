@@ -12,7 +12,7 @@ import { iconChoice } from '../../icon-picker/src/api'
 import { links } from '../../link-index/src/api'
 import { canShareItem, canWriteAt, shareThisFile } from '../../sharing/src/api'
 import { isDesktop, isMarkdownPath, withinSpace } from '../../platform/src/api'
-import { workspace } from '../../workspace/src/api'
+import { noteCovers, workspace } from '../../workspace/src/api'
 import { entryAt, folderNote } from '../../tree/src/api'
 
 export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
@@ -69,18 +69,17 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
   if (!path || !isMarkdownPath(path) || !canWriteAt(path)) return []
 
   const there = links.coverOf(path) !== null || workspace.itemMeta.valueOf(path, COVER_KEY) !== null
-  const cover = () => import('../../note-cover')
 
   return [
     {
       label: there ? 'Change cover' : 'Set cover',
-      run: () => void cover().then((one) => one.chooseCover(path)),
+      run: () => void noteCovers().then((one) => one.chooseCover(path)),
     },
     ...(there
       ? [
           {
             label: 'Remove cover',
-            run: () => void cover().then((one) => one.removeCover(path)),
+            run: () => void noteCovers().then((one) => one.removeCover(path)),
           },
         ]
       : []),

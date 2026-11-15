@@ -17,7 +17,7 @@ const {
   chatsOn,
   kindsHere,
 } = await import('./gates/src/api')
-const { setWord, receive } = await import('./kind-choice')
+const { setWord, receive } = await import('./gates/src/api')
 const { runnable, SHORTCUTS } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { account } = await import('./accounts/src/account.svelte')

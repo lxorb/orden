@@ -131,6 +131,7 @@ export const APP_FOLDERS = [
   'files-out',
   'first-screen',
   'foreign',
+  'frame',
   'gates',
   'glasses-choices',
   'glyphs',

@@ -22,5 +22,5 @@
     "icon-picker",
     "glyphs"
   ],
-  "pending": ["apps/desktop/src/lib/connectors.svelte.ts", "apps/desktop/src/lib/theme-ports.ts"]
+  "pending": ["apps/desktop/src/lib/theme-ports.ts"]
 }

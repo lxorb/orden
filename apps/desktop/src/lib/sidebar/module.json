@@ -32,6 +32,5 @@
     "marks",
     "updates",
     "settings"
-  ],
-  "pending": ["apps/desktop/src/lib/pull.svelte.ts", "apps/desktop/src/lib/sidebar-width.svelte.ts"]
+  ]
 }
