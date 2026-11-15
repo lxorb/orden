@@ -16,6 +16,7 @@ class Disk implements WorkDisk {
   readonly files = new Map<string, { bytes: Uint8Array; mtime: number }>()
   readonly dirs = new Set<string>()
   seen: string | null = null
+  there = true
   writes = 0
   private clock = 5000
   private heard: ((news: SpaceNews) => void) | null = null
@@ -77,11 +78,12 @@ class Disk implements WorkDisk {
   }
 
   isDir(rel: string) {
-    return Promise.resolve(this.dirs.has(rel))
+    return Promise.resolve(rel ? this.dirs.has(rel) : this.there)
   }
 
   mkdir(rel: string) {
     if (rel) this.dirs.add(rel)
+    else this.there = true
     return Promise.resolve()
   }
 
@@ -270,5 +272,24 @@ describe("a kept space's working folder", () => {
     expect(await folder.at('Quiet.md')).toBeNull()
     expect(await folder.readText('Busy.md')).toBe('two')
     expect(text(first.disk.files.get('Busy.md')?.bytes)).toBe('two')
+  })
+
+  test('a working folder that is gone, its record left behind, is filled again and deletes nothing', async () => {
+    const folder = await store()
+    await folder.write('Plan.md', 'ship it')
+    await folder.write('Lists/Milk.md', 'milk')
+    const first = await started(folder)
+    await first.mirror.stop()
+
+    const gone = new Disk()
+    gone.there = false
+    gone.seen = first.disk.seen
+
+    await started(folder, gone)
+
+    expect(await folder.readText('Plan.md')).toBe('ship it')
+    expect(await folder.readText('Lists/Milk.md')).toBe('milk')
+    expect(text(gone.files.get('Plan.md')?.bytes)).toBe('ship it')
+    expect(gone.there).toBe(true)
   })
 })
