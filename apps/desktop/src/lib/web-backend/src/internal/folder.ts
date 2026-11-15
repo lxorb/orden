@@ -297,10 +297,11 @@ export class InternalFolder {
   private under(path: string): { rest: string; key: string; path: string; entry: InternalEntry }[] {
     const own = this.keyOf(path)
     const inside = `${own}/`
+    const depth = own.split('/').length
     const out: { rest: string; key: string; path: string; entry: InternalEntry }[] = []
     for (const [key, one] of this.paths) {
       if (key === own) out.push({ rest: '', key, ...one })
-      else if (key.startsWith(inside)) out.push({ rest: one.path.slice(path.length), key, ...one })
+      else if (key.startsWith(inside)) out.push({ rest: restOf(one.path, depth), key, ...one })
     }
     return out
   }
@@ -562,4 +563,8 @@ export class InternalFolder {
     })
     for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
   }
+}
+
+function restOf(path: string, depth: number): string {
+  return `/${path.split('/').slice(depth).join('/')}`
 }

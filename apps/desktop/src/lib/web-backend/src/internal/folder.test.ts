@@ -30,6 +30,16 @@ describe('a folder Orden keeps', () => {
     expect(await folder.readText('work/plan.md')).toBe('ship it')
   })
 
+  test('moves a folder named in another Unicode spelling with everything inside it', async () => {
+    const folder = await opened()
+    await folder.write('Caf\u00e9/Menu.md', 'soup')
+
+    await folder.move('Cafe\u0301', 'Bistro')
+
+    expect(await folder.readText('Bistro/Menu.md')).toBe('soup')
+    expect(await folder.at('BistroMenu.md')).toBeNull()
+  })
+
   test('moves a folder by its index alone: every key stays and no byte is written', async () => {
     const bytes = new MemoryBytes()
     const folder = await opened(bytes)
