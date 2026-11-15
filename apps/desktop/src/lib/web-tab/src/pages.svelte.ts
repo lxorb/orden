@@ -305,6 +305,8 @@ class Pages {
 
   private readonly gone = new Set<string>()
 
+  private readonly goingTo = new WeakMap<Page, string>()
+
   private listening: Promise<void> | null = null
 
   each(): [string, Page][] {
@@ -414,6 +416,10 @@ class Pages {
       page.opening = false
     }
 
+    const goingTo = this.goingTo.get(page)
+    this.goingTo.delete(page)
+    if (goingTo && handed) void this.go(tabId, goingTo, page.upgrade)
+
     const wanted = page.wanted
     page.wanted = null
     if (!wanted) return
@@ -440,6 +446,7 @@ class Pages {
     page.pane = pane
     const tried = page.url
     const forOwn = page.own
+    this.goingTo.delete(page)
 
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
@@ -477,6 +484,10 @@ class Pages {
       page.opening = false
     }
 
+    const goingTo = this.goingTo.get(page)
+    this.goingTo.delete(page)
+    if (goingTo) page.url = goingTo
+
     const wanted = page.wanted
     page.wanted = null
     if (page.live && page.crashed) {
@@ -496,6 +507,8 @@ class Pages {
     }
 
     if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
+
+    if (goingTo && goingTo !== tried) void this.go(tabId, goingTo, page.upgrade)
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
@@ -857,6 +870,7 @@ class Pages {
       return
     }
 
+    if (page.opening) this.goingTo.set(page, url)
     if (!page.live) return
 
     leftPage(tabId)

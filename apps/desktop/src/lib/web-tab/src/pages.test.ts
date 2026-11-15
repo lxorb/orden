@@ -175,6 +175,31 @@ describe('while a page is being built', () => {
     expect(pages.of('a').openable).toBe(true)
   })
 
+  test('an address given while the page is being built is gone to once it arrives', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+
+    void pages.go('a', 'https://example.org/')
+    arrive()
+    await shown
+    await settle()
+
+    expect(last('web_navigate')).toMatchObject({ tab: 'a', url: 'https://example.org/' })
+    expect(pages.of('a').url).toBe('https://example.org/')
+  })
+
+  test('the address the page was built with is not gone to again', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+
+    void pages.go('a', SITE)
+    arrive()
+    await shown
+    await settle()
+
+    expect(commands()).not.toContain('web_navigate')
+  })
+
   test('a second placement asks for no second page', async () => {
     const shown = pages.show('a', SITE, PANE)
     const arrive = await asked()
