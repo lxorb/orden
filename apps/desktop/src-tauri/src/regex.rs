@@ -282,7 +282,7 @@ impl Pattern {
 
     fn holds(&self, wanted: &Letter, letter: char) -> bool {
         match wanted {
-            Letter::Any => letter != '\n',
+            Letter::Any => !ends_line(letter),
             Letter::Char(one) if self.fold => folded(letter) == folded(*one),
             Letter::Char(one) => letter == *one,
             Letter::Class(class) => class.holds(letter, self.fold),
@@ -484,7 +484,7 @@ impl Pattern {
                     c == wanted
                 }
             }
-            Step::Any => c != '\n',
+            Step::Any => !ends_line(c),
             Step::Class(index) => self
                 .program
                 .classes
@@ -596,8 +596,12 @@ fn is_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
+fn ends_line(c: char) -> bool {
+    matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}')
+}
+
 pub(crate) fn is_space(c: char) -> bool {
-    let breaks = matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}');
+    let breaks = ends_line(c);
     let blanks = matches!(c, '\t' | '\u{b}' | '\u{c}' | ' ' | '\u{a0}' | '\u{feff}');
     let wide = matches!(c, '\u{1680}' | '\u{202f}' | '\u{205f}' | '\u{3000}');
     breaks || blanks || wide || ('\u{2000}'..='\u{200a}').contains(&c)
@@ -1731,7 +1735,9 @@ mod tests {
         assert_eq!(first("a.c", "abc").as_deref(), Some("abc"));
         assert_eq!(first("a.c", "a\nc"), None);
         assert_eq!(first(".", "\n"), None);
-        assert_eq!(first(".", "\r").as_deref(), Some("\r"));
+        assert_eq!(first(".", "\r"), None);
+        assert_eq!(first("TODO.", "TODO\r\n"), None);
+        assert_eq!(first(".", "\u{2028}\u{2029}"), None);
         assert_eq!(first("a.", "aä").as_deref(), Some("aä"));
     }
 
