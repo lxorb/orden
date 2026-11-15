@@ -165,12 +165,13 @@ export function baseUnder(yaml: string, under: string): string {
     return 0
   }
   const views = document.contents.get('views', true)
-  const filters = [
+  const expressions = [
     document.contents.get('filters', true),
+    document.contents.get('formulas', true),
     ...(isSeq(views)
       ? views.items.map((view) => (isMap(view) ? view.get('filters', true) : null))
       : []),
   ]
-  const changed = filters.reduce((sum: number, one) => sum + follow(one), 0)
+  const changed = expressions.reduce((sum: number, one) => sum + follow(one), 0)
   return changed ? document.toString({ lineWidth: 0 }) : yaml
 }

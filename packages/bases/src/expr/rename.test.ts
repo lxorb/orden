@@ -33,7 +33,7 @@ describe('a filter landed under a folder', () => {
     expect(placedUnder('file.inFolder("Projects")', '')).toBe('file.inFolder("Projects")')
   })
 
-  test('reads every filter of a base, and keeps the rest as it was written', () => {
+  test('reads every filter and formula of a base, and keeps the rest as it was written', () => {
     const yaml = [
       '# mine',
       'filters:',
@@ -53,8 +53,23 @@ describe('a filter landed under a folder', () => {
       yaml
         .replace("file.inFolder('A')", 'file.inFolder("In/A")')
         .replace('"B"', '"In/B"')
+        .replace('"C"', '"In/C"')
         .replace('"D"', '"In/D"'),
     )
     expect(baseUnder('views: [', 'In')).toBe('views: [')
+  })
+
+  test('reads the formulas of a base too, since a filter can read them', () => {
+    const yaml = [
+      'formulas:',
+      '  mine: file.inFolder("Work") || file.folder == "Home"',
+      '  size: file.size * 2',
+      'filters: formula.mine',
+      '',
+    ].join('\n')
+
+    expect(baseUnder(yaml, 'In')).toBe(
+      yaml.replace('"Work"', '"In/Work"').replace('"Home"', '"In/Home"'),
+    )
   })
 })
