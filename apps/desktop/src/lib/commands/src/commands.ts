@@ -510,7 +510,11 @@ function recorded(view?: EditorView): Block[] {
   return commandRows('record', view).map((row) => ({
     id: row.id,
     label: () => row.label,
-    apply: () => row.run(),
+    apply: (target) => {
+      const ran =
+        target === view ? row : commandRows('record', target).find((one) => one.id === row.id)
+      ran?.run()
+    },
     ready: () => row.disabled !== true,
     byHand: row.byHand === true,
   }))
