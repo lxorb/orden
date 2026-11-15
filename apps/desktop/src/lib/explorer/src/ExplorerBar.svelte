@@ -141,7 +141,7 @@
         <button
           class="crumb"
           class:is-here={index === crumbs.length - 1}
-          use:dropOver={(event) => over(event)}
+          use:dropOver={(event) => over(event, crumb.path)}
           ondrop={(event) => dropInto(view, event, crumb.path)}
           aria-current={index === crumbs.length - 1 ? 'location' : undefined}
           onclick={() => view.go(crumb.path)}>{crumb.name}</button

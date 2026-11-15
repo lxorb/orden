@@ -88,7 +88,7 @@
           onclick={() => view.go(row.path)}
           oncontextmenu={(event) => rowMenu(event, row.path, row.pinned)}
           use:dropOver={(event) => {
-            if (over(event)) taking = row.path
+            if (over(event, row.path)) taking = row.path
           }}
           ondragleave={() => (taking = null)}
           ondrop={(event) => {

@@ -69,12 +69,12 @@ describe("a file explorer's drag", () => {
   test('moves between explorers, and copies with Ctrl or out of a space', () => {
     const outside = transfer()
     startDrag(dragEvent(outside), ['/home/me/Downloads/a.zip'])
-    expect(dropHow(dragEvent(outside))).toBe('move')
-    expect(dropHow(dragEvent(outside, { ctrlKey: true }))).toBe('copy')
+    expect(dropHow(dragEvent(outside), '/home/me/Music')).toBe('move')
+    expect(dropHow(dragEvent(outside, { ctrlKey: true }), '/home/me/Music')).toBe('copy')
     const inside = transfer()
     startDrag(dragEvent(inside), ['/home/me/Orden/Work/plan.md'])
-    expect(dropHow(dragEvent(inside))).toBe('copy')
-    expect(dropHow(dragEvent(inside, { shiftKey: true }))).toBe('move')
+    expect(dropHow(dragEvent(inside), '/home/me/Downloads')).toBe('copy')
+    expect(dropHow(dragEvent(inside, { shiftKey: true }), '/home/me/Downloads')).toBe('move')
   })
 
   test('lands in the folder it was let go over', () => {
@@ -85,6 +85,23 @@ describe("a file explorer's drag", () => {
     expect(prevent).toHaveBeenCalled()
     expect(carried).toEqual([
       { sources: ['/home/me/Downloads/a.zip'], folder: '/home/me/Music', how: 'move' },
+    ])
+  })
+
+  test('moves a note let go in a folder of a space, and copies it only with Ctrl (#2060)', () => {
+    const inside = transfer()
+    startDrag(dragEvent(inside), ['/home/me/Orden/Work/plan.md'])
+    expect(dropHow(dragEvent(inside), '/home/me/Orden/Work/Trips')).toBe('move')
+    expect(dropHow(dragEvent(inside, { ctrlKey: true }), '/home/me/Orden/Work/Trips')).toBe('copy')
+
+    carried.splice(0)
+    dropInto({} as never, dragEvent(inside), '/home/me/Orden/Work/Trips')
+    expect(carried).toEqual([
+      {
+        sources: ['/home/me/Orden/Work/plan.md'],
+        folder: '/home/me/Orden/Work/Trips',
+        how: 'move',
+      },
     ])
   })
 })

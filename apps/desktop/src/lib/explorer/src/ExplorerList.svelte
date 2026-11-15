@@ -290,7 +290,7 @@
 
   function overRow(event: DragEvent, entry: Entry) {
     if (!entry.folder || carriesItself(entry)) return
-    if (!over(event)) return
+    if (!over(event, view.pathOf(entry.name))) return
     event.stopPropagation()
     if (taking === entry.name) return
     taking = entry.name
@@ -393,7 +393,7 @@
     onpointermove={bandMove}
     onpointerup={bandEnd}
     onpointercancel={bandEnd}
-    use:dropOver={(event) => over(event)}
+    use:dropOver={(event) => over(event, view.listing?.path ?? '')}
     ondrop={dropOnRoom}
     oncontextmenu={roomMenuAt}
     data-entry={rows.length ? undefined : ''}
