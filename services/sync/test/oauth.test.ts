@@ -898,6 +898,27 @@ describe('what the settings show', () => {
 
     expect((await rpc(tokens.json.access_token, 'ping')).status).toBe(200)
   })
+
+  test('ending every other session disconnects every connected client too', async () => {
+    const session = await signIn(env, 'a@b.dev')
+    const { tokens, clientId } = await connect({ write: true })
+
+    const ended = await call(env, '/v1/sessions', { token: session, method: 'DELETE' })
+    expect(ended.status).toBe(200)
+
+    expect((await rpc(tokens.json.access_token, 'ping')).status).toBe(401)
+    const refreshed = await call(env, '/oauth/token', {
+      raw: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: tokens.json.refresh_token,
+        client_id: clientId,
+      }).toString(),
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(refreshed.status).not.toBe(200)
+    expect((await call(env, '/v1/mcp/token', { token: session })).json.clients).toHaveLength(0)
+    expect((await call(env, '/v1/me', { token: session })).status).toBe(200)
+  })
 })
 
 describe('how many clients this server registers', () => {
