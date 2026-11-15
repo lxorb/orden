@@ -286,7 +286,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const folder = judgedForWriting(where.folder ?? folderOf(relative)).replace(/^\.$/, '')
   const rows = await rowsStore()
   const template = await templateOf(place, where.template, rows.of(place.space.name))
-  const name = noteName(maybe(call, 'title') ?? 'Untitled')
+  const name = judgedForWriting(noteName(maybe(call, 'title') ?? 'Untitled'))
   const path = await freePath(place, folder === '.' ? '' : folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))

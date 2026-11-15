@@ -979,6 +979,18 @@ describe('the reader tabs', () => {
 })
 
 describe('what asks the reader first', () => {
+  test('a version is never put back into a hidden note', async () => {
+    files.set('/s/Home/.obsidian/Soup.md', '# Soup\n')
+    expect(
+      await call('restore_version', {
+        space: 'Home',
+        path: '.obsidian/Soup',
+        version: 'device:1000',
+      }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(docs.writeNote).not.toHaveBeenCalled()
+  })
+
   test('a version put back is deleting for good, and goes through once allowed', async () => {
     answer = { status: 'needs_approval', approval: 'a1', summary: 'Put back' }
     expect(
@@ -1600,6 +1612,25 @@ describe('a page into a note', () => {
     })
   })
 
+  test('a capture folder never leaves the space', async () => {
+    readOnly.add('/s/Home')
+    for (const folder of ['../Secret', '../Home', '..', '.hidden', '/s/Secret']) {
+      expect(
+        await call('capture_to_note', { tab: 'a1', as: 'clip', folder }),
+        folder,
+      ).toMatchObject({ code: 'bad_arguments' })
+    }
+    expect([...files.keys()].some((one) => one.includes('A page'))).toBe(false)
+    expect(capture()).toBeUndefined()
+  })
+
+  test('a capture folder is a folder inside the space', async () => {
+    expect(
+      await call('capture_to_note', { tab: 'a1', as: 'clip', folder: 'Clips/Web' }),
+    ).toMatchObject({ result: { path: 'Clips/Web/A page.md', created: true } })
+    expect(files.get('/s/Work/Clips/Web/A page.md')).toContain('Words of the page.')
+  })
+
   test('says which shapes there are', async () => {
     expect(await call('capture_to_note', { tab: 'w1', as: 'gif' })).toMatchObject({
       code: 'bad_arguments',
@@ -2025,6 +2056,23 @@ describe('to-dos and bases', () => {
       ops: [{ op: 'add_view', name: 'Board', type: 'kanban' }],
     })
     expect(files.get('/s/Home/Books.base')).toContain('name: Board')
+  })
+
+  test('a row title is a plain name, never a hidden or empty file', async () => {
+    files.set(
+      '/s/Home/Books.base',
+      'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n',
+    )
+    for (const title of ['.Emma', '../..', '.md']) {
+      expect(
+        await call('add_row', { space: 'Home', base: 'Books.base', title }),
+        title,
+      ).toMatchObject({ code: 'bad_arguments' })
+    }
+    expect([...files.keys()].filter((one) => one.startsWith('/s/Home/Books/'))).toEqual([])
+    expect(
+      await call('add_row', { space: 'Home', base: 'Books.base', title: 'Shelf/Emma' }),
+    ).toMatchObject({ result: { path: 'Books/Shelf Emma.md', created: true } })
   })
 
   test('a row added from a template is filled, drops its own keys and takes the view’s template first', async () => {

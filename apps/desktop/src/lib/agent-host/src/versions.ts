@@ -11,6 +11,7 @@ import {
   writerOf,
   Refused,
   judged,
+  judgedForWriting,
   onDisk,
   type Place,
   placeOf,
@@ -23,9 +24,9 @@ function idOf(version: Version): string {
   return `${version.path === null ? 'account' : 'device'}:${version.at}`
 }
 
-function noteOf(call: Call): { place: Place; relative: string; path: string } {
+function noteOf(call: Call, writing = false): { place: Place; relative: string; path: string } {
   const place = placeOf(call)
-  const asked = judged(need(call, 'path'))
+  const asked = (writing ? judgedForWriting : judged)(need(call, 'path'))
   const relative = notePath(asked) ?? asked
   const path = onDisk(place, relative)
   readable(path, relative)
@@ -48,7 +49,7 @@ export async function listVersions(call: Call): Promise<AgentAnswer> {
 }
 
 export async function restoreVersion(call: Call): Promise<AgentAnswer> {
-  const { place, relative, path } = noteOf(call)
+  const { place, relative, path } = noteOf(call, true)
   writableAt(place, path)
   const wanted = need(call, 'version')
   const version = (await versionsOf(path)).find((one) => idOf(one) === wanted)

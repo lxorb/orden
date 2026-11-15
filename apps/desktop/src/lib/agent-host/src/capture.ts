@@ -182,15 +182,15 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   if (!isShape(shape)) throw new Refused('bad_arguments', `as is one of ${SHAPES.join(', ')}`)
 
   const place = placeOf(call)
+  const folder = maybe(call, 'folder')
+  const within = folder === null ? null : judgedForWriting(folder)
   const page = await pageIn(call, need(call, 'tab'), shape)
   if (!page.url) throw new Refused('failed', 'that tab has no page to capture')
 
   const named = maybe(call, 'note')
   const target = named === null ? null : judgedForWriting(named)
   const relative =
-    target === null
-      ? await freshPath(place, maybe(call, 'folder'), page.title || page.url)
-      : notePath(target)
+    target === null ? await freshPath(place, within, page.title || page.url) : notePath(target)
   if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
 
   const path = onDisk(place, relative)
