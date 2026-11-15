@@ -11,7 +11,7 @@ import { services } from './services'
 
 export interface Copies {
   readonly undone: FileActions
-  readonly protection: Pick<Protection, 'copied'>
+  readonly protection: Pick<Protection, 'copied' | 'moved'>
   rootHolding(path: string | null): string | null
   readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved' | 'set'>
   entryAt(path: string): Entry | null
@@ -92,7 +92,10 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
       () => true,
       () => false,
     ))
-  if (own && renamed) ws.itemMeta.moved(own.from, own.to)
+  if (own && renamed) {
+    ws.itemMeta.moved(own.from, own.to)
+    ws.protection.moved(own.from, own.to, ws.rootHolding(own.to))
+  }
   await ws.fileCame(path, entry.is_dir ? 'folder' : 'file')
 
   return true

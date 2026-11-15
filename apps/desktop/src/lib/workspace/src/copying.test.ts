@@ -75,7 +75,7 @@ function rig(entries: Entry[]) {
   return {
     undone: { record: () => undefined },
     itemMeta: meta,
-    protection: { copied: () => undefined },
+    protection: { copied: () => undefined, moved: () => undefined },
     rootHolding: () => '/s',
     entryAt: (path: string) => entries.find((one) => one.path === path) ?? null,
     showEntry: () => undefined,
@@ -202,5 +202,17 @@ describe('a copy keeps what Orden keeps about the item', () => {
     expect(protection.covering('/t/Diary.md')).toEqual([
       { root: '/t', key: 'Diary.md', way: 'password' },
     ])
+  })
+
+  test('a folder whose folder note is protected leaves a copy whose renamed folder note is as protected', async () => {
+    disk.clear()
+    disk.set('/s/Trip/Trip.md', '# Trip\n')
+    const ws = rig([entry('/s/Trip', [entry('/s/Trip/Trip.md')])])
+    const protection = new Protection()
+    protection.set('/s', '/s/Trip/Trip.md', 'password')
+    await copyRows({ ...ws, protection } as never, [{ from: '/s/Trip', into: '/s' }])
+
+    expect(protection.locked('/s/Trip copy/Trip copy.md')).toBe(true)
+    expect(protection.agentsMay('/s/Trip copy/Trip copy.md')).toBe(false)
   })
 })

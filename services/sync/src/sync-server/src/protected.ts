@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
-import { LONGEST_PATH, staysInside } from './spaces/paths'
+import { LONGEST_PATH, lockable } from './spaces/paths'
 import type { Env, Variables } from './types'
 
 type Way = 'password' | 'device'
@@ -51,7 +51,7 @@ function waysOf(value: unknown): Record<string, Way> {
   for (const [given, way] of Object.entries(value as Record<string, unknown>)) {
     const key = fitted(given)
     if (Object.keys(out).length >= MOST_PER_SPACE) break
-    const path = key === '' || (key.length <= LONGEST_PATH && staysInside(key))
+    const path = key === '' || (key.length <= LONGEST_PATH && lockable(key))
     if (path && isWay(way)) out[key] = way
   }
   return out

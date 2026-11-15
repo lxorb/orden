@@ -1,5 +1,4 @@
 import {
-  insideItsSpace,
   insideSpace,
   invoke,
   isRecord,
@@ -9,7 +8,7 @@ import {
   without,
 } from '../../platform/src/api'
 import { syncStore } from '@orden/contracts'
-import { fitted, type Way } from './protection.svelte'
+import { fitted, lockable, type Way } from './protection.svelte'
 
 const BURIED_KEY = 'orden:protected-buried'
 const MOST_BURIED = 1000
@@ -20,7 +19,7 @@ type Buried = Record<string, Record<string, Way>>
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 
-const inSpace = (at: string) => at === '' || insideItsSpace(fitted(at))
+const inSpace = (at: string) => at === '' || lockable(fitted(at))
 
 function readBuried(): Buried {
   const saved = stored(BURIED_KEY)

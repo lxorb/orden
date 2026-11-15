@@ -47,6 +47,13 @@ describe('what a reader protected', () => {
     expect((await read()).json.spaces).toEqual({ s1: { ok: 'device' } })
   })
 
+  test('keeps a top-level name that begins like a drive, as macOS and Linux allow', async () => {
+    await ways('s1', { 'Q: Diary.md': 'password', 'W: Work/Plan.md': 'device', 'C:\\x': 'device' })
+    expect((await read()).json.spaces).toEqual({
+      s1: { 'Q: Diary.md': 'password', 'W: Work/Plan.md': 'device' },
+    })
+  })
+
   test('is replaced whole for a space, and an empty map takes the space away', async () => {
     await ways('s1', { Diary: 'password' })
     await ways('s1', { Work: 'device' })

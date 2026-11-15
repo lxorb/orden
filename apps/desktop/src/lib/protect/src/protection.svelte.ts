@@ -72,6 +72,8 @@ export function hashedOf(value: unknown): Hashed | null {
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 
+export const lockable = (key: string) => insideItsSpace(key.replace(/^[A-Za-z]:/, '_'))
+
 export const fitted = (key: string) =>
   key.length > 300 ? key.slice(0, 300).replace(/\/?[^/]*$/, '') : key
 
@@ -81,7 +83,7 @@ export function protectedMap(value: unknown): Record<string, Way> {
   for (const [key, way] of Object.entries(value)) {
     const path = fitted(key)
     if (Object.keys(out).length >= MOST_PROTECTED) break
-    if ((path === SPACE || insideItsSpace(path)) && isWay(way)) out[path] = way
+    if ((path === SPACE || lockable(path)) && isWay(way)) out[path] = way
   }
   return out
 }
@@ -297,7 +299,7 @@ export class Protection {
 
   set(root: string, path: string, way: Way | null): void {
     const key = path === root ? SPACE : relativeTo(root, path)
-    if (key !== SPACE && !insideItsSpace(key)) return
+    if (key !== SPACE && !lockable(key)) return
     const held = this.ways(root)
     if (way === null) {
       if (key in held) this.put(root, without(held, key))
@@ -348,7 +350,7 @@ export class Protection {
     if (root === null || into === null) return
     const was = relativeTo(root, from)
     const now = relativeTo(into, to)
-    if (!insideItsSpace(now)) return
+    if (!lockable(now)) return
     const came: Record<string, Way> = {}
     for (const [key, way] of Object.entries(this.ways(root))) {
       const at = key === SPACE ? null : movedTo(key, was, now, root)

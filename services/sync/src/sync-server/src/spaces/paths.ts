@@ -11,3 +11,5 @@ export function staysInside(path: string): boolean {
     !path.split('/').includes('..')
   )
 }
+
+export const lockable = (key: string) => staysInside(key.replace(A_DISK, '_'))
