@@ -1403,6 +1403,18 @@ describe('a page into a note', () => {
     }
   })
 
+  test('lands in no folder outside the space, and in no hidden one', async () => {
+    for (const folder of ['../Secret', '.obsidian', 'Notes/../../Secret']) {
+      expect(await call('capture_to_note', { tab: 'w1', as: 'clip', folder })).toMatchObject({
+        code: 'bad_arguments',
+      })
+    }
+    expect([...files.keys()].filter((key) => key.includes('A page'))).toEqual([])
+    expect(await call('capture_to_note', { tab: 'w1', as: 'clip', folder: 'Clips' })).toMatchObject(
+      { result: { path: 'Clips/A page.md', created: true } },
+    )
+  })
+
   test('an agent tab is clipped the same way, through the crate', async () => {
     const answered = await call('capture_to_note', { tab: 'a1', as: 'clip', note: 'Research' })
     expect(answered).toMatchObject({ result: { path: 'Research.md', created: true } })
