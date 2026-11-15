@@ -3,8 +3,10 @@ import type { IconNode } from 'lucide'
 import { account, api, type AccountSettings } from '../../accounts/src/api'
 import { BY_ID, runnable } from './registry'
 import { forget, isString, keepJson, stored } from '../../platform/src/api'
+import { owes, saveOwing } from './owed'
 
 const STORAGE_KEY = 'orden:toolbar'
+const OWED_KEY = 'orden:toolbar-owed'
 
 const MOST_BUTTONS = 24
 
@@ -133,6 +135,10 @@ class Toolbar {
   }
 
   receive(remote: AccountSettings) {
+    if (owes(OWED_KEY)) {
+      this.share()
+      return
+    }
     const theirs = remote.toolbar
     if (theirs === undefined) {
       if (this.chosen) this.share()
@@ -151,7 +157,7 @@ class Toolbar {
     const token = account.accountToken
     if (!token) return
 
-    void api.saveSettings(token, { toolbar: this.chosen }).catch(() => undefined)
+    saveOwing(OWED_KEY, api.saveSettings(token, { toolbar: this.chosen }))
   }
 }
 
