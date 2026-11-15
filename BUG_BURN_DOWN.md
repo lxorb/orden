@@ -1365,3 +1365,11 @@ The MCP auditor found no Critical, High or Medium bugs in re-audit 19.
 | --- | --- | --- | --- | --- | --- | --- |
 | C136 | Medium | An embedded base filtered by `this` (`note.project == this.project`, `this.file.links.contains(file)`) kept its old rows after the host note was edited | Fixed `43b33c26` | The per-row cache counted `this` as reading only the row, and its key held only the host's path | `this` counts as reading other notes, so such a view is answered afresh | `link-context.test.ts` "an embedded view filtered by ..." (2 tests, failed before); bases 1076, desktop views 328 passed |
 | C137 | Medium | "Notes linking here" filters (`file.links.contains(this.file)`, `note.parent == this`) kept old rows after a namesake was made beside a linking note | Fixed `43b33c26` | Same cache; link comparisons against `this` resolve through the other notes (sibling of C135) | Same change | `link-context.test.ts` "a view filtered by ... follows a namesake" (2 tests, failed before) |
+
+The round-20 MCP finding (a view comparing a link with `this` keeping stale rows) is the same bug as C137.
+
+### Re-audit 21 (2026-11-15)
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| C138 | Medium | `run_command` and `orden commands run` exported, reformatted or edited the protected note in front for an agent the reader had not let read it (after the reader unlocked it only to look) | Fixed `382b9f95` | The command runners checked scopes only, never whether the note in front is kept from agents | Commands that act on the note in front (export, note writes, edit/format/paragraph, tree) are refused with `protected` while that note is kept from agents | `agent-verbs.test.ts` "a command on the protected note in front" and `acts.test.ts` "a command on the note in front" (both failed before); agent-verbs, agent-host, automation, cli-args, weight, no-comments 489 passed |
