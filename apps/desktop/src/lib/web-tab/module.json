@@ -24,7 +24,8 @@
     "documents",
     "file-writes",
     "protect",
-    "workspace"
+    "workspace",
+    "launch"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",

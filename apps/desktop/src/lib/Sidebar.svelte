@@ -74,7 +74,8 @@
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
-  import { dur, fade, fly, startup } from './platform/src/api'
+  import { dur, fade, fly } from './platform/src/api'
+  import { startup } from './launch/src/api'
 
   const {
     side = 'left',

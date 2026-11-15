@@ -32,7 +32,8 @@
     "ui-kit",
     "web-backend",
     "sync-store",
-    "modes"
+    "modes",
+    "launch"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",

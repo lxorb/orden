@@ -136,6 +136,7 @@ export const APP_FOLDERS = [
   'history',
   'import',
   'kept-for-good',
+  'launch',
   'link-format',
   'link-index',
   'matching',

@@ -1776,7 +1776,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
 
   async function launched() {
     sync.start()
-    const { startup } = await import('../src/lib/platform/src/api')
+    const { startup } = await import('../src/lib/launch/src/api')
     await startup.shown()
   }
 
@@ -1896,7 +1896,7 @@ describe('an account moved to v2 while this device runs v1', () => {
 
       account.user = { ...account.user!, syncVersion: 2 }
       sync.start()
-      const { startup } = await import('../src/lib/platform/src/api')
+      const { startup } = await import('../src/lib/launch/src/api')
       void startup.shown()
       await until(() => runner.start.mock.calls.length > 0)
       expect(runner.start).toHaveBeenCalledTimes(1)

@@ -18,44 +18,8 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from '../../link-index/src/api'
-import {
-  onDisk,
-  insideOnly,
-  askCase,
-  folderOf,
-  insideSpace,
-  isMarkdownPath,
-  movedTo,
-  nameOf,
-  noteName,
-  pathKey,
-  pathKeys,
-  relativeTo,
-  samePath,
-  sameSpelling,
-  within,
-  withinSpace,
-  AGENTS_NAME,
-  isAgentsName,
-  nameFromContent,
-  shownName,
-  afterQuiet,
-  waited,
-  isRecord,
-  keepJson,
-  stored,
-  log,
-  invoke,
-  isDesktop,
-  isNative,
-  joinPath,
-  openExternal,
-  nextTask,
-  oneWriteAt,
-  startup,
-  mark,
-  markPainted,
-} from '../../platform/src/api'
+import { onDisk, insideOnly, askCase, folderOf, insideSpace, isMarkdownPath, movedTo, nameOf, noteName, pathKey, pathKeys, relativeTo, samePath, sameSpelling, within, withinSpace, AGENTS_NAME, isAgentsName, nameFromContent, shownName, afterQuiet, waited, isRecord, keepJson, stored, log, invoke, isDesktop, isNative, joinPath, openExternal, nextTask, oneWriteAt, mark, markPainted } from '../../platform/src/api'
+import { startup } from '../../launch/src/api'
 import { noteId } from '../../note-id'
 import { busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'

@@ -39,7 +39,7 @@ vi.mock('@orden/editor', async (importOriginal) => {
 })
 
 const { links } = await import('./link-index/src/api')
-const { startup } = await import('./platform/src/api')
+const { startup } = await import('./launch/src/api')
 
 beforeEach(() => {
   notes = {}

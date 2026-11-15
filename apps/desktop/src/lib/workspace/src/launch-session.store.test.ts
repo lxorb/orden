@@ -124,7 +124,7 @@ function freshRound(session: object = SESSION) {
 
 async function newWindow() {
   vi.resetModules()
-  const { startup } = await import('../../platform/src/api')
+  const { startup } = await import('../../launch/src/api')
   const turn = startup.turn.bind(startup)
   startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
   const { workspace } = await import('./workspace.svelte')

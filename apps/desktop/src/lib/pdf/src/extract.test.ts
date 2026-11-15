@@ -79,10 +79,7 @@ vi.mock('./papers', () => ({
   writePapers: () => Promise.resolve(),
 }))
 
-vi.mock('../../platform/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../platform/src/api')>()),
-  startup: { turn: () => Promise.resolve() },
-}))
+vi.mock('../../launch/src/api', () => ({ startup: { turn: () => Promise.resolve() } }))
 
 const { heldPapers, readPapers, walkedOf } = await import('./extract')
 

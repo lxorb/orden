@@ -9,7 +9,10 @@
     "sharing",
     "sync-client",
     "workspace",
-    "sync-store"
+    "sync-store",
+    "launch"
   ],
-  "pending": ["apps/desktop/src/lib/composer.ts"]
+  "pending": [
+    "apps/desktop/src/lib/composer.ts"
+  ]
 }
