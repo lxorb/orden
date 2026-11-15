@@ -3,6 +3,7 @@ import { appCommands, type Command } from '../../commands/src/api'
 import { invoke, answerNextDialog } from '../../platform/src/api'
 import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../panes/src/api'
+import { readable, spaceReadable } from './guarded'
 import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
 import type { Category } from '../../agent-protocol/src/api'
@@ -183,6 +184,8 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
   for (const scope of scopes ?? []) needScope(call, scope, id)
 
+  if (id.startsWith('export-')) carriesNothingShut(id)
+
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)
   if (question) return question
@@ -192,6 +195,16 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
     return done({ id, label: found.label })
   }
   return withPath(call, found, path)
+}
+
+function carriesNothingShut(id: string): void {
+  const space = workspace.activeSpace?.root
+  if (id === 'export-space') {
+    if (space) spaceReadable(space)
+    return
+  }
+  const note = workspace.active?.path
+  if (note) readable(note, 'The note in front')
 }
 
 const DIALOG_WITHIN = 15_000
