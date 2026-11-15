@@ -1,5 +1,5 @@
 import { nameKey } from '@orden/sync-core'
-import { placeholderOf } from '../../icloud-placeholder'
+import { iCloud } from '../../platform/src/api'
 import { folderOf } from './places'
 import type { Disk } from './world'
 
@@ -73,7 +73,8 @@ export class MemoryDisk implements Disk {
     for (let at = path; at && at !== '/'; at = folderOf(at)) this.folders.add(at)
   }
 
-  evicted(path: string): Promise<boolean> {
+  async evicted(path: string): Promise<boolean> {
+    const { placeholderOf } = await iCloud()
     return this.exists(placeholderOf(path))
   }
 

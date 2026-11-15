@@ -4,7 +4,6 @@
   "dependsOn": ["contracts", "accounts", "markdown", "platform", "scan", "sync-core", "file-ops"],
   "pending": [
     "apps/desktop/src/lib/agents-seed.ts",
-    "apps/desktop/src/lib/icloud-placeholder.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/welcome.ts"
   ]

@@ -129,3 +129,4 @@ export { localDate, localNumber, region, systemLocale } from './region'
 export { answer, frameWord, method, NoWord, onTheActivity, wordSaid } from './mobile-bridge'
 export { startInsets, tintSystemBars } from './insets'
 export { identifier } from './identifier'
+export const iCloud = () => import('./icloud-placeholder')
