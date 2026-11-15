@@ -39,6 +39,7 @@ export async function databaseName(
   former = FORMER_NAME,
 ): Promise<string> {
   if (from === to || typeof indexedDB === 'undefined') return to
+  if (!(await existing(from).then(closed))) return to
   const channel = `${former}:windows`
   if (await formerTabOpen(channel)) {
     if (await existing(to).then(closed)) return to

@@ -73,3 +73,17 @@ test('with no other tab at all the older store is carried and deleted', async ()
   expect(await names()).not.toContain('former-c')
   expect(await names()).toContain('new-c')
 })
+
+test('with no older store at all, no older tab is waited for', async () => {
+  const older = olderTab('former-d:windows')
+  older.onmessage = () => {
+    throw new Error('an older tab was asked about a store that is not there')
+  }
+
+  const tab = await freshTab()
+  const started = Date.now()
+  expect(await tab.databaseName('former-d', 'new-d', 'former-d')).toBe('new-d')
+  expect(Date.now() - started).toBeLessThan(200)
+  expect(await names()).not.toContain('former-d')
+  older.close()
+})
