@@ -28,6 +28,5 @@
     "undo-toast",
     "left-spaces",
     "space-owed"
-  ],
-  "pending": ["apps/desktop/src/lib/usage.svelte.ts"]
+  ]
 }

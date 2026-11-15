@@ -1,6 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { countText } from './documents/src/api'
+import { countText } from '../../documents/src/api'
 import { views } from './views.svelte'
 
 function viewOf(doc: string, ranges: readonly { from: number; to: number }[]): EditorView {

@@ -7,7 +7,7 @@
   import { links } from '../../link-index/src/api'
   import { longPaste } from '../../ui-controls/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { views } from '../../views.svelte'
+  import { views } from '../../panes/src/api'
   import { workspace } from '../../workspace/src/api'
   import { estimateText } from './chat-parts'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'

@@ -5,7 +5,7 @@
   import { Frame, MOVE } from './frame.svelte'
   import { settingsWindow } from '@orden/contracts'
   import { viewport } from '../../ui-kit/src/api'
-  import { views } from '../../views.svelte'
+  import { views } from '../../panes/src/api'
   import { workspace } from '../../workspace/src/api'
 
   const voice = $derived(bridge.voiceState)

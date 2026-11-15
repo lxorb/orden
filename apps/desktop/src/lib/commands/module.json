@@ -42,7 +42,6 @@
     "apps/desktop/src/lib/links.ts",
     "apps/desktop/src/lib/open-out.ts",
     "apps/desktop/src/lib/space-actions.ts",
-    "apps/desktop/src/lib/space-picker.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts"
+    "apps/desktop/src/lib/space-picker.svelte.ts"
   ]
 }

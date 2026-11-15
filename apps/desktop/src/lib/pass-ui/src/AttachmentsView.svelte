@@ -6,7 +6,7 @@
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { message } from '../../ui-kit/src/api'
   import { prompt } from '../../ui-kit/src/api'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import { savedAttachment } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
   import { pass } from '../../pass-sync/src/api'

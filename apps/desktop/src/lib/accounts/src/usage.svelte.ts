@@ -1,4 +1,5 @@
-import { api, account } from './accounts/src/api'
+import { account } from './account.svelte'
+import { api } from './client'
 
 export const NEARLY_FULL = 0.9
 
@@ -18,6 +19,13 @@ class Usage {
     if (!full) return
     this.dismissed = false
     void this.refresh()
+  }
+
+  reset() {
+    this.used = 0
+    this.limit = 0
+    this.dismissed = false
+    this.full = false
   }
 
   async refresh() {
@@ -42,13 +50,6 @@ class Usage {
 }
 
 export const usage = new Usage()
-
-account.forgetWithSession(() => {
-  usage.used = 0
-  usage.limit = 0
-  usage.dismissed = false
-  usage.full = false
-})
 
 export function readableSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`

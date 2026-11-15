@@ -38,7 +38,10 @@ vi.mock('../../ui-kit/src/api', () => ({
   },
 }))
 vi.mock('../../modes/src/api', () => ({ modes: { attachments: 'space' } }))
-vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  views: { of: () => null },
+}))
 vi.mock('../../commands/src/api', () => ({
   appCommands: () => [],
   putPicture: () => undefined,

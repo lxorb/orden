@@ -17,11 +17,8 @@
     "search",
     "workspace",
     "tasks-model",
-    "modes"
+    "modes",
+    "panes"
   ],
-  "pending": [
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/plugin.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/file-mark.ts", "apps/desktop/src/lib/plugin.ts"]
 }

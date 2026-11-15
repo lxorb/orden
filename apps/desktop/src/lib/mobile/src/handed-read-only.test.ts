@@ -46,7 +46,8 @@ vi.mock('../../platform/src/api', async (original) => ({
   answer: () => undefined,
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
-vi.mock('../../views.svelte', () => ({
+vi.mock('../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../panes/src/api')>()),
   views: { of: () => (world.open ? { state: { readOnly: false } } : null) },
 }))
 vi.mock('../../commands/src/api', () => ({

@@ -1,5 +1,5 @@
 {
   "name": "panes",
   "layer": "foundation",
-  "dependsOn": ["contracts", "platform"]
+  "dependsOn": ["contracts", "platform", "editor"]
 }

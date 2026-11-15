@@ -1,6 +1,6 @@
 import { askSheet } from '@orden/contracts'
 import { documentOf, type EditorView, type SharedDoc, type Text } from '@orden/editor'
-import { views } from '../../views.svelte'
+import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { carried, type ContextKind, insertion } from './quick'
 import type { Thread, Turn } from '../../ai-providers/src/api'

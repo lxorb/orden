@@ -1,5 +1,6 @@
 import { tabKindLoaded, type TabStream, type TabUsage } from '@orden/contracts'
 import type { Tab } from '../../documents/src/api'
+import { readableSize } from '../../accounts/src/api'
 
 const EVERY = 1000
 
@@ -25,10 +26,7 @@ export function watchFacts(tab: Tab, said: (lines: string[][]) => void): () => v
   let timer: ReturnType<typeof setTimeout> | undefined
   let release: (() => void) | null = null
   const read = async () => {
-    const [{ readableSize }, kind] = await Promise.all([
-      import('../../usage.svelte'),
-      tabKindLoaded(tab.kind),
-    ])
+    const kind = await tabKindLoaded(tab.kind)
     if (!kind.facts) return
     release ??= kind.hold?.(tab.id) ?? null
     const facts = await kind.facts(tab.id)

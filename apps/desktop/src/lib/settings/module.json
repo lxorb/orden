@@ -47,7 +47,6 @@
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/kind-words.ts",
-    "apps/desktop/src/lib/new-kinds.ts",
-    "apps/desktop/src/lib/usage.svelte.ts"
+    "apps/desktop/src/lib/new-kinds.ts"
   ]
 }

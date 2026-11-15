@@ -172,7 +172,10 @@ vi.mock('../src/lib/sharing/src/api', () => ({
 }))
 const othersWrite = new Set<string>()
 providePort('web.pages', { ...webPages(), addressOf: () => null })
-vi.mock('../src/lib/views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../src/lib/panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/lib/panes/src/api')>()),
+  views: { of: () => null },
+}))
 vi.mock('../src/lib/sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../src/lib/link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
 vi.mock('../src/lib/modes/src/api', () => ({

@@ -13,7 +13,7 @@
     "theme",
     "link-index",
     "documents",
-    "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/views.svelte.ts"]
+    "workspace",
+    "panes"
+  ]
 }

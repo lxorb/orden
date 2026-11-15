@@ -42,6 +42,7 @@
     zoneAt,
     keepsScroll,
     scrollKeyOf,
+    views,
   } from '../../panes/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
@@ -86,8 +87,7 @@
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
   import { followHref, followNote } from '../../open-link'
   import type { OpenHow } from '../../new-tab'
-  import { usage } from '../../usage.svelte'
-  import { views } from '../../views.svelte'
+  import { usage } from '../../accounts/src/api'
 
   const { pane }: { pane: Pane } = $props()
 

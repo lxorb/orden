@@ -14,7 +14,8 @@
     "ui-kit",
     "link-index",
     "workspace",
-    "commands"
+    "commands",
+    "panes"
   ],
-  "pending": ["apps/desktop/src/lib/assets.ts", "apps/desktop/src/lib/views.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/assets.ts"]
 }

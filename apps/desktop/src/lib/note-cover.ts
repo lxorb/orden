@@ -6,7 +6,7 @@ import { chooseFiles, PICTURES } from './ui-controls/src/api'
 import { changeOf } from '@orden/scan/search/replace'
 import { settingsWindow } from '@orden/contracts'
 import { isMarkdownPath } from './platform/src/api'
-import { usage } from './usage.svelte'
+import { usage } from './accounts/src/api'
 import { workspace } from './workspace/src/api'
 
 export function canHaveCover(path: string | null | undefined): boolean {

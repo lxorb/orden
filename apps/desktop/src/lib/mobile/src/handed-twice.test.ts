@@ -38,7 +38,10 @@ vi.mock('../../platform/src/api', async (original) => ({
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
 vi.mock('../../commands/src/api', () => ({ appCommands: () => [] }))
-vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../panes/src/api')>()),
+  views: { of: () => null },
+}))
 vi.mock('../../ui-kit/src/api', async (original) => ({
   ...(await original<typeof import('../../ui-kit/src/api')>()),
   prompt: {

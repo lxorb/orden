@@ -4,7 +4,7 @@ import { storeImage } from '../../assets'
 import { busy, message, viewport } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import { settingsWindow } from '@orden/contracts'
-import { usage } from '../../usage.svelte'
+import { usage } from '../../accounts/src/api'
 import { workspace } from '../../workspace/src/api'
 
 export function canInsertPicture(view?: EditorView): boolean {

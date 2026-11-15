@@ -3,7 +3,7 @@
   import type { Attachment } from '@orden/pass/types'
   import Paperclip from 'lucide/dist/esm/icons/paperclip.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import type { Picked } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
 

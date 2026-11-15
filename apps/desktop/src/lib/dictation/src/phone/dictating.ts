@@ -2,7 +2,7 @@ import type { EditorView } from '@orden/editor'
 import { busy } from '../../../ui-kit/src/api'
 import { writeAtCaret } from '../../../commands/src/api'
 import { log, systemLocale, answer, frameWord, method } from '../../../platform/src/api'
-import { views } from '../../../views.svelte'
+import { views } from '../../../panes/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { spaced, speechRecogniser } from './dictation'
 

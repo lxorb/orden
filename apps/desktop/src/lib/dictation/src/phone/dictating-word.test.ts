@@ -19,7 +19,10 @@ vi.mock('../../../ui-kit/src/api', async (original) => ({
   },
 }))
 vi.mock('../../../commands/src/api', () => ({ writeAtCaret: () => undefined }))
-vi.mock('../../../views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../panes/src/api')>()),
+  views: { of: () => null },
+}))
 vi.mock('../../../workspace/src/api', () => ({ workspace: { panes: { focusedId: 'a' } } }))
 
 const { dictating, toggle } = await import('./dictating')

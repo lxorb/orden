@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte'
 import { hiddenKinds } from './gates/src/api'
-import { views } from './views.svelte'
+import { views } from './panes/src/api'
 import { workspace } from './workspace/src/api'
 
 export function writeNew(event: Event) {

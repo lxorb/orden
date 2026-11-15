@@ -16,12 +16,12 @@
     "automation",
     "workspace",
     "files-out",
-    "gates"
+    "gates",
+    "accounts"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/usage.svelte.ts"
+    "apps/desktop/src/lib/layer-keys.ts"
   ]
 }

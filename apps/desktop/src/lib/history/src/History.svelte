@@ -5,7 +5,7 @@
   import { KEEP_YEAR, modes } from '../../modes/src/api'
   import { recovery } from './recovery.svelte'
   import { canWriteIn } from '../../sharing/src/api'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import { fade, LAYER, localDate, scale } from '../../platform/src/api'
   import { when } from '../../ui-controls/src/api'
   import { cubicOut } from 'svelte/easing'

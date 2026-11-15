@@ -17,7 +17,7 @@
   import { howFor, tabAsk } from '../../new-tab'
   import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
   import { insideSpace, withinSpace } from '../../platform/src/api'
-  import { views } from '../../views.svelte'
+  import { views } from '../../panes/src/api'
   import { when } from '../../ui-controls/src/api'
   import { workspace } from '../../workspace/src/api'
   import { ai } from '../../ai-providers/src/api'
