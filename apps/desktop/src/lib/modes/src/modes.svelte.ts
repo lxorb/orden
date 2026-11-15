@@ -409,7 +409,7 @@ class Modes {
     this.applyFonts()
     if (isDesktop) {
       const chosen = this.spellLanguages
-      void import('../../spell-languages').then((one) => one.tellEngine(one.inForceNow(chosen)))
+      void import('../../spelling/src/api').then((one) => one.tellEngine(one.inForceNow(chosen)))
     }
 
     this.written = isRecord(saved) ? saved : fieldsOf(this.state())

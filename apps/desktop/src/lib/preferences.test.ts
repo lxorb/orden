@@ -22,7 +22,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const { preferences, resettable } = await import('./settings/src/preferences')
 const { theme } = await import('./theme/src/theme.svelte')
-const { DICTIONARIES } = await import('./spell-languages')
+const { DICTIONARIES } = await import('./spelling/src/api')
 await import('./quick-add/src/api')
 await (await import('@orden/contracts')).registered()
 

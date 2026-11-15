@@ -36,7 +36,8 @@
     "sync-store",
     "modes",
     "double-tap",
-    "tab-cycle"
+    "tab-cycle",
+    "spelling"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
@@ -50,7 +51,6 @@
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/spell-languages.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/while-here.ts"
   ]

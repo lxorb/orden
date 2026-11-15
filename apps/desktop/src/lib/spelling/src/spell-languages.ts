@@ -1,4 +1,4 @@
-import { systemLocale, invoke, isDesktop, platform } from './platform/src/api'
+import { systemLocale, invoke, isDesktop, platform } from '../../platform/src/api'
 
 interface Dictionary {
   id: string

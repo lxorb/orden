@@ -12,7 +12,8 @@
     "platform",
     "sync-mirror",
     "theme",
-    "ui-kit"
+    "ui-kit",
+    "spelling"
   ],
-  "pending": ["apps/desktop/src/lib/attachments.ts", "apps/desktop/src/lib/spell-languages.ts"]
+  "pending": ["apps/desktop/src/lib/attachments.ts"]
 }

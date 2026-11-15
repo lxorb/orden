@@ -9,7 +9,7 @@ import {
   machineLanguages,
   tellEngine,
   toggled,
-} from '../../spell-languages'
+} from '../../spelling/src/api'
 import type { Field, Group, Pane } from './fields'
 
 function dictionaryGroups(view: EditorView | undefined): Group[] {
