@@ -116,7 +116,7 @@ export class InstructionsField {
       }
       this.settled(after, words)
     } catch {
-      // Still owed, and still in the field; leaving it or the next pause tries again.
+      return
     }
   }
 
