@@ -557,6 +557,12 @@ describe('naming a block in the note being written, as the note is written', () 
     )
   })
 
+  test('links the block from the second of two links to blocks on one line', async () => {
+    expect(await picked('second block\n\n[[#^a]] [[#^', 'second block')).toBe(
+      'second block ^abc\n\n[[#^a]] [[#^abc]]',
+    )
+  })
+
   test('keeps what the reader typed while the block was named', async () => {
     expect(await picked('first block\n\n[[#^', 'first block', undefined, ' and')).toBe(
       'first block ^abc\n\n[[#^abc]] and',

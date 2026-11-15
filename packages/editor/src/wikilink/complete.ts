@@ -1,5 +1,5 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
-import type { Text } from '@codemirror/state'
+import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
@@ -150,28 +150,61 @@ async function blockOptions(
     }))
 }
 
-function movedBy(now: Text, typed: string, start: number, reach: number): number | null {
-  for (let step = 0; step <= reach; step++) {
-    for (const shift of step ? [step, -step] : [0]) {
-      const at = start + shift
-      if (at >= 0 && now.sliceString(at, at + typed.length) === typed) return shift
+interface Held {
+  key: object
+  from: number
+  to: number
+}
+
+const holdTyped = StateEffect.define<Held>()
+
+const dropTyped = StateEffect.define<object>()
+
+const heldTyped = StateField.define<readonly Held[]>({
+  create: () => [],
+  update(held, transaction) {
+    let kept: readonly Held[] = held
+    if (transaction.docChanged) {
+      kept = held.flatMap((one) => {
+        const from = transaction.changes.mapPos(one.from, 1, MapMode.TrackDel)
+        const to = transaction.changes.mapPos(one.to, -1, MapMode.TrackDel)
+        return from === null || to === null ? [] : [{ ...one, from, to }]
+      })
     }
+    for (const effect of transaction.effects) {
+      if (effect.is(holdTyped)) kept = [...kept, effect.value]
+      else if (effect.is(dropTyped)) kept = kept.filter((one) => one.key !== effect.value)
+    }
+    return kept
+  },
+})
+
+function held(view: EditorView, from: number, to: number): object {
+  if (view.state.field(heldTyped, false) === undefined) {
+    view.dispatch({ effects: StateEffect.appendConfig.of(heldTyped) })
   }
-  return null
+  const key = {}
+  view.dispatch({ effects: holdTyped.of({ key, from, to }) })
+  return key
+}
+
+function released(view: EditorView, key: object): Held | null {
+  const found = view.state.field(heldTyped, false)?.find((one) => one.key === key) ?? null
+  view.dispatch({ effects: dropTyped.of(key) })
+  return found
 }
 
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
-    const before = view.state.doc
     const start = opened(view, from)
-    const typed = before.sliceString(start, to)
+    const typed = view.state.doc.sliceString(start, to)
+    const key = held(view, start, to)
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (!id) return
-        const now = view.state.doc
-        const shift = movedBy(now, typed, start, Math.abs(now.length - before.length))
-        if (shift === null) return
+        const now = released(view, key)
+        if (!id || !now || view.state.doc.sliceString(now.from, now.to) !== typed) return
+        const shift = now.from - start
         insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
       })
       .catch(() => undefined)
