@@ -30,7 +30,7 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from '../../attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -1082,8 +1082,8 @@ class Modes {
     const session = this.session
     try {
       await api.saveSettings(token, owed)
-    } catch {
-      return
+    } catch (error) {
+      if (!turnedDown(error)) return
     }
     if (this.session !== session) return
     const said = (value: unknown) => JSON.stringify(value)

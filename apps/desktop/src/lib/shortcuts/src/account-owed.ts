@@ -1,4 +1,4 @@
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
 import { forget, isRecord, keepJson, stored } from '../../platform/src/api'
 
 export class AccountOwed {
@@ -29,11 +29,14 @@ export class AccountOwed {
     if (!token) return
 
     const mine = ++this.sent
+    const heard = () => {
+      if (this.sent === mine && this.owner === who) forget(this.key)
+    }
     void api
       .saveSettings(token, patch)
-      .then(() => {
-        if (this.sent === mine && this.owner === who) forget(this.key)
+      .then(heard)
+      .catch((error: unknown) => {
+        if (turnedDown(error)) heard()
       })
-      .catch(() => undefined)
   }
 }

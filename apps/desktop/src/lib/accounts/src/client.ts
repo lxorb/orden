@@ -19,6 +19,17 @@ export class ApiError extends Error {
   }
 }
 
+const TRY_AGAIN: ReadonlySet<number> = new Set([401, 408, 429])
+
+export function turnedDown(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    !TRY_AGAIN.has(error.status)
+  )
+}
+
 export function fromServer(error: unknown): error is ApiError {
   return error instanceof ApiError && isRecord(error.body) && isString(error.body.error)
 }

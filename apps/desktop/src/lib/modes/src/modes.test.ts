@@ -708,6 +708,27 @@ describe('taking over what the account holds', () => {
     Object.assign(api, was)
   })
 
+  test('lets go of a change the account turned down, and hears the account again', async () => {
+    const { ApiError } = await import('../../accounts/src/client')
+    let server: Held = { vim: false }
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    api.saveSettings = async (_token: string, patch: Held) => {
+      if (patch.ligatures === 'code') throw new ApiError(400, 'refused')
+      server = { ...server, ...patch }
+      return { settings: server }
+    }
+    api.settings = async () => ({ settings: server })
+
+    modes.setLigatures('code')
+    await modes.adopt('token')
+
+    server = { ...server, vim: true }
+    const store = await restarted()
+    await store.adopt('token')
+    expect(store.vim).toBe(true)
+    Object.assign(api, was)
+  })
+
   test('brings the formatting marks kept quiet', async () => {
     const { release, settingsCall } = heldAnswer({ quietMarks: true })
     api.settings = settingsCall

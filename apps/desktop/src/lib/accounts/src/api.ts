@@ -21,7 +21,17 @@ export type {
 export { account, type Vault } from './account.svelte'
 export { readableSize, usage } from './usage.svelte'
 export { default as AccountBadge } from './AccountBadge.svelte'
-export { api, ApiError, BASE, faceUrl, fromServer, MCP_URL, request, warmCalls } from './client'
+export {
+  api,
+  ApiError,
+  BASE,
+  faceUrl,
+  fromServer,
+  MCP_URL,
+  request,
+  turnedDown,
+  warmCalls,
+} from './client'
 export {
   clampOffset,
   clampZoom,

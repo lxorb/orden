@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const world = vi.hoisted(() => ({
   saved: [] as unknown[],
   failing: false,
+  refusing: false,
   user: null as { id: string } | null,
   leaving: [] as (() => void)[],
 }))
@@ -23,6 +24,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => {
     api: {
       saveSettings: (_token: string, patch: unknown) => {
         world.saved.push(patch)
+        if (world.refusing) return Promise.reject(new original.ApiError(413, 'too big'))
         return world.failing
           ? Promise.reject(new Error('offline'))
           : Promise.resolve({ settings: {} })
@@ -70,6 +72,7 @@ beforeEach(() => {
   localStorage.clear()
   world.saved = []
   world.failing = false
+  world.refusing = false
   world.user = { id: 'u1' }
 })
 
@@ -141,6 +144,19 @@ describe('a shortcut changed before the account is known', () => {
     shortcuts.receive({ shortcuts: {} })
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
     expect(shortcuts.keyFor('format.italic')).toBe('Mod-Alt-k')
+  })
+})
+
+describe('a shortcut the account turned down', () => {
+  test('is owed no longer, so the account is heard again', async () => {
+    const { shortcuts } = await relaunched()
+    world.refusing = true
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+    world.refusing = false
+
+    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
   })
 })
 
