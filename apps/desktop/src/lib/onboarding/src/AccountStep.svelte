@@ -6,6 +6,7 @@
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
 
   const LENGTH = 6
   const blank = () => Array.from({ length: LENGTH }, () => '')
@@ -80,6 +81,8 @@
     account.step = 'email'
     account.error = null
   }
+
+  $effect(() => closeOnBack(asking && !signed, changeEmail))
 
   function send() {
     if (typed && !account.busy) void account.requestCode()
