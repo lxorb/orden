@@ -2,10 +2,10 @@ import { expect, test, vi } from 'vitest'
 
 type Ways = Record<string, string>
 
-const server = vi.hoisted(() => ({
-  spaces: {},
-  id: 's1',
-}))
+const server = vi.hoisted(() => {
+  const spaces: Record<string, Record<string, string>> = {}
+  return { spaces, id: 's1' }
+})
 
 const merged = (held: Ways, base: Ways, sent: Ways) => {
   const out = Object.fromEntries(
