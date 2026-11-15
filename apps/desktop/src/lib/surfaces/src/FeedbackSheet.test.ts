@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 
-const { feedback } = await import('./feedback/src/api')
+const { feedback } = await import('../../feedback/src/api')
 const FeedbackSheet = (await import('./FeedbackSheet.svelte')).default
 
 describe('the sheet', () => {

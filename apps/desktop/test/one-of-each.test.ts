@@ -308,11 +308,11 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(asking).toEqual([
-      'lib/PromptSheet.svelte',
       'lib/SpaceBadge.svelte',
       'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/src/SavePlace.svelte',
+      'lib/surfaces/src/PromptSheet.svelte',
       'lib/tab-strip/src/TabCard.svelte',
     ])
   })

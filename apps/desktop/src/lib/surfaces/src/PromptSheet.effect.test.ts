@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
-const { prompt } = await import('./ui-kit/src/prompt.svelte')
+const { prompt } = await import('../../ui-kit/src/api')
 const PromptSheet = (await import('./PromptSheet.svelte')).default
 
 let target: HTMLElement

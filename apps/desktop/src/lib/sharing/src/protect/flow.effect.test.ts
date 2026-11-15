@@ -15,7 +15,7 @@ vi.mock('../../../protect/src/device', () => ({
 const { busy } = await import('../../../ui-kit/src/busy.svelte')
 const { workspace } = await import('../../../workspace/src/api')
 const { protect } = await import('./unlocking')
-const PromptSheet = (await import('../../../PromptSheet.svelte')).default
+const PromptSheet = (await import('../../../surfaces/src/PromptSheet.svelte')).default
 
 const ROOT = '/space'
 const NOTE = `${ROOT}/Plans.md`

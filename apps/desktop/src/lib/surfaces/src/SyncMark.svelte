@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ForeignMark } from './foreign/src/api'
-  import { HeldMark } from './sync-client/src/api'
+  import { ForeignMark } from '../../foreign/src/api'
+  import { HeldMark } from '../../sync-client/src/api'
 
   const { path }: { path: string | null } = $props()
 </script>

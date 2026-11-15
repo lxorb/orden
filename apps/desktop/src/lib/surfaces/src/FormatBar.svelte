@@ -8,14 +8,14 @@
   } from '@orden/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@orden/markdown/highlights'
   import type { IconNode } from 'lucide'
-  import { keepFocus } from './focus'
+  import { keepFocus } from '../../focus'
   import { tick } from 'svelte'
-  import { Glyph } from './ui-controls/src/api'
-  import { modes } from './modes/src/api'
-  import { type AppContext, runEntry } from './shortcuts/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { glyphFor, lowMark, markFor, nameFor, toolbar } from './shortcuts/src/api'
-  import { roving, viewport } from './ui-kit/src/api'
+  import { Glyph } from '../../ui-controls/src/api'
+  import { modes } from '../../modes/src/api'
+  import { type AppContext, runEntry } from '../../shortcuts/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { glyphFor, lowMark, markFor, nameFor, toolbar } from '../../shortcuts/src/api'
+  import { roving, viewport } from '../../ui-kit/src/api'
 
   const {
     view,
