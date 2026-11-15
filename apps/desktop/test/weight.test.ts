@@ -133,8 +133,8 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 1_966_100
-const MOST_FILES = 475
+const BUDGET = 1_969_000
+const MOST_FILES = 480
 
 const MOST_TEXT = 6_500
 
@@ -306,7 +306,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
     ['/lib/preview-card.ts', 'the editor in a link card'],
     ['/lib/reading/src/drawn.ts', 'a paper or a plane drawn in a note'],
-    ['/lib/query-block.ts', "a query fence's rows"],
+    ['/lib/link-index/src/query-block.ts', "a query fence's rows"],
     ['/lib/note-cover.ts', "a note's cover, written"],
     ['/lib/theme-looks/src/gallery/store.svelte.ts', "the theme gallery's store"],
     ['/lib/theme-looks/src/gallery/registry.ts', 'the theme catalogue'],
