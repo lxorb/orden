@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
+use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
 use crate::regex::{budget_for, Pattern};
@@ -121,9 +122,9 @@ impl Facts<'_> {
     fn units_of(&self, unit: Unit) -> Units<'_> {
         if matches!(unit, Unit::Line) {
             Units::Lines {
+                body: self.body,
                 starts: self.starts(),
                 at: 0,
-                end: self.body.len(),
             }
         } else {
             Units::Held(self.units[slot(unit)].iter())
@@ -133,9 +134,9 @@ impl Facts<'_> {
 
 enum Units<'a> {
     Lines {
+        body: &'a str,
         starts: &'a [usize],
         at: usize,
-        end: usize,
     },
     Held(std::slice::Iter<'a, Region>),
 }
@@ -145,11 +146,9 @@ impl Iterator for Units<'_> {
 
     fn next(&mut self) -> Option<Region> {
         match self {
-            Units::Lines { starts, at, end } => {
+            Units::Lines { body, starts, at } => {
                 let from = *starts.get(*at)?;
-                let to = starts
-                    .get(*at + 1)
-                    .map_or(*end, |next| next.saturating_sub(1));
+                let to = line_end(body, starts, *at);
                 *at += 1;
 
                 Some(Region { from, to })
@@ -259,8 +258,21 @@ fn is_heading(line: &str) -> bool {
     rest.chars().nth(hashes).is_none_or(char::is_whitespace)
 }
 
+fn line_end(body: &str, starts: &[usize], index: usize) -> usize {
+    let Some(&next) = starts.get(index + 1) else {
+        return body.len();
+    };
+    let start = starts.get(index).copied().unwrap_or(0);
+    if next >= start + 2 && body.as_bytes().get(next - 2) == Some(&b'\r') {
+        next - 2
+    } else {
+        next - 1
+    }
+}
+
 fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
-    let end_of = |index: usize| starts.get(index + 1).map_or(body.len(), |next| next - 1);
+    let end_of = |index: usize| line_end(body, starts, index);
+    let mut code = CodeBlocks::default();
 
     if let Some(state) = task_state(unit) {
         let mut found = Vec::new();
@@ -268,6 +280,9 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         for (index, &start) in starts.iter().enumerate() {
             let end = end_of(index);
             let text = body.get(start..end).unwrap_or_default();
+            if code.line(text) != CodeLine::Words {
+                continue;
+            }
             let Some(task) = task_at(text) else {
                 continue;
             };
@@ -292,7 +307,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         let text = body.get(start..end_of(index)).unwrap_or_default();
         let previous = if index == 0 { start } else { end_of(index - 1) };
         let breaks = if sectioned {
-            is_heading(text)
+            code.line(text) == CodeLine::Words && is_heading(text)
         } else {
             text.trim().is_empty()
         };
@@ -962,6 +977,32 @@ mod tests {
 
     fn pattern(source: &str, fold: bool) -> String {
         format!(r#"{{"kind":"regex","source":"{source}","fold":{fold}}}"#)
+    }
+
+    #[test]
+    fn a_section_does_not_end_at_a_comment_inside_a_code_fence() {
+        let body = "# One\nalpha\n```sh\n# comment\n```\nbeta\n";
+        assert!(answers(
+            &scope("section", &all(&[text("alpha"), text("beta")])),
+            body
+        ));
+        assert!(!answers(
+            &scope("section", &all(&[text("alpha"), text("gamma")])),
+            body
+        ));
+    }
+
+    #[test]
+    fn a_box_inside_a_code_fence_is_no_task() {
+        let body = "```\n- [ ] not a task\n```\n- [ ] a task\n";
+        assert_eq!(lines(&scope("task", &text("task")), body), ["- [ ] a task"]);
+    }
+
+    #[test]
+    fn a_pattern_anchored_to_the_end_of_a_line_finds_it_in_a_note_with_crlf() {
+        let body = "a done\r\nb\r\n";
+        assert!(answers(&scope("line", &pattern("done$", false)), body));
+        assert!(!answers(&scope("line", &pattern("b.$", false)), body));
     }
 
     #[test]
