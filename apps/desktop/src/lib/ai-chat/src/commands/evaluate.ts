@@ -68,7 +68,11 @@ export function verdictIn(answer: string): Verdict {
   const word = (typeof said.verdict === 'string' ? said.verdict : answer).toLowerCase()
   const reason = typeof said.reason === 'string' ? said.reason.trim() : ''
   if (/\bimpossible\b/.test(word)) return { verdict: 'impossible', reason }
-  if (/\bnot[_ ]yet\b|\bunmet\b|(?:\bnot|n't|\bnever)\b[^.:;]{0,24}\b(?:met|achieved)\b/.test(word))
+  if (
+    /\bnot[_ ]yet\b|\bunmet\b|(?:\bnot|\bcannot|n't|\bnever)\b[^.:;]{0,24}\b(?:met|achieved)\b/.test(
+      word,
+    )
+  )
     return { verdict: 'not_yet', reason }
   if (/\bmet\b|\bachieved\b/.test(word)) return { verdict: 'met', reason }
   return { verdict: 'not_yet', reason }
