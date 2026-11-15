@@ -5,6 +5,8 @@ import { notePicture } from '../../link-index/src/api'
 
 type LinkResolver = NonNullable<RenderOptions['resolveLink']>
 
+const SCRIPT_TAGS = ['sub', 'sup']
+
 const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
 
 const PICTURE = /<img\b([^>]*)>/gi
@@ -103,7 +105,7 @@ export function inLineGroups(html: string): string {
 }
 
 export function answerHtml(markdown: string, options: AnswerOptions = {}): string {
-  const render: RenderOptions = { escapeHtml: true }
+  const render: RenderOptions = { escapeHtml: true, bareTags: SCRIPT_TAGS }
   if (options.resolveLink) render.resolveLink = options.resolveLink
   const drawn = pictures(
     viewHtml(markdown, render, { live: options.live === true }).replace(MEDIA, ''),

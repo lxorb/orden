@@ -52,6 +52,7 @@ export interface RenderOptions {
   properties?: PropertiesMode
   cover?: boolean | Cover
   escapeHtml?: boolean
+  bareTags?: readonly string[]
   toc?: boolean
   code?: (code: string, language: string) => string | null
   blockAnchors?: boolean
@@ -196,6 +197,13 @@ function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Lin
   }
 }
 
+const BARE_TAG = /^<\/?([a-z]+)>$/i
+
+function bareTag(text: string, allowed: readonly string[] | undefined): string | null {
+  const name = BARE_TAG.exec(text)?.[1]?.toLowerCase()
+  return name && allowed?.includes(name) ? text : null
+}
+
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
@@ -305,7 +313,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const { tags, rest: text } = iframesAhead(written)
         const cards = tags.map((tag) => iframeCard(tag) ?? '').join('')
         if (text !== written && !text.trim()) return cards
-        if (options.escapeHtml) return cards + escape(text)
+        if (options.escapeHtml) return cards + (bareTag(text, options.bareTags) ?? escape(text))
 
         return cards + (htmlBlockCard(text) ?? ownMarkup(text))
       },
@@ -362,7 +370,8 @@ function needsOwn(options: RenderOptions): boolean {
     options.tagHref !== undefined ||
     options.resolveEmbed !== undefined ||
     options.headings !== undefined ||
-    options.locale !== undefined
+    options.locale !== undefined ||
+    options.bareTags !== undefined
   )
 }
 

@@ -56,6 +56,7 @@ if (typeof addEventListener === 'function') {
 }
 
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
+const MATHS = 'Write maths as $…$ inline and $$…$$ on lines of their own.'
 const PARTLY =
   'Change part of a note with edit_note rather than write_note: they may be typing in it.'
 
@@ -65,12 +66,14 @@ const SYSTEM: Record<Thread['mode'], string> = {
     'Answer from what you read, and do what they ask with the tools you have; they approve each change before it is made.',
     CITE,
     PARTLY,
+    MATHS,
     'Reply in the language of the request, in markdown, briefly: no preamble, no sign-off.',
   ].join(' '),
   plan: [
     'You are the reader’s assistant inside Orden, their notes app and web browser, in a panel beside what they are reading.',
     'You are in Plan mode: read what you need, then write the plan as one new note with create_note, a task (- [ ]) per step, and change nothing else.',
     CITE,
+    MATHS,
     'Reply in the language of the request, briefly.',
   ].join(' '),
   auto: [
@@ -78,6 +81,7 @@ const SYSTEM: Record<Thread['mode'], string> = {
     'Do what they ask with the tools you have: most changes are made at once and shown to them to keep or undo, and a call that sends, deletes or publishes may wait for their approval.',
     CITE,
     PARTLY,
+    MATHS,
     'Reply in the language of the request, briefly, saying what you did.',
   ].join(' '),
   full: [
@@ -86,6 +90,7 @@ const SYSTEM: Record<Thread['mode'], string> = {
     'Nothing is asked of them or handed back: sign in with what their password manager filled, and pay, send, delete or change a setting yourself where the task needs it, never browser_takeover.',
     CITE,
     PARTLY,
+    MATHS,
     'Reply in the language of the request, briefly, saying what you did.',
   ].join(' '),
 }

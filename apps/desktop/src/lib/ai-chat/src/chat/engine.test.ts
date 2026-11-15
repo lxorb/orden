@@ -206,6 +206,17 @@ describe('a call made and answered', () => {
     expect(JSON.stringify(third.messages)).toContain('EqQBCgIYAhIM')
   })
 
+  test.each<Mode>(['approve', 'plan', 'auto', 'full'])(
+    'in %s mode the model is told to write maths as the panel draws it',
+    async (mode) => {
+      answers = [stream('anthropic-2')]
+      await send(newThread('space', 'anthropic', 'claude-opus-5-5', 'high', mode), 'MAD?')
+
+      const asked = sent[0]?.body as { system: string }
+      expect(asked.system).toContain('Write maths as $…$ inline and $$…$$ on lines of their own.')
+    },
+  )
+
   test('another model is told by a notice, and gets the turns rebuilt', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')

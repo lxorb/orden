@@ -539,6 +539,17 @@ describe('raw HTML', () => {
     expect(html).toContain('&lt;img')
   })
 
+  test('lets through only the bare tags it is told to, and nothing written in them', () => {
+    const html = renderMarkdown('H<sub>2</sub>O, m<SUP>2</SUP>, <sub id="x">a</sub>, <u>b</u>', {
+      escapeHtml: true,
+      bareTags: ['sub', 'sup'],
+    })
+    expect(html).toBe(
+      '<p>H<sub>2</sub>O, m<SUP>2</SUP>, &lt;sub id=&quot;x&quot;&gt;a</sub>, &lt;u&gt;b&lt;/u&gt;</p>\n',
+    )
+    expect(renderMarkdown('H<sub>2</sub>O', { escapeHtml: true })).toContain('&lt;sub&gt;')
+  })
+
   test('markdown itself still renders when publishing', () => {
     const html = renderMarkdown('# Title\n\n**bold** and [a link](https://x.dev)', {
       escapeHtml: true,

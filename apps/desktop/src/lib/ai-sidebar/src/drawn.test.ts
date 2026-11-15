@@ -139,6 +139,22 @@ describe('an answer, drawn as a note is', () => {
     expect(shown).toContain('<img src="https://example.com/cat.png?q=1" alt="a cat">')
   })
 
+  test('subscript and superscript the model wrote as bare tags are drawn as a note draws them', () => {
+    const markdown =
+      'MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>), m<sup>2</sup>'
+    expect(answerHtml(markdown)).toBe(
+      '<p>MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>), m<sup>2</sup></p>\n',
+    )
+    expect(answerHtml('| a |\n|---|\n| H<SUB>2</SUB>O |')).toContain('<td>H<SUB>2</SUB>O</td>')
+  })
+
+  test('a subscript tag with anything in it, or in code, stays its characters', () => {
+    const html = answerHtml('<sub onmouseover="x()">a</sub> <sup class="b">c</sup> `<sub>d</sub>`')
+    expect(html).not.toMatch(/<sub |<sup /)
+    expect(html).toContain('&lt;sub onmouseover=')
+    expect(html).toContain('<code>&lt;sub&gt;d&lt;/sub&gt;</code>')
+  })
+
   test('raw HTML the model wrote is its characters, and frames are taken out', () => {
     const html = answerHtml('<b>bold</b>\n\n<iframe src="https://example.com"></iframe>')
     expect(html).not.toContain('<b>')
