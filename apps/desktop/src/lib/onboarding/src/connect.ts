@@ -66,10 +66,11 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
   }
 
   const local = kind as LocalKind
-  const { account } = await accountOf(local)
+  const { account, made } = await accountOf(local)
   const standing = await plans.check({ id: account.id, kind: local })
   if (standing.state === 'in') return { state: 'in', id: account.id }
   if (standing.state === 'missing' || !standing.program) {
+    if (made) (await import('../../ai-providers/src/api')).ai.remove(account.id)
     void openExternal(INSTALL[local])
     return { state: 'failed', said: 'Not installed' }
   }
