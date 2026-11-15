@@ -42,6 +42,14 @@ export interface Hit {
 
 const LINE = 200
 
+export function shownLine(raw: string): string {
+  return Array.from(raw.trim()).slice(0, LINE).join('')
+}
+
+export function shownWhole(text: string): boolean {
+  return Array.from(text).length < LINE
+}
+
 const HEADING = /^ {0,3}#{1,6}(\s|$)/
 
 export interface Work {
@@ -365,7 +373,7 @@ export class Matcher {
     const next = starts[line + 1]
     const raw = note.body.slice(from, next === undefined ? note.body.length : next - 1)
     const lead = raw.length - raw.trimStart().length
-    const text = Array.from(raw.trim()).slice(0, LINE).join('')
+    const text = shownLine(raw)
 
     const moved: Range[] = []
     for (const range of ranges) {

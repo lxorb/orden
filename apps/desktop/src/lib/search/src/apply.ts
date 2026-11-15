@@ -1,15 +1,42 @@
 import { isMarkdownPath, relativeTo } from '../../platform/src/api'
-import { type Hit, Matcher } from '@orden/scan/search/match'
+import { lineStarts } from '@orden/scan/search/lines'
+import { type Hit, Matcher, shownLine } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import { type Change, changeOf, replaceIn } from '@orden/scan/search/replace'
 
-function linesPerNote(hits: readonly Hit[]): Map<string, Set<number>> {
-  const out = new Map<string, Set<number>>()
+function hitsPerNote(hits: readonly Hit[]): Map<string, Hit[]> {
+  const out = new Map<string, Hit[]>()
 
   for (const hit of hits) {
     const held = out.get(hit.path)
-    if (held) held.add(hit.line)
-    else out.set(hit.path, new Set([hit.line]))
+    if (held) held.push(hit)
+    else out.set(hit.path, [hit])
+  }
+
+  return out
+}
+
+function linesNow(body: string, hits: readonly Hit[]): Set<number> {
+  const starts = lineStarts(body)
+  const says = (line: number) => {
+    const from = starts[line]
+    if (from === undefined) return null
+    const next = starts[line + 1]
+    return shownLine(body.slice(from, next === undefined ? body.length : next - 1))
+  }
+
+  const out = new Set<number>()
+  for (const hit of hits) {
+    for (let distance = 0; distance < starts.length; distance++) {
+      if (says(hit.line - distance) === hit.text) {
+        out.add(hit.line - distance)
+        break
+      }
+      if (distance && says(hit.line + distance) === hit.text) {
+        out.add(hit.line + distance)
+        break
+      }
+    }
   }
 
   return out
@@ -25,7 +52,7 @@ export async function changesFor(
   const matcher = new Matcher(query)
   const out: Change[] = []
 
-  for (const [path, lines] of linesPerNote(hits)) {
+  for (const [path, held] of hitsPerNote(hits)) {
     if (!isMarkdownPath(path)) continue
 
     const before = await textOf(path)
@@ -36,7 +63,7 @@ export async function changesFor(
     const spans = matcher.spans({ path, relative, name, body: before })
     if (!spans) continue
 
-    const edits = replaceIn(before, spans, lines, replacement)
+    const edits = replaceIn(before, spans, linesNow(before, held), replacement)
     if (edits) out.push(changeOf(path, before, edits))
   }
 

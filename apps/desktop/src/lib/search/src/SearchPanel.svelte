@@ -8,7 +8,7 @@
   import { searchWarmth, type Warming } from './api'
   import { chosen, completing, naming, nearest, offered } from '@orden/scan/search/suggest'
   import type { Hit, Range } from '@orden/scan/search/match'
-  import { taskOf } from '@orden/scan/search/task'
+  import { taskOf, taskWordsOf } from '@orden/scan/search/task'
   import { relativeTo } from '../../platform/src/api'
   import { Suggest } from '../../matching/src/api'
   import { nodesIn, tagTree } from './tag-tree'
@@ -199,12 +199,12 @@
     return task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
   }
 
-  function ticked(event: Event, hit: Hit) {
+  async function ticked(event: Event, hit: Hit) {
     event.preventDefault()
     event.stopPropagation()
-    void workspace.toggleTaskAt(hit.path, hit.line).then((done) => {
-      if (done) search.ask(search.text)
-    })
+    const words = taskWordsOf(hit)
+    const hash = words === null ? undefined : (await import('@orden/bases')).taskHash(words)
+    if (await workspace.toggleTaskAt(hit.path, hit.line, hash)) search.ask(search.text)
   }
 
   async function openHit(hit: Hit, press: MouseEvent) {
@@ -389,7 +389,7 @@
                 class="orden-checkbox"
                 checked={task.done}
                 aria-label={task.text}
-                onclick={(event) => ticked(event, hit)}
+                onclick={(event) => void ticked(event, hit)}
               />
             {/if}
             <button

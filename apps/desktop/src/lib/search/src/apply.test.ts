@@ -10,15 +10,16 @@ const NOTES: Record<string, string> = {
   '/space/Two.md': 'alpha only\n',
   '/space/Three.md': 'Doe, John\nRoe, Jane\n',
   '/space/Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev\r\nOrden-Icon=star\r\n',
+  '/space/Moved.md': 'alpha new\nalpha one\nalpha two\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
 
-const hit = (path: string, line: number): Hit => ({
+const hit = (path: string, line: number, text?: string): Hit => ({
   path,
   name: path.split('/').pop() ?? path,
   line,
-  text: '',
+  text: text ?? (NOTES[path]?.split('\n')[line] ?? '').trim(),
   ranges: [],
 })
 
@@ -92,6 +93,16 @@ describe('what a replacement would do', () => {
 
   test('skips a note that has gone since the list was drawn', async () => {
     expect(await changes('alpha', [hit('/space/Missing.md', 0)], 'gamma')).toEqual([])
+  })
+
+  test('finds a ticked line where it went when lines came in above it', async () => {
+    const made = await changes('alpha', [hit('/space/Moved.md', 0, 'alpha one')], 'gamma')
+
+    expect(made[0]?.after).toBe('alpha new\ngamma one\nalpha two\n')
+  })
+
+  test('skips a ticked line that no longer says what the list showed', async () => {
+    expect(await changes('alpha', [hit('/space/Two.md', 0, 'alpha gone')], 'gamma')).toEqual([])
   })
 
   test('skips a note whose words no longer match', async () => {
