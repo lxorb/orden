@@ -1350,3 +1350,11 @@ Three fresh auditors reviewed every fix commit above and hunted again.
 | C134 | Medium | Hosted `query_base` rows had `file.mtime` 1970 and no cover or icon, so "recent notes" bases answered nothing | Fixed `d4578112` | The hosted reader never passed the note's `updated_at`, size or item meta into its rows | Rows take the stored size and time and the item meta, as the app's do | same test; sync 3089, scan 500, desktop views, agent-host, rows 540 passed |
 
 Not a bug (re-audit 18): hosted `query_base` leaving out task rows matches the app, whose rows store lists no note tasks since todos moved to the tasks model (#2104).
+
+### Re-audit 19 (2026-11-15)
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| C135 | Medium | A base view filtered, sorted or grouped by `file.hasLink(...)` or a link comparison (`note.parent == link("Sub/Plan")`) kept its old answer after another note was made, moved or removed, until the .base was read again | Fixed `49ec09a3` | The view kept each row's results while its expressions counted as reading only that row, but `hasLink` and `link()` resolve through the other notes | `hasLink` and `link()` count as reading other notes, as `asFile` and `backlinks` already did | `link-context.test.ts` (2 tests, failed before); bases 1069, desktop views 336 passed |
+
+The MCP auditor found no Critical, High or Medium bugs in re-audit 19.
