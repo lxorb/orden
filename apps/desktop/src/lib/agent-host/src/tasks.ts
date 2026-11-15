@@ -12,7 +12,7 @@ import {
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
-import type { AgentAnswer } from '../../automation/src/api'
+import { type AgentAnswer, threadSpaceOf } from '../../automation/src/api'
 import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
 import { reachedByOthersIn } from '../../sharing/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -114,9 +114,9 @@ function todoOut(todo: Todo) {
 }
 
 function spaceIdOf(call: Call): string | null {
-  const named = maybe(call, 'space')
-  if (named !== null) return placeFor(call, named).space.id
-  return workspace.activeSpace ? placeFor(call, null).space.id : null
+  const unplaced =
+    maybe(call, 'space') === null && !threadSpaceOf(call.caller) && !workspace.activeSpace
+  return unplaced ? null : placeOf(call).space.id
 }
 
 function textsOf(value: unknown): string[] | undefined {

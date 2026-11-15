@@ -777,7 +777,7 @@
   },
   {
     "name": "add_task",
-    "description": "Add a todo: `title`, and optionally `description`, `labels`, `space` (none when left out), `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).",
+    "description": "Add a todo: `title`, and optionally `description`, `labels`, `space` (when left out, the thread's space or the one open), `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).",
     "inputSchema": {
       "type": "object",
       "properties": {

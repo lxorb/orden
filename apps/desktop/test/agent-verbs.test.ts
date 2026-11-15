@@ -2380,6 +2380,35 @@ describe('a panel thread works in its own space', () => {
     })
   })
 
+  test('a todo added without a space is the thread’s space’s, granted all or only that one', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const homeOnly = callerOf(
+      {
+        id: 'orden-x',
+        name: 'X',
+        scopes: EVERY,
+        spaces: ['Home'],
+        mode: 'unsupervised',
+        built_in: true,
+      },
+      'thread-home',
+    )
+    const answers = [
+      await call('add_task', { text: 'Buy bread' }, fromHome()),
+      await call('add_task', { text: 'Buy eggs' }, homeOnly),
+      await call('add_task', { text: 'Buy tea', space: 'Work' }, fromHome()),
+    ]
+    for (const one of answers) {
+      const id = (one as { result?: { id: string } }).result?.id
+      if (id) await todos.remove(id)
+    }
+    expect(answers).toMatchObject([
+      { result: { space: 'home' } },
+      { result: { space: 'home' } },
+      { result: { space: 'work' } },
+    ])
+  })
+
   test('a space it names still wins', async () => {
     await call('write_note', { space: 'Work', path: 'Broth', content: '# Broth\n' }, fromHome())
     expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
