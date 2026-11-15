@@ -80,6 +80,25 @@ describe("Apple Notes off the Mac's own database", () => {
     expect(note).toContain('![](../assets/photo.png)')
   })
 
+  test('a link to a note at the top reaches it past a namesake beside the linking note', async () => {
+    const plan = await planFor({
+      ...read(),
+      notes: [
+        { ...read().notes[0]!, path: 'Groceries.md', text: '# Groceries\n\nMilk\n' },
+        { ...read().notes[0]!, path: 'Work/Groceries.md', text: '# Groceries\n\nSnacks\n' },
+        { ...read().notes[0]!, path: 'Home/List.md', title: 'List', text: '# List\n' },
+        { ...read().notes[0]!, path: 'Work/Home/List.md', title: 'List', text: '# List\n' },
+        {
+          ...read().notes[1]!,
+          text: '# Ideas\n\nSee [Groceries](Groceries.md) and [List](Home/List.md)\n',
+        },
+      ],
+    })
+
+    const note = noteAt(plan, 'Work/Ideas.md')
+    expect(note).toContain('See [Groceries](../Groceries.md) and [[Home/List|List]]')
+  })
+
   test("a title from the note's row opens no markup, as the words the crate escaped do not", async () => {
     const plan = await planFor({
       ...read(),
