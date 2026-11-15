@@ -23,7 +23,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../../workspace.svelte')
-const { NoteDoc, Tab } = await import('../../workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { renameFromTab } = await import('./ops')
 
 function terminalAt(path: string) {

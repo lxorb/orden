@@ -43,7 +43,7 @@ vi.mock('../../link-index/src/api', () => ({
 const { asShortcut, convertWebsites } = await import('./convert')
 type Converts = import('./convert').Converts
 type Entry = import('../../workspace.svelte').Entry
-type NoteDoc = import('../../workspace/documents.svelte').NoteDoc
+type NoteDoc = import('../../documents/src/api').NoteDoc
 
 const SPACE = '/space'
 

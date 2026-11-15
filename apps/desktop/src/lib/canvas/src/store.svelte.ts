@@ -16,7 +16,7 @@ import { type KeptView, viewKept, viewOf } from './place'
 import { afterQuiet, idle } from '../../platform/src/api'
 import { CanvasHistory } from './history'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from '@orden/markdown/plane'
-import type { NoteDoc, Tab } from '../../workspace/documents.svelte'
+import type { NoteDoc, Tab } from '../../documents/src/api'
 
 const PADDING = 48
 

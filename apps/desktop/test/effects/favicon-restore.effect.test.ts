@@ -33,7 +33,7 @@ test('a tab restored with no page wears the mark its site last showed, in its fi
 
   vi.resetModules()
   const { flushSync, mount, unmount } = await import('svelte')
-  const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+  const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
   const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
   const TabMark = (await import('../../src/lib/TabMark.svelte')).default
 

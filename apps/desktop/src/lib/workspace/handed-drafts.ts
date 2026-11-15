@@ -12,8 +12,7 @@ import { CanvasStore } from '../canvas/src/api'
 import { fromPdf } from '../pages/src/api'
 import { paperOf } from '@orden/markdown/pages'
 import { pageSizes } from '../pdf/src/api'
-import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
-import { isDraft } from './drafts'
+import { type NoteDoc, type Tab, UNTITLED, isDraft } from '../documents/src/api'
 
 export interface Drafts {
   readonly tabs: Tab[]

@@ -1,5 +1,5 @@
 import { movedTo, nameOf, samePath, within } from '../platform/src/api'
-import { unixLines } from './documents.svelte'
+import { unixLines } from '../documents/src/api'
 import type { FileOp } from '../file-ops/src/api'
 import type { ClosedTab, Draft } from './session'
 

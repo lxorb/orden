@@ -18,7 +18,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { viewOf, viewKept } = await import('./place')
-const { NoteDoc, Tab } = await import('../../workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas } = await import('@orden/markdown/canvas')
 

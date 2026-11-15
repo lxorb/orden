@@ -22,7 +22,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { workspace } = await import('./workspace.svelte')
-const { Tab } = await import('./workspace/documents.svelte')
+const { Tab } = await import('./documents/src/api')
 
 beforeEach(() => {
   handed.length = 0

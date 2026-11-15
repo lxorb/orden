@@ -28,7 +28,7 @@
   import { MOST_PLACES, ranked } from '../../matching/src/api'
   import type { OpenTab, Row } from './rows'
   import UnsavedDot from '../../UnsavedDot.svelte'
-  import { isDraft } from '../../workspace/drafts'
+  import { isDraft } from '../../documents/src/api'
   import { lookOf } from './trying'
   import { search } from '../../search.svelte'
   import { paletteWords } from '../../surfaces.svelte'

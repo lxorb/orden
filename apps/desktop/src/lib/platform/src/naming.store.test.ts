@@ -223,7 +223,7 @@ const { workspace } = await import('../../workspace.svelte')
 const { sync } = await import('../../sync.svelte')
 const { unread } = await import('../../unread.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-const { isDraft } = await import('../../workspace/drafts')
+const { isDraft } = await import('../../documents/src/api')
 type RemoteSpace = import('../../accounts/src/routes').RemoteSpace
 
 const dropped = (path: string, words: string) => ({

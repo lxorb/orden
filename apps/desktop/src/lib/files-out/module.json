@@ -1,6 +1,6 @@
 {
   "name": "files-out",
   "layer": "foundation",
-  "dependsOn": ["contracts", "downloads", "markdown", "platform", "ui-kit"],
-  "pending": ["apps/desktop/src/lib/reveal.ts", "apps/desktop/src/lib/workspace/write-file.ts"]
+  "dependsOn": ["contracts", "downloads", "markdown", "platform", "ui-kit", "file-writes"],
+  "pending": ["apps/desktop/src/lib/reveal.ts"]
 }

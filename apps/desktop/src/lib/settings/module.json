@@ -24,7 +24,8 @@
     "history",
     "snapshots",
     "kept-for-good",
-    "link-index"
+    "link-index",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/AiPane.svelte",
@@ -62,7 +63,6 @@
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/hidden-tabs.svelte.ts",
     "apps/desktop/src/lib/workspace/note-text.ts",
-    "apps/desktop/src/lib/workspace/sets.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace/sets.ts"
   ]
 }

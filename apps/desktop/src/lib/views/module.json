@@ -22,7 +22,9 @@
     "windows",
     "link-index",
     "file-ops",
-    "file-undo"
+    "file-undo",
+    "documents",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/drawer.svelte.ts",
@@ -38,8 +40,6 @@
     "apps/desktop/src/lib/swipe.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/note-text.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace/note-text.ts"
   ]
 }

@@ -1,6 +1,5 @@
 import { workspace } from './workspace.svelte'
-import type { NoteDoc } from './workspace/documents.svelte'
-import { isDraft } from './workspace/drafts'
+import { type NoteDoc, isDraft } from './documents/src/api'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 

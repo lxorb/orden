@@ -1,7 +1,7 @@
 import type { Flag } from '@orden/pass/monitor'
 import type { Content, Item } from '@orden/pass/types'
 import { prompt } from '../../ui-kit/src/api'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import type { Scope } from './list'
 import { pass } from './store.svelte'
 import { type Page, type PassView, type SettingsTab, viewIn, writeView } from './view'

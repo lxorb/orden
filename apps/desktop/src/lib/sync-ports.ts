@@ -18,7 +18,7 @@ import {
 } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 import { ROOTS_MOVED, rootsMoved } from './workspace/roots-moved'
-import { hearWrites } from './workspace/write-file'
+import { hearWrites } from './file-writes/src/api'
 
 providePort('sync.host', {
   get isNative() {

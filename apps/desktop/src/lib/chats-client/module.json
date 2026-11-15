@@ -23,7 +23,8 @@
     "ui-controls",
     "ui-kit",
     "link-index",
-    "file-ops"
+    "file-ops",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -48,7 +49,6 @@
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/retired-tabs.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace/retired-tabs.ts"
   ]
 }

@@ -1,7 +1,7 @@
 import { nameFromTitle, shownName, samePath, joinPath } from '../../platform/src/api'
 import type { Entry, Space } from '../../workspace.svelte'
-import { UNTITLED } from '../../workspace/documents.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { UNTITLED } from '../../documents/src/api'
+import { writeFile } from '../../file-writes/src/api'
 import { writeShortcut } from '@orden/scan/shortcut'
 
 export interface Sites {

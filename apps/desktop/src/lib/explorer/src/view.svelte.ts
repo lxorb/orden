@@ -1,6 +1,6 @@
 import { message } from '../../ui-kit/src/api'
 import { afterQuiet, isDesktop, joinPath, samePath } from '../../platform/src/api'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace.svelte'
 import {
   CHANGED,

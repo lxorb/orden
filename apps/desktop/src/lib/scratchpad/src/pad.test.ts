@@ -48,7 +48,8 @@ vi.mock('../../platform/src/stored', () => ({
   forget: (key: string) => fake.kept.delete(key),
 }))
 
-vi.mock('../../workspace/write-file', () => ({
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: (path: string, words: string) => {
     if (fake.going) return new Promise(() => undefined)
     if (fake.refusing) return Promise.reject(new Error('read-only'))

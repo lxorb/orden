@@ -22,7 +22,9 @@
     "web-backend",
     "automation",
     "link-index",
-    "file-undo"
+    "file-undo",
+    "documents",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -34,8 +36,6 @@
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/undoing.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace/undoing.ts"
   ]
 }

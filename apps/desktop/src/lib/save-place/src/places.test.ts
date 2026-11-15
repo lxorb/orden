@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { NoteDoc, UNTITLED } from '../../workspace/documents.svelte'
+import { NoteDoc, UNTITLED } from '../../documents/src/api'
 import { fileFor, placesFor, startingPlace } from './places'
 
 type Entry = import('../../workspace.svelte').Entry

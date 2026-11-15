@@ -74,7 +74,8 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: async () => undefined,
 }))
-vi.mock('../../workspace/write-file', () => ({
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: async (path: string, content: string) => void written.set(path, content),
 }))
 vi.mock('../../protect/src/api', () => ({

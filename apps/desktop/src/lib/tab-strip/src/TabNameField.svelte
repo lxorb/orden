@@ -2,7 +2,7 @@
   import { tabKindLoaded } from '@orden/contracts'
   import { focusEditor } from '../../focus'
   import { selectAll } from '../../select-all'
-  import type { Tab } from '../../workspace/documents.svelte'
+  import type { Tab } from '../../documents/src/api'
 
   const { tab }: { tab: Tab } = $props()
 

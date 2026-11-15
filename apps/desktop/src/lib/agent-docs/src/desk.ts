@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { insideOnly, insideSpace, nameOf, notePath } from '../../platform/src/api'
 import type { Change, Edit } from '@orden/scan/search/replace'
-import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { NoteDoc } from '../../documents/src/api'
 import type { Keeping } from '../../workspace/note-text'
 import { DocError } from './problem'
 

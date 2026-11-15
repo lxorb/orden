@@ -24,7 +24,8 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
     told.push(`${command} ${args.from} -> ${args.to}`)
   },
 }))
-vi.mock('./write-file', () => ({
+vi.mock('../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../file-writes/src/api')>()),
   copyPath: async (from: string, to: string) => {
     for (const [path, text] of [...disk]) {
       if (path === from || path.startsWith(`${from}/`)) disk.set(to + path.slice(from.length), text)

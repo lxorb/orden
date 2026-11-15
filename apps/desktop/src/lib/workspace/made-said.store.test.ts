@@ -18,7 +18,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../workspace.svelte')
 const { onDisk } = await import('../platform/src/on-disk')
-const { hearWrites, writeBytes, writeFile } = await import('./write-file')
+const { hearWrites, writeBytes, writeFile } = await import('../file-writes/src/api')
 
 const ROOT = '/space'
 const made: string[] = []

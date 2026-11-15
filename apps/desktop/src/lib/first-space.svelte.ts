@@ -5,7 +5,7 @@ import { beginSetup } from './onboarding/src/api'
 import { joinPath } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
-import { writeFile } from './workspace/write-file'
+import { writeFile } from './file-writes/src/api'
 import { type Space, workspace } from './workspace.svelte'
 
 class FirstSpace {

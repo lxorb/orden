@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { render } from 'svelte/server'
-import type { TabKind } from './workspace/documents.svelte'
+import type { TabKind } from './documents/src/api'
 
 const chosen: Record<string, string | null> = {}
 const marks: Record<string, string | null> = {}
@@ -19,7 +19,7 @@ const { iconLibrary } = await import('./icon-library.svelte')
 const { loadIcons } = await import('./ui-kit/src/icons')
 const { MARKS } = await import('./file-mark')
 const { GRAPH_MARK } = await import('./panel-marks')
-const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('./documents/src/api')
 const { pages } = await import('./web-tab/src/pages.svelte')
 const { writeShortcut } = await import('@orden/scan/shortcut')
 const TabMark = (await import('./TabMark.svelte')).default

@@ -1,6 +1,6 @@
 import { UNKNOWN_APP, type View } from '@orden/online/apps'
 import { describe, expect, test, vi } from 'vitest'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import type { AppHeard } from './link'
 import {
   ANSWER_WITHIN,

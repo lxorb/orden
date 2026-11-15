@@ -20,7 +20,9 @@
     "web-backend",
     "windows",
     "link-index",
-    "panes"
+    "panes",
+    "documents",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -46,8 +48,6 @@
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/typing-pointer.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

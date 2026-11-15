@@ -100,9 +100,19 @@ import {
   unixLines,
   Tab,
   UNTITLED,
-} from './workspace/documents.svelte'
+  OpenDocuments,
+  secondWebTabs,
+  draftFile,
+  hasWords,
+  isDraft,
+  isUnsaved,
+  worthAFile,
+  fetchAcross,
+  meetAcross,
+  oweTo,
+} from './documents/src/api'
+import { writeFile } from './file-writes/src/api'
 import { Layouts } from './workspace/layouts.svelte'
-import { OpenDocuments, secondWebTabs } from './workspace/open'
 import {
   type Along,
   type Frame,
@@ -128,11 +138,8 @@ import * as ahead from './workspace/ahead'
 import { firstScreen } from './first-screen/src/api'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
-import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
 import { TAB_KINDS, type TabKind } from './tab-kinds/src/api'
 import { type Binning, type FileAction, FileActions, type Kept } from './file-undo/src/api'
-import { fetchAcross, meetAcross } from './workspace/in-turn'
-import { writeFile } from './workspace/write-file'
 import { isScratchpad, pad as padNow, shown as pad } from './scratchpad/src/api'
 import { outermost, Selection } from './workspace/selection.svelte'
 import {
@@ -192,7 +199,7 @@ export interface Space {
   root: string
 }
 
-export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
+export type { NoteDoc, Tab, TabKind } from './documents/src/api'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
 
@@ -4244,6 +4251,8 @@ settingsTab.reveal = () => workspace.openSettings()
 settingsTab.hide = () => workspace.closeSettings()
 settingsTab.seen = () => workspace.settingsShown
 settingsTab.present = () => workspace.settingsTab !== null
+
+oweTo((note) => workspace.owedWords(note))
 
 links.archivedIn = (root) => workspace.archive.keysOf(root)
 links.spaceOf = (path) => workspace.rootHolding(path)

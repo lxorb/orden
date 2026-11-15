@@ -38,7 +38,7 @@ window.matchMedia = ((query: string) => ({
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { writeNew } = await import('../../src/lib/write-new')
-const { isDraft } = await import('../../src/lib/workspace/drafts')
+const { isDraft } = await import('../../src/lib/documents/src/api')
 const Pane = (await import('../../src/lib/Pane.svelte')).default
 
 let target: HTMLElement

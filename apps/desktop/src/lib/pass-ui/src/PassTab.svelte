@@ -7,7 +7,7 @@
   import { dur, fade } from '../../platform/src/api'
   import { reloading } from '../../reloading.svelte'
   import { shortcuts } from '../../shortcuts/src/api'
-  import type { Tab } from '../../workspace/documents.svelte'
+  import type { Tab } from '../../documents/src/api'
   import AdoptSheet from './AdoptSheet.svelte'
   import { asked } from '../../pass-sync/src/api'
   import ChangePassword from './ChangePassword.svelte'

@@ -5,7 +5,7 @@
   import { marks } from './online/marks.svelte'
   import { isTermTarget } from '@orden/markdown/links'
   import { remote } from './remote/hosts.svelte'
-  import type { Tab } from '../../workspace/documents.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { TERMINAL_MARKS } from './marks'
   import { terminalMark } from './naming'
   import { hostIdOf, readSpec } from './spec'

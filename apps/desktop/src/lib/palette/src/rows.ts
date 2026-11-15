@@ -1,7 +1,7 @@
 import type { Command } from '../../commands/src/api'
 import type { FileMark } from '../../file-mark'
 import type { Bookmark, PaletteDestination, PaletteHost } from '@orden/contracts'
-import type { TabKind } from '../../workspace/documents.svelte'
+import type { TabKind } from '../../documents/src/api'
 import type { Entry } from '../../workspace.svelte'
 import type { NoteToMake } from './new-note'
 import type { PaletteSetting } from '@orden/contracts'

@@ -3,7 +3,7 @@ import { account } from '../accounts/src/api'
 import { identifier, samePath, invoke, isDesktop, isNative } from '../platform/src/api'
 import { listedWith } from '../web-backend/src/api'
 import type { Entry, Naming, Space } from '../workspace.svelte'
-import type { Tab } from './documents.svelte'
+import type { Tab } from '../documents/src/api'
 
 export interface HoldsSpaces {
   spaces: Space[]

@@ -221,7 +221,7 @@ import {
 } from './sharing.svelte'
 import { pairSpaces, type Pairing } from '../../space-pairing'
 import type { RemoteSpace, SharedItem } from '../../accounts/src/routes'
-import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { NoteDoc } from '../../documents/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import { memoryStorage } from '../../../../test/disk'
 

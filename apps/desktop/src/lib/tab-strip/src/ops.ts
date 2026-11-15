@@ -3,7 +3,7 @@ import { folderNote } from '../../folder-notes'
 import { canWriteAt } from '../../sharing/src/api'
 import { folderOf, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import { nextPane } from '../../panes/src/api'
 
 export function duplicateTab(id: string) {

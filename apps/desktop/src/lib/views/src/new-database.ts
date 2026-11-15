@@ -2,7 +2,7 @@ import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../../folder-notes'
 import { basesOn } from '../../settings.svelte'
 import { samePath, joinPath } from '../../platform/src/api'
-import { writeFile } from '../../workspace/write-file'
+import { writeFile } from '../../file-writes/src/api'
 import { workspace } from '../../workspace.svelte'
 
 function databaseBase(status: string, view: string, shown: string): Base {

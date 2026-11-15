@@ -90,7 +90,7 @@ Object.defineProperty(navigator, 'clipboard', {
   },
 })
 
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { openRemote } = await import('../../src/lib/terminal/src/remote/open')

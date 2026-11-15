@@ -12,7 +12,7 @@ import {
 import { frecency as visitWeight, shownAddress } from '@orden/scan/visits'
 import type { Visit } from '@orden/scan/visits'
 import type { Bookmark, PaletteHost } from '@orden/contracts'
-import type { TabKind } from '../../workspace/documents.svelte'
+import type { TabKind } from '../../documents/src/api'
 import type { Entry } from '../../workspace.svelte'
 import type { Candidate, Kind } from '../../matching/src/api'
 import type { OpenTab, Row } from './rows'

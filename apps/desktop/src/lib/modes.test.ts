@@ -549,7 +549,7 @@ describe('source mode, per tab', () => {
   })
 
   test('starts a new tab where Settings says, and remembers that across a restart', async () => {
-    const { Tab, opening } = await import('./workspace/documents.svelte')
+    const { Tab, opening } = await import('./documents/src/api')
     const note = { kind: 'note' } as unknown as ConstructorParameters<typeof Tab>[0]
     expect(new Tab(note, 'p1').source).toBe(false)
 
@@ -559,7 +559,7 @@ describe('source mode, per tab', () => {
     expect(new Tab(note, 'p1').source).toBe(true)
 
     const restored = await restarted()
-    const fresh = await import('./workspace/documents.svelte')
+    const fresh = await import('./documents/src/api')
     expect(restored.opensInSource).toBe(true)
     expect(new fresh.Tab(note, 'p1').source).toBe(true)
   })

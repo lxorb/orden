@@ -8,7 +8,7 @@ import type { Entry } from '../workspace.svelte'
 import type { Protection } from '../protect/src/api'
 import type { ItemMetaStore } from '../space-kept/src/api'
 import type { Copied, FileActions } from '../file-undo/src/api'
-import { copyPath, writeBytes, writeFile } from './write-file'
+import { copyPath, writeBytes, writeFile } from '../file-writes/src/api'
 
 export interface Copies {
   readonly undone: FileActions

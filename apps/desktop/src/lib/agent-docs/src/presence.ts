@@ -1,7 +1,7 @@
 import { portOf } from '@orden/contracts'
 import { type Peer, setAgents } from '@orden/editor'
 import { accentColour, accentFor } from '../../theme/src/api'
-import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { NoteDoc } from '../../documents/src/api'
 
 export interface Agent {
   id: string

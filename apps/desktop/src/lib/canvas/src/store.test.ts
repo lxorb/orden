@@ -10,7 +10,7 @@ vi.stubGlobal('localStorage', {
   length: 0,
 })
 
-const { NoteDoc, Tab } = await import('../../workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas, readCanvas, writeCanvas } = await import('@orden/markdown/canvas')
 const { canvasMenu, run } = await import('./actions')

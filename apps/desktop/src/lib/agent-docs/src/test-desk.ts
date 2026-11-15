@@ -7,7 +7,7 @@ import {
   undoEdit,
 } from '@orden/editor'
 import { applied, type Change } from '@orden/scan/search/replace'
-import { NoteDoc } from '../../workspace/documents.svelte'
+import { NoteDoc } from '../../documents/src/api'
 import type { Keeping } from '../../workspace/note-text'
 import type { Desk, Space } from './desk'
 

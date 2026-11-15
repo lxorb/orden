@@ -8,7 +8,7 @@ import { type Canvas, type CanvasNode, emptyCanvas } from '@orden/markdown/canva
 import type { Hand, PlaneSurface, SharedPlane } from '@orden/markdown/plane'
 import { rooms } from '../../collab/src/api'
 import { bind } from '../../collab-rooms/src/api'
-import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { NoteDoc } from '../../documents/src/api'
 import { Mirrors } from './mirrors'
 import { LiveRelay } from './relay'
 

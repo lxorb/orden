@@ -1,6 +1,6 @@
 import type { Tab } from '../workspace.svelte'
 import { within } from '../platform/src/api'
-import type { TabKind } from '../workspace/documents.svelte'
+import type { TabKind } from '../documents/src/api'
 import { type Call, maybe, need } from './call'
 import { Refused } from './problem'
 import { type Place, placeFor, tabsInReach } from './spaces'

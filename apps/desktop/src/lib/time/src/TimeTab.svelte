@@ -3,7 +3,7 @@
   import { localDate } from '../../platform/src/api'
   import { menu } from '../../menu.svelte'
   import { segmented } from '../../ui-kit/src/api'
-  import type { Tab } from '../../workspace/documents.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { counted, isOwn } from './counted'
   import DayLanes from './DayLanes.svelte'
   import { counts, dayOf, daysAfter, endOf, piecesIn, startOf, stepped } from './days'

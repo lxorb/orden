@@ -30,7 +30,8 @@ vi.mock('../../../platform/src/tauri', async (real) => ({
   ...(await real<typeof import('../../../platform/src/tauri')>()),
   invoke: () => Promise.resolve(seen.words),
 }))
-vi.mock('../../../workspace/write-file', () => ({
+vi.mock('../../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../../file-writes/src/api')>()),
   writeFile: (_path: string, text: string) => {
     seen.written.push(text)
     return Promise.resolve()

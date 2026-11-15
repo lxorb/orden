@@ -2,7 +2,7 @@ import { basesOn } from '../../settings.svelte'
 import { canWriteAt } from '../../sharing/src/api'
 import { joinPath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { writeFile } from '../../file-writes/src/api'
 import { openBaseFile } from './open'
 
 function baseFileName(name: string): string {

@@ -1,0 +1,15 @@
+{
+  "name": "documents",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "camera",
+    "editor",
+    "file-ops",
+    "markdown",
+    "online-terms",
+    "platform",
+    "scan",
+    "tab-kinds"
+  ]
+}

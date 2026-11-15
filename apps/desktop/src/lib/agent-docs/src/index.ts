@@ -6,7 +6,7 @@ import { withinSpace, invoke, keepVersion } from '../../platform/src/api'
 import { theme } from '../../theme/src/api'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
-import { isDraft } from '../../workspace/drafts'
+import { isDraft } from '../../documents/src/api'
 import { type Desk, located, type NoteAt, SCRATCHPAD_TAB } from './desk'
 import {
   editNote,

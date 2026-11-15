@@ -47,7 +47,7 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')

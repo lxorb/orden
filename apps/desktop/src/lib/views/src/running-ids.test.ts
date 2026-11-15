@@ -34,7 +34,10 @@ vi.mock('../../sharing/src/api', () => ({
   trustsHtmlAt: () => true,
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
-vi.mock('../../workspace/write-file', () => ({ writeFile: async () => undefined }))
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
+  writeFile: async () => undefined,
+}))
 
 const { readHeld } = await import('./running')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')

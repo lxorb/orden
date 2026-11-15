@@ -3,7 +3,7 @@ import { afterEach, expect, onTestFinished, test, vi } from 'vitest'
 import Canvas from '../../src/lib/canvas/src/Canvas.svelte'
 import { emptyCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 class NoLayout {
   observe() {

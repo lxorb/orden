@@ -1,7 +1,7 @@
 import { shownName, nameOf } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
-import type { Tab } from '../../workspace/documents.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { type Tab } from '../../documents/src/api'
+import { writeFile } from '../../file-writes/src/api'
 import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
 export async function aimed(
