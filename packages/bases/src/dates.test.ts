@@ -12,6 +12,7 @@ import {
   rewritten,
   weekday,
 } from './dates'
+import type { DateValue } from './types'
 
 describe('dates on the floating clock', () => {
   test('a real date and not', () => {
@@ -47,6 +48,28 @@ describe('dates on the floating clock', () => {
       time: '09:05:00',
     })
     expect(readDate('tomorrow')).toBeNull()
+  })
+
+  test('an edit across a change of the clock here keeps the time that was typed', () => {
+    const was = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    try {
+      const winter: DateValue = {
+        kind: 'date',
+        iso: '2026-03-06',
+        time: '19:00:00',
+        zone: '-08:00',
+      }
+      expect(onClock(winter)).toMatchObject({ iso: '2026-03-06', time: '19:00:00' })
+      const saved = rewritten(winter, { kind: 'date', iso: '2026-03-09', time: '19:00' })
+      expect(onClock(saved)).toMatchObject({ iso: '2026-03-09', time: '19:00:00' })
+      const night: DateValue = { kind: 'date', iso: '2026-03-08', time: '01:00:00', zone: '-08:00' }
+      const later = rewritten(night, { kind: 'date', iso: '2026-03-08', time: '03:00' })
+      expect(onClock(later)).toMatchObject({ iso: '2026-03-08', time: '03:00:00' })
+    } finally {
+      if (was === undefined) delete process.env.TZ
+      else process.env.TZ = was
+    }
   })
 
   test('a moment written in UTC is read on the clock here', () => {

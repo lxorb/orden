@@ -79,10 +79,16 @@ export function onClock(value: DateValue, zone?: string): DateValue {
   return value.zone && value.time ? dateAt(msOf(value, zone)) : value
 }
 
-export function rewritten(was: DateValue, edited: DateValue): DateValue {
-  if (!was.zone || !was.time || !edited.time || edited.zone) return edited
-  const moved = wallMs(edited) - wallMs(onClock(was))
-  return { ...dateAt(wallMs(was) + moved), zone: was.zone }
+export function rewritten(was: DateValue, edited: DateValue, zone?: string): DateValue {
+  const offset = was.zone && was.time ? offsetMinutes(was.zone) : null
+  if (offset === null || !was.zone || !edited.time || edited.zone) return edited
+  return { ...dateAt(instantOf(wallMs(edited), zone) + offset * 60_000), zone: was.zone }
+}
+
+function instantOf(wall: number, zone?: string): number {
+  let guess = wall
+  for (let tries = 0; tries < 3; tries++) guess = wall - (wallOf(guess, zone) - guess)
+  return guess
 }
 
 function millisOf(time: string): number {
