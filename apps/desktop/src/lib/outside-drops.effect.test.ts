@@ -81,8 +81,8 @@ class Drag extends MouseEvent {
 Object.assign(globalThis, { DataTransfer: Transfer, DragEvent: Drag })
 
 const { guardDrops } = await import('./drops')
-const { filesAt, OutsideDrops } = await import('./outside-drops')
-const { explorerDragged, isExplorerDrag } = await import('./drag-paths')
+const { explorerDragged, isExplorerDrag, outsideDrops } = await import('./ui-kit/src/api')
+const { filesAt, OutsideDrops } = await outsideDrops()
 
 let under: Element | null = null
 let opened: string[][] = []

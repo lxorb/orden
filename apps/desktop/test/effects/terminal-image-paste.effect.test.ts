@@ -262,7 +262,7 @@ test('so is one pasted from the menu when the clipboard holds no text', async ()
     new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
   )
   flushSync()
-  const { menu } = await import('../../src/lib/menu.svelte')
+  const { menu } = await import('../../src/lib/ui-kit/src/api')
   const row = menu.items.find((one) => one !== null && 'label' in one && one.label === 'Paste')
   if (!row || !('run' in row)) throw new Error('no Paste row')
   row.run()

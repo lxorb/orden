@@ -2,11 +2,17 @@
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
   import { webPages } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
-  import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag } from '../../../drag-paths'
+  import {
+    carriedFiles,
+    carriesFiles,
+    draggedTab,
+    dropOver,
+    isTreeDrag,
+    viewport,
+  } from '../../../ui-kit/src/api'
   import { EmojiPicker } from '../../../emoji/src/api'
   import { shortcuts } from '../../../shortcuts/src/api'
   import { samePath } from '../../../platform/src/api'
-  import { viewport } from '../../../ui-kit/src/api'
   import type { Tab } from '../../../documents/src/api'
   import { workspace } from '../../../workspace/src/api'
   import { ChatPage } from './chat.svelte'

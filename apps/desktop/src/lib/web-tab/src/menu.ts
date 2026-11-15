@@ -1,5 +1,5 @@
 import { copyText } from '../../ui-controls/src/api'
-import { DIVIDER, type MenuEntry } from '../../menu.svelte'
+import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { openExternal } from '../../platform/src/api'
 import { isWebAddress } from '@orden/scan/web-address'

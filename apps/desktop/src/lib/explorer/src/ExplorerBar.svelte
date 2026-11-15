@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dropOver } from '../../drag-paths'
+  import { dropOver, menu } from '../../ui-kit/src/api'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import ArrowUp from 'lucide/dist/esm/icons/arrow-up.mjs'
@@ -14,7 +14,6 @@
   import ArrowUpDown from 'lucide/dist/esm/icons/arrow-up-down.mjs'
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
-  import { menu } from '../../menu.svelte'
   import { shortcuts } from '../../shortcuts/src/api'
   import { crumbsOf, typedFolder } from './crumbs'
   import { dropInto, over } from './drag'

@@ -6,19 +6,7 @@
     dropOver,
     isSectionDrag,
     landing,
-  } from '../../drag-paths'
-  import { dropOnList } from '../../list-landing.svelte'
-  import { movesSection } from '../../sections'
-  import { onMount, untrack } from 'svelte'
-  import { cubicOut } from 'svelte/easing'
-  import { longPress } from '../../longpress'
-  import { landsIn } from '../../move-targets'
-  import { shortcuts } from '../../shortcuts/src/api'
-  import { agentMarks } from '../../agent-marks.svelte'
-  import { sidebarPart } from '@orden/contracts'
-  import { UnreadDot } from '../../ui-kit/src/api'
-  import { account, arriving } from '../../accounts/src/api'
-  import {
+    longPress,
     ASK_MARK,
     CHATS_MARK,
     FILES_MARK,
@@ -30,9 +18,28 @@
     SCRATCHPAD_MARK,
     TASKS_MARK,
     TIME_MARK,
-  } from '../../panel-marks'
+    edgePeek,
+    UnreadDot,
+    arrive,
+    leave,
+    segmented,
+    scrollbar,
+    viewport,
+    overlays,
+    DIVIDER,
+    menu,
+    type MenuEntry,
+  } from '../../ui-kit/src/api'
+  import { dropOnList } from '../../list-landing.svelte'
+  import { movesSection } from '../../sections'
+  import { onMount, untrack } from 'svelte'
+  import { cubicOut } from 'svelte/easing'
+  import { landsIn, dropTarget } from '../../tree/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { agentMarks } from '../../agent-marks.svelte'
+  import { sidebarPart } from '@orden/contracts'
+  import { account, arriving } from '../../accounts/src/api'
   import { newSpace } from '../../space-actions'
-  import { arrive, leave, segmented } from '../../ui-kit/src/api'
   import { panels, type Panel, type PanelSide } from '../../session/src/api'
   import { headingAt, lineOf } from '../../documents/src/api'
   import {
@@ -48,19 +55,15 @@
     tasksPanel,
     timePanel,
   } from '../../surfaces.svelte'
-  import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { bookmarkEntry } from '../../menu-entries'
   import { roving } from '../../roving'
   import { pullable } from '../../pull.svelte'
-  import { scrollbar } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import { links } from '../../link-index/src/api'
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { search } from '../../search.svelte'
   import { SidebarWidth } from '../../sidebar-width.svelte'
-  import { viewport } from '../../ui-kit/src/api'
-  import { edgePeek } from '../../edge-peek.svelte'
-  import { overlays } from '../../ui-kit/src/api'
   import { fullscreen } from '../../fullscreen.svelte'
   import { alone } from '../../alone.svelte'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
@@ -70,7 +73,6 @@
   import SidebarToggle from '../../SidebarToggle.svelte'
   import { swipeOpens } from '../../swipe-opens'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
-  import { dropTarget } from '../../drop-target.svelte'
   import Tree from './Tree.svelte'
   import { dur, fade, fly } from '../../platform/src/api'
   import { startup } from '../../launch/src/api'

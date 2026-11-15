@@ -1,8 +1,6 @@
 <script lang="ts">
   import type { CardSize, RowKinds } from '@orden/bases'
-  import type { MenuEntry } from '../../menu.svelte'
-  import { segmented } from '../../ui-kit/src/api'
-  import { viewport } from '../../ui-kit/src/api'
+  import { type MenuEntry, segmented, viewport } from '../../ui-kit/src/api'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
   import { CARD_SIZES, sizeOf } from './board'
   import { displayName, knownProperties } from './columns'

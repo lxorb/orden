@@ -1,7 +1,7 @@
 import { oneWindow } from './web-tab/src/api'
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './accounts/src/api'
-import { busy, viewport } from './ui-kit/src/api'
+import { busy, outsideDrops, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai-chat/src/api'
 import { guardDrops } from './drops'
 import { joining } from './sharing/src/api'
@@ -263,7 +263,7 @@ export function start(): () => void {
 
   let stopOutsideDrops: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void import('./outside-drops')
+    void outsideDrops()
       .then(({ hearOutsideDrops }) => hearOutsideDrops())
       .then((stop) => (stopOutsideDrops = stop))
       .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))

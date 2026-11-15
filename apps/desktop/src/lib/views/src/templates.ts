@@ -1,7 +1,7 @@
 import type { Entry } from '@orden/contracts'
 import { protection } from '../../protect/src/api'
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
-import { menu } from '../../menu.svelte'
+import { menu } from '../../ui-kit/src/api'
 import { rows } from '../../rows/src/api'
 import {
   folderOf,

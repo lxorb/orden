@@ -20,5 +20,5 @@
     "workspace",
     "gates"
   ],
-  "pending": ["apps/desktop/src/lib/icon-choice.svelte.ts", "apps/desktop/src/lib/menu.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/icon-choice.svelte.ts"]
 }

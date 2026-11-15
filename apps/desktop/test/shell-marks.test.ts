@@ -88,18 +88,18 @@ describe('the mark that says shared', () => {
       .filter((one) => /lucide\/dist\/esm\/icons\/(users|share-2)\.mjs/.test(one.text))
       .map((one) => one.name)
 
-    expect(drawn).toEqual(['lib/SharedMark.svelte'])
+    expect(drawn).toEqual(['lib/ui-kit/src/SharedMark.svelte'])
   })
 
   test('is small and quiet, which is what a mark beside a name is', () => {
-    const style = declarations(named('lib/SharedMark.svelte').style)
+    const style = declarations(named('lib/ui-kit/src/SharedMark.svelte').style)
     expect(style).toMatch(/color\s*:\s*var\(--muted\)/)
     expect(style).toMatch(/width\s*:\s*var\(--icon-sm\)/)
   })
 
   test('and says it in a word as well, for a reader who cannot see it', () => {
-    expect(named('lib/SharedMark.svelte').text).toMatch(/aria-label=\{label\}/)
-    expect(named('lib/SharedMark.svelte').text).toMatch(/'Shared'/)
+    expect(named('lib/ui-kit/src/SharedMark.svelte').text).toMatch(/aria-label=\{label\}/)
+    expect(named('lib/ui-kit/src/SharedMark.svelte').text).toMatch(/'Shared'/)
   })
 
   test('and nothing draws a dot for it any more', () => {
@@ -128,7 +128,9 @@ describe('the mark that says shared', () => {
 
   test('and the file list says it on the note itself', () => {
     const tree = named('lib/sidebar/src/Tree.svelte')
-    expect(tree.text).toContain("import SharedMark from '../../SharedMark.svelte'")
+    expect(tree.text).toMatch(
+      /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
+    )
     expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
     expect(tree.text).toContain('othersIn(')
     expect(tree.text).toContain('isSharedItem(')
@@ -137,7 +139,9 @@ describe('the mark that says shared', () => {
   test('and the switcher says it with the mark instead', () => {
     const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
     const row = named('lib/SpaceRow.svelte')
-    expect(switcher.text).toContain("import SharedMark from '../../SharedMark.svelte'")
+    expect(switcher.text).toMatch(
+      /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
+    )
     expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text).toContain('<SharedMark icon={Eye} label="Read-only" />')

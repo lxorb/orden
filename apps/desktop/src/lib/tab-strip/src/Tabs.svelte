@@ -1,15 +1,8 @@
 <script lang="ts">
   import { webPages } from '@orden/contracts'
   import { droppedAddress } from '@orden/scan/web-address'
-  import { dropOver } from '../../drag-paths'
-  import { onDestroy, onMount, tick, untrack } from 'svelte'
-  import { whileHere } from '../../ui-kit/src/api'
-  import { staysOn } from '../../caret'
-  import Door from '../../Door.svelte'
-  import { views } from '../../views.svelte'
-  import { quintOut } from 'svelte/easing'
-  import { agentMarks } from '../../agent-marks.svelte'
   import {
+    dropOver,
     carried,
     carriedMark,
     dragged,
@@ -17,19 +10,28 @@
     isBookmarkDrag,
     isTreeDrag,
     mayCarryAddress,
-  } from '../../drag-paths'
+    longPress,
+    whileHere,
+    viewport,
+    UnsavedDot,
+    initial,
+    Cross,
+    SharedMark,
+    menu,
+  } from '../../ui-kit/src/api'
+  import { onDestroy, onMount, tick, untrack } from 'svelte'
+  import { staysOn } from '../../caret'
+  import Door from '../../Door.svelte'
+  import { views } from '../../views.svelte'
+  import { quintOut } from 'svelte/easing'
+  import { agentMarks } from '../../agent-marks.svelte'
   import { chrome } from '../../theme/src/api'
-  import { longPress } from '../../longpress'
-  import { menu } from '../../menu.svelte'
   import { middleOpens, tabAsk } from '../../new-tab'
   import { rooms } from '../../collab/src/api'
   import { roving } from '../../roving'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { viewport } from '../../ui-kit/src/api'
-  import SharedMark from '../../SharedMark.svelte'
   import { privateMark, syncMark, soundMark, tabOverview } from '../../surfaces.svelte'
   import TabMark from '../../TabMark.svelte'
-  import { UnsavedDot } from '../../ui-kit/src/api'
   import { askPlace } from '../../save-place/src/api'
   import {
     arrival,
@@ -87,10 +89,8 @@
   import { workspace } from '../../workspace/src/api'
   import { type Landing, inside } from '../../panes/src/api'
   import { isDraft } from '../../documents/src/api'
-  import { initial } from '../../ui-kit/src/api'
   import { SvelteSet } from 'svelte/reactivity'
   import { dur, fade, stillness } from '../../platform/src/api'
-  import { Cross } from '../../ui-kit/src/api'
 
   const { paneId, caption = false }: { paneId: string; caption?: boolean } = $props()
 

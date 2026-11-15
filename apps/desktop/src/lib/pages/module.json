@@ -21,11 +21,5 @@
     "file-writes",
     "workspace"
   ],
-  "pending": [
-    "apps/desktop/src/lib/drag-paths.ts",
-    "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/longpress.ts",
-    "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/roving.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/layer-keys.ts", "apps/desktop/src/lib/roving.ts"]
 }

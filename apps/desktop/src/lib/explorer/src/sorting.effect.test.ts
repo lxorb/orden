@@ -78,7 +78,7 @@ vi.mock('./commands', async (original) => ({
 }))
 
 const { workspace } = await import('../../workspace/src/api')
-const { menu } = await import('../../menu.svelte')
+const { menu } = await import('../../ui-kit/src/api')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')
 const { explorerPrefs } = await import('./prefs.svelte')

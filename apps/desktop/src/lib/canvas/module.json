@@ -27,9 +27,7 @@
     "apps/desktop/src/lib/alone.svelte.ts",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/open-link.ts"
   ]
 }

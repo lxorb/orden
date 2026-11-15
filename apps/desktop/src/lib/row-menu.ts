@@ -2,19 +2,24 @@ import type { Entry } from '@orden/contracts'
 import { webDataSheet } from './web-tab/src/api'
 import { foreignCopy } from '@orden/sync-core'
 import { isChatTarget } from '@orden/markdown/links'
-import { folderNote, nestedIn } from './tree/src/api'
+import {
+  moveTargets,
+  type MoveTarget,
+  movesInto,
+  folderNote,
+  nestedIn,
+  entryAt,
+} from './tree/src/api'
 import { basesOn, hiddenKinds, type KindName } from './gates/src/api'
 import { kindLabel } from './kind-words'
+import { DIVIDER, type MenuEntry, viewport } from './ui-kit/src/api'
 import {
   archiveEntry,
   coverEntries,
-  DIVIDER,
   iconEntries,
   searchAgainEntry,
-  type MenuEntry,
   shareEntry,
-} from './menu.svelte'
-import { moveTargets, type MoveTarget, movesInto } from './move-targets'
+} from './menu-entries'
 import { howFor } from './new-tab'
 import {
   rowName,
@@ -28,8 +33,6 @@ import {
 import { canWriteAt, protectEntries } from './sharing/src/api'
 import { shortcuts } from './shortcuts/src/api'
 import { reveal, showLabel } from './files-out/src/api'
-import { entryAt } from './tree/src/api'
-import { viewport } from './ui-kit/src/api'
 import { workspace } from './workspace/src/api'
 import { archive, showArchive } from './archive/src/api'
 

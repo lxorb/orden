@@ -1,4 +1,4 @@
-import { isFileDrop, listenOver, outsideRows } from './drag-paths'
+import { isFileDrop, listenOver, outsideRows } from './ui-kit/src/api'
 import { droppedPaths } from './platform/src/api'
 
 const PDF = /\.pdf$/i

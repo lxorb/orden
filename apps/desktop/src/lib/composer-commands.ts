@@ -1,6 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import type { Command } from './commands/src/api'
-import type { MenuEntry } from './menu.svelte'
+import { type MenuEntry } from './ui-kit/src/api'
 import { shownName, isMarkdownPath } from './platform/src/api'
 import { canWriteAt, canWriteIn } from './sharing/src/api'
 import { carvable, mergeable } from './workspace/src/composing'

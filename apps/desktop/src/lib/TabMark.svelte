@@ -4,7 +4,7 @@
   import { wearsChosen } from './chosen-icon'
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { ASK_MARK, GRAPH_MARK } from './panel-marks'
+  import { ASK_MARK, GRAPH_MARK } from './ui-kit/src/api'
   import { terminalMark } from './surfaces.svelte'
   import { type Page, pages, siteMark } from './web-tab/src/api'
   import { readWebFile } from '@orden/scan/shortcut'

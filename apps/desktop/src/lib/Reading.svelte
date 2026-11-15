@@ -2,7 +2,7 @@
   import { tick, untrack } from 'svelte'
   import FindBar from './FindBar.svelte'
   import { keyElsewhere } from './layer-keys'
-  import { menu } from './menu.svelte'
+  import { menu, scrollbar } from './ui-kit/src/api'
   import { modes } from './modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
   import {
@@ -19,7 +19,6 @@
     wordsOf,
   } from './reading/src/api'
   import { trustsHtmlIn } from './sharing/src/api'
-  import { scrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts/src/api'
   import { followHref, MIDDLE, opensLink } from './open-link'
   import { tabAsk } from './new-tab'

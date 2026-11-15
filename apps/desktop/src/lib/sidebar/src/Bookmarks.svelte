@@ -1,6 +1,21 @@
 <script lang="ts">
   import type { Bookmark, Entry } from '@orden/contracts'
-  import { dropOver } from '../../drag-paths'
+  import {
+    dropOver,
+    longPress,
+    GRAPH_MARK,
+    SEARCH_MARK,
+    carried,
+    carriedNothing,
+    carriedRows,
+    carryBookmark,
+    draggedBookmark,
+    isTreeDrag,
+    Twist,
+    DIVIDER,
+    type MenuEntry,
+    menu,
+  } from '../../ui-kit/src/api'
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
@@ -10,22 +25,11 @@
   import { fileMark, type FileMark as Mark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
   import { folderNote } from '../../tree/src/api'
-  import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from '../../menu.svelte'
+  import { bookmarkEntry, iconEntries } from '../../menu-entries'
   import { dur, scale } from '../../platform/src/api'
-  import Twist from '../../Twist.svelte'
-  import { longPress } from '../../longpress'
   import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
   import { roving } from '../../roving'
-  import { GRAPH_MARK, SEARCH_MARK } from '../../panel-marks'
   import { rowName } from '../../platform/src/api'
-  import {
-    carried,
-    carriedNothing,
-    carriedRows,
-    carryBookmark,
-    draggedBookmark,
-    isTreeDrag,
-  } from '../../drag-paths'
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'
   import { isTile, sameBookmark } from '../../space-kept/src/api'

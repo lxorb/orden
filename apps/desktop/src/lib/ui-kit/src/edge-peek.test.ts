@@ -141,7 +141,10 @@ describe('the list out over the note', () => {
 })
 
 describe('the left side', () => {
-  const sidebar = readFileSync(join(import.meta.dirname, './sidebar/src/Sidebar.svelte'), 'utf8')
+  const sidebar = readFileSync(
+    join(import.meta.dirname, '../../sidebar/src/Sidebar.svelte'),
+    'utf8',
+  )
 
   test('lets it out only shut, as a column, outside full screen and under nothing', () => {
     for (const rule of [
@@ -216,7 +219,7 @@ describe('the left side', () => {
   })
 
   test("a filled window's top bar comes at once too, and goes after the same grace", () => {
-    const bar = readFileSync(join(import.meta.dirname, './tab-fill/src/FillBar.svelte'), 'utf8')
+    const bar = readFileSync(join(import.meta.dirname, '../../tab-fill/src/FillBar.svelte'), 'utf8')
     expect(bar).toContain('const GOES_AFTER = GRACE')
     const moved = bar.slice(bar.indexOf('function moved('), bar.indexOf('function letGo('))
     expect(moved).not.toContain('setTimeout')

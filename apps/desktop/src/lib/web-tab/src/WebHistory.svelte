@@ -3,7 +3,7 @@
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { region } from '../../platform/src/api'
   import { localDate } from '../../platform/src/api'
-  import { menu } from '../../menu.svelte'
+  import { menu } from '../../ui-kit/src/api'
   import { tabAsk, type TabAsk } from '../../new-tab'
   import { dayName, historyRows, hostOf, onScreen, type HistoryRow } from './history-list'
   import { siteMark } from './pages.svelte'

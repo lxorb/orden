@@ -1,11 +1,6 @@
 <script lang="ts">
-  import { Facts } from '../../../ui-kit/src/api'
-  import { closeOnBack } from '../../../ui-kit/src/api'
-  import { dropOver } from '../../../drag-paths'
-  import { prompt } from '../../../ui-kit/src/api'
-  import { arrive } from '../../../ui-kit/src/api'
+  import { dropOver, Facts, closeOnBack, prompt, arrive, viewport } from '../../../ui-kit/src/api'
   import { invoke } from '../../../platform/src/api'
-  import { viewport } from '../../../ui-kit/src/api'
   import HostDetail from './HostDetail.svelte'
   import HostMark from './HostMark.svelte'
   import { destinationOf, moved } from './hosts'

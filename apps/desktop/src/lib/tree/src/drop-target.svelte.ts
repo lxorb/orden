@@ -1,5 +1,5 @@
-import { folderFor } from './tree/src/api'
-import { folderOf, isMarkdownPath } from './platform/src/api'
+import { folderFor } from './folder-notes'
+import { folderOf, isMarkdownPath } from '../../platform/src/api'
 
 export function targetFor(path: string, isFolder: boolean): string {
   if (isFolder) return path

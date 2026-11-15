@@ -1,5 +1,15 @@
 <script lang="ts">
-  import { Facts } from '../../ui-kit/src/api'
+  import {
+    OUTLINE_MARK,
+    GRAPH_MARK,
+    SEARCH_MARK,
+    Facts,
+    recentFirst,
+    overlays,
+    UnsavedDot,
+    viewport,
+    scrollbar,
+  } from '../../ui-kit/src/api'
   import { tick, untrack } from 'svelte'
   import { typeAhead } from './type-ahead'
   import { cubicOut } from 'svelte/easing'
@@ -10,13 +20,10 @@
   import { paletteCommands } from '../../commands/src/api'
   import { fileMark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
-  import { recentFirst } from '../../ui-kit/src/api'
   import Icon from '../../Icon.svelte'
   import { links } from '../../link-index/src/api'
   import { middleOpens } from '../../new-tab'
   import { AGENTS_NAME, shownName } from '../../platform/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { OUTLINE_MARK, GRAPH_MARK, SEARCH_MARK } from '../../panel-marks'
   import { browse, RECENT } from './browse'
   import { candidates, headingCandidates, resting, rowKey, type World } from './kinds'
   import { lineAsked, modeOf } from './mode'
@@ -25,7 +32,6 @@
   import { pieces } from '../../matching/src/api'
   import { frecency, MOST_PLACES, ranked } from '../../matching/src/api'
   import type { OpenTab, Row } from './rows'
-  import { UnsavedDot } from '../../ui-kit/src/api'
   import { isDraft, scanHeadings } from '../../documents/src/api'
   import { lookOf } from './trying'
   import { search } from '../../search.svelte'
@@ -38,12 +44,10 @@
   import { joinPath } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { isDesktop } from '../../platform/src/api'
-  import { viewport } from '../../ui-kit/src/api'
   import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
   import { notices, workspace } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
-  import { scrollbar } from '../../ui-kit/src/api'
   import { wholeRows } from './whole-rows'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */

@@ -1,5 +1,5 @@
 import { account } from '../../../accounts/src/api'
-import { DIVIDER, menu } from '../../../menu.svelte'
+import { DIVIDER, menu } from '../../../ui-kit/src/api'
 import { pass, type PassUi } from '../../../pass-sync/src/api'
 
 export function showPassAccount(event: MouseEvent, ui: PassUi): void {

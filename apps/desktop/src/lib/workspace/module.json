@@ -43,11 +43,9 @@
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/list-landing.svelte.ts",
-    "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/plugin.ts",

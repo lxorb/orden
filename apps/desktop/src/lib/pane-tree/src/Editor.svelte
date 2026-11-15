@@ -26,11 +26,14 @@
   import { keptCoverOf, setCoverPosition } from '../../kept-cover'
   import { mark } from '../../platform/src/api'
   import { modes } from '../../modes/src/api'
-  import { type OverlayScrollbar, overlayScrollbar } from '../../ui-kit/src/api'
+  import {
+    carriedIntoNotes,
+    type OverlayScrollbar,
+    overlayScrollbar,
+    viewport,
+  } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { pastesMarkup, trustsHtmlIn } from '../../sharing/src/api'
-  import { viewport } from '../../ui-kit/src/api'
-  import { carriedIntoNotes } from '../../drag-paths'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'
 

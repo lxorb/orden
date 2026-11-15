@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { carriedNothing, carriedRows, carry } from './drag-paths'
+import { carriedNothing, carriedRows, carry } from './ui-kit/src/api'
 import { linkedFiles } from './tree/src/api'
 
 function note(path: string): Entry {

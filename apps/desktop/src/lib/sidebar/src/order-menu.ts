@@ -1,4 +1,4 @@
-import { DIVIDER, type MenuEntry } from '../../menu.svelte'
+import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { SORT_MODES, type SortMode } from '../../tree/src/api'
 import { workspace } from '../../workspace/src/api'
 

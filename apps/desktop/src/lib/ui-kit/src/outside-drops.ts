@@ -1,4 +1,4 @@
-import { fileBytes, mimeOfPath, UNKNOWN_TYPE, nameOf } from './platform/src/api'
+import { fileBytes, mimeOfPath, UNKNOWN_TYPE, nameOf } from '../../platform/src/api'
 import { carriedNothing, carryOutside } from './drag-paths'
 
 export interface Said {

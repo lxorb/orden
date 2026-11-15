@@ -1,4 +1,4 @@
-import { dropTarget, targetFor } from '../../drop-target.svelte'
+import { dropTarget, targetFor } from '../../tree/src/api'
 import { dur } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'

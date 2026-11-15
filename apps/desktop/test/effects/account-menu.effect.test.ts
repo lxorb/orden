@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 import { account } from '../../src/lib/accounts/src/account.svelte'
-import { menu, type MenuItem } from '../../src/lib/menu.svelte'
+import { menu, type MenuItem } from '../../src/lib/ui-kit/src/api'
 import { providePort } from '@orden/contracts'
 import { settings } from '../../src/lib/settings/src/api'
 import SidebarFoot from '../../src/lib/sidebar/src/SidebarFoot.svelte'

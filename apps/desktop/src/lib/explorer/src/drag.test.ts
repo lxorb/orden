@@ -15,7 +15,7 @@ vi.mock('../../workspace/src/api', () => ({
 }))
 
 const { dragged, explorerDragged, isExplorerDrag, isTreeDrag, landing } =
-  await import('../../drag-paths')
+  await import('../../ui-kit/src/api')
 const { dropHow, dropInto, startDrag } = await import('./drag')
 
 function transfer() {

@@ -50,6 +50,7 @@ describe('the module stands on its own', () => {
       'platform',
       'sync-client',
       'sync-mirror',
+      'ui-kit',
     ])
   })
 })

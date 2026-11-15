@@ -1,7 +1,7 @@
 import { protection } from '../../protect/src/api'
 import { isWebTarget } from '@orden/markdown/links'
 import { readWebFile } from '@orden/scan/shortcut'
-import { isExplorerDrag, isTreeDrag } from '../../drag-paths'
+import { isExplorerDrag, isTreeDrag } from '../../ui-kit/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { diskPathOf } from '../../web-backend/src/api'
 import { workspace } from '../../workspace/src/api'

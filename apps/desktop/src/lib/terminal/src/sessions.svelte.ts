@@ -6,10 +6,6 @@ import { SerializeAddon } from '@xterm/addon-serialize'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { type ITheme, Terminal } from '@xterm/xterm'
 import { chrome } from '../../theme/src/api'
-import { busy, showCombination } from '../../ui-kit/src/api'
-import '@xterm/xterm/css/xterm.css'
-import { untrack } from 'svelte'
-import { copyText } from '../../ui-controls/src/api'
 import {
   dragged,
   isExplorerDrag,
@@ -17,10 +13,17 @@ import {
   isTreeDrag,
   listenOver,
   outsideRows,
-} from '../../drag-paths'
+  busy,
+  showCombination,
+  DIVIDER,
+  menu,
+  type MenuEntry,
+} from '../../ui-kit/src/api'
+import '@xterm/xterm/css/xterm.css'
+import { untrack } from 'svelte'
+import { copyText } from '../../ui-controls/src/api'
 import { droppedPaths, identifier, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
-import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
 import { tabAsk } from '../../new-tab'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'

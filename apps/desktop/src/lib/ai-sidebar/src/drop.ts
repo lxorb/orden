@@ -1,4 +1,4 @@
-import { carriedRows, draggedTab } from '../../drag-paths'
+import { carriedRows, draggedTab } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 import { chat } from './chat-parts'
 import { type Mention, mentionOf, sameMention } from './chat-parts'

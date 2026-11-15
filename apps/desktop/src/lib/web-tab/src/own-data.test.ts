@@ -16,10 +16,9 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-vi.mock('../../menu.svelte', () => ({
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   menu: { replace: (next: typeof rows) => (rows = next) },
-}))
-vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (said: { title: string }) => {
       asked.push(said.title)

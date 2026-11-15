@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { shownName } from './platform/src/api'
   import { ARCHIVE_MARK } from './archive/src/api'
-  import { SEARCH_MARK } from './panel-marks'
+  import { SEARCH_MARK } from './ui-kit/src/api'
   import { roving } from './roving'
   import { howFor, middleOpens, tabAsk } from './new-tab'
   import { search } from './search.svelte'

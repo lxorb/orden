@@ -19,7 +19,16 @@
   } from '@orden/editor'
   import { untrack } from 'svelte'
   import Door from '../../Door.svelte'
-  import { whileHere } from '../../ui-kit/src/api'
+  import {
+    dragged,
+    dropOver,
+    isTreeDrag,
+    whileHere,
+    message,
+    busy,
+    viewport,
+    paneCorners,
+  } from '../../ui-kit/src/api'
   import { alone } from '../../alone.svelte'
   import type { Tab } from '../../documents/src/api'
   import {
@@ -34,11 +43,8 @@
   } from '../../panes/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
-  import { dragged, dropOver, isTreeDrag } from '../../drag-paths'
   import Editor from './Editor.svelte'
-  import { message } from '../../ui-kit/src/api'
   import { keptAway } from '../../away/src/api'
-  import { busy } from '../../ui-kit/src/api'
 
   import { chrome } from '../../theme/src/api'
   import { without } from '../../graph/src/api'
@@ -80,11 +86,9 @@
   import { followHref, followNote } from '../../open-link'
   import type { OpenHow } from '../../new-tab'
   import { usage } from '../../usage.svelte'
-  import { viewport } from '../../ui-kit/src/api'
   import { views } from '../../views.svelte'
   import { workspace } from '../../workspace/src/api'
   import { keepsScroll, scrollKeyOf } from '../../kept-scroll'
-  import { paneCorners } from '../../ui-kit/src/api'
 
   const { pane }: { pane: Pane } = $props()
 

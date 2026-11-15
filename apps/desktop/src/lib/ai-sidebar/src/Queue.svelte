@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { dropOver } from '../../drag-paths'
+  import { dropOver, Cross } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
-  import { Cross } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { chat } from './chat-parts'
 

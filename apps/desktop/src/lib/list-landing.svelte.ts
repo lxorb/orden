@@ -10,7 +10,7 @@ import {
   isLinkDrop,
   isTreeDrag,
   landing,
-} from './drag-paths'
+} from './ui-kit/src/api'
 import { shortcuts } from './shortcuts/src/api'
 import { within } from './platform/src/api'
 import { workspace } from './workspace/src/api'

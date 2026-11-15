@@ -7,7 +7,7 @@ import {
   reverseFormula,
 } from '@orden/bases'
 import { region } from '../../platform/src/api'
-import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+import { DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
 import { writeEach } from './act'
 import {
   bare,

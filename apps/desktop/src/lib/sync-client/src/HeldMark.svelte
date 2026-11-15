@@ -8,7 +8,7 @@
 </script>
 
 <script lang="ts">
-  import SharedMark from '../../SharedMark.svelte'
+  import { SharedMark } from '../../ui-kit/src/api'
   import { asking } from './asking.svelte'
 
   const { path }: { path: string | null } = $props()

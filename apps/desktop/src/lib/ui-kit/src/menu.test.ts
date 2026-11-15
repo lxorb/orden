@@ -7,12 +7,6 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-vi.mock('./sharing/src/api', () => ({
-  canShareItem: () => false,
-  canWriteAt: () => true,
-  shareThisFile: () => undefined,
-}))
-
 const { menu } = await import('./menu.svelte')
 
 function press(x = 10, y = 20): MouseEvent {
