@@ -196,6 +196,19 @@ describe('a date written with its offset', () => {
   })
 })
 
+describe('a day no calendar has', () => {
+  test('is words, not a date', () => {
+    expect(
+      noteValues('---\ndue: 2026-02-30\nleft: 2026-13-01T10:00\nleap: 2028-02-29\n---\n'),
+    ).toEqual({
+      due: '2026-02-30',
+      left: '2026-13-01T10:00',
+      leap: { kind: 'date', iso: '2028-02-29' },
+    })
+    expect(scalarValue('2027-02-29')).toBe('2027-02-29')
+  })
+})
+
 describe('a task hash', () => {
   test('is stable and short, and differs with the words', () => {
     expect(taskHash('Call the bank')).toBe(taskHash('Call the bank'))
