@@ -337,6 +337,21 @@ impl<J: Send + 'static> Queues<J> {
     }
 }
 
+fn placed_by(
+    cached: Option<Place>,
+    now: impl Fn(&Place) -> Option<Place>,
+    forget: impl FnOnce(),
+    learnt: impl FnOnce() -> Option<Place>,
+) -> Option<Place> {
+    if let Some(was) = cached {
+        if let Some(place) = now(&was) {
+            return Some(place);
+        }
+        forget();
+    }
+    now(&learnt()?)
+}
+
 fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
     frames_in(tree, main)
         .into_iter()
@@ -422,23 +437,28 @@ mod engine {
         let Some(heard) = super::message_read(&job.payload) else {
             return;
         };
-        let Some(place) = context_placed(&job.view, &job.tab, &job.session, job.context) else {
-            crate::trace::mark("pass: a message from a frame the engine did not place");
-            return;
-        };
-        let Some(place) = place_now(&job.view, &job.tab, &job.session, job.context, &place) else {
+        let (view, tab, session, context) = (&job.view, &job.tab, &job.session, job.context);
+        let key = (tab.clone(), session.clone(), context);
+        let cached = known_frames().contexts.get(&key).cloned();
+        let place = super::placed_by(
+            cached,
+            |was| place_now(view, tab, session, context, was),
+            || {
+                known_frames().contexts.remove(&key);
+            },
+            || {
+                frames_learned(view, tab, session);
+                let learnt = known_frames().contexts.get(&key).cloned();
+                if learnt.is_none() {
+                    crate::trace::mark("pass: a message from a frame the engine did not place");
+                }
+                learnt
+            },
+        );
+        let Some(place) = place else {
             return;
         };
         super::said_emitted(&job.app, &job.window, &job.tab, &place, &heard.said);
-    }
-
-    fn context_placed(view: &Webview, tab: &str, session: &str, context: i64) -> Option<Place> {
-        let key = (tab.to_string(), session.to_string(), context);
-        if let Some(place) = known_frames().contexts.get(&key) {
-            return Some(place.clone());
-        }
-        frames_learned(view, tab, session);
-        known_frames().contexts.get(&key).cloned()
     }
 
     fn place_now(
@@ -632,9 +652,46 @@ mod tests {
     use std::time::Duration;
 
     use super::{
-        event_told, fill_asked, fill_checked, frames_in, message_read, place_in, script, secure,
-        Place, Queues, Said, MOST_FRAMES,
+        event_told, fill_asked, fill_checked, frames_in, message_read, place_in, placed_by, script,
+        secure, Place, Queues, Said, MOST_FRAMES,
     };
+
+    #[test]
+    fn a_frame_known_from_a_document_gone_is_placed_again() {
+        let elsewhere = Place {
+            origin: "https://b.example".into(),
+            url: "https://b.example/login".into(),
+            ..place()
+        };
+        let forgotten = std::cell::Cell::new(false);
+        let now = |was: &Place| (was.origin == elsewhere.origin).then(|| elsewhere.clone());
+
+        let placed = placed_by(
+            Some(place()),
+            now,
+            || forgotten.set(true),
+            || Some(elsewhere.clone()),
+        );
+
+        assert_eq!(placed, Some(elsewhere.clone()));
+        assert!(forgotten.get());
+    }
+
+    #[test]
+    fn a_frame_still_where_it_was_is_not_asked_about_again() {
+        let placed = placed_by(
+            Some(place()),
+            |was| Some(was.clone()),
+            || panic!("forgot a frame that is still there"),
+            || panic!("learnt the frames again"),
+        );
+        assert_eq!(placed, Some(place()));
+    }
+
+    #[test]
+    fn a_frame_the_engine_does_not_place_says_nothing() {
+        assert_eq!(placed_by(None, |was| Some(was.clone()), || (), || None), None);
+    }
 
     fn place() -> Place {
         Place {
