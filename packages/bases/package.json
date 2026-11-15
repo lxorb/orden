@@ -9,6 +9,7 @@
     "./agent": "./src/agent/index.ts",
     "./answer": "./src/answer.ts",
     "./language": "./src/language/index.ts",
+    "./links": "./src/link-context.ts",
     "./occurrence": "./src/occurrence.ts",
     "./rows": "./src/note-rows.ts",
     "./scan": "./src/scan.ts",

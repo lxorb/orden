@@ -1,4 +1,4 @@
-import { answer, builtinView } from '@orden/bases'
+import { answer, builtinView, cellValue, readBase, type Row } from '@orden/bases'
 import { noteRowsOf } from '@orden/scan/rows'
 import { describe, expect, test, vi } from 'vitest'
 import { linearly } from '../../../../../../scripts/growth'
@@ -97,5 +97,83 @@ describe('a link in a base', () => {
   test('counts as a backlink of the note it reaches', () => {
     expect(context.backlinks?.(note('Work/Plan.md'))).toEqual(['Work/Journal.md', 'Other.md'])
     expect(context.backlinks?.(note('Plan.md'))).toEqual(['Work/Notes.md'])
+  })
+})
+
+describe('the links a base follows', () => {
+  const build = (files: Record<string, string>) => {
+    const rows = Object.entries(files).flatMap(([path, text]) => noteRowsOf('Mine', path, text))
+    const note = (path: string) => {
+      const found = rows.find((one) => one.kind === 'note' && one.path === path)
+      if (!found) throw new Error(`no row for ${path}`)
+      return found
+    }
+    return { note, context: contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' }) }
+  }
+  const formula = (source: string) =>
+    readBase(`formulas:\n  it: ${source}\nviews:\n  - type: table\n    name: T\n`)
+
+  test('reach a backlink’s own note, not a namesake beside the row', () => {
+    const { note, context } = build({
+      'Projects/Alpha.md': '# Alpha\n',
+      'Projects/Kickoff.md': '# unrelated\n',
+      'Kickoff.md': '---\nproject: "[[Alpha]]"\n---\n',
+    })
+    const alpha = note('Projects/Alpha.md')
+    expect(
+      cellValue(
+        formula('file.backlinks.map(value.asFile().file.path)'),
+        'formula.it',
+        alpha,
+        context,
+      ),
+    ).toEqual(['Kickoff.md'])
+    expect(
+      cellValue(
+        formula('file.backlinks.filter(list(value.asFile().properties.project).contains(file))'),
+        'formula.it',
+        alpha,
+        context,
+      ),
+    ).toHaveLength(1)
+  })
+
+  test('reach a note by its alias, as the editor does', () => {
+    const { note, context } = build({
+      'Plan.md': '---\naliases: [Roadmap]\n---\n',
+      'A.md': 'See [[Roadmap]]\n',
+    })
+    expect(
+      cellValue(formula('file.hasLink(link("Plan"))'), 'formula.it', note('A.md'), context),
+    ).toBe(true)
+    expect(context.backlinks?.(note('Plan.md'))).toEqual(['A.md'])
+  })
+
+  test('count a note that links twice as one backlink', () => {
+    const { note, context } = build({
+      'Plan.md': '',
+      'A.md': 'See [[Plan]], then [[Plan#Goals]]\n',
+    })
+    expect(context.backlinks?.(note('Plan.md'))).toEqual(['A.md'])
+  })
+
+  test('are gathered in time that grows with the notes, however many share a name', () => {
+    const made = new Map<number, Row[]>()
+    const rowsFor = (count: number) => {
+      const known = made.get(count)
+      if (known) return known
+      const rows = Array.from({ length: count }, (_, at) =>
+        noteRowsOf('Mine', `Project ${at}/Index.md`, 'See [[Index]]\n'),
+      ).flat()
+      made.set(count, rows)
+      return rows
+    }
+    const linking = linearly((count) => {
+      const rows = rowsFor(count)
+      const first = rows[0]
+      if (!first) throw new Error('no rows')
+      return contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' }).backlinks?.(first)
+    }, 2000)
+    expect(linking).toEqual(['Project 0/Index.md'])
   })
 })
