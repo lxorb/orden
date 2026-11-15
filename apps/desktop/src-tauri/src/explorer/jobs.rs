@@ -156,7 +156,12 @@ pub async fn explorer_clashes(
 }
 
 fn same(one: &Path, other: &Path) -> bool {
-    (inside(one, other) && inside(other, one)) || crate::notes::same_entry(one, other)
+    (inside(one, other) && inside(other, one))
+        || crate::notes::same_entry(one, other)
+        || matches!(
+            (fs::canonicalize(one), fs::canonicalize(other)),
+            (Ok(one), Ok(other)) if one == other
+        )
 }
 
 #[tauri::command]
@@ -780,6 +785,15 @@ mod tests {
         let plan = planned(&from, &link, How::Copy, Clash::Replace, &mut out);
         assert_eq!(plan, [(real.join("a.txt"), link.join("a 2.txt"))]);
         assert!(planned(&from, &link, How::Move, Clash::Replace, &mut out).is_empty());
+        assert!(out.failed.is_empty());
+        let docs = real.join("docs");
+        fs::create_dir(&docs).expect("docs");
+        let elsewhere = dir.path().join("elsewhere");
+        fs::create_dir(&elsewhere).expect("elsewhere");
+        std::os::unix::fs::symlink(&docs, elsewhere.join("docs")).expect("a link to docs");
+        let linked = vec![elsewhere.join("docs")];
+        let plan = planned(&linked, &real, How::Copy, Clash::Replace, &mut out);
+        assert_eq!(plan, [(elsewhere.join("docs"), real.join("docs 2"))]);
         assert!(out.failed.is_empty());
     }
 
