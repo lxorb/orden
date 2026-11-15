@@ -55,7 +55,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
     }
   }
   const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
-  const { fullscreen } = await import('../../src/lib/platform/src/api')
+  const { fullscreen } = await import('../../src/lib/ui-kit/src/api')
   const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')
   const { Titlebar } = await import('../../src/lib/titlebar/src/api')
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
