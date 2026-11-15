@@ -115,6 +115,15 @@ interface OtherSpace {
   files: readonly string[]
 }
 
+function asWritten<Link extends { kind: LinkKind; target: string }>(
+  source: string | null,
+  link: Link,
+): Link {
+  if (source === null || link.target.startsWith('/')) return link
+  if (!isCanvasTarget(source) && !isPagesTarget(source)) return link
+  return { ...link, target: `/${link.target}` }
+}
+
 function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }): string | null {
   if (!link.target) return null
   if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
@@ -949,7 +958,7 @@ class Links {
     from: string,
     link: { kind: LinkKind; target: string },
   ): string | null {
-    return resolvedIn(this.otherIndex(root, from), link)
+    return resolvedIn(this.otherIndex(root, from), asWritten(from, link))
   }
 
   examined = 0
@@ -958,9 +967,10 @@ class Links {
 
   private resolveFrom(
     source: string | null,
-    link: { kind: LinkKind; target: string },
+    written: { kind: LinkKind; target: string },
   ): string | null {
-    if (!link.target) return null
+    if (!written.target) return null
+    const link = asWritten(source, written)
 
     const where = source === null ? '\0nowhere' : folderOf(source)
     const key = `${where}\0${link.kind}\0${link.target}`

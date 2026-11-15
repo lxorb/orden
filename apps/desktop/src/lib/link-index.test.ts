@@ -801,6 +801,27 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.backlinks(at('Other.md'))).toEqual([])
   })
 
+  test('a card read before cards named their file from the top still does', async () => {
+    const { scanCanvas } = await import('@orden/scan/canvas')
+    notes = { 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }
+    const board = scanCanvas('x/Board.canvas', '{"nodes":[],"edges":[]}')
+    const kept = { ...board, links: [{ ...scanNote('n.md', '[[Plan.md]]').links[0], line: 0 }] }
+    holding.set(ROOT, [
+      {
+        rows: {
+          notes: [scanNote('Plan.md', '# Plan'), scanNote('x/Plan.md', '# Other'), kept],
+          files: [],
+        },
+        gate: Promise.resolve(),
+        taken: () => undefined,
+      },
+    ])
+    await links.build(ROOT)
+
+    expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['x/Board.canvas'])
+    expect(links.backlinks(at('x/Plan.md'))).toEqual([])
+  })
+
   test('a card on a canvas in a folder names its file from the top of the space', async () => {
     const card = { x: 0, y: 0, width: 10, height: 10 }
     const board = JSON.stringify({

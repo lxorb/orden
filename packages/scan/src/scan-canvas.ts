@@ -59,6 +59,8 @@ export function markedPlane(path: string, marks: PlaneMarks): ScannedNote {
     address: null,
     cover: null,
     bare: false,
-    links: marks.links,
+    links: marks.links.map((link) =>
+      link.target.startsWith('/') ? link : { ...link, target: `/${link.target}` },
+    ),
   }
 }
