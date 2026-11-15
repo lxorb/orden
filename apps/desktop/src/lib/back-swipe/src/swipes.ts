@@ -17,6 +17,10 @@ export const PLAYS = 210
 
 export const HOLD = 4_000
 
+export const MOMENT = 500
+
+export const WATCH = 250
+
 const KEPT: Record<Side, boolean> = { left: true, right: true }
 
 const NEITHER: Record<Side, boolean> = { left: false, right: false }
@@ -49,6 +53,8 @@ interface Live {
 let live: Live | null = null
 let quiet: ReturnType<typeof setTimeout> | undefined
 let clearing: ReturnType<typeof setTimeout> | undefined
+let watching: ReturnType<typeof setInterval> | undefined
+let outBy = 0
 let settling = 0
 
 const pad = { known: false, down: false }
@@ -101,11 +107,47 @@ function draw(one: Live) {
 
 function played() {
   clearTimeout(clearing)
+  outBy = performance.now() + dur(PLAYS)
   clearing = setTimeout(gone, dur(PLAYS))
+  watched()
+}
+
+function kept() {
+  clearTimeout(clearing)
+  clearing = undefined
+}
+
+function watched() {
+  watching ??= setInterval(watch, WATCH)
+}
+
+function unwatched() {
+  clearInterval(watching)
+  watching = undefined
+}
+
+function onShow(tab: string | null, pane: string | null): boolean {
+  return tab !== null && pane !== null && workspace.showing(pane)?.id === tab
+}
+
+function watch() {
+  const now = performance.now()
+  const one = live
+  if (one) {
+    const still = (one.told ? HOLD : QUIET) + MOMENT
+    if (now - one.heardAt > still || !onShow(one.tab.id, one.tab.paneId)) end('dropped')
+  }
+  if (swiping.tab === null) {
+    if (!live) unwatched()
+    return
+  }
+  const tracking = live?.shown === true && !live.stepped
+  if (!onShow(swiping.tab, swiping.pane) || (!tracking && now >= outBy + MOMENT)) gone()
 }
 
 function gone() {
-  clearTimeout(clearing)
+  kept()
+  if (!live) unwatched()
   swiping.tab = null
   swiping.pane = null
   swiping.room = null
@@ -153,6 +195,7 @@ export function heard(step: Heard): void {
     scrolls: step.scrolls,
     room: null,
   }
+  watched()
   const one = live
   one.at = step.at
   one.heardAt = now
@@ -173,7 +216,7 @@ export function heard(step: Heard): void {
   const shown = one.swipe.turn(turn)
 
   if (shown.phase === 'tracking' || (shown.phase === 'gathering' && shown.travel > 0)) {
-    clearTimeout(clearing)
+    kept()
     one.shown = true
     draw(one)
   } else if (shown.phase === 'gathering' && one.shown) {
@@ -193,7 +236,12 @@ function end(how: 'lifted' | 'dropped', at?: number): void {
   clearTimeout(quiet)
   const one = live
   live = null
-  if (!one || one.swallowed) return
+  if (one && !one.swallowed) settle(one, how, at)
+  if (swiping.tab === null) unwatched()
+  else if (clearing === undefined) played()
+}
+
+function settle(one: Live, how: 'lifted' | 'dropped', at?: number) {
   if (how === 'lifted') {
     const when = at ?? one.at + (performance.now() - one.heardAt)
     const shown = one.swipe.lift(when)
@@ -381,7 +429,14 @@ export function pageSaid(said: Said): void {
 
 function away() {
   if (document.visibilityState === 'hidden') end('dropped')
+  else watch()
 }
+
+function blurred() {
+  end('dropped')
+}
+
+const STIRS = ['pointerdown', 'pointermove', 'keydown', 'focus'] as const
 
 function unseen() {
   end('dropped')
@@ -396,6 +451,8 @@ export function listen(): () => void {
   window.addEventListener('wheel', wheeled, { passive: true })
   window.addEventListener('scroll', scrolled, { capture: true, passive: true })
   document.addEventListener('visibilitychange', away)
+  window.addEventListener('blur', blurred)
+  for (const stir of STIRS) window.addEventListener(stir, watch, { capture: true, passive: true })
   const touching = !isMobile
   if (touching) {
     window.addEventListener('touchstart', touched, { capture: true, passive: true })
@@ -431,6 +488,8 @@ export function listen(): () => void {
     window.removeEventListener('wheel', wheeled)
     window.removeEventListener('scroll', scrolled, { capture: true })
     document.removeEventListener('visibilitychange', away)
+    window.removeEventListener('blur', blurred)
+    for (const stir of STIRS) window.removeEventListener(stir, watch, { capture: true })
     slid.forget()
     if (touching) {
       window.removeEventListener('touchstart', touched, { capture: true })
@@ -440,6 +499,7 @@ export function listen(): () => void {
     }
     end('dropped')
     gone()
+    unwatched()
     settling = 0
     pad.known = false
     pad.down = false
