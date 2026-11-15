@@ -1038,7 +1038,7 @@ function keepEdit(editor: EditorView, from: number, source: string, text: string
   editor.dispatch({ changes: { from, to: from + source.length, insert: text } })
 }
 
-export const PASTE_TEXT = 'orden:paste-text'
+const PASTE_TEXT = 'orden:paste-text'
 
 export function editableCellAt(view: EditorView, target: EventTarget | null): HTMLElement | null {
   if (!(target instanceof Element)) return null
