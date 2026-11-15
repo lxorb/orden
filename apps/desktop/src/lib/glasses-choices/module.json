@@ -1,10 +1,5 @@
 {
   "name": "glasses-choices",
   "layer": "shell",
-  "dependsOn": [
-    "contracts",
-    "accounts",
-    "glasses",
-    "modes"
-  ]
+  "dependsOn": ["contracts", "accounts", "glasses", "modes"]
 }

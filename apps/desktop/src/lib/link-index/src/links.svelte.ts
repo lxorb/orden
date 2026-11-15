@@ -27,7 +27,29 @@ import {
 } from '@orden/markdown/links'
 import { buildGraph, type NoteGraph } from '../../graph/src/api'
 import { type Placed, retargetLinks } from './link-rewrite'
-import { AGENTS_NAME, shownName, folderOf, insideSpace, isHiddenPath, isMarkdownPath, nameOf, noteName, relativePath, samePath, within, invoke, isVault, log, breathe, coveredBy, keepVersion, oneWriteAt, readText, writeInTurn, mark } from '../../platform/src/api'
+import {
+  AGENTS_NAME,
+  shownName,
+  folderOf,
+  insideSpace,
+  isHiddenPath,
+  isMarkdownPath,
+  nameOf,
+  noteName,
+  relativePath,
+  samePath,
+  within,
+  invoke,
+  isVault,
+  log,
+  breathe,
+  coveredBy,
+  keepVersion,
+  oneWriteAt,
+  readText,
+  writeInTurn,
+  mark,
+} from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'

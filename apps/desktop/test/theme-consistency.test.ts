@@ -185,7 +185,10 @@ describe('the paper a note is written on', () => {
 
   test('is see-through under a pane alone', () => {
     const offenders = components
-      .filter((one) => one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
+      .filter(
+        (one) =>
+          one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text),
+      )
       .map((one) => one.name)
 
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])

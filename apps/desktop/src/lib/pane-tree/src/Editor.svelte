@@ -99,7 +99,8 @@
       ...(opennote
         ? { openNote: (jump: NoteJump, press?: LinkPress) => opennote(jump, press, one.path) }
         : {}),
-      openTag: (tag: string) => void import('../../tag-search').then(({ searchTag }) => searchTag(tag)),
+      openTag: (tag: string) =>
+        void import('../../tag-search').then(({ searchTag }) => searchTag(tag)),
       ...(nameblock
         ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) }
         : {}),
