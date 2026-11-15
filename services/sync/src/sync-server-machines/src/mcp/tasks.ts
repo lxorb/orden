@@ -19,7 +19,7 @@ import {
   queryBase,
   readBase,
   rowPlace,
-  withProperties,
+  rowWords,
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
 import {
@@ -555,10 +555,7 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
         env,
         space,
         path,
-        withProperties(filledTemplate(template, title, clock), {
-          ...where.properties,
-          ...(properties as Args),
-        }),
+        rowWords(filledTemplate(template, title, clock), where.properties, properties as Args),
         null,
       )
     } catch (error) {

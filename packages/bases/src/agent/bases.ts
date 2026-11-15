@@ -1,4 +1,4 @@
-import { isPropertyName } from '@orden/markdown/front-matter'
+import { frontMatterList, isPropertyName } from '@orden/markdown/front-matter'
 import { type ListItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { readFilter } from '../filter'
 import { fillTemplate, withoutTemplateKeys } from '../templates'
@@ -14,6 +14,24 @@ function keyOf(name: string): string | null {
   const key = name.startsWith('note.') ? name.slice(5) : name
   if (/^(?:file|formula)\./.test(key) || !isPropertyName(key)) return null
   return key
+}
+
+export function rowWords(text: string, ...sets: Args[]): string {
+  const merged: Args = {}
+  for (const one of sets) Object.assign(merged, one)
+  if (sets.some((one) => 'tags' in one)) {
+    const tags = [frontMatterList(text, 'tags'), ...sets.map((one) => tagsIn(one.tags))]
+      .flat()
+      .map((tag) => tag.replace(/^#/, '').trim())
+      .filter(Boolean)
+    merged.tags = [...new Set(tags)]
+  }
+  return withProperties(text, merged)
+}
+
+function tagsIn(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String)
+  return typeof value === 'string' ? [value] : []
 }
 
 export function withProperties(text: string, properties: Args): string {

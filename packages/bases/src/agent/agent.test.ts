@@ -16,6 +16,7 @@ import {
   queryBase,
   readAt,
   rowPlace,
+  rowWords,
   taskChange,
   taskOut,
   withProperties,
@@ -432,5 +433,37 @@ describe('a base edited where Orden could not read it', () => {
     const written = writeBase(edited, SOURCE)
     expect(written).toContain('filters: c == 1\n')
     expect(written).not.toContain('- a\n')
+  })
+})
+
+describe('a new row of a base', () => {
+  test('keeps the tags its template has, beside the ones the base needs and the ones asked for', () => {
+    const base = readBase(
+      'filters: file.hasTag("reading")\nviews:\n  - type: table\n    name: All\n',
+    )
+    const template = filledTemplate(
+      '---\ntags: [book, fiction]\nstatus: new\n---\n# {{title}}\n',
+      'Dune',
+      {
+        today: '2026-11-15',
+        now: '2026-11-15T10:00:00',
+      },
+    )
+    const text = rowWords(template, rowPlace(base).properties, { tags: ['#sci-fi'] })
+    expect(text).toMatch(
+      /tags: \[book, fiction, reading, sci-fi\]|book[\s\S]*fiction[\s\S]*reading[\s\S]*sci-fi/,
+    )
+    expect(text).toContain('status: new')
+  })
+
+  test('is answered by its own path and space, whatever its properties are called', () => {
+    const base = readBase('views:\n  - type: table\n    name: All\n')
+    const rows = rowsOfText(
+      'Home',
+      'Courses/Rust.md',
+      '---\npath: beginner\nspace: Mars\n---\nbody\n',
+    )
+    const out = queryBase(base, undefined, rows, clockOf(new Date(), 'UTC'))
+    expect(out.groups[0]?.rows[0]).toMatchObject({ path: 'Courses/Rust.md', space: 'Home' })
   })
 })

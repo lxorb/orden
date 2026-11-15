@@ -1,5 +1,5 @@
 import { type Base, nextId, rowsInBase, type Value } from '@orden/bases'
-import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
+import { noteName, plainValue, rowPlace, rowWords } from '@orden/bases/agent'
 import { joinPath, insideOnly, folderOf, insideSpace, within } from '../../platform/src/api'
 import { contextFor } from './context'
 import { nowHere, todayHere } from './days'
@@ -65,7 +65,7 @@ export async function addNote(
   const template = link ? templatePath(link, space) : null
   const words = template === null ? '' : await templateWords(template, name.replace(/.md$/i, ''))
   const path = joinPath(dir, name)
-  await writeFile(path, withProperties(words, props))
+  await writeFile(path, rowWords(words, place.properties, props))
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
   if (made.open !== false) await workspace.open(path)

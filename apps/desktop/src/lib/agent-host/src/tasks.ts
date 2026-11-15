@@ -9,6 +9,7 @@ import {
   queryBase as queried,
   readBase,
   rowPlace,
+  rowWords,
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
@@ -301,12 +302,10 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   try {
-    const words = withProperties(
+    const words = rowWords(
       filledTemplate(template, nameOf(path).replace(/\.md$/i, ''), clockOf(new Date())),
-      {
-        ...where.properties,
-        ...(properties as Record<string, unknown>),
-      },
+      where.properties,
+      properties as Record<string, unknown>,
     )
     return done(await made(place, path, words, null))
   } catch (error) {
