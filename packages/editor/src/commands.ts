@@ -184,6 +184,11 @@ function wordsOfLine(line: Line): Words {
   return { from: line.from + quote, text: line.text.slice(quote) }
 }
 
+function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
+  const set = state.changes(changes)
+  return state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' })
+}
+
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state).map(wordsOfLine)
@@ -195,7 +200,7 @@ export function setHeading(level: number): StateCommand {
       return { from: line.from, to: line.from + (item || headingOf(line.text).length), insert }
     })
 
-    dispatch(state.update({ changes, userEvent: 'input' }))
+    dispatch(withCaretAfter(state, changes))
     return true
   }
 }
@@ -217,7 +222,7 @@ export function shiftHeading(delta: number): StateCommand {
         }
       })
 
-    dispatch(state.update({ changes, userEvent: 'input' }))
+    dispatch(withCaretAfter(state, changes))
     return true
   }
 }
@@ -280,7 +285,7 @@ export const toggleQuote: StateCommand = ({ state, dispatch }) => {
     })
   })
 
-  dispatch(state.update({ changes, userEvent: 'input' }))
+  dispatch(withCaretAfter(state, changes))
   return true
 }
 
@@ -632,7 +637,7 @@ function toggleList(
       changes.push({ from: line.start, to, insert: prefixOf(line, shifts) + marker })
     }
 
-    dispatch(state.update({ changes, userEvent: 'input' }))
+    dispatch(withCaretAfter(state, changes))
     return true
   }
 }

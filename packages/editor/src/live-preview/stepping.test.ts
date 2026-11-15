@@ -1,4 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { codeFolding, foldEffect } from '@codemirror/language'
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
@@ -17,6 +18,7 @@ function state(doc: string, cursor = 0, readOnly = false) {
       extensions: [
         markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dragFreeze,
+        codeFolding(),
         blockDecorations,
         noReveal.of(readOnly),
       ],
@@ -74,6 +76,34 @@ describe('a press onto a block that draws itself', () => {
     expect(stepDown(view)).toBe(true)
     expect(drawn()).toBe(0)
     expect(edgeBeside(now, top, true)).toBeNull()
+  })
+
+  test('not into a block that sits in a folded section', () => {
+    const doc = 'intro\n\n## Data\n$$\nE = mc^2\n$$\n\nmore\n\n## Next\n\nend'
+    const heading = at(doc, '## Data') + '## Data'.length
+    const shut = parsed(
+      state(doc, heading).update({
+        effects: foldEffect.of({ from: heading, to: at(doc, '\n\n## Next') }),
+      }).state,
+    )
+    expect(edgeBeside(shut, heading, true)).toBeNull()
+  })
+
+  test('not while the caret can still go down a row of its own wrapped line', () => {
+    const doc = `${'word '.repeat(300)}\n$$\nE = mc^2\n$$\n\nbelow\n`
+    let now = state(doc, 0)
+    const view = {
+      get state() {
+        return now
+      },
+      dispatch: (spec: TransactionSpec) => {
+        now = now.update(spec).state
+      },
+      moveVertically: (range: { head: number }) => EditorSelection.cursor(range.head + 80),
+    } as unknown as EditorView
+
+    expect(stepDown(view)).toBe(false)
+    expect(now.selection.main.head).toBe(0)
   })
 
   test('nothing where the line it aims at is ordinary text', () => {

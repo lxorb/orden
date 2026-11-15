@@ -325,4 +325,9 @@ describe('paragraphs pasted into a task', () => {
     expect(at('- [ ] task |', 'one\n\ntwo')).toBe('- [ ] task one\n\n  two')
     expect(at('1. [ ] task |', 'one\n\ntwo')).toBe('1. [ ] task one\n\n   two')
   })
+
+  test('stay inside a quote that is inside an item', () => {
+    expect(at('- > quote in item|', 'one\n\ntwo')).toBe('- > quote in itemone\n  >\n  > two')
+    expect(at('> - > deep|', 'one\n\ntwo')).toBe('> - > deepone\n>   >\n>   > two')
+  })
 })

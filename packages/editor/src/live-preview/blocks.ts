@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import type { SyntaxNode } from '@lezer/common'
+import type { SyntaxNode, Tree } from '@lezer/common'
 import {
   type ChangeDesc,
   type EditorState,
@@ -31,11 +31,10 @@ import {
   BaseWidget,
   ChartWidget,
   DiagramWidget,
+  labelOf,
   MathWidget,
   QueryWidget,
-  recordEquationLabel,
   RENDERED_LANGUAGES,
-  resetEquationLabels,
 } from './render'
 import { headings, TocWidget } from './toc'
 import { WebEmbedWidget } from './web'
@@ -56,22 +55,40 @@ function mathIn(doc: Text, node: { from: number; to: number }): string {
   return doc.sliceString(first.to, last.from)
 }
 
-function collectEquationLabels(state: EditorState): Map<number, number> {
+interface Equations {
+  numbers: ReadonlyMap<number, number>
+  labels: ReadonlyMap<string, number>
+}
+
+const UNNUMBERED: Equations = { numbers: new Map(), labels: new Map() }
+
+const counted = new WeakMap<Text, { tree: Tree; equations: Equations }>()
+
+export function equationsOf(state: EditorState): Equations {
+  if (!state.facet(numberEquations)) return UNNUMBERED
+
+  const tree = syntaxTree(state)
+  const known = counted.get(state.doc)
+  if (known?.tree === tree) return known.equations
+
   const numbers = new Map<number, number>()
+  const labels = new Map<string, number>()
   let counter = 0
-  syntaxTree(state).iterate({
+  tree.iterate({
     enter: (node) => {
       if (node.name !== 'BlockMath') return node.type.is('Block')
 
       counter += 1
       numbers.set(node.from, counter)
-
-      recordEquationLabel(mathIn(state.doc, node), counter)
+      const label = labelOf(mathIn(state.doc, node))
+      if (label !== undefined) labels.set(label, counter)
       return false
     },
   })
 
-  return numbers
+  const equations = { numbers, labels }
+  counted.set(state.doc, { tree, equations })
+  return equations
 }
 
 interface Span {
@@ -96,7 +113,7 @@ function scan(
   state: EditorState,
   reveals: boolean,
   region: Span,
-  equationNumbers: ReadonlyMap<number, number>,
+  equations: Equations,
   out: Scanned,
 ) {
   const { ranges, spans } = out
@@ -134,7 +151,7 @@ function scan(
           const tex = mathIn(doc, node).trim()
           ranges.push(
             Decoration.replace({
-              widget: new MathWidget(tex, true, equationNumbers.get(node.from)),
+              widget: new MathWidget(tex, true, equations.numbers.get(node.from), equations.labels),
               block: true,
             }).range(span.from, span.to),
           )
@@ -267,11 +284,8 @@ function chosenFor(state: EditorState, reveals: boolean, spans: readonly Span[])
 }
 
 function buildBlocks(state: EditorState, reveals = true): Blocks {
-  resetEquationLabels()
-  const numbered = state.facet(numberEquations)
-  const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
   const out: Scanned = { ranges: [], spans: [], toc: false }
-  scan(state, reveals, { from: 0, to: state.doc.length }, equationNumbers, out)
+  scan(state, reveals, { from: 0, to: state.doc.length }, equationsOf(state), out)
 
   return {
     decorations: Decoration.set(out.ranges, true),
@@ -415,7 +429,7 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   if (!first || !last) return { ...value, spans, chosen }
 
   const out: Scanned = { ranges: [], spans: [], toc: value.toc }
-  for (const region of regions) scan(state, chosen, region, new Map(), out)
+  for (const region of regions) scan(state, chosen, region, UNNUMBERED, out)
 
   const kept = spans.filter((span) => !touched(regions, span.from, span.to))
   const all = [...kept, ...out.spans].sort((one, other) => one.from - other.from)

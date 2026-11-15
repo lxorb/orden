@@ -649,6 +649,26 @@ describe('links', () => {
     return out
   }
 
+  test('words in brackets with nothing defined for them keep their brackets', () => {
+    const doc = 'He said [sic] it, see [1] and [TODO].'
+    expect(concealed(doc)).toEqual([])
+    expect(linkMarks(doc)).toEqual([])
+  })
+
+  test('the marker of a callout is not a link', () => {
+    expect(linkMarks('> [!note] Title\n> body')).toEqual([])
+  })
+
+  test('a reference link shows its words and follows its definition', () => {
+    const doc = 'see [text][ref] and [ref] here\n\n[ref]: https://x.com'
+    expect(concealed(doc)).toEqual(['[', ']', '[ref]', '[', ']', ':'])
+    expect(linkMarks(doc)).toEqual([
+      { text: 'text', href: 'https://x.com' },
+      { text: 'ref', href: 'https://x.com' },
+      { text: 'https://x.com', href: 'https://x.com' },
+    ])
+  })
+
   test('the label of a link carries its target', () => {
     expect(linkMarks('see [docs](https://x.dev) now')).toEqual([
       { text: 'docs', href: 'https://x.dev' },

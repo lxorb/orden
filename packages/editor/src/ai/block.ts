@@ -18,14 +18,21 @@ export function mentionsNote(prompt: string): boolean {
 export function answerSpan(
   lines: readonly string[],
   closeLine: number,
+  lead = '',
 ): { from: number; to: number } | null {
+  const bare = (line: string | undefined) => {
+    const text = line ?? ''
+    if (lead && text.startsWith(lead)) return text.slice(lead.length).trim()
+    if (lead && text.startsWith(lead.trimEnd())) return text.slice(lead.trimEnd().length).trim()
+    return text.trim()
+  }
   let at = closeLine + 1
-  while (at < lines.length && lines[at]?.trim() === '') at++
+  while (at < lines.length && bare(lines[at]) === '') at++
 
-  if (!OPENS.has(lines[at]?.trim() ?? '')) return null
+  if (!OPENS.has(bare(lines[at]))) return null
   const opened = at
 
-  while (at < lines.length && !CLOSES.has(lines[at]?.trim() ?? '')) at++
+  while (at < lines.length && !CLOSES.has(bare(lines[at]))) at++
   const closed = Math.min(at, lines.length - 1)
 
   return {

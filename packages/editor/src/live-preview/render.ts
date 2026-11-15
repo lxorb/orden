@@ -7,22 +7,17 @@ import { OrdenWidget } from './widget'
 import 'katex/dist/katex.min.css'
 import { sequenceToMermaid } from './sequence'
 
-const equationNumbers = new Map<string, number>()
+const NO_LABELS: ReadonlyMap<string, number> = new Map()
 
-export function resetEquationLabels() {
-  equationNumbers.clear()
+export function labelOf(tex: string): string | undefined {
+  return /\\label\s*\{([^}]+)\}/.exec(tex)?.[1]
 }
 
-export function recordEquationLabel(tex: string, number: number) {
-  const label = /\\label\s*\{([^}]+)\}/.exec(tex)?.[1]
-  if (label !== undefined) equationNumbers.set(label, number)
-}
-
-export function prepare(tex: string): string {
+export function prepare(tex: string, labels = NO_LABELS): string {
   return tex
     .replace(/\\label\s*\{[^}]*\}/g, '')
     .replace(/\\(?:eq)?ref\s*\{([^}]+)\}/g, (whole, name: string) => {
-      const number = equationNumbers.get(name)
+      const number = labels.get(name)
       return number ? `(${number})` : whole
     })
 }
@@ -34,16 +29,20 @@ abstract class PictureWidget extends OrdenWidget {
 }
 
 export class MathWidget extends PictureWidget {
+  private readonly shown: string
+
   constructor(
-    private readonly tex: string,
+    readonly tex: string,
     private readonly block: boolean,
     private readonly number?: number,
+    labels = NO_LABELS,
   ) {
     super()
+    this.shown = prepare(tex, labels)
   }
 
   override eq(other: MathWidget) {
-    return other.tex === this.tex && other.block === this.block && other.number === this.number
+    return other.shown === this.shown && other.block === this.block && other.number === this.number
   }
 
   override ignoreEvent() {
@@ -72,7 +71,7 @@ export class MathWidget extends PictureWidget {
   }
 
   private draw(engine: ReturnType<typeof mathsEngine>, body: HTMLElement) {
-    if (engine) drawMaths(engine, this.tex, this.block, body)
+    if (engine) drawMaths(engine, this.shown, this.block, body)
   }
 }
 

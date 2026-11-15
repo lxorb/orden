@@ -1,4 +1,3 @@
-import { syntaxTree } from '@codemirror/language'
 import {
   type EditorState,
   type Extension,
@@ -8,8 +7,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { external } from '../external'
-import { fenceCode, fenceLanguage } from '../fence'
-import { enclosingNamed } from '../nodes'
+import { fenceCode, fenceLanguage, fenceLead, fenceNear } from '../fence'
 import { documentOf } from '../shared'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
@@ -33,10 +31,11 @@ export interface AiFence {
   to: number
   closeLine: number
   prompt: string
+  lead: string
 }
 
 export function aiFenceAt(state: EditorState, pos: number): AiFence | null {
-  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, 1), 'FencedCode')
+  const node = fenceNear(state, pos)
   if (!node || !isAiLanguage(fenceLanguage(state, node))) return null
 
   const close = state.doc.lineAt(Math.min(node.to, state.doc.length))
@@ -45,6 +44,7 @@ export function aiFenceAt(state: EditorState, pos: number): AiFence | null {
     to: close.to,
     closeLine: close.number - 1,
     prompt: fenceCode(state, node),
+    lead: fenceLead(state, node),
   }
 }
 
@@ -234,16 +234,26 @@ function beginAnswer(owner: Owner, id: number, model: string) {
   const found = aiFenceAt(state, live.from)
   if (!found) return
 
-  const { head, tail } = answerParts(`answered by ${model}, ${today()}`)
-  const existing = answerSpan(state.doc.toString().split('\n'), found.closeLine)
+  const parts = answerParts(`answered by ${model}, ${today()}`)
+  const head = within(parts.head, found.lead)
+  const tail = within(parts.tail, found.lead)
+  const existing = answerSpan(state.doc.toString().split('\n'), found.closeLine, found.lead)
   const span = existing ?? { from: found.to, to: found.to }
-  const lead = existing ? '' : '\n\n'
+  const lead = existing ? '' : within('\n\n', found.lead)
+  const from = existing ? span.from + found.lead.length : span.from
 
   owner.dispatch({
-    changes: { from: span.from, to: span.to, insert: `${lead}${head}${tail}` },
-    effects: beganAnswer.of({ id, body: span.from + lead.length + head.length }),
+    changes: { from, to: span.to, insert: `${lead}${head}${tail}` },
+    effects: beganAnswer.of({ id, body: from + lead.length + head.length }),
     scrollIntoView: true,
   })
+}
+
+function within(text: string, lead: string): string {
+  if (!lead) return text
+  return text.replace(/\n(?=(\n?))/g, (_all, blank: string) =>
+    blank ? `\n${lead.trimEnd()}` : `\n${lead}`,
+  )
 }
 
 function writeAnswer(owner: Owner, id: number, text: string) {
@@ -251,10 +261,11 @@ function writeAnswer(owner: Owner, id: number, text: string) {
   const live = state && runOf(state, id)
   if (!live) return
   if (live.at === null || !text) return
+  const written = within(text, aiFenceAt(state, live.from)?.lead ?? '')
 
   owner.dispatch({
-    changes: { from: live.at, insert: text },
-    effects: wroteAnswer.of({ id, at: live.at + text.length }),
+    changes: { from: live.at, insert: written },
+    effects: wroteAnswer.of({ id, at: live.at + written.length }),
   })
 }
 

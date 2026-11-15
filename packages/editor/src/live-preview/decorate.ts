@@ -11,7 +11,7 @@ import {
 import type { SyntaxNode } from '@lezer/common'
 import { askingAt, asksMoved } from '../ai/run'
 import { concealable, hide, meta } from './conceal'
-import { numberEquations } from './blocks'
+import { equationsOf, numberEquations } from './blocks'
 import { dragging } from './dragging'
 import { blockMarkRevealed, lineRevealed, noReveal, overlaps, quietMarks, revealed } from './reveal'
 import { MathWidget, RENDERED_LANGUAGES } from './render'
@@ -57,12 +57,18 @@ for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `o
 
 const LINKED = new Set(['Link', 'Image', 'Wikilink'])
 
+const CONTAINERS = new Set(['Document', 'Blockquote', 'BulletList', 'OrderedList', 'ListItem'])
+
+const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
+
 class Decorator {
   private readonly marks: Range<Decoration>[] = []
   private readonly hidden: Range<Decoration>[] = []
   private readonly lineClasses = new Map<number, Set<string>>()
   private readonly lineAttrs = new Map<number, Record<string, string>>()
   private readonly claimed: { from: number; to: number }[] = []
+  private readonly unlinked = new Set<number>()
+  private definitions: Map<string, string> | null = null
 
   constructor(private readonly state: EditorState) {}
 
@@ -192,6 +198,9 @@ class Decorator {
         this.marks.push(Decoration.mark({ class: 'orden-sup' }).range(node.from, node.to))
         return true
       default:
+        if (node.name === 'LinkMark' && node.parent && this.unlinked.has(node.parent.from)) {
+          return true
+        }
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
         return true
     }
@@ -209,8 +218,46 @@ class Decorator {
     }
 
     const url = node.getChild('URL')
-    const target = url ? linkDestination(this.state.doc.sliceString(url.from, url.to)) : ''
+    if (url || node.getChildren('LinkMark').length > 2) {
+      const target = url ? linkDestination(this.state.doc.sliceString(url.from, url.to)) : ''
+      this.linkText(open.to, close.from, target)
+      return
+    }
+
+    const label = node.getChild('LinkLabel')
+    const named = label && label.to - label.from > 2
+    const key = named
+      ? this.state.doc.sliceString(label.from + 1, label.to - 1)
+      : this.state.doc.sliceString(open.to, close.from)
+    const target = this.definitionOf(key)
+    if (target === undefined) {
+      this.unlinked.add(node.from)
+      return
+    }
+    if (label) this.conceal(label.from, label.to, overlaps(this.state, node.from, node.to))
     this.linkText(open.to, close.from, target)
+  }
+
+  private definitionOf(label: string): string | undefined {
+    if (!this.definitions) {
+      const found = new Map<string, string>()
+      const { doc } = this.state
+      syntaxTree(this.state).iterate({
+        enter: (ref) => {
+          if (ref.name !== 'LinkReference') return CONTAINERS.has(ref.name)
+          const written = ref.node.getChild('LinkLabel')
+          const url = ref.node.getChild('URL')
+          if (!written) return false
+          const key = labelKey(doc.sliceString(written.from + 1, written.to - 1))
+          if (!found.has(key)) {
+            found.set(key, url ? linkDestination(doc.sliceString(url.from, url.to)) : '')
+          }
+          return false
+        },
+      })
+      this.definitions = found
+    }
+    return this.definitions.get(labelKey(label))
   }
 
   private wikilink(node: SyntaxNode): boolean {
@@ -403,7 +450,11 @@ class Decorator {
     if (overlaps(this.state, node.from, node.to)) return true
 
     const tex = this.state.doc.sliceString(node.from + 1, node.to - 1)
-    this.inlineWidget(node, new MathWidget(tex, false), false)
+    this.inlineWidget(
+      node,
+      new MathWidget(tex, false, undefined, equationsOf(this.state).labels),
+      false,
+    )
     return false
   }
 

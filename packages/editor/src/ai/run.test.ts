@@ -151,6 +151,29 @@ describe('asking', () => {
     )
   })
 
+  test('streams the answer inside the list item or quote the fence is in', async () => {
+    for (const [doc, lead] of [
+      ['1. a\n\n   ```ai\n   question here\n   ```\n2. b\n', '   '],
+      ['> ```ai\n> question here\n> ```\n', '> '],
+    ] as const) {
+      const runner = held()
+      const view = new Fake(doc)
+      const fence = aiFenceAt(view.state, doc.indexOf('```ai') - lead.length)
+      expect(fence?.prompt).toBe('question here')
+      askAiFence(view, fence!)
+
+      runner.ask.started('m')
+      runner.ask.wrote('line one\n\nline two')
+      runner.finish()
+      await settled(view)
+
+      expect(view.text).toContain(
+        `${lead}${ANSWER_OPEN}\n${lead}*answered by m, ${dated()}*\n${lead.trimEnd()}\n` +
+          `${lead}line one\n${lead.trimEnd()}\n${lead}line two\n${lead}${ANSWER_CLOSE}`,
+      )
+    }
+  })
+
   test('takes the blank space off the end of what the model sent', async () => {
     const runner = held()
     const view = new Fake(PLAIN)

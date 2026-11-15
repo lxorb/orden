@@ -6,7 +6,9 @@ import {
 } from '@codemirror/state'
 import { everywhere, type Landing, plainAt } from './paste'
 
-const ITEM_MARK = /^(?:[-*+]|\d+[.)])[ \t]+/
+const CONTAINERS = /^(?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?))*[ \t]*/
+
+const ITEM_MARKS = /((?:[-*+]|\d+[.)])[ \t]+)(?:\[[ xX]\][ \t]+)?/g
 
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
 
@@ -48,15 +50,13 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const before = line.text.slice(0, range.from - line.from)
   const after = end.text.slice(range.to - end.from)
 
-  const found = LEAD.exec(before)
-  const kept = found?.[1] ?? ''
-  const marker = found?.[2] ?? ''
-  const lead = kept + ' '.repeat(ITEM_MARK.exec(marker)?.[0].length ?? 0)
+  const prefix = CONTAINERS.exec(before)?.[0] ?? ''
+  const lead = prefix.replace(ITEM_MARKS, (_all, mark: string) => ' '.repeat(mark.length))
   const held = (lines: string) =>
     lines.replace(/\n([^\n]*)/g, (_all, one: string) => `\n${one ? lead + one : lead.trimEnd()}`)
   const gap = `\n${lead.trimEnd()}\n${lead}`
 
-  const inFront = before.length === kept.length + marker.length
+  const inFront = before.length === prefix.length
   const first = text.slice(0, text.indexOf('\n') + 1 || text.length).trimEnd()
   const last = text.slice(text.lastIndexOf('\n') + 1)
   const opens = !inFront && OPENS_BLOCK.test(first)

@@ -1171,6 +1171,16 @@ describe('lines a list command leaves to their block', () => {
     expect(apply(toggleQuote, nested, 6, nested.length).doc).toBe('- a\n  > - b\n  >   c')
   })
 
+  test('the caret on an empty line ends up after the marker put there', () => {
+    for (const command of [toggleBulletList, toggleOrderedList, toggleTaskList, toggleQuote]) {
+      const made = apply(command, 'a\n\nb', 2)
+      expect(made.selection[0]).toBe(made.doc.indexOf('\nb'))
+    }
+    const heading = apply(setHeading(2), 'a\n\nb', 2)
+    expect(heading.selection).toEqual([5, 5])
+    expect(apply(toggleBulletList, 'milk', 0).selection).toEqual([2, 2])
+  })
+
   test('quoting the paragraphs of an item across a blank line keeps them in the item', () => {
     const doc = '- a\n\n  b\n\n  c\n- d'
     expect(apply(toggleQuote, doc, doc.indexOf('b'), doc.indexOf('c') + 1).doc).toBe(
