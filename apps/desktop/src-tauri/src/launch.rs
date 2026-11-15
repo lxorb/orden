@@ -319,9 +319,11 @@ fn window_builder<'a>(
         .min_inner_size(520.0, 400.0);
     #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
+    let builder = match crate::ground::worn() {
+        Some(colour) => builder.background_color(colour),
+        None => builder,
+    };
 
-    #[cfg(not(target_os = "macos"))]
-    let builder = builder.transparent(true);
     #[cfg(target_os = "macos")]
     let builder = builder.visible(false);
 

@@ -35,6 +35,20 @@ export function rememberGround(): void {
 
     keep(KEY, ground)
 
-    if (isDesktop) void invoke('remember_ground', { colour: ground }).catch(() => undefined)
+    if (isDesktop) {
+      void invoke('remember_ground', { colour: ground, paint: paintOf(ground) }).catch(
+        () => undefined,
+      )
+    }
   })
+}
+
+function paintOf(ground: string): string {
+  if (!ground.startsWith('rgba(')) return ground
+  const probe = document.createElement('div')
+  probe.style.background = 'var(--bg)'
+  document.body.append(probe)
+  const paint = getComputedStyle(probe).backgroundColor.trim()
+  probe.remove()
+  return paint
 }

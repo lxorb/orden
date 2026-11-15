@@ -62,12 +62,10 @@ pub fn set_translucency(
         return Ok("");
     }
 
-    without_colour(&window);
     material::apply(&window, Some(dark), Kind::of(kind.as_deref()))
 }
 
 pub fn wear_from_the_start(window: &Window) {
-    without_colour(window);
     let kind = crate::ground::material(window.app_handle());
     let _ = material::apply(window, None, Kind::of(kind.as_deref()));
 }
@@ -88,13 +86,6 @@ impl Kind {
             Some("clear") => Self::Clear,
             _ => Self::MicaAlt,
         }
-    }
-}
-
-fn without_colour(window: &Window) {
-    let _ = window.set_background_color(None);
-    if let Some(view) = window.app_handle().get_webview_window(window.label()) {
-        let _ = view.set_background_color(None);
     }
 }
 
