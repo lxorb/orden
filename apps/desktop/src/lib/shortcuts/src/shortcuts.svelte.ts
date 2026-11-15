@@ -48,7 +48,11 @@ const MOST_OVERRIDES = 200
 
 const NAMED_KEY = /^[A-Z][A-Za-z0-9]*$/
 
-const namesAKey = (key: string) => key.length === 1 || NAMED_KEY.test(key)
+const PRINTED_ELSEWHERE = /^[^\s!-~]{1,4}$/u
+
+const printed = (key: string) => key.length === 1 || PRINTED_ELSEWHERE.test(key)
+
+const namesAKey = (key: string) => printed(key) || NAMED_KEY.test(key)
 
 const TYPING_KEYS: ReadonlySet<string> = new Set([
   'Enter',
@@ -115,11 +119,12 @@ class Shortcuts {
 
   conflicts(id: string, key: string): Shortcut[] {
     if (!key) return []
-    const place = BY_ID.get(id)?.contextual ? placeOf(id) : null
+    const places = BY_ID.get(id)?.contextual ? placesOf(id) : null
 
     return SHORTCUTS.filter((one) => {
       if (one.id === id || one.scope === 'fixed') return false
-      if (one.contextual ? placeOf(one.id) !== place : place !== null) return false
+      if (!one.contextual !== !places) return false
+      if (places && !placesOf(one.id).some((place) => places.includes(place))) return false
 
       const held = this.keyFor(one.id)
       return !!held && sameCombination(held, key, this.platform)
@@ -159,7 +164,7 @@ class Shortcuts {
     }
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
-    const typed = combination.key.length === 1 || TYPING_KEYS.has(combination.key)
+    const typed = printed(combination.key) || TYPING_KEYS.has(combination.key)
     if (bare && typed && !this.inAList(row) && !this.ownKey(row, key)) {
       return this.platform === 'mac' ? 'Hold ⌃, ⌥ or ⌘ as well.' : 'Hold Ctrl or Alt as well.'
     }
@@ -288,8 +293,22 @@ class Shortcuts {
   }
 }
 
-function placeOf(id: string): string {
-  return id.split('.')[0] ?? id
+const EXPLORER_TREE_KEYS: ReadonlySet<string> = new Set([
+  'tree.delete',
+  'tree.deselect',
+  'tree.down',
+  'tree.extend-down',
+  'tree.extend-up',
+  'tree.open',
+  'tree.rename',
+  'tree.select-all',
+  'tree.toggle',
+  'tree.up',
+])
+
+function placesOf(id: string): string[] {
+  const prefix = id.split('.')[0] ?? id
+  return EXPLORER_TREE_KEYS.has(id) ? [prefix, 'explorer'] : [prefix]
 }
 
 function usable(value: unknown): KeyOverrides {

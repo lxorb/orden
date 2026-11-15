@@ -283,13 +283,14 @@ describe('choosing a key', () => {
     for (const key of ['Ctrl+Shift+K', 'banana', 'Mod-Shift-ctrl k', 'Mod-k k']) {
       expect(shortcuts.refuse(key, 'app.palette'), key).toBe('That is not a key combination.')
     }
-    for (const key of ['F5', 'Mod-F13', 'ContextMenu', 'Mod-Space', 'Mod Mod', 'Shift Shift']) {
+    for (const key of ['F5', 'Mod-F13', 'ContextMenu', 'Mod-Space', 'Mod Mod', 'Mod-لا', 'Mod-𝑥']) {
       expect(shortcuts.refuse(key, 'app.palette'), key).toBeNull()
     }
   })
 
   test('is refused where it would fire while typing', () => {
     const { shortcuts } = registry
+    expect(shortcuts.refuse('لا')).not.toBeNull()
     expect(shortcuts.refuse('k')).not.toBeNull()
     expect(shortcuts.refuse('Shift-k')).not.toBeNull()
     expect(shortcuts.refuse('F7')).toBeNull()
@@ -662,6 +663,18 @@ describe('two shortcuts on one key', () => {
     ])
     expect(shortcuts.conflicts('canvas.tool.rect', 'Mod-Alt-=').map((one) => one.id)).toEqual([
       'canvas.zoom.in',
+    ])
+  })
+
+  test('counts the list keys the explorer answers to as its own place', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('explorer.hidden', 'Mod-a').map((one) => one.id)).toEqual([
+      'tree.select-all',
+    ])
+    const held = shortcuts.keyFor('explorer.list')
+    expect(held).toBeTruthy()
+    expect(shortcuts.conflicts('tree.rename', held ?? '').map((one) => one.id)).toEqual([
+      'explorer.list',
     ])
   })
 
