@@ -139,9 +139,12 @@ function ownerOf(view: AiView): Owner {
   let kept = view.state
   let keptText = note?.text ?? null
 
+  const turn = note?.turn
   const away = () => note !== null && documentOf(view) !== note
+  const gone = () => note !== null && note.turn !== turn
 
   const current = (): EditorState | null => {
+    if (gone()) return null
     if (!note || !away()) {
       kept = view.state
       keptText = note?.text ?? null
@@ -162,6 +165,7 @@ function ownerOf(view: AiView): Owner {
     },
 
     dispatch(spec) {
+      if (gone()) return
       if (!note || !away()) {
         view.dispatch(spec)
         current()

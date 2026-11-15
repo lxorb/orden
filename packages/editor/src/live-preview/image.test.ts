@@ -24,6 +24,7 @@ import {
 } from './image'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
+import type { ImageSpec } from './image/markup'
 
 function state(doc: string, selection: { anchor: number; head?: number } = { anchor: 0 }) {
   return parsed(
@@ -379,6 +380,45 @@ describe('a picture written again after an edit', () => {
     )
     expect(retag('<img src="a.png" width="300" style="float:left">', { ...image, zoom: 50 })).toBe(
       '<img src="a.png" style="zoom:50%; float:left">',
+    )
+  })
+
+  test('touches only what changed, whether a value is quoted or not', () => {
+    const edit = (tag: string, change: Partial<ImageSpec>) => {
+      const image = parseHtmlImage(tag)
+      if (!image) throw new Error(`no picture in ${tag}`)
+      return retag(tag, { ...image, ...change })
+    }
+    expect(edit('<img src="a.png" width="50%" alt="x">', { alt: 'y' })).toBe(
+      '<img src="a.png" width="50%" alt="y">',
+    )
+    expect(edit('<img src="a.png" alt="x" title=Sunset>', { alt: 'y' })).toBe(
+      '<img src="a.png" alt="y" title=Sunset>',
+    )
+    expect(edit('<img src="a.png" alt=cat>', { width: 300 })).toBe(
+      '<img src="a.png" alt=cat width="300">',
+    )
+    expect(edit('<img src="a.png" title="the width = 300 one" alt="x">', { alt: 'y' })).toBe(
+      '<img src="a.png" title="the width = 300 one" alt="y">',
+    )
+  })
+
+  test('drops the height when the width changes, so the picture keeps its shape', () => {
+    const tag = '<img src="a.png" width="300" height="200">'
+    const image = parseHtmlImage(tag)!
+    expect(retag(tag, { src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe(
+      '<img src="a.png">',
+    )
+    expect(retag(tag, { ...image, width: 400 })).toBe('<img src="a.png" width="400">')
+    expect(retag(tag, { ...image, alt: 'b' })).toBe(
+      '<img src="a.png" width="300" height="200" alt="b">',
+    )
+  })
+
+  test('keeps an escape written in its words as it was', () => {
+    const image = imageAt(state('![my\\_shot|300](a.png)'), 0)!
+    expect(imageMarkup({ src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe(
+      '![my\\_shot](a.png)',
     )
   })
 

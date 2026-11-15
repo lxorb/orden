@@ -241,6 +241,8 @@ describe('markdown being typed', () => {
     expect(type('a < b ', '"')).toBe('a < b “')
     expect(type('a <b and it', "'")).toBe('a <b and it’')
     expect(type('`$HOME` isn', "'")).toBe('`$HOME` isn’')
+    expect(type('It costs $5 and it', "'")).toBe('It costs $5 and it’')
+    expect(type('from $5 to $9 isn', "'")).toBe('from $5 to $9 isn’')
   })
 
   test('but prose after a closed link or comment still gets them', () => {

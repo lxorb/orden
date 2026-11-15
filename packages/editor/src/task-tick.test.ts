@@ -161,3 +161,15 @@ test('a box whose note changed in the background is ticked where its line went',
   expect(pane.first.text.toString()).toBe('new line\n- [x] one\nplain')
   expect(pane.second.text.toString()).toBe('- [ ] one\nplain')
 })
+
+test('a box whose tab is reused for another note is not ticked in that note', async () => {
+  const pane = switching('# Monday\n- [ ] water plants\n', 'else')
+  const ticking = tickLines(pane.view, HELP, pane.view.state.doc, [2])
+
+  pane.first.takeOn('# Tuesday\nother\n- [ ] water plants\n')
+  pane.answer()
+  await ticking
+  await pane.ticking
+
+  expect(pane.first.text.toString()).toBe('# Tuesday\nother\n- [ ] water plants\n')
+})

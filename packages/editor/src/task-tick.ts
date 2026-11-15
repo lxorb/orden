@@ -61,6 +61,7 @@ export async function tickLines(
   also: readonly ChangeSpec[] = [],
 ): Promise<void> {
   const owner = documentOf(view)
+  const turn = owner?.turn
   const away = () => owner !== null && documentOf(view) !== owner
   const shown = (): Text => (owner && away() ? owner.text : view.state.doc)
 
@@ -86,6 +87,7 @@ export async function tickLines(
       }
     }
 
+    if (owner && owner.turn !== turn) return
     const now = shown()
     if (now !== doc && !now.eq(doc)) {
       doc = now

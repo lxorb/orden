@@ -440,7 +440,10 @@ function prefixOf(line: Quoted, shifts: number[]): string {
 function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
   return ({ state, dispatch }) => {
     const chosen = selectedLines(state)
-    const lines = chosen.map(quotedLine)
+    const quoted = chosen.map(quotedLine)
+    const written = quoted.filter((line) => line.text.trim())
+    const skipsBlank = written.length > 0
+    const lines = skipsBlank ? written : quoted
     const allListed = lines.every((line) => own.test(line.text))
 
     if (allListed) {
@@ -463,6 +466,7 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
     const first = chosen[0]?.number ?? 1
     for (let number = first; number <= state.doc.lines; number++) {
       const line = quotedLine(state.doc.line(number))
+      if (skipsBlank && !line.text.trim()) continue
       if (!picked.has(number)) {
         if (!line.text.trim()) continue
         const shifts = shiftsOf(parents, line)
@@ -648,10 +652,22 @@ function fenceLine(text: string): { pad: string; rest: string } {
   return { pad: heldIn(prefix) + (/^ {0,3}/.exec(rest)?.[0] ?? ''), rest }
 }
 
+const NOT_PROSE = new Set([
+  'CodeBlock',
+  'HTMLBlock',
+  'CommentBlock',
+  'Comment',
+  'BlockMath',
+  'FrontMatter',
+])
+
 function opensUnclosedFence(state: EditorState, line: Line): boolean {
   const tree = ensureSyntaxTree(state, state.doc.length, 50)
-  const code = tree && enclosingNamed(tree.resolveInner(line.to, -1), 'FencedCode')
-  if (!code || state.doc.lineAt(code.from).number !== line.number) return false
+  if (!tree) return false
+  const here = tree.resolveInner(line.to, -1)
+  const code = enclosingNamed(here, 'FencedCode')
+  if (!code) return enclosingNamed(here, NOT_PROSE) === null
+  if (state.doc.lineAt(code.from).number !== line.number) return false
   return code.getChildren('CodeMark').length < 2
 }
 

@@ -188,3 +188,18 @@ test('words typed above the fence just before the switch still leave the answer 
   pane.back()
   expect(askingAt(pane.view.state, pane.view.state.doc.toString().indexOf('```ai'))).toBe(false)
 })
+
+test('an answer whose tab is reused for another note is not written into that note', async () => {
+  const runner = asked()
+  const pane = panes()
+  ask(pane.view)
+
+  pane.first.takeOn(OTHER)
+  runner.ask.started('m')
+  runner.ask.wrote('Herons stand still.')
+  runner.finish()
+  await settled()
+
+  expect(pane.first.text.toString()).toBe(OTHER)
+  expect(pane.view.state.doc.toString()).toBe(OTHER)
+})

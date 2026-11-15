@@ -33,8 +33,10 @@ export function later(
 ): (write: (state: EditorState) => TransactionSpec | null) => boolean {
   const asked = view.state
   const note = documentOf(view)
+  const turn = note?.turn
 
   return (write) => {
+    if (note && note.turn !== turn) return true
     if (documentOf(view) === note) {
       const spec = write(view.state)
       if (spec) view.dispatch(spec)
@@ -187,6 +189,7 @@ export class SharedDoc {
 
   private ownUndo = 0
   private ownRedo = 0
+  private taken = 0
 
   private recent: { before: Text; changes: ChangeSet; by: Made; at: number }[] = []
 
@@ -211,6 +214,7 @@ export class SharedDoc {
   }
 
   takeOn(text: string) {
+    this.taken++
     const held = this.state.doc.toString()
 
     if (held !== text) {
@@ -235,6 +239,10 @@ export class SharedDoc {
 
   get text(): Text {
     return this.state.doc
+  }
+
+  get turn(): number {
+    return this.taken
   }
 
   get roomWords(): Text {

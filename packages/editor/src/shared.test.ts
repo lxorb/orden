@@ -13,6 +13,7 @@ import type { EditorView } from '@codemirror/view'
 import {
   type DocView,
   documentOf,
+  later,
   fromInput,
   letGo,
   redoEdit,
@@ -810,5 +811,19 @@ describe('the steps undo takes back in a document', () => {
 
     expect(note.undo(pane)).toBe(true)
     expect(note.text.toString()).toBe('')
+  })
+})
+
+describe('a write asked for before the note in the tab was replaced', () => {
+  test('is not written into the note that took its place', () => {
+    const note = new SharedDoc('![A cat](cat.png)')
+    const pane = new Pane(note)
+    const land = later(pane)
+
+    note.takeOn('![A cat](cat.png) in another note')
+    land(() => ({ changes: { from: 2, to: 7, insert: 'A dog' } }))
+
+    expect(note.text.toString()).toBe('![A cat](cat.png) in another note')
+    expect(pane.text).toBe('![A cat](cat.png) in another note')
   })
 })

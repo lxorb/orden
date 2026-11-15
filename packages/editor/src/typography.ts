@@ -31,7 +31,12 @@ const TAG_OPEN =
 
 function withinMaths(before: string): boolean {
   const bare = before.replace(/\\./g, '').replace(/(`+)[\s\S]*?\1/g, '')
-  return (bare.match(/\$/g)?.length ?? 0) % 2 === 1
+  let open = false
+  for (let at = bare.indexOf('$'); at >= 0; at = bare.indexOf('$', at + 1)) {
+    if (open) open = /\s/.test(bare[at - 1] ?? ' ')
+    else open = !/[\s\d]/.test(bare[at + 1] ?? ' ')
+  }
+  return open
 }
 
 function withinOpen(before: string, opening: string, closing: string): boolean {

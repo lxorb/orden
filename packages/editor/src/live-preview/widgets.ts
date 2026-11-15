@@ -310,13 +310,13 @@ export class FenceHeaderWidget extends OrdenWidget {
     field.spellcheck = false
 
     const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
+    const opening = view.state.doc.lineAt(this.infoFrom)
+    const ticked = view.state.sliceDoc(opening.from, this.infoFrom).trimEnd().endsWith('`')
     const land = later(view)
     let done = false
     const commit = () => {
       if (done) return
       done = true
-      const opening = view.state.doc.lineAt(this.infoFrom)
-      const ticked = view.state.sliceDoc(opening.from, this.infoFrom).trimEnd().endsWith('`')
       const next = field.value.replace(ticked ? /[\s`]+/g : /\s+/g, '')
       field.replaceWith(label)
 

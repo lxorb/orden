@@ -381,11 +381,10 @@ export class TableView {
     const span = this.span()
     const current = span && editor.state.doc.sliceString(span.from, span.to) === this.source
 
+    this.clearPending()
     if (text !== this.source && span && current) {
       editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
     }
-
-    this.clearPending()
     this.focusAfter = null
   }
 

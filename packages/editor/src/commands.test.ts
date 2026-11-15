@@ -319,6 +319,14 @@ describe('line prefixes', () => {
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('> 1. a\n1. b')
   })
 
+  test('leaves blank lines in the selection blank', () => {
+    const loose = '- a\n\n- b'
+    expect(apply(toggleBulletList, loose, 0, loose.length).doc).toBe('a\n\nb')
+    expect(apply(toggleOrderedList, loose, 0, loose.length).doc).toBe('1. a\n\n2. b')
+    expect(apply(toggleBulletList, 'a\n\nb', 0, 4).doc).toBe('- a\n\n- b')
+    expect(run(toggleBulletList, '|')).toBe('- ')
+  })
+
   test('carries a quote inside a list item along with its item', () => {
     expect(at(toggleOrderedList, '- a\n  > note', 0)).toBe('1. a\n   > note')
     const doc = '- a\n  > - x\n- b'
@@ -503,7 +511,10 @@ describe('select word', () => {
   })
 })
 
-describe('pressing Enter after a code fence', () => {
+describe.each([
+  ['as the app reads it', ordenMarkdownExtensions],
+  ['as plain markdown reads it', []],
+])('pressing Enter after a code fence, %s', (_, extensions) => {
   function press(marked: string): { took: boolean; doc: string } {
     const caret = marked.indexOf('|')
     const doc = marked.replace(/\|/g, '')
@@ -511,7 +522,7 @@ describe('pressing Enter after a code fence', () => {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(caret),
-        extensions: [markdown({ base: markdownLanguage })],
+        extensions: [markdown({ base: markdownLanguage, extensions })],
       }),
     )
 
