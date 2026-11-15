@@ -33,7 +33,8 @@
     "quitting",
     "workspace",
     "highlight",
-    "sync-store"
+    "sync-store",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -44,7 +45,6 @@
     "apps/desktop/src/lib/kept-scroll.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/kind-words.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/new-kinds.ts",
     "apps/desktop/src/lib/note-id.ts",
     "apps/desktop/src/lib/panel-marks.ts",

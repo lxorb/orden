@@ -24,7 +24,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { modes } = await import('../../modes.svelte')
+const { modes } = await import('../../modes/src/api')
 const { spellingPane } = await import('./spelling-pane')
 const { inForceNow } = await import('../../spell-languages')
 

@@ -51,7 +51,7 @@
   import ThemeStore from './ThemeStore.svelte'
   import { store } from '../../theme-looks/src/api'
   import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
-  import { modes } from '../../modes.svelte'
+  import { modes } from '../../modes/src/api'
   import { readableSize, usage } from '../../usage.svelte'
   import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'

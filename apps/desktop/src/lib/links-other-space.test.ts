@@ -74,7 +74,7 @@ serveLinks({ search: (await import('./search/src/api')).searchSpace })
 const { startup } = await import('./platform/src/api')
 const { notePicture } = await import('./note-images')
 const { storeBeside } = await import('./assets')
-const { modes } = await import('./modes.svelte')
+const { modes } = await import('./modes/src/api')
 const { assetUrl } = await import('./platform/src/tauri')
 void startup.shown()
 

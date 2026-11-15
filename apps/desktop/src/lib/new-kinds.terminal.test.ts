@@ -54,7 +54,7 @@ describe('a terminal, as a kind a new tab can be', () => {
   })
 
   test('is left out, with Remote and Online, for somebody who does not write code, applications staying', async () => {
-    const { modes } = await import('./modes.svelte')
+    const { modes } = await import('./modes/src/api')
     modes.developer = false
     try {
       expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([

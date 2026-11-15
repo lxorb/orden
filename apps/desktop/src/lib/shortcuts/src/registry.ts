@@ -9,7 +9,7 @@ import {
 } from '@orden/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/api'
 import { revealPanel, stepRegionFocus } from '../../focus'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { searchFrom } from '../../search.svelte'
 import { showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
 import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../../settings.svelte'

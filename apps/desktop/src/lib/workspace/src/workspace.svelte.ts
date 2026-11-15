@@ -1254,7 +1254,7 @@ class Workspace {
 
   async newPages() {
     const { blankPages } = await import('@orden/markdown/pages')
-    const { modes } = await import('../../modes.svelte')
+    const { modes } = await import('../../modes/src/api')
     this.openUnsaved('pages', blankPages(modes.pagesPaper))
   }
 
@@ -2015,7 +2015,7 @@ class Workspace {
     if (named === undefined && this.startNaming('pages', dir)) return
 
     const { blankPages } = await import('@orden/markdown/pages')
-    const { modes } = await import('../../modes.svelte')
+    const { modes } = await import('../../modes/src/api')
 
     const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.pages))
     const content = blankPages(modes.pagesPaper)

@@ -298,7 +298,7 @@ class Rooms {
       apart: async (theirs) => {
         const [{ apart }, { modes }] = await Promise.all([
           import('../../collab-rooms/src/api'),
-          import('../../modes.svelte'),
+          import('../../modes/src/api'),
         ])
 
         return await apart(

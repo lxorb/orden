@@ -203,7 +203,7 @@ const RUNS: Record<string, Run> = {
   keybindings: () => settingsAt('shortcuts'),
   theme: async () => (await import('../../../theme-looks/src/api')).pickTheme(),
   vim: async () => {
-    const { modes } = await import('../../../modes.svelte')
+    const { modes } = await import('../../../modes/src/api')
     modes.setVimKeys(!modes.vim)
   },
   voice: ({ args, panel }) => panel.voice?.(onOff(args)),

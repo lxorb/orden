@@ -1,6 +1,6 @@
 import { setSnippets } from '@orden/editor'
 import { account } from './accounts/src/api'
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import { connectors } from './connectors.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'

@@ -19,7 +19,7 @@ import {
   factsOfLaunch,
   mark,
 } from './platform/src/api'
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import {
   anythingRuns,
   GIVE_UP,

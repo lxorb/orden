@@ -33,7 +33,7 @@ let registry: typeof import('./shortcuts.svelte')
 
 await Promise.all([
   import('./shortcuts.svelte'),
-  import('../../modes.svelte'),
+  import('../../modes/src/api'),
   import('../../commands/src/api'),
   import('../../app-menu'),
 ])
@@ -58,7 +58,7 @@ beforeEach(async () => {
 })
 
 async function currentModes() {
-  return (await import('../../modes.svelte')).modes
+  return (await import('../../modes/src/api')).modes
 }
 
 function press(

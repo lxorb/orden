@@ -1,7 +1,7 @@
 import { settingFieldsIn } from '@orden/contracts'
 import { method, isDesktop, isMobile, platform } from '../../platform/src/api'
 import { usageChoice } from '../../usage/src/api'
-import { DEFAULTS, modes, REMIND_BEFORE } from '../../modes.svelte'
+import { DEFAULTS, modes, REMIND_BEFORE } from '../../modes/src/api'
 import { protectionOn, turnProtection } from '../../sharing/src/api'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../../protect/src/api'
 import { recovery } from '../../history/src/api'

@@ -9,7 +9,7 @@
   import { localDate, localNumber } from '../../../platform/src/api'
   import { links } from '../../../link-index/src/api'
   import { DIVIDER, menu } from '../../../menu.svelte'
-  import { modes } from '../../../modes.svelte'
+  import { modes } from '../../../modes/src/api'
   import { dur, fade } from '../../../platform/src/api'
   import { followHref, followNoteFrom } from '../../../open-link'
   import { shortcuts } from '../../../shortcuts/src/api'

@@ -13,13 +13,13 @@
     "ui-controls",
     "ui-kit",
     "usage",
-    "sync-mirror"
+    "sync-mirror",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/feedback.svelte.ts",
     "apps/desktop/src/lib/icon-library.svelte.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/tab-cycle.svelte.ts"
   ]
 }

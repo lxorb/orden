@@ -29,7 +29,7 @@ await import('./hints.svelte')
 async function restarted() {
   vi.resetModules()
   const { hints } = await import('./hints.svelte')
-  const { modes } = await import('./modes.svelte')
+  const { modes } = await import('./modes/src/api')
   modes.restore()
   hints.restore()
   return { hints, modes }

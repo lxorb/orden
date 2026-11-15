@@ -9,7 +9,7 @@ import {
   showCombination,
   viewport,
 } from '../../ui-kit/src/api'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { knownPreset, type PresetId } from './preset-ids'
 import type { Preset } from './presets'
 import {

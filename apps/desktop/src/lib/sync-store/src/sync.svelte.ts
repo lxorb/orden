@@ -20,7 +20,7 @@ import {
 import type { Pairing } from '../../space-pairing'
 import { untrack } from 'svelte'
 import { rooms } from '../../collab/src/api'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import {
   type Folded,
   type Joined,

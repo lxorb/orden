@@ -14,7 +14,7 @@
   import { pickedLink } from '../../composer'
   import { adrift, pressedThrough } from '../../keyboard-home'
   import { links } from '../../link-index/src/api'
-  import { modes } from '../../modes.svelte'
+  import { modes } from '../../modes/src/api'
   import { followHref, followNoteFrom } from '../../open-link'
   import { shortcuts } from '../../shortcuts/src/api'
   import { afterQuiet } from '../../platform/src/api'

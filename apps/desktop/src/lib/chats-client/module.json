@@ -32,7 +32,8 @@
     "quitting",
     "workspace",
     "notify",
-    "sync-store"
+    "sync-store",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -45,7 +46,6 @@
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/open-link.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

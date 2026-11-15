@@ -1,6 +1,6 @@
 import { registered, settingFieldsIn } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { declaredPanes } from './preferences'
 import { shortcuts, SHORTCUTS } from '../../shortcuts/src/api'
 import { themeDeclarations } from './appearance-pane'

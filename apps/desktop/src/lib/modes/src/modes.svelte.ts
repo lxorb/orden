@@ -30,12 +30,12 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, type AccountSettings } from './accounts/src/api'
-import { viewport } from './ui-kit/src/api'
-import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { viewport } from '../../ui-kit/src/api'
+import { type AttachmentFolder, isAttachmentFolder } from '../../attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
-import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format/src/api'
-import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync-mirror/src/api'
+import { isLinkFormat, type LinkFormat, setLinkWriting } from '../../link-format/src/api'
+import { type ConflictRule, conflictRule, DEFAULT_RULE } from '../../sync-mirror/src/api'
 import {
   type Compaction,
   DEFAULT_COMPACTION,
@@ -53,9 +53,9 @@ import {
   currentWindow,
   invoke,
   isDesktop,
-} from './platform/src/api'
-import { theme } from './theme/src/api'
-import { opening } from './documents/src/api'
+} from '../../platform/src/api'
+import { theme } from '../../theme/src/api'
+import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
 
@@ -409,7 +409,7 @@ class Modes {
     this.applyFonts()
     if (isDesktop) {
       const chosen = this.spellLanguages
-      void import('./spell-languages').then((one) => one.tellEngine(one.inForceNow(chosen)))
+      void import('../../spell-languages').then((one) => one.tellEngine(one.inForceNow(chosen)))
     }
 
     this.written = isRecord(saved) ? saved : fieldsOf(this.state())

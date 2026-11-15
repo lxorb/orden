@@ -11,7 +11,7 @@
   import { keepFocus } from './focus'
   import { tick } from 'svelte'
   import { Glyph } from './ui-controls/src/api'
-  import { modes } from './modes.svelte'
+  import { modes } from './modes/src/api'
   import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/src/api'
   import { shortcuts } from './shortcuts/src/api'

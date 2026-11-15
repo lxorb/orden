@@ -19,7 +19,8 @@
     "shortcuts",
     "workspace",
     "protect",
-    "sync-store"
+    "sync-store",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -29,7 +30,6 @@
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/first-visit.svelte.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

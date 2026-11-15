@@ -43,7 +43,7 @@ import {
   printable,
 } from './export-formats/src/api'
 import { printOpen } from './open-out'
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import { shortcuts } from './shortcuts/src/api'
 import { toggleFill } from './tab-fill/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'

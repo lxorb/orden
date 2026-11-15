@@ -37,7 +37,7 @@ vi.mock('../../ui-kit/src/api', () => ({
     },
   },
 }))
-vi.mock('../../modes.svelte', () => ({ modes: { attachments: 'space' } }))
+vi.mock('../../modes/src/api', () => ({ modes: { attachments: 'space' } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../commands/src/api', () => ({
   appCommands: () => [],

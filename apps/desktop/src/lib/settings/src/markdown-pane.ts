@@ -1,5 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import { DEFAULTS, modes } from '../../modes.svelte'
+import { DEFAULTS, modes } from '../../modes/src/api'
 import type { Pane } from './fields'
 
 export function markdownPane(view: EditorView | undefined): Pane {

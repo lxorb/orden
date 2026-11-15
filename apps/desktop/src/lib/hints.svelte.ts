@@ -1,4 +1,4 @@
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import { keepJson, stored, stringList } from './platform/src/api'
 
 export const HINTS = ['drawer', 'graph', 'palette'] as const

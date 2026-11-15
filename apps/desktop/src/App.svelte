@@ -84,7 +84,7 @@
   import StatusBar from './lib/StatusBar.svelte'
   import { paneCorners } from './lib/pane-corners.svelte'
   import Titlebar from './lib/Titlebar.svelte'
-  import { modes } from './lib/modes.svelte'
+  import { modes } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform, startup } from './lib/platform/src/api'

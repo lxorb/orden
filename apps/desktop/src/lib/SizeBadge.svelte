@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { dur, fade, scale } from './platform/src/api'
-  import { modes } from './modes.svelte'
+  import { modes } from './modes/src/api'
 
   const HELD = 900
 

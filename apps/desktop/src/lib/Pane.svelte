@@ -43,7 +43,7 @@
   import { chrome } from './theme/src/api'
   import { without } from './graph/src/api'
   import { links } from './link-index/src/api'
-  import { modes } from './modes.svelte'
+  import { modes } from './modes/src/api'
   import { pull } from './pull.svelte'
   import { notePicture } from './note-images'
   import { placement } from './placement.svelte'

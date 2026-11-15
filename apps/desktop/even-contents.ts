@@ -140,6 +140,7 @@ export const APP_FOLDERS = [
   'link-index',
   'matching',
   'mobile',
+  'modes',
   'notify',
   'onboarding',
   'online-terms',

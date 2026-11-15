@@ -25,7 +25,7 @@
   import { firstScreen } from './first-screen/src/api'
   import { keptCoverOf, setCoverPosition } from './kept-cover'
   import { mark } from './platform/src/api'
-  import { modes } from './modes.svelte'
+  import { modes } from './modes/src/api'
   import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts/src/api'
   import { trustsHtmlIn } from './sharing/src/api'
