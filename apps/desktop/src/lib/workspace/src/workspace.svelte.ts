@@ -436,6 +436,7 @@ class Workspace {
     this.fileOps.follow((op) => links.follow(op))
     this.fileOps.follow((op) => {
       if (op.op === 'moved') {
+        void invoke('rehome_snapshots', { from: op.from, to: op.to }).catch(() => 0)
         void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)

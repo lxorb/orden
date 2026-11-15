@@ -190,7 +190,7 @@ fn rehome_in(root: &Path, from: &str, to: &str) -> usize {
         let Some(rest) = was.strip_prefix(from) else {
             continue;
         };
-        if !rest.starts_with(['/', '\\']) {
+        if !rest.is_empty() && !rest.starts_with(['/', '\\']) {
             continue;
         }
 
@@ -281,6 +281,25 @@ mod tests {
             now
         );
         assert!(after.join("1773500400000.md").exists());
+    }
+
+    #[test]
+    fn a_history_follows_its_note_when_the_note_is_renamed() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let was = format!("{OLD}/Notes/Draft.md");
+        let before = kept_at(root.path(), &was);
+        let beside = kept_at(root.path(), &format!("{OLD}/Notes/Draft.md 2"));
+
+        let now = format!("{OLD}/Notes/Diary.md");
+        assert_eq!(rehome_in(root.path(), &was, &now), 1);
+
+        assert!(!before.exists());
+        assert!(beside.exists());
+        assert!(root
+            .path()
+            .join(folder_key(&now))
+            .join("1773500400000.md")
+            .exists());
     }
 
     #[test]
