@@ -33,6 +33,20 @@ describe('a filter landed under a folder', () => {
     expect(placedUnder('file.inFolder("Projects")', '')).toBe('file.inFolder("Projects")')
   })
 
+  test('names a folder that stepped aside by the name it took', () => {
+    const moved = (path: string) => path.replace(/^Tasks(?=\/|$)/, 'Tasks 2')
+
+    expect(placedUnder('file.inFolder("Tasks") || file.inFolder("Home")', '', moved)).toBe(
+      'file.inFolder("Tasks 2") || file.inFolder("Home")',
+    )
+    expect(placedUnder('file.path.startsWith("/Tasks/Sub/")', 'In', moved)).toBe(
+      'file.path.startsWith("In/Tasks 2/Sub/")',
+    )
+    expect(baseUnder('filters: file.inFolder("Tasks")\n', '', moved)).toBe(
+      'filters: file.inFolder("Tasks 2")\n',
+    )
+  })
+
   test('reads every filter and formula of a base, and keeps the rest as it was written', () => {
     const yaml = [
       '# mine',

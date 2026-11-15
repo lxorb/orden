@@ -218,6 +218,12 @@ export function restamped(
     placed.set(file, free)
   }
 
+  const stepped = (path: string) => {
+    const now = path
+      ? (landedAt.get(nameKey(path)) ?? folders.get(nameKey(inside(path))) ?? into(inside(path)))
+      : inside(path)
+    return under ? now.slice(under.length + 1) : now
+  }
   const paths = plan.files.map((file) => file.path)
   const space = calledBy([...taken])
   const files = plan.files.map((file) => {
@@ -227,8 +233,8 @@ export function restamped(
       const bytes =
         (moved.size || under) && isCanvas(was)
           ? canvasFollowed(file.bytes, moved, under)
-          : under && isBase(was)
-            ? baseFollowed(file.bytes, under)
+          : (moved.size || under) && isBase(was)
+            ? baseFollowed(file.bytes, under, stepped)
             : file.bytes
       return { ...file, path: now, bytes }
     }
@@ -236,7 +242,7 @@ export function restamped(
       moved.size || under || there.size
         ? linksFollowed(file.text, was, moved, paths, under, space)
         : file.text
-    const text = under ? basesFollowed(linked, under) : linked
+    const text = moved.size || under ? basesFollowed(linked, under, stepped) : linked
     return { ...file, path: now, text }
   })
 

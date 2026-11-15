@@ -127,35 +127,40 @@ function placeLiterals(node: Node): Node[] {
   return [...named, ...children(node).flatMap(placeLiterals)]
 }
 
-export function placedUnder(source: string, under: string): string {
+type Stepping = (path: string) => string
+
+const unmoved: Stepping = (path) => path
+
+export function placedUnder(source: string, under: string, moved = unmoved): string {
   const folder = under.replace(/^\/+|\/+$/g, '')
-  if (!folder) return source
   let tree: Node
   try {
     tree = parseExpression(source)
   } catch {
     return source
   }
-  const spans = placeLiterals(tree).flatMap((node): [number, number, string][] =>
-    node.type === 'literal' && typeof node.value === 'string' && node.at !== undefined
-      ? [[node.at, node.end ?? node.at, node.value.replace(/^\/+/, '')]]
-      : [],
-  )
+  const spans = placeLiterals(tree).flatMap((node): [number, number, string][] => {
+    if (node.type !== 'literal' || typeof node.value !== 'string' || node.at === undefined)
+      return []
+    const written = node.value.replace(/^\/+/, '')
+    const now = moved(written)
+    if (!folder && now === written) return []
+    return [[node.at, node.end ?? node.at, folder ? (now ? `${folder}/${now}` : folder) : now]]
+  })
   return spans
     .sort((one, other) => other[0] - one[0])
     .reduce(
-      (text, [at, end, value]) =>
-        text.slice(0, at) + JSON.stringify(value ? `${folder}/${value}` : folder) + text.slice(end),
+      (text, [at, end, value]) => text.slice(0, at) + JSON.stringify(value) + text.slice(end),
       source,
     )
 }
 
-export function baseUnder(yaml: string, under: string): string {
+export function baseUnder(yaml: string, under: string, moved = unmoved): string {
   const document = parseDocument(yaml)
   if (document.errors.length || !isMap(document.contents)) return yaml
   const follow = (node: unknown): number => {
     if (isScalar(node) && typeof node.value === 'string') {
-      const placed = placedUnder(node.value, under)
+      const placed = placedUnder(node.value, under, moved)
       if (placed === node.value) return 0
       node.value = placed
       return 1

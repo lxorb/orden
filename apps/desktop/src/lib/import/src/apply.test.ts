@@ -363,6 +363,36 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Home.md')).toBe('See [[Tasks 2]] and [[Buy milk]].')
   })
 
+  test('a base that filters a folder follows the folder when it steps aside', () => {
+    const base = (folder: string) =>
+      `filters:\n  or:\n    - file.inFolder("${folder}")\n    - file.path.startsWith("${folder}/Sub/")\n    - file.inFolder("Other")\n`
+    const drawn = (folder: string) => `# Home\n\n\`\`\`base\n${base(folder)}\`\`\`\n`
+    for (const [folder, taken] of [
+      ['', 'tasks.md'],
+      ['In', 'in/tasks.md'],
+    ] as const) {
+      const stamped = restamped(
+        planOf([
+          note('Tasks.md', '# T'),
+          note('Tasks/Buy milk.md', '# B'),
+          note('Home.md', drawn('Tasks')),
+          { kind: 'file', path: 'Tasks.base', bytes: new TextEncoder().encode(base('Tasks')) },
+        ]),
+        new Set([taken]),
+        folder,
+      )
+      const inside = (path: string) => (folder ? `${folder}/${path}` : path)
+      const landed = stamped.files.find((one) => one.path === inside('Tasks.base'))
+      const other = (text: string) => (folder ? text.replace('"Other"', `"${folder}/Other"`) : text)
+
+      expect(stamped.files.map((one) => one.path)).toContain(inside('Tasks 2/Buy milk.md'))
+      expect(landed?.kind === 'file' && new TextDecoder().decode(landed.bytes)).toBe(
+        other(base(inside('Tasks 2'))),
+      )
+      expect(textAt(stamped.files, inside('Home.md'))).toBe(other(drawn(inside('Tasks 2'))))
+    }
+  })
+
   test('a link that names the folder follows the folder when it steps aside', () => {
     const stamped = restamped(
       planOf([

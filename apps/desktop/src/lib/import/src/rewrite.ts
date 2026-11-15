@@ -371,7 +371,11 @@ function respelled(said: string, from: string, to: string): string | null {
   return `${lead}${[...folders, spelled].join('/')}`
 }
 
-export function baseFollowed(bytes: Uint8Array, under: string): Uint8Array {
+export function baseFollowed(
+  bytes: Uint8Array,
+  under: string,
+  moved?: (path: string) => string,
+): Uint8Array {
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -379,16 +383,20 @@ export function baseFollowed(bytes: Uint8Array, under: string): Uint8Array {
     return bytes
   }
 
-  const followed = baseUnder(text, under)
+  const followed = baseUnder(text, under, moved)
   return followed === text ? bytes : new TextEncoder().encode(followed)
 }
 
 const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\r\n]*)?\r?\n([\s\S]*?)^\1[`~]*[ \t]*\r?$/gm
 
-export function basesFollowed(text: string, under: string): string {
+export function basesFollowed(
+  text: string,
+  under: string,
+  moved?: (path: string) => string,
+): string {
   return text.replace(BASE_FENCE, (whole, _fence: string, yaml: string) => {
     const lines = yaml.replace(/\r\n/g, '\n')
-    const followed = baseUnder(lines, under)
+    const followed = baseUnder(lines, under, moved)
     if (followed === lines) return whole
     return whole.replace(yaml, () => (lines === yaml ? followed : followed.replace(/\n/g, '\r\n')))
   })
