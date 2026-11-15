@@ -52,6 +52,7 @@ export {
 export type { Keystroke, Platform, Taken } from './keys'
 export { opensAt, spelled, walk } from './list-keys'
 export { stepped } from './step'
+export { roving } from './roving'
 export { longPress } from './longpress'
 export {
   ARCHIVE_MARK,

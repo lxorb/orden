@@ -10,7 +10,14 @@ import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
-import type { QuickAddPort, QuickAddPrefill, SheetId, SheetsPort, SurfacePorts } from './surfaces'
+import type {
+  QuickAddPort,
+  QuickAddPrefill,
+  ShellFocusPort,
+  SheetId,
+  SheetsPort,
+  SurfacePorts,
+} from './surfaces'
 import type { SyncStorePort, SyncPorts } from './sync-client'
 import type { TerminalPorts } from './terminal'
 import type { ThemePorts } from './theme'
@@ -135,4 +142,8 @@ export function askSheet(id: SheetId): Promise<void> {
 
 export function showQuickAdd(prefill?: QuickAddPrefill): void {
   ;(provided.get('quick-add.show') as QuickAddPort | undefined)?.show(prefill)
+}
+
+export function focusEditorRegion(): boolean {
+  return (provided.get('shell.focus') as ShellFocusPort | undefined)?.editor() ?? false
 }

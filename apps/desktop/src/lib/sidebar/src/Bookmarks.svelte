@@ -1,20 +1,21 @@
 <script lang="ts">
   import type { Bookmark, Entry } from '@orden/contracts'
   import {
-    dropOver,
-    longPress,
-    GRAPH_MARK,
-    SEARCH_MARK,
     carried,
     carriedNothing,
     carriedRows,
     carryBookmark,
-    draggedBookmark,
-    isTreeDrag,
-    Twist,
     DIVIDER,
-    type MenuEntry,
+    draggedBookmark,
+    dropOver,
+    GRAPH_MARK,
+    isTreeDrag,
+    longPress,
     menu,
+    type MenuEntry,
+    roving,
+    SEARCH_MARK,
+    Twist,
   } from '../../ui-kit/src/api'
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
@@ -28,7 +29,6 @@
   import { bookmarkEntry, iconEntries } from '../../menu-entries'
   import { dur, scale } from '../../platform/src/api'
   import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
-  import { roving } from '../../roving'
   import { rowName } from '../../platform/src/api'
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'

@@ -12,11 +12,10 @@
   import { tick } from 'svelte'
   import { Glyph } from './ui-controls/src/api'
   import { modes } from './modes/src/api'
-  import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/src/api'
   import { shortcuts } from './shortcuts/src/api'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './shortcuts/src/api'
-  import { viewport } from './ui-kit/src/api'
+  import { roving, viewport } from './ui-kit/src/api'
 
   const {
     view,

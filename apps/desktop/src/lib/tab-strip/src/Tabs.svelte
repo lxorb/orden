@@ -2,22 +2,23 @@
   import { webPages } from '@orden/contracts'
   import { droppedAddress } from '@orden/scan/web-address'
   import {
-    dropOver,
     carried,
     carriedMark,
+    Cross,
     dragged,
     draggedBookmark,
+    dropOver,
+    initial,
     isBookmarkDrag,
     isTreeDrag,
-    mayCarryAddress,
     longPress,
-    whileHere,
-    viewport,
-    UnsavedDot,
-    initial,
-    Cross,
-    SharedMark,
+    mayCarryAddress,
     menu,
+    roving,
+    SharedMark,
+    UnsavedDot,
+    viewport,
+    whileHere,
   } from '../../ui-kit/src/api'
   import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { staysOn } from '../../caret'
@@ -28,7 +29,6 @@
   import { chrome } from '../../theme/src/api'
   import { middleOpens, tabAsk } from '../../new-tab'
   import { rooms } from '../../collab/src/api'
-  import { roving } from '../../roving'
   import { shortcuts } from '../../shortcuts/src/api'
   import { privateMark, soundMark, syncMark } from '../../surfaces/src/api'
   import { tabOverview, workspace } from '../../workspace/src/api'

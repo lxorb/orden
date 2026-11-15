@@ -1,5 +1,8 @@
-import { focusEditor } from './focus'
-import { stepped, chorded, spelled, type Spelling, overlays } from './ui-kit/src/api'
+import { focusEditorRegion } from '@orden/contracts'
+import { chorded } from './keys'
+import { spelled, type Spelling } from './list-keys'
+import { overlays } from './overlays'
+import { stepped } from './step'
 
 interface LongList {
   count: () => number
@@ -167,7 +170,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
         }
         if (overlays.depth > 0) return
         event.preventDefault()
-        focusEditor()
+        focusEditorRegion()
         return
 
       default:
