@@ -277,6 +277,14 @@ class Wallpaper {
     void this.wearSharp()
   }
 
+  heard(slot: Slot): void {
+    this.held = { ...this.held, [slot]: slot === 'dark' ? heldDark() : heldWallpaper() }
+    this.sources[slot] = null
+    this.sharpened[slot] = null
+    theme.rewear(WALLPAPER_THEME)
+    if (theme.id === WALLPAPER_THEME) void this.wearSharp()
+  }
+
   private write(slot: Slot): void {
     const held = this.held[slot]
     if (!held) return
@@ -289,6 +297,13 @@ function clamp(value: number): number {
 }
 
 export const wallpaper = new Wallpaper()
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    const slot = SLOTS.find((one) => KEYS[one] === event.key)
+    if (slot) wallpaper.heard(slot)
+  })
+}
 
 $effect.root(() => {
   let making = false

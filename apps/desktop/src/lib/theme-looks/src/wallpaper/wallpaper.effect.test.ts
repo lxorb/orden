@@ -115,3 +115,29 @@ describe('a picture used as wallpaper from another theme', () => {
     expect(faked.blurs[0]).toBe(60)
   })
 })
+
+describe('a picture another window chose', () => {
+  test('is the one this window wears, not the one it had', async () => {
+    const { wallpaper } = await import('./wallpaper.svelte')
+    const theme = faked.theme
+    if (!theme) throw new Error('no theme')
+    let rewore = 0
+    theme.rewear = () => {
+      rewore++
+    }
+    theme.id = 'wallpaper'
+    flushSync()
+
+    const theirs = {
+      picture: 'data:image/png;base64,THEIRS',
+      blur: 12,
+      focus: [0.5, 0.5],
+      span: { least: [0, 0, 0], most: [255, 255, 255] },
+    }
+    localStorage.setItem('orden:wallpaper', JSON.stringify(theirs))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'orden:wallpaper' }))
+
+    expect(wallpaper.held.main?.picture).toBe(theirs.picture)
+    expect(rewore).toBe(1)
+  })
+})
