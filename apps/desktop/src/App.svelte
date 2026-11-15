@@ -586,7 +586,7 @@
   }
 
   function land(on: EditorView, line: number) {
-    workspace.uncoverNote()
+    workspace.showNote()
 
     const target = on.state.doc.line(Math.min(line + 1, on.state.doc.lines))
     on.dispatch({
