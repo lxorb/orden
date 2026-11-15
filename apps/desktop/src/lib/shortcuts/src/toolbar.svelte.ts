@@ -95,6 +95,16 @@ class Toolbar {
   restore() {
     const held = stored(STORAGE_KEY)
     this.chosen = usable(held)
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY) this.restore()
+    })
   }
 
   add(id: string) {

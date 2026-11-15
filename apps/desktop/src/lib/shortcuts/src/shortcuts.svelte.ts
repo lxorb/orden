@@ -81,6 +81,23 @@ class Shortcuts {
     this.preset =
       knownPreset(storedText(PRESET_KEY)) ??
       (Object.keys(this.overrides).length ? 'custom' : 'default')
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key !== STORAGE_KEY && event.key !== PRESET_KEY) return
+      this.restore()
+      for (const view of this.views) setShortcutKeys(view, this.overrides)
+    })
+  }
+
+  private get written(): KeyOverrides {
+    const held = stored(STORAGE_KEY)
+    return held === null ? this.overrides : usable(held)
   }
 
   choose(preset: Pick<Preset, 'id' | 'keys' | 'vim'>) {
@@ -186,15 +203,16 @@ class Shortcuts {
   }
 
   set(id: string, key: string | null) {
-    if (Object.keys(this.overrides).length >= MOST_OVERRIDES && !(id in this.overrides)) return
+    const held = this.written
+    if (Object.keys(held).length >= MOST_OVERRIDES && !(id in held)) return
 
-    this.overrides = { ...this.overrides, [id]: key }
+    this.overrides = { ...held, [id]: key }
     this.preset = 'custom'
     this.settle()
   }
 
   reset(id: string) {
-    this.overrides = without(this.overrides, id)
+    this.overrides = without(this.written, id)
     this.preset = 'custom'
     this.settle()
   }
