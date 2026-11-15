@@ -41,6 +41,25 @@ describe('an edit', () => {
   })
 })
 
+describe('a block right below the front matter or a fence', () => {
+  test('is only its own paragraph', () => {
+    const text = '---\ntags: [keep]\nstatus: open\n---\nThe idea here ^idea\n\nAfter\n'
+    expect(edited(text, [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
+      '---\ntags: [keep]\nstatus: open\n---\nNew words ^idea\n\nAfter\n',
+    )
+    expect(edited(text, [{ at: { block: 'idea' }, delete: true }])).toContain(
+      '---\ntags: [keep]\nstatus: open\n---\n',
+    )
+  })
+
+  test('leaves the fence that ends right above it', () => {
+    const text = '```\ncode\n```\nThe idea here ^idea\n'
+    expect(edited(text, [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
+      '```\ncode\n```\nNew words ^idea\n',
+    )
+  })
+})
+
 describe('several edits in one call', () => {
   const TEXT = '# Plan\n\n- [ ] one\n- [ ] two\n\n# Log\nnothing yet\n'
 

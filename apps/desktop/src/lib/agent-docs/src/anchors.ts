@@ -243,10 +243,14 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   )
   const row = one(marked, anchor, undefined)
 
+  const words = (at: number) => {
+    const near = rows[at]
+    return near !== undefined && !near.code && !near.matter && near.text.trim() !== ''
+  }
   let first = row.line
   let last = row.line
-  while (first > 0 && rows[first - 1]?.text.trim()) first--
-  while (last + 1 < rows.length && rows[last + 1]?.text.trim()) last++
+  while (words(first - 1)) first--
+  while (words(last + 1)) last++
 
   const start = rows[first] ?? row
   const end = rows[last] ?? row
