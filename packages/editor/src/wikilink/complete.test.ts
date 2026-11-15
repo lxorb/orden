@@ -344,6 +344,43 @@ describe('every row writes the link the app spells', () => {
     )
   })
 
+  test('a block named above the link still gets its link where the link was typed', async () => {
+    const doc = 'first para\n\nsee [[#^'
+    const asked = space([note('Here.md')], { path: 'Here.md', bodies: { 'Here.md': doc } })
+    const found = await rowsFor(doc, asked)
+    const row = found?.options.find((one) => one.label === 'first para')
+    if (!found || !row || typeof row.apply !== 'function') throw new Error('no row')
+
+    const view = {
+      get state() {
+        return built
+      },
+      dispatch: (spec: TransactionSpec) => {
+        built = built.update(spec).state
+      },
+    } as unknown as EditorView
+    let built = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(doc.length),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          noteIndex.of(asked.index),
+          blockNamer.of(() => {
+            view.dispatch({ changes: { from: 'first para'.length, insert: ' ^abc123' } })
+            return Promise.resolve('abc123')
+          }),
+        ],
+      }),
+    )
+
+    row.apply(view, row, found.from, doc.length)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(built.doc.toString()).toBe('first para ^abc123\n\nsee [[#^abc123]]')
+  })
+
   test('a `[[##` row carries the heading and takes the hashes with it', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })
 

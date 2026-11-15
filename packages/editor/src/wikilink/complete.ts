@@ -186,10 +186,17 @@ async function blockOptions(
 
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
+    const start = opened(view, from)
+    const typed = view.state.doc.sliceString(start, to)
+    const head = view.state.selection.main.head
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (id) insert({ ...target, fragment: `^${id}` })(view, completion, from, to)
+        if (!id) return
+        const moved = view.state.selection.main.head - head
+        const now = view.state.doc.sliceString(start + moved, to + moved)
+        if (now !== typed) return
+        insert({ ...target, fragment: `^${id}` })(view, completion, from + moved, to + moved)
       })
       .catch(() => undefined)
   }
