@@ -48,8 +48,7 @@ class Worker(harness.Worker):
         self.sql(
             f"insert into users (id, email, name, created_at)"
             f" values ('{user}', '{email}', 'Ada Lovelace', {now});"
-            f"insert into sessions (token_hash, user_id, created_at, expires_at)"
-            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
+            + harness.session_row(digest, user, now)
         )
 
         return token

@@ -34,10 +34,7 @@ class Worker(harness.Worker):
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
-        self.sql(
-            "insert into sessions (token_hash, user_id, created_at, expires_at)"
-            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
-        )
+        self.sql(harness.session_row(digest, user, now))
         return token
 
 
