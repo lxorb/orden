@@ -149,15 +149,29 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   const target = addressed(to)
   const join = (base: string, rest: string, kept: boolean) =>
     !rest ? base : kept || !rest.startsWith('/') ? `${base}${rest}` : joinPath(base, rest.slice(1))
+  const read = (one: { rest: string }) =>
+    source.kept
+      ? keptBytes(from, one.rest)
+      : crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }).then(
+          (bytes) => new Uint8Array(bytes),
+        )
+  const words = new Map<string, Uint8Array>()
+  if (target.kept) {
+    const { readsAsText } = await import('../web/commands')
+    for (const one of going) {
+      if (one.dir || !readsAsText(`${to}${one.rest}`)) continue
+      const bytes = await read(one)
+      if (!isUtf8(bytes)) throw new Error(`${from}${one.rest} is not UTF-8 text`)
+      words.set(one.rest, bytes)
+    }
+  }
   for (const one of going) {
     const into = join(target.at, one.rest, target.kept)
     if (one.dir) {
       await (target.kept ? web : crate)('create_folder', { path: into })
       continue
     }
-    const bytes = source.kept
-      ? await keptBytes(from, one.rest)
-      : new Uint8Array(await crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }))
+    const bytes = words.get(one.rest) ?? (await read(one))
     await (target.kept ? web : crate)('write_bytes', { path: into, bytes })
   }
   if (command === 'copy_path') return undefined as T
@@ -172,6 +186,17 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     await remove('delete_note', join(source.at, one.rest, source.kept)).catch(() => undefined)
   }
   return undefined as T
+}
+
+const strict = new TextDecoder('utf-8', { fatal: true })
+
+function isUtf8(bytes: Uint8Array): boolean {
+  try {
+    strict.decode(bytes)
+    return true
+  } catch {
+    return false
+  }
 }
 
 async function keptHolds(path: string): Promise<boolean> {

@@ -359,6 +359,19 @@ describe('a new space', () => {
 })
 
 describe('a note carried in from a folder', () => {
+  test('that is not UTF-8 text is refused, and stays where it was, byte for byte', async () => {
+    const latin = new Uint8Array([0x43, 0x61, 0x66, 0xe9])
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set('/spaces/Disk/Old.md', latin)
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+
+    await expect(
+      call('rename_note', { from: '/spaces/Disk/Old.md', to: `${made.path}/Old.md` }),
+    ).rejects.toThrow('not UTF-8')
+    expect(disk.files.get('/spaces/Disk/Old.md')).toEqual(latin)
+    expect(await call('path_exists', { path: `${made.path}/Old.md` })).toBe(false)
+  })
+
   test('is refused where a note of the same name, spelled another way, already lives', async () => {
     const nfc = 'Caf\u00e9.md'
     const nfd = 'Cafe\u0301.md'
