@@ -245,22 +245,31 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
 
   const words = (at: number) => {
     const near = rows[at]
-    return near !== undefined && !near.code && !near.matter && near.text.trim() !== ''
+    return near !== undefined && !near.matter && (near.code || near.text.trim() !== '')
   }
+  const alone = row.text.trim() === `^${anchor.block}`
+  let keep = alone ? `\n^${anchor.block}` : ` ^${anchor.block}`
   let first = row.line
   let last = row.line
+  if (alone && !words(first - 1)) {
+    let above = first - 1
+    while (above > 0 && rows[above]?.text.trim() === '' && !rows[above]?.matter) above--
+    if (words(above)) {
+      first = above
+      keep = `\n\n^${anchor.block}`
+    }
+  }
   while (words(first - 1)) first--
   while (words(last + 1)) last++
 
   const start = rows[first] ?? row
   const end = rows[last] ?? row
 
-  const alone = row.text.trim() === `^${anchor.block}`
   return {
     from: start.from,
     to: end.from + end.text.length,
     shape: 'paragraph',
-    keep: alone ? `\n^${anchor.block}` : ` ^${anchor.block}`,
+    keep,
   }
 }
 

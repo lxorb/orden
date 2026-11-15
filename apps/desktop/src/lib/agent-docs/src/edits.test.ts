@@ -52,10 +52,14 @@ describe('a block right below the front matter or a fence', () => {
     )
   })
 
-  test('leaves the fence that ends right above it', () => {
-    const text = '```\ncode\n```\nThe idea here ^idea\n'
-    expect(edited(text, [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
-      '```\ncode\n```\nNew words ^idea\n',
+  test('named by an id on its own line is the block above it, a table or a fence', () => {
+    const table = '| a | b |\n| - | - |\n| 1 | 2 |\n\n^table\n\nAfter\n'
+    expect(edited(table, [{ at: { block: 'table' }, delete: true }])).toBe('After\n')
+    expect(edited(table, [{ at: { block: 'table' }, replace: '| c |\n| - |\n| 3 |' }])).toBe(
+      '| c |\n| - |\n| 3 |\n\n^table\n\nAfter\n',
+    )
+    expect(edited('```\ncode\n```\n^snip\n', [{ at: { block: 'snip' }, replace: 'new' }])).toBe(
+      'new\n^snip\n',
     )
   })
 })
