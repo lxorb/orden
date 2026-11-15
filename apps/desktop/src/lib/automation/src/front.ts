@@ -22,6 +22,8 @@ export const NOTE_TREE = new Set([
 
 const ACROSS_SPACE = new Set(['convert-website-notes', 'redo-file', 'undo-file'])
 
+const ACROSS_SPACES = new Set(['redo-file', 'undo-file'])
+
 function actsOnFrontNote(id: string): boolean {
   return (
     id.startsWith('export-') ||
@@ -38,11 +40,15 @@ function actsAcrossSpace(id: string): boolean {
 export interface AgentsMay {
   front: boolean
   space: boolean
+  everywhere: boolean
 }
 
 export function keptFromAgents(id: string, may: AgentsMay): string | null {
   if (actsOnFrontNote(id) && !may.front) {
     return `${id} acts on the note in front, which is protected: the reader has to choose Let agents read in its menu`
+  }
+  if (ACROSS_SPACES.has(id) && !may.everywhere) {
+    return `${id} reaches notes that are protected from agents`
   }
   if (actsAcrossSpace(id) && !may.space) {
     return `${id} reaches notes in this space that are protected from agents`

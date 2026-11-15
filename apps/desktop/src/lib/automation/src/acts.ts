@@ -198,7 +198,8 @@ export async function runCommand(args: Said, road: Road = 'here'): Promise<unkno
   if (found.disabled === true) throw new Error(`${id} cannot run just now`)
   const kept = keptFromAgents(id, {
     front: protection.agentsMay(workspace.active?.path),
-    space: protection.agentsMayAllOf(workspace.activeSpace?.root),
+    space: protection.agentsMayAllOf(workspace.activeSpace?.root ?? ''),
+    everywhere: protection.agentsMayAllOf(),
   })
   if (kept) throw new Error(kept)
   if (found.ownWindow === true) throw new Error(`${id} is not something the command line may run`)

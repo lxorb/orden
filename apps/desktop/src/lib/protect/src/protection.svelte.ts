@@ -191,10 +191,11 @@ export class Protection {
     return shut.includes(SPACE) ? null : shut
   }
 
-  agentsMayAllOf(root: string | null | undefined): boolean {
-    if (!root) return true
-    return Object.entries(this.ways(root)).every(([key, way]) =>
-      unlocks.agentsMay([{ root, key, way }]),
+  agentsMayAllOf(root?: string | null): boolean {
+    return (root ? [root] : Object.keys(this.spaces)).every((one) =>
+      Object.entries(this.ways(one)).every(([key, way]) =>
+        unlocks.agentsMay([{ root: one, key, way }]),
+      ),
     )
   }
 

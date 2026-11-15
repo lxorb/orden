@@ -157,7 +157,8 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
   const kept = keptFromAgents(id, {
     front: seen(workspace.active?.path ?? ''),
-    space: protection.agentsMayAllOf(workspace.activeSpace?.root),
+    space: protection.agentsMayAllOf(workspace.activeSpace?.root ?? ''),
+    everywhere: protection.agentsMayAllOf(),
   })
   if (kept) throw new Refused('protected', kept)
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {

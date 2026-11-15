@@ -628,3 +628,15 @@ describe('a command on the note in front', () => {
     }
   })
 })
+
+describe('undoing the last file action from the command line', () => {
+  test('is refused while another space keeps notes from agents', async () => {
+    const { protection } = await import('../../protect/src/api')
+    protection.set('/Home', '/Home/Private', 'password')
+    try {
+      await expect(runCommand({ id: 'undo-file' }, 'here')).rejects.toThrow(/protected from agents/)
+    } finally {
+      protection.set('/Home', '/Home/Private', null)
+    }
+  })
+})

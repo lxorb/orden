@@ -2807,3 +2807,19 @@ describe('a command that reaches past the note in front', () => {
     }
   })
 })
+
+describe('undoing the last file action', () => {
+  test('is refused while any space, not only the active one, keeps notes from agents', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    protection.set('/s/Home', '/s/Home/Private', 'password')
+    ran.length = 0
+    try {
+      expect(await call('run_command', { id: 'undo-file' })).toMatchObject({ code: 'protected' })
+      answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
+      expect(await call('run_command', { id: 'reformat' })).toMatchObject({ status: 'ok' })
+      expect(ran).toEqual(['reformat'])
+    } finally {
+      protection.set('/s/Home', '/s/Home/Private', null)
+    }
+  })
+})
