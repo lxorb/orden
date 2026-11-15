@@ -1,3 +1,4 @@
+import type { Entry } from './item'
 import type { SyncFileOp } from './sync-client'
 
 export interface TextChange {
@@ -48,6 +49,8 @@ export interface SharedNote {
 export interface WorkspaceViewPort {
   readonly spaces: readonly WorkspaceSpace[]
   readonly tabs: readonly WorkspaceTab[]
+  readonly tree: Entry | null
+  readonly activeRoot: string | null
   showSpace(id: string): Promise<void>
   reload(path: string, text: string): void
   openShared(item: SharedNote, text: string): void
@@ -72,6 +75,8 @@ export const NO_WORKSPACE_NOTES: WorkspaceNotesPort = {
 export const NO_WORKSPACE_VIEW: WorkspaceViewPort = {
   spaces: [],
   tabs: [],
+  tree: null,
+  activeRoot: null,
   showSpace: () => Promise.resolve(),
   reload: () => undefined,
   openShared: () => undefined,

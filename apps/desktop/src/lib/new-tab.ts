@@ -23,11 +23,9 @@ export function linkAsk(press: Press): LinkAsk {
   return press.altKey && linkModifier(press) ? 'aside' : tabAsk(press)
 }
 
-export interface OpenHow {
-  activate?: boolean
-  preview?: boolean
-  beside?: boolean
-}
+import type { OpenHow } from '@orden/contracts'
+
+export type { OpenHow }
 
 export function howFor(ask: TabAsk, plain: OpenHow = {}): OpenHow {
   if (ask === 'plain') return plain

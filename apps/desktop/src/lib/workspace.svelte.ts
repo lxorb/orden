@@ -1,4 +1,4 @@
-import { type Entry, type PickedFile, providePort } from '@orden/contracts'
+import { type Entry, type PickedFile, providePort, tabKindLoaded } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
 import { seed } from './web-backend/src/api'
@@ -431,15 +431,6 @@ class Workspace {
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
       }
-    })
-    this.fileOps.follow((op) => {
-      const tree = this.tree
-      if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree || op.heard) return
-      if (!samePath(op.root, this.activeSpace?.root ?? '')) return
-      return import('./views/src/api').then(
-        ({ orderMoved }) => orderMoved(tree, op.root ?? '', op.from, op.to),
-        unfetched,
-      )
     })
   }
 
@@ -2155,19 +2146,17 @@ class Workspace {
           busy.failed('Databases are off. Turn them on in Settings.')
           return
         }
-        const { openBaseFile } = await (await import('./views/src/api')).baseOpening()
-        openBaseFile(path, options)
+        await (await tabKindLoaded('view')).open?.(path, options)
         return
       }
       case 'chat':
-        if (!__EVEN_PLUGIN__)
-          (await (await import('./chats-client/src/api')).chatOpening()).openChat(path, options)
+        if (!__EVEN_PLUGIN__) await (await tabKindLoaded('chat')).open?.(path, options)
         return
       case 'term':
-        if (!__EVEN_PLUGIN__) await (await import('./terminal/src/api')).openTerm(path, options)
+        if (!__EVEN_PLUGIN__) await (await tabKindLoaded('terminal')).open?.(path, options)
         return
       case 'application':
-        if (!__EVEN_PLUGIN__) (await import('./apps/src/api')).openApplication(path, options)
+        if (!__EVEN_PLUGIN__) await (await tabKindLoaded('application')).open?.(path, options)
         return
       case 'note':
         await this.open(path, options)
@@ -3393,11 +3382,9 @@ class Workspace {
     if (naming.making === 'canvas') await this.createCanvas(dir, name)
     else if (naming.making === 'pages') await this.createPages(dir, name)
     else if (naming.making === 'web') await this.createWebsite(dir, name)
-    else if (naming.making === 'database')
-      await (await import('./views/src/api')).createDatabase(dir, name)
+    else if (naming.making === 'database') await (await tabKindLoaded('view')).make?.(dir, name)
     else if (naming.making !== 'chat') await this.createNote(dir, name)
-    else if (!__EVEN_PLUGIN__)
-      await (await (await import('./chats-client/src/api')).chatOpening()).makeChat(dir, name)
+    else if (!__EVEN_PLUGIN__) await (await tabKindLoaded('chat')).make?.(dir, name)
   }
 
   cancelNaming() {
@@ -4256,6 +4243,12 @@ providePort('workspace.view', {
   },
   get tabs() {
     return workspace.tabs
+  },
+  get tree() {
+    return workspace.tree
+  },
+  get activeRoot() {
+    return workspace.activeSpace?.root ?? null
   },
   showSpace: (id) => workspace.showSpace(id),
   reload: (path, text) => workspace.reload(path, text),

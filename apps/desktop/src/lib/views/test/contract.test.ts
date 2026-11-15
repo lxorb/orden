@@ -10,6 +10,7 @@ import {
   pickTemplate,
   rowsCopied,
   startRunner,
+  viewTabKind,
 } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
@@ -63,5 +64,7 @@ describe('the module stands on its own', () => {
       orderMoved,
     ]
     for (const one of doors) expect(typeof one).toBe('function')
+    expect(typeof viewTabKind.open).toBe('function')
+    expect(typeof viewTabKind.make).toBe('function')
   })
 })

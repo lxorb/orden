@@ -175,6 +175,7 @@ export {
   registerTabKind,
   type TabFacts,
   tabKindLoaded,
+  type OpenHow,
   type TabKindParts,
   tabKindParts,
   type TabMenuEntry,

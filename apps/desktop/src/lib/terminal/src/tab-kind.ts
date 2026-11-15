@@ -3,7 +3,7 @@ import { iconChoice } from '../../icon-choice.svelte'
 import { iconEntries } from '../../menu.svelte'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { workspace } from '../../workspace.svelte'
-import { openOnline, renameTerminal, usageOfTab } from './api'
+import { openOnline, openTerm, renameTerminal, usageOfTab } from './api'
 import { openTerminal, shellRows } from './open'
 import { readSpec } from './spec'
 
@@ -31,6 +31,9 @@ function menu(id: string): TabMenuEntry[] {
 }
 
 export const terminalTabKind: TabKindParts = {
+  open: async (path, how) => {
+    await openTerm(path, how)
+  },
   menu,
   facts: async (id) => {
     const tab = terminalOf(id)
