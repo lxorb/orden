@@ -54,7 +54,7 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 vi.mock('../../accounts/src/client', () => ({ api: {}, BASE: '' }))
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: (...said: unknown[]) => saved.push(said) },
 }))
 vi.mock('../../space-watch', () => ({ scanSpace: () => Promise.resolve([]) }))

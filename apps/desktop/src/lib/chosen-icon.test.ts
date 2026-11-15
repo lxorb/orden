@@ -52,7 +52,8 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('./link-index.svelte', () => ({
+vi.mock('./link-index/src/api', async (original) => ({
+  ...(await original<typeof import('./link-index/src/api')>()),
   links: {
     rootOf: () => index.root,
     iconOf: (path: string) => index.icons[relative(path)] ?? null,
@@ -115,7 +116,7 @@ vi.mock('./workspace.svelte', () => ({
 }))
 
 const { chosenIcon, chosenTint, faviconFor, holdsPaper, sourceMark } = await import('./chosen-icon')
-const { elsewhere } = await import('./marks-elsewhere.svelte')
+const { elsewhere } = await import('./link-index/src/api')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
 
 function tabAt(path: string) {

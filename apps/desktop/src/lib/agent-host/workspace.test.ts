@@ -271,7 +271,7 @@ const readOnly = new Set<string>()
 
 const indexed: { root: string; asked: string; args: unknown[] }[] = []
 
-vi.mock('../link-index.svelte', () => {
+vi.mock('../link-index/src/api', () => {
   class Links {
     root = ''
     archivedIn: (root: string) => ReadonlySet<string> = () => new Set()

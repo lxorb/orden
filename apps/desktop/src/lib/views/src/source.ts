@@ -1,7 +1,7 @@
 import { readBase, type Row, writeBase } from '@orden/bases'
 import { CodeBlocks, OPENS } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { rows } from '../../rows/src/api'
 import { insideSpace, samePath, within } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'

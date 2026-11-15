@@ -4,7 +4,7 @@
   import { region, dur, fly, samePath, withinSpace } from '../../platform/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { chooseFiles } from '../../choose-files'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { longPaste } from '../../long-paste'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { overlays } from '../../ui-kit/src/api'

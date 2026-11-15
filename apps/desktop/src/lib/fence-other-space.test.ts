@@ -39,6 +39,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { readingHtml } = await import('./reading/src/render')
+const { serveLinks } = await import('./link-index/src/api')
+serveLinks({ search: (await import('./search/src/api')).searchSpace })
 
 beforeEach(() => {
   searched.length = 0

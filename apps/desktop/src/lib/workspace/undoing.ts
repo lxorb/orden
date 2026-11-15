@@ -8,9 +8,12 @@ import {
   samePath,
   within,
   invoke,
+  oneWriteAt,
+  readText,
+  writeInTurn,
 } from '../platform/src/api'
 import { applied, appliedToFile, type Edit, endingsLike } from '@orden/scan/search/replace'
-import { links, type Retargeting } from '../link-index.svelte'
+import { links, type Retargeting } from '../link-index/src/api'
 import type { HoldCheck } from '@orden/sync-core'
 import { keptAway } from '../away/src/api'
 import type { Entry } from '../workspace.svelte'
@@ -19,7 +22,7 @@ import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
 import type { Binning, FileAction, FileActions, Kept } from './undo.svelte'
 import type { Bookmark } from './bookmarks.svelte'
-import { inFileTurn, readText, writeEdited, writeInTurn } from './in-turn'
+import { writeEdited } from './in-turn'
 import { writeFile } from './write-file'
 
 export interface PutsBack {
@@ -332,7 +335,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       continue
     }
 
-    const down = await inFileTurn(note.path, async () => {
+    const down = await oneWriteAt(note.path, async () => {
       const file = await readText(note.path)
       if (file === null)
         throw new Error(`${note.path} will not read, so nothing is written over it`)

@@ -168,7 +168,7 @@ vi.mock('../web-tab/src/api', async (actual) => ({
 }))
 vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
-vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
+vi.mock('../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
 vi.mock('../modes.svelte', () => ({ modes: { pagesPaper: 'a4' } }))
 const settings = { show: vi.fn() }
 vi.mock('../settings.svelte', () => ({ settings }))

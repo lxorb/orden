@@ -1,12 +1,19 @@
 {
   "name": "reading",
   "layer": "content",
-  "dependsOn": ["contracts", "editor", "markdown", "pdf", "platform", "scan", "theme"],
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "markdown",
+    "pdf",
+    "platform",
+    "scan",
+    "theme",
+    "link-index"
+  ],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
     "apps/desktop/src/lib/kept-cover.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
-    "apps/desktop/src/lib/note-images.ts",
-    "apps/desktop/src/lib/query-block.ts"
+    "apps/desktop/src/lib/note-images.ts"
   ]
 }

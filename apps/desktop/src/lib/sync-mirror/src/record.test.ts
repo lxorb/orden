@@ -18,12 +18,16 @@ vi.mock('../../workspace.svelte', () => ({
 
 const invoked: { command: string; path: string }[] = []
 
-vi.mock('../../platform/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../platform/src/api')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     invoked.push({ command, path: String(args.path) })
     return Promise.resolve(command === 'read_note' ? 'what is here' : undefined)
   },
+}))
+
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
   isNative: false,
 }))

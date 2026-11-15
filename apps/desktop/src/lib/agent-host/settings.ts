@@ -1,6 +1,6 @@
 import type { AgentAnswer } from '../automation/src/api'
 import { ACCENTS, theme } from '../theme/src/api'
-import { LINK_FORMATS } from '../link-format'
+import { LINK_FORMATS } from '../link-format/src/api'
 import { LINE_HEIGHTS, modes, WIDTHS } from '../modes.svelte'
 import { type Field, settingDeclarations, settingSchema } from '../settings/src/api'
 import { asked } from './asks'

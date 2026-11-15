@@ -13,7 +13,8 @@
     "ui-controls",
     "ui-kit",
     "usage",
-    "commands"
+    "commands",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -24,7 +25,6 @@
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/frecency.ts",
     "apps/desktop/src/lib/hints.svelte.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/outline.ts",
     "apps/desktop/src/lib/panel-marks.ts",

@@ -9,6 +9,7 @@ import {
   type Folded,
   readSpaces,
   without,
+  coveredBy,
 } from '../platform/src/api'
 import { carried, moving } from './file-ops'
 
@@ -30,17 +31,6 @@ export function archiveMap(value: unknown): ArchiveMap {
   }
 
   return Object.fromEntries(kept)
-}
-
-export function coveredBy(keys: ReadonlySet<string>, at: string): string | null {
-  if (!keys.size) return null
-
-  for (let path = at; ;) {
-    if (keys.has(path)) return path
-    const cut = path.lastIndexOf('/')
-    if (cut === -1) return null
-    path = path.slice(0, cut)
-  }
 }
 
 function under(path: string, key: string, root: string): boolean {

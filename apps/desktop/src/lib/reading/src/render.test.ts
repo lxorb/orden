@@ -11,7 +11,7 @@ const bodies: Record<string, string> = {
 
 const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from: [] }
 
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     spaceOf: () => null,
     targetOf: (from: string | null, link: { target: string }) => {

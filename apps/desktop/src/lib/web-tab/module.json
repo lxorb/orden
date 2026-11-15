@@ -18,7 +18,8 @@
     "ui-kit",
     "parting",
     "web-backend",
-    "windows"
+    "windows",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -34,7 +35,6 @@
     "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/icon-sets.ts",
     "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",

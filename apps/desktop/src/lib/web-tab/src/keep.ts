@@ -1,5 +1,5 @@
 import { SAVE_AT_MOST, SAVE_DELAY, invoke, afterQuiet, type Later } from '../../platform/src/api'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { owes, writing } from '../../parting/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { isWebAddress } from '@orden/scan/web-address'

@@ -1,6 +1,6 @@
 import type { HtmlOptions } from './render'
 import { imagePath } from '../../images'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { modes } from '../../modes.svelte'
 import { settings } from '../../settings.svelte'
 import { trustsHtmlIn } from '../../sharing/src/api'

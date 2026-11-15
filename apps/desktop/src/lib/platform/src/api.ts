@@ -1,5 +1,5 @@
 export { carryKeys } from './former-keys'
-export { ASSET_ROUTE, assetType } from './asset-route'
+export { assetType } from './asset-route'
 export { serveAssets } from './serve-assets'
 export {
   BEAT_EVERY,
@@ -44,6 +44,7 @@ export { filledIn, meet, readSpaces, withOrWithout, without } from './records'
 export type { Folded, Folding } from './records'
 export {
   askCase,
+  coveredBy,
   folderOf,
   foldsIn,
   insideAnyOf,
@@ -120,6 +121,7 @@ export {
   spaceOf,
   under,
 } from './web-paths'
+export { keepVersion, readText, writeInTurn, writeTaking } from './note-files'
 export { oneWriteAt, windows } from './windows'
 export type { Said, Windows } from './windows'
 export { localDate, localNumber, region, systemLocale } from './region'

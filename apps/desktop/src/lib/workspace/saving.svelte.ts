@@ -15,7 +15,7 @@ import {
   joinPath,
   afterQuiet,
 } from '../platform/src/api'
-import { links } from '../link-index.svelte'
+import { links } from '../link-index/src/api'
 import { owesLast, surfacesToWords, writeOwed } from '../parting/src/api'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
 import type { FileOp } from './file-ops'

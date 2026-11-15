@@ -10,7 +10,7 @@
 
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { AGENTS_NAME } from '../../platform/src/api'
   import { onDisk } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'

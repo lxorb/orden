@@ -13,6 +13,7 @@ import type { TerminalPorts } from './terminal'
 import type { ThemePorts } from './theme'
 import type { VoicePorts } from './voice'
 import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
+import { NO_WORKSPACE_NOTES, type WorkspaceNotesPort, type WorkspacePorts } from './workspace'
 
 export type PortMap = AccountPorts &
   AgentPorts &
@@ -27,7 +28,8 @@ export type PortMap = AccountPorts &
   TerminalPorts &
   ThemePorts &
   VoicePorts &
-  WebPorts
+  WebPorts &
+  WorkspacePorts
 
 export type PortName = keyof PortMap
 
@@ -82,4 +84,8 @@ export function mayStop(why: StopReason): Promise<boolean> {
 
 export function webPages(): WebPagesPort {
   return (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
+}
+
+export function workspaceNotes(): WorkspaceNotesPort {
+  return (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES
 }

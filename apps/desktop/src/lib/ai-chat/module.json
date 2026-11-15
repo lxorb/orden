@@ -20,12 +20,12 @@
     "ui-kit",
     "parting",
     "web-backend",
-    "automation"
+    "automation",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

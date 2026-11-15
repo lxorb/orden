@@ -53,7 +53,7 @@ vi.mock('../../../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../../../link-index.svelte', () => ({ links: {} }))
+vi.mock('../../../link-index/src/api', () => ({ links: {} }))
 vi.mock('../../../scratchpad/src/api', () => ({
   pad: () => Promise.resolve({ where: () => Promise.resolve('') }),
 }))

@@ -1,5 +1,5 @@
 import { extracted, merged, type Split, splitAt } from '../composer'
-import type { Retargeting } from '../link-index.svelte'
+import type { Retargeting } from '../link-index/src/api'
 import {
   folderOf,
   isMarkdownPath,

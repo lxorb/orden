@@ -1,4 +1,4 @@
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import {
   onDisk,
   shownName,

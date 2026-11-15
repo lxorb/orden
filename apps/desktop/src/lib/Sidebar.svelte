@@ -58,7 +58,7 @@
   import { pullable } from './pull.svelte'
   import { scrollbar } from './ui-kit/src/api'
   import { workspace } from './workspace.svelte'
-  import { links } from './link-index.svelte'
+  import { links } from './link-index/src/api'
   import { worthAGraph } from './graph/src/api'
   import { DEEPEST, SHALLOWEST } from './graph-view/src/api'
   import { search } from './search.svelte'

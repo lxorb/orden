@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { expect, test, vi } from 'vitest'
 
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     version: 1,
     index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),

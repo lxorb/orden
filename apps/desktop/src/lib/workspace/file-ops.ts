@@ -1,35 +1,9 @@
+import type { SyncFileKind, SyncFileOp } from '@orden/contracts'
 import { log, movedTo, relativeTo, samePath, within } from '../platform/src/api'
 
-export type Kind = 'file' | 'folder' | 'space'
+export type Kind = SyncFileKind
 
-export type FileOp = (
-  | {
-      op: 'created'
-      path: string
-      kind: Exclude<Kind, 'space'>
-      root: string | null
-      key?: string
-      back?: string
-      putBack?: true
-    }
-  | {
-      op: 'moved'
-      from: string
-      to: string
-      kind: Kind
-      root: string | null
-      into?: string | null
-    }
-  | {
-      op: 'removed'
-      path: string
-      kind: Kind
-      root: string | null
-      back?: string
-    }
-) & {
-  heard?: true
-}
+export type FileOp = SyncFileOp
 
 export type Follower = (op: FileOp) => unknown
 

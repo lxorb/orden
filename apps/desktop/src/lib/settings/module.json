@@ -23,7 +23,8 @@
     "updates",
     "history",
     "snapshots",
-    "kept-for-good"
+    "kept-for-good",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/AiPane.svelte",
@@ -43,7 +44,6 @@
     "apps/desktop/src/lib/kept-scroll.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/kind-words.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/new-kinds.ts",
     "apps/desktop/src/lib/note-id.ts",

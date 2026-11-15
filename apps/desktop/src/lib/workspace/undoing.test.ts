@@ -37,7 +37,7 @@ vi.mock('../platform/src/tauri', () => ({
 
 const told: string[] = []
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../link-index/src/api', () => ({
   links: {
     noteSaved: (path: string) => void told.push(`saved ${path}`),
   },

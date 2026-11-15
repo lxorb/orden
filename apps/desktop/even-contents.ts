@@ -128,6 +128,8 @@ export const APP_FOLDERS = [
   'history',
   'import',
   'kept-for-good',
+  'link-format',
+  'link-index',
   'matching',
   'mobile',
   'onboarding',

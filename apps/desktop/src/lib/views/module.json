@@ -19,7 +19,8 @@
     "shortcuts",
     "commands",
     "automation",
-    "windows"
+    "windows",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/drawer.svelte.ts",
@@ -27,7 +28,6 @@
     "apps/desktop/src/lib/folder-notes.ts",
     "apps/desktop/src/lib/images.ts",
     "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/notify.ts",

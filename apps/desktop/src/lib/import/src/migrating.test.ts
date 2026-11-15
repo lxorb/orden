@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { sourceOf, type Source } from './sources'
-import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format'
+import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format/src/api'
 
 interface Entry {
   path: string
@@ -95,7 +95,7 @@ vi.mock('../../platform/src/tauri', () => ({
 }))
 vi.mock('../../workspace.svelte', () => ({ workspace: ws }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
@@ -108,7 +108,7 @@ vi.mock('../../first-visit.svelte', () => ({
   firstVisit: { fresh: false, answered: () => undefined },
 }))
 vi.mock('../../carry-over', async () => {
-  const { setLinkWriting } = await import('../../link-format')
+  const { setLinkWriting } = await import('../../link-format/src/api')
   return {
     carryOver: async (carried: { linkFormat?: LinkFormat }) => {
       if (carried.linkFormat) setLinkWriting(carried.linkFormat)

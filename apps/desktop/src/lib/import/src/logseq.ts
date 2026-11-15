@@ -1,6 +1,6 @@
 import { foldName } from '@orden/markdown/links'
 
-import { encodeTarget } from '../../link-rewrite'
+import { encodeTarget } from '@orden/markdown/links'
 import { folderOf, relativePath } from '../../platform/src/api'
 
 import { folderPlan, isHidden, isJunk } from './folder'

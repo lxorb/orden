@@ -8,8 +8,8 @@ import {
 } from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
 import { saysNothing } from '@orden/scan/note'
-import { ICON_COLOUR_KEY, ICON_KEY } from './ui-kit/src/api'
-import { isMarkdownPath, noteName, pathKey, within, invoke } from './platform/src/api'
+import { ICON_COLOUR_KEY, ICON_KEY } from '../../ui-kit/src/api'
+import { isMarkdownPath, noteName, onDisk, pathKey, within, invoke } from '../../platform/src/api'
 import { readWebFile } from '@orden/scan/shortcut'
 
 interface Worn {
@@ -80,10 +80,7 @@ async function wornBy(path: string, content: string): Promise<Worn> {
 }
 
 async function holdsItsPaper(path: string): Promise<boolean> {
-  const [{ onDisk }, { paperOf }] = await Promise.all([
-    import('./platform/src/api'),
-    import('@orden/markdown/pages'),
-  ])
+  const { paperOf } = await import('@orden/markdown/pages')
   return onDisk(paperOf(path))
 }
 

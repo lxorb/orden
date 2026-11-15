@@ -9,7 +9,7 @@
   import { followHref } from '../../../open-link'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { showProfile } from '../../../accounts-ui/src/api'
-  import { links } from '../../../link-index.svelte'
+  import { links } from '../../../link-index/src/api'
   import { workspace } from '../../../workspace.svelte'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import { drawing } from '../../../markdown-view.svelte'

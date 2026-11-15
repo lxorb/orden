@@ -1,7 +1,7 @@
 import { createEditor, EditorView, modeEffects, type PreviewNote } from '@orden/editor'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { pickedLink } from './composer'
-import { links } from './link-index.svelte'
+import { links } from './link-index/src/api'
 import { modes } from './modes.svelte'
 import { notePicture } from './note-images'
 import { canWriteAt, trustsHtmlAt } from './sharing/src/api'

@@ -1,4 +1,4 @@
-import { links, spaceLinks } from '../link-index.svelte'
+import { links, spaceLinks } from '../link-index/src/api'
 import { workspace } from '../workspace.svelte'
 import type { Place } from './spaces'
 

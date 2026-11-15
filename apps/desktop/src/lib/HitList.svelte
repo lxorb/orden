@@ -2,7 +2,7 @@
   import { tick } from 'svelte'
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import type { Outgoing, Reference } from './link-index.svelte'
+  import type { Outgoing, Reference } from './link-index/src/api'
   import { linkPieces, shownLine } from './link-line'
   import { middleOpens } from './new-tab'
   import { roving } from './roving'

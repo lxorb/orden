@@ -5,7 +5,7 @@ import { BASE } from '../../accounts/src/api'
 import { accountAddress } from '../../assets'
 import { isPicturePath, assetUrl, joinPath } from '../../platform/src/api'
 import { enginesArrived } from '../../engines.svelte'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { pointer, withPictures } from '../../reading/src/api'
 
 const MOST = 600

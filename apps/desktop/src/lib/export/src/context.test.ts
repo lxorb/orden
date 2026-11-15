@@ -25,7 +25,7 @@ vi.mock('../../theme/src/theme.svelte', () => ({
   theme: { accent: 'violet', active: { path: null } },
 }))
 vi.mock('../../modes.svelte', () => ({ modes: { codeTheme: 'auto' } }))
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     embedSource: () => null,
     relativeTarget: () => null,

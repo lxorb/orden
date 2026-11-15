@@ -55,6 +55,7 @@ import {
   unwrapOr,
   userId,
   webPages,
+  workspaceNotes,
   whenLoaded,
   whenPortProvided,
   type Result,
@@ -572,5 +573,18 @@ describe('loads', () => {
     rows()
     broken()
     expect(commandRows('web', view)).toEqual([])
+  })
+
+  it('answers the open notes with nothing until the workspace binds them', async () => {
+    const notes = workspaceNotes()
+    expect(notes.activeRoot).toBeNull()
+    expect(notes.documentAt('/a.md')).toBeNull()
+    expect(notes.leftOut('/')).toEqual([])
+    await expect(notes.openAt('/a.md', 1)).resolves.toBeUndefined()
+    await expect(notes.toggleTaskAt('/a.md', 1)).resolves.toBeUndefined()
+    const unbind = providePort('workspace.notes', { ...notes, activeRoot: '/space' })
+    expect(workspaceNotes().activeRoot).toBe('/space')
+    unbind()
+    expect(workspaceNotes().activeRoot).toBeNull()
   })
 })

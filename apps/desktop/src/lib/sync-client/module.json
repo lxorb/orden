@@ -21,13 +21,13 @@
     "parting",
     "away",
     "web-backend",
-    "kept-for-good"
+    "kept-for-good",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/icloud-placeholder.ts",
     "apps/desktop/src/lib/left-spaces.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/notify.ts",
     "apps/desktop/src/lib/space-owed.ts",
     "apps/desktop/src/lib/space-pairing.ts",

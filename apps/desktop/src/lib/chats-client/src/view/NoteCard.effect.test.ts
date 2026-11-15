@@ -2,7 +2,7 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { workspace } = await import('../../../workspace.svelte')
-const { links } = await import('../../../link-index.svelte')
+const { links } = await import('../../../link-index/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const NoteCard = (await import('./NoteCard.svelte')).default
 

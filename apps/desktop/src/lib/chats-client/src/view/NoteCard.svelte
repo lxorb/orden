@@ -1,7 +1,7 @@
 <script lang="ts">
   import FileMark from '../../../FileMark.svelte'
   import { fileMark } from '../../../file-mark'
-  import { links } from '../../../link-index.svelte'
+  import { links } from '../../../link-index/src/api'
   import { folderOf, insideSpace, nameOf, withoutExtension } from '../../../platform/src/api'
   import { workspace } from '../../../workspace.svelte'
   import { cardLines } from './note-card'

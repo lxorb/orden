@@ -1,5 +1,5 @@
 import type { AttachmentFolder } from '../../attachments'
-import type { LinkFormat } from '../../link-format'
+import type { LinkFormat } from '../../link-format/src/api'
 import type { FormatId } from './plan'
 import type { Source } from './sources'
 

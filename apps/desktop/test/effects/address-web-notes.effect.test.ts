@@ -6,7 +6,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-vi.mock('../../src/lib/link-index.svelte', () => ({
+vi.mock('../../src/lib/link-index/src/api', () => ({
   links: {
     rootOf: () => '/space',
     websitesHere: new Map([

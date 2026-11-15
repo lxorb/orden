@@ -193,6 +193,7 @@ export {
   providePort,
   webPages,
   whenPortProvided,
+  workspaceNotes,
 } from './ports'
 export { whenLoaded } from './loading'
 export type { AgentPorts, AgentScope, AgentWritesPort } from './agents'
@@ -262,3 +263,4 @@ export type {
   SyncWorkspacePort,
   SyncWriteHearing,
 } from './sync-client'
+export type { OpenNote, TextChange, WorkspaceNotesPort, WorkspacePorts } from './workspace'

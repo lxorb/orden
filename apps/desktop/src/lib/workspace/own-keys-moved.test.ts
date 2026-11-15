@@ -6,7 +6,7 @@ const held = vi.hoisted(() => ({
   root: '/space',
 }))
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../link-index/src/api', () => ({
   links: {
     scanned: () => Promise.resolve(),
     rootOf: () => held.root,

@@ -1,35 +1,26 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { providePort } from '@orden/contracts'
+import { serveLinks } from './services'
 import type { Hit } from '@orden/scan/search/match'
 
 const asked: { query: unknown; excluded: unknown }[] = []
 let answering: Hit[] = []
 
-vi.mock('./search/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./search/src/api')>()),
-  searchSpace: (
-    _root: string,
-    query: unknown,
-    _terms: string[],
-    _limit: number,
-    onFound: (found: { hits: Hit[]; loose: Hit[] }) => void,
-    excluded: readonly string[],
-  ) => {
+serveLinks({
+  search: (_root, query, _terms, _limit, onFound, excluded) => {
     asked.push({ query, excluded })
-    onFound({ hits: answering, loose: [] })
+    onFound({ hits: answering })
     return Promise.resolve()
   },
-}))
+})
 
-vi.mock('./workspace.svelte', () => ({
-  workspace: {
-    activeSpace: { root: '/space' },
-    leftOutOf: () => ['Archive'],
-    instructionsName: () => 'AGENTS.md',
-    open: () => Promise.resolve(),
-    goto: null,
-    toggleTaskAt: () => Promise.resolve(true),
-  },
-}))
+providePort('workspace.notes', {
+  activeRoot: '/space',
+  documentAt: () => null,
+  leftOut: () => ['Archive', 'AGENTS.md'],
+  openAt: () => Promise.resolve(),
+  toggleTaskAt: () => Promise.resolve(),
+})
 
 const { queryRowsHtml } = await import('./query-block')
 

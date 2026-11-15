@@ -1,6 +1,6 @@
 import { oneEdit } from '@orden/markdown/edits'
 import type { MetaPatch } from '@orden/sync-core'
-import { links } from '../link-index.svelte'
+import { links } from '../link-index/src/api'
 import { log, isMarkdownPath, samePath, joinPath } from '../platform/src/api'
 import { ownKeysTaken } from '../own-keys'
 import { type Change, changeOf } from '@orden/scan/search/replace'

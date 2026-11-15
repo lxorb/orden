@@ -10,15 +10,14 @@
     "rooms",
     "scan",
     "scratchpad",
-    "theme"
+    "theme",
+    "link-index"
   ],
   "pending": [
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/drafts.ts",
-    "apps/desktop/src/lib/workspace/in-turn.ts",
     "apps/desktop/src/lib/workspace/note-text.ts"
   ]
 }

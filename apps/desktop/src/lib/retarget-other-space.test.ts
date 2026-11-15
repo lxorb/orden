@@ -27,7 +27,7 @@ const { Disk, memoryStorage } = await import('../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
-const { links } = await import('./link-index.svelte')
+const { links } = await import('./link-index/src/api')
 const { startup } = await import('./startup.svelte')
 void startup.shown()
 

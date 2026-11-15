@@ -53,7 +53,7 @@ vi.mock('../../workspace.svelte', () => ({
 
 const heard: string[] = []
 
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     noteSaved: (path: string) => void heard.push(`saved ${path}`),
     cameBack: (path: string) => void heard.push(`came back ${path}`),

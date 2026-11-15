@@ -5,10 +5,8 @@ import {
   type FoundLink,
   wikilinkCannotName,
 } from '@orden/markdown/links'
-import { formatLink } from './link-format'
-import { shownName, folderOf, nameOf, relativePath } from './platform/src/api'
-
-export { encodeTarget }
+import { formatLink } from '../../link-format/src/api'
+import { shownName, folderOf, nameOf, relativePath } from '../../platform/src/api'
 
 export interface Placed {
   path: string

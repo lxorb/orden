@@ -1,6 +1,6 @@
 import { storeBeside } from '../../../assets'
 import { busy, message } from '../../../ui-kit/src/api'
-import { links } from '../../../link-index.svelte'
+import { links } from '../../../link-index/src/api'
 import { reloading } from '../../../reloading.svelte'
 import { settings } from '../../../settings.svelte'
 import { nameOf, spaceRelative } from '../../../platform/src/api'

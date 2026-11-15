@@ -33,7 +33,7 @@ vi.mock('../../accounts/src/account.svelte', () => ({
   },
 }))
 
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     noteSaved: (path: string) => void told.push(`saved ${path}`),
     urlOf: (path: string) => (disk.get(path)?.includes('url:') ? 'https://x' : null),

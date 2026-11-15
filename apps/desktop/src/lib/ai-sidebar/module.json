@@ -15,7 +15,8 @@
     "theme",
     "ui-controls",
     "ui-kit",
-    "windows"
+    "windows",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -28,7 +29,6 @@
     "apps/desktop/src/lib/feedback-pictures.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/grow.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/long-paste.ts",
     "apps/desktop/src/lib/markdown-view.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
