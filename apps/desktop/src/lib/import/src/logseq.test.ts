@@ -177,6 +177,26 @@ describe('a Logseq graph', () => {
     expect(text).not.toContain('type::')
   })
 
+  test('references, embeds and links written as code stay as they were written', async () => {
+    const id = '650c1a2b-1111-2222-3333-444455556666'
+    const code = [
+      `\`((${id}))\``,
+      `\`[words](((${id})))\``,
+      `\`{{embed ((${id}))}}\``,
+      '`{{embed [[Sep 11th, 2026]]}}`',
+      '`[words]([[Sep 11th, 2026]])`',
+      '``[[Sep 11th, 2026]]``',
+      '`![a](b.png){:height 10}`',
+    ].join(' ')
+    const plan = await readLogseq([
+      file('journals/2026_09_11.md', `- Woke up\n  id:: ${id}\n`),
+      file('pages/A.md', `- ${code} but ((${id})) and [[Sep 11th, 2026]]\n`),
+    ])
+
+    expect(noteAt(plan, 'A.md')).toContain(`- ${code} but Woke up and [[2026-09-11]]`)
+    expect(plan.lost).toEqual(['1 block references were written out as the words they pointed at'])
+  })
+
   test('a link to a journal follows it to the date it is now', async () => {
     const plan = await readLogseq([
       file('journals/2026_09_11.md', '- Woke up\n'),

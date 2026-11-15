@@ -494,20 +494,20 @@ function logseqText(text: string, graph: Graph, count: () => void): string {
   }
   const page = (name: string) => graph.days.get(name.trim().toLowerCase()) ?? name
 
-  return highlighted(text)
-    .replace(LABELLED_REFERENCE, (whole, words: string, id: string) =>
-      block(whole, id, () => words),
-    )
-    .replace(BLOCK_EMBED, (whole, id: string) => block(whole, id))
-    .replace(REFERENCE, (whole, id: string) => block(whole, id))
-    .replace(PAGE_EMBED, (_whole, name: string) => `![[${page(name)}]]`)
-    .replace(LABELLED_PAGE, (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`)
-    .replace(PAGE, (_whole, name: string) => `[[${page(name)}]]`)
-    .replace(PICTURE_SIZE, '$1')
-}
+  const outsideCode = (plain: string) =>
+    plain
+      .replace(HIGHLIGHT, '==$1==')
+      .replace(LABELLED_REFERENCE, (whole, words: string, id: string) =>
+        block(whole, id, () => words),
+      )
+      .replace(BLOCK_EMBED, (whole, id: string) => block(whole, id))
+      .replace(REFERENCE, (whole, id: string) => block(whole, id))
+      .replace(PAGE_EMBED, (_whole, name: string) => `![[${page(name)}]]`)
+      .replace(LABELLED_PAGE, (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`)
+      .replace(PAGE, (_whole, name: string) => `[[${page(name)}]]`)
+      .replace(PICTURE_SIZE, '$1')
 
-function highlighted(text: string): string {
   return codeAndWords(text)
-    .map((one) => (one.code ? one.text : one.text.replace(HIGHLIGHT, '==$1==')))
+    .map((one) => (one.code ? one.text : outsideCode(one.text)))
     .join('')
 }
