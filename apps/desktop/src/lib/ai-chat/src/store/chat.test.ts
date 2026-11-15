@@ -1451,6 +1451,24 @@ describe('a chat’s unread mark (#1064)', () => {
     hostOf(chat).line(parent, '↳ done')
     expect([...chat.unread]).toEqual([parent.id])
   })
+
+  test('archiving a chat takes its mark down, and a listed one keeps its own until seen (#2050)', async () => {
+    const shelved = await had('work', 'Serie 6', 3_000)
+    const listed = await had('work', 'Serie 7', 4_000)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() => expect(chat.every).toHaveLength(2))
+    chat.answered(shelved)
+    chat.answered(listed)
+    expect(chat.unread.size).toBe(2)
+
+    chat.archive(shelved.id)
+    await vi.waitFor(() => expect([...chat.unread]).toEqual([listed.id]))
+
+    await chat.saw(listed.id)
+    expect(chat.unread.size).toBe(0)
+  })
 })
 
 describe('an answer on its way', () => {
