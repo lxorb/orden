@@ -68,6 +68,7 @@ interface Scratchpad {
 
 export interface WorkspaceServices {
   readonly scratchpad: Scratchpad
+  readonly askPlace: (tab: string, saved: () => void) => void
   readonly beginSetup: (signedIn: boolean) => Promise<void>
   readonly warmSearch: (root: string) => Promise<void>
   readonly showArchive: (path: string) => void
@@ -99,6 +100,7 @@ let served: WorkspaceServices = {
     show: () => undefined,
     hide: () => undefined,
   },
+  askPlace: () => undefined,
   beginSetup: none,
   warmSearch: none,
   showArchive: () => undefined,

@@ -1,5 +1,6 @@
 import type { Tab } from '../documents/src/api'
 import { hasWords, isDraft } from '../documents/src/api'
+import { services } from './services'
 
 export function unsavedAmong(closing: readonly Tab[], every: readonly Tab[]): Tab[] {
   const going = new Set(closing.map((one) => one.id))
@@ -26,8 +27,7 @@ export async function mayLose(ws: Closing, closing: readonly Tab[]): Promise<boo
 
   const [only] = unsaved
   if (only && unsaved.length === 1) {
-    const { askPlace } = await import('../save-place/src/api')
-    askPlace(only.id, () => void ws.closeAsking(only.id))
+    services().askPlace(only.id, () => void ws.closeAsking(only.id))
     return false
   }
   const saved = await Promise.all(unsaved.map((tab) => ws.save(tab)))
