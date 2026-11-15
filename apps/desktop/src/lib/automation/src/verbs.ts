@@ -51,7 +51,10 @@ const VERBS: Record<string, Verb> = {
   search: { takes: ['query'], byLink: 'quiet', run: searchSpace },
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
 
-  'tasks.list': { takes: ['filter'], run: (args) => asReader('list_tasks', args) },
+  'tasks.list': {
+    takes: ['filter'],
+    run: (args) => asReader('list_tasks', unheard(args, 'tasks.list', ['filter', 'view'])),
+  },
   'tasks.add': { takes: ['text'], byLink: 'back', run: addTask },
   'tasks.done': {
     takes: ['at'],
@@ -247,8 +250,15 @@ async function asReader(name: string, args: Said): Promise<unknown> {
   throw new Error(answer.status === 'error' ? answer.message : answer.summary)
 }
 
+function unheard(args: Said, verb: string, names: readonly string[]): Said {
+  const found = names.find((name) => name in args)
+  if (found !== undefined) throw new Error(`${verb} takes no ${found}`)
+
+  return args
+}
+
 function addTask(args: Said, road: Road): Promise<unknown> {
-  if (road !== 'link') return asReader('add_task', args)
+  if (road !== 'link') return asReader('add_task', unheard(args, 'tasks.add', ['note', 'under']))
   const space = wordsOf(args, 'space')
   return asReader('add_task', { text: args.text, ...(space === null ? {} : { space }) })
 }

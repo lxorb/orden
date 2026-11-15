@@ -1647,6 +1647,20 @@ describe('to-dos and bases', () => {
     await todos.remove(id)
   })
 
+  test('a limit sent as the words a terminal types is still a limit', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const made: unknown[] = []
+    for (const text of ['Call mum', 'Buy leeks', 'Water the fern']) {
+      made.push(await call('add_task', { text }))
+    }
+    const listed = (await call('list_tasks', { limit: '2' })) as {
+      result: { total: number; todos: unknown[] }
+    }
+    expect(listed.result.total).toBe(3)
+    expect(listed.result.todos).toHaveLength(2)
+    for (const one of made) await todos.remove((one as { result: { id: string } }).result.id)
+  })
+
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
     const { madeOrChanged } = await import('../src/lib/agent-host/src/notes')
     const place = { space: home, open: false } as Parameters<typeof madeOrChanged>[0]

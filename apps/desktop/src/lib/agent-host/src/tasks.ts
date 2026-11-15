@@ -21,6 +21,7 @@ import {
   asked,
   stopWatch,
   type Call,
+  count,
   done,
   flag,
   maybe,
@@ -162,7 +163,7 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   const { todos, shownTodos, sortedTodos, dayOf } = await model()
   const only = maybe(call, 'space') !== null
   const label = maybe(call, 'label')
-  const limit = typeof call.args.limit === 'number' ? Math.max(1, call.args.limit) : 50
+  const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
   const shown = sortedTodos(
     shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
     'deadline',
