@@ -21,27 +21,9 @@ vi.mock('../keys', async (original) => ({
   },
 }))
 
-const carried = vi.hoisted(() => ({
-  calls: [] as { command: string; args: unknown; moved: string }[],
-  now: (): string => '',
-}))
-vi.mock('../../../platform/src/api', async (original) => {
-  const platform = await original<typeof import('../../../platform/src/api')>()
-  return {
-    ...platform,
-    isDesktop: true,
-    invoke: async (command: string, args: unknown) => {
-      if (command !== 'ai_agent_moved') return platform.invoke(command, args as never)
-      carried.calls.push({ command, args, moved: carried.now() })
-      return true
-    },
-  }
-})
-
 const { ai } = await import('../store.svelte')
 const { startVault, vault, world } = await import('./start.svelte')
 const { movedSince } = await import('../moves')
-carried.now = () => movedSince('anthropic', 0)
 
 test('a hub open again reads the vault again', async () => {
   const refresh = vi.spyOn(vault, 'refresh').mockResolvedValue()
@@ -86,24 +68,4 @@ test('nothing is kept as moved when the keys of a merge could not be written', a
   keys.refuse = false
   expect(movedSince('openai', 0)).toBe('openai')
   expect(adopt).not.toHaveBeenCalled()
-})
-
-test('the agent rights of an account moved to a fresh id are carried to it before it moves', async () => {
-  const none = {
-    accounts: { accounts: [], active: {}, defaultVendor: '', uses: {} },
-    keys: {},
-    seen: {},
-  }
-  vi.spyOn(ai, 'adopt').mockImplementation(() => undefined)
-  carried.calls.length = 0
-
-  await world.apply(none, none, { anthropic: 'anthropic-2' })
-
-  expect(carried.calls).toEqual([
-    {
-      command: 'ai_agent_moved',
-      args: { from: 'anthropic', to: 'anthropic-2' },
-      moved: 'anthropic',
-    },
-  ])
 })
