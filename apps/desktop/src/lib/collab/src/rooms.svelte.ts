@@ -1,3 +1,4 @@
+import { untrack } from 'svelte'
 import { documentOf, type EditorView } from '@orden/editor'
 import { account } from '../../accounts/src/api'
 import type { PlaneSurface } from '@orden/markdown/plane'
@@ -97,8 +98,12 @@ class Rooms {
   }
 
   follow(open: readonly Open[]) {
-    this.open = open
     const token = account.token
+    untrack(() => this.followAs(open, token))
+  }
+
+  private followAs(open: readonly Open[], token: string | null) {
+    this.open = open
     const wanted = new Map(token ? open.map((one) => [one.key, one]) : [])
 
     for (const [key, out] of this.shut) {
@@ -142,12 +147,14 @@ class Rooms {
   }
 
   drawing(key: string, surface: PlaneSurface | null) {
-    if (surface) this.planes.set(key, surface)
-    else this.planes.delete(key)
-    this.surfaces = new Map(this.planes)
-    this.drawn?.()
+    untrack(() => {
+      if (surface) this.planes.set(key, surface)
+      else this.planes.delete(key)
+      this.surfaces = new Map(this.planes)
+      this.drawn?.()
 
-    this.follow(this.open)
+      this.follow(this.open)
+    })
   }
 
   clear() {
@@ -173,13 +180,17 @@ class Rooms {
   }
 
   repaint(scheme: Scheme) {
-    for (const joined of this.held.values()) joined.room.repaint(scheme)
-    for (const one of this.carried.values()) one.room.repaint(scheme)
+    untrack(() => {
+      for (const joined of this.held.values()) joined.room.repaint(scheme)
+      for (const one of this.carried.values()) one.room.repaint(scheme)
+    })
   }
 
   rename(person: string | undefined) {
-    for (const joined of this.held.values()) joined.room.rename(person)
-    for (const one of this.carried.values()) one.room.rename(person)
+    untrack(() => {
+      for (const joined of this.held.values()) joined.room.rename(person)
+      for (const one of this.carried.values()) one.room.rename(person)
+    })
   }
 
   private ready(open: Open): boolean {
