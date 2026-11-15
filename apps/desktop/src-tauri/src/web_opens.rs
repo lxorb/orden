@@ -393,7 +393,8 @@ pub const SCRIPT: &str = r"(function () {
 
   var pressed = -1
   var spent = -1
-  ;['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (type) {
+  var lent = -1
+  ;['keydown', 'pointerdown'].forEach(function (type) {
     addEventListener(type, function (event) {
       if (!event.isTrusted) return
       pressed = Date.now()
@@ -401,9 +402,15 @@ pub const SCRIPT: &str = r"(function () {
   })
   function pressSpent() {
     var activation = navigator.userActivation
-    var fresh = pressed >= 0 && Date.now() - pressed < 5000 && spent !== pressed
-    if (!fresh || (activation && !activation.isActive)) return false
-    spent = pressed
+    if (activation && !activation.isActive) return false
+    var at = Date.now()
+    if (pressed >= 0 && at - pressed < 5000) {
+      if (spent === pressed) return false
+      spent = pressed
+      return true
+    }
+    if (!activation || at - lent < 5000) return false
+    lent = at
     return true
   }
   function blocked(url) {
