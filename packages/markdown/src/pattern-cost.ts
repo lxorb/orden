@@ -9,6 +9,9 @@ interface Cost {
   literal: boolean
   unit: string | null
   zero: boolean
+  span: number
+  runOf: string | null
+  reach: number
 }
 
 export function patternJudge() {
@@ -23,7 +26,20 @@ export function patternJudge() {
     literal: false,
     unit: null,
     zero: false,
+    span: 0,
+    runOf: null,
+    reach: 0,
   }
+
+  const LINE = Math.log(2000)
+
+  const NOTE = Math.log(400000)
+
+  const WORD = Math.log(100)
+
+  const WORD_STARTS = Math.log(100)
+
+  const LETTER_STARTS = Math.log(5000)
 
   const REFUSED: Cost = { ...PLAIN, open: Number.POSITIVE_INFINITY }
 
@@ -80,6 +96,16 @@ export function patternJudge() {
     }
   }
 
+  function spanOf(letters: string | null, flags: string): number {
+    if (letters === null) return NOTE
+    try {
+      const letter = new RegExp(`^(?:${letters})$`, flags.replace(/[^iuvs]/g, ''))
+      return letter.test('\n') ? NOTE : letter.test(' ') ? LINE : WORD
+    } catch {
+      return NOTE
+    }
+  }
+
   function commonLead(leads: readonly string[]): string {
     let shared = leads[0] ?? ''
     for (const one of leads) {
@@ -99,6 +125,7 @@ export function patternJudge() {
     const unicode = flags.includes('u') || flags.includes('v')
     const fold = flags.includes('i')
     let at = 0
+    let depth = 0
 
     function alternatives(): Cost {
       const opening = sequence()
@@ -129,7 +156,43 @@ export function patternJudge() {
         tail: same(branches.map((one) => one.tail)),
         loop: open === 1 ? same(branches.map((one) => one.loop)) : null,
         lead: commonLead(branches.map((one) => one.lead)),
+        reach: branches.reduce((high, one) => Math.max(high, one.reach), 0),
       }
+    }
+
+    function takesFrom(run: Cost, heads: readonly (string | null)[], lead: string): boolean {
+      if (lead.length >= 2) return false
+      const letters = run.runOf
+      if (letters === null || !heads.length) return true
+      return heads.some((head) => head === null || !setsApart(letters, head, flags))
+    }
+
+    function reachOf(parts: readonly Cost[]): number {
+      let reach = 0
+      let heads: (string | null)[] = []
+      let lead = ''
+      let ended = depth === 0
+
+      for (let index = parts.length - 1; index >= 0; index--) {
+        const part = parts[index]
+        if (!part) continue
+
+        if (part.span > 0) {
+          if (!ended)
+            reach = takesFrom(part, heads, lead) ? part.span + reach : Math.max(part.span, reach)
+        } else {
+          reach += part.reach
+          ended = false
+        }
+
+        if (part.zero) continue
+        lead = part.literal ? part.lead + lead : part.lead
+        if (part.head !== null) heads = [part.head]
+        else if (part.runOf !== null) heads = [part.runOf, ...heads]
+        else heads = [null]
+      }
+
+      return reach
     }
 
     function sequence(): Cost {
@@ -140,9 +203,11 @@ export function patternJudge() {
       let leading = true
       let counted = 0
       let alone: Cost | null = null
+      const parts: Cost[] = []
 
       while (at < source.length && source[at] !== '|' && source[at] !== ')') {
         const one = repeated(atom())
+        parts.push(one)
         all.open += one.open
         all.ways *= one.ways
         if (start) all.first = one.first
@@ -163,6 +228,9 @@ export function patternJudge() {
 
       all.loop = all.open === 1 && loops.length === 1 ? (loops[0] ?? null) : null
       all.unit = counted === 1 && alone ? alone.unit : null
+      all.span = counted === 1 && alone ? alone.span : 0
+      all.runOf = counted === 1 && alone ? alone.runOf : null
+      all.reach = reachOf(parts)
       return all
     }
 
@@ -207,10 +275,12 @@ export function patternJudge() {
       if (one === '(') {
         const opening = GROUP_OPENING.exec(source.slice(at, at + 64))?.[0] ?? ''
         at += opening.length
+        depth++
         const inner = alternatives()
+        depth--
         at++
         return /^\?(?:=|!|<=|<!)/.test(opening)
-          ? { ...ZERO, open: inner.open, ways: inner.ways, loop: inner.loop }
+          ? { ...ZERO, open: inner.open, ways: inner.ways, loop: inner.loop, reach: inner.reach }
           : inner
       }
       if (one === '^' || one === '$') return { ...ZERO }
@@ -276,6 +346,9 @@ export function patternJudge() {
           loop: open === 1 ? one.loop : null,
           literal: most === 1 && one.literal,
           unit: most === 1 ? one.unit : null,
+          span: most === 1 ? one.span : 0,
+          runOf: most === 1 ? one.runOf : null,
+          reach: one.reach * most,
         }
       }
       if (most === 1) {
@@ -284,13 +357,20 @@ export function patternJudge() {
           open: one.open,
           ways: one.ways * 2,
           loop: one.open === 1 ? one.loop : null,
+          span: one.span,
+          runOf: one.runOf,
+          reach: one.reach,
         }
       }
 
-      if (one.open > 0 || one.ways > 1) return delimited(one) ? { ...kept, open: 1 } : REFUSED
+      if (one.open > 0 || one.ways > 1) {
+        if (!delimited(one)) return REFUSED
+        return { ...kept, open: 1, span: spanOf(one.loop, flags), runOf: one.loop }
+      }
 
       const range = most - least
-      return range <= 8 ? { ...kept, ways: range + 1 } : { ...kept, open: 1, loop: one.unit }
+      if (range <= 8) return { ...kept, ways: range + 1 }
+      return { ...kept, open: 1, loop: one.unit, span: spanOf(one.unit, flags), runOf: one.unit }
     }
 
     return alternatives()
@@ -298,10 +378,19 @@ export function patternJudge() {
 
   const MOST_WAYS = 1e4
 
+  const MOST_REACH = 25
+
+  function startsOf(source: string, flags: string, lead: string): number {
+    if (source.startsWith('^')) return flags.includes('m') ? LINE : 0
+    if (lead.length >= 2) return WORD_STARTS
+    return lead ? LETTER_STARTS : NOTE
+  }
+
   function backtracksWildly(source: string, flags = ''): boolean {
     try {
-      const { open, ways } = patternCost(source, flags, false, true)
-      return open === Number.POSITIVE_INFINITY || ways > MOST_WAYS
+      const { open, ways, lead, reach } = patternCost(source, flags, false, true)
+      const starts = startsOf(source, flags, lead)
+      return open === Number.POSITIVE_INFINITY || ways > MOST_WAYS || starts + reach > MOST_REACH
     } catch {
       return true
     }

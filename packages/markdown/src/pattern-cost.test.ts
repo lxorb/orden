@@ -15,6 +15,20 @@ describe('a pattern that could backtrack without end', () => {
     '(a|aa)+$',
     '(a|a)'.repeat(30),
     '('.repeat(5000) + 'a' + ')'.repeat(5000),
+    '(.*) (.*) (.*)QQQ',
+    '\\w+.*\\w+.*QQQ',
+    '.*\\b.*\\b.*QQQ',
+    '.* .* .* .*QQQ',
+    '.*e.*o.*e.*o.*X',
+    '[^X]*e[^X]*e[^X]*X',
+    '[^X]*e[^X]*X',
+    '[\\s\\S]*e[\\s\\S]*X',
+    '(.*,){5}x',
+    '.*,.*,.*!',
+    '.*@\\w+.*!',
+    '(.*) (.*)$',
+    '.*e.*X',
+    '[\\s\\S]*eX',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
@@ -35,6 +49,16 @@ describe('a pattern that could backtrack without end', () => {
     '^#(\\w+\\/)*\\w+$',
     '^(foo|far)+$',
     '(\\d+,)*\\d+',
+    'foo.*bar.*baz.*qux',
+    '\\w+@\\w+\\.\\w+',
+    '\\[\\[.*\\]\\]',
+    'TODO.*@\\w+.*!',
+    '(\\w+) (\\w+)$',
+    '\\(([^)]*)\\)',
+    '-[^-]*-',
+    '^\\s*(\\w+)\\s*:\\s*(.*)$',
+    'e[\\s\\S]*X',
+    '^- \\[ \\] .*#\\w+.*$',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
   })
