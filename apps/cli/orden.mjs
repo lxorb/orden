@@ -35,6 +35,13 @@ function endpointFile() {
 
 const FLAG = /^--[a-z]/i
 
+const SWITCHES = new Set(['silent', 'append', 'prepend', 'undo', 'done'])
+
+function valueAfter(argv, at) {
+  const next = argv[at + 1]
+  return next !== undefined && !FLAG.test(next) ? next : null
+}
+
 function parseArgv(argv) {
   const mine = { json: false, out: null, yes: false, help: false }
   const args = {}
@@ -64,13 +71,15 @@ function parseArgv(argv) {
         continue
       }
       if (word === '--out') {
-        mine.out = argv[++at] ?? null
+        mine.out = valueAfter(argv, at)
+        if (mine.out !== null) at++
         continue
       }
       if (word.startsWith('--')) {
         const [name, ...value] = word.slice(2).split('=')
+        const next = SWITCHES.has(name) ? null : valueAfter(argv, at)
         if (value.length) args[name] = value.join('=')
-        else if (argv[at + 1] !== undefined && !FLAG.test(argv[at + 1])) args[name] = argv[++at]
+        else if (next !== null) args[name] = argv[++at]
         else args[name] = ''
         continue
       }

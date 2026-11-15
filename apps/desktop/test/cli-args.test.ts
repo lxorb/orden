@@ -137,3 +137,26 @@ test.skipIf(process.platform !== 'linux')(
     expect(heard).toBe(2)
   },
 )
+
+test('a switch before a word leaves the word a word', async () => {
+  expect(await sent(['new', '--silent', 'Plan'])).toEqual({
+    verb: 'new',
+    args: { silent: '' },
+    rest: ['Plan'],
+  })
+  expect(await sent(['tasks', 'done', '--undo', 'Inbox.md#0:abc'])).toEqual({
+    verb: 'tasks',
+    args: { undo: '' },
+    rest: ['done', 'Inbox.md#0:abc'],
+  })
+  expect((await sent(['new', 'Plan', '--append', '--content', 'x'])).args).toEqual({
+    append: '',
+    content: 'x',
+  })
+  expect((await sent(['new', 'Plan', '--silent=false'])).args).toEqual({ silent: 'false' })
+})
+
+test('--out takes no flag for its file', async () => {
+  const { out } = await ran(['window', '--out', '--json'], { ok: true, value: { x: 1 } })
+  expect(JSON.parse(out)).toEqual({ ok: true, value: { x: 1 } })
+})
