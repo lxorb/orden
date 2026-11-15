@@ -1,5 +1,4 @@
-import type { ModelInfo } from '../../../ai-providers/src/api'
-import type { Provider } from '../../../ai-providers/src/api'
+import { isLocal, type ModelInfo, type Provider } from '../../../ai-providers/src/api'
 
 export interface Offered {
   provider: Provider
@@ -21,7 +20,8 @@ export function routed(want: string, offered: readonly Offered[], parent: Provid
   const order = parentFirst(offered, parent)
   if (!asked) {
     const provider = parent ?? order[0]?.provider
-    return provider ? { provider, model: '' } : { refused: 'there is no AI provider set up' }
+    if (!provider) return { refused: 'there is no AI provider set up' }
+    return { provider, model: isLocal(provider.kind) ? '' : provider.model }
   }
 
   const is = (one: ModelInfo) => one.id.toLowerCase() === asked || one.name.toLowerCase() === asked
