@@ -1,5 +1,5 @@
 import { protection } from '../../protect/src/api'
-import { commandRows, commandRowsLoaded, runCommand } from '@orden/contracts'
+import { commandRows, commandRowsLoaded, runCommand, settingsWindow } from '@orden/contracts'
 import { copyNoteLink } from './link'
 import {
   CODE_PALETTES,
@@ -78,8 +78,7 @@ import {
 } from '../../sharing/src/api'
 import { archiveEntry, DIVIDER } from '../../menu.svelte'
 import { updates } from '../../updates/src/api'
-import { modes } from '../../modes/src/api'
-import { settings } from '../../settings.svelte'
+import { modes, choices } from '../../modes/src/api'
 import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
 import { agentMarks } from '../../agent-marks.svelte'
 import { shortcuts } from '../../shortcuts/src/api'
@@ -130,7 +129,7 @@ function importCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
   const asked = (id: string) => () => {
-    settings.show('import')
+    settingsWindow().show('import')
     void runCommand(id)
   }
 
@@ -664,7 +663,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'new-unique',
       label: 'New unique note',
       disabled: readOnly,
-      run: () => void workspace.createUniqueNote(settings.noteIdFormat),
+      run: () => void workspace.createUniqueNote(choices.noteIdFormat),
     },
     {
       id: 'new-canvas',
@@ -860,7 +859,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'settings',
       label: 'Settings',
       hint: shortcuts.hint('app.settings'),
-      run: () => settings.show(),
+      run: () => settingsWindow().show(),
     },
     {
       id: 'feedback',
@@ -872,13 +871,13 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'shortcuts',
       label: 'Shortcuts',
       hint: shortcuts.hint('app.keys'),
-      run: () => settings.show('shortcuts'),
+      run: () => settingsWindow().show('shortcuts'),
     },
     {
       id: 'history',
       label: 'Version history',
       disabled: !workspace.active?.path || shut(),
-      run: () => (settings.historyOpen = true),
+      run: () => (settingsWindow().historyOpen = true),
     },
     ...commandRows('agent-undo', view),
     ...agentRows(),
@@ -896,7 +895,7 @@ export function appCommands(view?: EditorView): Command[] {
     ...commandRows('export-picker', view),
     ...commandRows('export', view),
     ...spaceCommands(),
-    { id: 'llm', label: 'Connect an LLM to your notes', run: () => settings.show('llm') },
+    { id: 'llm', label: 'Connect an LLM to your notes', run: () => settingsWindow().show('llm') },
 
     account.user
       ? {
@@ -1295,7 +1294,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'keys',
       label: 'Keyboard shortcuts',
       hint: shortcuts.hint('app.keys'),
-      run: () => settings.show('shortcuts'),
+      run: () => settingsWindow().show('shortcuts'),
     },
 
     ...composerCommands(view),

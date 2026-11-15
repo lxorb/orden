@@ -1,5 +1,5 @@
 import { log, onDisk } from '../../platform/src/api'
-import { settings } from '../../settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { undoToastNotice } from '../../surfaces.svelte'
 import { UNDO_LINGER, undoToast } from '../../undo-toast/src/api'
 
@@ -92,7 +92,7 @@ class Failed extends Lingering {
 }
 
 export function openInstructions(root: string) {
-  settings.show('space', root, true)
+  settingsWindow().show('space', root, true)
 }
 
 class ReservedName extends Lingering {

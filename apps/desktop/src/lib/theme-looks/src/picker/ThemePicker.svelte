@@ -9,7 +9,7 @@
   import { overlays } from '../../../ui-kit/src/api'
   import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
   import { scrollbar } from '../../../ui-kit/src/api'
-  import { settings } from '../../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { pullsAway } from '../../../ui-controls/src/api'
   import { segmented } from '../../../ui-kit/src/api'
   import { type Scheme, type SchemeChoice, theme } from '../../../theme/src/api'
@@ -138,7 +138,7 @@
   function browse() {
     const term = picking.query.trim()
     picking.close()
-    settings.show('appearance')
+    settingsWindow().show('appearance')
     store.query = term
     store.show()
   }

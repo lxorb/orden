@@ -48,7 +48,7 @@
   import { notePicture } from '../../note-images'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -283,7 +283,7 @@
       return src
     } catch (error) {
       void usage.refresh()
-      settings.error = message(error, 'That image does not fit in your storage.')
+      settingsWindow().error = message(error, 'That image does not fit in your storage.')
       return null
     }
   }
@@ -292,7 +292,7 @@
     try {
       return await busy.run('Storing the file', () => storeAttachment(file, into.path))
     } catch (error) {
-      settings.error = message(error, 'That file could not be kept.')
+      settingsWindow().error = message(error, 'That file could not be kept.')
       return null
     }
   }

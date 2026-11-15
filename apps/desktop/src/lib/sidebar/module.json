@@ -58,7 +58,6 @@
     "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/search.svelte.ts",
     "apps/desktop/src/lib/sections.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/sidebar-width.svelte.ts",
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

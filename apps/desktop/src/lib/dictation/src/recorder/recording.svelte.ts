@@ -2,7 +2,7 @@ import { storeBeside } from '../../../assets'
 import { busy, message } from '../../../ui-kit/src/api'
 import { links } from '../../../link-index/src/api'
 import { reloading } from '../../../reloading.svelte'
-import { settings } from '../../../settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { nameOf, spaceRelative } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { canRecordHere, recordingName } from './container'
@@ -69,7 +69,7 @@ class Recorder {
       this.on = false
       this.held = null
       this.stopAsked = false
-      settings.error = message(error, 'That microphone could not be opened.')
+      settingsWindow().error = message(error, 'That microphone could not be opened.')
     }
   }
 
@@ -105,7 +105,7 @@ class Recorder {
         await this.keep(path, file.bytes, held.extension)
       })
     } catch (error) {
-      settings.error = message(error, 'That recording could not be saved.')
+      settingsWindow().error = message(error, 'That recording could not be saved.')
     } finally {
       this.saving = false
       void workspace.writesSettled()

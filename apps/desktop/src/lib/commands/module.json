@@ -40,7 +40,6 @@
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/open-out.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

@@ -8,6 +8,7 @@ import type { ImportPorts } from './import'
 import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
+import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
 import type { SyncStorePort, SyncPorts } from './sync-client'
 import type { TerminalPorts } from './terminal'
@@ -31,6 +32,7 @@ export type PortMap = AccountPorts &
   ImportPorts &
   PreviewPorts &
   QuittingPorts &
+  SettingsPorts &
   SharingPorts &
   SyncPorts &
   TerminalPorts &
@@ -110,4 +112,16 @@ export function workspaceNotes(): WorkspaceNotesPort {
 
 export function workspaceView(): WorkspaceViewPort {
   return (provided.get('workspace.view') as WorkspaceViewPort | undefined) ?? NO_WORKSPACE_VIEW
+}
+
+export function settingsWindow(): SettingsWindowPort {
+  return (
+    (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
+      open: false,
+      error: null,
+      at: null,
+      historyOpen: false,
+      show: () => undefined,
+    }
+  )
 }

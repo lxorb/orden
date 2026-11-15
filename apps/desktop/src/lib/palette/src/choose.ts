@@ -1,7 +1,6 @@
 import type { OpenHow, Press, TabAsk } from '../../new-tab'
-import type { PaletteDestination } from '@orden/contracts'
+import type { PaletteDestination, SettingsSectionId } from '@orden/contracts'
 import { howFor, linkAsk, tabAsk } from '../../new-tab'
-import type { Section } from '../../settings.svelte'
 import type { NoteToMake } from './new-note'
 import type { Row } from './rows'
 import { ran } from '../../usage/src/api'
@@ -16,7 +15,7 @@ export interface Hands {
   revealFolder(path: string): void
   searchFor(words: string): void
   openGraph(view: string | undefined): void
-  showSetting(section: Section, landing: string | null): void
+  showSetting(section: SettingsSectionId, landing: string | null): void
   make(note: NoteToMake): void
   agents(): void
   goto(line: number): void

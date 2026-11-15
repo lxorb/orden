@@ -106,7 +106,6 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: { drawer: false },
 }))
-vi.mock('../../settings.svelte', () => ({ settings: { open: true } }))
 vi.mock('./carry-over', async () => {
   const { setLinkWriting } = await import('../../link-format/src/api')
   return {

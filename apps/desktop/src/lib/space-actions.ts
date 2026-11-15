@@ -13,7 +13,7 @@ import {
   trustAgain,
   protectEntries,
 } from './sharing/src/api'
-import { settings } from './settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { type Space, workspace } from './workspace/src/api'
 
 const archiving = () => import('./space-archive')
@@ -85,7 +85,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
       : []),
     ...(__EVEN_PLUGIN__
       ? []
-      : [{ label: 'Settings', run: () => settings.show('space', space.root) }]),
+      : [{ label: 'Settings', run: () => settingsWindow().show('space', space.root) }]),
     ...(canShare(space) ? [{ label: 'Share', run: () => void shareSpace(space) }] : []),
     ...(canPublish(space) ? [{ label: 'Publish', run: () => publishSpace(space) }] : []),
     ...(!__EVEN_PLUGIN__ && canTrustAgain(space)

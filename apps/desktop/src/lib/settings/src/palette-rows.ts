@@ -1,6 +1,7 @@
 import type { PaletteSetting, PaletteSettings } from '@orden/contracts'
 import { EditorView } from '@orden/editor'
-import { type Section, settings } from '../../settings.svelte'
+import type { SettingsSectionId } from '@orden/contracts'
+import { settings } from './window.svelte'
 import type { Field, Pane } from './fields'
 import { landing } from './landing.svelte'
 import { places } from './places'
@@ -40,7 +41,7 @@ function pressOf(field: Field): (() => void) | null {
 }
 
 function plain(
-  section: Section,
+  section: SettingsSectionId,
   label: string,
   where: string,
   words: string[],
@@ -61,12 +62,12 @@ function plain(
 }
 
 export function settingRows(
-  panes: readonly { id: Section; label: string }[],
+  panes: readonly { id: SettingsSectionId; label: string }[],
   generated: readonly Pane[],
   places: readonly Place[],
   settingsWord: string,
 ): PaletteSetting[] {
-  const nameOf = (id: Section) => panes.find((one) => one.id === id)?.label ?? ''
+  const nameOf = (id: SettingsSectionId) => panes.find((one) => one.id === id)?.label ?? ''
   const rows = panes.map((one) => plain(one.id, one.label, settingsWord, [], false))
 
   for (const pane of generated) {

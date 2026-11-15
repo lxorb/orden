@@ -1,5 +1,4 @@
-import type { AgentAnswer } from '@orden/contracts'
-import { settings, type Section } from '../../settings.svelte'
+import { type AgentAnswer, type SettingsSectionId, settingsWindow } from '@orden/contracts'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import { panesIn, paneToward, type Toward } from '../../panes/src/api'
@@ -55,9 +54,9 @@ export function showGraph(call: Call): Tab | null {
   return workspace.active
 }
 
-export function showSettings(call: Call, section: Section): void {
+export function showSettings(call: Call, section: SettingsSectionId): void {
   needScope(call, 'workspace.focus', 'Settings')
-  settings.show(section)
+  settingsWindow().show(section)
 }
 
 export function showTab(call: Call, tab: Tab): void {

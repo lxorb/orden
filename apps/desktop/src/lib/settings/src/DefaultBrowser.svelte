@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { message } from '../../ui-kit/src/api'
   import { dur, fade } from '../../platform/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settings } from './window.svelte'
   import { invoke } from '../../platform/src/api'
 
   let is = $state<boolean | null>(null)

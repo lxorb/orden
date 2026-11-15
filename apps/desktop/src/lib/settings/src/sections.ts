@@ -1,11 +1,11 @@
+import type { SettingsSectionId } from '@orden/contracts'
 import { account } from '../../accounts/src/api'
 import { modes } from '../../modes/src/api'
-import type { Section } from '../../settings.svelte'
 import { isDesktop } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'
 
 export interface Item {
-  id: Section
+  id: SettingsSectionId
   label: string
 }
 
@@ -44,30 +44,32 @@ export function sectionGroups(): Item[][] {
   return [
     [
       { id: 'general', label: 'General' },
-      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'space' as Section, label: 'Space' }]),
+      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'space' as SettingsSectionId, label: 'Space' }]),
       { id: 'editor', label: 'Editor' },
       { id: 'kinds', label: 'Note types' },
       { id: 'shortcuts', label: 'Shortcuts' },
-      ...(viewport.touch || modes.mobileSeen ? [{ id: 'mobile' as Section, label: 'Mobile' }] : []),
+      ...(viewport.touch || modes.mobileSeen
+        ? [{ id: 'mobile' as SettingsSectionId, label: 'Mobile' }]
+        : []),
       { id: 'spelling', label: 'Spelling' },
       { id: 'markdown', label: 'Markdown' },
       { id: 'appearance', label: 'Appearance' },
       { id: 'ai', label: 'AI' },
       ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
-        ? [{ id: 'remote' as Section, label: 'Remote' }]
+        ? [{ id: 'remote' as SettingsSectionId, label: 'Remote' }]
         : []),
       ...(!__EVEN_PLUGIN__ && account.user && modes.coder
-        ? [{ id: 'online' as Section, label: 'Online terminal' }]
+        ? [{ id: 'online' as SettingsSectionId, label: 'Online terminal' }]
         : []),
       { id: 'experimental', label: 'Experimental' },
     ],
     [
       { id: 'account', label: 'Account' },
-      ...(account.user ? [{ id: 'sync' as Section, label: 'Sync' }] : []),
+      ...(account.user ? [{ id: 'sync' as SettingsSectionId, label: 'Sync' }] : []),
     ],
     [
       { id: 'trash', label: 'Recently deleted' },
-      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'import' as Section, label: 'Import' }]),
+      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'import' as SettingsSectionId, label: 'Import' }]),
       { id: 'export', label: 'Export' },
     ],
   ]

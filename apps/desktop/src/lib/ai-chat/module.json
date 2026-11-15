@@ -34,7 +34,6 @@
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]

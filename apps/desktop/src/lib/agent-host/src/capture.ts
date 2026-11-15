@@ -4,9 +4,8 @@ import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter
 import { asWords } from '@orden/markdown/words'
 import type { AgentAnswer } from '../../automation/src/api'
 import { attachmentFolder } from '../../attachments'
-import { modes } from '../../modes/src/api'
+import { modes, choices } from '../../modes/src/api'
 import { paperInches } from '../../files-out/src/api'
-import { settings } from '../../settings.svelte'
 import { notePath, relativeTo, invoke, decoded } from '../../platform/src/api'
 import { type Entry, workspace } from '../../workspace/src/api'
 import { notes } from './docs'
@@ -105,7 +104,7 @@ async function captured(call: Call, tab: string, shape: CaptureAs): Promise<Page
       tab,
       shape,
       fullPage: flag(call, 'full_page'),
-      page: paperInches(settings.page),
+      page: paperInches(choices.page),
     }).catch((error: unknown) => ({ status: 'error', code: 'failed', message: String(error) })),
   )
 

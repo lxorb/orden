@@ -21,6 +21,7 @@ import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
 import { samePath } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
+import { settings } from './settings/src/api'
 
 serveLinks({
   html: async (text, path) => {
@@ -44,6 +45,7 @@ serveLinks({
   },
   search: searchSpace,
 })
+providePort('settings.window', settings)
 registerSidebarPart(askPart)
 registerSidebarPart(outlinePart)
 registerSidebarPart(scratchpadPart)

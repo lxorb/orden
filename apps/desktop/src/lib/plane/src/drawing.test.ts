@@ -9,7 +9,7 @@ vi.mock('../../link-index/src/api', () => ({
     fileFor: () => null,
   },
 }))
-vi.mock('../../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
+vi.mock('../../modes/src/api', () => ({ choices: { exportAppearance: 'light' } }))
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   paperPicture: (at: { file: string }) =>

@@ -33,7 +33,7 @@ import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { type Faces, faceOf, NO_FACES, pdfFaces } from './faces'
 import { message } from '../../ui-kit/src/api'
-import { settings } from '../../settings.svelte'
+import { choices } from '../../modes/src/api'
 
 const PADDING = 32
 
@@ -395,7 +395,7 @@ function facesOf(drawing: Drawing): Promise<Faces> {
 }
 
 function chosenPalette(drawing: Drawing): Palette {
-  const chosen = settings.exportAppearance
+  const chosen = choices.exportAppearance
   return chosen === 'app' ? drawing.palette : paletteOf(chosen)
 }
 

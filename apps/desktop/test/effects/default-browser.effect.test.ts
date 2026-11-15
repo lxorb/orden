@@ -33,7 +33,7 @@ vi.mock('@tauri-apps/api/window', () => ({
 }))
 
 const { default: DefaultBrowser } = await import('../../src/lib/settings/src/DefaultBrowser.svelte')
-const { settings } = await import('../../src/lib/settings.svelte')
+const { settings } = await import('../../src/lib/settings/src/api')
 
 Element.prototype.animate = () =>
   ({

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { paperTwips } from '../../files-out/src/api'
-import { DEFAULT_PAGE_SETUP } from '../../paper'
+import { DEFAULT_PAGE_SETUP } from '@orden/contracts'
 import { documentOf, type Doc } from './document'
 import type { Picture } from './pictures'
 import { toRtf } from './rtf'

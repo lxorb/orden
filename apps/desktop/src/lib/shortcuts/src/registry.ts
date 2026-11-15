@@ -1,4 +1,4 @@
-import { commandRows, commandRowsLoaded, runCommand } from '@orden/contracts'
+import { commandRows, commandRowsLoaded, runCommand, settingsWindow } from '@orden/contracts'
 import {
   type BindingSpec,
   type EditorView,
@@ -12,7 +12,6 @@ import { revealPanel, stepRegionFocus } from '../../focus'
 import { modes } from '../../modes/src/api'
 import { searchFrom } from '../../search.svelte'
 import { showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
-import { settings } from '../../settings.svelte'
 import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
 import { stepSpace } from '../../space-actions'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
@@ -389,7 +388,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-,',
-    run: () => settings.show(),
+    run: () => settingsWindow().show(),
   },
   {
     id: 'app.keys',
@@ -398,7 +397,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-/',
     mac: null,
-    run: () => settings.show('shortcuts'),
+    run: () => settingsWindow().show('shortcuts'),
   },
   {
     id: 'app.print',

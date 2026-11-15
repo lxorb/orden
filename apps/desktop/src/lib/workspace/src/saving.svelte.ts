@@ -472,9 +472,11 @@ export class Saving {
     links.noteSaved(path, content)
 
     if (/\.css$|snippets\.json$/.test(path)) {
-      const { settings } = await import('../../settings.svelte')
-      const { theme } = await import('../../theme/src/api')
-      await Promise.all([settings.loadSnippets(), theme.reload()])
+      const [{ choices }, { theme }] = await Promise.all([
+        import('../../modes/src/api'),
+        import('../../theme/src/api'),
+      ])
+      await Promise.all([choices.loadSnippets(), theme.reload()])
     }
 
     if (making) {

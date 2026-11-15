@@ -90,7 +90,7 @@ def note_pictures(browser: Browser) -> None:
             wrong(f"empty paper under the note: {seen['height']} tall, the last mark at {seen['last']}")
 
         say("  Appearance dark is dark paper with light words")
-        page.evaluate("() => { window.ordenApp.settings.exportAppearance = 'dark' }")
+        page.evaluate("() => { window.ordenApp.choices.exportAppearance = 'dark' }")
         seen = looked_at(page, "Export as PNG")
         if not dark(seen["corner"]):
             wrong(f"a dark export has paper of {seen['corner']}")
@@ -121,7 +121,7 @@ def canvas_pictures(browser: Browser) -> None:
     if seen["dark"] < 50:
         wrong(f"a canvas's PNG under Appearance light has no dark ink: {seen['dark']} pixels")
 
-    page.evaluate("() => { window.ordenApp.settings.exportAppearance = 'app' }")
+    page.evaluate("() => { window.ordenApp.choices.exportAppearance = 'app' }")
     seen = looked_at(page, "Export as PNG")
     say(f"  Appearance as the app is: {seen}")
     if not dark(seen["corner"]):

@@ -63,8 +63,8 @@ BREAKS = """
 
 PAGE = """
 (patch) => {
-  window.ordenApp.settings.setPage(patch)
-  return window.ordenApp.settings.page
+  window.ordenApp.choices.setPage(patch)
+  return window.ordenApp.choices.page
 }
 """
 

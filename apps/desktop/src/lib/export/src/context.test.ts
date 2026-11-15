@@ -18,13 +18,13 @@ vi.mock('../../workspace/src/api', () => ({
   },
 }))
 vi.mock('../../sharing/src/api', () => ({ trustsHtmlIn: () => world.trusts }))
-vi.mock('../../settings.svelte', () => ({
-  settings: { page: undefined, exportAppearance: 'light' },
-}))
 vi.mock('../../theme/src/theme.svelte', () => ({
   theme: { accent: 'violet', active: { path: null } },
 }))
-vi.mock('../../modes/src/api', () => ({ modes: { codeTheme: 'auto' } }))
+vi.mock('../../modes/src/api', () => ({
+  modes: { codeTheme: 'auto' },
+  choices: { page: undefined, exportAppearance: 'light' },
+}))
 vi.mock('../../link-index/src/api', () => ({
   links: {
     embedSource: () => null,

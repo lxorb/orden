@@ -3,7 +3,7 @@ import { encodeTarget } from '@orden/markdown/links'
 import { storeImage } from '../../assets'
 import { busy, message, viewport } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
-import { settings } from '../../settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { usage } from '../../usage.svelte'
 import { workspace } from '../../workspace/src/api'
 
@@ -35,7 +35,7 @@ export async function putPicture(view: EditorView, file: File): Promise<void> {
     if (src) writeAtCaret(view, `![${alt(file.name)}](${encodeTarget(src)})`)
   } catch (error) {
     void usage.refresh()
-    settings.error = message(error, 'That image does not fit in your storage.')
+    settingsWindow().error = message(error, 'That image does not fit in your storage.')
   }
 }
 

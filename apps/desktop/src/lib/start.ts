@@ -19,7 +19,8 @@ import {
   mark,
 } from './platform/src/api'
 import { startup } from './launch/src/api'
-import { modes } from './modes/src/api'
+import { choices, modes } from './modes/src/api'
+import { connectors } from './connectors.svelte'
 import {
   anythingRuns,
   GIVE_UP,
@@ -34,7 +35,7 @@ import type { Across } from './workspace/src/across'
 import { recovery } from './history/src/api'
 import { reloading } from './reloading.svelte'
 import { record } from './sync-mirror/src/api'
-import { settings } from './settings.svelte'
+import { settings } from './settings/src/api'
 import { hiddenKinds } from './gates/src/api'
 import { gate } from './onboarding/src/api'
 import { shortcuts } from './shortcuts/src/api'
@@ -75,7 +76,8 @@ export function start(): () => void {
   toolbar.restore()
   pull.restore()
   hiddenKinds.restore()
-  settings.restore()
+  connectors.restore()
+  choices.restore()
   if (!__EVEN_PLUGIN__) gate.restore()
   const settling = setTimeout(() => {
     startup.settled = true
