@@ -200,6 +200,37 @@ describe('removing a member', () => {
     expect(content(again, id).note).toBe('unsent')
   })
 
+  test('wraps the new key to nobody it took out, however long the account keeps listing them', async () => {
+    const { a, vault } = await family()
+    await joined(a, vault, bob, 'editor')
+    await joined(a, vault, cy, 'editor')
+    const real = sharing(a, ada)
+    const before = await real.api.members(vault)
+    const sentTo: string[][] = []
+    type Rotating = (vault: string, sent: { members: Record<string, string> }) => Promise<unknown>
+    const held = real.api as typeof real.api & { rotate: Rotating }
+    const rotate = held.rotate.bind(held)
+    const members = held.members.bind(held)
+    const api = Object.assign(Object.create(held) as typeof held, {
+      members: async (asked: string) => {
+        const now = await members(asked)
+        const kept = before.filter((one) => !now.some((there) => there.email === one.email))
+        return [...now, ...kept]
+      },
+      rotate: async (asked: string, sent: { members: Record<string, string> }) => {
+        sentTo.push(Object.keys(sent.members))
+        return await rotate(asked, sent)
+      },
+    })
+
+    expect(await k.removedMember({ ...real, api }, vault, bob.email)).toBe(2)
+    expect(sentTo.length).toBeGreaterThan(0)
+    for (const one of sentTo) {
+      expect(one).not.toContain(bob.email)
+      expect(one).toContain(cy.email)
+    }
+  })
+
   test('also renews the key of an invitation still waiting, which keeps working', async () => {
     const { a, vault, id } = await family()
     const b = await joined(a, vault, bob, 'editor')
