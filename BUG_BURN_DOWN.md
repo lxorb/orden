@@ -1167,3 +1167,13 @@ failing reproduction before it was kept. Each fix starts from a failing regressi
 | C43 | Low | A malformed Arc sidebar with a folder listing itself ran the app out of memory | Fixed `49a9f1bf` | `rows` had a depth limit but no visited set | Each folder is read once | `arc.test.ts` (hung before) |
 | C44 | Low | A vault note in UTF-16 or Windows-1252 was read garbled | Fixed `a0b709c4` | Plain `TextDecoder` instead of `decoded()` | `decoded()` | `vaults.test.ts` (failed before) |
 | C45 | Low | Convert syntax rewrote `[[202201011200]]` inside code | Fixed `88817b50` | `convertIdLinks` ran over code | It runs through `outsideCode` | `convert.test.ts` (failed before) |
+
+### Re-audit 1 (2026-11-15)
+
+Three fresh auditors reviewed every fix commit above and hunted again.
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| C46 | Medium | Regression from C41: a dead `./` or `../` link resolved to a note of the same name elsewhere, counted as its backlink and was rewritten on its rename | Fixed `e531b71c` | Shrinking C41 to the startup budget dropped its guard for explicitly relative links | A link written as `./` or `../` resolves as before C41, never from the root or by name | `wikilink.test.ts`, `link-index.test.ts` "a relative link to a note that is not there" (failed before); editor 2073 passed |
+| C47 | Medium | Regression from C3: hosted `list_backlinks` missed links written from the space root or by name alone | Fixed `3f9752dd` | The new resolver tried only the note's folder | It follows the app's order: relative, root, nearest by name, with `./` and `../` kept relative | `mcp.test.ts` "markdown links the app reads from the top and by name" (failed before) |
+| C48 | Medium | Sibling of C1: hosted `list_notes` and `list_backlinks` stopped at 1000 notes without saying so | Fixed `3f9752dd` | The same silent limit | They read one past the limit and say when they stopped | `mcp.test.ts` "lists past the most read" (failed before); hosted MCP 73 passed |
