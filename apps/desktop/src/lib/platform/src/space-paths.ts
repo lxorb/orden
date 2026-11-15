@@ -15,12 +15,26 @@ function steps(path: string): string[] {
   return out
 }
 
+function caseless(name: string): string {
+  let out = ''
+  for (const one of name) {
+    const upper = one.toUpperCase()
+    if ([...upper].length !== 1) {
+      out += one
+      continue
+    }
+    const lower = upper.toLowerCase()
+    out += [...lower].length === 1 ? lower : upper
+  }
+  return out
+}
+
 function sameName(one: string, other: string, folds: () => boolean): boolean {
   if (one === other) return true
 
   const a = one.normalize('NFC')
   const b = other.normalize('NFC')
-  return a === b || (a.toLowerCase() === b.toLowerCase() && folds())
+  return a === b || (caseless(a) === caseless(b) && folds())
 }
 
 function foldsAt(path: string): boolean {
@@ -62,7 +76,7 @@ export function pathKeyAs(path: string, folds: boolean): string {
   const key = steps(path)
     .map((one) => one.normalize('NFC'))
     .join('/')
-  return folds ? key.toLowerCase() : key
+  return folds ? caseless(key) : key
 }
 
 export function pathKey(path: string, root?: string): string {
