@@ -35,7 +35,6 @@
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/caret.ts",
     "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/note-menu.ts"
   ]

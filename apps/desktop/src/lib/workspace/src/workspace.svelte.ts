@@ -228,7 +228,7 @@ const TRAIL = 30
 
 const unread = (path: string) => import('./notices.svelte').then((one) => one.unread.there(path))
 const changes = () => import('./space-changes')
-const essentials = () => import('../../essentials.svelte')
+const essentials = () => import('./essentials.svelte')
 const paneStays = (strip: number, showing: Tab | null) =>
   strip > 0 || (showing?.essential ?? null) !== null
 const sets = () => import('./sets.svelte').then((one) => one.sets)

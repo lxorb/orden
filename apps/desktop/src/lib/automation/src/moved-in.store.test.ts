@@ -178,7 +178,7 @@ describe('a tile of a nested AGENTS.md let go of over the top of the space', () 
 
   test('keeps its tile, and does not take the place of the instructions', async () => {
     tile()
-    const { unkeepInto } = await import('../../essentials.svelte')
+    const { unkeepInto } = await (await import('../../workspace/src/api')).essentials()
     await unkeepInto(0, ROOT)
 
     expect(workspace.bookmarks.of(ROOT)).toHaveLength(1)
@@ -190,7 +190,7 @@ describe('a tile of a nested AGENTS.md let go of over the top of the space', () 
     hard.files.delete(`${ROOT}/AGENTS.md`)
     await workspace.loadTree()
     tile()
-    const { unkeepInto } = await import('../../essentials.svelte')
+    const { unkeepInto } = await (await import('../../workspace/src/api')).essentials()
     await unkeepInto(0, ROOT)
 
     expect(workspace.bookmarks.of(ROOT)).toHaveLength(1)
@@ -199,7 +199,7 @@ describe('a tile of a nested AGENTS.md let go of over the top of the space', () 
 
   test('into a folder it moves as ever', async () => {
     tile()
-    const { unkeepInto } = await import('../../essentials.svelte')
+    const { unkeepInto } = await (await import('../../workspace/src/api')).essentials()
     await unkeepInto(0, `${ROOT}/b`)
 
     expect(workspace.bookmarks.of(ROOT)).toHaveLength(0)

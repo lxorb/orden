@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: { command: string; from?: unknown; to?: unknown }[] = []
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push({ command, from: args?.from, to: args?.to })
     if (command === 'read_note') return Promise.resolve('# a')
@@ -27,15 +27,15 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const readOnly = vi.hoisted(() => new Set<string>())
-vi.mock('./sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./sharing/src/sharing.svelte')>()),
+vi.mock('../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-const { workspace } = await import('./workspace/src/api')
+const { workspace } = await import('./api')
 const { place, unkeepInto } = await import('./essentials.svelte')
-type Entry = import('./workspace/src/api').Entry
+type Entry = import('./api').Entry
 
 const file = (path: string): Entry => ({
   name: path.split('/').pop() ?? path,
