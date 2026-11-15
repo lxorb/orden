@@ -137,6 +137,32 @@ describe('chats through the connector', () => {
     }
   })
 
+  test('in a folder kept from agents are neither listed, read, searched nor posted in', async () => {
+    chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json
+      .chat
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: owner,
+      body: { path: 'Private/secret.chat', content: chatText({ v: 1, chat }) },
+    })
+    await say(owner, 'the secret words')
+    await fire(logs.of(chat))
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token: owner,
+      body: { protected: { Private: 'password' } },
+    })
+    const key = await connector(owner)
+    const before = await state(owner)
+
+    expect(await tool(key, 'list_chats')).not.toContain('#secret')
+    expect(await tool(key, 'list_chats')).toContain('#thesis')
+    expect(await tool(key, 'read_chat', { chat: 'secret' })).not.toContain('the secret words')
+    expect(await tool(key, 'read_chat', { chat })).not.toContain('the secret words')
+    expect(await tool(key, 'search_chats', { query: 'secret' })).not.toContain('the secret words')
+    expect(await tool(key, 'post_message', { chat, text: 'sneaked in' })).not.toContain('Posted')
+    expect(await state(owner)).toEqual(before)
+  })
+
   test('are listed with the tools', async () => {
     const response = await call<RpcView>(env, '/mcp', {
       token: await connector(owner),

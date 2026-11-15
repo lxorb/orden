@@ -2,7 +2,14 @@ import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { EVENTS_A_MINUTE, LONGEST_SEARCH, MOST_BODY } from '@orden/chats/limits'
 import { postEventsOf } from '@orden/chats/wire'
-import { askInChunks, places, within, type Env, type Whoever } from '../../../sync-server/src/api'
+import {
+  askInChunks,
+  places,
+  shutFor,
+  within,
+  type Env,
+  type Whoever,
+} from '../../../sync-server/src/api'
 import { accountById } from '../../../sync-server-accounts/src/api'
 import {
   askChat,
@@ -99,17 +106,20 @@ async function chatsOf(
     rows.map((one) => one.id),
     async (chunk) => {
       const { results } = await env.DB.prepare(
-        `select ch.id as id, f.path as path, sp.name as space from chats ch
+        `select ch.id as id, f.path as path, sp.id as spaceId, sp.name as space from chats ch
            join spaces sp on sp.id = ch.space_id
            left join notes f on f.id = ch.file_id and f.deleted = 0
           where ch.id in (${places(chunk.length)})`,
       )
         .bind(...chunk)
-        .all<{ id: string; path: string | null; space: string }>()
+        .all<{ id: string; path: string | null; spaceId: string; space: string }>()
       return results
     },
   )
-  const named = new Map(found.map((one) => [one.id, one]))
+  const shut = who.kind === 'user' ? await shutFor(env, who.user.id) : null
+  const named = new Map(
+    found.filter((one) => !(one.path && shut?.(one.spaceId, one.path))).map((one) => [one.id, one]),
+  )
   const me = whoOf(who)
   return rows.flatMap((row): Known[] => {
     const chat = named.get(row.id)
