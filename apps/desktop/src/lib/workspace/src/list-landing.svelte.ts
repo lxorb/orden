@@ -12,7 +12,8 @@ import {
   currentPlatform,
   landing,
 } from '../../ui-kit/src/api'
-import { within } from '../../platform/src/api'
+import { keeping } from '../../file-ops/src/api'
+import { movedTo, within } from '../../platform/src/api'
 import { workspace } from './workspace.svelte'
 
 class FileClipboard {
@@ -28,6 +29,20 @@ class FileClipboard {
 
   isCut(path: string): boolean {
     return this.cutting.has(path)
+  }
+
+  moved(from: string, to: string) {
+    const now = this.paths.map((path) => movedTo(path, from, to) ?? path)
+    if (now.some((path, at) => path !== this.paths[at])) this.paths = now
+  }
+
+  spaceMoved(from: string, to: string) {
+    this.moved(from, to)
+  }
+
+  gone(path: string) {
+    const kept = this.paths.filter((one) => movedTo(one, path, path) === null)
+    if (kept.length !== this.paths.length) this.paths = kept
   }
 
   async paste(into: string) {
@@ -50,6 +65,7 @@ class FileClipboard {
 }
 
 export const fileClipboard = new FileClipboard()
+workspace.fileOps.follow(keeping(fileClipboard))
 
 export const listMotion: {
   before: () => Map<string, number> | null
