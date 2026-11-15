@@ -384,7 +384,7 @@ export class Protection {
   }
 
   private async unbury(back: string | null, root: string, at: string): Promise<void> {
-    const came = (await buried()).unburied(back, root, at, this.ways(root))
+    const came = await (await buried()).unburied(back, root, at, this.ways(root))
     if (came) this.put(root, { ...this.ways(root), ...came })
   }
 

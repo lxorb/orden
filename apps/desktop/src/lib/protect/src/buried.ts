@@ -1,8 +1,18 @@
-import { insideItsSpace, isRecord, keepJson, stored, without } from '../../platform/src/api'
+import {
+  insideItsSpace,
+  insideSpace,
+  invoke,
+  isRecord,
+  keepJson,
+  stored,
+  without,
+} from '../../platform/src/api'
 import type { Way } from './protection.svelte'
 
 const BURIED_KEY = 'orden:protected-buried'
 const MOST_BURIED = 200
+const HISTORY_KEY = 'orden:protected-buried-history'
+const HISTORY_AWAY = '/.orden-locked-history'
 
 type Buried = Record<string, Record<string, Way>>
 
@@ -31,24 +41,53 @@ function keepBuried(back: string, ways: Record<string, Way>): void {
   keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
 }
 
-export function bury(
+function readHistories(): Record<string, string> {
+  const saved = stored(HISTORY_KEY)
+  if (!isRecord(saved)) return {}
+  return Object.fromEntries(
+    Object.entries(saved).filter((one): one is [string, string] => typeof one[1] === 'string'),
+  )
+}
+
+function keepHistory(name: string, away: string): void {
+  const kept = Object.entries({ ...without(readHistories(), name), [name]: away })
+  keepJson(HISTORY_KEY, Object.fromEntries(kept.slice(-MOST_BURIED)))
+}
+
+const pathOf = (root: string, at: string) => (at ? insideSpace(root, at) : root)
+
+const rehome = (from: string, to: string) =>
+  invoke<number>('rehome_snapshots', { from, to }).catch(() => 0)
+
+export async function bury(
   root: string,
   at: string,
   back: string | undefined,
   ways: Record<string, Way>,
-): void {
+): Promise<void> {
   if (!Object.keys(ways).length) return
-  if (at) keepBuried(placeOf(root, at), ways)
-  if (back) keepBuried(back, ways)
+  const away = `${HISTORY_AWAY}/${crypto.randomUUID()}`
+  for (const name of [at ? placeOf(root, at) : null, back ?? null]) {
+    if (name === null) continue
+    keepBuried(name, ways)
+    keepHistory(name, away)
+  }
+  await rehome(pathOf(root, at), away)
 }
 
-export function unburied(
+export async function unburied(
   back: string | null,
   root: string,
   at: string,
   held: Record<string, Way>,
-): Record<string, Way> | null {
+): Promise<Record<string, Way> | null> {
   const named = back ?? placeOf(root, at)
+  const histories = readHistories()
+  const away = histories[named]
+  if (away !== undefined) {
+    keepJson(HISTORY_KEY, without(histories, named))
+    if (inSpace(at)) await rehome(away, pathOf(root, at))
+  }
   const buried = readBuried()
   const ways = buried[named]
   if (!ways) return null
