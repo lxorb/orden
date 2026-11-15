@@ -9,7 +9,7 @@ import { isDraft } from '../../documents/src/api'
 import { writeIfAbsent } from '../../file-writes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import { DocError, type NoteRead } from '../../agent-docs/src/api'
+import { DocError, type NoteRead, taskIn } from '../../agent-docs/src/api'
 import { SCRATCHPAD_TAB } from '../../agent-docs/src/api'
 import { SCRATCHPAD } from '../../scratchpad/src/api'
 import {
@@ -226,26 +226,15 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
 export async function setTask(call: Call): Promise<AgentAnswer> {
   const note = noteOf(call, true)
   const { relative } = note
-  const anchor = call.args.at
-  if (typeof anchor !== 'object' || anchor === null || !('task' in anchor)) {
-    throw new Refused('bad_arguments', 'at is {task, nth?}')
-  }
   const wanted = flag(call, 'done')
 
   const read = await notes.readNote(at(note), ['text', 'tasks'])
-  const named = anchor as { task: unknown; nth?: unknown }
-  const row = read.tasks?.find(
-    (one) =>
-      'task' in one.anchor &&
-      one.anchor.task === named.task &&
-      (named.nth === undefined || one.anchor.nth === named.nth),
-  )
-  if (!row) throw new Refused('not_found', `there is no task ${String(named.task)} in ${relative}`)
+  const row = taskIn(read.tasks ?? [], call.args.at)
   if (row.done === wanted) return done({ path: relative, rev: read.rev, changed: false })
 
   const line = (read.text ?? '').split('\n')[row.line] ?? ''
   const task = taskAt(line)
-  if (!task) throw new Refused('not_found', `the task ${String(named.task)} has moved`)
+  if (!task) throw new Refused('not_found', `that task has moved in ${relative}`)
 
   const question = await asked(call, null, `${wanted ? 'Tick' : 'Clear'} a task in ${relative}`)
   if (question) return question

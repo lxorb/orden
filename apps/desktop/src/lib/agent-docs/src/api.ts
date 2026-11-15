@@ -1,5 +1,6 @@
 export type { Agent } from './presence'
 export type { NoteRead } from './read'
+export { taskIn } from './anchors'
 export { DocError } from './problem'
 export { SCRATCHPAD_TAB, TYPING } from './desk'
 export { plan, readEdits, type Replacement } from './edits'

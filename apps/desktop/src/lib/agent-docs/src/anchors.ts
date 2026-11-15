@@ -267,6 +267,15 @@ export function taskWords(line: string): string | null {
   return (id ? words.slice(0, words.lastIndexOf(`^${id}`)) : words).trim()
 }
 
+export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: unknown): T {
+  const anchor = readAnchor(value)
+  if (!('task' in anchor)) throw new DocError('bad_anchor', value, 'at is {task, nth?}')
+
+  const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
+  const found = rows.filter((row) => 'task' in row.anchor && row.anchor.task === wanted)
+  return one(found, anchor, anchor.nth)
+}
+
 function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
   const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
   const found = [...lines(text)].filter((row) => !row.code && taskWords(row.text) === wanted)

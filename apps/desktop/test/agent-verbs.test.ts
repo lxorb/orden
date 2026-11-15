@@ -1343,6 +1343,64 @@ describe('the notes, on the road', () => {
     )
   })
 
+  test('a task written twice is ticked only by its nth, as edit_note finds it', async () => {
+    files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk\n- [ ] Buy milk\n')
+    const twice = {
+      path: 'Soup.md',
+      space: 'home',
+      rev: 'r1',
+      open: false,
+      typing: false,
+      text: '# Soup\n\n- [ ] Buy milk\n- [ ] Buy milk\n',
+      tasks: [
+        { anchor: { task: 'Buy milk', nth: 1 }, done: false, line: 2 },
+        { anchor: { task: 'Buy milk', nth: 2 }, done: false, line: 3 },
+      ],
+    }
+    docs.readNote.mockResolvedValueOnce(twice)
+    expect(
+      await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true }),
+    ).toMatchObject({ code: 'ambiguous' })
+    expect(docs.editNote).not.toHaveBeenCalled()
+
+    docs.readNote.mockResolvedValueOnce(twice)
+    await call('set_task', {
+      space: 'Home',
+      path: 'Soup',
+      at: { task: 'Buy milk', nth: 2 },
+      done: true,
+    })
+    expect(docs.editNote).toHaveBeenLastCalledWith(
+      { id: 'claude-code', name: 'Claude Code' },
+      { path: 'Soup.md', space: 'home' },
+      [{ at: { task: 'Buy milk', nth: 2 }, replace: '- [x] Buy milk' }],
+      'r1',
+    )
+  })
+
+  test('a task written once is ticked by its words, with or without nth 1', async () => {
+    await call('set_task', {
+      space: 'Home',
+      path: 'Soup',
+      at: { task: '- [ ] Buy milk', nth: 1 },
+      done: true,
+    })
+    expect(docs.editNote).toHaveBeenLastCalledWith(
+      { id: 'claude-code', name: 'Claude Code' },
+      { path: 'Soup.md', space: 'home' },
+      [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
+      'r1',
+    )
+    expect(
+      await call('set_task', {
+        space: 'Home',
+        path: 'Soup',
+        at: { task: 'Buy milk', nth: 2 },
+        done: true,
+      }),
+    ).toMatchObject({ code: 'not_found' })
+  })
+
   test('an edit says the AI panel thread that asked for it', async () => {
     const asker = callerOf(
       {
