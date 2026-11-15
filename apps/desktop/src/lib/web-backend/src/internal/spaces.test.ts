@@ -275,6 +275,42 @@ describe('a new space', () => {
     expect(await call('list_spaces')).toEqual([{ name: 'Goals', path: renamed.path }])
   })
 
+  test('renamed while a save is on its way, takes the save along and leaves nothing under the old name', async () => {
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+    await call('write_note', { path: `${made.path}/Plan.md`, content: 'one' })
+
+    const write = disk.crate
+    let release = (): void => undefined
+    const held = new Promise<void>((done) => (release = done))
+    disk.crate = (command, args) => {
+      if (command === 'write_note' && String(args.path).includes('/.entries/')) {
+        disk.crate = write
+        return held.then(() => write(command, args))
+      }
+      return write(command, args)
+    }
+
+    try {
+      const saving = call('write_note', { path: `${made.path}/Plan.md`, content: 'two' })
+      const renaming = call<{ path: string }>('rename_space', { from: made.path, name: 'Goals' })
+      for (let turn = 0; turn < 50 && !disk.dirs.has('/spaces/.orden/Goals'); turn += 1) {
+        await new Promise((later) => setTimeout(later, 0))
+      }
+      release()
+      await saving
+      const renamed = await renaming
+
+      expect(await call('read_note', { path: `${renamed.path}/Plan.md` })).toBe('two')
+    } finally {
+      disk.crate = write
+    }
+
+    const left = [...disk.files.keys(), ...disk.dirs].filter((one) =>
+      one.startsWith('/spaces/.orden/Plans'),
+    )
+    expect(left).toEqual([])
+  })
+
   test('goes to Recently deleted whole and comes back from it', async () => {
     const made = await call<{ path: string }>('create_space', { name: 'Plans' })
     await call('write_note', { path: `${made.path}/Plan.md`, content: 'ship it' })

@@ -258,7 +258,30 @@ export class InternalFolder {
   }
 
   async flush(): Promise<void> {
+    if (this.retired) return
+    if (this.stamps.size) await this.op(() => this.change(() => null))
+  }
+
+  private retired = false
+
+  private doing = new Set<Promise<unknown>>()
+
+  private async op<T>(run: () => Promise<T>): Promise<T> {
+    if (this.retired) throw new Error(`${this.name} has moved or gone`)
+    const doing = run()
+    this.doing.add(doing)
+    try {
+      return await doing
+    } finally {
+      this.doing.delete(doing)
+    }
+  }
+
+  async retire(): Promise<void> {
+    this.retired = true
+    while (this.doing.size) await Promise.allSettled([...this.doing])
     if (this.stamps.size) await this.change(() => null)
+    this.close()
   }
 
   close() {
@@ -341,78 +364,84 @@ export class InternalFolder {
   }
 
   async mkdir(path: string): Promise<void> {
-    if (!path) return
-    await this.change(() => {
-      const there = this.atNow(path)
-      if (there?.key) throw new Error(`${path} is a file`)
-      if (there) return null
-      const at = this.world.now()
-      const changes: InternalChange[] = []
-      this.folders(`${path}/-`, at, changes)
-      return changes
+    return this.op(async () => {
+      if (!path) return
+      await this.change(() => {
+        const there = this.atNow(path)
+        if (there?.key) throw new Error(`${path} is a file`)
+        if (there) return null
+        const at = this.world.now()
+        const changes: InternalChange[] = []
+        this.folders(`${path}/-`, at, changes)
+        return changes
+      })
     })
   }
 
   async write(path: string, what: string | Uint8Array): Promise<void> {
-    await this.fresh()
-    const there = this.atNow(path)
-    if (there && !there.key) throw new Error(`${path} is a folder`)
-    const at = this.world.now()
-    const size = typeof what === 'string' ? what.length : what.byteLength
-    const key = there?.key ?? this.newKey(path)
-    if (typeof what === 'string') await this.bytes.writeText(key, what)
-    else await this.bytes.write(key, what)
+    return this.op(async () => {
+      await this.fresh()
+      const there = this.atNow(path)
+      if (there && !there.key) throw new Error(`${path} is a folder`)
+      const at = this.world.now()
+      const size = typeof what === 'string' ? what.length : what.byteLength
+      const key = there?.key ?? this.newKey(path)
+      if (typeof what === 'string') await this.bytes.writeText(key, what)
+      else await this.bytes.write(key, what)
 
-    if (there) {
-      const now = this.namedFor(path, key)
-      if (!now) return
-      const spelled = now.path
-      const entry = { ...now.entry, modified: at, size }
-      this.paths.set(this.keyOf(spelled), { path: spelled, entry })
-      this.stamps.set(spelled, { modified: at, size })
-      const change: InternalChange = {
-        kind: 'modified',
-        path: spelled,
-        dir: false,
-        size,
-        mtime: at,
-        id: key,
+      if (there) {
+        const now = this.namedFor(path, key)
+        if (!now) return
+        const spelled = now.path
+        const entry = { ...now.entry, modified: at, size }
+        this.paths.set(this.keyOf(spelled), { path: spelled, entry })
+        this.stamps.set(spelled, { modified: at, size })
+        const change: InternalChange = {
+          kind: 'modified',
+          path: spelled,
+          dir: false,
+          size,
+          mtime: at,
+          id: key,
+        }
+        this.channel?.post({ gen: this.gen, changes: [change] })
+        this.tell([change])
+        this.stampSoon()
+        return
       }
-      this.channel?.post({ gen: this.gen, changes: [change] })
-      this.tell([change])
-      this.stampSoon()
-      return
-    }
-    await this.change(() => {
-      const changes: InternalChange[] = []
-      this.folders(path, at, changes)
-      this.paths.set(this.keyOf(path), { path, entry: { key, made: at, modified: at, size } })
-      changes.push({ kind: 'created', path, dir: false, size, mtime: at, id: key })
-      return changes
+      await this.change(() => {
+        const changes: InternalChange[] = []
+        this.folders(path, at, changes)
+        this.paths.set(this.keyOf(path), { path, entry: { key, made: at, modified: at, size } })
+        changes.push({ kind: 'created', path, dir: false, size, mtime: at, id: key })
+        return changes
+      })
     })
   }
 
   async adopt(path: string, what: Uint8Array | null): Promise<void> {
-    await this.fresh()
-    const there = this.atNow(path)
-    const at = this.world.now()
-    if (!what) {
-      if (there?.key) throw new Error(`${path} is a file`)
-      if (!there) this.folders(`${path}/-`, at, [])
-      return
-    }
-    if (there && !there.key) throw new Error(`${path} is a folder`)
-    const key = there?.key ?? this.newKey(path)
-    await this.bytes.write(key, what)
-    this.folders(path, at, [])
-    this.paths.set(this.keyOf(path), {
-      path: there ? this.spelled(path) : path,
-      entry: { key, made: there?.made ?? at, modified: at, size: what.byteLength },
+    return this.op(async () => {
+      await this.fresh()
+      const there = this.atNow(path)
+      const at = this.world.now()
+      if (!what) {
+        if (there?.key) throw new Error(`${path} is a file`)
+        if (!there) this.folders(`${path}/-`, at, [])
+        return
+      }
+      if (there && !there.key) throw new Error(`${path} is a folder`)
+      const key = there?.key ?? this.newKey(path)
+      await this.bytes.write(key, what)
+      this.folders(path, at, [])
+      this.paths.set(this.keyOf(path), {
+        path: there ? this.spelled(path) : path,
+        entry: { key, made: there?.made ?? at, modified: at, size: what.byteLength },
+      })
     })
   }
 
   save(): Promise<void> {
-    return this.change(() => [])
+    return this.op(() => this.change(() => []))
   }
 
   private newKey(path: string): string {
@@ -423,66 +452,70 @@ export class InternalFolder {
   }
 
   async move(from: string, to: string): Promise<void> {
-    if (from === to) return
-    await this.change(() => {
-      const moving = this.under(from)
-      if (!moving.length) throw new Error(`nothing is at ${from}`)
-      const self = this.keyOf(from)
-      const target = this.keyOf(to)
-      const caseOnly = self === target
-      if (!caseOnly && target.startsWith(`${self}/`))
-        throw new Error(`${from} cannot go into itself`)
-      if (!caseOnly && this.atNow(to)) throw new Error(`something is at ${to} already`)
-      const at = this.world.now()
-      const changes: InternalChange[] = []
-      this.folders(to, at, changes)
-      for (const one of moving) this.paths.delete(one.key)
-      for (const one of moving) {
-        const path = `${to}${one.rest}`
-        this.paths.set(this.keyOf(path), { path, entry: one.entry })
-        const stamp = this.stamps.get(one.path)
-        if (stamp) {
-          this.stamps.delete(one.path)
-          this.stamps.set(path, stamp)
+    return this.op(async () => {
+      if (from === to) return
+      await this.change(() => {
+        const moving = this.under(from)
+        if (!moving.length) throw new Error(`nothing is at ${from}`)
+        const self = this.keyOf(from)
+        const target = this.keyOf(to)
+        const caseOnly = self === target
+        if (!caseOnly && target.startsWith(`${self}/`))
+          throw new Error(`${from} cannot go into itself`)
+        if (!caseOnly && this.atNow(to)) throw new Error(`something is at ${to} already`)
+        const at = this.world.now()
+        const changes: InternalChange[] = []
+        this.folders(to, at, changes)
+        for (const one of moving) this.paths.delete(one.key)
+        for (const one of moving) {
+          const path = `${to}${one.rest}`
+          this.paths.set(this.keyOf(path), { path, entry: one.entry })
+          const stamp = this.stamps.get(one.path)
+          if (stamp) {
+            this.stamps.delete(one.path)
+            this.stamps.set(path, stamp)
+          }
         }
-      }
-      const top = moving.find((one) => one.rest === '')
-      if (top) {
-        changes.push({
-          kind: 'renamed',
-          from: top.path,
-          path: to,
-          dir: !top.entry.key,
-          size: top.entry.size,
-          mtime: top.entry.modified,
-          id: top.entry.key,
-        })
-      }
-      return changes
+        const top = moving.find((one) => one.rest === '')
+        if (top) {
+          changes.push({
+            kind: 'renamed',
+            from: top.path,
+            path: to,
+            dir: !top.entry.key,
+            size: top.entry.size,
+            mtime: top.entry.modified,
+            id: top.entry.key,
+          })
+        }
+        return changes
+      })
     })
   }
 
   async remove(path: string): Promise<void> {
-    let keys: string[] = []
-    await this.change(() => {
-      const going = this.under(path)
-      if (!going.length) return null
-      for (const one of going) {
-        this.paths.delete(one.key)
-        this.stamps.delete(one.path)
-      }
-      keys = going.flatMap((one) => (one.entry.key ? [one.entry.key] : []))
-      const top = going.find((one) => one.rest === '')
-      return [
-        {
-          kind: 'removed',
-          path: top?.path ?? path,
-          dir: !top?.entry.key,
-          id: top?.entry.key ?? null,
-        },
-      ]
+    return this.op(async () => {
+      let keys: string[] = []
+      await this.change(() => {
+        const going = this.under(path)
+        if (!going.length) return null
+        for (const one of going) {
+          this.paths.delete(one.key)
+          this.stamps.delete(one.path)
+        }
+        keys = going.flatMap((one) => (one.entry.key ? [one.entry.key] : []))
+        const top = going.find((one) => one.rest === '')
+        return [
+          {
+            kind: 'removed',
+            path: top?.path ?? path,
+            dir: !top?.entry.key,
+            id: top?.entry.key ?? null,
+          },
+        ]
+      })
+      for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
     })
-    for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
   }
 
   async trash(): Promise<InternalTrashed[]> {
@@ -495,82 +528,90 @@ export class InternalFolder {
     item: Omit<InternalTrashed, 'held' | 'from'>,
     beside: readonly string[] = [],
   ): Promise<boolean> {
-    let taken = false
-    await this.change(() => {
-      const going = this.under(path)
-      const top = going.find((one) => one.rest === '')
-      if (!top) return null
-      for (const one of beside) {
-        if (!one.startsWith(top.path) || one === top.path) continue
-        const at = this.paths.get(this.keyOf(one))
-        if (at) going.push({ rest: at.path.slice(top.path.length), key: this.keyOf(one), ...at })
-      }
-      for (const one of going) {
-        this.paths.delete(one.key)
-        this.stamps.delete(one.path)
-      }
-      this.trashed.push({
-        ...item,
-        from: top.path,
-        held: going.map((one) => [one.rest, one.entry]),
+    return this.op(async () => {
+      let taken = false
+      await this.change(() => {
+        const going = this.under(path)
+        const top = going.find((one) => one.rest === '')
+        if (!top) return null
+        for (const one of beside) {
+          if (!one.startsWith(top.path) || one === top.path) continue
+          const at = this.paths.get(this.keyOf(one))
+          if (at) going.push({ rest: at.path.slice(top.path.length), key: this.keyOf(one), ...at })
+        }
+        for (const one of going) {
+          this.paths.delete(one.key)
+          this.stamps.delete(one.path)
+        }
+        this.trashed.push({
+          ...item,
+          from: top.path,
+          held: going.map((one) => [one.rest, one.entry]),
+        })
+        taken = true
+        return [{ kind: 'removed', path: top.path, dir: !top.entry.key, id: top.entry.key }]
       })
-      taken = true
-      return [{ kind: 'removed', path: top.path, dir: !top.entry.key, id: top.entry.key }]
+      return taken
     })
-    return taken
   }
 
   async wordsToTrash(from: string, text: string, item: Omit<InternalTrashed, 'held' | 'from'>) {
-    const at = this.world.now()
-    const key = this.newKey(from)
-    await this.bytes.writeText(key, text)
-    await this.change(() => {
-      this.trashed.push({
-        ...item,
-        from,
-        held: [['', { key, made: at, modified: at, size: text.length }]],
+    return this.op(async () => {
+      const at = this.world.now()
+      const key = this.newKey(from)
+      await this.bytes.writeText(key, text)
+      await this.change(() => {
+        this.trashed.push({
+          ...item,
+          from,
+          held: [['', { key, made: at, modified: at, size: text.length }]],
+        })
+        return []
       })
-      return []
     })
   }
 
   async fromTrash(id: string, to: string): Promise<void> {
-    await this.change(() => {
-      const item = this.trashed.find((one) => one.id === id)
-      if (!item) throw new Error('nothing to restore')
-      if (this.atNow(to)) throw new Error(`something is at ${to} already`)
-      const at = this.world.now()
-      const changes: InternalChange[] = []
-      this.folders(to, at, changes)
-      for (const [rest, entry] of [...item.held].sort((a, b) => a[0].length - b[0].length)) {
-        const path = `${to}${rest}`
-        this.paths.set(this.keyOf(path), { path, entry })
-        if (rest === '') {
-          changes.push({
-            kind: 'created',
-            path,
-            dir: !entry.key,
-            size: entry.size,
-            mtime: entry.modified,
-            id: entry.key,
-          })
+    return this.op(async () => {
+      await this.change(() => {
+        const item = this.trashed.find((one) => one.id === id)
+        if (!item) throw new Error('nothing to restore')
+        if (this.atNow(to)) throw new Error(`something is at ${to} already`)
+        const at = this.world.now()
+        const changes: InternalChange[] = []
+        this.folders(to, at, changes)
+        for (const [rest, entry] of [...item.held].sort((a, b) => a[0].length - b[0].length)) {
+          const path = `${to}${rest}`
+          this.paths.set(this.keyOf(path), { path, entry })
+          if (rest === '') {
+            changes.push({
+              kind: 'created',
+              path,
+              dir: !entry.key,
+              size: entry.size,
+              mtime: entry.modified,
+              id: entry.key,
+            })
+          }
         }
-      }
-      this.trashed = this.trashed.filter((one) => one !== item)
-      return changes
+        this.trashed = this.trashed.filter((one) => one !== item)
+        return changes
+      })
     })
   }
 
   async purge(id: string): Promise<void> {
-    let keys: string[] = []
-    await this.change(() => {
-      const item = this.trashed.find((one) => one.id === id)
-      if (!item) return null
-      this.trashed = this.trashed.filter((one) => one !== item)
-      keys = item.held.flatMap(([, entry]) => (entry.key ? [entry.key] : []))
-      return []
+    return this.op(async () => {
+      let keys: string[] = []
+      await this.change(() => {
+        const item = this.trashed.find((one) => one.id === id)
+        if (!item) return null
+        this.trashed = this.trashed.filter((one) => one !== item)
+        keys = item.held.flatMap(([, entry]) => (entry.key ? [entry.key] : []))
+        return []
+      })
+      for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
     })
-    for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
   }
 }
 
