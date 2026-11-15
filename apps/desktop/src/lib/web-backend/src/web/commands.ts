@@ -750,8 +750,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
     const marks = marked.get(path)
     if (marks) notes.push(markedPlane(relative(path), marks))
-    const kept = marks ? isPages(path) : basename(path) !== KEEP && !path.endsWith(PDF_SIDECAR)
-    if (kept) beside.push(path)
+    if (basename(path) !== KEEP && !path.endsWith(PDF_SIDECAR)) beside.push(path)
   }
 
   const learnt: { path: string; modified: number; size: number; plane?: PlaneMarks }[] = []
@@ -764,7 +763,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
         const marks = planeMarks(row.content)
         notes.push(markedPlane(relative(row.path), marks))
         learnt.push({ ...found, plane: marks })
-        if (isPages(row.path)) beside.push(row.path)
+        beside.push(row.path)
         continue
       }
 

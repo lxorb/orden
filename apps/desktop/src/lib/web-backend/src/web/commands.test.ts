@@ -1314,7 +1314,17 @@ describe('reading a whole space for the link index', () => {
     const plane = found.notes.find((one) => one.path === 'note-005.canvas')
     expect(plane?.icon).toBe('rocket')
     expect(plane?.links.map((link) => link.target)).toEqual(['/note-001.md'])
-    expect(found.files).toEqual(['Book.pages'])
+    expect(found.files.sort()).toEqual(['Book.pages', 'note-005.canvas'])
+  })
+
+  test('keeps a canvas read afresh among the files, so a link to it reaches it', async () => {
+    await write('/Notes/a.md', 'see [[Board.canvas]]')
+    await write('/Notes/Board.canvas', JSON.stringify({ nodes: [], edges: [] }))
+    disk.planes.delete('/Notes/Board.canvas')
+
+    const found = await webInvoke<{ files: string[] }>('scan_links', { root: '/Notes' })
+
+    expect(found.files).toEqual(['Board.canvas'])
   })
 
   test('reads a page note written before as a plane, and keeps it among the files', async () => {
