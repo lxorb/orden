@@ -18,7 +18,7 @@ Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
-await import('../../src/lib/keyboard-home')
+await import('../../src/lib/ui-controls/src/keyboard-home')
 const { adrift, pressedThrough } = await import('../../src/lib/ui-controls/src/api')
 
 let editor: EditorView

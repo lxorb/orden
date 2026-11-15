@@ -1,4 +1,4 @@
-import { copySelection, cutSelection } from './ui-controls/src/api'
+import { copySelection, cutSelection } from '../../ui-controls/src/api'
 import {
   stepped,
   showCombination,
@@ -7,8 +7,8 @@ import {
   walkableRows,
   menu,
   type TextField,
-} from './ui-kit/src/api'
-import { shortcuts } from './shortcuts/src/api'
+} from '../../ui-kit/src/api'
+import { shortcuts } from '../../shortcuts/src/api'
 
 export function showFieldMenu(event: MouseEvent, field: TextField): void {
   menu.show(event, fieldEntries(field), { keepFocus: true })

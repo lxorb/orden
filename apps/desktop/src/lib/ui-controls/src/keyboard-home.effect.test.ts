@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import app from '../App.svelte?raw'
-import crateSide from '../../src-tauri/src/keyboard.rs?raw'
+import app from '../../../App.svelte?raw'
+import crateSide from '../../../../src-tauri/src/keyboard.rs?raw'
 
 const crate = vi.hoisted(() => ({
   inPage: true,
@@ -8,7 +8,7 @@ const crate = vi.hoisted(() => ({
   heard: new Map<string, () => void>(),
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isDesktop: true,
   invoke: async (command: string) => {
     if (command !== 'keyboard_went') return undefined
@@ -16,8 +16,8 @@ vi.mock('./platform/src/tauri', () => ({
     return crate.inPage
   },
 }))
-vi.mock('./windows/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./windows/src/api')>()),
+vi.mock('../../windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../windows/src/api')>()),
   hearHere: (name: string, then: () => void) => {
     crate.heard.set(name, then)
     return Promise.resolve(() => undefined)
@@ -25,8 +25,8 @@ vi.mock('./windows/src/api', async (importOriginal) => ({
 }))
 
 const { IN_PAGE } = await import('./keyboard-home')
-const { overlays } = await import('./ui-kit/src/overlays')
-const { IN_A_PAGE } = await import('./ui-controls/src/trap')
+const { overlays } = await import('../../ui-kit/src/overlays')
+const { IN_A_PAGE } = await import('./trap')
 
 async function settled() {
   await new Promise((done) => setTimeout(done, 40))

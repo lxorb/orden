@@ -1,5 +1,6 @@
 export { closeOnBack } from './backstack.svelte'
 export { busy } from './busy.svelte'
+export { reloading } from './reloading.svelte'
 export { held, type Latched, latched } from './doors.svelte'
 export { default as Cross } from './Cross.svelte'
 export { default as UnreadDot } from './UnreadDot.svelte'
@@ -51,8 +52,8 @@ export {
 } from './keys'
 export type { Keystroke, Platform, Taken } from './keys'
 export { opensAt, spelled, walk } from './list-keys'
-export { stepped } from './step'
 export { roving } from './roving'
+export { stepped } from './step'
 export { longPress } from './longpress'
 export {
   ARCHIVE_MARK,
@@ -131,3 +132,5 @@ export {
 } from './drag-paths'
 
 export const outsideDrops = () => import('./outside-drops')
+
+export const reloadWhen = () => import('./reload-when')

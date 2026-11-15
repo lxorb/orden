@@ -1,7 +1,6 @@
 import { storeBeside } from '../../../assets'
-import { busy, message } from '../../../ui-kit/src/api'
+import { busy, message, reloading } from '../../../ui-kit/src/api'
 import { links } from '../../../link-index/src/api'
-import { reloading } from '../../../reloading.svelte'
 import { askSheet, settingsWindow } from '@orden/contracts'
 import { nameOf, spaceRelative } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'

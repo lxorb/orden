@@ -1,6 +1,7 @@
-import { overlays } from './ui-kit/src/api'
-import { invoke, isDesktop } from './platform/src/api'
-import { adrift, IN_A_PAGE, pressedThrough } from './ui-controls/src/api'
+import { overlays } from '../../ui-kit/src/api'
+import { invoke, isDesktop } from '../../platform/src/api'
+import { adrift, pressedThrough } from './adrift'
+import { IN_A_PAGE } from './trap'
 
 export const IN_PAGE = 'orden://keyboard-in-page'
 
@@ -44,7 +45,7 @@ class KeyboardHome {
     })
     if (isDesktop) {
       void invoke('keyboard_watch').catch(() => undefined)
-      void import('./windows/src/api')
+      void import('../../windows/src/api')
         .then(({ hearHere }) => hearHere(IN_PAGE, () => void this.went()))
         .catch(() => undefined)
     }

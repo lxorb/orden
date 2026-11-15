@@ -1,5 +1,5 @@
-import { overlays } from './ui-kit/src/api'
-import { keep, storedText, isNative, afterQuiet } from './platform/src/api'
+import { overlays } from './overlays'
+import { keep, storedText, isNative, afterQuiet } from '../../platform/src/api'
 
 const HANDS_OFF = 3000
 

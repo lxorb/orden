@@ -22,7 +22,7 @@ import { outlinePart } from './pages/src/api'
 import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
 import { searchSpace } from './search/src/api'
-import { partView } from './ui-kit/src/api'
+import { partView, reloadWhen } from './ui-kit/src/api'
 import { samePath } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
 import { loadSettingsPanel, settings } from './settings/src/api'
@@ -286,7 +286,9 @@ export async function warmDoors(): Promise<void> {
     () => signInSheet.ask(),
     () => joinSheet.ask(),
     __EVEN_PLUGIN__ ? undefined : () => undoToastNotice.ask(),
-    __EVEN_PLUGIN__ ? undefined : () => import('./field-menu'),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./context-menu/src/api').then((one) => one.loadFieldMenu()),
     () => import('./ai-providers/src/api'),
     () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
@@ -307,8 +309,8 @@ export async function warmDoors(): Promise<void> {
           Promise.all([import('./first-screen/src/api'), import('./workspace/src/api')]).then(
             ([one, { workspace }]) => one.keepFirstScreens(workspace),
           ),
-    () => import('./reload-when'),
-    () => import('./keyboard-home'),
+    () => reloadWhen(),
+    () => import('./ui-controls/src/api').then((one) => one.watchKeyboard()),
     __EVEN_PLUGIN__
       ? undefined
       : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
