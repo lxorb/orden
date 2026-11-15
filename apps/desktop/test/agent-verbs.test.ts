@@ -1738,6 +1738,19 @@ describe('to-dos and bases', () => {
     await todos.remove(id)
   })
 
+  test('a change takes a day or the space off when sent empty, and leaves done alone when sent null', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const added = await call('add_task', { text: 'Pay rent', deadline: '2026-12-01' })
+    const id = (added as { result: { id: string } }).result.id
+    await call('update_task', { id, done: true })
+
+    expect(await call('update_task', { id, deadline: '', done: null })).toMatchObject({
+      result: { deadline: null, done: true },
+    })
+    expect(await call('update_task', { id, space: '' })).toMatchObject({ result: { space: null } })
+    await todos.remove(id)
+  })
+
   test('a limit sent as the words a terminal types is still a limit', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const made: unknown[] = []

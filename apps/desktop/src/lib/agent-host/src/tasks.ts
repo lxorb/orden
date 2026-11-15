@@ -149,14 +149,14 @@ function patchOf(call: Call): TodoPatch {
   if (description !== null) patch.description = description
   const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
   if (labels !== undefined) patch.labels = labels
-  if ('space' in call.args) patch.space = spaceIdOf(call)
+  if ('space' in call.args) patch.space = maybe(call, 'space') === null ? null : spaceIdOf(call)
   const start = dayArg(call, 'start')
   if (start !== undefined) patch.start = start
-  const deadline = dayArg(call, 'deadline') ?? dayArg(call, 'due')
+  const deadline = dayArg(call, 'deadline' in call.args ? 'deadline' : 'due')
   if (deadline !== undefined) patch.deadline = deadline
   const priority = priorityArg(call)
   if (priority !== undefined) patch.priority = priority
-  if ('done' in call.args) patch.done = flag(call, 'done')
+  if (call.args.done !== undefined && call.args.done !== null) patch.done = flag(call, 'done')
   return patch
 }
 
