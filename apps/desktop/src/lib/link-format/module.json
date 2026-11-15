@@ -1,0 +1,5 @@
+{
+  "name": "link-format",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "platform"]
+}

@@ -110,7 +110,7 @@ describe('converting syntax', () => {
 
 describe('converting website notes', () => {
   async function offers(): Promise<boolean> {
-    const { links } = await import('../../link-index.svelte')
+    const { links } = await import('../../link-index/src/api')
     vi.spyOn(links, 'websiteNotes', 'get').mockReturnValue(true)
     vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
       id: 'theirs',

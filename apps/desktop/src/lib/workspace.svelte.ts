@@ -1,4 +1,4 @@
-import type { PickedFile } from '@orden/contracts'
+import { type PickedFile, providePort } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
 import { seed } from './web-backend/src/api'
@@ -18,7 +18,7 @@ import {
 } from '@orden/markdown/links'
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
-import { links, type Retargeting } from './link-index.svelte'
+import { links, type Retargeting } from './link-index/src/api'
 import { searchWarmth } from './search/src/api'
 import {
   onDisk,
@@ -53,6 +53,7 @@ import {
   joinPath,
   openExternal,
   nextTask,
+  oneWriteAt,
 } from './platform/src/api'
 import { noteId } from './note-id'
 import { busy, readTint, viewport } from './ui-kit/src/api'
@@ -119,7 +120,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
 import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
-import { fetchAcross, inFileTurn, meetAcross } from './workspace/in-turn'
+import { fetchAcross, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, pad as padNow, shown as pad } from './scratchpad/src/api'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -345,9 +346,13 @@ class Workspace {
     return [...this.excluded.of(root), ...this.archive.keysOf(root)]
   }
 
+  notSearched(root: string): string[] {
+    return [...this.leftOutOf(root), this.instructionsName(root)]
+  }
+
   get leftOut(): string[] {
     const root = this.activeSpace?.root
-    return root === undefined ? [] : [...this.leftOutOf(root), this.instructionsName(root)]
+    return root === undefined ? [] : this.notSearched(root)
   }
 
   instructionsName(root: string): string {
@@ -3483,7 +3488,7 @@ class Workspace {
       into: this.rootHolding(to),
     } as const
     await this.fileOps.doing(op, () =>
-      inFileTurn(from, () => invoke('rename_note', { from, to, ...how })),
+      oneWriteAt(from, () => invoke('rename_note', { from, to, ...how })),
     )
   }
 
@@ -3586,14 +3591,14 @@ class Workspace {
       if (toAccount) {
         const back = crypto.randomUUID()
         await this.fileOps.doing({ ...gone, back }, () =>
-          inFileTurn(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
+          oneWriteAt(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
         )
         if (isFolder) return held && { content: '', folder: true, ...held, back }
         return words ? { content: content ?? '', back } : null
       }
       let trashId = ''
       await this.fileOps.doing(gone, async () => {
-        const entry = await inFileTurn(path, () =>
+        const entry = await oneWriteAt(path, () =>
           invoke<{ id: string }>('trash_item', {
             path,
             kind: isFolder ? 'folder' : 'note',
@@ -4235,3 +4240,18 @@ links.archivedIn = (root) => workspace.archive.keysOf(root)
 links.spaceOf = (path) => workspace.rootHolding(path)
 links.lockedAt = (path) => workspace.protection.locked(path)
 links.locksSeen = () => workspace.protection.seen
+
+providePort('workspace.notes', {
+  get activeRoot() {
+    return workspace.activeSpace?.root ?? null
+  },
+  documentAt: (path) => workspace.documentAt(path),
+  leftOut: (root) => workspace.notSearched(root),
+  openAt: async (path, line) => {
+    await workspace.open(path)
+    workspace.goto = { path, line }
+  },
+  toggleTaskAt: async (path, line, hash) => {
+    await workspace.toggleTaskAt(path, line, hash)
+  },
+})

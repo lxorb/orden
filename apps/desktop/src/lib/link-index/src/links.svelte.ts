@@ -25,7 +25,7 @@ import {
   type LinkKind,
   withoutBlockIds,
 } from '@orden/markdown/links'
-import { buildGraph, type NoteGraph } from './graph/src/api'
+import { buildGraph, type NoteGraph } from '../../graph/src/api'
 import { type Placed, retargetLinks } from './link-rewrite'
 import {
   AGENTS_NAME,
@@ -43,18 +43,21 @@ import {
   isVault,
   log,
   breathe,
-} from './platform/src/api'
+  coveredBy,
+  keepVersion,
+  oneWriteAt,
+  readText,
+  writeInTurn,
+} from '../../platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
-import { searchSpace } from './search/src/api'
 import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
-import { startup } from './startup.svelte'
-import { mark } from './trace'
+import { startup } from '../../startup.svelte'
+import { mark } from '../../trace'
 import { elsewhere } from './marks-elsewhere.svelte'
-import { coveredBy } from './workspace/archive.svelte'
-import type { NoteDoc } from './workspace/documents.svelte'
-import type { FileOp } from './workspace/file-ops'
-import { inFileTurn, keepVersion, readText, writeEdited, writeInTurn } from './workspace/in-turn'
+import { type OpenNote, type SyncFileOp, workspaceNotes } from '@orden/contracts'
+import { services } from './services'
+import { pressQueryRow, queryRowsHtml } from './query-door'
 
 export interface Reference {
   path: string
@@ -93,8 +96,6 @@ interface Held {
   notes: ScannedNote[]
   files: readonly string[]
 }
-
-let queryBlock: typeof import('./query-block') | null = null
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
 const hearing = new Set<(path: string, content: string, arrived: boolean) => void>()
@@ -669,7 +670,7 @@ class Links {
     return root ? within(root, path) : null
   }
 
-  follow(op: FileOp): Promise<void> | undefined {
+  follow(op: SyncFileOp): Promise<void> | undefined {
     elsewhere.forget(op.op === 'moved' ? op.from : op.path)
     if (op.op === 'moved') elsewhere.forget(op.to)
     const other = this.otherHolding(op.op === 'moved' ? op.from : op.path)
@@ -717,11 +718,8 @@ class Links {
       ...(this.vault ? { dueReads: 'deadline' as const } : {}),
       tags: this.spaceTags,
       searchBlocks: (text, most) => this.searchBlocks(text, most),
-      query: async (code) => {
-        queryBlock ??= await import('./query-block')
-        return queryBlock.queryRowsHtml(code, 'Nothing found')
-      },
-      pressRow: (target) => queryBlock?.pressRow(target) ?? false,
+      query: (code) => queryRowsHtml(code, 'Nothing found'),
+      pressRow: pressQueryRow,
       render: (source, from) => this.shownHtml(source, from),
       drawFile: (card, file) => this.drawnFile(card, file),
       mountBase: (host, ask) => this.mountedBase(host, ask, path, stranger),
@@ -833,9 +831,9 @@ class Links {
     const from = path === null || root === null ? null : insideSpace(root, path)
     let stop: (() => void) | null = null
     let stopped = false
-    void import('./views/src/api')
-      .then((one) => one.baseMounting())
-      .then(({ mountBase }) => {
+    void services()
+      .bases()
+      .then((mountBase) => {
         if (!stopped) stop = mountBase(host, ask, from, stranger)
       })
     return () => {
@@ -850,9 +848,11 @@ class Links {
 
     let stop: (() => void) | null = null
     let stopped = false
-    void import('./reading/src/api').then(({ drawFile }) => {
-      if (!stopped) stop = drawFile(card, { ...file, root })
-    })
+    void services()
+      .files()
+      .then((drawFile) => {
+        if (!stopped) stop = drawFile(card, { ...file, root })
+      })
 
     return () => {
       stopped = true
@@ -860,16 +860,8 @@ class Links {
     }
   }
 
-  private async shownHtml(source: string, from: string | null, root = this.root): Promise<string> {
-    const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
-      import('./reading/src/api'),
-      import('./theme/src/api'),
-      import('./sharing/src/api'),
-    ])
-
-    const path = from === null || root === null ? null : insideSpace(root, from)
-
-    return readingHtml({ text: source, path }, theme.current, trustsHtmlAt(path))
+  private shownHtml(source: string, from: string | null, root = this.root): Promise<string> {
+    return services().html(source, from === null || root === null ? null : insideSpace(root, from))
   }
 
   private readonly handed = new Map<string, NoteIndex>()
@@ -1065,17 +1057,19 @@ class Links {
     if (!written.length) return []
 
     const found: Hit[] = []
-    const left = await this.leftOut(root)
+    const left = workspaceNotes().leftOut(root)
     await Promise.all(
       written.map((one) =>
-        searchSpace(
-          root,
-          parseQuery(`"${one.replace(/(["\\])/g, '\\$1')}"`),
-          [],
-          MOST_MENTIONS,
-          (batch) => found.push(...batch.hits),
-          left,
-        ).catch(() => undefined),
+        services()
+          .search(
+            root,
+            parseQuery(`"${one.replace(/(["\\])/g, '\\$1')}"`),
+            [],
+            MOST_MENTIONS,
+            (batch) => found.push(...batch.hits),
+            left,
+          )
+          .catch(() => undefined),
       ),
     )
 
@@ -1107,7 +1101,7 @@ class Links {
     from: string,
     to: string,
     root: string,
-    open: (path: string) => NoteDoc | null = () => null,
+    open: (path: string) => OpenNote | null = () => null,
     how: Retargeting = {},
   ): Promise<number> {
     const was = within(root, from)
@@ -1176,7 +1170,7 @@ class Links {
       was: string
       now: string
       root: string
-      open: (path: string) => NoteDoc | null
+      open: (path: string) => OpenNote | null
       how: Retargeting
       files: readonly string[]
       listed?: (path: string) => ScannedNote | undefined
@@ -1261,8 +1255,7 @@ class Links {
       const absolute = insideSpace(root, note.path)
       const target = went === null ? absolute : insideSpace(root, went)
       const doc = open(absolute)
-      const drawn =
-        doc && rewrite && !isPagesTarget(note.path) ? await rewrite.drawnPlane(doc) : null
+      const drawn = doc && rewrite && !isPagesTarget(note.path) ? await services().plane(doc) : null
       let read = listed?.(note.path) ?? note
       const drawing = { relinked: false }
 
@@ -1299,9 +1292,9 @@ class Links {
               const edit = oneEdit(before, words)
               if (edit) doc.edited([edit], words)
             }
-            return writeEdited(doc, target, words, knew, () => keepIt(before))
+            return doc.writeTo(target, words, knew, () => keepIt(before))
           })().catch(refused)
-        : await inFileTurn(target, async () => {
+        : await oneWriteAt(target, async () => {
             const got = await fresh()
             if (!got) return null
             const { before, words } = got
@@ -1327,7 +1320,7 @@ class Links {
   private async wordsOf(
     path: string,
     file: string,
-    open: (path: string) => NoteDoc | null,
+    open: (path: string) => OpenNote | null,
   ): Promise<string | null> {
     const doc = open(path)
     if (doc) {
@@ -1343,14 +1336,16 @@ class Links {
 
     const found: Hit[] = []
 
-    await searchSpace(
-      root,
-      parseQuery(`"${needle.replace(/(["\\])/g, '\\$1')}"`),
-      [],
-      most,
-      (batch) => found.push(...batch.hits),
-      await this.leftOut(root),
-    ).catch(() => undefined)
+    await services()
+      .search(
+        root,
+        parseQuery(`"${needle.replace(/(["\\])/g, '\\$1')}"`),
+        [],
+        most,
+        (batch) => found.push(...batch.hits),
+        workspaceNotes().leftOut(root),
+      )
+      .catch(() => undefined)
 
     return found
       .filter((hit) => hit.page === undefined && isMarkdownPath(hit.path))
@@ -1363,26 +1358,16 @@ class Links {
       }))
   }
 
-  private async openDocument(): Promise<(path: string) => NoteDoc | null> {
-    const { workspace } = await import('./workspace.svelte')
-    return (path) => workspace.documentAt(path)
-  }
-
-  private async leftOut(root: string): Promise<string[]> {
-    const { workspace } = await import('./workspace.svelte')
-    return [...workspace.leftOutOf(root), workspace.instructionsName(root)]
-  }
-
   async nameBlock(relative: string, line: number, from: string | null): Promise<string | null> {
     if (!isMarkdownPath(relative)) return null
     const root = (from === null ? null : this.spaceOf(from)) ?? this.root
     if (root === null) return null
 
     const absolute = insideSpace(root, relative)
-    const { canWriteAt } = await import('./sharing/src/api')
+    const { canWriteAt } = await import('../../sharing/src/api')
     if (!canWriteAt(absolute)) return null
 
-    const open = await this.openDocument()
+    const open = (path: string) => workspaceNotes().documentAt(path)
     const { namedBlock } = await import('@orden/markdown/block-names')
     const doc = open(absolute)
 
@@ -1404,7 +1389,7 @@ class Links {
       if (doc) {
         const knew = doc.onDisk
         if (edit) doc.edited([edit], after)
-        await writeEdited(doc, absolute, after, knew, keepIt)
+        await doc.writeTo(absolute, after, knew, keepIt)
       } else {
         await keepIt()
         await writeInTurn(absolute, after, false)
@@ -1413,7 +1398,7 @@ class Links {
       this.noteSaved(absolute, after)
       return id
     }
-    return doc ? name() : inFileTurn(absolute, name)
+    return doc ? name() : oneWriteAt(absolute, name)
   }
 
   async embedSource(
@@ -1431,7 +1416,7 @@ class Links {
   ): Promise<EmbeddedNote | null> {
     const [found, { trustsHtmlAt }] = await Promise.all([
       this.embedded(target, from, inSpaceOf),
-      import('./sharing/src/api'),
+      import('../../sharing/src/api'),
     ])
     return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path) }
   }

@@ -77,7 +77,7 @@ vi.mock('../../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 
-const { links } = await import('../../link-index.svelte')
+const { links } = await import('../../link-index/src/api')
 const { startup } = await import('../../startup.svelte')
 const { readingHtml } = await import('./render')
 await import('../../modes.svelte')

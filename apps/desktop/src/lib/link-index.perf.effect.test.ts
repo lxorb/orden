@@ -38,7 +38,7 @@ vi.mock('@orden/editor', async (importOriginal) => {
   }
 })
 
-const { links } = await import('./link-index.svelte')
+const { links } = await import('./link-index/src/api')
 const { startup } = await import('./startup.svelte')
 
 beforeEach(() => {

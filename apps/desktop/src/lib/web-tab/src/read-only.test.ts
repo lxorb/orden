@@ -168,7 +168,7 @@ describe('in a space shared to be read', () => {
   })
 
   test('converting the space writes nothing', async () => {
-    const { links } = await import('../../link-index.svelte')
+    const { links } = await import('../../link-index/src/api')
     vi.spyOn(links, 'urlOf').mockImplementation((path) =>
       path.endsWith('Kit.md') ? 'https://kit.svelte.dev/' : null,
     )

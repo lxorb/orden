@@ -85,7 +85,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
-const { links } = await import('./link-index.svelte')
+const { links } = await import('./link-index/src/api')
 const { startup } = await import('./startup.svelte')
 
 async function settle() {

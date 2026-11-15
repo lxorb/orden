@@ -22,9 +22,10 @@ const using = (pattern: RegExp) =>
 describe('the words of a note written by anything but its own editor', () => {
   test('go through the one edit that passes a shut protected note by', () => {
     expect(
-      using(/import \{[^}]*\b(?:writeInTurn|writeEdited)\b[^}]*\} from '[^']*in-turn'/),
+      using(/import \{[^}]*\b(?:writeInTurn|writeEdited)\b[^}]*\} from '|\.writeTo\(/),
     ).toEqual([
-      'link-index.svelte.ts',
+      'link-index/src/links.svelte.ts',
+      'workspace/documents.svelte.ts',
       'workspace/note-text.ts',
       'workspace/undoing.ts',
       'workspace/write-file.ts',

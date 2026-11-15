@@ -5,7 +5,7 @@ const found: Record<string, string> = {
   'deep.png': 'notes/pictures/deep.png',
 }
 
-vi.mock('./link-index.svelte', () => ({
+vi.mock('./link-index/src/api', () => ({
   links: {
     fileFor: (name: string, notePath: string | null) =>
       notePath !== null && found[name] ? `/Work/${found[name]}` : null,

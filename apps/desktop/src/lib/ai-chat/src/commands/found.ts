@@ -1,4 +1,4 @@
-import { links } from '../../../link-index.svelte'
+import { links } from '../../../link-index/src/api'
 import type { Query } from '@orden/scan/search/query'
 import { protection } from '../../../protect/src/api'
 import { samePath } from '../../../platform/src/api'

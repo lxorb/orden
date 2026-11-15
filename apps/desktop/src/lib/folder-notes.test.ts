@@ -10,7 +10,7 @@ import {
   renameSteps,
   unnesting,
 } from './folder-notes'
-import { rewriteLinks } from './link-rewrite'
+import { rewriteLinks } from './link-index/src/api'
 import { noteName } from './platform/src/space-paths'
 import type { Entry } from './workspace.svelte'
 

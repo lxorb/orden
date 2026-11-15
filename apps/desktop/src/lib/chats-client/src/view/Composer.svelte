@@ -7,7 +7,7 @@
   import { chooseFiles } from '../../../choose-files'
   import { pickedLink } from '../../../composer'
   import { localDate, localNumber } from '../../../platform/src/api'
-  import { links } from '../../../link-index.svelte'
+  import { links } from '../../../link-index/src/api'
   import { DIVIDER, menu } from '../../../menu.svelte'
   import { modes } from '../../../modes.svelte'
   import { dur, fade } from '../../../platform/src/api'

@@ -3,9 +3,9 @@ import { escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
 import { keptCoverOf } from '../../kept-cover'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { notePicture } from '../../note-images'
-import { queryRowsHtml } from '../../query-block'
+import { queryRowsHtml } from '../../link-index/src/api'
 import type { Scheme } from '../../theme/src/api'
 
 export interface Note {

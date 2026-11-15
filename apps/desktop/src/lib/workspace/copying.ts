@@ -1,7 +1,7 @@
 import type { PickedFile } from '@orden/contracts'
 import { isPdfTarget } from '@orden/markdown/links'
 import { folderNote, isFolderNote } from '../folder-notes'
-import { readsWords } from '../link-index.svelte'
+import { readsWords } from '../link-index/src/api'
 import { copiesInto } from '../move-targets'
 import { copyName, isMarkdownPath, nameOf, invoke, joinPath } from '../platform/src/api'
 import type { Entry } from '../workspace.svelte'

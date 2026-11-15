@@ -1,6 +1,6 @@
 import { isBaseTarget } from '@orden/markdown/links'
 import { untrack } from 'svelte'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { rows } from '../../rows/src/api'
 import { basesOn } from '../../settings.svelte'
 import { workspace } from '../../workspace.svelte'

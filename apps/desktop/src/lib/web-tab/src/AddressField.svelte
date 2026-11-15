@@ -29,7 +29,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import Suggest from '../../Suggest.svelte'
   import { frecency } from '../../frecency'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { pieces } from '../../matching/src/api'
   import { dotCom, type HalfTyped } from '@orden/scan/typed'
   import { shownAddress } from '@orden/scan/visits'

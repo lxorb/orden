@@ -1,6 +1,5 @@
 import { toArchive, toRestore } from './archive-plan'
-import { relativeTo, insideSpace, withinSpace } from '../../platform/src/api'
-import { coveredBy } from '../../workspace/archive.svelte'
+import { relativeTo, insideSpace, withinSpace, coveredBy } from '../../platform/src/api'
 import { changed } from '../../workspace/archive-map'
 import type { FileAction } from '../../workspace/undo.svelte'
 import { workspace } from '../../workspace.svelte'

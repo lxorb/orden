@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { Archive, archiveMap, coveredBy, MOST_ARCHIVED, STORAGE_KEY } from './archive.svelte'
+import { coveredBy } from '../platform/src/api'
+import { Archive, archiveMap, MOST_ARCHIVED, STORAGE_KEY } from './archive.svelte'
 import { changed, merged, REMEMBERED, sameMap, stampAfter, trimmed } from './archive-map'
 
 function memoryStorage(): Storage {

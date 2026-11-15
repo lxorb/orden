@@ -8,7 +8,7 @@ import {
 } from '@orden/markdown/links'
 import { stripFrontMatter } from '@orden/markdown/front-matter'
 import { codeSpans, inCode } from '@orden/markdown/tags'
-import { encodeTarget } from '../../link-rewrite'
+import { encodeTarget } from '@orden/markdown/links'
 
 interface Edit {
   from: number

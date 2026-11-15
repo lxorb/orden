@@ -31,7 +31,7 @@ vi.mock('../platform/src/tauri', () => ({
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
 
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../link-index/src/api', () => ({
   links: { noteSaved: () => undefined },
 }))
 

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { providePort } from '@orden/contracts'
 
-vi.mock('../../link-index.svelte', () => ({ links: { name: 'links' } }))
+vi.mock('../../link-index/src/api', () => ({ links: { name: 'links' } }))
 vi.mock('../../search.svelte', () => ({ search: {} }))
 vi.mock('../../settings.svelte', () => ({ settings: {} }))
 vi.mock('../../platform/src/tauri', () => ({ invoke: () => Promise.resolve(null) }))

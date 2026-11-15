@@ -1,10 +1,9 @@
 import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import type { SpaceLinks } from '@orden/scan/note'
-import { insideSpace, invoke, isVault, breathe } from '../../platform/src/api'
+import { insideSpace, invoke, isVault, breathe, readText } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
-import { readText } from '../../workspace/in-turn'
 import { type RowsListener, RowsStore } from './store'
 import { type RowChange, writeRow } from './write'
 

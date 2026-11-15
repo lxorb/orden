@@ -1,32 +1,6 @@
-import { log, invoke } from '../platform/src/api'
+import { invoke, log, writeTaking } from '../platform/src/api'
 import type { Across } from './across'
 import type { NoteDoc } from './documents.svelte'
-
-const others = () => import('../platform/src/api')
-
-export async function inFileTurn<T>(path: string, run: () => Promise<T>): Promise<T> {
-  const { oneWriteAt } = await others()
-  return oneWriteAt(path, run)
-}
-
-export async function readText(path: string): Promise<string | null> {
-  return invoke<string>('read_note', { path }).catch(() => null)
-}
-
-export async function keepVersion(path: string, content: string, source?: string): Promise<void> {
-  const from = source === undefined ? {} : { source }
-  await invoke('snapshot_note', { path, content, ...from }).catch(() => undefined)
-}
-
-export async function writeInTurn(path: string, content: string, arrived = false): Promise<void> {
-  await invoke('write_note', arrived ? { path, content, arrived } : { path, content })
-  const { windows } = await others()
-  if (!windows.alone) windows.say('words', { path, text: content })
-}
-
-export function writeTaking(path: string, content: string, arrived = false): Promise<void> {
-  return inFileTurn(path, () => writeInTurn(path, content, arrived))
-}
 
 let across: Across | null = null
 

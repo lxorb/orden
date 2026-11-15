@@ -19,7 +19,7 @@ vi.mock('../platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
+vi.mock('../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('../protect/src/api', () => ({ protection: { locked: () => true } }))

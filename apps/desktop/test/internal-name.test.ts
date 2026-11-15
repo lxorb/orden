@@ -84,7 +84,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/automation/src/start.ts': ["'nib'"],
   'apps/desktop/src/lib/automation/src/uri.test.ts': ['nib:'],
   'apps/desktop/src/lib/automation/src/uri.ts': ["'nib:'", 'web+nib'],
-  'apps/desktop/src/lib/canvas-rewrite.ts': ["'nib'"],
+  'apps/desktop/src/lib/link-index/src/canvas-rewrite.ts': ["'nib'"],
   'apps/desktop/src/lib/chats-client/src/socket.test.ts': ["'nib."],
   'apps/desktop/src/lib/chats-client/src/view/compose.test.ts': ['@NIB'],
   'apps/desktop/src/lib/chats-client/src/view/compose.ts': ['|nib)'],

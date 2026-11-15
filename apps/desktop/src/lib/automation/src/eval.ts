@@ -1,4 +1,4 @@
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { search } from '../../search.svelte'
 import { settings } from '../../settings.svelte'
 import { invoke } from '../../platform/src/api'

@@ -7,8 +7,32 @@ import {
   registerSettingsPart,
   registerTabKind,
 } from '@orden/contracts'
+import { serveLinks } from './link-index/src/api'
+import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
 
+serveLinks({
+  html: async (text, path) => {
+    const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
+      import('./reading/src/api'),
+      import('./theme/src/api'),
+      import('./sharing/src/api'),
+    ])
+    return readingHtml({ text, path }, theme.current, trustsHtmlAt(path))
+  },
+  files: async () => (await import('./reading/src/api')).drawFile,
+  bases: async () => (await (await import('./views/src/api')).baseMounting()).mountBase,
+  plane: async (note) => {
+    if (__EVEN_PLUGIN__) return null
+    const [{ CanvasStore }, { workspace }] = await Promise.all([
+      import('./canvas/src/api'),
+      import('./workspace.svelte'),
+    ])
+    const doc = workspace.documents.find((one) => one === note)
+    return doc ? CanvasStore.drawing(doc, workspace.tabs) : null
+  },
+  search: searchSpace,
+})
 registerFeature(() => import('./quick-add/src/api'))
 registerCommand('app.quick-question', async () => (await import('./ai-chat/src/api')).askQuickly)
 registerCommand(

@@ -33,8 +33,8 @@
     isTabFile,
     pageFragment,
   } from '@orden/markdown/links'
-  import { links } from './link-index.svelte'
-  import { pressRow } from './query-block'
+  import { links } from './link-index/src/api'
+  import { pressQueryRow } from './link-index/src/api'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -259,7 +259,7 @@
       return
     }
 
-    if (!middle && pressRow(event.target)) {
+    if (!middle && pressQueryRow(event.target)) {
       event.preventDefault()
       return
     }

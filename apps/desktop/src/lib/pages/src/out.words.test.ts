@@ -62,7 +62,7 @@ vi.mock('../../pdf/src/raster', () => ({
   paperPicture: (at: { file: string }) =>
     Promise.resolve(at.file === 'Reading.pdf' ? 'data:image/png;base64,UEFHRQ==' : null),
 }))
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     version: 1,
     index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),

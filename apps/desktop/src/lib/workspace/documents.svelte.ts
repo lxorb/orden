@@ -4,6 +4,7 @@ import { identifier } from '../identifier'
 import { draftName, shownName, TITLE_CHARS, samePath } from '../platform/src/api'
 import { oneEdit } from '@orden/markdown/edits'
 import { applied, appliedToFile, type Edit, flatEdits } from '@orden/scan/search/replace'
+import { writeEdited } from './in-turn'
 import { type TabKind, TAB_KINDS } from './tab-kinds'
 
 export const UNTITLED = 'Untitled'
@@ -178,6 +179,15 @@ export class NoteDoc {
     this.dirty = false
     this.onDisk = text
     if (this.before !== null) this.before = written
+  }
+
+  writeTo(
+    path: string,
+    words: string,
+    knew: string | null,
+    first: () => Promise<unknown>,
+  ): Promise<string | null> {
+    return writeEdited(this, path, words, knew, first)
   }
 
   edited(changes: readonly { from: number; to: number; insert: string }[], text: string) {

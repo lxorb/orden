@@ -18,7 +18,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     noteSaved: (path: string, content: string) => told.push({ path, content }),
   },

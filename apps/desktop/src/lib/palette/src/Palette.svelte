@@ -13,7 +13,7 @@
   import { frecency } from '../../frecency'
   import { recentFirst } from '../../ui-kit/src/api'
   import Icon from '../../Icon.svelte'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { middleOpens } from '../../new-tab'
   import { AGENTS_NAME, shownName } from '../../platform/src/api'
   import { scanHeadings } from '../../outline'

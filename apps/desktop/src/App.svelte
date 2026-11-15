@@ -87,7 +87,7 @@
   import { paneCorners } from './lib/pane-corners.svelte'
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes.svelte'
-  import { links } from './lib/link-index.svelte'
+  import { links } from './lib/link-index/src/api'
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/platform/src/api'
   import { storedText } from './lib/platform/src/api'

@@ -215,8 +215,8 @@ const fake = vi.hoisted(() => {
   }
 })
 
-vi.mock('../../platform/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../platform/src/api')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: fake.invoke,
 }))
 

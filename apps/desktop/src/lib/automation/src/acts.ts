@@ -5,7 +5,7 @@ import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands } from '../../commands/src/api'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import {
   folderOf,
   insideSpace,

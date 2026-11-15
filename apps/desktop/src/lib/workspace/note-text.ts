@@ -2,9 +2,16 @@ import { oneEdit } from '@orden/markdown/edits'
 import { isTagName } from '@orden/markdown/tags'
 import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
-import { links } from '../link-index.svelte'
+import { links } from '../link-index/src/api'
 import { lineStarts } from '@orden/scan/search/lines'
-import { isMarkdownPath, samePath } from '../platform/src/api'
+import {
+  isMarkdownPath,
+  samePath,
+  keepVersion,
+  oneWriteAt,
+  readText,
+  writeInTurn,
+} from '../platform/src/api'
 import {
   applied,
   appliedToFile,
@@ -17,7 +24,7 @@ import {
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
-import { inFileTurn, keepVersion, readText, writeEdited, writeInTurn } from './in-turn'
+import { writeEdited } from './in-turn'
 
 export interface HoldsNotes {
   readonly activeSpace: Space | null
@@ -219,7 +226,7 @@ async function writeClosed(
   change: Change,
   keeping: Keeping,
 ): Promise<Undone | null> {
-  const turn = await inFileTurn(change.path, async () => {
+  const turn = await oneWriteAt(change.path, async () => {
     const read = await readText(change.path)
     if (read === null) return null
 

@@ -1,5 +1,5 @@
 import type { LinkWrite } from '@orden/editor'
-import { formatLink, type LinkFormat, type LinkTarget, linkWriting } from './link-format'
+import { formatLink, type LinkFormat, type LinkTarget, linkWriting } from './link-format/src/api'
 import { nameFromContent } from './platform/src/api'
 
 const SEAM = '\n\n---\n\n'

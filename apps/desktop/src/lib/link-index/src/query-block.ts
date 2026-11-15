@@ -1,9 +1,10 @@
+import { workspaceNotes } from '@orden/contracts'
 import { escapeAll } from '@orden/markdown/html'
-import { shownName } from './platform/src/api'
+import { shownName } from '../../platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { taskOf } from '@orden/scan/search/task'
 import { parseQuery } from '@orden/scan/search/query'
-import { searchSpace } from './search/src/api'
+import { services } from './services'
 
 const MOST = 40
 
@@ -62,16 +63,21 @@ export async function queryRowsHtml(
   const said = queryIn(code)
   if (!said) return null
 
-  const { workspace } = await import('./workspace.svelte')
-  root ??= workspace.activeSpace?.root ?? null
+  root ??= workspaceNotes().activeRoot
   if (!root) return null
 
   const query = parseQuery(said)
   const hits: Hit[] = []
-  await searchSpace(root, query, [], MOST, (batch) => hits.push(...batch.hits), [
-    ...workspace.leftOutOf(root),
-    workspace.instructionsName(root),
-  ]).catch(() => undefined)
+  await services()
+    .search(
+      root,
+      query,
+      [],
+      MOST,
+      (batch) => hits.push(...batch.hits),
+      workspaceNotes().leftOut(root),
+    )
+    .catch(() => undefined)
 
   if (!hits.length)
     return `<div class="orden-query"><p class="orden-query-none">${escapeAll(nothing)}</p></div>`
@@ -87,17 +93,6 @@ export async function queryRowsHtml(
   return `<div class="orden-query">${groups}</div>`
 }
 
-async function openQueryRow(path: string, line: number): Promise<void> {
-  const { workspace } = await import('./workspace.svelte')
-  await workspace.open(path)
-  workspace.goto = { path, line }
-}
-
-async function tickQueryRow(path: string, line: number, hash?: string): Promise<void> {
-  const { workspace } = await import('./workspace.svelte')
-  await workspace.toggleTaskAt(path, line, hash)
-}
-
 export function pressRow(target: EventTarget | null): boolean {
   const found = target instanceof Element ? target.closest('[data-path]') : null
   if (!(found instanceof HTMLElement)) return false
@@ -106,8 +101,8 @@ export function pressRow(target: EventTarget | null): boolean {
   if (path === undefined) return false
 
   const line = Number(found.dataset.line ?? 0)
-  if (found.dataset.task === undefined) void openQueryRow(path, line)
-  else void tickQueryRow(path, line, found.dataset.hash)
+  if (found.dataset.task === undefined) void workspaceNotes().openAt(path, line)
+  else void workspaceNotes().toggleTaskAt(path, line, found.dataset.hash)
 
   return true
 }

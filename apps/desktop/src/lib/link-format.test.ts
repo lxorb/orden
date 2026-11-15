@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { findLinks } from '@orden/markdown/links'
-import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from './link-format'
+import {
+  formatLink,
+  isLinkFormat,
+  LINK_FORMATS,
+  linkWriting,
+  setLinkWriting,
+} from './link-format/src/api'
 import { linkTo, pickedLink } from './composer'
 import { citation } from './pdf/src/api'
 import { rewriteLinks } from './import/src/rewrite'

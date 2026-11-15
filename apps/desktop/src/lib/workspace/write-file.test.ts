@@ -13,7 +13,7 @@ vi.mock('../platform/src/tauri', () => ({
     return Promise.resolve(command === 'path_exists' ? there : undefined)
   },
 }))
-vi.mock('../link-index.svelte', () => ({
+vi.mock('../link-index/src/api', () => ({
   links: { noteSaved: (path: string) => void order.push(`index ${path}`) },
 }))
 vi.mock('../platform/src/windows', () => ({

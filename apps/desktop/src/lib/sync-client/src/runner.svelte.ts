@@ -20,7 +20,7 @@ import { type SyncFileDoer, type SyncFileOp, whenPortProvided } from '@orden/con
 import { owesAtTheEnd, owesLast, writing } from '../../parting/src/api'
 import { keptAway } from '../../away/src/api'
 import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
 import { forgetIndex, type IndexStore, openIndex } from './index-store'

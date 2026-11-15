@@ -6,7 +6,7 @@
   import { quickAdd } from './asked.svelte'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { dayOf, labelsOf, todos } from '../../tasks-model/src/api'
   import { ai } from '../../ai-providers/src/api'
   import { addTask } from './write'

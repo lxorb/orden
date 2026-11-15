@@ -17,7 +17,8 @@
     "ui-kit",
     "updates",
     "web-backend",
-    "ui-controls"
+    "ui-controls",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -28,7 +29,6 @@
     "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/insert-picture.ts",
     "apps/desktop/src/lib/kind-choice.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/links.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/mobile/dictation.ts",

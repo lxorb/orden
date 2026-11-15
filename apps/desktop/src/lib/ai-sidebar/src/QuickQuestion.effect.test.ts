@@ -30,8 +30,8 @@ vi.mock('../../ai-chat/src/quick.svelte', () => ({
   },
 }))
 
-vi.mock('../../link-index.svelte', async (original) => ({
-  ...(await original<typeof import('../../link-index.svelte')>()),
+vi.mock('../../link-index/src/api', async (original) => ({
+  ...(await original<typeof import('../../link-index/src/api')>()),
   links: {
     targetOf: (_from: string | null, link: { target: string }) =>
       link.target === 'Birds' ? 'Birds.md' : null,

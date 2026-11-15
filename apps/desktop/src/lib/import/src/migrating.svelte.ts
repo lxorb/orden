@@ -1,6 +1,6 @@
 import { busy, message, viewport } from '../../ui-kit/src/api'
 import { firstVisit } from '../../first-visit.svelte'
-import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format'
+import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format/src/api'
 import { isDesktop } from '../../platform/src/api'
 import { type Space, workspace } from '../../workspace.svelte'
 import { applyImport } from './apply'

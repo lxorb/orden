@@ -251,3 +251,14 @@ export function keptShaped(root: string): boolean {
   const name = parts.at(-1)
   return parts.length > 2 && parts.at(-3) === KEPT_HOME && !!name && parts.at(-2) === name
 }
+
+export function coveredBy(keys: ReadonlySet<string>, at: string): string | null {
+  if (!keys.size) return null
+
+  for (let path = at; ;) {
+    if (keys.has(path)) return path
+    const cut = path.lastIndexOf('/')
+    if (cut === -1) return null
+    path = path.slice(0, cut)
+  }
+}

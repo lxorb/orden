@@ -39,7 +39,7 @@ const { noteIndex, resolveNote } = await import('../../../../packages/editor/src
 const { loadScratchpadCard, pad } = await import('../../src/lib/scratchpad/src/api')
 const { default: ScratchpadCard } = await loadScratchpadCard()
 const scratchpad = await pad()
-const { links } = await import('../../src/lib/link-index.svelte')
+const { links } = await import('../../src/lib/link-index/src/api')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
 

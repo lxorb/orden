@@ -1,7 +1,7 @@
 import { OWN_FILE as INBOX_PATH, syncDeletes } from '@orden/sync-core'
 import { fileBytes, sha256, deviceName, onDisk } from '../../platform/src/api'
 import { keptMounts } from '../../web-backend/src/api'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { evictedHere } from '../../icloud-placeholder'
 import { holderOf } from '@orden/markdown/pages'
 import { scanSpace } from '../../space-watch'

@@ -1,8 +1,7 @@
 import type { Canvas } from '@orden/markdown/canvas'
 import { type FoundLink, isPagesTarget } from '@orden/markdown/links'
 import { paperOf } from '@orden/markdown/pages'
-import { folderOf } from './platform/src/api'
-import type { NoteDoc } from './workspace/documents.svelte'
+import { folderOf } from '../../platform/src/api'
 import { skim, type Span } from '@orden/scan/json-skim'
 import { type Move, type Placed, retargetLinks } from './link-rewrite'
 
@@ -89,15 +88,6 @@ export function cardsMoving(
     const there = path === own ? null : moving(path)
     return there === own ? null : there
   }
-}
-
-export async function drawnPlane(doc: NoteDoc) {
-  if (__EVEN_PLUGIN__) return null
-  const [{ CanvasStore }, { workspace }] = await Promise.all([
-    import('./canvas/src/api'),
-    import('./workspace.svelte'),
-  ])
-  return CanvasStore.drawing(doc, workspace.tabs)
 }
 
 interface Edit {

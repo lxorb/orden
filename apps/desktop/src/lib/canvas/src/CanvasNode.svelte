@@ -25,7 +25,7 @@
   import { type Box, isLineShape, shapeLine, shapePath } from '../../plane/src/api'
   import { shownColour } from '../../plane/src/api'
   import { pickedLink } from '../../composer'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { followHref } from '../../open-link'
 

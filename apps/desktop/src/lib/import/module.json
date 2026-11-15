@@ -13,7 +13,8 @@
     "ui-controls",
     "ui-kit",
     "accounts",
-    "handoff"
+    "handoff",
+    "link-format"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -25,8 +26,6 @@
     "apps/desktop/src/lib/dialog-answer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/first-visit.svelte.ts",
-    "apps/desktop/src/lib/link-format.ts",
-    "apps/desktop/src/lib/link-rewrite.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

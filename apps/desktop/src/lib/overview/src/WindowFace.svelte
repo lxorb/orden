@@ -6,7 +6,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { dur, fade } from '../../platform/src/api'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { readingHtml, unreadableHtml } from '../../reading/src/api'
   import { trustsHtmlIn } from '../../sharing/src/api'
   import { noteBehind } from '../../protect/src/api'

@@ -21,7 +21,8 @@
     "sync-client",
     "sync-core",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -32,7 +33,6 @@
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/markdown-view.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",

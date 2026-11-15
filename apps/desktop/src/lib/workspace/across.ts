@@ -251,7 +251,7 @@ export class Across {
 
 export async function startAcross(): Promise<Across> {
   const { workspace } = await import('../workspace.svelte')
-  const { links } = await import('../link-index.svelte')
+  const { links } = await import('../link-index/src/api')
   const { sync } = await import('../sync.svelte')
   const { account } = await import('../accounts/src/api')
   let told = false

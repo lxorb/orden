@@ -1,6 +1,6 @@
-import { links } from '../link-index.svelte'
-import { onDisk, invoke } from '../platform/src/api'
-import { inFileTurn, writeInTurn, writeTaking, wroteHere } from './in-turn'
+import { links } from '../link-index/src/api'
+import { onDisk, invoke, oneWriteAt, writeInTurn, writeTaking } from '../platform/src/api'
+import { wroteHere } from './in-turn'
 
 export interface Hearing {
   there(path: string): Promise<boolean>
@@ -30,7 +30,7 @@ export async function writeFile(path: string, content: string): Promise<void> {
 }
 
 export async function writeIfAbsent(path: string, content: string): Promise<boolean> {
-  const made = await inFileTurn(path, async () => {
+  const made = await oneWriteAt(path, async () => {
     if (await onDisk(path)) return false
     await writeInTurn(path, content)
     return true

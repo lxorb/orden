@@ -3,7 +3,7 @@
   import { TAB_KINDS } from '../../workspace/tab-kinds'
   import { SvelteSet } from 'svelte/reactivity'
   import { without } from '../../graph/src/api'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { workspace } from '../../workspace.svelte'
   import {
     askPanel,

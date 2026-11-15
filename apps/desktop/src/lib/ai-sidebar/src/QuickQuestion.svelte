@@ -12,7 +12,7 @@
   import { closeOnBack } from '../../ui-kit/src/api'
   import { copyText } from '../../ui-controls/src/api'
   import { Cross } from '../../ui-kit/src/api'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
   import { overlays } from '../../ui-kit/src/api'

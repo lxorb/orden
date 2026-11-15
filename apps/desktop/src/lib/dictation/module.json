@@ -11,11 +11,11 @@
     "platform",
     "sharing",
     "shortcuts",
-    "ui-kit"
+    "ui-kit",
+    "link-index"
   ],
   "pending": [
     "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/link-index.svelte.ts",
     "apps/desktop/src/lib/reloading.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

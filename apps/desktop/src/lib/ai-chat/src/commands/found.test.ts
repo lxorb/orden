@@ -11,7 +11,7 @@ const TEXTS: Record<string, string> = {
 const front = { root: '/own' }
 const others = { reach: (path: string | null) => !!path?.startsWith('/team/') }
 
-vi.mock('../../../link-index.svelte', () => ({ links: { version: 0 } }))
+vi.mock('../../../link-index/src/api', () => ({ links: { version: 0 } }))
 vi.mock('../../../workspace.svelte', () => ({
   workspace: {
     get activeSpace() {

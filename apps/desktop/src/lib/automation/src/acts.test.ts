@@ -33,7 +33,7 @@ const held = new Map<string, string>()
 const written: { path: string; before: string; after: string }[] = []
 const made: { folder: string; name: string }[] = []
 
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     fileNamed: () => beside,
     targetOf: (_from: string | null, link: { target: string }) =>

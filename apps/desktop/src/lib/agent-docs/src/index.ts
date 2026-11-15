@@ -1,13 +1,12 @@
 import { documentOf } from '@orden/editor'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { protection } from '../../protect/src/api'
 import { isScratchpad, pad } from '../../scratchpad/src/api'
-import { withinSpace, invoke } from '../../platform/src/api'
+import { withinSpace, invoke, keepVersion } from '../../platform/src/api'
 import { theme } from '../../theme/src/api'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
-import { keepVersion } from '../../workspace/in-turn'
 import { type Desk, located, type NoteAt, SCRATCHPAD_TAB } from './desk'
 import {
   editNote,

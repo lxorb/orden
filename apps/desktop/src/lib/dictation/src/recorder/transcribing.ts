@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { busy, message } from '../../../ui-kit/src/api'
 import { region, assetUrl, joinPath } from '../../../platform/src/api'
-import { links } from '../../../link-index.svelte'
+import { links } from '../../../link-index/src/api'
 import { settings } from '../../../settings.svelte'
 import { workspace } from '../../../workspace.svelte'
 import { transcribedBy, wordsInFile } from './transcribe'

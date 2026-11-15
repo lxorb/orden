@@ -11,7 +11,7 @@
   import type { Part, Turn } from '../../ai-providers/src/api'
   import { copyText } from '../../ui-controls/src/api'
   import { region } from '../../platform/src/api'
-  import { links } from '../../link-index.svelte'
+  import { links } from '../../link-index/src/api'
   import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
   import { dur, fly, slide } from '../../platform/src/api'
   import { howFor, tabAsk } from '../../new-tab'

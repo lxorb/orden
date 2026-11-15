@@ -22,7 +22,7 @@ vi.mock('../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path) || !path.endsWith('.md')),
 }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => disk.writable }))
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     hearSaves: (hear: (path: string, words: string) => void) => {
       disk.heard = hear

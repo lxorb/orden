@@ -30,7 +30,7 @@ vi.mock('./sharing/src/api', () => ({
   },
   trustsHtmlAt: () => false,
 }))
-vi.mock('./link-index.svelte', () => ({
+vi.mock('./link-index/src/api', () => ({
   links: {
     index: (path: string) => ({ notes: [], files: [], path, read: () => Promise.resolve(null) }),
   },

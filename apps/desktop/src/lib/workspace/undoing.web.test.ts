@@ -19,7 +19,7 @@ vi.mock('../platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
+vi.mock('../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
 
 const { putBack } = await import('./undoing')
 

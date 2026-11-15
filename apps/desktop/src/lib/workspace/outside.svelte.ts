@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { links } from '../link-index.svelte'
+import { links } from '../link-index/src/api'
 import { account } from '../accounts/src/api'
 import {
   keptShaped,
