@@ -1659,6 +1659,42 @@ describe('to-dos and bases', () => {
     await todos.remove(id)
   })
 
+  test('a todo of a space the agent does not reach is not listed, changed or added to', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const kept = await todos.add({ title: 'Hidden plan', space: secret.id })
+    const loose = await todos.add({ title: 'Loose one', space: null })
+    if (!kept.ok || !loose.ok) throw new Error('not added')
+    try {
+      const listed = JSON.stringify(await call('list_tasks', { done: true }))
+      expect(listed).not.toContain('Hidden plan')
+      expect(listed).not.toContain('Loose one')
+      expect(JSON.stringify(await call('list_tasks', {}, READER))).toContain('Hidden plan')
+      for (const id of [kept.value.id, loose.value.id]) {
+        expect(await call('update_task', { id, done: true })).toMatchObject({
+          code: 'no_such_file',
+        })
+      }
+      expect(todos.todo(kept.value.id)?.done).toBe(false)
+      expect(
+        await call('update_task', { id: kept.value.id, space: 'Secret' }, READER),
+      ).toMatchObject({ result: { space: secret.id } })
+      const everywhere = agent({ spaces: 'all' })
+      expect(JSON.stringify(await call('list_tasks', {}, everywhere))).toContain('Loose one')
+    } finally {
+      await todos.remove(kept.value.id)
+      await todos.remove(loose.value.id)
+    }
+  })
+
+  test('a todo is not added into an open space the agent does not reach', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const before = todos.todos.length
+    expect(await call('add_task', { text: 'Sneak' }, agent({ spaces: ['Home'] }))).toMatchObject({
+      code: 'no_such_space',
+    })
+    expect(todos.todos.length).toBe(before)
+  })
+
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
     const { madeOrChanged } = await import('../src/lib/agent-host/src/notes')
     const place = { space: home, open: false } as Parameters<typeof madeOrChanged>[0]

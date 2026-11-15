@@ -31,6 +31,7 @@ import {
   onDisk,
   type Place,
   placeFor,
+  reachesSpace,
   placeOf,
   writableAt,
 } from '../../agent-verbs/src/api'
@@ -166,7 +167,7 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   const shown = sortedTodos(
     shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
     'deadline',
-  ).filter((one) => flag(call, 'done') || !one.done)
+  ).filter((one) => (flag(call, 'done') || !one.done) && reachesSpace(call, one.space))
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 
@@ -176,11 +177,11 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
   const patch = patchOf(call)
-  const made = await todos.add({
-    ...patch,
-    title,
-    space: 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null),
-  })
+  const space = 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null)
+  if (!reachesSpace(call, space)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  const made = await todos.add({ ...patch, title, space })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
@@ -189,7 +190,8 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
+  if (!was || !reachesSpace(call, was.space))
+    throw new Refused('no_such_file', `there is no todo ${id}`)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
   const kept = await todos.update(id, patchOf(call))
