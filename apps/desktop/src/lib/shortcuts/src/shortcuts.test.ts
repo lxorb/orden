@@ -278,6 +278,16 @@ describe('choosing a key', () => {
     expect(on('mac', 'Meta-k')).toBeNull()
   })
 
+  test('is refused where it names no key the keyboard has', () => {
+    const { shortcuts } = registry
+    for (const key of ['Ctrl+Shift+K', 'banana', 'Mod-Shift-ctrl k', 'Mod-k k']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toBe('That is not a key combination.')
+    }
+    for (const key of ['F5', 'Mod-F13', 'ContextMenu', 'Mod-Space', 'Mod Mod', 'Shift Shift']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toBeNull()
+    }
+  })
+
   test('is refused where it would fire while typing', () => {
     const { shortcuts } = registry
     expect(shortcuts.refuse('k')).not.toBeNull()
@@ -636,10 +646,34 @@ describe('two shortcuts on one key', () => {
     ])
   })
 
-  test('leaves the contextual ones out, which is how they share the arrows', () => {
+  test('leaves the contextual ones of other places out, which is how they share the arrows', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('table.below', 'ArrowUp')).toEqual([])
+    expect(shortcuts.conflicts('canvas.nudge.up', 'ArrowUp')).toEqual([])
     expect(shortcuts.conflicts('app.new', 'ArrowDown')).toEqual([])
+    expect(shortcuts.conflicts('table.below', 'ArrowUp').map((one) => one.id)).toEqual([
+      'table.above',
+    ])
+  })
+
+  test('counts the contextual ones that answer in the same place', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('canvas.tool.rect', 'c').map((one) => one.id)).toEqual([
+      'canvas.tool.text',
+    ])
+    expect(shortcuts.conflicts('canvas.tool.rect', 'Mod-Alt-=').map((one) => one.id)).toEqual([
+      'canvas.zoom.in',
+    ])
+  })
+
+  test('finds no contextual row clashing as the keys ship, on any system', () => {
+    for (const platform of ['mac', 'win', 'linux']) {
+      const one = Object.create(registry.shortcuts) as typeof registry.shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      for (const entry of registry.SHORTCUTS.filter((row) => row.contextual)) {
+        const key = one.keyFor(entry.id)
+        if (key) expect(one.conflicts(entry.id, key), `${platform} ${entry.id}`).toEqual([])
+      }
+    }
   })
 
   test('is resolved by taking the key, which leaves the other with none', () => {

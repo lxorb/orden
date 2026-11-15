@@ -1,6 +1,7 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
 import type { AccountSettings } from '../../accounts/src/api'
 import { AccountOwed } from './account-owed'
+import { tapOf } from '../../double-tap/src/api'
 import {
   currentPlatform,
   type Keystroke,
@@ -44,6 +45,10 @@ const PRESET_KEY = 'orden:preset'
 const OWED_KEY = 'orden:shortcuts-owed'
 
 const MOST_OVERRIDES = 200
+
+const NAMED_KEY = /^[A-Z][A-Za-z0-9]*$/
+
+const namesAKey = (key: string) => key.length === 1 || NAMED_KEY.test(key)
 
 const TYPING_KEYS: ReadonlySet<string> = new Set([
   'Enter',
@@ -109,11 +114,12 @@ class Shortcuts {
   }
 
   conflicts(id: string, key: string): Shortcut[] {
-    const entry = BY_ID.get(id)
-    if (!key || entry?.contextual) return []
+    if (!key) return []
+    const place = BY_ID.get(id)?.contextual ? placeOf(id) : null
 
     return SHORTCUTS.filter((one) => {
-      if (one.id === id || one.contextual || one.scope === 'fixed') return false
+      if (one.id === id || one.scope === 'fixed') return false
+      if (one.contextual ? placeOf(one.id) !== place : place !== null) return false
 
       const held = this.keyFor(one.id)
       return !!held && sameCombination(held, key, this.platform)
@@ -148,6 +154,9 @@ class Shortcuts {
     const combination = parseCombination(key, this.platform)
     if (!combination) return 'That is not a key combination.'
     if (combination.meta && this.platform !== 'mac') return 'That is not a key combination.'
+    if (!namesAKey(combination.key) && !tapOf(key, this.platform)) {
+      return 'That is not a key combination.'
+    }
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     const typed = combination.key.length === 1 || TYPING_KEYS.has(combination.key)
@@ -277,6 +286,10 @@ class Shortcuts {
     saveFront()
     return true
   }
+}
+
+function placeOf(id: string): string {
+  return id.split('.')[0] ?? id
 }
 
 function usable(value: unknown): KeyOverrides {
