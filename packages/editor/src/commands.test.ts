@@ -735,6 +735,20 @@ describe('a heading over a list item', () => {
   })
 })
 
+describe('a heading in a quote', () => {
+  test('goes inside the quote marker', () => {
+    expect(at(setHeading(1), '> Title', 4)).toBe('> # Title')
+    expect(at(setHeading(2), '> > Title', 6)).toBe('> > ## Title')
+  })
+
+  test('comes off again, and changes level there', () => {
+    expect(at(setHeading(1), '> # Title', 5)).toBe('> Title')
+    expect(at(setHeading(3), '> # Title', 5)).toBe('> ### Title')
+    expect(at(shiftHeading(1), '> ## Title', 5)).toBe('> ### Title')
+    expect(at(shiftHeading(1), '> Title', 4)).toBe('> # Title')
+  })
+})
+
 describe('clear formatting over code', () => {
   test('leaves a fence as it is', () => {
     const doc = '```\n**b** `c`\n```'

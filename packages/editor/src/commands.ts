@@ -171,9 +171,19 @@ function headingOf(text: string): { level: number; length: number } {
   return { level: hashes.length, length: match[0].length }
 }
 
+interface Words {
+  from: number
+  text: string
+}
+
+function wordsOfLine(line: Line): Words {
+  const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
+  return { from: line.from + quote, text: line.text.slice(quote) }
+}
+
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
-    const lines = selectedLines(state)
+    const lines = selectedLines(state).map(wordsOfLine)
     const already = level > 0 && lines.every((line) => headingOf(line.text).level === level)
     const insert = level && !already ? `${'#'.repeat(level)} ` : ''
 
@@ -191,16 +201,18 @@ const ITEM_MARKER = /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/
 
 export function shiftHeading(delta: number): StateCommand {
   return ({ state, dispatch }) => {
-    const changes: ChangeSpec[] = selectedLines(state).map((line) => {
-      const existing = headingOf(line.text)
-      const next = Math.min(6, Math.max(0, existing.level + delta))
+    const changes: ChangeSpec[] = selectedLines(state)
+      .map(wordsOfLine)
+      .map((line) => {
+        const existing = headingOf(line.text)
+        const next = Math.min(6, Math.max(0, existing.level + delta))
 
-      return {
-        from: line.from,
-        to: line.from + existing.length,
-        insert: next ? `${'#'.repeat(next)} ` : '',
-      }
-    })
+        return {
+          from: line.from,
+          to: line.from + existing.length,
+          insert: next ? `${'#'.repeat(next)} ` : '',
+        }
+      })
 
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
