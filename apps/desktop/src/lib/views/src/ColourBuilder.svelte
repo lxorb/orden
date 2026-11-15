@@ -4,7 +4,14 @@
   import { Select } from '../../ui-controls/src/api'
   import { displayName, holdsOf, knownProperties } from './columns'
   import { setViewOrden } from './edit'
-  import { expressionOf, type Operator, OPERATORS, rowOf, takesValue } from './filter-rows'
+  import {
+    expressionOf,
+    type Operator,
+    OPERATORS,
+    rowOf,
+    takesValue,
+    withProperty,
+  } from './filter-rows'
   import type { Kit } from './kit'
   import ToneDot from './ToneDot.svelte'
   import { propertyName } from './words'
@@ -84,7 +91,7 @@
             label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
           }))}
           onchange={(property: string) =>
-            change(at, { ...rule, when: expressionOf({ ...shown, property }, holds) })}
+            change(at, { ...rule, when: expressionOf(withProperty(shown, property), holds) })}
         />
         <Select
           label="Compare"

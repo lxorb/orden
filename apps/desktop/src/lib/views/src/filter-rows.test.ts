@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { filterOf, type HoldsOf, rowsOf } from './filter-rows'
+import { filterOf, type HoldsOf, rowsOf, withProperty } from './filter-rows'
 
 const text: HoldsOf = (property) => (property === 'note.count' ? 'number' : 'other')
 
@@ -19,19 +19,21 @@ test('a quoted true stays a word, and a bare one stays a truth', () => {
   })
 })
 
-test('a number typed for a text property is compared as text, and for a number one as a number', () => {
+test('a number in a list stays a number when another row changes', () => {
+  const rows = rowsOf({ and: ['note.ratings.contains(5)'] }, text)
+  const added = {
+    ...rows,
+    rows: [...rows.rows, { property: 'note.title', op: '==' as const, value: 'x' }],
+  }
+  expect(filterOf(added, text)).toEqual({ and: ['note.ratings.contains(5)', 'note.title == "x"'] })
+})
+
+test('a quoted value moved to another property is read afresh', () => {
+  const [row] = rowsOf('note.zip == "007"').rows
+  if (!row || 'kept' in row) throw new Error('no row')
   expect(
-    filterOf(
-      {
-        join: 'and',
-        rows: [
-          { property: 'note.zip', op: '==', value: '007' },
-          { property: 'note.count', op: '>', value: '3' },
-        ],
-      },
-      text,
-    ),
-  ).toEqual({ and: ['note.zip == "007"', 'note.count > 3'] })
+    filterOf({ join: 'and', rows: [{ ...withProperty(row, 'note.count'), value: '5' }] }),
+  ).toBe('note.count == 5')
 })
 
 test('a date typed for a text property is still read as a date', () => {

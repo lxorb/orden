@@ -53,9 +53,6 @@ function unliteral(written: string): { value: string; quoted: boolean } | null {
   return { value, quoted: quoted && literal(value, false) !== written.trim() }
 }
 
-const readsAsText = (value: string) =>
-  /^-?\d+(\.\d+)?$/.test(value.trim()) || value.trim() === 'true' || value.trim() === 'false'
-
 function valueIn(written: string): string | null {
   const trimmed = written.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed) || trimmed === 'true' || trimmed === 'false') return trimmed
@@ -66,9 +63,15 @@ function valueIn(written: string): string | null {
   return null
 }
 
+export const withProperty = (row: ValueRow, property: string): ValueRow => ({
+  property,
+  op: row.op,
+  value: row.value,
+})
+
 export function expressionOf(row: ValueRow, holds?: HoldsOf): string {
   const { property, op, value } = row
-  const text = row.quoted === true || (holds?.(property) === 'other' && readsAsText(value))
+  const text = row.quoted === true
   switch (op) {
     case '==':
     case '!=':
