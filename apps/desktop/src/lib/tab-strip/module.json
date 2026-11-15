@@ -29,7 +29,6 @@
     "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/SpaceMark.svelte",
     "apps/desktop/src/lib/TabMark.svelte",
-    "apps/desktop/src/lib/UnsavedDot.svelte",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/caret.ts",
     "apps/desktop/src/lib/chosen-icon.ts",
@@ -45,7 +44,6 @@
     "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/views.svelte.ts",
-    "apps/desktop/src/lib/while-here.ts"
+    "apps/desktop/src/lib/views.svelte.ts"
   ]
 }

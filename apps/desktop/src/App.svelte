@@ -81,7 +81,7 @@
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
   import StatusBar from './lib/StatusBar.svelte'
-  import { paneCorners } from './lib/pane-corners.svelte'
+  import { paneCorners } from './lib/ui-kit/src/api'
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'

@@ -18,7 +18,7 @@
   import { hand } from './hand.svelte'
   import { DEFAULT_INK, shownInk } from '../../plane/src/api'
   import { nearestDock, pens, upright } from './pens.svelte'
-  import { frameOf } from '../../pane-corners.svelte'
+  import { frameOf } from '../../ui-kit/src/api'
   import { type Tool } from './pointer'
   import { shortcuts } from '../../shortcuts/src/api'
   import { tools } from './tools.svelte'

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { whileHere } from '../../src/lib/while-here'
+  import { whileHere } from '../../src/lib/ui-kit/src/api'
 
   const here = whileHere()
 

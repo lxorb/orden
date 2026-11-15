@@ -22,7 +22,6 @@
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/TabMark.svelte",
-    "apps/desktop/src/lib/UnsavedDot.svelte",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/frecency.ts",
     "apps/desktop/src/lib/hints.svelte.ts",

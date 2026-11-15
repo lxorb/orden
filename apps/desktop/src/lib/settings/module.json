@@ -51,7 +51,6 @@
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/while-here.ts"
+    "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

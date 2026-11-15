@@ -3,6 +3,9 @@ export { busy } from './busy.svelte'
 export { default as Cross } from './Cross.svelte'
 export { default as UnreadDot } from './UnreadDot.svelte'
 export { default as Facts } from './Facts.svelte'
+export { default as UnsavedDot } from './UnsavedDot.svelte'
+export { frameOf, paneCorners } from './pane-corners.svelte'
+export { whileHere } from './while-here'
 export { rank, recentFirst, walked } from './fuzzy'
 export {
   brandIcon,
