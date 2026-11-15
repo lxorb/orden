@@ -1,5 +1,5 @@
 import { frontMatterBlock, frontMatterKeys, frontMatterList } from '@orden/markdown/front-matter'
-import { backtracksWildly } from '@orden/markdown/pattern-cost'
+import { searchBacktracksWildly } from '@orden/markdown/pattern-cost'
 import { taskAt } from '@orden/markdown/tasks'
 import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { lineAt, lineStarts } from './lines'
@@ -499,7 +499,7 @@ export class Matcher {
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 
-    const made = backtracksWildly(source, folded ? 'i' : '')
+    const made = searchBacktracksWildly(source, folded)
       ? null
       : compiled(source, folded ? 'gi' : 'g')
 

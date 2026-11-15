@@ -87,6 +87,13 @@ describe('a pattern the web search refuses as too costly', () => {
     })
   })
 
+  test('judged in the Unicode mode it runs in', async () => {
+    const wild = { kind: 'regex', source: '(\\p{L}+)+;', fold: false }
+    await searchSpace(ROOT, wild as never, [], 50, () => undefined)
+
+    expect(asked.query).toEqual({ ...wild, refused: true })
+  })
+
   test('judged with the case it ignores', async () => {
     const wild = { kind: 'regex', source: '(a|A)*b', fold: true }
     await searchSpace(ROOT, wild as never, [], 50, () => undefined)

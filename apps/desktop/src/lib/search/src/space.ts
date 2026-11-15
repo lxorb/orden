@@ -2,7 +2,7 @@ import { protection } from '../../protect/src/api'
 import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
 import { searchInternal, searchInWorker } from '../../web-backend/src/api'
-import { backtracksWildly } from '@orden/markdown/pattern-cost'
+import { searchBacktracksWildly } from '@orden/markdown/pattern-cost'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -83,9 +83,7 @@ function judged(query: Query): Query {
     case 'scope':
       return { ...query, of: judged(query.of) }
     case 'regex':
-      return backtracksWildly(query.source, query.fold ? 'i' : '')
-        ? { ...query, refused: true }
-        : query
+      return searchBacktracksWildly(query.source, query.fold) ? { ...query, refused: true } : query
     case 'text':
     case 'content':
     case 'path':

@@ -271,6 +271,14 @@ describe('a regular expression that backtracks without end', () => {
     expect(marked('/a+!/', { body: RUN })).toEqual([RUN])
   })
 
+  test('is judged in the Unicode mode it runs in', () => {
+    const started = Date.now()
+    expect(answers('/(\\p{L}+)+;/', { body: RUN })).toBe(false)
+    expect(answers('/(\\u{61}+)+;/', { body: RUN })).toBe(false)
+    expect(Date.now() - started).toBeLessThan(1500)
+    expect(answers('/\\p{L}+!/', { body: RUN })).toBe(true)
+  })
+
   test('is judged with the case it was asked to ignore', () => {
     const started = Date.now()
     expect(answers('/(a|A)*b/i', { body: RUN })).toBe(false)

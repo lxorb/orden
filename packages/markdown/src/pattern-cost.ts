@@ -311,3 +311,13 @@ export function patternJudge() {
 }
 
 export const { patternCost, backtracksWildly } = patternJudge()
+
+export function searchBacktracksWildly(source: string, fold: boolean): boolean {
+  const flags = fold ? 'i' : ''
+  try {
+    RegExp(source, 'u')
+    return backtracksWildly(source, `${flags}u`)
+  } catch {
+    return backtracksWildly(source, flags)
+  }
+}
