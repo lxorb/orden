@@ -46,7 +46,7 @@
   import { workspace } from '../../workspace.svelte'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { wholeRows } from '../../whole-rows'
+  import { wholeRows } from './whole-rows'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */
   let {

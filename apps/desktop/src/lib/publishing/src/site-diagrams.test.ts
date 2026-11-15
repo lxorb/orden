@@ -16,7 +16,7 @@ const world = vi.hoisted((): World => ({
   kept: {},
 }))
 
-vi.mock('./accounts/src/client', () => ({
+vi.mock('../../accounts/src/client', () => ({
   api: {
     putBlob: (
       _token: string,
@@ -33,7 +33,7 @@ vi.mock('./accounts/src/client', () => ({
   },
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'read_tree') {
       const root = String(args.root)
@@ -64,7 +64,7 @@ vi.mock('./platform/src/tauri', () => ({
   },
 }))
 
-vi.mock('./platform/src/stored', () => ({
+vi.mock('../../platform/src/stored', () => ({
   stored: (key: string) => {
     const held = world.kept[key]
     return held === undefined ? null : (JSON.parse(held) as unknown)
@@ -79,7 +79,7 @@ vi.mock('./platform/src/stored', () => ({
   },
 }))
 
-vi.mock('./diagrams', () => ({
+vi.mock('../../diagrams', () => ({
   drawDiagram: (code: string, language: string, scheme: 'light' | 'dark') => {
     if (world.refuse.has(code)) return Promise.reject(new Error('mermaid said no'))
 

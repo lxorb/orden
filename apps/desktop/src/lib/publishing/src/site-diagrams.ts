@@ -6,10 +6,10 @@ import {
   diagramKey,
   isDiagram,
 } from '@orden/markdown/diagrams'
-import { api } from './accounts/src/api'
-import { drawDiagram } from './diagrams'
-import { keepJson, stored, invoke } from './platform/src/api'
-import { shapesOnly } from './svg-file'
+import { api } from '../../accounts/src/api'
+import { drawDiagram } from '../../diagrams'
+import { keepJson, stored, invoke } from '../../platform/src/api'
+import { shapesOnly } from '../../svg-file'
 
 const MOST = 100
 

@@ -1,6 +1,6 @@
-import type { Carried } from './import/src/api'
-import { modes } from './modes.svelte'
-import { shortcutPresets, shortcuts } from './shortcuts/src/api'
+import type { Carried } from './api'
+import { modes } from '../../modes.svelte'
+import { shortcutPresets, shortcuts } from '../../shortcuts/src/api'
 
 export async function carryOver(carried: Carried) {
   if (carried.keys) {

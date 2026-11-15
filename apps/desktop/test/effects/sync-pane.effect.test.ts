@@ -16,7 +16,7 @@ Element.prototype.animate = () =>
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')
-const SyncPane = (await import('../../src/lib/SyncPane.svelte')).default
+const SyncPane = (await import('../../src/lib/settings/src/SyncPane.svelte')).default
 
 const PLAN = {
   id: 'Plan',

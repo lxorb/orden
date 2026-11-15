@@ -179,7 +179,7 @@ export async function importAsSpace(
   await applyImport(plan, { root: space.root, folder: '' })
 
   if (carried) {
-    const { carryOver } = await import('../../carry-over')
+    const { carryOver } = await import('./carry-over')
     await carryOver(carried)
   }
 

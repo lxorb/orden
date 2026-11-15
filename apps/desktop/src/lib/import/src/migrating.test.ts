@@ -107,7 +107,7 @@ vi.mock('../../settings.svelte', () => ({ settings: { open: true } }))
 vi.mock('../../first-visit.svelte', () => ({
   firstVisit: { fresh: false, answered: () => undefined },
 }))
-vi.mock('../../carry-over', async () => {
+vi.mock('./carry-over', async () => {
   const { setLinkWriting } = await import('../../link-format/src/api')
   return {
     carryOver: async (carried: { linkFormat?: LinkFormat }) => {

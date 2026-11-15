@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte'
   import Answer from './Answer.svelte'
-  import { atItsCost } from '../../at-its-cost'
+  import { atItsCost } from './at-its-cost'
 
   const {
     text,
