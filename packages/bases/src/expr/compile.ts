@@ -167,6 +167,7 @@ function compileNode(node: Node, facts: Facts): Fn {
         Object.fromEntries(entries.map(([key, value]) => [key, settled(value(scope))]))
     }
     case 'name':
+      if (node.name === 'this') facts.local = false
       return compileName(node.name)
     case 'member':
       return compileMember(node, facts)
