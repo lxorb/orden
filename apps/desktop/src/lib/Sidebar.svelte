@@ -34,7 +34,7 @@
   import { newSpace } from './space-actions'
   import { arrive, leave, segmented } from './ui-kit/src/api'
   import { panels, type Panel, type PanelSide } from './session/src/api'
-  import { headingAt, lineOf } from './outline'
+  import { headingAt, lineOf } from './documents/src/api'
   import { pages } from './pages/src/api'
   import {
     archiveSection,

@@ -25,29 +25,10 @@ import { busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'
 import { isPlugin } from '../../plugin'
 import { scanFootnotes } from './footnotes'
-import { lineOfHeading, scanHeadings } from '../../outline'
 import type { Change } from '@orden/scan/search/replace'
 import { tabOverview } from '../../surfaces.svelte'
 import { GIVE_UP } from '../../parting/src/api'
-import {
-  holdsRetiredTab,
-  type DocumentStart,
-  holdsWords,
-  NoteDoc,
-  unixLines,
-  Tab,
-  UNTITLED,
-  OpenDocuments,
-  secondWebTabs,
-  draftFile,
-  hasWords,
-  isDraft,
-  isUnsaved,
-  worthAFile,
-  fetchAcross,
-  meetAcross,
-  oweTo,
-} from '../../documents/src/api'
+import { holdsRetiredTab, type DocumentStart, holdsWords, NoteDoc, unixLines, Tab, UNTITLED, OpenDocuments, secondWebTabs, draftFile, hasWords, isDraft, isUnsaved, worthAFile, fetchAcross, meetAcross, oweTo, lineOfHeading, scanHeadings } from '../../documents/src/api'
 import { WELCOME_PATH } from '../../welcome'
 import {
   arrangementIn,
@@ -172,7 +153,7 @@ const PLACEHOLDER: Record<NewKind, string> = {
   database: 'Untitled',
 }
 
-export type { Heading } from '../../outline'
+export type { Heading } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:workspace'
 const TREE_KEY = 'orden:tree'
