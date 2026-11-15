@@ -1,4 +1,4 @@
-import { type NoteIndex, resolveFile, resolveNote } from '@orden/editor'
+import { type NoteIndex, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { ImportPlan, Planned } from './plan'
@@ -666,6 +666,46 @@ describe('a vault landed in a folder of a space that holds notes of the same nam
     expect(textAt(files, 'Inbox/Daily/Day.md')).toBe(
       '| What |\n| --- |\n| [[Inbox/Ideas\\|Ideas]] |\n',
     )
+  })
+
+  test('has a markdown link by name reach the note it came with, not the namesake at the top', () => {
+    const out = restamped(
+      planOf([
+        note('Projects/Plan.md', '# mine'),
+        file('Trips/cat 1.png'),
+        note(
+          'Daily/Day.md',
+          'See [the plan](Plan.md), ![](<cat 1.png>) and [Plan](Plan).\n\n[p]: Plan.md\n',
+        ),
+      ]),
+      new Set(['Plan.md', 'cat 1.png']),
+      'Inbox',
+    )
+    const text = textAt(out.files, 'Inbox/Daily/Day.md')
+    const index = spaceIndex(
+      ['Plan.md', 'Inbox/Projects/Plan.md', 'Inbox/Daily/Day.md'],
+      ['cat 1.png', 'Inbox/Trips/cat 1.png'],
+      'Inbox/Daily/Day.md',
+    )
+    const targets = [...text.matchAll(/\]\(<?([^)>]+)>?\)|\]: (\S+)/g)].map((one) =>
+      decodeURIComponent(one[1] ?? one[2] ?? ''),
+    )
+
+    expect(text).toBe(
+      'See [the plan](../Projects/Plan.md), ![](../Trips/cat%201.png) and [Plan](../Projects/Plan.md).\n\n[p]: ../Projects/Plan.md\n',
+    )
+    expect(resolveRelative(index, targets[0] ?? '')?.path).toBe('Inbox/Projects/Plan.md')
+    expect(resolveFile(index, targets[1] ?? '', 'markdown')).toBe('Inbox/Trips/cat 1.png')
+  })
+
+  test('keeps a markdown link by name that already reaches the note it came with', () => {
+    const out = restamped(
+      planOf([note('Projects/Plan.md', '# mine'), note('Daily/Day.md', 'See [it](Plan.md).')]),
+      new Set(['Archive/Old/Deep/Plan.md']),
+      'Inbox',
+    )
+
+    expect(textAt(out.files, 'Inbox/Daily/Day.md')).toBe('See [it](Plan.md).')
   })
 
   test('names the note from the very top when even its path is held beside the link', () => {

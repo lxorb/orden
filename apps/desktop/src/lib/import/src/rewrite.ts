@@ -208,16 +208,32 @@ export function linksFollowed(
   const code = withMath(text, codeRanges(text))
   const known = new Set(paths.map(foldName))
   const movedTo = (path: string) => moved.get(path) ?? movedFolded.get(foldName(path))
+  const landed = (path: string) => `${under ? `${under}/` : ''}${movedTo(path) ?? path}`
+
+  const byName = (said: string): string | null => {
+    const meant = nearest(said, was, called)
+    if (meant === undefined) return null
+    const landing = landed(meant)
+    const from = landed(was)
+    const held = (path: string) => path !== landing && holds(path, space)
+    const taken =
+      movedTo(meant) !== undefined ||
+      held(joined(folderOf(from), said)) ||
+      held(said) ||
+      captured(said, landing, from, space)
+    return taken ? relativePath(folderOf(from), landing) : null
+  }
 
   const follow = (path: string): string | null => {
     const top = path.replace(/^\/+/, '')
     const beside = joined(here, path)
+    const dotted = /^\.{1,2}(\/|$)/.test(path)
     const fromTop =
-      path.startsWith('/') ||
-      (!/^\.{1,2}(\/|$)/.test(path) && !known.has(foldName(beside)) && known.has(foldName(top)))
+      path.startsWith('/') || (!dotted && !known.has(foldName(beside)) && known.has(foldName(top)))
     if (!fromTop) {
       const now = movedTo(beside)
-      return now === undefined ? null : relativePath(here, now)
+      if (now !== undefined) return relativePath(here, now)
+      return dotted || known.has(foldName(beside)) ? null : byName(path)
     }
     const now = movedTo(top) ?? (under && known.has(foldName(top)) ? top : undefined)
     if (now === undefined) return null
@@ -252,7 +268,6 @@ export function linksFollowed(
   const linked = text.replace(LINK, markdownLink)
   const stillCode = withMath(linked, codeRanges(linked))
   const stillTables = tableRanges(linked)
-  const landed = (path: string) => `${under ? `${under}/` : ''}${movedTo(path) ?? path}`
 
   const wikilinked = linked.replace(
     WIKILINK,
@@ -314,6 +329,15 @@ function fitting(said: string, called: ReadonlyMap<string, string[]>): string[] 
     const bare = isMarkdownPath(path) ? foldName(withoutExtension(path)) : whole
     return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
   })
+}
+
+function holds(path: string, space: ReadonlyMap<string, string[]>): boolean {
+  const wanted = foldName(path)
+  return fitting(path, space).some(
+    (one) =>
+      foldName(isMarkdownPath(one) ? withoutExtension(one) : one) === wanted ||
+      foldName(one) === wanted,
+  )
 }
 
 function captured(
