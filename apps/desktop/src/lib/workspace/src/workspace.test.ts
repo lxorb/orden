@@ -622,6 +622,32 @@ describe('the right side and the scratchpad take turns', () => {
     expect(workspace.rightShows).toBeNull()
   })
 
+  test('on a phone, a note opened from the drawer is shown over the card and the side', async () => {
+    const was = viewport.device
+    viewport.device = 'phone'
+    try {
+      for (const right of [() => pad.show(false), () => workspace.showPanel('outline')]) {
+        right()
+        workspace.panel = 'tree'
+        await workspace.open('/space/a.md')
+        expect(workspace.panel).toBeNull()
+        expect(pad.on).toBe(false)
+        expect(workspace.rightShows).toBeNull()
+      }
+    } finally {
+      viewport.device = was
+    }
+  })
+
+  test('beside a wide window, a note opened keeps the side and the card as they were', async () => {
+    workspace.showPanel('outline')
+    await workspace.open('/space/a.md')
+    expect(workspace.rightShows).toBe('outline')
+    pad.show(false)
+    await workspace.open('/space/a.md')
+    expect(pad.on).toBe(true)
+  })
+
   test('the drawer opens it out of the way of itself, and shuts it the same way', () => {
     workspace.panel = 'tree'
     workspace.rightPanel = 'outline'

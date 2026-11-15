@@ -1274,7 +1274,7 @@ class Workspace {
       home,
     })
     this.add(new Tab(note, this.panes.focusedId))
-    this.showNote()
+    this.uncoverNote()
     if (doc) void this.placeAtHome(note)
   }
 
@@ -1323,7 +1323,7 @@ class Workspace {
     })
     const tab = this.add(new Tab(file, this.panes.focusedId), activate, beside)
     if (activate) {
-      this.showNote()
+      this.uncoverNote()
       this.dropScaffolding(tab)
     }
     this.persist()
@@ -1336,7 +1336,7 @@ class Workspace {
 
     if (open) {
       this.panes.activate(open.paneId, open.id)
-      this.showNote()
+      this.uncoverNote()
       return
     }
 
@@ -1352,7 +1352,7 @@ class Workspace {
     const tab = new Tab(note, this.panes.focusedId)
     this.add(tab)
     this.dropScaffolding(tab)
-    this.showNote()
+    this.uncoverNote()
   }
 
   showingShared(id: string): boolean {
@@ -1555,7 +1555,7 @@ class Workspace {
     const file = this.document({ kind: kind ?? 'view', path, name, text: words, dirty: false })
     const tab = new Tab(file, this.panes.focusedId)
     this.arrive(tab, how)
-    if (how.activate !== false) this.showNote()
+    if (how.activate !== false) this.uncoverNote()
     if (path !== null) this.remember(path)
     this.persist()
     return tab
@@ -1716,7 +1716,7 @@ class Workspace {
     if (!how.preview) this.keep(tab.id)
     if (how.activate !== false) {
       this.activeTabId = tab.id
-      this.showNote()
+      this.uncoverNote()
     }
     return tab
   }
@@ -1893,7 +1893,7 @@ class Workspace {
     webPages().privately(tab.id, inPrivate)
     this.add(tab)
     this.dropScaffolding(tab)
-    this.showNote()
+    this.uncoverNote()
     this.persist()
   }
 
@@ -1924,7 +1924,7 @@ class Workspace {
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
-      this.showNote()
+      this.uncoverNote()
       this.dropScaffolding(tab)
     }
 
@@ -2069,7 +2069,7 @@ class Workspace {
       dirty: false,
     })
     const tab = this.add(new Tab(file, this.panes.focusedId))
-    this.showNote()
+    this.uncoverNote()
     this.remember(path)
     this.dropScaffolding(tab)
 
@@ -2102,7 +2102,7 @@ class Workspace {
 
   front(id: string) {
     this.activeTabId = id
-    this.showNote()
+    this.uncoverNote()
     this.persist()
   }
 
@@ -2111,7 +2111,7 @@ class Workspace {
     tab.essential = essential
     if (note.path) this.placeAt(tab, note.path)
     this.add(tab, how.activate !== false, this.openedFrom(how, tab.paneId))
-    if (how.activate !== false) this.showNote()
+    if (how.activate !== false) this.uncoverNote()
     this.persist()
     return tab
   }
@@ -2333,8 +2333,10 @@ class Workspace {
     await this.loadTree()
   }
 
-  private showNote() {
-    if (!viewport.drawer || !this.panel) return
+  uncoverNote() {
+    if (!viewport.drawer) return
+    if (this.rightShows !== null) this.closeRight()
+    if (!this.panel) return
 
     this.panel = null
     this.persist()
@@ -2370,7 +2372,7 @@ class Workspace {
     if (!options.preview) this.keep(tab.id)
     if (options.activate !== false) {
       this.activeTabId = tab.id
-      this.showNote()
+      this.uncoverNote()
     }
   }
 
@@ -2514,7 +2516,7 @@ class Workspace {
     tab.reading = false
 
     this.activeTabId = tab.id
-    this.showNote()
+    this.uncoverNote()
     this.remember(path)
     this.persist()
   }
@@ -3221,7 +3223,7 @@ class Workspace {
       dirty: false,
     })
     const tab = this.add(new Tab(note, this.panes.focusedId))
-    this.showNote()
+    this.uncoverNote()
     this.remember(path)
     this.dropScaffolding(tab)
 
@@ -3267,7 +3269,7 @@ class Workspace {
       dirty: false,
     })
     const tab = this.add(new Tab(file, this.panes.focusedId))
-    this.showNote()
+    this.uncoverNote()
     this.remember(path)
     this.dropScaffolding(tab)
 
@@ -3814,7 +3816,7 @@ class Workspace {
     const tab = new Tab(note, this.panes.focusedId)
     tab.cursor = content.length
     this.add(tab)
-    this.showNote()
+    this.uncoverNote()
     this.remember(path)
     this.dropScaffolding(tab)
     this.startRenaming(path, true)
