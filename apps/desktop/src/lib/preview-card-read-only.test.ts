@@ -31,7 +31,7 @@ vi.mock('./link-index/src/api', () => ({
   },
 }))
 
-const { mountPreview } = await import('./preview-card')
+const { mountPreview } = await import('./pane-tree/src/preview-card')
 
 function card(readOnly = false) {
   const host = document.createElement('div')

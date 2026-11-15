@@ -7,7 +7,14 @@ import {
   tableBindings,
 } from '@orden/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/api'
-import { revealPanel, stepRegionFocus, toggleTabOverview, workspace } from '../../workspace/src/api'
+import {
+  paneMoves,
+  refreshing,
+  revealPanel,
+  stepRegionFocus,
+  toggleTabOverview,
+  workspace,
+} from '../../workspace/src/api'
 import { modes } from '../../modes/src/api'
 import {
   commandRows,
@@ -536,7 +543,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: `Alt-${letter}`,
     mac: null,
-    run: () => void import('../../pane-moves').then((one) => one.movePane(toward)),
+    run: () => void paneMoves().then((one) => one.movePane(toward)),
   })),
   {
     id: 'app.tab-overview',
@@ -669,7 +676,9 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: null,
     run: () =>
-      void import('../../refresh').then(({ refreshHere }) => refreshHere()).catch(() => undefined),
+      void refreshing()
+        .then(({ refreshHere }) => refreshHere())
+        .catch(() => undefined),
   },
   {
     id: 'app.links',

@@ -26,15 +26,7 @@
     "surfaces",
     "row-menu",
     "accounts",
-    "spaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/TabMark.svelte",
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/caret.ts",
-    "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/note-menu.ts"
+    "spaces",
+    "marks"
   ]
 }

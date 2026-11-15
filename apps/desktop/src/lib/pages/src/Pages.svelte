@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { keyElsewhere } from '../../layer-keys'
+  import {
+    keyElsewhere,
+    longPress,
+    said,
+    viewport,
+    DIVIDER,
+    menu,
+    type MenuEntry,
+  } from '../../ui-kit/src/api'
   import { untrack } from 'svelte'
   import {
     CanvasBar,
@@ -61,7 +69,6 @@
   import { freshId, type InkPoint, type InkStroke } from '@orden/markdown/canvas'
   import { copyText, tick } from '../../ui-controls/src/api'
   import { pageAt } from '@orden/markdown/pages'
-  import { longPress, said, viewport, DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
   import { samePath, stillness } from '../../platform/src/api'
   import {
     type Highlight,

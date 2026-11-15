@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TabMark from '../../TabMark.svelte'
+  import { TabMark } from '../../marks/src/api'
   import type { Tab } from '../../documents/src/api'
 
   const { tab, left, top, width }: { tab: Tab; left: number; top: number; width: number } = $props()

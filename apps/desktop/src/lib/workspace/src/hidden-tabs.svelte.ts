@@ -1,4 +1,4 @@
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from './agent-marks.svelte'
 import { webPages } from '@orden/contracts'
 import { keepJson, stored } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'

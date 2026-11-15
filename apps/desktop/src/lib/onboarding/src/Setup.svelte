@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { iconLibrary } from '../../icon-library.svelte'
+  import { iconLibrary } from '../../glyphs/src/api'
   import { BRANDS } from '../../ui-kit/src/api'
   import { dur, fade, fly } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'

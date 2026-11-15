@@ -962,7 +962,7 @@ describe('a page out of sight', () => {
   })
 
   test('is never frozen while an agent is acting in it', async () => {
-    const { agentMarks } = await import('../../agent-marks.svelte')
+    const { agentMarks } = await import('../../workspace/src/api')
     await built('t0')
     await built('t1')
     agentMarks.on = { t0: { agent: 'claude', colour: '#000', stopped: false } }

@@ -31,6 +31,5 @@
     "modes",
     "gates",
     "panes"
-  ],
-  "pending": ["apps/desktop/src/lib/agent-marks.svelte.ts"]
+  ]
 }

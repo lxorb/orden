@@ -3,7 +3,7 @@
 Emil, 2026-10-03: the icon of a `.url` row in the left sidebar often differed from the
 same page's tab icon - WhatsApp and Slack most, whose marks carry an unread count. The
 tab follows the page's live mark; the row now does too while the tab is open, and keeps
-the last one after it closes (see `faviconFor` in apps/desktop/src/lib/chosen-icon.ts).
+the last one after it closes (see `faviconFor` in apps/desktop/src/lib/marks/src/chosen-icon.ts).
 
 This serves a page of its own, opens its web note in a tab, and swaps the page's mark
 twice the way a chat site does - a badge on, the badge off - through the page's own

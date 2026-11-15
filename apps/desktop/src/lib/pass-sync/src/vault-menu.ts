@@ -1,5 +1,5 @@
 import type { Folder, Vault } from '@orden/pass/types'
-import { iconChoice } from '../../icon-choice.svelte'
+import { iconChoice } from '../../icon-picker/src/api'
 import { DIVIDER, type MenuEntry, prompt } from '../../ui-kit/src/api'
 import { newId } from './rows'
 import { pass } from './store.svelte'

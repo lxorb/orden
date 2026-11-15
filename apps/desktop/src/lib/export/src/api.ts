@@ -1,6 +1,7 @@
 export { exportCommands, exportPicker } from './commands'
 export { frontShut, openOut, openTarget, renderOptions } from './context'
 export { printNote } from './print'
+export { exportRuns } from './print-open'
 export { picker } from './picker.svelte'
 export type { RunOptions } from './run'
 

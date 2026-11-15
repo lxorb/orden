@@ -13,11 +13,7 @@
     "emoji",
     "workspace",
     "sync-mirror",
-    "sync-store"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/file-mark.ts"
+    "sync-store",
+    "marks"
   ]
 }

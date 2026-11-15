@@ -28,7 +28,7 @@
     whenLoaded,
   } from '@orden/contracts'
   import { Outward } from '../../ui-controls/src/api'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { localDate } from '../../platform/src/api'
   import { Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'

@@ -1,3 +1,5 @@
+import type { CommandExtension } from './shell'
+
 export type SurfaceId =
   | 'agent-rows'
   | 'agent-session'
@@ -109,7 +111,12 @@ export interface ShellFocusPort {
   editor(): boolean
 }
 
+export interface AppCommandsPort {
+  rows(view: object | undefined): Promise<readonly CommandExtension[]>
+}
+
 export interface SurfacePorts {
+  readonly 'commands.app': AppCommandsPort
   readonly search: SearchPort
   readonly 'shell.focus': ShellFocusPort
   readonly 'shell.sheets': SheetsPort

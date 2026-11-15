@@ -62,7 +62,7 @@ import {
   steers,
 } from '../../../ai-providers/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
-import { agentMarks } from '../../../agent-marks.svelte'
+import { agentMarks } from '../../../workspace/src/api'
 import { tasks } from '../commands/tasks.svelte'
 import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
