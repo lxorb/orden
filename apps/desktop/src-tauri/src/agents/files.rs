@@ -136,7 +136,7 @@ pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
     behind(&own_folders(app), path)
 }
 
-fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
+pub(super) fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
     let real_path = real(path);
     fenced
         .iter()
@@ -288,9 +288,7 @@ fn question(
         return None;
     }
     let folder = folder_of(path, asked.op);
-    if category == Category::Files
-        && ancestors(&folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
-    {
+    if category == Category::Files && always_allowed(grant, asked.op, path, to) {
         return None;
     }
     let key = approvals::key(
@@ -318,6 +316,13 @@ fn question(
             key,
         },
     ))
+}
+
+fn always_allowed(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> bool {
+    let covered = |folder: PathBuf| {
+        ancestors(&folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
+    };
+    covered(folder_of(path, op)) && to.is_none_or(|to| covered(folder_of(to, op)))
 }
 
 fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
@@ -712,6 +717,38 @@ mod tests {
         assert!(!globbed("?.md", "üb.md"));
         assert!(globbed("Ärger*", "ärger.txt"));
         assert!(globbed("*.MD", "Übersicht.md"));
+    }
+
+    #[test]
+    fn a_folder_always_allowed_does_not_let_a_copy_or_move_write_elsewhere() {
+        let mut grant = crate::agents::grants::Grant::own("a".into(), "A");
+        grant.always.insert("/a".into(), vec![Category::Files]);
+        let from = Path::new("/a/x.txt");
+        assert!(always_allowed(&grant, FilesOp::Read, from, None));
+        assert!(always_allowed(
+            &grant,
+            FilesOp::Copy,
+            from,
+            Some(Path::new("/a/y.txt"))
+        ));
+        assert!(!always_allowed(
+            &grant,
+            FilesOp::Copy,
+            from,
+            Some(Path::new("/b/x.txt"))
+        ));
+        assert!(!always_allowed(
+            &grant,
+            FilesOp::Move,
+            from,
+            Some(Path::new("/home/me/.config/autostart/x.desktop"))
+        ));
+        assert!(!always_allowed(
+            &grant,
+            FilesOp::Copy,
+            Path::new("/b/x.txt"),
+            Some(Path::new("/a/x.txt"))
+        ));
     }
 
     fn temp() -> PathBuf {
