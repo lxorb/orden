@@ -38,7 +38,7 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
     await sets.adopt(moved, space)
   }
   if (refused.length) {
-    const { failed } = await import('../../failed.svelte')
+    const { failed } = await import('./notices.svelte')
     failed.tell(() => void moveToSpace(refused, space))
   }
   return tabs.every((tab) => moved.includes(tab))
@@ -83,7 +83,7 @@ async function fileMoved(path: string, root: string, done: Map<string, boolean |
   if (before !== undefined) return before
 
   if (isAgentsName(nameOf(path))) {
-    void import('../../reserved-name.svelte').then((one) => one.reservedName.tell(root))
+    void import('./notices.svelte').then((one) => one.reservedName.tell(root))
     done.set(path, 'said')
     return 'said'
   }

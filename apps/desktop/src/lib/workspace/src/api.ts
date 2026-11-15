@@ -21,3 +21,9 @@ export const spaceMoving = () => import('./moving-space')
 export const spaceSets = () => import('./sets.svelte')
 
 export const fileUndoing = () => import('./undoing')
+
+export const notices = () => import('./notices.svelte')
+
+export const firstVisiting = () => import('./first-visit.svelte')
+
+export const loadUndoToast = () => import('./UndoToast.svelte')

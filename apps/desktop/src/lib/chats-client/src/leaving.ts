@@ -1,8 +1,7 @@
 import { ApiError } from '../../accounts/src/api'
 import { onDisk, nameOf, samePath, within, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
-import { failed } from '../../failed.svelte'
-import { mayCarry, pointersMoving, spaceHolding, workspace } from '../../workspace/src/api'
+import { mayCarry, notices, pointersMoving, spaceHolding, workspace } from '../../workspace/src/api'
 import { carryQuestion } from './carry-question'
 import { listChats, moveChat } from './http'
 import { chatName, readPointer } from './pointers'
@@ -28,7 +27,7 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   }
   const refuse = async (error: Error): Promise<never> => {
     await back()
-    failed.tell(() => void workspace.move(path, folder).catch(() => undefined))
+    ;(await notices()).failed.tell(() => void workspace.move(path, folder).catch(() => undefined))
     throw error
   }
   if (await onDisk(joinPath(folder, nameOf(path)))) {

@@ -53,7 +53,6 @@
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/pull.svelte.ts",
-    "apps/desktop/src/lib/reserved-name.svelte.ts",
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/search.svelte.ts",

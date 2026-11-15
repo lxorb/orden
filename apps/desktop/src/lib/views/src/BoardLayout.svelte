@@ -53,7 +53,7 @@
     setSort,
     setSummary,
   } from './edit'
-  import { failed } from '../../failed.svelte'
+  import { notices } from '../../workspace/src/api'
   import { laneKeys, withEveryDay, withinDays } from './list-items'
   import type { Kit } from './kit'
   import { holdsLists, optionsAt } from './options'
@@ -399,7 +399,7 @@
             : pending.filter((one) => one !== moving)
       } else {
         pending = pending.filter((one) => one !== moving)
-        failed.tell(() => {
+        ;(await notices()).failed.tell(() => {
           pickedFrom = from
           carryTo(row, group, laneKey, index, null)
         })

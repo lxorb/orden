@@ -260,7 +260,7 @@ export const appMenuRows = held(async () => {
 
 export const undoToastNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no undo toast in the Even Realities plugin')
-  return import('./UndoToast.svelte')
+  return import('./workspace/src/api').then((one) => one.loadUndoToast())
 })
 
 export const spaceSound = latched(() => import('./SpaceSound.svelte'))

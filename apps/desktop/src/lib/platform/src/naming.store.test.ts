@@ -222,7 +222,7 @@ const { nameFault } = await import('./naming')
 const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { sync } = await import('../../sync-store/src/api')
-const { unread } = await import('../../unread.svelte')
+const { unread } = await import('../../workspace/src/notices.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
 const { isDraft } = await import('../../documents/src/api')
 type RemoteSpace = import('../../accounts/src/routes').RemoteSpace

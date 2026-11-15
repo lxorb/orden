@@ -6,7 +6,7 @@ import {
   stored,
   stringList,
   afterQuiet,
-} from './platform/src/api'
+} from '../../platform/src/api'
 
 const KEY = 'orden:palette-picks'
 

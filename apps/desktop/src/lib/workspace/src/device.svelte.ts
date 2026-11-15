@@ -71,7 +71,7 @@ export class DeviceView {
       RECENT_LIMIT,
     )
     keepJson(RECENT_KEY, this.recent)
-    void import('../../frecency').then((one) => one.frecency.use(`note:${path}`))
+    void import('../../matching/src/api').then((one) => one.frecency.use(`note:${path}`))
   }
 
   unremember(path: string) {

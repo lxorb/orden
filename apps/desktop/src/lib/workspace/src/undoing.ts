@@ -76,7 +76,7 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
 }
 
 async function refused(ws: PutsBack, action: FileAction) {
-  const { failed } = await import('../../failed.svelte')
+  const { failed } = await import('./notices.svelte')
   failed.tell(
     () => void ws.undoFileAction(),
     true,

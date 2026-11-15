@@ -1,6 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { hang } from '../../ui-kit/src/api'
+  import { notices } from '../../workspace/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { type NameFault, nameFault, nameToCommit } from '../../platform/src/api'
   import { caretAtEnd, selectAll, selectStem } from '../../ui-kit/src/api'
@@ -79,10 +80,8 @@
     const name = nameToCommit({ typed, extension, taken, was: value, current })
     if (name === null) oncancel()
     else oncommit(name)
-    if (told) void refused().then((one) => one.reservedName.tell(told))
+    if (told) void notices().then((one) => one.reservedName.tell(told))
   }
-
-  const refused = () => import('../../reserved-name.svelte')
 
   let field = $state<HTMLInputElement>()
   let hint = $state<HTMLButtonElement>()
@@ -90,7 +89,7 @@
   function follow() {
     const told = space
     escape()
-    if (told) void refused().then((one) => one.openInstructions(told))
+    if (told) void notices().then((one) => one.openInstructions(told))
   }
 
   function escape() {

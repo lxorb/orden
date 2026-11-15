@@ -29,7 +29,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { workspace } = await import('./workspace/src/api')
-const { unread } = await import('./unread.svelte')
+const { unread } = await import('./workspace/src/notices.svelte')
 
 beforeEach(() => {
   handed.length = 0

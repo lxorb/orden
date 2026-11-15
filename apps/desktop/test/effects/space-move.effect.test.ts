@@ -230,7 +230,7 @@ describe('a move taken back', () => {
 
 describe('a move that was refused', () => {
   test('says so, with the way to try again, and answers that nothing moved', async () => {
-    const { failed } = await import('../../src/lib/failed.svelte')
+    const { failed } = await import('../../src/lib/workspace/src/notices.svelte')
     failed.dismiss()
     files().set('/spaces/Home/Plan.md', '# theirs\n')
     await workspace.openEntry(PLAN)
@@ -308,7 +308,7 @@ describe('a tab with nowhere to come back to', () => {
   })
 
   test('a move whose space is archived since: not undone, file and tab together, and said', async () => {
-    const { failed } = await import('../../src/lib/failed.svelte')
+    const { failed } = await import('../../src/lib/workspace/src/notices.svelte')
     failed.dismiss()
     await workspace.openEntry(PLAN)
     await moveToSpace([tabAt(PLAN).id], 'home')
@@ -322,7 +322,7 @@ describe('a tab with nowhere to come back to', () => {
   })
 
   test('a redo into a space archived since: not done, and said', async () => {
-    const { failed } = await import('../../src/lib/failed.svelte')
+    const { failed } = await import('../../src/lib/workspace/src/notices.svelte')
     failed.dismiss()
     await workspace.openEntry(PLAN)
     await moveToSpace([tabAt(PLAN).id], 'home')

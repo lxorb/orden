@@ -1,12 +1,20 @@
 import { account } from '../../accounts/src/api'
-import { firstVisit } from '../../first-visit.svelte'
 import { log, isNative } from '../../platform/src/api'
 import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEB, unpack, WEB } from '../../handoff/src/api'
+import { firstVisiting } from '../../workspace/src/api'
+
+type FirstVisit = Awaited<ReturnType<typeof firstVisiting>>['firstVisit']
 
 const WATCH = 500
 
 class TakingOver {
   state = $state<'idle' | 'asking' | 'nothing'>('idle')
+
+  private visit = $state.raw<FirstVisit | null>(null)
+
+  constructor() {
+    void firstVisiting().then((one) => (this.visit = one.firstVisit))
+  }
 
   get offered(): boolean {
     return (
@@ -14,7 +22,7 @@ class TakingOver {
       typeof location !== 'undefined' &&
       location.origin === WEB &&
       !account.signedIn &&
-      firstVisit.fresh
+      !!this.visit?.fresh
     )
   }
 
@@ -48,7 +56,7 @@ class TakingOver {
       }
       unpack(handoff)
         .then(() => {
-          firstVisit.answered()
+          this.visit?.answered()
           location.reload()
         })
         .catch((error: unknown) => {

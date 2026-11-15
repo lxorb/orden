@@ -1,16 +1,13 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { focusEditor } from './focus'
-  import { dur, fly } from './platform/src/api'
-  import { told } from './ui-kit/src/api'
-  import { reservedName } from './reserved-name.svelte'
-  import { back, unsynced } from './sync-client/src/api'
-  import { gateNote } from './gate-note.svelte'
-  import { undoToast } from './undo-toast/src/api'
-  import { unread } from './unread.svelte'
-  import { failed } from './failed.svelte'
-  import { workspace } from './workspace/src/api'
+  import { focusEditor } from '../../focus'
+  import { dur, fly } from '../../platform/src/api'
+  import { told } from '../../ui-kit/src/api'
+  import { back, unsynced } from '../../sync-client/src/api'
+  import { undoToast } from '../../undo-toast/src/api'
+  import { failed, gateNote, reservedName, unread } from './notices.svelte'
+  import { workspace } from './workspace.svelte'
 
   const word = $derived({
     delete: 'Deleted',

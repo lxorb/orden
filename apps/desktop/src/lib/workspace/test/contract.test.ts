@@ -12,7 +12,8 @@ vi.stubGlobal('localStorage', {
   clear: () => held.clear(),
 })
 
-const { isHiddenTabs, movingOf, ownerOf, spacesFor, workspace } = await import('../src/api')
+const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spacesFor, workspace } =
+  await import('../src/api')
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -78,6 +79,33 @@ describe('the workspace', () => {
     expect(workspace.tabs.map((one) => one.id)).toEqual(
       expect.arrayContaining([first?.id, second?.id]),
     )
+  })
+})
+
+describe('its notices', () => {
+  test('open through a door, and a failure told lingers until it is retried or dismissed', async () => {
+    const { failed, gateNote } = await notices()
+    let retried = 0
+    failed.tell(() => retried++)
+    expect(failed.retry).not.toBe(null)
+    failed.again()
+    expect(retried).toBe(1)
+    expect(failed.retry).toBe(null)
+    gateNote.show('Turned off')
+    expect(gateNote.said).toBe('Turned off')
+    gateNote.dismiss()
+    expect(gateNote.said).toBe(null)
+  })
+
+  test('the first visit is fresh only once seeded and until it is answered', async () => {
+    const { firstVisit } = await firstVisiting()
+    expect(firstVisit.fresh).toBe(false)
+    firstVisit.seeded()
+    expect(firstVisit.fresh).toBe(true)
+    firstVisit.answered()
+    expect(firstVisit.fresh).toBe(false)
+    firstVisit.seeded()
+    expect(firstVisit.fresh).toBe(false)
   })
 })
 

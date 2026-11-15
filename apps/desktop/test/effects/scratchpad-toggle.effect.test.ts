@@ -297,7 +297,7 @@ test("a note in a space keeps the rows the scratchpad's switch leaves out", asyn
 test('a scratchpad that will not read is never opened empty', async () => {
   disk.current?.files.set(PAD, 'a year of notes\n')
   disk.current?.unreadable.add(PAD)
-  const { unread } = await import('../../src/lib/unread.svelte')
+  const { unread } = await import('../../src/lib/workspace/src/notices.svelte')
 
   shown.show()
   const column = document.createElement('div')
