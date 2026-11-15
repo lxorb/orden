@@ -67,6 +67,8 @@ class Sync {
   private timer: ReturnType<typeof setTimeout> | null = null
   private dueAt = 0
   private running = false
+  private ticking = false
+  private owed = false
   private quiet = 0
   private reconciledAt = 0
 
@@ -390,7 +392,8 @@ class Sync {
     if (!this.timer) return
 
     this.quiet = 0
-    this.schedule(nudgeDelay(this.dueAt - Date.now()))
+    if (this.ticking) this.owed = true
+    else this.schedule(nudgeDelay(this.dueAt - Date.now()))
   }
 
   private readonly onVisibility = () => {
@@ -419,6 +422,7 @@ class Sync {
   private async tick() {
     const mine = this.generation
     let moved = false
+    this.ticking = true
 
     try {
       moved = await this.pass()
@@ -427,12 +431,16 @@ class Sync {
         this.status = 'error'
         this.lastError = error instanceof Error ? error.message : 'sync failed'
       }
+    } finally {
+      this.ticking = false
     }
 
     if (mine !== this.generation) return
 
-    this.quiet = moved ? 0 : Math.min(this.quiet + 1, 8)
-    this.schedule()
+    const owed = this.owed
+    this.owed = false
+    this.quiet = moved || owed ? 0 : Math.min(this.quiet + 1, 8)
+    this.schedule(owed ? nudgeDelay(Infinity) : this.delay())
   }
 
   async pass(): Promise<boolean> {
@@ -624,6 +632,7 @@ class Sync {
 
   async run(): Promise<boolean> {
     if (V2 && this.v2) return await this.v2.passNow()
+    if (this.running) this.owed = true
     if (this.running || !account.token) return false
 
     const token = account.token
