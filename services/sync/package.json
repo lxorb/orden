@@ -36,7 +36,7 @@
     "@orden/rooms": "workspace:*",
     "@orden/scan": "workspace:*",
     "@orden/sync-core": "workspace:*",
-    "hono": "^4.13.5",
+    "hono": "^4.13.16",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.32"
   },
