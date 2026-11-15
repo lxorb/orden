@@ -491,3 +491,34 @@ describe('a write the note refuses, being locked', () => {
     refusing.clear()
   })
 })
+
+describe('words prepended to a note', () => {
+  test('go above the body, under the front matter, which stays the front matter', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '---\nstatus: draft\n---\n# Plan\n')
+    written.length = 0
+
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    const after = written[0]?.after ?? ''
+    expect(after).toBe('---\nstatus: draft\n---\nTop line.\n\n# Plan\n')
+    expect(frontMatterValue(after, 'status')).toBe('draft')
+  })
+
+  test('and under front matter that ends the note, on a line of their own', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '---\nstatus: draft\n---')
+    written.length = 0
+
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    expect(written[0]?.after).toBe('---\nstatus: draft\n---\nTop line.')
+  })
+
+  test('and at the very top of a note with none', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan\n')
+    written.length = 0
+
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    expect(written[0]?.after).toBe('Top line.\n\n# Plan\n')
+  })
+})

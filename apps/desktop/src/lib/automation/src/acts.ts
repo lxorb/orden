@@ -1,5 +1,6 @@
 import { protection } from '../../protect/src/api'
 import type { TextEdit } from '@orden/markdown/edits'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
@@ -75,7 +76,7 @@ export async function newNote(args: Said): Promise<unknown> {
       throw new Error(`${relative} is already there: say append or prepend to add to it`)
     }
 
-    const after = append ? joined(before, content) : joined(content, before)
+    const after = append ? joined(before, content) : prepended(before, content)
     wroteTo(
       relative,
       await workspace.replaceInNotes([
@@ -134,7 +135,15 @@ function joined(first: string, second: string): string {
   if (!first.trim()) return second
   if (!second.trim()) return first
 
-  return `${first.replace(/\s+$/, '')}\n\n${second.replace(/^\s+/, '')}\n`
+  const rest = second.replace(/^\s+/, '')
+  return `${first.replace(/\s+$/, '')}\n\n${rest}${rest.endsWith('\n') ? '' : '\n'}`
+}
+
+function prepended(before: string, content: string): string {
+  const at = frontMatterBlock(before)?.to ?? 0
+  const head = before.slice(0, at)
+
+  return `${head}${head && !head.endsWith('\n') ? '\n' : ''}${joined(content, before.slice(at))}`
 }
 
 function wanted(args: Said): string {
