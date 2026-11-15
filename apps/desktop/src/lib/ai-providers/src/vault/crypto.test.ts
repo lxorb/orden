@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { commitment, digits as pairing, newNonce } from '../../../pairing'
+import { commitment, digits as pairing, newNonce } from '../pairing'
 
 const digits = (...parts: [string, string, string, string]) =>
   pairing('nib ai vault digits', ...parts)

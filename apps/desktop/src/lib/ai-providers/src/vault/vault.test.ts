@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { added, type Accounts, NONE } from '../accounts'
 import type { Base, Contents } from './merge'
-import { newNonce } from '../../../pairing'
+import { newNonce } from '../pairing'
 import { deviceKeyIn, newDeviceKey, open, unwrap } from './crypto'
 import { Vault, type VaultWorld } from './vault.svelte'
 

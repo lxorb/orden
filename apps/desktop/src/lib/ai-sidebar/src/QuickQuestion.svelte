@@ -19,7 +19,7 @@
   import { scrollbar } from '../../ui-kit/src/api'
   import { settings } from '../../settings.svelte'
   import { trap } from '../../ui-controls/src/api'
-  import { grow } from '../../grow'
+  import { grow } from './grow'
   import { longPaste } from '../../long-paste'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'

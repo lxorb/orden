@@ -1,4 +1,4 @@
-import { commitment, digits as pairingDigits, newNonce } from '../../../pairing'
+import { commitment, digits as pairingDigits, newNonce } from '../pairing'
 import {
   authOf,
   type DeviceKey,

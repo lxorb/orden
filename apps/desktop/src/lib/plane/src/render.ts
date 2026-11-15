@@ -4,7 +4,7 @@ import { embedKind } from '@orden/markdown/links'
 import { BASE } from '../../accounts/src/api'
 import { accountAddress } from '../../assets'
 import { isPicturePath, assetUrl, joinPath } from '../../platform/src/api'
-import { enginesArrived } from '../../engines.svelte'
+import { enginesArrived } from './engines.svelte'
 import { links } from '../../link-index/src/api'
 import { pointer, withPictures } from '../../reading/src/api'
 

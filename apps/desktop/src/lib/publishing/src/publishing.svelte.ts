@@ -11,7 +11,7 @@ import {
 } from '../../accounts/src/api'
 import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from '../../platform/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
-import { isDomainStatus, keepAsking } from '../../domain-status'
+import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from '../../ui-kit/src/api'
 import { publishSheet } from '../../surfaces.svelte'
 import { sync } from '../../sync.svelte'
@@ -350,7 +350,7 @@ class Publish {
     const root = this.space?.root
     if (!id || !root || account.accountToken !== token) return
 
-    const { pushDiagrams } = await import('../../site-diagrams')
+    const { pushDiagrams } = await import('./site-diagrams')
     if (account.accountToken !== token) return
     const drawn = await pushDiagrams(token, id, root).catch(() => null)
     if (drawn && (drawn.sent || drawn.refused)) {

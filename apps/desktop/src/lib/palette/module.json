@@ -34,7 +34,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/typing-pointer.ts",
-    "apps/desktop/src/lib/whole-rows.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

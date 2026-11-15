@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Facts from './Facts.svelte'
+  import Facts from '../../Facts.svelte'
   import { cubicOut } from 'svelte/easing'
-  import { relativeStep } from './ago'
-  import { region } from './platform/src/api'
-  import { settings } from './settings.svelte'
-  import { trash, type TrashItem } from './trash/src/api'
-  import { rowName } from './platform/src/api'
-  import { dur, slide } from './platform/src/api'
+  import { relativeStep } from '../../ago'
+  import { region } from '../../platform/src/api'
+  import { settings } from '../../settings.svelte'
+  import { trash, type TrashItem } from '../../trash/src/api'
+  import { rowName } from '../../platform/src/api'
+  import { dur, slide } from '../../platform/src/api'
 
   const DAY = 24 * 60 * 60 * 1000
 

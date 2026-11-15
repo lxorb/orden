@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Family, installedFamilies, isInstalled, offered } from '../../font-families'
+  import { type Family, installedFamilies, isInstalled, offered } from './font-families'
   import { overlays } from '../../ui-kit/src/api'
   import { hang } from '../../ui-kit/src/api'
 

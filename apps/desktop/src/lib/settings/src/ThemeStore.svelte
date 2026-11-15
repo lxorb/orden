@@ -1,18 +1,24 @@
 <script lang="ts">
-  import Facts from './Facts.svelte'
-  import { closeOnBack } from './ui-kit/src/api'
+  import Facts from '../../Facts.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
-  import { overlays } from './ui-kit/src/api'
-  import { scrollbar } from './ui-kit/src/api'
-  import { Select } from './ui-controls/src/api'
-  import { type Scheme, theme } from './theme/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import type { StoreTheme } from './theme-looks/src/api'
-  import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './theme-looks/src/api'
-  import { PAINT, store } from './theme-looks/src/api'
-  import { dur, fade, fly, LAYER, scale } from './platform/src/api'
-  import { trap } from './ui-controls/src/api'
-  import { Cross } from './ui-kit/src/api'
+  import { overlays } from '../../ui-kit/src/api'
+  import { scrollbar } from '../../ui-kit/src/api'
+  import { Select } from '../../ui-controls/src/api'
+  import { type Scheme, theme } from '../../theme/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import type { StoreTheme } from '../../theme-looks/src/api'
+  import {
+    FRAME,
+    FULL_HEIGHT,
+    miniatureCss,
+    paletteCss,
+    sampleHtml,
+  } from '../../theme-looks/src/api'
+  import { PAINT, store } from '../../theme-looks/src/api'
+  import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
+  import { trap } from '../../ui-controls/src/api'
+  import { Cross } from '../../ui-kit/src/api'
 
   const STYLE_ID = 'orden-theme-miniatures'
   const PALETTE_ID = 'orden-theme-palettes'

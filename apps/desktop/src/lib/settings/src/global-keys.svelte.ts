@@ -1,4 +1,4 @@
-import { invoke, isDesktop } from './platform/src/api'
+import { invoke, isDesktop } from '../../platform/src/api'
 
 export interface GlobalKeys {
   reach: 'system' | 'portal' | 'none'

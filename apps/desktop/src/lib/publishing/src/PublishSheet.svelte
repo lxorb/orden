@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { domainNotice } from '../../domain-status'
+  import { domainNotice } from './domain-status'
   import { localDate } from '../../platform/src/api'
   import { publish } from './publishing.svelte'
   import { segmented } from '../../ui-kit/src/api'

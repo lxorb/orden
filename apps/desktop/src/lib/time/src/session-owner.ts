@@ -1,4 +1,4 @@
-import { forget, keep, storedText } from './platform/src/api'
+import { forget, keep, storedText } from '../../platform/src/api'
 
 const OWNER = 'orden:session-owner'
 
