@@ -95,6 +95,7 @@ vi.mock('../../sharing/src/api', async (importOriginal) => ({
 }))
 
 const remote = {
+  landsAt: null as string | null,
   spaces: [] as { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[],
   notes: [] as {
     id: string
@@ -115,7 +116,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     restoreNote: async (_token: string, id: string) => {
       apiCalls.push(`restoreNote ${id}`)
       remote.notes = remote.notes.filter((one) => one.id !== id)
-      return { note: {} }
+      return { note: remote.landsAt ? { path: remote.landsAt } : {} }
     },
     restoreSpace: async (_token: string, id: string) => {
       apiCalls.push(`restoreSpace ${id}`)
@@ -130,6 +131,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     emptyTrash: async () => {
       apiCalls.push('emptyTrash')
       remote.notes = []
+      remote.landsAt = null
       remote.spaces = []
       return { ok: true }
     },
@@ -555,6 +557,27 @@ describe('signed in', () => {
     await trash.load()
     await trash.restore(trash.items.find((item) => item.id === 'note:n2')!)
     expect(protection.own('/space', '/space/Private')?.way).toBe('password')
+    await protection.forget('/space')
+  })
+
+  test('a protected note the account puts back under another name is protected there', async () => {
+    protection.set('/space', '/space/Idea.md', 'password')
+    await workspace.remove('/space/Idea.md', false)
+    const at = Date.now()
+    remote.notes = [
+      {
+        id: 'n3',
+        spaceId: 'remote',
+        spaceName: 'space',
+        path: 'Idea.md',
+        deletedAt: at,
+        purgeAt: at,
+      },
+    ]
+    remote.landsAt = 'Idea 2.md'
+    await trash.load()
+    await trash.restore(trash.items.find((item) => item.id === 'note:n3')!)
+    expect(protection.own('/space', '/space/Idea 2.md')?.way).toBe('password')
     await protection.forget('/space')
   })
 

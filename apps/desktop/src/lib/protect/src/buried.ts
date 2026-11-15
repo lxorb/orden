@@ -110,23 +110,27 @@ async function exactly(
 
 async function under(
   root: string,
+  was: string,
   at: string,
   held: Record<string, Way>,
 ): Promise<Record<string, Way>> {
   const came: Record<string, Way> = {}
   const histories = readHistories()
-  const here = pathOf(root, at)
+  const there = pathOf(root, was)
   for (const [name, ways] of Object.entries(readBuried())) {
     if (!name.startsWith(`${root}\n`)) continue
     const folder = name.slice(root.length + 1)
-    if (folder === at || within(folder, at, root) === null) continue
+    if (folder === was || within(folder, was, root) === null) continue
     for (const [rest, way] of Object.entries(ways)) {
       const key = landedAt(folder, rest)
-      const near = within(key, at, root) !== null || within(at, key, root) !== null
-      if (near && inSpace(key) && !(key in held)) came[key] = way
+      const inside = within(was, key, root)
+      const landed = inside === null ? key : landedAt(at, inside)
+      const near = inside !== null || within(key, was, root) !== null
+      if (near && inSpace(landed) && !(landed in held)) came[landed] = way
     }
     const away = histories[name]
-    if (away !== undefined) await rehome(`${away}${here.slice(pathOf(root, folder).length)}`, here)
+    const from = `${away}${there.slice(pathOf(root, folder).length)}`
+    if (away !== undefined) await rehome(from, pathOf(root, at))
   }
   return came
 }
@@ -136,13 +140,14 @@ export async function unburied(
   root: string,
   at: string,
   held: Record<string, Way>,
+  was = at,
 ): Promise<Record<string, Way> | null> {
-  if (!inSpace(at)) return null
+  if (!inSpace(at) || !inSpace(was)) return null
   const buried = readBuried()
-  const place = placeOf(root, at)
+  const place = placeOf(root, was)
   const named = [back, place].find((one) => one !== null && one in buried) ?? null
   const came = {
-    ...(await under(root, at, held)),
+    ...(await under(root, was, at, held)),
     ...(named === null ? {} : await exactly(named, root, at, held)),
   }
   if (named !== null && named !== place && place in buried) {
@@ -150,4 +155,27 @@ export async function unburied(
     keepJson(HISTORY_KEY, without(readHistories(), place))
   }
   return Object.keys(came).length ? came : null
+}
+
+export function moveSpace(from: string, to: string): void {
+  const moved = <T>(record: Record<string, T>) =>
+    Object.fromEntries(
+      Object.entries(record).map(([name, one]) => [
+        name.startsWith(`${from}\n`) ? `${to}${name.slice(from.length)}` : name,
+        one,
+      ]),
+    )
+  keepJson(BURIED_KEY, moved(readBuried()))
+  keepJson(HISTORY_KEY, moved(readHistories()))
+}
+
+export function waits(back: string | null, root: string | null, at: string): boolean {
+  return Object.keys(readBuried()).some(
+    (name) =>
+      back === null ||
+      name === back ||
+      (root !== null &&
+        name.startsWith(`${root}\n`) &&
+        within(name.slice(root.length + 1), at, root) !== null),
+  )
 }

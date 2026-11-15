@@ -65,7 +65,7 @@ describe('the versions of a locked note that is deleted', () => {
     await protection.gone('/s/Diary.md', '/s')
     await settled()
     const away = rehomed[0]?.split(' -> ')[1]
-    await protection.restoredAt('/s', 'Diary.md')
+    await protection.unbury(null, '/s', 'Diary.md')
     expect(rehomed[1]).toBe(`${away} -> /s/Diary.md`)
   })
 
@@ -82,7 +82,7 @@ describe('the versions of a locked note that is deleted', () => {
     protection.set('/s', '/s/Private/Deep/Diary.md', 'device')
     await protection.gone('/s/Private', '/s', 'gone-folder')
     const away = rehomed[0]?.split(' -> ')[1]
-    await protection.restoredAt('/s', 'Private/Deep/Diary.md')
+    await protection.unbury(null, '/s', 'Private/Deep/Diary.md')
     expect(protection.ways('/s')).toEqual({
       Private: 'password',
       'Private/Deep/Diary.md': 'device',
@@ -113,5 +113,33 @@ describe('the versions of a locked note that is deleted', () => {
     await going
     expect(rehomed).toHaveLength(1)
     expect(protection.own('/s', '/s/Diary.md')).toBeNull()
+  })
+  test('of a note deleted from a locked folder, come back locked after the folder is renamed', async () => {
+    const protection = new Protection()
+    protection.set('/s', '/s/Private', 'password')
+    await protection.gone('/s/Private/Diary.md', '/s', 'trash-in')
+    protection.moved('/s/Private', '/s/Open', '/s')
+    await protection.cameBack('/s/Private/Diary.md', '/s', 'trash-in')
+    expect(protection.locked('/s/Private/Diary.md')).toBe(true)
+  })
+
+  test('come back where the account puts the note back under another name', async () => {
+    const protection = new Protection()
+    protection.set('/s', '/s/Diary.md', 'password')
+    await protection.gone('/s/Diary.md', '/s')
+    const away = rehomed[0]?.split(' -> ')[1]
+    await protection.unbury(null, '/s', 'Diary 2.md', 'Diary.md')
+    expect(protection.own('/s', '/s/Diary 2.md')?.way).toBe('password')
+    expect(rehomed[1]).toBe(`${away} -> /s/Diary 2.md`)
+  })
+
+  test('follow their space when it is renamed', async () => {
+    const protection = new Protection()
+    protection.set('/s', '/s/Diary.md', 'device')
+    await protection.gone('/s/Diary.md', '/s')
+    protection.spaceMoved('/s', '/t')
+    await settled()
+    await protection.unbury(null, '/t', 'Diary.md')
+    expect(protection.own('/t', '/t/Diary.md')?.way).toBe('device')
   })
 })

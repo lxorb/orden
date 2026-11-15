@@ -1,4 +1,6 @@
 import type { AgentAnswer } from '../../automation/src/api'
+import { workspace } from '../../workspace/src/api'
+import { buried } from '../../protect/src/api'
 import { folderOf, insideSpace, within } from '../../platform/src/api'
 import type { TrashItem } from '../../trash/src/api'
 import { asked, type Call, done, need, Refused, reachable } from '../../agent-verbs/src/api'
@@ -19,6 +21,32 @@ function whereOf(call: Call, item: TrashItem): string | null {
     if (inside !== null) return inside ? `${space.name}/${inside}` : space.name
   }
   return null
+}
+
+function spaceAt(item: TrashItem): string | null {
+  if (item.from !== undefined) return null
+  return item.kind === 'space' ? item.name : (item.detail.split(' / ')[0] ?? null)
+}
+
+function placeOf(item: TrashItem): { root: string; at: string } | null {
+  const named = spaceAt(item)
+  for (const space of workspace.spaces) {
+    if (item.from !== undefined) {
+      const at = within(space.root, insideSpace(folderOf(space.root), item.from))
+      if (at !== null) return { root: space.root, at }
+    } else if (named === space.name) return { root: space.root, at: item.note?.path ?? '' }
+  }
+  return null
+}
+
+export async function nothingLockedWaits(item: TrashItem | null): Promise<void> {
+  const place = item && placeOf(item)
+  const waits = (await buried()).waits(item?.ref ?? null, place?.root ?? null, place?.at ?? '')
+  if (!waits) return
+  throw new Refused(
+    'protected',
+    `${item ? item.name : 'This'} brings back a lock: the reader has to put it back themselves`,
+  )
 }
 
 async function listed(call: Call) {
@@ -58,6 +86,7 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
     throw new Refused('read_only', `${found.from} is shared with you to read`)
   }
 
+  await nothingLockedWaits(found.item)
   const question = await asked(call, null, `Put back ${found.name}`)
   if (question) return question
 

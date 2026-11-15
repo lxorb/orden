@@ -1007,10 +1007,10 @@ class Runner {
         this.own.delete(`moved:${from}`)
       }
     },
-    gone: async (path, kind) => {
+    gone: async (path, kind, back) => {
       this.own.add(`removed:${path}`)
       try {
-        await workspace().fileGone(path, kind)
+        await workspace().fileGone(path, kind, back)
         workspace().heardGone(path)
         this.treeStale()
       } finally {

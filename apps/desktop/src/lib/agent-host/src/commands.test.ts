@@ -34,6 +34,7 @@ vi.mock('../../commands/src/api', () => ({
     row('export-pdf'),
     row('reformat'),
     row('protect.let-agents'),
+    row('undo-file'),
   ],
 }))
 
@@ -54,7 +55,9 @@ vi.mock('../../workspace/src/api', () => ({
 }))
 
 const shut = new Set<string>()
+let waiting = false
 vi.mock('../../protect/src/api', () => ({
+  buried: async () => ({ waits: () => waiting }),
   protection: {
     agentsMay: (path: string) => !shut.has(path),
     ways: (root: string) =>
@@ -71,7 +74,7 @@ function call(id: string, path: string | null = '/tmp/out') {
     caller: callerOf({
       id: 'claude',
       name: 'Claude',
-      scopes: ['workspace', 'notes.write'],
+      scopes: ['workspace', 'notes.write', 'tree'],
       mode: 'unsupervised',
     }),
   }
@@ -80,6 +83,7 @@ function call(id: string, path: string | null = '/tmp/out') {
 beforeEach(() => {
   ran.length = 0
   shut.clear()
+  waiting = false
 })
 
 describe('an agent running a command that writes the note in front', () => {
@@ -124,5 +128,18 @@ describe('an agent exporting', () => {
     await runCommand(call('export-space'))
     await runCommand(call('export-pdf'))
     expect(ran).toEqual(['export-space', 'export-pdf'])
+  })
+})
+
+describe('an agent undoing a file change', () => {
+  test('cannot while a lock waits to come back with what it would put back', async () => {
+    waiting = true
+    await expect(runCommand(call('undo-file', null))).rejects.toMatchObject({ code: 'protected' })
+    expect(ran).toEqual([])
+  })
+
+  test('can when no lock waits', async () => {
+    await runCommand(call('undo-file', null))
+    expect(ran).toEqual(['undo-file'])
   })
 })

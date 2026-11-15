@@ -104,7 +104,7 @@ const WAYS: Folding<Record<string, Way>> = {
   same,
 }
 
-const buried = () => import('./buried')
+export const buried = () => import('./buried')
 
 const synced = () =>
   __EVEN_PLUGIN__
@@ -359,8 +359,10 @@ export class Protection {
     if (root === null) return
     const at = relativeTo(root, path)
     const went = (key: string) => key !== SPACE && within(at, key, root) !== null
-    if (!Object.keys(this.ways(root)).some(went)) return
-    await (await buried()).bury(root, at, back, this.ways(root))
+    const above = this.covering(path).find((one) => one.key !== at)
+    if (!Object.keys(this.ways(root)).some(went) && !above) return
+    const held = { ...(above && { [at]: above.way }), ...this.ways(root) }
+    await (await buried()).bury(root, at, back, held)
     this.put(
       root,
       Object.fromEntries(Object.entries(this.ways(root)).filter(([key]) => !went(key))),
@@ -371,16 +373,8 @@ export class Protection {
     return root === null ? undefined : this.unbury(back, root, relativeTo(root, path))
   }
 
-  spaceCameBack(root: string, back: string): Promise<void> {
-    return this.unbury(back, root, SPACE)
-  }
-
-  restoredAt(root: string, at: string): Promise<void> {
-    return this.unbury(null, root, at)
-  }
-
-  private async unbury(back: string | null, root: string, at: string): Promise<void> {
-    const came = await (await buried()).unburied(back, root, at, this.ways(root))
+  async unbury(back: string | null, root: string, at: string, was = at): Promise<void> {
+    const came = await (await buried()).unburied(back, root, at, this.ways(root), was)
     if (came) this.put(root, { ...this.ways(root), ...came })
   }
 
@@ -389,6 +383,7 @@ export class Protection {
     if (!kept || from === to) return
     this.spaces = { ...without(this.spaces, from), [to]: kept }
     this.write()
+    void buried().then((one) => one.moveSpace(from, to))
   }
 
   async forget(root: string, back?: string): Promise<void> {

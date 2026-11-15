@@ -4,6 +4,7 @@ import { invoke, answerNextDialog } from '../../platform/src/api'
 import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../panes/src/api'
 import { readable, spaceReadable } from './guarded'
+import { nothingLockedWaits } from './deleted'
 import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
 import type { Category } from '../../agent-protocol/src/api'
@@ -188,6 +189,7 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   for (const scope of scopes ?? []) needScope(call, scope, id)
 
   reachesNothingShut(id, scopes ?? [])
+  if (id === 'undo-file' || id === 'redo-file') await nothingLockedWaits(null)
 
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)
