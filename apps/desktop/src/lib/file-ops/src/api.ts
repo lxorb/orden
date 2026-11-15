@@ -60,13 +60,13 @@ export interface KeptByPath {
   gone?(path: string, root: string | null, back?: string): void
   cameBack?(path: string, root: string | null, back: string): void
   spaceMoved?(from: string, to: string): void
-  forget?(root: string): void
+  forget?(root: string, back?: string): void
 }
 
 export function keeping(store: KeptByPath): Follower {
   return (op) => {
     if (op.op === 'removed') {
-      if (op.kind === 'space') store.forget?.(op.path)
+      if (op.kind === 'space') store.forget?.(op.path, op.back)
       else store.gone?.(op.path, op.root, op.back)
     } else if (op.op === 'moved') {
       if (op.kind === 'space') store.spaceMoved?.(op.from, op.to)

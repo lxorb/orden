@@ -27,6 +27,8 @@ import { unlocks } from './unlocked.svelte'
 export const STORAGE_KEY = 'orden:protected'
 const PASSWORD_KEY = 'orden:protect-password'
 const OWNER_KEY = 'orden:protect-password-account'
+const BURIED_KEY = 'orden:protected-buried'
+const MOST_BURIED = 200
 
 export type Way = 'password' | 'device'
 
@@ -92,6 +94,33 @@ function read(): Record<string, Kept> {
     ways: protectedMap(one.ways),
     sent: one.sent !== false,
   }))
+}
+
+type Buried = Record<string, Record<string, Way>>
+
+function readBuried(): Buried {
+  const saved = stored(BURIED_KEY)
+  if (!isRecord(saved)) return {}
+  const out: Buried = {}
+  for (const [back, ways] of Object.entries(saved)) {
+    if (!isRecord(ways)) continue
+    const kept: Record<string, Way> = {}
+    for (const [rest, way] of Object.entries(ways)) {
+      if ((rest === '' || insideItsSpace(rest)) && isWay(way)) kept[rest] = way
+    }
+    if (Object.keys(kept).length) out[back] = kept
+  }
+  return out
+}
+
+function placeOf(root: string, at: string): string {
+  return `${root}\n${at}`
+}
+
+function bury(back: string, ways: Record<string, Way>): void {
+  if (!Object.keys(ways).length) return
+  const buried = Object.entries({ ...without(readBuried(), back), [back]: ways })
+  keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
 }
 
 function same(one: Record<string, Way>, other: Record<string, Way>): boolean {
@@ -345,14 +374,48 @@ export class Protection {
     if (Object.keys(came).length) this.put(into, { ...this.ways(into), ...came })
   }
 
-  gone(path: string, root: string | null): void {
+  gone(path: string, root: string | null, back?: string): void {
     if (root === null) return
     const at = relativeTo(root, path)
     const held = this.ways(root)
-    const next = Object.fromEntries(
-      Object.entries(held).filter(([key]) => key === SPACE || within(at, key, root) === null),
-    )
-    if (Object.keys(next).length !== Object.keys(held).length) this.put(root, next)
+    const next: Record<string, Way> = {}
+    const went: Record<string, Way> = {}
+    for (const [key, way] of Object.entries(held)) {
+      const rest = key === SPACE ? null : within(at, key, root)
+      if (rest === null) next[key] = way
+      else went[rest] = way
+    }
+    bury(placeOf(root, at), went)
+    if (back) bury(back, went)
+    if (Object.keys(went).length) this.put(root, next)
+  }
+
+  cameBack(path: string, root: string | null, back: string): void {
+    if (root === null) return
+    this.unbury(back, root, relativeTo(root, path))
+  }
+
+  spaceCameBack(root: string, back: string): void {
+    this.unbury(back, root, SPACE)
+  }
+
+  restoredAt(root: string, at: string): void {
+    this.unbury(placeOf(root, at), root, at)
+  }
+
+  private unbury(back: string, root: string, at: string): void {
+    const buried = readBuried()
+    const ways = buried[back]
+    if (!ways) return
+    keepJson(BURIED_KEY, without(buried, back))
+    if (at !== SPACE && !insideItsSpace(at)) return
+    const held = this.ways(root)
+    const came: Record<string, Way> = {}
+    for (const [rest, way] of Object.entries(ways)) {
+      const landed = at === SPACE ? rest : rest ? `${at}/${rest}` : at
+      if ((landed === SPACE || insideItsSpace(landed)) && !(landed in held)) came[landed] = way
+    }
+    if (Object.keys(came).length) this.put(root, { ...held, ...came })
   }
 
   spaceMoved(from: string, to: string): void {
@@ -362,8 +425,9 @@ export class Protection {
     this.write()
   }
 
-  forget(root: string): void {
+  forget(root: string, back?: string): void {
     if (!(root in this.spaces)) return
+    if (back) bury(back, this.ways(root))
     this.spaces = without(this.spaces, root)
     this.write()
   }
