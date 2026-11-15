@@ -95,6 +95,9 @@ export interface Joined {
   declined?: boolean
   second?: boolean
   holding?: string
+  code?: boolean
+  email?: string
+  resendIn?: number
 }
 
 export interface RemoteSpace {

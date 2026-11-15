@@ -162,8 +162,7 @@ describe('hooks', () => {
     const wired = {
       accounts: {
         whoever: () => Promise.resolve(null),
-        signingIn: () => Promise.resolve({ second: true as const, holding: '' }),
-        sessionFor: () => Promise.resolve({ token: '', user: { id: '', email: '', name: null } }),
+        sendCode: () => Promise.resolve({ ok: true as const, resendIn: 0 }),
       },
       blog: { publishesFile: () => Promise.resolve(false) },
       chats: {

@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono'
 import { SPACE_IS_FULL } from '../refused'
 import { objectBody, readBody } from '../body'
 import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
-import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
+import { forgetMailed, mailer, mayMail, refusedMail, requestMessage } from '../email'
 import { forgetEmptyGuest, newGuest, presentGuest } from '../guests'
 import { hooks } from '../hooks'
 import { machineOf, mayTellTheOwner } from '../limits'
@@ -343,16 +343,10 @@ join.delete('/:token', async (context) => {
 async function redeemInvitation(context: Reply, found: Leads) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
-  const signing = await hooks().accounts.signingIn(context.env, found.email)
-  if ('second' in signing) return context.json(signing)
+  const sent = await hooks().accounts.sendCode(context.env, found.email, machineOf(context.req))
+  if ('error' in sent) return refusedMail(context, sent)
 
-  const role = await takeInvitation(context.env, found)
-  if (!role) return context.json({ error: EXPIRED }, 404)
-
-  return context.json({
-    ...(await hooks().accounts.sessionFor(context.env, signing.user)),
-    ...landedOn(context.env, found, role, await ownerOf(context.env, found.space)),
-  })
+  return context.json({ code: true, email: found.email, resendIn: sent.resendIn })
 }
 
 async function asAnAccount(context: Reply, found: Leads, user: User) {
