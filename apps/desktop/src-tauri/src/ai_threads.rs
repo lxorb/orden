@@ -25,6 +25,8 @@ fn ours(webview: &tauri::Webview) -> Result<(), String> {
     }
 }
 
+const LIST: &str = "index";
+
 fn named(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 64
@@ -36,6 +38,14 @@ fn named(id: &str) -> Result<&str, String> {
     } else {
         Err(format!("{id} is not an id"))
     }
+}
+
+fn thread_named(id: &str) -> Result<&str, String> {
+    let id = named(id)?;
+    if id.eq_ignore_ascii_case(LIST) {
+        return Err(format!("{id} is not an id"));
+    }
+    Ok(id)
 }
 
 fn root(app: &AppHandle) -> Result<PathBuf, String> {
@@ -51,7 +61,7 @@ fn space_dir(root: &Path, space: &str) -> Result<PathBuf, String> {
 }
 
 fn read_list(dir: &Path) -> BTreeMap<String, Value> {
-    fs::read_to_string(dir.join("index.json"))
+    fs::read_to_string(dir.join(format!("{LIST}.json")))
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok())
         .unwrap_or_default()
@@ -59,7 +69,7 @@ fn read_list(dir: &Path) -> BTreeMap<String, Value> {
 
 fn write_list(dir: &Path, list: &BTreeMap<String, Value>) -> Result<(), String> {
     let text = serde_json::to_string(list).map_err(|error| error.to_string())?;
-    write_privately(&dir.join("index.json"), text.as_bytes())
+    write_privately(&dir.join(format!("{LIST}.json")), text.as_bytes())
 }
 
 pub fn list(root: &Path, space: &str) -> Result<Vec<Value>, String> {
@@ -68,7 +78,7 @@ pub fn list(root: &Path, space: &str) -> Result<Vec<Value>, String> {
 }
 
 pub fn read(root: &Path, space: &str, id: &str) -> Result<Option<String>, String> {
-    let path = space_dir(root, space)?.join(format!("{}.json", named(id)?));
+    let path = space_dir(root, space)?.join(format!("{}.json", thread_named(id)?));
     match fs::read_to_string(&path) {
         Ok(text) => Ok(Some(text)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -81,7 +91,7 @@ pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Res
         return Err("that thread is too long to keep".into());
     }
     let dir = space_dir(root, space)?;
-    let file = format!("{}.json", named(id)?);
+    let file = format!("{}.json", thread_named(id)?);
     made(&dir)?;
     let _held = LISTS
         .lock()
@@ -94,7 +104,7 @@ pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Res
 
 pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
-    let path = dir.join(format!("{}.json", named(id)?));
+    let path = dir.join(format!("{}.json", thread_named(id)?));
     let _held = LISTS
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -187,6 +197,17 @@ mod tests {
             std::env::temp_dir().join(format!("orden-ai-threads-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         dir
+    }
+
+    #[test]
+    fn a_thread_never_takes_the_place_of_the_list() {
+        let root = folder("list-named");
+        write(&root, "space-1", "t-1", json!({"id": "t-1"}), "{}").expect("written");
+        for id in ["index", "INDEX", "Index"] {
+            assert!(write(&root, "space-1", id, json!({"id": id}), "{}").is_err());
+        }
+        assert_eq!(list(&root, "space-1").expect("listed").len(), 1);
+        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]
