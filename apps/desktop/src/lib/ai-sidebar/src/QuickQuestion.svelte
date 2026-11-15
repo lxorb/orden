@@ -21,7 +21,7 @@
   import { grow } from './grow'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
 
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()

@@ -26,7 +26,7 @@ const PLAN = '/spaces/Work/Plan.md'
 const FOOD = '/spaces/Home/Food.md'
 
 async function run() {
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   const onScreen = () =>
     workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
   return { workspace, onScreen }
@@ -67,7 +67,7 @@ test('the set every Global space shared becomes the first such space’s own', a
   flushSync()
   expect(onScreen()).toEqual(['Plan.md'])
 
-  const { tabSets } = await import('../../src/lib/workspace/spaces')
+  const { tabSets } = await import('../../src/lib/workspace/src/spaces')
   await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Food.md'), {
     timeout: 15_000,

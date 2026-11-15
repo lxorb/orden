@@ -29,7 +29,7 @@ async function leftOpen(typed: string | null) {
   localStorage.clear()
   vi.resetModules()
 
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
   workspace.activeSpaceId = 'work'
   await workspace.loadTree()
@@ -51,7 +51,7 @@ async function leftOpen(typed: string | null) {
   }
   disk.current.files.delete(STAND_IN)
   vi.resetModules()
-  return (await import('../../src/lib/workspace.svelte')).workspace
+  return (await import('../../src/lib/workspace/src/api')).workspace
 }
 
 test('a clean tab on it is not put back, and the file stays', async () => {

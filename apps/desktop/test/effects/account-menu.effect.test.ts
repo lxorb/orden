@@ -4,7 +4,7 @@ import { account } from '../../src/lib/accounts/src/account.svelte'
 import { menu, type MenuItem } from '../../src/lib/menu.svelte'
 import { settings } from '../../src/lib/settings.svelte'
 import SidebarFoot from '../../src/lib/SidebarFoot.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 
 afterEach(() => {
   account.user = null

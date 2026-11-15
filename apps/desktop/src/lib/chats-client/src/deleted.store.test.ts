@@ -47,7 +47,7 @@ vi.mock('./pointers', async (importOriginal) => ({
 }))
 
 const { chats } = await import('./store.svelte')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 
 const listed = () => chats.list.map((one) => [one.id, one.name])
 

@@ -1,5 +1,5 @@
 import type { BrowserId } from '@orden/contracts'
-import type { Space } from '../../workspace.svelte'
+import type { Space } from '../../workspace/src/api'
 import { arcSidebar } from './arc'
 import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
 import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'

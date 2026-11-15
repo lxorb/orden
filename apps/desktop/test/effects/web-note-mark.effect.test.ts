@@ -18,7 +18,7 @@ vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   },
 }))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { writeShortcut } = await import('@orden/scan/shortcut')

@@ -36,7 +36,7 @@ const { APPS_WORD, EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } =
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, EXPLORER_WORD, PASS_WORD]
 
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
 
 afterEach(() => {

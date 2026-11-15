@@ -49,7 +49,7 @@ import { toggleFill } from './tab-fill/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
 import { isDesktop, isNative, openExternal } from './platform/src/api'
 import { updates } from './updates/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 interface Context {
   view?: EditorView | undefined

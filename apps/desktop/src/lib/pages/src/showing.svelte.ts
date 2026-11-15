@@ -1,6 +1,6 @@
 import { SvelteMap } from 'svelte/reactivity'
 import type { PagesStore } from './store.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 class Pages {
   private readonly shown = new SvelteMap<string, PagesStore>()

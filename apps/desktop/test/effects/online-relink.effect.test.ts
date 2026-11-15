@@ -133,7 +133,7 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { openTerm } = await import('../../src/lib/terminal/src/online/open')
 const { statusLine } = await import('../../src/lib/terminal/src/online/arrival.svelte')

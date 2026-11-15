@@ -67,7 +67,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { setFileIcon } = await import('./file-icon')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 
 function written(path: string): string | null {
   const write = sent.filter((one) => one.command === 'write_note' && one.path === path).pop()

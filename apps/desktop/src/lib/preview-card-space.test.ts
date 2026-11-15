@@ -10,7 +10,7 @@ const disk: Record<string, string> = {
   '/home/me/B/Plan.md': '# Plan of B\n',
 }
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     spaces: [A, B],
     activeSpace: B,

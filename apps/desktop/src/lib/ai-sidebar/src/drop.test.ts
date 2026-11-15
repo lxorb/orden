@@ -3,7 +3,7 @@ import { expect, test, vi } from 'vitest'
 const chat = vi.hoisted(() => ({ chips: [] as unknown[], focus: () => undefined }))
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({ chat }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { dropRows } = await import('./drop')
 
 const entry = (path: string, is_dir = false) => {

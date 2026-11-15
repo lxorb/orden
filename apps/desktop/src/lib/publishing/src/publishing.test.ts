@@ -89,7 +89,7 @@ vi.mock('../../sync.svelte', () => ({
   sync: { remoteIdFor: (root: string) => world.mirrors[root] ?? null },
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get spaces() {
       return Object.keys(world.mirrors).map((root) => ({ id: root, name: root, root }))

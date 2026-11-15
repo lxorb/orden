@@ -4,7 +4,7 @@ import { setWord } from './kind-choice'
 import { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from './settings.svelte'
 import { whenChatsOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
 import { openPass } from './pass-sync/src/open'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 beforeEach(() => {
   localStorage.clear()

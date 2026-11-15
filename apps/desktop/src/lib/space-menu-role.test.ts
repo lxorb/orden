@@ -10,7 +10,7 @@ vi.mock('./sync.svelte', () => ({
   },
 }))
 
-vi.mock('./workspace.svelte', () => {
+vi.mock('./workspace/src/api', () => {
   const spaces = [
     { id: 'theirs', name: 'Theirs', root: '/spaces/Theirs' },
     { id: 'mine', name: 'Mine', root: '/spaces/Mine' },
@@ -34,7 +34,7 @@ vi.mock('./sharing/src/api', async (importOriginal) => ({
 
 const { account } = await import('./accounts/src/account.svelte')
 const { spaceMenu } = await import('./space-actions')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 
 providePort('workspace.view', { ...workspaceView(), spaces: workspace.spaces })
 

@@ -10,7 +10,7 @@ vi.mock('./changes', () => ({
   freeName: (_taken: Set<string>, name: string) => name,
   takenNames: () => new Set(),
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { spaces: [{ root: '/home/me/Orden/Work' }], undone: { record: vi.fn() } },
 }))
 

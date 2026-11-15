@@ -1,6 +1,6 @@
 import { busy } from '../../../ui-kit/src/api'
 import { shownName, insideSpace, nameOf, samePath } from '../../../platform/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { fileUndoing, workspace } from '../../../workspace/src/api'
 import type { FileAction } from '../../../file-undo/src/api'
 import type { Thread } from '../../../ai-providers/src/api'
 import { type FileChange, spaceNamed } from './files'
@@ -46,7 +46,7 @@ export async function undoFile(
     }
     const step = deletion(insideSpace(root, change.path))
     if (!step) return false
-    const { putBack } = await import('../../../workspace/undoing')
+    const { putBack } = await fileUndoing()
     const back = await putBack(step)
     workspace.undone.stack = workspace.undone.stack.flatMap((one): FileAction[] =>
       one === step

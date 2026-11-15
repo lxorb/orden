@@ -48,7 +48,7 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')

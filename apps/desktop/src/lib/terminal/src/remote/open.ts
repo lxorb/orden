@@ -1,6 +1,6 @@
 import { identifier } from '../../../platform/src/api'
 import { hostShell, writeSpec } from '../spec'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { type Destination, hostFor } from './hosts'
 import { remote } from './hosts.svelte'
 

@@ -130,7 +130,7 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { openRemote } = await import('../../src/lib/terminal/src/remote/open')

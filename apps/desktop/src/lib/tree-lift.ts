@@ -5,7 +5,7 @@ import { dur, folderOf, nameOf } from './platform/src/api'
 import { spaceDropping } from './tab-strip/src/api'
 import { placedBeside, stepped, trimmed } from './tree-arranging'
 import { entryAt, shownNames } from './tree/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export type Band = 'before' | 'on' | 'after'
 

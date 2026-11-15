@@ -6,7 +6,7 @@ vi.mock('../../../history/src/versions', () => ({
   versionText: () => Promise.resolve('what nobody may read'),
 }))
 
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const { appCommands } = await import('../../../commands/src/api')
 const { exportCommands } = await import('../../../export/src/api')

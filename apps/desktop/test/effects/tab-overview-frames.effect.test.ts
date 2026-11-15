@@ -20,7 +20,7 @@ vi.mock('../../src/lib/reading/src/api', () => ({
 
 const { default: Overview } = await import('../../src/lib/overview/src/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { faces } = await import('../../src/lib/overview/src/faces.svelte')
 
 let now = 0

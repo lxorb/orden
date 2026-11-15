@@ -55,7 +55,7 @@
   import { modes } from '../../modes.svelte'
   import { readableSize, usage } from '../../usage.svelte'
   import { viewport } from '../../ui-kit/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { dur, fly, slide } from '../../platform/src/api'
   import { waited } from '../../platform/src/api'
   import { Cross } from '../../ui-kit/src/api'

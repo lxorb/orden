@@ -1,6 +1,6 @@
 import { dropTarget, targetFor } from '../../drop-target.svelte'
 import { dur } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'
 import { type Landing, zoneAt } from '../../panes/src/api'
 import type { Bounds } from './layout'

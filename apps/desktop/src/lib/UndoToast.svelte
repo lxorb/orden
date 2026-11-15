@@ -10,7 +10,7 @@
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
   import { failed } from './failed.svelte'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const word = $derived({
     delete: 'Deleted',

@@ -1,5 +1,5 @@
 import { withinSpace } from '../../platform/src/api'
-import { ownerOf } from '../../workspace/sets'
+import { ownerOf } from '../../workspace/src/api'
 
 export const REENTRY = 300
 

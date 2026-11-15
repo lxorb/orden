@@ -14,7 +14,7 @@ import { glassesOn } from './lib/settings.svelte'
 import { recovery } from './lib/history/src/api'
 import { rememberSeedIn } from './lib/seeded'
 import { sync } from './lib/sync.svelte'
-import { workspace } from './lib/workspace.svelte'
+import { workspace } from './lib/workspace/src/api'
 
 serveAssets()
 holdComposingKeys()

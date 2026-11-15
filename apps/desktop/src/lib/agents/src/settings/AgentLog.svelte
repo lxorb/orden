@@ -4,7 +4,7 @@
   import { localDate } from '../../../platform/src/api'
   import { dur, slide } from '../../../platform/src/api'
   import { prompt } from '../../../ui-kit/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { keepInNote } from '../ui/keep'
   import { aboutOf, sessionMarkdown } from '../ui/session'
   import { wordFor } from '../ui/words'

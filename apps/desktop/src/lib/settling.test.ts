@@ -46,7 +46,7 @@ vi.mock('./ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     spaces: [
       { id: 'a', name: 'Plans', root: '/Plans' },

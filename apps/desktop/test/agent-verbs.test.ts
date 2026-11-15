@@ -170,7 +170,7 @@ const workspace = {
   ),
 }
 
-vi.mock('../src/lib/workspace.svelte', () => ({ workspace }))
+vi.mock('../src/lib/workspace/src/api', () => ({ workspace }))
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }

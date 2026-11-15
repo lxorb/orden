@@ -6,7 +6,7 @@ const world = vi.hoisted(() => ({
   printed: [] as unknown[],
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     get active() {
       return { kind: world.kind, note: {} }

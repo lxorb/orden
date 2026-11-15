@@ -12,7 +12,7 @@ import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from './ui-kit/src/api'
 import { changeOf } from '@orden/scan/search/replace'
 import { settings } from './settings.svelte'
 import { folderOf, isMarkdownPath } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export async function setFileIcon(
   path: string,

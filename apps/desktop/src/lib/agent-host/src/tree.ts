@@ -3,7 +3,7 @@ import type { AgentAnswer } from '../../automation/src/api'
 import { automationMoving } from '../../automation/src/api'
 import { isMarkdownPath, notePath, relativeTo, invoke, coveredBy } from '../../platform/src/api'
 import { entryAt } from '../../tree/src/api'
-import { type Entry, workspace } from '../../workspace.svelte'
+import { type Entry, workspace } from '../../workspace/src/api'
 import { revOf } from '../../agent-docs/src/api'
 import {
   asked,

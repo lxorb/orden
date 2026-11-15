@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { agentDocs, DocError, inTurn, plan, readEdits, revOf, touchedBy } from '../src/api'
 
 const followed = vi.hoisted(() => [] as unknown[])
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { fileOps: { follow: (one: unknown) => followed.push(one) } },
 }))
 

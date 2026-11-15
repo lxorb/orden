@@ -20,7 +20,7 @@ const { run } = await import('./actions')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas } = await import('@orden/markdown/canvas')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 
 function boardInB(nodes: unknown[] = []) {
   const note = new NoteDoc(

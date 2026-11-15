@@ -21,7 +21,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
     ),
 }))
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { Tab } = await import('./documents/src/api')
 
 beforeEach(() => {

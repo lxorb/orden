@@ -9,7 +9,7 @@ const state = vi.hoisted(() => ({
   active: null as string | null,
 }))
 
-vi.mock('../../src/lib/workspace.svelte', async () => {
+vi.mock('../../src/lib/workspace/src/api', async () => {
   const { reactive } = await import('./online-opening-world.svelte')
   return { workspace: reactive(state, opened, closed) }
 })

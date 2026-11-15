@@ -3,7 +3,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const wrote: { text: string; folder: string | undefined }[] = []
 const notice = { value: null as string | null }
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     activeSpace: { id: 'home', root: '/Home' },
     spaces: [

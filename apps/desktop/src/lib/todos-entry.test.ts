@@ -15,7 +15,7 @@ const state = vi.hoisted(() => ({
   opened: [] as (string | undefined)[],
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     get tabs() {
       return state.tabs
@@ -80,7 +80,7 @@ describe('where it is asked for', () => {
 
   test('a double press on a side’s Todos icon, which opens a panel as its tab', () => {
     expect(read('./Sidebar.svelte')).toMatch(/ondblclick=[\s\S]*?import\('\.\/panel-tab'\)/)
-    expect(read('./panel-tab.ts')).toMatch(/tasks: \{\s*tab: \(\) => import\('\.\/todos-entry'\)/)
+    expect(read('./panel-tab.ts')).toMatch(/tasks: \(\) => import\('\.\/todos-entry'\)/)
   })
 
   test('its key, and the palette’s row, which says the key', () => {

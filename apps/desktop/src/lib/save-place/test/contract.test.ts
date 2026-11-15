@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 const wrote = vi.hoisted(() => ({ times: 0 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     active: null,
     writeNow: () => {

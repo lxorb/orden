@@ -18,7 +18,7 @@ import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../../accounts/src/api'
 import { samePath, within, keep, storedText, isNative, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type {
   ChatEntry,
   ChatMember,

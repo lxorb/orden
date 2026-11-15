@@ -96,7 +96,7 @@ vi.mock('./commands', () => ({
 
 const changed: string[] = []
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')
 
@@ -370,7 +370,7 @@ describe('a file explorer', () => {
   })
 
   test('puts what is picked in the trash with Delete, and makes a folder with its key', async () => {
-    const { workspace: ws } = await import('../../workspace.svelte')
+    const { workspace: ws } = await import('../../workspace/src/api')
     await explorer()
     press('p')
     press('l')

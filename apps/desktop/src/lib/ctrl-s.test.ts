@@ -4,7 +4,7 @@ const writeNow = vi.fn(() => Promise.resolve())
 const front = {
   active: { id: 'tab', note: { path: '/s/a.md' as string | null, shared: null, kind: 'note' } },
 }
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     writeNow,
     fileOps: { follow: () => () => undefined },

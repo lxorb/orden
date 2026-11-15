@@ -1,5 +1,5 @@
 import { carriedRows, draggedTab } from '../../drag-paths'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { chat } from './chat-parts'
 import { type Mention, mentionOf, sameMention } from './chat-parts'
 

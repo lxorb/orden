@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { NoteDoc, UNTITLED } from '../../documents/src/api'
 import { fileFor, placesFor, startingPlace } from './places'
 
-type Entry = import('../../workspace.svelte').Entry
+type Entry = import('../../workspace/src/api').Entry
 
 const row = (path: string, children: Entry[] = []): Entry => ({
   name: path.slice(path.lastIndexOf('/') + 1),

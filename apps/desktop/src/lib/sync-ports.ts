@@ -17,8 +17,8 @@ import {
   platform,
   waited,
 } from './platform/src/api'
-import { workspace } from './workspace.svelte'
-import { ROOTS_MOVED, rootsMoved } from './workspace/roots-moved'
+import { workspace } from './workspace/src/api'
+import { ROOTS_MOVED, rootsMoved } from './workspace/src/roots-moved'
 import { hearWrites } from './file-writes/src/api'
 
 providePort('sync.host', {
@@ -134,13 +134,13 @@ providePort('sync.workspace', {
   describes: (root) => workspace.itemMeta.describes(root),
   metaFromEngine: (root) => workspace.itemMeta.fromEngine(root),
   notesDescribed: async (root) => {
-    const { moveOwnKeysSoon } = await import('./workspace/own-keys-moved')
+    const { moveOwnKeysSoon } = await import('./workspace/src/own-keys-moved')
     moveOwnKeysSoon(root, workspace, true)
-    const { keepSetextMarked } = await import('./workspace/setext')
+    const { keepSetextMarked } = await import('./workspace/src/setext')
     keepSetextMarked(workspace, root)
   },
   spaceUnpaired: async (root) => {
-    const { moveOwnKeysSoon } = await import('./workspace/own-keys-moved')
+    const { moveOwnKeysSoon } = await import('./workspace/src/own-keys-moved')
     moveOwnKeysSoon(root, workspace, false)
   },
   hearWrites: (hearing) => hearWrites(hearing),

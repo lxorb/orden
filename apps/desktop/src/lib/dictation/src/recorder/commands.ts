@@ -3,7 +3,7 @@ import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { canWriteAt } from '../../../sharing/src/api'
 import { isMarkdownPath } from '../../../platform/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { canDictate, dictating, toggleDictation } from '../phone/dictation'
 import { canRecordHere } from './container'
 

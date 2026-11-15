@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { spaces: [{ id: 'notes', name: 'Notes', root: '/s/Notes' }] },
 }))
 vi.mock('../../platform/src/api', async (importOriginal) => ({

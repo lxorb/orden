@@ -64,7 +64,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { firstSpace } = await import('./first-space.svelte')
 const { insideFolder, pickedFolder } = await import('./import/src/sources')
 const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('./welcome')

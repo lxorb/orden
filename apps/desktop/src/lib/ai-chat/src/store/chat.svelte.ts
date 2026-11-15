@@ -13,7 +13,7 @@ import {
 } from '../../../platform/src/api'
 import { message, prompt } from '../../../ui-kit/src/api'
 import { owes, writing } from '../../../parting/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
 import {

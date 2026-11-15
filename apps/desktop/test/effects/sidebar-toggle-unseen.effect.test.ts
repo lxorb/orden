@@ -2,7 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
 const SidebarToggle = (await import('../../src/lib/SidebarToggle.svelte')).default
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 
 let shown: ReturnType<typeof mount>
 let toggle: HTMLButtonElement

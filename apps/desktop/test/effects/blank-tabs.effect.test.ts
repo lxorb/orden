@@ -12,9 +12,9 @@ vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   hearHere: () => Promise.resolve(() => undefined),
 }))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
-await import('../../src/lib/workspace/blank-tabs.svelte')
+await import('../../src/lib/workspace/src/blank-tabs.svelte')
 
 const open = (id: string) => workspace.tabs.some((one) => one.id === id)
 

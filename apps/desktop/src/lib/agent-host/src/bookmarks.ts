@@ -2,7 +2,7 @@ import type { Bookmark } from '@orden/contracts'
 import type { AgentAnswer } from '../../automation/src/api'
 import { notePath } from '../../platform/src/api'
 import { MOST_BOOKMARKS, sameBookmark } from '../../space-kept/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import {
   asked,
   type Call,

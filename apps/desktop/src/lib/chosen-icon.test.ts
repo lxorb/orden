@@ -94,7 +94,7 @@ const FOLDERS: Record<string, ReturnType<typeof folder>> = {
 
 const tabs: { kind: string; path: string | null; id: string }[] = []
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     spaces: [
       { id: 'w', name: 'Work', root: '/Work' },

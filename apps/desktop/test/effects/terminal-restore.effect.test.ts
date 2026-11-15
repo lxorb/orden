@@ -126,7 +126,7 @@ Object.defineProperty(document, 'fonts', {
 })
 
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { flushSync } = await import('svelte')

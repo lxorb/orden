@@ -1,5 +1,5 @@
 import { carriedNothing, carry, carryTab } from '../../drag-paths'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 const ATTRIBUTE = 'data-chat-drop'
 

@@ -85,7 +85,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 
 const WRITES = /write|rename|delete|trash|copy|create|move|snapshot|bring|remove/
 const writes = () => asked.filter((command) => WRITES.test(command))
@@ -208,7 +208,7 @@ describe('a tab saved into a space shared to be read', () => {
   })
 
   test('nor do the two ways a tab is given a file, asked on their own', async () => {
-    const { keepWeb } = await import('./workspace/placing')
+    const { keepWeb } = await import('./workspace/src/placing')
     workspace.openWebsite()
     const web = workspace.active
     if (!web) throw new Error('no web tab')

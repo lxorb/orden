@@ -52,7 +52,7 @@ const moves = vi.hoisted(() => ({
   moveMany: vi.fn(() => Promise.resolve(true)),
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [space],
     rename: moves.rename,

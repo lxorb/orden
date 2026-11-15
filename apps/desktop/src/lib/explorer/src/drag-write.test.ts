@@ -35,7 +35,7 @@ vi.mock('./changes', () => ({
   takenNames: () => new Set(),
 }))
 const record = vi.fn()
-vi.mock('../../workspace.svelte', () => ({ workspace: { undone: { record } } }))
+vi.mock('../../workspace/src/api', () => ({ workspace: { undone: { record } } }))
 
 const { WRITTEN_AT_ONCE, writeInto } = await import('./drag')
 

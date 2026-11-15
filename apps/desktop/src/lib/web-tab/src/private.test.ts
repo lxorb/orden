@@ -34,7 +34,7 @@ const { Page } = await import('./pages.svelte')
 const sites = await import('./sites')
 const { grants } = await import('./permissions.svelte')
 const { pages } = await import('./pages.svelte')
-vi.doMock('../../workspace.svelte', () => ({
+vi.doMock('../../workspace/src/api', () => ({
   workspace: {
     get tabs() {
       return tabs

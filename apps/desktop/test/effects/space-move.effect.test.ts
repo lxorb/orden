@@ -28,11 +28,11 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 const { Disk } = await import('../disk')
 disk.current = new Disk()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 await import('../../src/lib/workspace-ports')
-await import('../../src/lib/workspace/sets.svelte')
+await import('../../src/lib/workspace/src/sets.svelte')
 const { pane } = await import('../../src/lib/panes/src/api')
-const { moveToSpace } = await import('../../src/lib/workspace/moving-space')
+const { moveToSpace } = await import('../../src/lib/workspace/src/moving-space')
 const { written } = await import('../../src/lib/parting/src/api')
 
 const PLAN = '/spaces/Work/Plan.md'

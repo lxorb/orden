@@ -35,7 +35,7 @@ const open = vi.hoisted(() => ({
   notes: [] as { key: string; path: string; text: string; revision: number }[],
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get worthKeeping() {
       return open.notes

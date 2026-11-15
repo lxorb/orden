@@ -9,7 +9,7 @@ vi.mock('./ai-chat/src/api', () => ({
 vi.mock('./scratchpad/src/api', () => ({
   pad: () => Promise.resolve({ asNote: () => asked.push('pad') }),
 }))
-vi.mock('./workspace.svelte', () => ({ workspace: { movePanel: () => undefined } }))
+vi.mock('./workspace/src/api', () => ({ workspace: { movePanel: () => undefined } }))
 vi.mock('./search.svelte', () => ({ search: { ordering: {}, setSort: () => undefined } }))
 
 const { hasTab, openAsTab } = await import('./panel-tab')

@@ -1,6 +1,6 @@
 import { chorded } from './ui-kit/src/api'
 import { read, type Reading, typedBy, typedOn, WAIT } from './space-pick'
-import { type Space, workspace } from './workspace.svelte'
+import { type Space, workspace } from './workspace/src/api'
 
 export class ListTyping {
   typed = $state('')

@@ -8,7 +8,7 @@ import {
 } from '@orden/editor'
 import { applied, type Change } from '@orden/scan/search/replace'
 import { NoteDoc } from '../../documents/src/api'
-import type { Keeping } from '../../workspace/note-text'
+import type { Keeping } from '../../workspace/src/api'
 import type { Desk, Space } from './desk'
 
 const SPACE: Space = { id: 's1', name: 'Space', root: '/space' }

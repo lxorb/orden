@@ -4,7 +4,7 @@
   import RowMore from './RowMore.svelte'
   import SpaceRow from './SpaceRow.svelte'
   import type { SpaceTyping } from './space-typing.svelte'
-  import { type Space, workspace } from './workspace.svelte'
+  import { type Space, workspace } from './workspace/src/api'
 
   const {
     typing,

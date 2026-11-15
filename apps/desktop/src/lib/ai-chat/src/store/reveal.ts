@@ -1,5 +1,5 @@
 import { revealPanel } from '../../../focus'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 
 export function revealChat(): void {
   const tab = workspace.singleHere('chat')

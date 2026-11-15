@@ -5,7 +5,7 @@
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import { Cross, prompt } from '../../../ui-kit/src/api'
   import { Select, Switch } from '../../../ui-controls/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import type { Grant, Scope } from '../../../agent-protocol/src/api'
   import AgentLog from './AgentLog.svelte'
   import AgentMark from './AgentMark.svelte'

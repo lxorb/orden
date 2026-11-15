@@ -2,7 +2,7 @@ import type { OpenHow } from '../../new-tab'
 import { appsOn } from '../../settings.svelte'
 import { nameOf, samePath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export function appName(path: string): string {
   return nameOf(path).replace(/\.application$/i, '') || nameOf(path)

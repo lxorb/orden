@@ -2,7 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { settings } = await import('./settings.svelte')
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { reservedName } = await import('./reserved-name.svelte')
 const NameField = (await import('./NameField.svelte')).default
 

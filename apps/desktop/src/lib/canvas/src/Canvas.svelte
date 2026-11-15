@@ -100,7 +100,7 @@
   import { modes } from '../../modes.svelte'
   import { viewport } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { RightPan } from './right-pan'
   import { freeScroll, holdFreeScroll } from './free-scroll'
 

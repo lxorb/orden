@@ -17,7 +17,7 @@ const hard = new Disk()
 disk.current = hard
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { movedIn } = await import('./moving')
 
 const ROOT = '/space'

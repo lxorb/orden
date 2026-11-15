@@ -173,7 +173,7 @@ const spacesOf = vi.hoisted(
     })),
 )
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get spaces() {
       return spacesOf()

@@ -1,5 +1,5 @@
 import { readViewSpec } from './tab-kinds/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export async function showTodos(): Promise<void> {
   if (__EVEN_PLUGIN__) return

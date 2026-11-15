@@ -4,7 +4,7 @@ import { forgetSeedSpace, seedSpaceRoot } from './seeded'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
 import { samePath, invoke, isNative } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export interface Pairing {
   pairs(): { root: string; spaceId: string; shared: boolean }[]

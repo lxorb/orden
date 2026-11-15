@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte'
 import { hiddenKinds } from './settings.svelte'
 import { views } from './views.svelte'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 export function writeNew(event: Event) {
   if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()

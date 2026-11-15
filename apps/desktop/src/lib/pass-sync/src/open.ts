@@ -1,5 +1,5 @@
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { passOn } from '../../settings.svelte'
 import { asked, type PassIntent } from './asked.svelte'
 import { FIRST_VIEW, writeView } from './view'

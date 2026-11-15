@@ -10,7 +10,7 @@ import {
   type ThemeSetting,
   type ThemeValue,
 } from '../../theme/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { PictureSide, PairField, Field, Group, Pane } from './fields'
 
 const FONT_FIELDS: readonly {

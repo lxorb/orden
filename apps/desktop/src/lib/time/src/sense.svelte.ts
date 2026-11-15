@@ -1,7 +1,7 @@
 import { untrack } from 'svelte'
 import { sync } from '../../sync.svelte'
 import { invoke, isDesktop } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../settings.svelte'
 import { MinuteFold, SAMPLE_EVERY } from './minutes'
 import { type Sensed, sensedOf, withIdle } from './sensed'

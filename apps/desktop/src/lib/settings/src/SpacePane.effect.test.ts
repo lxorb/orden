@@ -30,7 +30,7 @@ vi.mock('../../link-index/src/api', () => ({
     },
   },
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     activeSpace: { root: '/space' },
     spaces: [
@@ -40,8 +40,6 @@ vi.mock('../../workspace.svelte', () => ({
     loadTree: vi.fn(() => Promise.resolve()),
     fileCame: vi.fn(() => Promise.resolve()),
   },
-}))
-vi.mock('../../workspace/note-text', () => ({
   noteText: async (_: unknown, path: string) => {
     disk.reads++
     if (disk.reactive) void disk.tabs?.()
@@ -253,7 +251,7 @@ describe('Settings > Space', () => {
   })
 
   test('the file made tells the listing of the space it is in, not the one now asked for', async () => {
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     // eslint-disable-next-line @typescript-eslint/unbound-method -- a mock, only ever read
     const reads = vi.mocked(workspace.loadTree)
     reads.mockClear()

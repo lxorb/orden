@@ -1,6 +1,6 @@
 import { account } from './accounts/src/api'
 import { joining } from './sharing/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 class Alone {
   on = $derived(

@@ -13,8 +13,8 @@ const { Disk, memoryStorage } = await import('../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
-const { workspace } = await import('./workspace.svelte')
-const { serveWorkspace } = await import('./workspace/services')
+const { workspace } = await import('./workspace/src/api')
+const { serveWorkspace } = await import('./workspace/src/services')
 serveWorkspace({
   mayEnd: (closing) => {
     asked.tabs.push(closing.filter((tab) => tab.kind === 'terminal').map((tab) => tab.id))

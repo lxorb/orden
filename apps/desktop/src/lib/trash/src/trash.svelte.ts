@@ -3,7 +3,7 @@ import { message, prompt } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { sync } from '../../sync.svelte'
 import { folderOf, insideSpace, samePath, within, invoke } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 

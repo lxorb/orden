@@ -1,6 +1,6 @@
 import { settings } from '../../../settings.svelte'
 import { hostPickerDialog } from '../../../surfaces.svelte'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { type Destination, groupHosts, type Host } from './hosts'
 import { remote } from './hosts.svelte'
 import { connectTo, openAll, openRemote } from './open'

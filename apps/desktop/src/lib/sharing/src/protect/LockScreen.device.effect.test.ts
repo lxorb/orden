@@ -12,7 +12,7 @@ vi.mock('../../../protect/src/device', () => ({
   },
 }))
 
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const LockScreen = (await import('./LockScreen.svelte')).default
 

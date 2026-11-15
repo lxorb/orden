@@ -123,7 +123,7 @@ const shown = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../../workspace.svelte', () => ({ workspace: shown }))
+vi.mock('../../workspace/src/api', () => ({ workspace: shown }))
 
 vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>

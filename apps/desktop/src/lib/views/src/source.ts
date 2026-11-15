@@ -4,8 +4,7 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { links } from '../../link-index/src/api'
 import { rows } from '../../rows/src/api'
 import { insideSpace, samePath, within } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
-import { noteText, writeNoteText } from '../../workspace/note-text'
+import { noteText, workspace, writeNoteText } from '../../workspace/src/api'
 import type { Shown, Source } from './live.svelte'
 
 function spaceOf(path: string): { name: string; root: string } | null {

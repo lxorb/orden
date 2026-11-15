@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { region } from '../../platform/src/api'
   import { dur, slide } from '../../platform/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { insideSpace } from '../../platform/src/api'
   import type { Part } from '../../ai-providers/src/api'
   import Approval from './review/Approval.svelte'

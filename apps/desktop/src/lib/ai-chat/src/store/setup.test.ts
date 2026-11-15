@@ -7,7 +7,7 @@ const TEXTS: Record<string, string> = {
   '/team/CLAUDE.md': 'Be brief.',
 }
 
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [
       { id: 'own', root: '/own' },

@@ -12,7 +12,7 @@ import {
 import { shortcuts } from '../../shortcuts/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { settings } from '../../settings.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 import { frontShut, openOut, openTarget, renderOptions } from './context'
 import { picker } from './picker.svelte'

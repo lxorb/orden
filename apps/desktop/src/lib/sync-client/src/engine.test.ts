@@ -10,7 +10,7 @@ import {
   type PushRequest,
 } from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
-import { Across } from '../../workspace/across'
+import { Across } from '../../workspace/src/across'
 import { NoteDoc } from '../../documents/src/api'
 import { Windows } from '../../platform/src/windows'
 import { attach } from './binding'

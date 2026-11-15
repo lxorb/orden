@@ -26,7 +26,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
 const { Disk, memoryStorage } = await import('../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { links } = await import('./link-index/src/api')
 const { startup } = await import('./startup.svelte')
 void startup.shown()

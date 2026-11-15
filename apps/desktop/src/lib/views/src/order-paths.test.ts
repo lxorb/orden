@@ -5,8 +5,8 @@ import { movedWords, orderMoved } from './order-paths'
 
 const notes = new Map<string, string>()
 
-vi.mock('../../workspace.svelte', () => ({ workspace: {} }))
-vi.mock('../../workspace/note-text', () => ({
+vi.mock('../../workspace/src/api', () => ({
+  workspace: {},
   noteText: (_: unknown, path: string) => Promise.resolve(notes.get(path) ?? null),
   writeNoteText: (_: unknown, path: string, _before: string, after: string) => {
     notes.set(path, after)

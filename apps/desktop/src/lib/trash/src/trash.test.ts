@@ -153,7 +153,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { account } = await import('../../accounts/src/api')
 type RemoteSpace = import('../../accounts/src/api').RemoteSpace
 const { trash } = await import('./trash.svelte')

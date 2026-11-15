@@ -4,7 +4,7 @@ import SpaceSwitcher from '../../src/lib/SpaceSwitcher.svelte'
 import Titlebar from '../../src/lib/Titlebar.svelte'
 import { spacesMenu } from '../../src/lib/surfaces.svelte'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.scrollIntoView = () => undefined
 

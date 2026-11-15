@@ -23,10 +23,10 @@ Element.prototype.animate = () =>
 
 const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
-const { hiddenTabs } = await import('../../src/lib/workspace/hidden-tabs.svelte')
+const { hiddenTabs } = await import('../../src/lib/workspace/src/hidden-tabs.svelte')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
-type Tab = import('../../src/lib/workspace.svelte').Tab
+type Tab = import('../../src/lib/workspace/src/api').Tab
 
 let target: HTMLElement
 let close: (() => void) | undefined

@@ -23,7 +23,7 @@ const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { makePointer } = await import('./pointers')
 
 test("a chat made for a note of another space steps past that space's Chat.chat", async () => {

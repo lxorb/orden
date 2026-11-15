@@ -11,13 +11,13 @@
     "ui-kit",
     "snapshots",
     "documents",
-    "protect"
+    "protect",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/when.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/when.ts"
   ]
 }

@@ -11,7 +11,7 @@
   import { trap } from '../../ui-controls/src/api'
   import { webPages } from '@orden/contracts'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { offeredName } from '../../documents/src/api'
   import { isAgentsName } from '../../platform/src/api'
   import { joinPath } from '../../platform/src/api'

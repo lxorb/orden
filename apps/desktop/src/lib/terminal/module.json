@@ -20,7 +20,8 @@
     "parting",
     "documents",
     "file-writes",
-    "agent-verbs"
+    "agent-verbs",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -42,7 +43,6 @@
     "apps/desktop/src/lib/space-pick.ts",
     "apps/desktop/src/lib/space-typing.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/sync.svelte.ts"
   ]
 }

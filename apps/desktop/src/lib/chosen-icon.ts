@@ -7,7 +7,7 @@ import { links } from './link-index/src/api'
 import { elsewhere } from './link-index/src/api'
 import { folderOf, isMarkdownPath, samePath, withinSpace } from './platform/src/api'
 import { pages, siteMark } from './web-tab/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 function mapKey(path: string): string {
   return isFolderNote(path) ? folderOf(path) : path

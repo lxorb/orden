@@ -16,7 +16,7 @@ vi.mock('./file-mark', async (importOriginal) => {
 
 vi.mock('./collab/src/api', () => ({ rooms: { present: {}, seen: {}, following: null } }))
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const Tabs = (await import('./Tabs.svelte')).default
 
 function strip(count: number) {

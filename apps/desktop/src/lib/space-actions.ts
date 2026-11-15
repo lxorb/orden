@@ -14,7 +14,7 @@ import {
   protectEntries,
 } from './sharing/src/api'
 import { settings } from './settings.svelte'
-import { type Space, workspace } from './workspace.svelte'
+import { type Space, workspace } from './workspace/src/api'
 
 const archiving = () => import('./space-archive')
 
@@ -156,7 +156,7 @@ export async function deleteSpace(space: Space) {
   })
 
   if (!sure) return
-  const { mayEndSpace } = await import('./workspace/space-changes')
+  const { mayEndSpace } = await import('./workspace/src/space-changes')
   if (!(await mayEndSpace(workspace, space.id))) return
 
   const root = space.root

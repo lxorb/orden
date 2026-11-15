@@ -2,7 +2,7 @@ import { listen } from '@tauri-apps/api/event'
 import { log, invoke } from '../../platform/src/api'
 import { crashAskDue } from '../../surfaces.svelte'
 import { updates } from '../../updates/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { crashReports } from './choice.svelte'
 import { nativeSending, sendWaiting } from './send'
 

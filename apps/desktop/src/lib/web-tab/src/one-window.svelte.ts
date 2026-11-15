@@ -1,6 +1,6 @@
 import { untrack } from 'svelte'
 import { invoke } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 interface Said {
   window?: unknown

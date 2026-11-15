@@ -1,4 +1,4 @@
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { readSpec, writeSpec } from './spec'
 
 export function setTerminalIcon(id: string, icon: string | null, colour: string | null): void {

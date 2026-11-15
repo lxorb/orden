@@ -133,7 +133,7 @@ let over: Element | null = null
 document.elementFromPoint = () => over ?? document.querySelector('.hole')
 
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
 const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
@@ -321,7 +321,7 @@ test('a menu over the page is cut out of it, and the page stays', async () => {
   void unmount(app)
 })
 
-async function hoverOver(tab: import('../../src/lib/workspace.svelte').Tab) {
+async function hoverOver(tab: import('../../src/lib/workspace/src/api').Tab) {
   const pane = document.createElement('div')
   pane.setAttribute('data-pane', tab.paneId)
   pane.setAttribute('data-box', JSON.stringify({ x: 0, y: 0, width: 800, height: 600 }))

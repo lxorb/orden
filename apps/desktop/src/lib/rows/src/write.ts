@@ -13,7 +13,7 @@ import {
 import { writeTask } from '@orden/markdown/task-edits'
 import { readTask } from '@orden/markdown/task-line'
 import { changeOf } from '@orden/scan/search/replace'
-import { type HoldsNotes, noteText, replaceInNotes } from '../../workspace/note-text'
+import { type HoldsNotes, noteText, replaceInNotes } from '../../workspace/src/api'
 
 export interface RowChange {
   note?: Record<string, Value | null>

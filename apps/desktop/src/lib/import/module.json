@@ -16,7 +16,8 @@
     "handoff",
     "link-format",
     "file-writes",
-    "shortcuts"
+    "shortcuts",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -31,7 +32,6 @@
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/sync.svelte.ts"
   ]
 }

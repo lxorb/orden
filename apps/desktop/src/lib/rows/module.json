@@ -9,10 +9,7 @@
     "scan",
     "link-index",
     "file-ops",
-    "protect"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/note-text.ts"
+    "protect",
+    "workspace"
   ]
 }

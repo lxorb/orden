@@ -37,7 +37,7 @@ vi.mock('./microphone', async (importOriginal) => ({
     }),
 }))
 
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 const { canRecord } = await import('./commands')
 const { noteToRecordInto } = await import('./note')
 const { recorder } = await import('./recording.svelte')

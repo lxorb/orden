@@ -20,7 +20,7 @@ const workspace = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('./workspace.svelte', () => ({ workspace }))
+vi.mock('./workspace/src/api', () => ({ workspace }))
 
 const asked = vi.hoisted(() => ({ offered: [] as string[], answer: null as string | null }))
 vi.mock('./ui-kit/src/prompt.svelte', () => ({

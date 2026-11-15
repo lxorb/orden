@@ -1,7 +1,7 @@
 import { identifier } from '../../platform/src/api'
 import type { MenuEntry } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { type Shell, shellName, shells } from './shells.svelte'
 import { hostIdOf, startingFolder, writeSpec } from './spec'
 

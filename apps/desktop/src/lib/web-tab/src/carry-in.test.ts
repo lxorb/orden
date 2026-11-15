@@ -18,7 +18,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 await import('../../web-backend/src/internal/work')
 const { carriedToPages, carryToPages, carryingOf, droppedOnPage, leftPage, overPage } =
   await import('./carry-in')

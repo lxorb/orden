@@ -17,7 +17,7 @@ import { appCommands } from '../../commands/src/api'
 import { putPicture, writeAtCaret } from '../../insert-picture'
 import { modes } from '../../modes.svelte'
 import { views } from '../../views.svelte'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { watchWidgets } from './widgets.svelte'
 
 const SLICE = 256 * 1024

@@ -11,7 +11,7 @@ vi.mock('../../platform/src/tauri', async (original) => ({
 }))
 vi.mock('./open', () => ({ inASpace: () => true }))
 const { newFolder } = await import('./changes')
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 vi.spyOn(workspace, 'loadTree').mockResolvedValue()
 
 function filteredView() {

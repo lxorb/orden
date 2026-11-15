@@ -4,7 +4,7 @@
   import { fileMark } from '../../../file-mark'
   import { links } from '../../../link-index/src/api'
   import { folderOf, insideSpace, nameOf, withoutExtension } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { cardLines } from './note-card'
 
   const { target, from = null }: { target: string; from?: string | null } = $props()

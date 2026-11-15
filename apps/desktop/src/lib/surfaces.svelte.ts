@@ -396,7 +396,7 @@ export async function warmDoors(): Promise<void> {
     __EVEN_PLUGIN__
       ? undefined
       : () =>
-          Promise.all([import('./first-screen/src/api'), import('./workspace.svelte')]).then(
+          Promise.all([import('./first-screen/src/api'), import('./workspace/src/api')]).then(
             ([one, { workspace }]) => one.keepFirstScreens(workspace),
           ),
     () => import('./reload-when'),

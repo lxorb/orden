@@ -1,5 +1,5 @@
 import { log, invoke } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { isExtensionPage, isWebAddress } from '@orden/scan/web-address'
 
 export async function hearPages(): Promise<() => void> {

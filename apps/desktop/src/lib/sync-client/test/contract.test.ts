@@ -39,7 +39,6 @@ function textOf(report: Report, name: string): string {
 const PLAN = 0
 
 const SHELL = [
-  'workspace.svelte',
   'workspace/',
   'account.svelte',
   'settings.svelte',

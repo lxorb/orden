@@ -63,7 +63,7 @@ vi.mock('../../ui-kit/src/busy.svelte', () => ({
   busy: { failed: (said: string) => void done.push(`said ${said}`) },
 }))
 
-vi.mock('../../workspace.svelte', () => {
+vi.mock('../../workspace/src/api', () => {
   let active: string | null = null
   return {
     workspace: {

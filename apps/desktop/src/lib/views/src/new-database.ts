@@ -3,7 +3,7 @@ import { folderNotePath } from '../../tree/src/api'
 import { basesOn } from '../../settings.svelte'
 import { samePath, joinPath } from '../../platform/src/api'
 import { writeFile } from '../../file-writes/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 function databaseBase(status: string, view: string, shown: string): Base {
   return {

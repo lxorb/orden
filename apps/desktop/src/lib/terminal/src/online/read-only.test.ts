@@ -32,7 +32,7 @@ vi.mock('./calls', async (importOriginal) => ({
   termSession: () => Promise.resolve({ v: 1, machine: 'm_1', session: 's_1' }),
 }))
 
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 const { isUnsaved } = await import('../../../documents/src/api')
 const { madeOnline, openOnline } = await import('./open')
 const { isOnlineTab } = await import('../../../online-terms/src/api')

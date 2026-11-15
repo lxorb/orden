@@ -3,7 +3,7 @@
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../../panel-marks'
   import { chatsOn, hiddenKinds } from '../../settings.svelte'
   import { UnreadDot, viewport } from '../../ui-kit/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { writeNew } from '../../write-new'
   import { panels, type PhoneTab } from '../../session/src/api'
 

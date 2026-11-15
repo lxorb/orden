@@ -30,7 +30,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   isDesktop: false,
   invoke: async (command: string, args?: Record<string, unknown>) => {
-    const { workspace } = await import('./workspace.svelte')
+    const { workspace } = await import('./workspace/src/api')
     sent.push({ command, listed: !!workspace.tree, frames })
 
     const root = typeof args?.root === 'string' ? args.root : '/space'
@@ -84,7 +84,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { links } = await import('./link-index/src/api')
 const { startup } = await import('./startup.svelte')
 

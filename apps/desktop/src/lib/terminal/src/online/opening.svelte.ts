@@ -2,7 +2,7 @@ import { callbacksIn, isCallbackOf, isWebUrl } from '@orden/online/urls'
 import { untrack } from 'svelte'
 import { openExternal } from '../../../platform/src/api'
 import { webPages } from '@orden/contracts'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 
 export type Where = 'tab' | 'system' | 'offer' | 'none'
 

@@ -6,7 +6,7 @@ import { joinPath } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
 import { writeFile } from './file-writes/src/api'
-import { type Space, workspace } from './workspace.svelte'
+import { type Space, workspace } from './workspace/src/api'
 
 class FirstSpace {
   private working = false

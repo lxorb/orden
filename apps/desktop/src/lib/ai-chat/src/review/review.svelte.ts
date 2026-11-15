@@ -17,7 +17,7 @@ import {
   onDisk,
   onceAFrame,
 } from '../../../platform/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { type NoteDoc } from '../../../documents/src/api'
 import { writeFile } from '../../../file-writes/src/api'
 import { answeringAt, onSend, onSent } from '../chat/sends'

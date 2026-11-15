@@ -2,7 +2,7 @@ import type { EditorView } from '@orden/editor'
 import { insideOnly, insideSpace, nameOf, notePath } from '../../platform/src/api'
 import type { Change, Edit } from '@orden/scan/search/replace'
 import type { NoteDoc } from '../../documents/src/api'
-import type { Keeping } from '../../workspace/note-text'
+import type { Keeping } from '../../workspace/src/api'
 import { DocError } from './problem'
 
 export interface Space {

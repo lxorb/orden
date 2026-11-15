@@ -10,7 +10,7 @@ import {
 import { account, request } from '../../accounts/src/api'
 import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
 import { flush, pruned } from './queue'
 import { commonOf } from './system'

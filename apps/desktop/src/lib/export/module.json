@@ -19,7 +19,8 @@
     "web-backend",
     "link-index",
     "tab-kinds",
-    "protect"
+    "protect",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
@@ -31,7 +32,6 @@
     "apps/desktop/src/lib/page-setup.ts",
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/surfaces.svelte.ts"
   ]
 }

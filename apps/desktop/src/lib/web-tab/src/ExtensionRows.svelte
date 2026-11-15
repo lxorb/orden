@@ -3,7 +3,7 @@
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import { Switch } from '../../ui-controls/src/api'
   import { dur, slide } from '../../platform/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import ExtensionGaps from './ExtensionGaps.svelte'
   import { extensions } from './extensions.svelte'
 

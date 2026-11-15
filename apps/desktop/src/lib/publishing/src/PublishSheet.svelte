@@ -14,7 +14,7 @@
   import SpaceMark from '../../SpaceMark.svelte'
   import { readableSize } from '../../usage.svelte'
   import { viewport } from '../../ui-kit/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { dur, slide } from '../../platform/src/api'
 
   const blog = $derived(publish.blog)

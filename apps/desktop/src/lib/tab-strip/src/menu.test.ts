@@ -17,8 +17,8 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { tabMenu } = await import('./menu')
-const { workspace } = await import('../../workspace.svelte')
-type Tab = import('../../workspace.svelte').Tab
+const { workspace } = await import('../../workspace/src/api')
+type Tab = import('../../workspace/src/api').Tab
 
 function tab(path: string | null, kind: Tab['kind'] = 'note'): Tab {
   const note = { path, kind, shared: null }

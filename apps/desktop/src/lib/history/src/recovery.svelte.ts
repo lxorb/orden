@@ -7,7 +7,7 @@ import {
   snapshotMinutes,
 } from '../../snapshots/src/api'
 import { isRecord, keepJson, stored, invoke } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export const STORAGE_KEY = 'orden:recovery'
 const MINUTE = 60 * 1000

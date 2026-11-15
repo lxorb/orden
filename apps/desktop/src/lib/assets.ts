@@ -3,7 +3,7 @@ import { attachmentFolder } from './attachments'
 import { sha256, invoke, spaceRelative } from './platform/src/api'
 import { links } from './link-index/src/api'
 import { modes } from './modes.svelte'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 function extensionFor(type: string, name: string): string {
   const fromName = /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase()

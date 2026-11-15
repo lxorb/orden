@@ -94,7 +94,7 @@
   import { windowDocuments } from './lib/windows/src/api'
   import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
-  import { workspace } from './lib/workspace.svelte'
+  import { workspace } from './lib/workspace/src/api'
   import { sidebarKey, used } from './lib/file-undo/src/api'
   import { saveFront } from './lib/save-place/src/api'
   import PadColumn from './lib/PadColumn.svelte'

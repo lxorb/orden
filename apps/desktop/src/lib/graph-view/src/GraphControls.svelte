@@ -1,7 +1,7 @@
 <script lang="ts">
   import { closeOnBack, overlays } from '../../ui-kit/src/api'
   import Twist from '../../Twist.svelte'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import {
     DEEPEST,
     LEAST_DISTANCE,

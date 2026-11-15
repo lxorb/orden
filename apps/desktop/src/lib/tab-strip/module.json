@@ -14,7 +14,9 @@
     "space-kept",
     "panes",
     "documents",
-    "tree"
+    "tree",
+    "workspace",
+    "scan"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -32,11 +34,6 @@
     "apps/desktop/src/lib/row-menu.ts",
     "apps/desktop/src/lib/select-all.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/chat-carry.ts",
-    "apps/desktop/src/lib/workspace/moving-space.ts",
-    "apps/desktop/src/lib/workspace/sets.ts",
-    "apps/desktop/src/lib/workspace/space-move.ts"
+    "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

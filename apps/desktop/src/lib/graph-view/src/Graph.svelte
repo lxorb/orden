@@ -18,7 +18,7 @@
   import { parseQuery } from '@orden/scan/search/query'
   import { pixelRatio } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { MOST_GROUPS } from '../../space-kept/src/api'
 
   const {

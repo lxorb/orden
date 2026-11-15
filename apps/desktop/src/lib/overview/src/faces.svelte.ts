@@ -1,7 +1,7 @@
 import { untrack } from 'svelte'
 import { webPages } from '@orden/contracts'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 import {
   evicted,

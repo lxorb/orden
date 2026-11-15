@@ -12,7 +12,7 @@ const world = vi.hoisted(() => ({
   asked: [] as string[],
 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     openPage: (url: string, ask: string) => {
       world.opened.push({ url, ask })

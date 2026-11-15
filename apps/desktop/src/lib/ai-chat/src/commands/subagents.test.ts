@@ -4,7 +4,7 @@ import type { Thread } from '../../../ai-providers/src/chat/types'
 import type { Host } from '../commands/host'
 import type { Ended } from '../commands/types'
 
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'space', root: '/vault' }],
     activeSpace: null,

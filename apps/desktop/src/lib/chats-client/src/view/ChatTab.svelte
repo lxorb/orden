@@ -8,7 +8,7 @@
   import { samePath } from '../../../platform/src/api'
   import { viewport } from '../../../ui-kit/src/api'
   import type { Tab } from '../../../documents/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { ChatPage } from './chat.svelte'
   import ChatHead from './ChatHead.svelte'
   import Composer from './Composer.svelte'

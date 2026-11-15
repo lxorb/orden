@@ -1,4 +1,4 @@
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export function openPrivate(): void {
   workspace.openWebsite(true)

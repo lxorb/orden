@@ -3,7 +3,7 @@
   import { GRACE } from '../../edge-peek.svelte'
   import { focusEditor } from '../../focus'
   import { overlays } from '../../ui-kit/src/api'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { chromeComes } from './chrome'
   import { unfill } from './fill'
   import { atEdge, escapeLeaves, mayHide, stillFills } from './rules'

@@ -30,7 +30,7 @@ vi.mock('./sharing/src/api', () => ({
   },
 }))
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     get active() {
       return world.active

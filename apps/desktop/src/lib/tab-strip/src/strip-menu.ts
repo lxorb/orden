@@ -1,6 +1,6 @@
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 export function stripMenu(paneId: string): MenuEntry[] {
   const inFront = workspace.panes.at(paneId)?.activeTabId ?? ''

@@ -45,7 +45,7 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { askPlace } = await import('../../src/lib/save-place/src/ask')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default

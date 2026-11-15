@@ -5,7 +5,7 @@ import type { OpenHow } from '../../../new-tab'
 import { chatsOn } from '../../../settings.svelte'
 import { canWriteAt } from '../../../sharing/src/api'
 import { nameOf as fileName, samePath } from '../../../platform/src/api'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { store } from './source.svelte'
 
 const jumps = new Map<string, string>()

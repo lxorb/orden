@@ -8,7 +8,7 @@
   import { spacePicker } from './space-picker.svelte'
   import { SpaceTyping } from './space-typing.svelte'
   import { trap } from './ui-controls/src/api'
-  import { type Space, workspace } from './workspace.svelte'
+  import { type Space, workspace } from './workspace/src/api'
 
   $effect(() => (spacePicker.open ? overlays.show(() => spacePicker.dismiss()) : undefined))
   $effect(() => closeOnBack(spacePicker.open, () => spacePicker.dismiss()))

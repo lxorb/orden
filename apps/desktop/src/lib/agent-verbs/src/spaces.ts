@@ -2,7 +2,7 @@ import { threadSpaceOf } from '../../automation/src/api'
 import { insideOnly, insideSpace, nameOf, relativeTo, within } from '../../platform/src/api'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
-import { type Space, workspace } from '../../workspace.svelte'
+import { type Space, workspace } from '../../workspace/src/api'
 import { type Call, maybe } from './call'
 import { Refused } from './problem'
 

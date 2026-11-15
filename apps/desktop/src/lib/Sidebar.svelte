@@ -56,7 +56,7 @@
   import { roving } from './roving'
   import { pullable } from './pull.svelte'
   import { scrollbar } from './ui-kit/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { links } from './link-index/src/api'
   import { worthAGraph } from './graph/src/api'
   import { DEEPEST, SHALLOWEST } from './space-kept/src/api'

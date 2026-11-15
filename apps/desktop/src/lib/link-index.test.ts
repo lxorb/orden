@@ -722,7 +722,7 @@ describe('the blocks the whole space holds', () => {
       'archive/Old.md': '# Old\n\nthe second half of that\n',
     })
 
-    const { workspace } = await import('./workspace.svelte')
+    const { workspace } = await import('./workspace/src/api')
     const left = vi.spyOn(workspace.excluded, 'of').mockReturnValue(['archive'])
 
     try {

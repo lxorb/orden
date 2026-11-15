@@ -3,7 +3,7 @@ import { rowName, insideSpace, isRecord, keepJson, stored } from '../../platform
 import { FIXED_ENTRIES, SHORTCUTS } from '../../shortcuts/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { isTile } from '../../space-kept/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { lettersFor, takenUnderAlt } from './letters'
 
 const STORAGE_KEY = 'orden:essential-letters'

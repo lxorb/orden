@@ -11,7 +11,7 @@ const team = { id: 'team', name: 'Team', root: '/spaces/Team' }
 const secret = { id: 'secret', name: 'Secret', root: '/spaces/Secret' }
 const third = { id: 'third', name: 'Third', root: '/spaces/Third' }
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [team, secret, third],
     activeSpace: team,

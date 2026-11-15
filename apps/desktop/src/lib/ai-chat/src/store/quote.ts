@@ -1,5 +1,5 @@
 import { views } from '../../../views.svelte'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import { chat } from './chat.svelte'
 import { sameMention } from './mentions'
 import { revealChat } from './reveal'

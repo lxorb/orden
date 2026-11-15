@@ -12,7 +12,7 @@ const front = { root: '/own' }
 const others = { reach: (path: string | null) => !!path?.startsWith('/team/') }
 
 vi.mock('../../../link-index/src/api', () => ({ links: { version: 0 } }))
-vi.mock('../../../workspace.svelte', () => ({
+vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     get activeSpace() {
       return front

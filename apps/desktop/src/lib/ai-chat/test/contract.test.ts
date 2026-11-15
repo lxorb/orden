@@ -18,7 +18,7 @@ import {
   sidebarParts,
 } from '../src/api'
 
-vi.mock('../../workspace.svelte', () => ({ workspace: { active: null } }))
+vi.mock('../../workspace/src/api', () => ({ workspace: { active: null } }))
 vi.mock('../../settings.svelte', () => ({ chatsOn: () => true }))
 
 const HERE = join(import.meta.dirname, '..')

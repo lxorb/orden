@@ -10,7 +10,7 @@ import { canWriteAt } from '../../sharing/src/api'
 import { nameOf, joinPath } from '../../platform/src/api'
 import { type Tab } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { openApplication } from './open'
 import { type Computer, hostChoices, mayHost, programOf } from './words'
 

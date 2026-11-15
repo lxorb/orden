@@ -49,7 +49,7 @@ vi.mock('../../ui-kit/src/api', async (original) => ({
     },
   },
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [{ id: 'mine', name: 'Mine', root: '/mine' }],
     activeSpace: { id: 'mine', name: 'Mine', root: '/mine' },

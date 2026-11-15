@@ -7,7 +7,7 @@ let flushed = 0
 
 const texts: Record<string, string> = { '/Work/notes/Plan.md': '# Plan' }
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [space],
     activeSpace: space,

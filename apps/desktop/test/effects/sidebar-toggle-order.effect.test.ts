@@ -6,7 +6,7 @@ const into = vi.hoisted(() => ({ side: vi.fn<(side: string) => HTMLElement | nul
 vi.mock('../../src/lib/focus', () => ({ intoSide: into.side }))
 
 const SidebarToggle = (await import('../../src/lib/SidebarToggle.svelte')).default
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 
 let shown: ReturnType<typeof mount>
 let inside: HTMLElement

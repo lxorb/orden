@@ -1,5 +1,5 @@
 import { listenOver } from '../../drag-paths'
-import { type Space, workspace } from '../../workspace.svelte'
+import { type Space, workspace } from '../../workspace/src/api'
 import { spacesOf, spacesOfPaths, toSpace } from './to-space'
 
 export type Carried = { tab: string } | { paths: readonly string[] }

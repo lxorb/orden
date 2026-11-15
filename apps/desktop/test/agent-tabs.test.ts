@@ -124,7 +124,7 @@ const workspace = {
   scheduleSession: vi.fn(),
 }
 
-vi.mock('../src/lib/workspace.svelte', () => ({ workspace }))
+vi.mock('../src/lib/workspace/src/api', () => ({ workspace }))
 
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 const asked: { command: string; args: Record<string, unknown> }[] = []

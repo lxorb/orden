@@ -1,7 +1,7 @@
 import { toArchive, toRestore } from './archive-plan'
 import { relativeTo, insideSpace, withinSpace, coveredBy } from '../../platform/src/api'
 import type { FileAction } from '../../file-undo/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 
 type Archiving = Extract<FileAction, { kind: 'archive' | 'unarchive' }>
 

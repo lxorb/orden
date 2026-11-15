@@ -2,7 +2,7 @@ import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
 import { hasTab, openAsTab } from './panel-tab'
 import { search, type SearchSort } from './search.svelte'
 import { panels, type Panel, type PanelSide } from './session/src/api'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 function sortMenu(making: MenuEntry[]): MenuEntry[] {
   return [

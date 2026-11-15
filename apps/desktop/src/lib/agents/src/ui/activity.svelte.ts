@@ -1,7 +1,7 @@
 import { accentFor, theme } from '../../../theme/src/api'
 import type { TabAct } from '../../../agent-marks.svelte'
 import { portOf } from '@orden/contracts'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import type { AgentEvent, Approval, Grant, Picture } from '../../../agent-protocol/src/api'
 import { agentDocs, touchedBy } from '../../../agent-docs/src/api'
 import { keepInNote } from './keep'

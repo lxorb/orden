@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('./workspace.svelte', () => ({ workspace: {} }))
+vi.mock('./workspace/src/api', () => ({ workspace: {} }))
 
 const { keepFocus } = await import('./focus')
 

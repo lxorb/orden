@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 const right = vi.hoisted(() => ({ shows: null as string | null, closed: 0 }))
 
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     tabs: [],
     outside: (path: string) => !path.startsWith('/space/'),

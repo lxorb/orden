@@ -7,7 +7,7 @@ import { settings } from '../../settings.svelte'
 import { trustsHtmlIn } from '../../sharing/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
 import { invoke, isNative } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { RunOptions } from './run'
 
 export interface Target {

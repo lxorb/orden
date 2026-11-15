@@ -1,6 +1,5 @@
 {
   "name": "usage",
   "layer": "shell",
-  "dependsOn": ["contracts", "accounts", "platform", "sync-core", "updates"],
-  "pending": ["apps/desktop/src/lib/workspace.svelte.ts"]
+  "dependsOn": ["contracts", "accounts", "platform", "sync-core", "updates", "workspace"]
 }

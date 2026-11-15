@@ -21,7 +21,8 @@
     "link-index",
     "panes",
     "documents",
-    "protect"
+    "protect",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -43,7 +44,6 @@
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/todos-entry.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/todos-entry.ts"
   ]
 }

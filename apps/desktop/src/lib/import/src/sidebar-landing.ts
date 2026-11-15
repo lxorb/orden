@@ -1,7 +1,7 @@
 import { busy } from '../../ui-kit/src/api'
 import { relativeTo, invoke, joinPath } from '../../platform/src/api'
 import { readShortcut } from '@orden/scan/shortcut'
-import { type Space, workspace } from '../../workspace.svelte'
+import { type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
 import { nameKey } from './names'
 import type { Planned } from './plan'

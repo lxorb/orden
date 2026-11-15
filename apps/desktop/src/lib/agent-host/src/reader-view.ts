@@ -1,7 +1,7 @@
 import type { AgentAnswer } from '@orden/contracts'
 import { settings, type Section } from '../../settings.svelte'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { panesIn, paneToward, type Toward } from '../../panes/src/api'
 import { asksFront, type Call, done, needScope, openedBy, Refused } from '../../agent-verbs/src/api'
 

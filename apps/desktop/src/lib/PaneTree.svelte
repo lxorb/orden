@@ -3,7 +3,7 @@
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { clamped, type Frame, paneIn, type Split, tracks } from './panes/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   const { frame }: { frame: Frame } = $props()
 

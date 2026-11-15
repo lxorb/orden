@@ -17,7 +17,7 @@
   import { pages as showing } from './showing.svelte'
   import { ListView } from '../../windows/src/api'
   import { roving } from '../../roving'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
 
   const WIDE = 104
 

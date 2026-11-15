@@ -2,7 +2,7 @@ import { providePort, webPages } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('../../platform/src/tauri', () => ({ isDesktop: false, isMobile: false }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { tabs: [], goBack: () => undefined, goForward: () => undefined },
 }))
 
@@ -25,7 +25,7 @@ const PAGE = {
   muted: false,
 }
 providePort('web.pages', { ...webPages(), of: () => PAGE })
-type Tab = import('../../workspace.svelte').Tab
+type Tab = import('../../workspace/src/api').Tab
 
 const pane = document.createElement('div')
 pane.dataset.pane = 'p'

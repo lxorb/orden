@@ -13,7 +13,7 @@ vi.stubGlobal(
 
 const { FixtureChats } = await import('../../src/lib/chats-client/src/view/fixture.svelte')
 const { useStore } = await import('../../src/lib/chats-client/src/view/source.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const ChatTab = (await import('../../src/lib/chats-client/src/view/ChatTab.svelte')).default
 
 test('a note dropped on a chat is linked in the composer', async () => {

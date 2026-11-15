@@ -20,7 +20,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { pages } = await import('../../web-tab/src/pages.svelte')
 const { agentMarks } = await import('../../agent-marks.svelte')
@@ -28,7 +28,7 @@ const { prompt } = await import('../../ui-kit/src/prompt.svelte')
 const { tabMenu } = await import('./menu')
 const { mayUnload, unload, unloadEntries, unloadsAround } = await import('./unloading.svelte')
 const { unloadTabs } = await import('./unload-choice.svelte')
-type Tab = import('../../workspace.svelte').Tab
+type Tab = import('../../workspace/src/api').Tab
 type TabKind = import('../../tab-kinds/src/api').TabKind
 
 function add(kind: TabKind, name: string): Tab {

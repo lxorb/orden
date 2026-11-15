@@ -2,7 +2,7 @@ import type { AgentAnswer } from '@orden/contracts'
 import { message } from '../../ui-kit/src/api'
 import { foldsIn, pathKeyAs, samePath, joinPath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { Category } from '../../agent-protocol/src/api'
 import { explorerOn } from '../../settings.svelte'
 import {

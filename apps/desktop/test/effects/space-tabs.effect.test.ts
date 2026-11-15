@@ -24,9 +24,9 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 const { Disk } = await import('../disk')
 disk.current = new Disk()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-await import('../../src/lib/workspace/sets.svelte')
-const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+await import('../../src/lib/workspace/src/sets.svelte')
+const { deleteSpace } = await import('../../src/lib/workspace/src/space-changes')
 const { pane } = await import('../../src/lib/panes/src/api')
 const { shown: pad } = await import('../../src/lib/scratchpad/src/api')
 

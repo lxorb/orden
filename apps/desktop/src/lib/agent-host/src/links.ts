@@ -1,5 +1,5 @@
 import { links, spaceLinks } from '../../link-index/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { Place } from '../../agent-verbs/src/api'
 
 const KEPT = 60_000

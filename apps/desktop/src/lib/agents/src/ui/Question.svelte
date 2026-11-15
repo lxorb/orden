@@ -3,7 +3,7 @@
   import FileMark from '../../../FileMark.svelte'
   import { dur, fly } from '../../../platform/src/api'
   import { webPages } from '@orden/contracts'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import type { Approval } from '../../../agent-protocol/src/api'
   import type { Activity } from './activity.svelte'
   import { hostOf } from './session'

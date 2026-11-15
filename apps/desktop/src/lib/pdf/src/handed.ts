@@ -1,6 +1,6 @@
 import { log, invoke } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { arrivalOf } from './arrival'
 
 export async function hearPdfs(): Promise<() => void> {

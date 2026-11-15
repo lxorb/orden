@@ -1,7 +1,7 @@
 import { EditorState, EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { callerOf } = await import('../../src/lib/automation/src/api')
 await import('../agent-verbs-wired')
 const { runAgentVerb } = await import('@orden/contracts')

@@ -18,7 +18,7 @@
   import TagTree from './TagTree.svelte'
   import { isScratchpad, pad } from './scratchpad/src/api'
   import { canWriteAt } from './sharing/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { dur, fly } from './platform/src/api'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()

@@ -380,12 +380,12 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 let account: typeof import('./accounts/src/account.svelte').account
 let sync: typeof import('./sync.svelte').sync
-let workspace: typeof import('./workspace.svelte').workspace
+let workspace: typeof import('./workspace/src/api').workspace
 
 await Promise.all([
   import('./accounts/src/account.svelte'),
   import('./sync.svelte'),
-  import('./workspace.svelte'),
+  import('./workspace/src/api'),
 ])
 
 let everStarted = false
@@ -400,7 +400,7 @@ beforeEach(async () => {
   vi.resetModules()
   ;({ account } = await import('./accounts/src/account.svelte'))
   ;({ sync } = await import('./sync.svelte'))
-  ;({ workspace } = await import('./workspace.svelte'))
+  ;({ workspace } = await import('./workspace/src/api'))
 
   vi.useFakeTimers({ shouldAdvanceTime: true })
 })

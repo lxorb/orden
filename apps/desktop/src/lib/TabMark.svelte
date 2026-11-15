@@ -9,7 +9,7 @@
   import { type Page, pages, siteMark } from './web-tab/src/api'
   import { readWebFile } from '@orden/scan/shortcut'
   import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
   import { TAB_KINDS } from './tab-kinds/src/api'
 
   const { tab }: { tab: Tab } = $props()

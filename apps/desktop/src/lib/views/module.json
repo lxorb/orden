@@ -26,7 +26,8 @@
     "documents",
     "file-writes",
     "tab-kinds",
-    "tree"
+    "tree",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/drawer.svelte.ts",
@@ -39,8 +40,6 @@
     "apps/desktop/src/lib/panel-marks.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/swipe.ts",
-    "apps/desktop/src/lib/undo-toast.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/note-text.ts"
+    "apps/desktop/src/lib/undo-toast.svelte.ts"
   ]
 }

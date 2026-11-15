@@ -16,7 +16,7 @@ vi.mock('./platform/src/tauri', () => ({
   },
 }))
 vi.mock('./surfaces.svelte', () => ({ tabOverview: { open: false } }))
-vi.mock('./workspace.svelte', () => ({
+vi.mock('./workspace/src/api', () => ({
   workspace: {
     device: {
       get paneFollowsPointer() {

@@ -16,7 +16,7 @@ import { chatsOn, hiddenKinds, passOn, settings, timeOn } from '../../settings.s
 import { stepSpace } from '../../space-actions'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
 import type { Platform } from '../../ui-kit/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { type Toward, type Around, closeAfterLabel } from '../../panes/src/api'
 import type { UsageVia } from '@orden/sync-core'
 import { ran } from '../../usage/src/api'

@@ -13,7 +13,7 @@ import type { Holder } from '../../online-link/src/api'
 import type { IdAt } from '../../sync-client/src/api'
 import { untrack } from 'svelte'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { type AppHeard, AppLink } from './link'
 import { Picture } from './picture.svelte'
 

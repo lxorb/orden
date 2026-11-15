@@ -29,7 +29,8 @@
     "protect",
     "agent-verbs",
     "automation",
-    "quitting"
+    "quitting",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -52,8 +53,6 @@
     "apps/desktop/src/lib/sidebar-width.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/chat-carry.ts"
+    "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

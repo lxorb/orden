@@ -61,7 +61,7 @@ vi.mock('./commands', () => ({
 }))
 
 const scheduleSession = vi.fn()
-vi.mock('../../workspace.svelte', () => ({ workspace: { scheduleSession, tabs: [] } }))
+vi.mock('../../workspace/src/api', () => ({ workspace: { scheduleSession, tabs: [] } }))
 
 const { LIST_WAIT, viewOf } = await import('./view.svelte')
 const { readSpec } = await import('./spec')

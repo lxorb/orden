@@ -1,7 +1,7 @@
 import { openSpaces } from './focus'
 import { spacePickerDialog } from './surfaces.svelte'
 import { viewport } from './ui-kit/src/api'
-import { type Space, workspace } from './workspace.svelte'
+import { type Space, workspace } from './workspace/src/api'
 
 class SpacePicker {
   open = $state(false)

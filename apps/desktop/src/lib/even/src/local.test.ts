@@ -10,7 +10,7 @@ import {
   ICONS_KEY,
   RECENT_KEY,
   TAGS_KEY,
-} from '../../workspace/device.svelte'
+} from '../../workspace/src/device.svelte'
 
 const phone = vi.hoisted(() => ({ held: new Map<string, string>(), reachable: false }))
 

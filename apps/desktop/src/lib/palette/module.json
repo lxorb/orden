@@ -15,7 +15,8 @@
     "usage",
     "commands",
     "link-index",
-    "documents"
+    "documents",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -33,7 +34,6 @@
     "apps/desktop/src/lib/search.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/typing-pointer.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/typing-pointer.ts"
   ]
 }

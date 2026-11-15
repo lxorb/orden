@@ -11,7 +11,7 @@ import {
 } from '../../drag-paths'
 import { message } from '../../ui-kit/src/api'
 import { invoke, joinPath, platform } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { OutsideStep } from '../../file-undo/src/api'
 import { carry, changeable, freeName, takenNames } from './changes'
 import { listFolder } from './commands'

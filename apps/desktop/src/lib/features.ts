@@ -30,7 +30,7 @@ serveLinks({
     if (__EVEN_PLUGIN__) return null
     const [{ CanvasStore }, { workspace }] = await Promise.all([
       import('./canvas/src/api'),
-      import('./workspace.svelte'),
+      import('./workspace/src/api'),
     ])
     const doc = workspace.documents.find((one) => one === note)
     return doc ? CanvasStore.drawing(doc, workspace.tabs) : null

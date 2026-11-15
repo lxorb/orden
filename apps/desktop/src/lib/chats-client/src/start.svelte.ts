@@ -5,7 +5,7 @@ import { account } from '../../accounts/src/api'
 import { hub } from '../../sync-client/src/api'
 import { chatsOn } from '../../settings.svelte'
 import { isMobile } from '../../platform/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
 

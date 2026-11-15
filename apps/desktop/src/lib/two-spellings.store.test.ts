@@ -16,7 +16,7 @@ const { Disk, memoryStorage } = await import('../../test/disk')
 disk.current = new Disk(true)
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { answeredCase, samePath, within } = await import('./platform/src/space-paths')
 
 const ROOT = '/space'

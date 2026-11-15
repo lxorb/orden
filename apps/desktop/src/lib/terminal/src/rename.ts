@@ -1,5 +1,5 @@
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace.svelte'
+import { workspace } from '../../workspace/src/api'
 import { isOnlineTab, MADE_NAME } from '../../online-terms/src/api'
 import { folderOf } from '../../platform/src/api'
 import { shellName, shells } from './shells.svelte'

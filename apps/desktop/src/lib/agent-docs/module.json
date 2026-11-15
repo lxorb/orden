@@ -12,11 +12,8 @@
     "scratchpad",
     "theme",
     "link-index",
-    "documents"
+    "documents",
+    "workspace"
   ],
-  "pending": [
-    "apps/desktop/src/lib/views.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/note-text.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/views.svelte.ts"]
 }

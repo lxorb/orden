@@ -3,7 +3,7 @@ import { account } from './accounts/src/api'
 import { sharedWithYou } from './sharing/src/api'
 import { insideSpace, within, waited } from './platform/src/api'
 import { sync } from './sync.svelte'
-import { workspace } from './workspace.svelte'
+import { workspace } from './workspace/src/api'
 
 const LOOK = 150
 const PATIENCE = 20_000

@@ -3,7 +3,7 @@ import { expect, test } from 'vitest'
 
 const Bookmarks = (await import('../../src/lib/Bookmarks.svelte')).default
 const { carry } = await import('../../src/lib/drag-paths')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 
 const file = (path: string, is_dir = false) => {
   const name = path.split('/').pop() ?? path

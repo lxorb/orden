@@ -31,7 +31,7 @@ vi.mock('../../search/src/api', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('../../workspace.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: { activeSpace: { root: '/space' }, leftOutOf: () => [] },
 }))
 

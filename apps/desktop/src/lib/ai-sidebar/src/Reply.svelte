@@ -20,7 +20,7 @@
   import { viewport } from '../../ui-kit/src/api'
   import { views } from '../../views.svelte'
   import { when } from '../../when'
-  import { workspace } from '../../workspace.svelte'
+  import { workspace } from '../../workspace/src/api'
   import { ai } from '../../ai-providers/src/api'
   import { chat } from './chat-parts'
   import type { Source } from './chat-parts'

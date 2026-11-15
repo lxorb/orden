@@ -10,7 +10,7 @@
   import { offsetOf, type Rows, windowFor } from './windows/src/api'
   import { ListView, measuredRow } from './windows/src/api'
   import { folderOf, insideSpace } from './platform/src/api'
-  import { workspace } from './workspace.svelte'
+  import { workspace } from './workspace/src/api'
 
   type Row = Reference | Outgoing
 

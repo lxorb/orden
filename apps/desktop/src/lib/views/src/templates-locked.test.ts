@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-const { workspace } = await import('../../workspace.svelte')
+const { workspace } = await import('../../workspace/src/api')
 const { unlocks } = await import('../../protect/src/api')
 const { templates, templateWords } = await import('./templates')
 

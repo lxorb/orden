@@ -7,7 +7,7 @@ vi.mock('../../../web-tab/src/pages.svelte', () => ({
   pages: { adopt: (_id: string, handing: () => Promise<void>) => handing() },
 }))
 
-const { workspace } = await import('../../../workspace.svelte')
+const { workspace } = await import('../../../workspace/src/api')
 vi.spyOn(workspace, 'openPage').mockImplementation((url: string) => {
   opened.pages.push(url)
   return `reader-${String(opened.pages.length)}`

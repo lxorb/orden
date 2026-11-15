@@ -1,6 +1,6 @@
 import { withinSpace } from '../../../platform/src/api'
 import { views } from '../../../views.svelte'
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 import type { Front, Picked } from './gather'
 import type { Mention } from './mentions'
 

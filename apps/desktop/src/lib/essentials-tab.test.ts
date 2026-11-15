@@ -22,12 +22,12 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace.svelte')
+const { workspace } = await import('./workspace/src/api')
 const { keepAsTab, openEssential } = await import('./essentials.svelte')
 const { essentialLetters } = await import('./tab-strip/src/letters.svelte')
 const { droppedEssential } = await import('./tab-strip/src/essential-drop')
 const { flushSync } = await import('svelte')
-type Entry = import('./workspace.svelte').Entry
+type Entry = import('./workspace/src/api').Entry
 
 const file = (path: string): Entry => ({
   name: path.split('/').pop() ?? path,

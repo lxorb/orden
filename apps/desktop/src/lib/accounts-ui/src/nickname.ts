@@ -1,7 +1,7 @@
 import { account, nameIn } from '../../accounts/src/api'
 import { busy, message, prompt } from '../../ui-kit/src/api'
 import { sync } from '../../sync.svelte'
-import type { Space } from '../../workspace.svelte'
+import type { Space } from '../../workspace/src/api'
 
 export async function nameHere(space: Space): Promise<void> {
   const id = sync.remoteIdFor(space.root)

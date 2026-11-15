@@ -5,7 +5,7 @@ import appSource from '../../src/App.svelte?raw'
 import pullSource from '../../src/lib/PullMark.svelte?raw'
 import base from '../../../../packages/themes/src/base.css?raw'
 
-vi.mock('../../src/lib/workspace.svelte', () => ({
+vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: { showing: (pane: string) => (pane === 'p' ? { id: 't' } : null) },
 }))
 

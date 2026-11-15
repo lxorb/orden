@@ -1,4 +1,4 @@
-import { workspace } from '../../../workspace.svelte'
+import { workspace } from '../../../workspace/src/api'
 
 export async function keepInNote(text: string): Promise<void> {
   const front = workspace.active

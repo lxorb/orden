@@ -6,7 +6,7 @@
   import { prompt } from '../../../ui-kit/src/api'
   import { within } from '../../../platform/src/api'
   import { runner } from '../../../sync-client/src/api'
-  import { workspace } from '../../../workspace.svelte'
+  import { workspace } from '../../../workspace/src/api'
   import { cityOf } from './calls'
   import { opens, rowsOf, type SessionRow } from './listing'
   import { machine } from './machine.svelte'
