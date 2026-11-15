@@ -156,7 +156,7 @@ pub async fn explorer_clashes(
 }
 
 fn same(one: &Path, other: &Path) -> bool {
-    inside(one, other) && inside(other, one)
+    (inside(one, other) && inside(other, one)) || crate::notes::same_entry(one, other)
 }
 
 #[tauri::command]
@@ -764,6 +764,23 @@ mod tests {
             [(dir.path().join("a.txt"), dir.path().join("a 2.txt"))]
         );
         assert!(planned(&from, dir.path(), How::Move, Clash::Skip, &mut out).is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_carried_into_its_own_folder_by_another_way_is_never_replaced_by_itself() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let real = dir.path().join("real");
+        fs::create_dir(&real).expect("real");
+        fs::write(real.join("a.txt"), "a").expect("a");
+        let link = dir.path().join("link");
+        std::os::unix::fs::symlink(&real, &link).expect("link");
+        let from = vec![real.join("a.txt")];
+        let mut out = Transferred::default();
+        let plan = planned(&from, &link, How::Copy, Clash::Replace, &mut out);
+        assert_eq!(plan, [(real.join("a.txt"), link.join("a 2.txt"))]);
+        assert!(planned(&from, &link, How::Move, Clash::Replace, &mut out).is_empty());
+        assert!(out.failed.is_empty());
     }
 
     #[test]
