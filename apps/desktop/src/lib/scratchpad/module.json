@@ -14,12 +14,12 @@
     "parting",
     "link-index",
     "file-writes",
-    "workspace"
+    "workspace",
+    "held-database"
   ],
   "pending": [
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/held-database.ts",
     "apps/desktop/src/lib/keyboard-home.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/open-link.ts",

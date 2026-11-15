@@ -57,11 +57,11 @@ vi.mock('../../platform/src/api', async (original) => ({
   answer: () => undefined,
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
-vi.mock('../../commands/src/api', () => ({ appCommands: () => [] }))
 vi.mock('../../views.svelte', () => ({
   views: { of: () => (world.open ? { state: { readOnly: false } } : null) },
 }))
-vi.mock('../../insert-picture', () => ({
+vi.mock('../../commands/src/api', () => ({
+  appCommands: () => [],
   putPicture: () => undefined,
   writeAtCaret: (_view: unknown, words: string) => void world.typed.push(words),
 }))
@@ -74,7 +74,8 @@ vi.mock('../../ui-kit/src/api', async (original) => ({
     },
   },
 }))
-vi.mock('../../task-actions', () => ({
+vi.mock('../../tasks-model/src/api', async (original) => ({
+  ...(await original<typeof import('../../tasks-model/src/api')>()),
   addTask: (_text: string, options: { root?: string; typed?: boolean } = {}) => {
     world.tasks.push(options)
     return Promise.resolve({ path: `${options.root}/Inbox.md`, line: 0 })

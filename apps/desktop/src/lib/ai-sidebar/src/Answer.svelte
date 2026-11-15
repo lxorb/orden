@@ -1,12 +1,12 @@
 <script module lang="ts">
-  import { warmRenderer } from '../../markdown-view.svelte'
+  import { warmRenderer } from '../../chat-kit/src/api'
 
   warmRenderer()
 </script>
 
 <script lang="ts">
+  import { mathsWaiting } from '../../chat-kit/src/api'
   import { copyText } from '../../ui-controls/src/api'
-  import { mathsWaiting } from '../../markdown-view.svelte'
   import { drawInPieces } from './answer-pieces'
   import { patchHtml } from './patch-html'
 

@@ -61,7 +61,7 @@ import { links } from '../../link-index/src/api'
 import type { MenuItem } from '../../ui-kit/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
 import { printOpen } from '../../open-out'
-import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from '../../insert-picture'
+import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { moveTargets } from '../../move-targets'
 import { closeAfterLabel } from '../../panes/src/api'
 import { revealPanel, stepRegionFocus } from '../../focus'
@@ -768,7 +768,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'convert-syntax',
       label: 'Convert syntax',
       disabled: readOnly,
-      run: () => void import('../../convert-syntax').then((m) => m.convertSyntax()),
+      run: () => void runCommand('import.convert-syntax'),
     },
     ...(canPrint
       ? [

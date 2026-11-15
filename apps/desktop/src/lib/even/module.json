@@ -15,14 +15,14 @@
     "ai-providers",
     "scan",
     "search",
-    "workspace"
+    "workspace",
+    "tasks-model"
   ],
   "pending": [
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/plugin.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
 }

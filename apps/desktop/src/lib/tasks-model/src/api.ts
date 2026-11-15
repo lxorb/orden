@@ -29,3 +29,4 @@ export {
 export { TodoStore, type StoreWorld, type Opening } from './store.svelte'
 export { MemoryTodoDisk, MemoryTodoServer, type TodoDisk, type TodoServer } from './records'
 export { startTodos, todos } from './start.svelte'
+export { addTask, listed, priorityOf, tickTask } from './actions'

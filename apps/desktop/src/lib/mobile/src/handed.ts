@@ -13,8 +13,7 @@ import {
   onTheActivity,
   wordSaid,
 } from '../../platform/src/api'
-import { appCommands } from '../../commands/src/api'
-import { putPicture, writeAtCaret } from '../../insert-picture'
+import { appCommands, putPicture, writeAtCaret } from '../../commands/src/api'
 import { modes } from '../../modes.svelte'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace/src/api'
@@ -115,7 +114,7 @@ async function take(): Promise<void> {
 }
 
 async function ticked(at: string): Promise<void> {
-  const { tickTask } = await import('../../task-actions')
+  const { tickTask } = await import('../../tasks-model/src/api')
   await tickTask(at, true).catch((error: unknown) => {
     log('error', `handed: a task could not be ticked: ${String(error)}`)
   })
@@ -223,7 +222,7 @@ async function ask(
 }
 
 async function asATask(shared: Shared) {
-  const { addTask } = await import('../../task-actions')
+  const { addTask } = await import('../../tasks-model/src/api')
   await addTask(shared.task, { typed: false })
 }
 

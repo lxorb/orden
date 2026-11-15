@@ -43,7 +43,6 @@
     "apps/desktop/src/lib/failed.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/longpress.ts",
-    "apps/desktop/src/lib/markdown-view.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",

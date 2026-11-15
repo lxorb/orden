@@ -1,4 +1,4 @@
-import { heldDatabase } from '../../../held-database'
+import { heldDatabase } from '../../../held-database/src/api'
 
 const NAME = 'orden-wallpaper'
 const STORE = 'picture'

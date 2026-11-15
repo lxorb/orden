@@ -42,7 +42,7 @@
     const done = !isDone(one)
     const place = placeOf(one)
     ticked = { ...ticked, [place]: done }
-    void import('../../task-actions')
+    void import('../../tasks-model/src/api')
       .then(({ tickTask }) => tickTask(one.at, done))
       .catch(() => false)
       .then((landed) => {

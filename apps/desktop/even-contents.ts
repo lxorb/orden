@@ -129,6 +129,7 @@ export const APP_FOLDERS = [
   'graph-drawing',
   'graph-view',
   'handoff',
+  'held-database',
   'history',
   'import',
   'kept-for-good',

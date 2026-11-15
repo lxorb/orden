@@ -97,7 +97,7 @@ export function watchWidgets(): () => void {
   let today = $state<TodayRow[]>([])
 
   const read = async () => {
-    const { listed } = await import('../../task-actions')
+    const { listed } = await import('../../tasks-model/src/api')
     const tasks = listed().tasks
     today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.id === space)?.root)
   }

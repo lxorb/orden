@@ -111,8 +111,8 @@ class Bridge {
   private panel: Panel | null = null
   private shell: Shell | null = null
   private readonly todayList = new Today({
-    load: async () => (await import('../../task-actions')).listed().tasks,
-    tick: async (id, done) => (await import('../../task-actions')).tickTask(id, done),
+    load: async () => (await import('../../tasks-model/src/api')).listed().tasks,
+    tick: async (id, done) => (await import('../../tasks-model/src/api')).tickTask(id, done),
     redraw: () => this.act('draw'),
   })
   private voice: Voice | null = null
@@ -634,7 +634,7 @@ class Bridge {
   }
 
   private async addSpoken(words: string): Promise<void> {
-    const { addTask } = await import('../../task-actions')
+    const { addTask } = await import('../../tasks-model/src/api')
     const added = await addTask(words).catch(() => null)
     if (added) this.flash('Done')
   }

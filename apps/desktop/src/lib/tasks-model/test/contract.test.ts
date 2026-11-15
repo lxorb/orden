@@ -8,6 +8,7 @@ import {
   LIMITS,
   MemoryTodoDisk,
   MemoryTodoServer,
+  priorityOf,
   priorityTone,
   shownTodos,
   SORTS,
@@ -64,7 +65,7 @@ const todo = (over: Partial<Todo>): Todo => ({
 })
 
 describe('tasks-model contract', () => {
-  test('nothing under src reaches the shell: only contracts, sync-core and the held database', () => {
+  test('nothing under src reaches the shell: only contracts, sync-core, the held database and the task line of markdown', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
       const text = readFileSync(join(src, name), 'utf8')
@@ -74,7 +75,8 @@ describe('tasks-model contract', () => {
           one.startsWith('./') ||
           one === '@orden/contracts' ||
           one === '@orden/sync-core' ||
-          one === '../../held-database'
+          one === '../../held-database/src/api' ||
+          one === '@orden/markdown/task-line'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }
@@ -306,5 +308,9 @@ describe('a priority', () => {
       'var(--canvas-5)',
     ])
     expect(priorityTone(4)).toBeUndefined()
+  })
+
+  test('said in a quick add, the first is the highest and none is plain', () => {
+    expect(([1, 2, 3, undefined] as const).map((one) => priorityOf(one))).toEqual([3, 2, 1, 0])
   })
 })

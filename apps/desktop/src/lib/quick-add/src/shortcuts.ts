@@ -27,7 +27,7 @@ interface Added {
 type Add = (text: string) => Promise<boolean>
 
 async function addedHere(text: string): Promise<boolean> {
-  const { addTask } = await import('../../task-actions')
+  const { addTask } = await import('../../tasks-model/src/api')
   return (await addTask(text, { typed: false })) !== null
 }
 

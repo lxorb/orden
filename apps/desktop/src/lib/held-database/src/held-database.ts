@@ -1,4 +1,4 @@
-export interface HeldDatabase {
+interface HeldDatabase {
   transaction(
     stores: string | readonly string[],
     mode?: IDBTransactionMode,
