@@ -1,5 +1,5 @@
 import type { Entry } from '@orden/contracts'
-import { byDefault, shownNames, type Row } from './tree/src/api'
+import { byDefault, shownNames, type Row } from '../../tree/src/api'
 
 function sortedFrom(rows: readonly Row[], at: number): boolean {
   for (let index = at + 1; index < rows.length; index++) {

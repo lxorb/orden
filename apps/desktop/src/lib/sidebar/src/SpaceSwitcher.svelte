@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { arrive, leave } from './ui-kit/src/api'
-  import Door from './Door.svelte'
+  import { arrive, leave } from '../../ui-kit/src/api'
+  import Door from '../../Door.svelte'
   import NameField from './NameField.svelte'
-  import { overlays } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { commitSpaceName } from './space-actions'
-  import SharedMark from './SharedMark.svelte'
-  import SpaceBadge from './SpaceBadge.svelte'
-  import { spacesMenu } from './surfaces.svelte'
-  import { isShared } from './sharing/src/api'
-  import { workspace } from './workspace/src/api'
+  import { overlays } from '../../ui-kit/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { commitSpaceName } from '../../space-actions'
+  import SharedMark from '../../SharedMark.svelte'
+  import SpaceBadge from '../../SpaceBadge.svelte'
+  import { spacesMenu } from '../../surfaces.svelte'
+  import { isShared } from '../../sharing/src/api'
+  import { workspace } from '../../workspace/src/api'
 
   let open = $state(false)
 

@@ -1,3 +1,6 @@
+import type { SidebarPart } from '@orden/contracts'
+import { scratchFromDrawer, shown } from './is.svelte'
+
 export {
   SCRATCHPAD,
   closeScratchpad,
@@ -22,3 +25,10 @@ export const loadScratchpadCard = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('not in the plugin'))
     : import('./ScratchpadCard.svelte')
+
+export const scratchpadPart: SidebarPart = {
+  id: 'scratchpad',
+  open: () => shown.on,
+  toggle: scratchFromDrawer,
+  toTab: () => pad().then((one) => one.asNote()),
+}

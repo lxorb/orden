@@ -64,5 +64,5 @@ test('every way the sidebar deletes asks through it', () => {
   const menu = read('../../row-menu.ts')
   expect(menu).toMatch(/if \(!inside\) \{\s*if \(await chatsKept\(\[entry\.path\]\)\) return/)
   expect(menu).toContain('run: () => void removeAsking(paths)')
-  expect(read('../../Tree.svelte')).toContain('one.removeAsking(going)')
+  expect(read('../../sidebar/src/Tree.svelte')).toContain('one.removeAsking(going)')
 })

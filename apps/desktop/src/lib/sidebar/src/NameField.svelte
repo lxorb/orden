@@ -1,9 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { hang } from './ui-kit/src/api'
-  import { dur, fly } from './platform/src/api'
-  import { type NameFault, nameFault, nameToCommit } from './platform/src/api'
-  import { caretAtEnd, selectAll, selectStem } from './ui-kit/src/api'
+  import { hang } from '../../ui-kit/src/api'
+  import { dur, fly } from '../../platform/src/api'
+  import { type NameFault, nameFault, nameToCommit } from '../../platform/src/api'
+  import { caretAtEnd, selectAll, selectStem } from '../../ui-kit/src/api'
 
   interface Props {
     value: string
@@ -82,7 +82,7 @@
     if (told) void refused().then((one) => one.reservedName.tell(told))
   }
 
-  const refused = () => import('./reserved-name.svelte')
+  const refused = () => import('../../reserved-name.svelte')
 
   let field = $state<HTMLInputElement>()
   let hint = $state<HTMLButtonElement>()

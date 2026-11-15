@@ -30,18 +30,18 @@ const ROW_SCALE = {
 }
 
 const SURFACES = [
-  'lib/Bookmarks.svelte',
+  'lib/sidebar/src/Bookmarks.svelte',
   'lib/canvas/src/CanvasBar.svelte',
   'lib/ContextMenu.svelte',
   'lib/FindBar.svelte',
   'lib/Links.svelte',
   'lib/SearchPanel.svelte',
-  'lib/Sidebar.svelte',
-  'lib/SidebarFoot.svelte',
-  'lib/SpaceSwitcher.svelte',
+  'lib/sidebar/src/Sidebar.svelte',
+  'lib/sidebar/src/SidebarFoot.svelte',
+  'lib/sidebar/src/SpaceSwitcher.svelte',
   'lib/TagTree.svelte',
   'lib/Titlebar.svelte',
-  'lib/Tree.svelte',
+  'lib/sidebar/src/Tree.svelte',
   'lib/palette/src/Palette.svelte',
 ]
 
@@ -160,7 +160,7 @@ describe('the touch scale', () => {
   })
 
   test('a tree row is a row, and its marks are drawn at the row', () => {
-    const tree = components.find((one) => one.name === 'lib/Tree.svelte')?.style ?? ''
+    const tree = components.find((one) => one.name === 'lib/sidebar/src/Tree.svelte')?.style ?? ''
     const mark = components.find((one) => one.name === 'lib/FileMark.svelte')?.style ?? ''
 
     expect(tree).toContain('var(--row-indent)')

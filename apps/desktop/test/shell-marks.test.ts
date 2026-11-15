@@ -60,7 +60,7 @@ describe('a mark that fills the box it was given', () => {
   })
 
   test('and so does the space named over the file list, out of the one badge', () => {
-    const switcher = named('lib/SpaceSwitcher.svelte')
+    const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
     const badge = named('lib/SpaceBadge.svelte')
     const row = named('lib/SpaceRow.svelte')
 
@@ -73,7 +73,7 @@ describe('a mark that fills the box it was given', () => {
   })
 
   test('and the chevron beside it is stroked in its own ink, not filled in black', () => {
-    const style = declarations(named('lib/SpaceSwitcher.svelte').style)
+    const style = declarations(named('lib/sidebar/src/SpaceSwitcher.svelte').style)
     const chevron = /\.chevron\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
 
     expect(chevron).toMatch(/fill\s*:\s*none/)
@@ -127,17 +127,17 @@ describe('the mark that says shared', () => {
   })
 
   test('and the file list says it on the note itself', () => {
-    const tree = named('lib/Tree.svelte')
-    expect(tree.text).toContain("import SharedMark from './SharedMark.svelte'")
+    const tree = named('lib/sidebar/src/Tree.svelte')
+    expect(tree.text).toContain("import SharedMark from '../../SharedMark.svelte'")
     expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
     expect(tree.text).toContain('othersIn(')
     expect(tree.text).toContain('isSharedItem(')
   })
 
   test('and the switcher says it with the mark instead', () => {
-    const switcher = named('lib/SpaceSwitcher.svelte')
+    const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
     const row = named('lib/SpaceRow.svelte')
-    expect(switcher.text).toContain("import SharedMark from './SharedMark.svelte'")
+    expect(switcher.text).toContain("import SharedMark from '../../SharedMark.svelte'")
     expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text).toContain('<SharedMark icon={Eye} label="Read-only" />')

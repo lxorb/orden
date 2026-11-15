@@ -6,18 +6,18 @@
     dropOver,
     isSectionDrag,
     landing,
-  } from './drag-paths'
-  import { dropOnList } from './list-landing.svelte'
-  import { movesSection } from './sections'
+  } from '../../drag-paths'
+  import { dropOnList } from '../../list-landing.svelte'
+  import { movesSection } from '../../sections'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { longPress } from './longpress'
-  import { landsIn } from './move-targets'
-  import { shortcuts } from './shortcuts/src/api'
-  import { agentMarks } from './agent-marks.svelte'
-  import { chatStore, chatsUnread, lookAtLaunch } from './ai-chat/src/api'
-  import { UnreadDot } from './ui-kit/src/api'
-  import { account, arriving } from './accounts/src/api'
+  import { longPress } from '../../longpress'
+  import { landsIn } from '../../move-targets'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { agentMarks } from '../../agent-marks.svelte'
+  import { sidebarPart } from '@orden/contracts'
+  import { UnreadDot } from '../../ui-kit/src/api'
+  import { account, arriving } from '../../accounts/src/api'
   import {
     ASK_MARK,
     CHATS_MARK,
@@ -30,12 +30,11 @@
     SCRATCHPAD_MARK,
     TASKS_MARK,
     TIME_MARK,
-  } from './panel-marks'
-  import { newSpace } from './space-actions'
-  import { arrive, leave, segmented } from './ui-kit/src/api'
-  import { panels, type Panel, type PanelSide } from './session/src/api'
-  import { headingAt, lineOf } from './documents/src/api'
-  import { pages } from './pages/src/api'
+  } from '../../panel-marks'
+  import { newSpace } from '../../space-actions'
+  import { arrive, leave, segmented } from '../../ui-kit/src/api'
+  import { panels, type Panel, type PanelSide } from '../../session/src/api'
+  import { headingAt, lineOf } from '../../documents/src/api'
   import {
     archiveSection,
     askPanel,
@@ -48,34 +47,33 @@
     searchPanel,
     tasksPanel,
     timePanel,
-  } from './surfaces.svelte'
-  import { scratchFromDrawer, shown as pad } from './scratchpad/src/api'
-  import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
-  import { roving } from './roving'
-  import { pullable } from './pull.svelte'
-  import { scrollbar } from './ui-kit/src/api'
-  import { workspace } from './workspace/src/api'
-  import { links } from './link-index/src/api'
-  import { worthAGraph } from './graph/src/api'
-  import { DEEPEST, SHALLOWEST } from './space-kept/src/api'
-  import { search } from './search.svelte'
-  import { SidebarWidth } from './sidebar-width.svelte'
-  import { viewport } from './ui-kit/src/api'
-  import { edgePeek } from './edge-peek.svelte'
-  import { overlays } from './ui-kit/src/api'
-  import { fullscreen } from './fullscreen.svelte'
-  import { alone } from './alone.svelte'
-  import { chatsOn, hiddenKinds, timeOn } from './settings.svelte'
-  import { canWriteAt } from './sharing/src/api'
+  } from '../../surfaces.svelte'
+  import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { roving } from '../../roving'
+  import { pullable } from '../../pull.svelte'
+  import { scrollbar } from '../../ui-kit/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { links } from '../../link-index/src/api'
+  import { worthAGraph } from '../../graph/src/api'
+  import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
+  import { search } from '../../search.svelte'
+  import { SidebarWidth } from '../../sidebar-width.svelte'
+  import { viewport } from '../../ui-kit/src/api'
+  import { edgePeek } from '../../edge-peek.svelte'
+  import { overlays } from '../../ui-kit/src/api'
+  import { fullscreen } from '../../fullscreen.svelte'
+  import { alone } from '../../alone.svelte'
+  import { chatsOn, hiddenKinds, timeOn } from '../../settings.svelte'
+  import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
-  import SidebarToggle from './SidebarToggle.svelte'
-  import { swipeOpens } from './swipe-opens'
+  import SidebarToggle from '../../SidebarToggle.svelte'
+  import { swipeOpens } from '../../swipe-opens'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
-  import { dropTarget } from './drop-target.svelte'
+  import { dropTarget } from '../../drop-target.svelte'
   import Tree from './Tree.svelte'
-  import { dur, fade, fly } from './platform/src/api'
-  import { startup } from './launch/src/api'
+  import { dur, fade, fly } from '../../platform/src/api'
+  import { startup } from '../../launch/src/api'
 
   const {
     side = 'left',
@@ -115,13 +113,12 @@
 
   const HOLD_MARK = 'M4.6 2h4M6.6 2v3.2M4 5.2h5.2M6.6 5.2v5.6'
 
-  const FRESH_MARK =
-    'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
-
-  const THREADS_MARK =
-    'M2 6.5a4.5 4.5 0 1 0 4.5-4.5 4.9 4.9 0 0 0-3.4 1.4L2 4.5M2 2v2.5h2.5M6.5 4v2.5l2 1'
-
   const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
+
+  const ask = sidebarPart('ask')
+  const pad = sidebarPart('scratchpad')
+  const outlined = sidebarPart('outline')
+  const unread = $derived(ask?.unread?.() ?? false)
 
   const phoneTabs = $derived(side === 'left' && viewport.device === 'phone' && !__EVEN_PLUGIN__)
 
@@ -133,7 +130,7 @@
 
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
   const showing = $derived.by((): Panel | 'scratchpad' => {
-    if (side === 'right' && padHere && pad.on) return 'scratchpad'
+    if (side === 'right' && padHere && pad?.open?.()) return 'scratchpad'
     const open = workspace.openOn(side)
     const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
     if (open) lastShown = open
@@ -260,7 +257,7 @@
   ]
 
   $effect(() => {
-    void lookAtLaunch(workspace.spaces.map((one) => one.id))
+    ask?.spaces?.(workspace.spaces.map((one) => one.id))
   })
 
   const mine = $derived.by(() => {
@@ -339,17 +336,14 @@
     const own = import('./panel-menu')
     const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
     if (id !== 'tree') {
-      const making =
-        id === 'time' && !__EVEN_PLUGIN__ && timeOn()
-          ? import('./time/src/api').then(({ trackingMenu }) => trackingMenu())
-          : Promise.resolve([])
+      const making = sidebarPart(id)?.menu?.() ?? Promise.resolve([])
       void Promise.all([own, making]).then(([{ panelMenu }, rows]) =>
-        shown(panelMenu(id, side, rows)),
+        shown(panelMenu(id, side, [...rows])),
       )
       return
     }
 
-    void Promise.all([import('./order-menu'), import('./row-menu'), own]).then(
+    void Promise.all([import('./order-menu'), import('../../row-menu'), own]).then(
       ([{ orderMenu }, { newFileRows }, { panelMenu }]) =>
         shown([...orderMenu(), DIVIDER, ...panelMenu(id, side, newFileRows())]),
     )
@@ -358,7 +352,7 @@
   function showSpaceMenu(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
-    void import('./row-menu').then(({ newFileRows }) =>
+    void import('../../row-menu').then(({ newFileRows }) =>
       menu.show(event, newFileRows(), titleOfSpace()),
     )
   }
@@ -458,7 +452,7 @@
         label: 'Move',
         run: () => {
           void (async () => {
-            const { prompt } = await import('./ui-kit/src/api')
+            const { prompt } = await import('../../ui-kit/src/api')
             const to = await prompt.find({
               title: 'Move after',
               options: targets.map((one) => ({ id: one.id, label: one.label })),
@@ -568,7 +562,7 @@
         <SpaceSwitcher />
         {#if phoneTabs}
           {#await phoneYou() then PhoneYou}
-            <PhoneYou scratchpad={scratchFromDrawer} />
+            <PhoneYou scratchpad={() => pad?.toggle?.()} />
           {/await}
         {/if}
       </div>
@@ -599,9 +593,7 @@
               data-tab={item.id}
               role="tab"
               title={shortcuts.tooltip(item.label, commandOf(item.id))}
-              aria-label={item.id === 'ask' && chatsUnread.any
-                ? `${item.label}, unread`
-                : item.label}
+              aria-label={item.id === 'ask' && unread ? `${item.label}, unread` : item.label}
               aria-selected={showing === item.id}
               onclick={(event) => {
                 if (event.detail > 1) return
@@ -610,7 +602,7 @@
               }}
               ondblclick={() => {
                 const id = firstPress ?? item.id
-                void import('./panel-tab').then(({ openAsTab }) => openAsTab(id))
+                void sidebarPart(id)?.toTab?.()
               }}
               oncontextmenu={(event) => {
                 if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
@@ -625,7 +617,7 @@
                   {agentMarks.waiting}
                 </span>
               {/if}
-              {#if item.id === 'ask' && chatsUnread.any}
+              {#if item.id === 'ask' && unread}
                 <UnreadDot corner />
               {/if}
             </button>
@@ -647,7 +639,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
-        {#await import('./HintCard.svelte') then card}
+        {#await import('../../HintCard.svelte') then card}
           <card.default
             hint="graph"
             side="below"
@@ -659,7 +651,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && paletteKey && startup.settled}
-        {#await import('./HintCard.svelte') then card}
+        {#await import('../../HintCard.svelte') then card}
           <card.default
             hint="palette"
             side="below"
@@ -743,28 +735,17 @@
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
         {/if}
-        {#if showing === 'ask'}
-          <button
-            class="orden-glyph tool fresh"
-            title="New chat"
-            aria-label="New chat"
-            onclick={() => {
-              if (!__EVEN_PLUGIN__) void chatStore().then((one) => one.chat.newThread())
-            }}
-          >
-            <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
-          </button>
+        {#each sidebarPart(showing)?.tools ?? [] as tool (tool.id)}
           <button
             class="orden-glyph tool"
-            title={shortcuts.tooltip('Chats', 'app.ask')}
-            aria-label="Chats"
-            onclick={() => {
-              if (!__EVEN_PLUGIN__) void chatStore().then((one) => one.chat.showThreads())
-            }}
+            data-tool={tool.id}
+            title={tool.command ? shortcuts.tooltip(tool.label, tool.command) : tool.label}
+            aria-label={tool.label}
+            onclick={() => tool.run()}
           >
-            <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
+            <svg viewBox="0 0 13 13"><path d={tool.mark} /></svg>
           </button>
-        {/if}
+        {/each}
       </div>
     </div>
 
@@ -816,7 +797,7 @@
               <button class="empty" onclick={() => newSpace()}>Create a space</button>
             {/if}
           {:else if showing === 'outline'}
-            {#if pages.current}
+            {#if outlined?.covers?.()}
               {#await pagesNavigator() then PagesNavigator}
                 <PagesNavigator />
               {/await}
@@ -916,7 +897,7 @@
     {/if}
     {#if phoneTabs}
       {#await phoneTabsBar() then PhoneTabs}
-        <PhoneTabs unread={chatsUnread.any} />
+        <PhoneTabs {unread} />
       {/await}
     {/if}
   </aside>
@@ -1313,7 +1294,7 @@
     padding: 0;
   }
 
-  aside:has(:global(.ask.is-empty)) .fresh {
+  aside:has(:global(.ask.is-empty)) [data-tool='new-chat'] {
     display: none;
   }
 

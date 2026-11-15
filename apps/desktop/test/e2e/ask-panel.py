@@ -296,7 +296,7 @@ def asked(page: Page) -> None:
     if "It faces the wind [[Hovering]]." not in text:
         wrong(f"Insert did not write the answer with its citation as a link: {text[-60:]!r}")
 
-    page.locator(".fresh").click()
+    page.locator("[data-tool='new-chat']").click()
     page.wait_for_timeout(300)
     if page.locator(".ask .answer").count():
         wrong("the pen did not start the conversation again")

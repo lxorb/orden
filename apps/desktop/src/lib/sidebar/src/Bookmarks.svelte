@@ -1,23 +1,23 @@
 <script lang="ts">
   import type { Bookmark, Entry } from '@orden/contracts'
-  import { dropOver } from './drag-paths'
+  import { dropOver } from '../../drag-paths'
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
   import { isBaseTarget } from '@orden/markdown/links'
   import BookmarkTile from './BookmarkTile.svelte'
-  import { fileMark, type FileMark as Mark } from './file-mark'
-  import FileMark from './FileMark.svelte'
-  import { folderNote } from './tree/src/api'
-  import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from './menu.svelte'
-  import { dur, scale } from './platform/src/api'
-  import Twist from './Twist.svelte'
-  import { longPress } from './longpress'
-  import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from './new-tab'
-  import { roving } from './roving'
-  import { GRAPH_MARK, SEARCH_MARK } from './panel-marks'
-  import { rowName } from './platform/src/api'
+  import { fileMark, type FileMark as Mark } from '../../file-mark'
+  import FileMark from '../../FileMark.svelte'
+  import { folderNote } from '../../tree/src/api'
+  import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from '../../menu.svelte'
+  import { dur, scale } from '../../platform/src/api'
+  import Twist from '../../Twist.svelte'
+  import { longPress } from '../../longpress'
+  import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
+  import { roving } from '../../roving'
+  import { GRAPH_MARK, SEARCH_MARK } from '../../panel-marks'
+  import { rowName } from '../../platform/src/api'
   import {
     carried,
     carriedNothing,
@@ -25,12 +25,12 @@
     carryBookmark,
     draggedBookmark,
     isTreeDrag,
-  } from './drag-paths'
-  import { basesOn } from './settings.svelte'
-  import { insideSpace, samePath } from './platform/src/api'
-  import { isTile, sameBookmark } from './space-kept/src/api'
-  import { workspace } from './workspace/src/api'
-  import { tabLetters, tabUnloading } from './tab-strip/src/api'
+  } from '../../drag-paths'
+  import { basesOn } from '../../settings.svelte'
+  import { insideSpace, samePath } from '../../platform/src/api'
+  import { isTile, sameBookmark } from '../../space-kept/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()
 
@@ -155,8 +155,8 @@
     return mark !== null && !workspace.bookmarks.has(mark)
   })
 
-  const reckoning = door(() => import('./essentials.svelte'))
-  let hands = $state.raw<typeof import('./essentials.svelte') | null>(null)
+  const reckoning = door(() => import('../../essentials.svelte'))
+  let hands = $state.raw<typeof import('../../essentials.svelte') | null>(null)
   const reach = () => {
     if (!hands) void reckoning().then((one) => (hands = one))
   }
@@ -330,13 +330,13 @@
   }
 
   async function newGroup() {
-    const { prompt } = await import('./ui-kit/src/api')
+    const { prompt } = await import('../../ui-kit/src/api')
     const name = await prompt.ask({ title: 'New group', confirmLabel: 'Make' })
     if (name) workspace.bookmarks.addGroup(name)
   }
 
   async function renameGroup(mark: Bookmark) {
-    const { prompt } = await import('./ui-kit/src/api')
+    const { prompt } = await import('../../ui-kit/src/api')
     const name = await prompt.ask({
       title: 'Rename',
       value: mark.text,

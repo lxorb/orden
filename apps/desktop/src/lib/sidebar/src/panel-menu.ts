@@ -1,8 +1,8 @@
-import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
-import { hasTab, openAsTab } from './panel-tab'
-import { search, type SearchSort } from './search.svelte'
-import { panels, type Panel, type PanelSide } from './session/src/api'
-import { workspace } from './workspace/src/api'
+import { sidebarPart } from '@orden/contracts'
+import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
+import { search, type SearchSort } from '../../search.svelte'
+import { panels, type Panel, type PanelSide } from '../../session/src/api'
+import { workspace } from '../../workspace/src/api'
 
 function sortMenu(making: MenuEntry[]): MenuEntry[] {
   return [
@@ -44,11 +44,9 @@ export function panelMenu(
   side: PanelSide | undefined,
   making: MenuEntry[] = [],
 ): MenuEntry[] {
-  const sorts =
-    id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : id === 'time' ? making : []
-  const asTab: MenuEntry[] = hasTab(id)
-    ? [{ label: 'Open in new tab', run: () => openAsTab(id) }]
-    : []
+  const sorts = id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : making
+  const toTab = sidebarPart(id)?.toTab
+  const asTab: MenuEntry[] = toTab ? [{ label: 'Open in new tab', run: () => void toTab() }] : []
   const own = [...asTab, ...(asTab.length && sorts.length ? [DIVIDER] : []), ...sorts]
   const there: PanelSide = side === 'right' ? 'left' : 'right'
 

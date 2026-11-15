@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
-import NameField from '../src/lib/NameField.svelte'
+import NameField from '../src/lib/sidebar/src/NameField.svelte'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
@@ -24,8 +24,8 @@ function componentFiles(dir: string): string[] {
 
 const components = componentFiles(SOURCE)
 
-const tree = read('lib/Tree.svelte')
-const switcher = read('lib/SpaceSwitcher.svelte')
+const tree = read('lib/sidebar/src/Tree.svelte')
+const switcher = read('lib/sidebar/src/SpaceSwitcher.svelte')
 const shared = readFileSync(`${THEMES}base.css`, 'utf8')
 
 const naming = tree.slice(
@@ -85,7 +85,7 @@ describe('the field that renames', () => {
     const asking = components.filter((name) => read(name).includes('<NameField')).sort()
     const knowing = components.filter((name) => read(name).includes('workspace.naming')).sort()
 
-    expect(asking).toEqual(['lib/SpaceSwitcher.svelte', 'lib/Tree.svelte'])
+    expect(asking).toEqual(['lib/sidebar/src/SpaceSwitcher.svelte', 'lib/sidebar/src/Tree.svelte'])
     expect(knowing).toEqual(['App.svelte', ...asking])
   })
 
@@ -100,8 +100,8 @@ describe('the field that renames', () => {
     expect(shared.slice(shared.indexOf('.is-wrong'))).toContain('var(--danger)')
 
     for (const [name, text] of [
-      ['lib/Tree.svelte', tree],
-      ['lib/SpaceSwitcher.svelte', switcher],
+      ['lib/sidebar/src/Tree.svelte', tree],
+      ['lib/sidebar/src/SpaceSwitcher.svelte', switcher],
     ] as const) {
       expect(text, name).toContain('class:is-wrong={wrong}')
       expect(text, name).toContain('bind:wrong')
@@ -148,7 +148,7 @@ describe('what the field draws', () => {
 })
 
 describe('the keys the field takes', () => {
-  const field = read('lib/NameField.svelte')
+  const field = read('lib/sidebar/src/NameField.svelte')
 
   test('Enter writes the name, Escape puts it back, and so does clicking away', () => {
     expect(field).toContain("if (event.key === 'Enter')")

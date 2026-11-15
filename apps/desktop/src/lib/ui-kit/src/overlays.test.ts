@@ -312,11 +312,12 @@ describe('what hides a web page', () => {
     'lib/PromptSheet.svelte': 'dialog',
     'lib/ai-sidebar/src/QuickQuestion.svelte': 'dialog',
     'lib/ui-controls/src/Select.svelte': 'dropdown',
-    'lib/Sidebar.svelte': 'the shut file list, out over the note while the pointer is on it',
+    'lib/sidebar/src/Sidebar.svelte':
+      'the shut file list, out over the note while the pointer is on it',
     'lib/ui-controls/src/Sheet.svelte': 'sheet',
     'lib/accounts-ui/src/SignIn.svelte': 'sheet',
     'lib/SpacePicker.svelte': 'dialog',
-    'lib/SpaceSwitcher.svelte': 'menu',
+    'lib/sidebar/src/SpaceSwitcher.svelte': 'menu',
     'lib/overview/src/Overview.svelte': 'dialog',
     'lib/pass-ui/src/PassFill.svelte':
       "Pass's offer to fill, save or sign in, under a web tab's bar",
@@ -372,7 +373,10 @@ describe('what hides a web page', () => {
 
   test('what comes out under a resting pointer is a peek, and nothing opened by a press is', () => {
     const peeks = sources().filter((path) => read(path).includes('overlays.peek('))
-    expect(peeks.sort()).toEqual(['lib/Sidebar.svelte', 'lib/tab-strip/src/hover-card.svelte.ts'])
+    expect(peeks.sort()).toEqual([
+      'lib/sidebar/src/Sidebar.svelte',
+      'lib/tab-strip/src/hover-card.svelte.ts',
+    ])
     for (const path of peeks) expect(read(path), path).not.toContain('overlays.show(')
   })
 

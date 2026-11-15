@@ -36,7 +36,8 @@ globalThis.ResizeObserver = class {
 
 const { Disk } = await import('../disk')
 const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
-const { default: Sidebar } = await import('../../src/lib/Sidebar.svelte')
+const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')
+await (await import('../sidebar-parts')).registerSidebarParts()
 const { loadScratchpadCard, pad, shown, toggleScratchpad } =
   await import('../../src/lib/scratchpad/src/api')
 const { default: ScratchpadCard } = await loadScratchpadCard()

@@ -7,7 +7,7 @@
   import { prompt } from '../../../ui-kit/src/api'
   import { reloading } from '../../../reloading.svelte'
   import { said } from '../../../ui-kit/src/api'
-  import SidebarFoot from '../../../SidebarFoot.svelte'
+  import { SidebarFoot } from '../../../sidebar/src/api'
   import { contextMenu, feedbackSheet, promptSheet, signInSheet } from '../../../surfaces.svelte'
   import Gate from '../Gate.svelte'
   import PassTab from '../PassTab.svelte'

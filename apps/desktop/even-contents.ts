@@ -171,6 +171,7 @@ export const APP_FOLDERS = [
   'settings',
   'sharing',
   'shortcuts',
+  'sidebar',
   'snapshots',
   'space-kept',
   'space-pick',

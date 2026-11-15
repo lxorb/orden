@@ -108,23 +108,26 @@ export {
 } from './events'
 export {
   type CommandExtension,
-  EMPTY_EXTENSIONS,
   type FileMark,
   type NewKind,
   type PanelSide,
-  type SettingsSectionExtension,
   type SettingsSectionId,
-  type ShellExtensions,
-  type ShellRegistry,
-  type SidebarPanelExtension,
   type SidebarPanelId,
   isTabKind,
   TAB_KINDS,
   type TabKind,
-  type TabKindExtension,
   type TabKindTraits,
   type TabPanel,
 } from './shell'
+export {
+  registerSidebarPart,
+  type SidebarMenuEntry,
+  type SidebarMenuItem,
+  type SidebarPart,
+  type SidebarPartId,
+  sidebarPart,
+  type SidebarTool,
+} from './sidebar'
 export {
   NO_HOSTS,
   NO_MESSAGES,

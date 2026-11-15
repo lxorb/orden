@@ -67,7 +67,7 @@ describe('where it is asked for', () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
   test('not the left side’s head, whose checkbox is gone (#1110)', () => {
-    const sidebar = read('../../Sidebar.svelte')
+    const sidebar = read('../../sidebar/src/Sidebar.svelte')
     const head = sidebar.slice(
       sidebar.indexOf('<div class="head"'),
       sidebar.indexOf('<div class="switch"'),
@@ -77,8 +77,12 @@ describe('where it is asked for', () => {
   })
 
   test('a double press on a side’s Todos icon, which opens a panel as its tab', () => {
-    expect(read('../../Sidebar.svelte')).toMatch(/ondblclick=[\s\S]*?import\('\.\/panel-tab'\)/)
-    expect(read('../../panel-tab.ts')).toMatch(/tasks: \(\) => runCommand\('views\.todos'\)/)
+    expect(read('../../sidebar/src/Sidebar.svelte')).toMatch(
+      /ondblclick=[\s\S]*?sidebarPart\(id\)\?\.toTab\?\.\(\)/,
+    )
+    expect(read('../../features.ts')).toMatch(
+      /registerSidebarPart\(\{ id: 'tasks', toTab: \(\) => runCommand\('views\.todos'\)/,
+    )
   })
 
   test('its key, and the palette’s row, which says the key', () => {

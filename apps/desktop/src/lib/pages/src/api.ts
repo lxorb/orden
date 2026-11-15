@@ -1,4 +1,7 @@
-export { pages } from './showing.svelte'
+import type { SidebarPart } from '@orden/contracts'
+import { pages } from './showing.svelte'
+
+export { pages }
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
 
@@ -16,3 +19,8 @@ export const pagesOut = () =>
     : import('./out')
 
 export const pdfTabs = () => import('./pdf-tabs')
+
+export const outlinePart: SidebarPart = {
+  id: 'outline',
+  covers: () => pages.current !== null,
+}

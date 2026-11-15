@@ -1,6 +1,6 @@
-import { DIVIDER, type MenuEntry } from './menu.svelte'
-import { SORT_MODES, type SortMode } from './tree/src/api'
-import { workspace } from './workspace/src/api'
+import { DIVIDER, type MenuEntry } from '../../menu.svelte'
+import { SORT_MODES, type SortMode } from '../../tree/src/api'
+import { workspace } from '../../workspace/src/api'
 
 const WORDS: Record<SortMode, () => string> = {
   name: () => 'Name, A to Z',

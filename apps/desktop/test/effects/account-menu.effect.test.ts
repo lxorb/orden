@@ -3,7 +3,7 @@ import { afterEach, expect, test } from 'vitest'
 import { account } from '../../src/lib/accounts/src/account.svelte'
 import { menu, type MenuItem } from '../../src/lib/menu.svelte'
 import { settings } from '../../src/lib/settings.svelte'
-import SidebarFoot from '../../src/lib/SidebarFoot.svelte'
+import SidebarFoot from '../../src/lib/sidebar/src/SidebarFoot.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
 
 afterEach(() => {

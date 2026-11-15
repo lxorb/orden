@@ -24,7 +24,7 @@ function componentsWith(glyph: string): string[] {
 }
 
 const titlebar = read('lib/Titlebar.svelte')
-const sidebar = read('lib/Sidebar.svelte')
+const sidebar = read('lib/sidebar/src/Sidebar.svelte')
 const toggle = read('lib/SidebarToggle.svelte')
 
 const PANEL = '<rect x="1" y="2.5" width="12" height="9" rx="1.5" />'
@@ -36,7 +36,7 @@ describe('the button that opens the file list', () => {
 
     for (const [name, text] of [
       ['lib/Titlebar.svelte', titlebar],
-      ['lib/Sidebar.svelte', sidebar],
+      ['lib/sidebar/src/Sidebar.svelte', sidebar],
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
       expect(text, `${name} uses the component`).toMatch(
@@ -51,7 +51,7 @@ describe('the button that opens the file list', () => {
   })
 
   test('is said and not shown in the drawer head on the same condition as the bar', () => {
-    expect(sidebar).toContain("import { swipeOpens } from './swipe-opens'")
+    expect(sidebar).toContain("import { swipeOpens } from '../../swipe-opens'")
     expect(sidebar.replace(/\s+/g, ' ')).toContain('<SidebarToggle unseen={swipeOpens()} />')
   })
 

@@ -1,5 +1,5 @@
 import { tick } from 'svelte'
-import { dur } from './platform/src/api'
+import { dur } from '../../platform/src/api'
 
 const SETTLING = 180
 

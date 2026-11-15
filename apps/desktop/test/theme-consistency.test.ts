@@ -197,7 +197,7 @@ describe('the paper a note is written on', () => {
 
 describe('what a side shows', () => {
   const FLOATING = ['orden-layer', 'orden-screen', 'orden-bubble']
-  const sidebar = readFileSync(join(SOURCE, 'lib/Sidebar.svelte'), 'utf8')
+  const sidebar = readFileSync(join(SOURCE, 'lib/sidebar/src/Sidebar.svelte'), 'utf8')
   const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
   const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
     const door = one[1] ?? ''

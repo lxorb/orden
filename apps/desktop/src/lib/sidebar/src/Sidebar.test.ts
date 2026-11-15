@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
-import { panels } from './session/src/api'
+import { panels } from '../../session/src/api'
 
-vi.mock('./collab/src/api', () => ({ rooms: { present: {}, following: null } }))
-vi.mock('./surfaces.svelte', () => ({
+vi.mock('../../collab/src/api', () => ({ rooms: { present: {}, following: null } }))
+vi.mock('../../surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
@@ -16,12 +16,13 @@ vi.mock('./surfaces.svelte', () => ({
   tabOverview: { open: false },
 }))
 
-const { workspace } = await import('./workspace/src/api')
-const { viewport } = await import('./ui-kit/src/viewport.svelte')
-const { agentMarks } = await import('./agent-marks.svelte')
-const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('./settings.svelte')
+const { workspace } = await import('../../workspace/src/api')
+const { viewport } = await import('../../ui-kit/src/viewport.svelte')
+const { agentMarks } = await import('../../agent-marks.svelte')
+const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('../../settings.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
-const { loadPhoneTabs, loadPhoneYou } = await import('./phone/src/api')
+await (await import('../../../../test/sidebar-parts')).registerSidebarParts()
+const { loadPhoneTabs, loadPhoneYou } = await import('../../phone/src/api')
 const PhoneTabs = (await loadPhoneTabs()).default
 const PhoneYou = (await loadPhoneYou()).default
 
@@ -235,7 +236,7 @@ describe('the button that holds a panel on a note', () => {
   })
 
   test('and the palette offers the same hold, by the same rule', async () => {
-    const { appCommands } = await import('./commands/src/api')
+    const { appCommands } = await import('../../commands/src/api')
     open('# Head\n')
 
     viewport.device = 'desktop'
@@ -423,7 +424,7 @@ describe('the AI panel on a phone and a tablet', () => {
   })
 
   test('and the palette has no row for it', async () => {
-    const { appCommands } = await import('./commands/src/api')
+    const { appCommands } = await import('../../commands/src/api')
     open('# Head\n')
 
     viewport.device = 'desktop'
