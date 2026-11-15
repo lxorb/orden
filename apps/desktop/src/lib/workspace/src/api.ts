@@ -62,3 +62,11 @@ export {
 export { alone, swipeOpens } from './alone.svelte'
 
 export { scratchpadOn } from './services'
+
+export type { Across } from './across'
+
+export const acrossStarting = () => import('./across')
+
+export const blankTabs = () => import('./blank-tabs.svelte')
+
+export const outsideHearing = () => import('./outside.svelte')
