@@ -1,6 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { systemLocale } from '../../platform/src/api'
-import { DEFAULTS, modes } from '../../modes.svelte'
+import { DEFAULTS, modes } from '../../modes/src/api'
 import {
   choosable,
   DICTIONARIES,

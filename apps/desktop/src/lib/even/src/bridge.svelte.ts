@@ -14,7 +14,7 @@ import {
 } from '../../glasses-choices/src/api'
 import type { Field } from '../../settings/src/api'
 import { fileMark } from '../../file-mark'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { shownName } from '../../platform/src/api'
 import { quietFor, waitFor } from './pace'
 import { Panel } from './screen'

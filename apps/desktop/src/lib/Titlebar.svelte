@@ -3,7 +3,7 @@
   import { swipeOpens } from './swipe-opens'
   import { chrome } from './theme/src/api'
   import { keepFocus } from './focus'
-  import { modes } from './modes.svelte'
+  import { modes } from './modes/src/api'
   import { SEARCH_MARK } from './panel-marks'
   import SidebarToggle from './SidebarToggle.svelte'
   import FileMark from './FileMark.svelte'

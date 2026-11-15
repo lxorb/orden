@@ -40,8 +40,8 @@ const told = vi.hoisted(() => ({
 
 const crate = vi.hoisted(() => ({ refuses: false, asked: [] as unknown[] }))
 
-vi.mock('./platform/src/tauri', async (importOriginal) => {
-  const real = await importOriginal<typeof import('./platform/src/tauri')>()
+vi.mock('../../platform/src/tauri', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../platform/src/tauri')>()
   return {
     ...real,
     invoke: (command: string, args?: Record<string, unknown>) => {
@@ -94,8 +94,8 @@ interface Held {
   canvasTurnSnaps?: boolean
 }
 
-vi.mock('./accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./accounts/src/client')>()),
+vi.mock('../../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/client')>()),
   api,
 }))
 
@@ -549,7 +549,7 @@ describe('source mode, per tab', () => {
   })
 
   test('starts a new tab where Settings says, and remembers that across a restart', async () => {
-    const { Tab, opening } = await import('./documents/src/api')
+    const { Tab, opening } = await import('../../documents/src/api')
     const note = { kind: 'note' } as unknown as ConstructorParameters<typeof Tab>[0]
     expect(new Tab(note, 'p1').source).toBe(false)
 
@@ -559,7 +559,7 @@ describe('source mode, per tab', () => {
     expect(new Tab(note, 'p1').source).toBe(true)
 
     const restored = await restarted()
-    const fresh = await import('./documents/src/api')
+    const fresh = await import('../../documents/src/api')
     expect(restored.opensInSource).toBe(true)
     expect(new fresh.Tab(note, 'p1').source).toBe(true)
   })
@@ -945,7 +945,7 @@ describe('taking over what the account holds', () => {
     modes.sawGlasses()
     expect(await modes.adopt('first')).toBeNull()
 
-    const { account } = await import('./accounts/src/account.svelte')
+    const { account } = await import('../../accounts/src/account.svelte')
     await account.signOut()
 
     api.saveSettings = async (token: string, patch: Held) => {
@@ -963,7 +963,7 @@ describe('taking over what the account holds', () => {
     api.settings = settingsCall
 
     const adopted = modes.adopt('first')
-    const { account } = await import('./accounts/src/account.svelte')
+    const { account } = await import('../../accounts/src/account.svelte')
     await account.signOut()
     release()
 
@@ -999,7 +999,7 @@ describe('taking over what the account holds', () => {
         return { settings: {} }
       }
       api.settings = async () => ({ settings: account })
-      const { viewport } = await import('./ui-kit/src/viewport.svelte')
+      const { viewport } = await import('../../ui-kit/src/viewport.svelte')
       viewport.device = device
       await modes.adopt('token')
       return patches
@@ -1030,7 +1030,7 @@ describe('taking over what the account holds', () => {
         throw new Error('unknown setting mobileSeen')
       }
       api.settings = async () => ({ settings: {} })
-      const { viewport } = await import('./ui-kit/src/viewport.svelte')
+      const { viewport } = await import('../../ui-kit/src/viewport.svelte')
       viewport.device = 'phone'
       await modes.adopt('token')
 
@@ -1149,7 +1149,7 @@ describe('translucency, which the glass theme is now', () => {
 
   async function restartedAsking() {
     vi.resetModules()
-    const { theme } = await import('./theme/src/theme.svelte')
+    const { theme } = await import('../../theme/src/theme.svelte')
     const adopt = vi.spyOn(theme, 'adoptTranslucency').mockImplementation(() => undefined)
     ;(await import('./modes.svelte')).modes.restore()
     return adopt

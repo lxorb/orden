@@ -24,7 +24,8 @@
     "protect",
     "workspace",
     "markdown",
-    "highlight"
+    "highlight",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -35,7 +36,6 @@
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/links.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/open-out.ts",
     "apps/desktop/src/lib/outline.ts",

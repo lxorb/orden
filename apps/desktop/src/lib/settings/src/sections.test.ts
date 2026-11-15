@@ -22,7 +22,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { modes } = await import('../../modes.svelte')
+const { modes } = await import('../../modes/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { sectionGroups } = await import('./sections')
 

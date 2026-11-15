@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { CODE_PALETTES } from '@orden/editor'
 import { paletteName } from '../../highlight/src/api'
-import { DEFAULTS, modes } from '../../modes.svelte'
+import { DEFAULTS, modes } from '../../modes/src/api'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../../note-id'
 import { settings } from '../../settings.svelte'
 import type { Pane } from './fields'

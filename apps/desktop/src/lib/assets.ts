@@ -2,7 +2,7 @@ import { api, BASE, account } from './accounts/src/api'
 import { attachmentFolder } from './attachments'
 import { sha256, invoke, spaceRelative } from './platform/src/api'
 import { links } from './link-index/src/api'
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import { workspace } from './workspace/src/api'
 
 function extensionFor(type: string, name: string): string {

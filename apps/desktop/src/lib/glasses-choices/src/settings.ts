@@ -1,5 +1,5 @@
 import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@orden/glasses/choices'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import type { SettingField as Field } from '@orden/contracts'
 import { resetFields } from './reset-fields'
 import { commandWords, DEFAULT_WORDS } from './commands'

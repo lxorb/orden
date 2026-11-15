@@ -1,5 +1,5 @@
 import type { Carried } from './api'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { shortcutPresets, shortcuts } from '../../shortcuts/src/api'
 
 export async function carryOver(carried: Carried) {

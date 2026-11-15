@@ -3,7 +3,7 @@
   import FindBar from './FindBar.svelte'
   import { keyElsewhere } from './layer-keys'
   import { menu } from './menu.svelte'
-  import { modes } from './modes.svelte'
+  import { modes } from './modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
   import {
     headingOffsets,

@@ -1,5 +1,5 @@
 import { account } from '../../accounts/src/api'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import type { Section } from '../../settings.svelte'
 import { isDesktop } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'

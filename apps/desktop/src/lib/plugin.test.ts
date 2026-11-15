@@ -39,14 +39,14 @@ vi.stubGlobal('document', {
   },
 })
 
-let modes: typeof import('./modes.svelte').modes
+let modes: typeof import('./modes/src/api').modes
 let preferences: typeof import('./settings/src/preferences').preferences
 let sectionGroups: typeof import('./settings/src/sections').sectionGroups
 let hiddenKinds: typeof import('./settings.svelte').hiddenKinds
 let words: { experimental: string; glasses: string }
 
 beforeAll(async () => {
-  ;({ modes } = await import('./modes.svelte'))
+  ;({ modes } = await import('./modes/src/api'))
   ;({ preferences } = await import('./settings/src/preferences'))
   ;({ sectionGroups } = await import('./settings/src/sections'))
   const gates = await import('./settings.svelte')

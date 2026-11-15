@@ -46,7 +46,7 @@ async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: str
 
     case 'pages': {
       const { blankPages } = await import('@orden/markdown/pages')
-      const { modes } = await import('../../modes.svelte')
+      const { modes } = await import('../../modes/src/api')
       return blankPages(modes.pagesPaper)
     }
 

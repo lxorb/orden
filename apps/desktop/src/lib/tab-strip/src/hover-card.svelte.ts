@@ -1,6 +1,6 @@
 import { webPages } from '@orden/contracts'
 import { mount } from 'svelte'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { overlays, viewport } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'

@@ -20,7 +20,8 @@
     "ui-controls",
     "collab",
     "theme",
-    "markdown"
+    "markdown",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -38,7 +39,6 @@
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/note-menu.ts",
     "apps/desktop/src/lib/roving.ts",

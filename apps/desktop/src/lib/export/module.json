@@ -22,9 +22,14 @@
     "protect",
     "workspace",
     "fences",
-    "highlight"
+    "highlight",
+    "modes"
   ],
   "pending": [
+    "apps/desktop/src/lib/before-render.ts",
+    "apps/desktop/src/lib/highlight.ts",
+    "apps/desktop/src/lib/images.ts",
+    "apps/desktop/src/lib/math-fonts.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/paper.ts",

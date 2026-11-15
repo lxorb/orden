@@ -10,7 +10,7 @@ import { account } from './accounts/src/api'
 import { fullscreen } from './fullscreen.svelte'
 import { hiddenKinds } from './settings.svelte'
 import type { MenuItem } from './ui-kit/src/api'
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import {
   type Change,
   changesBetween,

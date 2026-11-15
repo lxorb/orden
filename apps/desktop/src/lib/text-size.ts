@@ -1,4 +1,4 @@
-import { modes } from './modes.svelte'
+import { modes } from './modes/src/api'
 import { platform } from './platform/src/api'
 
 export function sizeStepFor(

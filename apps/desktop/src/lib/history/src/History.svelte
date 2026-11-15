@@ -2,7 +2,7 @@
   import { protection } from '../../protect/src/api'
   import { closeOnBack, overlays, scrollbar } from '../../ui-kit/src/api'
   import { diffCount, lineDiff, trimmed } from '@orden/markdown/line-diff'
-  import { KEEP_YEAR, modes } from '../../modes.svelte'
+  import { KEEP_YEAR, modes } from '../../modes/src/api'
   import { recovery } from './recovery.svelte'
   import { canWriteIn } from '../../sharing/src/api'
   import { readableSize } from '../../usage.svelte'

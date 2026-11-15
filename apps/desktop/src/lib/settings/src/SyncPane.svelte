@@ -5,7 +5,7 @@
   import { when } from '../../ui-controls/src/api'
   import Facts from '../../Facts.svelte'
   import { log } from '../../platform/src/api'
-  import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from '../../modes.svelte'
+  import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from '../../modes/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { type Answer, type Clash, record } from '../../sync-mirror/src/api'

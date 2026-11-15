@@ -451,7 +451,7 @@ describe('a room the service threw away and will build again', () => {
   })
 
   test('takes its own words back from the new room as its own, never as a copy', async () => {
-    const { modes } = await import('../../modes.svelte')
+    const { modes } = await import('../../modes/src/api')
     modes.conflicts = 'ask'
     try {
       const note = documentOn('/Notes/a.md', '# A\n')
@@ -483,7 +483,7 @@ describe('a room the service threw away and will build again', () => {
   })
 
   test('takes the new room’s words when nothing was typed here since', async () => {
-    const { modes } = await import('../../modes.svelte')
+    const { modes } = await import('../../modes/src/api')
     modes.conflicts = 'ask'
     try {
       const note = documentOn('/Notes/a.md', '# A\n')
@@ -510,7 +510,7 @@ describe('a room the service threw away and will build again', () => {
   })
 
   test('stays out of its room while a reader is being asked, and rejoins after', async () => {
-    const { modes } = await import('../../modes.svelte')
+    const { modes } = await import('../../modes/src/api')
     modes.conflicts = 'ask'
 
     try {

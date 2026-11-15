@@ -13,11 +13,11 @@
     "ui-kit",
     "usage",
     "panes",
-    "workspace"
+    "workspace",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/pane-moves.ts",
     "apps/desktop/src/lib/refresh.ts",
     "apps/desktop/src/lib/search.svelte.ts",

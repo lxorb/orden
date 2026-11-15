@@ -1,7 +1,7 @@
 import type { AgentAnswer } from '../../automation/src/api'
 import { ACCENTS, theme } from '../../theme/src/api'
 import { LINK_FORMATS } from '../../link-format/src/api'
-import { LINE_HEIGHTS, modes, WIDTHS } from '../../modes.svelte'
+import { LINE_HEIGHTS, modes, WIDTHS } from '../../modes/src/api'
 import { type Field, settingDeclarations, settingSchema } from '../../settings/src/api'
 import { asked, type Call, done, need, Refused } from '../../agent-verbs/src/api'
 

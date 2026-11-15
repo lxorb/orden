@@ -1,4 +1,4 @@
-import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../../modes.svelte'
+import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../../modes/src/api'
 import { isDesktop, platform } from '../../platform/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES, WALLPAPER_THEME, wallpaper } from '../../theme-looks/src/api'
 import {

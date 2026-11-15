@@ -182,6 +182,6 @@ export async function currentSettings(): Promise<Record<PresetSetting, boolean>>
 export async function settleMarkdown(app: string | null): Promise<void> {
   const style = markdownStyleFor(app)
   if (!style) return
-  const { modes } = await import('../../modes.svelte')
+  const { modes } = await import('../../modes/src/api')
   if ((style === 'clean') !== modes.quietMarks) modes.toggleQuietMarks()
 }

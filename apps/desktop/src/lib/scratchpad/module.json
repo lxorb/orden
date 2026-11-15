@@ -15,13 +15,13 @@
     "link-index",
     "file-writes",
     "workspace",
-    "held-database"
+    "held-database",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/keyboard-home.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/open-link.ts",
     "apps/desktop/src/lib/unread.svelte.ts"
   ]

@@ -1,0 +1,21 @@
+{
+  "name": "modes",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "documents",
+    "editor",
+    "glasses",
+    "link-format",
+    "markdown",
+    "platform",
+    "sync-mirror",
+    "theme",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/attachments.ts",
+    "apps/desktop/src/lib/spell-languages.ts"
+  ]
+}

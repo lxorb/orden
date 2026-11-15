@@ -16,11 +16,11 @@
     "scan",
     "search",
     "workspace",
-    "tasks-model"
+    "tasks-model",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/plugin.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"

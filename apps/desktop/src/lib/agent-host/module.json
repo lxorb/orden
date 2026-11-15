@@ -47,13 +47,15 @@
     "workspace",
     "files-out",
     "notify",
-    "sync-store"
+    "sync-store",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/attachments.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
+    "apps/desktop/src/lib/notify.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"

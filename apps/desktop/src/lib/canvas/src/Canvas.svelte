@@ -97,7 +97,7 @@
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
   import { pastesMarkup } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { modes } from '../../modes.svelte'
+  import { modes } from '../../modes/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'

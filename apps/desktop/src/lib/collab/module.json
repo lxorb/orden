@@ -10,7 +10,7 @@
     "accounts",
     "platform",
     "ui-kit",
-    "documents"
-  ],
-  "pending": ["apps/desktop/src/lib/modes.svelte.ts"]
+    "documents",
+    "modes"
+  ]
 }

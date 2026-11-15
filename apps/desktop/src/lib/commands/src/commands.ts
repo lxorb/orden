@@ -78,7 +78,7 @@ import {
 } from '../../sharing/src/api'
 import { archiveEntry, DIVIDER } from '../../menu.svelte'
 import { updates } from '../../updates/src/api'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { basesOn, type KindName, passOn, settings, timeOn } from '../../settings.svelte'
 import { agentMarks } from '../../agent-marks.svelte'
 import { shortcuts } from '../../shortcuts/src/api'

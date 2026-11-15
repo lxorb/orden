@@ -3,7 +3,7 @@
   import { countText } from './counts'
   import { chrome } from './theme/src/api'
   import { localNumber } from './platform/src/api'
-  import { VIM_WORDS } from './modes.svelte'
+  import { VIM_WORDS } from './modes/src/api'
   import { pages } from './pages/src/api'
   import { views } from './views.svelte'
   import { workspace } from './workspace/src/api'

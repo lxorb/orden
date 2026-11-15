@@ -13,7 +13,8 @@
     "documents",
     "protect",
     "workspace",
-    "sync-store"
+    "sync-store",
+    "modes"
   ],
   "pending": [
     "apps/desktop/src/lib/modes.svelte.ts",

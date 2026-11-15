@@ -169,7 +169,7 @@ providePort('web.pages', { ...webPages(), addressOf: () => null })
 vi.mock('../src/lib/views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../src/lib/sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../src/lib/link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
-vi.mock('../src/lib/modes.svelte', () => ({ modes: { pagesPaper: 'a4' } }))
+vi.mock('../src/lib/modes/src/api', () => ({ modes: { pagesPaper: 'a4' } }))
 const settings = { show: vi.fn() }
 vi.mock('../src/lib/settings.svelte', () => ({ settings }))
 

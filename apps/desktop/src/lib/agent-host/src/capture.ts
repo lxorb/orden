@@ -4,7 +4,7 @@ import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter
 import { asWords } from '@orden/markdown/words'
 import type { AgentAnswer } from '../../automation/src/api'
 import { attachmentFolder } from '../../attachments'
-import { modes } from '../../modes.svelte'
+import { modes } from '../../modes/src/api'
 import { paperInches } from '../../files-out/src/api'
 import { settings } from '../../settings.svelte'
 import { notePath, relativeTo, invoke, decoded } from '../../platform/src/api'
