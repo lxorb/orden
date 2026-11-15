@@ -5,7 +5,14 @@ import { notePicture } from '../../link-index/src/api'
 
 type LinkResolver = NonNullable<RenderOptions['resolveLink']>
 
-const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
+const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed|image)\b[^>]*>/gi
+
+const REACHES_OUT =
+  /\/\/|\\|\b(?:https?|wss?|ftp)\s*:|\bimg\b|\bimage\b|\bsrc\b|\bhref\b|url\s*\(|@import|[#&]#?\w+;|<(?!br\b)[a-z]/i
+
+function drawsHere(code: string): boolean {
+  return !REACHES_OUT.test(code)
+}
 
 const PICTURE = /<img\b([^>]*)>/gi
 
@@ -122,7 +129,10 @@ export function answerHtml(markdown: string, options: AnswerOptions = {}): strin
   const render: RenderOptions = { escapeHtml: true }
   if (options.resolveLink) render.resolveLink = options.resolveLink
   const drawn = pictures(
-    viewHtml(markdown, render, { live: options.live === true }).replace(MEDIA, ''),
+    viewHtml(markdown, render, { live: options.live === true, draws: drawsHere }).replace(
+      MEDIA,
+      '',
+    ),
     options.from ?? null,
     options.shown ?? new Set(),
   )
