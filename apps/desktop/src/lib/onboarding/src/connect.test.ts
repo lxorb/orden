@@ -13,11 +13,13 @@ const held: {
   keys: Map<string, string>
   refusing: boolean
   standing: { state: string; program?: string }
+  starts: boolean
 } = {
   accounts: [],
   keys: new Map(),
   refusing: false,
   standing: { state: 'missing' },
+  starts: true,
 }
 
 vi.mock('../../platform/src/api', async (importOriginal) => ({
@@ -60,7 +62,8 @@ vi.mock('../../ai-providers/src/api', () => {
     firstModel: (_kind: string, models: string[]) => models[0] ?? '',
     localCli: () =>
       Promise.resolve({
-        plans: { check: () => Promise.resolve(held.standing) },
+        plans: { check: () => Promise.resolve(held.standing), watch: () => undefined },
+        signIn: () => Promise.resolve(held.starts),
       }),
   }
 })
@@ -76,6 +79,7 @@ beforeEach(() => {
   held.keys = new Map()
   held.refusing = false
   held.standing = { state: 'missing' }
+  held.starts = true
 })
 
 describe('connecting an AI during setup', () => {
@@ -118,5 +122,16 @@ describe('connecting an AI during setup', () => {
     held.accounts = [{ id: 'mine', kind: 'gemini-cli', model: 'gemini' }]
     expect(await signInWith('gemini')).toEqual({ state: 'failed', said: 'Not installed' })
     expect(held.accounts.map((one) => one.id)).toEqual(['mine'])
+  })
+
+  test('a sign-in whose terminal never starts says so and leaves no account behind', async () => {
+    held.standing = { state: 'out', program: '/usr/bin/gemini' }
+    held.starts = false
+    expect(await signInWith('gemini')).toEqual({ state: 'failed', said: 'Could not sign in.' })
+    expect(held.accounts).toEqual([])
+
+    held.starts = true
+    expect(await signInWith('gemini')).toMatchObject({ state: 'waiting' })
+    expect(held.accounts.map((one) => one.kind)).toEqual(['gemini-cli'])
   })
 })

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { READER } from '../../automation/src/api'
 
-const world = vi.hoisted(() => ({ style: 'default' }))
+const world = vi.hoisted(() => ({ style: 'default', loaded: true }))
 
 vi.mock('../../agent-verbs/src/api', async (original) => ({
   ...(await original<typeof import('../../agent-verbs/src/api')>()),
@@ -20,10 +20,12 @@ vi.mock('../../settings/src/api', async (original) => ({
             open: true,
             label: 'Style',
             hint: 'The theme Orden is drawn in.',
-            options: [
-              { value: 'default', label: 'Classic' },
-              { value: 'wallpaper', label: 'Wallpaper' },
-            ],
+            options: world.loaded
+              ? [
+                  { value: 'default', label: 'Classic' },
+                  { value: 'wallpaper', label: 'Wallpaper' },
+                ]
+              : [],
             get: () => world.style,
             set: (value: string) => (world.style = value),
           },
@@ -37,6 +39,7 @@ const call = (verb: string, args: Record<string, unknown>) => ({ verb, args, cal
 
 beforeEach(() => {
   world.style = 'default'
+  world.loaded = true
 })
 
 describe('a setting chosen from a list that can grow', () => {
@@ -56,5 +59,11 @@ describe('a setting chosen from a list that can grow', () => {
 
     const read = await readSetting(call('read_setting', { key: 'appearance.style' }))
     expect(read).toMatchObject({ ok: true, result: { choices: ['default', 'wallpaper'] } })
+  })
+
+  test('is not refused for good while its choices are still being found', async () => {
+    world.loaded = false
+    await writeSetting(call('write_setting', { key: 'appearance.style', value: 'wallpaper' }))
+    expect(world.style).toBe('wallpaper')
   })
 })

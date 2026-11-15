@@ -147,7 +147,9 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
   if (!first || !declared) return null
   const open = named.find((one) => one.kind === 'select' && one.open)
   const schema =
-    open?.kind === 'select' ? { ...declared, enum: open.options.map((one) => one.value) } : declared
+    open?.kind === 'select' && open.options.length
+      ? { ...declared, enum: open.options.map((one) => one.value) }
+      : declared
 
   const read = () =>
     schema.type === 'list'
