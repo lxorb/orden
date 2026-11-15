@@ -484,6 +484,26 @@ describe('block names', () => {
   })
 })
 
+describe('a section of a note with front matter', () => {
+  test('is found past a fence opened in the front matter', () => {
+    const note = ['---', 'snippet: |', '  ```', '  npm i', '---', '# Books', '', 'Dune', ''].join(
+      '\n',
+    )
+    expect(sectionOf(note, { heading: 'Books', block: null })).toBe('# Books\n\nDune')
+  })
+
+  test('is the heading of the words, not a comment of the front matter', () => {
+    const note = ['---', '# Books', 'status: draft', '---', '# Books', '', 'Dune', ''].join('\n')
+    expect(sectionOf(note, { heading: 'Books', block: null })).toBe('# Books\n\nDune')
+  })
+
+  test('is the block of the words, not a line of the front matter', () => {
+    const note = ['---', 'note: Later ^idea', '---', 'Later ^idea', ''].join('\n')
+    expect(sectionOf(note, { heading: null, block: 'idea' })).toBe('Later')
+    expect(blockIds(note).map((one) => one.line)).toEqual([3])
+  })
+})
+
 describe('the headings a note holds', () => {
   test('in order, as the words they show', () => {
     expect(headingsOf('# One\n\ntext\n\n## Two\n')).toEqual(['One', 'Two'])

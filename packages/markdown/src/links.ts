@@ -534,12 +534,12 @@ function headingSection(source: string, wanted: string): string | null {
   const needle = wanted.trim().toLowerCase()
   const slug = slugify(wanted)
 
-  const code = new CodeBlocks()
   let start = -1
   let level = 0
 
-  for (const [index, line] of lines.entries()) {
-    if (code.line(line) !== WORDS) continue
+  for (const row of rowsOf(source)) {
+    if (row.code || row.matter) continue
+    const { text: line, line: index } = row
 
     const hashes = HEADING.exec(line)?.[1]
     if (!hashes) continue
@@ -569,9 +569,10 @@ function blockSection(source: string, wanted: string): string | null {
     return blockAbove(source, lines, found.line)
   }
 
+  const words = rowsOf(source).findIndex((row) => !row.matter)
   let start = found.line
   let end = found.line
-  while (start > 0 && (lines[start - 1] ?? '').trim()) start--
+  while (start > words && (lines[start - 1] ?? '').trim()) start--
   while (end + 1 < lines.length && (lines[end + 1] ?? '').trim()) end++
 
   const block = lines.slice(start, end + 1)
@@ -610,6 +611,7 @@ export function blockIds(text: string): { id: string; line: number }[] {
   const found: { id: string; line: number }[] = []
 
   for (const row of lines(text)) {
+    if (row.matter) continue
     const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (id) found.push({ id, line: row.line })
   }
@@ -714,6 +716,7 @@ function replacingBlockIds(
   let at = 0
 
   for (const row of lines(text)) {
+    if (row.matter) continue
     const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (!id) continue
 
