@@ -35,7 +35,7 @@ const MONTHS = [
   'december',
 ]
 
-const PAGE = / \(([^()\s]+\.md)\)(?:, |$)/g
+const PAGE = / \(((?:[^()\s]|\([^()\s]*\))+\.md)\)(?:, |$)/g
 
 const LABEL = /^[^.!?\n]{1,40}$/
 

@@ -211,7 +211,7 @@ function isIndex(path: string): boolean {
 
 function viewsFollowed(text: string, from: string, paths: ReadonlySet<string>): string {
   const folder = parentOf(from)
-  return text.replace(/\]\(([^()\s]+)\.csv\)/gi, (whole, target: string) => {
+  return text.replace(/\]\(((?:[^()\s]|\([^()\s]*\))+)\.csv\)/gi, (whole, target: string) => {
     let said: string
     try {
       said = decodeURIComponent(target)

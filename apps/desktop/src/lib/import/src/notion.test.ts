@@ -209,6 +209,19 @@ describe('a Notion export', () => {
     expect(home).toContain('[[Mine]]')
   })
 
+  test('a link to a database named with brackets goes to its folder note', async () => {
+    const plan = await readNotion([
+      file(
+        `Home ${PLAN}.md`,
+        `# Home\n\n[Reading (2024)](Home%20${PLAN}/Reading%20(2024)%20${TASKS}.csv)\n`,
+      ),
+      file(`Home ${PLAN}/Reading (2024) ${TASKS}.csv`, 'Name\nOne\n'),
+      file(`Home ${PLAN}/Reading (2024) ${TASKS}_all.csv`, 'Name\nOne\n'),
+    ])
+
+    expect(noteAt(plan, 'Home.md')).toContain('[[Reading (2024)]]')
+  })
+
   test('an HTML export keeps a row’s properties and its to-dos', async () => {
     const plan = await readNotion([
       file(
