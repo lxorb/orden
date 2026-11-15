@@ -299,7 +299,7 @@ async function renameNote(from: string, to: string, hold = false, alone = false,
     throw new Error(NOT_HERE)
   }
 
-  if (await occupied(target, raw)) throw new Error('something already lives there')
+  if (await holds(target, raw)) throw new Error('something already lives there')
 
   const pictures = await moveAssets(source, target)
 
@@ -392,9 +392,7 @@ async function copyPath(from: string, to: string) {
   if (target === source || target.startsWith(`${source}/`)) {
     throw new Error(`${source} cannot be copied into itself`)
   }
-  if ((await occupied(target)) || (await assets.get(target))) {
-    throw new Error('something already lives there')
-  }
+  if (await holds(target)) throw new Error('something already lives there')
   const there = await paperInTheWay(source, target)
   if (there) throw new Error(`${there} is already there`)
 
@@ -530,8 +528,8 @@ async function occupied(path: string, raw = false): Promise<boolean> {
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
-async function holds(path: string): Promise<boolean> {
-  if ((await occupied(path)) || (await assets.get(path))) return true
+async function holds(path: string, raw = false): Promise<boolean> {
+  if ((await occupied(path, raw)) || (await assets.get(path))) return true
   return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
