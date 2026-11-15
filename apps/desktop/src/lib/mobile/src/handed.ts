@@ -1,5 +1,6 @@
-import { attachmentFolder } from '../attachments'
-import { busy, prompt } from '../ui-kit/src/api'
+import { commandRowsLoaded, type ImportBringPort, portOf, type Shared } from '@orden/contracts'
+import { attachmentFolder } from '../../attachments'
+import { prompt } from '../../ui-kit/src/api'
 import {
   fromBase64,
   log,
@@ -11,25 +12,12 @@ import {
   method,
   onTheActivity,
   wordSaid,
-} from '../platform/src/api'
-import { commandRowsLoaded } from '@orden/contracts'
-import { appCommands } from '../commands/src/api'
-import { putPicture, writeAtCaret } from '../insert-picture'
-import { modes } from '../modes.svelte'
-import { views } from '../views.svelte'
-import { workspace } from '../workspace.svelte'
-import {
-  applyImport,
-  type Arrived,
-  arrivedFrom,
-  isPicture,
-  sharedPlan,
-  sharedTask,
-  sharedTitle,
-  sharedMarkdown,
-  sharedWords,
-  type SharedItem,
-} from '../import/src/api'
+} from '../../platform/src/api'
+import { appCommands } from '../../commands/src/api'
+import { putPicture, writeAtCaret } from '../../insert-picture'
+import { modes } from '../../modes.svelte'
+import { views } from '../../views.svelte'
+import { workspace } from '../../workspace.svelte'
 import { watchWidgets } from './widgets.svelte'
 
 const SLICE = 256 * 1024
@@ -127,28 +115,35 @@ async function take(): Promise<void> {
 }
 
 async function ticked(at: string): Promise<void> {
-  const { tickTask } = await import('../task-actions')
+  const { tickTask } = await import('../../task-actions')
   await tickTask(at, true).catch((error: unknown) => {
     log('error', `handed: a task could not be ticked: ${String(error)}`)
   })
 }
 
+function importing(): ImportBringPort | null {
+  const port = portOf('import.bring')
+  return port.ok ? port.value : null
+}
+
 async function taken(word: string): Promise<void> {
-  const arrived = arrivedFrom(method('shared')?.(word) ?? '')
-  if (!arrived) return
+  const said = method('shared')?.(word) ?? ''
+  const port = said ? importing() : null
+  const shared = port ? await port.shared(said) : null
+  if (!port || !shared) return
 
   let answered = true
   try {
-    const bytes = await carried(arrived, word)
+    const bytes = await carried(shared, word)
     const root = await landing()
-    const where = await ask(arrived, root)
+    const where = await ask(shared, root)
 
     if (where === 'kept') {
       answered = false
       log('error', 'shared: no space may be written in, so the share is kept')
-    } else if (where === 'here') await intoTheOpenNote(arrived, bytes)
-    else if (where === 'new' && root !== null) await intoANewNote(arrived, bytes, root)
-    else if (where === 'task' && root !== null) await asATask(arrived)
+    } else if (where === 'here') await intoTheOpenNote(shared, bytes)
+    else if (where === 'new' && root !== null) await intoANewNote(port, shared, bytes, root)
+    else if (where === 'task' && root !== null) await asATask(shared)
   } catch (error) {
     log('error', `shared: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
@@ -156,12 +151,12 @@ async function taken(word: string): Promise<void> {
   }
 }
 
-async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint8Array>> {
+async function carried(shared: Shared, word: string): Promise<Map<number, Uint8Array>> {
   const read = method('sharedBytes')
   const held = new Map<number, Uint8Array>()
   if (!read) return held
 
-  for (const [at, item] of arrived.items.entries()) {
+  for (const [at, item] of shared.items.entries()) {
     if (item.text !== null || item.size <= 0) continue
 
     const parts: Uint8Array[] = []
@@ -195,27 +190,27 @@ async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint
 }
 
 async function landing(): Promise<string | null> {
-  const { canWriteAt } = await import('../sharing/src/api')
+  const { canWriteAt } = await import('../../sharing/src/api')
   const open = workspace.activeSpace?.root
   if (open !== undefined && canWriteAt(open)) return open
   return workspace.spaces.find((one) => canWriteAt(one.root))?.root ?? null
 }
 
 async function ask(
-  arrived: Arrived,
+  shared: Shared,
   root: string | null,
 ): Promise<'new' | 'here' | 'task' | 'kept' | null> {
   const tab = workspace.active
   const view = views.of(workspace.panes.focusedId)
-  const fits = arrived.items.every((one) => one.text !== null || isPicture(one))
-  const into = tab?.kind === 'note' && !!view && !view.state.readOnly && fits ? tab : null
-  const words = arrived.items.every((one) => one.text !== null)
+  const into =
+    tab?.kind === 'note' && !!view && !view.state.readOnly && shared.fitsInNote ? tab : null
+  const words = shared.items.every((one) => one.text !== null)
   if (root === null && !into) return 'kept'
   if (root !== null && !into && !words) return 'new'
 
   const chosen = await prompt.choose({
     title: 'Shared',
-    detail: summary(arrived),
+    detail: summary(shared),
     options: [
       ...(root !== null ? [{ id: 'new', label: 'New note', primary: true }] : []),
       ...(into ? [{ id: 'here', label: `Add to ${into.shown}` }] : []),
@@ -227,49 +222,39 @@ async function ask(
   return null
 }
 
-async function asATask(arrived: Arrived) {
-  const { addTask } = await import('../task-actions')
-  await addTask(sharedTask(arrived), { typed: false })
+async function asATask(shared: Shared) {
+  const { addTask } = await import('../../task-actions')
+  await addTask(shared.task, { typed: false })
 }
 
-function summary(arrived: Arrived): string {
-  const words = sharedWords(arrived).replace(/\s+/g, ' ').trim()
+function summary(shared: Shared): string {
+  const words = shared.words.replace(/\s+/g, ' ').trim()
   if (words) return words.length > SHOWN ? `${words.slice(0, SHOWN)}…` : words
 
-  return arrived.items
-    .map((one: SharedItem) => one.name)
+  return shared.items
+    .map((one) => one.name)
     .filter(Boolean)
     .join(', ')
 }
 
 async function intoANewNote(
-  arrived: Arrived,
+  port: ImportBringPort,
+  shared: Shared,
   bytes: ReadonlyMap<number, Uint8Array>,
   root: string,
 ) {
-  const folder = attachmentFolder(
-    modes.attachments,
-    joinPath(root, `${sharedTitle(arrived)}.md`),
-    root,
-  )
-
-  const plan = sharedPlan(arrived, bytes, new Date(), folder)
-  if (!plan.files.length) return
-
-  const landed = await busy.run('Importing', () => applyImport(plan, { root, folder: '' }))
-
-  const first = landed.paths[0]
+  const folder = attachmentFolder(modes.attachments, joinPath(root, `${shared.title}.md`), root)
+  const first = await port.landShared(shared, bytes, root, folder)
   if (first) await workspace.openEntry(first)
 }
 
-async function intoTheOpenNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint8Array>) {
+async function intoTheOpenNote(shared: Shared, bytes: ReadonlyMap<number, Uint8Array>) {
   const view = views.of(workspace.panes.focusedId)
   if (!view) return
 
-  const words = sharedMarkdown(arrived)
-  if (words) writeAtCaret(view, words)
+  if (shared.markdown) writeAtCaret(view, shared.markdown)
 
-  for (const [at, item] of arrived.items.entries()) {
+  for (const [at, item] of shared.items.entries()) {
     const held = bytes.get(at)
     if (item.text !== null || !held?.length) continue
 

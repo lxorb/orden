@@ -4,6 +4,8 @@ const NOTHING: ImportBringPort = {
   here: () => Promise.resolve(new Set()),
   browser: () => Promise.resolve([]),
   notes: () => Promise.resolve({ picked: false, trouble: null }),
+  shared: () => Promise.resolve(null),
+  landShared: () => Promise.resolve(null),
 }
 
 export function bringing(): ImportBringPort {

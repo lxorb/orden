@@ -175,7 +175,7 @@ describe('the quick settings tiles', () => {
       ...[...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1]),
       ...[...`${widgets}${today}`.matchAll(/command\(context, "([\w.-]+)"/g)].map((one) => one[1]),
     ]
-    const handed = read(SOURCE, 'lib', 'mobile', 'handed.ts')
+    const handed = read(SOURCE, 'lib', 'mobile', 'src', 'handed.ts')
     const list = /HANDED[^[]*\[([^\]]*)\]/.exec(handed)?.[1] ?? ''
     expect(new Set(sent)).toEqual(new Set([...list.matchAll(/'([\w.-]+)'/g)].map((one) => one[1])))
   })
@@ -193,7 +193,7 @@ describe('the home screen widget', () => {
   })
 
   test('has a row for every note the page sends', () => {
-    const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
+    const state = read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     expect(most).toBeGreaterThan(0)
 
@@ -359,7 +359,7 @@ describe('the Today widget', () => {
   })
 
   test('has a box and the words for every task the page sends', () => {
-    const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
+    const state = read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     const ids = (kind: string, text: string) =>
       [...text.matchAll(new RegExp(String.raw`orden_today_${kind}_(\d+)`, 'g'))].map((one) =>
@@ -375,7 +375,7 @@ describe('the Today widget', () => {
   test('ticks through the page, which reads the anchor the activity hands over', () => {
     expect(kotlin).toContain('MainActivity.EXTRA_TICK')
     expect(activity).toContain('json.put("tick", ticking)')
-    expect(read(SOURCE, 'lib', 'mobile', 'handed.ts')).toContain('tickTask(at, true)')
+    expect(read(SOURCE, 'lib', 'mobile', 'src', 'handed.ts')).toContain('tickTask(at, true)')
     expect(widgets).toContain('TodayWidget.refresh(context)')
   })
 })

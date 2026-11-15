@@ -1,14 +1,13 @@
 import { renderMarkdown } from '@orden/markdown'
 import { readTask } from '@orden/markdown/task-line'
 import { plainWords } from '@orden/markdown/task-reminders'
+import type { Arrived, SharedItem } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import {
-  type Arrived,
   arrivedFrom,
   embedFor,
   isNote,
   isPicture,
-  type SharedItem,
   sharedPlan,
   sharedTask,
   sharedTitle,

@@ -63,7 +63,8 @@ providePort('web.lending', {
   },
 })
 
-const bringing = () => import('./import/src/api').then((one) => one.bringing())
+const importing = () => import('./import/src/api')
+const bringing = () => importing().then((one) => one.bringing())
 
 providePort('import.bring', {
   here: () => (__EVEN_PLUGIN__ ? Promise.resolve(new Set()) : bringing().then((one) => one.here())),
@@ -73,6 +74,12 @@ providePort('import.bring', {
     __EVEN_PLUGIN__
       ? Promise.resolve({ picked: false, trouble: null })
       : bringing().then((one) => one.notes(from)),
+  shared: (json) =>
+    __EVEN_PLUGIN__ ? Promise.resolve(null) : importing().then((one) => one.readShared(json)),
+  landShared: (shared, bytes, root, folder) =>
+    __EVEN_PLUGIN__
+      ? Promise.resolve(null)
+      : importing().then((one) => one.landShared(shared, bytes, root, folder)),
 })
 
 providePort('account.signingOut', {

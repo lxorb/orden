@@ -81,6 +81,8 @@ describe('what the setup asks of import', () => {
         return Promise.resolve(['1 bookmark could not be read'])
       },
       notes: () => Promise.resolve({ picked: true, trouble: null }),
+      shared: () => Promise.resolve(null),
+      landShared: () => Promise.resolve(null),
     })
     expect(stepAfter('browser', answers, reach(await bringing().here()))).toBe('import')
     expect(await bringing().browser('chrome')).toEqual(['1 bookmark could not be read'])

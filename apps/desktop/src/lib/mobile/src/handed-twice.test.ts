@@ -1,4 +1,6 @@
+import { providePort } from '@orden/contracts'
 import { expect, test, vi } from 'vitest'
+import { readShared } from '../../import/src/api'
 
 const world = vi.hoisted(() => ({
   shared: JSON.stringify({ items: [{ name: '', mime: 'text/plain', text: 'a link' }] }),
@@ -7,12 +9,16 @@ const world = vi.hoisted(() => ({
   handed: null as (() => void) | null,
 }))
 
-vi.mock('../sharing/src/api', () => ({ canWriteAt: () => true }))
-vi.mock('../import/src/api', async (original) => ({
-  ...(await original<typeof import('../import/src/api')>()),
-  applyImport: () => Promise.resolve({ paths: [], stepped: 0 }),
-}))
-vi.mock('../platform/src/mobile-bridge', () => ({
+vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
+providePort('import.bring', {
+  here: () => Promise.resolve(new Set()),
+  browser: () => Promise.resolve([]),
+  notes: () => Promise.resolve({ picked: false, trouble: null }),
+  shared: (json) => Promise.resolve(readShared(json)),
+  landShared: () => Promise.resolve(null),
+})
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../platform/src/api')>()),
   onTheActivity: () => true,
   frameWord: () => Promise.resolve('word'),
   wordSaid: () => new Promise(() => undefined),
@@ -31,9 +37,10 @@ vi.mock('../platform/src/mobile-bridge', () => ({
   },
 }))
 vi.mock('./widgets.svelte', () => ({ watchWidgets: () => () => undefined }))
-vi.mock('../commands/src/api', () => ({ appCommands: () => [] }))
-vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
-vi.mock('../ui-kit/src/prompt.svelte', () => ({
+vi.mock('../../commands/src/api', () => ({ appCommands: () => [] }))
+vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../../ui-kit/src/api', async (original) => ({
+  ...(await original<typeof import('../../ui-kit/src/api')>()),
   prompt: {
     choose: async () => {
       world.asked++
@@ -42,7 +49,7 @@ vi.mock('../ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-vi.mock('../workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces: [{ id: 'mine', name: 'Mine', root: '/mine' }],
     activeSpace: { id: 'mine', name: 'Mine', root: '/mine' },
