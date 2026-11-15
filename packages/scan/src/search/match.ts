@@ -4,7 +4,7 @@ import { taskAt } from '@orden/markdown/tasks'
 import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { lineAt, lineStarts } from './lines'
 import { isEmpty, type Query, type Unit } from './query'
-import { tagsIn } from './tags'
+import { tagPath, tagsIn } from './tags'
 
 export interface SearchNote {
   path: string
@@ -188,7 +188,7 @@ function startsOf(facts: Facts): readonly number[] {
 }
 
 function tagsOf(facts: Facts): string[] {
-  return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tag.slice(1).toLowerCase()))
+  return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tagPath(tag.slice(1))))
 }
 
 function frontOf(facts: Facts): Map<string, string> {
@@ -448,7 +448,7 @@ export class Matcher {
         return contains(facts.note.name, query.text, query.fold) ? [] : null
 
       case 'tag': {
-        const wanted = query.tag.toLowerCase()
+        const wanted = tagPath(query.tag)
         const has = tagsOf(facts).some((tag) => tag === wanted || tag.startsWith(`${wanted}/`))
 
         return has ? [] : null

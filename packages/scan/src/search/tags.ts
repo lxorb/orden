@@ -36,33 +36,51 @@ export function tagsIn(body: string): string[] {
   return tagUses(body).map((use) => `#${use.tag}`)
 }
 
+export function tagPath(tag: string): string {
+  return tag
+    .toLowerCase()
+    .split('/')
+    .filter((segment) => segment !== '')
+    .join('/')
+}
+
+export function tagUnder(tag: string, wanted: string): boolean {
+  const path = tagPath(tag)
+  return path === wanted || path.startsWith(`${wanted}/`)
+}
+
 export function tagSpans(body: string, path: string): { from: number; to: number }[] {
-  const wanted = path.toLowerCase()
+  const wanted = tagPath(path)
   if (!wanted) return []
 
   return tagUses(body)
-    .filter((use) => {
-      const folded = use.tag.toLowerCase()
-      return folded === wanted || folded.startsWith(`${wanted}/`)
-    })
+    .filter((use) => tagUnder(use.tag, wanted))
     .map((use) => ({ from: use.from, to: use.from + nodeLength(use.tag, wanted) }))
 }
 
 function nodeLength(tag: string, wanted: string): number {
-  const depth = wanted.split('/').length
-  return tag.split('/').slice(0, depth).join('/').length
+  let left = wanted.split('/').length
+  let at = 0
+
+  for (const segment of tag.split('/')) {
+    at += segment.length
+    if (segment !== '') left--
+    if (left === 0) return at
+    at += 1
+  }
+
+  return tag.length
 }
 
 export function tagCuts(body: string, path: string): { from: number; to: number }[] {
-  const wanted = path.toLowerCase()
+  const wanted = tagPath(path)
   if (!wanted) return []
 
   const out: { from: number; to: number }[] = []
   const frontEnds = frontMatterBlock(body)?.close ?? 0
 
   for (const use of tagUses(body)) {
-    const folded = use.tag.toLowerCase()
-    if (folded !== wanted && !folded.startsWith(`${wanted}/`)) continue
+    if (!tagUnder(use.tag, wanted)) continue
 
     out.push(widened(body, use.from < frontEnds ? unquoted(body, use) : use))
   }

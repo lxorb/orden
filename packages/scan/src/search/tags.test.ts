@@ -187,6 +187,14 @@ describe('where a tag sits', () => {
     expect(tagSpans('#Work/Orden', 'work/orden')).toEqual([{ from: 1, to: 11 }])
   })
 
+  test('and a slash nobody meant is read the way the tag tree reads it', () => {
+    const body = '#a//b and #a//b/c'
+    expect(tagSpans(body, 'a/b').map((span) => body.slice(span.from, span.to))).toEqual([
+      'a//b',
+      'a//b',
+    ])
+  })
+
   test('as long as the name is written, even where folding makes it longer', () => {
     const body = '#İstanbul trip and #İstanbul/old'
     const spans = tagSpans(body, 'İstanbul')

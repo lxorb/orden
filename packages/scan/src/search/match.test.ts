@@ -202,6 +202,13 @@ describe('tags', () => {
     expect(answers('tag:missing', listed)).toBe(false)
   })
 
+  test('read a slash nobody meant the way the tag tree does', () => {
+    const doubled = { body: 'words #a//b more\n' }
+
+    expect(answers('tag:a/b', doubled)).toBe(true)
+    expect(answers('tag:a', doubled)).toBe(true)
+  })
+
   test('written as items under the key, which is Obsidian’s other spelling', () => {
     const items = { body: '---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n' }
 
