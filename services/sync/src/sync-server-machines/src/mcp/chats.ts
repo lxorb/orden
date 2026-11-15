@@ -14,6 +14,7 @@ import {
   type Reached,
 } from '../../../sync-server-chats/src/api'
 import type { TokenRow } from './tokens'
+import { zoneOf } from './zone'
 
 const string = { type: 'string' }
 
@@ -219,7 +220,7 @@ async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
   return messagesText(known.name, shown, await readingOf(env, who, [known.id]))
 }
 
-async function searchChats(env: Env, who: Whoever, args: Record<string, unknown>) {
+async function searchChats(env: Env, token: TokenRow, who: Whoever, args: Record<string, unknown>) {
   const query = words(args, 'query')
   if (!query) return 'Search for what?'
   if (query.length > LONGEST_SEARCH) return `A search is at most ${LONGEST_SEARCH} characters.`
@@ -232,7 +233,8 @@ async function searchChats(env: Env, who: Whoever, args: Record<string, unknown>
     )
   ).flatMap((one) => (one.reached ? [{ id: one.id, reached: one.reached }] : []))
   const names = new Map(all.map((one) => [one.id, one.name]))
-  const hits = (await searched(env, who, (key) => (key === 'q' ? query : undefined), picked))
+  const asked: Record<string, string> = { q: query, zone: await zoneOf(env, token.user_id) }
+  const hits = (await searched(env, who, (key) => asked[key], picked))
     .slice(0, whole(args, 'limit', 20, MOST_FOUND))
     .map((one) => ({ chat: names.get(one.chat) ?? one.chat, message: one.message }))
   const reading = await readingOf(env, who, [...new Set(picked.map((one) => one.id))])
@@ -322,7 +324,7 @@ export async function callChatTool(
     case 'read_chat':
       return await readChat(env, who, args)
     case 'search_chats':
-      return await searchChats(env, who, args)
+      return await searchChats(env, token, who, args)
     case 'post_message':
       return await postMessage(env, token, who, args)
     case 'react':

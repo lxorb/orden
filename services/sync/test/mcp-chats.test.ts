@@ -193,6 +193,29 @@ describe('chats through the connector', () => {
     ).toBe('A search is at most 1000 characters.')
   })
 
+  test('searched by day on the asker’s clock, as the app asks', async () => {
+    at(8 * 3600_000)
+    await say(owner, 'Late chapter notes')
+    at(8 * 3600_000 + 2_000)
+    await fire(logs.of(chat))
+    env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+    const query = 'late chapter on:2026-10-08'
+    const app = await call<{ hits: unknown[] }>(
+      env,
+      `/v2/chats/search?q=${encodeURIComponent(query)}&zone=Asia%2FTokyo&today=2026-10-08`,
+      { token: owner, method: 'GET' },
+    )
+    expect(app.json.hits).toHaveLength(1)
+    const key = await connector(owner)
+    expect(await tool(key, 'search_chats', { query })).toContain('Late chapter notes')
+    expect(await tool(key, 'search_chats', { query: 'late chapter on:today' })).toContain(
+      'Late chapter notes',
+    )
+    expect(await tool(key, 'search_chats', { query: 'late chapter on:2026-10-07' })).not.toContain(
+      'Late chapter notes',
+    )
+  })
+
   test('a post and a reaction land in the log as the connector’s', async () => {
     const key = await connector(owner)
     const said = await tool(key, 'post_message', { chat: 'thesis', text: 'Looks good @Lucile' })
