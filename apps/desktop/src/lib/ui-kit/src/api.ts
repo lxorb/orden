@@ -6,6 +6,8 @@ export { default as Facts } from './Facts.svelte'
 export { default as UnsavedDot } from './UnsavedDot.svelte'
 export { frameOf, paneCorners } from './pane-corners.svelte'
 export { whileHere } from './while-here'
+export { linkScroll, type ScrollEnd } from './linked-scroll'
+export const systemMenu = () => import('./system-menu')
 export { rank, recentFirst, walked } from './fuzzy'
 export {
   brandIcon,

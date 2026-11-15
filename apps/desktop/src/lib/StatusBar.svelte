@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tooLongToParse, type VimMode } from '@orden/editor'
-  import { countText } from './counts'
+  import { countText } from './documents/src/api'
   import { chrome } from './theme/src/api'
   import { localNumber } from './platform/src/api'
   import { VIM_WORDS } from './modes/src/api'

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { macMenuKey } from '../../src/lib/system-menu'
+import { macMenuKey } from '../../src/lib/ui-kit/src/system-menu'
 
 const key = (init: KeyboardEventInit) =>
   new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })

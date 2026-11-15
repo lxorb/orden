@@ -20,4 +20,5 @@ export {
 export { type Across, fetchAcross, meetAcross, oweTo, writeEdited, wroteHere } from './in-turn'
 export { OpenDocuments, secondWebTabs } from './open'
 export { holdsRetiredTab, isRetiredChat, isRetiredTab } from './retired-tabs'
+export { countText } from './counts'
 export { type Heading, headingAt, lineOf, lineOfHeading, scanHeadings } from './outline'

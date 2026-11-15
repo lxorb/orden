@@ -1,4 +1,4 @@
-import { afterQuiet } from './platform/src/api'
+import { afterQuiet } from '../../platform/src/api'
 
 export interface ScrollEnd {
   top(): number
