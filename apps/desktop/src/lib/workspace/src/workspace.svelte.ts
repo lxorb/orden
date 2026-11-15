@@ -8,6 +8,7 @@ import {
   tabKindLoaded,
   WELCOME_PATH,
   webPages,
+  type OpenHow,
 } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account, arriving } from '../../accounts/src/api'
@@ -28,6 +29,7 @@ import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from '../../link-index/src/api'
 import {
+  isPlugin,
   onDisk,
   insideOnly,
   askCase,
@@ -65,9 +67,9 @@ import {
   markPainted,
 } from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
+import { besideAt, howFor, type LinkAsk, type TabAsk } from './new-tab'
 import { carriedRows, busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'
-import { isPlugin } from '../../plugin'
 import { scanFootnotes } from './footnotes'
 import type { Change } from '@orden/scan/search/replace'
 import { GIVE_UP } from '../../parting/src/api'
@@ -179,7 +181,6 @@ import {
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from '../../agent-marks.svelte'
-import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from '../../new-tab'
 import { services } from './services'
 
 function isInstructions(root: string, path: string): boolean {
@@ -228,7 +229,7 @@ const TRAIL = 30
 
 const unread = (path: string) => import('./notices.svelte').then((one) => one.unread.there(path))
 const changes = () => import('./space-changes')
-const essentials = () => import('../../essentials.svelte')
+const essentials = () => import('./essentials.svelte')
 const paneStays = (strip: number, showing: Tab | null) =>
   strip > 0 || (showing?.essential ?? null) !== null
 const sets = () => import('./sets.svelte').then((one) => one.sets)

@@ -1,6 +1,5 @@
-import type { OpenHow, Press, TabAsk } from '../../new-tab'
-import type { PaletteDestination, SettingsSectionId } from '@orden/contracts'
-import { howFor, linkAsk, tabAsk } from '../../new-tab'
+import { type Press, type TabAsk, howFor, linkAsk, tabAsk } from '../../workspace/src/api'
+import type { PaletteDestination, SettingsSectionId, OpenHow } from '@orden/contracts'
 import type { NoteToMake } from './new-note'
 import type { Row } from './rows'
 import { ran } from '../../usage/src/api'

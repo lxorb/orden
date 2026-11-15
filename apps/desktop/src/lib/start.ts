@@ -1,3 +1,4 @@
+import { hinting } from './hints/src/api'
 import { oneWindow } from './web-tab/src/api'
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './accounts/src/api'
@@ -31,7 +32,6 @@ import {
   written,
 } from './parting/src/api'
 import { warmDoors } from './features'
-import type { Across } from './workspace/src/across'
 import { recovery } from './history/src/api'
 import { record } from './sync-mirror/src/api'
 import { settings } from './settings/src/api'
@@ -45,7 +45,13 @@ import { toolbar } from './shortcuts/src/api'
 import { trash } from './trash/src/api'
 import { installStaged, ready, settledForInstaller, updates } from './updates/src/api'
 import { startRunner } from './views/src/api'
-import { workspace } from './workspace/src/api'
+import {
+  acrossStarting,
+  type Across,
+  blankTabs,
+  outsideHearing,
+  workspace,
+} from './workspace/src/api'
 import { mayStop, providePort } from '@orden/contracts'
 
 if (!__EVEN_PLUGIN__) {
@@ -80,7 +86,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) gate.restore()
   const settling = setTimeout(() => {
     startup.settled = true
-    if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.settle())
+    if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.settle())
   }, 20_000)
   installAiRunner()
   recovery.restore()
@@ -149,36 +155,22 @@ export function start(): () => void {
     void startup
       .turn('right')
       .then(() => import('./feature-gate.svelte'))
-      .then(({ whenPassOn }) =>
+      .then(({ whenAppsOn, whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
         whenPassOn(
           () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
           () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
-        ),
-      )
-  }
-
-  if (!__EVEN_PLUGIN__) {
-    void startup
-      .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenChatsOn }) =>
-        whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats())),
-      )
+        )
+        whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats()))
+        whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime()))
+        whenAppsOn()
+        whenExplorerOn()
+      })
     void startup
       .turn('right')
       .then(() => import('./chats-client/src/api'))
       .then((one) => one.retireChats())
       .then((one) => one.forgetRetiredChatsHere())
       .catch(() => undefined)
-  }
-
-  if (!__EVEN_PLUGIN__) {
-    void startup
-      .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenTimeOn }) =>
-        whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime())),
-      )
   }
 
   if (!__EVEN_PLUGIN__) {
@@ -191,21 +183,11 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenAppsOn, whenExplorerOn }) => {
-        whenAppsOn()
-        whenExplorerOn()
-      })
-  }
-
-  if (!__EVEN_PLUGIN__) {
-    void startup
-      .turn('right')
       .then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
   }
 
   if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./workspace/src/blank-tabs.svelte'))
+    void startup.turn('right').then(blankTabs)
   }
 
   if (!__EVEN_PLUGIN__)
@@ -239,16 +221,13 @@ export function start(): () => void {
 
   if (!__EVEN_PLUGIN__) {
     let fetched: Promise<Across> | null = null
-    const across = () =>
-      (fetched ??= import('./workspace/src/across').then(({ startAcross }) => startAcross()))
+    const across = () => (fetched ??= acrossStarting().then(({ startAcross }) => startAcross()))
     workspace.acrossWhenWriting(across)
     void startup.turn('rooms').then(across)
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup
-      .turn('rooms')
-      .then(() => import('./workspace/src/outside.svelte').then(({ hearOutside }) => hearOutside()))
+    void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
   }
 
   let stopAnywhere: (() => void) | null = null

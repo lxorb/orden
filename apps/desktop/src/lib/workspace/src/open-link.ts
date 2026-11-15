@@ -1,11 +1,10 @@
-import { settingsWindow } from '@orden/contracts'
+import { portOf, settingsWindow } from '@orden/contracts'
 import type { LinkPress, NoteJump, NoteOpener } from '@orden/editor'
 import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
-import { isPlugin } from './plugin'
-import { isOpenable, openExternal } from './platform/src/api'
-import { viewport } from './ui-kit/src/api'
+import { viewport } from '../../ui-kit/src/api'
+import { isPlugin, isOpenable, openExternal } from '../../platform/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
-import { workspace } from './workspace/src/api'
+import { workspace } from './workspace.svelte'
 
 export type LinkPlace = 'here' | 'behind' | 'system' | 'nowhere'
 
@@ -46,10 +45,8 @@ export function followHref(href: string, press: LinkPress): void {
   }
   const ask = tabAsk(press, true)
   if (/^(orden|nib):\/\/chat\//i.test(href)) {
-    const opening = __EVEN_PLUGIN__
-      ? null
-      : import('./chats-client/src/api').then((one) => one.chatOpening())
-    void opening?.then(({ openChatLink }) => openChatLink(href, howFor(ask)))
+    const chats = portOf('chats')
+    if (chats.ok) void chats.value.openLink(href, howFor(ask))
     return
   }
   const place = placeFor(href, ask)

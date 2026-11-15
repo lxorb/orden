@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import HintCard from '../../src/lib/HintCard.svelte'
-import { hints } from '../../src/lib/hints.svelte'
+import HintCard from './HintCard.svelte'
+import { hints } from './hints.svelte'
 
 Element.prototype.animate = () =>
   ({

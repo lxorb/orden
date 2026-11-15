@@ -1,23 +1,27 @@
 <script lang="ts">
   import { whenLoaded } from '@orden/contracts'
-  import { swipeOpens } from './swipe-opens'
-  import { chrome } from './theme/src/api'
-  import { keepFocus } from './focus'
-  import { modes } from './modes/src/api'
-  import { SEARCH_MARK, UnsavedDot, viewport } from './ui-kit/src/api'
+  import { hinting, loadHintCard } from '../../hints/src/api'
+  import { chrome } from '../../theme/src/api'
+  import { keepFocus, SEARCH_MARK, UnsavedDot, viewport } from '../../ui-kit/src/api'
+  import { modes } from '../../modes/src/api'
   import SidebarToggle from './SidebarToggle.svelte'
-  import FileMark from './FileMark.svelte'
-  import TabMark from './TabMark.svelte'
-  import { askPlace } from './save-place/src/api'
-  import { shown as pad } from './scratchpad/src/api'
-  import { isDraft } from './documents/src/api'
-  import { TopStrips } from './pane-tree/src/api'
-  import { closeWindow, currentWindow, isDesktop, platform } from './platform/src/api'
-  import { startup } from './launch/src/api'
-  import { tabOverview, toggleTabOverview, workspace } from './workspace/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { WindowState } from './windows/src/api'
-  import { topRow } from './panes/src/api'
+  import FileMark from '../../FileMark.svelte'
+  import TabMark from '../../TabMark.svelte'
+  import { askPlace } from '../../save-place/src/api'
+  import { isDraft } from '../../documents/src/api'
+  import { TopStrips } from '../../pane-tree/src/api'
+  import { closeWindow, currentWindow, isDesktop, platform } from '../../platform/src/api'
+  import { startup } from '../../launch/src/api'
+  import {
+    scratchpadOn,
+    swipeOpens,
+    tabOverview,
+    toggleTabOverview,
+    workspace,
+  } from '../../workspace/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { WindowState } from '../../windows/src/api'
+  import { topRow } from '../../panes/src/api'
 
   const {
     onpalette,
@@ -37,17 +41,14 @@
 
   function showMore(event: MouseEvent) {
     const from = event.currentTarget as HTMLElement
-    void (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/src/api'))
+    void (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api'))
       .then((one) => one.noteMore())
       .then((one) => one.showNoteMore(from))
   }
 
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
-      whenLoaded(
-        () => import('./hints.svelte'),
-        ({ hints }) => hints.dismiss('drawer'),
-      )
+      whenLoaded(hinting, ({ hints }) => hints.dismiss('drawer'))
     }
   })
 
@@ -81,8 +82,8 @@
   let endWide = $state(0)
   const overPanes = $derived(endWide - wide + (panes || wide))
 
-  const title = $derived(pad.on ? 'Scratchpad' : (workspace.active?.shown ?? 'Orden'))
-  const showing = $derived(viewport.touch && pad.on ? null : workspace.active)
+  const title = $derived(scratchpadOn() ? 'Scratchpad' : (workspace.active?.shown ?? 'Orden'))
+  const showing = $derived(viewport.touch && scratchpadOn() ? null : workspace.active)
 
   async function minimize() {
     if (isDesktop) await (await currentWindow()).minimize()
@@ -180,7 +181,7 @@
     <SidebarToggle unseen={swiped} />
     {#if swiped && startup.settled && !__EVEN_PLUGIN__}
       <span class="swipe-hint">
-        {#await import('./HintCard.svelte') then card}
+        {#await loadHintCard() then card}
           <card.default
             hint="drawer"
             side="below"
@@ -221,7 +222,7 @@
     {/if}
 
     <h1 class="title" data-save-anchor>
-      {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
+      {#if showing}<TabMark tab={showing} />{:else if scratchpadOn()}<FileMark mark="note" />{/if}
       <span class="name">{title}</span>
       {#if showing && isDraft(showing.note)}
         <button class="orden-glyph" aria-label="Save" onclick={() => askPlace(showing.id)}

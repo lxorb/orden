@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Bookmark, Entry } from '@orden/contracts'
+  import type { Bookmark, Entry, OpenHow } from '@orden/contracts'
   import {
     carried,
     carriedNothing,
@@ -28,12 +28,18 @@
   import { folderNote } from '../../tree/src/api'
   import { bookmarkEntry, iconEntries } from '../../row-menu/src/api'
   import { dur, scale } from '../../platform/src/api'
-  import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
   import { rowName } from '../../platform/src/api'
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'
   import { isTile, sameBookmark } from '../../space-kept/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import {
+    essentials,
+    workspace,
+    howFor,
+    middleOpens,
+    type TabAsk,
+    tabAsk,
+  } from '../../workspace/src/api'
   import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()
@@ -159,8 +165,8 @@
     return mark !== null && !workspace.bookmarks.has(mark)
   })
 
-  const reckoning = door(() => import('../../essentials.svelte'))
-  let hands = $state.raw<typeof import('../../essentials.svelte') | null>(null)
+  const reckoning = door(essentials)
+  let hands = $state.raw<Awaited<ReturnType<typeof essentials>> | null>(null)
   const reach = () => {
     if (!hands) void reckoning().then((one) => (hands = one))
   }

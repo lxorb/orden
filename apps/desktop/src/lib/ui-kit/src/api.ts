@@ -52,7 +52,7 @@ export {
 } from './keys'
 export type { Keystroke, Platform, Taken } from './keys'
 export { opensAt, spelled, walk } from './list-keys'
-export { roving } from './roving'
+export { keepFocus, roving } from './roving'
 export { stepped } from './step'
 export { longPress } from './longpress'
 export {
@@ -134,3 +134,4 @@ export {
 export const outsideDrops = () => import('./outside-drops')
 
 export const reloadWhen = () => import('./reload-when')
+export { escapeLeaves, fullscreen } from './fullscreen.svelte'

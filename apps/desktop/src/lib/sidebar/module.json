@@ -26,29 +26,23 @@
     "gates",
     "surfaces",
     "row-menu",
-    "spaces"
+    "spaces",
+    "hints",
+    "titlebar"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
     "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/HintCard.svelte",
-    "apps/desktop/src/lib/SidebarToggle.svelte",
     "apps/desktop/src/lib/account-menu.ts",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/alone.svelte.ts",
     "apps/desktop/src/lib/caret.ts",
     "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/links.ts",
-    "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/pull.svelte.ts",
     "apps/desktop/src/lib/sections.ts",
     "apps/desktop/src/lib/sidebar-width.svelte.ts",
-    "apps/desktop/src/lib/swipe-opens.ts",
     "apps/desktop/src/lib/tree-keys.ts"
   ]
 }

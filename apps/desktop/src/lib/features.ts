@@ -32,7 +32,7 @@ import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from 
 import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './platform/src/api'
-import { focusEditor } from './focus'
+import { focusEditor } from './workspace/src/api'
 import { startup } from './launch/src/api'
 import {
   contextMenu,

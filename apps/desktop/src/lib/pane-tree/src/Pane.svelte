@@ -29,7 +29,7 @@
     viewport,
     paneCorners,
   } from '../../ui-kit/src/api'
-  import { alone } from '../../alone.svelte'
+  import { alone, followHref, followNote, tabOverview, workspace } from '../../workspace/src/api'
   import type { Tab } from '../../documents/src/api'
   import {
     type Pane,
@@ -56,7 +56,7 @@
   import { pull } from '../../pull.svelte'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { commandRowsLoaded, settingsWindow } from '@orden/contracts'
+  import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -79,14 +79,11 @@
     viewSurface,
     webSurface,
   } from '../../surfaces/src/api'
-  import { tabOverview, workspace } from '../../workspace/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { storeAttachment, storeImage } from '../../assets'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
-  import { followHref, followNote } from '../../open-link'
-  import type { OpenHow } from '../../new-tab'
   import { usage } from '../../accounts/src/api'
 
   const { pane }: { pane: Pane } = $props()

@@ -7,7 +7,7 @@ import {
   tableBindings,
 } from '@orden/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/api'
-import { revealPanel, stepRegionFocus } from '../../focus'
+import { revealPanel, stepRegionFocus, toggleTabOverview, workspace } from '../../workspace/src/api'
 import { modes } from '../../modes/src/api'
 import {
   commandRows,
@@ -17,7 +17,6 @@ import {
   settingsWindow,
   showQuickAdd,
 } from '@orden/contracts'
-import { toggleTabOverview, workspace } from '../../workspace/src/api'
 import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
 import { stepSpace, toggleSpacePicker } from '../../spaces/src/api'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'

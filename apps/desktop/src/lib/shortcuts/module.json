@@ -20,9 +20,5 @@
     "gates",
     "spaces"
   ],
-  "pending": [
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/pane-moves.ts",
-    "apps/desktop/src/lib/refresh.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/pane-moves.ts", "apps/desktop/src/lib/refresh.ts"]
 }

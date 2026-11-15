@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { serveSyncStore } from '../../test/sync-store'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -17,7 +17,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { ArchivedSpaces } = await import('./space-kept/src/api')
+const { ArchivedSpaces } = await import('../../space-kept/src/api')
 
 interface Space {
   id: string
@@ -44,14 +44,13 @@ const workspace = vi.hoisted(() => ({
 const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
 const session = vi.hoisted(() => ({ forgets: [] as (() => void)[] }))
 
-vi.mock('./workspace/src/api', () => ({ workspace }))
-vi.mock('./accounts/src/account.svelte', () => ({
+vi.mock('../../workspace/src/api', () => ({ workspace }))
+vi.mock('../../accounts/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
   account: {
     accountToken: 'token',
     forgetWithSession: (clear: () => void) => session.forgets.push(clear),
   },
-}))
-vi.mock('./accounts/src/client', () => ({
   api: {
     saveSettings: (_token: string, patch: unknown) => {
       if (told.fails) return Promise.reject(new Error('offline'))
@@ -63,7 +62,7 @@ vi.mock('./accounts/src/client', () => ({
 const store = vi.hoisted(() => ({
   remoteIdFor: (root: string) => (root === '/spaces/Local' ? null : `id-${root.slice(8)}`),
 }))
-vi.mock('./sync-store/src/api', () => ({ sync: store }))
+vi.mock('../../sync-store/src/api', () => ({ sync: store }))
 serveSyncStore(store)
 
 const archive = await import('./space-archive')

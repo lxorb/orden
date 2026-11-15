@@ -9,7 +9,7 @@
     feedback,
   } from '../../feedback/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
-  import { followHref } from '../../open-link'
+  import { followHref } from '../../workspace/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { chooseFiles } from '../../ui-controls/src/api'
 

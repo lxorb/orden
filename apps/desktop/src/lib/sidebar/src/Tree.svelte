@@ -26,7 +26,16 @@
     rowIds,
   } from '../../tree/src/api'
   import { staysOn } from '../../caret'
-  import { focusList } from '../../focus'
+  import {
+    focusList,
+    dropOnList,
+    fileClipboard,
+    listMotion,
+    workspace,
+    howFor,
+    middleOpens,
+    tabAsk,
+  } from '../../workspace/src/api'
   import {
     carried,
     carriedNothing,
@@ -44,13 +53,11 @@
     viewport,
   } from '../../ui-kit/src/api'
   import NameField from './NameField.svelte'
-  import { howFor, middleOpens, tabAsk } from '../../new-tab'
   import { extensionOf } from '../../platform/src/api'
   import { rowName } from '../../platform/src/api'
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { syncMark } from '../../surfaces/src/api'
-  import { dropOnList, fileClipboard, listMotion, workspace } from '../../workspace/src/api'
   import {
     autoScrollBy,
     heightOf,

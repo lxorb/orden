@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { hinting } from '../../hints/src/api'
+  import type { OpenHow } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
   import { neighbours, type NoteGraph, signature } from '../../graph/src/api'
   import { Fingers } from './fingers'
   import { graphFilter, type Keeps } from './filter'
   import { type GraphColours, Layout, paint, radiusOf } from '../../graph-drawing/src/api'
-  import { howFor, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
   import {
     type Camera,
     framing,
@@ -18,7 +19,7 @@
   import { parseQuery } from '@orden/scan/search/query'
   import { pixelRatio } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, howFor, type TabAsk, tabAsk } from '../../workspace/src/api'
   import { MOST_GROUPS } from '../../space-kept/src/api'
 
   const {
@@ -37,8 +38,7 @@
     onescape?: (() => void) | undefined
   } = $props()
 
-  if (!__EVEN_PLUGIN__)
-    void import('../../hints.svelte').then(({ hints }) => hints.dismiss('graph'))
+  if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.dismiss('graph'))
 
   const A_FRAME = 6
 

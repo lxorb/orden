@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { loadHintCard } from '../../hints/src/api'
   import {
     arrive,
     ASK_MARK,
@@ -30,8 +31,9 @@
     TIME_MARK,
     UnreadDot,
     viewport,
+    fullscreen,
   } from '../../ui-kit/src/api'
-  import { dropOnList, workspace } from '../../workspace/src/api'
+  import { alone, swipeOpens, dropOnList, workspace } from '../../workspace/src/api'
   import { movesSection } from '../../sections'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -62,17 +64,14 @@
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from '../../sidebar-width.svelte'
-  import { fullscreen } from '../../fullscreen.svelte'
-  import { alone } from '../../alone.svelte'
+  import { dur, fade, fly } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
-  import SidebarToggle from '../../SidebarToggle.svelte'
-  import { swipeOpens } from '../../swipe-opens'
+  import { SidebarToggle } from '../../titlebar/src/api'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import Tree from './Tree.svelte'
-  import { dur, fade, fly } from '../../platform/src/api'
   import { startup } from '../../launch/src/api'
 
   const {
@@ -636,7 +635,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
-        {#await import('../../HintCard.svelte') then card}
+        {#await loadHintCard() then card}
           <card.default
             hint="graph"
             side="below"
@@ -648,7 +647,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && paletteKey && startup.settled}
-        {#await import('../../HintCard.svelte') then card}
+        {#await loadHintCard() then card}
           <card.default
             hint="palette"
             side="below"

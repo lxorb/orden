@@ -1,7 +1,7 @@
 import { protection } from '../../protect/src/api'
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
-import { revealPanel } from '../../focus'
+import { revealPanel, workspace } from '../../workspace/src/api'
 import { isScratchpad, scratchpadHits } from '../../scratchpad/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
@@ -16,7 +16,6 @@ import {
   stored,
   afterQuiet,
 } from '../../platform/src/api'
-import { workspace } from '../../workspace/src/api'
 
 const WAIT = 140
 

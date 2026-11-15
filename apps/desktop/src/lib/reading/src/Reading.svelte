@@ -12,11 +12,9 @@
   import { readingHtml, tagAnchor, unreadableHtml } from './render'
   import { trustsHtmlIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { followHref, MIDDLE, opensLink } from '../../open-link'
-  import { tabAsk } from '../../new-tab'
+  import { followHref, MIDDLE, opensLink, workspace, tabAsk } from '../../workspace/src/api'
   import { theme } from '../../theme/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
   import {
     blockIds,

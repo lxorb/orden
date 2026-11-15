@@ -31,10 +31,11 @@ import {
   type MenuItem,
   type MenuRow,
   viewport,
+  fullscreen,
 } from '../../ui-kit/src/api'
 import { copySelection, cutSelection } from '../../ui-controls/src/api'
 import { blockCommands } from '../../commands/src/api'
-import { fullscreen } from '../../fullscreen.svelte'
+import { isDesktop, isNative, openExternal } from '../../platform/src/api'
 import { protection } from '../../protect/src/api'
 import {
   canPrint,
@@ -48,7 +49,6 @@ import { modes } from '../../modes/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
-import { isDesktop, isNative, openExternal } from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 

@@ -20,5 +20,5 @@
     "modes",
     "panes"
   ],
-  "pending": ["apps/desktop/src/lib/file-mark.ts", "apps/desktop/src/lib/plugin.ts"]
+  "pending": ["apps/desktop/src/lib/file-mark.ts"]
 }

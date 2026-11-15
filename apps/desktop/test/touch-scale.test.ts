@@ -40,7 +40,7 @@ const SURFACES = [
   'lib/sidebar/src/SidebarFoot.svelte',
   'lib/sidebar/src/SpaceSwitcher.svelte',
   'lib/search/src/TagTree.svelte',
-  'lib/Titlebar.svelte',
+  'lib/titlebar/src/Titlebar.svelte',
   'lib/sidebar/src/Tree.svelte',
   'lib/palette/src/Palette.svelte',
 ]

@@ -1,5 +1,4 @@
-import { revealPanel } from '../../../focus'
-import { workspace } from '../../../workspace/src/api'
+import { revealPanel, workspace } from '../../../workspace/src/api'
 
 export function revealChat(): void {
   const tab = workspace.singleHere('chat')

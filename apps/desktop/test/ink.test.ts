@@ -140,7 +140,7 @@ describe('the stylesheets', () => {
         name: path.replace(/\\/g, '/').split('/src/').pop() ?? path,
         text: readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''),
       }))
-      .filter((one) => one.name !== 'lib/Titlebar.svelte')
+      .filter((one) => one.name !== 'Titlebar.svelte')
       .filter((one) => WHITE_INK.test(one.text))
       .map((one) => one.name)
 

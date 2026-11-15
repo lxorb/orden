@@ -4940,7 +4940,7 @@ describe('an essential', () => {
 
   test('takes no place in the strip a tab is dragged to or reopened into', async () => {
     keep('/space/a.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
     expect(workspace.tabs).toHaveLength(3)
     expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
@@ -4958,7 +4958,7 @@ describe('an essential', () => {
 
   test('shows its file with no tab in the strip', async () => {
     keep('/space/a.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
 
     expect(workspace.active?.path).toBe('/space/a.md')
     expect(workspace.active?.essential).toBe('/space/a.md')
@@ -4967,14 +4967,14 @@ describe('an essential', () => {
 
   test('stays loaded behind another tab, and comes back as it was left', async () => {
     keep('/space/a.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     const first = workspace.active?.id
     await workspace.open('/space/b.md')
 
     expect(strip()).toEqual(['/space/b.md'])
     expect(workspace.tabs).toHaveLength(2)
 
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     expect(workspace.active?.id).toBe(first)
     expect(workspace.tabs).toHaveLength(2)
   })
@@ -4983,7 +4983,7 @@ describe('an essential', () => {
     keep('/space/a.md')
     await workspace.open('/space/a.md')
     const inStrip = workspace.active
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
 
     expect(strip()).toEqual(['/space/a.md'])
     expect(workspace.active?.id).not.toBe(inStrip?.id)
@@ -4992,7 +4992,7 @@ describe('an essential', () => {
 
   test('goes back to the strip once it is taken out of the Essentials', async () => {
     keep('/space/a.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     keep('/space/a.md')
     await workspace.bookmarks.offered
     await new Promise((done) => setTimeout(done))
@@ -5004,7 +5004,7 @@ describe('an essential', () => {
   test('stays on screen when the last tab of the strip closes behind it', async () => {
     keep('/space/a.md')
     await workspace.open('/space/b.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     const shown = workspace.active?.id
     const behind = workspace.tabs.find((one) => one.path === '/space/b.md')
     if (!behind) throw new Error('b is not open')
@@ -5018,7 +5018,7 @@ describe('an essential', () => {
   test('closed, hands the pane back to the tab shown before it', async () => {
     keep('/space/a.md')
     await workspace.open('/space/b.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
 
     workspace.close(workspace.active?.id ?? '')
 
@@ -5027,7 +5027,7 @@ describe('an essential', () => {
 
   test('follows its file when the file is renamed', async () => {
     keep('/space/a.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     const shown = workspace.active
 
     await workspace.fileMoved('/space/a.md', '/space/z.md', 'file')
@@ -5043,7 +5043,7 @@ describe('an essential of a web note with web data of its own', () => {
   const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
   const keep = (path: string) =>
     workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
-  const essentials = () => import('../../essentials.svelte')
+  const essentials = () => import('./essentials.svelte')
 
   beforeEach(() => {
     onePane()
@@ -5117,10 +5117,10 @@ describe('an essential asked for in a tab', () => {
   const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
 
   test('gets one of its own beside the essential, on the one document', async () => {
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
     const essential = workspace.active
 
-    await (await import('../../essentials.svelte')).openInStrip('/space/a.md', { beside: true })
+    await (await import('./essentials.svelte')).openInStrip('/space/a.md', { beside: true })
 
     expect(strip()).toEqual(['/space/a.md'])
     expect(workspace.active?.essential).toBeNull()
@@ -5129,9 +5129,9 @@ describe('an essential asked for in a tab', () => {
 
   test('is the tab of the strip that already shows it', async () => {
     await workspace.open('/space/a.md')
-    await (await import('../../essentials.svelte')).openEssential('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
 
-    await (await import('../../essentials.svelte')).openInStrip('/space/a.md', {})
+    await (await import('./essentials.svelte')).openInStrip('/space/a.md', {})
 
     expect(strip()).toEqual(['/space/a.md'])
     expect(workspace.tabs).toHaveLength(2)

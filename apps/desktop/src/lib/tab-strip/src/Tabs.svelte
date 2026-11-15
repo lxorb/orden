@@ -26,63 +26,55 @@
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from '../../agent-marks.svelte'
   import { chrome } from '../../theme/src/api'
-  import { middleOpens, tabAsk } from '../../new-tab'
   import { rooms } from '../../collab/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { privateMark, syncMark } from '../../surfaces/src/api'
   import { soundMark } from '../../spaces/src/api'
-  import { tabOverview, workspace } from '../../workspace/src/api'
+  import { tabOverview, workspace, middleOpens, tabAsk } from '../../workspace/src/api'
   import TabMark from '../../TabMark.svelte'
   import { askPlace } from '../../save-place/src/api'
+  import { arrival, handOver, keyOf, picks, register, stripOf, TabDrag } from './drag.svelte'
+  import type { Block } from './picking.svelte'
   import {
-    arrival,
-    type Block,
     type Bounds,
-    type ClosingWidths,
     crossTakes,
     endOf,
-    essentialDropping,
-    fitTabs,
     fitted,
-    flushStart,
-    handOver,
     holds,
-    hoverCards,
-    iconTabs,
-    initialOf,
     keptWidths,
-    keyOf,
-    loadTabChip,
     MAGNETISM,
     moved,
     OPENING,
     partsFor,
-    picks,
     placed,
     PLUS,
     PLUS_GAP,
     plusFits,
-    register,
-    revealed,
     separated,
-    siteLook,
     slotAt,
+    trailing,
+    widened,
+    widthsFor,
+    worthKeeping,
+  } from './layout'
+  import type { ClosingWidths } from './closing.svelte'
+  import {
+    essentialDropping,
+    hoverCards,
+    loadTabChip,
     stripMenus,
-    stripOf,
     tabCarrying,
     tabClosing,
-    TabDrag,
     tabMenus,
     tabNameField,
     tabOps,
     tabPicking,
-    trailing,
-    twins,
-    wheelAlong,
-    widened,
-    widthsFor,
-    worthKeeping,
-  } from './api'
+  } from './shell-parts'
+  import { fitTabs, iconTabs } from './icon-tabs.svelte'
+  import { flushStart } from './flush'
+  import { initialOf, siteLook, twins } from './twins'
+  import { revealed } from './scroll'
+  import { wheelAlong } from './wheel'
   import { insideSpace, nameOf } from '../../platform/src/api'
   import { shownName } from '../../platform/src/api'
   import { chosenIcon } from '../../chosen-icon'

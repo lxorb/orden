@@ -53,7 +53,7 @@
 
   async function bringBack(space: Space) {
     close()
-    const { unarchiveSpace } = await import('../../space-archive')
+    const { unarchiveSpace } = await import('./space-archive')
     await unarchiveSpace(space)
     await workspace.showSpace(space.id)
   }

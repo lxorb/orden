@@ -8,7 +8,7 @@ const world = vi.hoisted(() => ({
   active: null as { note: { shared?: string } } | null,
 }))
 
-vi.mock('./accounts/src/account.svelte', () => ({
+vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     get user() {
       return world.user
@@ -22,7 +22,7 @@ vi.mock('./accounts/src/account.svelte', () => ({
   },
 }))
 
-vi.mock('./sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   joining: {
     get invitation() {
       return world.invitation
@@ -30,7 +30,7 @@ vi.mock('./sharing/src/api', () => ({
   },
 }))
 
-vi.mock('./workspace/src/api', () => ({
+vi.mock('./workspace.svelte', () => ({
   workspace: {
     get active() {
       return world.active

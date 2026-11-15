@@ -6,8 +6,7 @@ import { modes } from './modes/src/api'
 import { canWriteAt, trustsHtmlAt } from './sharing/src/api'
 import { shortcuts } from './shortcuts/src/api'
 import { insideSpace } from './platform/src/api'
-import { followHref } from './open-link'
-import { workspace } from './workspace/src/api'
+import { followHref, workspace } from './workspace/src/api'
 
 const SETTLES_AFTER = 900
 

@@ -2,12 +2,43 @@ import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
 import { account, api, type AccountSettings } from '../../accounts/src/api'
 import { BY_ID, runnable } from './registry'
-import { forget, isString, keepJson, stored } from '../../platform/src/api'
-import { owedUntilSignOut, owes, saveOwing } from './owed'
+import { forget, isString, keep, keepJson, stored, storedText } from '../../platform/src/api'
+
+class Owed {
+  private readonly latest = new Map<string, Promise<unknown>>()
+
+  untilSignOut(key: string): void {
+    account.forgetWithSession(() => {
+      this.latest.delete(key)
+      forget(key)
+    })
+  }
+
+  saving(key: string, save: Promise<unknown>): void {
+    this.latest.set(key, save)
+    const last = () => this.latest.get(key) === save
+    void save.then(
+      () => {
+        if (!last()) return
+        this.latest.delete(key)
+        forget(key)
+      },
+      () => {
+        if (last()) keep(key, 'yes')
+      },
+    )
+  }
+
+  owes(key: string): boolean {
+    return storedText(key) === 'yes'
+  }
+}
+
+export const owed = new Owed()
 
 const STORAGE_KEY = 'orden:toolbar'
 const OWED_KEY = 'orden:toolbar-owed'
-owedUntilSignOut(OWED_KEY)
+owed.untilSignOut(OWED_KEY)
 
 const MOST_BUTTONS = 24
 
@@ -136,7 +167,7 @@ class Toolbar {
   }
 
   receive(remote: AccountSettings) {
-    if (owes(OWED_KEY)) {
+    if (owed.owes(OWED_KEY)) {
       this.share()
       return
     }
@@ -158,7 +189,7 @@ class Toolbar {
     const token = account.accountToken
     if (!token) return
 
-    saveOwing(OWED_KEY, api.saveSettings(token, { toolbar: this.chosen }))
+    owed.saving(OWED_KEY, api.saveSettings(token, { toolbar: this.chosen }))
   }
 }
 

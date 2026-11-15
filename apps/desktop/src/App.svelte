@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { spaceArchiving } from './lib/spaces/src/api'
   import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
   import { moveSection } from './lib/sections'
@@ -17,6 +18,8 @@
     showField,
     textFieldOf,
     viewport,
+    escapeLeaves,
+    fullscreen,
   } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
@@ -34,14 +37,19 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
-  import { swipeOpens } from './lib/swipe-opens'
-  import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
-  import { alone } from './lib/alone.svelte'
+  import {
+    swipeOpens,
+    alone,
+    hasStatusBar,
+    paletteWords,
+    tabOverview,
+    workspace,
+  } from './lib/workspace/src/api'
+  import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
   import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
   import { linkScroll, type ScrollEnd, systemMenu } from './lib/ui-kit/src/api'
   import { recovery } from './lib/history/src/api'
-  import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
   import { search } from './lib/search/src/api'
@@ -83,16 +91,13 @@
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
   import StatusBar from './lib/StatusBar.svelte'
-  import Titlebar from './lib/Titlebar.svelte'
+  import { Titlebar } from './lib/titlebar/src/api'
   import { choices, modes, watchTextSize } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
-  import { invoke, isDesktop, isNative, platform } from './lib/platform/src/api'
   import { startup } from './lib/launch/src/api'
-  import { storedText } from './lib/platform/src/api'
   import { windowDocuments } from './lib/windows/src/api'
   import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/panes/src/api'
-  import { paletteWords, tabOverview, workspace } from './lib/workspace/src/api'
   import { sidebarKey, used } from './lib/file-undo/src/api'
   import { saveFront } from './lib/save-place/src/api'
   import PadColumn from './lib/PadColumn.svelte'
@@ -228,10 +233,7 @@
           (one) => one.receive(remote),
         )
         recovery.receive(remote)
-        whenLoaded(
-          () => import('./lib/space-archive'),
-          (one) => void one.receive(remote),
-        )
+        whenLoaded(spaceArchiving, (one) => void one.receive(remote))
         if (!__EVEN_PLUGIN__)
           whenLoaded(
             () => import('./lib/chats-client/src/api'),

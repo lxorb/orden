@@ -1,7 +1,6 @@
 import { askSheet } from '@orden/contracts'
-import { openSpaces } from '../../focus'
+import { openSpaces, type Space, workspace } from '../../workspace/src/api'
 import { viewport } from '../../ui-kit/src/api'
-import { type Space, workspace } from '../../workspace/src/api'
 
 class SpacePicker {
   open = $state(false)

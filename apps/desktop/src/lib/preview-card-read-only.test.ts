@@ -7,6 +7,7 @@ const share = vi.hoisted(() => ({ readOnly: false }))
 const written = vi.hoisted(() => [] as string[])
 
 vi.mock('./workspace/src/api', () => ({
+  followHref: () => undefined,
   workspace: {
     spaces: [home],
     activeSpace: home,

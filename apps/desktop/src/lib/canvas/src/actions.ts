@@ -62,8 +62,7 @@ import {
   fileBytes,
   spaceRelative,
 } from '../../platform/src/api'
-import { openHref } from '../../open-link'
-import { workspace } from '../../workspace/src/api'
+import { openHref, workspace } from '../../workspace/src/api'
 import { drawScale, loading, PDF_TO_CSS, pdfjs } from '../../pdf/src/api'
 
 const NUDGE = 1

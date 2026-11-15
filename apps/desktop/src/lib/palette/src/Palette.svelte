@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { hinting } from '../../hints/src/api'
   import {
     OUTLINE_MARK,
     GRAPH_MARK,
@@ -22,7 +23,6 @@
   import FileMark from '../../FileMark.svelte'
   import Icon from '../../Icon.svelte'
   import { links } from '../../link-index/src/api'
-  import { middleOpens } from '../../new-tab'
   import { AGENTS_NAME, shownName } from '../../platform/src/api'
   import { browse, RECENT } from './browse'
   import { candidates, headingCandidates, resting, rowKey, type World } from './kinds'
@@ -44,7 +44,7 @@
   import { isDesktop } from '../../platform/src/api'
   import { type PaletteHost, paletteKind, searching, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { notices, paletteWords, workspace } from '../../workspace/src/api'
+  import { notices, paletteWords, workspace, middleOpens } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { wholeRows } from './whole-rows'
 
@@ -61,11 +61,7 @@
   /* eslint-enable prefer-const */
 
   $effect(() => {
-    if (!__EVEN_PLUGIN__ && open)
-      whenLoaded(
-        () => import('../../hints.svelte'),
-        ({ hints }) => hints.dismiss('palette'),
-      )
+    if (!__EVEN_PLUGIN__ && open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
   })
 
   let query = $state('')

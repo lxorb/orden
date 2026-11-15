@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tabKindLoaded } from '@orden/contracts'
-  import { focusEditor } from '../../focus'
+  import { focusEditor } from '../../workspace/src/api'
   import { selectAll } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
 

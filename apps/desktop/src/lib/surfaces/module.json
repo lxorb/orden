@@ -24,14 +24,12 @@
     "shortcuts",
     "sync-client",
     "new-here",
-    "spaces"
+    "spaces",
+    "workspace"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/fullscreen.svelte.ts",
-    "apps/desktop/src/lib/open-link.ts",
     "apps/desktop/src/lib/renamed.svelte.ts"
   ]
 }

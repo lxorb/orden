@@ -19,9 +19,5 @@
     "views",
     "workspace"
   ],
-  "pending": [
-    "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/open-link.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/layer-keys.ts"]
 }

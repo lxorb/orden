@@ -25,6 +25,8 @@ export const spaceMoving = () => import('./moving-space')
 
 export const spaceSets = () => import('./sets.svelte')
 
+export const essentials = () => import('./essentials.svelte')
+
 export const spaceChanges = () => import('./space-changes')
 
 export const fileUndoing = () => import('./undoing')
@@ -34,3 +36,48 @@ export const notices = () => import('./notices.svelte')
 export const firstVisiting = () => import('./first-visit.svelte')
 
 export const loadUndoToast = () => import('./UndoToast.svelte')
+
+export {
+  focusEditor,
+  focusList,
+  intoSide,
+  openAgentSession,
+  openSpaces,
+  revealPanel,
+  stepRegionFocus,
+} from './focus'
+
+export { hasStatusBar } from './regions'
+
+export {
+  followHref,
+  followNote,
+  followNoteFrom,
+  MIDDLE,
+  openHref,
+  opensLink,
+  webHref,
+} from './open-link'
+
+export { alone, swipeOpens } from './alone.svelte'
+
+export { scratchpadOn } from './services'
+
+export type { Across } from './across'
+
+export const acrossStarting = () => import('./across')
+
+export const blankTabs = () => import('./blank-tabs.svelte')
+
+export const outsideHearing = () => import('./outside.svelte')
+
+export {
+  besideAt,
+  howFor,
+  type LinkAsk,
+  linkAsk,
+  middleOpens,
+  type Press,
+  type TabAsk,
+  tabAsk,
+} from './new-tab'

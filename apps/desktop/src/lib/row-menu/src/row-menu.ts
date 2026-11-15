@@ -20,7 +20,6 @@ import {
   shareEntry,
   webDataEntry,
 } from './api'
-import { howFor } from '../../new-tab'
 import {
   rowName,
   folderOf,
@@ -33,7 +32,7 @@ import {
 import { canWriteAt, protectEntries } from '../../sharing/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { reveal, showLabel } from '../../files-out/src/api'
-import { workspace } from '../../workspace/src/api'
+import { workspace, howFor } from '../../workspace/src/api'
 
 export function rowMenu(entry: Entry): MenuEntry[] {
   const several = selectionMenu(entry)

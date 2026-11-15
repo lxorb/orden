@@ -1,4 +1,4 @@
-import { currentWindow, whenScreenGivenBack, afterQuiet } from './platform/src/api'
+import { afterQuiet, currentWindow, whenScreenGivenBack } from '../../platform/src/api'
 
 interface Panes {
   fills: string | null
