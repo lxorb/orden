@@ -375,6 +375,32 @@ describe('the two that were already there', () => {
   })
 })
 
+describe('duplicating a selection over blocks that hold other blocks', () => {
+  test('copies a heading with its section once', () => {
+    const doc = '# H\n\npara'
+    const { view, said } = viewOf(doc, 0, doc.length)
+    expect(duplicateBlocks(view, 1)).toBe(true)
+    expect(said()).toBe('# H\n\npara\n\n# H\n\npara')
+  })
+
+  test('copies a nested list once', () => {
+    const doc = '- a\n  - b\n'
+    const { view, said } = viewOf(doc, 0, doc.length - 1)
+    expect(duplicateBlocks(view, 1)).toBe(true)
+    expect(said().match(/- b/g)?.length).toBe(2)
+    expect(said().match(/- a/g)?.length).toBe(2)
+  })
+
+  test('leaves the caret at the copy of the last block', () => {
+    const doc = 'a\n\nb\n'
+    const { view, said } = viewOf(doc, 0, doc.indexOf('b') + 1)
+    expect(duplicateBlocks(view, 0)).toBe(true)
+    const caret = view.state.selection.main.head
+    expect(said().slice(caret, caret + 1)).toBe('b')
+    expect(said().indexOf('b')).toBeLessThan(caret)
+  })
+})
+
 describe('from a key', () => {
   test('duplicates the block the caret is in', () => {
     const doc = 'a\n\nb\n\nc\n'

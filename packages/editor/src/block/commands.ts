@@ -31,22 +31,30 @@ function runOf(spans: BlockSpan[]): BlockSpan | null {
   return { from: first.from, to, kind: first.kind }
 }
 
-export function duplicateBlocks(view: EditorView, pos: number): boolean {
-  const spans = blocksFor(view, pos)
-  if (!spans.length) return false
-
-  const changes: ChangeSpec[] = []
-  let caret: number | null = null
-
-  for (const span of [...spans].reverse()) {
-    const edit = copyBlock(view.state, span)
-    changes.push(...edit.changes)
-    caret ??= edit.caret
+function outermost(spans: readonly BlockSpan[]): BlockSpan[] {
+  const kept: BlockSpan[] = []
+  for (const span of spans) {
+    const holder = kept.at(-1)
+    if (holder && span.from >= holder.from && span.to <= holder.to) continue
+    kept.push(span)
   }
+  return kept
+}
+
+export function duplicateBlocks(view: EditorView, pos: number): boolean {
+  const spans = outermost(blocksFor(view, pos))
+  const last = spans.at(-1)
+  if (!last) return false
+
+  const changes = view.state.changes(spans.flatMap((span) => copyBlock(view.state, span).changes))
+  const caret = copyBlock(view.state, last).caret
+  const lastCopy = { from: 0, fromB: 0 }
+  changes.iterChanges((from, _to, fromB) => Object.assign(lastCopy, { from, fromB }))
+  const landing = caret === null ? null : lastCopy.fromB + caret - lastCopy.from
 
   view.dispatch({
     changes,
-    ...(caret === null ? {} : { selection: { anchor: caret } }),
+    ...(landing === null ? {} : { selection: { anchor: landing } }),
     scrollIntoView: true,
   })
   view.focus()
