@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import FindBar from '../../FindBar.svelte'
+  import { FindBar } from '../../reading/src/api'
   import { Outward } from '../../ui-controls/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { hostOf } from '@orden/online/urls'

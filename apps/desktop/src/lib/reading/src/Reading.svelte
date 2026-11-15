@@ -1,30 +1,21 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
   import FindBar from './FindBar.svelte'
-  import { keyElsewhere } from './layer-keys'
-  import { menu, scrollbar } from './ui-kit/src/api'
-  import { modes } from './modes/src/api'
+  import { keyElsewhere } from '../../layer-keys'
+  import { menu, scrollbar } from '../../ui-kit/src/api'
+  import { modes } from '../../modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
-  import {
-    headingOffsets,
-    inlineFiles,
-    paint,
-    positionOf,
-    rangeOf,
-    readingHtml,
-    type Section,
-    sectionAt,
-    tagAnchor,
-    unreadableHtml,
-    wordsOf,
-  } from './reading/src/api'
-  import { trustsHtmlIn } from './sharing/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { followHref, MIDDLE, opensLink } from './open-link'
-  import { tabAsk } from './new-tab'
-  import { theme } from './theme/src/api'
-  import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace/src/api'
+  import { inlineFiles } from './drawn'
+  import { paint, rangeOf, wordsOf } from './find'
+  import { headingOffsets, positionOf, type Section, sectionAt } from './places'
+  import { readingHtml, tagAnchor, unreadableHtml } from './render'
+  import { trustsHtmlIn } from '../../sharing/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { followHref, MIDDLE, opensLink } from '../../open-link'
+  import { tabAsk } from '../../new-tab'
+  import { theme } from '../../theme/src/api'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace/src/api'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
   import {
     blockIds,
@@ -33,8 +24,8 @@
     isTabFile,
     pageFragment,
   } from '@orden/markdown/links'
-  import { links } from './link-index/src/api'
-  import { pressQueryRow } from './link-index/src/api'
+  import { links } from '../../link-index/src/api'
+  import { pressQueryRow } from '../../link-index/src/api'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -56,7 +47,7 @@
       return () => undefined
     let stop: (() => void) | null = null
     let stopped = false
-    void import('./views/src/api')
+    void import('../../views/src/api')
       .then((one) => one.baseMounting())
       .then(({ mountBases }) => {
         if (stopped) return
@@ -268,7 +259,7 @@
     if (tag) {
       event.preventDefault()
       const name = tag.getAttribute('data-tag')
-      if (name && !middle) void import('./tag-search').then(({ searchTag }) => searchTag(name))
+      if (name && !middle) void import('../../tag-search').then(({ searchTag }) => searchTag(name))
       return
     }
 

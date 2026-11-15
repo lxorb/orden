@@ -131,7 +131,9 @@ export const passFill = held(() =>
 
 export const emptySurface = held(() => import('./NewHere.svelte'))
 
-export const readingSurface = held(() => import('./Reading.svelte'))
+export const readingSurface = held(() =>
+  import('./reading/src/api').then((one) => one.loadReading()),
+)
 
 export const lockScreen = held(() =>
   __EVEN_PLUGIN__
@@ -139,7 +141,9 @@ export const lockScreen = held(() =>
     : import('./sharing/src/api').then((one) => one.loadLockScreen()),
 )
 
-export const findBar = held(() => import('./FindBar.svelte'))
+export const findBar = held(() =>
+  import('./reading/src/api').then((one) => ({ default: one.FindBar })),
+)
 
 const agentsApi = () => (__EVEN_PLUGIN__ ? never : import('./agents/src/api'))
 
@@ -189,7 +193,9 @@ export const archivedStrip = held(() =>
 
 export const historySheet = latched(loadHistory)
 
-export const shareSheet = latched(() => import('./ShareSheet.svelte'))
+export const shareSheet = latched(() =>
+  import('./accounts-ui/src/api').then((one) => one.loadShareSheet()),
+)
 
 export const publishSheet = latched(() =>
   import('./publishing/src/api').then((one) => one.loadPublishSheet()),

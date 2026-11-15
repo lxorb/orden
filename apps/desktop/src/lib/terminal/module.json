@@ -24,10 +24,10 @@
     "workspace",
     "notify",
     "sync-store",
-    "space-pick"
+    "space-pick",
+    "reading"
   ],
   "pending": [
-    "apps/desktop/src/lib/FindBar.svelte",
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/Sweep.svelte",
     "apps/desktop/src/lib/chosen-icon.ts",

@@ -229,11 +229,11 @@ describe('the ring a keyboard leaves', () => {
 
     expect(wearing).toEqual([
       'lib/ContextMenu.svelte',
-      'lib/Reading.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/canvas/src/Canvas.svelte',
       'lib/pass-ui/src/PassFill.svelte',
+      'lib/reading/src/Reading.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
       'lib/web-tab/src/WebAsk.svelte',
     ])
@@ -288,9 +288,9 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/ShareSheet.svelte',
       'lib/SpaceBadge.svelte',
       'lib/SpaceMenu.svelte',
+      'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/accounts/src/AccountBadge.svelte',
       'lib/agents/src/settings/AgentMark.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
@@ -309,8 +309,8 @@ describe('the badge in front of a name', () => {
 
     expect(asking).toEqual([
       'lib/PromptSheet.svelte',
-      'lib/ShareSheet.svelte',
       'lib/SpaceBadge.svelte',
+      'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/src/SavePlace.svelte',
       'lib/tab-strip/src/TabCard.svelte',
@@ -334,7 +334,7 @@ describe('the switch', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/ShareSheet.svelte',
+      'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
       'lib/ai-sidebar/src/ModelPicker.svelte',
       'lib/chats-client/src/view/PollSheet.svelte',
