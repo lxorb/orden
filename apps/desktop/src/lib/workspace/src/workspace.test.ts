@@ -1424,6 +1424,19 @@ describe('walking back along a trail', () => {
     expect(looking.trail).toEqual(['/space/b.md'])
     expect(looking.path).toBe('/space/b.md')
   })
+
+  test('and stays on the note it shows when the gone one was behind it, so Forward still goes on', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    looking.trail = ['/space/a.md', '/space/gone.md', '/space/b.md', '/space/c.md']
+    looking.at = 2
+
+    await workspace.walk(1, looking.id)
+
+    expect(looking.trail).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(looking.trail[looking.at]).toBe('/space/b.md')
+    expect(looking.path).toBe('/space/b.md')
+  })
 })
 
 describe('a strip whose tabs start at its pane’s edge (#1139)', () => {

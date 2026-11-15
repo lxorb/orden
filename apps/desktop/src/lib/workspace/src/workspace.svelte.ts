@@ -2502,8 +2502,9 @@ class Workspace {
     this.flush()
     const note = await this.opened.opening(path, () => this.stepped(tab, path))
     if (!note) {
+      const behind = tab.trail.slice(0, tab.at).filter((one) => samePath(one, path)).length
       tab.trail = tab.trail.filter((one) => !samePath(one, path))
-      tab.at = Math.min(tab.at, Math.max(tab.trail.length - 1, 0))
+      tab.at = Math.max(Math.min(tab.at - behind, tab.trail.length - 1), 0)
       return
     }
 
