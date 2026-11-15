@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import {
   INBOX_PAGE,
   inboxChangesOf,
+  inboxFits,
   mergedInbox,
   MOST_INBOX_ITEMS,
   type InboxChange,
@@ -167,7 +168,7 @@ export async function writeInbox(
     for (const change of changes) {
       const was = held.get(change.id) ?? null
       const merged = mergedInbox(was, change)
-      if (!merged.changed) continue
+      if (!merged.changed || !inboxFits({ id: change.id, ...merged })) continue
       plans.push({
         id: change.id,
         fields: JSON.stringify(merged.fields),

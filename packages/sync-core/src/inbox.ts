@@ -76,8 +76,13 @@ export function inboxChangeOf(value: unknown): InboxChange | null {
     const stamp = stamps[key]
     if (typeof stamp !== 'string' || !INBOX_STAMP.test(stamp)) return null
   }
-  if (bytesOf(JSON.stringify(value)) > MOST_INBOX_BYTES) return null
-  return { id, fields: fields as InboxFields, stamps: stamps as InboxStamps }
+  const change = { id, fields: fields as InboxFields, stamps: stamps as InboxStamps }
+  return inboxFits(change) ? change : null
+}
+
+export function inboxFits(change: InboxChange): boolean {
+  const { id, fields, stamps } = change
+  return bytesOf(JSON.stringify({ id, fields, stamps })) <= MOST_INBOX_BYTES
 }
 
 export function inboxChangesOf(body: unknown): InboxChange[] | null {
