@@ -1,4 +1,4 @@
-import { type Base, nextId, rowsInBase, type Value } from '@orden/bases'
+import { type Base, nextId, noteValues, rowsInBase, type Value } from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath, insideOnly, folderOf, insideSpace, within } from '../../platform/src/api'
 import { contextFor } from './context'
@@ -26,6 +26,19 @@ function idFor(base: Base, space: { name: string }): Record<string, string> {
   return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }
 
+function frontValue(value: Value): unknown {
+  if (Array.isArray(value)) return value.map(frontValue)
+  if (value === null || typeof value !== 'object' || !('kind' in value) || value.kind !== 'link')
+    return plainValue(value)
+  const { target, display } = value
+  if (typeof target !== 'string') return plainValue(value)
+  return typeof display === 'string' && display ? `[[${target}|${display}]]` : `[[${target}]]`
+}
+
+export function askedProperties(asked: Record<string, Value> = {}): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(asked).map(([name, value]) => [name, frontValue(value)]))
+}
+
 export function groupProperties(group?: { property: string; key: Value }): Record<string, unknown> {
   if (!group || !isNoteProperty(group.property)) return {}
   const key = group.key
@@ -33,8 +46,11 @@ export function groupProperties(group?: { property: string; key: Value }): Recor
     typeof key === 'string' ||
     typeof key === 'number' ||
     typeof key === 'boolean' ||
-    (key !== null && typeof key === 'object' && 'kind' in key && key.kind === 'date')
-  return kept ? { [bare(group.property)]: plainValue(key) } : {}
+    (key !== null &&
+      typeof key === 'object' &&
+      'kind' in key &&
+      (key.kind === 'date' || key.kind === 'link'))
+  return kept ? { [bare(group.property)]: frontValue(key) } : {}
 }
 
 const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
@@ -62,6 +78,21 @@ export function joinedProperties(
   return out
 }
 
+export function withTemplate(
+  words: string,
+  props: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!words.startsWith('---')) return props
+  const own = noteValues(words)
+  const lists = Object.fromEntries(
+    Object.keys(props).flatMap((name) => {
+      const value = own[name]
+      return Array.isArray(value) ? [[name, frontValue(value)]] : []
+    }),
+  )
+  return joinedProperties(lists, props)
+}
+
 export async function addNote(
   base: Base,
   at: number,
@@ -82,18 +113,17 @@ export async function addNote(
     folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
   if (!canWriteAt(dir)) return null
 
-  const asked = Object.fromEntries(
-    Object.entries(made.properties ?? {}).map(([name, value]) => [name, plainValue(value)]),
-  )
-  const props = joinedProperties(place.properties, groupProperties(group), asked)
-  Object.assign(props, idFor(base, space))
-
   const title = noteName(made.title ?? 'Untitled')
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
   const link =
     made.template === undefined ? (view?.orden.template ?? base.orden.template) : made.template
   const template = link ? templatePath(link, space) : null
   const words = template === null ? '' : await templateWords(template, name.replace(/.md$/i, ''))
+  const props = withTemplate(
+    words,
+    joinedProperties(place.properties, groupProperties(group), askedProperties(made.properties)),
+  )
+  Object.assign(props, idFor(base, space))
   const path = joinPath(dir, name)
   await writeFile(path, withProperties(words, props))
   await workspace.loadTree()
