@@ -16,7 +16,7 @@
   import { swiping } from '../../back-swipe/src/api'
   import { findBar, passFill, takeoverBar } from '../../surfaces.svelte'
   import { invoke, isDesktop, openExternal } from '../../platform/src/api'
-  import { takesWords, writes } from '../../typing-pointer'
+  import { takesWords, writes } from '../../ui-controls/src/api'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'
   import { favicon, plainOrigin } from '@orden/scan/web-address'

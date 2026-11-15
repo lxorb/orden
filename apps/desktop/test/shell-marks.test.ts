@@ -119,8 +119,8 @@ describe('the mark that says shared', () => {
       .sort()
 
     expect(dots).toEqual([
-      'lib/JoinPending.svelte',
-      'lib/JoinSheet.svelte',
+      'lib/sharing/src/JoinPending.svelte',
+      'lib/sharing/src/JoinSheet.svelte',
       'lib/tab-strip/src/Tabs.svelte',
       'lib/ui-kit/src/UnreadDot.svelte',
     ])

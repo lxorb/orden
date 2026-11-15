@@ -231,7 +231,9 @@ export const recordingPill = latched(() =>
   import('./dictation/src/api').then((one) => one.loadRecordingPill()),
 )
 
-export const joinPending = latched(() => import('./JoinPending.svelte'))
+export const joinPending = latched(() =>
+  import('./sharing/src/api').then((one) => one.loadJoinPending()),
+)
 
 export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 
@@ -325,7 +327,9 @@ export const signInSheet = latched(() =>
   import('./accounts-ui/src/api').then((one) => ({ default: one.SignIn })),
 )
 
-export const joinSheet = latched(() => import('./JoinSheet.svelte'))
+export const joinSheet = latched(() =>
+  import('./sharing/src/api').then((one) => one.loadJoinSheet()),
+)
 
 export const feedbackSheet = latched(() => import('./FeedbackSheet.svelte'))
 
@@ -350,7 +354,9 @@ export function showQuickAdd(prefill: import('./quick-add/src/api').Prefill = {}
 export const fillBar = held(() => import('./tab-fill/src/api').then((one) => one.loadFillBar()))
 export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 
-export const guestCorner = held(() => import('./GuestCorner.svelte'))
+export const guestCorner = held(() =>
+  import('./collab/src/api').then((one) => one.loadGuestCorner()),
+)
 
 export const menuBarDoor = () =>
   __EVEN_PLUGIN__

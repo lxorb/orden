@@ -291,7 +291,7 @@ export function start(): () => void {
 
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
-    void import('./typing-pointer').then((one) => (stopPointer = one.hidePointerWhileTyping()))
+    void import('./ui-controls/src/api').then((one) => (stopPointer = one.hidePointerWhileTyping()))
   }
 
   return () => {

@@ -297,7 +297,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/context-menu/src/ContextMenu.svelte', 'the right-click menu'],
     ['/lib/FormatBar.svelte', 'the bar over a selection'],
     ['/lib/accounts-ui/src/SignIn.svelte', 'the sign-in sheet'],
-    ['/lib/JoinSheet.svelte', 'the join sheet'],
+    ['/lib/sharing/src/JoinSheet.svelte', 'the join sheet'],
     ['/lib/drawer-follow.ts', "a drawer's drag"],
     ['/lib/swipe.ts', "the drag's arithmetic"],
     ['/editor/src/block/commands.ts', "what a block's menu does"],

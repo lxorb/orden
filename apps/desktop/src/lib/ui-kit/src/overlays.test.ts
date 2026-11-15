@@ -304,9 +304,9 @@ describe('what hides a web page', () => {
     'lib/crash-reports/src/CrashAsk.svelte': 'dialog',
     'lib/graph-view/src/GraphControls.svelte': 'dropdown',
     'lib/FeedbackSheet.svelte': 'dialog',
-    'lib/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
+    'lib/collab/src/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/history/src/History.svelte': 'sheet',
-    'lib/JoinSheet.svelte': 'sheet',
+    'lib/sharing/src/JoinSheet.svelte': 'sheet',
     'lib/IconPicker.svelte': 'sheet',
     'lib/palette/src/Palette.svelte': 'dialog',
     'lib/PromptSheet.svelte': 'dialog',
@@ -357,7 +357,7 @@ describe('what hides a web page', () => {
     'lib/RenameNotice.svelte',
     'lib/StorageWarning.svelte',
     'lib/dictation/src/recorder/RecordingPill.svelte',
-    'lib/JoinPending.svelte',
+    'lib/sharing/src/JoinPending.svelte',
   ]
 
   function sources(): string[] {

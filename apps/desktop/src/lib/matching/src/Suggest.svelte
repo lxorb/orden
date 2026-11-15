@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly } from './platform/src/api'
-  import type { Piece } from './matching/src/api'
+  import { dur, fly } from '../../platform/src/api'
+  import type { Piece } from './pieces'
 
   const {
     values,
