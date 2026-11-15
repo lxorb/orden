@@ -369,6 +369,58 @@ describe('a Notion export', () => {
     expect(row).toMatch(/^property-\d+: 5$/m)
   })
 
+  test('two databases of one name under one page each keep a folder of their own', async () => {
+    const one = 'a'.repeat(32)
+    const two = 'b'.repeat(32)
+    const plan = await readNotion([
+      file(`Home ${PLAN}.md`, '# Home\n'),
+      file(`Home ${PLAN}/Untitled ${one}_all.csv`, 'Name\nOne\n'),
+      file(`Home ${PLAN}/Untitled ${one}/One ${ROW}.md`, '# One\n'),
+      file(`Home ${PLAN}/Untitled ${two}_all.csv`, 'Name\nTwo\nThree\n'),
+      file(`Home ${PLAN}/Untitled ${two}/Two ${SUB}.md`, '# Two\n'),
+    ])
+
+    expect(pathsOf(plan).sort()).toEqual([
+      'Home.md',
+      'Home/Untitled 2.md',
+      'Home/Untitled 2/Three.md',
+      'Home/Untitled 2/Two.md',
+      'Home/Untitled.md',
+      'Home/Untitled/One.md',
+    ])
+  })
+
+  test('two pages of one name keep their subpages apart, in Markdown and in HTML', async () => {
+    const one = 'a'.repeat(32)
+    const two = 'b'.repeat(32)
+    const markdown = await readNotion([
+      file(`Untitled ${one}/Kit ${ROW}.md`, '# Kit\n'),
+      file(`Untitled ${one}.md`, '# Untitled\n'),
+      file(`Untitled ${two}.md`, `# Untitled\n\n[Tent](Untitled%20${two}/Tent%20${SUB}.md)\n`),
+      file(`Untitled ${two}/Tent ${SUB}.md`, '# Tent\n'),
+    ])
+    const html = await readNotion([
+      file(`Untitled ${one}.html`, '<h1>Untitled</h1>'),
+      file(`Untitled ${one}/Kit ${ROW}.html`, '<h1>Kit</h1>'),
+      file(`Untitled ${two}.html`, '<h1>Untitled</h1>'),
+      file(`Untitled ${two}/Tent ${SUB}.html`, '<h1>Tent</h1>'),
+    ])
+
+    expect(pathsOf(markdown).sort()).toEqual([
+      'Untitled 2.md',
+      'Untitled 2/Tent.md',
+      'Untitled.md',
+      'Untitled/Kit.md',
+    ])
+    expect(noteAt(markdown, 'Untitled 2.md')).toContain('[[Tent]]')
+    expect(pathsOf(html).sort()).toEqual([
+      'Untitled 2.md',
+      'Untitled 2/Tent.md',
+      'Untitled.md',
+      'Untitled/Kit.md',
+    ])
+  })
+
   test('an HTML export is read as HTML rather than refused', async () => {
     const plan = await readNotion([
       file(`Plan ${PLAN}.html`, '<h1>Plan</h1><p>Words</p>'),
