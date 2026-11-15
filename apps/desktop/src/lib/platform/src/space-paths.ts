@@ -79,21 +79,21 @@ export function sameSpelling(one: string, other: string): boolean {
   return a.length === b.length && holds(a, b, () => false)
 }
 
+function inward(parts: readonly string[]): string | null {
+  return parts.includes('..') ? null : parts.join('/')
+}
+
 export function within(folder: string, path: string, root?: string): string | null {
   if (!folder) return path.replace(/\\/g, '/')
 
   if (path.startsWith(folder) && !/[\\/]$/.test(folder)) {
     const rest = path.slice(folder.length)
-    if (!rest || /^[\\/]/.test(rest))
-      return rest
-        .split(/[\\/]+/)
-        .filter(Boolean)
-        .join('/')
+    if (!rest || /^[\\/]/.test(rest)) return inward(rest.split(/[\\/]+/).filter(Boolean))
   }
 
   const head = steps(folder)
   const file = steps(path)
-  return holds(head, file, () => foldsAt(root ?? folder)) ? file.slice(head.length).join('/') : null
+  return holds(head, file, () => foldsAt(root ?? folder)) ? inward(file.slice(head.length)) : null
 }
 
 export function movedTo(path: string, from: string, to: string, root?: string): string | null {
