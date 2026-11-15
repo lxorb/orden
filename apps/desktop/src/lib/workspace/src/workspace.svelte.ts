@@ -3807,6 +3807,7 @@ class Workspace {
   ): Promise<string | null> {
     const slashed = target.replace(/[\\]/g, '/')
     if (slashed.trimStart().startsWith('//')) return null
+    if (kind === 'markdown' && /(?:^|\/)\.{0,2}\s*$/.test(slashed)) return null
     const clean = slashed.replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 

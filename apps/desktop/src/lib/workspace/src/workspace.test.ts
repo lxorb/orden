@@ -4708,6 +4708,10 @@ describe('a tab asked for with a modifier', () => {
     expect(await made('../Up.md')).toEqual(['/space/Up.md'])
     expect(await made('sub/Deep.md')).toEqual(['/space/B/sub/Deep.md'])
     expect(await made('../../Out.md')).toEqual([])
+    expect(await made('./')).toEqual([])
+    expect(await made('../')).toEqual([])
+    expect(await made('sub/')).toEqual([])
+    expect(await made('..')).toEqual([])
   })
 
   test('a paper followed the same way opens behind too, as its page note', async () => {
