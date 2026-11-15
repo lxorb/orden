@@ -2,7 +2,7 @@ import { foldName } from '@orden/markdown/links'
 import { asWords } from '@orden/markdown/words'
 
 import { dayOf, noteText, type Meta } from './meta'
-import { Names, safeName } from './names'
+import { Names, pageLink, safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
@@ -214,16 +214,17 @@ export function roamText(
       .replace(/\^\^([^^]+)\^\^/g, '==$1==')
       .replace(/(?<![\w_])__(?=\S)([^_\n]+?)__(?![\w_])/g, '*$1*')
       .replace(BLOCK_EMBED, (whole, uid: string) => block(whole, uid))
-      .replace(PAGE_EMBED, (_whole, name: string) => `![[${page(name)}]]`)
+      .replace(PAGE_EMBED, (_whole, name: string) => pageLink(page(name), null, true))
       .replace(/\[([^\]\n]+)\]\(\(\(([^()\s]+)\)\)\)/g, (whole, words: string, uid: string) =>
         block(whole, uid, () => words),
       )
       .replace(/\(\(([^()\s]+)\)\)/g, (whole, uid: string) => block(whole, uid))
-      .replace(
-        /\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g,
-        (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`,
+      .replace(/\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g, (_whole, words: string, name: string) =>
+        pageLink(page(name), words),
       )
-      .replace(/(?<!\{)\[\[([^[\]\n]+)\]\](?!\})/g, (_whole, name: string) => `[[${page(name)}]]`)
+      .replace(/(?<!\{)\[\[([^[\]\n]+)\]\](?!\})/g, (whole, name: string) =>
+        name.includes('|') ? whole : pageLink(page(name)),
+      )
       .replace(/\{\{\[\[([^\]]+)\]\]\}\}/g, '$1'),
   )
 }

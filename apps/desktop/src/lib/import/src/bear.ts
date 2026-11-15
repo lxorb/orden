@@ -1,3 +1,4 @@
+import { wikilinkCannotName } from '@orden/markdown/links'
 import { relativePath } from '../../platform/src/api'
 import { convertTags, outsideCode } from './convert'
 import { isHidden } from './folder'
@@ -83,6 +84,8 @@ const NOTE_LINK = /\]\((bear:\/\/x-callback-url\/open-note\?[^)\s]*)\)/g
 
 const WIKILINK = /(?<!\\)(!?)\[\[([^\]\n|#]+)((?:\|[^\]\n]*)?)\]\]/g
 
+const UNLINKABLE_NAME = /(?<!\\)!?\[\[([^\]\n|]*[#^[][^\]\n|]*)((?:\|[^\]\n]*)?)\]\]/g
+
 export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): string {
   const tagged = bearTags(text)
 
@@ -90,6 +93,13 @@ export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): st
     words
       .replace(UNDERLINE, '<u>$1</u>')
       .replace(COLONS, '==$1==')
+      .replace(UNLINKABLE_NAME, (whole, target: string, shown: string) => {
+        const to = notes.named(target)
+        if (!to) return whole
+        const folder = from.includes('/') ? from.slice(0, from.lastIndexOf('/')) : ''
+        const words = (shown.slice(1) || target).replace(/[[\]\\]/g, (one) => `\\${one}`)
+        return `[${words}](${encoded(relativePath(folder, to))})`
+      })
       .replace(WIKILINK, (whole, bang: string, target: string, shown: string) => {
         const heading = notes.heading(target)
         return heading === null ? whole : `${bang}[[${heading}${shown}]]`
@@ -115,9 +125,10 @@ function encoded(path: string): string {
 interface NoteIndex {
   find(address: string): string | null
   heading(target: string): string | null
+  named(target: string): string | null
 }
 
-const EMPTY: NoteIndex = { find: () => null, heading: () => null }
+const EMPTY: NoteIndex = { find: () => null, heading: () => null, named: () => null }
 
 function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>): NoteIndex {
   const byId = new Map<string, string>()
@@ -150,6 +161,9 @@ function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>)
       if (id) return byId.get(id.toUpperCase()) ?? null
       const title = params.get('title')
       return title ? (byTitle.get(title.toLowerCase()) ?? null) : null
+    },
+    named(target) {
+      return wikilinkCannotName(target) ? (byTitle.get(target.trim().toLowerCase()) ?? null) : null
     },
     heading(target) {
       const slash = target.indexOf('/')

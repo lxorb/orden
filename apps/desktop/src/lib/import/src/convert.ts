@@ -1,3 +1,4 @@
+import { pageLink } from './names'
 import { roamText } from './roam'
 
 const CLOSED_TAG = /(^|[\s(])#([^\s#`[\]\n]|[^\s#`[\]\n][^#`[\]\n]{0,58}[^\s#`[\]\n])#(?![\w#])/g
@@ -96,7 +97,7 @@ export function convertIdLinks(text: string, ids: ReadonlyMap<string, string>): 
       if (!name || name === id) return whole
 
       changes += 1
-      return `[[${name}${shown}]]`
+      return pageLink(name, shown ? shown.slice(1) : null)
     }),
   )
 

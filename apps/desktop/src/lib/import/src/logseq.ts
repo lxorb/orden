@@ -6,7 +6,7 @@ import { folderOf, relativePath } from '../../platform/src/api'
 
 import { folderPlan, isHidden, isJunk } from './folder'
 import { dayOf, type Meta } from './meta'
-import { Names, safeName } from './names'
+import { Names, pageLink, safeName } from './names'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 
@@ -502,9 +502,9 @@ function logseqText(text: string, graph: Graph, count: () => void): string {
       )
       .replace(BLOCK_EMBED, (whole, id: string) => block(whole, id))
       .replace(REFERENCE, (whole, id: string) => block(whole, id))
-      .replace(PAGE_EMBED, (_whole, name: string) => `![[${page(name)}]]`)
-      .replace(LABELLED_PAGE, (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`)
-      .replace(PAGE, (_whole, name: string) => `[[${page(name)}]]`)
+      .replace(PAGE_EMBED, (_whole, name: string) => pageLink(page(name), null, true))
+      .replace(LABELLED_PAGE, (_whole, words: string, name: string) => pageLink(page(name), words))
+      .replace(PAGE, (whole, name: string) => (name.includes('|') ? whole : pageLink(page(name))))
       .replace(PICTURE_SIZE, '$1')
 
   return codeAndWords(text)

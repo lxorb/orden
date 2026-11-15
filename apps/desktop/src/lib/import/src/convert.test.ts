@@ -45,6 +45,13 @@ describe('a Zettelkasten id link', () => {
     expect(said.changes).toBe(1)
   })
 
+  test('is a link that reaches a note whose name a wikilink cannot hold', () => {
+    const named = idsIn(['202201011200 C# notes.md'])
+    expect(convertIdLinks('See [[202201011200]].', named).text).toBe(
+      'See [202201011200 C# notes](202201011200%20C%23%20notes.md).',
+    )
+  })
+
   test('keeps the words the link showed', () => {
     expect(convertIdLinks('[[202201011200|the first one]]', ids).text).toBe(
       '[[202201011200 The first note|the first one]]',

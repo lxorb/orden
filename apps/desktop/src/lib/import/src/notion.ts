@@ -2,7 +2,7 @@ import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { folderPlan, isJunk } from './folder'
 import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
-import { hasNotionId, Names, safeName, safeParts, withoutNotionId } from './names'
+import { hasNotionId, Names, pageLink, safeName, safeParts, withoutNotionId } from './names'
 import {
   baseBlock,
   type Database,
@@ -567,7 +567,7 @@ function relationIn(cell: string): string[] | null {
     } catch {
       // A stray percent sign is a character of the name.
     }
-    links.push(`[[${safeName(withoutNotionId(name.replace(HTML, '')))}]]`)
+    links.push(pageLink(safeName(withoutNotionId(name.replace(HTML, '')))))
   }
   return links.length ? links : null
 }
