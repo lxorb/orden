@@ -976,8 +976,11 @@ class Links {
   }
 
   private noteFrom(source: string | null, link: { kind: LinkKind; target: string }): string | null {
-    const last = comparable(link.target).split('/').pop() ?? ''
-    const candidates = this.byName.get(last) ?? []
+    const whole = comparable(link.target)
+    const last = whole.split('/').pop() ?? ''
+    const named = this.byName.get(last) ?? []
+    const aliased = whole === last ? [] : (this.byName.get(whole) ?? [])
+    const candidates = aliased.length ? [...new Set([...named, ...aliased])] : named
     this.examined += candidates.length
 
     const index: NoteIndex = {
@@ -1000,8 +1003,8 @@ class Links {
 
   private couldName(link: { target: string }, names: ReadonlySet<string>): boolean {
     if (!link.target) return false
-    const last = comparable(link.target).split('/').pop() ?? ''
-    return names.has(last)
+    const whole = comparable(link.target)
+    return names.has(whole.split('/').pop() ?? '') || names.has(whole)
   }
 
   private namesFor(relative: string): ReadonlySet<string> {

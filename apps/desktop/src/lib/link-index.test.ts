@@ -1406,6 +1406,21 @@ describe('a folder renamed, in a note that also links into it by other names', (
   })
 })
 
+describe('an alias that holds a slash', () => {
+  test('links through it count as backlinks and outgoing links', async () => {
+    await space({
+      'Networking.md': '---\naliases: [TCP/IP, 24/7]\n---\n# Net',
+      'x.md': '[[TCP/IP]] and [[24/7]]\n',
+    })
+
+    expect(links.backlinks(at('Networking.md')).map((one) => one.path)).toEqual(['x.md', 'x.md'])
+    expect(links.outgoing(at('x.md')).map((one) => one.to)).toEqual([
+      'Networking.md',
+      'Networking.md',
+    ])
+  })
+})
+
 describe('a link written with spaces inside its brackets or a slash at its end', () => {
   test('is rewritten when the picture it names is renamed', async () => {
     await space({ 'One.md': '![[ abc.png ]] ![](assets/abc.png/)\n' }, ['assets/abc.png'])
