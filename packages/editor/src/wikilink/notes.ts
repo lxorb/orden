@@ -208,7 +208,13 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   if (!parts.length) return null
   const whole = resolveNote(index, `/${parts.join('/')}`)
   if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
-  return resolveNote(index, parts.join('/'))
+  const beside = resolveNote(index, parts.join('/'))
+  if (beside || !freelyWritten(target)) return beside
+  return resolveNote(index, `/${target}`) ?? resolveNote(index, target)
+}
+
+function freelyWritten(target: string): boolean {
+  return !/^\.{1,2}(?:[/\\]|$)/.test(target.trim()) && !/^[/\\]/.test(target.trim())
 }
 
 function relativeParts(index: NoteIndex, target: string): string[] {
@@ -243,11 +249,12 @@ export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): s
     return held === wanted || (!whole && held.endsWith(`/${wanted}`))
   })
 
-  return (
+  const picked =
     [...found].sort(
       (one, other) => one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
     )[0] ?? null
-  )
+  if (picked || kind !== 'markdown' || !freelyWritten(target)) return picked
+  return resolveFile(index, target, 'wikilink')
 }
 
 export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteRef | null {

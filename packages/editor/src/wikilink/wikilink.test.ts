@@ -352,6 +352,18 @@ describe('which note a name means', () => {
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
   })
 
+  test('a markdown target written from the top or by name alone still finds its note', () => {
+    const here = index([note('ideas/Plan.md'), note('Plan B.md')], 'journal/Monday.md', {}, [
+      'files/pic.png',
+    ])
+    expect(resolveRelative(here, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('ideas/Plan.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveFile(here, 'files/pic.png', 'markdown')).toBe('files/pic.png')
+    expect(resolveFile(here, 'pic.png', 'markdown')).toBe('files/pic.png')
+    expect(resolveFile(here, './pic.png', 'markdown')).toBeNull()
+  })
+
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()

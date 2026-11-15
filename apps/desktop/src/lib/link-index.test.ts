@@ -1700,6 +1700,25 @@ describe('a rename while the space is still being read', () => {
   })
 })
 
+describe('a markdown link written from the top or by name alone', () => {
+  test('is a backlink, and a rename keeps it reaching its note', async () => {
+    await space({
+      'ideas/Plan.md': '# Plan',
+      'journal/Monday.md': 'see [Plan](Plan.md) and [it](ideas/Plan.md)\n',
+    })
+
+    expect(links.backlinks(at('ideas/Plan.md')).map((one) => one.name)).toEqual([
+      'Monday.md',
+      'Monday.md',
+    ])
+
+    expect(await links.retarget(at('ideas/Plan.md'), at('ideas/Road.md'), ROOT)).toBe(1)
+    expect(notes['journal/Monday.md']).toBe(
+      'see [Plan](../ideas/Road.md) and [it](../ideas/Road.md)\n',
+    )
+  })
+})
+
 describe('a file renamed across the note extension', () => {
   test('becomes a note when it takes the extension and stops being one when it drops it', async () => {
     await space(
