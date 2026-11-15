@@ -361,9 +361,10 @@ pub(crate) fn dispatch(
     };
 
     let args = asked.get("args").cloned().unwrap_or_default();
+    let session = crate::agents::session_of(&asked);
     if let Some(read) = crate::agents::verbs::Verb::read(&verb, args.clone()) {
         let answered = match read {
-            Ok(one) => crate::agents::answer(app, caller, one, args),
+            Ok(one) => crate::agents::answer(app, caller, &session, one, args),
             Err(why) => {
                 crate::agents::verbs::Answer::error(crate::agents::verbs::Code::BadArguments, why)
             }
@@ -398,7 +399,16 @@ pub(crate) fn dispatch(
             ),
         };
         let tab = args.get("tab").and_then(serde_json::Value::as_str);
-        crate::agents::logged(app, caller, &verb, tab, args.clone(), &answered, started);
+        crate::agents::logged(
+            app,
+            caller,
+            &session,
+            &verb,
+            tab,
+            args.clone(),
+            &answered,
+            started,
+        );
     }
     match outcome {
         Ok(answered) => (200, answered),
