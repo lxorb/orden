@@ -171,6 +171,7 @@ async function freshPath(place: Place, folder: string | null, title: string): Pr
     title
       .replace(/[\\/:*?"<>|#^[\]]+/g, ' ')
       .replace(/\s+/g, ' ')
+      .replace(/^[\s.]+/, '')
       .trim()
       .slice(0, 80) || 'Untitled'
   const inside = (name: string) => (folder ? `${folder}/${name}` : name)

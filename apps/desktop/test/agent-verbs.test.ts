@@ -1513,6 +1513,13 @@ describe('a page into a note', () => {
     expect(capture()).toMatchObject({ agent: 'claude-code', tab: 'a1', shape: 'clip' })
   })
 
+  test('a page whose title starts with a dot is never captured as a hidden note', async () => {
+    reads({ title: '.NET 9 is out' })
+    const answered = await call('capture_to_note', { tab: 'a1', as: 'clip' })
+    expect(answered).toMatchObject({ result: { path: 'NET 9 is out.md', created: true } })
+    expect([...files.keys()].some((one) => /\/\.[^/]*$/.test(one))).toBe(false)
+  })
+
   test('a screenshot is a picture kept beside the note, the whole page when asked', async () => {
     reads({ html: undefined, png: btoa('PNG bytes') })
     await call('capture_to_note', { tab: 'a1', as: 'screenshot', full_page: true })
