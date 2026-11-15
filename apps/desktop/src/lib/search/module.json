@@ -1,10 +1,16 @@
 {
   "name": "search",
   "layer": "content",
-  "dependsOn": ["contracts", "editor", "pdf", "platform", "scan", "away", "web-backend", "windows"],
-  "pending": [
-    "apps/desktop/src/lib/startup.svelte.ts",
-    "apps/desktop/src/lib/trace.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
-  ]
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "pdf",
+    "platform",
+    "scan",
+    "away",
+    "web-backend",
+    "windows",
+    "protect"
+  ],
+  "pending": ["apps/desktop/src/lib/startup.svelte.ts", "apps/desktop/src/lib/trace.ts"]
 }

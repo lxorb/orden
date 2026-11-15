@@ -97,7 +97,8 @@
 
   import { pages as pagesState } from './showing.svelte'
   import { viewport } from '../../ui-kit/src/api'
-  import { workspace, type Tab } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 

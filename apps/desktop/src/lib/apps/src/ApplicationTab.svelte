@@ -18,7 +18,7 @@
   import { heldLine } from '../../online-link/src/api'
   import { settings } from '../../settings.svelte'
   import Sweep from '../../Sweep.svelte'
-  import type { Tab } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { appSessionOf, type Unread } from './session.svelte'
 
   const { tab: shown }: { tab: Tab } = $props()

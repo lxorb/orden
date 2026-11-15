@@ -3,8 +3,7 @@
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import Icon from '../../../Icon.svelte'
   import { nameOf } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace.svelte'
-  import { deviceCan, deviceName } from '../../../protect/src/api'
+  import { deviceCan, deviceName, protection } from '../../../protect/src/api'
   import { openedWithin, unlockAt, unlockByDevice } from './unlocking'
 
   const { path, focused = false }: { path: string; focused?: boolean } = $props()
@@ -15,7 +14,7 @@
   let field = $state<HTMLInputElement>()
   let device = $state(false)
 
-  const password = $derived(workspace.protection.password !== null)
+  const password = $derived(protection.password !== null)
 
   $effect(() => {
     void deviceCan().then((can) => (device = can))

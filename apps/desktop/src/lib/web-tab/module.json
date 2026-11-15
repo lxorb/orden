@@ -22,7 +22,8 @@
     "link-index",
     "panes",
     "documents",
-    "file-writes"
+    "file-writes",
+    "protect"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",

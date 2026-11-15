@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { protection } from '../../protect/src/api'
   import { closeOnBack, overlays, scrollbar } from '../../ui-kit/src/api'
   import { diffCount, lineDiff, trimmed } from '@orden/markdown/line-diff'
   import { KEEP_YEAR, modes } from '../../modes.svelte'
@@ -8,7 +9,8 @@
   import { fade, LAYER, localDate, scale } from '../../platform/src/api'
   import { when } from '../../when'
   import { cubicOut } from 'svelte/easing'
-  import { type Tab, workspace } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace.svelte'
   import { type Version, versionsOf, versionText } from './versions'
   import { trap } from '../../ui-controls/src/api'
 
@@ -20,7 +22,7 @@
   let previewOf = $state<Tab | null>(null)
   let comparing = $state(true)
 
-  const shut = $derived(workspace.protection.locked(workspace.active?.path))
+  const shut = $derived(protection.locked(workspace.active?.path))
 
   $effect(() => {
     if (open && shut) open = false

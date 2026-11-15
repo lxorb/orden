@@ -4,7 +4,7 @@ import type { MenuItem } from '../../../ui-kit/src/api'
 import { samePath, within } from '../../../platform/src/api'
 import { workspace } from '../../../workspace.svelte'
 import { protectionOn } from './gate'
-import { unlocks } from '../../../protect/src/api'
+import { unlocks, protection } from '../../../protect/src/api'
 
 const unlocking = () =>
   __EVEN_PLUGIN__
@@ -32,7 +32,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
   if (__EVEN_PLUGIN__ || !path) return []
   const root = rootOf(path)
   if (root === null) return []
-  const locks = workspace.protection.covering(path)
+  const locks = protection.covering(path)
   const agents = unlocks.agentsMay(locks)
   const lock: ProtectRow[] =
     locks.length && !unlocks.shut(locks)
@@ -47,7 +47,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
         ]
       : []
   if (!protectionOn()) return lock
-  if (workspace.protection.own(root, path)) {
+  if (protection.own(root, path)) {
     return [
       ...lock,
       {

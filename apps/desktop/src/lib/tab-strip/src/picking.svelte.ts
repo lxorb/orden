@@ -1,4 +1,5 @@
-import { workspace, type Tab } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
+import { workspace } from '../../workspace.svelte'
 import type { Landing } from '../../panes/src/api'
 import { type Bounds, endOf, moved, placed, widthsFor } from './layout'
 import { duplicateTab, moveToOtherPane } from './ops'

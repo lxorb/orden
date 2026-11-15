@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import type { Tab } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
 import { unsavedAmong } from './closing-unsaved'
 
 function tab(id: string, note: object): Tab {

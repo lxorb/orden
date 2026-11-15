@@ -18,7 +18,8 @@
     "shortcuts",
     "web-backend",
     "link-index",
-    "tab-kinds"
+    "tab-kinds",
+    "protect"
   ],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",

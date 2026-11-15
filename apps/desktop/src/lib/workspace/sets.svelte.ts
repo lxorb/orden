@@ -13,7 +13,8 @@ import {
 import { spaceSound } from '../surfaces.svelte'
 import { IN_A_PAGE } from '../ui-controls/src/api'
 import { pages } from '../web-tab/src/api'
-import { type Tab, workspace } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
+import { workspace } from '../workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from '../panes/src/api'
 import {
   focusIn,

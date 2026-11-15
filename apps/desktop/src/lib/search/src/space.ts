@@ -1,3 +1,4 @@
+import { protection } from '../../protect/src/api'
 import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
 import { searchInternal, searchInWorker } from '../../web-backend/src/api'
@@ -24,13 +25,12 @@ export async function searchSpace(
   onFound: (found: Found) => void,
   excluded: readonly string[] = [],
 ): Promise<void> {
-  const { workspace } = await import('../../workspace.svelte')
-  const shut = workspace.protection.shutIn(root)
+  const shut = protection.shutIn(root)
   if (shut === null) return
   if (shut.length) {
     excluded = [...excluded, ...shut]
     const told = onFound
-    const open = (one: { path: string }) => !workspace.protection.locked(one.path)
+    const open = (one: { path: string }) => !protection.locked(one.path)
     onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
   }
   const { papersFor, searchPapers } = await (await import('../../pdf/src/api')).papers()

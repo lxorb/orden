@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import type { Tab } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
 
 interface Call {
   command: string

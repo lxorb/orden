@@ -13,10 +13,9 @@ import {
 import { roomKind } from '../collab/src/api'
 import { builtinName, readSpec } from '../views/src/api'
 import type { Panel, Space } from '../workspace.svelte'
-import type { TabKind } from '../documents/src/api'
+import { isRetiredTab, type TabKind } from '../documents/src/api'
 import { type Along, type Frame, pane } from '../panes/src/api'
 import { PANELS } from './panels'
-import { isRetiredTab } from './retired-tabs'
 import { isTabKind } from '../tab-kinds/src/api'
 
 const VERSION = 2

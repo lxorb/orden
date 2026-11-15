@@ -1,6 +1,7 @@
 import type { MenuEntry } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
-import { type Space, type Tab, workspace } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
+import { type Space, workspace } from '../../workspace.svelte'
 import { mayCarry } from '../../workspace/chat-carry'
 import { movingOf, spacesFor } from '../../workspace/space-move'
 

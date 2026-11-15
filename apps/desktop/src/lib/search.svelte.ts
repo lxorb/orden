@@ -1,3 +1,4 @@
+import { protection } from './protect/src/api'
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
@@ -66,7 +67,7 @@ class Search {
   readonly asks = $derived(this.text.trim().length >= SHORTEST && !isEmpty(this.query))
 
   private readonly open = $derived(
-    workspace.protection.any ? (hit: Hit) => !workspace.protection.locked(hit.path) : () => true,
+    protection.any ? (hit: Hit) => !protection.locked(hit.path) : () => true,
   )
 
   readonly hits = $derived(

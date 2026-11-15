@@ -16,7 +16,8 @@
     "ui-controls",
     "ui-kit",
     "windows",
-    "link-index"
+    "link-index",
+    "protect"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",

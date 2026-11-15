@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, test } from 'vitest'
 import { readDraft } from '../../workspace/session'
-import { holdsRetiredTab, isRetiredChat } from '../../workspace/retired-tabs'
+import { holdsRetiredTab, isRetiredChat } from '../../documents/src/retired-tabs'
 import { forgetRetiredChats, type RetiredWorld, retiredSecrets, secretName } from './retired'
 
 const LINKED = [

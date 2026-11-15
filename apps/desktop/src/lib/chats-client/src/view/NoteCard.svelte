@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { protection } from '../../../protect/src/api'
   import FileMark from '../../../FileMark.svelte'
   import { fileMark } from '../../../file-mark'
   import { links } from '../../../link-index/src/api'
@@ -23,7 +24,7 @@
     follows(links.locksSeen())
     const note = path
     lines = []
-    if (!note || workspace.protection.locked(note)) return
+    if (!note || protection.locked(note)) return
     let current = true
     void workspace.noteText(note).then((text) => {
       if (current && text !== null) lines = cardLines(text, name)

@@ -20,7 +20,8 @@
     "ui-controls",
     "link-index",
     "panes",
-    "documents"
+    "documents",
+    "protect"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",

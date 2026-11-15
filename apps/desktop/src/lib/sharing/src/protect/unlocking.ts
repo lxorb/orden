@@ -1,6 +1,5 @@
 import { mount, unmount } from 'svelte'
 import { busy, prompt } from '../../../ui-kit/src/api'
-import { workspace } from '../../../workspace.svelte'
 import {
   deviceCan,
   deviceName,
@@ -8,6 +7,7 @@ import {
   hashPassword,
   matches,
   unlocks,
+  protection,
 } from '../../../protect/src/api'
 import PasswordSheet from './PasswordSheet.svelte'
 import type { Way } from '../../../protect/src/api'
@@ -30,7 +30,7 @@ function asked(choosing: boolean, title: string): Promise<string | null> {
 }
 
 async function passwordOpens(typed: string): Promise<boolean> {
-  const kept = workspace.protection.password
+  const kept = protection.password
   return kept !== null && (await matches(typed, kept))
 }
 
@@ -57,26 +57,26 @@ async function ownerOpens(): Promise<boolean | null> {
 
 export async function unlockAt(path: string, typed: string): Promise<boolean> {
   if (!(await passwordOpens(typed))) return false
-  unlocks.unlock(workspace.protection.covering(path))
+  unlocks.unlock(protection.covering(path))
   return true
 }
 
 export async function unlockByDevice(path: string): Promise<boolean> {
   if ((await ownerOpens()) !== true) return false
-  unlocks.unlock(workspace.protection.covering(path))
+  unlocks.unlock(protection.covering(path))
   return true
 }
 
 export function openedWithin(path: string): boolean {
-  return unlocks.stillProven(workspace.protection.covering(path))
+  return unlocks.stillProven(protection.covering(path))
 }
 
 async function opened(path: string): Promise<boolean> {
-  const locks = workspace.protection.covering(path)
+  const locks = protection.covering(path)
   if (!unlocks.shut(locks)) return true
   const open =
     ((await deviceCan()) && (await ownerOpens()) === true) ||
-    (workspace.protection.password !== null && (await asked(false, 'Unlock')) !== null)
+    (protection.password !== null && (await asked(false, 'Unlock')) !== null)
   if (open) unlocks.unlock(locks)
   return open
 }
@@ -97,10 +97,10 @@ async function wayFor(): Promise<Way | null> {
       if (said !== null) return said ? 'device' : null
     }
   }
-  if (workspace.protection.password) return 'password'
+  if (protection.password) return 'password'
   const chosen = await asked(true, 'Choose a password')
   if (chosen === null) return null
-  workspace.protection.setPassword(await hashPassword(chosen))
+  protection.setPassword(await hashPassword(chosen))
   return 'password'
 }
 
@@ -113,12 +113,12 @@ export async function protect(root: string, path: string): Promise<void> {
     return null
   })
   if (way === null) return
-  workspace.protection.set(root, path, way)
-  const own = workspace.protection.own(root, path)
+  protection.set(root, path, way)
+  const own = protection.own(root, path)
   if (own) unlocks.unlock([own])
 }
 
 export async function unprotect(root: string, path: string): Promise<void> {
   if (!(await opened(path))) return
-  workspace.protection.set(root, path, null)
+  protection.set(root, path, null)
 }

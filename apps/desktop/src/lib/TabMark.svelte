@@ -8,7 +8,8 @@
   import { terminalMark } from './surfaces.svelte'
   import { type Page, pages, siteMark } from './web-tab/src/api'
   import { readWebFile } from '@orden/scan/shortcut'
-  import { type Tab, workspace } from './workspace.svelte'
+  import type { Tab } from './documents/src/api'
+  import { workspace } from './workspace.svelte'
   import { TAB_KINDS } from './tab-kinds/src/api'
 
   const { tab }: { tab: Tab } = $props()

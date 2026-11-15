@@ -1,7 +1,7 @@
 import type { Message } from '@orden/chats'
 import { account } from '../../../accounts/src/api'
 import { forget, isNumber, isRecord, isString, keepJson, stored } from '../../../platform/src/api'
-import { isRetiredChat } from '../../../workspace/retired-tabs'
+import { isRetiredChat } from '../../../documents/src/api'
 
 const KEY = 'orden:chats-saved'
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { protection } from '../../../protect/src/api'
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../../platform/src/api'
   import { insideSpace } from '../../../platform/src/api'
@@ -91,7 +92,7 @@
             }}
           >
             <span class="orden-row-label" class:is-gone={!change.spots.some((one) => one.inserted)}
-              >{workspace.protection.locked(note.path) ? 'Protected' : snippetOf(change)}</span
+              >{protection.locked(note.path) ? 'Protected' : snippetOf(change)}</span
             >
             <Tally added={change.added} removed={change.removed} />
           </button>

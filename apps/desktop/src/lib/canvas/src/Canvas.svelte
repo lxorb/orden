@@ -99,7 +99,8 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { modes } from '../../modes.svelte'
   import { viewport } from '../../ui-kit/src/api'
-  import { workspace, type Tab } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace.svelte'
   import { RightPan } from './right-pan'
   import { freeScroll, holdFreeScroll } from './free-scroll'
 

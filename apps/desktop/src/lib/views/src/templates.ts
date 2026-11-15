@@ -1,3 +1,4 @@
+import { protection } from '../../protect/src/api'
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { menu } from '../../menu.svelte'
 import { rows } from '../../rows/src/api'
@@ -43,7 +44,7 @@ export async function templates(): Promise<Entry[]> {
       (one) =>
         /\.md$/i.test(one.name) &&
         within(folder, one.path, root) !== null &&
-        !workspace.protection.locked(one.path),
+        !protection.locked(one.path),
     )
     .sort((a, b) => a.name.localeCompare(b.name))
 }
@@ -71,7 +72,7 @@ export function templatePath(link: string, space = workspace.activeSpace): strin
 }
 
 export async function templateWords(path: string, title: string): Promise<string> {
-  if (workspace.protection.locked(path)) return ''
+  if (protection.locked(path)) return ''
   const text = await workspace.noteText(path).catch(() => null)
   if (text === null) return ''
   const now = nowHere()

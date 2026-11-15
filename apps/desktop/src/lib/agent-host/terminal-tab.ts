@@ -4,7 +4,7 @@ import { historyOf, sessions, shellRunning, readSpec } from '../terminal/src/api
 import { isOnlineTab } from '../online-terms/src/api'
 import type { Session } from '../terminal/src/api'
 import { platform } from '../platform/src/api'
-import type { Tab } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need } from './call'
 import { Refused } from './problem'
