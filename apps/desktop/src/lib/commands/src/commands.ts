@@ -63,8 +63,13 @@ import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './inse
 import { moveTargets } from '../../tree/src/api'
 import { closeAfterLabel } from '../../panes/src/api'
 import { revealPanel, stepRegionFocus } from '../../focus'
-import { newSpace, publishSpace, shareSpace, stepSpace } from '../../space-actions'
-import { spacePicker } from '../../space-picker.svelte'
+import {
+  newSpace,
+  publishSpace,
+  shareSpace,
+  stepSpace,
+  toggleSpacePicker,
+} from '../../spaces/src/api'
 import {
   canPublish,
   canShare,
@@ -1273,7 +1278,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'spaces',
       label: 'Spaces',
       hint: shortcuts.hint('space.switcher'),
-      run: () => spacePicker.toggle(),
+      run: toggleSpacePicker,
     },
     {
       id: 'tab-overview',

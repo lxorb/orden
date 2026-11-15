@@ -1,10 +1,10 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import { longPress } from './ui-kit/src/api'
+  import { longPress } from '../../ui-kit/src/api'
   import RowMore from './RowMore.svelte'
   import SpaceRow from './SpaceRow.svelte'
-  import type { SpaceTyping } from './space-pick/src/api'
-  import { type Space, workspace } from './workspace/src/api'
+  import type { SpaceTyping } from '../../space-pick/src/api'
+  import { type Space, workspace } from '../../workspace/src/api'
 
   const {
     typing,

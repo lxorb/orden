@@ -1,6 +1,6 @@
-import { account } from './accounts/src/api'
-import { iconChoice } from './icon-choice.svelte'
-import { DIVIDER, type MenuEntry, trim, prompt } from './ui-kit/src/api'
+import { account } from '../../accounts/src/api'
+import { iconChoice } from '../../icon-choice.svelte'
+import { DIVIDER, held, latched, type MenuEntry, trim, prompt } from '../../ui-kit/src/api'
 import {
   canPublish,
   canShare,
@@ -11,13 +11,13 @@ import {
   share,
   trustAgain,
   protectEntries,
-} from './sharing/src/api'
-import { settingsWindow } from '@orden/contracts'
-import { type Space, workspace } from './workspace/src/api'
-import { writeFile } from './file-writes/src/api'
-import { AGENTS_NAME, joinPath } from './platform/src/api'
+} from '../../sharing/src/api'
+import { portOf, settingsWindow } from '@orden/contracts'
+import { type Space, spaceChanges, workspace } from '../../workspace/src/api'
+import { writeFile } from '../../file-writes/src/api'
+import { AGENTS_NAME, joinPath } from '../../platform/src/api'
 
-const archiving = () => import('./space-archive')
+const archiving = () => import('../../space-archive')
 
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
@@ -37,12 +37,12 @@ export async function madeSpace(
   if (!space) return
   made?.(space)
   if (!__EVEN_PLUGIN__) {
-    const { AGENTS_SEED } = await import('./agents-seed/src/api')
+    const { AGENTS_SEED } = await import('../../agents-seed/src/api')
     await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
     await workspace.loadTree()
   }
 
-  const { sync } = await import('./sync-store/src/api')
+  const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
   return space
 }
@@ -59,7 +59,7 @@ export function stepSpace(direction: number) {
 async function moveSpace(id: string, beforeId: string | null) {
   if (!workspace.moveSpace(id, beforeId)) return
 
-  const { sync } = await import('./sync-store/src/api')
+  const { sync } = await import('../../sync-store/src/api')
   void sync.pushSpaceOrder()
 }
 
@@ -104,7 +104,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
       ? [
           {
             label: 'Nickname',
-            run: () => void import('./accounts-ui/src/api').then((one) => one.nameHere(space)),
+            run: () => void import('../../accounts-ui/src/api').then((one) => one.nameHere(space)),
           },
         ]
       : []),
@@ -143,8 +143,8 @@ export async function shareSpace(space: Space) {
 }
 
 export async function publishSpace(space: Space) {
-  const { publish } = await import('./publishing/src/api')
-  publish.show(space)
+  const publishing = portOf('publishing')
+  if (publishing.ok) await publishing.value.show(space)
 }
 
 export async function deleteSpace(space: Space) {
@@ -165,12 +165,26 @@ export async function deleteSpace(space: Space) {
   })
 
   if (!sure) return
-  const { mayEndSpace } = await import('./workspace/src/space-changes')
+  const { mayEndSpace } = await spaceChanges()
   if (!(await mayEndSpace(workspace, space.id))) return
 
   const root = space.root
   await workspace.deleteSpace(space.id)
 
-  const { sync } = await import('./sync-store/src/api')
+  const { sync } = await import('../../sync-store/src/api')
   await sync.forget(root, role)
+}
+
+export { default as SpaceBadge } from './SpaceBadge.svelte'
+
+export const spaceSound = latched(() => import('./SpaceSound.svelte'))
+
+export const soundMark = held(() => import('./SoundMark.svelte'))
+
+export const loadSpaceMenu = () => import('./SpaceMenu.svelte')
+
+export const loadSpacePicker = () => import('./SpacePicker.svelte')
+
+export function toggleSpacePicker(): void {
+  void import('./space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }

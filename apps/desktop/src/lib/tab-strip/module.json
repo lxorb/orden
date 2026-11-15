@@ -25,7 +25,8 @@
     "double-tap",
     "surfaces",
     "row-menu",
-    "accounts"
+    "accounts",
+    "spaces"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",

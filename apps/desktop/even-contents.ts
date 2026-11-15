@@ -186,6 +186,7 @@ export const APP_FOLDERS = [
   'space-owed',
   'space-pairing',
   'space-pick',
+  'spaces',
   'spelling',
   'surfaces',
   'sync-client',

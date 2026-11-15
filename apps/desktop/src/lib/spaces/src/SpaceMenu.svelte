@@ -1,18 +1,26 @@
 <script lang="ts">
-  import type { SharedItem } from './accounts/src/api'
-  import { fileMark } from './file-mark'
-  import FileMark from './FileMark.svelte'
-  import { arrive, letGo, LIST_STEP, longPress, menu, roving, SharedMark } from './ui-kit/src/api'
+  import type { SharedItem } from '../../accounts/src/api'
+  import { fileMark } from '../../file-mark'
+  import FileMark from '../../FileMark.svelte'
+  import {
+    arrive,
+    letGo,
+    LIST_STEP,
+    longPress,
+    menu,
+    roving,
+    SharedMark,
+  } from '../../ui-kit/src/api'
   import RowMore from './RowMore.svelte'
-  import { newSpace, spaceMenu } from './space-actions'
+  import { newSpace, spaceMenu } from './api'
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
-  import { SpaceTyping } from './space-pick/src/api'
-  import { sharedWithYou } from './sharing/src/api'
+  import { SpaceTyping } from '../../space-pick/src/api'
+  import { sharedWithYou } from '../../sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
-  import { spendClick } from './ui-controls/src/api'
-  import { trap } from './ui-controls/src/api'
-  import { type Space, workspace } from './workspace/src/api'
+  import { spendClick } from '../../ui-controls/src/api'
+  import { trap } from '../../ui-controls/src/api'
+  import { type Space, workspace } from '../../workspace/src/api'
 
   const { close }: { close: () => void } = $props()
 
@@ -45,7 +53,7 @@
 
   async function bringBack(space: Space) {
     close()
-    const { unarchiveSpace } = await import('./space-archive')
+    const { unarchiveSpace } = await import('../../space-archive')
     await unarchiveSpace(space)
     await workspace.showSpace(space.id)
   }

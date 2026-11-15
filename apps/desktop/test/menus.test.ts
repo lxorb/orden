@@ -42,7 +42,7 @@ function moduleBody(text: string, signature: string): string {
 }
 
 describe('what a space offers', () => {
-  const space = moduleBody(read('lib/space-actions.ts'), 'export function spaceMenu(space: Space)')
+  const space = moduleBody(read('lib/spaces/src/api.ts'), 'export function spaceMenu(space: Space)')
 
   test('the space itself: its name, its mark, who may reach it', () => {
     for (const entry of ["'Rename'", "'Choose an icon'", "'Share'", "'Publish'"]) {
@@ -73,7 +73,7 @@ describe('what a space offers', () => {
 
   test('but not for a space somebody else shared', () => {
     const nudge = moduleBody(
-      read('lib/space-actions.ts'),
+      read('lib/spaces/src/api.ts'),
       'function canNudge(space: Space, by: -1 | 1): boolean',
     )
 
@@ -81,8 +81,8 @@ describe('what a space offers', () => {
   })
 
   test('through the one menu the switcher opens, however it is asked for', () => {
-    const switcher = read('lib/SpaceMenu.svelte')
-    const rows = read('lib/SpaceList.svelte')
+    const switcher = read('lib/spaces/src/SpaceMenu.svelte')
+    const rows = read('lib/spaces/src/SpaceList.svelte')
 
     expect(switcher).toContain('menu.show(event, spaceMenu(space)')
     expect(switcher).toContain('<SpaceList {typing} {choose} {about} />')
