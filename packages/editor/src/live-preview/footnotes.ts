@@ -69,8 +69,15 @@ function footnoteParts(state: EditorState): FootnotePart[] {
   return parts
 }
 
+function sameLabel(one: string, other: string): boolean {
+  const folded = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase()
+  return folded(one) === folded(other)
+}
+
 export function definitionOf(state: EditorState, label: string): FootnotePart | null {
-  return footnoteParts(state).find((one) => one.kind === 'def' && one.label === label) ?? null
+  return (
+    footnoteParts(state).find((one) => one.kind === 'def' && sameLabel(one.label, label)) ?? null
+  )
 }
 
 export function definitionWords(state: EditorState, definition: FootnotePart): string {
@@ -91,11 +98,13 @@ function jumpTarget(view: EditorView, part: FootnotePart): number | null {
     return definition.labelTo + (/^\]:?[ \t]*/.exec(words)?.[0].length ?? 0)
   }
 
-  const marks = footnoteParts(state).filter((one) => one.kind === 'ref' && one.label === part.label)
+  const marks = footnoteParts(state).filter(
+    (one) => one.kind === 'ref' && sameLabel(one.label, part.label),
+  )
   if (!marks.length) return null
   const back = cameFrom.get(view)
   const mark =
-    back?.label === part.label
+    back && sameLabel(back.label, part.label)
       ? (marks.find((one) => one.from <= back.at && back.at <= one.to) ?? marks[0])
       : marks[0]
   return mark ? mark.to : null
