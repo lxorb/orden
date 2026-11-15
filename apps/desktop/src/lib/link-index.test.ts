@@ -1747,3 +1747,19 @@ describe('a file named by a name that more than one folder holds', () => {
     )
   })
 })
+
+describe('an alias with a slash in it', () => {
+  test('is reached by a wikilink, so the note it names lists the link as a backlink', async () => {
+    await space({
+      'Continuous integration.md': '---\naliases: [CI/CD]\n---\n# CI\n',
+      'Build.md': 'See [[CI/CD]].\n',
+    })
+
+    expect(links.targetOf(at('Build.md'), { kind: 'wikilink', target: 'CI/CD' })).toBe(
+      'Continuous integration.md',
+    )
+    expect(links.backlinks(at('Continuous integration.md')).map((one) => one.path)).toEqual([
+      'Build.md',
+    ])
+  })
+})
