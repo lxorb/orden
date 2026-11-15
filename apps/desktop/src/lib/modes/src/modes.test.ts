@@ -932,6 +932,51 @@ describe('taking over what the account holds', () => {
     expect(patches).toEqual([{ glassesSeen: true }, { glassesSeen: true }])
   })
 
+  test('keeps on the device a setting the account refuses, and still sends the rest', async () => {
+    const { ApiError } = await import('../../accounts/src/client')
+    const patches: Held[] = []
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      if ('silent' in patch) throw new ApiError(400, 'refused')
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: {} })
+
+    modes.toggleSilent()
+    modes.toggleQuietMarks()
+    await modes.adopt('token')
+    expect(patches).toEqual([
+      { silent: true, quietMarks: true },
+      { silent: true },
+      { quietMarks: true },
+    ])
+    expect(modes.silent).toBe(true)
+
+    patches.length = 0
+    modes.toggleVim()
+    await modes.adopt('token')
+    expect(patches).toEqual([{ vim: true }])
+  })
+
+  test('keeps every setting owed when the account cannot answer', async () => {
+    const { ApiError } = await import('../../accounts/src/client')
+    const patches: Held[] = []
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      throw new ApiError(503, 'down')
+    }
+    api.settings = async () => ({ settings: {} })
+
+    modes.toggleSilent()
+    modes.toggleQuietMarks()
+    await modes.adopt('token')
+    await modes.adopt('token')
+    expect(patches).toEqual([
+      { silent: true, quietMarks: true },
+      { silent: true, quietMarks: true },
+    ])
+  })
+
   test('owes nothing to the next account once the session that could not be reached signs out', async () => {
     const patches: [string, Held][] = []
     api.saveSettings = async (token: string, patch: Held) => {
@@ -1286,5 +1331,12 @@ describe('a step from wherever a slider left it', () => {
     modes.stepZoom(-1)
     expect(modes.zoom).toBe(0.9)
     modes.resetZoom()
+  })
+})
+
+describe('a spoken phrase for a glasses command', () => {
+  test('is cut to the 60 characters the account keeps', () => {
+    modes.setGlassesWord('next', `  ${'Go on '.repeat(15)}`)
+    expect(modes.glassesWords.next).toBe('go on '.repeat(10).trim())
   })
 })
