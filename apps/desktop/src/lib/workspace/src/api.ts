@@ -104,3 +104,5 @@ export const noteCovers = () => import('./note-cover')
 export const featureGates = () => import('./feature-gate.svelte')
 
 export const refreshing = () => import('./refresh')
+
+export const closing = () => import('./closing')
