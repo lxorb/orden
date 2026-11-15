@@ -224,6 +224,11 @@ def drive(browser: Browser, scheme: str) -> None:
     type_and_send(page, "Second of two")
     waited(page, "document.querySelectorAll('.ask .queued').length === 1", "the queued message")
     shot(page, f"{tag}03-queued")
+    waiting = page.locator(".ask .when").all_inner_texts()
+    if waiting != ["Sends when the current reply finishes"]:
+        wrong(f"the queued message does not say it waits for the reply: {waiting}")
+    if not page.locator('.ask .queued [aria-label="Send into the running answer"]').count():
+        wrong("a model that takes words mid-answer offers no way to send the queued one in now")
     Model.pause = 0.02
     waited(page, f"document.querySelectorAll('.ask .said').length >= 4", "the queued message to go")
     idle(page)
