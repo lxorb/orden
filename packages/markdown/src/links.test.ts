@@ -497,6 +497,25 @@ describe('a section of a note with front matter', () => {
     expect(sectionOf(note, { heading: 'Books', block: null })).toBe('# Books\n\nDune')
   })
 
+  test('is the table above an id on its own line, not the front matter above the table', () => {
+    const note = [
+      '---',
+      'tags: a',
+      '',
+      'status: draft',
+      '---',
+      '| a | b |',
+      '|---|---|',
+      '| 1 | 2 |',
+      '',
+      '^table',
+      '',
+    ].join('\n')
+    expect(sectionOf(note, { heading: null, block: 'table' })).toBe(
+      '| a | b |\n|---|---|\n| 1 | 2 |',
+    )
+  })
+
   test('is the block of the words, not a line of the front matter', () => {
     const note = ['---', 'note: Later ^idea', '---', 'Later ^idea', ''].join('\n')
     expect(sectionOf(note, { heading: null, block: 'idea' })).toBe('Later')

@@ -592,7 +592,12 @@ function blockAbove(source: string, lines: readonly string[], under: number): st
   while (end > 0 && !(lines[end] ?? '').trim()) end--
 
   let start = end
-  while (start > 0 && ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)) start--
+  while (
+    start > 0 &&
+    !rows[start - 1]?.matter &&
+    ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)
+  )
+    start--
 
   return lines
     .slice(start, end + 1)
