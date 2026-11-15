@@ -178,6 +178,25 @@ describe('the panel’s chats', () => {
     expect(chat.models).toEqual({ 'p-2': [] })
   })
 
+  test('drop a model list asked before the vault moved its account off that id', async () => {
+    const chat = await launched()
+    chat.know(['work'])
+    let answer: (list: never[]) => void = () => undefined
+    const asked = vi
+      .spyOn(engine, 'models')
+      .mockReturnValueOnce(new Promise((done) => (answer = done)))
+    const listing = chat.loadModels({ id: 'p', kind: 'compatible', model: 'm', name: 'Fake' })
+    await vi.waitFor(() => expect(asked).toHaveBeenCalled())
+
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ p: 'p-3' })
+    answer([{ id: 'theirs', name: 'Theirs' } as never])
+    await listing
+
+    asked.mockRestore()
+    expect(chat.models.p).toBeUndefined()
+  })
+
   test('let go of a chat read once another is open, so a long session holds only what it shows', async () => {
     const names = Array.from({ length: 12 }, (_, at) => `Chat ${String(at)}`)
     const made = []

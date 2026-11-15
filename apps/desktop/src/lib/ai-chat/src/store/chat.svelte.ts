@@ -1313,6 +1313,7 @@ class Chat implements Panel {
       this.asking.set(provider.id, asked)
     }
     const list = await asked
+    if (this.asking.get(provider.id) !== asked) return list
     if (list.length) this.models = { ...this.models, [provider.id]: list }
     else this.asking.delete(provider.id)
     return list

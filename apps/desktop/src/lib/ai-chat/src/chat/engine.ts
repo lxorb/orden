@@ -146,8 +146,10 @@ export function createApiEngine(setup: Setup): Engine {
   const answers = setup.answers ?? crateAnswers
   const listed = new Map<string, ModelInfo[]>()
   const steering = new Map<string, string[]>()
-  onMoves((moves) => {
-    for (const one of moves) listed.delete(one.from)
+  let moves = 0
+  onMoves((moved) => {
+    moves++
+    for (const one of moved) listed.delete(one.from)
   })
 
   function providerOf(thread: Thread): Provider {
@@ -159,8 +161,9 @@ export function createApiEngine(setup: Setup): Engine {
   async function modelOf(provider: Provider, id: string): Promise<ModelInfo> {
     let models = listed.get(provider.id)
     if (!models) {
+      const before = moves
       models = await catalogue(provider).catch(() => [])
-      if (models.length) listed.set(provider.id, models)
+      if (models.length && before === moves) listed.set(provider.id, models)
     }
     return models.find((one) => one.id === id) ?? unlisted(provider, id)
   }
