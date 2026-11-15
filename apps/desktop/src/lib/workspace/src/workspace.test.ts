@@ -3025,6 +3025,24 @@ describe('closing a tab with unsaved words', () => {
     )
   })
 
+  test('Save on the one draft among several tabs closes all of them once it is saved', async () => {
+    await workspace.open('/space/a.md')
+    const plain = workspace.tabs.find((one) => one.path === '/space/a.md')
+    const tab = draft('# Plan\n\nwords')
+    if (!plain) throw new Error('no note')
+    sheet.answer = 'save'
+
+    await workspace.closeMany([plain.id, tab.id])
+    await vi.waitFor(() => expect(placing.asked).toHaveLength(1))
+    expect(open(plain.id) && open(tab.id)).toBe(true)
+
+    await workspace.save(tab, '/space', 'Plan.md')
+    placing.asked[0]?.saved?.()
+    await vi.waitFor(() => expect(open(tab.id)).toBe(false))
+    expect(open(plain.id)).toBe(false)
+    expect(sheet.asked).toHaveLength(1)
+  })
+
   test('asks nothing of an empty new tab, a note with a file, or a website', async () => {
     workspace.openBlank()
     const empty = workspace.active

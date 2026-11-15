@@ -17,17 +17,20 @@ type Unsaved = 'save' | 'discard' | 'keep'
 interface Closing {
   tabs: Tab[]
   save(tab: Tab): Promise<string | null>
-  closeAsking(id: string): Promise<void>
 }
 
-export async function mayLose(ws: Closing, closing: readonly Tab[]): Promise<boolean> {
+export async function mayLose(
+  ws: Closing,
+  closing: readonly Tab[],
+  again: () => void,
+): Promise<boolean> {
   const unsaved = unsavedAmong(closing, ws.tabs)
   const answer = await askUnsaved(unsaved)
   if (answer !== 'save') return answer === 'discard'
 
   const [only] = unsaved
   if (only && unsaved.length === 1) {
-    services().askPlace(only.id, () => void ws.closeAsking(only.id))
+    services().askPlace(only.id, again)
     return false
   }
   const saved = await Promise.all(unsaved.map((tab) => ws.save(tab)))

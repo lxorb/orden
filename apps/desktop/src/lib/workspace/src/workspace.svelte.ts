@@ -2578,7 +2578,7 @@ class Workspace {
 
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (tab && (await this.mayClose([tab]))) this.close(id)
+    if (tab && (await this.mayClose([tab], () => void this.closeAsking(id)))) this.close(id)
   }
 
   async closeActive() {
@@ -2594,7 +2594,7 @@ class Workspace {
 
   async closeMany(ids: readonly string[]) {
     const going = this.tabs.filter((one) => ids.includes(one.id))
-    if (!(await this.mayClose(going))) return
+    if (!(await this.mayClose(going, () => void this.closeMany(ids)))) return
 
     this.closeEach(
       going.map((one) => one.id),
@@ -2608,11 +2608,11 @@ class Workspace {
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
-  private async mayClose(closing: readonly Tab[]): Promise<boolean> {
+  private async mayClose(closing: readonly Tab[], again: () => void): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
     if (closing.some(unsaved)) {
       const { mayLose } = await import('./closing-unsaved')
-      if (!(await mayLose(this, closing))) return false
+      if (!(await mayLose(this, closing, again))) return false
     }
     if (!closing.some((tab) => tab.kind === 'terminal')) return true
     return services().mayEnd(closing, this.tabs)
@@ -4126,7 +4126,7 @@ class Workspace {
     if (this.panes.count < 2) return
 
     const tabs = this.heldIn(paneId)
-    if (!(await this.mayClose(tabs))) return
+    if (!(await this.mayClose(tabs, () => void this.closePane(paneId)))) return
 
     this.closeEach(
       tabs.map((tab) => tab.id),
@@ -4188,7 +4188,7 @@ class Workspace {
         !tab.dirty &&
         (tab.path === null || !kept.some((path) => samePath(path, tab.path))),
     )
-    if (!(await this.mayClose(going))) return
+    if (!(await this.mayClose(going, () => void this.useLayout(name)))) return
     await this.applyLayout(layout)
   }
 }
