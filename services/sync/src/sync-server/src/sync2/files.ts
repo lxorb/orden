@@ -203,7 +203,7 @@ v2Blobs.put('/:hash', async (context) => {
   if (!(await keepBlob(context.env, user.id, hash, body.byteLength, type))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
-  if (!placed && !(await stillThere(context.env, hash))) await put()
+  if (!(await stillThere(context.env, hash))) await put()
   return context.json({ hash, stored: true }, 201)
 })
 
@@ -402,7 +402,7 @@ v2Blobs.post('/parts/:upload', async (context) => {
     await context.env.NOTES.delete(upload.staging)
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
-  if (!placed && !(await stillThere(context.env, upload.hash))) await move()
+  if (!(await stillThere(context.env, upload.hash))) await move()
   await context.env.NOTES.delete(upload.staging)
   return context.json({ hash: upload.hash, stored: true }, 201)
 })

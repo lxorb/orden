@@ -390,6 +390,38 @@ describe('giving an image back', () => {
     })
   }
 
+  for (const route of ['/v1/blobs', '/v2/blobs']) {
+    test(`keeps the bytes an account puts on ${route} while the last other holder's give-back deletes them`, async () => {
+      const other = await signIn(env, 'other@b.dev')
+      const picture = sized(2048)
+      await upload(picture, { token: other })
+      env.db.prepare('delete from blobs where hash = ?').run(picture.hash)
+
+      const put = env.NOTES.put.bind(env.NOTES)
+      let deleted = false
+      env.NOTES.put = (async (...args: Parameters<typeof put>) => {
+        const done = await put(...args)
+        if (!deleted && args[0] === `blobs/${picture.hash}`) {
+          deleted = true
+          await env.NOTES.delete(`blobs/${picture.hash}`)
+        }
+        return done
+      }) as typeof env.NOTES.put
+
+      const stored = await call(env, `${route}/${picture.hash}`, {
+        method: 'PUT',
+        token,
+        raw: picture.bytes,
+        headers: { 'content-type': 'image/png' },
+      })
+      env.NOTES.put = put
+
+      expect(deleted).toBe(true)
+      expect(stored.status).toBe(201)
+      expect(await env.NOTES.get(`blobs/${picture.hash}`)).not.toBeNull()
+    })
+  }
+
   test('hands it to the owner of a space that still uses it, rather than deleting it', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (

@@ -108,7 +108,7 @@ blobs.put('/:hash', async (context) => {
       return context.json({ error: OUT_OF_SPACE }, 507)
     }
   }
-  if (!placed && !(await stillThere(context.env, hash))) await put()
+  if (!(await stillThere(context.env, hash))) await put()
 
   return context.json({ hash, stored: true }, 201)
 })
