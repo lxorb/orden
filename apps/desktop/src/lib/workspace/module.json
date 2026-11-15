@@ -39,6 +39,7 @@
     "crate",
     "left-spaces",
     "gates",
-    "link-format"
+    "link-format",
+    "updates"
   ]
 }
