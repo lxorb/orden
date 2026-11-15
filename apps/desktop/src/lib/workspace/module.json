@@ -40,10 +40,5 @@
     "left-spaces",
     "gates"
   ],
-  "pending": [
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/own-keys.ts",
-    "apps/desktop/src/lib/tree-keys.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/composer.ts", "apps/desktop/src/lib/own-keys.ts"]
 }

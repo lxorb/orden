@@ -1,6 +1,6 @@
 <script lang="ts">
   import { account, AccountBadge, arriving } from '../../accounts/src/api'
-  import { showAccount } from '../../account-menu'
+  import { showAccount } from '../../settings/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { showFeedback } from '../../surfaces/src/api'
 

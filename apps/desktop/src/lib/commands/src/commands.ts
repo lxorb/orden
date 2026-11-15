@@ -58,11 +58,16 @@ import { composerCommands } from '../../composer-commands'
 import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
-import { printOpen } from '../../open-out'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { moveTargets } from '../../tree/src/api'
 import { closeAfterLabel } from '../../panes/src/api'
-import { revealPanel, stepRegionFocus, toggleTabOverview, workspace } from '../../workspace/src/api'
+import {
+  revealPanel,
+  stepRegionFocus,
+  toggleTabOverview,
+  workspace,
+  agentMarks,
+} from '../../workspace/src/api'
 import {
   newSpace,
   publishSpace,
@@ -80,10 +85,9 @@ import {
   protectEntries,
 } from '../../sharing/src/api'
 import { archiveEntry } from '../../row-menu/src/api'
-import { updates } from '../../updates/src/api'
+import { updates, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
-import { agentMarks } from '../../agent-marks.svelte'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
 import {
@@ -96,7 +100,6 @@ import {
   isMarkdownPath,
   samePath,
 } from '../../platform/src/api'
-import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
 import { exportSpace } from '../../web-backend/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
 import { theme } from '../../theme/src/api'
@@ -785,7 +788,7 @@ export function appCommands(view?: EditorView): Command[] {
             label: 'Print',
             hint: shortcuts.hint('app.print'),
             disabled: !printable(workspace.active?.kind) || shut(),
-            run: () => busy.start('Printing', () => printOpen(), 'print'),
+            run: () => void runCommand('export.print'),
           },
         ]
       : []),

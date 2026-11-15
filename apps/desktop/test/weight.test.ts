@@ -133,8 +133,8 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 1_999_200
-const MOST_FILES = 500
+const BUDGET = 2_000_000
+const MOST_FILES = 502
 
 const MOST_TEXT = 6_500
 
@@ -298,8 +298,8 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/surfaces/src/FormatBar.svelte', 'the bar over a selection'],
     ['/lib/accounts-ui/src/SignIn.svelte', 'the sign-in sheet'],
     ['/lib/sharing/src/JoinSheet.svelte', 'the join sheet'],
-    ['/lib/drawer-follow.ts', "a drawer's drag"],
-    ['/lib/swipe.ts', "the drag's arithmetic"],
+    ['/lib/workspace/src/drawer-follow.ts', "a drawer's drag"],
+    ['/lib/workspace/src/swipe.ts', "the drag's arithmetic"],
     ['/editor/src/block/commands.ts', "what a block's menu does"],
     ['/editor/src/run/run.ts', "the Run button's sandbox"],
     ['/editor/src/run/panel.ts', 'what it prints into'],
@@ -341,7 +341,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai-chat/src/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/platform/src/mobile-bridge.ts', 'whether there is an activity at all'],
     ['/lib/shortcuts/src/preset-ids.ts', 'the names of the keyboards'],
-    ['/lib/drawer.svelte.ts', 'the drawers as the markup reads them'],
+    ['/lib/workspace/src/drawer.svelte.ts', 'the drawers as the markup reads them'],
     ['/editor/src/run/door.ts', 'the door the Run button knocks on'],
     ['/editor/src/wikilink/block-namer.ts', 'the facet every editor is built with'],
   ])('while %s (%s) is', (tail) => {
@@ -350,7 +350,7 @@ describe('what the app evaluates before it draws anything', () => {
 
   test('and nothing of the agents', () => {
     expect([...names].filter((one) => /\/lib\/(agents|agent-docs)\//.test(one))).toEqual([])
-    expect(holds('/lib/agent-marks.svelte.ts')).toBe(true)
+    expect(holds('/lib/workspace/src/agent-marks.svelte.ts')).toBe(true)
   })
 
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {

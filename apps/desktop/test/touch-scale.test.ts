@@ -161,7 +161,7 @@ describe('the touch scale', () => {
 
   test('a tree row is a row, and its marks are drawn at the row', () => {
     const tree = components.find((one) => one.name === 'lib/sidebar/src/Tree.svelte')?.style ?? ''
-    const mark = components.find((one) => one.name === 'lib/FileMark.svelte')?.style ?? ''
+    const mark = components.find((one) => one.name === 'lib/marks/src/FileMark.svelte')?.style ?? ''
 
     expect(tree).toContain('var(--row-indent)')
     expect(mark).toContain('width: var(--icon-md)')

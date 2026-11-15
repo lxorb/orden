@@ -14,12 +14,8 @@
     "sync-store",
     "ui-controls",
     "ui-kit",
-    "workspace"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/icon-choice.svelte.ts"
+    "workspace",
+    "icon-picker",
+    "marks"
   ]
 }

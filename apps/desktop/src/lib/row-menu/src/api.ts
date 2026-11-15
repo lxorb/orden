@@ -8,7 +8,7 @@ import {
 } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
-import { iconChoice } from '../../icon-choice.svelte'
+import { iconChoice } from '../../icon-picker/src/api'
 import { links } from '../../link-index/src/api'
 import { canShareItem, canWriteAt, shareThisFile } from '../../sharing/src/api'
 import { isDesktop, isMarkdownPath, withinSpace } from '../../platform/src/api'

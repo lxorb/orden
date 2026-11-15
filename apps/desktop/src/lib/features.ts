@@ -23,7 +23,7 @@ import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
 import { loadSearchPanel, search, searchFrom, searchSpace, showSearch } from './search/src/api'
 import { partView, reloadWhen } from './ui-kit/src/api'
-import { samePath } from './platform/src/api'
+import { samePath, breathe } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
 import { loadSettingsPanel, settings } from './settings/src/api'
 import { paletteDoor } from './palette/src/api'
@@ -31,7 +31,6 @@ import { loadGraph } from './graph-view/src/api'
 import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from './archive/src/api'
 import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
-import { breathe } from './platform/src/api'
 import { focusEditor } from './workspace/src/api'
 import { startup } from './launch/src/api'
 import {
@@ -141,6 +140,13 @@ registerSettingsPart({
 })
 registerCommands('import.', async () => (await import('./import/src/api')).importCommands)
 registerCommands('views.', async () => (await import('./views/src/api')).viewCommands)
+registerCommands('export.', async () => (await import('./export/src/api')).exportRuns)
+providePort('commands.app', {
+  rows: async (view) => {
+    const { appCommands } = await import('./commands/src/api')
+    return appCommands(view as Parameters<typeof appCommands>[0])
+  },
+})
 registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
 registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)

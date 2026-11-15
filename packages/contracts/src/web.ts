@@ -57,6 +57,7 @@ export interface WebPagesPort {
   shoot(tab: string): Promise<void>
   clip(tab: string, selection: boolean): Promise<WebClip | null>
   faviconOf(url: string | null | undefined): string | null
+  iconOf(tab: string): string | null
   holdStill(): Promise<void> | null
   letGo(): Promise<void>
   carryIn(paths: readonly string[]): void
@@ -156,6 +157,7 @@ export const NO_WEB_PAGES: WebPagesPort = {
   shoot: () => Promise.resolve(),
   clip: () => Promise.resolve(null),
   faviconOf: () => null,
+  iconOf: () => null,
   holdStill: () => null,
   letGo: () => Promise.resolve(),
   carryIn: () => undefined,

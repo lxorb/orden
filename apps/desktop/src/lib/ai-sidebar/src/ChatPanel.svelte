@@ -6,7 +6,7 @@
   import { hearAgain } from '../../shortcuts/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { ai } from '../../ai-providers/src/api'
-  import { agentMarks } from '../../agent-marks.svelte'
+  import { agentMarks } from '../../workspace/src/api'
   import { agentSession } from '../../surfaces/src/api'
   import { following, toggleFollow } from './chat-parts'
   import { chat } from './chat-parts'

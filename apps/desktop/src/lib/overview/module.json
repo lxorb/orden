@@ -19,7 +19,7 @@
     "documents",
     "workspace",
     "held-database",
-    "surfaces"
-  ],
-  "pending": ["apps/desktop/src/lib/TabMark.svelte"]
+    "surfaces",
+    "marks"
+  ]
 }

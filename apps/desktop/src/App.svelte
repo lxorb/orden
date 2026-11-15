@@ -2,7 +2,7 @@
   import { spaceArchiving } from './lib/spaces/src/api'
   import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
-  import { moveSection } from './lib/sections'
+  import { moveSection, isDraft, scanHeadings } from './lib/documents/src/api'
   import {
     busy,
     closeOnBack,
@@ -20,11 +20,16 @@
     viewport,
     escapeLeaves,
     fullscreen,
+    keyboardStays,
+    takesCaret,
+    linkScroll,
+    type ScrollEnd,
+    systemMenu,
+    Door,
   } from './lib/ui-kit/src/api'
-  import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
   import { OUTSIDE_FOLDER, whenLoaded } from '@orden/contracts'
-  import { iconChoice } from './lib/icon-choice.svelte'
+  import { iconChoice } from './lib/icon-picker/src/api'
   import { PaneTree } from './lib/pane-tree/src/api'
   import FirstScreen from './lib/FirstScreen.svelte'
   import { Sidebar } from './lib/sidebar/src/api'
@@ -36,19 +41,21 @@
   import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
-  import { drawer, rightDrawer } from './lib/drawer.svelte'
   import {
+    drawer,
+    drawerFollowing,
+    rightDrawer,
     swipeOpens,
     alone,
     hasStatusBar,
     paletteWords,
     tabOverview,
     workspace,
+    writeNew,
   } from './lib/workspace/src/api'
   import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
-  import { chrome } from './lib/theme/src/api'
+  import { chrome, theme } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
-  import { linkScroll, type ScrollEnd, systemMenu } from './lib/ui-kit/src/api'
   import { recovery } from './lib/history/src/api'
   import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
@@ -96,22 +103,17 @@
   import { links } from './lib/link-index/src/api'
   import { startup } from './lib/launch/src/api'
   import { windowDocuments } from './lib/windows/src/api'
-  import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/panes/src/api'
   import { sidebarKey, used } from './lib/file-undo/src/api'
   import { saveFront } from './lib/save-place/src/api'
   import PadColumn from './lib/PadColumn.svelte'
   import { shown as pad } from './lib/scratchpad/src/api'
-  import { isDraft, scanHeadings } from './lib/documents/src/api'
   import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
-  import { doubleTaps, shortcuts } from './lib/shortcuts/src/api'
-  import { toolbar } from './lib/shortcuts/src/api'
+  import { doubleTaps, shortcuts, toolbar } from './lib/shortcuts/src/api'
   import { pull } from './lib/pull.svelte'
   import PullMark from './lib/PullMark.svelte'
   import type { AppContext } from './lib/shortcuts/src/api'
-  import { writeNew } from './lib/write-new'
   import { firstSpaceDoor, gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
-  import Door from './lib/Door.svelte'
 
   if (renamed.showing) void renameNotice.ask()
   if (isDesktop && !__EVEN_PLUGIN__) {
@@ -371,10 +373,7 @@
     if (!host || !swipeOpens()) return
 
     let stop: (() => void) | null = null
-    const off = whenLoaded(
-      () => import('./lib/drawer-follow'),
-      (one) => (stop = one.followDrawers(host)),
-    )
+    const off = whenLoaded(drawerFollowing, (one) => (stop = one.followDrawers(host)))
 
     return () => {
       off()

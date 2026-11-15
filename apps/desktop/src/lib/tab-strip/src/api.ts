@@ -48,3 +48,5 @@ export { default as Tabs } from './Tabs.svelte'
 export { initialOf, siteLook, twins } from './twins'
 export { unloadTabs } from './unload-choice.svelte'
 export { wheelAlong } from './wheel'
+
+export const noteMenus = () => import('./note-menu')

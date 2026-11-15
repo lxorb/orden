@@ -214,8 +214,8 @@ describe('a file with nowhere of its own to write an icon', () => {
   })
 
   test('wears the icon from the space, and puts it down again', async () => {
-    const { iconChoice } = await import('../../icon-choice.svelte')
-    const { chosenIcon } = await import('../../chosen-icon')
+    const { iconChoice } = await import('../../icon-picker/src/api')
+    const { chosenIcon } = await import('../../marks/src/api')
     const { wear } = await import('../../icon-picker/src/icon-target')
     const press = (path: string, label: string) =>
       rowMenu(note(path))

@@ -21,11 +21,10 @@ import {
   undoEdit,
   unfoldEverything,
 } from '@orden/editor'
-import { commandRows } from '@orden/contracts'
+import { commandRows, runCommand } from '@orden/contracts'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from '../../accounts/src/api'
 import {
-  busy,
   DIVIDER,
   type MenuGroup,
   type MenuItem,
@@ -44,12 +43,10 @@ import {
   EXPORT_VARIANTS,
   printable,
 } from '../../export-formats/src/api'
-import { printOpen } from '../../open-out'
 import { modes } from '../../modes/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
-import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
-import { updates } from '../../updates/src/api'
+import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL, updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 
 interface Context {
@@ -148,7 +145,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 ...keyed('app.print'),
                 asks: true,
                 disabled: !printable(workspace.active?.kind) || shut(),
-                run: () => busy.start('Printing', () => printOpen(), 'print'),
+                run: () => void runCommand('export.print'),
               },
             ]
           : []),

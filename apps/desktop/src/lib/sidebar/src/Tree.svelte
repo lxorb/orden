@@ -1,13 +1,30 @@
 <script lang="ts">
   import { protection } from '../../protect/src/api'
   import { webPages, type Entry } from '@orden/contracts'
-  import { keyElsewhere } from '../../layer-keys'
+  import {
+    keyElsewhere,
+    staysOn,
+    carried,
+    carriedNothing,
+    carry,
+    dropOver,
+    isBookmarkDrag,
+    landing,
+    listenOver,
+    longPress,
+    menu,
+    overlays,
+    roving,
+    SharedMark,
+    Twist,
+    viewport,
+  } from '../../ui-kit/src/api'
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
-  import { fileMark, type FileMark as Mark } from '../../file-mark'
+  import { fileMark, FileMark } from '../../marks/src/api'
+  import type { FileMark as Mark } from '@orden/contracts'
   import { hiddenKinds } from '../../gates/src/api'
-  import FileMark from '../../FileMark.svelte'
   import {
     landsIn,
     dropTarget,
@@ -25,7 +42,6 @@
     type FlatRow,
     rowIds,
   } from '../../tree/src/api'
-  import { staysOn } from '../../caret'
   import {
     focusList,
     dropOnList,
@@ -35,26 +51,12 @@
     howFor,
     middleOpens,
     tabAsk,
+    onTwist,
+    treeStep,
+    TREE_MOVES,
   } from '../../workspace/src/api'
-  import {
-    carried,
-    carriedNothing,
-    carry,
-    dropOver,
-    isBookmarkDrag,
-    landing,
-    listenOver,
-    longPress,
-    menu,
-    overlays,
-    roving,
-    SharedMark,
-    Twist,
-    viewport,
-  } from '../../ui-kit/src/api'
   import NameField from './NameField.svelte'
-  import { extensionOf } from '../../platform/src/api'
-  import { rowName } from '../../platform/src/api'
+  import { extensionOf, rowName, folderOf, samePath, dur } from '../../platform/src/api'
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { syncMark } from '../../surfaces/src/api'
@@ -66,13 +68,12 @@
     type Rows,
     slotsFor,
     windowFor,
+    ListView,
+    tokenFloor,
+    tokenRow,
   } from '../../windows/src/api'
-  import { ListView, tokenFloor, tokenRow } from '../../windows/src/api'
-  import { folderOf, samePath } from '../../platform/src/api'
-  import { onTwist, treeStep, TREE_MOVES } from '../../tree-keys'
   import { spaceDropping } from '../../tab-strip/src/api'
   import { inside } from '../../panes/src/api'
-  import { dur } from '../../platform/src/api'
   import { keptAway } from '../../away/src/api'
   import { rowMenus } from '../../row-menu/src/api'
   import { indexed, settle } from './tree-settle'

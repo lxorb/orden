@@ -3,7 +3,8 @@
   import { closeOnBack, overlays } from '../../ui-kit/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { TickBox } from '../../ui-controls/src/api'
-  import { sparkMark, terminalMark } from '../../surfaces/src/api'
+  import { terminalMark } from '../../marks/src/api'
+  import { sparkMark } from '../../surfaces/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { quitAsk } from './state.svelte'
 

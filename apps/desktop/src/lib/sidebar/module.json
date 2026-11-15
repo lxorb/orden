@@ -28,21 +28,10 @@
     "row-menu",
     "spaces",
     "hints",
-    "titlebar"
+    "titlebar",
+    "marks",
+    "updates",
+    "settings"
   ],
-  "pending": [
-    "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/account-menu.ts",
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/caret.ts",
-    "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/links.ts",
-    "apps/desktop/src/lib/pull.svelte.ts",
-    "apps/desktop/src/lib/sections.ts",
-    "apps/desktop/src/lib/sidebar-width.svelte.ts",
-    "apps/desktop/src/lib/tree-keys.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/pull.svelte.ts", "apps/desktop/src/lib/sidebar-width.svelte.ts"]
 }

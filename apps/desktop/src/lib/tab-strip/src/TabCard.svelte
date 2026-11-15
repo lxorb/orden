@@ -2,7 +2,7 @@
   import { Facts } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import { dur, fade, fly } from '../../platform/src/api'
-  import SpaceMark from '../../SpaceMark.svelte'
+  import { SpaceMark } from '../../marks/src/api'
   import type { Shown } from './hover-card.svelte'
 
   const {

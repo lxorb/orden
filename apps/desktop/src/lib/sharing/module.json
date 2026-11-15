@@ -12,7 +12,8 @@
     "sync-mirror",
     "file-ops",
     "documents",
-    "gates"
+    "gates",
+    "glyphs"
   ],
-  "pending": ["apps/desktop/src/lib/Icon.svelte", "apps/desktop/src/lib/kind-choice.ts"]
+  "pending": ["apps/desktop/src/lib/kind-choice.ts"]
 }

@@ -1,6 +1,6 @@
 import { type TabKind, webPages } from '@orden/contracts'
 import { tick } from 'svelte'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from '../../workspace/src/api'
 import type { MenuEntry } from '../../ui-kit/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
