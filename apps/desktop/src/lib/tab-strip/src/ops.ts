@@ -31,7 +31,7 @@ export function duplicateTab(id: string) {
 
   const at = workspace.tabsIn(tab.paneId).indexOf(tab)
   workspace.tabs = [...workspace.tabs, copy]
-  workspace.moveTab(copy.id, tab.paneId, at + 1)
+  workspace.moveTab(copy.id, tab.paneId, at < 0 ? null : at + 1)
 }
 
 export function moveToOtherPane(id: string) {

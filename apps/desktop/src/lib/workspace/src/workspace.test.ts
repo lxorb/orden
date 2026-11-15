@@ -4936,6 +4936,17 @@ describe('an essential', () => {
     expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
   })
 
+  test('duplicated, puts its copy at the end of the strip', async () => {
+    keep('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const essential = workspace.tabs.find((one) => one.essential === '/space/a.md')!
+
+    ops.duplicateTab(essential.id)
+
+    expect(strip()).toEqual(['/space/b.md', '/space/c.md', '/space/a.md'])
+  })
+
   test('shows its file with no tab in the strip', async () => {
     keep('/space/a.md')
     await (await import('./essentials.svelte')).openEssential('/space/a.md')
