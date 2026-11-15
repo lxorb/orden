@@ -1,4 +1,5 @@
 import type { Remind } from '@orden/markdown/task-line'
+import { type Dressed, isDressed } from '../../theme/src/api'
 import type { Entry } from './entry'
 
 export const CHANNEL = 'orden-quick-add'
@@ -7,7 +8,7 @@ export const ANSWERING = 'orden-quick-add-answering'
 
 export type Said =
   | { kind: 'hello' }
-  | { kind: 'world'; lang: string; smart: boolean }
+  | { kind: 'world'; lang: string; smart: boolean; dressed?: Dressed }
   | { kind: 'task'; id: string; entry: Entry; open: boolean }
   | { kind: 'added'; id: string; ok: boolean }
 
@@ -48,7 +49,10 @@ export function heard(value: unknown): Said | null {
   if (!isRecord(value)) return null
   if (value.kind === 'hello') return { kind: 'hello' }
   if (value.kind === 'world' && isString(value.lang) && typeof value.smart === 'boolean') {
-    return { kind: 'world', lang: value.lang, smart: value.smart }
+    const { lang, smart, dressed } = value
+    return isDressed(dressed)
+      ? { kind: 'world', lang, smart, dressed }
+      : { kind: 'world', lang, smart }
   }
   if (
     value.kind === 'task' &&

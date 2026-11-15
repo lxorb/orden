@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { invoke } from '../../platform/src/api'
+  import { dressAs } from '../../theme/src/api'
   import { asking, CHANNEL, heard, type Said } from './channel'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
@@ -21,8 +22,9 @@
       return
     }
     if (said?.kind !== 'world') return
-    langs = [said.lang]
+    if (langs.length !== 1 || langs[0] !== said.lang) langs = [said.lang]
     smart = said.smart
+    if (said.dressed) dressAs(said.dressed)
   }
 
   const hide = (raise = false) => void invoke('quick_add_hide', { raise }).catch(() => undefined)

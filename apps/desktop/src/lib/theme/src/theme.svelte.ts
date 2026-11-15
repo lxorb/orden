@@ -42,6 +42,7 @@ import {
   valueOf,
 } from './settings'
 import { carriedCss } from './carried'
+import { CUSTOM_ID, type Dressed, sheetAs, STYLE_ID } from './dressed'
 import { type Stamp, STAMP_LINE, stamped, stampOf } from './stamp'
 
 interface ThemeInfo {
@@ -65,8 +66,6 @@ interface ThemeFile {
 
 const STORAGE_KEY = 'orden:theme'
 const SCHEME_KEY = 'orden:theme-scheme'
-const STYLE_ID = 'orden-user-theme'
-const CUSTOM_ID = 'orden-custom-css'
 
 const ACCENT_KEY = 'orden:accent'
 const SHEET_KEY = 'orden:theme-sheet'
@@ -183,6 +182,9 @@ class Themes {
   private keptScheme = $state<SchemeChoice>('system')
   private readonly pickers = new Set<() => void>()
   private readonly wearers = new Set<() => void>()
+  private readonly dressers = new Set<() => void>()
+  private custom = ''
+  private wornSheet = ''
   private listed: Promise<void> = Promise.resolve()
   private chosen = $state<ChosenSettings>({})
   private trying = $state<Record<string, ThemeValue>>({})
@@ -402,19 +404,9 @@ class Themes {
     const css = await invoke<string>('read_custom_css')
       .then(carriedCss)
       .catch(() => '')
-    let style = document.getElementById(CUSTOM_ID)
-
-    if (!css.trim()) {
-      style?.remove()
-      return
-    }
-
-    if (!style) {
-      style = document.createElement('style')
-      style.id = CUSTOM_ID
-      document.head.append(style)
-    }
-    style.textContent = everySurface(css)
+    this.custom = css.trim() ? everySurface(css) : ''
+    sheetAs(CUSTOM_ID, this.custom)
+    this.redress()
   }
 
   select(id: string) {
@@ -443,6 +435,24 @@ class Themes {
   rewore(run: () => void): () => void {
     this.wearers.add(run)
     return () => this.wearers.delete(run)
+  }
+
+  redressed(run: () => void): () => void {
+    this.dressers.add(run)
+    return () => this.dressers.delete(run)
+  }
+
+  dressed(): Dressed {
+    return {
+      scheme: this.current,
+      sheet: this.wornSheet,
+      custom: this.custom,
+      tokens: { ...this.tokens },
+    }
+  }
+
+  private redress() {
+    for (const run of this.dressers) run()
   }
 
   private tellPicked() {
@@ -615,15 +625,16 @@ class Themes {
     this.set('accent', id)
   }
 
-  private painted: string[] = []
+  private tokens: Record<string, string> = {}
 
   private paintSettings() {
     const style = document.documentElement.style
-    for (const token of this.painted) style.removeProperty(token)
+    for (const token of Object.keys(this.tokens)) style.removeProperty(token)
 
     const tokens = paintOf(this.settings, this.values, this.current)
     for (const [token, value] of Object.entries(tokens)) style.setProperty(token, value)
-    this.painted = Object.keys(tokens)
+    this.tokens = tokens
+    this.redress()
   }
 
   private applied = 0
@@ -678,6 +689,7 @@ class Themes {
 
     this.paintSystemBars()
     if (kept) rememberGround()
+    this.redress()
   }
 
   private woken = false
@@ -786,19 +798,8 @@ class Themes {
   private inject(css: string | null) {
     if (css === null) return
 
-    let style = document.getElementById(STYLE_ID)
-
-    if (!css) {
-      style?.remove()
-      return
-    }
-
-    if (!style) {
-      style = document.createElement('style')
-      style.id = STYLE_ID
-      document.head.insertBefore(style, document.getElementById(CUSTOM_ID))
-    }
-    style.textContent = everySurface(chosenFirst(css))
+    this.wornSheet = css ? everySurface(chosenFirst(css)) : ''
+    sheetAs(STYLE_ID, this.wornSheet, CUSTOM_ID)
   }
 }
 
