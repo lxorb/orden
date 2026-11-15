@@ -91,11 +91,11 @@ export function nameFromContent(doc: string): string | null {
 
 export function nameFromTitle(title: string): string | null {
   const text = title
-    .replace(/[<>:"/\\|?* -]/g, ' ')
+    .replace(/[<>:"/\\|?*]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
     .slice(0, MOST)
 
-  if (!text) return null
+  if (!/[^\s.-]/.test(text)) return null
   return isReserved(text) ? `_${text}` : text
 }

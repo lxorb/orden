@@ -282,6 +282,16 @@ describe('a title that is a device name', () => {
     expect(nameFromTitle('Lpt1 ')).toBe('_Lpt1')
   })
 
+  test('keeps the hyphens a title is written with', () => {
+    expect(nameFromTitle('Q3-planning')).toBe('Q3-planning')
+    expect(nameFromContent('## Follow-up items\n')).toBe('Follow-up items')
+  })
+
+  test('but a title of nothing but dashes names nothing', () => {
+    expect(nameFromTitle('---')).toBeNull()
+    expect(nameFromTitle('- - .')).toBeNull()
+  })
+
   test('and a name that only starts like one is left as it is', () => {
     expect(nameFromContent('# Console log\n')).toBe('Console log')
     expect(nameFromTitle('COM10')).toBe('COM10')
