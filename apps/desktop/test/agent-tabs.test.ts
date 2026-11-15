@@ -167,10 +167,11 @@ vi.mock('../src/lib/sharing/src/api', () => ({
   isShared: () => false,
   reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
   reachedAs: (path: string | null) => (path !== null && othersWrite.has(path) ? 'space' : null),
-  reachedByOthersIn: () => false,
+  reachedByOthersIn: (root: string) => sharedRoots.has(root),
   canWriteAt: () => !readOnly,
 }))
 const othersWrite = new Set<string>()
+const sharedRoots = new Set<string>()
 providePort('web.pages', { ...webPages(), addressOf: () => null })
 vi.mock('../src/lib/views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../src/lib/sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
@@ -811,6 +812,21 @@ describe('a PDF, Settings and Recently deleted', () => {
       result: { restored: true, from: 'Work/archive' },
     })
     expect(trash.restore).toHaveBeenCalledWith(trash.items[0])
+  })
+
+  test('what was deleted in a shared space is read as data', async () => {
+    const only = agent(EVERY, { spaces: ['Work'] })
+    expect(await call('recently_deleted', { op: 'list' }, only)).not.toHaveProperty('untrusted')
+
+    sharedRoots.add('/s/Work')
+    try {
+      expect(await call('recently_deleted', { op: 'list' }, only)).toMatchObject({
+        result: [{ id: 'device:1', name: 'Old.md' }],
+        untrusted: 'shared space Work',
+      })
+    } finally {
+      sharedRoots.clear()
+    }
   })
 
   test('nothing is put back into a space shared to be read', async () => {

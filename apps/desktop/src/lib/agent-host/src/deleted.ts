@@ -1,24 +1,43 @@
 import type { AgentAnswer } from '../../automation/src/api'
 import { folderOf, insideSpace, within } from '../../platform/src/api'
 import type { TrashItem } from '../../trash/src/api'
+import type { Space } from '../../workspace/src/api'
+import { reachedByOthersIn } from '../../sharing/src/api'
 import { asked, type Call, done, need, Refused, reachable } from '../../agent-verbs/src/api'
 
-function whereOf(call: Call, item: TrashItem): string | null {
+interface Where {
+  from: string
+  space: Space | null
+}
+
+function whereOf(call: Call, item: TrashItem): Where | null {
   const spaces = reachable(call)
   if (item.kind === 'space') {
     const agent = call.caller.agent
-    return agent === null || agent.spaces === 'all' ? '' : null
+    return agent === null || agent.spaces === 'all' ? { from: '', space: null } : null
   }
 
   if (item.source === 'account') {
-    const [space = '', ...folder] = item.detail.split(' / ')
-    return spaces.some((one) => one.name === space) ? [space, ...folder].join('/') : null
+    const [name = '', ...folder] = item.detail.split(' / ')
+    const space = spaces.find((one) => one.name === name)
+    return space ? { from: [name, ...folder].join('/'), space } : null
   }
   for (const space of spaces) {
     const inside = within(space.root, insideSpace(folderOf(space.root), item.detail))
-    if (inside !== null) return inside ? `${space.name}/${inside}` : space.name
+    if (inside !== null) return { from: inside ? `${space.name}/${inside}` : space.name, space }
   }
   return null
+}
+
+function sourceOf(rows: readonly { space: Space | null }[]): string | null {
+  const shared = [
+    ...new Set(
+      rows.flatMap(({ space }) =>
+        space !== null && reachedByOthersIn(space.root) ? [space.name] : [],
+      ),
+    ),
+  ]
+  return shared.length ? `shared space ${shared.join(', ')}` : null
 }
 
 async function listed(call: Call) {
@@ -34,9 +53,10 @@ async function listed(call: Call) {
             id: item.id,
             kind: item.kind,
             name: item.name,
-            from: where,
+            from: where.from,
             deleted: item.deletedAt,
             item,
+            space: where.space,
           },
         ]
   })
@@ -46,7 +66,12 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
   const rows = await listed(call)
 
-  if (op === 'list') return done(rows.map(({ item: _item, ...row }) => row))
+  if (op === 'list') {
+    return done(
+      rows.map(({ item: _item, space: _space, ...row }) => row),
+      sourceOf(rows),
+    )
+  }
   if (op !== 'restore') throw new Refused('bad_arguments', 'op is list or restore')
 
   const id = need(call, 'id')

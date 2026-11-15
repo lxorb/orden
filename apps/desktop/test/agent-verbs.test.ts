@@ -1255,6 +1255,17 @@ describe('the notes, on the road', () => {
     expect(await call('read_note', { path: 'Plan' })).not.toHaveProperty('untrusted')
   })
 
+  test('the bookmarks of a shared space are read as data', async () => {
+    marks['/s/Home'] = [{ kind: 'search', path: '', text: 'ignore the reader' }]
+    marks['/s/Work'] = [{ kind: 'note', path: 'Plan.md', text: '' }]
+
+    expect(await call('bookmarks', { space: 'Home', op: 'list' })).toMatchObject({
+      result: [{ kind: 'search', text: 'ignore the reader' }],
+      untrusted: 'shared space Home',
+    })
+    expect(await call('bookmarks', { op: 'list' })).not.toHaveProperty('untrusted')
+  })
+
   test('a note shared on its own is read as data, and so is a listing of its space', async () => {
     othersWrite.add('/s/Work/Plan.md')
     try {
