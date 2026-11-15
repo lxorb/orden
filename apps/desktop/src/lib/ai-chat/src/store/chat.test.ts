@@ -701,6 +701,20 @@ describe('the field while a message is changed', () => {
 
     await vi.waitFor(() => expect(sentWords()).toEqual(['second']))
   })
+  test('says a compaction failed only in the thread it failed in', async () => {
+    const chat = await asked()
+    let fail: (error: Error) => void = () => undefined
+    const compact = vi.fn(() => new Promise<void>((_, reject) => (fail = reject)))
+    ;(engine as unknown as { compact: unknown }).compact = compact
+    chat.compact()
+    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
+    chat.newThread()
+    fail(new Error('too long'))
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(chat.trouble).toBeNull()
+  })
+
   test('sends a queued message taken after an earlier one as itself, not as the earlier one changed', async () => {
     const chat = await asked()
     edits.length = 0

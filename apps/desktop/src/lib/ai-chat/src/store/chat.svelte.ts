@@ -1408,7 +1408,7 @@ class Chat implements Panel {
       .then((engine) => engine.compact(thread, focus))
       .catch((error: unknown) => {
         stop = 'error'
-        this.trouble = message(error, 'The model did not answer.')
+        if (thread === this.open) this.trouble = message(error, 'The model did not answer.')
       })
       .then(() => this.ended(thread, stopper, false, stop))
   }
