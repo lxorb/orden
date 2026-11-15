@@ -134,7 +134,7 @@ class Trash {
         workspace.undone.forget(item.ref)
         await workspace.loadSpaces()
         await workspace.loadTree()
-        if (item.kind === 'space') protection.spaceCameBack(at, item.ref)
+        if (item.kind === 'space') await protection.spaceCameBack(at, item.ref)
         else {
           await workspace.fileCame(
             at,
@@ -156,7 +156,7 @@ class Trash {
         const { note } = item
         const space =
           note && workspace.spaces.find((one) => sync.remoteIdFor(one.root) === note.spaceId)
-        if (note && space) protection.restoredAt(space.root, note.path)
+        if (note && space) await protection.restoredAt(space.root, note.path)
       }
       sync.nudge()
     })

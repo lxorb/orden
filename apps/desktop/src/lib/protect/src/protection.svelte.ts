@@ -27,8 +27,6 @@ import { unlocks } from './unlocked.svelte'
 export const STORAGE_KEY = 'orden:protected'
 const PASSWORD_KEY = 'orden:protect-password'
 const OWNER_KEY = 'orden:protect-password-account'
-const BURIED_KEY = 'orden:protected-buried'
-const MOST_BURIED = 200
 
 export type Way = 'password' | 'device'
 
@@ -96,33 +94,6 @@ function read(): Record<string, Kept> {
   }))
 }
 
-type Buried = Record<string, Record<string, Way>>
-
-function readBuried(): Buried {
-  const saved = stored(BURIED_KEY)
-  if (!isRecord(saved)) return {}
-  const out: Buried = {}
-  for (const [back, ways] of Object.entries(saved)) {
-    if (!isRecord(ways)) continue
-    const kept: Record<string, Way> = {}
-    for (const [rest, way] of Object.entries(ways)) {
-      if ((rest === '' || insideItsSpace(rest)) && isWay(way)) kept[rest] = way
-    }
-    if (Object.keys(kept).length) out[back] = kept
-  }
-  return out
-}
-
-function placeOf(root: string, at: string): string {
-  return `${root}\n${at}`
-}
-
-function bury(back: string, ways: Record<string, Way>): void {
-  if (!Object.keys(ways).length) return
-  const buried = Object.entries({ ...without(readBuried(), back), [back]: ways })
-  keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
-}
-
 function same(one: Record<string, Way>, other: Record<string, Way>): boolean {
   const keys = Object.keys(one)
   return keys.length === Object.keys(other).length && keys.every((key) => one[key] === other[key])
@@ -132,6 +103,8 @@ const WAYS: Folding<Record<string, Way>> = {
   fold: (theirs, mine) => ({ ...theirs, ...mine }),
   same,
 }
+
+const buried = () => import('./buried')
 
 const synced = () =>
   __EVEN_PLUGIN__
@@ -385,37 +358,26 @@ export class Protection {
       if (rest === null) next[key] = way
       else went[rest] = way
     }
-    bury(placeOf(root, at), went)
-    if (back) bury(back, went)
-    if (Object.keys(went).length) this.put(root, next)
+    if (!Object.keys(went).length) return
+    this.put(root, next)
+    void buried().then((one) => one.bury(root, at, back, went))
   }
 
-  cameBack(path: string, root: string | null, back: string): void {
-    if (root === null) return
-    this.unbury(back, root, relativeTo(root, path))
+  cameBack(path: string, root: string | null, back: string): Promise<void> | undefined {
+    return root === null ? undefined : this.unbury(back, root, relativeTo(root, path))
   }
 
-  spaceCameBack(root: string, back: string): void {
-    this.unbury(back, root, SPACE)
+  spaceCameBack(root: string, back: string): Promise<void> {
+    return this.unbury(back, root, SPACE)
   }
 
-  restoredAt(root: string, at: string): void {
-    this.unbury(placeOf(root, at), root, at)
+  restoredAt(root: string, at: string): Promise<void> {
+    return this.unbury(null, root, at)
   }
 
-  private unbury(back: string, root: string, at: string): void {
-    const buried = readBuried()
-    const ways = buried[back]
-    if (!ways) return
-    keepJson(BURIED_KEY, without(buried, back))
-    if (at !== SPACE && !insideItsSpace(at)) return
-    const held = this.ways(root)
-    const came: Record<string, Way> = {}
-    for (const [rest, way] of Object.entries(ways)) {
-      const landed = at === SPACE ? rest : rest ? `${at}/${rest}` : at
-      if ((landed === SPACE || insideItsSpace(landed)) && !(landed in held)) came[landed] = way
-    }
-    if (Object.keys(came).length) this.put(root, { ...held, ...came })
+  private async unbury(back: string | null, root: string, at: string): Promise<void> {
+    const came = (await buried()).unburied(back, root, at, this.ways(root))
+    if (came) this.put(root, { ...this.ways(root), ...came })
   }
 
   spaceMoved(from: string, to: string): void {
@@ -427,7 +389,8 @@ export class Protection {
 
   forget(root: string, back?: string): void {
     if (!(root in this.spaces)) return
-    if (back) bury(back, this.ways(root))
+    const ways = this.ways(root)
+    if (back) void buried().then((one) => one.bury(root, SPACE, back, ways))
     this.spaces = without(this.spaces, root)
     this.write()
   }

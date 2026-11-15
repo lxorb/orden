@@ -255,36 +255,36 @@ describe('a copy an outside sync tool left of a protected note', () => {
 })
 
 describe('a protected note put in Recently deleted', () => {
-  test('is protected again when it is put back', () => {
+  test('is protected again when it is put back', async () => {
     protection.set(ROOT, at('Diary.md'), 'password')
     protection.gone(at('Diary.md'), ROOT, 'trash-1')
     expect(protection.covering(at('Diary.md'))).toEqual([])
-    protection.cameBack(at('Diary.md'), ROOT, 'trash-1')
+    await protection.cameBack(at('Diary.md'), ROOT, 'trash-1')
     expect(protection.covering(at('Diary.md'))).toEqual([
       { root: ROOT, key: 'Diary.md', way: 'password' },
     ])
   })
 
-  test('keeps what was protected inside a folder, wherever the folder is put back', () => {
+  test('keeps what was protected inside a folder, wherever the folder is put back', async () => {
     protection.set(ROOT, at('Trip/Diary.md'), 'device')
     protection.set(ROOT, at('Trip'), 'password')
     protection.gone(at('Trip'), ROOT, 'trash-2')
-    protection.cameBack(at('Trip 2'), ROOT, 'trash-2')
+    await protection.cameBack(at('Trip 2'), ROOT, 'trash-2')
     expect(protection.ways(ROOT)).toEqual({ 'Trip 2': 'password', 'Trip 2/Diary.md': 'device' })
   })
 
-  test('is protected again after the app starts over', () => {
+  test('is protected again after the app starts over', async () => {
     protection.set(ROOT, at('Diary.md'), 'password')
     protection.gone(at('Diary.md'), ROOT, 'trash-3')
     const later = new Protection()
-    later.cameBack(at('Diary.md'), ROOT, 'trash-3')
+    await later.cameBack(at('Diary.md'), ROOT, 'trash-3')
     expect(later.own(ROOT, at('Diary.md'))?.way).toBe('password')
   })
 
-  test('brings back nothing for another note put back', () => {
+  test('brings back nothing for another note put back', async () => {
     protection.set(ROOT, at('Diary.md'), 'password')
     protection.gone(at('Diary.md'), ROOT, 'trash-4')
-    protection.cameBack(at('Other.md'), ROOT, 'trash-5')
+    await protection.cameBack(at('Other.md'), ROOT, 'trash-5')
     expect(protection.ways(ROOT)).toEqual({})
   })
 })
