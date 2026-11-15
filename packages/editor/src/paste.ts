@@ -9,6 +9,7 @@ import {
 import { type Command, EditorView } from '@codemirror/view'
 import { rangeInCode } from './code'
 import { ourOwn } from './copy'
+import { fenceLead, fenceNear } from './fence'
 import { wordsBesidePicture } from './images'
 import { loadLineCommands } from './line-door'
 import { later } from './shared'
@@ -81,6 +82,20 @@ function inserted(state: EditorState, text: string): TransactionSpec {
   return everywhere(state, (range) => plainAt(range, text))
 }
 
+function codeLead(state: EditorState, range: SelectionRange): string {
+  const fence = fenceNear(state, range.from)
+  return fence ? fenceLead(state, fence) : ''
+}
+
+function heldInCode(state: EditorState, text: string): TransactionSpec | null {
+  if (!/[\r\n]/.test(text) || state.selection.ranges.every((range) => !codeLead(state, range))) {
+    return null
+  }
+  return everywhere(state, (range) =>
+    plainAt(range, text.replace(/\r\n?|\n/g, `\n${codeLead(state, range)}`)),
+  )
+}
+
 function insert(view: EditorView, text: string) {
   view.dispatch(inserted(view.state, text))
 }
@@ -124,7 +139,13 @@ export function richPaste(): Extension {
         return true
       }
 
-      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
+      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) {
+        const held = heldInCode(view.state, text)
+        if (!held) return false
+        event.preventDefault()
+        view.dispatch(held)
+        return true
+      }
 
       if (
         view.state.selection.ranges.length === 1 &&
@@ -176,7 +197,7 @@ export const pasteHere: Command = (view) => {
 
       const inCodeNow = land((state) =>
         state.selection.ranges.some((range) => rangeInCode(state, range))
-          ? inserted(state, clipboard.text)
+          ? (heldInCode(state, clipboard.text) ?? inserted(state, clipboard.text))
           : null,
       )
       if (inCodeNow) return

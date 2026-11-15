@@ -15,7 +15,7 @@ import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { blockIdOf } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { EditorView } from '@codemirror/view'
-import { inCode } from './code'
+import { inCode, inVerbatimBlock } from './code'
 import { marksAcross } from './line-door'
 import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
@@ -128,7 +128,7 @@ export function spansLines(state: EditorState, range: SelectionRange): boolean {
 }
 
 export const OPENING =
-  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/u
+  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|\[\^[^\]\s]+\]:[ \t]*)?/u
 
 function pastOpening(state: EditorState, start: number, end: number): number {
   const first = state.doc.lineAt(start)
@@ -200,10 +200,10 @@ function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
 }
 
 function headingLines(state: EditorState): Words[] {
-  const lines = selectedLines(state).map(wordsOfLine)
-  if (lines.length < 2) return lines
-  const written = lines.filter((line) => line.text.trim() !== '')
-  return written.length ? written : lines
+  const lines = selectedLines(state)
+  if (lines.length < 2) return lines.map(wordsOfLine)
+  const written = lines.filter((line) => line.text.trim() !== '' && !inVerbatimBlock(state, line))
+  return (written.length ? written : lines).map(wordsOfLine)
 }
 
 export function setHeading(level: number): StateCommand {

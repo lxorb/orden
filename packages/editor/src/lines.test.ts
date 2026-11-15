@@ -35,6 +35,18 @@ function run(command: StateCommand, marked: string): { took: boolean; note: stri
 
 const note = (command: StateCommand, marked: string) => run(command, marked).note
 
+function textAfter(command: StateCommand, doc: string, caret: number): string {
+  let state = parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(caret),
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
+    }),
+  )
+  command({ state, dispatch: (transaction) => (state = transaction.state) })
+  return state.doc.toString()
+}
+
 const META = '---\nicon: list-checks\n---\n'
 
 describe('sorting and reversing lines', () => {
@@ -105,6 +117,44 @@ describe('sorting and reversing the list the caret is in', () => {
     items[0] = '1. |item0\n   - child'
     const reversed = note(reverseLines, items.join('\n')).replace(/[«»]/g, '')
     expect(reversed.slice(reversed.indexOf('10.'))).toBe('10. item0\n    - child')
+  })
+})
+
+describe('sorting and reversing lines in code or a table', () => {
+  const code = 'Imports:\n\n```js\nimport b|\nimport a\n```\n\nAfter'
+
+  test('sorting in a code block keeps the fence lines in place', () => {
+    expect(note(sortLines, code)).toBe('Imports:\n\n```js\n«import a\nimport b»\n```\n\nAfter')
+  })
+
+  test('reversing in a code block keeps the fence lines in place', () => {
+    expect(note(reverseLines, code)).toBe('Imports:\n\n```js\n«import a\nimport b»\n```\n\nAfter')
+  })
+
+  test('sorting in code inside a list item sorts the code, not the list', () => {
+    expect(note(sortLines, '- step\n  ```\n  b|\n  a\n  ```\n- next')).toBe(
+      '- step\n  ```\n«  a\n  b»\n  ```\n- next',
+    )
+  })
+
+  test('gives way on a fence line', () => {
+    expect(run(sortLines, '```js|\nb\na\n```').took).toBe(false)
+  })
+
+  test('a line just above a fence is not sorted in with the code', () => {
+    expect(run(sortLines, 'Imports:|\n```js\nb\na\n```').took).toBe(false)
+  })
+
+  const table = 'Sizes\n\n| n | x |\n| - | - |\n| 2 | b |\n| 1 | a |'
+
+  test('sorting in a table sorts only its body rows', () => {
+    expect(textAfter(sortLines, table, table.indexOf('2 | b'))).toBe(
+      'Sizes\n\n| n | x |\n| - | - |\n| 1 | a |\n| 2 | b |',
+    )
+  })
+
+  test('gives way on a table’s header row', () => {
+    expect(textAfter(sortLines, table, table.indexOf('n | x'))).toBe(table)
   })
 })
 

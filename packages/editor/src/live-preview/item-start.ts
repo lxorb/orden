@@ -1,5 +1,12 @@
 import { syntaxTree } from '@codemirror/language'
-import { EditorSelection, EditorState, type Line, type SelectionRange } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  type Line,
+  Prec,
+  type SelectionRange,
+} from '@codemirror/state'
+import { type EditorView, keymap } from '@codemirror/view'
 import { quietMarks } from './reveal'
 
 const QUOTE = /^(?:[ \t]*>[ \t]?)*/
@@ -50,11 +57,25 @@ function kept(before: EditorState, after: EditorState, range: SelectionRange, at
   if (!range.empty) {
     return sameLine && was > run.to ? EditorSelection.range(range.anchor, run.to) : range
   }
-  if (sameLine && was === run.to && line.number > 1) return EditorSelection.cursor(line.from - 1)
   return EditorSelection.cursor(run.to)
 }
 
-export const itemStart = EditorState.transactionFilter.of((transaction) => {
+function leftOutOfWords(view: EditorView): boolean {
+  const { state } = view
+  const main = state.selection.main
+  if (state.selection.ranges.length > 1 || !main.empty) return false
+  const line = state.doc.lineAt(main.head)
+  const run = hiddenRun(state, line)
+  if (run?.to !== main.head || line.number < 2) return false
+  view.dispatch({
+    selection: EditorSelection.cursor(line.from - 1),
+    scrollIntoView: true,
+    userEvent: 'select',
+  })
+  return true
+}
+
+const snapped = EditorState.transactionFilter.of((transaction) => {
   if (transaction.docChanged || !transaction.selection || !transaction.isUserEvent('select')) {
     return transaction
   }
@@ -71,3 +92,8 @@ export const itemStart = EditorState.transactionFilter.of((transaction) => {
     },
   ]
 })
+
+export const itemStart = [
+  snapped,
+  Prec.high(keymap.of([{ key: 'ArrowLeft', run: leftOutOfWords }])),
+]

@@ -10,6 +10,7 @@ import { dropSpacing, pointerSnap } from './snap'
 import { tableWrites } from '../table/navigation'
 import { tableTracking } from '../table/widget'
 import { itemStart } from './item-start'
+import { foundMatch } from './reveal'
 
 export function livePreview(): Extension {
   return [
@@ -18,6 +19,7 @@ export function livePreview(): Extension {
     footnoteReading,
     pointerSnap,
     itemStart,
+    foundMatch,
     dropSpacing,
     livePreviewDecorations,
     blockDecorations,

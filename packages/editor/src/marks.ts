@@ -10,7 +10,7 @@ import {
 import { type HighlightColour, readHighlight, writeHighlight } from '@orden/markdown/highlights'
 import { blockIdOf, ownLine } from '@orden/markdown/links'
 import { verbatimLines } from './block/verbatim'
-import { inCode } from './code'
+import { inVerbatimBlock } from './code'
 import { inside, OPENING } from './commands'
 
 const BLOCKS_APART =
@@ -29,7 +29,7 @@ function partsOf(state: EditorState, from: number, to: number): Part[] {
   const last = state.doc.lineAt(to).number
   for (let number = state.doc.lineAt(from).number; number <= last; number++) {
     const line = state.doc.line(number)
-    if (verbatim.has(number) || inCode(state, line.from) || ownLine(line.text)) continue
+    if (verbatim.has(number) || inVerbatimBlock(state, line) || ownLine(line.text)) continue
 
     const id = blockIdOf(line.text)
     const said = id ? line.text.trimEnd().slice(0, -id.length - 1) : line.text
@@ -46,15 +46,21 @@ function wrapEach(
   parts: readonly Part[],
   range: Part,
   mark: string,
+  adding: boolean,
 ): { changes: ChangeSpec[]; range: SelectionRange } {
   const size = mark.length
-  const marked = parts.every((part) => {
-    const words = state.doc.sliceString(part.from, part.to)
-    const stars = mark === '*' ? (/^\*+/u.exec(words)?.[0].length ?? 0) : 1
-    return (
-      words.length >= size * 2 && words.startsWith(mark) && words.endsWith(mark) && stars % 2 === 1
-    )
-  })
+  const marked =
+    !adding &&
+    parts.every((part) => {
+      const words = state.doc.sliceString(part.from, part.to)
+      const stars = mark === '*' ? (/^\*+/u.exec(words)?.[0].length ?? 0) : 1
+      return (
+        words.length >= size * 2 &&
+        words.startsWith(mark) &&
+        words.endsWith(mark) &&
+        stars % 2 === 1
+      )
+    })
 
   const changes = parts.flatMap((part): ChangeSpec[] =>
     marked
@@ -71,11 +77,11 @@ function wrapEach(
   return { changes, range: EditorSelection.range(range.from, range.to + grown) }
 }
 
-export function marksAcross(mark: string): StateCommand {
+export function marksAcross(mark: string, adding = false): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
       const held = inside(state, range.from, range.to)
-      return wrapEach(state, partsOf(state, held.from, held.to), held, mark)
+      return wrapEach(state, partsOf(state, held.from, held.to), held, mark, adding)
     })
 
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))

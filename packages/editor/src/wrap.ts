@@ -22,7 +22,7 @@ export function wrapSelection(): Extension {
       if (state.selection.ranges.some((range) => rangeInCode(state, range))) return false
 
       if (state.selection.ranges.some((range) => spansLines(state, range))) {
-        return marksAcross(typed)(view)
+        return marksAcross(typed, true)(view)
       }
 
       const wrapped = state.changeByRange((range) => {

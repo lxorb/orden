@@ -8,6 +8,7 @@ import {
   type StateCommand,
 } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
+import { verbatimBlockAt } from './code'
 import { type Lines, linesOf } from './commands'
 import { frontMatterSpan } from './live-preview/front-matter'
 
@@ -47,17 +48,50 @@ function listAround(state: EditorState, line: Line): Run | null {
   return null
 }
 
+function rowsOf(state: EditorState, block: SyntaxNode): Lines | null {
+  const lineOf = (pos: number) => state.doc.lineAt(pos).number
+  if (block.name === 'FencedCode') {
+    const close = block.getChildren('CodeMark')[1]
+    return {
+      first: lineOf(block.from) + 1,
+      last: close ? lineOf(close.from) - 1 : lineOf(block.to),
+    }
+  }
+  if (block.name === 'Table') {
+    const rows = block.getChildren('TableRow')
+    const [top, bottom] = [rows[0], rows.at(-1)]
+    return top && bottom ? { first: lineOf(top.from), last: lineOf(bottom.from) } : null
+  }
+  return { first: lineOf(block.from), last: lineOf(block.to) }
+}
+
+function verbatimRows(state: EditorState, line: Line): Lines | null {
+  const block = verbatimBlockAt(state, line)
+  if (!block) return null
+
+  const rows = rowsOf(state, block)
+  return rows && rows.first <= line.number && line.number <= rows.last
+    ? rows
+    : { first: line.number, last: line.number }
+}
+
 function runAround(state: EditorState, number: number): Run {
   const doc = state.doc
   const line = doc.line(number)
-  const list = blank(line) ? null : listAround(state, line)
+  const verbatim = verbatimRows(state, line)
+  const list = verbatim || blank(line) ? null : listAround(state, line)
   if (list) return list
 
-  const top = firstOfBody(state, number)
+  const { first: top, last: bottom } = verbatim ?? {
+    first: firstOfBody(state, number),
+    last: doc.lines,
+  }
+  const joins = (other: Line) =>
+    !blank(other) && (verbatim !== null || verbatimBlockAt(state, other) === null)
   let first = number
   let last = number
-  while (first > top && !blank(doc.line(first - 1))) first--
-  while (last < doc.lines && !blank(doc.line(last + 1))) last++
+  while (first > top && joins(doc.line(first - 1))) first--
+  while (last < bottom && joins(doc.line(last + 1))) last++
   return { first, last }
 }
 

@@ -78,6 +78,7 @@ export class TocWidget extends OrdenWidget {
         view.dispatch({
           selection: { anchor: entry.from },
           effects: EditorView.scrollIntoView(entry.from, { y: 'start', yMargin: 72 }),
+          userEvent: 'select',
         })
         view.focus()
       })

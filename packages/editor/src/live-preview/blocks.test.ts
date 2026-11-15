@@ -389,6 +389,17 @@ describe('prose typed away from every construct', () => {
     expect(is.decorations.size).toBe(1)
   })
 
+  test('a letter taken out of an HTML block opener draws the maths the block no longer holds', () => {
+    const opener = 'x\n\n<div\n$$\nx\n$$\n\nend\n'
+    const at = opener.indexOf('<div') + '<div'.length
+    const { was, is, state: after } = afterTyping(opener, at - 1, '', at)
+    const text = after.doc.toString()
+
+    expect(was.decorations.size).toBe(0)
+    expect(drawn(is, text)).toEqual(['$$\nx\n$$'])
+    expect(drawn(is, text)).toEqual(drawn({ decorations: buildBlockDecorations(after) }, text))
+  })
+
   test('a toc completed by deleting the words after it is drawn', () => {
     const draft = 'intro\n\n[toc] draft\n\n# One\n'
     const from = draft.indexOf('[toc]') + '[toc]'.length

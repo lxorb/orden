@@ -117,3 +117,19 @@ describe('paragraphs copied in Orden, pasted from the menu or with the keys', ()
     expect(await keyPaste('- item |', html, text)).toBe('- item one\n\n  two')
   })
 })
+
+describe('lines pasted from the menu or with the keys into code inside a list item or quote', () => {
+  test('both keep the later lines inside the list item', async () => {
+    const marked = '- step\n  ```js\n  |\n  ```\n\nafter'
+    const held = '- step\n  ```js\n  let a = 1\n  let b = 2\n  ```\n\nafter'
+    expect(await menuPaste(marked, '', 'let a = 1\nlet b = 2')).toBe(held)
+    expect(await keyPaste(marked, '', 'let a = 1\nlet b = 2')).toBe(held)
+  })
+
+  test('both keep the later lines inside the quote', async () => {
+    const marked = '> ```js\n> |\n> ```\n\nafter'
+    const held = '> ```js\n> let a = 1\n> let b = 2\n> ```\n\nafter'
+    expect(await menuPaste(marked, '', 'let a = 1\nlet b = 2')).toBe(held)
+    expect(await keyPaste(marked, '', 'let a = 1\nlet b = 2')).toBe(held)
+  })
+})

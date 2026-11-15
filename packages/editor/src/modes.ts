@@ -21,6 +21,7 @@ import { fenceLanguage } from './languages'
 import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
+import { numberHeadings } from './headings'
 import { ordenMarkdownExtensions, NoSetextHeadings } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
@@ -224,7 +225,7 @@ const ligaturesFor = once((scope: LigatureScope): Extension =>
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 
 const headingNumbersFor = once((on: boolean): Extension =>
-  on ? editorClass('orden-numbered') : [],
+  on ? [editorClass('orden-numbered'), numberHeadings.of(true)] : [],
 )
 
 const codeLineNumbersFor = once((on: boolean): Extension =>

@@ -16,7 +16,7 @@ import { dragging } from './dragging'
 import { blockMarkRevealed, lineRevealed, noReveal, overlaps, quietMarks, revealed } from './reveal'
 import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
-import { HEADING_LEVEL } from '../headings'
+import { HEADING_LEVEL, headingNumbersOf, numberHeadings } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
 import { enclosingNamed, linkBrackets } from '../nodes'
@@ -109,7 +109,7 @@ class Decorator {
 
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
-      this.markLines(node, lineClass)
+      this.markLines(node, lineClass, false, this.headingNumber(node))
       return name !== 'FrontMatter'
     }
 
@@ -663,6 +663,11 @@ class Decorator {
     }
   }
 
+  private headingNumber(node: SyntaxNode): Record<string, string> | undefined {
+    const number = headingNumbersOf(this.state).get(node.from)
+    return number === undefined ? undefined : { 'data-heading-number': number }
+  }
+
   private markLines(
     node: SyntaxNode,
     className: string,
@@ -752,6 +757,7 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
         update.startState.facet(quietMarks) !== update.state.facet(quietMarks) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
+        update.startState.facet(numberHeadings) !== update.state.facet(numberHeadings) ||
         update.startState.facet(noteIndex) !== update.state.facet(noteIndex) ||
         trustChanged(update.startState, update.state)
       const landed = update.transactions.some((one) =>

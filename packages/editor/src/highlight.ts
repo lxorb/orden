@@ -47,6 +47,13 @@ function highlighted(
   return null
 }
 
+function colourOf(inner: string): { colour: HighlightColour; from: number } {
+  const bare = HIGHLIGHT_COLOURS.find(
+    (colour) => colour.emoji !== null && inner.trimEnd() === colour.emoji,
+  )
+  return bare ? { colour: bare, from: inner.length } : readHighlight(inner)
+}
+
 export function toggleHighlight(colour: HighlightColour): StateCommand {
   return (target) => {
     const { state, dispatch } = target
@@ -59,7 +66,7 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
       const already = highlighted(state.doc, from, to)
 
       if (already) {
-        const { colour: had, from: at } = readHighlight(already.inner)
+        const { colour: had, from: at } = colourOf(already.inner)
         const words = already.inner.slice(at)
 
         if (had.emoji === colour.emoji) {
@@ -76,10 +83,12 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
             to: already.to - MARK.length,
             insert: inner,
           },
-          range: EditorSelection.range(
-            already.from + MARK.length,
-            already.from + MARK.length + inner.length,
-          ),
+          range: words
+            ? EditorSelection.range(
+                already.from + MARK.length,
+                already.from + MARK.length + inner.length,
+              )
+            : EditorSelection.cursor(already.from + MARK.length + inner.length),
         }
       }
 
