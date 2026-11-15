@@ -78,6 +78,12 @@ describe('snippets', () => {
     expect(completionsFor('run `note|` here\n')).toBeNull()
   })
 
+  test('is never offered in front matter', () => {
+    setSnippets({ date: '2026-11-15' })
+    expect(completionsFor('---\ntitle: date|\n---\nwords\n')).toBeNull()
+    expect(completionsFor('---\ntitle: a\n---\ndate|\n')).not.toBeNull()
+  })
+
   test('summarises a multi-line body to one line', () => {
     setSnippets({ note: '> [!NOTE]\n> ' })
     expect(completionsFor('note')?.options[0]?.detail).toBe('> [!NOTE]')

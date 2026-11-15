@@ -1183,6 +1183,9 @@ first.
 | EC60 | Medium | With reveal on, the arrow key next to a drawn block (table, maths) did nothing: the caret stood on the block edge and the key was swallowed, a regression of EC47 | Fixed | Stepping moved the caret to the edge it was already on, so nothing changed and the block never opened | When the edge is the caret itself, stepping asks the blocks to open there (`openBlocksHere`) | `stepping.test.ts` "opens that block on the press instead of pressing in place" (fails before) |
 | EC61 | Low | Smart quotes stayed straight in prose after `a <b and it` or after a code span holding `$`, and a closing attribute quote checked the wrong text | Fixed | The tag test matched any `<word`, and the maths test counted `$` inside code spans and escapes | Tags count only while an attribute value is open (tested before the typed quote); maths ignores escapes and code spans | `typography.test.ts` new expectations (fail before) |
 
+| EC62 | Medium | Making a list over an item holding a quote (`- a` then `  > note`) left the quote behind the widened item, so it fell out of the list, and the numbering restarted after a quote nested in an item (`- a`, `  > - x`, `- b` gave `1.`, `1.`, `1.`) | Fixed | Nesting compared whole quote prefixes, so a quote inside an item never counted the item as its parent, and any change of quote dropped every running count | Each line is read as its quote levels and the space before each `>`; parents and counts are matched level by level, the space before a nested `>` takes its item's shift, and only counts of levels that ended are dropped | `commands.test.ts` "carries a quote inside a list item along with its item" (fails before) |
+| EC63 | Low | A snippet was offered while typing a front matter value | Fixed | Snippets only skipped code | Snippets also skip front matter | `snippets.test.ts` "is never offered in front matter" (fails before) |
+| EC64 | Low | A language holding a backtick, typed for a backtick fence, turned the whole code block into prose | Fixed | The language field wrote any text after the fence; a backtick fence's info may not hold a backtick | Backticks are dropped from the language of a backtick fence; tilde fences keep them | `fields.test.ts` "never holds a backtick that would end a backtick fence" (fails before) |
 ### Editor core: open Lows
 
 Seen, judged minor, left as they are:
@@ -1194,7 +1197,13 @@ Seen, judged minor, left as they are:
 - Smart punctuation and `leaveQuote`/`closeFence` act on the main cursor only with several cursors.
 - `leaveQuote` on an empty quote line inside a list item drops the item's indent.
 - Changing a list's kind does not renumber following siblings outside the selection.
-- The task hint, slash commands and snippets are offered in front matter.
+- The task hint and slash commands are offered in front matter.
+- An AI answer streaming into a note that is also open in a second tab follows only the tab it started in.
+- Writes that started before a note turned read-only (a table cell, a language) still land.
+- A snippet trigger typed in full and then Enter accepts the snippet instead of a new line, as completions do.
+- Ctrl-Space completion is taken by the input method switcher on some Windows and Linux setups.
+- An unclosed `$$` makes the rest of the note maths until it is closed; a callout marker written mid-line is plain text.
+- Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.
 - `drag-start.test.ts` "selects from the press, when no drag starts" failed once in 55 runs, while other test runs loaded the machine, and passed the 54 others and the full suite. The timer it waits for runs first by Node's timer order, so the likely cause is a jsdom selection event arriving late under load. It is test-only and was not reproduced again.

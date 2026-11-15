@@ -1,5 +1,7 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete'
+import { syntaxTree } from '@codemirror/language'
 import { inCode } from './code'
+import { enclosingNamed } from './nodes'
 
 let table: Record<string, string> = {}
 
@@ -22,6 +24,8 @@ export function snippetCompletions(context: CompletionContext): CompletionResult
 
   const typed = context.matchBefore(/[\w-]{2,}/)
   if (!typed || inCode(context.state, typed.from)) return null
+  if (enclosingNamed(syntaxTree(context.state).resolveInner(typed.from, 1), 'FrontMatter'))
+    return null
 
   const query = typed.text.toLowerCase()
   const offered = context.explicit

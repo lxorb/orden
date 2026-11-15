@@ -315,7 +315,9 @@ export class FenceHeaderWidget extends OrdenWidget {
     const commit = () => {
       if (done) return
       done = true
-      const next = field.value.trim().replace(/\s+/g, '')
+      const opening = view.state.doc.lineAt(this.infoFrom)
+      const ticked = view.state.sliceDoc(opening.from, this.infoFrom).trimEnd().endsWith('`')
+      const next = field.value.replace(ticked ? /[\s`]+/g : /\s+/g, '')
       field.replaceWith(label)
 
       if (next === this.language) return

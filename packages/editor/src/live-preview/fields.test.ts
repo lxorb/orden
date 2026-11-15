@@ -92,3 +92,29 @@ describe('a field in the page left while the editor is updating', () => {
     expect(view.state.doc.toString()).toBe('```ts\nconst a = 1\n```\n')
   })
 })
+
+describe('a language typed for a code block', () => {
+  async function typedLanguage(doc: string, typed: string) {
+    const view = viewOf(doc)
+    const label = view.dom.querySelector<HTMLElement>('.orden-fence-language')
+    label?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+    const field = view.dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
+    if (!field) throw new Error('no field to type the language in')
+    field.value = typed
+    field.blur()
+    await settled()
+    return view.state.doc.toString()
+  }
+
+  test('never holds a backtick that would end a backtick fence', async () => {
+    expect(await typedLanguage('```js\nconst a = 1\n```\n', 'py`thon')).toBe(
+      '```python\nconst a = 1\n```\n',
+    )
+  })
+
+  test('keeps a backtick in a tilde fence', async () => {
+    expect(await typedLanguage('~~~js\nconst a = 1\n~~~\n', 'py`')).toBe(
+      '~~~py`\nconst a = 1\n~~~\n',
+    )
+  })
+})

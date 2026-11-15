@@ -319,6 +319,16 @@ describe('line prefixes', () => {
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('> 1. a\n1. b')
   })
 
+  test('carries a quote inside a list item along with its item', () => {
+    expect(at(toggleOrderedList, '- a\n  > note', 0)).toBe('1. a\n   > note')
+    const doc = '- a\n  > - x\n- b'
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. a\n   > 1. x\n2. b')
+    const deeper = '- a\n  > - x\n  >   - y\n- b'
+    expect(apply(toggleOrderedList, deeper, 0, deeper.length).doc).toBe(
+      '1. a\n   > 1. x\n   >    1. y\n2. b',
+    )
+  })
+
   test('puts the list inside a quote, and takes it off again', () => {
     expect(run(toggleBulletList, '> |one')).toBe('> - one')
     expect(run(toggleOrderedList, '> |one')).toBe('> 1. one')

@@ -352,24 +352,49 @@ const NUMBERED = /^\s*\d+[.)]\s+/
 const BULLETED = /^\s*[-*+]\s+/
 
 interface Parent {
-  quote: string
-  column: number
+  depth: number
+  levels: number[]
   shift: number
 }
 
 interface Quoted {
+  start: number
   from: number
-  quote: string
+  depth: number
+  leads: string[]
+  marks: string[]
+  levels: number[]
   text: string
   space: string
   column: number
 }
 
+const QUOTE_LEVEL = /([ \t]*)(>[ \t]?)/y
+
 function quotedLine(line: Line): Quoted {
-  const quote = QUOTED.exec(line.text)?.[0] ?? ''
-  const text = line.text.slice(quote.length)
+  const leads: string[] = []
+  const marks: string[] = []
+  let at = 0
+  QUOTE_LEVEL.lastIndex = 0
+  for (let found = QUOTE_LEVEL.exec(line.text); found; found = QUOTE_LEVEL.exec(line.text)) {
+    leads.push(found[1] ?? '')
+    marks.push(found[2] ?? '')
+    at = QUOTE_LEVEL.lastIndex
+  }
+  const text = line.text.slice(at)
   const space = INDENT.exec(text)?.[0] ?? ''
-  return { from: line.from + quote.length, quote, text, space, column: columnOf(space) }
+  const column = columnOf(space)
+  return {
+    start: line.from,
+    from: line.from + at,
+    depth: leads.length,
+    leads,
+    marks,
+    levels: [...leads.map(columnOf), column],
+    text,
+    space,
+    column,
+  }
 }
 
 function columnOf(space: string): number {
@@ -386,12 +411,30 @@ function shiftedSpace(space: string, shift: number): string {
   return space.slice(0, space.length - Math.min(trailing, -shift))
 }
 
-function parentOf(parents: Parent[], line: Quoted): number {
+function encloses(outer: number[], inner: number[], orSibling: boolean): boolean {
+  const last = outer.length - 1
+  if (last >= inner.length) return false
+  for (let at = 0; at < last; at++) if (outer[at] !== inner[at]) return false
+  const own = outer[last] ?? 0
+  const theirs = inner[last] ?? 0
+  return own < theirs || (orSibling && last === inner.length - 1 && own === theirs)
+}
+
+function shiftsOf(parents: Parent[], line: Quoted): number[] {
   for (let top = parents.at(-1); top; top = parents.at(-1)) {
-    if (top.quote === line.quote && top.column < line.column) return top.shift
+    if (encloses(top.levels, line.levels, false)) break
     parents.pop()
   }
-  return 0
+  const shifts = Array.from({ length: line.depth + 1 }, () => 0)
+  for (const parent of parents) shifts[parent.depth] = parent.shift
+  return shifts
+}
+
+function prefixOf(line: Quoted, shifts: number[]): string {
+  const quote = line.leads.map(
+    (lead, at) => shiftedSpace(lead, shifts[at] ?? 0) + (line.marks[at] ?? ''),
+  )
+  return quote.join('') + shiftedSpace(line.space, shifts[line.depth] ?? 0)
 }
 
 function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
@@ -413,7 +456,7 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
 
     const picked = new Set(chosen.map((line) => line.number))
     const last = chosen.at(-1)?.number ?? 0
-    const counts = new Map<string, number>()
+    const counts = new Map<string, { levels: number[]; count: number }>()
     const parents: Parent[] = []
     const changes: ChangeSpec[] = []
 
@@ -422,32 +465,31 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
       const line = quotedLine(state.doc.line(number))
       if (!picked.has(number)) {
         if (!line.text.trim()) continue
-        const inherited = parentOf(parents, line)
+        const shifts = shiftsOf(parents, line)
         if (!parents.length && number > last) break
-        parents.push({ quote: line.quote, column: line.column, shift: inherited })
-        if (inherited) {
+        parents.push({ depth: line.depth, levels: line.levels, shift: shifts[line.depth] ?? 0 })
+        if (shifts.some(Boolean)) {
           const end = line.from + line.space.length
-          changes.push({ from: line.from, to: end, insert: shiftedSpace(line.space, inherited) })
+          changes.push({ from: line.start, to: end, insert: prefixOf(line, shifts) })
         }
         continue
       }
 
-      const key = `${line.quote}\u0000${line.column}`
-      for (const held of counts.keys()) {
-        const [quote, column] = held.split('\u0000')
-        if (quote !== line.quote || Number(column) > line.column) counts.delete(held)
-      }
-      const count = (counts.get(key) ?? 0) + 1
-      counts.set(key, count)
+      for (const [key, held] of counts)
+        if (!encloses(held.levels, line.levels, true)) counts.delete(key)
+      const key = line.levels.join(',')
+      const count = (counts.get(key)?.count ?? 0) + 1
+      counts.set(key, { levels: line.levels, count })
 
-      const inherited = parentOf(parents, line)
+      const shifts = shiftsOf(parents, line)
       const matched = MARKER.exec(line.text)?.[0] ?? ''
       const marker = markerFor(count)
       const widened = matched ? marker.length - (matched.length - line.space.length) : 0
-      parents.push({ quote: line.quote, column: line.column, shift: inherited + widened })
+      const shift = (shifts[line.depth] ?? 0) + widened
+      parents.push({ depth: line.depth, levels: line.levels, shift })
 
       const to = line.from + Math.max(matched.length, line.space.length)
-      changes.push({ from: line.from, to, insert: shiftedSpace(line.space, inherited) + marker })
+      changes.push({ from: line.start, to, insert: prefixOf(line, shifts) + marker })
     }
 
     dispatch(state.update({ changes, userEvent: 'input' }))
