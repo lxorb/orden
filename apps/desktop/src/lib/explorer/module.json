@@ -14,7 +14,8 @@
     "agent-protocol",
     "agent-verbs",
     "automation",
-    "workspace"
+    "workspace",
+    "files-out"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -24,7 +25,6 @@
     "apps/desktop/src/lib/list-landing.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/picking.ts",
-    "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"

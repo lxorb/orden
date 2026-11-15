@@ -25,7 +25,8 @@
     "file-writes",
     "protect",
     "workspace",
-    "launch"
+    "launch",
+    "files-out"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -39,12 +40,10 @@
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/frecency.ts",
     "apps/desktop/src/lib/fullscreen.svelte.ts",
-    "apps/desktop/src/lib/icon-sets.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/reveal.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/take-keyboard.ts",

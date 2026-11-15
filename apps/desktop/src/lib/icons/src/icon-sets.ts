@@ -1,4 +1,3 @@
-import { siteIconSet } from './web-tab/src/api'
 import {
   BRANDS,
   EMOJI_OUTLINE,
@@ -10,8 +9,9 @@ import {
   SITE_ICONS,
   squash,
   writtenIcon,
-} from './ui-kit/src/api'
+} from '../../ui-kit/src/api'
 import { outlineName, plain } from './outline-names'
+import { loadSites } from './site-set'
 
 let tagged: Map<string, string> | null = null
 
@@ -334,8 +334,6 @@ function spaced(name: string): string {
     .toLowerCase()
 }
 
-export const DEFAULT_SET = LUCIDE
-
 export const FLAT_COLOUR = 'flat-color-icons'
 
 export const ICON_SETS: readonly IconSet[] = [
@@ -367,7 +365,7 @@ export const ICON_SETS: readonly IconSet[] = [
     id: SITE_ICONS,
     label: 'Web icons',
     credit: '',
-    load: async () => (await siteIconSet()).siteSet(),
+    load: loadSites,
   },
   {
     id: BRANDS,

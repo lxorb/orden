@@ -13,6 +13,7 @@ import {
 import { writeBytes, writeFile as writeText } from '../../file-writes/src/api'
 import { numbered } from '@orden/markdown/paths'
 import { fileNameFor, freeName, stemOf } from './naming'
+import { reveal } from './reveal'
 
 export type Payload =
   | { text: string; mime: string }
@@ -147,11 +148,6 @@ async function writePayload(target: string, payload: Payload): Promise<void> {
   }
 
   await writeFile(target, 'text' in payload ? payload.text : payload.bytes)
-}
-
-async function reveal(target: string): Promise<void> {
-  const shown = await import('../../reveal')
-  await shown.reveal(target)
 }
 
 async function namesIn(folder: string): Promise<Set<string>> {

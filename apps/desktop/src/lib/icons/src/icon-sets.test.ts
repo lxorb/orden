@@ -11,8 +11,8 @@ import {
   SITE_ICONS,
   takesTint,
   writtenIcon,
-} from './ui-kit/src/icons'
-import { notoOutlines } from '../../emoji-outlines'
+} from '../../ui-kit/src/api'
+import { notoOutlines } from '../../../../emoji-outlines'
 import { BESIDE, LOOSE, SAME } from './flat-colour-places'
 import {
   FLAT_COLOUR,

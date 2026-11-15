@@ -224,7 +224,7 @@ export {
 } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
-export type { PandocPicture, PickedFile } from './files'
+export type { ExplorerShowPort, FilePorts, PandocPicture, PickedFile } from './files'
 export type {
   Arrived,
   BrowserId,
@@ -249,6 +249,9 @@ export type {
   EngineTaken,
   OfferedEngine,
   PressedKey,
+  SiteIcon,
+  SiteIconsHeld,
+  SiteIconsPort,
   WebClip,
   WebLendingPort,
   WebLent,

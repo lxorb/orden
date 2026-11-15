@@ -3,6 +3,7 @@ import type { AgentPorts } from './agents'
 import type { AccountPorts } from './user'
 import type { BackendPorts } from './backend'
 import type { ChatPorts } from './chats'
+import type { FilePorts } from './files'
 import type { ImportPorts } from './import'
 import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
@@ -25,6 +26,7 @@ export type PortMap = AccountPorts &
   AgentPorts &
   BackendPorts &
   ChatPorts &
+  FilePorts &
   NotePorts &
   ImportPorts &
   PreviewPorts &

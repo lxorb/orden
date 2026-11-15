@@ -27,7 +27,7 @@ import {
 } from './platform/src/api'
 import { canWriteAt, protectEntries } from './sharing/src/api'
 import { shortcuts } from './shortcuts/src/api'
-import { showLabel } from './reveal'
+import { reveal, showLabel } from './files-out/src/api'
 import { entryAt } from './tree/src/api'
 import { viewport } from './ui-kit/src/api'
 import { workspace } from './workspace/src/api'
@@ -293,7 +293,7 @@ function revealEntry(entry: Entry): MenuEntry[] {
   return [
     {
       label: showLabel(),
-      run: () => void import('./reveal').then((one) => one.reveal(entry.path)),
+      run: () => void reveal(entry.path),
     },
   ]
 }

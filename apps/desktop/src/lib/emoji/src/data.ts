@@ -1,5 +1,5 @@
 import { door } from '@orden/markdown/door'
-import { setNamed, tonedEmoji } from '../../icon-sets'
+import { setNamed, tonedEmoji } from '../../icons/src/api'
 import { EMOJI_SET, type IconEntry, rankIcons } from '../../ui-kit/src/api'
 
 export interface EmojiData {

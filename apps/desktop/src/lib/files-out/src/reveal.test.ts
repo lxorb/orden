@@ -1,20 +1,18 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { providePort } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const opened: string[] = []
 const shown: string[] = []
 const state = { explorer: false, shows: true }
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
 }))
-vi.mock('./settings.svelte', () => ({
-  hiddenKinds: { offers: (kind: string) => kind === 'explorer' && state.explorer },
-}))
-vi.mock('./web-backend/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./web-backend/src/api')>()),
+vi.mock('../../web-backend/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../web-backend/src/api')>()),
   diskPathOf: (path: string) => Promise.resolve(path),
 }))
 vi.mock('@tauri-apps/plugin-opener', () => ({
@@ -23,12 +21,13 @@ vi.mock('@tauri-apps/plugin-opener', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('./explorer/src/reveal', () => ({
-  showInExplorer: (path: string) => {
+providePort('explorer.show', {
+  offered: () => state.explorer,
+  show: (path) => {
     shown.push(path)
     return Promise.resolve(state.shows)
   },
-}))
+})
 
 const { reveal, showLabel } = await import('./reveal')
 
@@ -47,9 +46,9 @@ function sources(folder: string, ending: RegExp): string[] {
   })
 }
 
-const LIB = import.meta.dirname
+const LIB = join(import.meta.dirname, '../..')
 const CRATE = join(LIB, '../../src-tauri/src')
-const THE_ONE = /['"](?:\.\.?\/)+reveal['"]/
+const THE_ONE = /['"](?:\.\.?\/)+(?:files-out\/src\/api|reveal)['"]/
 
 describe('the words for showing a file where it sits', () => {
   test('name Finder on a Mac only while the system shows it', () => {
@@ -112,7 +111,7 @@ describe('showing a file where it sits', () => {
     const own = sources(LIB, /\.(ts|svelte)$/)
       .filter((path) => readFileSync(path, 'utf8').includes('revealItemInDir'))
       .map((path) => relative(LIB, path).replaceAll('\\', '/'))
-    expect(own).toEqual(['reveal.ts'])
+    expect(own).toEqual(['files-out/src/reveal.ts'])
     const crate = sources(CRATE, /\.rs$/)
       .filter((path) => readFileSync(path, 'utf8').includes('reveal_item_in_dir'))
       .map((path) => relative(CRATE, path).replaceAll('\\', '/'))

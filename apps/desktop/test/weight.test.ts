@@ -312,7 +312,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/theme-looks/src/gallery/registry.ts', 'the theme catalogue'],
     ['/lib/theme-looks/src/gallery/validate.ts', 'the theme reviewer'],
     ['/lib/accounts/src/routes.ts', "the service's calls"],
-    ['/lib/icon-sets.ts', 'the list of icon sets'],
+    ['/lib/icons/src/icon-sets.ts', 'the list of icon sets'],
     ['/lib/dictation/src/recorder/commands.ts', 'the row that wakes the recorder'],
     ['/lib/dictation/src/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/first-screen/src/keep.svelte.ts', "what keeps a note's first screen"],
