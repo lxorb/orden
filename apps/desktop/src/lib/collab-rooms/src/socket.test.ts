@@ -164,3 +164,36 @@ describe('a room connection waiting to dial again', () => {
     expect(listeners.get('online')?.size ?? 0).toBe(0)
   })
 })
+
+describe('a room that closes the connection as soon as it opens', () => {
+  test('is dialled again after longer and longer waits', () => {
+    dialled()
+    for (let at = 0; at < 600; at++) {
+      const socket = last()
+      if (socket.readyState === FakeWebSocket.CONNECTING) {
+        socket.up()
+        socket.onclose?.({ code: 1011, reason: 'broken' })
+      }
+      vi.advanceTimersByTime(100)
+    }
+
+    expect(FakeWebSocket.made.length).toBeLessThanOrEqual(12)
+  })
+
+  test('is dialled again at the first wait once a connection outlived a beat', () => {
+    dialled()
+    for (let turn = 0; turn < 4; turn++) {
+      last().up()
+      last().onclose?.({ code: 1011, reason: 'broken' })
+      while (FakeWebSocket.made.length === turn + 1) vi.advanceTimersByTime(100)
+    }
+
+    const kept = last()
+    kept.up()
+    vi.advanceTimersByTime(10_000)
+    kept.onclose?.({ code: 1011, reason: 'broken' })
+    vi.advanceTimersByTime(600)
+
+    expect(FakeWebSocket.made).toHaveLength(6)
+  })
+})
