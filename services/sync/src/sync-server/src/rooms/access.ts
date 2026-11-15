@@ -11,7 +11,8 @@ export const SIGNED_IN_AS = `me as (
 )`
 
 const ACCESS = `with ${SIGNED_IN_AS}
-select case when sp.user_id = me.user_id then 'write'
+select case when sp.deleted = 1 then 'none'
+            when sp.user_id = me.user_id then 'write'
             when 'write' in (coalesce(ms.role, ''), coalesce(mi.role, ''),
                              coalesce(gs.role, ''), coalesce(gi.role, '')) then 'write'
             when ms.role is not null or mi.role is not null
