@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { feedPageOf, isName, type FeedItem } from '@orden/sync-core'
+import { feedPageOf, isName, opsResponseOf, type FeedItem } from '@orden/sync-core'
 import { sha256 } from '../src/sync-server/src/crypto'
 import { cleanPath, noteBeside } from '../src/sync-server/src/notes'
 import type { Note } from '../src/sync-server/src/types'
@@ -179,4 +179,39 @@ test('a copy kept beside a note named near the limit, or under a bad folder, sti
   )
   expect(lost?.path.startsWith('pwn')).toBe(true)
   expect((await feed()).read).not.toBeNull()
+})
+
+test('an answer to a change of such a note is read, and names it as the feed does', async () => {
+  const id = 'f'.repeat(32)
+  await badRow('notes', id, LONG)
+  const change = { ops: [{ op: 'p1', t: 'place', id, pos: 'V', seen: 901 }] }
+
+  for (const time of ['first', 'again']) {
+    const answer = opsResponseOf(
+      (await call(env, `/v2/spaces/${space}/ops`, { token, body: change })).json,
+    )
+    expect(answer?.results[0], time).toMatchObject({ op: 'p1', ok: true, id })
+    const named = answer?.results[0]
+    expect(named && 'name' in named && named.name).toBe(
+      (await feed()).read?.items.find((one) => one.id === id)?.name,
+    )
+  }
+})
+
+test('two names one letter apart at the limit are told apart within it when a space is prepared', async () => {
+  const other = (await call(env, '/v1/spaces', { token, body: { name: 'Twins' } })).json.space.id
+  for (const path of [`${'x'.repeat(252)}.md`, `X${'x'.repeat(251)}.md`]) {
+    await call(env, `/v1/spaces/${other}/notes`, { token, body: { path, content: path } })
+  }
+
+  await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
+
+  const names = (
+    await env.DB.prepare('select name from notes where space_id = ?')
+      .bind(other)
+      .all<{ name: string }>()
+  ).results.map((one) => one.name)
+  expect(names).toHaveLength(2)
+  expect(names.every((one) => isName(one))).toBe(true)
+  expect(new Set(names.map((one) => one.toLowerCase())).size).toBe(2)
 })

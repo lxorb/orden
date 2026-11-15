@@ -3,6 +3,7 @@ import {
   applyOp,
   heldName,
   LONGEST_NAME,
+  shortened,
   contentChanged,
   kindOfName,
   nameKey,
@@ -148,9 +149,14 @@ class Placing {
     return this.folders.get(`${parent ?? ''}\u0000${nameKey(name)}`)
   }
 
-  free(parent: string | null, wanted: string): string {
+  free(parent: string | null, wanted: string, kind: EntryKind): string {
     const taken = this.namesIn(parent)
-    return freePath(wanted, (candidate) => taken.has(nameKey(candidate)))
+    let name = heldName(wanted)
+    for (;;) {
+      const found = freePath(name, (candidate) => taken.has(nameKey(candidate)))
+      if (found.length <= LONGEST_NAME) return found
+      name = shortened(name, found.length - LONGEST_NAME, kind)
+    }
   }
 
   private slot(parent: string | null, key: string): Folders {
@@ -229,7 +235,7 @@ export class Tree {
       let parent: string | null = null
       for (const part of parts) parent = this.folderFor(placing, parent, part, live, row.seq)
 
-      const placed = live ? placing.free(parent, name) : name
+      const placed = live ? placing.free(parent, name, 'note') : name
       const entry = noteEntry(row, placed)
       entry.parent = parent
       entry.kind = kindIn(row.kind === 'note' ? kindOfName(name) : row.kind, name)
@@ -264,7 +270,7 @@ export class Tree {
       id: newId(),
       kind: 'folder',
       parent,
-      name: live ? placing.free(parent, name) : name,
+      name: live ? placing.free(parent, name, 'folder') : name,
       deleted: !live,
       seq: this.tick(),
       docSeq: 0,
