@@ -1040,15 +1040,21 @@ class Chat implements Panel {
     provider: Provider,
     draft: Draft,
     stopper: AbortController,
+    firstAsked?: number,
   ): Promise<Ended> {
     if (isDeleted(thread.id) && (await staysDeleted(thread.id)))
       return { stop: 'stopped', turn: null, usage: null }
     const engine = await engineOf(provider.kind)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
+    let askedAt = firstAsked
     await engine.send(
       thread,
       draft,
       (event) => {
+        if (event.type === 'turn' && event.turn.role === 'you' && askedAt !== undefined) {
+          event.turn.at = askedAt
+          askedAt = undefined
+        }
         if (event.type === 'turn' && event.turn.role === 'model') ended.turn = event.turn
         else if (event.type === 'usage')
           ended.usage = ended.usage ? added(ended.usage, event.usage) : event.usage
@@ -1235,7 +1241,7 @@ class Chat implements Panel {
   ): void {
     const at = thread.turns.length
     let stop: Stop = 'end'
-    void this.sendDraft(thread, provider, draft, stopper)
+    void this.sendDraft(thread, provider, draft, stopper, taken[0]?.at)
       .then((ended) => (stop = ended.stop))
       .catch((error: unknown) => {
         stop = 'error'

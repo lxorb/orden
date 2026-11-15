@@ -1061,6 +1061,24 @@ describe('a chat while it answers', () => {
     expect(engine.send).not.toHaveBeenCalled()
   })
 
+  test('Ask again sends the message at its first time, so what the first try changed is its own', async () => {
+    const chat = await asked()
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    engine.send.mockImplementationOnce((into, draft, on) => {
+      const you: Turn = { id: 'u2', role: 'you', at: 5_000, parts: [], draft }
+      into.turns.push(you)
+      on({ type: 'turn', turn: you })
+      on({ type: 'done', stop: 'end' })
+      return Promise.resolve()
+    })
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(thread.turns.map((one) => one.id)).toEqual(['u2']))
+    expect(thread.turns[0]?.at).toBe(1)
+  })
+
   test('keeps the message and its answer on Ask again refused before any turn', async () => {
     const chat = await asked()
     const thread = chat.thread!
