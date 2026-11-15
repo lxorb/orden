@@ -395,6 +395,26 @@ describe('finding the links in a note', () => {
     expect(findLinks(note).map((one) => one.target)).toEqual(['Up', 'L'])
   })
 
+  test('a link in a quoted front matter value is read the way the value means it', () => {
+    const note = `---\nup: '[[Bob''s plan#It''s|Bob''s]] "x"'\nby: "[[A \\"B\\"]] [x](C%20\\\\D.md)"\nnot: '[[open''s]]\n---\n[[Bob''s]]\n`
+    const found = findLinks(note)
+    expect(found.map((one) => [one.target, one.heading, one.alias])).toEqual([
+      ["Bob's plan", "It's", "Bob's"],
+      ['A "B"', null, null],
+      ['C \\D.md', null, 'x'],
+      ["open''s", null, null],
+      ["Bob''s", null, null],
+    ])
+    expect(found.map((one) => note.slice(one.targetFrom, one.targetTo))).toEqual([
+      "Bob''s plan",
+      'A \\"B\\"',
+      'C%20\\\\D.md',
+      "open''s",
+      "Bob''s",
+    ])
+    expect(note.slice(found[0]!.from, found[0]!.to)).toBe("[[Bob''s plan#It''s|Bob''s]]")
+  })
+
   test('a shorter fence or one with a backtick in its info string closes nothing', () => {
     const targets = (text: string) => findLinks(text).map((one) => one.target)
     expect(targets('````md\n```\n````\n[[Plan]]')).toEqual(['Plan'])

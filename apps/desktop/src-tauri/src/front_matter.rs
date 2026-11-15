@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 pub struct Block {
     pub from: usize,
     pub close: usize,
@@ -531,6 +533,69 @@ fn uncommented(value: &str) -> &str {
 fn opens_quote(before: &str) -> bool {
     let before = before.trim_end();
     before.is_empty() || before.ends_with('[') || before.ends_with(',')
+}
+
+fn opens_scalar(before: &str) -> bool {
+    let trimmed = before.trim_end();
+    if trimmed.ends_with([':', '[', ',']) {
+        return true;
+    }
+    let lead = trimmed.trim_start();
+    lead.is_empty() || (lead == "-" && trimmed.len() < before.len())
+}
+
+pub fn read_in_quotes(line: &str) -> Cow<'_, str> {
+    if !line.contains(['\'', '"']) {
+        return Cow::Borrowed(line);
+    }
+
+    let mut text = String::with_capacity(line.len());
+    let mut quote: Option<char> = None;
+    let mut open = 0;
+    let mut held = String::new();
+    let mut before: Option<char> = None;
+    let mut letters = line.char_indices().peekable();
+
+    while let Some((at, one)) = letters.next() {
+        let next = letters.peek().map(|&(_, letter)| letter);
+        match (quote, one, next) {
+            (None, '#', _) if before.is_none_or(char::is_whitespace) => {
+                text.push_str(&line[at..]);
+                return Cow::Owned(text);
+            }
+            (None, _, _) => {
+                text.push(one);
+                if matches!(one, '\'' | '"') && opens_scalar(&line[..at]) {
+                    quote = Some(one);
+                    open = at;
+                    held.clear();
+                }
+            }
+            (Some('"'), '\\', Some(escaped)) => {
+                letters.next();
+                if !matches!(escaped, '"' | '\\' | '/') {
+                    held.push(one);
+                }
+                held.push(escaped);
+            }
+            (Some('\''), '\'', Some('\'')) => {
+                letters.next();
+                held.push('\'');
+            }
+            (Some(mark), _, _) if one == mark => {
+                text.push_str(&held);
+                text.push(one);
+                quote = None;
+            }
+            (Some(_), _, _) => held.push(one),
+        }
+        before = Some(one);
+    }
+
+    if quote.is_some() {
+        text.push_str(&line[open + 1..]);
+    }
+    Cow::Owned(text)
 }
 
 fn flow_items(value: &str) -> Vec<String> {

@@ -1,5 +1,6 @@
 import { closingTicks, CodeBlocks, WORDS } from './fences'
 import { frontMatterBlock } from './front-matter'
+import { readInQuotes } from './yaml'
 
 export interface Wikilink {
   target: string
@@ -342,10 +343,28 @@ export function findLinks(text: string): FoundLink[] {
 
   for (const row of lines(text)) {
     if (found.length >= MOST_LINKS) break
-    if (!row.code) collect(withoutCode(row.text), row.from, row.line, found)
+    if (row.matter) collectInMatter(row, found)
+    else if (!row.code) collect(withoutCode(row.text), row.from, row.line, found)
   }
 
   return found.length > MOST_LINKS ? found.slice(0, MOST_LINKS) : found
+}
+
+function collectInMatter(row: Row, found: FoundLink[]) {
+  const read = readInQuotes(row.text)
+  const local: FoundLink[] = []
+  collect(withoutCode(read.text), 0, row.line, local)
+  const raw = (at: number) => row.from + (read.at[at] ?? row.text.length)
+
+  for (const link of local) {
+    found.push({
+      ...link,
+      from: raw(link.from),
+      to: raw(link.to),
+      targetFrom: raw(link.targetFrom),
+      targetTo: raw(link.targetTo),
+    })
+  }
 }
 
 export interface Row {

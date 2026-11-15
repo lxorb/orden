@@ -511,7 +511,12 @@ fn prose(body: &str, words_from: usize) -> Prose {
             return;
         }
 
-        let mut found = links_on(&without_code(line), MOST_LINKS - links.len());
+        let read = if index < words_from {
+            front_matter::read_in_quotes(line)
+        } else {
+            Cow::Borrowed(line)
+        };
+        let mut found = links_on(&without_code(&read), MOST_LINKS - links.len());
         if found.is_empty() {
             return;
         }
@@ -1273,6 +1278,35 @@ mod tests {
         assert_eq!(targets, ["Up", "L"]);
         assert_eq!(read.tasks.len(), 1);
         assert_eq!(read.tasks[0].text, "t [[L]]");
+    }
+
+    #[test]
+    fn a_link_in_a_quoted_front_matter_value_is_read_the_way_the_value_means_it() {
+        let read = note_at(
+            "Quoted.md".to_string(),
+            "---\nup: '[[Bob''s plan#It''s|Bob''s]] \"x\"'\nby: \"[[A \\\"B\\\"]] [x](C%20\\\\D.md)\"\nnot: '[[open''s]]\n---\n[[Bob''s]]\n",
+        );
+        let said: Vec<(&str, Option<&str>, Option<&str>)> = read
+            .links
+            .iter()
+            .map(|one| {
+                (
+                    one.target.as_str(),
+                    one.heading.as_deref(),
+                    one.alias.as_deref(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            said,
+            [
+                ("Bob's plan", Some("It's"), Some("Bob's")),
+                ("A \"B\"", None, None),
+                ("C \\D.md", None, Some("x")),
+                ("open''s", None, None),
+                ("Bob''s", None, None),
+            ]
+        );
     }
 
     #[test]
