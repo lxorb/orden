@@ -23,7 +23,6 @@
     "apps/desktop/src/lib/attachments.ts",
     "apps/desktop/src/lib/carry-over.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/dialog-answer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/first-visit.svelte.ts",
     "apps/desktop/src/lib/move-targets.ts",

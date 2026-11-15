@@ -2,6 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
+  answerNextDialog,
+  coveredBy,
+  dialogAnswer,
   assetType,
   copyName,
   endingOf,
@@ -310,5 +313,25 @@ describe('a request in time', () => {
     } finally {
       globalThis.fetch = was
     }
+  })
+})
+
+describe('a dialog answered ahead', () => {
+  test('is handed to the next dialog only, once', async () => {
+    expect(dialogAnswer()).toBeNull()
+    answerNextDialog((write) => Promise.resolve(write ? '/out.md' : null))
+    const judge = dialogAnswer()
+    await expect(judge?.(true)).resolves.toBe('/out.md')
+    expect(dialogAnswer()).toBeNull()
+  })
+})
+
+describe('a folder that covers a path', () => {
+  test('is the nearest kept folder above it, or the path itself', () => {
+    const keys = new Set(['Old', 'Old/2019'])
+    expect(coveredBy(keys, 'Old/2019/Taxes.md')).toBe('Old/2019')
+    expect(coveredBy(keys, 'Old/2020')).toBe('Old')
+    expect(coveredBy(keys, 'Older')).toBeNull()
+    expect(coveredBy(new Set(), 'Plan.md')).toBeNull()
   })
 })

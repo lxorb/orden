@@ -121,6 +121,7 @@ export {
   spaceOf,
   under,
 } from './web-paths'
+export { answerNextDialog, dialogAnswer } from './dialog-answer'
 export { keepVersion, readText, writeInTurn, writeTaking } from './note-files'
 export { oneWriteAt, windows } from './windows'
 export type { Said, Windows } from './windows'

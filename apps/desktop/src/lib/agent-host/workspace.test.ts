@@ -411,7 +411,7 @@ vi.mock('../commands/src/api', () => ({
       id: 'export-pdf',
       label: 'Export as PDF',
       run: () =>
-        void import('../dialog-answer').then(async ({ dialogAnswer }) => {
+        void import('../platform/src/api').then(async ({ dialogAnswer }) => {
           ran.push(`export-pdf:${(await dialogAnswer()?.(true)) ?? 'cancelled'}`)
         }),
     },

@@ -549,7 +549,7 @@ describe("a space written out keeps each note's own metadata (#1210)", () => {
 
 describe("a space written out for an agent's command (#1078)", () => {
   test('goes into the folder its path names, and the dialog is never shown', async () => {
-    const { answerNextDialog } = await import('../../../dialog-answer')
+    const { answerNextDialog } = await import('../../../platform/src/api')
     const { exportSpace } = await import('./export')
     disk.dirs.add('/spaces/Disk')
     disk.files.set('/spaces/Disk/Plan.md', 'ship it')
@@ -567,7 +567,7 @@ describe("a space written out for an agent's command (#1078)", () => {
   })
 
   test('writes nothing where the crate refused the path', async () => {
-    const { answerNextDialog } = await import('../../../dialog-answer')
+    const { answerNextDialog } = await import('../../../platform/src/api')
     const { exportSpace } = await import('./export')
     disk.dirs.add('/spaces/Disk')
     disk.files.set('/spaces/Disk/Plan.md', 'ship it')

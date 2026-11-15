@@ -1,5 +1,5 @@
 import type { PandocPicture } from '@orden/contracts'
-import { invoke, isDesktop } from '../../platform/src/api'
+import { invoke, isDesktop, dialogAnswer } from '../../platform/src/api'
 import { busy } from '../../ui-kit/src/api'
 
 export async function importDocument(): Promise<{
@@ -10,7 +10,7 @@ export async function importDocument(): Promise<{
   if (!isDesktop) return null
 
   const { open } = await import('@tauri-apps/plugin-dialog')
-  const given = (await import('../../dialog-answer')).dialogAnswer()
+  const given = dialogAnswer()
   const picked = given
     ? await given(false)
     : await open({

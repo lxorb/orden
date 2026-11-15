@@ -15,7 +15,6 @@
     "ui-kit"
   ],
   "pending": [
-    "apps/desktop/src/lib/dialog-answer.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/seeded.ts",
     "apps/desktop/src/lib/space-watch.ts",
