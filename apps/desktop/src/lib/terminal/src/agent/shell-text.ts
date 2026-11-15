@@ -569,11 +569,14 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
 }
 
-const READ_ALIKE = /^[A-Za-z0-9 _\-./:=+@%~,'"]*$/
+const READ_ALIKE = /^[\p{L}\p{M}0-9 _\-./:=+@%~,^'"]*$/u
 
 function readAlikeEverywhere(command: string, os: Os): boolean {
   if (!READ_ALIKE.test(command) || /,['"]*-/.test(command)) return false
-  return os !== 'windows' || !/'[^']*\s-[^']*'/.test(command)
+  if (os !== 'windows') return true
+  if (/[\^]|%[^%\s]*%/.test(command)) return false
+  if (/""|''/.test(command) || (command.includes("'") && command.includes('"'))) return false
+  return !/'[^']*\s-[^']*'/.test(command)
 }
 
 export function startsOnlyOne(command: string): boolean {

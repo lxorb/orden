@@ -262,14 +262,23 @@ describe('a line another shell reads differently', () => {
     'git fetch \\x2d\\x2dupload-pack=touch\\x20pwned .',
     'git fetch ‘--upload-pack=calc’ .',
     'git fetch “--upload-pack=calc” .',
-    'git fetch ^--upload-pack=calc .',
     "git fetch r#'--upload-pack=calc'# .",
     'git log a,--output=pwned',
     "git log a,'--output=pwned'",
     'git log src\\ --output=pwned',
-    'git add Ünterlagen.md',
+    'git fetch \u2013\u2013upload-pack=calc .',
   ])('asks: %s', (line) => {
     expect(onBoth(line, ['git'])).toBe(false)
+  })
+
+  test.each([
+    'git fetch ^--upload-pack=calc .',
+    'git fetch %OS:Windows_NT=--upload-pack=calc% .',
+    'git fetch %COMPUTERNAME:~7,1%-upload-pack=calc .',
+    `git fetch . 'x"'" --upload-pack=calc"`,
+    'git log "a"" --output=pwned"',
+  ])('asks on Windows: %s', (line) => {
+    expect(onTheList(line, ['git'], 'windows')).toBe(false)
   })
 
   test('a word cmd splits inside single quotes asks on Windows, and only there', () => {
@@ -278,10 +287,19 @@ describe('a line another shell reads differently', () => {
     expect(onTheList(line, ['git'], 'unix')).toBe(true)
   })
 
-  test.each(['git log --format=%h,%s', "git commit -m 'a, b'", 'git log --author=me@x.org'])(
-    'goes: %s',
+  test.each([
+    "git commit -m 'a, b'",
+    'git log --author=me@x.org',
+    'git add Ünterlagen.md',
+    'git commit -m "café au lait"',
+  ])('goes: %s', (line) => {
+    expect(onBoth(line, ['git'])).toBe(true)
+  })
+
+  test.each(['git log --format=%h,%s', 'git show HEAD^', 'git diff HEAD^ -- a.ts'])(
+    'goes where no shell expands it: %s',
     (line) => {
-      expect(onBoth(line, ['git'])).toBe(true)
+      expect(onTheList(line, ['git'], 'unix')).toBe(true)
     },
   )
 })
