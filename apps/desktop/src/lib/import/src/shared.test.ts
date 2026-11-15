@@ -346,6 +346,41 @@ describe('what a share becomes', () => {
     expect(text).not.toContain('source:')
   })
 
+  test('two pictures of one name, in any case, are two files the note draws', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'Trip',
+        items: [
+          item({ name: 'image.jpg', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'image.jpg', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'Photo.JPG', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'photo.jpg', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'Kit.md', mime: 'text/markdown', size: 3 }),
+          item({ name: 'kit.md', mime: 'text/markdown', size: 3 }),
+        ],
+      }),
+      new Map([0, 1, 2, 3, 4, 5].map((at) => [at, bytes(`file ${at}`)])),
+      day,
+      'assets',
+    )
+
+    expect(plan.files.map((one) => one.path)).toEqual([
+      'Trip.md',
+      'Kit.md',
+      'kit 2.md',
+      'assets/image.jpg',
+      'assets/image 2.jpg',
+      'assets/Photo.JPG',
+      'assets/photo 2.jpg',
+    ])
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('![](assets/image.jpg)')
+    expect(text).toContain('![](assets/image%202.jpg)')
+    expect(text).toContain('![](assets/Photo.JPG)')
+    expect(text).toContain('![](assets/photo%202.jpg)')
+  })
+
   test('a file nothing carried bytes for is left out entirely', () => {
     const plan = sharedPlan(
       arrived({ items: [item({ name: 'gone.png', mime: 'image/png', size: 40 })] }),
