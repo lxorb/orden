@@ -14,7 +14,7 @@
   import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
   import { dur, fade } from '../../platform/src/api'
   import { prompt } from '../../ui-kit/src/api'
-  import { said } from '../../said.svelte'
+  import { said } from '../../ui-kit/src/api'
   import AliasPanel from './AliasPanel.svelte'
   import AttachmentsView from './AttachmentsView.svelte'
   import FieldRow from './FieldRow.svelte'

@@ -27,3 +27,4 @@ export {
 } from './sharing.svelte'
 
 export const loadLockScreen = () => import('./protect/LockScreen.svelte')
+export { pastesMarkup } from './trust'

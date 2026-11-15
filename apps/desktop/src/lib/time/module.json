@@ -12,11 +12,11 @@
     "documents",
     "workspace",
     "held-database",
-    "notify"
+    "notify",
+    "ui-controls"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
-    "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts"

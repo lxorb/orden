@@ -1,3 +1,4 @@
+import { runCommand } from '@orden/contracts'
 import { priorityOf, todos, type Todo } from '../../tasks-model/src/api'
 import type { Entry } from './entry'
 
@@ -11,8 +12,7 @@ export async function addTask(
   adding = added.catch(() => undefined)
   const landed = await added
   if (landed && options.open) {
-    const { showTodos } = await import('../../todos-entry')
-    await showTodos()
+    await runCommand('views.todos')
   }
   return landed
 }

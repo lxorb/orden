@@ -36,7 +36,7 @@ export async function readingHtml(
   trusted: boolean,
   tagHref?: TagHref,
 ): Promise<string> {
-  const { prepareEmbeds, prepareFences } = await import('../../before-render')
+  const { prepareEmbeds, prepareFences } = await import('../../fences/src/api')
   const root = note.path === null ? null : links.spaceOf(note.path)
 
   const [fence, embed] = await Promise.all([

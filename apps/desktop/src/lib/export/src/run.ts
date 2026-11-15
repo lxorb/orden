@@ -2,7 +2,7 @@ import { loadFor } from '@orden/markdown/engines'
 import { numbered } from '@orden/markdown/paths'
 import type { FoundLink } from '@orden/markdown/links'
 import { buildBody, buildStyles, type HtmlOptions, renderNote } from './render'
-import { prepareEmbeds, prepareFences } from '../../before-render'
+import { prepareEmbeds, prepareFences } from '../../fences/src/api'
 import {
   pageSetupFor,
   paperInches,

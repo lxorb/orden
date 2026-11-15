@@ -1,5 +1,5 @@
 import type { PickedFile } from '@orden/contracts'
-import { chooseFiles } from './choose-files'
+import { chooseFiles } from './ui-controls/src/api'
 import { caughtFiles, type CaughtFiles } from './drag-paths'
 import { tidyPath } from './import/src/api'
 

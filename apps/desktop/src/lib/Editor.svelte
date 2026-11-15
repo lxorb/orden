@@ -29,7 +29,7 @@
   import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts/src/api'
   import { trustsHtmlIn } from './sharing/src/api'
-  import { pastesMarkup } from './trust'
+  import { pastesMarkup } from './sharing/src/api'
   import { viewport } from './ui-kit/src/api'
   import { carriedIntoNotes } from './drag-paths'
   import type { Tab } from './documents/src/api'

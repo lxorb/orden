@@ -1,10 +1,14 @@
 {
   "name": "chat-kit",
   "layer": "foundation",
-  "dependsOn": ["contracts", "platform", "ui-kit", "editor", "markdown", "theme"],
-  "pending": [
-    "apps/desktop/src/lib/before-render.ts",
-    "apps/desktop/src/lib/diagrams.ts",
-    "apps/desktop/src/lib/highlight.ts"
+  "dependsOn": [
+    "contracts",
+    "platform",
+    "ui-kit",
+    "editor",
+    "markdown",
+    "theme",
+    "fences",
+    "highlight"
   ]
 }

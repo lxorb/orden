@@ -16,7 +16,8 @@
     "documents",
     "tree",
     "workspace",
-    "scan"
+    "scan",
+    "ui-controls"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -28,11 +29,9 @@
     "apps/desktop/src/lib/drop-target.svelte.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/keytip.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/row-menu.ts",
-    "apps/desktop/src/lib/select-all.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]

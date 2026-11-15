@@ -6,7 +6,7 @@
   import { overlays } from '../../../ui-kit/src/api'
   import { prompt } from '../../../ui-kit/src/api'
   import { reloading } from '../../../reloading.svelte'
-  import { said } from '../../../said.svelte'
+  import { said } from '../../../ui-kit/src/api'
   import SidebarFoot from '../../../SidebarFoot.svelte'
   import { contextMenu, feedbackSheet, promptSheet, signInSheet } from '../../../surfaces.svelte'
   import Gate from '../Gate.svelte'

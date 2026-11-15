@@ -2,7 +2,7 @@
   import { onMount, tick } from 'svelte'
   import { fade, LAYER } from '../../platform/src/api'
   import { DIVIDER, type MenuEntry, walkableRows } from '../../ui-kit/src/api'
-  import { spendClick } from '../../spent-click'
+  import { spendClick } from '../../ui-controls/src/api'
 
   const {
     rows,

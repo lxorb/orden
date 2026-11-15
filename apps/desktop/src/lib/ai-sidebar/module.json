@@ -26,7 +26,6 @@
     "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/feedback-pictures.ts",
     "apps/desktop/src/lib/focus.ts",
@@ -37,7 +36,6 @@
     "apps/desktop/src/lib/pictures-away.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/todos-entry.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
 }

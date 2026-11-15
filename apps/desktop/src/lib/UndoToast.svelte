@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { focusEditor } from './focus'
   import { dur, fly } from './platform/src/api'
-  import { told } from './said.svelte'
+  import { told } from './ui-kit/src/api'
   import { reservedName } from './reserved-name.svelte'
   import { back, unsynced } from './sync-client/src/api'
   import { gateNote } from './gate-note.svelte'

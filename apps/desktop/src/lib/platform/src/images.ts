@@ -1,6 +1,7 @@
 import { frontMatter } from '@orden/markdown/front-matter'
 import { decodeTarget } from '@orden/markdown/links'
-import { folderOf, assetUrl, joinPath } from './platform/src/api'
+import { folderOf } from './space-paths'
+import { assetUrl, joinPath } from './tauri'
 
 function isRemote(src: string): boolean {
   return /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')

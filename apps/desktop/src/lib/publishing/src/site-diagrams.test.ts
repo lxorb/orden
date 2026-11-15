@@ -79,7 +79,7 @@ vi.mock('../../platform/src/stored', () => ({
   },
 }))
 
-vi.mock('../../diagrams', () => ({
+vi.mock('../../fences/src/api', () => ({
   drawDiagram: (code: string, language: string, scheme: 'light' | 'dark') => {
     if (world.refuse.has(code)) return Promise.reject(new Error('mermaid said no'))
 

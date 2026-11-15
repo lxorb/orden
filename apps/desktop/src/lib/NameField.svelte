@@ -3,7 +3,7 @@
   import { hang } from './ui-kit/src/api'
   import { dur, fly } from './platform/src/api'
   import { type NameFault, nameFault, nameToCommit } from './platform/src/api'
-  import { caretAtEnd, selectAll, selectStem } from './select-all'
+  import { caretAtEnd, selectAll, selectStem } from './ui-kit/src/api'
 
   interface Props {
     value: string

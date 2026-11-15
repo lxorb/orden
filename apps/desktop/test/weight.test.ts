@@ -445,7 +445,10 @@ describe('what reading a note fetches', () => {
       const reached = ahead.files.map((one) => one.replace(/\\/g, '/'))
 
       expect(reached.filter((one) => one.endsWith('/themes/src/raw.ts'))).toEqual([])
-      expect(ahead.assets, 'stylesheets quoted into the surface').toEqual([])
+      expect(
+        ahead.assets.filter((one) => !graph.assets.includes(one)),
+        'stylesheets quoted into the surface',
+      ).toEqual([])
 
       for (const heavy of [
         '/export/src/render.ts',

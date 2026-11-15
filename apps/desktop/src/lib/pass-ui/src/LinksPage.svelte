@@ -4,7 +4,7 @@
   import Trash from 'lucide/dist/esm/icons/trash-2.mjs'
   import { account } from '../../accounts/src/api'
   import { message } from '../../ui-kit/src/api'
-  import { said } from '../../said.svelte'
+  import { said } from '../../ui-kit/src/api'
   import Gate from './Gate.svelte'
   import Glyph from './Glyph.svelte'
   import ItemMark from './ItemMark.svelte'

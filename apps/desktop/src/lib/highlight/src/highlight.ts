@@ -4,8 +4,6 @@ import { everySurface } from '@orden/themes/write'
 
 export type Parser = LanguageSupport['language']['parser']
 
-export { highlightCode } from '@orden/markdown/highlight'
-
 export async function loadParsers(names: Iterable<string>): Promise<Map<string, Parser>> {
   const parsers = new Map<string, Parser>()
   const known = await fenceLanguages()

@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import '@orden/markdown/eager'
 import { buildHtml, renderNote } from './render'
 import { localSources } from '../../files-out/src/api'
-import { prepareEmbeds, prepareFences } from '../../before-render'
+import { prepareEmbeds, prepareFences } from '../../fences/src/api'
 import { titleOf } from './document'
 import { EXPORT_FORMATS, PANDOC_FORMATS } from '../../export-formats/src/formats'
 

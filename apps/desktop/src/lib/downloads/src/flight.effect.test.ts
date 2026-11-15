@@ -7,7 +7,7 @@ vi.mock('../../platform/src/motion', async (importOriginal) => ({
   dur: (ms: number) => (still ? 0 : ms),
 }))
 
-const { said } = await import('../../said.svelte')
+const { said } = await import('../../ui-kit/src/api')
 const { started, stopFlights } = await import('./flight')
 
 interface Played {

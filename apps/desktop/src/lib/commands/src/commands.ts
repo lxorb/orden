@@ -56,7 +56,7 @@ import { account } from '../../accounts/src/api'
 import { busy, prompt, viewport } from '../../ui-kit/src/api'
 import { turnedOff } from '../../kind-choice'
 import { composerCommands } from '../../composer-commands'
-import { paletteName } from '../../highlight'
+import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
 import type { MenuItem } from '../../ui-kit/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
@@ -1227,7 +1227,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'todos',
             label: 'Todos',
             hint: shortcuts.hint('app.tasks'),
-            run: () => void import('../../todos-entry').then(({ showTodos }) => showTodos()),
+            run: () => void runCommand('views.todos'),
           },
           ...(timeOn()
             ? [

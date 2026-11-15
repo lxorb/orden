@@ -37,7 +37,6 @@
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/choose-files.ts",
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",

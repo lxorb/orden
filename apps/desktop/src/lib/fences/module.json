@@ -1,0 +1,5 @@
+{
+  "name": "fences",
+  "layer": "foundation",
+  "dependsOn": ["theme", "editor", "markdown", "highlight"]
+}

@@ -11,14 +11,13 @@
     "ui-controls",
     "ui-kit",
     "markdown",
-    "workspace"
+    "workspace",
+    "fences"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/diagrams.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/svg-file.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]

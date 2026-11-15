@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { said } from '../../src/lib/said.svelte'
+import { said } from '../../src/lib/ui-kit/src/api'
 import Announcing from './Announcing.svelte'
 import { reactive, root, watch } from './runes.svelte'
 

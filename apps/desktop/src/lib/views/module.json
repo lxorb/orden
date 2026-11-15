@@ -33,7 +33,6 @@
   "pending": [
     "apps/desktop/src/lib/drawer.svelte.ts",
     "apps/desktop/src/lib/failed.svelte.ts",
-    "apps/desktop/src/lib/images.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",

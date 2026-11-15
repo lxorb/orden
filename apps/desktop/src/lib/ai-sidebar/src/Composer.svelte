@@ -4,7 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { region, dur, fly, samePath, withinSpace } from '../../platform/src/api'
   import { Cross } from '../../ui-kit/src/api'
-  import { chooseFiles } from '../../choose-files'
+  import { chooseFiles } from '../../ui-controls/src/api'
   import { links } from '../../link-index/src/api'
   import { longPaste } from '../../ui-controls/src/api'
   import { DIVIDER, menu } from '../../menu.svelte'

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { keytipIn, keytipOut } from '../../keytip'
+  import { keytipIn, keytipOut } from '../../ui-controls/src/api'
   import type { Worn } from './numbers.svelte'
 
   const { numbers }: { numbers: { readonly worn: readonly Worn[] } } = $props()

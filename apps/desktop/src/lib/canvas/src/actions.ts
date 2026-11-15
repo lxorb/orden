@@ -52,7 +52,7 @@ import { NOTCH, turned, turnOf, zoomed } from '../../camera/src/api'
 import type { Keystroke } from '../../ui-kit/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { accountAddress, storeImage } from '../../assets'
-import { chooseFiles, PICTURES } from '../../choose-files'
+import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
 import { prompt, busy } from '../../ui-kit/src/api'
 import {

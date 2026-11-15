@@ -18,9 +18,5 @@
     "windows",
     "link-index"
   ],
-  "pending": [
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/spent-click.ts",
-    "apps/desktop/src/lib/todos-entry.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/focus.ts"]
 }

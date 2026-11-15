@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const asked = vi.hoisted(() => [] as string[])
 
-vi.mock('./todos-entry', () => ({ showTodos: () => asked.push('todos') }))
+vi.mock('@orden/contracts', async (original) => ({
+  ...(await original<typeof import('@orden/contracts')>()),
+  runCommand: (id: string) => {
+    asked.push(id === 'views.todos' ? 'todos' : id)
+    return Promise.resolve(true)
+  },
+}))
 vi.mock('./ai-chat/src/api', () => ({
   chatReveal: () => Promise.resolve({ chatToTab: () => asked.push('chat') }),
 }))

@@ -4,7 +4,7 @@
   import { account } from '../../accounts/src/api'
   import { message } from '../../ui-kit/src/api'
   import { prompt } from '../../ui-kit/src/api'
-  import { said } from '../../said.svelte'
+  import { said } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { Sheet } from '../../ui-controls/src/api'
   import Glyph from './Glyph.svelte'

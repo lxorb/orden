@@ -61,3 +61,5 @@ export {
   showField,
   viewport,
 } from './viewport.svelte'
+export { caretAtEnd, selectAll, selectStem } from './select-all'
+export { said, told } from './said.svelte'

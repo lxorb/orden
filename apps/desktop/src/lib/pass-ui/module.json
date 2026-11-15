@@ -26,7 +26,6 @@
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/reloading.svelte.ts",
-    "apps/desktop/src/lib/said.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/take-keyboard.ts",

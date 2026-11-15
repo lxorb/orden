@@ -32,7 +32,10 @@ vi.mock('../../link-index/src/api', () => ({
     spaceRead: () => Promise.resolve(),
   },
 }))
-vi.mock('../../images', () => ({ imagePath: () => null }))
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../platform/src/api')>()),
+  imagePath: () => null,
+}))
 vi.mock('../../platform/src/tauri', () => ({ invoke: () => Promise.resolve(''), isNative: false }))
 
 const { openTarget, renderOptions } = await import('./context')

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { dropOver } from '../../drag-paths'
   import { account } from '../../accounts/src/api'
-  import { chooseFiles, PICTURES } from '../../choose-files'
+  import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
   import { type Box, Glyph } from '../../chat-kit/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { message } from '../../ui-kit/src/api'

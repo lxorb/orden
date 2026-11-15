@@ -31,7 +31,8 @@
     "sync-mirror",
     "trash",
     "quitting",
-    "workspace"
+    "workspace",
+    "highlight"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -39,7 +40,6 @@
     "apps/desktop/src/lib/double-tap.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/highlight.ts",
     "apps/desktop/src/lib/kept-scroll.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/kind-words.ts",

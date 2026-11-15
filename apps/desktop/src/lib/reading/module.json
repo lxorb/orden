@@ -9,11 +9,8 @@
     "platform",
     "scan",
     "theme",
-    "link-index"
+    "link-index",
+    "fences"
   ],
-  "pending": [
-    "apps/desktop/src/lib/before-render.ts",
-    "apps/desktop/src/lib/kept-cover.ts",
-    "apps/desktop/src/lib/note-images.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/kept-cover.ts", "apps/desktop/src/lib/note-images.ts"]
 }

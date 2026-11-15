@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
-  import { told } from '../../said.svelte'
+  import { told } from '../../ui-kit/src/api'
   import { settings } from '../../settings.svelte'
   import { keysMoved } from './keys-moved.svelte'
 
