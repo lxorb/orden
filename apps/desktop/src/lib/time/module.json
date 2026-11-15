@@ -16,6 +16,5 @@
     "ui-controls",
     "sync-store",
     "gates"
-  ],
-  "pending": ["apps/desktop/src/lib/menu.svelte.ts"]
+  ]
 }

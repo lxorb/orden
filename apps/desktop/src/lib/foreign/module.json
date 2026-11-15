@@ -1,6 +1,13 @@
 {
   "name": "foreign",
   "layer": "foundation",
-  "dependsOn": ["contracts", "accounts", "platform", "sync-client", "sync-core", "sync-mirror"],
-  "pending": ["apps/desktop/src/lib/SharedMark.svelte"]
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "platform",
+    "sync-client",
+    "sync-core",
+    "sync-mirror",
+    "ui-kit"
+  ]
 }

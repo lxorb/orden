@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Value } from '@orden/bases'
-  import { menu } from '../../menu.svelte'
+  import { menu } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { workspace } from '../../workspace/src/api'
   import { addNote } from './add'

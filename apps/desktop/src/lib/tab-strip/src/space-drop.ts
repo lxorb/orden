@@ -1,4 +1,4 @@
-import { listenOver } from '../../drag-paths'
+import { listenOver } from '../../ui-kit/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
 import { spacesOf, spacesOfPaths, toSpace } from './to-space'
 

@@ -1,10 +1,14 @@
 <script lang="ts">
   import { type Base, writeBase } from '@orden/bases'
-  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
-  import { ORDER_MARK } from '../../panel-marks'
-  import { segmented } from '../../ui-kit/src/api'
+  import {
+    DIVIDER,
+    menu,
+    type MenuEntry,
+    ORDER_MARK,
+    segmented,
+    viewport,
+  } from '../../ui-kit/src/api'
   import { relativeTo } from '../../platform/src/api'
-  import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
   import AutomationsBuilder from './AutomationsBuilder.svelte'

@@ -1,14 +1,21 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { type Spelling, spelled } from './ui-kit/src/api'
-  import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
-  import { overlays } from './ui-kit/src/api'
+  import {
+    stepped,
+    type Spelling,
+    spelled,
+    overlays,
+    viewport,
+    DIVIDER,
+    menu,
+    trim,
+    type MenuEntry,
+    type MenuItem,
+  } from './ui-kit/src/api'
   import { released, shortcutPassesBy } from './menu-release'
   import { spendClick } from './ui-controls/src/api'
   import { pullsAway } from './ui-controls/src/api'
   import { trap } from './ui-controls/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import { walked } from './walk'
   import { ran } from './usage/src/api'
   import { dur, fade, fly, scale } from './platform/src/api'
 
@@ -167,7 +174,7 @@
       return
     }
 
-    const moved = walked(event.key, at < 0 ? null : at, list.length, true)
+    const moved = stepped(event.key, at < 0 ? null : at, list.length, true)
     const landed = moved === null ? undefined : list[moved]
 
     if (landed) {

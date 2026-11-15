@@ -47,9 +47,29 @@ export {
 } from './keys'
 export type { Keystroke, Platform, Taken } from './keys'
 export { opensAt, spelled, walk } from './list-keys'
+export { stepped } from './step'
+export { longPress } from './longpress'
+export {
+  ASK_MARK,
+  CHATS_MARK,
+  FILES_MARK,
+  FOLD_MARK,
+  GRAPH_MARK,
+  LINKS_MARK,
+  ORDER_MARK,
+  OUTLINE_MARK,
+  SCRATCHPAD_MARK,
+  SEARCH_MARK,
+  TASKS_MARK,
+  TIME_MARK,
+} from './panel-marks'
+export { default as Twist } from './Twist.svelte'
+export { default as SharedMark } from './SharedMark.svelte'
+export { edgePeek, GRACE } from './edge-peek.svelte'
 export type { Spelling, Walk } from './list-keys'
 export { DIVIDER, isSubmenu, walkableRows } from './menu-item'
 export type { MenuEntry, MenuGroup, MenuItem, MenuRow } from './menu-item'
+export { menu, type TextField, textFieldOf, trim } from './menu.svelte'
 export { message } from './message'
 export { overlays } from './overlays'
 export { hang, partView, portal } from './portal'
@@ -67,3 +87,40 @@ export {
 } from './viewport.svelte'
 export { caretAtEnd, selectAll, selectStem } from './select-all'
 export { said, told } from './said.svelte'
+export {
+  carried,
+  carriedFiles,
+  carriedIntoNotes,
+  carriedMark,
+  carriedNothing,
+  carriedRows,
+  carriesFiles,
+  carry,
+  carryBookmark,
+  carryFromExplorer,
+  carryPage,
+  carrySection,
+  carryTab,
+  caughtFiles,
+  type CaughtFiles,
+  dragged,
+  draggedBookmark,
+  draggedPage,
+  draggedSection,
+  draggedTab,
+  dropOver,
+  explorerDragged,
+  isBookmarkDrag,
+  isExplorerDrag,
+  isFileDrop,
+  isLinkDrop,
+  isPageDrag,
+  isSectionDrag,
+  isTreeDrag,
+  landing,
+  listenOver,
+  mayCarryAddress,
+  outsideRows,
+} from './drag-paths'
+
+export const outsideDrops = () => import('./outside-drops')

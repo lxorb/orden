@@ -1,6 +1,5 @@
 import { focusEditor } from './focus'
-import { chorded, spelled, type Spelling, overlays } from './ui-kit/src/api'
-import { walked } from './walk'
+import { stepped, chorded, spelled, type Spelling, overlays } from './ui-kit/src/api'
 
 interface LongList {
   count: () => number
@@ -118,7 +117,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     const move = key === null ? undefined : moves[key]
 
     if (move !== undefined) {
-      const moved = walked(move, at < 0 ? null : at, count, settings.wrap ?? false)
+      const moved = stepped(move, at < 0 ? null : at, count, settings.wrap ?? false)
       if (moved !== null && went(moved)) event.preventDefault()
       return
     }

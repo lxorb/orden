@@ -61,8 +61,7 @@
   import { freshId, type InkPoint, type InkStroke } from '@orden/markdown/canvas'
   import { copyText, tick } from '../../ui-controls/src/api'
   import { pageAt } from '@orden/markdown/pages'
-  import { longPress } from '../../longpress'
-  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { longPress, said, viewport, DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
   import { samePath, stillness } from '../../platform/src/api'
   import {
     type Highlight,
@@ -91,12 +90,10 @@
   import { inSight } from './sight'
   import { PagesStore } from './store.svelte'
   import { rooms } from '../../collab/src/api'
-  import { said } from '../../ui-kit/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
 
   import { pages as pagesState } from './showing.svelte'
-  import { viewport } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'
 

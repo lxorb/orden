@@ -23,3 +23,12 @@ export {
   SORT_MODES,
   type SortMode,
 } from './tree-order'
+export { dropTarget, targetFor } from './drop-target.svelte'
+export {
+  copiesInto,
+  landsIn,
+  type MoveTarget,
+  moveTargets,
+  movesInto,
+  type Space,
+} from './move-targets'

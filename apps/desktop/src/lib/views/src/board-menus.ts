@@ -7,7 +7,7 @@ import {
   type Value,
 } from '@orden/bases'
 import { copyText } from '../../ui-controls/src/api'
-import { DIVIDER, type MenuEntry } from '../../menu.svelte'
+import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 import { asOneUndo, writeEach } from './act'
 import { grouped } from './column-menu'

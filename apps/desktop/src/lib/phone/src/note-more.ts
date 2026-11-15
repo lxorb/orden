@@ -1,4 +1,4 @@
-import { DIVIDER, menu, trim, type MenuEntry } from '../../menu.svelte'
+import { DIVIDER, menu, trim, type MenuEntry } from '../../ui-kit/src/api'
 import { noteMenu } from '../../note-menu'
 import { tabMenus } from '../../tab-strip/src/api'
 import type { Tab } from '../../documents/src/api'

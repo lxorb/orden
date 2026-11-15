@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
-import { folderFor, folderNote } from './tree/src/api'
-import { folderOf, isMarkdownPath, relativeTo, rootedAt, samePath } from './platform/src/api'
+import { folderFor, folderNote } from './api'
+import { folderOf, isMarkdownPath, relativeTo, rootedAt, samePath } from '../../platform/src/api'
 
 export interface MoveTarget {
   id: string

@@ -1,4 +1,4 @@
-import { walked } from './walk'
+import { stepped } from './ui-kit/src/api'
 
 export interface TreeRow {
   path: string
@@ -29,7 +29,7 @@ export function treeStep(
   const at = here === null ? -1 : rows.findIndex((row) => row.path === here)
   const row = at < 0 ? undefined : rows[at]
 
-  const moved = walked(key, at < 0 ? null : at, rows.length)
+  const moved = stepped(key, at < 0 ? null : at, rows.length)
   if (moved !== null) {
     const landed = rows[moved]
     return landed ? { do: 'stand', path: landed.path } : null

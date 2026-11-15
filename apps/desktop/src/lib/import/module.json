@@ -20,15 +20,14 @@
     "workspace",
     "protect",
     "sync-store",
-    "modes"
+    "modes",
+    "tree"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/attachments.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/drag-paths.ts",
-    "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/picking.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts"
   ]

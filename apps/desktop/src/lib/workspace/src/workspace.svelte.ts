@@ -63,7 +63,7 @@ import {
   markPainted,
 } from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
-import { busy, readTint, viewport } from '../../ui-kit/src/api'
+import { carriedRows, busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'
 import { isPlugin } from '../../plugin'
 import { scanFootnotes } from './footnotes'
@@ -150,8 +150,9 @@ import * as text from './note-text'
 import { Saving } from './saving.svelte'
 import { TAB_KINDS, type TabKind } from '../../tab-kinds/src/api'
 import { type Binning, type FileAction, FileActions, type Kept } from '../../file-undo/src/api'
-import { outermost, Selection } from '../../tree/src/api'
 import {
+  outermost,
+  Selection,
   folderFor,
   folderNote,
   folderNotePath,
@@ -159,20 +160,21 @@ import {
   linkedFiles,
   noteToNest,
   unnesting,
-} from '../../tree/src/api'
-import { carriedRows } from '../../drag-paths'
-import { anyOpen, flatRows, standsOpen } from '../../tree/src/api'
-import {
+  anyOpen,
+  flatRows,
+  standsOpen,
   entryAt,
   withComing,
   withEntry,
   withMove,
   withoutEntry,
   withoutRows,
+  rowIds,
+  orderedTree,
+  type SortMode,
+  Arranged,
+  SpaceSorting,
 } from '../../tree/src/api'
-import { rowIds } from '../../tree/src/api'
-import { orderedTree, type SortMode } from '../../tree/src/api'
-import { Arranged, SpaceSorting } from '../../tree/src/api'
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from '../../agent-marks.svelte'

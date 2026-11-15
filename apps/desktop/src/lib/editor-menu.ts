@@ -45,7 +45,7 @@ import { copyPicture } from './copy-picture'
 import { countText } from './counts'
 import { linkTo } from './composer'
 import { composerEntries } from './composer-commands'
-import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
+import { DIVIDER, type MenuEntry, menu, viewport } from './ui-kit/src/api'
 import { modes } from './modes/src/api'
 import { webHref } from './open-link'
 import { recordingAt, transcribeEmbed } from './dictation/src/api'
@@ -53,7 +53,6 @@ import { openExternal, isMarkdownPath, noteName, relativeTo } from './platform/s
 import { shortcuts } from './shortcuts/src/api'
 import { workspace } from './workspace/src/api'
 import { unlocks } from './protect/src/api'
-import { viewport } from './ui-kit/src/api'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return

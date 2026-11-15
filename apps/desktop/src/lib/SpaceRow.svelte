@@ -2,7 +2,7 @@
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import { account } from './accounts/src/api'
   import { pieces } from './matching/src/api'
-  import SharedMark from './SharedMark.svelte'
+  import { SharedMark } from './ui-kit/src/api'
   import { isShared, roleOf } from './sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
   import { SpacePlace } from './space-pick/src/api'

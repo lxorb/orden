@@ -1,6 +1,6 @@
 import type { PickedFile } from '@orden/contracts'
 import { chooseFiles } from './ui-controls/src/api'
-import { caughtFiles, type CaughtFiles } from './drag-paths'
+import { caughtFiles, type CaughtFiles } from './ui-kit/src/api'
 import { tidyPath } from './import/src/api'
 
 export function pickFiles(): Promise<PickedFile[]> {

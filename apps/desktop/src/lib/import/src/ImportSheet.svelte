@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { dropOver } from '../../drag-paths'
+  import { dropOver, Facts, segmented, viewport } from '../../ui-kit/src/api'
 
-  import { Facts } from '../../ui-kit/src/api'
   import { droppedFiles, pickFiles } from '../../picking'
   import { choices } from '../../modes/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { Sheet } from '../../ui-controls/src/api'
-  import { segmented, viewport } from '../../ui-kit/src/api'
   import { onMac } from './folder-name'
   import { importing } from './importing.svelte'
   import type { FormatId } from './plan'

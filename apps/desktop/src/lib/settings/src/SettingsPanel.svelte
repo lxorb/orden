@@ -1,11 +1,22 @@
 <script lang="ts">
-  import { dropOver } from '../../drag-paths'
-  import { closeOnBack } from '../../ui-kit/src/api'
+  import {
+    dropOver,
+    SEARCH_MARK,
+    closeOnBack,
+    arrive,
+    segmented,
+    message,
+    whileHere,
+    scrollbar,
+    showCombination,
+    prompt,
+    viewport,
+    Cross,
+  } from '../../ui-kit/src/api'
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { Swatches } from '../../ui-controls/src/api'
   import { account } from '../../accounts/src/api'
-  import { arrive, segmented } from '../../ui-kit/src/api'
   import { accelerator, Glyph, Hint, Switch, Select } from '../../ui-controls/src/api'
   import DefaultBrowser from './DefaultBrowser.svelte'
   import FontPicker from './FontPicker.svelte'
@@ -19,14 +30,10 @@
   import { Outward } from '../../ui-controls/src/api'
   import Icon from '../../Icon.svelte'
   import { localDate } from '../../platform/src/api'
-  import { message } from '../../ui-kit/src/api'
-  import { SEARCH_MARK } from '../../panel-marks'
   import { Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { holdScroll } from '../../kept-scroll'
-  import { whileHere } from '../../ui-kit/src/api'
-  import { scrollbar } from '../../ui-kit/src/api'
   import type { SettingsSectionId } from '@orden/contracts'
   import { settings } from './window.svelte'
   import { glassesOn } from '../../gates/src/api'
@@ -40,8 +47,6 @@
     shortcuts,
   } from '../../shortcuts/src/api'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from '../../shortcuts/src/api'
-  import { showCombination } from '../../ui-kit/src/api'
-  import { prompt } from '../../ui-kit/src/api'
   import { Rebind } from './rebind.svelte'
   import { globalKeys, noteFor } from './global-keys.svelte'
   import { landing } from './landing.svelte'
@@ -56,11 +61,9 @@
   import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
   import { modes } from '../../modes/src/api'
   import { readableSize, usage } from '../../usage.svelte'
-  import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import { dur, fly, slide } from '../../platform/src/api'
   import { waited } from '../../platform/src/api'
-  import { Cross } from '../../ui-kit/src/api'
 
   let customBad = $state(false)
 

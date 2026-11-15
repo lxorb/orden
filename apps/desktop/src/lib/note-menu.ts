@@ -1,5 +1,5 @@
 import { appCommands } from './commands/src/api'
-import { DIVIDER, type MenuEntry } from './menu.svelte'
+import { DIVIDER, type MenuEntry } from './ui-kit/src/api'
 import { views } from './views.svelte'
 
 const GROUPS: readonly (readonly string[])[] = [

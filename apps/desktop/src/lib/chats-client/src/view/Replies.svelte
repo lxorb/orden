@@ -5,7 +5,7 @@
   import { cubicOut } from 'svelte/easing'
   import { localNumber } from '../../../platform/src/api'
   import { dur, fly } from '../../../platform/src/api'
-  import { menu } from '../../../menu.svelte'
+  import { menu } from '../../../ui-kit/src/api'
   import type { ChatPage } from './chat.svelte'
   import Composer from './Composer.svelte'
   import { Glyph } from '../../../chat-kit/src/api'

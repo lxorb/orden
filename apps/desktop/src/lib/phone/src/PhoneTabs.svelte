@@ -1,8 +1,7 @@
 <script lang="ts">
   import { account } from '../../accounts/src/api'
-  import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../../panel-marks'
+  import { CHATS_MARK, SEARCH_MARK, TASKS_MARK, UnreadDot, viewport } from '../../ui-kit/src/api'
   import { chatsOn, hiddenKinds } from '../../gates/src/api'
-  import { UnreadDot, viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import { writeNew } from '../../write-new'
   import { panels, type PhoneTab } from '../../session/src/api'

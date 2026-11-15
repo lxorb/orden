@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { closeOnBack, overlays } from '../../ui-kit/src/api'
-  import Twist from '../../Twist.svelte'
+  import { closeOnBack, overlays, Twist } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import {
     DEEPEST,

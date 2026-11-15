@@ -8,7 +8,7 @@
   import { pickedLink } from '../../../composer'
   import { localDate, localNumber } from '../../../platform/src/api'
   import { links } from '../../../link-index/src/api'
-  import { DIVIDER, menu } from '../../../menu.svelte'
+  import { DIVIDER, menu } from '../../../ui-kit/src/api'
   import { modes } from '../../../modes/src/api'
   import { dur, fade } from '../../../platform/src/api'
   import { followHref, followNoteFrom } from '../../../open-link'

@@ -2,15 +2,25 @@
   import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
   import { moveSection } from './lib/sections'
-  import { pageHeight, scrollerOf, showField, viewport } from './lib/ui-kit/src/api'
-  import { closeOnBack } from './lib/ui-kit/src/api'
+  import {
+    pageHeight,
+    scrollerOf,
+    showField,
+    viewport,
+    closeOnBack,
+    currentPlatform,
+    menu,
+    textFieldOf,
+    overlays,
+    busy,
+    said,
+    prompt,
+    paneCorners,
+  } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
   import { whenLoaded } from '@orden/contracts'
   import { iconChoice } from './lib/icon-choice.svelte'
-  import { currentPlatform } from './lib/ui-kit/src/api'
-  import { menu, textFieldOf } from './lib/menu.svelte'
-  import { overlays } from './lib/ui-kit/src/api'
   import { PaneTree } from './lib/pane-tree/src/api'
   import FirstScreen from './lib/FirstScreen.svelte'
   import { Sidebar } from './lib/sidebar/src/api'
@@ -21,7 +31,6 @@
   import { renamed } from './lib/renamed.svelte'
   import { account, arriving } from './lib/accounts/src/api'
   import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
-  import { busy } from './lib/ui-kit/src/api'
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
@@ -36,9 +45,7 @@
   import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
-  import { said } from './lib/ui-kit/src/api'
   import { search } from './lib/search.svelte'
-  import { prompt } from './lib/ui-kit/src/api'
   import { settings } from './lib/settings/src/api'
   import { hiddenKinds } from './lib/gates/src/api'
   import {
@@ -82,7 +89,6 @@
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
   import StatusBar from './lib/StatusBar.svelte'
-  import { paneCorners } from './lib/ui-kit/src/api'
   import Titlebar from './lib/Titlebar.svelte'
   import { choices, modes } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'

@@ -8,11 +8,8 @@
     "ui-controls",
     "ui-kit",
     "documents",
-    "workspace"
+    "workspace",
+    "tree"
   ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/move-targets.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/FileMark.svelte", "apps/desktop/src/lib/SpaceMark.svelte"]
 }

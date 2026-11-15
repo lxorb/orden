@@ -8,8 +8,8 @@ import {
   isExplorerDrag,
   isFileDrop,
   isTreeDrag,
-} from '../../drag-paths'
-import { message } from '../../ui-kit/src/api'
+  message,
+} from '../../ui-kit/src/api'
 import { invoke, joinPath, platform } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { OutsideStep } from '../../file-undo/src/api'

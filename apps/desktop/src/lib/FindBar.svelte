@@ -6,10 +6,8 @@
   import Regex from 'lucide/dist/esm/icons/regex.mjs'
   import WholeWord from 'lucide/dist/esm/icons/whole-word.mjs'
   import { dur, fly } from './platform/src/api'
-  import { SEARCH_MARK } from './panel-marks'
-  import { arrive } from './ui-kit/src/api'
+  import { SEARCH_MARK, arrive, Cross } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts/src/api'
-  import { Cross } from './ui-kit/src/api'
 
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
 

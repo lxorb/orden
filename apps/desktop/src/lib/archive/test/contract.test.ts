@@ -39,13 +39,19 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('reaches no app module but the platform, the undo record, the tree and the workspace', () => {
+  test('reaches no app module but the platform, the undo record, the tree, the ui kit and the workspace', () => {
     const reached = sources(SRC).flatMap((file) =>
       [...readFileSync(file, 'utf8').matchAll(/from '\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map(
         (found) => found[1],
       ),
     )
-    expect([...new Set(reached)].sort()).toEqual(['file-undo', 'platform', 'tree', 'workspace'])
+    expect([...new Set(reached)].sort()).toEqual([
+      'file-undo',
+      'platform',
+      'tree',
+      'ui-kit',
+      'workspace',
+    ])
   })
 })
 

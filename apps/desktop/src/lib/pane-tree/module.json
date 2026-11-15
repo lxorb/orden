@@ -29,7 +29,6 @@
     "apps/desktop/src/lib/alone.svelte.ts",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/editor-menu.ts",
     "apps/desktop/src/lib/kept-cover.ts",
     "apps/desktop/src/lib/kept-scroll.ts",

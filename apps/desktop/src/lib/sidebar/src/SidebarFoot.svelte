@@ -6,9 +6,8 @@
   import { dur, fade } from '../../platform/src/api'
   import { showFeedback } from '../../surfaces.svelte'
   import { isNative, openExternal } from '../../platform/src/api'
-  import { viewport } from '../../ui-kit/src/api'
+  import { SCRATCHPAD_MARK, viewport } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { SCRATCHPAD_MARK } from '../../panel-marks'
   import { sidebarPart, settingsWindow } from '@orden/contracts'
 
   const {

@@ -101,7 +101,7 @@ describe('the Pass tab', () => {
     expect(target.querySelector('[data-item]')?.textContent).toContain('Mail')
     typed(search, '')
 
-    const { menu } = await import('../../menu.svelte')
+    const { menu } = await import('../../ui-kit/src/api')
     const chosen = (label: string) => {
       target.querySelector<HTMLButtonElement>('.bar .orden-chip')?.click()
       flushSync()

@@ -1,8 +1,14 @@
 import { copySelection, cutSelection } from './ui-controls/src/api'
-import { showCombination, DIVIDER, type MenuEntry, walkableRows } from './ui-kit/src/api'
-import { menu, type TextField } from './menu.svelte'
+import {
+  stepped,
+  showCombination,
+  DIVIDER,
+  type MenuEntry,
+  walkableRows,
+  menu,
+  type TextField,
+} from './ui-kit/src/api'
 import { shortcuts } from './shortcuts/src/api'
-import { walked } from './walk'
 
 export function showFieldMenu(event: MouseEvent, field: TextField): void {
   menu.show(event, fieldEntries(field), { keepFocus: true })
@@ -25,7 +31,7 @@ function onKey(event: KeyboardEvent): void {
   }
   const stops = walkableRows(menu.items)
   const at = stops.indexOf(menu.lit)
-  const moved = walked(event.key, at < 0 ? null : at, stops.length, true)
+  const moved = stepped(event.key, at < 0 ? null : at, stops.length, true)
   if (moved !== null) {
     took()
     menu.lit = stops[moved] ?? -1

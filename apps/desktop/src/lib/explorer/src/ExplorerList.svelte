@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { carried, dropOver } from '../../drag-paths'
+  import { carried, dropOver, spelled, type Spelling, menu } from '../../ui-kit/src/api'
   import { tick, untrack } from 'svelte'
-  import { spelled, type Spelling } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { readableSize } from '../../usage.svelte'
   import { isPicturePath, nameOf, folderOf, samePath } from '../../platform/src/api'
-  import { menu } from '../../menu.svelte'
   import { when } from '../../ui-controls/src/api'
   import { renamePath } from './changes'
   import { dropInto, endDrag, over, startDrag } from './drag'

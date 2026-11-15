@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ASK_MARK } from '../../../panel-marks'
+  import { ASK_MARK } from '../../../ui-kit/src/api'
 
   const {
     colour,

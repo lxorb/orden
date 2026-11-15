@@ -29,7 +29,6 @@
     "left-spaces"
   ],
   "pending": [
-    "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/space-owed.ts",
     "apps/desktop/src/lib/space-pairing.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

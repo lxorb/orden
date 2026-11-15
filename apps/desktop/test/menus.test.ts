@@ -95,7 +95,7 @@ describe('what a space offers', () => {
 describe('the path a note sits at', () => {
   const everywhere = [
     ...componentSources(),
-    read('lib/menu.svelte.ts'),
+    read('lib/menu-entries.ts'),
     read('lib/commands/src/commands.ts'),
     read('lib/app-menu.ts'),
   ].join('\n')
@@ -112,7 +112,7 @@ describe('making a folder', () => {
   const everywhere = [
     ...componentSources(),
     read('lib/row-menu.ts'),
-    read('lib/menu.svelte.ts'),
+    read('lib/menu-entries.ts'),
     read('lib/commands/src/commands.ts'),
     read('lib/app-menu.ts'),
     read('lib/shortcuts/src/registry.ts')
@@ -139,7 +139,7 @@ describe('what a row of the file list offers', () => {
   const tree = read('lib/sidebar/src/Tree.svelte')
   const source = read('lib/row-menu.ts')
   const row = moduleBody(source, 'export function rowMenu(entry: Entry)')
-  const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
+  const entries = moduleBody(read('lib/menu-entries.ts'), 'export function iconEntries(')
 
   test('its name, and where it goes', () => {
     for (const entry of ["'Rename'", 'moveEntry(entry)']) {

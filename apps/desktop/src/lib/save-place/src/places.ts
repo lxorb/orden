@@ -1,5 +1,5 @@
 import type { Entry } from '@orden/contracts'
-import { type MoveTarget, moveTargets, type Space } from '../../move-targets'
+import { type MoveTarget, moveTargets, type Space } from '../../tree/src/api'
 import { nameFromTitle, samePath } from '../../platform/src/api'
 import { type NoteDoc, fileNamed, offeredName } from '../../documents/src/api'
 

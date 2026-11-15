@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { menu } from '../../src/lib/menu.svelte'
+import { menu } from '../../src/lib/ui-kit/src/api'
 import { overlays } from '../../src/lib/ui-kit/src/overlays'
 
 let host: HTMLElement

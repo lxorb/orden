@@ -53,16 +53,15 @@ import {
   upperCase,
 } from '@orden/editor'
 import { account } from '../../accounts/src/api'
-import { busy, prompt, viewport } from '../../ui-kit/src/api'
+import { busy, prompt, viewport, type MenuItem, DIVIDER } from '../../ui-kit/src/api'
 import { turnedOff } from '../../kind-choice'
 import { composerCommands } from '../../composer-commands'
 import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
-import type { MenuItem } from '../../ui-kit/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
 import { printOpen } from '../../open-out'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
-import { moveTargets } from '../../move-targets'
+import { moveTargets } from '../../tree/src/api'
 import { closeAfterLabel } from '../../panes/src/api'
 import { revealPanel, stepRegionFocus } from '../../focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from '../../space-actions'
@@ -76,7 +75,7 @@ import {
   lockAllEntry,
   protectEntries,
 } from '../../sharing/src/api'
-import { archiveEntry, DIVIDER } from '../../menu.svelte'
+import { archiveEntry } from '../../menu-entries'
 import { updates } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'

@@ -1,7 +1,6 @@
 import { account } from './accounts/src/api'
 import { iconChoice } from './icon-choice.svelte'
-import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
-import { prompt } from './ui-kit/src/api'
+import { DIVIDER, type MenuEntry, trim, prompt } from './ui-kit/src/api'
 import {
   canPublish,
   canShare,

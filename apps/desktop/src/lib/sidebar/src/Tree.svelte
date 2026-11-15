@@ -9,29 +9,27 @@
   import { hiddenKinds } from '../../gates/src/api'
   import FileMark from '../../FileMark.svelte'
   import {
+    landsIn,
+    dropTarget,
+    targetFor,
     folderFor,
     folderNote,
     folderNotePath,
     isFolderNote,
     nestedIn,
     renameSteps,
+    flatRows,
+    heldRows,
+    rowIndex,
+    standsOpen,
+    type FlatRow,
+    rowIds,
   } from '../../tree/src/api'
   import { staysOn } from '../../caret'
   import { focusList } from '../../focus'
-  import { menu } from '../../menu.svelte'
-  import { overlays } from '../../ui-kit/src/api'
-  import { longPress } from '../../longpress'
-  import { landsIn } from '../../move-targets'
-  import NameField from './NameField.svelte'
-  import { howFor, middleOpens, tabAsk } from '../../new-tab'
-  import { extensionOf } from '../../platform/src/api'
-  import { rowName } from '../../platform/src/api'
-  import { roving } from '../../roving'
-  import SharedMark from '../../SharedMark.svelte'
-  import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
-  import { shortcuts } from '../../shortcuts/src/api'
-  import { syncMark } from '../../surfaces.svelte'
   import {
+    menu,
+    longPress,
     carried,
     carriedNothing,
     carry,
@@ -39,9 +37,20 @@
     isBookmarkDrag,
     landing,
     listenOver,
-  } from '../../drag-paths'
+    overlays,
+    viewport,
+    SharedMark,
+    Twist,
+  } from '../../ui-kit/src/api'
+  import NameField from './NameField.svelte'
+  import { howFor, middleOpens, tabAsk } from '../../new-tab'
+  import { extensionOf } from '../../platform/src/api'
+  import { rowName } from '../../platform/src/api'
+  import { roving } from '../../roving'
+  import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { syncMark } from '../../surfaces.svelte'
   import { dropOnList, fileClipboard, listMotion } from '../../list-landing.svelte'
-  import { dropTarget, targetFor } from '../../drop-target.svelte'
   import {
     autoScrollBy,
     heightOf,
@@ -53,16 +62,12 @@
   } from '../../windows/src/api'
   import { ListView, tokenFloor, tokenRow } from '../../windows/src/api'
   import { folderOf, samePath } from '../../platform/src/api'
-  import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from '../../tree/src/api'
   import { onTwist, treeStep, TREE_MOVES } from '../../tree-keys'
-  import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import { spaceDropping } from '../../tab-strip/src/api'
   import { inside } from '../../panes/src/api'
-  import Twist from '../../Twist.svelte'
   import { dur } from '../../platform/src/api'
   import { keptAway } from '../../away/src/api'
-  import { rowIds } from '../../tree/src/api'
   import { indexed, settle } from './tree-settle'
 
   const { tree }: { tree: Entry } = $props()

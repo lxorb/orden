@@ -9,9 +9,16 @@
     PATTERNS,
   } from '@orden/markdown/canvas'
   import { paintSketch, readPalette } from '../../plane/src/api'
-  import { carryPage, draggedPage, dropOver, isPageDrag } from '../../drag-paths'
-  import { longPress } from '../../longpress'
-  import { DIVIDER, type MenuEntry, menu } from '../../menu.svelte'
+  import {
+    carryPage,
+    draggedPage,
+    dropOver,
+    isPageDrag,
+    longPress,
+    DIVIDER,
+    type MenuEntry,
+    menu,
+  } from '../../ui-kit/src/api'
   import { densityFor, paperOf } from '../../pdf/src/api'
   import { sameSheet, type SheetDrawn, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
   import { pages as showing } from './showing.svelte'

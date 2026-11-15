@@ -27,7 +27,8 @@
     "highlight",
     "modes",
     "files-out",
-    "gates"
+    "gates",
+    "tree"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -37,8 +38,7 @@
     "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/links.ts",
-    "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/move-targets.ts",
+    "apps/desktop/src/lib/menu-entries.ts",
     "apps/desktop/src/lib/open-out.ts",
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",

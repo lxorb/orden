@@ -1,5 +1,5 @@
 import { account } from './accounts/src/api'
-import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
+import { DIVIDER, menu, type MenuEntry } from './ui-kit/src/api'
 import { settingsWindow } from '@orden/contracts'
 import { shortcuts } from './shortcuts/src/api'
 

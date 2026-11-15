@@ -1,4 +1,4 @@
-import { carriedNothing, carry, carryTab } from '../../drag-paths'
+import { carriedNothing, carry, carryTab } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 
 const ATTRIBUTE = 'data-chat-drop'

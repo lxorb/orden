@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { menu } from '../../menu.svelte'
+  import { menu, dropOver, isTreeDrag } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
   import { hearAgain } from '../../shortcuts/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { dropOver, isTreeDrag } from '../../drag-paths'
   import { ai } from '../../ai-providers/src/api'
   import { agentMarks } from '../../agent-marks.svelte'
   import { agentSession } from '../../surfaces.svelte'

@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { dropOver } from './drag-paths'
+  import { dropOver, closeOnBack, Cross, overlays } from './ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from './ui-kit/src/api'
-  import { Cross } from './ui-kit/src/api'
   import {
     MOST_PICTURES,
     type Picture,
@@ -12,7 +10,6 @@
   } from './feedback/src/api'
   import { fade, LAYER, scale } from './platform/src/api'
   import { followHref } from './open-link'
-  import { overlays } from './ui-kit/src/api'
   import { trap } from './ui-controls/src/api'
   import { chooseFiles } from './ui-controls/src/api'
 
