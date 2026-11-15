@@ -44,6 +44,14 @@ function marked(source: string, over: Partial<SearchNote> = {}): string[] {
     .flatMap((hit) => hit.ranges.map((range) => hit.text.slice(range.from, range.to)))
 }
 
+describe('a note whose lines end in CRLF', () => {
+  test('still has the block list its front matter holds', () => {
+    const body = '---\r\nstatus:\r\n  - open\r\n---\r\nalpha here\r\n'
+    expect(answers('[status:open] alpha', { body })).toBe(true)
+    expect(answers('[status:null]', { body })).toBe(false)
+  })
+})
+
 describe('words', () => {
   test('match anywhere in the note, folded', () => {
     expect(answers('alpha')).toBe(true)

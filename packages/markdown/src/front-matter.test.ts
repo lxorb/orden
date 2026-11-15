@@ -149,6 +149,11 @@ describe('reading the front matter', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
   })
 
+  test('a block list in a note whose lines end in CRLF', () => {
+    const source = '---\r\nstatus:\r\n  - open\r\n  -\r\n  - "two"\r\n---\r\nalpha\r\n'
+    expect(frontMatterList(source, 'status')).toEqual(['open', 'two'])
+  })
+
   test('a comment after the value', () => {
     expect(frontMatterValue('---\ntitle: a # note\n---\n', 'title')).toBe('a')
     expect(frontMatterValue("---\ntitle: 'a # b' # note\n---\n", 'title')).toBe('a # b')
