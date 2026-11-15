@@ -1,4 +1,5 @@
 import type { Context, Row } from '@orden/bases'
+import { linkContext } from '@orden/bases/links'
 import {
   PROTECTED,
   shutFor,
@@ -28,6 +29,7 @@ import {
   inboxChangeOf,
   inboxStamp,
   mergedInbox,
+  metaFromText,
 } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import {
@@ -144,11 +146,13 @@ interface Held {
   id: string
   path: string
   meta: string | null
+  size: number
+  updated_at: number
 }
 
 async function notesOf(env: Env, space: Space): Promise<Held[]> {
   const { results } = await env.DB.prepare(
-    `select id, path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
+    `select id, path, meta, size, updated_at from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
     .bind(space.id, MOST_READ + 1)
@@ -176,7 +180,10 @@ async function rowsOf(
       const batch = reading.slice(at, at + AT_ONCE)
       const bodies = await Promise.all(batch.map((one) => noteBody(env, space.id, one.id)))
       batch.forEach((one, index) => {
-        const read = noteRowsOf(space.name, one.path, bodies[index] ?? '')
+        const read = noteRowsOf(space.name, one.path, bodies[index] ?? '', {
+          stamp: { size: one.size, mtime: one.updated_at, ctime: 0 },
+          meta: metaFromText(one.meta) ?? null,
+        })
         rows.push(...read.filter((row) => row.kind !== 'task'))
       })
     }
@@ -524,7 +531,10 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
     throw new Said('Say the path of a .base file, or the base as yaml.')
   }
   const { rows, partial } = await rowsOf(env, [space], space.shut)
-  const answer = queryBase(base, words(args, 'view'), rows, contextNow(space.zone))
+  const answer = queryBase(base, words(args, 'view'), rows, {
+    ...contextNow(space.zone),
+    ...linkContext(rows),
+  })
   return partial ? { ...answer, partial } : answer
 }
 

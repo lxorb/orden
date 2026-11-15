@@ -1,4 +1,5 @@
 import type { Base, Context, Row } from '@orden/bases'
+import { linkContext } from '@orden/bases/links'
 import { readable, seen } from './guarded'
 import {
   AgentError,
@@ -241,13 +242,12 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
           }
         })()
   const rows = await rowsStore()
+  const seenRows = rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path)))
   try {
-    const answer = queried(
-      base,
-      maybe(call, 'view') ?? undefined,
-      rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path))),
-      await contextOf(),
-    )
+    const answer = queried(base, maybe(call, 'view') ?? undefined, seenRows, {
+      ...(await contextOf()),
+      ...linkContext(seenRows),
+    })
     return done(answer, sourceOf([place]))
   } catch (error) {
     refused(error)

@@ -1,6 +1,6 @@
 import type { Row } from '@orden/bases'
 import { type NoteRead, rowsOf } from '@orden/bases/rows'
-import { scanRows } from '@orden/bases/scan'
+import { scanRows, type Stamp } from '@orden/bases/scan'
 import { type ScannedNote, scanNote } from './scan-note'
 
 export function readOf(note: ScannedNote): NoteRead {
@@ -14,7 +14,18 @@ export function readOf(note: ScannedNote): NoteRead {
   }
 }
 
-export function noteRowsOf(space: string, path: string, content: string): Row[] {
-  const stamp = { size: content.length, mtime: 0, ctime: 0 }
-  return rowsOf(space, readOf({ ...scanNote(path, content), ...scanRows(content), stamp }))
+export interface NoteHeld {
+  stamp?: Stamp
+  meta?: Readonly<Record<string, string>> | null | undefined
+}
+
+export function noteRowsOf(
+  space: string,
+  path: string,
+  content: string,
+  held: NoteHeld = {},
+): Row[] {
+  const stamp = held.stamp ?? { size: content.length, mtime: 0, ctime: 0 }
+  const read = readOf({ ...scanNote(path, content), ...scanRows(content), stamp })
+  return rowsOf(space, { ...read, meta: held.meta ?? null })
 }

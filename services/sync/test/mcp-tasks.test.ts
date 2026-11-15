@@ -338,6 +338,41 @@ describe('bases, with Orden closed', () => {
     expect(answer).toMatchObject({ total: 3 })
   })
 
+  test('a base reads a note’s links, its time and its cover as the app does', async () => {
+    for (const [path, content] of [
+      ['People/Ada.md', '---\nborn: 1815\n---\n'],
+      ['Day1.md', '---\nwho: "[[Ada]]"\n---\nSee [[Ada]]\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    env.db
+      .prepare(`update notes set meta = ? where path = 'People/Ada.md'`)
+      .run('{"cover":"ada.png"}')
+    await basesTurned(true)
+    const key = await connector(true)
+    const answer = await json(key, 'query_base', {
+      space: 'Work',
+      yaml: [
+        'filters: file.mtime > now() - "7 days"',
+        'formulas:',
+        '  back: file.backlinks.length',
+        '  born: who.asFile().properties.born',
+        'views:',
+        '  - type: table',
+        '    name: All',
+        '    order: [file.name, cover, formula.back, formula.born]',
+        '',
+      ].join('\n'),
+    })
+    const rows = (answer.groups as { rows: Record<string, unknown>[] }[])[0]?.rows
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'Day1.md', 'formula.back': 0, 'formula.born': 1815 }),
+        expect.objectContaining({ path: 'People/Ada.md', cover: 'ada.png', 'formula.back': 1 }),
+      ]),
+    )
+  })
+
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
     await basesTurned(true)
