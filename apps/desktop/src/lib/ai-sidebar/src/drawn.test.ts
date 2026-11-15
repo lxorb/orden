@@ -139,6 +139,18 @@ describe('an answer, drawn as a note is', () => {
     expect(shown).toContain('<img src="https://example.com/cat.png?q=1" alt="a cat">')
   })
 
+  test.each([
+    'https:/evil.example/p.png?d=secret',
+    'https:evil.example/p.png?d=secret',
+    'HTTPS:/evil.example/p.png?d=secret',
+    '//evil.example/p.png?d=secret',
+  ])('a picture at %s, which the page reads as another host, is held too', (src) => {
+    const held = answerHtml(`![x](${src})`)
+    expect(held).not.toContain('<img')
+    expect(held).toContain('class="picture-held"')
+    expect(held).toContain('<span>x</span>')
+  })
+
   test('raw HTML the model wrote is its characters, and frames are taken out', () => {
     const html = answerHtml('<b>bold</b>\n\n<iframe src="https://example.com"></iframe>')
     expect(html).not.toContain('<b>')

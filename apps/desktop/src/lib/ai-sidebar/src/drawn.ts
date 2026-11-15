@@ -9,7 +9,19 @@ const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
 
 const PICTURE = /<img\b([^>]*)>/gi
 
-const ELSEWHERE = /^(?:[a-z][a-z\d+.-]*:)?\/\//i
+const HERE = new URL('http://here.invalid/')
+
+const DRIVE = /^[a-z]:[\\/]/i
+
+function placeOf(src: string): { here: boolean; host: string } {
+  if (DRIVE.test(src)) return { here: true, host: '' }
+  try {
+    const read = new URL(src.replace(/&amp;/g, '&'), HERE)
+    return { here: read.origin === HERE.origin, host: read.host }
+  } catch {
+    return { here: false, host: '' }
+  }
+}
 
 const BLOCK = /<pre><code(?: class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g
 
@@ -40,16 +52,16 @@ function pictures(html: string, from: string | null, shown: ReadonlySet<string>)
   return html.replace(PICTURE, (whole, attributes: string) => {
     const src = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
     if (!src) return ''
-    if (!ELSEWHERE.test(src)) {
-      if (/^data:/i.test(src)) return whole
+    if (/^data:/i.test(src)) return whole
+    const { here, host } = placeOf(src)
+    if (here) {
       return `<img${attributes.replace(`src="${src}"`, () => `src="${escape(notePicture(src, from, ''))}"`)}>`
     }
     if (shown.has(src)) return whole
     const alt = /\balt="([^"]*)"/.exec(attributes)?.[1] ?? ''
-    const host = /^(?:[a-z][a-z\d+.-]*:)?\/\/([^/?#]+)/i.exec(src)?.[1] ?? src
     return (
       `<button type="button" class="picture-held" data-picture="${src}" title="${src}">` +
-      `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || host}</span></button>`
+      `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || host || src}</span></button>`
     )
   })
 }
