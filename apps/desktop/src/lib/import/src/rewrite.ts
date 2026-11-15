@@ -314,7 +314,7 @@ export function linksFollowed(
       const pipe = inCode(stillTables, offset) ? '\\|' : '|'
       const words =
         shown ?? (reached === renamed || bang || fragment !== null ? '' : `${pipe}${renamed}`)
-      return `${bang}[[${path.replace(said, reached)}${anchor}${cell ? '\\' : ''}${words}]]`
+      return `${bang}[[${path.replace(said, () => reached)}${anchor}${cell ? '\\' : ''}${words}]]`
     },
   )
 
