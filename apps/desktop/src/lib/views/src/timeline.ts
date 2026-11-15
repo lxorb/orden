@@ -26,7 +26,7 @@ function shiftIn(value: Value, day: string | null): number {
 function timeIn(value: Value): string {
   if (typeof value === 'string') return value.slice(10)
   if (!isDateValue(value) || !value.time) return ''
-  return `T${value.time.replace(/:00$/, '')}${value.zone ?? ''}`
+  return `T${value.time.replace(/^(\d{2}:\d{2}):00$/, '$1')}${value.zone ?? ''}`
 }
 
 export function barOf(

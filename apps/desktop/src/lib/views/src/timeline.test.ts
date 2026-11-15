@@ -41,4 +41,11 @@ describe('a bar for a date written with its offset', () => {
       expect(dragged(bar, 'move', 1)).toEqual({ due: '2026-03-11T02:00+09:00' })
     })
   })
+
+  test('without an offset or seconds keeps its hour and minutes as written', () => {
+    inZone('Asia/Tokyo', () => {
+      expect(dragged(barFor('2026-03-10T23:00'), 'move', 1)).toEqual({ due: '2026-03-11T23:00' })
+      expect(dragged(barFor('2026-03-10'), 'start', -1)).toEqual({ due: '2026-03-09' })
+    })
+  })
 })
