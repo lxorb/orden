@@ -831,3 +831,20 @@ describe('an answer of nothing at all', () => {
     expect((await send(one, 'What is in Birds.md?')).at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
 })
+
+describe('an account the vault moved to a fresh id', () => {
+  test('is the same model to the thread, so no notice says it changed', async () => {
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    PROVIDERS.moved = { ...PROVIDERS.anthropic!, id: 'anthropic-9' }
+    answers = [stream('anthropic-2'), stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    await send(thread, 'one')
+
+    keepMoves({ anthropic: 'anthropic-9' }, (thread.turns.at(-1)?.at ?? 0) + 1)
+    thread.provider = 'anthropic-9'
+    await send(thread, 'two')
+
+    delete PROVIDERS.moved
+    expect(thread.turns[3]?.parts.map((part) => part.kind)).not.toContain('notice')
+  })
+})

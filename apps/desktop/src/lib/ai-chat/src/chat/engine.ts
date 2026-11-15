@@ -1,6 +1,7 @@
 import {
   type LocalKind,
   isLocal,
+  movedSince,
   onMoves,
   type Provider,
   type ProviderKind,
@@ -117,7 +118,9 @@ function modelTurn(thread: Thread): Turn {
 function lastModel(thread: Thread): string {
   for (let at = thread.turns.length - 1; at >= 0; at--) {
     const turn = thread.turns[at]
-    if (turn?.role === 'model' && turn.model) return `${turn.provider ?? ''}/${turn.model}`
+    if (turn?.role === 'model' && turn.model) {
+      return `${movedSince(turn.provider ?? '', turn.at)}/${turn.model}`
+    }
   }
   return ''
 }
