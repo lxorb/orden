@@ -191,6 +191,7 @@ export {
   mayStop,
   type PortMap,
   type PortName,
+  needPort,
   portOf,
   portProvided,
   providePort,

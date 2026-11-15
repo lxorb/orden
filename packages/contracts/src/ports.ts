@@ -63,6 +63,12 @@ export function portOf<Name extends PortName>(name: Name): Result<PortMap[Name]>
   return ok(port)
 }
 
+export function needPort<Name extends PortName>(name: Name): PortMap[Name] {
+  const found = portOf(name)
+  if (!found.ok) throw new Error(found.error.message)
+  return found.value
+}
+
 export function portProvided(name: PortName): boolean {
   return provided.has(name)
 }

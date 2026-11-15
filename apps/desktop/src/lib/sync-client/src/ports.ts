@@ -1,33 +1,21 @@
-import {
-  portOf,
-  type PortMap,
-  type PortName,
-  type SyncNote,
-  type SyncWorkspacePort,
-} from '@orden/contracts'
+import { needPort, type SyncNote, type SyncWorkspacePort } from '@orden/contracts'
 import type { SharedDoc } from '@orden/editor'
 
 export interface LiveNote extends SyncNote {
   readonly live: SharedDoc
 }
 
-function need<Name extends PortName>(name: Name): PortMap[Name] {
-  const found = portOf(name)
-  if (!found.ok) throw new Error(found.error.message)
-  return found.value
-}
+const host = () => needPort('sync.host')
 
-const host = () => need('sync.host')
+const storage = () => needPort('sync.storage')
 
-const storage = () => need('sync.storage')
+const clock = () => needPort('sync.clock')
 
-const clock = () => need('sync.clock')
+export const account = () => needPort('sync.account')
 
-export const account = () => need('sync.account')
+export const remote = () => needPort('sync.api')
 
-export const remote = () => need('sync.api')
-
-export const workspace = () => need('sync.workspace') as SyncWorkspacePort<LiveNote>
+export const workspace = () => needPort('sync.workspace') as SyncWorkspacePort<LiveNote>
 
 export const isNative = () => host().isNative
 

@@ -1,5 +1,6 @@
 import './lib/backend-ports'
 import './lib/platform/src/api'
+import './lib/sync-ports'
 import '@orden/themes'
 import { mount } from 'svelte'
 import { holdComposingKeys } from './lib/ui-kit/src/api'

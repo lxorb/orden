@@ -287,3 +287,15 @@ describe('the Worker a drive asks', () => {
     expect(/^def opened\([\s\S]*?(?=^[^\s)])/m.exec(harness)?.[0]).toMatch(/DROPPED not in said/)
   })
 })
+
+describe('the modules a drive loads from the dev server', () => {
+  test('are all still where the drive asks for them', () => {
+    const gone = drives.flatMap((name) =>
+      [...read(E2E, name).matchAll(/\bimport\(\s*["'](\/src\/[^"'?]+)["']/g)]
+        .map((found) => caught(found))
+        .filter((path) => !existsSync(join(ROOT, 'apps', 'desktop', path)))
+        .map((path) => `${name}: ${path}`),
+    )
+    expect(gone).toEqual([])
+  })
+})

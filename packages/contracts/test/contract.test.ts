@@ -45,6 +45,7 @@ import {
   settingsPartsIn,
   sidebarPart,
   mayStop,
+  needPort,
   notePath,
   ok,
   portOf,
@@ -277,6 +278,14 @@ describe('ports', () => {
 
     unbind()
     expect(portProvided('sync.clock')).toBe(false)
+  })
+
+  it('throws for a needed port nothing bound, naming it, and hands over the bound one', () => {
+    expect(() => needPort('sync.clock')).toThrow("no module has provided the port 'sync.clock' yet")
+    const clock = { now: () => 3, waited: () => Promise.resolve() }
+    const unbind = providePort('sync.clock', clock)
+    expect(needPort('sync.clock')).toBe(clock)
+    unbind()
   })
 
   it('lets a later binding replace an earlier one, and an old unbind leave the new one alone', () => {
