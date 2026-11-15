@@ -114,7 +114,11 @@ function todoOut(todo: Todo) {
 function spaceIdOf(call: Call): string | null {
   const named = maybe(call, 'space')
   if (named !== null) return placeFor(call, named).space.id
-  return workspace.activeSpace?.id ?? null
+  const open = workspace.activeSpace?.id ?? null
+  if (!reachesSpace(call, open)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  return open
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -165,7 +169,12 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   const label = maybe(call, 'label')
   const limit = typeof call.args.limit === 'number' ? Math.max(1, call.args.limit) : 50
   const shown = sortedTodos(
-    shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
+    shownTodos(todos.todos, {
+      onlySpace: only,
+      space: only ? spaceIdOf(call) : null,
+      label,
+      today: dayOf(),
+    }),
     'deadline',
   ).filter((one) => (flag(call, 'done') || !one.done) && reachesSpace(call, one.space))
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
@@ -177,7 +186,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
   const patch = patchOf(call)
-  const space = 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null)
+  const space = 'space' in call.args ? (patch.space ?? null) : spaceIdOf(call)
   if (!reachesSpace(call, space)) {
     throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
   }

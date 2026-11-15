@@ -1747,6 +1747,22 @@ describe('to-dos and bases', () => {
     }
   })
 
+  test('a todo is not moved into an open space the agent does not reach', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const kept = await todos.add({ title: 'Stays at work', space: work.id })
+    if (!kept.ok) throw new Error('not added')
+    workspace.activeSpaceId = 'home'
+    try {
+      expect(
+        await call('update_task', { id: kept.value.id, space: null }, agent({ spaces: ['Work'] })),
+      ).toMatchObject({ code: 'no_such_space' })
+      expect(todos.todo(kept.value.id)?.space).toBe(work.id)
+    } finally {
+      workspace.activeSpaceId = 'work'
+      await todos.remove(kept.value.id)
+    }
+  })
+
   test('a todo is not added into an open space the agent does not reach', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const before = todos.todos.length
