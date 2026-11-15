@@ -5,10 +5,10 @@
   import { account } from '../../accounts/src/api'
   import { chatsOn } from '../../gates/src/api'
   import { graphSurface } from '../../surfaces/src/api'
-  import { howFor, tabAsk, held } from '../../ui-kit/src/api'
+  import { held } from '../../ui-kit/src/api'
   import { links, type Outgoing, type Reference } from '../../link-index/src/api'
   import { insideSpace } from '../../platform/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, howFor, tabAsk } from '../../workspace/src/api'
   import HitList from './HitList.svelte'
 
   const {

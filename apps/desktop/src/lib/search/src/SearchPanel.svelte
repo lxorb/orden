@@ -2,14 +2,7 @@
   import type { Entry } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { shownName } from '../../platform/src/api'
-  import {
-    howFor,
-    middleOpens,
-    tabAsk,
-    ARCHIVE_MARK,
-    roving,
-    SEARCH_MARK,
-  } from '../../ui-kit/src/api'
+  import { ARCHIVE_MARK, roving, SEARCH_MARK } from '../../ui-kit/src/api'
   import { search } from './panel.svelte'
   import { OPERATORS } from '@orden/scan/search/query'
   import { searchWarmth, type Warming } from './api'
@@ -22,7 +15,7 @@
   import TagTree from './TagTree.svelte'
   import { isScratchpad, pad } from '../../scratchpad/src/api'
   import { canWriteAt } from '../../sharing/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, howFor, middleOpens, tabAsk } from '../../workspace/src/api'
   import { dur, fly } from '../../platform/src/api'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()

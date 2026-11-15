@@ -7,7 +7,6 @@
   import { Fingers } from './fingers'
   import { graphFilter, type Keeps } from './filter'
   import { type GraphColours, Layout, paint, radiusOf } from '../../graph-drawing/src/api'
-  import { howFor, type TabAsk, tabAsk } from '../../ui-kit/src/api'
   import {
     type Camera,
     framing,
@@ -20,7 +19,7 @@
   import { parseQuery } from '@orden/scan/search/query'
   import { pixelRatio } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, howFor, type TabAsk, tabAsk } from '../../workspace/src/api'
   import { MOST_GROUPS } from '../../space-kept/src/api'
 
   const {

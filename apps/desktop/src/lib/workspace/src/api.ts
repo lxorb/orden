@@ -70,3 +70,14 @@ export const acrossStarting = () => import('./across')
 export const blankTabs = () => import('./blank-tabs.svelte')
 
 export const outsideHearing = () => import('./outside.svelte')
+
+export {
+  besideAt,
+  howFor,
+  type LinkAsk,
+  linkAsk,
+  middleOpens,
+  type Press,
+  type TabAsk,
+  tabAsk,
+} from './new-tab'

@@ -1,4 +1,4 @@
-import { type Press, type TabAsk, howFor, linkAsk, tabAsk } from '../../ui-kit/src/api'
+import { type Press, type TabAsk, howFor, linkAsk, tabAsk } from '../../workspace/src/api'
 import type { PaletteDestination, SettingsSectionId, OpenHow } from '@orden/contracts'
 import type { NoteToMake } from './new-note'
 import type { Row } from './rows'

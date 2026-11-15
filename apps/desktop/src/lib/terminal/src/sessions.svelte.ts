@@ -7,7 +7,6 @@ import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { type ITheme, Terminal } from '@xterm/xterm'
 import { chrome } from '../../theme/src/api'
 import {
-  tabAsk,
   dragged,
   isExplorerDrag,
   isFileDrop,
@@ -36,7 +35,7 @@ import { LocalEcho } from './online/echo-view'
 import { marks } from './online/marks.svelte'
 import { resumeCommand } from './online/resume'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace/src/api'
+import { workspace, tabAsk } from '../../workspace/src/api'
 import {
   dropHistory,
   fitted,

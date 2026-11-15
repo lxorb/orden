@@ -1,7 +1,6 @@
 import { protection } from './protect/src/api'
 import { providePort } from '@orden/contracts'
 import { account, api, ApiError, BASE, fromServer, request } from './accounts/src/api'
-import { howFor } from './ui-kit/src/api'
 import {
   forget,
   keep,
@@ -17,7 +16,7 @@ import {
   platform,
   waited,
 } from './platform/src/api'
-import { workspace } from './workspace/src/api'
+import { workspace, howFor } from './workspace/src/api'
 import { ROOTS_MOVED, rootsMoved } from './workspace/src/roots-moved'
 import { hearWrites } from './file-writes/src/api'
 

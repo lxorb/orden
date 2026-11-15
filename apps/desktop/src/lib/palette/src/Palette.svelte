@@ -1,7 +1,6 @@
 <script lang="ts">
   import { hinting } from '../../hints/src/api'
   import {
-    middleOpens,
     OUTLINE_MARK,
     GRAPH_MARK,
     SEARCH_MARK,
@@ -45,7 +44,7 @@
   import { isDesktop } from '../../platform/src/api'
   import { type PaletteHost, paletteKind, searching, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { notices, paletteWords, workspace } from '../../workspace/src/api'
+  import { notices, paletteWords, workspace, middleOpens } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { wholeRows } from './whole-rows'
 

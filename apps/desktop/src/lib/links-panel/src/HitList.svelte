@@ -4,12 +4,12 @@
   import FileMark from '../../FileMark.svelte'
   import type { Outgoing, Reference } from '../../link-index/src/api'
   import { linkPieces, shownLine } from './link-line'
-  import { middleOpens, roving } from '../../ui-kit/src/api'
+  import { roving } from '../../ui-kit/src/api'
   import { shownName } from '../../platform/src/api'
   import { offsetOf, type Rows, windowFor } from '../../windows/src/api'
   import { ListView, measuredRow } from '../../windows/src/api'
   import { folderOf, insideSpace } from '../../platform/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, middleOpens } from '../../workspace/src/api'
 
   type Row = Reference | Outgoing
 

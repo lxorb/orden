@@ -52,7 +52,7 @@ import {
   upperCase,
 } from '@orden/editor'
 import { account } from '../../accounts/src/api'
-import { busy, prompt, viewport, type MenuItem, DIVIDER } from '../../ui-kit/src/api'
+import { busy, prompt, viewport, type MenuItem, DIVIDER, fullscreen } from '../../ui-kit/src/api'
 import { turnedOff } from '../../kind-choice'
 import { composerCommands } from '../../composer-commands'
 import { paletteName } from '../../highlight/src/api'
@@ -87,7 +87,6 @@ import { agentMarks } from '../../agent-marks.svelte'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
 import {
-  fullscreen,
   closeWindow,
   internal,
   invoke,

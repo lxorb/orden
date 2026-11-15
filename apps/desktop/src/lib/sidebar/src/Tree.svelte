@@ -32,11 +32,11 @@
     fileClipboard,
     listMotion,
     workspace,
-  } from '../../workspace/src/api'
-  import {
     howFor,
     middleOpens,
     tabAsk,
+  } from '../../workspace/src/api'
+  import {
     carried,
     carriedNothing,
     carry,
