@@ -1,8 +1,10 @@
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, MutexGuard};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Ticket {
     pub path: String,
     pub back: String,
@@ -17,8 +19,40 @@ fn now() -> i64 {
         })
 }
 
-#[cfg(target_os = "macos")]
+static GIVEN: Mutex<Option<HashSet<Ticket>>> = Mutex::new(None);
+
+fn given() -> MutexGuard<'static, Option<HashSet<Ticket>>> {
+    GIVEN
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+fn hand_out(ticket: Ticket) -> Ticket {
+    given()
+        .get_or_insert_with(HashSet::new)
+        .insert(ticket.clone());
+    ticket
+}
+
+fn take_back(ticket: &Ticket) -> bool {
+    given().as_mut().is_some_and(|all| all.remove(ticket))
+}
+
 pub fn trash(path: &Path) -> Result<Ticket, String> {
+    trashed(path).map(hand_out)
+}
+
+pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
+    if !take_back(ticket) {
+        return Err(format!("{} was not put in the trash here", ticket.path));
+    }
+    restored(ticket).inspect_err(|_| {
+        hand_out(ticket.clone());
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn trashed(path: &Path) -> Result<Ticket, String> {
     use objc2_foundation::{NSFileManager, NSString, NSURL};
 
     let url = NSURL::fileURLWithPath(&NSString::from_str(&path.to_string_lossy()));
@@ -43,7 +77,7 @@ pub fn trash(path: &Path) -> Result<Ticket, String> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
+fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     let back = Path::new(&ticket.back);
     let path = PathBuf::from(&ticket.path);
     if std::fs::symlink_metadata(&path).is_ok() {
@@ -54,7 +88,7 @@ pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
 }
 
 #[cfg(any(target_os = "linux", windows))]
-pub fn trash(path: &Path) -> Result<Ticket, String> {
+fn trashed(path: &Path) -> Result<Ticket, String> {
     let back = match (path.parent(), path.file_name()) {
         (Some(folder), Some(name)) => std::fs::canonicalize(folder)
             .map_or_else(|_| path.to_path_buf(), |folder| folder.join(name)),
@@ -70,7 +104,7 @@ pub fn trash(path: &Path) -> Result<Ticket, String> {
 }
 
 #[cfg(any(target_os = "linux", windows))]
-pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
+fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     let path = PathBuf::from(&ticket.path);
     if std::fs::symlink_metadata(&path).is_ok() {
         return Err(format!("{} is there again", path.display()));
@@ -92,7 +126,7 @@ pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
-pub fn trash(path: &Path) -> Result<Ticket, String> {
+fn trashed(path: &Path) -> Result<Ticket, String> {
     Err(format!(
         "{}: this system has no trash Orden reaches",
         path.display()
@@ -100,7 +134,7 @@ pub fn trash(path: &Path) -> Result<Ticket, String> {
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
-pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
+fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     Err(format!(
         "{}: this system has no trash Orden reaches",
         ticket.path
@@ -125,8 +159,36 @@ fn newest_from<T>(
 
 #[cfg(test)]
 mod tests {
-    use super::newest_from;
+    use super::{hand_out, newest_from, take_back, untrash, Ticket};
     use std::path::{Path, PathBuf};
+
+    #[test]
+    fn a_ticket_the_trash_never_gave_brings_nothing_back() {
+        let dir = tempfile::tempdir().unwrap();
+        let kept = dir.path().join("kept.json");
+        std::fs::write(&kept, "grants").unwrap();
+        let ticket = Ticket {
+            path: dir.path().join("out.json").display().to_string(),
+            back: kept.display().to_string(),
+            at: 0,
+        };
+        assert!(!take_back(&ticket));
+        assert!(untrash(&ticket).is_err());
+        assert_eq!(std::fs::read_to_string(&kept).unwrap(), "grants");
+        assert!(!dir.path().join("out.json").exists());
+    }
+
+    #[test]
+    fn a_ticket_the_trash_gave_is_taken_back_once() {
+        let ticket = Ticket {
+            path: "/nowhere/given.txt".into(),
+            back: "/nowhere/.Trash/given.txt".into(),
+            at: 7,
+        };
+        hand_out(ticket.clone());
+        assert!(take_back(&ticket));
+        assert!(!take_back(&ticket));
+    }
 
     #[test]
     fn the_way_back_is_the_newest_from_that_place_since_it_went() {
