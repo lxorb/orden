@@ -14,23 +14,10 @@ function memoryStorage(): Storage {
   }
 }
 
-type Heard = (event: { key: string | null }) => void
-const heard: Heard[] = []
-
 beforeEach(() => {
-  heard.length = 0
   vi.resetModules()
   vi.stubGlobal('localStorage', memoryStorage())
-  vi.stubGlobal('window', {
-    addEventListener: (type: string, listener: Heard) => {
-      if (type === 'storage') heard.push(listener)
-    },
-  })
 })
-
-const told = (key: string) => {
-  for (const listener of heard) listener({ key })
-}
 
 describe('helping improve Orden, across windows', () => {
   test('turned off in another window stops this one too', async () => {
@@ -41,7 +28,7 @@ describe('helping improve Orden, across windows', () => {
     expect(usageChoice.helping).toBe(true)
 
     localStorage.setItem('orden:usage-help', 'false')
-    told('orden:usage-help')
+    usageChoice.heard()
 
     expect(usageChoice.helping).toBe(false)
     expect(changed).toBe(1)

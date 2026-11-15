@@ -63,16 +63,20 @@ class HiddenKinds {
 
   restore() {
     this.hidden = stringList(stored(KINDS_KEY)) ?? []
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key === KINDS_KEY) this.restore()
+    })
   }
 }
 
 export const hiddenKinds = new HiddenKinds()
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === KINDS_KEY) hiddenKinds.restore()
-  })
-}
 
 export const EXPERIMENTAL_WORD = 'experimental'
 

@@ -298,7 +298,7 @@ function clamp(value: number): number {
 
 export const wallpaper = new Wallpaper()
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
   window.addEventListener('storage', (event) => {
     const slot = SLOTS.find((one) => KEYS[one] === event.key)
     if (slot) wallpaper.heard(slot)

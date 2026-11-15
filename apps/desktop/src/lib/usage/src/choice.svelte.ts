@@ -43,9 +43,3 @@ class UsageChoice {
 }
 
 export const usageChoice = new UsageChoice()
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === HELP_IMPROVE) usageChoice.heard()
-  })
-}
