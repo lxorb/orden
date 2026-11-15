@@ -6,7 +6,6 @@ import {
   wikilinkCannotName,
 } from '@orden/markdown/links'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { readProperties } from '@orden/markdown/properties'
 import { formatLink } from '../../link-format/src/api'
 import { shownName, folderOf, nameOf, relativePath } from '../../platform/src/api'
 
@@ -117,6 +116,12 @@ const VALUE_OPENS = /^(?:[ \t]*-[ \t]+|[ \t]*[^\s#-][^:]*?[ \t]*:[ \t]+)/
 
 const INDICATOR = /^(?:[-?:](?:\s|$)|[,[\]{}#&*!|>'"%@`])/
 
+const SIMPLE_LINE = /^[ \t]*(?:#.*|-(?:[ \t]+\S.*)?|[^\s#:-][^:]*:(?:[ \t]+(?![|>])\S.*)?)?$/
+
+function simpleMatter(body: string): boolean {
+  return body.split('\n').every((line) => SIMPLE_LINE.test(line.replace(/\r$/, '')))
+}
+
 function plainHolds(value: string): boolean {
   const link = /^\[\[([^\]]*)\]\]$/.exec(value)
   if (value.startsWith('[') && !link) return false
@@ -132,7 +137,7 @@ function quotedValue(value: string): string {
 
 function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
   const matter = frontMatterBlock(text)
-  if (!matter || !readProperties(text)) return [...edits]
+  if (!matter || !simpleMatter(text.slice(matter.body.from, matter.body.to))) return [...edits]
 
   const out: Edit[] = []
   let at = 0
