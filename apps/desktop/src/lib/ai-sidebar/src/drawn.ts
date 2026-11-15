@@ -9,15 +9,19 @@ const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
 
 const PICTURE = /<img\b([^>]*)>/gi
 
-const HERE = new URL('http://here.invalid/')
+const HERE = [new URL('http://here.invalid/'), new URL('here-only://here.invalid/')]
 
 const DRIVE = /^[a-z]:[\\/]/i
 
 function placeOf(src: string): { here: boolean; host: string } {
   if (DRIVE.test(src)) return { here: true, host: '' }
+  const written = src.replace(/&amp;/g, '&')
   try {
-    const read = new URL(src.replace(/&amp;/g, '&'), HERE)
-    return { here: read.origin === HERE.origin, host: read.host }
+    const read = HERE.map((base) => ({ base, at: new URL(written, base) }))
+    const here = read.every(
+      ({ base, at }) => at.protocol === base.protocol && at.host === base.host,
+    )
+    return { here, host: read[1]?.at.host ?? '' }
   } catch {
     return { here: false, host: '' }
   }
