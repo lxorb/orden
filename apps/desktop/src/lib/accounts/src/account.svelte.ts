@@ -230,25 +230,24 @@ class Session {
 
   private async leaveFor(token: string, next: { user?: Account | null; guest?: Guest | null }) {
     const unanswered = !this.signedAs && this.token !== token ? this.token : null
-    const same = unanswered ? await this.heldBy(unanswered, next.user) : false
+    const heard = unanswered ? await this.heldBy(unanswered) : null
 
-    const was = this.signedAs
+    const was = this.signedAs ?? heard
     const now = next.user ? next.user.id : next.guest ? `guest:${next.guest.id}` : null
     if (was && was !== now && !(this.guest && next.user)) this.forget()
-    if (unanswered && !was && !same) this.heardNoAccount()
+    if (unanswered && !was) this.heardNoAccount()
   }
 
   private get signedAs(): string | null {
     return this.user ? this.user.id : this.guest ? `guest:${this.guest.id}` : null
   }
 
-  private async heldBy(token: string, user: Account | null | undefined): Promise<boolean> {
-    if (!user) return false
+  private async heldBy(token: string): Promise<string | null> {
     const who = await Promise.race([
       api.me(token).catch(() => null),
       waited(ASK_BEFORE_LEAVING).then(() => null),
     ])
-    return who?.user?.id === user.id
+    return who?.user ? who.user.id : who?.guest ? `guest:${who.guest.id}` : null
   }
 
   private async settleIn(token: string, user: Account): Promise<void> {
