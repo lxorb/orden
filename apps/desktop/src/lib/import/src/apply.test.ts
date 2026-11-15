@@ -13,6 +13,8 @@ const said = new Map<string, string>()
 
 const onDisk = new Set<string>()
 
+const listed = new Map<string, string[]>()
+
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'file_stamp') {
@@ -25,7 +27,13 @@ vi.mock('../../platform/src/tauri', () => ({
     if (command === 'read_note' || command === 'read_asset') {
       return Promise.reject(new Error('nothing there'))
     }
-    if (command === 'read_tree') return Promise.resolve({ children: [] })
+    if (command === 'read_tree') {
+      const root = String(args.root)
+      const paths = listed.get(root) ?? []
+      return Promise.resolve({
+        children: paths.map((path) => ({ path: `${root}/${path}`, is_dir: false, children: [] })),
+      })
+    }
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })
@@ -41,6 +49,7 @@ const described: [string, unknown][] = []
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
+    activeSpace: { root: '/Space' },
     files: [],
     undone: { record: (action: unknown) => void recorded.push(action) },
     itemMeta: { set: (path: string, patch: unknown) => void described.push([path, patch]) },
@@ -78,6 +87,7 @@ beforeEach(() => {
   refusing = null
   readOnly.clear()
   onDisk.clear()
+  listed.clear()
   said.clear()
   described.length = 0
 })
@@ -676,6 +686,24 @@ describe('a vault landed in a folder of a space that holds notes of the same nam
 
     expect(text).toBe('See [[/Projects/Ideas|Projects/Ideas]].')
     expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Projects/Ideas.md')
+  })
+})
+
+describe('an import into a space that is not the one open', () => {
+  test('has a link by name reach the note it came with, not that space’s namesake', async () => {
+    listed.set('/Other', ['Ideas.md', 'cover.png'])
+    await applyImport(
+      planOf([
+        note('Ideas.md', '# mine'),
+        file('cover.png'),
+        note('Daily/Day.md', 'See [[Ideas]] and ![[cover.png]].'),
+      ]),
+      { root: '/Other', folder: 'Vault' },
+    )
+
+    expect(said.get('/Other/Vault/Daily/Day.md')).toBe(
+      'See [[Vault/Ideas|Ideas]] and ![[Vault/cover.png]].',
+    )
   })
 })
 

@@ -1,6 +1,7 @@
 import { freePath } from '@orden/markdown/paths'
 
-import { insideOnly, log, onDisk, joinPath, sha256 } from '../../platform/src/api'
+import type { Entry } from '@orden/contracts'
+import { insideOnly, invoke, log, onDisk, joinPath, samePath, sha256 } from '../../platform/src/api'
 import { holderOf, pairOf, paperOf } from '@orden/markdown/pages'
 import { workspace } from '../../workspace/src/api'
 import { writeBytes, writeFile } from '../../file-writes/src/api'
@@ -99,7 +100,7 @@ async function restampedOnDisk(
   plan: Written,
   target: ImportTarget,
 ): Promise<{ files: Planned[]; stepped: number }> {
-  const taken = takenIn(target)
+  const taken = await takenIn(target)
   const there = new Map<string, boolean>()
 
   for (;;) {
@@ -128,11 +129,13 @@ async function restampedOnDisk(
   }
 }
 
-function takenIn(target: ImportTarget): Set<string> {
+async function takenIn(target: ImportTarget): Promise<Set<string>> {
   const taken = new Set<string>()
   const root = target.root
+  const open = workspace.activeSpace?.root
+  const files = open !== undefined && samePath(open, root) ? workspace.files : await filesIn(root)
 
-  for (const entry of workspace.files) {
+  for (const entry of files) {
     if (!entry.path.startsWith(root)) continue
     taken.add(
       entry.path
@@ -143,6 +146,20 @@ function takenIn(target: ImportTarget): Set<string> {
   }
 
   return taken
+}
+
+async function filesIn(root: string): Promise<Entry[]> {
+  const options = workspace.treeOptions
+  const tree = await invoke<Entry>('read_tree', { root, options }).catch(() => null)
+  const files: Entry[] = []
+  const walk = (entry: Entry) => {
+    for (const child of entry.children) {
+      if (child.is_dir) walk(child)
+      else files.push(child)
+    }
+  }
+  if (tree) walk(tree)
+  return files
 }
 
 export function restamped(
