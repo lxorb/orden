@@ -36,6 +36,13 @@ describe('noteLinks', () => {
     expect(noteLinks(index, ['Board.canvas'], wikilink)).toBe('[[Board.canvas]]')
   })
 
+  test('a file two folders share a name in is linked by enough of the path to reach it', () => {
+    const files = { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] }
+    expect(noteLinks(files, ['a/b/pic.png'], wikilink)).toBe('![[a/b/pic.png]]')
+    expect(noteLinks(files, ['b/pic.png'], wikilink)).toBe('![[b/pic.png]]')
+    expect(noteLinks(files, ['c/d.png'], wikilink)).toBe('![[d.png]]')
+  })
+
   test('a note not written yet is linked by the name that will find it', () => {
     expect(noteLinks(index, ['Trips/Trips.md'], wikilink)).toBe('[[Trips]]')
   })
