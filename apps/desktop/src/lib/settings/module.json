@@ -38,13 +38,13 @@
     "double-tap",
     "tab-cycle",
     "spelling",
-    "gates"
+    "gates",
+    "panes"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/connectors.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/kept-scroll.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/kind-words.ts",
     "apps/desktop/src/lib/new-kinds.ts",

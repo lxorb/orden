@@ -1,18 +1,22 @@
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../link-index/src/api', () => ({
-  links: {
-    version: 1,
-    index: (path: string | null) => ({
-      notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [] }],
-      path,
-      read: () => Promise.resolve(null),
-    }),
-    targetOf: (_from: string | null, link: { target: string }) =>
-      link.target.toLowerCase() === 'plan' ? 'Plan.md' : null,
-    fileFor: (name: string) => (name === 'kept.png' ? '/space/pictures/kept.png' : null),
-  },
-}))
+vi.mock('../../link-index/src/api', async () => {
+  const { assetUrl, imageUrl } = await import('../../platform/src/api')
+  return {
+    links: {
+      version: 1,
+      index: (path: string | null) => ({
+        notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [] }],
+        path,
+        read: () => Promise.resolve(null),
+      }),
+      targetOf: (_from: string | null, link: { target: string }) =>
+        link.target.toLowerCase() === 'plan' ? 'Plan.md' : null,
+    },
+    notePicture: (src: string, notePath: string | null, source: string) =>
+      src === 'kept.png' ? assetUrl('/space/pictures/kept.png') : imageUrl(src, notePath, source),
+  }
+})
 
 const { cardHtml, fileShown, fileSource, fileUrl, keptByAccount, pageOfFile } =
   await import('./render')

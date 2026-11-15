@@ -23,7 +23,6 @@
   import { pickedLink } from '../../composer'
   import { EditorStates } from './editor-states'
   import { firstScreen } from '../../first-screen/src/api'
-  import { keptCoverOf, setCoverPosition } from '../../kept-cover'
   import { mark } from '../../platform/src/api'
   import { modes } from '../../modes/src/api'
   import {
@@ -35,7 +34,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { pastesMarkup, trustsHtmlIn } from '../../sharing/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { keptCoverOf, setCoverPosition, workspace } from '../../workspace/src/api'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
   let {

@@ -2,10 +2,8 @@ import { renderMarkdown, type Wikilink } from '@orden/markdown'
 import { escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
-import { keptCoverOf } from '../../kept-cover'
-import { links } from '../../link-index/src/api'
-import { notePicture } from '../../note-images'
-import { queryRowsHtml } from '../../link-index/src/api'
+import { keptCoverOf } from '../../workspace/src/api'
+import { links, notePicture, queryRowsHtml } from '../../link-index/src/api'
 import type { Scheme } from '../../theme/src/api'
 
 export interface Note {

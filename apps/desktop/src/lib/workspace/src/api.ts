@@ -12,6 +12,7 @@ export {
 } from './workspace.svelte'
 export { mayCarry, pointersMoving, spaceHolding } from './chat-carry'
 export { hiddenTabs } from './hidden-tabs.svelte'
+export { keptCoverOf, setCoverPosition } from './kept-cover'
 export { type HoldsNotes, type Keeping, noteText, replaceInNotes, writeNoteText } from './note-text'
 export { isHiddenTabs, ownerOf } from './sets'
 export { movingOf, spacesFor } from './space-move'
