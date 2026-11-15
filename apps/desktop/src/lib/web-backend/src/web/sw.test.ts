@@ -150,10 +150,9 @@ describe('the asset worker', () => {
     ])
   })
 
-  test('answers for the asset route and for nothing else', async () => {
+  test("answers for the asset route, and leaves what is neither a space's file nor the app to the network", async () => {
     expect(await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`)).not.toBeNull()
-    expect(await worker.fetch(`${ORIGIN}/assets/index-a1b2.js`)).toBeNull()
-    expect(await worker.fetch(`${ORIGIN}/`)).toBeNull()
+    expect(await worker.fetch(`${ORIGIN}/icon-256.png`)).toBeNull()
     expect(await worker.fetch('https://example.com/asset/Work/pic.png')).toBeNull()
   })
 

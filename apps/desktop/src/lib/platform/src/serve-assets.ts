@@ -7,7 +7,22 @@ export function serveAssets(): void {
 
   navigator.serviceWorker.addEventListener('controllerchange', drawAgain)
 
-  void navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => undefined)
+  void navigator.serviceWorker
+    .register('/sw.js', { scope: '/' })
+    .then(() => navigator.serviceWorker.ready)
+    .then((held) => held.active?.postMessage({ ordenKeep: codeLoaded() }))
+    .catch(() => undefined)
+}
+
+const BUILT = '/assets/'
+
+function codeLoaded(): string[] {
+  const loaded: string[] = []
+  for (const one of performance.getEntriesByType('resource')) {
+    const url = new URL(one.name)
+    if (url.origin === location.origin && url.pathname.startsWith(BUILT)) loaded.push(url.pathname)
+  }
+  return loaded
 }
 
 function drawAgain(): void {
