@@ -1,10 +1,12 @@
 import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import type { AccountSettings } from '../../accounts/src/api'
+import { AccountOwed } from './account-owed'
 import { BY_ID, runnable } from './registry'
 import { forget, isString, keepJson, stored } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:toolbar'
+const OWED_KEY = 'orden:toolbar-owed'
 
 const MOST_BUTTONS = 24
 
@@ -132,8 +134,14 @@ class Toolbar {
     this.share()
   }
 
+  private readonly owed = new AccountOwed(OWED_KEY)
+
   receive(remote: AccountSettings) {
     const theirs = remote.toolbar
+    if (this.owed.standing) {
+      this.share()
+      return
+    }
     if (theirs === undefined) {
       if (this.chosen) this.share()
       return
@@ -148,10 +156,7 @@ class Toolbar {
   }
 
   private share() {
-    const token = account.accountToken
-    if (!token) return
-
-    void api.saveSettings(token, { toolbar: this.chosen }).catch(() => undefined)
+    this.owed.send({ toolbar: this.chosen })
   }
 }
 

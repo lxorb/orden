@@ -1,0 +1,128 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+const world = vi.hoisted(() => ({
+  saved: [] as unknown[],
+  failing: false,
+  user: null as { id: string } | null,
+}))
+
+vi.mock('../../accounts/src/api', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/api')>()
+  return {
+    ...original,
+    account: {
+      get user() {
+        return world.user
+      },
+      get accountToken() {
+        return world.user ? 'token' : null
+      },
+      forgetWithSession: () => undefined,
+    },
+    api: {
+      saveSettings: (_token: string, patch: unknown) => {
+        world.saved.push(patch)
+        return world.failing
+          ? Promise.reject(new Error('offline'))
+          : Promise.resolve({ settings: {} })
+      },
+    },
+  }
+})
+
+function memoryStorage(): Storage {
+  const store = new Map<string, string>()
+  return {
+    get length() {
+      return store.size
+    },
+    key: (index) => [...store.keys()][index] ?? null,
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => void store.set(key, value),
+    removeItem: (key) => void store.delete(key),
+    clear: () => store.clear(),
+  }
+}
+
+vi.stubGlobal('localStorage', memoryStorage())
+
+async function relaunched() {
+  vi.resetModules()
+  const [{ shortcuts }, { toolbar }] = await Promise.all([
+    import('./shortcuts.svelte'),
+    import('./toolbar.svelte'),
+  ])
+  shortcuts.restore()
+  toolbar.restore()
+  return { shortcuts, toolbar }
+}
+
+const settled = () => new Promise((done) => setTimeout(done, 0))
+
+beforeEach(() => {
+  localStorage.clear()
+  world.saved = []
+  world.failing = false
+  world.user = { id: 'u1' }
+})
+
+describe('a shortcut changed while the account could not hear it', () => {
+  test('outlives a relaunch, wins over the account and is sent again', async () => {
+    const first = await relaunched()
+    world.failing = true
+    first.shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+
+    world.failing = false
+    world.saved = []
+    const { shortcuts } = await relaunched()
+    shortcuts.receive({ shortcuts: {} })
+    await settled()
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+    expect(world.saved.at(-1)).toMatchObject({ shortcuts: { 'format.bold': 'Mod-Alt-j' } })
+
+    shortcuts.receive({ shortcuts: { 'format.italic': 'Mod-Alt-k' } })
+    expect(shortcuts.keyFor('format.italic')).toBe('Mod-Alt-k')
+  })
+
+  test('changed while the answer was on its way is not undone by it', async () => {
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+    shortcuts.receive({ shortcuts: {} })
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+  })
+
+  test('is not pressed on another account', async () => {
+    const first = await relaunched()
+    world.failing = true
+    first.shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+
+    world.failing = false
+    world.user = { id: 'u2' }
+    const { shortcuts } = await relaunched()
+    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+  })
+})
+
+describe('a toolbar changed while the account could not hear it', () => {
+  test('outlives a relaunch, wins over the account and is sent again', async () => {
+    const first = await relaunched()
+    world.failing = true
+    first.toolbar.add('paragraph.task-list')
+    await settled()
+
+    world.failing = false
+    world.saved = []
+    const { toolbar } = await relaunched()
+    toolbar.receive({ toolbar: null })
+    await settled()
+
+    expect(toolbar.ids.at(-1)).toBe('paragraph.task-list')
+    expect(world.saved.at(-1)).toMatchObject({
+      toolbar: expect.arrayContaining(['paragraph.task-list']),
+    })
+  })
+})

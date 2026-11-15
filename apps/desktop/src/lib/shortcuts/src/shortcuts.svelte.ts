@@ -1,5 +1,6 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import type { AccountSettings } from '../../accounts/src/api'
+import { AccountOwed } from './account-owed'
 import {
   currentPlatform,
   type Keystroke,
@@ -40,6 +41,7 @@ const STORAGE_KEY = 'orden:shortcuts'
 
 const WRITE_CHORD = 'Mod-s'
 const PRESET_KEY = 'orden:preset'
+const OWED_KEY = 'orden:shortcuts-owed'
 
 const MOST_OVERRIDES = 200
 
@@ -209,8 +211,14 @@ class Shortcuts {
     return this.overrides
   }
 
+  private readonly owed = new AccountOwed(OWED_KEY)
+
   receive(remote: AccountSettings) {
     const theirs = remote.shortcuts
+    if (this.owed.standing) {
+      this.share()
+      return
+    }
     if (!theirs || typeof theirs !== 'object') {
       if (Object.keys(this.overrides).length || this.preset !== 'default') this.share()
       return
@@ -230,12 +238,7 @@ class Shortcuts {
   }
 
   private share() {
-    const token = account.accountToken
-    if (!token) return
-
-    void api
-      .saveSettings(token, { shortcuts: this.overrides, preset: this.preset })
-      .catch(() => undefined)
+    this.owed.send({ shortcuts: this.overrides, preset: this.preset })
   }
 
   pressed(id: string, event: Keystroke): boolean {
