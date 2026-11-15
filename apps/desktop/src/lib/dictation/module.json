@@ -16,9 +16,5 @@
     "workspace",
     "commands"
   ],
-  "pending": [
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/reloading.svelte.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/assets.ts", "apps/desktop/src/lib/views.svelte.ts"]
 }

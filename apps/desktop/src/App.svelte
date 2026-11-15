@@ -3,19 +3,20 @@
   import { onDestroy, tick, untrack } from 'svelte'
   import { moveSection } from './lib/sections'
   import {
-    pageHeight,
-    scrollerOf,
-    showField,
-    viewport,
+    busy,
     closeOnBack,
     currentPlatform,
     menu,
-    textFieldOf,
     overlays,
-    busy,
-    said,
-    prompt,
+    pageHeight,
     paneCorners,
+    prompt,
+    reloading,
+    said,
+    scrollerOf,
+    showField,
+    textFieldOf,
+    viewport,
   } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
@@ -40,7 +41,6 @@
   import { paintCodePalette } from './lib/highlight/src/api'
   import { linkScroll, type ScrollEnd, systemMenu } from './lib/ui-kit/src/api'
   import { recovery } from './lib/history/src/api'
-  import { reloading } from './lib/reloading.svelte'
   import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
@@ -549,7 +549,9 @@
     event.preventDefault()
     event.stopPropagation()
     if (!__EVEN_PLUGIN__) {
-      void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
+      void import('./lib/context-menu/src/api')
+        .then((one) => one.loadFieldMenu())
+        .then((one) => one.showFieldMenu(event, field))
     }
   }
 

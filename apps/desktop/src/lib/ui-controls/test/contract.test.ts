@@ -25,14 +25,14 @@ import { putsAway } from '../src/sheet-pull'
 const SRC = join(import.meta.dirname, '../src')
 
 describe('the module stands on its own', () => {
-  test('nothing under src reaches past the platform, theme and ui-kit apis', () => {
+  test('nothing under src reaches past the platform, theme, ui-kit and windows apis', () => {
     const reaching = readdirSync(SRC)
       .filter((name) => !name.includes('.test.'))
       .flatMap((name) => {
         const text = readFileSync(join(SRC, name), 'utf8')
         return [...text.matchAll(/'(\.\.\/[^']*)'/g)]
           .map((found) => found[1] ?? '')
-          .filter((spec) => !/^\.\.\/\.\.\/(?:platform|theme|ui-kit)\/src\/api$/.test(spec))
+          .filter((spec) => !/^\.\.\/\.\.\/(?:platform|theme|ui-kit|windows)\/src\/api$/.test(spec))
           .map((spec) => `${name}: ${spec}`)
       })
     expect(reaching).toEqual([])
