@@ -108,7 +108,7 @@ struct Facts<'a> {
     body: &'a str,
     starts: OnceCell<Vec<usize>>,
     tags: Vec<String>,
-    front: HashMap<String, String>,
+    front: HashMap<String, Vec<String>>,
     units: [Vec<Region>; UNITS],
     budget: Cell<usize>,
 }
@@ -319,7 +319,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
     out
 }
 
-fn front_matter(body: &str) -> HashMap<String, String> {
+fn front_matter(body: &str) -> HashMap<String, Vec<String>> {
     let mut out = HashMap::new();
     let Some(block) = front_matter_block(body) else {
         return out;
@@ -330,14 +330,16 @@ fn front_matter(body: &str) -> HashMap<String, String> {
             continue;
         }
 
-        let Some((name, value)) = line.split_once(':') else {
+        let Some((name, _)) = line.split_once(':') else {
             continue;
         };
-        if name.trim().is_empty() {
+        let name = name.trim();
+        if name.is_empty() {
             continue;
         }
 
-        out.insert(name.trim().to_lowercase(), value.trim().to_string());
+        out.entry(name.to_lowercase())
+            .or_insert_with(|| crate::front_matter::list(body, &block, name));
     }
 
     out
@@ -616,15 +618,18 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             let held = facts.front.get(name);
 
             if matches!(compare, Compare::Null) {
-                return held.is_none_or(|one| one.trim().is_empty()).then(Vec::new);
+                return held
+                    .is_none_or(|all| all.iter().all(|one| one.trim().is_empty()))
+                    .then(Vec::new);
             }
 
             let held = held?;
             match value {
                 None => Some(Vec::new()),
-                Some(wanted) => {
-                    held_against(held, wanted, *compare, upto.as_deref()).then(Vec::new)
-                }
+                Some(wanted) => held
+                    .iter()
+                    .any(|one| held_against(one, wanted, *compare, upto.as_deref()))
+                    .then(Vec::new),
             }
         }
 
@@ -1105,6 +1110,32 @@ mod tests {
         assert!(!answers(&pair("status", "open"), NOTE));
         assert!(!answers(&key("later"), NOTE));
         assert!(!answers(&key("status"), "status: done\n"));
+    }
+
+    #[test]
+    fn front_matter_answers_for_every_member_of_a_list_and_a_value_however_written() {
+        let pair = |one: &str, said: &str, compare: &str| {
+            format!(
+                r#"{{"kind":"property","name":"{one}","value":"{said}","compare":"{compare}"}}"#
+            )
+        };
+        let missing = |one: &str| {
+            format!(r#"{{"kind":"property","name":"{one}","value":null,"compare":"null"}}"#)
+        };
+
+        let listed = "---\nauthors:\n  - Herbert\n  - Ursula\ntags: [a, b] # old\n---\n\nWords.\n";
+        assert!(answers(&pair("authors", "herbert", "has"), listed));
+        assert!(answers(&pair("authors", "Ursula", "is"), listed));
+        assert!(!answers(&pair("authors", "Frank", "has"), listed));
+        assert!(answers(&pair("tags", "a", "is"), listed));
+        assert!(answers(&pair("tags", "b", "is"), listed));
+        assert!(!answers(&pair("tags", "old", "has"), listed));
+        assert!(!answers(&missing("authors"), listed));
+
+        let quoted = "---\nstatus: \"done\"\nnext: done # soon\nempty:\n---\n";
+        assert!(answers(&pair("status", "done", "is"), quoted));
+        assert!(answers(&pair("next", "done", "is"), quoted));
+        assert!(answers(&missing("empty"), quoted));
     }
 
     #[test]
