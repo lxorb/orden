@@ -10,7 +10,9 @@ import {
   insertPageBreak,
   calloutSign,
   insertTableToEdit,
+  editableCellAt,
   pasteHere,
+  pasteIntoCell,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -233,8 +235,26 @@ function rowsFor(place: CommandPlace, on: object | undefined): MenuEntry[] {
   return commandRows(place, on).map(({ label, run }) => ({ label, run }))
 }
 
-function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
-  const selected = !!view && !view.state.selection.main.empty
+function pasteInto(view: EditorView, cell: HTMLElement | null): void {
+  if (!cell) {
+    pasteHere(view)
+    view.focus()
+    return
+  }
+  void navigator.clipboard
+    .readText()
+    .then((text) => pasteIntoCell(cell, text))
+    .catch(() => undefined)
+}
+
+function editorMenu(
+  view: EditorView | undefined,
+  block: MenuEntry[],
+  cell: HTMLElement | null = null,
+): MenuEntry[] {
+  const selected = cell
+    ? !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
+    : !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
 
@@ -256,9 +276,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
       hint: shortcuts.hint('fixed.paste'),
       disabled: locked,
       run: () => {
-        if (!view) return
-        pasteHere(view)
-        view.focus()
+        if (view) pasteInto(view, cell)
       },
     },
   ]
@@ -431,7 +449,11 @@ export function showEditorMenu(
     [
       ...pictureEntries(view, event),
       ...linkEntries(view, event, path),
-      ...editorMenu(view, blockEntries(view, at, path)),
+      ...editorMenu(
+        view,
+        blockEntries(view, at, path),
+        view ? editableCellAt(view, event.target) : null,
+      ),
       ...recordingEntries(view, at),
     ],
     { near: true, until: unlocks.held },

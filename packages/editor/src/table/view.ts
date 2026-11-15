@@ -47,6 +47,7 @@ import {
   sortedColumn,
 } from './edits'
 import { inlineShortcut, runInCell } from './shortcuts'
+import { PASTE_TEXT } from './menu-paste'
 
 export interface TableSource {
   source: string
@@ -576,6 +577,11 @@ export class TableView {
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
+    cell.addEventListener(PASTE_TEXT, (event) => {
+      if (event instanceof CustomEvent && typeof event.detail === 'string') {
+        this.typeInCell(event.detail, cell, at)
+      }
+    })
 
     return cell
   }
@@ -731,7 +737,12 @@ export class TableView {
 
   private pasteInCell(event: ClipboardEvent, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
-    const text = (event.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n/g, ' ')
+    this.typeInCell(event.clipboardData?.getData('text/plain') ?? '', cell, at)
+  }
+
+  private typeInCell(said: string, cell: HTMLElement, at: CellAddress) {
+    if (this.editor.state.readOnly) return
+    const text = said.replace(/\r?\n/g, ' ')
     if (!text) return
 
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- no replacement reaches the browser's own undo stack
