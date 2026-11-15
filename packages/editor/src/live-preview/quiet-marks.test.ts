@@ -7,8 +7,8 @@ import { quietMarks } from './reveal'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-function concealed(doc: string, cursor: number, quiet: boolean): string[] {
-  const state = parsed(
+function written(doc: string, cursor: number, quiet: boolean) {
+  return parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
@@ -18,10 +18,26 @@ function concealed(doc: string, cursor: number, quiet: boolean): string[] {
       ],
     }),
   )
+}
+
+function concealed(doc: string, cursor: number, quiet: boolean): string[] {
   const out: string[] = []
-  buildDecorations(state).atomic.between(0, doc.length, (from, to) => {
+  buildDecorations(written(doc, cursor, quiet)).atomic.between(0, doc.length, (from, to) => {
     out.push(doc.slice(from, to))
   })
+  return out
+}
+
+function lineClasses(doc: string, cursor: number, quiet: boolean): string[] {
+  const out: string[] = []
+  buildDecorations(written(doc, cursor, quiet)).decorations.between(
+    0,
+    doc.length,
+    (_from, _to, value) => {
+      const name: unknown = value.spec.class
+      if (typeof name === 'string') out.push(...name.split(' '))
+    },
+  )
   return out
 }
 
@@ -47,5 +63,22 @@ describe('quiet marks', () => {
   test('a link still opens its target under the caret', () => {
     const doc = '[label](https://example.com)'
     expect(concealed(doc, 3, true)).toEqual([])
+  })
+
+  test('a # with nothing after it is no heading yet, so it does not grow and vanish while typed (#2089)', () => {
+    for (const quiet of [true, false]) {
+      for (const doc of ['#', '###', '######', '- ##', '> #']) {
+        const level = doc.replace(/[^#]/g, '').length
+        expect(concealed(doc, doc.length, quiet), doc).not.toContain('#'.repeat(level))
+        expect(lineClasses(doc, doc.length, quiet), doc).not.toContain(`orden-h${level}`)
+      }
+    }
+  })
+
+  test('a # becomes a heading once a space follows it (#2089)', () => {
+    expect(lineClasses('# ', 2, true)).toContain('orden-h1')
+    expect(concealed('# ', 2, true)).toEqual(['# '])
+    expect(lineClasses('## T', 4, true)).toContain('orden-h2')
+    expect(lineClasses('- ## ', 5, true)).toContain('orden-h2')
   })
 })

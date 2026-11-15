@@ -100,6 +100,7 @@ class Decorator {
 
   private visit(node: SyntaxNode): boolean {
     const name = node.name
+    if (name in HEADING_LEVEL && this.markAlone(node)) return false
 
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
@@ -610,6 +611,11 @@ class Decorator {
       if (number < first || number > last) continue
       this.addLineAttrs(line.from, { 'data-code-number': String(number - first + 1) })
     }
+  }
+
+  private markAlone(node: SyntaxNode): boolean {
+    const doc = this.state.doc
+    return /^ {0,3}#{1,6}$/.test(doc.sliceString(node.from, doc.lineAt(node.from).to))
   }
 
   private markLines(
