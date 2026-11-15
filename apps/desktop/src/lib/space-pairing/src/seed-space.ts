@@ -1,4 +1,4 @@
-import { isUntouchedAgents } from './agents-seed'
+import { isUntouchedAgents } from '../../agents-seed/src/api'
 import { isUntouchedWelcome } from '@orden/contracts'
 
 export interface Listed {

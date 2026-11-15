@@ -229,7 +229,8 @@ import {
   trustsHtmlIn,
   trustAgain,
 } from './sharing.svelte'
-import { pairSpaces, type Pairing } from '../../space-pairing'
+import type { SyncPairing } from '@orden/contracts'
+import { pairSpaces } from '../../space-pairing/src/api'
 import type { RemoteSpace, SharedItem } from '../../accounts/src/routes'
 import type { NoteDoc } from '../../documents/src/api'
 import type { FileOp } from '../../file-ops/src/api'
@@ -552,7 +553,7 @@ describe('what may be done before the account has listed its spaces', () => {
     ]
     await account.loadSpaces()
 
-    const pairing: Pairing = {
+    const pairing: SyncPairing = {
       pairs: () =>
         Object.entries(world.mirrors).map(([root, spaceId]) => ({ root, spaceId, shared: false })),
       pair: (root, spaceId) => {

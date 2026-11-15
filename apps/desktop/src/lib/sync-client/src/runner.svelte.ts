@@ -12,11 +12,15 @@ import {
   type Said,
   windows,
 } from '../../platform/src/api'
-import { type Pairing, pairSpaces } from '../../space-pairing'
 import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import { isRecord } from './shape'
-import { type SyncFileDoer, type SyncFileOp, whenPortProvided } from '@orden/contracts'
+import {
+  type SyncFileDoer,
+  type SyncFileOp,
+  type SyncPairing,
+  whenPortProvided,
+} from '@orden/contracts'
 import { owesAtTheEnd, owesLast, writing } from '../../parting/src/api'
 import { keptAway } from '../../away/src/api'
 import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
@@ -32,6 +36,7 @@ import {
   joinPath,
   keepJson,
   remote,
+  spacePairing,
   stored,
   waited,
   workspace,
@@ -937,7 +942,7 @@ class Runner {
     this.reconciledAt = Date.now()
     const core = engine.core
     const changes: Parameters<typeof core.commit>[0][number][] = []
-    const pairing: Pairing = {
+    const pairing: SyncPairing = {
       pairs: () =>
         [...core.spaces.values()].map((space) => ({
           root: space.row.root,
@@ -971,7 +976,7 @@ class Runner {
         changes.push(...core.addSpace(one.spaceId, one.root, one.role))
       }
     }
-    await pairSpaces(token, pairing)
+    await spacePairing().pairSpaces(token, pairing)
     if (account().token !== token) return
     await core.commit(changes)
     this.watched?.follow()
@@ -1212,7 +1217,7 @@ class Runner {
 
   private async named(spaceId: string, root: string) {
     const token = account().token
-    const { holder, sendName } = await import('../../space-owed')
+    const { holder, sendName } = await import('../../space-owed/src/api')
     const accountId = holder()
     const listed = account().spaces.find((one) => one.id === spaceId)
     const name = workspace().spaces.find((one) => samePath(one.root, root))?.name ?? nameOf(root)

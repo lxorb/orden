@@ -292,6 +292,8 @@ export type {
   SyncNote,
   SyncStorePort,
   SyncOpenNote,
+  SyncPairing,
+  SyncPairingPort,
   SyncPorts,
   SyncPositioned,
   SyncRemoteNote,

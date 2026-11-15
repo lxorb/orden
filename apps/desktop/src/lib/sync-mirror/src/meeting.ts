@@ -1,6 +1,6 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { inForeignCopy } from '@orden/sync-core'
-import { isUntouchedAgents } from '../../agents-seed'
+import { isUntouchedAgents } from '../../agents-seed/src/api'
 import { api } from '../../accounts/src/api'
 import { sha256, relativeTo, invoke } from '../../platform/src/api'
 import { type Entry, isUntouchedWelcome } from '@orden/contracts'

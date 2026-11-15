@@ -1,21 +1,24 @@
-import { account, api } from './accounts/src/api'
-import { leaveSpaces, leftByAnother } from './left-spaces/src/api'
-import { forgetSeedSpace, seedSpaceRoot } from './seeded/src/api'
+import type { SyncPairing } from '@orden/contracts'
+import { account, api } from '../../accounts/src/api'
+import { leaveSpaces, leftByAnother } from '../../left-spaces/src/api'
+import { forgetSeedSpace, seedSpaceRoot } from '../../seeded/src/api'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
-import { samePath, invoke, isNative } from './platform/src/api'
-import { workspace } from './workspace/src/api'
+import { samePath, invoke, isNative } from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
+import {
+  endsOwed,
+  holder,
+  iconOwed,
+  orderSent,
+  sendIcon,
+  settleEnds,
+  settleNames,
+} from '../../space-owed/src/api'
 
-export interface Pairing {
-  pairs(): { root: string; spaceId: string; shared: boolean }[]
-  pair(root: string, spaceId: string, shared: boolean): void
-  unpair(root: string): void
-  share(root: string, shared: boolean): void
-}
+const inTheAir = new WeakMap<SyncPairing, Promise<void>>()
 
-const inTheAir = new WeakMap<Pairing, Promise<void>>()
-
-export function pairSpaces(token: string, pairing: Pairing): Promise<void> {
+export function pairSpaces(token: string, pairing: SyncPairing): Promise<void> {
   const running = inTheAir.get(pairing)
   if (running) return running
   const now = pairOnce(token, pairing)
@@ -26,7 +29,7 @@ export function pairSpaces(token: string, pairing: Pairing): Promise<void> {
 }
 
 async function rolesPaired(): Promise<void> {
-  ;(await import('./sharing/src/api')).rememberRoles()
+  ;(await import('../../sharing/src/api')).rememberRoles()
 }
 
 async function untouchedDefault(): Promise<string | null> {
@@ -41,23 +44,7 @@ async function untouchedDefault(): Promise<string | null> {
   )
 }
 
-async function owedBy(): Promise<string | null> {
-  const { holder } = await import('./space-owed')
-  return holder()
-}
-
-async function orderOwed(token: string, who: string): Promise<boolean> {
-  const { orderSent } = await import('./space-owed')
-  return await orderSent(token, who)
-}
-
-async function endsNow(who: string): Promise<Set<string>> {
-  const { endsOwed } = await import('./space-owed')
-  return endsOwed(who)
-}
-
 async function endsSettled(token: string, who: string): Promise<Set<string>> {
-  const { endsOwed, settleEnds, settleNames } = await import('./space-owed')
   await settleNames(token, who)
   const owed = endsOwed(who)
   if (owed.size) await settleEnds(token, who)
@@ -65,13 +52,12 @@ async function endsSettled(token: string, who: string): Promise<Set<string>> {
 }
 
 async function iconSent(token: string, who: string, spaceId: string): Promise<boolean> {
-  const { iconOwed, sendIcon } = await import('./space-owed')
   const owed = iconOwed(who, spaceId)
   if (owed) await sendIcon(token, who, spaceId, owed)
   return owed !== null
 }
 
-async function pairOnce(token: string, pairing: Pairing): Promise<void> {
+async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
   if (!workspace.restored) await workspace.loadSpaces()
   const seeded = seedSpaceRoot()
   const who = account.user?.id ?? null
@@ -80,7 +66,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     await workspace.loadSpaces()
   }
   const mirrors = pairing.pairs()
-  const owes = await owedBy()
+  const owes = holder()
   const ending = owes === null ? new Set<string>() : await endsSettled(token, owes)
   const kept = new Set(mirrors.map((one) => one.spaceId))
   const plan = planSpaces({
@@ -130,7 +116,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
 
   const paired = () => pairing.pairs()
   for (const space of plan.adopt) {
-    if (owes !== null && (await endsNow(owes)).has(space.id)) continue
+    if (owes !== null && endsOwed(owes).has(space.id)) continue
     const taken =
       shared(space.id) ||
       workspace.spaces.some(
@@ -181,13 +167,13 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
 
   if (accountId !== null && !__EVEN_PLUGIN__) {
     const pairs = paired()
-    void import('./protect/src/api').then(
+    void import('../../protect/src/api').then(
       (one) => one.pulled(token, accountId, pairs),
       () => undefined,
     )
   }
 
-  if (owes !== null && (await orderOwed(token, owes))) return
+  if (owes !== null && (await orderSent(token, owes))) return
   const order = paired()
   workspace.applySpaceOrder(
     account.spaces.flatMap((space) => {

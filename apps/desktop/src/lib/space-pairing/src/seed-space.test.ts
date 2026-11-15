@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { AGENTS_SEED } from './agents-seed'
+import { AGENTS_SEED } from '../../agents-seed/src/api'
 import { type Listed, untouchedSeedSpace } from './seed-space'
 import { WELCOME } from '@orden/contracts'
 

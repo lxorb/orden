@@ -12,11 +12,8 @@
     "sync-core",
     "sync-mirror",
     "modes",
-    "launch"
+    "launch",
+    "space-owed"
   ],
-  "pending": [
-    "apps/desktop/src/lib/space-owed.ts",
-    "apps/desktop/src/lib/space-pairing.ts",
-    "apps/desktop/src/lib/sync-ports.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/sync-ports.ts"]
 }

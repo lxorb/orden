@@ -1,8 +1,4 @@
-import { AGENTS_NAME, joinPath } from './platform/src/api'
-import { writeFile } from './file-writes/src/api'
-import { workspace } from './workspace/src/api'
-
-export { AGENTS_NAME }
+import { AGENTS_NAME } from '../../platform/src/api'
 
 export const AGENTS_SEED = `# AGENTS
 
@@ -14,9 +10,4 @@ These are my notes. Write in the language and style they are written in, and ask
 export function isUntouchedAgents(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
   return name === AGENTS_NAME && content === AGENTS_SEED
-}
-
-export async function seedAgents(root: string): Promise<void> {
-  await writeFile(joinPath(root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
-  await workspace.loadTree()
 }

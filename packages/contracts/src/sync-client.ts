@@ -217,6 +217,17 @@ export interface SyncStorePort {
   entryPathOf(root: string, id: string): string | null
 }
 
+export interface SyncPairing {
+  pairs(): { root: string; spaceId: string; shared: boolean }[]
+  pair(root: string, spaceId: string, shared: boolean): void
+  unpair(root: string): void
+  share(root: string, shared: boolean): void
+}
+
+export interface SyncPairingPort {
+  pairSpaces(token: string, pairing: SyncPairing): Promise<void>
+}
+
 export interface SyncPorts {
   readonly 'sync.host': SyncHostPort
   readonly 'sync.storage': SyncStoragePort
@@ -225,4 +236,5 @@ export interface SyncPorts {
   readonly 'sync.api': SyncApiPort
   readonly 'sync.workspace': SyncWorkspacePort
   readonly 'sync.store': SyncStorePort
+  readonly 'sync.pairing': SyncPairingPort
 }

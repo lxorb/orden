@@ -156,3 +156,8 @@ providePort('sync.workspace', {
   reload: (path, text) => workspace.reload(path, text),
   leaveTheWelcomeNote: () => workspace.leaveTheWelcomeNote(),
 })
+
+providePort('sync.pairing', {
+  pairSpaces: async (token, pairing) =>
+    (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
+})
