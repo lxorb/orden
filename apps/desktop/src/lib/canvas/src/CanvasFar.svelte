@@ -4,7 +4,7 @@
   import type { CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
   import type { Box } from '../../plane/src/api'
   import type { Palette } from '../../plane/src/api'
-  import { pixelRatio } from '../../pixel-ratio.svelte'
+  import { pixelRatio } from '../../ui-controls/src/api'
 
   const {
     nodes,

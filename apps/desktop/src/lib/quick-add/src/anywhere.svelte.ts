@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { accelerator } from '../../accelerator'
+import { accelerator } from '../../ui-controls/src/api'
 import { region, heldForLife, log, invoke } from '../../platform/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { quickAdd } from './asked.svelte'

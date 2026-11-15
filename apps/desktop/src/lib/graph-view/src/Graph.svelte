@@ -16,7 +16,7 @@
   } from '../../camera/src/api'
   import { relativeTo, stillness } from '../../platform/src/api'
   import { parseQuery } from '@orden/scan/search/query'
-  import { pixelRatio } from '../../pixel-ratio.svelte'
+  import { pixelRatio } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'
   import { workspace } from '../../workspace.svelte'
   import { MOST_GROUPS } from '../../space-kept/src/api'

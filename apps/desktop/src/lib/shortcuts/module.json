@@ -18,7 +18,6 @@
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/pane-moves.ts",
-    "apps/desktop/src/lib/random-note.ts",
     "apps/desktop/src/lib/refresh.ts",
     "apps/desktop/src/lib/search.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

@@ -25,8 +25,6 @@
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/pixel-ratio.svelte.ts",
-    "apps/desktop/src/lib/png-off.ts",
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/said.svelte.ts",
     "apps/desktop/src/lib/unread.svelte.ts",

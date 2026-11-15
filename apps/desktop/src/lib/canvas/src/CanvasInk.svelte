@@ -5,7 +5,7 @@
   import { type InkMode, inkLayer, wantedInkMode } from './backing'
   import { type Palette, paintLive, type View } from '../../plane/src/api'
   import { InkTiles } from './tiles'
-  import { pixelRatio } from '../../pixel-ratio.svelte'
+  import { pixelRatio } from '../../ui-controls/src/api'
 
   const {
     ink,

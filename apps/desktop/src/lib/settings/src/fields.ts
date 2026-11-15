@@ -1,5 +1,6 @@
 import type { SettingCommon, SettingControl } from '@orden/contracts'
 import type { IconNode } from 'lucide'
+import type { PairField, SwatchOption } from '../../ui-controls/src/api'
 
 export interface PictureSide {
   label: string
@@ -16,24 +17,13 @@ interface Common extends SettingCommon {
   icon?: IconNode
 }
 
-export interface SwatchOption {
-  value: string
-  label: string
-  colour: string
-}
-
-export interface PairField {
-  get(): readonly [string, string]
-  own(): boolean
-  preview(first: string, second: string): void
-  set(first: string, second: string): void
-}
-
 export interface Segment {
   value: string
   label: string
   disabled?: boolean
 }
+
+export type { PairField, SwatchOption }
 
 export type Field = Common &
   (

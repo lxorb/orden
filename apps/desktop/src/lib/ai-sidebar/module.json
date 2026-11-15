@@ -28,7 +28,6 @@
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/feedback-pictures.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/long-paste.ts",
     "apps/desktop/src/lib/markdown-view.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",

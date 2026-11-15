@@ -56,6 +56,10 @@ registerCommand(
   'app.scratchpad',
   async () => (await import('./scratchpad/src/api')).toggleScratchpad,
 )
+registerCommand('app.random-note', async () => {
+  const { runRow } = await import('./commands/src/api')
+  return () => void runRow('random-note')
+})
 registerCommand('app.print', async () => {
   const { runRow } = await import('./commands/src/api')
   return () => void runRow('print')

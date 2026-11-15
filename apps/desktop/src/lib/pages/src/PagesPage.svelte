@@ -19,7 +19,7 @@
     wordsOfRuns,
   } from '../../pdf/src/api'
   import { wordsEnd } from './words-end'
-  import { pixelRatio } from '../../pixel-ratio.svelte'
+  import { pixelRatio } from '../../ui-controls/src/api'
 
   const {
     page,

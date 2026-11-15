@@ -11,13 +11,13 @@
     "scan",
     "theme",
     "ui-kit",
-    "space-kept"
+    "space-kept",
+    "ui-controls"
   ],
   "pending": [
     "apps/desktop/src/lib/Twist.svelte",
     "apps/desktop/src/lib/hints.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/pixel-ratio.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

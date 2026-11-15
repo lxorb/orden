@@ -1,4 +1,4 @@
-import { pngData, pngDrawn } from '../../png-off'
+import { pngData, pngDrawn } from './png-off'
 import { type PaperAt, paperOf, sharpness } from './paper'
 
 export async function svgToPng(

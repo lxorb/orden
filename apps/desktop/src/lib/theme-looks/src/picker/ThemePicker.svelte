@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { ACCENTS, accentSetting, accentTokens } from '../../../theme/src/api'
   import { paintsOver } from '../../../theme/src/api'
-  import Swatches from '../../../Swatches.svelte'
+  import { Swatches } from '../../../ui-controls/src/api'
   import { closeOnBack } from '../../../ui-kit/src/api'
   import { fade, fly, LAYER, scale } from '../../../platform/src/api'
   import { overlays } from '../../../ui-kit/src/api'

@@ -6,7 +6,7 @@
   import { Cross } from '../../ui-kit/src/api'
   import { chooseFiles } from '../../choose-files'
   import { links } from '../../link-index/src/api'
-  import { longPaste } from '../../long-paste'
+  import { longPaste } from '../../ui-controls/src/api'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { overlays } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'

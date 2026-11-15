@@ -8,3 +8,4 @@ export const quitAsked = (): Promise<void> =>
 
 export const answerQuitting = (window: string): Promise<void> =>
   __EVEN_PLUGIN__ ? Promise.resolve() : import('./windows').then((one) => one.answer(window))
+export { hasTray, residency } from './residency.svelte'

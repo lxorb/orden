@@ -19,10 +19,10 @@ const asked = vi.hoisted(() => ({
   dropText: () => undefined,
 }))
 
-vi.mock('./ai-chat/src/api', () => ({ sidebarParts: () => Promise.resolve({ quick: asked }) }))
+vi.mock('../../ai-chat/src/api', () => ({ sidebarParts: () => Promise.resolve({ quick: asked }) }))
 
-const QuickAdd = (await import('./quick-add/src/QuickAdd.svelte')).default
-const QuickQuestion = (await import('./ai-sidebar/src/QuickQuestion.svelte')).default
+const QuickAdd = (await import('../../quick-add/src/QuickAdd.svelte')).default
+const QuickQuestion = (await import('../../ai-sidebar/src/QuickQuestion.svelte')).default
 
 let target: HTMLElement
 let drawn: ReturnType<typeof mount> | undefined

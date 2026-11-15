@@ -3,10 +3,10 @@
   import { closeOnBack } from '../../ui-kit/src/api'
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import Swatches from '../../Swatches.svelte'
+  import { Swatches } from '../../ui-controls/src/api'
   import { account } from '../../accounts/src/api'
   import { arrive, segmented } from '../../ui-kit/src/api'
-  import { Glyph } from '../../ui-controls/src/api'
+  import { accelerator, Glyph, Hint, Switch, Select } from '../../ui-controls/src/api'
   import DefaultBrowser from './DefaultBrowser.svelte'
   import FontPicker from './FontPicker.svelte'
   import {
@@ -15,9 +15,7 @@
     type SettingsPartHost,
     settingsPartsIn,
   } from '@orden/contracts'
-  import { Hint } from '../../ui-controls/src/api'
-  import { Switch } from '../../ui-controls/src/api'
-  import Outward from '../../Outward.svelte'
+  import { Outward } from '../../ui-controls/src/api'
   import Icon from '../../Icon.svelte'
   import { localDate } from '../../platform/src/api'
   import { message } from '../../ui-kit/src/api'
@@ -29,7 +27,6 @@
   import { holdScroll } from '../../kept-scroll'
   import { whileHere } from '../../while-here'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
   import { glassesOn, settings, type Section } from '../../settings.svelte'
   import {
     CATEGORIES,
@@ -43,7 +40,6 @@
   import { showCombination } from '../../ui-kit/src/api'
   import { prompt } from '../../ui-kit/src/api'
   import { Rebind } from './rebind.svelte'
-  import { accelerator } from '../../accelerator'
   import { globalKeys, noteFor } from './global-keys.svelte'
   import { hearTaps } from '../../tapped'
   import { landing } from './landing.svelte'

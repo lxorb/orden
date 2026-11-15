@@ -1,15 +1,15 @@
-import type { Field } from './settings/src/api'
-
 interface Resettable {
   initial?: boolean | number | string
   get(): boolean | number | string
   set(value: boolean | number | string): void
 }
 
-export function resetFields(fields: Iterable<Field>): void {
+type Field = Resettable | { readonly kind: 'value' }
+
+export function resetFields<F extends Field>(fields: Iterable<F>): void {
   for (const field of fields) {
-    if (field.kind === 'value') continue
-    const one: Resettable = field
+    const one: Field = field
+    if (!('set' in one)) continue
     if (one.initial !== undefined && one.get() !== one.initial) one.set(one.initial)
   }
 }

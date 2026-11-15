@@ -1,5 +1,5 @@
-import { isMarkdownPath } from './platform/src/api'
-import { workspace } from './workspace.svelte'
+import { isMarkdownPath } from '../../platform/src/api'
+import { workspace } from '../../workspace.svelte'
 
 export function pickOne<T>(choices: readonly T[], roll: number): T | null {
   if (!choices.length) return null

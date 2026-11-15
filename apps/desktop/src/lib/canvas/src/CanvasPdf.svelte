@@ -10,7 +10,7 @@
     type Part,
   } from '../../pdf/src/api'
   import FileMark from '../../FileMark.svelte'
-  import { pixelRatio } from '../../pixel-ratio.svelte'
+  import { pixelRatio } from '../../ui-controls/src/api'
 
   const {
     file,

@@ -32,7 +32,6 @@
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/open-link.ts",
     "apps/desktop/src/lib/pane-corners.svelte.ts",
-    "apps/desktop/src/lib/pixel-ratio.svelte.ts",
     "apps/desktop/src/lib/trust.ts",
     "apps/desktop/src/lib/workspace.svelte.ts"
   ]
