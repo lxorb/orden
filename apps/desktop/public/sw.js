@@ -218,11 +218,49 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(cameBackTo(tag))
 })
 
+const ANSWERED_WITHIN = 300
+
 async function cameBackTo(tag) {
-  const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-  const client = open[0] ?? (await self.clients.openWindow('/'))
+  const every = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  const open = every.filter(isTheApp)
+  const holder = typeof tag === 'string' ? await holderOf(open, tag) : null
+  const client = holder ?? open[0] ?? (await self.clients.openWindow('/'))
   if (!client) return
 
   await client.focus?.().catch(() => undefined)
   if (typeof tag === 'string') client.postMessage({ ordenNotice: tag })
+}
+
+function isTheApp(client) {
+  try {
+    return !new URL(client.url).pathname.startsWith(ROUTE)
+  } catch {
+    return true
+  }
+}
+
+function holderOf(open, tag) {
+  if (!open.length) return Promise.resolve(null)
+
+  return new Promise((resolve) => {
+    const lines = []
+    let waiting = open.length
+    const answer = (client) => {
+      clearTimeout(timer)
+      for (const line of lines) line.port1.close()
+      resolve(client)
+    }
+    const timer = setTimeout(() => answer(null), ANSWERED_WITHIN)
+
+    for (const client of open) {
+      const line = new MessageChannel()
+      lines.push(line)
+      line.port1.onmessage = (event) => {
+        waiting -= 1
+        if (event.data === true) answer(client)
+        else if (waiting === 0) answer(null)
+      }
+      client.postMessage({ ordenHolds: tag }, [line.port2])
+    }
+  })
 }

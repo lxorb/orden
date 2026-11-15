@@ -91,10 +91,11 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
     hearingTheWorker = true
     workers.addEventListener('message', (event: MessageEvent) => {
       const said: unknown = event.data
-      const pressed =
+      const { ordenNotice: pressed, ordenHolds: asked } =
         typeof said === 'object' && said !== null
-          ? (said as { ordenNotice?: unknown }).ordenNotice
-          : null
+          ? (said as { ordenNotice?: unknown; ordenHolds?: unknown })
+          : {}
+      if (typeof asked === 'string') event.ports[0]?.postMessage(byWorker.has(asked))
       if (typeof pressed === 'string') byWorker.get(pressed)?.opened?.()
     })
     workers.startMessages()
