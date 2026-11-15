@@ -1,6 +1,6 @@
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands, type Command } from '../commands/src/api'
-import { invoke } from '../platform/src/api'
+import { invoke, answerNextDialog } from '../platform/src/api'
 import type { AgentAnswer } from '../automation/src/api'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
@@ -189,7 +189,6 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
 const DIALOG_WITHIN = 15_000
 
 async function withPath(call: Call, found: Command, path: string): Promise<AgentAnswer> {
-  const { answerNextDialog } = await import('../dialog-answer')
   const agent = call.caller.agent
   let settle: (said: AgentAnswer | null) => void = () => undefined
   const judged = new Promise<AgentAnswer | null>((go) => (settle = go))

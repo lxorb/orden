@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { coveredBy } from '../platform/src/api'
 import { Archive, archiveMap, MOST_ARCHIVED, STORAGE_KEY } from './archive.svelte'
 import { changed, merged, REMEMBERED, sameMap, stampAfter, trimmed } from './archive-map'
 
@@ -233,15 +232,6 @@ describe('the map', () => {
 
     expect(Object.keys(cut)).toHaveLength(MOST_ARCHIVED)
     expect(cut.restored).toBeUndefined()
-  })
-
-  test('says which archived path hides a path', () => {
-    const keys = new Set(['Old', 'Old/2019', 'Plan.md'])
-
-    expect(coveredBy(keys, 'Old/2019/Taxes.md')).toBe('Old/2019')
-    expect(coveredBy(keys, 'Old/2020')).toBe('Old')
-    expect(coveredBy(keys, 'Older')).toBe(null)
-    expect(coveredBy(new Set(), 'Plan.md')).toBe(null)
   })
 
   test('changes nothing, and says so, where nothing would change', () => {

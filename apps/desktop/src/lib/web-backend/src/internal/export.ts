@@ -1,6 +1,6 @@
 import type { ItemMeta } from '@orden/sync-core'
 import { invoke as crate } from '../../../crate/src/api'
-import { joinPath } from '../../../platform/src/api'
+import { joinPath, dialogAnswer } from '../../../platform/src/api'
 import { mountOf } from './roots'
 
 interface Listed {
@@ -100,7 +100,7 @@ export async function exportSpace(
   name: string,
   metaOf: MetaOf = () => null,
 ): Promise<string | null> {
-  const given = (await import('../../../dialog-answer')).dialogAnswer()
+  const given = dialogAnswer()
   const picked = given
     ? await given(true)
     : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })

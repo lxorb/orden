@@ -8,6 +8,7 @@ import {
   isMobile,
   isNative,
   joinPath,
+  dialogAnswer,
 } from '../../platform/src/api'
 import { writeBytes, writeFile as writeText } from '../../workspace/write-file'
 import { numbered } from '@orden/markdown/paths'
@@ -37,7 +38,7 @@ export async function chooseTarget(
   extension: string,
   label: string,
 ): Promise<string | null> {
-  const given = (await import('../../dialog-answer')).dialogAnswer()
+  const given = dialogAnswer()
   if (given) {
     const chosen = await given(true)
     if (chosen) downloadStarted(nameOf(chosen))
