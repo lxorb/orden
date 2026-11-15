@@ -167,6 +167,7 @@ export const APP_FOLDERS = [
   'quick-add',
   'quitting',
   'reading',
+  'row-menu',
   'rows',
   'save-place',
   'scratchpad',

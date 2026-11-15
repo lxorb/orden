@@ -1,7 +1,7 @@
 <script lang="ts">
   import { dropOver, Facts, segmented, viewport } from '../../ui-kit/src/api'
 
-  import { droppedFiles, pickFiles } from '../../picking'
+  import { droppedFiles, pickFiles } from '../../ui-controls/src/api'
   import { choices } from '../../modes/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { Sheet } from '../../ui-controls/src/api'

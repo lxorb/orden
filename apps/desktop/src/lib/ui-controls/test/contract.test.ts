@@ -19,6 +19,7 @@ import {
   Select,
   Sheet,
   Switch,
+  tidyPath,
 } from '../src/api'
 import { putsAway } from '../src/sheet-pull'
 
@@ -82,5 +83,12 @@ describe('a sheet pulled down', () => {
     expect(putsAway(119, 800, 0)).toBe(false)
     expect(putsAway(120, 800, 0)).toBe(true)
     expect(putsAway(60, 200, 0)).toBe(true)
+  })
+})
+
+describe('picked paths', () => {
+  test('are tidied to forward slashes with nothing in front', () => {
+    expect(tidyPath('.\\Notes\\a.md')).toBe('Notes/a.md')
+    expect(tidyPath('//a/b')).toBe('a/b')
   })
 })
