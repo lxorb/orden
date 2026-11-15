@@ -32,7 +32,7 @@ const ROW_SCALE = {
 const SURFACES = [
   'lib/sidebar/src/Bookmarks.svelte',
   'lib/canvas/src/CanvasBar.svelte',
-  'lib/ContextMenu.svelte',
+  'lib/context-menu/src/ContextMenu.svelte',
   'lib/reading/src/FindBar.svelte',
   'lib/Links.svelte',
   'lib/SearchPanel.svelte',

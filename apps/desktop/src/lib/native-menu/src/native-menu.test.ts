@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { matchesCombination, readCombination } from './ui-kit/src/keys'
-import { DIVIDER, type MenuGroup, type MenuItem } from './ui-kit/src/menu-item'
+import {
+  DIVIDER,
+  matchesCombination,
+  type MenuGroup,
+  type MenuItem,
+  readCombination,
+} from '../../ui-kit/src/api'
 import {
   changesBetween,
   chordFor,

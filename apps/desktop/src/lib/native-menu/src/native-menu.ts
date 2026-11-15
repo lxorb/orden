@@ -1,4 +1,4 @@
-import { tapOf } from './double-tap/src/api'
+import { tapOf } from '../../double-tap/src/api'
 import {
   matchesCombination,
   PHYSICAL,
@@ -8,8 +8,8 @@ import {
   type MenuGroup,
   type MenuItem,
   type MenuRow,
-} from './ui-kit/src/api'
-import { ran } from './usage/src/api'
+} from '../../ui-kit/src/api'
+import { ran } from '../../usage/src/api'
 
 type SystemItem =
   | 'About'

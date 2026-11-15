@@ -115,7 +115,7 @@ describe('the row a list is made of', () => {
   test('and the lists wear the class rather than a row of their own', () => {
     const lists = [
       'lib/sidebar/src/Bookmarks.svelte',
-      'lib/ContextMenu.svelte',
+      'lib/context-menu/src/ContextMenu.svelte',
       'lib/HitList.svelte',
       'lib/SearchPanel.svelte',
       'lib/settings/src/SettingsPanel.svelte',
@@ -228,10 +228,10 @@ describe('the ring a keyboard leaves', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/ContextMenu.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/canvas/src/Canvas.svelte',
+      'lib/context-menu/src/ContextMenu.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/reading/src/Reading.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',

@@ -315,7 +315,9 @@ export const paletteDoor = latched(() =>
 
 export const paletteWords = $state<{ words: string | null }>({ words: null })
 
-export const contextMenu = latched(() => import('./ContextMenu.svelte'))
+export const contextMenu = latched(() =>
+  import('./context-menu/src/api').then((one) => one.loadContextMenu()),
+)
 
 export const formatBar = latched(() => import('./FormatBar.svelte'))
 
@@ -353,7 +355,7 @@ export const guestCorner = held(() => import('./GuestCorner.svelte'))
 export const menuBarDoor = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no menu bar in the Even Realities plugin'))
-    : import('./native-menu-bar.svelte')
+    : import('./native-menu/src/api').then((one) => one.loadMenuBar())
 
 export const firstSpaceDoor = () =>
   __EVEN_PLUGIN__

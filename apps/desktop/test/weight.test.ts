@@ -294,7 +294,7 @@ describe('what the app evaluates before it draws anything', () => {
       '/lib/theme-looks/src/picker/schemes.ts',
       'the names of the three schemes, which only the pickers say',
     ],
-    ['/lib/ContextMenu.svelte', 'the right-click menu'],
+    ['/lib/context-menu/src/ContextMenu.svelte', 'the right-click menu'],
     ['/lib/FormatBar.svelte', 'the bar over a selection'],
     ['/lib/accounts-ui/src/SignIn.svelte', 'the sign-in sheet'],
     ['/lib/JoinSheet.svelte', 'the join sheet'],
