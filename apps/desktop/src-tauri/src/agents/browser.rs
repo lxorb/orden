@@ -73,7 +73,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
 
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
-        Caller::Reader => super::reader::tabs(app, &Spaces::All(super::grants::Every::All)),
+        Caller::Reader => super::reader::every_tab(app),
         Caller::Agent(grant) if grant.holds(Scope::BrowserReader) => {
             super::reader::tabs(app, &grant.spaces)
         }
@@ -191,10 +191,9 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         return Err(not_found());
     }
     if let Caller::Agent(grant) = caller {
-        if !matches!(grant.spaces, Spaces::All(_))
-            && !super::reader::tabs(app, &grant.spaces)
-                .iter()
-                .any(|one| one.id == tab)
+        if !super::reader::tabs(app, &grant.spaces)
+            .iter()
+            .any(|one| one.id == tab)
         {
             return Err(not_found());
         }

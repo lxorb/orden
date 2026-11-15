@@ -37,6 +37,7 @@ export interface Draft {
   zoom?: number | undefined
   address?: string | undefined
   apart?: string | undefined
+  behind?: string | undefined
   space?: string | undefined
 }
 
@@ -137,7 +138,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value) || isRetiredTab(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, address, space, source, apart, base } = value
+  const { folds, page, zoom, address, space, source, apart, behind, base } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -164,6 +165,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(isString(address) ? { address } : {}),
     ...(path === null && isString(space) ? { space } : {}),
     ...(path === null && isString(apart) ? { apart } : {}),
+    ...(path === null && isString(behind) ? { behind } : {}),
   }
 }
 

@@ -30,6 +30,7 @@ import {
 import { made, madeOrChanged } from './notes'
 import { treeOf } from './tree'
 import { readable } from './guarded'
+import { noteBehind } from '../../protect/src/api'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
 type Shape = (typeof SHAPES)[number]
@@ -58,7 +59,8 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
     if (!tabsInReach(call).includes(reader)) {
       throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
     }
-    if (reader.path !== null) readable(reader.path, reader.shown)
+    const behind = noteBehind(reader)
+    if (behind !== null) readable(behind, reader.shown)
     const known: Page = {
       url: webPages().addressOf(tab) ?? workspace.webAddressOf(reader) ?? '',
       title: reader.shown,

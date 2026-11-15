@@ -412,8 +412,12 @@ export class Protection {
   }
 }
 
-export function noteBehind(tab: { kind: string; path: string | null }): string | null {
-  return tab.kind === 'view' ? null : tab.path
+export function noteBehind(tab: {
+  kind: string
+  path: string | null
+  behind?: string | null
+}): string | null {
+  return tab.kind === 'view' ? null : (tab.path ?? tab.behind ?? null)
 }
 
 export const protection = new Protection()

@@ -316,6 +316,7 @@ class Workspace {
     const pages = webPages()
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
     tab.apart = apartOf(keeper)
+    tab.behind = keeper.path ?? keeper.behind
     tab.note = this.document({
       kind: 'web',
       path: null,
@@ -1009,6 +1010,7 @@ class Workspace {
     tab.zoom = draft.zoom
     tab.address = draft.address
     tab.apart = draft.apart ?? null
+    tab.behind = draft.behind ?? null
     return tab
   }
 
@@ -1167,6 +1169,7 @@ class Workspace {
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
       ...(tab.path === null && tab.apart !== null ? { apart: tab.apart } : {}),
+      ...(tab.path === null && tab.behind !== null ? { behind: tab.behind } : {}),
       ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
     }
   }
@@ -1922,6 +1925,7 @@ class Workspace {
     tab.inPrivate = from?.inPrivate === true
     pages.privately(tab.id, tab.inPrivate)
     tab.apart = from ? apartOf(from) : null
+    tab.behind = from ? (from.path ?? from.behind) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
@@ -3992,6 +3996,12 @@ class Workspace {
   }
 
   copyOf(tab: Tab, paneId: string): Tab {
+    const copy = this.plainCopyOf(tab, paneId)
+    copy.behind = tab.behind
+    return copy
+  }
+
+  private plainCopyOf(tab: Tab, paneId: string): Tab {
     const words =
       !__EVEN_PLUGIN__ && tab.kind === 'terminal' && tab.path === null ? shellWords(tab.doc) : null
     if (!words) return new Tab(tab.note, paneId)

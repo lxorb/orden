@@ -9,7 +9,7 @@ import {
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
 import { seen } from './guarded'
-import { protection } from '../../protect/src/api'
+import { noteBehind, protection } from '../../protect/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../panes/src/api'
@@ -60,7 +60,7 @@ function front(tab: Tab): boolean {
   return workspace.showing(tab.paneId)?.id === tab.id
 }
 
-const shut = (tab: Tab) => tab.path !== null && !protection.agentsMay(tab.path)
+const shut = (tab: Tab) => noteBehind(tab) !== null && !protection.agentsMay(noteBehind(tab))
 
 function addressOf(tab: Tab): string | null {
   if (tab.kind !== 'web' || shut(tab)) return null
