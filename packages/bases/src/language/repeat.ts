@@ -186,18 +186,30 @@ export function repeatAt(
   let end = read.end + (rule.unit === 'month' ? longestAt(words, read.end, g.ofTheMonth) : 0)
   let first: string | undefined
   let time: string | undefined
-  for (let turn = 0; turn < 2; turn++) {
-    const said = time === undefined ? askedTime(words, end, g) : null
-    const from = said?.time ? said.end : end
+  const partSaid = g.partsOfDay[bare(words[end])]
+  if (partSaid) {
+    const later = timeInPart(words, end + 1, g, partSaid)
+    time = later?.time ?? partSaid
+    end = later?.end ?? end + 1
+  }
+  const boundAt = (from: number) => {
     const key = bare(words[from])
     const isStart = g.starting.has(key)
-    if (!isStart && !g.until.has(key)) break
+    if (!isStart && !g.until.has(key)) return null
     const day = dayAt(words, from + 1, g, clock, true)
-    if (!day?.day) break
-    if (said?.time) time = said.time
-    if (isStart) first = day.day
-    else rule.until = day.day
-    end = day.end
+    return day?.day ? { isStart, day: day.day, end: day.end } : null
+  }
+  for (let turn = 0; turn < 2; turn++) {
+    let bound = boundAt(end)
+    if (!bound && time === undefined) {
+      const said = askedTime(words, end, g)
+      bound = said?.time ? boundAt(said.end) : null
+      if (bound) time = said?.time
+    }
+    if (!bound) break
+    if (bound.isStart) first = bound.day
+    else rule.until = bound.day
+    end = bound.end
   }
   return { end, rule, ...(first ? { first } : {}), ...(time ? { time } : {}) }
 }

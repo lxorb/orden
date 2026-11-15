@@ -570,4 +570,21 @@ describe('on a Sunday in November', () => {
   ])('the words of a repeat leave the title: %s', (text, lang, recurrence, due, time) => {
     expect(on(text, lang)).toEqual({ text: 'Pay', recurrence, due, ...(time ? { time } : {}) })
   })
+
+  test.each([
+    ['Team sync every monday morning', 'en', 'Team sync', '09:00'],
+    ['bins every tuesday evening', 'en', 'bins', '19:00'],
+    ['Gym every weekday evening', 'en', 'Gym', '19:00'],
+    ['Müll jeden Dienstag Abend', 'de', 'Müll', '19:00'],
+  ])('a part of the day after a repeating day is its time: %s', (text, lang, title, time) => {
+    expect(on(text, lang)).toMatchObject({ text: title, time })
+    expect(on(text, lang).recurrence).toBeDefined()
+  })
+
+  test('bis and a day after a repeat is still its end', () => {
+    expect(on('Sport jeden Tag bis morgen', 'de')).toMatchObject({
+      text: 'Sport',
+      recurrence: 'every day until November 16, 2026',
+    })
+  })
 })
