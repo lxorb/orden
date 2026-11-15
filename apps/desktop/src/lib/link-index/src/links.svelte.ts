@@ -1191,24 +1191,23 @@ class Links {
       path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
+    const calledAs = (path: string): { notes: NoteRef[]; files: string[] } => {
+      const key = comparable(nameOf(path))
+      const held = calledAfter.get(key) ?? { notes: [], files: [] }
+      calledAfter.set(key, held)
+      return held
+    }
     const reaching =
       (source: string, there: string) =>
       (written: string): boolean => {
-        const key = comparable(nameOf(there))
-        let called = calledAfter.get(key)
-        if (!called) {
-          called = {
-            notes: notes.flatMap((one) => {
-              const path = moving(one.path) ?? one.path
-              return comparable(nameOf(path)) === key ? [{ ...refOf(one), path }] : []
-            }),
-            files: files
-              .map((path) => moving(path) ?? path)
-              .filter((path) => comparable(nameOf(path)) === key),
+        if (!calledAfter.size) {
+          for (const one of notes) {
+            const path = moving(one.path) ?? one.path
+            calledAs(path).notes.push({ ...refOf(one), path })
           }
-          calledAfter.set(key, called)
+          for (const one of files) calledAs(moving(one) ?? one).files.push(moving(one) ?? one)
         }
-        const index: NoteIndex = { ...called, path: source, read: nothing }
+        const index: NoteIndex = { ...calledAs(there), path: source, read: nothing }
         const found = isTabFile(written)
           ? resolveFile(index, written, 'wikilink')
           : (resolveNote(index, written)?.path ?? resolveFile(index, written, 'wikilink'))
@@ -1224,6 +1223,8 @@ class Links {
       const went = moved ? moving(note.path) : null
       const source = went ?? note.path
       const shifted = went !== null && folderOf(went) !== folderOf(note.path)
+      const relooked = (link: { kind: LinkKind }) =>
+        link.kind === 'markdown' ? shifted : went !== null
 
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one note's answers, thrown away after it
       const answered = new Map<string, string | Placed | null>()
@@ -1241,10 +1242,16 @@ class Links {
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
         if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) return null
         const there = moving(found) ?? found
-        if (there === found && !(shifted && link.kind === 'markdown')) return null
+        if (there === found && !relooked(link)) return null
         const kept = nameOf(there) === nameOf(found)
-        if (stillReaches(source, link, found, there, !shifted, kept)) return null
-        return link.kind === 'wikilink' ? { path: there, reaches: reaching(source, there) } : there
+        const reaches = reaching(source, there)
+        const wikilink = link.kind === 'wikilink'
+        if (
+          stillReaches(source, link, found, there, !shifted, kept) &&
+          (!wikilink || reaches(link.target))
+        )
+          return null
+        return wikilink ? { path: there, reaches } : there
       }
 
       const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
@@ -1252,9 +1259,7 @@ class Links {
       const card = rewrite?.cardsMoving(note.path, moving) ?? null
       const worth = card
         ? note.links.some((link) => card(link.target) !== null)
-        : note.links.some(
-            (link) => (named(link) || (shifted && link.kind === 'markdown')) && to(link) !== null,
-          )
+        : note.links.some((link) => (named(link) || relooked(link)) && to(link) !== null)
       if (!worth) continue
 
       const absolute = insideSpace(root, note.path)

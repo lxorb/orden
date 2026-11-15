@@ -1367,6 +1367,48 @@ describe('a note moved to another folder', () => {
     ).toBe(0)
     expect(notes['Goal.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
   })
+
+  test('a bare link to it is respelled when a namesake now ranks nearer', async () => {
+    await space({
+      'Plan.md': '# the plan',
+      'Archive/Plan.md': '# old plan',
+      'Home.md': 'see [[Plan]]',
+    })
+    expect(links.outgoing(at('Home.md'))[0]?.to).toBe('Plan.md')
+    notes['Projects/2026/Plan.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+
+    await links.retarget(at('Plan.md'), at('Projects/2026/Plan.md'), ROOT, () => null, {
+      moved: true,
+    })
+    links.notesMoved(at('Plan.md'), at('Projects/2026/Plan.md'))
+
+    expect(notes['Home.md']).toBe('see [[2026/Plan]]')
+    expect(links.outgoing(at('Home.md'))[0]?.to).toBe('Projects/2026/Plan.md')
+  })
+
+  test('its own bare links are respelled when the folder it lands in holds a namesake', async () => {
+    await space({
+      'Notes/Draft.md': 'see [[Ideas]] and [[Other]]',
+      'Notes/Ideas.md': '# mine',
+      'Archive/Ideas.md': '# old',
+      'Other.md': '# other',
+    })
+    expect(links.outgoing(at('Notes/Draft.md'))[0]?.to).toBe('Notes/Ideas.md')
+    notes['Archive/Draft.md'] = notes['Notes/Draft.md'] ?? ''
+    delete notes['Notes/Draft.md']
+
+    await links.retarget(at('Notes/Draft.md'), at('Archive/Draft.md'), ROOT, () => null, {
+      moved: true,
+    })
+    links.notesMoved(at('Notes/Draft.md'), at('Archive/Draft.md'))
+
+    expect(notes['Archive/Draft.md']).toBe('see [[Notes/Ideas]] and [[Other]]')
+    expect(links.outgoing(at('Archive/Draft.md')).map((one) => one.to)).toEqual([
+      'Notes/Ideas.md',
+      'Other.md',
+    ])
+  })
 })
 
 describe('a folder renamed, in a note that also links into it by other names', () => {
