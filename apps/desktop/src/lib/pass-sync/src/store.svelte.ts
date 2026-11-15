@@ -565,7 +565,9 @@ export class PassStore {
   }
 
   heardSettings(): void {
+    const was = this.settings.relockAfter
     this.settings = { ...readSettings(), lock: this.settings.lock }
+    if (this.settings.relockAfter !== was) this.relock.rearm()
   }
 
   setSetting<K extends keyof PassSettings>(key: K, value: PassSettings[K]): void {
