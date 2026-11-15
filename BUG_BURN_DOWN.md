@@ -1358,3 +1358,10 @@ Not a bug (re-audit 18): hosted `query_base` leaving out task rows matches the a
 | C135 | Medium | A base view filtered, sorted or grouped by `file.hasLink(...)` or a link comparison (`note.parent == link("Sub/Plan")`) kept its old answer after another note was made, moved or removed, until the .base was read again | Fixed `49ec09a3` | The view kept each row's results while its expressions counted as reading only that row, but `hasLink` and `link()` resolve through the other notes | `hasLink` and `link()` count as reading other notes, as `asFile` and `backlinks` already did | `link-context.test.ts` (2 tests, failed before); bases 1069, desktop views 336 passed |
 
 The MCP auditor found no Critical, High or Medium bugs in re-audit 19.
+
+### Re-audit 20 (2026-11-15)
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| C136 | Medium | An embedded base filtered by `this` (`note.project == this.project`, `this.file.links.contains(file)`) kept its old rows after the host note was edited | Fixed `43b33c26` | The per-row cache counted `this` as reading only the row, and its key held only the host's path | `this` counts as reading other notes, so such a view is answered afresh | `link-context.test.ts` "an embedded view filtered by ..." (2 tests, failed before); bases 1076, desktop views 328 passed |
+| C137 | Medium | "Notes linking here" filters (`file.links.contains(this.file)`, `note.parent == this`) kept old rows after a namesake was made beside a linking note | Fixed `43b33c26` | Same cache; link comparisons against `this` resolve through the other notes (sibling of C135) | Same change | `link-context.test.ts` "a view filtered by ... follows a namesake" (2 tests, failed before) |
