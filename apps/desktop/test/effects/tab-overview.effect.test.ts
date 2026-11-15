@@ -13,7 +13,7 @@ const { default: Overview } = await import('../../src/lib/overview/src/Overview.
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands/src/api')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
-const { runTap } = await import('../../src/lib/tapped')
+const { runTap } = await (await import('../../src/lib/shortcuts/src/api')).doubleTaps()
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 

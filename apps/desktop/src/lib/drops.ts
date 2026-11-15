@@ -1,4 +1,5 @@
 import { isFileDrop, listenOver, outsideRows } from './drag-paths'
+import { droppedPaths } from './platform/src/api'
 
 const PDF = /\.pdf$/i
 
@@ -69,6 +70,5 @@ async function openPdfs(paths: readonly string[]) {
 
 async function pathsOf(files: readonly File[]): Promise<readonly string[]> {
   if (!files.length) return []
-  const { droppedPaths } = await import('./dropped-paths')
   return droppedPaths(files)
 }

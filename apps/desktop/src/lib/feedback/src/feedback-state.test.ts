@@ -7,16 +7,16 @@ interface Service {
 }
 
 const api = vi.hoisted((): Service => ({ answer: null, fails: null, sent: [] }))
-vi.mock('./accounts/src/client', () => ({
+vi.mock('../../accounts/src/api', () => ({
+  account: { token: null },
   request: (path: string, options: { body: unknown }) => {
     api.sent.push({ path, body: options.body })
     return api.fails ? Promise.reject(api.fails) : Promise.resolve(api.answer)
   },
 }))
-vi.mock('./accounts/src/account.svelte', () => ({ account: { token: null } }))
 
 const { feedback } = await import('./feedback.svelte')
-const { log } = await import('./platform/src/log')
+const { log } = await import('../../platform/src/api')
 
 beforeEach(() => {
   api.answer = null

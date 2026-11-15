@@ -9,7 +9,8 @@
     "ui-kit",
     "usage",
     "updates",
-    "workspace"
+    "workspace",
+    "feedback"
   ],
-  "pending": ["apps/desktop/src/lib/feedback-log.ts", "apps/desktop/src/lib/surfaces.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/surfaces.svelte.ts"]
 }

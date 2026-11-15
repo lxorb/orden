@@ -14,7 +14,8 @@
     "usage",
     "panes",
     "workspace",
-    "modes"
+    "modes",
+    "double-tap"
   ],
   "pending": [
     "apps/desktop/src/lib/focus.ts",

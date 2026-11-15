@@ -322,7 +322,7 @@ export const joinSheet = latched(() => import('./JoinSheet.svelte'))
 export const feedbackSheet = latched(() => import('./FeedbackSheet.svelte'))
 
 export function showFeedback(): void {
-  void import('./feedback.svelte').then(({ feedback }) => {
+  void import('./feedback/src/api').then(({ feedback }) => {
     feedback.show()
     void feedbackSheet.ask()
   })

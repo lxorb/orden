@@ -1,4 +1,4 @@
-import { WITHIN } from '../../double-tap'
+import { WITHIN } from '../../double-tap/src/api'
 import type { Platform } from '../../ui-kit/src/api'
 import { underAlt } from './letters'
 

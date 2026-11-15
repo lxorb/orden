@@ -1,4 +1,4 @@
-import { tapOf } from './double-tap'
+import { tapOf } from './double-tap/src/api'
 import {
   matchesCombination,
   PHYSICAL,

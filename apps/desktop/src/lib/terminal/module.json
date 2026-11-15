@@ -33,7 +33,6 @@
     "apps/desktop/src/lib/Sweep.svelte",
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/drag-paths.ts",
-    "apps/desktop/src/lib/dropped-paths.ts",
     "apps/desktop/src/lib/icon-choice.svelte.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/menu.svelte.ts",

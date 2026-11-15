@@ -18,7 +18,7 @@ import {
   listenOver,
   outsideRows,
 } from '../../drag-paths'
-import { identifier, localDate, platform } from '../../platform/src/api'
+import { droppedPaths, identifier, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
 import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
 import { tabAsk } from '../../new-tab'
@@ -1313,9 +1313,7 @@ class Session {
     }
     if (this.online || !files.length) return
 
-    void import('../../dropped-paths').then(async ({ droppedPaths }) =>
-      this.speak(await droppedPaths(files)),
-    )
+    void droppedPaths(files).then((paths) => this.speak(paths))
   }
 
   private droppedRows(paths: readonly string[]) {

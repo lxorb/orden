@@ -1,6 +1,6 @@
-import { account, request } from './accounts/src/api'
+import { account, request } from '../../accounts/src/api'
 import { scrubbedLog } from './feedback-log'
-import { recentLog, invoke, isDesktop, isMobile, isNative, platform } from './platform/src/api'
+import { recentLog, invoke, isDesktop, isMobile, isNative, platform } from '../../platform/src/api'
 
 const LOG_LINES = 200
 const LOG_BYTES = 60 * 1024

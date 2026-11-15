@@ -34,12 +34,12 @@
     "workspace",
     "highlight",
     "sync-store",
-    "modes"
+    "modes",
+    "double-tap"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/double-tap.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/kept-scroll.ts",
@@ -52,7 +52,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/spell-languages.ts",
     "apps/desktop/src/lib/tab-cycle.svelte.ts",
-    "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/toolbar.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/while-here.ts"

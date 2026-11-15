@@ -1,4 +1,4 @@
-import { type Modifier, writeTap } from '../../double-tap'
+import { type Modifier, writeTap } from '../../double-tap/src/api'
 import { readCombination } from '../../ui-kit/src/api'
 import { type Shortcut, shortcuts } from '../../shortcuts/src/api'
 import { BY_ID } from '../../shortcuts/src/api'

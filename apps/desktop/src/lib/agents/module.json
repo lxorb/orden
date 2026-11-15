@@ -22,7 +22,6 @@
     "apps/desktop/src/lib/connectors.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/panel-marks.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/take-keyboard.ts"
+    "apps/desktop/src/lib/settings.svelte.ts"
   ]
 }

@@ -14,3 +14,5 @@ export {
 export { shortcuts } from './shortcuts.svelte'
 
 export const shortcutPresets = () => import('./presets')
+
+export const doubleTaps = () => import('./tapped')
