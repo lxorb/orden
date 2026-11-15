@@ -76,15 +76,18 @@ export async function newNote(args: Said): Promise<unknown> {
     }
 
     const after = append ? joined(before, content) : joined(content, before)
-    await workspace.replaceInNotes([
-      {
-        path,
-        before,
-        after,
-        edits: [{ from: 0, to: before.length, insert: after }],
-        back: [{ from: 0, to: after.length, insert: before }],
-      },
-    ])
+    wroteTo(
+      relative,
+      await workspace.replaceInNotes([
+        {
+          path,
+          before,
+          after,
+          edits: [{ from: 0, to: before.length, insert: after }],
+          back: [{ from: 0, to: after.length, insert: before }],
+        },
+      ]),
+    )
 
     if (!silent) await workspace.open(path)
     return { path: relative, added: true }
@@ -121,6 +124,10 @@ export async function newNote(args: Said): Promise<unknown> {
 
 export function appendNote(args: Said): Promise<unknown> {
   return newNote({ ...args, append: true, prepend: false })
+}
+
+function wroteTo(relative: string, count: number) {
+  if (count === 0) throw new Error(`nothing was written to ${relative}`)
 }
 
 function joined(first: string, second: string): string {
@@ -198,17 +205,20 @@ export async function writeFile(args: Said): Promise<unknown> {
   if (before === null)
     return { path: await madeFile(args, relative, content), written: content.length }
 
-  await workspace.replaceInNotes(
-    [
-      {
-        path,
-        before,
-        after: content,
-        edits: [{ from: 0, to: before.length, insert: content }],
-        back: [{ from: 0, to: content.length, insert: before }],
-      },
-    ],
-    { anyFile: true },
+  wroteTo(
+    relative,
+    await workspace.replaceInNotes(
+      [
+        {
+          path,
+          before,
+          after: content,
+          edits: [{ from: 0, to: before.length, insert: content }],
+          back: [{ from: 0, to: content.length, insert: before }],
+        },
+      ],
+      { anyFile: true },
+    ),
   )
 
   return { path: relative, written: content.length }
@@ -301,21 +311,24 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!edit) return { path: note.relative, key, value, changed: false }
 
   const after = note.text.slice(0, edit.from) + edit.insert + note.text.slice(edit.to)
-  await workspace.replaceInNotes([
-    {
-      path: note.path,
-      before: note.text,
-      after,
-      edits: [{ from: edit.from, to: edit.to, insert: edit.insert }],
-      back: [
-        {
-          from: edit.from,
-          to: edit.from + edit.insert.length,
-          insert: note.text.slice(edit.from, edit.to),
-        },
-      ],
-    },
-  ])
+  wroteTo(
+    note.relative,
+    await workspace.replaceInNotes([
+      {
+        path: note.path,
+        before: note.text,
+        after,
+        edits: [{ from: edit.from, to: edit.to, insert: edit.insert }],
+        back: [
+          {
+            from: edit.from,
+            to: edit.from + edit.insert.length,
+            insert: note.text.slice(edit.from, edit.to),
+          },
+        ],
+      },
+    ]),
+  )
 
   return { path: note.relative, key, value, changed: true }
 }

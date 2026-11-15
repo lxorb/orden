@@ -30,6 +30,8 @@ const opened: string[] = []
 
 const held = new Map<string, string>()
 
+const refusing = new Set<string>()
+
 const written: { path: string; before: string; after: string }[] = []
 const made: { folder: string; name: string }[] = []
 
@@ -72,11 +74,12 @@ vi.mock('../../workspace/src/api', () => ({
     activeTabId: null,
     noteText: (path: string) => Promise.resolve(held.get(path) ?? null),
     replaceInNotes: (changes: { path: string; before: string; after: string }[]) => {
-      for (const change of changes) {
+      const taken = changes.filter((change) => !refusing.has(change.path))
+      for (const change of taken) {
         written.push({ path: change.path, before: change.before, after: change.after })
         held.set(change.path, change.after)
       }
-      return Promise.resolve()
+      return Promise.resolve(taken.length)
     },
     createNote: (folder: string, name: string) => {
       made.push({ folder, name })
@@ -463,5 +466,28 @@ describe('files.write to a path with nothing there', () => {
     })
     expect(made).toEqual([{ folder: '/Work/notes', name: 'Plan.md' }])
     expect(laid).toEqual([])
+  })
+})
+
+describe('a write the note refuses, being locked', () => {
+  test('is said to have failed by append, files.write and properties.set alike', async () => {
+    held.clear()
+    held.set('/Work/Locked.md', '# Locked\n')
+    refusing.add('/Work/Locked.md')
+    written.length = 0
+
+    await expect(appendNote({ path: 'Locked.md', content: 'More.' })).rejects.toThrow(
+      /nothing was written to Locked.md/,
+    )
+    await expect(writeFile({ path: 'Locked.md', content: 'Gone.' })).rejects.toThrow(
+      /nothing was written to Locked.md/,
+    )
+    await expect(setProperty({ path: 'Locked.md', key: 'status', value: 'done' })).rejects.toThrow(
+      /nothing was written to Locked.md/,
+    )
+    expect(written).toEqual([])
+    expect(held.get('/Work/Locked.md')).toBe('# Locked\n')
+
+    refusing.clear()
   })
 })
