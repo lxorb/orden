@@ -102,7 +102,12 @@ export interface QuickAddPort {
   show(prefill?: QuickAddPrefill): void
 }
 
+export interface ShellFocusPort {
+  editor(): boolean
+}
+
 export interface SurfacePorts {
+  readonly 'shell.focus': ShellFocusPort
   readonly 'shell.sheets': SheetsPort
   readonly 'quick-add.show': QuickAddPort
 }

@@ -189,6 +189,7 @@ export {
 export {
   askSheet,
   flushHeldEdits,
+  focusEditorRegion,
   mayStop,
   type PortMap,
   type PortName,
@@ -211,6 +212,7 @@ export {
   OUTSIDE_FOLDER,
   type QuickAddPort,
   type QuickAddPrefill,
+  type ShellFocusPort,
   registerSurfaces,
   type SheetId,
   type SheetsPort,

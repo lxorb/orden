@@ -22,7 +22,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { workspace } = await import('../../src/lib/workspace/src/api')
-const { roving } = await import('../../src/lib/roving')
+const { roving } = await import('../../src/lib/ui-kit/src/api')
 const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
 function nothing() {

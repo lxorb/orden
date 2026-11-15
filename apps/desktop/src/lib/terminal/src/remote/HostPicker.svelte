@@ -1,11 +1,10 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { tick } from 'svelte'
-  import { longPress, closeOnBack, overlays, menu } from '../../../ui-kit/src/api'
+  import { closeOnBack, longPress, menu, overlays, roving } from '../../../ui-kit/src/api'
   import { region } from '../../../platform/src/api'
   import { fade, LAYER, scale } from '../../../platform/src/api'
   import { pieces } from '../../../matching/src/api'
-  import { roving } from '../../../roving'
   import { isNumber, ListTyping } from '../../../space-pick/src/api'
   import { SpacePlace } from '../../../space-pick/src/api'
   import { trap } from '../../../ui-controls/src/api'

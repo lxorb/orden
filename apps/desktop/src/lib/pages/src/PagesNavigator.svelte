@@ -11,19 +11,19 @@
   import { paintSketch, readPalette } from '../../plane/src/api'
   import {
     carryPage,
+    DIVIDER,
     draggedPage,
     dropOver,
     isPageDrag,
     longPress,
-    DIVIDER,
-    type MenuEntry,
     menu,
+    type MenuEntry,
+    roving,
   } from '../../ui-kit/src/api'
   import { densityFor, paperOf } from '../../pdf/src/api'
   import { sameSheet, type SheetDrawn, sheetDrawn, shelvesOf, shownOf, thumbSize } from './thumbs'
   import { pages as showing } from './showing.svelte'
   import { ListView } from '../../windows/src/api'
-  import { roving } from '../../roving'
   import { workspace } from '../../workspace/src/api'
 
   const WIDE = 104

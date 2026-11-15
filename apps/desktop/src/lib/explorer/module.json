@@ -24,7 +24,6 @@
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/list-landing.svelte.ts",
     "apps/desktop/src/lib/picking.ts",
-    "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

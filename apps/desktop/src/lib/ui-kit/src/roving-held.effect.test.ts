@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { providePort } from '@orden/contracts'
 import { roving } from './roving'
 
 const HELD: Record<string, KeyboardEventInit> = {
@@ -90,5 +91,17 @@ describe('any other list', () => {
     }
     expect(standing()).toBe('Food')
     expect(chosen).toEqual([])
+  })
+})
+
+describe('Escape that nothing in the list takes', () => {
+  test('goes back to the editor through the shell.focus port', () => {
+    let asked = 0
+    const unbind = providePort('shell.focus', { editor: () => ++asked > 0 })
+    mount(false)
+
+    expect(press('Escape', {}).defaultPrevented).toBe(true)
+    expect(asked).toBe(1)
+    unbind()
   })
 })

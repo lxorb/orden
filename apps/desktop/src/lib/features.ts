@@ -32,6 +32,7 @@ import { loadArchive, loadArchivedStrip } from './archive/src/api'
 import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
 import { breathe } from './platform/src/api'
+import { focusEditor } from './focus'
 import { startup } from './launch/src/api'
 import {
   appMenuRows,
@@ -76,6 +77,7 @@ serveLinks({
 })
 providePort('settings.window', settings)
 providePort('shell.sheets', sheets)
+providePort('shell.focus', { editor: focusEditor })
 providePort('quick-add.show', {
   show: (prefill = {}) => {
     if (__EVEN_PLUGIN__) return

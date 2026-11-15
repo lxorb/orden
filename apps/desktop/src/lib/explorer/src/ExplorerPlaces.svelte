@@ -1,8 +1,7 @@
 <script lang="ts">
   import Folder from 'lucide/dist/esm/icons/folder.mjs'
   import type { IconNode } from 'lucide'
-  import { menu, dropOver, isExplorerDrag, explorerDragged } from '../../ui-kit/src/api'
-  import { roving } from '../../roving'
+  import { dropOver, explorerDragged, isExplorerDrag, menu, roving } from '../../ui-kit/src/api'
   import { nameOf, samePath, within } from '../../platform/src/api'
   import { dropInto, over } from './drag'
   import { placeMark, placeName, places } from './places.svelte'
