@@ -1,5 +1,5 @@
 import { answer, builtinView } from '@orden/bases'
-import { rowsOfText } from '@orden/bases/rows'
+import { noteRowsOf } from '@orden/scan/rows'
 import { describe, expect, test, vi } from 'vitest'
 import { linearly } from '../../../../../../scripts/growth'
 
@@ -15,7 +15,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
 
 const { contextFor } = await import('./context')
 
-const rows = rowsOfText(
+const rows = noteRowsOf(
   'Mine',
   'Errands.md',
   '- [ ] Mine [assignee:: Emil]\n- [ ] Also mine [assignee:: emil]\n- [ ] Theirs [assignee:: Ada]\n- [ ] Nobody’s\n',
@@ -43,15 +43,15 @@ describe('a view’s tasks assigned to me (#1254)', () => {
 
 describe('the notes that link to a note', () => {
   test('are gathered in time that grows with the notes, however many link to one', () => {
-    const index = rowsOfText('Mine', 'Index.md', '# Index\n')
-    const days = new Map<number, ReturnType<typeof rowsOfText>>()
+    const index = noteRowsOf('Mine', 'Index.md', '# Index\n')
+    const days = new Map<number, ReturnType<typeof noteRowsOf>>()
     const daily = (count: number) => {
       const known = days.get(count)
       if (known) return known
       const made = [
         ...index,
         ...Array.from({ length: count }, (_, at) =>
-          rowsOfText('Mine', `Day ${at}.md`, 'See [[Index]]\n'),
+          noteRowsOf('Mine', `Day ${at}.md`, 'See [[Index]]\n'),
         ).flat(),
       ]
       days.set(count, made)
@@ -74,11 +74,11 @@ describe('the notes that link to a note', () => {
 
 describe('a link in a base', () => {
   const rows = [
-    ...rowsOfText('Mine', 'Plan.md', '# Top plan\n'),
-    ...rowsOfText('Mine', 'Work/Plan.md', '# Work plan\n'),
-    ...rowsOfText('Mine', 'Work/Journal.md', 'See [[Plan]]\n'),
-    ...rowsOfText('Mine', 'Other.md', 'See [[Work/Plan]]\n'),
-    ...rowsOfText('Mine', 'Work/Notes.md', 'See [the plan](../Plan.md)\n'),
+    ...noteRowsOf('Mine', 'Plan.md', '# Top plan\n'),
+    ...noteRowsOf('Mine', 'Work/Plan.md', '# Work plan\n'),
+    ...noteRowsOf('Mine', 'Work/Journal.md', 'See [[Plan]]\n'),
+    ...noteRowsOf('Mine', 'Other.md', 'See [[Work/Plan]]\n'),
+    ...noteRowsOf('Mine', 'Work/Notes.md', 'See [the plan](../Plan.md)\n'),
   ]
   const note = (path: string) => {
     const found = rows.find((one) => one.kind === 'note' && one.path === path)

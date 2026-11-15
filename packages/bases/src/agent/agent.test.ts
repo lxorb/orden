@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { readBase, writeBase } from '../base-file'
-import { rowsOfText } from '../note-rows'
+import { findLinks } from '@orden/markdown/links'
+import { tagsIn } from '@orden/markdown/task-line'
+import { rowsOf } from '../note-rows'
+import { scanRows } from '../scan'
 import {
   AgentError,
   atOf,
@@ -24,6 +27,13 @@ import {
 import { type TaskChange, taskLine } from '@orden/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
+
+function rowsOfText(space: string, path: string, text: string) {
+  const { front, tasks } = scanRows(text)
+  const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
+  const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
+  return rowsOf(space, { path, front, tasks, stamp: null, tags, links })
+}
 
 const NOTE = [
   '# Errands',

@@ -532,7 +532,7 @@ vi.mock('../src/lib/tasks-model/src/api', async (actual) => {
 })
 
 vi.mock('../src/lib/rows/src/rows.svelte', async () => {
-  const { rowsOfText } = await import('@orden/bases/rows')
+  const { noteRowsOf } = await import('@orden/scan/rows')
   const spaces = [work, home, secret]
   return {
     rows: {
@@ -545,7 +545,7 @@ vi.mock('../src/lib/rows/src/rows.svelte', async () => {
         if (!space) return []
         return [...files]
           .filter(([at]) => at.startsWith(`${space.root}/`) && at.endsWith('.md'))
-          .flatMap(([at, text]) => rowsOfText(space.name, at.slice(space.root.length + 1), text))
+          .flatMap(([at, text]) => noteRowsOf(space.name, at.slice(space.root.length + 1), text))
           .filter((row) => row.kind !== 'task')
       },
     },

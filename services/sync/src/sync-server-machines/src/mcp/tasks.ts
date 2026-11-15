@@ -21,7 +21,7 @@ import {
   rowPlace,
   rowWords,
 } from '@orden/bases/agent'
-import { rowsOfText } from '@orden/bases/rows'
+import { noteRowsOf } from '@orden/scan/rows'
 import {
   type InboxChange,
   type InboxHeld,
@@ -176,7 +176,7 @@ async function rowsOf(
       const batch = reading.slice(at, at + AT_ONCE)
       const bodies = await Promise.all(batch.map((one) => noteBody(env, space.id, one.id)))
       batch.forEach((one, index) => {
-        const read = rowsOfText(space.name, one.path, bodies[index] ?? '')
+        const read = noteRowsOf(space.name, one.path, bodies[index] ?? '')
         rows.push(...read.filter((row) => row.kind !== 'task'))
       })
     }

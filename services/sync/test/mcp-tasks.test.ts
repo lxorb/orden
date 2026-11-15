@@ -319,6 +319,25 @@ describe('bases, with Orden closed', () => {
     )
   })
 
+  test('a base filtered by tag finds the notes tagged in their front matter', async () => {
+    for (const [path, content] of [
+      ['Inline.md', 'Body #book\n'],
+      ['Front.md', '---\ntags: [book]\n---\nBody\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    await baseFile(
+      'Books.base',
+      ['filters: file.hasTag("book")', 'views:', '  - type: table', '    name: All', ''].join('\n'),
+    )
+    await basesTurned(true)
+    const key = await connector()
+    await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+
+    const answer = await json(key, 'query_base', { space: 'Work', path: 'Books.base' })
+    expect(answer).toMatchObject({ total: 3 })
+  })
+
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
     await basesTurned(true)
