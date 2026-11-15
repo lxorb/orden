@@ -86,4 +86,11 @@ describe('a pattern the web search refuses as too costly', () => {
       of: [{ kind: 'not', of: { ...wild, refused: true } }, plain],
     })
   })
+
+  test('judged with the case it ignores', async () => {
+    const wild = { kind: 'regex', source: '(a|A)*b', fold: true }
+    await searchSpace(ROOT, wild as never, [], 50, () => undefined)
+
+    expect(asked.query).toEqual({ ...wild, refused: true })
+  })
 })

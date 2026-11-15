@@ -83,7 +83,9 @@ function judged(query: Query): Query {
     case 'scope':
       return { ...query, of: judged(query.of) }
     case 'regex':
-      return backtracksWildly(query.source) ? { ...query, refused: true } : query
+      return backtracksWildly(query.source, query.fold ? 'i' : '')
+        ? { ...query, refused: true }
+        : query
     case 'text':
     case 'content':
     case 'path':

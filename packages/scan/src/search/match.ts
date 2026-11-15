@@ -499,7 +499,9 @@ export class Matcher {
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 
-    const made = backtracksWildly(source) ? null : compiled(source, folded ? 'gi' : 'g')
+    const made = backtracksWildly(source, folded ? 'i' : '')
+      ? null
+      : compiled(source, folded ? 'gi' : 'g')
 
     this.patterns.set(key, made)
     return made

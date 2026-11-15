@@ -270,6 +270,12 @@ describe('a regular expression that backtracks without end', () => {
   test('leaves a pattern that runs in time alone', () => {
     expect(marked('/a+!/', { body: RUN })).toEqual([RUN])
   })
+
+  test('is judged with the case it was asked to ignore', () => {
+    const started = Date.now()
+    expect(answers('/(a|A)*b/i', { body: RUN })).toBe(false)
+    expect(Date.now() - started).toBeLessThan(1500)
+  })
 })
 
 describe('regular expressions', () => {
