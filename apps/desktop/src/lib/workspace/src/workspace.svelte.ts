@@ -1,10 +1,9 @@
 import { type Entry, type PickedFile, providePort, tabKindLoaded, webPages } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
-import { account } from '../../accounts/src/api'
+import { account, arriving } from '../../accounts/src/api'
 import { seed } from '../../web-backend/src/api'
 import { appsOn, basesOn, hiddenKinds } from '../../settings.svelte'
 import { settingsTab } from '../../settings-tab'
-import { arriving } from '../../arriving.svelte'
 import { keptAway } from '../../away/src/api'
 import {
   blockIds,
@@ -19,41 +18,7 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from '../../link-index/src/api'
-import {
-  onDisk,
-  insideOnly,
-  askCase,
-  folderOf,
-  insideSpace,
-  isMarkdownPath,
-  movedTo,
-  nameOf,
-  noteName,
-  pathKey,
-  pathKeys,
-  relativeTo,
-  samePath,
-  sameSpelling,
-  within,
-  withinSpace,
-  AGENTS_NAME,
-  isAgentsName,
-  nameFromContent,
-  shownName,
-  afterQuiet,
-  waited,
-  isRecord,
-  keepJson,
-  stored,
-  log,
-  invoke,
-  isDesktop,
-  isNative,
-  joinPath,
-  openExternal,
-  nextTask,
-  oneWriteAt,
-} from '../../platform/src/api'
+import { onDisk, insideOnly, askCase, folderOf, insideSpace, isMarkdownPath, movedTo, nameOf, noteName, pathKey, pathKeys, relativeTo, samePath, sameSpelling, within, withinSpace, AGENTS_NAME, isAgentsName, nameFromContent, shownName, afterQuiet, waited, isRecord, keepJson, stored, log, invoke, isDesktop, isNative, joinPath, openExternal, nextTask, oneWriteAt, startup, mark, markPainted } from '../../platform/src/api'
 import { noteId } from '../../note-id'
 import { busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'
@@ -61,9 +26,7 @@ import { isPlugin } from '../../plugin'
 import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from '../../outline'
 import type { Change } from '@orden/scan/search/replace'
-import { startup } from '../../startup.svelte'
 import { tabOverview } from '../../surfaces.svelte'
-import { mark, markPainted } from '../../trace'
 import { GIVE_UP } from '../../parting/src/api'
 import {
   holdsRetiredTab,

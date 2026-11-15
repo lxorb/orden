@@ -135,7 +135,7 @@ document.elementFromPoint = () => over ?? document.querySelector('.hole')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
-const { startup } = await import('../../src/lib/startup.svelte')
+const { startup } = await import('../../src/lib/platform/src/api')
 const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
 const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
 

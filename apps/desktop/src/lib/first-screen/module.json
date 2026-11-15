@@ -1,6 +1,15 @@
 {
   "name": "first-screen",
   "layer": "shell",
-  "dependsOn": ["contracts", "documents", "editor", "panes", "platform", "session"],
-  "pending": ["apps/desktop/src/lib/trace.ts", "apps/desktop/src/lib/views.svelte.ts"]
+  "dependsOn": [
+    "contracts",
+    "documents",
+    "editor",
+    "panes",
+    "platform",
+    "session"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/views.svelte.ts"
+  ]
 }

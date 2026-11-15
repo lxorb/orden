@@ -1,4 +1,4 @@
-import { mark } from '../../trace'
+import { mark } from '../../platform/src/api'
 
 export interface AwayDraw {
   number: number

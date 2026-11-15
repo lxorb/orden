@@ -28,7 +28,7 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace/src/api')
 const { links } = await import('./link-index/src/api')
-const { startup } = await import('./startup.svelte')
+const { startup } = await import('./platform/src/api')
 void startup.shown()
 
 const files = () => disk.current?.files ?? new Map<string, string>()

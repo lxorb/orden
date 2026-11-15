@@ -86,7 +86,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace/src/api')
 const { links } = await import('./link-index/src/api')
-const { startup } = await import('./startup.svelte')
+const { startup } = await import('./platform/src/api')
 
 async function settle() {
   for (let round = 0; round < 12; round++) await new Promise((done) => setTimeout(done, 0))

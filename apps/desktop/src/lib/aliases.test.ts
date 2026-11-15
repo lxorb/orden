@@ -65,7 +65,7 @@ vi.mock('./search/src/api', async (importOriginal) => ({
 
 const { links, serveLinks } = await import('./link-index/src/api')
 serveLinks({ search: (await import('./search/src/api')).searchSpace })
-const { startup } = await import('./startup.svelte')
+const { startup } = await import('./platform/src/api')
 
 void startup.shown()
 

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { account } from './accounts/src/api'
-  import { arriving } from './arriving.svelte'
+  import { account, arriving } from './accounts/src/api'
   import Sweep from './Sweep.svelte'
   import { dur, fade } from './platform/src/api'
   import { workspace } from './workspace/src/api'

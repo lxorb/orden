@@ -30,8 +30,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return held.disk!.invoke(command, args)
   },
 }))
-vi.mock('../../startup.svelte', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../startup.svelte')>()
+vi.mock('../../platform/src/api', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../platform/src/api')>()
   const turn = real.startup.turn.bind(real.startup)
   real.startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
   return real

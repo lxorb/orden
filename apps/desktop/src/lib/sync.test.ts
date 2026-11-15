@@ -1266,11 +1266,11 @@ describe('turning syncing off while a pass is in the air', () => {
 })
 
 describe('the first pass, which somebody is waiting on', () => {
-  let arriving: typeof import('./arriving.svelte').arriving
+  let arriving: typeof import('./accounts/src/api').arriving
 
   beforeEach(async () => {
     standInForTheWindow()
-    ;({ arriving } = await import('./arriving.svelte'))
+    ;({ arriving } = await import('./accounts/src/api'))
   })
 
   afterEach(() => {
@@ -1535,11 +1535,11 @@ describe('two passes asked for at once', () => {
 })
 
 describe('a pass that fails partway through', () => {
-  let arriving: typeof import('./arriving.svelte').arriving
+  let arriving: typeof import('./accounts/src/api').arriving
 
   beforeEach(async () => {
     standInForTheWindow()
-    ;({ arriving } = await import('./arriving.svelte'))
+    ;({ arriving } = await import('./accounts/src/api'))
   })
 
   afterEach(() => {
@@ -1776,7 +1776,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
 
   async function launched() {
     sync.start()
-    const { startup } = await import('./startup.svelte')
+    const { startup } = await import('./platform/src/api')
     await startup.shown()
   }
 
@@ -1896,7 +1896,7 @@ describe('an account moved to v2 while this device runs v1', () => {
 
       account.user = { ...account.user!, syncVersion: 2 }
       sync.start()
-      const { startup } = await import('./startup.svelte')
+      const { startup } = await import('./platform/src/api')
       void startup.shown()
       await until(() => runner.start.mock.calls.length > 0)
       expect(runner.start).toHaveBeenCalledTimes(1)

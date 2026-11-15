@@ -53,7 +53,7 @@ document.elementFromPoint = () => document.querySelector('.hole')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { saver } = await import('../../src/lib/web-tab/src/saver.svelte')
-const { startup } = await import('../../src/lib/startup.svelte')
+const { startup } = await import('../../src/lib/platform/src/api')
 const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
 const { default: Cycling } = await import('./Cycling.svelte')
 

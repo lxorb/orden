@@ -1,25 +1,8 @@
 import './sync-ports'
-import { api, type SpaceRole, account } from './accounts/src/api'
-import { arriving } from './arriving.svelte'
-import {
-  without,
-  log,
-  keep,
-  keepJson,
-  stored,
-  storedText,
-  nudgeDelay,
-  pollDelay,
-  RECONCILE_INTERVAL,
-  invoke,
-  isDesktop,
-  joinPath,
-  rootedAt,
-  samePath,
-} from './platform/src/api'
+import { api, type SpaceRole, account, arriving } from './accounts/src/api'
+import { without, log, keep, keepJson, stored, storedText, nudgeDelay, pollDelay, RECONCILE_INTERVAL, invoke, isDesktop, joinPath, rootedAt, samePath, startup } from './platform/src/api'
 import type { Pairing } from './space-pairing'
 import { untrack } from 'svelte'
-import { startup } from './startup.svelte'
 import { rooms } from './collab/src/api'
 import { modes } from './modes.svelte'
 import {

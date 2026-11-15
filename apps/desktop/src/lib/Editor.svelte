@@ -24,7 +24,7 @@
   import { EditorStates } from './editor-states'
   import { firstScreen } from './first-screen/src/api'
   import { keptCoverOf, setCoverPosition } from './kept-cover'
-  import { mark } from './trace'
+  import { mark } from './platform/src/api'
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
   import { shortcuts } from './shortcuts/src/api'

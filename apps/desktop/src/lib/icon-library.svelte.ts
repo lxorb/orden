@@ -7,7 +7,7 @@ import {
   type WrittenIcon,
 } from './ui-kit/src/api'
 import type { IconShape, LoadedSet } from './icon-sets'
-import { startup } from './startup.svelte'
+import { startup } from './platform/src/api'
 
 class IconLibrary {
   loaded = $state<Record<string, LoadedSet>>({})

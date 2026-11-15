@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { account, AccountBadge } from '../../accounts/src/api'
+  import { account, AccountBadge, arriving } from '../../accounts/src/api'
   import { showAccount } from '../../account-menu'
-  import { arriving } from '../../arriving.svelte'
   import { dur, fade } from '../../platform/src/api'
   import { showFeedback } from '../../surfaces.svelte'
 

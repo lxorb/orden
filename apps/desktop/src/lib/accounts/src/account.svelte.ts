@@ -1,7 +1,7 @@
 import { portOf } from '@orden/contracts'
 import { api, ApiError, fromServer } from './client'
 import type { Account, Guest, RemoteSpace } from './routes'
-import { arriving } from '../../arriving.svelte'
+import { arriving } from './arriving.svelte'
 import { pollDelay, forget, keep, storedText, waited } from '../../platform/src/api'
 import { called } from './person'
 

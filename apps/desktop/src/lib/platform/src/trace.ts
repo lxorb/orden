@@ -1,4 +1,4 @@
-import { invoke, isNative } from './platform/src/api'
+import { invoke, isNative } from './tauri'
 
 interface Step {
   step: string
