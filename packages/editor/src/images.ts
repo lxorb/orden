@@ -1,7 +1,8 @@
 import { EditorSelection, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { embedKind, encodeTarget, formatWikilink } from '@orden/markdown/links'
+import { embedKind, encodeTarget, foldName, formatWikilink } from '@orden/markdown/links'
 import { later } from './shared'
+import { type NoteIndex, noteIndex, spacePathOf } from './wikilink/notes'
 
 export type ImageSink = (file: File) => Promise<string | null>
 
@@ -22,11 +23,18 @@ function isKept(file: File): boolean {
   return isImage(file) || embedKind(file.name) !== null
 }
 
-function markdownFor(file: File, path: string): string {
+const nameOf = (path: string) => foldName(path.slice(path.lastIndexOf('/') + 1))
+
+function markdownFor(file: File, path: string, index: NoteIndex): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`
 
   const name = path.slice(path.lastIndexOf('/') + 1)
-  return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })
+  const own = spacePathOf(index, path)
+  const shared = index.files.some(
+    (other) => foldName(other) !== foldName(own) && nameOf(other) === foldName(name),
+  )
+  const target = shared && own ? own : name
+  return formatWikilink({ target, heading: null, block: null, alias: null, embed: true })
 }
 
 export function wordsBesidePicture(html: string, text: string): boolean {
@@ -70,7 +78,7 @@ export async function receiveImages(
   const written: string[] = []
   for (const file of kept) {
     const path = await sink(file)
-    if (path) written.push(markdownFor(file, path))
+    if (path) written.push(markdownFor(file, path, view.state.facet(noteIndex)))
   }
   if (!written.length) return
 

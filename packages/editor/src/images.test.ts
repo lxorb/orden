@@ -2,14 +2,19 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { imageHandling, type ImageSink, receiveImages, wordsBesidePicture } from './images'
+import { type NoteIndex, noteIndex } from './wikilink/notes'
 
 const PICTURE = [new File([new Uint8Array([1])], 'a.png', { type: 'image/png' })]
 
-function surface(doc: string, caret: number, readOnly = false) {
+function surface(doc: string, caret: number, readOnly = false, space?: NoteIndex) {
   let state = EditorState.create({
     doc,
     selection: EditorSelection.cursor(caret),
-    extensions: [imageHandling(() => Promise.resolve(null)), EditorState.readOnly.of(readOnly)],
+    extensions: [
+      imageHandling(() => Promise.resolve(null)),
+      EditorState.readOnly.of(readOnly),
+      ...(space ? [noteIndex.of(space)] : []),
+    ],
   })
 
   const dispatch = (spec: TransactionSpec) => {
@@ -145,6 +150,38 @@ describe('a dropped file that is not a picture', () => {
     await receiveImages(editor.view, dropped, (one) => Promise.resolve(`../assets/${one.name}`), 0)
 
     expect(editor.doc).toBe('![](../assets/a.png)\n![[b.pdf]]')
+  })
+})
+
+describe('a dropped file named like another file in the space', () => {
+  const file = (name: string) => new File([new Uint8Array([1])], name, { type: 'application/pdf' })
+  const space = (files: string[]): NoteIndex => ({
+    notes: [],
+    files,
+    path: 'Notes/Today.md',
+    read: () => Promise.resolve(null),
+  })
+
+  test('is embedded by its path in the space, so the link opens this one', async () => {
+    const editor = surface('', 0, false, space(['report.pdf']))
+    await receiveImages(
+      editor.view,
+      [file('report.pdf')],
+      () => Promise.resolve('../assets/report.pdf'),
+      0,
+    )
+    expect(editor.doc).toBe('![[assets/report.pdf]]')
+  })
+
+  test('and by its name alone when no other file has it', async () => {
+    const editor = surface('', 0, false, space(['assets/report.pdf', 'other.pdf']))
+    await receiveImages(
+      editor.view,
+      [file('report.pdf')],
+      () => Promise.resolve('../assets/report.pdf'),
+      0,
+    )
+    expect(editor.doc).toBe('![[report.pdf]]')
   })
 })
 

@@ -211,6 +211,10 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   return resolveNote(index, parts.join('/'))
 }
 
+export function spacePathOf(index: NoteIndex, written: string): string {
+  return relativeParts(index, written).join('/')
+}
+
 function relativeParts(index: NoteIndex, target: string): string[] {
   const written = target.replace(/\\/g, '/')
   const parts =
