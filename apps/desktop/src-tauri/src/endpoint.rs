@@ -20,6 +20,8 @@ const MOST_BYTES: usize = 8 * 1024 * 1024;
 
 const PATIENCE: Duration = Duration::from_secs(30);
 
+const TERMINAL_STARTING: Duration = Duration::from_secs(90);
+
 const SLOWEST: Duration = Duration::from_secs(10);
 
 const SECRET_BYTES: usize = 32;
@@ -436,7 +438,33 @@ fn answering_order(app: &AppHandle) -> Vec<String> {
 }
 
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
-    ask_the_window_within(app, asked, PATIENCE)
+    let verb = asked.get("verb").and_then(serde_json::Value::as_str);
+    let args = asked.get("args").cloned().unwrap_or_default();
+    let patience = window_patience(verb.unwrap_or_default(), &args);
+    ask_the_window_within(app, asked, patience)
+}
+
+pub(crate) fn window_patience(verb: &str, args: &serde_json::Value) -> Duration {
+    PATIENCE + declared_wait(verb, args)
+}
+
+pub(crate) fn declared_wait(verb: &str, args: &serde_json::Value) -> Duration {
+    let waited = |name: &str, fallback: u64, most: u64| {
+        let millis = match args.get(name) {
+            None | Some(serde_json::Value::Null) => fallback,
+            Some(serde_json::Value::Number(one)) => {
+                one.as_u64().map_or(most, |one| one.clamp(1, most))
+            }
+            Some(_) => most,
+        };
+        Duration::from_millis(millis)
+    };
+    match verb {
+        "ask_reader" => waited("wait_ms", 60_000, 120_000),
+        "run_terminal" => TERMINAL_STARTING + waited("timeout_ms", 60_000, 600_000),
+        "type_terminal" => TERMINAL_STARTING + waited("wait_ms", 2_000, 30_000),
+        _ => Duration::ZERO,
+    }
 }
 
 fn ask_the_window_within(
@@ -702,8 +730,8 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 mod tests {
     use super::{
         as_hex, awaited, find, is_json, is_local, parse_head, read_request, reason, refused,
-        same_secret, Admitted, Kept, Request, Waiting, MOST_AT_ONCE, MOST_BYTES, SECRET_BYTES,
-        SLOWEST,
+        same_secret, window_patience, Admitted, Kept, Request, Waiting, MOST_AT_ONCE, MOST_BYTES,
+        PATIENCE, SECRET_BYTES, SLOWEST,
     };
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
@@ -970,6 +998,41 @@ mod tests {
         assert_eq!(waiting.page_of("main"), page, "a claim is no new page");
         waiting.page_started("main");
         assert_ne!(waiting.page_of("main"), page);
+    }
+
+    #[test]
+    fn a_verb_that_waits_is_waited_for_past_the_longest_wait_it_takes() {
+        let patience = |verb: &str, args: serde_json::Value| window_patience(verb, &args);
+        assert_eq!(patience("read_note", serde_json::json!({})), PATIENCE);
+        assert!(patience("ask_reader", serde_json::json!({})) > Duration::from_secs(60));
+        for asked in [120_000, 999_999] {
+            let args = serde_json::json!({ "wait_ms": asked });
+            assert!(patience("ask_reader", args) > Duration::from_secs(120));
+        }
+        let args = serde_json::json!({ "timeout_ms": 600_000, "tab": "t1" });
+        assert!(patience("run_terminal", args) > Duration::from_secs(600 + 90));
+        let args = serde_json::json!({ "timeout_ms": "600000" });
+        assert!(patience("run_terminal", args) > Duration::from_secs(600));
+        let args = serde_json::json!({ "wait_ms": 30_000 });
+        assert!(patience("type_terminal", args) > Duration::from_secs(30 + 90));
+    }
+
+    #[test]
+    fn the_waits_are_the_ones_the_window_verbs_take() {
+        let ask = include_str!("../../src/lib/agent-host/src/ask.ts");
+        assert!(ask.contains("const WAIT = 60_000\nconst MOST_WAIT = 120_000\n"));
+        let run = include_str!("../../src/lib/terminal/src/agent/run.ts");
+        assert!(run.contains("const WAIT = 60_000\nconst MOST_WAIT = 600_000\n"));
+        let tab = include_str!("../../src/lib/terminal/src/agent/tab.ts");
+        assert!(tab.contains("const WAIT = 2000\nconst MOST_WAIT = 30_000\n"));
+        assert!(tab.contains("const RUN_WAIT = 60_000\nconst MOST_RUN_WAIT = 120_000\n"));
+        for starting in [
+            "const STARTING = 5000",
+            "const PROMPT_WAIT = 20_000",
+            "const CONNECTING = 60_000",
+        ] {
+            assert!(tab.contains(starting), "{starting}");
+        }
     }
 
     #[test]

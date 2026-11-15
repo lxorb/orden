@@ -395,7 +395,8 @@ impl Link {
         if let (Some(thread), Some(_)) = (thread_handed(), handed()) {
             asked["thread"] = json!(thread);
         }
-        let said = match app::post(&endpoint, Some(&kept.token), &asked, PATIENCE) {
+        let patience = patience_for(verb, args);
+        let said = match app::post(&endpoint, Some(&kept.token), &asked, patience) {
             Ok(said) => said,
             Err(first) => {
                 let again = self
@@ -407,7 +408,7 @@ impl Link {
                     return Outcome::failed("unavailable", unreachable(&first));
                 };
                 self.change(|held| held.endpoint = Some(now.clone()));
-                match app::post(&now, Some(&kept.token), &asked, PATIENCE) {
+                match app::post(&now, Some(&kept.token), &asked, patience) {
                     Ok(said) => said,
                     Err(second) => return Outcome::failed("unavailable", unreachable(&second)),
                 }
@@ -448,6 +449,10 @@ impl Link {
             Standing::Paired => format!("{name} is paired with Orden."),
         }
     }
+}
+
+fn patience_for(verb: &str, args: &Value) -> Duration {
+    PATIENCE + crate::endpoint::declared_wait(verb, args)
 }
 
 fn handed() -> Option<String> {
@@ -492,4 +497,25 @@ fn unreachable(error: &std::io::Error) -> String {
 
 fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|one| one.modified()).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_call_waits_on_orden_longer_than_orden_waits_on_its_window() {
+        for (verb, args) in [
+            ("read_note", json!({})),
+            ("ask_reader", json!({ "wait_ms": 120_000 })),
+            ("run_terminal", json!({ "timeout_ms": 600_000 })),
+            ("type_terminal", json!({ "tab": "t1" })),
+        ] {
+            let window = crate::endpoint::window_patience(verb, &args);
+            assert!(
+                patience_for(verb, &args) >= window + Duration::from_secs(60),
+                "{verb}"
+            );
+        }
+    }
 }
