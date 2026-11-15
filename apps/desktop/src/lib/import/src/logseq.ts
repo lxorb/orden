@@ -1,6 +1,7 @@
 import { foldName } from '@orden/markdown/links'
 
 import { encodeTarget } from '@orden/markdown/links'
+import { codeAndWords } from '@orden/markdown/tags'
 import { folderOf, relativePath } from '../../platform/src/api'
 
 import { folderPlan, isHidden, isJunk } from './folder'
@@ -27,6 +28,8 @@ const PAGE_EMBED = /\{\{embed\s+\[\[([^\]\n]+)\]\]\s*\}\}/gi
 const LABELLED_PAGE = /\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g
 
 const PAGE = /\[\[([^\][\n]+)\]\]/g
+
+const HIGHLIGHT = /\^\^([^^\n]+)\^\^/g
 
 const PICTURE_SIZE = /(!\[[^\]\n]*\]\([^)\n]*\))\{:[^}\n]*\}/g
 
@@ -490,7 +493,7 @@ function logseqText(text: string, graph: Graph, count: () => void): string {
   }
   const page = (name: string) => graph.days.get(name.trim().toLowerCase()) ?? name
 
-  return text
+  return highlighted(text)
     .replace(LABELLED_REFERENCE, (whole, words: string, id: string) =>
       block(whole, id, () => words),
     )
@@ -500,4 +503,10 @@ function logseqText(text: string, graph: Graph, count: () => void): string {
     .replace(LABELLED_PAGE, (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`)
     .replace(PAGE, (_whole, name: string) => `[[${page(name)}]]`)
     .replace(PICTURE_SIZE, '$1')
+}
+
+function highlighted(text: string): string {
+  return codeAndWords(text)
+    .map((one) => (one.code ? one.text : one.text.replace(HIGHLIGHT, '==$1==')))
+    .join('')
 }

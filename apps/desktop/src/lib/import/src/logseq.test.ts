@@ -331,4 +331,10 @@ describe('a Logseq graph', () => {
     expect(said.aliases).toEqual(['Smith, John', 'JS'])
     expect(said.meta.tags).toEqual(['Guns, Germs, and Steel', 'history', 'Nov 15th, 2026'])
   })
+
+  test('a highlight is a highlight, and in code stays as it was written', () => {
+    const said = logseqNote('- this is ^^important^^ now, and `^^not^^` in code\n')
+
+    expect(said.body).toBe('- this is ==important== now, and `^^not^^` in code\n')
+  })
 })
