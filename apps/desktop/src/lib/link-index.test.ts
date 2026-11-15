@@ -775,6 +775,32 @@ describe('renaming a note rewrites the links to it', () => {
     ])
   })
 
+  test('and the canvas is still read as a canvas, so a second rename follows its card', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Plan.md', ...card },
+        { id: 'b', type: 'text', text: 'see [[Other]]', ...card },
+      ],
+      edges: [],
+    })
+    await import('@orden/scan/canvas')
+    await space({ 'Plan.md': '# Plan', 'Other.md': '# Other' }, ['Board.canvas'])
+    notes['Board.canvas'] = board
+    links.canvasRead(at('Board.canvas'), board)
+    await vi.waitFor(() =>
+      expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'),
+    )
+
+    notes['Roadmap.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+    await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('Plan.md'), at('Roadmap.md'))
+
+    expect(links.backlinks(at('Roadmap.md')).map((one) => one.path)).toEqual(['Board.canvas'])
+    expect(links.backlinks(at('Other.md'))).toEqual([])
+  })
+
   test('every note that pointed at it, and no others', async () => {
     await space({
       'Plan.md': '# Plan',

@@ -1137,9 +1137,15 @@ class Links {
         },
       )
       if (rescanned.size) {
+        const planes = [...rescanned.keys()].some(
+          (path) => isCanvasTarget(path) || isPagesTarget(path),
+        )
+        const { scanCanvas } = planes ? await import('@orden/scan/canvas') : { scanCanvas: null }
         this.notes = this.notes.map((one) => {
           const held = rescanned.get(one.path)
-          return held?.from === one ? scanNote(one.path, held.after) : one
+          if (held?.from !== one) return one
+          const plane = scanCanvas && (isCanvasTarget(one.path) || isPagesTarget(one.path))
+          return plane ? scanCanvas(one.path, held.after) : scanNote(one.path, held.after)
         })
       }
       if (touched) this.changed()
