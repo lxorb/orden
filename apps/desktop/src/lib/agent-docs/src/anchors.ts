@@ -236,7 +236,8 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
     const said = [...heading.path, heading.title].map((step) => step.trim())
     return said.length === wanted.length && said.every((step, at) => step === wanted[at])
   })
-  const heading = one(exact.length ? exact : found, anchor, anchor.nth)
+  const fits = exact.length > 0 && (anchor.nth ?? 1) <= exact.length
+  const heading = one(fits ? exact : found, anchor, anchor.nth)
   return { from: heading.from, to: heading.to, shape: 'paragraph' }
 }
 

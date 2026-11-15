@@ -181,3 +181,11 @@ describe('an outline of headings that share a title at other depths or cases', (
     }
   })
 })
+
+describe('a hand-written heading anchor with a count', () => {
+  test('counts every heading of that name when fewer share its whole path', () => {
+    const NOTE = '# Notes\n\nweek\n\n# Monday\n\n## Notes\n\nmon\n'
+    const place = resolve({ heading: 'Notes', nth: 2 }, NOTE)
+    expect(NOTE.slice(place.from).startsWith('## Notes')).toBe(true)
+  })
+})
