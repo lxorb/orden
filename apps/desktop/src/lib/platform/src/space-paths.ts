@@ -20,8 +20,11 @@ function win32Name(name: string, last: boolean): string {
   return last ? name.replace(/[. ]+$/, '') : name.replace(/\.$/, '')
 }
 
+const DROPPED = /[. ]$/
+
 function spelled(name: string, last: boolean): string {
-  return (platform() === 'windows' ? win32Name(name, last) : name).normalize('NFC')
+  const one = name.normalize('NFC')
+  return DROPPED.test(one) && platform() === 'windows' ? win32Name(one, last) : one
 }
 
 function sameName(one: string, other: string, folds: () => boolean, last: boolean): boolean {

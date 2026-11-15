@@ -34,10 +34,6 @@ export const SPACE = ''
 
 const MOST_PROTECTED = 400
 
-const BURIED_KEY = 'orden:protected-buried'
-
-const MOST_BURIED = 200
-
 export interface Lock {
   root: string
   key: string
@@ -86,29 +82,6 @@ export function protectedMap(value: unknown): Record<string, Way> {
   return out
 }
 
-type Buried = Record<string, Record<string, Way>>
-
-function readBuried(): Buried {
-  const saved = stored(BURIED_KEY)
-  if (!isRecord(saved)) return {}
-  const out: Buried = {}
-  for (const [back, ways] of Object.entries(saved)) {
-    if (!isRecord(ways)) continue
-    const kept: Record<string, Way> = {}
-    for (const [rest, way] of Object.entries(ways)) {
-      if ((rest === '' || insideItsSpace(rest)) && isWay(way)) kept[rest] = way
-    }
-    if (Object.keys(kept).length) out[back] = kept
-  }
-  return out
-}
-
-function bury(back: string, ways: Record<string, Way>): void {
-  if (!Object.keys(ways).length) return
-  const buried = Object.entries({ ...without(readBuried(), back), [back]: ways })
-  keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
-}
-
 interface Kept extends Folded {
   ways: Record<string, Way>
   sent: boolean
@@ -130,6 +103,8 @@ const WAYS: Folding<Record<string, Way>> = {
   fold: (theirs, mine) => ({ ...theirs, ...mine }),
   same,
 }
+
+const buried = () => import('./buried')
 
 const synced = () =>
   __EVEN_PLUGIN__
@@ -399,33 +374,17 @@ export class Protection {
     if (root === null) return
     const at = relativeTo(root, path)
     const held = this.ways(root)
-    if (back) {
-      const under: Record<string, Way> = {}
-      for (const [key, way] of Object.entries(held)) {
-        const rest = key === SPACE ? null : within(at, key, root)
-        if (rest !== null) under[rest] = way
-      }
-      bury(back, under)
-    }
+    if (back) void buried().then((one) => one.buryUnder(back, held, at, root))
     const next = Object.fromEntries(
       Object.entries(held).filter(([key]) => key === SPACE || within(at, key, root) === null),
     )
     if (Object.keys(next).length !== Object.keys(held).length) this.put(root, next)
   }
 
-  cameBack(path: string, root: string | null, back: string): void {
+  async cameBack(path: string, root: string | null, back: string): Promise<void> {
     if (root === null) return
-    const buried = readBuried()
-    const ways = buried[back]
-    if (!ways) return
-    keepJson(BURIED_KEY, without(buried, back))
-    const at = relativeTo(root, path)
-    const came: Record<string, Way> = {}
-    for (const [rest, way] of Object.entries(ways)) {
-      const landed = rest ? `${at}/${rest}` : at
-      if (insideItsSpace(landed)) came[landed] = way
-    }
-    if (Object.keys(came).length) this.put(root, { ...this.ways(root), ...came })
+    const came = (await buried()).dugUp(back, relativeTo(root, path))
+    if (came) this.put(root, { ...this.ways(root), ...came })
   }
 
   spaceMoved(from: string, to: string): void {

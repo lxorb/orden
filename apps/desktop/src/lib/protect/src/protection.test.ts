@@ -169,15 +169,16 @@ describe('a protected path that moves', () => {
     expect(protection.ways(ROOT)).toEqual({ Diary: 'password' })
   })
 
-  test('deleted and put back, is protected again with what was protected inside it', () => {
+  test('deleted and put back, is protected again with what was protected inside it', async () => {
     protection.set(ROOT, at('Secret.md'), 'password')
     protection.set(ROOT, at('Trip/Diary.md'), 'device')
     protection.gone(at('Secret.md'), ROOT, 't1')
     protection.gone(at('Trip'), ROOT, 't2')
     expect(protection.ways(ROOT)).toEqual({})
+    await import('./buried')
     const later = new Protection()
-    later.cameBack(at('Secret.md'), ROOT, 't1')
-    later.cameBack(at('Trip 2'), ROOT, 't2')
+    await later.cameBack(at('Secret.md'), ROOT, 't1')
+    await later.cameBack(at('Trip 2'), ROOT, 't2')
     expect(later.covering(at('Secret.md'))).toEqual([
       { root: ROOT, key: 'Secret.md', way: 'password' },
     ])
@@ -185,7 +186,7 @@ describe('a protected path that moves', () => {
       { root: ROOT, key: 'Trip 2/Diary.md', way: 'device' },
     ])
     later.gone(at('Secret.md'), ROOT)
-    later.cameBack(at('Secret.md'), ROOT, 't1')
+    await later.cameBack(at('Secret.md'), ROOT, 't1')
     expect(later.covering(at('Secret.md'))).toEqual([])
   })
 
