@@ -347,19 +347,70 @@ fn favicon_of(content: &str) -> Option<String> {
 }
 
 fn address_of(content: &str) -> Option<String> {
-    key_of(content, "url").or_else(|| {
-        let (_, after) = content.split_once("<key>URL</key>")?;
-        let (_, after) = after.split_once("<string>")?;
-        let (said, _) = after.split_once("</string>")?;
-        let said = said
-            .trim()
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&quot;", "\"")
-            .replace("&apos;", "'")
-            .replace("&amp;", "&");
-        (!said.is_empty()).then_some(said)
+    let said = if content.contains("<key>URL</key>") {
+        webloc_address(content)
+    } else {
+        shortcut_url(content)
+    };
+    said.filter(|one| is_web_address(one))
+}
+
+fn shortcut_url(content: &str) -> Option<String> {
+    let mut section = String::new();
+    content.lines().find_map(|line| {
+        let line = line.trim();
+        if let Some(named) = line.strip_prefix('[').and_then(|one| one.strip_suffix(']')) {
+            section = named.trim().to_ascii_lowercase();
+            return None;
+        }
+        if section != "internetshortcut" {
+            return None;
+        }
+        let (key, value) = line.split_once('=')?;
+        let value = value.trim();
+        (key.trim().eq_ignore_ascii_case("url") && !value.is_empty()).then(|| value.to_string())
     })
+}
+
+fn is_web_address(url: &str) -> bool {
+    let inner = url
+        .get(..12)
+        .filter(|one| one.eq_ignore_ascii_case("view-source:"))
+        .map_or(url, |_| &url[12..]);
+    let lower = inner.to_ascii_lowercase();
+    let Some(rest) = lower
+        .strip_prefix("https://")
+        .or_else(|| lower.strip_prefix("http://"))
+    else {
+        return false;
+    };
+    let host_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let authority = &rest[..host_end];
+    let host = authority.rsplit('@').next().unwrap_or(authority);
+    let host = host.split(':').next().unwrap_or(host).trim_end_matches('.');
+    !host.is_empty()
+        && ![
+            "tauri.localhost",
+            "ipc.localhost",
+            "asset.localhost",
+            "orden.localhost",
+            "nib.localhost",
+        ]
+        .contains(&host)
+}
+
+fn webloc_address(content: &str) -> Option<String> {
+    let (_, after) = content.split_once("<key>URL</key>")?;
+    let (_, after) = after.split_once("<string>")?;
+    let (said, _) = after.split_once("</string>")?;
+    let said = said
+        .trim()
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&amp;", "&");
+    (!said.is_empty()).then_some(said)
 }
 
 fn key_of(content: &str, wanted: &str) -> Option<String> {
@@ -429,7 +480,9 @@ fn prose(body: &str, words_from: usize) -> Prose {
                 section.push((level, text.clone()));
                 open.clear();
             }
-            headings.push(text);
+            if index >= words_from {
+                headings.push(text);
+            }
         } else if index >= words_from {
             let item = task_at(line);
             let mut task = None;
@@ -550,7 +603,17 @@ fn heading_of(line: &str) -> Option<(usize, String)> {
         return None;
     }
 
-    Some((hashes, rest.trim().trim_end_matches('#').trim().to_string()))
+    Some((hashes, without_closing_hashes(rest).trim().to_string()))
+}
+
+fn without_closing_hashes(rest: &str) -> &str {
+    let text = rest.trim_end_matches([' ', '\t']);
+    let run = text.trim_end_matches('#');
+    if run.len() < text.len() && run.ends_with([' ', '\t']) {
+        run
+    } else {
+        text
+    }
 }
 
 fn block_id_of(line: &str) -> Option<String> {
@@ -855,7 +918,7 @@ fn wikilink(inner: &str, embed: bool) -> Option<Link> {
     };
 
     let (target, heading, block) = split_target(named);
-    if target.is_empty() && heading.is_none() && block.is_none() {
+    if target.is_empty() && heading.is_none() && block.as_deref().is_none_or(str::is_empty) {
         return None;
     }
 
@@ -1412,6 +1475,59 @@ mod tests {
             Vec::<String>::new()
         );
         assert_eq!(headings_in("```\n# In code\n```"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn a_hash_that_ends_a_heading_word_stays_in_the_heading() {
+        assert_eq!(heading_of("# C#"), Some((1, "C#".to_string())));
+        assert_eq!(
+            heading_of("## Notes on F#"),
+            Some((2, "Notes on F#".to_string()))
+        );
+        assert_eq!(heading_of("## Closed ##"), Some((2, "Closed".to_string())));
+        assert_eq!(heading_of("# #"), Some((1, String::new())));
+    }
+
+    #[test]
+    fn a_comment_in_the_front_matter_is_no_heading() {
+        let read = note_at(
+            "A.md".to_string(),
+            "---\n# my comment\ntitle: x\n---\n# Real\n",
+        );
+        assert_eq!(read.headings, vec!["Real".to_string()]);
+    }
+
+    #[test]
+    fn a_link_to_an_empty_block_of_nothing_is_no_link() {
+        assert!(links_in("[[#^]]").is_empty());
+    }
+
+    #[test]
+    fn a_shortcut_to_an_address_that_is_not_a_web_page_points_nowhere() {
+        for url in [
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+            "http://tauri.localhost/x",
+        ] {
+            let read = shortcut_note(
+                "A.url".to_string(),
+                &format!("[InternetShortcut]\nURL={url}\n"),
+            );
+            assert!(read.address.is_none(), "{url}");
+        }
+        let other = shortcut_note(
+            "A.url".to_string(),
+            "[Other]\nURL=https://b.example/\n[InternetShortcut]\nURL=https://a.example/\n",
+        );
+        assert_eq!(other.address.as_deref(), Some("https://a.example/"));
+        let source = shortcut_note(
+            "A.url".to_string(),
+            "[InternetShortcut]\nURL=view-source:https://a.example/\n",
+        );
+        assert_eq!(
+            source.address.as_deref(),
+            Some("view-source:https://a.example/")
+        );
     }
 
     #[test]
