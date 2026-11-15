@@ -275,9 +275,27 @@ describe('line prefixes', () => {
 
   test('keeps the task box and the nesting when a list changes kind', () => {
     const doc = '- [ ] a\n  - b\n- c'
-    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. [ ] a\n  1. b\n2. c')
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. [ ] a\n   1. b\n2. c')
     const back = '1. [x] a\n   1. b'
-    expect(apply(toggleBulletList, back, 0, back.length).doc).toBe('- [x] a\n   - b')
+    expect(apply(toggleBulletList, back, 0, back.length).doc).toBe('- [x] a\n  - b')
+  })
+
+  test('keeps a child under its parent when the markers change width', () => {
+    const doc = '9. a\n10. b\n    - c\n        - d'
+    const bullets = '- a\n  - b\n    - c'
+    expect(apply(toggleOrderedList, bullets, 0, bullets.length).doc).toBe(
+      '1. a\n   1. b\n      1. c',
+    )
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n- b\n  - c\n      - d')
+    expect(apply(toggleBulletList, 'a\n  b', 0, 5).doc).toBe('- a\n  - b')
+  })
+
+  test('puts the list inside a quote, and takes it off again', () => {
+    expect(run(toggleBulletList, '> |one')).toBe('> - one')
+    expect(run(toggleOrderedList, '> |one')).toBe('> 1. one')
+    expect(run(toggleOrderedList, '[> one\n> two]')).toBe('> 1. one\n> 2. two')
+    expect(run(toggleBulletList, '> - |one')).toBe('> one')
+    expect(run(toggleOrderedList, '> > 1. |one')).toBe('> > one')
   })
 
   test('takes the numbers off a nested ordered list without the indent', () => {
@@ -497,6 +515,14 @@ describe('pressing Enter after a code fence', () => {
 
   test('leaves a closing fence alone', () => {
     expect(press('```\ncode\n```|').took).toBe(false)
+  })
+
+  test('leaves a closing fence alone after a block in a nested list item', () => {
+    expect(press('- a\n  - ```js\n    code\n    ```\n\n```\nx\n```|').took).toBe(false)
+  })
+
+  test('leaves a closing fence alone after a block a quote ended', () => {
+    expect(press('> ```\n> code\n\n```\nx\n```|').took).toBe(false)
   })
 
   test('does nothing away from the end of the line', () => {

@@ -1,4 +1,4 @@
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import {
   type ChangeSpec,
@@ -9,7 +9,6 @@ import {
   type StateCommand,
 } from '@codemirror/state'
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
-import { closesFence } from '@orden/markdown/fences'
 import { blockIdOf } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { EditorView } from '@codemirror/view'
@@ -220,13 +219,13 @@ export function shiftHeading(delta: number): StateCommand {
   }
 }
 
-function toggleLinePrefix(prefix: string, pattern: RegExp, replaces = pattern): StateCommand {
+function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
     const allPrefixed = lines.every((line) => pattern.test(line.text))
 
     const changes: ChangeSpec[] = lines.map((line) => {
-      const existing = (allPrefixed ? pattern : replaces).exec(line.text)
+      const existing = pattern.exec(line.text)
       const matched = existing?.[0] ?? ''
       const indent = matched.length - matched.trimStart().length
 
@@ -246,7 +245,6 @@ function toggleLinePrefix(prefix: string, pattern: RegExp, replaces = pattern): 
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 
 export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
-export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/, MARKER)
 const INDENT = /^\s*/
 
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
@@ -348,31 +346,56 @@ export const tickTaskAtCaret: StateCommand = (target) => {
 }
 
 const NUMBERED = /^\s*\d+[.)]\s+/
+const BULLETED = /^\s*[-*+]\s+/
 
-export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
-  const lines = selectedLines(state)
-  const allNumbered = lines.every((line) => NUMBERED.test(line.text))
-  const counts = new Map<number, number>()
-
-  const changes: ChangeSpec[] = lines.map((line) => {
-    const matched = (allNumbered ? NUMBERED : MARKER).exec(line.text)?.[0] ?? ''
-    const indent = matched.length - matched.trimStart().length
-
-    if (allNumbered) {
-      const task = taskAt(line.text)
-      const end = task ? Math.max(task.marker, matched.length) : matched.length
-      return { from: line.from + indent, to: line.from + end, insert: '' }
-    }
-
-    for (const depth of counts.keys()) if (depth > indent) counts.delete(depth)
-    const count = (counts.get(indent) ?? 0) + 1
-    counts.set(indent, count)
-    return { from: line.from + indent, to: line.from + matched.length, insert: `${count}. ` }
-  })
-
-  dispatch(state.update({ changes, userEvent: 'input' }))
-  return true
+interface Parent {
+  indent: number
+  shift: number
 }
+
+function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
+  return ({ state, dispatch }) => {
+    const lines = selectedLines(state).map((line) => {
+      const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
+      return { from: line.from + quote, text: line.text.slice(quote) }
+    })
+    const allListed = lines.every((line) => own.test(line.text))
+    const counts = new Map<number, number>()
+    const parents: Parent[] = []
+
+    const changes: ChangeSpec[] = lines.map((line) => {
+      const indent = (INDENT.exec(line.text)?.[0] ?? '').length
+      const matched = MARKER.exec(line.text)?.[0] ?? ''
+
+      if (allListed) {
+        const task = taskAt(line.text)
+        const end = task ? Math.max(task.marker, matched.length) : matched.length
+        return { from: line.from + indent, to: line.from + end, insert: '' }
+      }
+
+      for (const depth of counts.keys()) if (depth > indent) counts.delete(depth)
+      const count = (counts.get(indent) ?? 0) + 1
+      counts.set(indent, count)
+
+      while (parents.length && (parents.at(-1)?.indent ?? 0) >= indent) parents.pop()
+      const inherited = parents.at(-1)?.shift ?? 0
+      const marker = markerFor(count)
+      const widened = matched ? marker.length - (matched.length - indent) : 0
+      parents.push({ indent, shift: inherited + widened })
+
+      const to = line.from + Math.max(matched.length, indent)
+      if (!inherited) return { from: line.from + indent, to, insert: marker }
+      return { from: line.from, to, insert: ' '.repeat(Math.max(0, indent + inherited)) + marker }
+    })
+
+    dispatch(state.update({ changes, userEvent: 'input' }))
+    return true
+  }
+}
+
+export const toggleBulletList = toggleList(BULLETED, () => '- ')
+
+export const toggleOrderedList = toggleList(NUMBERED, (count) => `${count}. `)
 
 interface Block {
   text: string
@@ -514,6 +537,13 @@ function fenceLine(text: string): { pad: string; rest: string } {
   return { pad: heldIn(prefix) + (/^ {0,3}/.exec(rest)?.[0] ?? ''), rest }
 }
 
+function opensUnclosedFence(state: EditorState, line: Line): boolean {
+  const tree = ensureSyntaxTree(state, state.doc.length, 200)
+  const code = tree && enclosingNamed(tree.resolveInner(line.to, -1), 'FencedCode')
+  if (!code || state.doc.lineAt(code.from).number !== line.number) return false
+  return code.getChildren('CodeMark').length < 2
+}
+
 export const closeFence: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
@@ -525,20 +555,7 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   const fence = fenceOf(rest)
   if (!fence) return false
 
-  let open: string | null = null
-  for (let number = 1; number < line.number; number++) {
-    const text = fenceLine(state.doc.line(number).text).rest
-    if (open) {
-      if (closesFence(text, open)) open = null
-    } else {
-      open = fenceOf(text)?.mark ?? null
-    }
-  }
-  if (open) return false
-
-  for (let number = line.number + 1; number <= state.doc.lines; number++) {
-    if (closesFence(fenceLine(state.doc.line(number).text).rest, fence.mark)) return false
-  }
+  if (!opensUnclosedFence(state, line)) return false
 
   dispatch(
     state.update({
