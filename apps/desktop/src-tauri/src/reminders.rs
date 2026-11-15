@@ -200,7 +200,7 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
-        let _ = std::fs::write(path, bytes);
+        let _ = crate::paths::write_atomically(&path, &bytes);
     }
 }
 
