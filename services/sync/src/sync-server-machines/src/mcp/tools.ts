@@ -294,10 +294,6 @@ function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(MARKDOWN, ''))
 }
 
-function wikilinkReaches(said: string, parts: readonly string[], names: ReadonlySet<string>) {
-  return said.startsWith('/') ? said.slice(1) === parts.join('/') : names.has(said)
-}
-
 function climbed(start: string[], written: string): string[] {
   const parts = [...start]
   for (const part of written.split('/')) {
@@ -320,6 +316,13 @@ function nearestNamed(held: readonly string[], name: string, from: string): stri
       (one < other ? -1 : 1),
   )
   return found[0] ?? null
+}
+
+function wikilinkTarget(from: string, target: string, held: readonly string[]): string | null {
+  const said = comparable(target.trim())
+  if (!said.startsWith('/')) return nearestNamed(held, said, from)
+  const path = said.slice(1)
+  return held.includes(path) ? path : null
 }
 
 function markdownTarget(from: string, target: string, held: readonly string[]): string | null {
@@ -345,10 +348,6 @@ async function listBacklinks(
   const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
-  const names = new Set<string>()
-  const parts = path.replace(MARKDOWN, '').toLowerCase().split('/')
-  for (let at = 0; at < parts.length; at++) names.add(parts.slice(at).join('/'))
-
   const { results } = await env.DB.prepare(
     `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
         order by path limit ?`,
@@ -367,11 +366,11 @@ async function listBacklinks(
 
     const body = await noteBody(env, space.id, row.id)
     for (const link of findLinks(body)) {
-      const reaches =
+      const reached =
         link.kind === 'markdown'
-          ? markdownTarget(row.path, link.target, held) === wanted
-          : wikilinkReaches(link.target.replace(MARKDOWN, '').toLowerCase(), parts, names)
-      if (!reaches) continue
+          ? markdownTarget(row.path, link.target, held)
+          : wikilinkTarget(row.path, link.target, held)
+      if (reached !== wanted) continue
       found.push(`${row.path}:${lineAt(body, link.from) + 1}`)
       break
     }

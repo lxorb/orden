@@ -556,6 +556,50 @@ describe('a link by name with namesakes in folders of capitals', () => {
   })
 })
 
+describe('a wikilink by name with namesakes', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('counts only for the note the app opens', async () => {
+    await addNote('A/Plan.md', '# a\n')
+    await addNote('B/Plan.md', '# b\n')
+    await addNote('A/Index.md', 'see [[Plan]]\n')
+    await addNote('C/Index.md', 'see [[Plan#Goals|the plan]]\n')
+    const key = await connector()
+    const beside = await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Plan.md' })
+    const other = await tool(key, 'list_backlinks', { space: 'Work', path: 'B/Plan.md' })
+    const top = await tool(key, 'list_backlinks', { space: 'Work', path: 'plan.md' })
+    expect(beside).toContain('A/Index.md:1')
+    expect(other).not.toContain('A/Index.md')
+    expect(top).toContain('C/Index.md:1')
+    expect(beside).not.toContain('C/Index.md')
+  })
+
+  test('a path in it, from the top or not, names the note there', async () => {
+    await addNote('A/Plan.md', '# a\n')
+    await addNote('B/Plan.md', '# b\n')
+    await addNote('A/Index.md', 'see [[B/Plan]]\n')
+    await addNote('Z/Index.md', 'see [[/b/plan.md]]\n')
+    const key = await connector()
+    const other = await tool(key, 'list_backlinks', { space: 'Work', path: 'B/Plan.md' })
+    expect(other).toContain('A/Index.md:1')
+    expect(other).toContain('Z/Index.md:1')
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Plan.md' })).toContain(
+      'Nothing links to',
+    )
+  })
+
+  test('names in either form of an accent are one name', async () => {
+    await addNote('Cafe\u0301.md', '# cafe\n')
+    await addNote('Index.md', 'see [[Caf\u00e9]]\n')
+    const key = await connector()
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'Cafe\u0301.md' })).toContain(
+      'Index.md:1',
+    )
+  })
+})
+
 describe('lists past the most read', () => {
   function filler(count: number) {
     const insert = env.db.prepare(
