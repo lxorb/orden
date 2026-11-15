@@ -7,6 +7,7 @@ export type SurfaceId =
   | 'ask'
   | 'canvas'
   | 'channel'
+  | 'chat-links'
   | 'chats'
   | 'crash-ask'
   | 'explorer'
@@ -16,6 +17,7 @@ export type SurfaceId =
   | 'host-picker'
   | 'import'
   | 'keys-moved'
+  | 'links'
   | 'overview'
   | 'pages'
   | 'pages-navigator'
@@ -31,6 +33,7 @@ export type SurfaceId =
   | 'recording-pill'
   | 'rewrite'
   | 'scratchpad-card'
+  | 'search-panel'
   | 'settings'
   | 'spark'
   | 'takeover-bar'
@@ -107,6 +110,7 @@ export interface ShellFocusPort {
 }
 
 export interface SurfacePorts {
+  readonly search: SearchPort
   readonly 'shell.focus': ShellFocusPort
   readonly 'shell.sheets': SheetsPort
   readonly 'quick-add.show': QuickAddPort
@@ -127,4 +131,37 @@ export function registerSurfaces(
 export function surfaceLoad(id: SurfaceId): Promise<unknown> {
   const load = loads.get(id)
   return load ? load() : Promise.reject(new Error(`no module has registered the surface '${id}'`))
+}
+
+export interface SearchHit {
+  path: string
+  name: string
+  line: number
+  page?: number
+  tab?: string
+  text: string
+  ranges: { from: number; to: number }[]
+  bare?: true
+  score?: number
+}
+
+export type SearchSort = 'relevance' | 'name' | 'modified' | 'created'
+
+export interface SearchOrdering {
+  sort: SearchSort
+  descending: boolean
+}
+
+export interface SearchPanel {
+  readonly running: boolean
+  readonly hits: readonly SearchHit[]
+  readonly ordering: SearchOrdering
+  ask(text: string): void
+  setSort(sort: SearchSort): void
+}
+
+export interface SearchPort {
+  readonly panel: SearchPanel
+  show(text: string): void
+  fromView(view: object | undefined): void
 }

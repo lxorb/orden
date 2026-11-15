@@ -13,7 +13,7 @@ const { setKind, setWord, receive } = await import('./kind-choice')
 const { runnable, SHORTCUTS } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { appCommands } = await import('./commands/src/api')
-const { offeredKinds } = await import('./new-kinds')
+const { offeredKinds } = await import('./new-here/src/api')
 const { openPass } = await import('./pass-sync/src/open')
 const { workspace } = await import('./workspace/src/api')
 

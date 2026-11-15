@@ -11,6 +11,14 @@
     "web-backend",
     "windows",
     "protect",
-    "launch"
-  ]
+    "launch",
+    "documents",
+    "markdown",
+    "matching",
+    "scratchpad",
+    "sharing",
+    "ui-kit",
+    "workspace"
+  ],
+  "pending": ["apps/desktop/src/lib/focus.ts", "apps/desktop/src/lib/new-tab.ts"]
 }

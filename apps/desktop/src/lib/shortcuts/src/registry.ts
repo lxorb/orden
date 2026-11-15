@@ -9,10 +9,10 @@ import {
 import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/api'
 import { revealPanel, stepRegionFocus } from '../../focus'
 import { modes } from '../../modes/src/api'
-import { searchFrom } from '../../search.svelte'
 import {
   commandRows,
   commandRowsLoaded,
+  searching,
   runCommand,
   settingsWindow,
   showQuickAdd,
@@ -661,7 +661,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-f',
-    run: (context) => searchFrom(context.view),
+    run: (context) => searching()?.fromView(context.view),
   },
   {
     id: 'app.refresh',

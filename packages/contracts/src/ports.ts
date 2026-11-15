@@ -13,6 +13,7 @@ import type { SharingPorts } from './sharing'
 import type {
   QuickAddPort,
   QuickAddPrefill,
+  SearchPort,
   ShellFocusPort,
   SheetId,
   SheetsPort,
@@ -109,6 +110,10 @@ export function mayStop(why: StopReason): Promise<boolean> {
 
 export function syncStore(): SyncStorePort | null {
   return (provided.get('sync.store') as SyncStorePort | undefined) ?? null
+}
+
+export function searching(): SearchPort | null {
+  return (provided.get('search') as SearchPort | undefined) ?? null
 }
 
 export function webPages(): WebPagesPort {

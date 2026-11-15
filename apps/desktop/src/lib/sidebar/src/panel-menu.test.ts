@@ -1,10 +1,21 @@
-import { registerSidebarPart } from '@orden/contracts'
+import { providePort, registerSidebarPart } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: { movePanel: () => undefined, treeOptions: { showHidden: false } },
 }))
-vi.mock('../../search.svelte', () => ({ search: { ordering: {}, setSort: () => undefined } }))
+
+providePort('search', {
+  panel: {
+    running: false,
+    hits: [],
+    ordering: { sort: 'relevance', descending: false },
+    ask: () => undefined,
+    setSort: () => undefined,
+  },
+  show: () => undefined,
+  fromView: () => undefined,
+})
 
 const { panelMenu } = await import('./panel-menu')
 

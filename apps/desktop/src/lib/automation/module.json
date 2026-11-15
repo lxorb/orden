@@ -19,5 +19,5 @@
     "documents",
     "panes"
   ],
-  "pending": ["apps/desktop/src/lib/own-keys.ts", "apps/desktop/src/lib/search.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/own-keys.ts"]
 }

@@ -116,11 +116,11 @@ describe('the row a list is made of', () => {
     const lists = [
       'lib/sidebar/src/Bookmarks.svelte',
       'lib/context-menu/src/ContextMenu.svelte',
-      'lib/HitList.svelte',
-      'lib/SearchPanel.svelte',
+      'lib/links-panel/src/HitList.svelte',
+      'lib/search/src/SearchPanel.svelte',
       'lib/settings/src/SettingsPanel.svelte',
       'lib/sidebar/src/Sidebar.svelte',
-      'lib/TagTree.svelte',
+      'lib/search/src/TagTree.svelte',
       'lib/sidebar/src/Tree.svelte',
       'lib/palette/src/Palette.svelte',
     ]

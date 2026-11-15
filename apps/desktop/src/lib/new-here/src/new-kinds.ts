@@ -1,12 +1,11 @@
-import { webPages } from '@orden/contracts'
+import { portOf, runCommand, tabKindLoaded, webPages } from '@orden/contracts'
 import type { IconNode } from 'lucide'
-import type { FileMark } from './file-mark'
-import { hiddenKinds, type KindName, kindsHere } from './gates/src/api'
-import { kindLabel } from './kind-words'
-import { menu, type MenuEntry } from './ui-kit/src/api'
-import { hostPicking, openOnline, openTerminal, shellRows, shells } from './terminal/src/api'
-import { canWriteAt } from './sharing/src/api'
-import { workspace } from './workspace/src/api'
+import type { FileMark } from '../../file-mark'
+import { hiddenKinds, type KindName, kindsHere } from '../../gates/src/api'
+import { kindLabel } from '../../kind-words'
+import { menu, type MenuEntry } from '../../ui-kit/src/api'
+import { canWriteAt } from '../../sharing/src/api'
+import { workspace } from '../../workspace/src/api'
 
 type KindLine = 'write' | 'run' | 'web'
 
@@ -20,6 +19,11 @@ export interface NewKindRow {
   make: (paneId?: string) => void
   others?: (paneId?: string) => Promise<MenuEntry[]>
   ready?: () => void
+}
+
+const making = () => {
+  const found = portOf('terminal.making')
+  return found.ok ? found.value : null
 }
 
 function inPane(paneId: string | undefined, make: () => unknown) {
@@ -70,12 +74,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'chat',
     letter: 'm',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__)
-        inPane(paneId, () =>
-          import('./chats-client/src/api')
-            .then((one) => one.chatOpening())
-            .then((one) => one.makeChat()),
-        )
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => tabKindLoaded('chat').then((one) => one.make?.()))
     },
   }),
   explorer: () => ({
@@ -85,8 +84,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'folder',
     letter: 'f',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./explorer/src/api').then((one) => one.openExplorer()))
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => runCommand('app.explorer'))
     },
   }),
   pass: () => ({
@@ -96,8 +94,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'key',
     letter: 'k',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => import('./pass-sync/src/api').then((one) => one.openPass()))
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => runCommand('pass.open'))
     },
   }),
   terminal: () => terminalRow(),
@@ -111,9 +108,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'a',
     make: (paneId) => {
       if (!__EVEN_PLUGIN__)
-        inPane(paneId, () =>
-          import('./apps/src/api').then(({ makeApplication }) => makeApplication()),
-        )
+        inPane(paneId, () => tabKindLoaded('application').then((one) => one.make?.()))
     },
   }),
   web: () => ({
@@ -160,7 +155,7 @@ function onlineRow(): NewKindRow {
     icon: ONLINE,
     letter: 'o',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => openOnline())
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => making()?.online())
     },
   }
 }
@@ -173,7 +168,7 @@ function remoteRow(): NewKindRow {
     mark: 'remote',
     letter: 's',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) void hostPicking().then(({ hostPicker }) => hostPicker.show(paneId))
+      if (!__EVEN_PLUGIN__) void making()?.pickHost(paneId)
     },
   }
 }
@@ -185,12 +180,12 @@ function terminalRow(): NewKindRow {
     label: () => kindLabel('terminal'),
     mark: 'terminal',
     letter: 'r',
-    make: (paneId) => inPane(paneId, () => openTerminal()),
-    others: (paneId) =>
-      shellRows((shell) => {
-        inPane(paneId, () => openTerminal(shell.id))
-      }),
-    ready: () => void shells.ask(),
+    make: (paneId) => inPane(paneId, () => making()?.open()),
+    others: async (paneId) =>
+      (await making()?.shells((shell) => {
+        inPane(paneId, () => making()?.open(shell))
+      })) ?? [],
+    ready: () => void making()?.warm(),
   }
 }
 

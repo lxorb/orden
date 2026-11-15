@@ -1,5 +1,5 @@
-import { chorded, type Keystroke } from './ui-kit/src/api'
-import { takesWords } from './ui-controls/src/api'
+import { chorded, type Keystroke } from '../../ui-kit/src/api'
+import { takesWords } from '../../ui-controls/src/api'
 
 export function kindOfLetter<Kind extends { letter: string }>(
   kinds: readonly Kind[],

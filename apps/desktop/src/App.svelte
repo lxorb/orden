@@ -44,7 +44,7 @@
   import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
-  import { search } from './lib/search.svelte'
+  import { search } from './lib/search/src/api'
   import { settings } from './lib/settings/src/api'
   import { paletteDoor } from './lib/palette/src/api'
   import { hiddenKinds } from './lib/gates/src/api'

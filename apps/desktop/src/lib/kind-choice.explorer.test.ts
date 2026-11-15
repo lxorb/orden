@@ -34,8 +34,8 @@ vi.mock('./explorer/src/api', () => ({
 const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } =
   await import('./gates/src/api')
 const { receive, setKind, setWord } = await import('./kind-choice')
-const { offeredKinds } = await import('./new-kinds')
-const { kindOfLetter } = await import('./new-kind-keys')
+const { offeredKinds } = await import('./new-here/src/api')
+const { kindOfLetter } = await import('./new-here/src/api')
 const { kindsPane } = await import('./settings/src/kinds-pane')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { BY_ID } = await import('./shortcuts/src/api')

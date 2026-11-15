@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { neighbourhood, type NoteGraph, without } from './graph/src/api'
-  import { account } from './accounts/src/api'
-  import { chatsOn } from './gates/src/api'
-  import { graphSurface } from './surfaces/src/api'
-  import { held } from './ui-kit/src/api'
-  import { links, type Outgoing, type Reference } from './link-index/src/api'
-  import { insideSpace } from './platform/src/api'
-  import { workspace } from './workspace/src/api'
-  import { howFor, type OpenHow, tabAsk } from './new-tab'
+  import type { Component } from 'svelte'
+  import { surfaceLoad } from '@orden/contracts'
+  import { neighbourhood, type NoteGraph, without } from '../../graph/src/api'
+  import { account } from '../../accounts/src/api'
+  import { chatsOn } from '../../gates/src/api'
+  import { graphSurface } from '../../surfaces/src/api'
+  import { held } from '../../ui-kit/src/api'
+  import { links, type Outgoing, type Reference } from '../../link-index/src/api'
+  import { insideSpace } from '../../platform/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { howFor, type OpenHow, tabAsk } from '../../new-tab'
   import HitList from './HitList.svelte'
 
   const {
@@ -29,10 +31,8 @@
 
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
 
-  const chatLinks = held(() =>
-    __EVEN_PLUGIN__
-      ? new Promise<never>(() => undefined)
-      : import('./chats-client/src/api').then((one) => one.loadChatLinks()),
+  const chatLinks = held(
+    () => surfaceLoad('chat-links') as Promise<{ default: Component<{ path: string }> }>,
   )
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
 
