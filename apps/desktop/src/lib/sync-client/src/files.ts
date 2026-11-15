@@ -200,6 +200,20 @@ export async function settleFiles(
       const bytes = await blobs.down(space.id, entry.id)
       if (!alive() || bytes === null) return false
       if (bytes === 'gone') continue
+      if (entry.local_path) {
+        const meanwhile = await readBytes(core, space, entry)
+        if (typeof meanwhile === 'string') {
+          core.touched.add(entry.id)
+          continue
+        }
+        if (meanwhile !== null && meanwhile.hash !== (here?.hash ?? entry.written_hash)) {
+          await core.commit(holdFile(core, entry, meanwhile.hash))
+          continue
+        }
+      } else if (await core.world.disk.exists(full)) {
+        await claimed(core, space, entry, path)
+        continue
+      }
       try {
         await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
         await blobs.write(full, bytes)
