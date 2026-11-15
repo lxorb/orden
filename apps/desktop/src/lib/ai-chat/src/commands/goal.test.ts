@@ -242,6 +242,12 @@ describe('the evaluator', () => {
     expect(verdictIn('not yet met').verdict).toBe('not_yet')
     expect(verdictIn('???')).toEqual({ verdict: 'not_yet', reason: '' })
   })
+
+  test('a not before met is not met', () => {
+    expect(verdictIn('Not met yet: two notes left.').verdict).toBe('not_yet')
+    expect(verdictIn('{"verdict":"not met","reason":"two left"}').verdict).toBe('not_yet')
+    expect(verdictIn('{"verdict":"not achieved"}').verdict).toBe('not_yet')
+  })
 })
 
 describe('a goal in a thread that read words from outside', () => {
