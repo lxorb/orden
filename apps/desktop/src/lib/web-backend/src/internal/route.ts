@@ -177,8 +177,20 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   if (command === 'copy_path') return undefined as T
 
   const remove = (call: string, path: string) => (source.kept ? web : crate)(call, { path })
-  if (going[0]?.dir) {
+  if (going[0]?.dir && source.kept) {
     await remove('delete_folder', source.at)
+    return undefined as T
+  }
+  if (going[0]?.dir) {
+    for (const one of going.filter((each) => !each.dir)) {
+      await crate('delete_note', { path: join(from, one.rest, false) })
+    }
+    const folders = going.filter((each) => each.dir).reverse()
+    for (const one of folders) {
+      await crate('remove_empty_folder', { path: join(from, one.rest, false) }).catch(
+        () => undefined,
+      )
+    }
     return undefined as T
   }
   await remove('delete_note', source.at)

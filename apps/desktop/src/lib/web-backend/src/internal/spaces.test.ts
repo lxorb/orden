@@ -118,6 +118,12 @@ const disk = vi.hoisted(() => {
       case 'create_folder':
         mkdirs(path)
         return undefined
+      case 'remove_empty_folder':
+        if ([...files.keys(), ...dirs].some((one) => one.startsWith(`${path}/`))) {
+          throw new Error('the folder is not empty')
+        }
+        dirs.delete(path)
+        return undefined
       case 'delete_folder':
         for (const one of [...files.keys()]) if (under(path, one)) files.delete(one)
         for (const one of [...dirs]) if (under(path, one)) dirs.delete(one)
@@ -359,6 +365,32 @@ describe('a new space', () => {
 })
 
 describe('a note carried in from a folder', () => {
+  test('in a folder deeper than the listing reaches leaves what it could not carry where it was', async () => {
+    disk.dirs.add('/spaces/Disk')
+    disk.dirs.add('/spaces/Disk/Work')
+    disk.dirs.add('/spaces/Disk/Work/Deep')
+    disk.files.set('/spaces/Disk/Work/Plan.md', 'ship it')
+    disk.files.set('/spaces/Disk/Work/Deep/Far.md', 'far down')
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+
+    const write = disk.crate
+    disk.crate = (command, args) => {
+      const listed = write(command, args) as { children?: { path: string; children?: unknown[] }[] }
+      if (command !== 'read_tree') return listed
+      for (const child of listed.children ?? []) child.children = []
+      return listed
+    }
+    try {
+      await call('rename_note', { from: '/spaces/Disk/Work', to: `${made.path}/Work` })
+    } finally {
+      disk.crate = write
+    }
+
+    expect(await call('read_note', { path: `${made.path}/Work/Plan.md` })).toBe('ship it')
+    expect(disk.files.has('/spaces/Disk/Work/Plan.md')).toBe(false)
+    expect(disk.files.get('/spaces/Disk/Work/Deep/Far.md')).toBe('far down')
+  })
+
   test('that is not UTF-8 text is refused, and stays where it was, byte for byte', async () => {
     const latin = new Uint8Array([0x43, 0x61, 0x66, 0xe9])
     disk.dirs.add('/spaces/Disk')
