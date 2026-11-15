@@ -488,6 +488,26 @@ Words.
     expect(asked('[due:>2026-09-02]')).toBe(false)
   })
 
+  test('and a bare day as the whole of that day, against a time written on it', () => {
+    const at = (source: string, due: string) =>
+      answers(source, { body: `---\ndue: ${due}\n---\n\nWords.\n` })
+
+    expect(at('[due:<=2026-11-15]', '2026-11-15 10:00')).toBe(true)
+    expect(at('[due:2026-11-01..2026-11-15]', '2026-11-15 10:00')).toBe(true)
+    expect(at('[due:=2026-11-15]', '2026-11-15 10:00')).toBe(true)
+    expect(at('[due:>2026-11-15]', '2026-11-15 10:00')).toBe(false)
+    expect(at('[due:<2026-11-16]', '2026-11-15T23:59')).toBe(true)
+    expect(at('[due:>=2026-11-15 10:00]', '2026-11-15')).toBe(true)
+    expect(at('[due:<2026-11-15 10:00]', '2026-11-15T09:00:00Z')).toBe(true)
+    expect(at('[due:>2026-11-15 10:00]', '2026-11-15t11:30:00.250+02:00')).toBe(true)
+    expect(at('[due:<2026-11-15 10:00]', '2026-11-15 10:30')).toBe(false)
+  })
+
+  test('and a number written another way as the same number', () => {
+    expect(answers('[n:=5]', { body: '---\nn: 5.0\n---\n' })).toBe(true)
+    expect(answers('[n:=5]', { body: '---\nn: 50\n---\n' })).toBe(false)
+  })
+
   test('and takes a range with both ends in it', () => {
     expect(asked('[pages:100..200]')).toBe(true)
     expect(asked('[pages:150..150]')).toBe(true)

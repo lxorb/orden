@@ -726,34 +726,58 @@ fn a_number(said: &str) -> bool {
     at == bytes.len()
 }
 
-fn a_date(said: &str) -> bool {
+fn wall_clock(said: &str) -> Option<&str> {
     let bytes = said.as_bytes();
     let digits = |at: usize, many: usize| {
         (0..many).all(|step| matches!(bytes.get(at + step), Some(b'0'..=b'9')))
     };
 
-    if !(digits(0, 4) && bytes.get(4) == Some(&b'-') && digits(5, 2) && bytes.get(7) == Some(&b'-'))
+    if !(digits(0, 4)
+        && bytes.get(4) == Some(&b'-')
+        && digits(5, 2)
+        && bytes.get(7) == Some(&b'-')
+        && digits(8, 2))
     {
-        return false;
-    }
-    if !digits(8, 2) {
-        return false;
+        return None;
     }
     if bytes.len() == 10 {
-        return true;
+        return Some(said);
     }
 
-    if !matches!(bytes.get(10), Some(b'T' | b' ')) {
-        return false;
+    if !matches!(bytes.get(10), Some(b'T' | b't' | b' ')) {
+        return None;
     }
     if !(digits(11, 2) && bytes.get(13) == Some(&b':') && digits(14, 2)) {
-        return false;
+        return None;
     }
-    if bytes.len() == 16 {
-        return true;
+    let mut at = 16;
+    if bytes.get(at) == Some(&b':') && digits(at + 1, 2) {
+        at += 3;
+    }
+    let clock = at;
+
+    if bytes.get(at) == Some(&b'.') && digits(at + 1, 1) {
+        at += 1;
+        while digits(at, 1) {
+            at += 1;
+        }
+    }
+    match bytes.get(at) {
+        Some(b'Z' | b'z') => at += 1,
+        Some(b'+' | b'-') if digits(at + 1, 2) => {
+            at += 3;
+            if bytes.get(at) == Some(&b':') {
+                at += 1;
+            }
+            if !digits(at, 2) {
+                return None;
+            }
+            at += 2;
+        }
+        _ => {}
     }
 
-    bytes.get(16) == Some(&b':') && digits(17, 2) && bytes.len() == 19
+    (at == bytes.len()).then(|| &said[..clock])
 }
 
 fn order(value: &str, asked: &str) -> Ordering {
@@ -766,17 +790,31 @@ fn order(value: &str, asked: &str) -> Ordering {
         return here.partial_cmp(&there).unwrap_or(Ordering::Equal);
     }
 
-    if a_date(one) && a_date(other) {
-        return one.replacen(' ', "T", 1).cmp(&other.replacen(' ', "T", 1));
+    if let (Some(here), Some(there)) = (wall_clock(one), wall_clock(other)) {
+        let shared = here.len().min(there.len());
+        let even = |said: &str| said[..shared].replacen([' ', 't'], "T", 1);
+        return even(here).cmp(&even(there));
     }
 
     one.to_lowercase().cmp(&other.to_lowercase())
 }
 
+fn alike(value: &str, asked: &str) -> bool {
+    let one = value.trim();
+    let other = asked.trim();
+    let measured = (a_number(one) && a_number(other))
+        || (wall_clock(one).is_some() && wall_clock(other).is_some());
+    if measured {
+        order(one, other) == Ordering::Equal
+    } else {
+        one.to_lowercase() == other.to_lowercase()
+    }
+}
+
 fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) -> bool {
     match compare {
         Compare::Has => holds(value, &asked.to_lowercase(), true),
-        Compare::Is => value.trim().to_lowercase() == asked.trim().to_lowercase(),
+        Compare::Is => alike(value, asked),
         Compare::Lt => order(value, asked) == Ordering::Less,
         Compare::Lte => order(value, asked) != Ordering::Greater,
         Compare::Gt => order(value, asked) == Ordering::Greater,
@@ -1250,6 +1288,43 @@ mod tests {
         assert!(answers(&pair("2024-01-01T10:00", "gt"), note));
         assert!(!answers(&pair("2024-01-01T12:00", "gt"), note));
         assert!(answers(&pair("DUE", "has"), "---\ndue: Due soon\n---\n"));
+    }
+
+    #[test]
+    fn a_bare_day_is_the_whole_of_that_day_against_a_time_written_on_it() {
+        let pair = |said: &str, compare: &str| {
+            format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
+        };
+        let due = |said: &str| format!("---\ndue: {said}\n---\n\nWords.\n");
+
+        assert!(answers(
+            &pair("2026-11-15", "lte"),
+            &due("2026-11-15 10:00")
+        ));
+        assert!(answers(&pair("2026-11-15", "is"), &due("2026-11-15 10:00")));
+        assert!(!answers(
+            &pair("2026-11-15", "gt"),
+            &due("2026-11-15 10:00")
+        ));
+        assert!(answers(&pair("2026-11-16", "lt"), &due("2026-11-15T23:59")));
+        assert!(answers(
+            &pair("2026-11-15 10:00", "gte"),
+            &due("2026-11-15")
+        ));
+        assert!(answers(
+            &pair("2026-11-15 10:00", "lt"),
+            &due("2026-11-15T09:00:00Z")
+        ));
+        assert!(answers(
+            &pair("2026-11-15 10:00", "gt"),
+            &due("2026-11-15t11:30:00.250+02:00")
+        ));
+        assert!(!answers(
+            &pair("2026-11-15 10:00", "lt"),
+            &due("2026-11-15 10:30")
+        ));
+        assert!(answers(&pair("5", "is"), "---\nn: 5.0\ndue: 5.0\n---\n"));
+        assert!(!answers(&pair("5", "is"), "---\ndue: 50\n---\n"));
     }
 
     #[test]

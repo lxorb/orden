@@ -205,7 +205,14 @@ function unitsOf(facts: Facts, unit: Unit): Range[] {
 }
 
 const A_NUMBER = /^-?\d+(?:\.\d+)?$/
-const A_DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
+const A_DATE =
+  /^(\d{4}-\d{2}-\d{2})(?:[Tt ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(?:[Zz]|[+-]\d{2}:?\d{2})?)?$/
+
+function wallClock(said: string): string | null {
+  const read = A_DATE.exec(said)
+  if (!read) return null
+  return read[2] ? `${read[1]}T${read[2]}` : (read[1] ?? null)
+}
 
 function order(value: string, asked: string): number {
   const one = value.trim()
@@ -217,10 +224,20 @@ function order(value: string, asked: string): number {
     return here < there ? -1 : here > there ? 1 : 0
   }
 
-  const dates = A_DATE.test(one) && A_DATE.test(other)
-  const left = dates ? one.replace(' ', 'T') : one.toLowerCase()
-  const right = dates ? other.replace(' ', 'T') : other.toLowerCase()
+  const here = wallClock(one)
+  const there = wallClock(other)
+  const shared = here && there ? Math.min(here.length, there.length) : 0
+  const left = here && there ? here.slice(0, shared) : one.toLowerCase()
+  const right = here && there ? there.slice(0, shared) : other.toLowerCase()
   return left < right ? -1 : left > right ? 1 : 0
+}
+
+function alike(value: string, asked: string): boolean {
+  const one = value.trim()
+  const other = asked.trim()
+  const measured =
+    (A_NUMBER.test(one) && A_NUMBER.test(other)) || (A_DATE.test(one) && A_DATE.test(other))
+  return measured ? order(one, other) === 0 : one.toLowerCase() === other.toLowerCase()
 }
 
 function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>): boolean {
@@ -231,7 +248,7 @@ function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>)
     case 'has':
       return contains(value, asked, true)
     case 'is':
-      return value.trim().toLowerCase() === asked.trim().toLowerCase()
+      return alike(value, asked)
     case 'lt':
       return order(value, asked) < 0
     case 'lte':
