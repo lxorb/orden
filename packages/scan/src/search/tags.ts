@@ -119,17 +119,11 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
       const value = at + line.length - rest.length
       const closes = valueClosesAt(body, value, front.close)
       if (closes !== -1) {
-        const words = body
-          .slice(value, closes)
-          .replace(
-            /(^|\s)(#\s.*)$/gm,
-            (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
-          )
-        readValues(value, words, out)
+        readValues(value, blankedComments(body.slice(value, closes)), out)
         at = closes + 1
         continue
       }
-      readValues(value, rest, out)
+      readValues(value, blankedComments(rest), out)
       at = readItems(body, stop + 1, front, out)
       continue
     }
@@ -150,12 +144,19 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
     if (!item) return at
 
     const [, value = ''] = item
-    readValues(at + line.indexOf(value), value, out)
+    readValues(at + line.indexOf(value), blankedComments(value), out)
     if (end === -1) return front.close
     at = end + 1
   }
 
   return at
+}
+
+function blankedComments(text: string): string {
+  return text.replace(
+    /(^|\s)(#\s.*)$/gm,
+    (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
+  )
 }
 
 function readValues(from: number, text: string, out: TagUse[]) {

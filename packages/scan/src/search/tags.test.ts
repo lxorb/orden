@@ -143,6 +143,13 @@ describe('the tags in the front matter', () => {
     expect(front('status: done # not a tag')).toEqual([])
   })
 
+  test('but not from a comment after the value', () => {
+    expect(front('tags:\n  - project # active')).toEqual(['#project'])
+    expect(front('tags: [a] # old')).toEqual(['#a'])
+    expect(front('tags: a, b # c')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - project # active\r\n---\r\n')).toEqual(['#project'])
+  })
+
   test('and both halves of a note count', () => {
     expect(tagsIn('---\ntags: [work]\n---\n\nwords #orden\n')).toEqual(['#work', '#orden'])
   })
