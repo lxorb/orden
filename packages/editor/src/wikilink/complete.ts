@@ -1,5 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
+import type { Text } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { fold } from '@orden/rooms/fold'
 import { blocksOf, foldName } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
@@ -149,12 +151,30 @@ async function blockOptions(
     }))
 }
 
+interface Span {
+  from: number
+  to: number
+}
+
+function carriedOver(before: Text, now: Text, typed: Span): Span | null {
+  const change = fold(before.toString(), now.toString())
+  if (!change) return typed
+  if (change.from >= typed.to) return typed
+  if (change.to > typed.from - MARKER) return null
+
+  const shift = change.insert.length - (change.to - change.from)
+  return { from: typed.from + shift, to: typed.to + shift }
+}
+
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
+    const before = view.state.doc
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (id) insert({ ...target, fragment: `^${id}` })(view, completion, from, to)
+        const typed = id ? carriedOver(before, view.state.doc, { from, to }) : null
+        if (id && typed)
+          insert({ ...target, fragment: `^${id}` })(view, completion, typed.from, typed.to)
       })
       .catch(() => undefined)
   }

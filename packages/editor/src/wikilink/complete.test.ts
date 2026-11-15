@@ -419,3 +419,45 @@ describe('a note the space has archived', () => {
     expect(labels(await rowsFor('[[^^ab', asked))).toEqual(['^abd'])
   })
 })
+
+describe('a block named while its link is picked', () => {
+  test('lands the link where the typing has gone, after the name went into this note', async () => {
+    const doc = 'Alpha para\n\nSee [[Plan#^alp'
+    const asked = space([note('Plan.md')], { bodies: { 'Plan.md': 'Alpha para\n' } })
+    const found = await wikilinkCompletions(
+      new CompletionContext(state(doc, asked.index), doc.length, false),
+    )
+    const row = found?.options.find((one) => one.label === 'Alpha para')
+    if (!found || !row || typeof row.apply !== 'function') throw new Error('no row')
+
+    let built: EditorState
+    const view = {
+      get state() {
+        return built
+      },
+      dispatch: (spec: TransactionSpec) => {
+        built = built.update(spec).state
+      },
+    } as unknown as EditorView
+    built = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(doc.length),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          noteIndex.of(asked.index),
+          blockNamer.of(() => {
+            view.dispatch({ changes: { from: 10, insert: ' ^abc123' } })
+            return Promise.resolve('abc123')
+          }),
+        ],
+      }),
+    )
+
+    row.apply(view, row, found.from, doc.length)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(built.doc.toString()).toBe('Alpha para ^abc123\n\nSee [[Plan#^abc123]]')
+  })
+})
