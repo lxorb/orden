@@ -380,6 +380,12 @@ async function listBacklinks(
   return [marked(spaceSource(space), found.join('\n')), ...stopped].join('\n')
 }
 
+export const hiddenPath = (path: string): boolean =>
+  path.split('/').some((part) => part.startsWith('.'))
+
+export const HIDDEN = (path: string): string =>
+  `${path} is hidden: Orden does not write notes whose names or folders start with a dot.`
+
 async function writeNote(
   env: Env,
   space: Space,
@@ -388,6 +394,7 @@ async function writeNote(
 ): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
+  if (hiddenPath(path)) return HIDDEN(path)
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'

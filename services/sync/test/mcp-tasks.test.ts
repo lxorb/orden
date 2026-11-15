@@ -300,6 +300,25 @@ describe('bases, with Orden closed', () => {
     expect(await read(key, 'Visits/Anna.md')).toBe('# Anna visit\n')
   })
 
+  test('a row title or a note path is never a hidden note', async () => {
+    await baseFile('Books.base', BOOKS)
+    await basesTurned(true)
+    const key = await connector()
+
+    expect(
+      await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: '.Secret' }),
+    ).toMatch(/is hidden/)
+    expect(
+      await tool(key, 'write_note', { space: 'Work', path: '.hidden/x.md', content: 'hi' }),
+    ).not.toMatch(/^Saved/)
+    expect(
+      await tool(key, 'write_note', { space: 'Work', path: 'a/.b.md', content: 'hi' }),
+    ).not.toMatch(/^Saved/)
+    expect(await tool(key, 'list_notes', { space: 'Work' })).not.toMatch(
+      /\.Secret|\.hidden|\.b\.md/,
+    )
+  })
+
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
     await basesTurned(true)

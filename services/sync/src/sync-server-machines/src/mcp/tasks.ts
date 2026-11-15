@@ -30,7 +30,16 @@ import {
   mergedInbox,
 } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
-import { askedSpace, marked, noteBody, putNote, type Space, spaceSource } from './tools'
+import {
+  askedSpace,
+  HIDDEN,
+  hiddenPath,
+  marked,
+  noteBody,
+  putNote,
+  type Space,
+  spaceSource,
+} from './tools'
 import type { TokenRow } from './tokens'
 import { zoneOf } from './zone'
 
@@ -538,6 +547,7 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
     const asked = folder ? `${folder}/${file}` : file
     const path = cleanPath(asked)
     if (!path) throw new Said(`${asked} is not a note path.`)
+    if (hiddenPath(path)) throw new Said(HIDDEN(path))
     if ((await wordsAt(env, space, path)) !== null) continue
     let landed
     try {
