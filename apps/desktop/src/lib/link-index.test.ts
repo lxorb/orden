@@ -822,6 +822,34 @@ describe('renaming a note rewrites the links to it', () => {
     },
   )
 
+  test.each([
+    ['x/Plan.md', 'x/Road.md', 'see [[Road]]'],
+    ['Plan.md', 'Road.md', 'see [[Plan]]'],
+  ])(
+    'a text card link on a canvas in a folder is read from beside it when %s is renamed',
+    async (was, now, words) => {
+      const card = { x: 0, y: 0, width: 10, height: 10 }
+      const plane = JSON.stringify({
+        nodes: [{ id: 'b', type: 'text', text: 'see [[Plan]]', ...card }],
+        edges: [],
+      })
+      await import('@orden/scan/canvas')
+      await space({ 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }, ['x/Board.canvas'])
+      notes['x/Board.canvas'] = plane
+      links.canvasRead(at('x/Board.canvas'), plane)
+      await vi.waitFor(() =>
+        expect(links.held().map((one) => one.path)).toContain('x/Board.canvas'),
+      )
+
+      await links.retarget(at(was), at(now), ROOT)
+
+      const after = JSON.parse(notes['x/Board.canvas'] ?? '') as {
+        nodes: Record<string, string>[]
+      }
+      expect(after.nodes.map((one) => one.text)).toEqual([words])
+    },
+  )
+
   test('a card read before cards named their file from the top still does', async () => {
     const { scanCanvas } = await import('@orden/scan/canvas')
     notes = { 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }

@@ -968,9 +968,10 @@ class Links {
   private resolveFrom(
     source: string | null,
     written: { kind: LinkKind; target: string },
+    indexed = true,
   ): string | null {
     if (!written.target) return null
-    const link = asWritten(source, written)
+    const link = indexed ? asWritten(source, written) : written
 
     const where = source === null ? '\0nowhere' : folderOf(source)
     const key = `${where}\0${link.kind}\0${link.target}`
@@ -1149,7 +1150,7 @@ class Links {
       const touched = await this.retargetIn(
         this.notes,
         (source, link) =>
-          this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
+          this.resolveFrom(source, link, false) ?? fileNamed(this.filesNamed, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
         {
           was,
