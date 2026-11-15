@@ -2,7 +2,7 @@ import { isBaseTarget } from '@orden/markdown/links'
 import { untrack } from 'svelte'
 import { links } from '../../link-index/src/api'
 import { rows } from '../../rows/src/api'
-import { basesOn } from '../../settings.svelte'
+import { basesOn } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { basesAre, heardChange, readHeld, repeatTemplates } from './running'
 

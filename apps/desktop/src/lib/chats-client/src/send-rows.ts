@@ -1,7 +1,7 @@
 import type { CommandExtension } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import { account } from '../../accounts/src/api'
-import { chatsOn } from '../../settings.svelte'
+import { chatsOn } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
 
 async function send(note: string, view: EditorView | undefined) {

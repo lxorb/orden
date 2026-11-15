@@ -7,7 +7,7 @@ import {
   type KindName,
   kindsHere,
   shownOf,
-} from './settings.svelte'
+} from './gates/src/api'
 import { forget, isString, keepJson } from './platform/src/api'
 
 const MOST_KINDS = 32

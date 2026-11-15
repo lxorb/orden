@@ -20,7 +20,7 @@ import { serveLinks } from './link-index/src/api'
 import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
 import { samePath } from './platform/src/api'
-import { hiddenKinds } from './settings.svelte'
+import { hiddenKinds } from './gates/src/api'
 
 serveLinks({
   html: async (text, path) => {

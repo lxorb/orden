@@ -18,7 +18,8 @@
     "agent-verbs",
     "automation",
     "pdf",
-    "workspace"
+    "workspace",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/Sweep.svelte",

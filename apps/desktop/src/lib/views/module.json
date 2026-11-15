@@ -29,7 +29,8 @@
     "tree",
     "workspace",
     "notify",
-    "undo-toast"
+    "undo-toast",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/drawer.svelte.ts",
@@ -37,7 +38,6 @@
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/panel-marks.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/swipe.ts"
   ]
 }

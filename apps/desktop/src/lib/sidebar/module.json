@@ -22,7 +22,8 @@
     "tree",
     "ui-kit",
     "windows",
-    "workspace"
+    "workspace",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",

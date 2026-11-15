@@ -1,7 +1,7 @@
 import { webPages } from '@orden/contracts'
 import type { IconNode } from 'lucide'
 import type { FileMark } from './file-mark'
-import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
+import { hiddenKinds, type KindName, kindsHere } from './gates/src/api'
 import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
 import { hostPicking, openOnline, openTerminal, shellRows, shells } from './terminal/src/api'

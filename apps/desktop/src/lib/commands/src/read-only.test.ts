@@ -10,7 +10,7 @@ vi.mock('../../sharing/src/api', async (importOriginal) => ({
 
 const { workspace } = await import('../../workspace/src/api')
 const { appCommands } = await import('./api')
-const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 
 const SPACE = '/Theirs'

@@ -1,6 +1,6 @@
 import { may } from '@orden/chats'
 import { account } from '../../accounts/src/api'
-import { hiddenKinds } from '../../settings.svelte'
+import { hiddenKinds } from '../../gates/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import { nameOf, samePath, within, withoutExtension } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'

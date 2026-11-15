@@ -1,5 +1,5 @@
 import type { OpenHow } from '../../new-tab'
-import { appsOn } from '../../settings.svelte'
+import { appsOn } from '../../gates/src/api'
 import { nameOf, samePath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'

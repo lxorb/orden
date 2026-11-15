@@ -1,7 +1,7 @@
 <script lang="ts">
   import { account } from '../../accounts/src/api'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../../panel-marks'
-  import { chatsOn, hiddenKinds } from '../../settings.svelte'
+  import { chatsOn, hiddenKinds } from '../../gates/src/api'
   import { UnreadDot, viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import { writeNew } from '../../write-new'

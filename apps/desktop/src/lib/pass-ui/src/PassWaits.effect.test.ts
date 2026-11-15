@@ -18,8 +18,8 @@ vi.mock('../../protect/src/device', () => ({
   deviceName: () => 'Touch ID',
 }))
 
-vi.mock('../../settings.svelte', async (original) => ({
-  ...(await original<typeof import('../../settings.svelte')>()),
+vi.mock('../../gates/src/api', async (original) => ({
+  ...(await original<typeof import('../../gates/src/api')>()),
   passOn: () => true,
 }))
 

@@ -32,7 +32,7 @@ vi.mock('./terminal/src/remote/picker.svelte', () => ({
 
 const { kindLines, newKinds } = await import('./new-kinds')
 const { APPS_WORD, EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } =
-  await import('./settings.svelte')
+  await import('./gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, EXPLORER_WORD, PASS_WORD]
 
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')

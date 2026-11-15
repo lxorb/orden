@@ -9,7 +9,7 @@ import {
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account, arriving } from '../../accounts/src/api'
 import { seed } from '../../web-backend/src/api'
-import { appsOn, basesOn, hiddenKinds } from '../../settings.svelte'
+import { appsOn, basesOn, hiddenKinds } from '../../gates/src/api'
 import { settingsTab } from '../../settings-tab'
 import { keptAway } from '../../away/src/api'
 import {

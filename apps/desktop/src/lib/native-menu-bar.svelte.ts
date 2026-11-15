@@ -8,7 +8,7 @@ import type {
 } from '@tauri-apps/api/menu'
 import { account } from './accounts/src/api'
 import { fullscreen } from './fullscreen.svelte'
-import { hiddenKinds } from './settings.svelte'
+import { hiddenKinds } from './gates/src/api'
 import type { MenuItem } from './ui-kit/src/api'
 import { modes } from './modes/src/api'
 import {

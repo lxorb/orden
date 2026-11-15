@@ -27,7 +27,8 @@
   import { holdScroll } from '../../kept-scroll'
   import { whileHere } from '../../ui-kit/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { glassesOn, settings, type Section } from '../../settings.svelte'
+  import { settings, type Section } from '../../settings.svelte'
+  import { glassesOn } from '../../gates/src/api'
   import {
     CATEGORIES,
     doubleTaps,

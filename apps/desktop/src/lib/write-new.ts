@@ -1,5 +1,5 @@
 import { flushSync } from 'svelte'
-import { hiddenKinds } from './settings.svelte'
+import { hiddenKinds } from './gates/src/api'
 import { views } from './views.svelte'
 import { workspace } from './workspace/src/api'
 

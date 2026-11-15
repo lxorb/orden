@@ -27,7 +27,8 @@
     "workspace",
     "launch",
     "files-out",
-    "double-tap"
+    "double-tap",
+    "gates"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",

@@ -551,7 +551,7 @@ let log: unknown[] = []
 await import('./agent-verbs-wired')
 const { answerTheCrate } = await import('../src/lib/agent-host/src/api')
 const { forgetIndexes } = await import('../src/lib/agent-host/src/links')
-const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../src/lib/settings.svelte')
+const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../src/lib/gates/src/api')
 
 const EVERY = [
   'context',

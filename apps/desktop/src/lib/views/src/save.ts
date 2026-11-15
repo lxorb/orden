@@ -1,4 +1,4 @@
-import { basesOn } from '../../settings.svelte'
+import { basesOn } from '../../gates/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { joinPath } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'

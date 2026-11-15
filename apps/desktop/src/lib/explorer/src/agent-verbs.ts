@@ -4,7 +4,7 @@ import { foldsIn, pathKeyAs, samePath, joinPath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { Category } from '../../agent-protocol/src/api'
-import { explorerOn } from '../../settings.svelte'
+import { explorerOn } from '../../gates/src/api'
 import {
   asked,
   type Call,

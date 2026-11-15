@@ -1,6 +1,6 @@
 import { whenLoaded } from '@orden/contracts'
 import { untrack } from 'svelte'
-import { appsOn, chatsOn, explorerOn, passOn, timeOn } from './settings.svelte'
+import { appsOn, chatsOn, explorerOn, passOn, timeOn } from './gates/src/api'
 import type { TabKind } from './tab-kinds/src/api'
 import { notices, workspace } from './workspace/src/api'
 

@@ -69,7 +69,7 @@ const { configurePass, PassStore } = await import('./store.svelte')
 const { Autofill } = await import('./autofill')
 const { passBubbles } = await import('./fill-bubbles.svelte')
 const { FLOW_WINDOW } = await import('./sign-in-flow')
-const { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../settings.svelte')
+const { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
 
 configurePass({ kdf: { m: 64, t: 1, p: 1 }, pinKdf: { m: 64, t: 1, p: 1 } })
 

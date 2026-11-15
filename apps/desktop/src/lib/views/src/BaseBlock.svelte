@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { basesOn } from '../../settings.svelte'
+  import { basesOn } from '../../gates/src/api'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
   import { fenceSource, fileSource, rowAt } from './source'

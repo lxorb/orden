@@ -2,7 +2,7 @@ import { inTurn, keepJson, stored } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
 import { counted } from './counted'
 import { lasting, MINUTE } from './days'
-import { timeOn } from '../../settings.svelte'
+import { timeOn } from '../../gates/src/api'
 import { dueOf } from './goals'
 import { time } from './time.svelte'
 
