@@ -412,7 +412,7 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     };
 
     let from = line.as_ptr() as usize - body.as_ptr() as usize;
-    let past = line.len() - said.len();
+    let past = said.as_ptr() as usize - line.as_ptr() as usize;
     if let Some(close) = value_closes_at(body, from + past, block.close) {
         let joined: Vec<&str> = body[from + past..close]
             .lines()
@@ -421,7 +421,7 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
         return flow_items(&joined.join(" "));
     }
 
-    if said.is_empty() {
+    if uncommented(said).is_empty() {
         dash_items(lines)
     } else {
         flow_items(said)
@@ -636,6 +636,35 @@ mod tests {
 
     fn aliases(body: &str) -> Vec<String> {
         block(body).map_or_else(Vec::new, |one| list(body, &one, "aliases"))
+    }
+
+    #[test]
+    fn a_list_reads_past_a_comment_on_its_key_and_a_space_at_the_end_of_its_first_line() {
+        let read = |text: &str, key: &str| {
+            let block = super::block(text);
+            block
+                .map(|block| super::list(text, &block, key))
+                .unwrap_or_default()
+        };
+        assert_eq!(
+            read(
+                "---\naliases: # other names\n  - a\n  - b\n---\n",
+                "aliases"
+            ),
+            vec!["a", "b"]
+        );
+        assert_eq!(
+            read("---\naliases: [Alpha, \n  Beta]\n---\n", "aliases"),
+            vec!["Alpha", "Beta"]
+        );
+        assert_eq!(
+            read("---\r\naliases: [Alpha, \r\n  Beta]\r\n---\r\n", "aliases"),
+            vec!["Alpha", "Beta"]
+        );
+        assert_eq!(
+            read("---\ntitle: \"one \n  two\"\n---\n", "title"),
+            vec!["one two"]
+        );
     }
 
     #[test]
