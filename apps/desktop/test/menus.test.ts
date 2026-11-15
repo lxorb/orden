@@ -157,9 +157,13 @@ describe('what a row of the file list offers', () => {
     expect(entries).toContain("'Choose an icon'")
   })
 
-  test('and the way back to no icon, only while it wears one', () => {
-    expect(entries).toContain("'Remove icon'")
-    expect(entries).toContain('chosenIcon(path) === null')
+  test('and the way back to no icon is in the picker, not the menu', () => {
+    expect(entries).not.toContain('Remove icon')
+    const picker = read('lib/IconPicker.svelte')
+    expect(picker).toMatch(
+      /\(worn !== null \|\| tint !== null\)[\s\S]{0,80}onclick=\{remove\}>Remove icon</,
+    )
+    expect(picker).toMatch(/function remove\(\)[\s\S]{0,120}wear\(asked, null, null\)/)
   })
 
   test('choosing opens the one picker there is', () => {

@@ -158,9 +158,8 @@ test('an icon chosen for an open chat is written into its pointer and worn every
   expect(files[path]).toBe(`{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"orange"}\n`)
   await wearing(['rocket, coloured', 'rocket, coloured', 'rocket, coloured'], marks)
 
-  const remove = iconEntries(path).find((one) => one?.label === 'Remove icon')
-  if (!remove) throw new Error('no Remove icon in the menu')
-  remove.run()
+  expect(iconEntries(path).map((one) => one?.label)).toEqual(['Choose an icon'])
+  await setFileIcon(path, null)
   await vi.waitFor(() => expect(files[path]).toBe(bare))
   await wearing(['kind', 'kind', '#'], marks)
 

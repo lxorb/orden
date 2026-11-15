@@ -174,7 +174,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the web essential does not start on its site icon: {before.get('Svelte docs')}")
     sidebar(page, "01-before")
 
-    resets = {"Svelte docs": "Reset to site icon"}
     for name in ("Plan", "Svelte docs", "Paper.pdf", "Board", "Reading"):
         if not press(page, name, "Choose an icon"):
             continue
@@ -199,7 +198,9 @@ def drive(browser: Browser) -> None:
         wrong(f"the folder's icon is not kept in the space's synced icons: {reading}")
 
     for name in ("Plan", "Svelte docs", "Paper.pdf", "Board", "Reading"):
-        if press(page, name, resets.get(name, "Remove icon")):
+        if press(page, name, "Choose an icon"):
+            page.locator(".sheet button", has_text="Remove icon").click()
+            page.locator(".sheet").wait_for(state="hidden", timeout=PATIENCE * 1000)
             page.wait_for_timeout(400)
     after = page.evaluate(FACES)
     say(f"after: {json.dumps(after)}")
@@ -208,10 +209,11 @@ def drive(browser: Browser) -> None:
             wrong(f"{name} did not go back to its own face: {after.get(name)} != {before.get(name)}")
     sidebar(page, "03-reset")
 
-    still = [one.strip() for one in menu_of(page, "Plan")]
-    page.keyboard.press("Escape")
-    if "Remove icon" in still:
-        wrong("Plan still offers to remove an icon it no longer wears")
+    if press(page, "Plan", "Choose an icon"):
+        page.locator(".sheet input.orden-field").wait_for(state="visible", timeout=PATIENCE * 1000)
+        if page.locator(".sheet button", has_text="Remove icon").count():
+            wrong("Plan still offers to remove an icon it no longer wears")
+        page.keyboard.press("Escape")
     page.context.close()
 
 
