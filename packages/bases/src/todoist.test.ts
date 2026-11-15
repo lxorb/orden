@@ -184,3 +184,16 @@ describe('mistakes', () => {
     expect(() => fromTodoist(source, options)).toThrow(message)
   })
 })
+
+describe('a keyed term written with capitals', () => {
+  test('reads as it does in lower case', () => {
+    for (const [typed, lower] of [
+      ['Assigned to: me', 'assigned to: me'],
+      ['Due before: tomorrow', 'due before: tomorrow'],
+      ['Created after: -7 days', 'created after: -7 days'],
+      ['Zugewiesen an: mich', 'zugewiesen an: mich'],
+    ] as const) {
+      expect(fromTodoist(typed)).toEqual(fromTodoist(lower))
+    }
+  })
+})
