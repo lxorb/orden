@@ -307,7 +307,8 @@ class Session {
     if (sharing.ok) await sharing.value.listed(() => this.token === token)
     if (this.token !== token) return
 
-    await (await import('../../space-archive')).listed()
+    const archived = portOf('spaces.archived')
+    if (archived.ok) await archived.value.listed()
   }
 
   private asking?: ReturnType<typeof setTimeout>

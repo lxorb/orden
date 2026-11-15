@@ -10,7 +10,12 @@ interface PublishingPort {
   }) => Promise<void>
 }
 
+interface SpacesArchivedPort {
+  readonly listed: () => Promise<void>
+}
+
 export interface SharingPorts {
   readonly 'sharing.spaces': SharingSpacesPort
+  readonly 'spaces.archived': SpacesArchivedPort
   readonly publishing: PublishingPort
 }
