@@ -7,7 +7,7 @@ import {
   SCROLL_KEPT,
   scrollKeyOf,
 } from './kept-scroll'
-import type { TabKind } from './workspace/tab-kinds'
+import type { TabKind } from './tab-kinds/src/api'
 
 const frames = async (count = 3) => {
   for (let one = 0; one < count; one += 1) {

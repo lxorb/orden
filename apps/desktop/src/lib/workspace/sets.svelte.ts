@@ -1,12 +1,20 @@
 import { tick } from 'svelte'
 import { focusEditor } from '../focus'
-import { identifier } from '../identifier'
-import { log, without, forget, isRecord, stored, invoke, isDesktop } from '../platform/src/api'
+import {
+  identifier,
+  log,
+  without,
+  forget,
+  isRecord,
+  stored,
+  invoke,
+  isDesktop,
+} from '../platform/src/api'
 import { spaceSound } from '../surfaces.svelte'
 import { IN_A_PAGE } from '../ui-controls/src/api'
 import { pages } from '../web-tab/src/api'
 import { type Tab, workspace } from '../workspace.svelte'
-import { type Frame, pane, paneIn, panesIn } from './pane-tree'
+import { type Frame, pane, paneIn, panesIn } from '../panes/src/api'
 import {
   focusIn,
   GLOBAL,
@@ -18,7 +26,7 @@ import {
   tidied,
 } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
-import { TAB_KINDS } from './tab-kinds'
+import { TAB_KINDS } from '../tab-kinds/src/api'
 
 interface Aside {
   frame: Frame

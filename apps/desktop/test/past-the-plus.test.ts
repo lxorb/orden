@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { TAB_KINDS } from '../src/lib/workspace/tab-kinds'
+import { TAB_KINDS } from '../src/lib/tab-kinds/src/api'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')

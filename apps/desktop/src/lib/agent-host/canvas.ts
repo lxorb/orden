@@ -15,7 +15,7 @@ import { type Call, done, maybe, need } from './call'
 import { readablePages } from './pages-ops'
 import { Refused } from './problem'
 import { namedTab, tabsOwnSpace } from './tab-target'
-import { kindsWhere } from '../workspace/tab-kinds'
+import { kindsWhere } from '../tab-kinds/src/api'
 import {
   docSource,
   judged,

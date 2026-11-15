@@ -2,7 +2,7 @@ import { unixLines } from './documents.svelte'
 import { type Draft, readClosed, readDraft } from './session'
 import { ifFree, locksHere, locksWork, log, isNumber, isRecord } from '../platform/src/api'
 import { leftLately, slotLock, slotOf } from './slot'
-import { TAB_KINDS } from './tab-kinds'
+import { TAB_KINDS } from '../tab-kinds/src/api'
 import { mergedOver } from './unwritten'
 
 function wordsOnly(one: Draft): boolean {

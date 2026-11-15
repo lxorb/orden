@@ -1,4 +1,4 @@
-import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
+import { type TabKind, TAB_KINDS } from './tab-kinds/src/api'
 
 export const REGIONS = [
   'space',

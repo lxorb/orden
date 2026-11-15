@@ -17,7 +17,8 @@
     "plane",
     "shortcuts",
     "web-backend",
-    "link-index"
+    "link-index",
+    "tab-kinds"
   ],
   "pending": [
     "apps/desktop/src/lib/before-render.ts",
@@ -30,7 +31,6 @@
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/tab-kinds.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

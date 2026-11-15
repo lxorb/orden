@@ -1,3 +1,4 @@
+import type { FileMark } from '@orden/contracts'
 import {
   isApplicationTarget,
   isBaseTarget,
@@ -23,7 +24,7 @@ import Cog from 'lucide/dist/esm/icons/settings.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Table from 'lucide/dist/esm/icons/table-2.mjs'
 import { isMarkdownPath } from './platform/src/api'
-import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
+import { type TabKind, TAB_KINDS } from './tab-kinds/src/api'
 
 const PLAIN_TEXT = /\.(txt|text)$/i
 
@@ -66,23 +67,7 @@ const Pdf: IconNode = typeMark([
   ['path', { d: 'M17 17.5h3' }],
 ])
 
-export type FileMark =
-  | 'note'
-  | 'folder'
-  | 'canvas'
-  | 'pages'
-  | 'pdf'
-  | 'picture'
-  | 'file'
-  | 'web'
-  | 'terminal'
-  | 'remote'
-  | 'base'
-  | 'chat'
-  | 'application'
-  | 'key'
-  | 'time'
-  | 'settings'
+export type { FileMark }
 
 export function fileMark(name: string): FileMark {
   if (isWebTarget(name)) return 'web'

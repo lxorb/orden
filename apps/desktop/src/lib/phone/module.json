@@ -1,7 +1,7 @@
 {
   "name": "phone",
   "layer": "shell",
-  "dependsOn": ["contracts", "accounts", "platform", "tab-strip", "ui-kit"],
+  "dependsOn": ["contracts", "accounts", "platform", "tab-strip", "ui-kit", "tab-kinds"],
   "pending": [
     "apps/desktop/src/lib/account-menu.ts",
     "apps/desktop/src/lib/arriving.svelte.ts",
@@ -12,7 +12,6 @@
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/panels.ts",
-    "apps/desktop/src/lib/workspace/tab-kinds.ts",
     "apps/desktop/src/lib/write-new.ts"
   ]
 }

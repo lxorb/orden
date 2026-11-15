@@ -1,6 +1,5 @@
-import { identifier } from '../../../identifier'
+import { identifier, invoke } from '../../../platform/src/api'
 import { Channel } from '../../../crate/src/api'
-import { invoke } from '../../../platform/src/api'
 import { READER_TABS } from '../chat/choices'
 import type { Mode } from '../modes'
 import type { LocalKind } from '../providers'

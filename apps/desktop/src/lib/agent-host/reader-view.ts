@@ -3,7 +3,7 @@ import { agentMarks } from '../agent-marks.svelte'
 import type { Refused as Why } from '../terminal/src/api'
 import { settings, type Section } from '../settings.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
-import { panesIn, paneToward, type Toward } from '../workspace/pane-tree'
+import { panesIn, paneToward, type Toward } from '../panes/src/api'
 import { type Call, done, flag, needScope } from './call'
 import { Refused } from './problem'
 

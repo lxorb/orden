@@ -11,7 +11,8 @@
     "sync-core",
     "tab-fill",
     "ui-kit",
-    "usage"
+    "usage",
+    "panes"
   ],
   "pending": [
     "apps/desktop/src/lib/focus.ts",
@@ -26,8 +27,6 @@
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/tab-cycle.svelte.ts",
     "apps/desktop/src/lib/todos-entry.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/closing-around.ts",
-    "apps/desktop/src/lib/workspace/pane-tree.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

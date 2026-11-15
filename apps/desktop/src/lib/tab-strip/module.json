@@ -11,7 +11,8 @@
     "shortcuts",
     "tab-fill",
     "ui-kit",
-    "space-kept"
+    "space-kept",
+    "panes"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -33,14 +34,10 @@
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/chat-carry.ts",
-    "apps/desktop/src/lib/workspace/closing-around.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/drafts.ts",
     "apps/desktop/src/lib/workspace/moving-space.ts",
-    "apps/desktop/src/lib/workspace/pane-tree.ts",
-    "apps/desktop/src/lib/workspace/panes.svelte.ts",
     "apps/desktop/src/lib/workspace/sets.ts",
-    "apps/desktop/src/lib/workspace/space-move.ts",
-    "apps/desktop/src/lib/workspace/zones.ts"
+    "apps/desktop/src/lib/workspace/space-move.ts"
   ]
 }

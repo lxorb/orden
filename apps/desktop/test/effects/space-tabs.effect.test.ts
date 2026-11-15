@@ -27,7 +27,7 @@ disk.current = new Disk()
 const { workspace } = await import('../../src/lib/workspace.svelte')
 await import('../../src/lib/workspace/sets.svelte')
 const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
-const { pane } = await import('../../src/lib/workspace/pane-tree')
+const { pane } = await import('../../src/lib/panes/src/api')
 const { shown: pad } = await import('../../src/lib/scratchpad/src/api')
 
 const PLAN = '/spaces/Work/Plan.md'

@@ -1,27 +1,6 @@
-import type { FileMark } from '../file-mark'
+import { isTabKind, type TabKind, type TabKindTraits, type TabPanel } from '@orden/contracts'
 
-export interface TabKindTraits {
-  readonly words: boolean
-  readonly extension: string | null
-  readonly statusBar: boolean
-  readonly mark: FileMark | null
-  readonly glyph: 'graph' | 'ask' | null
-  readonly liveMark: boolean
-  readonly editor: boolean
-  readonly takesDrops: boolean
-  readonly ownBar: boolean
-  readonly fileDocument: boolean
-  readonly plane: boolean
-  readonly exports: 'note' | 'canvas' | 'pages' | 'file' | 'none'
-  readonly selection: 'words' | 'drawing' | 'terminal' | 'page' | null
-  readonly outsideTitle: boolean
-  readonly preview: 'reading' | 'scrollback' | 'photograph' | 'drawn' | 'picture' | 'mark'
-  readonly panels: readonly TabPanel[]
-  readonly asksToMove: boolean
-  readonly single: boolean
-}
-
-export type TabPanel = 'outline' | 'links'
+export { isTabKind, type TabKind, type TabKindTraits, type TabPanel }
 
 export const TAB_KINDS = {
   note: {
@@ -324,15 +303,9 @@ export const TAB_KINDS = {
     asksToMove: false,
     single: true,
   },
-} as const satisfies Record<string, TabKindTraits>
-
-export type TabKind = keyof typeof TAB_KINDS
+} as const satisfies Record<TabKind, TabKindTraits>
 
 const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
-
-export function isTabKind(value: unknown): value is TabKind {
-  return typeof value === 'string' && Object.hasOwn(TAB_KINDS, value)
-}
 
 export function kindsWhere(trait: (traits: TabKindTraits) => boolean): TabKind[] {
   return KINDS.filter((kind) => trait(TAB_KINDS[kind]))

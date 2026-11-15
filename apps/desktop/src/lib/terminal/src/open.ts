@@ -1,4 +1,4 @@
-import { identifier } from '../../identifier'
+import { identifier } from '../../platform/src/api'
 import type { MenuEntry } from '../../ui-kit/src/api'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { type Shell, shellName, shells } from './shells.svelte'

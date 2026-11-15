@@ -4,7 +4,7 @@ import { isExplorerDrag, isTreeDrag } from '../../drag-paths'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { diskPathOf } from '../../web-backend/src/api'
 import { workspace } from '../../workspace.svelte'
-import { zoneAt } from '../../workspace/zones'
+import { zoneAt } from '../../panes/src/api'
 
 export interface Carrying {
   files: string[]

@@ -22,9 +22,17 @@
   import { whileHere } from './while-here'
   import { alone } from './alone.svelte'
   import type { Tab } from './workspace.svelte'
-  import { type Pane, panesIn, topRow } from './workspace/pane-tree'
-  import type { Landing } from './workspace/panes.svelte'
-  import { TAB_KINDS } from './workspace/tab-kinds'
+  import {
+    type Pane,
+    panesIn,
+    topRow,
+    type Landing,
+    EDGE,
+    inside,
+    type Zone,
+    zoneAt,
+  } from './panes/src/api'
+  import { TAB_KINDS } from './tab-kinds/src/api'
   import { isDesktop } from './platform/src/api'
   import { dragged, dropOver, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
@@ -77,7 +85,6 @@
   import { workspace } from './workspace.svelte'
   import { keepsScroll, scrollKeyOf } from './kept-scroll'
   import { paneCorners } from './pane-corners.svelte'
-  import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
 
   const { pane }: { pane: Pane } = $props()
 

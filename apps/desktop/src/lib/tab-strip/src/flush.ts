@@ -1,4 +1,4 @@
-import { panesIn, topRow } from '../../workspace/pane-tree'
+import { panesIn, topRow } from '../../panes/src/api'
 import { workspace } from '../../workspace.svelte'
 
 export function flushStart(paneId: string): boolean {
