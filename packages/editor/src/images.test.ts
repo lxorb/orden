@@ -127,6 +127,52 @@ describe('a dropped picture', () => {
   })
 })
 
+describe('two drops written at the same time', () => {
+  test('each land where they were dropped, whichever is written first', async () => {
+    const first = heldSink()
+    const second = heldSink()
+    const editor = surface('one\ntwo\nthree\n', 0)
+
+    const one = receiveImages(editor.view, PICTURE, first.sink, 3)
+    const other = receiveImages(
+      editor.view,
+      [new File([new Uint8Array([1])], 'b.png', { type: 'image/png' })],
+      second.sink,
+      13,
+    )
+    first.settle('assets/a.png')
+    await one
+    await settled()
+    second.settle('assets/b.png')
+    await other
+    await settled()
+
+    expect(editor.doc).toBe('one![](assets/a.png)\ntwo\nthree![](assets/b.png)\n')
+  })
+
+  test('a paste meanwhile does not send the drop to the caret', async () => {
+    const dropped = heldSink()
+    const pasted = heldSink()
+    const editor = surface('one\ntwo\n', 0)
+
+    const drop = receiveImages(editor.view, PICTURE, dropped.sink, 3)
+    const paste = receiveImages(
+      editor.view,
+      [new File([new Uint8Array([1])], 'b.png', { type: 'image/png' })],
+      pasted.sink,
+      null,
+    )
+    dropped.settle('assets/a.png')
+    await drop
+    await settled()
+    pasted.settle('assets/b.png')
+    await paste
+    await settled()
+
+    expect(editor.doc).toBe('one![](assets/a.png)![](assets/b.png)\ntwo\n')
+  })
+})
+
 describe('a dropped file that is not a picture', () => {
   const file = (name: string, type: string) => new File([new Uint8Array([1])], name, { type })
 

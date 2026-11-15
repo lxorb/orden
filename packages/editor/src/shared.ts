@@ -48,7 +48,13 @@ export function later(
     if (!spec) return false
 
     const made = asked.update(spec)
-    note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
+    note.local(
+      made.changes,
+      made.newSelection,
+      view,
+      made.annotation(Transaction.userEvent),
+      asked.selection,
+    )
     return true
   }
 }
@@ -296,7 +302,14 @@ export class SharedDoc {
     this.settle()
   }
 
-  local(changes: ChangeSet, selection: EditorSelection, from: DocView, userEvent?: string) {
+  local(
+    changes: ChangeSet,
+    selection: EditorSelection,
+    from: DocView,
+    userEvent?: string,
+    before?: EditorSelection,
+  ) {
+    if (before && !before.eq(this.state.selection)) this.selected(before)
     const made = this.state.update({
       changes,
       selection,

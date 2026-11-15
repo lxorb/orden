@@ -5,6 +5,7 @@ import {
   MapMode,
   type Text,
   type StateCommand,
+  type StateEffect,
   Transaction,
 } from '@codemirror/state'
 import type { Command, EditorView } from '@codemirror/view'
@@ -53,6 +54,7 @@ import {
   lineBeside,
   type TableSpan,
   tableAt,
+  changesDuring,
   tableWrite,
   writingTable,
 } from './navigation'
@@ -443,8 +445,11 @@ export class TableView {
 
   private keepCaretBeside(from: number, to: number) {
     const { state } = this.editor
-    const beside = to < state.doc.length ? to + 1 : from > 0 ? from - 1 : null
-    if (beside === null) return
+    const blank = (pos: number) => !state.doc.lineAt(pos).text.trim()
+    const beside = [to + 1, from - 1].find(
+      (pos) => pos >= 0 && pos <= state.doc.length && blank(pos),
+    )
+    if (beside === undefined) return
     const { main } = state.selection
     if (state.selection.ranges.length === 1 && main.empty && main.head === beside) return
     this.editor.dispatch({
@@ -895,8 +900,12 @@ export class TableView {
     this.flush()
     this.focusAfter = { at, offset: caretOffset(cell) }
     const scroll = this.editor.scrollSnapshot()
-    writingTable(() => command(this.editor))
-    this.editor.dispatch({ effects: scroll, annotations: tableWrite.of(true) })
+    const made = changesDuring(this.editor, () => writingTable(() => command(this.editor)))
+    const kept = made.reduce<StateEffect<unknown> | undefined>(
+      (effect, changes) => effect?.map(changes),
+      scroll,
+    )
+    if (kept) this.editor.dispatch({ effects: kept, annotations: tableWrite.of(true) })
     this.focusAfter = null
   }
 

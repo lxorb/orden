@@ -266,11 +266,13 @@ export const toggleQuote: StateCommand = ({ state, dispatch }) => {
     return run.map((line): ChangeSpec => {
       const existing = QUOTE_MARK.exec(line.text)
       if (existing) {
-        const lead = existing[1]?.length ?? 0
+        const lead = existing[1] ?? ''
         const end = existing[0].length
-        return allQuoted
-          ? { from: line.from + lead, to: line.from + end, insert: '' }
-          : { from: line.from + lead, to: line.from + end, insert: '> ' }
+        if (allQuoted) return { from: line.from + lead.length, to: line.from + end, insert: '' }
+        if (columnOf(lead) > column) {
+          return { from: line.from + offsetAt(line.text, column), insert: '> ' }
+        }
+        return { from: line.from + lead.length, to: line.from + end, insert: '> ' }
       }
       return { from: line.from + offsetAt(line.text, column), insert: '> ' }
     })

@@ -185,7 +185,13 @@ export function editorState(options: StateOptions): EditorState {
             .find((one) => one !== undefined)
           if (!update.docChanged) document?.selected(update.state.selection, userEvent)
           else if (document) {
-            document.local(update.changes, update.state.selection, update.view, userEvent)
+            document.local(
+              update.changes,
+              update.state.selection,
+              update.view,
+              userEvent,
+              update.startState.selection,
+            )
           } else onChange?.(update.state.doc)
         }
         if (

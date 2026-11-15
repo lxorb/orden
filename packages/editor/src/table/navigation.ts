@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
-import { Annotation, type ChangeSpec, EditorState } from '@codemirror/state'
+import { Annotation, type ChangeSet, type ChangeSpec, EditorState } from '@codemirror/state'
+import type { EditorView } from '@codemirror/view'
 import { enclosingNamed } from '../nodes'
 import { overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
@@ -115,6 +116,22 @@ export function cellAbove(at: CellAddress): CellAddress | 'above' {
 export const tableWrite = Annotation.define<boolean>()
 
 let writing = 0
+const collecting = new WeakMap<EditorView, ChangeSet[]>()
+
+export function changesDuring(view: EditorView, run: () => unknown): ChangeSet[] {
+  const made: ChangeSet[] = []
+  collecting.set(view, made)
+  try {
+    run()
+  } finally {
+    collecting.delete(view)
+  }
+  return made
+}
+
+export function noteChanges(view: EditorView, changes: ChangeSet) {
+  collecting.get(view)?.push(changes)
+}
 
 export function writingTable<T>(run: () => T): T {
   writing++

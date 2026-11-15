@@ -1171,6 +1171,11 @@ describe('lines a list command leaves to their block', () => {
     expect(apply(toggleQuote, nested, 6, nested.length).doc).toBe('- a\n  > - b\n  >   c')
   })
 
+  test('quoting a list nests a quote that is inside an item', () => {
+    expect(all(toggleQuote, '- a\n  > b\n- c')).toBe('> - a\n>   > b\n> - c')
+    expect(all(toggleQuote, 'a\n> b')).toBe('> a\n> b')
+  })
+
   test('a lazy line under a nested item goes with the list', () => {
     expect(all(toggleBulletList, '- a\n  - b\n  c')).toBe('a\nb\nc')
     expect(all(toggleOrderedList, '1. a\n   1. b\n   c')).toBe('a\nb\nc')

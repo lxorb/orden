@@ -51,19 +51,37 @@ export function wordsBesidePicture(html: string, text: string): boolean {
   return words.trim() !== ''
 }
 
-const dropAt = StateEffect.define<number | null>()
+interface Drop {
+  key: number
+  at: number
+}
 
-const dropPoint = StateField.define<number | null>({
-  create: () => null,
+const dropAt = StateEffect.define<Drop>()
+const dropDone = StateEffect.define<number>()
+
+const dropPoints = StateField.define<ReadonlyMap<number, number>>({
+  create: () => new Map(),
 
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(dropAt)) return effect.value
+    let next = value
+    if (transaction.docChanged && value.size) {
+      next = new Map(
+        [...value].map(([key, at]) => [key, transaction.changes.mapPos(at, 1)] as const),
+      )
     }
-    if (value === null || !transaction.docChanged) return value
-    return transaction.changes.mapPos(value, 1)
+    for (const effect of transaction.effects) {
+      if (effect.is(dropAt)) next = new Map(next).set(effect.value.key, effect.value.at)
+      else if (effect.is(dropDone) && next.has(effect.value)) {
+        const left = new Map(next)
+        left.delete(effect.value)
+        next = left
+      }
+    }
+    return next
   },
 })
+
+let drops = 0
 
 export async function receiveImages(
   view: EditorView,
@@ -75,21 +93,26 @@ export async function receiveImages(
   if (!kept.length) return
 
   const land = later(view)
-  view.dispatch({ effects: dropAt.of(at) })
+  const key = ++drops
+  if (at !== null) view.dispatch({ effects: dropAt.of({ key, at }) })
 
   const written: string[] = []
   for (const file of kept) {
     const path = await sink(file)
     if (path) written.push(markdownFor(file, path, view.state.facet(noteIndex)))
   }
-  if (!written.length) return
+  if (!written.length) {
+    if (at !== null) view.dispatch({ effects: dropDone.of(key) })
+    return
+  }
 
   const markdown = written.join('\n')
   land((state) => {
     if (state.readOnly) return null
 
     const range = state.selection.main
-    const mapped = state === view.state ? (state.field(dropPoint, false) ?? null) : at
+    const point = at === null ? undefined : state.field(dropPoints, false)?.get(key)
+    const mapped = state === view.state ? (point ?? null) : at
     const from = mapped ?? range.from
     const to = mapped ?? range.to
 
@@ -98,7 +121,7 @@ export async function receiveImages(
       selection: EditorSelection.cursor(from + markdown.length),
       scrollIntoView: true,
       userEvent: 'input.paste',
-      effects: dropAt.of(null),
+      effects: dropDone.of(key),
     }
   })
 }
@@ -119,7 +142,7 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
   }
 
   return [
-    dropPoint,
+    dropPoints,
     EditorView.domEventHandlers({
       paste(event, view) {
         if (view.state.readOnly) return false

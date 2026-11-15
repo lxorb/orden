@@ -1,6 +1,7 @@
 import { type EditorView, ViewPlugin } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { parseTable } from './model'
+import { noteChanges } from './navigation'
 import { TableView } from './view'
 
 export { flushTableEdits } from './view'
@@ -15,6 +16,7 @@ export const tableTracking = ViewPlugin.define((view) => {
   return {
     update(update) {
       if (!update.docChanged) return
+      noteChanges(update.view, update.changes)
       for (const table of live)
         if (table.editor === update.view) table.track(update.changes, update.state.doc)
     },
@@ -91,7 +93,9 @@ export class TableWidget extends OrdenWidget {
           if (showing.get(editor) !== shown) return
           const drawn = start === null ? null : tableViewAt(editor, start)
           if (drawn) drawn.focusCell(focus.at, focus.offset)
-          else if (!editor.dom.contains(document.activeElement)) editor.focus()
+          else if (editor.dom.isConnected && !editor.dom.contains(document.activeElement)) {
+            editor.focus()
+          }
         })
       }
       table.destroy()
