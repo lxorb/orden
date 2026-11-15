@@ -1,4 +1,4 @@
-import { type Account, type Accounts, accountsIn, type Vendor } from '../accounts'
+import { type Account, type Accounts, accountsIn, freshId, renamed, type Vendor } from '../accounts'
 
 export interface Contents {
   accounts: Accounts
@@ -83,7 +83,45 @@ function mergedAccounts(base: Accounts | null, local: Accounts, remote: Accounts
   })
 }
 
-export function merged(base: Base | null, local: Side, remote: Side): Contents {
+const moved = <T>(record: Record<string, T>, from: string, to: string): Record<string, T> =>
+  from in record
+    ? Object.fromEntries(Object.entries(record).map(([id, one]) => [id === from ? to : id, one]))
+    : record
+
+function alike(mine: Account, theirs: Account, myKey?: string, theirKey?: string): boolean {
+  return (
+    mine.kind === theirs.kind &&
+    mine.baseUrl === theirs.baseUrl &&
+    (myKey === undefined || theirKey === undefined || myKey === theirKey)
+  )
+}
+
+function apart(base: Base | null, local: Side, remote: Side): Side {
+  const all = [base?.accounts, local.contents.accounts, remote.contents.accounts]
+  const taken = new Set(all.flatMap((one) => one?.accounts.map((each) => each.id) ?? []))
+  const agreed = new Set(base?.accounts.accounts.map((one) => one.id) ?? [])
+  let side = local
+  for (const mine of local.contents.accounts.accounts) {
+    const theirs = remote.contents.accounts.accounts.find((one) => one.id === mine.id)
+    if (!theirs || agreed.has(mine.id)) continue
+    if (alike(mine, theirs, local.contents.keys[mine.id], remote.contents.keys[mine.id])) continue
+    const id = freshId(mine.kind, (one) => taken.has(one))
+    taken.add(id)
+    const { contents, prints } = side
+    side = {
+      contents: {
+        accounts: renamed(contents.accounts, mine.id, id),
+        keys: moved(contents.keys, mine.id, id),
+        seen: moved(contents.seen, mine.id, id),
+      },
+      prints: moved(prints, mine.id, id),
+    }
+  }
+  return side
+}
+
+export function merged(base: Base | null, mine: Side, remote: Side): Contents {
+  const local = apart(base, mine, remote)
   const accounts = mergedAccounts(
     base?.accounts ?? null,
     local.contents.accounts,

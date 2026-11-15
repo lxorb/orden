@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { activated, added, type Accounts, NONE, removed, updated } from '../accounts'
+import { activated, added, type Accounts, NONE, removed, updated, used } from '../accounts'
 import { baseOf, type Contents, merged, type Side } from './merge'
 
 const side = (contents: Contents): Side => ({ contents, prints: { ...contents.keys } })
@@ -55,5 +55,52 @@ describe('two devices’ changes met', () => {
       'openai',
     ])
     expect(met.keys).toEqual({ anthropic: 'sk-1', openai: 'sk-here' })
+  })
+
+  test('a different account under the same id on each side keeps both, with their keys', () => {
+    const ollama = updated(added(NONE, 'compatible').state, 'compatible-1', {
+      name: 'Ollama',
+      baseUrl: 'http://localhost:11434/v1',
+    })
+    const router = updated(added(NONE, 'compatible').state, 'compatible-1', {
+      name: 'OpenRouter',
+      baseUrl: 'https://openrouter.ai/api/v1',
+    })
+    const here = side({
+      accounts: used(ollama, 'chat', 'compatible-1'),
+      keys: { 'compatible-1': 'sk-a' },
+      seen: {},
+    })
+    const there = side({ accounts: router, keys: { 'compatible-1': 'sk-k' }, seen: {} })
+    const met = merged(null, here, there)
+    expect(met.accounts.accounts.map((one) => [one.id, one.name])).toEqual([
+      ['compatible-1', 'OpenRouter'],
+      ['compatible-2', 'Ollama'],
+    ])
+    expect(met.keys).toEqual({ 'compatible-1': 'sk-k', 'compatible-2': 'sk-a' })
+    expect(met.accounts.uses).toEqual({ chat: 'compatible-2' })
+  })
+
+  test('a second account added on each side while apart keeps both', () => {
+    const here = side({ ...start, keys: { ...start.keys, 'anthropic-2': 'sk-here' } })
+    const there = side({ ...start, keys: { ...start.keys, 'anthropic-2': 'sk-there' } })
+    const one = added(NONE, 'anthropic').state
+    const met = merged(baseOf({ ...start, accounts: one }, { ...start.keys }), here, there)
+    expect(met.accounts.accounts.map((each) => each.id)).toEqual([
+      'anthropic',
+      'anthropic-2',
+      'anthropic-3',
+    ])
+    expect(met.keys).toEqual({
+      anthropic: 'sk-1',
+      'anthropic-2': 'sk-there',
+      'anthropic-3': 'sk-here',
+    })
+  })
+
+  test('the same account on both sides with nothing agreed stays one', () => {
+    const met = merged(null, side(start), side(start))
+    expect(met.accounts.accounts.map((one) => one.id)).toEqual(['anthropic', 'anthropic-2'])
+    expect(met.keys).toEqual({ anthropic: 'sk-1' })
   })
 })
