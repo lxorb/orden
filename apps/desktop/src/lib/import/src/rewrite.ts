@@ -261,11 +261,14 @@ export function linksFollowed(
       const { path, fragment } = splitFragment(named)
       const said = path.trim()
       const meant = nearest(said, was, called)
-      const now = meant === undefined ? undefined : moved.get(meant)
-      if (meant === undefined || now === undefined) return whole
+      if (meant === undefined) return whole
+      const now = moved.get(meant)
+      const respelt = now === undefined ? said : respelled(said, meant, now)
+      if (respelt === null) return whole
 
-      const renamed = respelled(said, meant, now)
-      if (renamed === null) return whole
+      const renamed =
+        under && said.startsWith('/') ? `/${under}/${respelt.replace(/^\/+/, '')}` : respelt
+      if (renamed === said) return whole
       const bang = whole.startsWith('!') ? '!' : ''
       const anchor = fragment === null ? '' : `#${fragment}`
       return `${bang}[[${path.replace(said, renamed)}${anchor}${cell ? '\\' : ''}${shown ?? ''}]]`

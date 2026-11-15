@@ -112,6 +112,36 @@ describe('where an import lands', () => {
 
     expect(stamped.files[0]?.path).toBe('A.md')
   })
+
+  test('has a wikilink written from the top of the vault name its note from the top of the space', () => {
+    const plan = planOf([
+      note('Projects/Plan.md', '# P'),
+      file('Trips/Map.png'),
+      note(
+        'Home.md',
+        'See [[/Projects/Plan]], [[/Projects/Plan#Goals|goals]] and ![[/Trips/Map.png]].',
+      ),
+    ])
+
+    expect(textAt(restamped(plan, new Set(), 'Inbox').files, 'Inbox/Home.md')).toBe(
+      'See [[/Inbox/Projects/Plan]], [[/Inbox/Projects/Plan#Goals|goals]] and ![[/Inbox/Trips/Map.png]].',
+    )
+    expect(
+      textAt(restamped(plan, new Set(['inbox/projects/plan.md']), 'Inbox').files, 'Inbox/Home.md'),
+    ).toBe(
+      'See [[/Inbox/Projects/Plan 2]], [[/Inbox/Projects/Plan 2#Goals|goals]] and ![[/Inbox/Trips/Map.png]].',
+    )
+  })
+
+  test('keeps a wikilink from the top that names nothing in the vault as it was written', () => {
+    const stamped = restamped(
+      planOf([note('Home.md', 'See [[/Elsewhere/Plan]].')]),
+      new Set(),
+      'Inbox',
+    )
+
+    expect(textAt(stamped.files, 'Inbox/Home.md')).toBe('See [[/Elsewhere/Plan]].')
+  })
 })
 
 describe('a name that is already taken', () => {
