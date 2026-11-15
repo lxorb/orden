@@ -331,6 +331,14 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Vault/Home.md')).toBe(said('Vault/Projects'))
   })
 
+  test('a base drawn in a note written with Windows line ends still filters the folders it filtered', async () => {
+    const said = (folder: string) =>
+      `# Home\r\n\r\n\`\`\`base\r\nfilters: file.inFolder("${folder}")\r\n\`\`\`\r\n`
+    const files = await vaultLanded([], ['Home.md', said('Projects')])
+
+    expect(textAt(files, 'Inbox/Home.md')).toBe(said('Inbox/Projects'))
+  })
+
   test('a folder note and its folder step aside together', () => {
     const base = '```base\nfilters:\n  and:\n    - file.folder + ".md" == this.file.path\n```\n'
     const stamped = restamped(

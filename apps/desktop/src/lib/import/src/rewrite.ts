@@ -383,12 +383,14 @@ export function baseFollowed(bytes: Uint8Array, under: string): Uint8Array {
   return followed === text ? bytes : new TextEncoder().encode(followed)
 }
 
-const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\n]*)?\n([\s\S]*?)^\1[`~]*[ \t]*$/gm
+const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\r\n]*)?\r?\n([\s\S]*?)^\1[`~]*[ \t]*\r?$/gm
 
 export function basesFollowed(text: string, under: string): string {
   return text.replace(BASE_FENCE, (whole, _fence: string, yaml: string) => {
-    const followed = baseUnder(yaml, under)
-    return followed === yaml ? whole : whole.replace(yaml, () => followed)
+    const lines = yaml.replace(/\r\n/g, '\n')
+    const followed = baseUnder(lines, under)
+    if (followed === lines) return whole
+    return whole.replace(yaml, () => (lines === yaml ? followed : followed.replace(/\n/g, '\r\n')))
   })
 }
 
