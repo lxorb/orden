@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const handed = vi.hoisted(() => ({ paths: [] as string[], asked: [] as string[][] }))
 
-vi.mock('./dropped-paths', () => ({
+vi.mock('./platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./platform/src/api')>()),
   droppedPaths: (files: readonly File[]) => {
     handed.asked.push(files.map((one) => one.name))
     return Promise.resolve(handed.paths)

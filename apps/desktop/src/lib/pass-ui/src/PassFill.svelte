@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { takeKeyboard } from '../../take-keyboard'
+  import { takeKeyboard } from '../../platform/src/api'
   import { isDesktop } from '../../platform/src/api'
   import { autofill } from '../../pass-sync/src/api'
   import type { FillChoice, PassBubble } from '../../pass-sync/src/api'

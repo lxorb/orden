@@ -12,11 +12,11 @@
     "scan",
     "snapshots",
     "sync-core",
-    "ui-kit"
+    "ui-kit",
+    "seeded"
   ],
   "pending": [
     "apps/desktop/src/lib/own-keys.ts",
-    "apps/desktop/src/lib/seeded.ts",
     "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/welcome.ts"
   ]

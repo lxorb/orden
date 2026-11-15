@@ -1,8 +1,8 @@
-import { DoubleTap, type Modifier, tapOf } from './double-tap'
-import { shortcuts } from './shortcuts/src/api'
-import { type AppContext, SHORTCUTS } from './shortcuts/src/api'
-import { fromPage } from './ui-kit/src/api'
-import { ran } from './usage/src/api'
+import { DoubleTap, type Modifier, tapOf } from '../../double-tap/src/api'
+import { fromPage } from '../../ui-kit/src/api'
+import { ran } from '../../usage/src/api'
+import { type AppContext, SHORTCUTS } from './registry'
+import { shortcuts } from './shortcuts.svelte'
 
 type Hearer = (key: Modifier) => void
 

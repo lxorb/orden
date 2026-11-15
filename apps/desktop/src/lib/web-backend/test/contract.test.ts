@@ -51,6 +51,7 @@ describe('the module stands on its own', () => {
       'crate',
       'handoff',
       'platform',
+      'seeded',
       'snapshots',
       'ui-kit',
     ])

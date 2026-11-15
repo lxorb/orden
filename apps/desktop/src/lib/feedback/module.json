@@ -1,0 +1,5 @@
+{
+  "name": "feedback",
+  "layer": "foundation",
+  "dependsOn": ["accounts", "platform"]
+}

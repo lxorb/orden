@@ -49,7 +49,7 @@ import {
   type TreeRows,
   trees,
 } from './store'
-import { markSeedSpace, markSeeded, wasSeeded } from '../../../seeded'
+import { markSeedSpace, markSeeded, wasSeeded } from '../../../seeded/src/api'
 import { WELCOME, WELCOME_PATH, WELCOME_SPACE } from '../../../welcome'
 
 interface Entry {

@@ -1,4 +1,4 @@
-import { takeKeyboard } from '../../take-keyboard'
+import { takeKeyboard } from '../../platform/src/api'
 
 export async function closeItself(tab: string, opener: string): Promise<void> {
   const { workspace } = await import('../../workspace/src/api')

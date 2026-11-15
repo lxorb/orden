@@ -131,4 +131,7 @@ export { startInsets, tintSystemBars } from './insets'
 export { identifier } from './identifier'
 export { factsOfLaunch, mark, markPainted, sendTrace, watchFirstInput } from './trace'
 export const iCloud = () => import('./icloud-placeholder')
+export const droppedPaths = async (files: readonly File[]): Promise<string[]> =>
+  (await import('./dropped-paths')).droppedPaths(files)
 export { imagePath, imageUrl } from './images'
+export { takeKeyboard } from './take-keyboard'

@@ -99,7 +99,7 @@
   import { shown as pad } from './lib/scratchpad/src/api'
   import { isDraft, scanHeadings } from './lib/documents/src/api'
   import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
-  import { shortcuts } from './lib/shortcuts/src/api'
+  import { doubleTaps, shortcuts } from './lib/shortcuts/src/api'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
   import PullMark from './lib/PullMark.svelte'
@@ -675,7 +675,8 @@
   let untap: (() => void) | undefined
   void startup
     .turn('doors')
-    .then(() => import('./lib/tapped').then(({ hear }) => (untap = hear(appContext))))
+    .then(doubleTaps)
+    .then(({ hear }) => (untap = hear(appContext)))
   onDestroy(() => untap?.())
 
   async function showCommands() {

@@ -14,6 +14,7 @@
     type SettingsPart,
     type SettingsPartHost,
     settingsPartsIn,
+    whenLoaded,
   } from '@orden/contracts'
   import { Outward } from '../../ui-controls/src/api'
   import Icon from '../../Icon.svelte'
@@ -29,6 +30,7 @@
   import { glassesOn, settings, type Section } from '../../settings.svelte'
   import {
     CATEGORIES,
+    doubleTaps,
     type Preset,
     runnable,
     SHORTCUTS,
@@ -40,7 +42,6 @@
   import { prompt } from '../../ui-kit/src/api'
   import { Rebind } from './rebind.svelte'
   import { globalKeys, noteFor } from './global-keys.svelte'
-  import { hearTaps } from '../../tapped'
   import { landing } from './landing.svelte'
   import { places as paneRows } from './places'
   import { ICONS, sectionGroups } from './sections'
@@ -325,11 +326,15 @@
     }
 
     window.addEventListener('keydown', record, true)
-    const unheard = hearTaps((key) => rebind.tapped(key))
+    let unheard: (() => void) | undefined
+    const unwanted = whenLoaded(doubleTaps, ({ hearTaps }) => {
+      unheard = hearTaps((key) => rebind.tapped(key))
+    })
 
     return () => {
       window.removeEventListener('keydown', record, true)
-      unheard()
+      unwanted()
+      unheard?.()
     }
   })
 

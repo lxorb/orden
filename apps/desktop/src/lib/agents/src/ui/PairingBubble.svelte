@@ -5,7 +5,7 @@
   import { initial } from '../../../ui-kit/src/api'
   import { dur, fly } from '../../../platform/src/api'
   import { overlays } from '../../../ui-kit/src/api'
-  import { takeKeyboard } from '../../../take-keyboard'
+  import { takeKeyboard } from '../../../platform/src/api'
   import { isDesktop } from '../../../platform/src/api'
   import { theme } from '../../../theme/src/api'
   import type { Activity } from './activity.svelte'

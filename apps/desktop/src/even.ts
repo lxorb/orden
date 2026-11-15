@@ -12,7 +12,7 @@ import { account } from './lib/accounts/src/api'
 import { holdComposingKeys } from './lib/ui-kit/src/api'
 import { glassesOn } from './lib/settings.svelte'
 import { recovery } from './lib/history/src/api'
-import { rememberSeedIn } from './lib/seeded'
+import { rememberSeedIn } from './lib/seeded/src/api'
 import { sync } from './lib/sync-store/src/api'
 import { workspace } from './lib/workspace/src/api'
 

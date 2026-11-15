@@ -1,5 +1,5 @@
 import { type Moment, startsFresh } from './fresh-start'
-import { markSeedSpace, markSeeded, wasSeeded } from './seeded'
+import { markSeedSpace, markSeeded, wasSeeded } from './seeded/src/api'
 import { madeSpace } from './space-actions'
 import { beginSetup } from './onboarding/src/api'
 import { joinPath } from './platform/src/api'

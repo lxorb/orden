@@ -1,7 +1,7 @@
-import type { Modifier } from '../../double-tap'
+import type { Modifier } from '../../double-tap/src/api'
 import { fullscreen } from '../../fullscreen.svelte'
 import { isRecord } from '../../platform/src/api'
-import { heard } from '../../tapped'
+import { doubleTaps } from '../../shortcuts/src/api'
 import type { Page } from './pages.svelte'
 import { sought } from './seek'
 
@@ -41,7 +41,7 @@ export const addressing = $state<{ asked: { page: Page } | null }>({ asked: null
 
 export function answer(tab: string, page: Page, key: Passed): void {
   const tapped = TAPS[key]
-  if (tapped) heard(tapped)
+  if (tapped) void doubleTaps().then(({ heard }) => heard(tapped))
   else if (key === 'address') addressing.asked = { page }
   else if (key === 'escape') void fullscreen.leave()
   else if (key === 'find' || key === 'next' || key === 'previous') sought(tab, page, key)

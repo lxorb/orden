@@ -21,7 +21,8 @@
     "collab",
     "theme",
     "markdown",
-    "modes"
+    "modes",
+    "double-tap"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -33,7 +34,6 @@
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/caret.ts",
     "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/double-tap.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/drop-target.svelte.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",

@@ -67,7 +67,7 @@ vi.mock('./platform/src/tauri', () => ({
   joinPath: (...parts: string[]) => parts.join('/'),
 }))
 
-vi.mock('./seeded', () => ({ seedSpaceRoot: () => null, forgetSeedSpace: () => undefined }))
+vi.mock('./seeded/src/api', () => ({ seedSpaceRoot: () => null, forgetSeedSpace: () => undefined }))
 vi.mock('./seed-space', () => ({ untouchedSeedSpace: () => Promise.resolve(null) }))
 vi.mock('./sharing/src/api', () => ({ rememberRoles: () => undefined }))
 vi.mock('./protect/src/api', () => ({ pulled: () => Promise.resolve() }))

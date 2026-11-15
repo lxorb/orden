@@ -312,7 +312,7 @@ describe('a folder brought in as a space', () => {
   })
 })
 
-const { seedSpaceRoot } = await import('./seeded')
+const { seedSpaceRoot } = await import('./seeded/src/api')
 const { untouchedSeedSpace } = await import('./seed-space')
 const { madeSpace } = await import('./space-actions')
 const { invoke } = await import('./platform/src/tauri')

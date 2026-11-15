@@ -1,4 +1,4 @@
-import { scrubbedLog } from '../../feedback-log'
+import { scrubbedLog } from '../../feedback/src/api'
 import { tokensOut } from '../../platform/src/api'
 
 interface CrashFrame {
