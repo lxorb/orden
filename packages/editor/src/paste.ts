@@ -103,6 +103,9 @@ export async function pastedMarkdown(html: string, text: string): Promise<string
   return htmlToMarkdown(html) || null
 }
 
+const inCode = (state: EditorState) =>
+  state.selection.ranges.some((range) => rangeInCode(state, range))
+
 export function richPaste(): Extension {
   return EditorView.domEventHandlers({
     paste(event, view) {
@@ -124,7 +127,7 @@ export function richPaste(): Extension {
         return true
       }
 
-      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
+      if (inCode(view.state)) return false
 
       if (
         view.state.selection.ranges.length === 1 &&
@@ -175,6 +178,7 @@ export const pasteHere: Command = (view) => {
       if (!clipboard) return
       const { linkedPaste, placed, plainly } = await loadLineCommands()
       if (land((state) => linkedPaste(state, clipboard.text))) return
+      if (land((state) => (inCode(state) ? inserted(state, clipboard.text) : null))) return
 
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       if (markdown) land((state) => placed(state, markdown))

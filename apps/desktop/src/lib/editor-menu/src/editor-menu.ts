@@ -10,6 +10,7 @@ import {
   insertPageBreak,
   calloutSign,
   insertTableToEdit,
+  pasteHere,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -53,15 +54,6 @@ function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
 
   command({ state: view.state, dispatch: (transaction: Transaction) => view.dispatch(transaction) })
-  view.focus()
-}
-
-async function paste(view: EditorView) {
-  const text = await navigator.clipboard.readText().catch(() => '')
-  if (!text) return
-
-  const range = view.state.selection.main
-  view.dispatch({ changes: { from: range.from, to: range.to, insert: text } })
   view.focus()
 }
 
@@ -264,7 +256,9 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
       hint: shortcuts.hint('fixed.paste'),
       disabled: locked,
       run: () => {
-        if (view) void paste(view)
+        if (!view) return
+        pasteHere(view)
+        view.focus()
       },
     },
   ]
