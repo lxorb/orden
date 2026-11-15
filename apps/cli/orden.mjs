@@ -2,6 +2,7 @@
 
 import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
+import { request } from 'node:http'
 import { homedir, platform, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -184,22 +185,47 @@ function readStdin() {
 async function ask(verb, args, rest) {
   const { port, secret } = await endpoint()
 
-  const response = await fetch(`http://127.0.0.1:${port}/`, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${secret}`,
-      'content-type': 'application/json',
+  const response = await posted(port, secret, JSON.stringify({ verb, args, rest })).catch(
+    (error) => {
+      throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
     },
-    body: JSON.stringify({ verb, args, rest }),
-  }).catch((error) => {
-    throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
-  })
+  )
 
-  const said = await response.text()
+  const said = response.said
   const body = said ? JSON.parse(said) : {}
 
   if (!response.ok) throw new Error(body.error ?? `the app answered ${response.status}`)
   return body
+}
+
+function posted(port, secret, body) {
+  return new Promise((settle, fail) => {
+    const asked = request(
+      {
+        host: '127.0.0.1',
+        port,
+        path: '/',
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${secret}`,
+          'content-type': 'application/json',
+          'content-length': Buffer.byteLength(body),
+        },
+      },
+      (answer) => {
+        let said = ''
+        answer.setEncoding('utf8')
+        answer.on('data', (chunk) => (said += chunk))
+        answer.on('error', fail)
+        answer.on('end', () => {
+          const status = answer.statusCode ?? 0
+          settle({ ok: status >= 200 && status < 300, status, said })
+        })
+      },
+    )
+    asked.on('error', fail)
+    asked.end(body)
+  })
 }
 
 async function endpoint() {
