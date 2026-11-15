@@ -62,7 +62,7 @@ import { printOpen } from '../../open-out'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { moveTargets } from '../../tree/src/api'
 import { closeAfterLabel } from '../../panes/src/api'
-import { revealPanel, stepRegionFocus } from '../../focus'
+import { revealPanel, stepRegionFocus, toggleTabOverview, workspace } from '../../workspace/src/api'
 import {
   newSpace,
   publishSpace,
@@ -113,7 +113,6 @@ import {
   settingsWindow,
   showQuickAdd,
 } from '@orden/contracts'
-import { toggleTabOverview, workspace } from '../../workspace/src/api'
 
 async function openCustomCss() {
   if (!isNative) return

@@ -34,3 +34,15 @@ export const notices = () => import('./notices.svelte')
 export const firstVisiting = () => import('./first-visit.svelte')
 
 export const loadUndoToast = () => import('./UndoToast.svelte')
+
+export {
+  focusEditor,
+  focusList,
+  intoSide,
+  openAgentSession,
+  openSpaces,
+  revealPanel,
+  stepRegionFocus,
+} from './focus'
+
+export { hasStatusBar } from './regions'

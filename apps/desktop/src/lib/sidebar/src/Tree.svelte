@@ -26,7 +26,13 @@
     rowIds,
   } from '../../tree/src/api'
   import { staysOn } from '../../caret'
-  import { focusList } from '../../focus'
+  import {
+    focusList,
+    dropOnList,
+    fileClipboard,
+    listMotion,
+    workspace,
+  } from '../../workspace/src/api'
   import {
     carried,
     carriedNothing,
@@ -50,7 +56,6 @@
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { syncMark } from '../../surfaces/src/api'
-  import { dropOnList, fileClipboard, listMotion, workspace } from '../../workspace/src/api'
   import {
     autoScrollBy,
     heightOf,

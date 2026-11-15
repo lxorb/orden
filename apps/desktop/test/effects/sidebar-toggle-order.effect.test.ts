@@ -3,7 +3,10 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const into = vi.hoisted(() => ({ side: vi.fn<(side: string) => HTMLElement | null>() }))
 
-vi.mock('../../src/lib/focus', () => ({ intoSide: into.side }))
+vi.mock('../../src/lib/workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/workspace/src/api')>()),
+  intoSide: into.side,
+}))
 
 const SidebarToggle = (await import('../../src/lib/SidebarToggle.svelte')).default
 const { workspace } = await import('../../src/lib/workspace/src/api')

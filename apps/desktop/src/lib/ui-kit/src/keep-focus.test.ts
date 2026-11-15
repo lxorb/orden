@@ -1,8 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-
-vi.mock('./workspace/src/api', () => ({ workspace: {} }))
-
-const { keepFocus } = await import('./focus')
+import { keepFocus } from './roving'
 
 describe('a press that keeps the keyboard where it is', () => {
   const pressed = (pointerType?: string) => {

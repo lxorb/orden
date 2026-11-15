@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { stepRegionFocus } from '../../src/lib/focus'
+import { stepRegionFocus } from '../../src/lib/workspace/src/api'
 
 Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList
 
