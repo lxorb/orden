@@ -13,6 +13,11 @@ describe('a block of the note’s own HTML that does something', () => {
     expect(card).not.toContain('<div')
   })
 
+  test('keeps the entities the block writes, so they still show as written when it runs', () => {
+    const card = htmlBlockCard('<div>Type &lt;b&gt; here</div><script>x()</script>') ?? ''
+    expect(card).toContain('Type &amp;lt;b&amp;gt; here')
+  })
+
   test('and is a button rather than a link, having nowhere to send anybody', () => {
     const card = htmlBlockCard(BLOCK) ?? ''
     expect(card).toContain('role="button"')
