@@ -1,6 +1,6 @@
 import { tick } from 'svelte'
 import { askSheet, webPages } from '@orden/contracts'
-import { focusEditor } from '../../focus'
+import { focusEditor } from './focus'
 import {
   identifier,
   log,

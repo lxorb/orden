@@ -1,7 +1,7 @@
-import type { Panel } from './session/src/api'
-import { agentMarks } from './agent-marks.svelte'
+import type { Panel } from '../../session/src/api'
+import { agentMarks } from '../../agent-marks.svelte'
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
-import { workspace } from './workspace/src/api'
+import { workspace } from './workspace.svelte'
 
 const FOCUSABLE =
   '[tabindex="0"], button, input, select, textarea, a[href], summary, [contenteditable="true"]'
@@ -159,8 +159,4 @@ export function openSpaces(): void {
   requestAnimationFrame(() => {
     pressRegion('space', SWITCHER)
   })
-}
-
-export function keepFocus(event: Pick<Event, 'preventDefault'> & { pointerType?: string }): void {
-  if (event.pointerType !== 'touch') event.preventDefault()
 }

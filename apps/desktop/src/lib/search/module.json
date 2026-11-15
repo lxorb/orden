@@ -20,5 +20,5 @@
     "ui-kit",
     "workspace"
   ],
-  "pending": ["apps/desktop/src/lib/focus.ts", "apps/desktop/src/lib/new-tab.ts"]
+  "pending": ["apps/desktop/src/lib/new-tab.ts"]
 }

@@ -238,3 +238,7 @@ function atRow(row: HTMLElement): MouseEvent {
     clientY: Math.round(box.bottom),
   })
 }
+
+export function keepFocus(event: Pick<Event, 'preventDefault'> & { pointerType?: string }): void {
+  if (event.pointerType !== 'touch') event.preventDefault()
+}

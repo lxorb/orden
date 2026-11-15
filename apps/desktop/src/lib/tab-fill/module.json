@@ -1,6 +1,5 @@
 {
   "name": "tab-fill",
   "layer": "shell",
-  "dependsOn": ["contracts", "platform", "ui-kit", "workspace"],
-  "pending": ["apps/desktop/src/lib/focus.ts"]
+  "dependsOn": ["contracts", "platform", "ui-kit", "workspace"]
 }

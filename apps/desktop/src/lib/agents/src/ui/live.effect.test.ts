@@ -14,7 +14,8 @@ vi.mock('../../../notify/src/api', () => ({
   unshow: (tag: string) => shown.taken.push(tag),
 }))
 
-vi.mock('../../../focus', () => ({
+vi.mock('../../../workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../workspace/src/api')>()),
   openAgentSession: (agent: string) => shown.opened.push(agent),
 }))
 

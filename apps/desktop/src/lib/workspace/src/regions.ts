@@ -1,4 +1,4 @@
-import { type TabKind, TAB_KINDS } from './tab-kinds/src/api'
+import { type TabKind, TAB_KINDS } from '../../tab-kinds/src/api'
 
 export const REGIONS = [
   'space',

@@ -52,7 +52,7 @@ export {
 } from './keys'
 export type { Keystroke, Platform, Taken } from './keys'
 export { opensAt, spelled, walk } from './list-keys'
-export { roving } from './roving'
+export { keepFocus, roving } from './roving'
 export { stepped } from './step'
 export { longPress } from './longpress'
 export {

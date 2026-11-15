@@ -37,7 +37,6 @@
     "apps/desktop/src/lib/agent-marks.svelte.ts",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/composer-commands.ts",
-    "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/links.ts",

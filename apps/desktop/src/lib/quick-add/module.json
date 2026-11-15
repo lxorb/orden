@@ -17,6 +17,5 @@
     "web-backend",
     "windows",
     "link-index"
-  ],
-  "pending": ["apps/desktop/src/lib/focus.ts"]
+  ]
 }

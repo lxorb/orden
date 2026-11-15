@@ -40,7 +40,6 @@
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/fullscreen.svelte.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/links.ts",

@@ -2,7 +2,7 @@
   import type { Priority } from '@orden/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@orden/bases/language'
   import { todayOf } from '@orden/bases'
-  import { keepFocus } from '../../focus'
+  import { keepFocus, type MenuEntry } from '../../ui-kit/src/api'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
@@ -16,7 +16,6 @@
   import type { Dictates } from '../../dictation/src/api'
   import { longPaste } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
-  import type { MenuEntry } from '../../ui-kit/src/api'
   import type { Entry, Prefill } from './entry'
   import {
     carried,

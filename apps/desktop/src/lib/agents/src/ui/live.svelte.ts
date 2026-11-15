@@ -1,5 +1,5 @@
 import { mount, unmount, untrack } from 'svelte'
-import { openAgentSession } from '../../../focus'
+import { openAgentSession } from '../../../workspace/src/api'
 import { notify, unshow } from '../../../notify/src/api'
 import { agentMarks } from '../../../agent-marks.svelte'
 import { portOf } from '@orden/contracts'
