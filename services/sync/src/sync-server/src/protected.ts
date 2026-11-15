@@ -78,9 +78,15 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
   return readProtected(await rawFor(env, userId))
 }
 
+const folded = (path: string): string => path.normalize('NFC').toLowerCase()
+
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
-  return Object.keys(ways).some((key) => key === '' || path === key || path.startsWith(`${key}/`))
+  const asked = folded(path)
+  return Object.keys(ways).some((key) => {
+    const kept = folded(key)
+    return kept === '' || asked === kept || asked.startsWith(`${kept}/`)
+  })
 }
 
 export type Shut = (spaceId: string, path: string) => boolean
