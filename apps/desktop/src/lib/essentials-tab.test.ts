@@ -132,13 +132,13 @@ describe('an essential dragged into a strip', () => {
   })
 
   test('is what the strip does with a bookmark let go of on it', () => {
-    const tabs = readFileSync(join(import.meta.dirname, './Tabs.svelte'), 'utf8')
+    const tabs = readFileSync(join(import.meta.dirname, './tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/const takes = [^\n]*\n?[^\n]*isBookmarkDrag\(transfer\)/)
     expect(tabs).toContain('droppedEssential(mark, paneId, at)')
   })
 
   test('and the strip takes it from the moment it comes over the strip, as Safari asks', () => {
-    const tabs = readFileSync(join(import.meta.dirname, './Tabs.svelte'), 'utf8')
+    const tabs = readFileSync(join(import.meta.dirname, './tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/use:dropOver=\{over\}/)
   })
 

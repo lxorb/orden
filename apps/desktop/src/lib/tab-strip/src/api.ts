@@ -29,6 +29,7 @@ export {
 export type { Block } from './picking.svelte'
 export { PREVIEW_DELAY, previewDelay } from './preview-delay.svelte'
 export { revealed } from './scroll'
+export { default as Tabs } from './Tabs.svelte'
 export { initialOf, siteLook, twins } from './twins'
 export { unloadTabs } from './unload-choice.svelte'
 export { wheelAlong } from './wheel'

@@ -30,7 +30,7 @@ describe('letting words go', () => {
     expect(await aloneHere()).toBe(false)
 
     forgetWindow()
-    vi.stubGlobal('navigator', {})
+    vi.stubGlobal('navigator', { userAgent: '' })
     expect(await aloneHere()).toBe(false)
   })
 
@@ -51,7 +51,7 @@ describe('letting words go', () => {
     expect(await keptBudget()).toBe(10_000_000)
     estimate(0, 6_000_000_000)
     expect(await keptBudget()).toBe(48_000_000)
-    vi.stubGlobal('navigator', {})
+    vi.stubGlobal('navigator', { userAgent: '' })
     expect(await keptBudget()).toBe(4_000_000)
   })
 })

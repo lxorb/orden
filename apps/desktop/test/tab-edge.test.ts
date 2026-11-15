@@ -22,7 +22,7 @@ const TOKENS = readFileSync(
   fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)),
   'utf8',
 )
-const TABS = readFileSync(join(import.meta.dirname, '../src/lib/Tabs.svelte'), 'utf8')
+const TABS = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
 
 const SCHEMES: Scheme[] = ['dark', 'light']
 

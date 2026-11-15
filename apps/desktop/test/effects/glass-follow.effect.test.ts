@@ -61,7 +61,7 @@ const { theme } = await import('../../src/lib/theme/src/theme.svelte')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { chrome } = await import('../../src/lib/theme/src/chrome.svelte')
 const { grounds } = await import('../../src/lib/theme-looks/src/glass/grounds.svelte')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 
 const BLACK = 'https://black.example/'
 const WHITE = 'https://white.example/'
@@ -304,6 +304,8 @@ test('the shell, the bar and the open tab ease the colour rather than jump to it
     /background: var\(--shell-ground\);\s*transition: background var\(--dur-/,
   )
   expect(source('src/lib/web-tab/src/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
-  expect(source('src/lib/Tabs.svelte')).toMatch(/transition:\s+--tab-ground var\(--dur-/)
+  expect(source('src/lib/tab-strip/src/Tabs.svelte')).toMatch(
+    /transition:\s+--tab-ground var\(--dur-/,
+  )
   expect(source('../../packages/themes/src/glass.css')).toMatch(/@property --tab-ground/)
 })

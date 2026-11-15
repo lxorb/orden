@@ -41,7 +41,7 @@ const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 held.disk = d
 vi.stubGlobal('localStorage', memoryStorage())
-vi.stubGlobal('navigator', {})
+vi.stubGlobal('navigator', { userAgent: '' })
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 
 const ONE = '/spaces/One'

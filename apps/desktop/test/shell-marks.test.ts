@@ -121,7 +121,7 @@ describe('the mark that says shared', () => {
     expect(dots).toEqual([
       'lib/JoinPending.svelte',
       'lib/JoinSheet.svelte',
-      'lib/Tabs.svelte',
+      'lib/tab-strip/src/Tabs.svelte',
       'lib/ui-kit/src/UnreadDot.svelte',
     ])
   })

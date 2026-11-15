@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 
-const TABS = readFileSync(join(import.meta.dirname, '../src/lib/Tabs.svelte'), 'utf8')
+const TABS = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
 
 function rule(selector: string): string {
   const at = TABS.indexOf(`\n  ${selector} {`)

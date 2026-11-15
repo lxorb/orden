@@ -1,14 +1,14 @@
 <script lang="ts">
   import { webPages } from '@orden/contracts'
   import { droppedAddress } from '@orden/scan/web-address'
-  import { dropOver } from './drag-paths'
+  import { dropOver } from '../../drag-paths'
   import { onDestroy, onMount, tick, untrack } from 'svelte'
-  import { whileHere } from './while-here'
-  import { staysOn } from './caret'
-  import Door from './Door.svelte'
-  import { views } from './views.svelte'
+  import { whileHere } from '../../while-here'
+  import { staysOn } from '../../caret'
+  import Door from '../../Door.svelte'
+  import { views } from '../../views.svelte'
   import { quintOut } from 'svelte/easing'
-  import { agentMarks } from './agent-marks.svelte'
+  import { agentMarks } from '../../agent-marks.svelte'
   import {
     carried,
     carriedMark,
@@ -17,20 +17,26 @@
     isBookmarkDrag,
     isTreeDrag,
     mayCarryAddress,
-  } from './drag-paths'
-  import { chrome } from './theme/src/api'
-  import { longPress } from './longpress'
-  import { menu } from './menu.svelte'
-  import { middleOpens, tabAsk } from './new-tab'
-  import { rooms } from './collab/src/api'
-  import { roving } from './roving'
-  import { shortcuts } from './shortcuts/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import SharedMark from './SharedMark.svelte'
-  import { privateMark, syncMark, soundMark, tabNameField, tabOverview } from './surfaces.svelte'
-  import TabMark from './TabMark.svelte'
-  import UnsavedDot from './UnsavedDot.svelte'
-  import { askPlace } from './save-place/src/api'
+  } from '../../drag-paths'
+  import { chrome } from '../../theme/src/api'
+  import { longPress } from '../../longpress'
+  import { menu } from '../../menu.svelte'
+  import { middleOpens, tabAsk } from '../../new-tab'
+  import { rooms } from '../../collab/src/api'
+  import { roving } from '../../roving'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import SharedMark from '../../SharedMark.svelte'
+  import {
+    privateMark,
+    syncMark,
+    soundMark,
+    tabNameField,
+    tabOverview,
+  } from '../../surfaces.svelte'
+  import TabMark from '../../TabMark.svelte'
+  import UnsavedDot from '../../UnsavedDot.svelte'
+  import { askPlace } from '../../save-place/src/api'
   import {
     arrival,
     type Block,
@@ -78,18 +84,18 @@
     widened,
     widthsFor,
     worthKeeping,
-  } from './tab-strip/src/api'
-  import { insideSpace, nameOf } from './platform/src/api'
-  import { shownName } from './platform/src/api'
-  import { chosenIcon } from './chosen-icon'
-  import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace/src/api'
-  import { type Landing, inside } from './panes/src/api'
-  import { isDraft } from './documents/src/api'
-  import { initial } from './ui-kit/src/api'
+  } from './api'
+  import { insideSpace, nameOf } from '../../platform/src/api'
+  import { shownName } from '../../platform/src/api'
+  import { chosenIcon } from '../../chosen-icon'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { type Landing, inside } from '../../panes/src/api'
+  import { isDraft } from '../../documents/src/api'
+  import { initial } from '../../ui-kit/src/api'
   import { SvelteSet } from 'svelte/reactivity'
-  import { dur, fade, stillness } from './platform/src/api'
-  import { Cross } from './ui-kit/src/api'
+  import { dur, fade, stillness } from '../../platform/src/api'
+  import { Cross } from '../../ui-kit/src/api'
 
   const { paneId, caption = false }: { paneId: string; caption?: boolean } = $props()
 
@@ -120,7 +126,7 @@
   }
 
   function showNoteMenu(event: MouseEvent) {
-    void here(import('./note-menu')).then(({ noteMenu }) => menu.show(event, noteMenu(paneId)))
+    void here(import('../../note-menu')).then(({ noteMenu }) => menu.show(event, noteMenu(paneId)))
   }
 
   let onMark = false

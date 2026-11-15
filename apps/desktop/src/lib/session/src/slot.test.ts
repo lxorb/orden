@@ -31,7 +31,7 @@ describe('a window takes a session of its own', () => {
   })
 
   test('without locks there is the one', async () => {
-    vi.stubGlobal('navigator', {})
+    vi.stubGlobal('navigator', { userAgent: '' })
     expect(await takeSlot()).toBe(0)
     vi.unstubAllGlobals()
   })
