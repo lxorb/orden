@@ -17,9 +17,10 @@ const faked = vi.hoisted(() => ({
 
 vi.mock('../../../theme/src/api', async () => {
   const { reactive } = await import('../../../../../test/effects/runes.svelte')
+  const current: 'dark' | 'light' = 'dark'
   faked.theme = reactive({
     id: 'wallpaper',
-    current: 'dark',
+    current,
     values: { blur: 0 },
     settings: [{ id: 'blur' }],
     accent: '#336699',
