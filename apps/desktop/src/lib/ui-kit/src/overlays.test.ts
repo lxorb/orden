@@ -316,7 +316,7 @@ describe('what hides a web page', () => {
       'the shut file list, out over the note while the pointer is on it',
     'lib/ui-controls/src/Sheet.svelte': 'sheet',
     'lib/accounts-ui/src/SignIn.svelte': 'sheet',
-    'lib/SpacePicker.svelte': 'dialog',
+    'lib/spaces/src/SpacePicker.svelte': 'dialog',
     'lib/sidebar/src/SpaceSwitcher.svelte': 'menu',
     'lib/overview/src/Overview.svelte': 'dialog',
     'lib/pass-ui/src/PassFill.svelte':

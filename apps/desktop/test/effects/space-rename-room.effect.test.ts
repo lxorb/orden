@@ -55,7 +55,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 const { account } = await import('../../src/lib/accounts/src/account.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sync } = await import('../../src/lib/sync-store/src/api')
-const { commitSpaceName } = await import('../../src/lib/space-actions')
+const { commitSpaceName } = await import('../../src/lib/spaces/src/api')
 const { root, watch } = await import('./runes.svelte')
 
 let stop: (() => void) | undefined

@@ -288,14 +288,14 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/SpaceBadge.svelte',
-      'lib/SpaceMenu.svelte',
       'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/accounts/src/AccountBadge.svelte',
       'lib/agents/src/settings/AgentMark.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/pass-ui/src/VaultMark.svelte',
+      'lib/spaces/src/SpaceBadge.svelte',
+      'lib/spaces/src/SpaceMenu.svelte',
       'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Sheet.svelte',
     ])
@@ -308,10 +308,10 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(asking).toEqual([
-      'lib/SpaceBadge.svelte',
       'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/src/SavePlace.svelte',
+      'lib/spaces/src/SpaceBadge.svelte',
       'lib/surfaces/src/PromptSheet.svelte',
       'lib/tab-strip/src/TabCard.svelte',
     ])

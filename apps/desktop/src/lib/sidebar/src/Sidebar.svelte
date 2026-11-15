@@ -40,7 +40,7 @@
   import { agentMarks } from '../../agent-marks.svelte'
   import { searching, sidebarPart } from '@orden/contracts'
   import { account, arriving } from '../../accounts/src/api'
-  import { newSpace } from '../../space-actions'
+  import { newSpace } from '../../spaces/src/api'
   import { panels, type Panel, type PanelSide } from '../../session/src/api'
   import { headingAt, lineOf } from '../../documents/src/api'
   import {

@@ -240,6 +240,9 @@ if (!__EVEN_PLUGIN__) {
     showData: async (path) => (await webDataSheet()).showWebData(path),
   })
   providePort('archive', { archive, unarchive, show: showArchive })
+  providePort('publishing', {
+    show: async (space) => (await import('./publishing/src/api')).publish.show(space),
+  })
   providePort('web.siteIcons', {
     held: async () => (await (await import('./web-tab/src/api')).siteIconSet()).siteIcons,
   })

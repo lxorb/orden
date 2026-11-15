@@ -73,7 +73,6 @@
     rewriteSheet,
     shareSheet,
     signInSheet,
-    firstSpaceDoor,
     undoToastNotice,
     keysMovedNotice,
     outsideNotice,
@@ -106,7 +105,7 @@
   import PullMark from './lib/PullMark.svelte'
   import type { AppContext } from './lib/shortcuts/src/api'
   import { writeNew } from './lib/write-new'
-  import { gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
+  import { firstSpaceDoor, gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
   import Door from './lib/Door.svelte'
 
   if (renamed.showing) void renameNotice.ask()

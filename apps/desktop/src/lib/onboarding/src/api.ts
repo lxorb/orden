@@ -14,3 +14,8 @@ export const beginSetup = (signedIn: boolean): Promise<void> =>
   __EVEN_PLUGIN__
     ? Promise.resolve()
     : import('./setup-state.svelte').then((one) => one.setup.begin(signedIn))
+
+export const firstSpaceDoor = () =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no fresh start in the Even Realities plugin'))
+    : import('./first-space.svelte')

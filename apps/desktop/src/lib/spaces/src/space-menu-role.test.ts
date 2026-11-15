@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { serveSyncStore } from '../../test/sync-store'
+import { serveSyncStore } from '../../../../test/sync-store'
 import { providePort, workspaceView } from '@orden/contracts'
 
 const world = vi.hoisted((): { mirrors: Record<string, string> } => ({ mirrors: {} }))
@@ -8,10 +8,10 @@ const store = vi.hoisted(() => ({
   remoteIdFor: (root: string) => world.mirrors[root] ?? null,
   roleKept: () => null,
 }))
-vi.mock('./sync-store/src/api', () => ({ sync: store }))
+vi.mock('../../sync-store/src/api', () => ({ sync: store }))
 serveSyncStore(store)
 
-vi.mock('./workspace/src/api', () => {
+vi.mock('../../workspace/src/api', () => {
   const spaces = [
     { id: 'theirs', name: 'Theirs', root: '/spaces/Theirs' },
     { id: 'mine', name: 'Mine', root: '/spaces/Mine' },
@@ -28,14 +28,14 @@ vi.mock('./workspace/src/api', () => {
   }
 })
 
-vi.mock('./sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./sharing/src/api')>()),
+vi.mock('../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sharing/src/api')>()),
   protectEntries: () => [],
 }))
 
-const { account } = await import('./accounts/src/account.svelte')
-const { spaceMenu } = await import('./space-actions')
-const { workspace } = await import('./workspace/src/api')
+const { account } = await import('../../accounts/src/account.svelte')
+const { spaceMenu } = await import('./api')
+const { workspace } = await import('../../workspace/src/api')
 
 providePort('workspace.view', { ...workspaceView(), spaces: workspace.spaces })
 

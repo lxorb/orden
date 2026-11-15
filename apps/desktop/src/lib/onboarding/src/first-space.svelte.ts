@@ -1,12 +1,12 @@
 import { type Moment, startsFresh } from './fresh-start'
-import { markSeedSpace, markSeeded, wasSeeded } from './seeded/src/api'
-import { madeSpace } from './space-actions'
-import { beginSetup } from './onboarding/src/api'
-import { joinPath } from './platform/src/api'
-import { viewport } from './ui-kit/src/api'
+import { markSeedSpace, markSeeded, wasSeeded } from '../../seeded/src/api'
+import { madeSpace } from '../../spaces/src/api'
+import { beginSetup } from './api'
+import { joinPath } from '../../platform/src/api'
+import { viewport } from '../../ui-kit/src/api'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from '@orden/contracts'
-import { writeFile } from './file-writes/src/api'
-import { type Space, workspace } from './workspace/src/api'
+import { writeFile } from '../../file-writes/src/api'
+import { type Space, workspace } from '../../workspace/src/api'
 
 class FirstSpace {
   private working = false

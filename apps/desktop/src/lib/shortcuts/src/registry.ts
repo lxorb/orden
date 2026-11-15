@@ -19,7 +19,7 @@ import {
 } from '@orden/contracts'
 import { toggleTabOverview, workspace } from '../../workspace/src/api'
 import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
-import { stepSpace } from '../../space-actions'
+import { stepSpace, toggleSpacePicker } from '../../spaces/src/api'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
 import type { Platform } from '../../ui-kit/src/api'
 import { type Toward, type Around, closeAfterLabel } from '../../panes/src/api'
@@ -1327,10 +1327,6 @@ CANVAS_ENTRIES.push({
   contextual: true,
   alias: true,
 })
-
-function toggleSpacePicker() {
-  void import('../../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
-}
 
 let cycling: typeof import('../../tab-cycle/src/api') | null = null
 

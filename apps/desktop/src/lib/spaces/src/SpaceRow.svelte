@@ -1,15 +1,15 @@
 <script lang="ts">
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
-  import { account } from './accounts/src/api'
-  import { pieces } from './matching/src/api'
-  import { SharedMark } from './ui-kit/src/api'
-  import { isShared, roleOf } from './sharing/src/api'
+  import { account } from '../../accounts/src/api'
+  import { pieces } from '../../matching/src/api'
+  import { SharedMark } from '../../ui-kit/src/api'
+  import { isShared, roleOf } from '../../sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
-  import { SpacePlace } from './space-pick/src/api'
-  import { isNumber } from './space-pick/src/api'
-  import { spaceSound } from './surfaces/src/api'
-  import { sync } from './sync-store/src/api'
-  import type { Space } from './workspace/src/api'
+  import { SpacePlace } from '../../space-pick/src/api'
+  import { isNumber } from '../../space-pick/src/api'
+  import { spaceSound } from './api'
+  import { sync } from '../../sync-store/src/api'
+  import type { Space } from '../../workspace/src/api'
 
   const {
     space,
@@ -35,7 +35,7 @@
       >{:else}{piece.text}{/if}{/each}</span
 >
 {#if !__EVEN_PLUGIN__ && others.length}
-  {#await import('./accounts-ui/src/api') then ui}<ui.Faces ids={others} />{/await}
+  {#await import('../../accounts-ui/src/api') then ui}<ui.Faces ids={others} />{/await}
 {/if}
 {#if reads}
   <SharedMark icon={Eye} label="Read-only" />

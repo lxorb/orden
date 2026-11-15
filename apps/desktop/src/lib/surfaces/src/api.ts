@@ -13,6 +13,7 @@ import { loadHistory } from '../../history/src/api'
 import { loadIconPicker } from '../../icon-picker/src/api'
 import { storedText } from '../../platform/src/api'
 import { held, type Latched, latched } from '../../ui-kit/src/api'
+import { loadSpaceMenu, loadSpacePicker, spaceSound } from '../../spaces/src/api'
 
 type Loaded<T> = () => Promise<{ default: T }>
 type Shown = Loaded<Component>
@@ -138,8 +139,6 @@ export const crashAskDue = (): boolean =>
 export const crashAsk = latched(from('crash-ask') as Shown)
 
 export const undoToastNotice = latched(from('undo-toast') as Shown)
-export const spaceSound = latched(() => import('./SpaceSound.svelte'))
-export const soundMark = held(() => import('./SoundMark.svelte'))
 export const privateMark = held(from('private-mark') as Loaded<Component<{ large?: boolean }>>)
 
 export const terminalMark = held(
@@ -154,10 +153,10 @@ export const syncMark = latched(() =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
 )
 
-export const spacePickerDialog = latched(() => import('../../SpacePicker.svelte'))
+export const spacePickerDialog = latched(loadSpacePicker)
 export const tabOverviewLayer = latched(from('overview') as Shown)
 export const hostPickerDialog = latched(from('host-picker') as Shown)
-export const spacesMenu = held(() => import('../../SpaceMenu.svelte'))
+export const spacesMenu = held(loadSpaceMenu)
 export const promptSheet = latched(() => import('./PromptSheet.svelte'))
 
 export const contextMenu = latched(() =>
@@ -191,11 +190,6 @@ export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 export const guestCorner = held(() =>
   import('../../collab/src/api').then((one) => one.loadGuestCorner()),
 )
-
-export const firstSpaceDoor = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no fresh start in the Even Realities plugin'))
-    : import('../../first-space.svelte')
 
 const SHEETS: Readonly<Record<SheetId, Latched<unknown>>> = {
   export: exportSheet,

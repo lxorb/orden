@@ -193,7 +193,7 @@ describe('a running shell in the space being deleted, which the sheet says nothi
     ending.asked = []
     const { prompt } = await import('../../ui-kit/src/prompt.svelte')
     vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
-    const { deleteSpace } = await import('../../space-actions')
+    const { deleteSpace } = await import('../../spaces/src/api')
     await deleteSpace(workspace.spaces[0] ?? WORK)
     return workspace
   }

@@ -61,8 +61,8 @@ describe('a mark that fills the box it was given', () => {
 
   test('and so does the space named over the file list, out of the one badge', () => {
     const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
-    const badge = named('lib/SpaceBadge.svelte')
-    const row = named('lib/SpaceRow.svelte')
+    const badge = named('lib/spaces/src/SpaceBadge.svelte')
+    const row = named('lib/spaces/src/SpaceRow.svelte')
 
     expect(badge.text.match(/<SpaceMark /g)).toHaveLength(1)
     expect(badge.text).toMatch(/class="orden-badge"[\s\S]{0,200}<SpaceMark/)
@@ -138,7 +138,7 @@ describe('the mark that says shared', () => {
 
   test('and the switcher says it with the mark instead', () => {
     const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
-    const row = named('lib/SpaceRow.svelte')
+    const row = named('lib/spaces/src/SpaceRow.svelte')
     expect(switcher.text).toMatch(
       /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
     )

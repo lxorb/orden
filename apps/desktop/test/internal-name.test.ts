@@ -88,7 +88,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/chats-client/src/socket.test.ts': ["'nib."],
   'apps/desktop/src/lib/chats-client/src/view/compose.test.ts': ['@NIB'],
   'apps/desktop/src/lib/chats-client/src/view/compose.ts': ['|nib)'],
-  'apps/desktop/src/lib/first-space.test.ts': ['Welcome to Nib', 'nib://'],
+  'apps/desktop/src/lib/onboarding/src/first-space.test.ts': ['Welcome to Nib', 'nib://'],
   'apps/desktop/src/lib/platform/src/former-keys.test.ts': ["'nib"],
   'apps/desktop/src/lib/platform/src/former-keys.ts': ["'nib:'", "'nib.'"],
   'apps/desktop/src/lib/modes/src/modes.svelte.ts': ["'nib'"],

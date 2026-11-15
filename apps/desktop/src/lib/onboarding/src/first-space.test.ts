@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Listed } from './space-pairing/src/seed-space'
+import type { Listed } from '../../space-pairing/src/seed-space'
 
 const notes = new Map<string, string>()
 let reading: (() => void) | null = null
@@ -8,8 +8,8 @@ const made: { name: string; path: string }[] = []
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -49,7 +49,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('./sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -66,13 +66,13 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { workspace } = await import('./workspace/src/api')
+const { workspace } = await import('../../workspace/src/api')
 const { firstSpace } = await import('./first-space.svelte')
-const { insideFolder, pickedFolder } = await import('./import/src/sources')
+const { insideFolder, pickedFolder } = await import('../../import/src/sources')
 const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } =
   await import('@orden/contracts')
-const { AGENTS_NAME } = await import('./platform/src/api')
-const { AGENTS_SEED, isUntouchedAgents } = await import('./agents-seed/src/api')
+const { AGENTS_NAME } = await import('../../platform/src/api')
+const { AGENTS_SEED, isUntouchedAgents } = await import('../../agents-seed/src/api')
 
 const FRESH = {
   native: true,
@@ -316,10 +316,10 @@ describe('a folder brought in as a space', () => {
   })
 })
 
-const { seedSpaceRoot } = await import('./seeded/src/api')
-const { untouchedSeedSpace } = await import('./space-pairing/src/seed-space')
-const { madeSpace } = await import('./space-actions')
-const { invoke } = await import('./platform/src/tauri')
+const { seedSpaceRoot } = await import('../../seeded/src/api')
+const { untouchedSeedSpace } = await import('../../space-pairing/src/seed-space')
+const { madeSpace } = await import('../../spaces/src/api')
+const { invoke } = await import('../../platform/src/tauri')
 
 describe('the space a fresh start made', () => {
   const read = {

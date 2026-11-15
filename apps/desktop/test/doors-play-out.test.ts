@@ -103,9 +103,9 @@ describe('a component fetched through a door', () => {
   test('which is what the list of spaces is', () => {
     const switcher = readFileSync(join(LIB, 'sidebar/src/SpaceSwitcher.svelte'), 'utf8')
     expect(switcher).toMatch(/<Door \{open\} load=\{\(\) => spacesMenu\(\)\}>/)
-    expect(rootTags(readFileSync(join(LIB, 'SpaceMenu.svelte'), 'utf8')).join('\n')).toMatch(
-      /transition:arrive/,
-    )
+    expect(
+      rootTags(readFileSync(join(LIB, 'spaces/src/SpaceMenu.svelte'), 'utf8')).join('\n'),
+    ).toMatch(/transition:arrive/)
   })
 })
 
