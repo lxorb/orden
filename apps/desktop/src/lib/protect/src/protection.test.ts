@@ -148,6 +148,47 @@ describe('a protected path that moves', () => {
     expect(protection.ways(ROOT)).toEqual({ Diary: 'password' })
   })
 
+  test('moved out from under a protected folder or space, stays protected', () => {
+    protection.set(ROOT, at('Diary'), 'password')
+    protection.set(OTHER, OTHER, 'device')
+    protection.moved(at('Diary/Monday.md'), at('Monday.md'), ROOT)
+    expect(protection.covering(at('Monday.md'))).toEqual([
+      { root: ROOT, key: 'Monday.md', way: 'password' },
+    ])
+    protection.moved(`${OTHER}/Plans.md`, at('Plans.md'), OTHER, ROOT)
+    expect(protection.covering(at('Plans.md'))).toEqual([
+      { root: ROOT, key: 'Plans.md', way: 'device' },
+    ])
+    expect(protection.ways(OTHER)).toEqual({ [SPACE]: 'device' })
+  })
+
+  test('moved within its lock, adds no lock of its own', () => {
+    protection.set(ROOT, at('Diary'), 'password')
+    protection.moved(at('Diary/Monday.md'), at('Diary/Week/Monday.md'), ROOT)
+    protection.moved(at('Plain.md'), at('Elsewhere.md'), ROOT)
+    expect(protection.ways(ROOT)).toEqual({ Diary: 'password' })
+  })
+
+  test('deleted and put back, is protected again with what was protected inside it', () => {
+    protection.set(ROOT, at('Secret.md'), 'password')
+    protection.set(ROOT, at('Trip/Diary.md'), 'device')
+    protection.gone(at('Secret.md'), ROOT, 't1')
+    protection.gone(at('Trip'), ROOT, 't2')
+    expect(protection.ways(ROOT)).toEqual({})
+    const later = new Protection()
+    later.cameBack(at('Secret.md'), ROOT, 't1')
+    later.cameBack(at('Trip 2'), ROOT, 't2')
+    expect(later.covering(at('Secret.md'))).toEqual([
+      { root: ROOT, key: 'Secret.md', way: 'password' },
+    ])
+    expect(later.covering(at('Trip 2/Diary.md'))).toEqual([
+      { root: ROOT, key: 'Trip 2/Diary.md', way: 'device' },
+    ])
+    later.gone(at('Secret.md'), ROOT)
+    later.cameBack(at('Secret.md'), ROOT, 't1')
+    expect(later.covering(at('Secret.md'))).toEqual([])
+  })
+
   test('with its space renamed follows the space', () => {
     protection.set(ROOT, at('Inside'), 'password')
     protection.spaceMoved(ROOT, '/renamed')
