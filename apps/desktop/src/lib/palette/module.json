@@ -14,7 +14,8 @@
     "ui-kit",
     "usage",
     "commands",
-    "link-index"
+    "link-index",
+    "documents"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -34,8 +35,6 @@
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/typing-pointer.ts",
     "apps/desktop/src/lib/whole-rows.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/drafts.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

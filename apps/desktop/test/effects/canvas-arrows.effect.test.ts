@@ -5,7 +5,7 @@ import CanvasBar from '../../src/lib/canvas/src/CanvasBar.svelte'
 import { blankCanvas, type CanvasNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
 import { PagesStore } from '../../src/lib/pages/src/store.svelte'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 function card(id: string): CanvasNode {
   return { id, type: 'text', x: 0, y: 0, width: 250, height: 60, text: id }

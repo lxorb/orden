@@ -28,7 +28,8 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   },
 }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
-vi.mock('../../workspace/write-file', () => ({
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: (path: string, text: string) => {
     files.set(path, text)
     return Promise.resolve()

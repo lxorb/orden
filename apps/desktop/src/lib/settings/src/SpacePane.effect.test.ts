@@ -54,7 +54,8 @@ vi.mock('../../workspace/note-text', () => ({
     return Promise.resolve()
   },
 }))
-vi.mock('../../workspace/write-file', () => ({
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: (path: string, text: string) => {
     disk.made.push(path)
     disk.files.set(path, text)

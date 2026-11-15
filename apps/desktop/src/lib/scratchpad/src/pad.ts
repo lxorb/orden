@@ -12,7 +12,7 @@ import {
 } from '../../platform/src/api'
 import { applied, type Edit } from '@orden/scan/search/replace'
 import { workspace } from '../../workspace.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { writeFile } from '../../file-writes/src/api'
 import { closeScratchpad, shown } from './is.svelte'
 import { difference, joined } from './words'
 

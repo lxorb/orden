@@ -1,7 +1,7 @@
 import { canWriteAt } from '../../../sharing/src/api'
 import { samePath } from '../../../platform/src/api'
 import { workspace } from '../../../workspace.svelte'
-import { writeIfAbsent } from '../../../workspace/write-file'
+import { writeIfAbsent } from '../../../file-writes/src/api'
 import type { Thread } from '../../../ai-providers/src/api'
 import { found, foundNamed, fromOthers, rootOfSpace } from './found'
 import { type Host, sendHere } from './host'

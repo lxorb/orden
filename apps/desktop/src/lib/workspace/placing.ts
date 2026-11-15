@@ -4,9 +4,8 @@ import { sameSite, settleShortcuts } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 import type { Entry, Space } from '../workspace.svelte'
 import type { ClosedTabs } from './closed.svelte'
-import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
-import { draftFile } from './drafts'
-import { writeFile } from './write-file'
+import { type NoteDoc, type Tab, UNTITLED, draftFile } from '../documents/src/api'
+import { writeFile } from '../file-writes/src/api'
 
 export interface Places {
   readonly spaces: readonly Space[]

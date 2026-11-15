@@ -11,7 +11,7 @@ import {
   joinPath,
 } from '../../platform/src/api'
 import { type Entry, workspace } from '../../workspace.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { writeFile } from '../../file-writes/src/api'
 import { nowHere } from './days'
 
 const folders = new Map<string, Promise<string>>()

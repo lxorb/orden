@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import type { Tab } from '../../workspace/documents.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
   import { fileSource } from './source'

@@ -22,7 +22,7 @@ import type { KeptView } from '../../canvas/src/api'
 import { CanvasStore } from '../../canvas/src/api'
 import type { Highlight, PdfHeading } from '../../pdf/src/api'
 import { stillness } from '../../platform/src/api'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 
 const MARGIN = 28
 

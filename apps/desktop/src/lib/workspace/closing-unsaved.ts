@@ -1,5 +1,5 @@
 import type { Tab } from '../workspace.svelte'
-import { hasWords, isDraft } from './drafts'
+import { hasWords, isDraft } from '../documents/src/api'
 
 export function unsavedAmong(closing: readonly Tab[], every: readonly Tab[]): Tab[] {
   const going = new Set(closing.map((one) => one.id))

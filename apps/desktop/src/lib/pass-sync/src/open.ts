@@ -1,4 +1,4 @@
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace.svelte'
 import { passOn } from '../../settings.svelte'
 import { asked, type PassIntent } from './asked.svelte'

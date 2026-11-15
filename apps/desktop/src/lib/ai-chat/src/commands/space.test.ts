@@ -19,7 +19,8 @@ vi.mock('../../../workspace.svelte', () => ({
     fileCame: () => Promise.resolve(),
   },
 }))
-vi.mock('../../../workspace/write-file', () => ({
+vi.mock('../../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../../file-writes/src/api')>()),
   writeIfAbsent: (path: string, text: string) => {
     if (disk.files.has(path)) return Promise.resolve(false)
     disk.files.set(path, text)

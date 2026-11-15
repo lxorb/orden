@@ -1,7 +1,7 @@
 import type { OpenHow } from '../../new-tab'
 import { appsOn } from '../../settings.svelte'
 import { nameOf, samePath } from '../../platform/src/api'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace.svelte'
 
 export function appName(path: string): string {

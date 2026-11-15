@@ -36,7 +36,7 @@ vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => !share.readOnly }))
 const { changed, writeRow } = await import('./write')
 const { lineOfTask: taskLine } = await import('@orden/bases')
 const { FileActions } = await import('../../file-undo/src/api')
-const { NoteDoc } = await import('../../workspace/documents.svelte')
+const { NoteDoc } = await import('../../documents/src/api')
 type HoldsNotes = import('../../workspace/note-text').HoldsNotes
 
 const PATH = '/space/Plan.md'

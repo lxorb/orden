@@ -144,7 +144,7 @@ describe('writing an export', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
     expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
     expect(read('../src/lib/files-out/src/save.ts')).toContain('writeBytes(')
-    expect(read('../src/lib/workspace/write-file.ts')).toContain("invoke('write_bytes'")
+    expect(read('../src/lib/file-writes/src/api.ts')).toContain("invoke('write_bytes'")
   })
 
   test('and the write is whole, which is what the plugin could not give it', () => {

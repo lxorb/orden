@@ -8,9 +8,9 @@ import {
   invoke,
   joinPath,
 } from '../platform/src/api'
-import { type Tab, UNTITLED } from './documents.svelte'
+import { type Tab, UNTITLED } from '../documents/src/api'
+import { writeFile } from '../file-writes/src/api'
 import type { FileActions } from '../file-undo/src/api'
-import { writeFile } from './write-file'
 
 export interface Composes {
   readonly activeSpace: { root: string } | null

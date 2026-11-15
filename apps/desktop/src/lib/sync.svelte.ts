@@ -40,7 +40,7 @@ import type { HoldCheck } from '@orden/sync-core'
 import { workspace } from './workspace.svelte'
 import { sayEntryIds } from './space-kept/src/api'
 import type { FileOp } from './file-ops/src/api'
-import { unixLines } from './workspace/documents.svelte'
+import { unixLines } from './documents/src/api'
 
 export const STORAGE_KEY = MIRRORS_KEY
 

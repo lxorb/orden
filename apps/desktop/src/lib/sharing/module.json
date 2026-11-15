@@ -10,7 +10,8 @@
     "ui-controls",
     "ui-kit",
     "sync-mirror",
-    "file-ops"
+    "file-ops",
+    "documents"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
@@ -20,7 +21,6 @@
     "apps/desktop/src/lib/settling.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/trust.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

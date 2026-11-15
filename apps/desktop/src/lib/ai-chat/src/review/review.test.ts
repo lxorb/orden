@@ -1,7 +1,7 @@
 import { EditorState, type TransactionSpec } from '@orden/editor'
 import { reviewMarks, reviewMarksOf } from '@orden/editor/review'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
+import type { NoteDoc } from '../../../documents/src/api'
 import type { Thread, Turn } from '../../../ai-providers/src/chat/types'
 
 const fake = vi.hoisted(() => ({
@@ -122,7 +122,8 @@ vi.mock('../../../agent-docs/src/presence', () => ({ showAgent: () => undefined 
 
 vi.mock('./summary', () => ({ summarized: () => Promise.resolve('summary') }))
 
-vi.mock('../../../workspace/write-file', () => ({
+vi.mock('../../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../../file-writes/src/api')>()),
   writeFile: (path: string, words: string) => {
     if (fake.unwritable.has(path)) return Promise.reject(new Error('the disk is full'))
     fake.desk.disk.set(path, words)

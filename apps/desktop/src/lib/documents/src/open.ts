@@ -1,8 +1,8 @@
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
-import { movedTo, nameOf, samePath, within } from '../platform/src/api'
+import { movedTo, nameOf, samePath, within } from '../../platform/src/api'
 import type { DocumentStart, NoteDoc, Tab } from './documents.svelte'
-import type { FileOp } from '../file-ops/src/api'
-import { TAB_KINDS } from '../tab-kinds/src/api'
+import type { FileOp } from '../../file-ops/src/api'
+import { TAB_KINDS } from '../../tab-kinds/src/api'
 
 export class OpenDocuments {
   private readonly coming = new Map<string, Promise<NoteDoc | null>>()

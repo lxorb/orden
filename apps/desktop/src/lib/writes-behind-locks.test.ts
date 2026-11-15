@@ -24,11 +24,11 @@ describe('the words of a note written by anything but its own editor', () => {
     expect(
       using(/import \{[^}]*\b(?:writeInTurn|writeEdited)\b[^}]*\} from '|\.writeTo\(/),
     ).toEqual([
+      'documents/src/documents.svelte.ts',
+      'file-writes/src/api.ts',
       'link-index/src/links.svelte.ts',
-      'workspace/documents.svelte.ts',
       'workspace/note-text.ts',
       'workspace/undoing.ts',
-      'workspace/write-file.ts',
     ])
   })
 

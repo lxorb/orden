@@ -1,4 +1,4 @@
-import { unixLines } from './documents.svelte'
+import { unixLines } from '../documents/src/api'
 import { type Draft, readClosed, readDraft } from './session'
 import { ifFree, locksHere, locksWork, log, isNumber, isRecord } from '../platform/src/api'
 import { leftLately, slotLock, slotOf } from './slot'

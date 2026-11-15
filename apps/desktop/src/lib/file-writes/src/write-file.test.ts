@@ -6,17 +6,17 @@ let alone = false
 
 let there = false
 
-vi.mock('../platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string) => {
     order.push(command)
     return Promise.resolve(command === 'path_exists' ? there : undefined)
   },
 }))
-vi.mock('../link-index/src/api', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: (path: string) => void order.push(`index ${path}`) },
 }))
-vi.mock('../platform/src/windows', () => ({
+vi.mock('../../platform/src/windows', () => ({
   windows: {
     get alone() {
       return alone
@@ -34,7 +34,7 @@ vi.mock('../platform/src/windows', () => ({
   },
 }))
 
-const { writeFile, writeIfAbsent } = await import('./write-file')
+const { writeFile, writeIfAbsent } = await import('./api')
 
 afterEach(() => {
   order.length = 0

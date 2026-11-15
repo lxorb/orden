@@ -1,5 +1,5 @@
 import { fold } from '@orden/rooms/fold'
-import { unixLines } from './documents.svelte'
+import { unixLines } from '../documents/src/api'
 import type { Draft } from './session'
 
 export interface Asks {

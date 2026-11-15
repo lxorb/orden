@@ -9,10 +9,8 @@
     "theme",
     "accounts",
     "platform",
-    "ui-kit"
+    "ui-kit",
+    "documents"
   ],
-  "pending": [
-    "apps/desktop/src/lib/modes.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/modes.svelte.ts"]
 }

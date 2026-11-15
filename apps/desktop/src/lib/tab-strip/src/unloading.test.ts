@@ -21,7 +21,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../../workspace.svelte')
-const { NoteDoc, Tab } = await import('../../workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { pages } = await import('../../web-tab/src/pages.svelte')
 const { agentMarks } = await import('../../agent-marks.svelte')
 const { prompt } = await import('../../ui-kit/src/prompt.svelte')

@@ -1,6 +1,6 @@
-import { links } from '../link-index/src/api'
-import { onDisk, invoke, oneWriteAt, writeInTurn, writeTaking } from '../platform/src/api'
-import { wroteHere } from './in-turn'
+import { links } from '../../link-index/src/api'
+import { onDisk, invoke, oneWriteAt, writeInTurn, writeTaking } from '../../platform/src/api'
+import { wroteHere } from '../../documents/src/api'
 
 export interface Hearing {
   there(path: string): Promise<boolean>

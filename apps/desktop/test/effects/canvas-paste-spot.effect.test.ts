@@ -4,7 +4,7 @@ import Canvas from '../../src/lib/canvas/src/Canvas.svelte'
 import { graphPoint } from '../../src/lib/camera/src/api'
 import { blankCanvas, readCanvas } from '@orden/markdown/canvas'
 import { tools } from '../../src/lib/canvas/src/tools.svelte'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 Element.prototype.animate = () =>
   ({

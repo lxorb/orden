@@ -103,7 +103,7 @@ vi.mock('../../ui-kit/src/busy.svelte', () => ({
 
 const { inRooms, rooms } = await import('./rooms.svelte')
 const { record } = await import('../../sync-mirror/src/api')
-const { NoteDoc } = await import('../../workspace/documents.svelte')
+const { NoteDoc } = await import('../../documents/src/api')
 
 type Doc = InstanceType<typeof NoteDoc>
 type Socket = InstanceType<typeof sockets.FakeSocket>

@@ -117,7 +117,7 @@ vi.mock('./workspace.svelte', () => ({
 
 const { chosenIcon, chosenTint, faviconFor, holdsPaper, sourceMark } = await import('./chosen-icon')
 const { elsewhere } = await import('./link-index/src/api')
-const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('./documents/src/api')
 
 function tabAt(path: string) {
   const doc = new NoteDoc(

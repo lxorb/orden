@@ -1,6 +1,20 @@
-import { invoke, log, writeTaking } from '../platform/src/api'
-import type { Across } from './across'
+import { invoke, log, writeTaking } from '../../platform/src/api'
 import type { NoteDoc } from './documents.svelte'
+
+interface Written {
+  words: string
+  revision: number
+}
+
+export interface Across {
+  wroteHere(path: string): void
+  owe(note: NoteDoc): void
+  writing(
+    note: NoteDoc,
+    path: string,
+    write: (words: string) => Promise<unknown>,
+  ): Promise<Written | null>
+}
 
 let across: Across | null = null
 
@@ -9,6 +23,12 @@ export function meetAcross(one: Across | null) {
 }
 
 let acrossSoon: (() => Promise<Across>) | null = null
+
+let owed: ((note: NoteDoc) => void) | null = null
+
+export function oweTo(owe: (note: NoteDoc) => void) {
+  owed = owe
+}
 
 export function fetchAcross(fetch: () => Promise<Across>) {
   acrossSoon = fetch
@@ -52,10 +72,10 @@ export function writeEdited(
         note.dirty = note.revision !== written.revision
         return written.words
       },
-      async (error: unknown) => {
+      (error: unknown) => {
         log('error', `save: ${path} - ${String(error)}`)
         if (through) through.owe(note)
-        else (await import('../workspace.svelte')).workspace.owedWords(note)
+        else owed?.(note)
         return null
       },
     )

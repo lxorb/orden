@@ -24,7 +24,7 @@ vi.mock('../../src/lib/terminal/src/sessions.svelte', () => ({
 
 await import('../../src/lib/terminal-ports')
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { TAB_KINDS } = await import('../../src/lib/tab-kinds/src/api')
 const { faces } = await import('../../src/lib/overview/src/faces.svelte')
 const { scrollbackOf } = await import('../../src/lib/overview/src/previews')

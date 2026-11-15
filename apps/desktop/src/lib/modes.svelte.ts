@@ -55,7 +55,7 @@ import {
   isDesktop,
 } from './platform/src/api'
 import { theme } from './theme/src/api'
-import { opening } from './workspace/documents.svelte'
+import { opening } from './documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
 

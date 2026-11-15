@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const wrote = vi.hoisted(() => [] as string[])
 const readOnly = vi.hoisted(() => new Set<string>())
 
-vi.mock('../../../workspace/write-file', () => ({
+vi.mock('../../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../../file-writes/src/api')>()),
   writeFile: (path: string) => {
     wrote.push(path)
     return Promise.resolve()

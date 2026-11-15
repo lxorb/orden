@@ -14,7 +14,8 @@
     "ui-kit",
     "accounts",
     "handoff",
-    "link-format"
+    "link-format",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -30,7 +31,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

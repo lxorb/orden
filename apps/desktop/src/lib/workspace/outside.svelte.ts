@@ -18,7 +18,7 @@ import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync-client/src/api'
 import { type FileOp, landing } from '../file-ops/src/api'
 import { workspace } from '../workspace.svelte'
-import { holdsWords, unixLines } from './documents.svelte'
+import { holdsWords, unixLines } from '../documents/src/api'
 
 const NO_ENGINE = 'no-engine'
 

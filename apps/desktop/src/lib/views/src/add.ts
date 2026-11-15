@@ -7,7 +7,7 @@ import { templatePath, templateWords } from './templates'
 import { rows } from '../../rows/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { workspace } from '../../workspace.svelte'
-import { writeFile } from '../../workspace/write-file'
+import { writeFile } from '../../file-writes/src/api'
 import { bare, isNoteProperty } from './columns'
 
 export interface NewNote {

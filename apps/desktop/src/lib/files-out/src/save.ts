@@ -10,7 +10,7 @@ import {
   joinPath,
   dialogAnswer,
 } from '../../platform/src/api'
-import { writeBytes, writeFile as writeText } from '../../workspace/write-file'
+import { writeBytes, writeFile as writeText } from '../../file-writes/src/api'
 import { numbered } from '@orden/markdown/paths'
 import { fileNameFor, freeName, stemOf } from './naming'
 

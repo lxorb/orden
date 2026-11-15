@@ -11,7 +11,7 @@ import {
   type Windows,
   windows as theWindows,
 } from '../platform/src/api'
-import { type NoteDoc, unixLines } from './documents.svelte'
+import { type NoteDoc, unixLines } from '../documents/src/api'
 import type { FileOp } from '../file-ops/src/api'
 
 interface Joined {

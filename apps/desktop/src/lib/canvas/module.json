@@ -17,7 +17,8 @@
     "parting",
     "shortcuts",
     "windows",
-    "link-index"
+    "link-index",
+    "documents"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -33,7 +34,6 @@
     "apps/desktop/src/lib/pane-corners.svelte.ts",
     "apps/desktop/src/lib/pixel-ratio.svelte.ts",
     "apps/desktop/src/lib/trust.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

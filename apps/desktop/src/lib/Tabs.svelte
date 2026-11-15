@@ -84,7 +84,7 @@
   import { chosenIcon } from './chosen-icon'
   import { workspace, type Tab } from './workspace.svelte'
   import { type Landing, inside } from './panes/src/api'
-  import { isDraft } from './workspace/drafts'
+  import { isDraft } from './documents/src/api'
   import { initial } from './ui-kit/src/api'
   import { SvelteSet } from 'svelte/reactivity'
   import { dur, fade, stillness } from './platform/src/api'

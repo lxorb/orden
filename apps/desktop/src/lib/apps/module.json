@@ -12,15 +12,15 @@
     "sync-client",
     "ui-controls",
     "ui-kit",
-    "settings"
+    "settings",
+    "documents",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/Sweep.svelte",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/png-off.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

@@ -1,6 +1,6 @@
 import { samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
-import { Tab } from '../../workspace/documents.svelte'
+import { Tab } from '../../documents/src/api'
 
 const peeks = new Map<string, { tab: string; walk: string[]; back: HTMLElement | null }>()
 let listening = false

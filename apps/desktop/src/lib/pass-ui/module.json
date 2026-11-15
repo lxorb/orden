@@ -14,7 +14,8 @@
     "theme",
     "theme-looks",
     "ui-controls",
-    "ui-kit"
+    "ui-kit",
+    "documents"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -30,7 +31,6 @@
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/take-keyboard.ts",
     "apps/desktop/src/lib/theme-ports.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts"
+    "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

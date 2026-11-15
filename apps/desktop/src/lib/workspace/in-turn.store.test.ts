@@ -21,7 +21,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('../workspace.svelte')
 const { startAcross } = await import('./across')
 await startAcross()
-const { writeEdited } = await import('./in-turn')
+const { writeEdited } = await import('../documents/src/api')
 
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`

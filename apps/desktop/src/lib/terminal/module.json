@@ -17,7 +17,9 @@
     "theme",
     "ui-controls",
     "ui-kit",
-    "parting"
+    "parting",
+    "documents",
+    "file-writes"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -42,9 +44,6 @@
     "apps/desktop/src/lib/space-typing.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/drafts.ts",
-    "apps/desktop/src/lib/workspace/write-file.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

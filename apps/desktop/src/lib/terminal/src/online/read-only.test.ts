@@ -9,7 +9,8 @@ vi.mock('../../../sharing/src/api', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-vi.mock('../../../workspace/write-file', () => ({
+vi.mock('../../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../../file-writes/src/api')>()),
   writeFile: (path: string, text: string) => {
     written.push({ path, text })
     return Promise.resolve()
@@ -32,7 +33,7 @@ vi.mock('./calls', async (importOriginal) => ({
 }))
 
 const { workspace } = await import('../../../workspace.svelte')
-const { isUnsaved } = await import('../../../workspace/drafts')
+const { isUnsaved } = await import('../../../documents/src/api')
 const { madeOnline, openOnline } = await import('./open')
 const { isOnlineTab } = await import('../../../online-terms/src/api')
 

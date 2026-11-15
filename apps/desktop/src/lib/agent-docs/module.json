@@ -11,13 +11,12 @@
     "scan",
     "scratchpad",
     "theme",
-    "link-index"
+    "link-index",
+    "documents"
   ],
   "pending": [
     "apps/desktop/src/lib/views.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/drafts.ts",
     "apps/desktop/src/lib/workspace/note-text.ts"
   ]
 }

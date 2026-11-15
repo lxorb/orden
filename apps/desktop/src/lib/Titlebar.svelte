@@ -11,7 +11,7 @@
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/src/api'
   import { shown as pad } from './scratchpad/src/api'
-  import { isDraft } from './workspace/drafts'
+  import { isDraft } from './documents/src/api'
   import TopStrips from './TopStrips.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './platform/src/api'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'

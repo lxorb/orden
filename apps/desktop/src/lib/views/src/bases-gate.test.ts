@@ -10,7 +10,8 @@ vi.stubGlobal('localStorage', {
 vi.mock('./runner.svelte', () => ({}))
 
 const written: string[] = []
-vi.mock('../../workspace/write-file', () => ({
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: async (path: string) => void written.push(path),
 }))
 

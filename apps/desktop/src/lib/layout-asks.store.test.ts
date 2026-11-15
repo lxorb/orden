@@ -20,7 +20,7 @@ const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
-const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('./documents/src/api')
 
 function terminal() {
   const note = new NoteDoc(

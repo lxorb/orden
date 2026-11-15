@@ -1,7 +1,8 @@
 import { expect, test, vi } from 'vitest'
 
 const written: { path: string; content: string }[] = []
-vi.mock('../../workspace/write-file', () => ({
+vi.mock('../../file-writes/src/api', async (original) => ({
+  ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: (path: string, content: string) => {
     written.push({ path, content })
     return Promise.resolve()

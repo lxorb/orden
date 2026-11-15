@@ -11,7 +11,7 @@
   import { trap } from '../../ui-controls/src/api'
   import { prompt } from '../../ui-kit/src/api'
   import { webPages, whenLoaded } from '@orden/contracts'
-  import { isDraft } from '../../workspace/drafts'
+  import { isDraft } from '../../documents/src/api'
   import { type Tab, workspace } from '../../workspace.svelte'
   import {
     aimed,

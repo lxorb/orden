@@ -23,7 +23,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { run } = await import('./actions')
 const { CanvasStore } = await import('./store.svelte')
-const { NoteDoc, Tab } = await import('../../workspace/documents.svelte')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { workspace } = await import('../../workspace.svelte')
 
 const ADDRESS = 'https://orden.so/i/abc.png'

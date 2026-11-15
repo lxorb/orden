@@ -1,6 +1,6 @@
 import '../../sync-ports'
 import { describe, expect, test, vi } from 'vitest'
-import type { NoteDoc } from '../../workspace/documents.svelte'
+import type { NoteDoc } from '../../documents/src/api'
 
 vi.stubGlobal('localStorage', {
   length: 0,

@@ -1,6 +1,6 @@
 import { fileMark } from '../../file-mark'
 import { nameOf, within } from '../../platform/src/api'
-import type { Tab } from '../../workspace/documents.svelte'
+import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace.svelte'
 import { openWithSystem } from './commands'
 import { folderName } from './crumbs'

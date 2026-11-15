@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte'
 import { expect, test } from 'vitest'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 import { root, watch } from './runes.svelte'
 
 function documentAt(path: string): NoteDoc {

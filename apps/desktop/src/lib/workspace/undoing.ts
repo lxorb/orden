@@ -19,11 +19,10 @@ import { keptAway } from '../away/src/api'
 import type { Entry } from '../workspace.svelte'
 import type { Bookmark } from '@orden/contracts'
 import type { Archive } from '../space-kept/src/api'
-import type { NoteDoc } from './documents.svelte'
+import { type NoteDoc, writeEdited } from '../documents/src/api'
+import { writeFile } from '../file-writes/src/api'
 import { inFlight, type Kind } from '../file-ops/src/api'
 import type { Binning, FileAction, FileActions, Kept } from '../file-undo/src/api'
-import { writeEdited } from './in-turn'
-import { writeFile } from './write-file'
 
 export interface PutsBack {
   readonly undone: FileActions

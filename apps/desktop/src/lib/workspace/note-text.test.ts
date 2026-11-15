@@ -53,8 +53,8 @@ const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteT
 const { FileActions } = await import('../file-undo/src/api')
 const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
-const { NoteDoc } = await import('./documents.svelte')
-const { meetAcross } = await import('./in-turn')
+const { NoteDoc } = await import('../documents/src/api')
+const { meetAcross } = await import('../documents/src/api')
 const { protection } = await import('../protect/src/protection.svelte')
 const { unlocks } = await import('../protect/src/unlocked.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes

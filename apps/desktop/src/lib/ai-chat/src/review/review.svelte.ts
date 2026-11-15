@@ -18,8 +18,8 @@ import {
   onceAFrame,
 } from '../../../platform/src/api'
 import { workspace } from '../../../workspace.svelte'
-import type { NoteDoc } from '../../../workspace/documents.svelte'
-import { writeFile } from '../../../workspace/write-file'
+import { type NoteDoc } from '../../../documents/src/api'
+import { writeFile } from '../../../file-writes/src/api'
 import { answeringAt, onSend, onSent } from '../chat/sends'
 import type { Thread, Turn } from '../../../ai-providers/src/api'
 import { cutForEdit } from './branches'
