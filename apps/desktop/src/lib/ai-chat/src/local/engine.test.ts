@@ -427,26 +427,25 @@ describe('a Claude Code thread', () => {
     expect(done?.type === 'done' && done.error).toMatch(/Claude plan is at its limit until /)
   })
 
-  test('words steered into a running turn are a message, answered after it', async () => {
+  test('takes no words into a running Claude turn, which would answer them only after it, so they wait in the queue (#2046)', async () => {
     let holding: Open | undefined
     answer = (open, said) => {
-      if (said.kind !== 'turn') return []
-      if (!holding) {
-        holding = open
-        return []
-      }
-      return [...claudeTurn('First.'), ...claudeTurn('Second.')]
+      if (said.kind === 'turn') holding ??= open
+      return said.kind === 'interrupt'
+        ? ['{"type":"result","subtype":"error_during_execution","is_error":true}']
+        : []
     }
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
-    const sending = send(CLAUDE, on, 'one', built)
+    const stopper = new AbortController()
+    const sending = send(CLAUDE, on, 'one', built, stopper.signal)
     await vi.waitFor(() => expect(holding).toBeDefined())
-    await built.steer(on, 'and shorter')
-    await sending
 
-    expect(on.turns.map((turn) => turn.role)).toEqual(['you', 'model', 'you', 'model'])
-    expect(on.turns[2]).toMatchObject({ steered: true, draft: { text: 'and shorter' } })
-    expect(on.turns.at(-1)?.parts.at(-1)).toEqual({ kind: 'text', text: 'Second.' })
+    expect(await built.steer(on, 'and shorter')).toBe(false)
+    expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn'])
+    expect(on.turns.map((turn) => turn.role)).toEqual(['you', 'model'])
+    stopper.abort()
+    await sending
   })
 
   test('lists the models Claude Code lists', async () => {
