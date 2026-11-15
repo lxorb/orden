@@ -249,6 +249,7 @@ function heldValue(value: string): boolean {
 function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>): boolean {
   const asked = query.value
   if (asked === null) return true
+  if (query.compare !== 'has' && query.compare !== 'is' && !heldValue(value)) return false
 
   switch (query.compare) {
     case 'has':

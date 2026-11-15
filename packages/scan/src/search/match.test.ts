@@ -531,6 +531,14 @@ Words.
       expect(answers('[n:null]', { body: `---\nn: ${written}\n---\n` })).toBe(true)
     }
     expect(answers('[n:null]', { body: '---\nn: nullable\n---\n' })).toBe(false)
+    for (const asked of ['[n:>2026-01-01]', '[n:<5]', '[n:>5]', '[n:0..9]']) {
+      expect(answers(asked, { body: '---\nn: null\n---\n' })).toBe(false)
+    }
+  })
+
+  test('and reads a list on past a comment line between its items', () => {
+    const body = '---\ntags:\n  - a\n  # later\n  - b\n---\n'
+    expect(answers('[tags:b]', { body })).toBe(true)
   })
 
   test('and falls back to the words where the two are not the same kind of thing', () => {

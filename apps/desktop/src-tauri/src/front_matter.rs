@@ -650,7 +650,7 @@ fn dash_items<'a>(lines: impl Iterator<Item = &'a str>) -> Vec<String> {
 
     for line in lines {
         let line = line.trim();
-        if line.is_empty() {
+        if line.is_empty() || line.starts_with('#') {
             continue;
         }
 

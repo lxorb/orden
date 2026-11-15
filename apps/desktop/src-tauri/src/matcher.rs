@@ -815,6 +815,10 @@ fn alike(value: &str, asked: &str) -> bool {
 }
 
 fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) -> bool {
+    let ordered = !matches!(compare, Compare::Has | Compare::Is);
+    if ordered && matches!(value.trim(), "" | "~" | "null" | "Null" | "NULL") {
+        return false;
+    }
     match compare {
         Compare::Has => holds(value, &asked.to_lowercase(), true),
         Compare::Is => alike(value, asked),
@@ -1337,6 +1341,13 @@ mod tests {
             assert!(answers(null, &format!("---\nn: {written}\n---\n")));
         }
         assert!(!answers(null, "---\nn: nullable\n---\n"));
+        let past = r#"{"kind":"property","name":"n","value":"2026-01-01","compare":"gt"}"#;
+        assert!(!answers(past, "---\nn: null\n---\n"));
+        let listed = r#"{"kind":"property","name":"tags","value":"b","compare":"has"}"#;
+        assert!(answers(
+            listed,
+            "---\ntags:\n  - a\n  # later\n  - b\n---\n"
+        ));
     }
 
     #[test]

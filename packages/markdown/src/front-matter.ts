@@ -116,7 +116,7 @@ export function frontMatterList(source: string, key: string): string[] {
     const stop = end === -1 || end > block.body.to ? block.body.to : end
     const text = source.slice(at, stop)
 
-    if (text.trim()) {
+    if (text.trim() && !text.trim().startsWith('#')) {
       const item = writtenListItem(text)
       if (item === null) break
       out.push(unquoted(uncommented(item)))
