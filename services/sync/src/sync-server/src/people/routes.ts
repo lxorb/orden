@@ -3,6 +3,7 @@ import { objectBody, readBody } from '../body'
 import { cleanPersonName, now } from '../crypto'
 import { NOT_A_HASH, NOT_AN_OBJECT } from '../refused'
 import { atLeast, spaceOf } from '../spaces/space'
+import { RESTAMPED } from '../unused'
 import { letGo } from '../used'
 import type { Env, User, Variables } from '../types'
 import { avatarIn, isHash } from './avatar'
@@ -178,7 +179,7 @@ async function giveBack(
     if (keeping.includes(hash)) continue
     if (!(await letGo(env, userId, hash, true))) {
       await env.DB.prepare(
-        'insert or ignore into unused_blobs (user_id, hash, since) values (?, ?, ?)',
+        `insert into unused_blobs (user_id, hash, since) values (?, ?, ?) ${RESTAMPED}`,
       )
         .bind(userId, hash, now())
         .run()

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { reachAs } from '../src/sync-server-chats/src/chats/reach'
 import { sha256 } from '../src/sync-server/src/crypto'
 import { sweepChats } from '../src/sync-server-chats/src/chats/sweep'
-import { sweepUnused } from '../src/sync-server/src/unused'
+import { NIGHTLY, sweepUnused, UNUSED_FOR } from '../src/sync-server/src/unused'
 import { sweepLeftovers } from '../src/sync-server/src/leftovers'
 import { chatLogs, type ChatSocket, fire, hangUp, open, say } from './chat-fakes'
 import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
@@ -1130,6 +1130,7 @@ describe('chats', () => {
       const holders = (hash: string) =>
         env.db.prepare('select user_id from blobs where hash = ? order by user_id').all(hash)
       const served = async (hash: string) => (await call(env, `/i/${hash}.png`)).status
+      const swept = () => sweepUnused(env, NIGHTLY, Date.now() + UNUSED_FOR)
 
       async function posted(chat: string, hash: string, token = people.writer) {
         const post = postOf('see', { files: [file(hash)] })
@@ -1148,7 +1149,7 @@ describe('chats', () => {
         await deleted(people.writer, chat, post.message)
         expect(unused()).toEqual([{ user_id: ids.writer, hash }])
 
-        expect(await sweepUnused(env)).toBe(1)
+        expect(await swept()).toBe(1)
         expect(holders(hash)).toEqual([])
         expect(await served(hash)).toBe(404)
       })
@@ -1162,7 +1163,7 @@ describe('chats', () => {
         expect(await sweepChats(env, T0)).toBe(1)
         expect(unused()).toEqual([{ user_id: ids.writer, hash }])
 
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([])
         expect(await served(hash)).toBe(404)
       })
@@ -1174,7 +1175,9 @@ describe('chats', () => {
 
         await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: people.owner })
         await call(env, `/v1/trash/spaces/${spaceId}`, { method: 'DELETE', token: people.owner })
+        expect(holders(hash)).toEqual([{ user_id: ids.writer }])
 
+        await swept()
         expect(holders(hash)).toEqual([])
         expect(await served(hash)).toBe(404)
       })
@@ -1188,7 +1191,7 @@ describe('chats', () => {
         await deleted(people.writer, chat, post.message)
         expect(unused()).toEqual([{ user_id: ids.writer, hash }])
 
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.owner }])
         expect(await served(hash)).toBe(200)
       })
@@ -1213,7 +1216,7 @@ describe('chats', () => {
         await deleted(people.writer, chat, post.message)
         expect(unused()).toEqual([{ user_id: ids.writer, hash }])
 
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.stranger }])
         expect(await served(hash)).toBe(200)
       })
@@ -1228,7 +1231,7 @@ describe('chats', () => {
         const post = await posted(chat, hash, people.owner)
 
         await deleted(people.owner, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.owner }])
         expect(await served(hash)).toBe(200)
       })
@@ -1253,7 +1256,7 @@ describe('chats', () => {
         const post = await posted(chat, hash, people.owner)
 
         await deleted(people.owner, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.owner }])
         expect(await served(hash)).toBe(200)
       })
@@ -1274,7 +1277,7 @@ describe('chats', () => {
         const post = await posted(chat, hash, people.owner)
 
         await deleted(people.owner, chat, post.message)
-        expect(await sweepUnused(env)).toBe(0)
+        expect(await swept()).toBe(0)
         expect(holders(hash)).toEqual([{ user_id: ids.owner }])
         expect(unused()).toEqual([{ user_id: ids.owner, hash }])
       })
@@ -1287,7 +1290,7 @@ describe('chats', () => {
         const there = await posted(other, hash)
 
         await deleted(people.writer, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(
           (await call(env, `/v2/chats/${other}/files/${hash}`, { token: people.reader })).status,
         ).toBe(200)
@@ -1321,7 +1324,7 @@ describe('chats', () => {
         await send(people.writer, other, later(hash))
 
         await deleted(people.writer, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.writer }])
         expect(await served(hash)).toBe(200)
       })
@@ -1335,12 +1338,12 @@ describe('chats', () => {
         await send(people.writer, other, held)
 
         await deleted(people.writer, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.writer }])
         expect(unused()).toEqual([])
 
         await deleted(people.writer, other, held.post.message)
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([])
       })
 
@@ -1352,7 +1355,7 @@ describe('chats', () => {
         const held = later(hash)
         await send(people.writer, other, held)
         await deleted(people.writer, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(unused()).toEqual([])
 
         await send(people.writer, other, {
@@ -1360,7 +1363,7 @@ describe('chats', () => {
           id: id(),
           post: { ...held.post, files: [] },
         })
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([])
       })
 
@@ -1373,7 +1376,7 @@ describe('chats', () => {
         logs.of(other).state.db.prepare("update scheduled set refused = 'nope'").run()
 
         await deleted(people.writer, chat, post.message)
-        await sweepUnused(env)
+        await swept()
         expect(holders(hash)).toEqual([{ user_id: ids.writer }])
       })
 
@@ -1385,7 +1388,7 @@ describe('chats', () => {
 
         const held = env.CHATS
         Reflect.deleteProperty(env, 'CHATS')
-        expect(await sweepUnused(env)).toBe(0)
+        expect(await swept()).toBe(0)
         Object.assign(env, { CHATS: held })
         expect(holders(hash)).toEqual([{ user_id: ids.writer }])
         expect(unused()).toEqual([{ user_id: ids.writer, hash }])

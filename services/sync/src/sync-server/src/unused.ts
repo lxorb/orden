@@ -6,7 +6,17 @@ import type { Env } from './types'
 export const RIGHT_AFTER = 25
 export const NIGHTLY = 200
 
+export const UNUSED_FOR = 30 * 24 * 60 * 60 * 1000
+
 const HASHES_AT_ONCE = 10_000
+
+export const RESTAMPED =
+  'on conflict(user_id, hash) do update set since = max(since, excluded.since)'
+
+export interface Asked {
+  by: string
+  from: number
+}
 
 export function noteUnused(
   env: Env,
@@ -16,9 +26,10 @@ export function noteUnused(
 ): D1PreparedStatement[] {
   return chunks([...new Set(hashes)], HASHES_AT_ONCE).map((piece) =>
     env.DB.prepare(
-      `insert or ignore into unused_blobs (user_id, hash, since)
+      `insert into unused_blobs (user_id, hash, since)
          select sp.user_id, value, ?3 from spaces sp, json_each(?2)
-          where sp.id = ?1 and value != ''`,
+          where sp.id = ?1 and value != ''
+       ${RESTAMPED}`,
     ).bind(spaceId, JSON.stringify(piece), at),
   )
 }
@@ -30,9 +41,10 @@ export function noteUnusedBy(
   at: number,
 ): D1PreparedStatement {
   return env.DB.prepare(
-    `insert or ignore into unused_blobs (user_id, hash, since)
+    `insert into unused_blobs (user_id, hash, since)
        select user_id, hash, ?3 from blobs
-        where user_id = ?1 and hash in (select value from json_each(?2))`,
+        where user_id = ?1 and hash in (select value from json_each(?2))
+     ${RESTAMPED}`,
   ).bind(userId, JSON.stringify(hashes), at)
 }
 
@@ -43,7 +55,7 @@ export function noteChatFiles(
   ...bound: string[]
 ): D1PreparedStatement {
   return env.DB.prepare(
-    `insert or ignore into unused_blobs (user_id, hash, since)
+    `insert into unused_blobs (user_id, hash, since)
        select b.user_id, b.hash, ?1
          from chat_files f
          join chats c on c.id = f.chat_id
@@ -53,15 +65,24 @@ export function noteChatFiles(
           and (b.user_id = sp.user_id
                or exists (select 1 from space_members m join users u on u.email = m.email
                            where m.space_id = sp.id and u.id = b.user_id))
-          and not exists (select 1 from blobs o where o.hash = b.hash and o.user_id <> b.user_id)`,
+          and not exists (select 1 from blobs o where o.hash = b.hash and o.user_id <> b.user_id)
+     ${RESTAMPED}`,
   ).bind(at, ...bound)
 }
 
-export async function sweepUnused(env: Env, most = NIGHTLY, first = ''): Promise<number> {
+export async function sweepUnused(
+  env: Env,
+  most = NIGHTLY,
+  at = now(),
+  asked: Asked | null = null,
+): Promise<number> {
+  const cutoff = at - UNUSED_FOR
   const { results } = await env.DB.prepare(
-    'select user_id, hash from unused_blobs order by user_id = ?2 desc, since, hash limit ?1',
+    `select user_id, hash from unused_blobs
+      where since <= ?2 or (user_id = ?3 and since >= ?4)
+      order by user_id = ?3 desc, since, hash limit ?1`,
   )
-    .bind(most, first)
+    .bind(most, cutoff, asked?.by ?? '', asked?.from ?? at)
     .all<{ user_id: string; hash: string }>()
 
   const done = reading()
@@ -71,9 +92,9 @@ export async function sweepUnused(env: Env, most = NIGHTLY, first = ''): Promise
     await env.DB.prepare(
       settled
         ? 'delete from unused_blobs where user_id = ?1 and hash = ?2'
-        : 'update unused_blobs set since = ?3 where user_id = ?1 and hash = ?2',
+        : 'update unused_blobs set since = max(since, ?3) where user_id = ?1 and hash = ?2',
     )
-      .bind(one.user_id, one.hash, ...(settled ? [] : [now()]))
+      .bind(one.user_id, one.hash, ...(settled ? [] : [cutoff]))
       .run()
     if (settled) decided += 1
   }

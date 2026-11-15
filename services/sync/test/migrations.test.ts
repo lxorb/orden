@@ -420,3 +420,28 @@ describe('0066, who could once write in a space', () => {
     database.close()
   })
 })
+
+describe('0087, the blobs already waiting to be let go', () => {
+  test('wait the whole grace from now, and none is let go', () => {
+    const database = upTo('0086_note_reminders_gone.sql')
+    seed(database)
+    database.exec(
+      `insert into unused_blobs (user_id, hash, since)
+       values ('u', 'old', 1), ('u', 'new', ${Date.now() - 60 * 1000})`,
+    )
+    const before = Date.now()
+
+    database.exec(sql('0087_unused_blobs_grace.sql'))
+
+    const rows = database.prepare('select hash, since from unused_blobs order by hash').all() as {
+      hash: string
+      since: number
+    }[]
+    expect(rows.map((row) => row.hash)).toEqual(['new', 'old'])
+    for (const row of rows) {
+      expect(row.since).toBeGreaterThanOrEqual(before - 1000)
+      expect(row.since).toBeLessThanOrEqual(Date.now())
+    }
+    database.close()
+  })
+})

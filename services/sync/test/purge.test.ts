@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { sweepChats } from '../src/sync-server-chats/src/chats/sweep'
 import { sweepLeftovers } from '../src/sync-server/src/leftovers'
 import { purgeExpired } from '../src/sync-server/src/trash'
+import { UNUSED_FOR } from '../src/sync-server/src/unused'
 import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { FakeSocket } from './room'
 import { framed, type Live, live } from './sync2'
@@ -567,7 +568,7 @@ describe('a purge the database fails part way', () => {
     ['its reminders', /delete from push_reminders/],
     ['its pictures', /delete from note_pictures/],
     ['its versions', /delete from note_versions/],
-    ['the blobs it stops using', /insert or ignore into unused_blobs/],
+    ['the blobs it stops using', /insert into unused_blobs/],
     ['what is left in the bucket and the room', /insert or ignore into leftovers/],
     ['its chat', /update chats set ended_at/],
     ['its form answers', /delete from form_answers/],
@@ -978,8 +979,8 @@ describe('what a purge stops paying for', () => {
     expect(env.db.prepare('select hash from unused_blobs').all()).toEqual([{ hash }])
 
     env.db.prepare('update notes set front_rev = 2 where id = ?').run(old)
-    const { sweepUnused } = await import('../src/sync-server/src/unused')
-    expect(await sweepUnused(env)).toBe(1)
+    const { NIGHTLY, sweepUnused } = await import('../src/sync-server/src/unused')
+    expect(await sweepUnused(env, NIGHTLY, Date.now() + UNUSED_FOR)).toBe(1)
     expect((await call(env, `/i/${hash}.png`)).status).toBe(404)
   })
 
@@ -1044,5 +1045,100 @@ describe('what a purge stops paying for', () => {
     expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
 
     expect(gets).toBeLessThanOrEqual(251)
+  })
+
+  describe('at the nightly sweep, a picture no note shows any more', () => {
+    const DAY = 24 * 60 * 60 * 1000
+    let start = 0
+    const on = (day: number) => vi.setSystemTime(start + day * DAY)
+    const served = async (hash: string) => (await call(env, `/i/${hash}.png`)).status
+    const waiting = () => env.db.prepare('select hash from unused_blobs').all()
+
+    beforeEach(() => {
+      start = Date.now()
+      vi.useFakeTimers({ toFake: ['Date'] })
+      on(0)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    async function shownIn(path: string, hash: string): Promise<string> {
+      return (
+        await call(env, `/v1/spaces/${space}/notes`, {
+          token,
+          body: { path, content: `![](https://nibeditor.com/i/${hash}.png)` },
+        })
+      ).json.note.id
+    }
+
+    async function purgedAtNight(id: string): Promise<void> {
+      await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+      env.db.prepare('update notes set deleted_at = 1 where id = ?').run(id)
+      await purgeExpired(env, Date.now())
+    }
+
+    test('is kept while it waits out the grace, and let go once it has', async () => {
+      const hash = await upload('left alone', 'image/png')
+      await purgedAtNight(await shownIn('A.md', hash))
+
+      on(UNUSED_FOR / DAY - 1)
+      await purgeExpired(env, Date.now())
+      expect(await served(hash)).toBe(200)
+
+      on(UNUSED_FOR / DAY + 1)
+      await purgeExpired(env, Date.now())
+      expect(await served(hash)).toBe(404)
+      expect(waiting()).toEqual([])
+    })
+
+    test('is kept, and no longer waits, once a note shows it again inside the grace', async () => {
+      const hash = await upload('shown again', 'image/png')
+      await purgedAtNight(await shownIn('A.md', hash))
+
+      on(10)
+      await shownIn('B.md', hash)
+
+      on(UNUSED_FOR / DAY + 1)
+      await purgeExpired(env, Date.now())
+      expect(await served(hash)).toBe(200)
+      expect(waiting()).toEqual([])
+    })
+
+    test('waits the whole grace again from when it lost the note that showed it again', async () => {
+      const hash = await upload('lost twice', 'image/png')
+      await purgedAtNight(await shownIn('A.md', hash))
+
+      on(10)
+      const again = await shownIn('B.md', hash)
+
+      on(20)
+      await purgedAtNight(again)
+
+      on(UNUSED_FOR / DAY + 1)
+      await purgeExpired(env, Date.now())
+      expect(await served(hash)).toBe(200)
+
+      on(20 + UNUSED_FOR / DAY + 1)
+      await purgeExpired(env, Date.now())
+      expect(await served(hash)).toBe(404)
+    })
+
+    test('a delete for good lets go of its own at once, and leaves what already waits', async () => {
+      const waits = await upload('already waiting', 'image/png')
+      await purgedAtNight(await shownIn('A.md', waits))
+
+      on(1)
+      const gone = await upload('deleted for good', 'image/png')
+      const id = await shownIn('B.md', gone)
+      await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(
+        200,
+      )
+
+      expect(await served(gone)).toBe(404)
+      expect(await served(waits)).toBe(200)
+    })
   })
 })
