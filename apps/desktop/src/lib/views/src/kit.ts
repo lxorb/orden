@@ -15,6 +15,7 @@ export interface Kit {
   live: LiveView
   spec: ViewSpec
   file: string | null
+  readonly home: string | null
   compact: boolean
   open(row: Row, how?: 'aside' | 'tab'): void
   choose(row: Row, tab?: boolean): void
@@ -61,6 +62,9 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     live,
     spec,
     file,
+    get home() {
+      return file ?? live.writtenAt
+    },
     compact,
     writes,
     get writable() {
@@ -68,7 +72,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
     get adds() {
       if (!reachable()) return false
-      const to = file ?? workspace.activeSpace?.root
+      const to = kit.home ?? workspace.activeSpace?.root
       return to === undefined || canWriteAt(to)
     },
     open(row, how = 'aside') {
@@ -107,7 +111,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     add(group, template) {
       const base = live.base
       if (!base || !reachable()) return
-      void addNote(base, live.at, file, group, template === undefined ? {} : { template })
+      void addNote(base, live.at, kit.home, group, template === undefined ? {} : { template })
     },
     change(edit, unlocking = false) {
       const base = live.base

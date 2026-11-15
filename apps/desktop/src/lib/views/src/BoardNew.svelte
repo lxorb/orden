@@ -63,7 +63,7 @@
       path = await addNote(
         base,
         kit.live.at,
-        kit.file,
+        kit.home,
         property ? { property, key: group.key } : undefined,
         { title, open: false, properties: valued() },
       )
