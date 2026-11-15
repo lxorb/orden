@@ -266,7 +266,11 @@ fn card_link(card: &serde_json::Value) -> Option<Link> {
 
     Some(Link {
         kind: "wikilink",
-        target: file.to_string(),
+        target: if file.starts_with('/') {
+            file.to_string()
+        } else {
+            format!("/{file}")
+        },
         heading: subpath
             .strip_prefix('#')
             .filter(|_| !subpath.starts_with("#^"))
@@ -1646,7 +1650,7 @@ mod tests {
         );
 
         let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
-        assert_eq!(targets, vec!["Plan.md", "Plan.md", "Plan.md"]);
+        assert_eq!(targets, vec!["/Plan.md", "/Plan.md", "/Plan.md"]);
         assert_eq!(read.links[0].heading, None);
         assert_eq!(read.links[1].heading.as_deref(), Some("Later"));
         assert_eq!(read.links[2].block.as_deref(), Some("abc123"));
@@ -1669,7 +1673,7 @@ mod tests {
         );
 
         let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
-        assert_eq!(targets, vec!["Plan.md", "Goal.md"]);
+        assert_eq!(targets, vec!["/Plan.md", "/Goal.md"]);
         assert_eq!(read.links[0].heading, None);
     }
 

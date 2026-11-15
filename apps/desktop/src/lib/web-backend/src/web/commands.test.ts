@@ -1313,7 +1313,7 @@ describe('reading a whole space for the link index', () => {
 
     const plane = found.notes.find((one) => one.path === 'note-005.canvas')
     expect(plane?.icon).toBe('rocket')
-    expect(plane?.links.map((link) => link.target)).toEqual(['note-001.md'])
+    expect(plane?.links.map((link) => link.target)).toEqual(['/note-001.md'])
     expect(found.files).toEqual(['Book.pages'])
   })
 

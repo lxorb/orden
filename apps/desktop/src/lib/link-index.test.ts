@@ -801,6 +801,25 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.backlinks(at('Other.md'))).toEqual([])
   })
 
+  test('a card on a canvas in a folder names its file from the top of the space', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [{ id: 'a', type: 'file', file: 'Plan.md', ...card }],
+      edges: [],
+    })
+    await import('@orden/scan/canvas')
+    await space({ 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }, ['x/Board.canvas'])
+    notes['x/Board.canvas'] = board
+    links.canvasRead(at('x/Board.canvas'), board)
+    await vi.waitFor(() => expect(links.held().map((one) => one.path)).toContain('x/Board.canvas'))
+
+    expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['x/Board.canvas'])
+    expect(links.backlinks(at('x/Plan.md'))).toEqual([])
+
+    expect(await links.retarget(at('x/Plan.md'), at('x/Later.md'), ROOT)).toBe(0)
+    expect(JSON.parse(notes['x/Board.canvas'] ?? '')).toEqual(JSON.parse(board))
+  })
+
   test('every note that pointed at it, and no others', async () => {
     await space({
       'Plan.md': '# Plan',
