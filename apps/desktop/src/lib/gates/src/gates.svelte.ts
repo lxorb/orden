@@ -68,6 +68,12 @@ class HiddenKinds {
 
 export const hiddenKinds = new HiddenKinds()
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === KINDS_KEY) hiddenKinds.restore()
+  })
+}
+
 export const EXPERIMENTAL_WORD = 'experimental'
 
 export function experimentalOn(): boolean {
