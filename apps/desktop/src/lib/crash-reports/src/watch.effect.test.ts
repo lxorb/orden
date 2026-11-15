@@ -53,3 +53,15 @@ test('once it is answered, waiting reports go at start', () => {
   flushSync()
   expect(world.sent).toBe(1)
 })
+
+test('reports turned off in another window are not sent from this one', () => {
+  localStorage.setItem('orden:crash-reports-told', 'true')
+  crashReports.set(true)
+  stop = watchForCrashes(true)
+  flushSync()
+
+  localStorage.setItem('orden:crash-reports', 'false')
+  window.dispatchEvent(new StorageEvent('storage', { key: 'orden:crash-reports' }))
+
+  expect(crashReports.on).toBe(false)
+})

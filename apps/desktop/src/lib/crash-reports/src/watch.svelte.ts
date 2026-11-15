@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event'
 import { log, invoke } from '../../platform/src/api'
-import { crashAskDue } from '../../surfaces/src/api'
+import { CRASH_REPORTS, crashAskDue } from '../../surfaces/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { crashReports } from './choice.svelte'
@@ -31,6 +31,10 @@ export function watchForCrashes(sending: boolean): () => void {
   alive()
   const beating = setInterval(alive, ALIVE)
   document.addEventListener('visibilitychange', alive)
+  const heard = (event: StorageEvent) => {
+    if (event.key === CRASH_REPORTS) crashReports.heard()
+  }
+  window.addEventListener('storage', heard)
 
   let shaping: ReturnType<typeof setTimeout> | undefined
   const stopShape = $effect.root(() => {
@@ -49,6 +53,7 @@ export function watchForCrashes(sending: boolean): () => void {
       clearTimeout(shaping)
       stopShape()
       document.removeEventListener('visibilitychange', alive)
+      window.removeEventListener('storage', heard)
     }
   }
 
