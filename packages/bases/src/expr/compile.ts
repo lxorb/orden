@@ -28,7 +28,7 @@ type Fn = (scope: Scope) => Val
 
 const BOUND = new Set(['value', 'index', 'acc', 'values'])
 
-const READS_OTHERS = new Set(['asFile', 'linksTo', 'backlinks'])
+const READS_OTHERS = new Set(['asFile', 'linksTo', 'backlinks', 'hasLink', 'link'])
 
 export interface Compiled {
   source: string
@@ -120,7 +120,7 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
   if (callee.type === 'name') {
     const name = callee.name
     if (!GLOBALS.has(name)) throw new BasesError(`There is no function ${name}()`, callee.at)
-    if (name === 'file' || name === 'random') facts.local = false
+    if (name === 'file' || name === 'random' || READS_OTHERS.has(name)) facts.local = false
     if (name === 'today' && !args.length)
       return (scope) => ({ kind: 'date', iso: scope.context.today })
     return (scope) => callGlobal(name, thunks(args, scope), scope)
