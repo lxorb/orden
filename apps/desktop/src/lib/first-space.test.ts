@@ -3,6 +3,7 @@ import type { Listed } from './space-pairing/src/seed-space'
 
 const notes = new Map<string, string>()
 let reading: (() => void) | null = null
+let writing: (() => void) | null = null
 const made: { name: string; path: string }[] = []
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -39,6 +40,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
         reading?.()
         return notes.get(path) ?? ''
       case 'write_note':
+        writing?.()
         notes.set(path, text(args?.content))
         return undefined
       default:
@@ -334,6 +336,14 @@ describe('the space a fresh start made', () => {
 
     notes.set(`${root}/${WELCOME_NAME}`, `${WELCOME}\nmine\n`)
     expect(await untouchedSeedSpace(seedSpaceRoot(), roots(), read)).toBeNull()
+  })
+
+  test('is known as the seed before anything is written in it, for a pairing pass meanwhile', async () => {
+    const seeds: (string | null)[] = []
+    writing = () => void seeds.push(seedSpaceRoot())
+    await firstSpace.start(FRESH)
+    writing = null
+    expect(seeds[0]).toBe(`/spaces/${WELCOME_SPACE}`)
   })
 
   test('and a space the reader makes is never it', async () => {
