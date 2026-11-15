@@ -168,7 +168,7 @@ export function queryBase(
     } else {
       for (const [key, value] of Object.entries(row.note)) values[key] = plainValue(value)
     }
-    return { path: row.path, space: row.space, ...values }
+    return { ...values, path: row.path, space: row.space }
   }
   const summed = (summaries: Record<string, Value>) =>
     Object.keys(summaries).length
