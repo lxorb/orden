@@ -63,9 +63,9 @@ function toneOption(kit: Kit, property: string, value: string, tone: string | nu
     property,
     optionsAt(base, property).map((one) => {
       if (one.value !== value) return one
-      const next: SelectOption = { value: one.value }
-      if (one.group) next.group = one.group
-      if (tone !== null) next.tone = tone
+      const next: SelectOption = { ...one }
+      if (tone === null) delete next.tone
+      else next.tone = tone
       return next
     }),
   )
