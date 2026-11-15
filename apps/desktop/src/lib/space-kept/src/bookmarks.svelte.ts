@@ -1,4 +1,10 @@
-import { BOOKMARK_KINDS, type Bookmark, type BookmarkKind } from '@orden/contracts'
+import {
+  BOOKMARK_KINDS,
+  type Bookmark,
+  type BookmarkKind,
+  type SyncNotesPort,
+  syncNotes,
+} from '@orden/contracts'
 import {
   movedTo,
   relativeTo,
@@ -13,7 +19,6 @@ import {
   isString,
   keepJson,
 } from '../../platform/src/api'
-import { type EntryIds, entryIds } from './entry-ids'
 import { carried, moving } from '../../file-ops/src/api'
 
 const STORAGE_KEY = 'orden:bookmarks'
@@ -77,18 +82,18 @@ export function bookmarkList(value: unknown): Bookmark[] {
 export function located(
   root: string,
   list: readonly Bookmark[],
-  ids: EntryIds,
+  ids: SyncNotesPort,
   { moves = true }: { moves?: boolean } = {},
 ): Bookmark[] {
   const found = list.map((mark) => {
     if (!POINTS_AT_A_FILE.has(mark.kind)) return mark
 
     const file = fileOf(mark)
-    const here = ids.idOf(root, file)
+    const here = ids.entryIdAt(root, file)
     if (here !== null) return here === mark.id ? mark : { ...mark, id: here }
     if (!mark.id || !moves) return mark
 
-    const there = ids.pathOf(root, mark.id)
+    const there = ids.entryPathOf(root, mark.id)
     return there === null || there === file
       ? mark
       : { ...mark, path: there + mark.path.slice(file.length) }
@@ -144,8 +149,8 @@ const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 export class Bookmarks {
   private spaces = $state<Record<string, Kept>>(read())
 
-  private get ids(): EntryIds | null {
-    return entryIds()
+  private get ids(): SyncNotesPort | null {
+    return syncNotes()
   }
 
   offered: Promise<unknown> = Promise.resolve()

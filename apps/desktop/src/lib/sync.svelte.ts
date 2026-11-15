@@ -37,8 +37,8 @@ import {
   within,
 } from './sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
+import { providePort, whenPortProvided } from '@orden/contracts'
 import { workspace } from './workspace/src/api'
-import { sayEntryIds } from './space-kept/src/api'
 import type { FileOp } from './file-ops/src/api'
 import { unixLines } from './documents/src/api'
 
@@ -832,14 +832,15 @@ function known(): Promise<void> {
 
 export const sync = new Sync()
 
-workspace.fileOps.follow((op) => (op.heard ? undefined : sync.follow(op)))
-workspace.fileOps.follow((op) => (op.heard ? undefined : record.follow(op)))
-record.notes = {
-  at: (id) => sync.pathOf(id),
-  of: (path) => sync.tracked(path)?.id ?? null,
+providePort('sync.notes', {
+  pathOf: (id) => sync.pathOf(id),
+  idOf: (path) => sync.tracked(path)?.id ?? null,
   moved: (from, to) => sync.moved(from, to),
-}
-sayEntryIds({
-  idOf: (root, path) => sync.entryIdAt(root, path),
-  pathOf: (root, id) => sync.entryPathOf(root, id),
+  entryIdAt: (root, path) => sync.entryIdAt(root, path),
+  entryPathOf: (root, id) => sync.entryPathOf(root, id),
+})
+
+whenPortProvided('workspace.view', (view) => {
+  view.follow((op) => (op.heard ? undefined : sync.follow(op)))
+  view.follow((op) => (op.heard ? undefined : record.follow(op)))
 })
