@@ -232,7 +232,11 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
     (heading) => under(heading, wanted) || (wanted.length > 1 && names(whole, heading.title)),
   )
 
-  const heading = one(found, anchor, anchor.nth)
+  const exact = found.filter((heading) => {
+    const said = [...heading.path, heading.title].map((step) => step.trim())
+    return said.length === wanted.length && said.every((step, at) => step === wanted[at])
+  })
+  const heading = one(exact.length ? exact : found, anchor, anchor.nth)
   return { from: heading.from, to: heading.to, shape: 'paragraph' }
 }
 

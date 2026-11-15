@@ -165,3 +165,19 @@ describe('a note whose front matter holds a comment like a heading', () => {
     expect(before.startsWith('---\n# Reading list\nstatus: draft\n---\n')).toBe(true)
   })
 })
+
+describe('an outline of headings that share a title at other depths or cases', () => {
+  test('hands out anchors that each name exactly their heading', async () => {
+    const NOTE =
+      '# Notes\n\nweek\n\n# Monday\n\n## Notes\n\nmon\n\n# Tuesday\n\n## Notes\n\ntue\n\n# Plan\n\n# plan\n'
+    const read = await readNote(deskWith({ 'week.md': NOTE }).desk, { path: 'week.md' })
+    const rows = NOTE.split('\n')
+    expect(read.outline?.length).toBe(7)
+    for (const row of read.outline ?? []) {
+      const place = resolve(row.anchor, NOTE)
+      expect(NOTE.slice(place.from).startsWith(rows[row.line] ?? '\0'), row.anchor.heading).toBe(
+        true,
+      )
+    }
+  })
+})
