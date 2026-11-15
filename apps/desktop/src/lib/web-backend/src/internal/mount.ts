@@ -12,7 +12,7 @@ const INDEX_TURN_AT_MOST = 10_000
 
 const NEWEST = 'orden:internal-index:'
 
-function newestOf(folder: string): InternalWorld['newest'] {
+function newestOf(folder: string): NonNullable<InternalWorld['newest']> {
   const name = `${NEWEST}${folder}`
   return {
     read: () => Number(storedText(name)) || 0,
