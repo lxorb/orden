@@ -18,12 +18,17 @@ import {
 
 const inTheAir = new WeakMap<SyncPairing, Promise<void>>()
 
+let last: Promise<unknown> = Promise.resolve()
+
 export function pairSpaces(token: string, pairing: SyncPairing): Promise<void> {
   const running = inTheAir.get(pairing)
   if (running) return running
-  const now = pairOnce(token, pairing)
+  const now = last
+    .catch(() => undefined)
+    .then(() => pairOnce(token, pairing))
     .finally(rolesPaired)
     .finally(() => inTheAir.delete(pairing))
+  last = now
   inTheAir.set(pairing, now)
   return now
 }
