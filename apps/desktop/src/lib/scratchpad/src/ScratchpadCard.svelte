@@ -13,7 +13,6 @@
   import { SAVE_DELAY } from '../../platform/src/api'
   import { notices } from '../../workspace/src/api'
   import { pickedLink } from '../../composer'
-  import { adrift, pressedThrough } from '../../keyboard-home'
   import { links } from '../../link-index/src/api'
   import { modes } from '../../modes/src/api'
   import { followHref, followNoteFrom } from '../../open-link'
@@ -22,6 +21,7 @@
   import { scratchpad } from './pad'
   import { closeScratchpad, padTab, shown, WIDTH } from './is.svelte'
   import { viewport } from '../../ui-kit/src/api'
+  import { adrift, pressedThrough } from '../../ui-controls/src/api'
 
   const { docked = false }: { docked?: boolean } = $props()
 
