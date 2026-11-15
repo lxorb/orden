@@ -2,6 +2,7 @@
   import { whenLoaded } from '@orden/contracts'
   import { account } from '../../accounts/src/api'
   import { joining } from '../../sharing/src/api'
+  import { settling } from '../../sync-mirror/src/api'
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
@@ -43,7 +44,7 @@
       }
       signed = true
       whenLoaded(
-        () => import('../../settling'),
+        settling,
         ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
       )
       setTimeout(() => setup.next(), 900)

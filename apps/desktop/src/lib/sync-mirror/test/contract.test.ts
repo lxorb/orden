@@ -56,6 +56,7 @@ describe('the module stands on its own', () => {
     expect(statics).not.toContain('meeting')
     expect(statics).not.toContain('holding')
     expect(statics).not.toContain('write-down')
+    expect(statics).not.toContain('settling')
     expect(api).toMatch(/import\('\.\/pass'\)/)
   })
 })

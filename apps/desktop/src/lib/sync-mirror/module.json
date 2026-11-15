@@ -1,7 +1,16 @@
 {
   "name": "sync-mirror",
   "layer": "foundation",
-  "dependsOn": ["contracts", "accounts", "markdown", "platform", "scan", "sync-core", "file-ops"],
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "markdown",
+    "platform",
+    "scan",
+    "sync-core",
+    "file-ops",
+    "ui-kit"
+  ],
   "pending": [
     "apps/desktop/src/lib/agents-seed.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",

@@ -1,8 +1,8 @@
-import { account } from './accounts/src/api'
-import { prompt } from './ui-kit/src/api'
-import { meetingAgain, MIRRORS_KEY, returning, savedRecord } from './sync-mirror/src/api'
-import { rootedAt, stored } from './platform/src/api'
-import { workspace } from './workspace/src/api'
+import { workspaceView } from '@orden/contracts'
+import { account } from '../../accounts/src/api'
+import { prompt } from '../../ui-kit/src/api'
+import { rootedAt, stored } from '../../platform/src/api'
+import { MIRRORS_KEY, savedRecord } from './mirror'
 
 export async function settleLocalNotes(): Promise<void> {
   try {
@@ -10,13 +10,13 @@ export async function settleLocalNotes(): Promise<void> {
     const user = account.user
     if (!token || !user) return
 
-    const { apartName, asksOnReturn, baseFor } = await returning()
+    const { apartName, asksOnReturn, baseFor } = await import('./returning')
 
     const base = baseFor(savedRecord(stored(MIRRORS_KEY)), user.id)
     if (base === 'mine') return
 
-    const { meeting } = await meetingAgain()
-    const met = await meeting(token, workspace.spaces, account.spaces)
+    const { meeting } = await import('./meeting')
+    const met = await meeting(token, workspaceView().spaces, account.spaces)
     if (!asksOnReturn(base, met.length > 0)) return
 
     const answer = await prompt.choose({
@@ -29,15 +29,15 @@ export async function settleLocalNotes(): Promise<void> {
     if (answer === 'merge') return
 
     const taken = new Set([
-      ...workspace.spaces.map((one) => one.name),
+      ...workspaceView().spaces.map((one) => one.name),
       ...account.spaces.map((one) => one.name),
     ])
     for (const space of met) {
-      const id = rootedAt(workspace.spaces, space.root)?.id
+      const id = rootedAt(workspaceView().spaces, space.root)?.id
       if (id === undefined) continue
       const name = apartName(space.name, taken)
       taken.add(name)
-      await workspace.renameSpace(id, name)
+      await workspaceView().renameSpace(id, name)
     }
   } finally {
     account.settled()
