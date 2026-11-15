@@ -602,6 +602,16 @@ describe('a chat’s unread mark (#1064)', () => {
     ]
     expect([...unreadOf(heads)].sort()).toEqual(['never', 'new', 'orphan', 'parent'])
   })
+
+  test('is never on an archived chat, nor on it for its helpers’ answers (#2050)', () => {
+    const head = (id: string, more: object) => ({ ...headOf(had()), id, ...more })
+    const heads = [
+      head('shelved', { answered: 30, seen: 20, archived: true }),
+      head('helper', { parent: 'shelved', answered: 40 }),
+      head('listed', { answered: 30, seen: 20 }),
+    ]
+    expect([...unreadOf(heads)]).toEqual(['listed'])
+  })
 })
 
 describe('a thread two windows hold', () => {

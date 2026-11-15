@@ -49,3 +49,10 @@ test('once the panel keeps the dot, the launch’s look leaves it alone', async 
   await lookAtLaunch(['work'])
   expect(chatsUnread.any).toBe(false)
 })
+
+test('an archived chat answered since it was seen leaves it down (#2050)', async () => {
+  heads.set('work', [head('shelved', { answered: 3, seen: 1, archived: true })])
+  const { chatsUnread, lookAtLaunch } = await import('./unread.svelte')
+  await lookAtLaunch(['work'])
+  expect(chatsUnread.any).toBe(false)
+})

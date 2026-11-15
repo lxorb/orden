@@ -579,7 +579,7 @@ export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
   for (const head of heads) {
     if (!head.answered) continue
     const top = topOf(head)
-    if (head.answered > (top.seen ?? 0)) unread.add(top.id)
+    if (!top.archived && head.answered > (top.seen ?? 0)) unread.add(top.id)
   }
   return unread
 }
