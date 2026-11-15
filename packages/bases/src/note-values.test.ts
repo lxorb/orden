@@ -89,11 +89,74 @@ describe('front matter as values', () => {
     expect(scalarValue('~')).toBeNull()
     expect(scalarValue('-3.5')).toBe(-3.5)
     expect(scalarValue('FALSE')).toBe(false)
-    expect(scalarValue('2026-10-03T10:00:00Z')).toEqual({
-      kind: 'date',
-      iso: '2026-10-03',
-      time: '10:00:00',
-      zone: 'UTC',
+    inZone('UTC', () => {
+      expect(scalarValue('2026-10-03T10:00:00Z')).toEqual({
+        kind: 'date',
+        iso: '2026-10-03',
+        time: '10:00:00',
+      })
+    })
+  })
+})
+
+function inZone(zone: string, run: () => void): void {
+  const was = process.env.TZ
+  process.env.TZ = zone
+  try {
+    run()
+  } finally {
+    if (was === undefined) delete process.env.TZ
+    else process.env.TZ = was
+  }
+}
+
+describe('a date written with its offset', () => {
+  const at = contextAt({ today: '2026-11-15', now: '2026-11-15T09:00:00' })
+  const said = (row: ReturnType<typeof noteRow>, expression: string) =>
+    compile(expression).evaluate(row, at, {})
+
+  test('is the moment it names, on the clock of whoever reads it', () => {
+    inZone('America/Los_Angeles', () => {
+      const row = noteRow('Clips/Page.md', '---\nclipped: 2026-11-15T17:00:00.000Z\n---\n')
+      expect(row.note.clipped).toEqual({ kind: 'date', iso: '2026-11-15', time: '09:00:00' })
+      expect(said(row, 'clipped.relative()')).toBe('a few seconds ago')
+      expect(said(row, 'clipped <= now()')).toBe(true)
+      expect(said(row, 'clipped.format("YYYY-MM-DD HH:mm")')).toBe('2026-11-15 09:00')
+    })
+  })
+
+  test('is earlier or later than another by the moments, not the numbers written', () => {
+    inZone('America/Los_Angeles', () => {
+      const row = noteRow(
+        'A.md',
+        '---\na: 2024-03-10T23:30:00+05:00\nb: 2024-03-10T20:00:00Z\n---\n',
+      )
+      expect(said(row, 'a < b')).toBe(true)
+      expect(said(row, 'a.date() == date("2024-03-10")')).toBe(true)
+    })
+    inZone('Asia/Tokyo', () => {
+      const row = noteRow('A.md', '---\na: 2026-01-01T20:00:00-0500\n---\n')
+      expect(row.note.a).toEqual({ kind: 'date', iso: '2026-01-02', time: '10:00:00' })
+    })
+  })
+
+  test('reads the same quoted or written in a list', () => {
+    inZone('Europe/Berlin', () => {
+      expect(
+        noteValues('---\na: "2026-06-01T10:00Z"\nb:\n  - 2026-06-01T10:00:00+02:00\n---\n'),
+      ).toEqual({
+        a: { kind: 'date', iso: '2026-06-01', time: '12:00:00' },
+        b: [{ kind: 'date', iso: '2026-06-01', time: '10:00:00' }],
+      })
+    })
+  })
+
+  test('while one with no offset stays as it is written', () => {
+    inZone('America/Los_Angeles', () => {
+      expect(noteValues('---\na: 2026-11-15T17:00\nb: 2026-11-15\n---\n')).toEqual({
+        a: { kind: 'date', iso: '2026-11-15', time: '17:00' },
+        b: { kind: 'date', iso: '2026-11-15' },
+      })
     })
   })
 })

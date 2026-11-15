@@ -47,6 +47,31 @@ describe('dates on the floating clock', () => {
     expect(readDate('tomorrow')).toBeNull()
   })
 
+  test('a moment written in UTC is read on the clock here', () => {
+    const was = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    try {
+      expect(readDate('2026-11-15T17:00:00Z')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '09:00:00',
+      })
+      expect(readDate('2026-11-15T17:00:00.250Z')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '09:00:00.250',
+      })
+      expect(readDate('2026-11-15T17:00:00')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+      })
+    } finally {
+      if (was === undefined) delete process.env.TZ
+      else process.env.TZ = was
+    }
+  })
+
   test.each([
     ['YYYY-MM-DD', '2026-10-04'],
     ['YY/M/D', '26/10/4'],

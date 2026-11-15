@@ -96,6 +96,23 @@ export function wallClock(epochMs: number): number {
   )
 }
 
+const OFFSET = /^([+-])(\d{2}):?(\d{2})$/
+
+function offsetMinutes(zone: string): number | null {
+  if (zone === 'Z') return 0
+  const found = OFFSET.exec(zone)
+  if (!found) return null
+  const minutes = Number(found[2]) * 60 + Number(found[3])
+  return found[1] === '-' ? -minutes : minutes
+}
+
+export function zonedAt(iso: string, time: string, zone: string): DateValue | null {
+  const offset = offsetMinutes(zone)
+  const [hours = 0, minutes = 0, seconds = 0] = time.split(':').map(Number)
+  if (!civil(iso) || offset === null || hours > 23 || minutes > 59 || seconds >= 60) return null
+  return dateAt(wallClock(msOf({ kind: 'date', iso, time }) - offset * 60_000))
+}
+
 export function readDate(text: string): DateValue | null {
   const found = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(\.\d+)?)?)?(Z)?$/.exec(
     text.trim(),
@@ -103,7 +120,8 @@ export function readDate(text: string): DateValue | null {
   if (!found?.[1] || !civil(found[1])) return null
   if (found[2] === undefined) return { kind: 'date', iso: found[1] }
   const time = `${pad(Number(found[2]))}:${found[3] ?? '00'}:${found[4] ?? '00'}${found[5] ?? ''}`
-  return { kind: 'date', iso: found[1], time }
+  const zoned = found[6] ? zonedAt(found[1], time, found[6]) : null
+  return zoned ?? { kind: 'date', iso: found[1], time }
 }
 
 const MONTHS = [
