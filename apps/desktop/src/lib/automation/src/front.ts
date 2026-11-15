@@ -20,14 +20,32 @@ export const NOTE_TREE = new Set([
   'undo-file',
 ])
 
-export function actsOnFrontNote(id: string): boolean {
+const ACROSS_SPACE = new Set(['convert-website-notes', 'redo-file', 'undo-file'])
+
+function actsOnFrontNote(id: string): boolean {
   return (
     id.startsWith('export-') ||
     NOTE_WRITES.has(id) ||
-    NOTE_TREE.has(id) ||
+    (NOTE_TREE.has(id) && !ACROSS_SPACE.has(id)) ||
     /^(edit|format|paragraph)\./.test(id)
   )
 }
 
-export const FRONT_KEPT = (id: string) =>
-  `${id} acts on the note in front, which is protected: the reader has to choose Let agents read in its menu`
+function actsAcrossSpace(id: string): boolean {
+  return id.startsWith('export-') || ACROSS_SPACE.has(id)
+}
+
+export interface AgentsMay {
+  front: boolean
+  space: boolean
+}
+
+export function keptFromAgents(id: string, may: AgentsMay): string | null {
+  if (actsOnFrontNote(id) && !may.front) {
+    return `${id} acts on the note in front, which is protected: the reader has to choose Let agents read in its menu`
+  }
+  if (actsAcrossSpace(id) && !may.space) {
+    return `${id} reaches notes in this space that are protected from agents`
+  }
+  return null
+}

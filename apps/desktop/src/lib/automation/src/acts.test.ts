@@ -112,6 +112,7 @@ const rows = [
   { id: 'shut', label: 'Shut', disabled: true, run: () => ran.push('shut') },
   { id: 'new-terminal', label: 'New terminal', ownWindow: true, run: () => ran.push('shell') },
   { id: 'reformat', label: 'Tidy up', run: () => ran.push('reformat') },
+  { id: 'undo-file', label: 'Undo', run: () => ran.push('undo-file') },
 ]
 const ran: string[] = []
 
@@ -615,6 +616,12 @@ describe('a command on the note in front', () => {
       await expect(runCommand({ id: 'reformat' }, 'here')).rejects.toThrow(/is protected/)
       expect(await runCommand({ id: 'files' }, 'here')).toEqual({ id: 'files', label: 'File list' })
       expect(ran).toEqual(['files'])
+      front.active = { path: '/Work/Plan.md' }
+      await expect(runCommand({ id: 'undo-file' }, 'here')).rejects.toThrow(/protected from agents/)
+      expect(await runCommand({ id: 'reformat' }, 'here')).toEqual({
+        id: 'reformat',
+        label: 'Tidy up',
+      })
     } finally {
       protection.set('/Work', '/Work/Secret', null)
       front.active = null

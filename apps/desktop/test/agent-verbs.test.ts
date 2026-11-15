@@ -2781,3 +2781,29 @@ describe('a command on the protected note in front', () => {
     }
   })
 })
+
+describe('a command that reaches past the note in front', () => {
+  test('is refused while any note in the space is kept from agents', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
+    protection.set('/s/Work', '/s/Work/Secret', 'password')
+    ran.length = 0
+    try {
+      answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
+      for (const command of [{ id: 'export-pdf', path: '~/out.pdf' }, { id: 'undo-file' }]) {
+        expect(await call('run_command', command), command.id).toMatchObject({
+          code: 'protected',
+        })
+      }
+      expect(await call('run_command', { id: 'reformat' })).toMatchObject({ status: 'ok' })
+      expect(ran).toEqual(['reformat'])
+
+      unlocks.unlock(protection.covering('/s/Work/Secret/Diary.md'))
+      unlocks.letAgents(protection.covering('/s/Work/Secret/Diary.md'), true)
+      expect(await call('run_command', { id: 'undo-file' })).toMatchObject({ status: 'ok' })
+    } finally {
+      protection.set('/s/Work', '/s/Work/Secret', null)
+      unlocks.lockAll()
+    }
+  })
+})

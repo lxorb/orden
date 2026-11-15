@@ -16,4 +16,4 @@ export const automationActs = () => import('./acts')
 
 export const automationMoving = () => import('./moving')
 
-export { actsOnFrontNote, FRONT_KEPT, NOTE_TREE, NOTE_WRITES } from './front'
+export { keptFromAgents, NOTE_TREE, NOTE_WRITES } from './front'
