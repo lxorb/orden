@@ -148,8 +148,8 @@ class Shortcuts {
     if (combination.meta && this.platform !== 'mac') return 'That is not a key combination.'
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
-    const typing = TYPING_KEYS.has(combination.key) && !this.inAList(row) && !this.ownKey(row, key)
-    if (bare && (combination.key.length === 1 || typing)) {
+    const typed = combination.key.length === 1 || TYPING_KEYS.has(combination.key)
+    if (bare && typed && !this.inAList(row) && !this.ownKey(row, key)) {
       return this.platform === 'mac' ? 'Hold ⌃, ⌥ or ⌘ as well.' : 'Hold Ctrl or Alt as well.'
     }
 

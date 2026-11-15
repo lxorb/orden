@@ -310,6 +310,14 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
   })
 
+  test('and a list’s own row may have a letter, where nobody is typing', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.refuse('r', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('x', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('Shift-x', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('k', 'format.bold')).not.toBeNull()
+  })
+
   test('and so may a row whose own key it is', () => {
     const { shortcuts } = registry
     expect(shortcuts.refuse('Delete', 'table.delete')).toBeNull()
