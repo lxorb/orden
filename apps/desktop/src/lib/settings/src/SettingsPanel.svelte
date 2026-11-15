@@ -974,7 +974,7 @@
                   disabled={!shortcuts.changed(entry.id)}
                   title="Reset"
                   aria-label="Reset"
-                  onclick={() => shortcuts.reset(entry.id)}
+                  onclick={() => rebind.reset(entry.id)}
                 >
                   <svg viewBox="0 0 16 16">
                     <path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.6v2.6h2.6" />

@@ -27,8 +27,17 @@ export class Rebind {
     if (!clash) return
 
     for (const holder of clash.holders) shortcuts.set(holder.id, null)
-    shortcuts.set(clash.id, clash.key)
+    if (clash.key === shortcuts.defaultFor(clash.id)) shortcuts.reset(clash.id)
+    else shortcuts.set(clash.id, clash.key)
     this.clash = null
+  }
+
+  reset(id: string) {
+    this.forget()
+    const key = shortcuts.defaultFor(id)
+    const holders = key ? shortcuts.conflicts(id, key) : []
+    if (key && holders.length) this.clash = { id, key, holders }
+    else shortcuts.reset(id)
   }
 
   record(event: KeyboardEvent) {

@@ -178,3 +178,32 @@ describe('a modifier tapped twice', () => {
     expect(rebind.listening).toBe('format.bold')
   })
 })
+
+describe('a key brought back by Reset', () => {
+  test('is held back while another row took it over', () => {
+    rebind.listen('app.new')
+    rebind.record(press('b', { ctrl: true }))
+    rebind.takeOver()
+    expect(shortcuts.keyFor('format.bold')).toBeNull()
+
+    rebind.reset('format.bold')
+
+    expect(shortcuts.keyFor('format.bold')).toBeNull()
+    expect(rebind.clash).toMatchObject({ id: 'format.bold', key: 'Mod-b' })
+    expect(rebind.clash?.holders.map((one) => one.id)).toEqual(['app.new'])
+
+    rebind.takeOver()
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    expect(shortcuts.changed('format.bold')).toBe(false)
+    expect('format.bold' in shortcuts.overrides).toBe(false)
+    expect(shortcuts.keyFor('app.new')).toBeNull()
+  })
+
+  test('comes back at once when nothing else holds it', () => {
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+    rebind.reset('format.bold')
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    expect(rebind.clash).toBeNull()
+  })
+})
