@@ -82,7 +82,7 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       ...common,
       kind: 'switch',
       initial: setting.initial,
-      get: () => get() === true,
+      get: () => (get() ?? setting.initial) === true,
       set: put,
     }
   }
