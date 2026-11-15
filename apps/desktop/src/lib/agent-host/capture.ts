@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import { freePath } from '@orden/markdown/paths'
 import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
 import { asWords } from '@orden/markdown/words'
@@ -7,7 +8,6 @@ import { modes } from '../modes.svelte'
 import { paperInches } from '../page-setup'
 import { settings } from '../settings.svelte'
 import { notePath, relativeTo, invoke, decoded } from '../platform/src/api'
-import { pages, webNotes } from '../web-tab/src/api'
 import { type Entry, workspace } from '../workspace.svelte'
 import { notes } from './docs'
 import { CAPTURE_AS, type CaptureAs, type Code, type Overview } from '../agent-protocol/src/api'
@@ -54,7 +54,7 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
       throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
     }
     const known: Page = {
-      url: pages.addressOf(tab) ?? workspace.webAddressOf(reader) ?? '',
+      url: webPages().addressOf(tab) ?? workspace.webAddressOf(reader) ?? '',
       title: reader.shown,
       html: '',
       file: null,
@@ -81,7 +81,7 @@ async function readersPage(call: Call, tab: string, shape: CaptureAs, known: Pag
   } catch (error) {
     if (!(error instanceof Refused)) throw error
     if (error.code === 'unsupported_on_this_engine' && shape === 'clip') {
-      const read = await pages.read(tab, false)
+      const read = await webPages().clip(tab, false)
       return read ? { ...read, file: null } : known
     }
     if (error.code === 'no_such_tab') {
@@ -131,7 +131,7 @@ function pageOf(record: Record<string, unknown>, shape: CaptureAs): Page {
 }
 
 async function wordsFor(page: Page, shape: Shape, embed: string | null): Promise<string> {
-  if (shape === 'clip') return (await webNotes()).clipNote(page, new Date())
+  if (shape === 'clip') return webPages().clipNote(page, new Date())
 
   const title = page.title.trim() || page.url
   const shown = embed === null ? `<${page.url}>` : `![[${embed}]]`

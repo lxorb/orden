@@ -55,11 +55,22 @@ export interface WebPagesPort {
   takeEngine(engine: OfferedEngine): Promise<EngineTaken>
   searchHome(): Promise<string | null>
   replayKey(key: PressedKey): void
+  articleOf(page: WebClip): Promise<string>
+  clipNote(page: WebClip, on: Date): Promise<string>
+}
+
+export interface WebLent {
+  readonly url: string | null
+  readonly space: string | null
+  readonly path: string | null
+  readonly own: string | null
 }
 
 export interface WebLendingPort {
   adopt(tab: string, handing: () => Promise<void>): Promise<void>
+  lend(tab: string, as: WebLent): Promise<void>
   unlend(tab: string): void
+  readerStore(): Promise<string | null>
 }
 
 export interface WebScriptsPort {
@@ -109,4 +120,6 @@ export const NO_WEB_PAGES: WebPagesPort = {
   takeEngine: () => Promise.resolve('same'),
   searchHome: () => Promise.resolve(null),
   replayKey: () => undefined,
+  articleOf: () => Promise.resolve(''),
+  clipNote: () => Promise.resolve(''),
 }

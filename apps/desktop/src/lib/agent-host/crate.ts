@@ -1,7 +1,7 @@
+import { portOf, webPages } from '@orden/contracts'
 import type { Said } from '../automation/src/api'
 import { said } from '../automation/src/api'
 import { READER } from '../automation/src/api'
-import { webDataStores, webNotes } from '../web-tab/src/api'
 import type { StoreSaid } from '../agent-protocol/src/api'
 import { workingPath } from '../web-backend/src/api'
 import { placeFor } from './spaces'
@@ -9,9 +9,8 @@ import { lendTab, readerTabs } from './tabs'
 
 async function storeFor(args: Said): Promise<StoreSaid> {
   const place = placeFor({ verb: 'agent.store_for', args, caller: READER }, said(args, 'space'))
-  const { webData } = await webDataStores()
-
-  return { space: place.space.name, store: await webData.store(null) }
+  const lending = portOf('web.lending')
+  return { space: place.space.name, store: lending.ok ? await lending.value.readerStore() : null }
 }
 
 async function markdown(args: Said): Promise<string> {
@@ -19,12 +18,11 @@ async function markdown(args: Said): Promise<string> {
   if (!html.trim()) return ''
 
   const url = said(args, 'url') ?? ''
-  const { articleOf } = await webNotes()
   const [read, { htmlToMarkdown }] = await Promise.all([
-    articleOf({ url, title: '', html }),
+    webPages().articleOf({ url, title: '', html }),
     import('@orden/markdown/from-html'),
   ])
-  return read.html.trim() ? htmlToMarkdown(read.html).trim() : ''
+  return read.trim() ? htmlToMarkdown(read).trim() : ''
 }
 
 export async function answerTheCrate(name: string, args: Said): Promise<unknown> {

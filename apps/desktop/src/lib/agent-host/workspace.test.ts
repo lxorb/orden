@@ -1,4 +1,4 @@
-import { type AgentHeard, providePort } from '@orden/contracts'
+import { type AgentHeard, providePort, type WebLent, webPages } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../automation/src/api'
 import { AGENT_WINDOW_VERBS } from '../agent-protocol/src/api'
@@ -459,22 +459,26 @@ vi.mock('../settings/src/declarations', () => ({
     ]),
 }))
 
-const lentPage: Record<string, unknown> = { url: null, space: null }
-const lending = { lend: vi.fn(() => Promise.resolve()), unlend: vi.fn() }
-vi.mock('../web-tab/src/api', async (actual) => ({
-  ...(await actual<typeof import('../web-tab/src/api')>()),
-  webLending: () => Promise.resolve(lending),
-  pages: {
-    of: () => lentPage,
-    addressOf: () => 'https://docs.example/a',
-    read: () =>
-      Promise.resolve({
-        url: 'https://docs.example/a',
-        title: 'A page',
-        html: '<article><p>Words of the page.</p></article>',
-      }),
-  },
-}))
+const lending = {
+  adopt: () => Promise.resolve(),
+  lend: vi.fn((_tab: string, _as: WebLent) => Promise.resolve()),
+  unlend: vi.fn(),
+  readerStore: () => Promise.resolve(null),
+}
+providePort('web.lending', lending)
+const { webNotes } = await import('../web-tab/src/api')
+providePort('web.pages', {
+  ...webPages(),
+  addressOf: () => 'https://docs.example/a',
+  clip: () =>
+    Promise.resolve({
+      url: 'https://docs.example/a',
+      title: 'A page',
+      html: '<article><p>Words of the page.</p></article>',
+    }),
+  articleOf: async (page) => (await (await webNotes()).articleOf(page)).html,
+  clipNote: async (page, on) => (await webNotes()).clipNote(page, on),
+})
 
 vi.mock('../history/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../history/src/api')>()),
@@ -1382,8 +1386,7 @@ describe('a page into a note', () => {
         untrusted: 'https://docs.example/a',
       })
 
-      const { clipNote } = await import('../web-tab/src/note')
-      const clip = await clipNote(PAGE, new Date())
+      const clip = await (await webNotes()).clipNote(PAGE, new Date())
       expect(files.get('/s/Work/A page.md')).toBe(clip)
       expect(clip).toContain('source: https://docs.example/a')
       expect(capture()).toMatchObject({ agent: 'claude-code', tab: 'w1', shape: 'clip' })
@@ -1577,11 +1580,11 @@ describe('what the crate asks', () => {
 
   test('a reader web tab lent to an agent, with what its pane would have told its page', async () => {
     expect(await answerTheCrate('agent.lend', { tab: 'w1' })).toBeNull()
-    expect(lending.lend).toHaveBeenCalledWith('w1')
-    expect(lentPage).toMatchObject({
+    expect(lending.lend).toHaveBeenCalledWith('w1', {
       url: 'https://docs.example/',
       space: 'work',
       path: '/s/Work/Docs.url',
+      own: null,
     })
 
     lending.lend.mockClear()
