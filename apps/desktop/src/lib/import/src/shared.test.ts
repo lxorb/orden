@@ -314,6 +314,25 @@ describe('what a share becomes', () => {
     expect(plan.files).toEqual([{ kind: 'note', path: 'Kit list.md', text: '# Kit\n\nA tent' }])
   })
 
+  test('a text file in another encoding is the words it holds', () => {
+    const plan = sharedPlan(
+      arrived({
+        items: [
+          item({ name: 'Café.txt', mime: 'text/plain', size: 4 }),
+          item({ name: 'Wide.txt', mime: 'text/plain', size: 6 }),
+        ],
+      }),
+      new Map([
+        [0, Uint8Array.from([0x43, 0x61, 0x66, 0xe9])],
+        [1, Uint8Array.from([0xff, 0xfe, 0x57, 0x00, 0xe9, 0x00])],
+      ]),
+      day,
+      'assets',
+    )
+
+    expect(plan.files.map((one) => (one.kind === 'note' ? one.text : null))).toEqual(['Café', 'Wé'])
+  })
+
   test('words and pictures and a file, in one note', () => {
     const plan = sharedPlan(
       arrived({

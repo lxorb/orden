@@ -8,6 +8,7 @@ import { applyImport } from './apply'
 import { dayOf, noteText } from './meta'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
+import { decoded } from './sources'
 
 const NOTES = /\.(md|markdown|mdown|mkd|txt|text)$/i
 
@@ -162,7 +163,7 @@ export function sharedPlan(
 
     if (isNote(item)) {
       const name = names.free(`${safeName(item.name.replace(/\.[^.]+$/, ''))}.md`)
-      notes.push({ kind: 'note', path: name, text: new TextDecoder().decode(held) })
+      notes.push({ kind: 'note', path: name, text: decoded(held) })
       return
     }
 
