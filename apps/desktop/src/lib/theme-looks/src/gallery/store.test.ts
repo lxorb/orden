@@ -289,6 +289,31 @@ describe('installing, updating and removing', () => {
     expect(store.updatable(entry({ version: '2.0.0' }) as never)).toBe(false)
   })
 
+  test('an update to a theme not in use leaves the app on the theme it was showing', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+    theme.select('default')
+
+    serving([entry({ version: '2.0.0' })], sheet('#111111'))
+    await store.install(entry({ version: '2.0.0' }) as never)
+
+    expect(folder.files.get('warm-paper')).toContain('--bg: #111111;')
+    expect(theme.id).toBe('default')
+    expect(store.using('warm-paper')).toBe(false)
+  })
+
+  test('an update to the theme in use keeps the app on it', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+
+    serving([entry({ version: '2.0.0' })], sheet('#111111'))
+    await store.install(entry({ version: '2.0.0' }) as never)
+
+    expect(store.using('warm-paper')).toBe(true)
+  })
+
   test('removing takes the file away and the app off it', async () => {
     serving([entry()])
     await store.load()
