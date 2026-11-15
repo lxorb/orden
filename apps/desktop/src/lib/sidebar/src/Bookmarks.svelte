@@ -1,10 +1,6 @@
 <script lang="ts">
   import type { Bookmark, Entry, OpenHow } from '@orden/contracts'
   import {
-    howFor,
-    middleOpens,
-    type TabAsk,
-    tabAsk,
     carried,
     carriedNothing,
     carriedRows,
@@ -36,7 +32,14 @@
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'
   import { isTile, sameBookmark } from '../../space-kept/src/api'
-  import { essentials, workspace } from '../../workspace/src/api'
+  import {
+    essentials,
+    workspace,
+    howFor,
+    middleOpens,
+    type TabAsk,
+    tabAsk,
+  } from '../../workspace/src/api'
   import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()

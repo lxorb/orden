@@ -31,10 +31,11 @@ import {
   type MenuItem,
   type MenuRow,
   viewport,
+  fullscreen,
 } from '../../ui-kit/src/api'
 import { copySelection, cutSelection } from '../../ui-controls/src/api'
 import { blockCommands } from '../../commands/src/api'
-import { fullscreen, isDesktop, isNative, openExternal } from '../../platform/src/api'
+import { isDesktop, isNative, openExternal } from '../../platform/src/api'
 import { protection } from '../../protect/src/api'
 import {
   canPrint,

@@ -31,6 +31,7 @@
     TIME_MARK,
     UnreadDot,
     viewport,
+    fullscreen,
   } from '../../ui-kit/src/api'
   import { alone, swipeOpens, dropOnList, workspace } from '../../workspace/src/api'
   import { movesSection } from '../../sections'
@@ -63,7 +64,7 @@
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from '../../sidebar-width.svelte'
-  import { fullscreen, dur, fade, fly } from '../../platform/src/api'
+  import { dur, fade, fly } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'

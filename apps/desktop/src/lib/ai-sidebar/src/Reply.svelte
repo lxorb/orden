@@ -12,9 +12,17 @@
   import { copyText } from '../../ui-controls/src/api'
   import { region } from '../../platform/src/api'
   import { links } from '../../link-index/src/api'
-  import { howFor, tabAsk, DIVIDER, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
+  import { DIVIDER, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
   import { dur, fly, slide } from '../../platform/src/api'
-  import { followHref, followNote, MIDDLE, opensLink, workspace } from '../../workspace/src/api'
+  import {
+    followHref,
+    followNote,
+    MIDDLE,
+    opensLink,
+    workspace,
+    howFor,
+    tabAsk,
+  } from '../../workspace/src/api'
   import { insideSpace, withinSpace } from '../../platform/src/api'
   import { views } from '../../panes/src/api'
   import { when } from '../../ui-controls/src/api'

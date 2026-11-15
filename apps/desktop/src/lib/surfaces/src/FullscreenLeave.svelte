@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fullscreen } from '../../platform/src/api'
+  import { fullscreen } from '../../ui-kit/src/api'
 </script>
 
 <button

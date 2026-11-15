@@ -2,8 +2,6 @@
   import { webPages } from '@orden/contracts'
   import { droppedAddress } from '@orden/scan/web-address'
   import {
-    middleOpens,
-    tabAsk,
     carried,
     carriedMark,
     Cross,
@@ -32,7 +30,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { privateMark, syncMark } from '../../surfaces/src/api'
   import { soundMark } from '../../spaces/src/api'
-  import { tabOverview, workspace } from '../../workspace/src/api'
+  import { tabOverview, workspace, middleOpens, tabAsk } from '../../workspace/src/api'
   import TabMark from '../../TabMark.svelte'
   import { askPlace } from '../../save-place/src/api'
   import { arrival, handOver, keyOf, picks, register, stripOf, TabDrag } from './drag.svelte'

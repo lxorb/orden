@@ -8,9 +8,9 @@ import type {
   Submenu,
 } from '@tauri-apps/api/menu'
 import { account } from '../../accounts/src/api'
-import { fullscreen, takeKeyboard, currentWindow, invoke, afterQuiet } from '../../platform/src/api'
+import { takeKeyboard, currentWindow, invoke, afterQuiet } from '../../platform/src/api'
 import { hiddenKinds } from '../../gates/src/api'
-import type { MenuItem } from '../../ui-kit/src/api'
+import { type MenuItem, fullscreen } from '../../ui-kit/src/api'
 import { modes } from '../../modes/src/api'
 import {
   type Change,

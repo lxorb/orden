@@ -134,13 +134,4 @@ export {
 export const outsideDrops = () => import('./outside-drops')
 
 export const reloadWhen = () => import('./reload-when')
-export {
-  besideAt,
-  howFor,
-  type LinkAsk,
-  linkAsk,
-  middleOpens,
-  type Press,
-  type TabAsk,
-  tabAsk,
-} from './new-tab'
+export { escapeLeaves, fullscreen } from './fullscreen.svelte'

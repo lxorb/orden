@@ -18,6 +18,8 @@
     showField,
     textFieldOf,
     viewport,
+    escapeLeaves,
+    fullscreen,
   } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
@@ -43,15 +45,7 @@
     tabOverview,
     workspace,
   } from './lib/workspace/src/api'
-  import {
-    escapeLeaves,
-    fullscreen,
-    invoke,
-    isDesktop,
-    isNative,
-    platform,
-    storedText,
-  } from './lib/platform/src/api'
+  import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
   import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
   import { linkScroll, type ScrollEnd, systemMenu } from './lib/ui-kit/src/api'

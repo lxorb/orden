@@ -11,6 +11,7 @@ const disk: Record<string, string> = {
 }
 
 vi.mock('./workspace/src/api', () => ({
+  followHref: () => undefined,
   workspace: {
     spaces: [A, B],
     activeSpace: B,

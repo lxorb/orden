@@ -11,7 +11,7 @@ import {
 } from '../../tree/src/api'
 import { basesOn, hiddenKinds, type KindName } from '../../gates/src/api'
 import { kindLabel } from '../../kind-words'
-import { howFor, DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
+import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import {
   archiveEntry,
   coverEntries,
@@ -32,7 +32,7 @@ import {
 import { canWriteAt, protectEntries } from '../../sharing/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { reveal, showLabel } from '../../files-out/src/api'
-import { workspace } from '../../workspace/src/api'
+import { workspace, howFor } from '../../workspace/src/api'
 
 export function rowMenu(entry: Entry): MenuEntry[] {
   const several = selectionMenu(entry)

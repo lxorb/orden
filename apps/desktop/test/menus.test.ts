@@ -215,7 +215,9 @@ describe("what the strip's empty stretch offers", () => {
     expect(read('lib/features.ts')).toContain(
       "import('./tab-strip/src/api').then((one) => one.stripMenus())",
     )
-    expect(read('lib/tab-strip/src/api.ts')).toContain("stripMenus = () => import('./strip-menu')")
+    expect(read('lib/tab-strip/src/shell-parts.ts')).toContain(
+      "stripMenus = () => import('./strip-menu')",
+    )
   })
 
   test('asked for on the strip, and only where nothing else is under the point', () => {

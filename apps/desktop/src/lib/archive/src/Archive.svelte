@@ -6,9 +6,6 @@
   import { archiveList } from './archive-list.svelte'
   import { archive, unarchive } from './archiving'
   import {
-    howFor,
-    middleOpens,
-    tabAsk,
     carriedRows,
     DIVIDER,
     dropOver,
@@ -26,7 +23,7 @@
   import { dur, slide } from '../../platform/src/api'
   import { rowName } from '../../platform/src/api'
   import { folderOf, insideSpace } from '../../platform/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, howFor, middleOpens, tabAsk } from '../../workspace/src/api'
 
   interface Row {
     entry: Entry
