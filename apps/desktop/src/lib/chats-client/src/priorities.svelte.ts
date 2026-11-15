@@ -74,11 +74,16 @@ export class Priorities {
   private ask: () => Asker | null = () => null
 
   constructor() {
+    this.restore()
+  }
+
+  restore(): void {
     const kept = keptOf(stored(KEY))
     this.on = kept.on
     this.drafting = kept.drafting
     this.assigned = kept.assigned
     this.lessons = kept.lessons
+    if (!this.drafting) this.suggestions = {}
   }
 
   useAsker(ask: () => Asker | null): void {
@@ -170,3 +175,9 @@ export class Priorities {
 }
 
 export const priorities = new Priorities()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === KEY) priorities.restore()
+  })
+}
