@@ -250,6 +250,9 @@ class Themes {
     window.addEventListener('storage', (event) => {
       if (event.key === STORAGE_KEY || event.key === SCHEME_KEY) this.heardChoice()
       else if (event.key === SETTINGS_KEY) {
+        const ended = this.id === this.keptId && this.trying.accent === this.kept.accent
+        if (ended) this.trying = without(this.trying, 'accent')
+        this.unkept = false
         this.chosen = this.storedDrawers()
         this.paintSettings()
         this.apply()
@@ -263,6 +266,7 @@ class Themes {
     if (saved && saved !== 'null' && !isSchemeChoice(saved)) {
       this.id = saved
       this.keptId = saved
+      if (!this.all.some((one) => one.id === saved)) void this.reload().catch(() => undefined)
     }
     if (isSchemeChoice(scheme)) {
       this.scheme = scheme
@@ -285,8 +289,10 @@ class Themes {
     return drawers
   }
 
+  private unkept = false
+
   private get writtenDrawers(): ChosenSettings {
-    return stored(SETTINGS_KEY) === null ? this.chosen : this.storedDrawers()
+    return stored(SETTINGS_KEY) === null || this.unkept ? this.chosen : this.storedDrawers()
   }
 
   private withLoaded(theme: ThemeInfo): ThemeInfo {
@@ -504,7 +510,7 @@ class Themes {
       return
 
     this.chosen = values
-    keepJson(SETTINGS_KEY, values)
+    this.unkept = !keepJson(SETTINGS_KEY, values)
     keep(GIVEN_KEY, '')
     this.keptScheme = look.scheme
     keep(SCHEME_KEY, look.scheme)
@@ -614,7 +620,7 @@ class Themes {
     }
     const held = this.writtenDrawers
     this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
-    keepJson(SETTINGS_KEY, this.chosen)
+    this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
     this.tellPicked()
   }
 
@@ -626,7 +632,7 @@ class Themes {
     const held = this.writtenDrawers
     this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
-    keepJson(SETTINGS_KEY, this.chosen)
+    this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()

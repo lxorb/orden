@@ -260,6 +260,26 @@ describe('what the dropdown offers', () => {
 })
 
 describe('a second window', () => {
+  test('is heard over a preview that has ended', () => {
+    theme.init()
+    const [first, second] = theme.accents.slice(-2).map((one) => one.id)
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent: first } }))
+    theme.preview('contrast', theme.kept.scheme, second ?? '')
+    theme.preview(theme.kept.id, theme.kept.scheme, theme.kept.accent)
+
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent: second } }))
+    expect(theme.accent).toBe(second)
+  })
+
+  test('reads the folder again for a theme it has not listed', async () => {
+    theme.init()
+    await settled()
+    installed('rose', 'Rose', '[data-theme="dark"] { --bg: #200; }')
+    anotherWindowWrote('orden:theme', 'file:rose')
+    await settled(() => theme.active.id === 'file:rose')
+    expect(theme.active.id).toBe('file:rose')
+  })
+
   test('is heard when it changes the theme or the scheme', () => {
     theme.init()
     anotherWindowWrote('orden:theme', 'contrast')
