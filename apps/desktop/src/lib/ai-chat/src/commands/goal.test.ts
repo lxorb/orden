@@ -247,6 +247,11 @@ describe('the evaluator', () => {
     expect(verdictIn('Not met yet: two notes left.').verdict).toBe('not_yet')
     expect(verdictIn('{"verdict":"not met","reason":"two left"}').verdict).toBe('not_yet')
     expect(verdictIn('{"verdict":"not achieved"}').verdict).toBe('not_yet')
+    expect(verdictIn('{"verdict":"unmet"}').verdict).toBe('not_yet')
+    expect(verdictIn('The goal has not been met.').verdict).toBe('not_yet')
+    expect(verdictIn("It isn't met: one note left.").verdict).toBe('not_yet')
+    expect(verdictIn('It was never achieved.').verdict).toBe('not_yet')
+    expect(verdictIn('Met, nothing is missing.').verdict).toBe('met')
   })
 })
 
