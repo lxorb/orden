@@ -149,3 +149,14 @@ describe('pairing the spaces on this device with the account s', () => {
     expect(world.remembered).toBe(1)
   })
 })
+
+describe('two engines pairing at once', () => {
+  test('pair one after the other, so a space of the account comes down once', async () => {
+    world.remote = [{ id: 'r1', name: 'Work', role: 'owner' }]
+    const one = engine()
+    const other = engine()
+    await Promise.all([pairSpaces('t', one.pairing), pairSpaces('t', other.pairing)])
+    expect(world.local.map((space) => space.root)).toEqual(['/Work'])
+    expect(other.pairs.get('/Work')).toEqual({ spaceId: 'r1', shared: false })
+  })
+})
