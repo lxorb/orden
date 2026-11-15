@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { account, arriving } from './accounts/src/api'
-  import { showAccount } from './account-menu'
-  import { AccountBadge } from './accounts/src/api'
-  import { DOWNLOAD_URL } from './links'
-  import { dur, fade } from './platform/src/api'
-  import { settings } from './settings.svelte'
-  import { showFeedback } from './surfaces.svelte'
-  import { isNative, openExternal } from './platform/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { SCRATCHPAD_MARK } from './panel-marks'
-  import { scratchFromDrawer, shown as pad } from './scratchpad/src/api'
+  import { account, arriving } from '../../accounts/src/api'
+  import { showAccount } from '../../account-menu'
+  import { AccountBadge } from '../../accounts/src/api'
+  import { DOWNLOAD_URL } from '../../links'
+  import { dur, fade } from '../../platform/src/api'
+  import { settings } from '../../settings.svelte'
+  import { showFeedback } from '../../surfaces.svelte'
+  import { isNative, openExternal } from '../../platform/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { SCRATCHPAD_MARK } from '../../panel-marks'
+  import { sidebarPart } from '@orden/contracts'
 
   const {
     theming = true,
@@ -26,8 +26,11 @@
 
   const who = $derived(account.name)
 
+  const pad = sidebarPart('scratchpad')
+  const padOn = $derived(pad?.open?.() ?? false)
+
   const pick = (event: MouseEvent) =>
-    void import('./theme-looks/src/api').then((one) => one.pickTheme(event))
+    void import('../../theme-looks/src/api').then((one) => one.pickTheme(event))
 </script>
 
 <div class="foot" data-region="foot">
@@ -95,14 +98,14 @@
       </button>
     {/if}
 
-    {#if scratch && viewport.touch && !__EVEN_PLUGIN__}
+    {#if scratch && pad && viewport.touch && !__EVEN_PLUGIN__}
       <button
         class="orden-glyph act"
-        class:is-on={pad.on}
-        aria-pressed={pad.on}
+        class:is-on={padOn}
+        aria-pressed={padOn}
         title={shortcuts.tooltip('Scratchpad', 'app.scratchpad')}
         aria-label="Scratchpad"
-        onclick={scratchFromDrawer}
+        onclick={() => pad.toggle?.()}
       >
         <svg viewBox="0 0 13 13"><path d={SCRATCHPAD_MARK} /></svg>
       </button>

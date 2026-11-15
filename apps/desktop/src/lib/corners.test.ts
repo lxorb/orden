@@ -32,8 +32,8 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
     'pane-tree/src/PaneTree.svelte': ['--chrome-seam'],
     'panes/src/pane-tree.ts': ['--card-gap'],
     '../App.svelte': ['--card-inset', '--chrome-ground'],
-    'Sidebar.svelte': ['--side-ground', '--chrome-seam'],
-    'SidebarFoot.svelte': ['--chrome-seam'],
+    'sidebar/src/Sidebar.svelte': ['--side-ground', '--chrome-seam'],
+    'sidebar/src/SidebarFoot.svelte': ['--chrome-seam'],
     'Titlebar.svelte': ['--chrome-seam'],
     'tab-strip/src/Tabs.svelte': ['--strip-line'],
     'StatusBar.svelte': ['--card-room'],
@@ -46,7 +46,7 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
 })
 
 test('the sidebar draws its separators with the seam, never with a line of its own', () => {
-  for (const file of ['Sidebar.svelte', 'SidebarFoot.svelte']) {
+  for (const file of ['sidebar/src/Sidebar.svelte', 'sidebar/src/SidebarFoot.svelte']) {
     const style = /<style[^>]*>([\s\S]*)<\/style>/.exec(read(`./${file}`))?.[1] ?? ''
     expect(style, file).not.toMatch(/border(?:-[a-z]+)*:\s*1px solid var\(--line\)/)
   }
@@ -66,7 +66,7 @@ test('every full mode makes the card flush through one condition', () => {
 test('every sidebar over the note stands on the paper, under the chrome and its own ground', () => {
   const over: [string, RegExp][] = [
     ['../App.svelte', /:global\(\[data-drawer\]\) \.panels \{([^}]*)\}/],
-    ['Sidebar.svelte', /\n {2}\.column\.shut\.floating aside \{([^}]*)\}/],
+    ['sidebar/src/Sidebar.svelte', /\n {2}\.column\.shut\.floating aside \{([^}]*)\}/],
   ]
   for (const [file, selector] of over) {
     const rule = selector.exec(read(`./${file}`))?.[1] ?? ''

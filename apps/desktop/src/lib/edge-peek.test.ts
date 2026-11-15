@@ -141,7 +141,7 @@ describe('the list out over the note', () => {
 })
 
 describe('the left side', () => {
-  const sidebar = readFileSync(join(import.meta.dirname, './Sidebar.svelte'), 'utf8')
+  const sidebar = readFileSync(join(import.meta.dirname, './sidebar/src/Sidebar.svelte'), 'utf8')
 
   test('lets it out only shut, as a column, outside full screen and under nothing', () => {
     for (const rule of [

@@ -54,7 +54,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
 }
 
 const MADE_BY: Record<string, string> = {
-  'lib/Tree.svelte .row.carried': 'lib/tree-lift.ts',
+  'lib/sidebar/src/Tree.svelte .row.carried': 'lib/sidebar/src/tree-lift.ts',
 }
 
 interface Node {

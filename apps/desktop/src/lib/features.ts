@@ -8,9 +8,14 @@ import {
   providePort,
   registerFeature,
   registerSettingsPart,
+  registerSidebarPart,
   registerTabKind,
+  runCommand,
   whenPortProvided,
 } from '@orden/contracts'
+import { askPart } from './ai-chat/src/api'
+import { outlinePart } from './pages/src/api'
+import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
 import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
@@ -39,6 +44,10 @@ serveLinks({
   },
   search: searchSpace,
 })
+registerSidebarPart(askPart)
+registerSidebarPart(outlinePart)
+registerSidebarPart(scratchpadPart)
+registerSidebarPart({ id: 'tasks', toTab: () => runCommand('views.todos').then(() => undefined) })
 registerFeature(() => import('./quick-add/src/api'))
 registerTabKind('view', async () => (await import('./views/src/api')).viewTabKind)
 whenPortProvided('workspace.view', (view) =>
@@ -76,6 +85,11 @@ registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
 
 if (!__EVEN_PLUGIN__) {
+  registerSidebarPart({
+    id: 'time',
+    menu: async () => (await import('./time/src/api')).trackingMenu(),
+    toTab: async () => void (await import('./time/src/api')).openTime(),
+  })
   registerFeature(() => import('./agents/src/api'))
   registerFeature(() => import('./chats-client/src/api'))
   registerFeature(() => import('./crash-reports/src/api'))

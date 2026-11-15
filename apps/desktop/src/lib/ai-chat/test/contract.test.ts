@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 import {
+  askPart,
   askQuickly,
   chatQuoting,
   chatReplies,
@@ -80,6 +81,18 @@ describe('the unread mark', () => {
   test('stays off while there is no space to look in', async () => {
     await lookAtLaunch([])
     expect(chatsUnread.any).toBe(false)
+  })
+
+  test('is what the Ask panel’s sidebar part says, beside its new chat and threads tools', () => {
+    expect(askPart.unread?.()).toBe(false)
+    chatsUnread.any = true
+    expect(askPart.unread?.()).toBe(true)
+    chatsUnread.any = false
+    expect(askPart.tools?.map((one) => [one.id, one.label, one.command])).toEqual([
+      ['new-chat', 'New chat', undefined],
+      ['threads', 'Chats', 'app.ask'],
+    ])
+    expect(typeof askPart.toTab).toBe('function')
   })
 })
 

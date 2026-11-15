@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import { orderedTree, shownNames, type SortMode } from './tree/src/api'
+import { orderedTree, shownNames, type SortMode } from '../../tree/src/api'
 import { placedBeside } from './tree-arranging'
 
 interface Built extends Entry {

@@ -1,6 +1,7 @@
-export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
+import type { PanelSide, SidebarPanelId } from '@orden/contracts'
 
-export type PanelSide = 'left' | 'right'
+export type Panel = SidebarPanelId
+export type { PanelSide }
 
 export interface Sides {
   panel: Panel | null

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const { settings } = await import('./settings.svelte')
 const { workspace } = await import('./workspace/src/api')
 const { reservedName } = await import('./reserved-name.svelte')
-const NameField = (await import('./NameField.svelte')).default
+const NameField = (await import('./sidebar/src/NameField.svelte')).default
 
 const flushed = () => new Promise((resolve) => setTimeout(resolve))
 

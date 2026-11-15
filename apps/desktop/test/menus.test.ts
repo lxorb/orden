@@ -136,7 +136,7 @@ describe('making a folder', () => {
 })
 
 describe('what a row of the file list offers', () => {
-  const tree = read('lib/Tree.svelte')
+  const tree = read('lib/sidebar/src/Tree.svelte')
   const source = read('lib/row-menu.ts')
   const row = moduleBody(source, 'export function rowMenu(entry: Entry)')
   const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
@@ -199,7 +199,7 @@ describe('what a row of the file list offers', () => {
       tree.indexOf('function openRowAt('),
     )
 
-    expect(door).toContain("import('./row-menu')")
+    expect(door).toContain("import('../../row-menu')")
     expect(door).toContain('menu.show(event, rowMenu(entry), { title })')
     expect(read('lib/surfaces.svelte.ts')).toContain("import('./row-menu')")
   })

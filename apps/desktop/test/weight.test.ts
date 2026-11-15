@@ -326,7 +326,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/src/App.svelte', 'the app'],
     ['/lib/pane-tree/src/Pane.svelte', 'a pane'],
     ['/lib/pane-tree/src/Editor.svelte', 'the editor'],
-    ['/lib/Tree.svelte', 'the file list'],
+    ['/lib/sidebar/src/Tree.svelte', 'the file list'],
     ['/editor/src/editor.ts', "the editor's own state"],
     ['/markdown/src/breaks.ts', 'the line-break switch the renderer reads'],
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],

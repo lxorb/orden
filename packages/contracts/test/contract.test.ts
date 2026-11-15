@@ -11,7 +11,6 @@ import {
   commandRowsLoaded,
   attempt,
   attemptAsync,
-  EMPTY_EXTENSIONS,
   ENTRY_KINDS,
   err,
   failure,
@@ -36,6 +35,7 @@ import {
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
+  registerSidebarPart,
   registerCommand,
   registerCommandRows,
   registerHearing,
@@ -43,6 +43,7 @@ import {
   registerTabKind,
   settingFieldsIn,
   settingsPartsIn,
+  sidebarPart,
   mayStop,
   notePath,
   ok,
@@ -205,13 +206,18 @@ describe('shell extension points', () => {
     expect(isTabKind('folder')).toBe(false)
   })
 
-  it('starts with no extensions', () => {
-    expect(EMPTY_EXTENSIONS).toEqual({
-      tabKinds: [],
-      commands: [],
-      settingsSections: [],
-      sidebarPanels: [],
-    })
+  it('keeps one part per sidebar panel, the last registered, until it is taken back', () => {
+    const first = { id: 'ask', unread: () => true } as const
+    const second = { id: 'ask', unread: () => false } as const
+    const dropFirst = registerSidebarPart(first)
+    expect(sidebarPart('ask')).toBe(first)
+    const dropSecond = registerSidebarPart(second)
+    expect(sidebarPart('ask')).toBe(second)
+    dropFirst()
+    expect(sidebarPart('ask')).toBe(second)
+    dropSecond()
+    expect(sidebarPart('ask')).toBe(null)
+    expect(sidebarPart('time')).toBe(null)
   })
 
   it('asks a port for each kind of thing quitting would stop', async () => {

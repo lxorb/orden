@@ -1,3 +1,5 @@
+import type { SidebarPart } from '@orden/contracts'
+import { chatsUnread, lookAtLaunch } from './unread.svelte'
 export type { Listed } from './commands/todos'
 export type { Panel, PanelCommand } from './commands/types'
 export type { ContextKind } from './quick'
@@ -12,7 +14,7 @@ export type { Mention, MentionKind, Row } from './store/mentions'
 export type { TaskTool } from './store/prefs'
 export { askQuickly } from './quick-door'
 export { installAiRunner } from './ask'
-export { chatsUnread, lookAtLaunch } from './unread.svelte'
+export { chatsUnread, lookAtLaunch }
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
 
@@ -43,3 +45,31 @@ export const sidebarParts = () =>
 export const rewritingStore = () => import('./rewriting.svelte')
 
 export const loadRewriteSheet = () => import('./RewriteSheet.svelte')
+
+const FRESH_MARK =
+  'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
+
+const THREADS_MARK =
+  'M2 6.5a4.5 4.5 0 1 0 4.5-4.5 4.9 4.9 0 0 0-3.4 1.4L2 4.5M2 2v2.5h2.5M6.5 4v2.5l2 1'
+
+export const askPart: SidebarPart = {
+  id: 'ask',
+  unread: () => chatsUnread.any,
+  spaces: (ids) => void lookAtLaunch(ids),
+  tools: [
+    {
+      id: 'new-chat',
+      label: 'New chat',
+      mark: FRESH_MARK,
+      run: () => void chatStore().then((one) => one.chat.newThread()),
+    },
+    {
+      id: 'threads',
+      label: 'Chats',
+      mark: THREADS_MARK,
+      command: 'app.ask',
+      run: () => void chatStore().then((one) => one.chat.showThreads()),
+    },
+  ],
+  toTab: () => chatReveal().then((one) => one.chatToTab()),
+}

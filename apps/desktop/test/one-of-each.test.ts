@@ -114,14 +114,14 @@ describe('the row a list is made of', () => {
 
   test('and the lists wear the class rather than a row of their own', () => {
     const lists = [
-      'lib/Bookmarks.svelte',
+      'lib/sidebar/src/Bookmarks.svelte',
       'lib/ContextMenu.svelte',
       'lib/HitList.svelte',
       'lib/SearchPanel.svelte',
       'lib/settings/src/SettingsPanel.svelte',
-      'lib/Sidebar.svelte',
+      'lib/sidebar/src/Sidebar.svelte',
       'lib/TagTree.svelte',
-      'lib/Tree.svelte',
+      'lib/sidebar/src/Tree.svelte',
       'lib/palette/src/Palette.svelte',
     ]
 
@@ -581,11 +581,11 @@ describe('the bubble a sentence appears in', () => {
 
     expect(own).toEqual([
       'lib/HintCard.svelte',
-      'lib/NameField.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
       'lib/pass-ui/src/PassFill.svelte',
+      'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Hint.svelte',
       'lib/web-tab/src/WebAsk.svelte',

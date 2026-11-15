@@ -1,11 +1,11 @@
 import type { Entry } from '@orden/contracts'
 import { tick } from 'svelte'
-import { dropTarget, targetFor } from './drop-target.svelte'
-import { dur, folderOf, nameOf } from './platform/src/api'
-import { spaceDropping } from './tab-strip/src/api'
+import { dropTarget, targetFor } from '../../drop-target.svelte'
+import { dur, folderOf, nameOf } from '../../platform/src/api'
+import { spaceDropping } from '../../tab-strip/src/api'
 import { placedBeside, stepped, trimmed } from './tree-arranging'
-import { entryAt, shownNames } from './tree/src/api'
-import { workspace } from './workspace/src/api'
+import { entryAt, shownNames } from '../../tree/src/api'
+import { workspace } from '../../workspace/src/api'
 
 export type Band = 'before' | 'on' | 'after'
 

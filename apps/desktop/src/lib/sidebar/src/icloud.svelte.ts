@@ -1,5 +1,5 @@
 import { SvelteSet } from 'svelte/reactivity'
-import { isDesktop } from './platform/src/api'
+import { isDesktop } from '../../platform/src/api'
 
 interface Fetching {
   path: string
@@ -28,7 +28,7 @@ class ICloud {
     }
 
     this.coming.delete(one.path)
-    void import('./workspace/src/api').then(({ workspace }) => workspace.loadTree())
+    void import('../../workspace/src/api').then(({ workspace }) => workspace.loadTree())
   }
 }
 

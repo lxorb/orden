@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { protection } from './protect/src/api'
+  import { protection } from '../../protect/src/api'
   import { webPages, type Entry } from '@orden/contracts'
-  import { keyElsewhere } from './layer-keys'
+  import { keyElsewhere } from '../../layer-keys'
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
-  import { fileMark, type FileMark as Mark } from './file-mark'
-  import { hiddenKinds } from './settings.svelte'
-  import FileMark from './FileMark.svelte'
+  import { fileMark, type FileMark as Mark } from '../../file-mark'
+  import { hiddenKinds } from '../../settings.svelte'
+  import FileMark from '../../FileMark.svelte'
   import {
     folderFor,
     folderNote,
@@ -15,22 +15,22 @@
     isFolderNote,
     nestedIn,
     renameSteps,
-  } from './tree/src/api'
-  import { staysOn } from './caret'
-  import { focusList } from './focus'
-  import { menu } from './menu.svelte'
-  import { overlays } from './ui-kit/src/api'
-  import { longPress } from './longpress'
-  import { landsIn } from './move-targets'
+  } from '../../tree/src/api'
+  import { staysOn } from '../../caret'
+  import { focusList } from '../../focus'
+  import { menu } from '../../menu.svelte'
+  import { overlays } from '../../ui-kit/src/api'
+  import { longPress } from '../../longpress'
+  import { landsIn } from '../../move-targets'
   import NameField from './NameField.svelte'
-  import { howFor, middleOpens, tabAsk } from './new-tab'
-  import { extensionOf } from './platform/src/api'
-  import { rowName } from './platform/src/api'
-  import { roving } from './roving'
-  import SharedMark from './SharedMark.svelte'
-  import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from './sharing/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { syncMark } from './surfaces.svelte'
+  import { howFor, middleOpens, tabAsk } from '../../new-tab'
+  import { extensionOf } from '../../platform/src/api'
+  import { rowName } from '../../platform/src/api'
+  import { roving } from '../../roving'
+  import SharedMark from '../../SharedMark.svelte'
+  import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { syncMark } from '../../surfaces.svelte'
   import {
     carried,
     carriedNothing,
@@ -39,9 +39,9 @@
     isBookmarkDrag,
     landing,
     listenOver,
-  } from './drag-paths'
-  import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
-  import { dropTarget, targetFor } from './drop-target.svelte'
+  } from '../../drag-paths'
+  import { dropOnList, fileClipboard, listMotion } from '../../list-landing.svelte'
+  import { dropTarget, targetFor } from '../../drop-target.svelte'
   import {
     autoScrollBy,
     heightOf,
@@ -50,19 +50,19 @@
     type Rows,
     slotsFor,
     windowFor,
-  } from './windows/src/api'
-  import { ListView, tokenFloor, tokenRow } from './windows/src/api'
-  import { folderOf, samePath } from './platform/src/api'
-  import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from './tree/src/api'
-  import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
-  import { viewport } from './ui-kit/src/api'
-  import { workspace } from './workspace/src/api'
-  import { spaceDropping } from './tab-strip/src/api'
-  import { inside } from './panes/src/api'
-  import Twist from './Twist.svelte'
-  import { dur } from './platform/src/api'
-  import { keptAway } from './away/src/api'
-  import { rowIds } from './tree/src/api'
+  } from '../../windows/src/api'
+  import { ListView, tokenFloor, tokenRow } from '../../windows/src/api'
+  import { folderOf, samePath } from '../../platform/src/api'
+  import { flatRows, heldRows, rowIndex, standsOpen, type FlatRow } from '../../tree/src/api'
+  import { onTwist, treeStep, TREE_MOVES } from '../../tree-keys'
+  import { viewport } from '../../ui-kit/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { spaceDropping } from '../../tab-strip/src/api'
+  import { inside } from '../../panes/src/api'
+  import Twist from '../../Twist.svelte'
+  import { dur } from '../../platform/src/api'
+  import { keptAway } from '../../away/src/api'
+  import { rowIds } from '../../tree/src/api'
   import { indexed, settle } from './tree-settle'
 
   const { tree }: { tree: Entry } = $props()
@@ -298,7 +298,7 @@
       keyedOn = true
       const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
       const going = workspace.selection
-      void import('./row-menu').then((one) => {
+      void import('../../row-menu').then((one) => {
         void one.removeAsking(going)
         if (kept.length) void one.refuseDeleting(kept)
       })
@@ -613,7 +613,7 @@
   function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
     event.preventDefault()
     event.stopPropagation()
-    void import('./row-menu').then(({ rowMenu }) => menu.show(event, rowMenu(entry), { title }))
+    void import('../../row-menu').then(({ rowMenu }) => menu.show(event, rowMenu(entry), { title }))
   }
 
   function openRowAt(event: MouseEvent, entry: Entry) {

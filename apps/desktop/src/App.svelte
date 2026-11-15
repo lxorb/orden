@@ -13,7 +13,7 @@
   import { overlays } from './lib/ui-kit/src/api'
   import { PaneTree } from './lib/pane-tree/src/api'
   import FirstScreen from './lib/FirstScreen.svelte'
-  import Sidebar from './lib/Sidebar.svelte'
+  import { Sidebar } from './lib/sidebar/src/api'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
   import { watchTextSize } from './lib/text-size'

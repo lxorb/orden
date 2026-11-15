@@ -103,6 +103,18 @@ describe('showing it on the right', () => {
     api.scratchFromDrawer()
     expect(right.shows).toBe('scratchpad')
   })
+
+  test('its sidebar part says whether it is shown and toggles it the way the drawer does', () => {
+    api.shown.on = true
+    expect(api.scratchpadPart.open?.()).toBe(true)
+    api.scratchpadPart.toggle?.()
+    expect(right.shows).toBeNull()
+    api.shown.on = false
+    expect(api.scratchpadPart.open?.()).toBe(false)
+    api.scratchpadPart.toggle?.()
+    expect(right.shows).toBe('scratchpad')
+    expect(typeof api.scratchpadPart.toTab).toBe('function')
+  })
 })
 
 describe('words added to the pad', () => {

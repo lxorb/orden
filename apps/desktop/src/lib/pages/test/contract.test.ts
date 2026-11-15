@@ -42,7 +42,9 @@ describe('the module stands on its own', () => {
 
   test('loads only which page note each tab shows, and the rest through doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    const loaded = [...api.matchAll(/^export \{[^}]*\} from '([^']+)'/gm)].map((one) => one[1])
+    const loaded = [...api.matchAll(/^(?:import|export) \{[^}]*\} from '([^']+)'/gm)].map(
+      (one) => one[1],
+    )
     expect(loaded).toEqual(['./showing.svelte'])
     for (const door of ['loadPages', 'loadNavigator', 'pagesOut', 'pdfTabs']) {
       expect(api).toMatch(new RegExp(`export const ${door} = \\(\\) =>`))
