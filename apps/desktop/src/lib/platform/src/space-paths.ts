@@ -15,10 +15,12 @@ function steps(path: string): string[] {
   return out
 }
 
+const DROPPED_ON_WINDOWS = /[. ]+$/
+
 function asOpened(name: string): string {
   const normal = name.normalize('NFC')
-  if (platform() !== 'windows') return normal
-  return normal.replace(/[. ]+$/, '') || normal
+  if (!DROPPED_ON_WINDOWS.test(normal) || platform() !== 'windows') return normal
+  return normal.replace(DROPPED_ON_WINDOWS, '') || normal
 }
 
 function sameName(one: string, other: string, folds: () => boolean): boolean {

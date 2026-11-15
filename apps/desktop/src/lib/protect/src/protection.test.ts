@@ -288,3 +288,29 @@ describe('a protected note put in Recently deleted', () => {
     expect(protection.ways(ROOT)).toEqual({})
   })
 })
+
+describe('a note moved out from under a lock', () => {
+  test('in its space, stays locked as it was', () => {
+    protection.set(ROOT, at('Private'), 'password')
+    protection.moved(at('Private/Diary.md'), at('Diary.md'), ROOT)
+    expect(protection.covering(at('Diary.md'))).toEqual([
+      { root: ROOT, key: 'Diary.md', way: 'password' },
+    ])
+    expect(protection.own(ROOT, at('Private'))?.way).toBe('password')
+  })
+
+  test('to another space, carries the lock of the folder or space it left', () => {
+    protection.set(ROOT, ROOT, 'device')
+    protection.moved(at('Diary.md'), `${OTHER}/Diary.md`, ROOT, OTHER)
+    expect(protection.covering(`${OTHER}/Diary.md`)).toEqual([
+      { root: OTHER, key: 'Diary.md', way: 'device' },
+    ])
+  })
+
+  test('into a place already locked, takes no lock of its own', () => {
+    protection.set(ROOT, at('Private'), 'password')
+    protection.set(ROOT, at('Vault'), 'device')
+    protection.moved(at('Private/Diary.md'), at('Vault/Diary.md'), ROOT)
+    expect(protection.ways(ROOT)).toEqual({ Private: 'password', Vault: 'device' })
+  })
+})

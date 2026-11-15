@@ -20,7 +20,7 @@ import {
   readSpaces,
   without,
 } from '../../platform/src/api'
-import { carried, moving } from '../../file-ops/src/api'
+import { carried, moving, type Moving } from '../../file-ops/src/api'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
 
@@ -307,6 +307,14 @@ export class Protection {
     if (root === null || from === to) return
     const move = moving(from, to, root, into)
     if (!move.was) return
+    const above = this.covering(from).find((one) => one.key !== move.was)
+    this.carry(move, root)
+    if (above && move.now && !this.covering(to).length) {
+      this.put(move.there, { ...this.ways(move.there), [move.now]: above.way })
+    }
+  }
+
+  private carry(move: Moving, root: string): void {
     const held = Object.entries(this.ways(root)).filter(([key]) => key !== SPACE)
     if (move.across) {
       const { left, went } = carried(

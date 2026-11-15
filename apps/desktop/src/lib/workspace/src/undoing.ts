@@ -401,6 +401,7 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   await writeFile(action.into, action.intoContent)
   const from = await freeBeside(action.from)
   await writeFile(from, action.fromContent)
+  if (action.back) await ws.fileCame(from, 'file', undefined, action.back)
   ws.reload(action.into, action.intoContent)
 
   const only = action.relinked?.filter(

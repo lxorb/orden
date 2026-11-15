@@ -451,6 +451,14 @@ describe('a merge and a carve put back', () => {
     ])
   })
 
+  test('a merge put back hands the note back under the id it left with, so what it kept returns', async () => {
+    disk.set('/s/b.md', MERGE.intoAfter)
+    const ws = store({ ...MERGE, back: 'merged-1' })
+    await undoLastFileAction(ws)
+
+    expect(told).toContain('back /s/a.md')
+  })
+
   test('and leaves a merge alone whose note has been written in since', async () => {
     disk.set('/s/b.md', `${MERGE.intoAfter}\n\ntyped since`)
     const ws = store({ ...MERGE })
