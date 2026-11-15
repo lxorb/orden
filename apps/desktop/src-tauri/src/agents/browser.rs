@@ -1279,7 +1279,7 @@ fn files_of(
                 return Err(absent());
             }
             if matches!(caller, Caller::Agent(_)) && twin.is_none() {
-                handed_from_own(&super::files::own_folders(app), &path)?;
+                handed_from_own(root.as_deref(), &super::files::own_folders(app), &path)?;
             }
             let mut inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
@@ -1303,7 +1303,14 @@ fn files_of(
         .collect()
 }
 
-fn handed_from_own(own: &[PathBuf], path: &Path) -> Result<(), Answer> {
+fn handed_from_own(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Result<(), Answer> {
+    let in_spaces = spaces.is_some_and(|spaces| {
+        crate::paths::inside(spaces, path)
+            && crate::paths::inside(&super::files::real(spaces), &super::files::real(path))
+    });
+    if in_spaces {
+        return Ok(());
+    }
     super::files::behind(own, path).map_or(Ok(()), Err)
 }
 
@@ -1338,10 +1345,19 @@ mod tests {
         std::os::unix::fs::symlink(&own, &alias).unwrap();
         let free = dir.path().join("free.txt");
         std::fs::write(&free, "x").unwrap();
+        let spaces = own.join("Spaces");
+        std::fs::create_dir_all(spaces.join("Work")).unwrap();
+        let report = spaces.join("Work").join("report.pdf");
+        std::fs::write(&report, "pdf").unwrap();
+        let sneaking = spaces.join("Work").join("sneaking.json");
+        std::os::unix::fs::symlink(&secret, &sneaking).unwrap();
         let fenced = [own.clone()];
-        assert!(handed_from_own(&fenced, &secret).is_err());
-        assert!(handed_from_own(&fenced, &alias.join("automation.json")).is_err());
-        assert!(handed_from_own(&fenced, &free).is_ok());
+        let handed = |path: &Path| handed_from_own(Some(&spaces), &fenced, path);
+        assert!(handed(&secret).is_err());
+        assert!(handed(&alias.join("automation.json")).is_err());
+        assert!(handed(&free).is_ok());
+        assert!(handed(&report).is_ok());
+        assert!(handed(&sneaking).is_err());
     }
     use crate::agents::grants::{Every, SiteRule, Spaces};
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
