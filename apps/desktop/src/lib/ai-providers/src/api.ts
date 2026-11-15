@@ -71,6 +71,7 @@ export {
   type Provider,
   type ProviderKind,
   reachable,
+  steers,
   talkable,
   troubleIn,
   usable,

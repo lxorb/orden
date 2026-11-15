@@ -59,6 +59,7 @@ import {
   type SessionEvent,
   type SessionState,
   statesOf,
+  steers,
 } from '../../../ai-providers/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
 import { agentMarks } from '../../../agent-marks.svelte'
@@ -1132,6 +1133,11 @@ class Chat implements Panel {
 
   get busy(): boolean {
     return !!this.head && this.running.includes(this.head.id)
+  }
+
+  get canSteer(): boolean {
+    const kind = this.provider?.kind
+    return this.busy && !!kind && steers(kind)
   }
 
   private setQueue(list: Queued[]): void {

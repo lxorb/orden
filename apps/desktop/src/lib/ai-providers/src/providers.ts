@@ -6,6 +6,10 @@ export function isLocal(kind: ProviderKind): kind is LocalKind {
   return kind === 'claude-code' || kind === 'codex' || kind === 'gemini-cli'
 }
 
+export function steers(kind: ProviderKind): boolean {
+  return kind === 'codex' || !isLocal(kind)
+}
+
 export function offeredKinds(desktop: boolean, claudeCode: boolean): ProviderKind[] {
   const keyed: ProviderKind[] = ['anthropic', 'openai', 'gemini', 'compatible']
   if (!desktop) return keyed

@@ -25,6 +25,7 @@ import {
   type Provider,
   type Say,
   type Session,
+  steers,
 } from '../../../ai-providers/src/api'
 import { agentsOf } from '../review/changes'
 
@@ -68,7 +69,6 @@ interface Live {
 interface Running {
   thread: Thread
   on: (event: EngineEvent) => void
-  pending: number
   steered: (text: string) => void
 }
 
@@ -253,14 +253,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       closing = close
 
       const ended = (how: NonNullable<Read['ended']>) => {
-        const flight = running.get(thread.id)
-        if (how === 'end' && flight && flight.pending > 0) {
-          flight.pending--
-          turn = modelTurn(thread)
-          thread.turns.push(turn)
-          on({ type: 'turn', turn })
-          return
-        }
         if (stopping || how === 'stopped') {
           close('stopped')
           return
@@ -435,13 +427,11 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       }
       thread.turns.push(said)
       on({ type: 'turn', turn: said })
-      if (kind === 'codex') {
-        turn = modelTurn(thread)
-        thread.turns.push(turn)
-        on({ type: 'turn', turn })
-      }
+      turn = modelTurn(thread)
+      thread.turns.push(turn)
+      on({ type: 'turn', turn })
     }
-    running.set(thread.id, { thread, on, pending: 0, steered })
+    running.set(thread.id, { thread, on, steered })
 
     const agents = agentsOf(provider.id)
     const unhear = await answers
@@ -565,13 +555,8 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     async steer(thread, text) {
       const flight = running.get(thread.id)
       const live = sessions.get(thread.id)
-      if (!flight || !live || live.session.ended || kind === 'gemini-cli') return false
-      if (kind === 'codex') {
-        await live.session.say({ kind: 'steer', text })
-      } else {
-        flight.pending++
-        await live.session.say({ kind: 'turn', text, images: [] })
-      }
+      if (!flight || !live || live.session.ended || !steers(kind)) return false
+      await live.session.say({ kind: 'steer', text })
       flight.steered(text)
       return true
     },

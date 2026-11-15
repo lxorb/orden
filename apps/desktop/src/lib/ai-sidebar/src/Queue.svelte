@@ -17,6 +17,9 @@
 </script>
 
 {#if queue.length}
+  {#if chat.busy}
+    <p class="when">Sends when the current reply finishes</p>
+  {/if}
   <ol class="queue">
     {#each queue as one, index (one.id)}
       <li
@@ -36,14 +39,16 @@
         <button class="words" dir="auto" title="Edit" onclick={() => chat.editQueued(one.id)}
           >{one.text}</button
         >
-        <button
-          class="orden-glyph small"
-          title="Send into the running answer"
-          aria-label="Send into the running answer"
-          onclick={() => chat.steerQueued(one.id)}
-        >
-          <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
-        </button>
+        {#if chat.canSteer}
+          <button
+            class="orden-glyph small"
+            title="Send into the running answer"
+            aria-label="Send into the running answer"
+            onclick={() => chat.steerQueued(one.id)}
+          >
+            <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
+          </button>
+        {/if}
         <button
           class="orden-glyph small"
           title="Remove"
@@ -76,6 +81,13 @@
     border-radius: var(--radius-sm);
     background: var(--ink-wash);
     transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .when {
+    margin: 0;
+    padding-inline-start: 4px;
+    color: var(--faint);
+    font-size: var(--text-xs);
   }
 
   .queued.dragging {

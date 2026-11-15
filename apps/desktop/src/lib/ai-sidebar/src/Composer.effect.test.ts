@@ -9,12 +9,13 @@ const panel = vi.hoisted(() => ({
   head: null,
   heads: [] as unknown[],
   busy: false,
+  canSteer: false,
   changing: true,
   thread: null,
   provider: { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' },
   model: null,
   root: null,
-  queue: [],
+  queue: [] as { id: string; text: string }[],
   focusAsked: 0,
   trouble: null as string | null,
   taken: vi.fn(() => (panel.text = '')),
@@ -72,6 +73,10 @@ beforeEach(() => {
   panel.heads = []
   panel.trouble = null
   panel.steer.mockClear()
+  panel.text = ''
+  panel.busy = false
+  panel.canSteer = false
+  panel.queue = []
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -171,6 +176,43 @@ test('Ctrl+Enter with nothing running runs a typed command', async () => {
   await vi.waitFor(() => expect(ran).toEqual(['export:to the desk']))
   expect(panel.steer).not.toHaveBeenCalled()
   expect(panel.submit).not.toHaveBeenCalled()
+})
+
+test('Ctrl+Enter into a running answer that cannot take words queues them as Enter does (#2046)', async () => {
+  panel.busy = true
+  panel.text = 'and shorter'
+  const field = composer()
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+
+  await vi.waitFor(() => expect(panel.submit).toHaveBeenCalled())
+  expect(panel.steer).not.toHaveBeenCalled()
+})
+
+test('Ctrl+Enter into a running answer that takes words steers it', () => {
+  panel.busy = true
+  panel.canSteer = true
+  panel.text = 'and shorter'
+  const field = composer()
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+
+  expect(panel.steer).toHaveBeenCalled()
+  expect(panel.submit).not.toHaveBeenCalled()
+})
+
+test('a queued message says it waits for the reply, and offers steering only where it can go in', () => {
+  panel.busy = true
+  panel.queue = [{ id: 'q', text: 'and shorter' }]
+  composer()
+
+  expect(target.textContent).toContain('Sends when the current reply finishes')
+  expect(target.querySelector('[aria-label="Send into the running answer"]')).toBeNull()
+  close?.()
+
+  panel.canSteer = true
+  composer()
+  expect(target.querySelector('[aria-label="Send into the running answer"]')).not.toBeNull()
 })
 
 function pasted(field: HTMLTextAreaElement, files: File[], text = '') {
