@@ -119,6 +119,7 @@ export const APP_FOLDERS = [
   'documents',
   'double-tap',
   'downloads',
+  'editor-menu',
   'even',
   'export',
   'export-formats',

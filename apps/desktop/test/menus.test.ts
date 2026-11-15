@@ -97,7 +97,7 @@ describe('the path a note sits at', () => {
     ...componentSources(),
     read('lib/row-menu/src/api.ts'),
     read('lib/commands/src/commands.ts'),
-    read('lib/app-menu.ts'),
+    read('lib/native-menu/src/app-menu.ts'),
   ].join('\n')
 
   test('is not a row in any menu, on any device', () => {
@@ -114,7 +114,7 @@ describe('making a folder', () => {
     read('lib/row-menu/src/row-menu.ts'),
     read('lib/row-menu/src/api.ts'),
     read('lib/commands/src/commands.ts'),
-    read('lib/app-menu.ts'),
+    read('lib/native-menu/src/app-menu.ts'),
     read('lib/shortcuts/src/registry.ts')
       .split('\n')
       .filter((line) => !line.includes("['explorer."))

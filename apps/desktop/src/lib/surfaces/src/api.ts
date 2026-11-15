@@ -1,6 +1,5 @@
 import type { Component } from 'svelte'
 import {
-  commandRowsLoaded,
   type FindBarProps,
   type OpenHow,
   type SheetId,
@@ -124,11 +123,6 @@ export const crashAskDue = (): boolean =>
   storedText(CRASHES_ASKED) === null && storedText(CRASH_REPORTS) === null
 
 export const crashAsk = latched(from('crash-ask') as Shown)
-
-export const appMenuRows = held(async () => {
-  const [{ appMenu }] = await Promise.all([import('../../app-menu'), commandRowsLoaded()])
-  return { default: appMenu }
-})
 
 export const undoToastNotice = latched(from('undo-toast') as Shown)
 export const spaceSound = latched(() => import('../../SpaceSound.svelte'))

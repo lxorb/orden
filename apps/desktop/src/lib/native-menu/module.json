@@ -13,7 +13,17 @@
     "ui-kit",
     "usage",
     "workspace",
-    "surfaces"
+    "commands",
+    "export-formats",
+    "markdown",
+    "protect",
+    "tab-fill",
+    "ui-controls",
+    "updates"
   ],
-  "pending": ["apps/desktop/src/lib/fullscreen.svelte.ts"]
+  "pending": [
+    "apps/desktop/src/lib/fullscreen.svelte.ts",
+    "apps/desktop/src/lib/links.ts",
+    "apps/desktop/src/lib/open-out.ts"
+  ]
 }
