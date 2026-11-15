@@ -88,7 +88,7 @@ test('with no older store at all, no older tab is waited for', async () => {
   older.close()
 })
 
-test('a tab left on the older store by a carry that did not finish keeps it from the next tab', async () => {
+test('a tab left on the older store by a carry that did not finish keeps it, and the next tab or worker joins it there', async () => {
   await kept('former-e', 'note', 'written before', 2)
   const holding = await new Promise<IDBDatabase>((resolve) => {
     const request = indexedDB.open('new-e', 1)
@@ -101,6 +101,23 @@ test('a tab left on the older store by a carry that did not finish keeps it from
   holding.close()
 
   const later = await freshTab()
-  await later.databaseName('former-e', 'new-e', 'former-e')
+  expect(await later.databaseName('former-e', 'new-e', 'former-e')).toBe('former-e')
   expect(await names()).toContain('former-e')
+})
+
+test('a tab staying on one older store does not keep a new tab on another older store', async () => {
+  await kept('former-g', 'note', 'written before', 2)
+  const holding = await new Promise<IDBDatabase>((resolve) => {
+    const request = indexedDB.open('new-g', 1)
+    request.onsuccess = () => resolve(request.result)
+  })
+  holding.onversionchange = () => undefined
+  const first = await freshTab()
+  expect(await first.databaseName('former-g', 'new-g', 'shared-g')).toBe('former-g')
+  holding.close()
+
+  await kept('former-h', 'note', 'written before')
+  await kept('new-h', 'note', 'written before')
+  const later = await freshTab()
+  expect(await later.databaseName('former-h', 'new-h', 'shared-g')).toBe('new-h')
 })

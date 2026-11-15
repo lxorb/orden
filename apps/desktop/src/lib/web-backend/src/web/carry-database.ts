@@ -6,28 +6,35 @@ const ANSWERED_WITHIN = 400
 
 const me = crypto.randomUUID()
 
-let alive: Promise<boolean> | null = null
+type Heard = 'nobody' | 'older' | 'staying'
+
+const alive = new Map<string, Promise<Heard>>()
+const staying = new Set<string>()
 let answering: BroadcastChannel | null = null
 
-function formerTabOpen(channel: string): Promise<boolean> {
-  return (alive ??= askedFormer(channel))
+function formerTabOpen(channel: string, from: string): Promise<Heard> {
+  const asked = alive.get(from) ?? askedFormer(channel, from)
+  alive.set(from, asked)
+  return asked
 }
 
-function askedFormer(channel: string): Promise<boolean> {
-  if (typeof BroadcastChannel !== 'function') return Promise.resolve(false)
+function askedFormer(channel: string, from: string): Promise<Heard> {
+  if (typeof BroadcastChannel !== 'function') return Promise.resolve('nobody')
   return new Promise((resolve) => {
     const line = new BroadcastChannel(channel)
-    const done = (open: boolean) => {
+    const done = (open: Heard) => {
       clearTimeout(timer)
       line.postMessage({ kind: 'bye', from: me })
       line.close()
       resolve(open)
     }
-    const timer = setTimeout(() => done(false), ANSWERED_WITHIN)
+    const timer = setTimeout(() => done('nobody'), ANSWERED_WITHIN)
     line.onmessage = (event: MessageEvent<unknown>) => {
-      const said = event.data as { kind?: unknown; from?: unknown } | null
+      const said = event.data as { kind?: unknown; from?: unknown; stays?: unknown } | null
       if (said?.kind === 'hello' || said?.kind === 'bye') return
-      if (typeof said?.from === 'string' && said.from !== me) done(true)
+      if (typeof said?.from === 'string' && said.from !== me) {
+        done(Array.isArray(said.stays) && said.stays.includes(from) ? 'staying' : 'older')
+      }
     }
     line.postMessage({ kind: 'hello', from: me })
   })
@@ -41,24 +48,29 @@ export async function databaseName(
   if (from === to || typeof indexedDB === 'undefined') return to
   if (!(await existing(from).then(closed))) return to
   const channel = `${former}:windows`
-  if (await formerTabOpen(channel)) {
-    if (await existing(to).then(closed)) return to
-    answerAs(channel)
+  const heard = await formerTabOpen(channel, from)
+  if (heard !== 'nobody') {
+    if (heard === 'older' && (await existing(to).then(closed))) return to
+    answerAs(channel, from)
     return from
   }
-  const carried = await carryDatabase(from, to, () => askedFormer(channel)).catch(() => false)
+  const inUse = () => askedFormer(channel, from).then((now) => now !== 'nobody')
+  const carried = await carryDatabase(from, to, inUse).catch(() => false)
   if (carried) return to
-  answerAs(channel)
+  answerAs(channel, from)
   return from
 }
 
-function answerAs(channel: string): void {
+function answerAs(channel: string, from: string): void {
+  staying.add(from)
   if (answering || typeof BroadcastChannel !== 'function') return
   const line = new BroadcastChannel(channel)
   answering = line
   line.onmessage = (event: MessageEvent<unknown>) => {
     const said = event.data as { kind?: unknown; from?: unknown } | null
-    if (said?.kind === 'hello' && said.from !== me) line.postMessage({ kind: 'here', from: me })
+    if (said?.kind === 'hello' && said.from !== me) {
+      line.postMessage({ kind: 'here', from: me, stays: [...staying] })
+    }
   }
 }
 
