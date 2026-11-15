@@ -10,14 +10,10 @@ function spanText(span: Span): string {
   return span.text
 }
 
-function linked(span: Span): string | undefined {
-  return span.picture === undefined && span.note === undefined ? span.href : undefined
-}
-
 function textOf(spans: readonly Span[]): string {
   const runs: { href: string | undefined; words: string }[] = []
   for (const span of spans) {
-    const href = linked(span)
+    const href = span.href
     const last = runs.at(-1)
     if (href !== undefined && last?.href === href) last.words += spanText(span)
     else runs.push({ href, words: spanText(span) })
