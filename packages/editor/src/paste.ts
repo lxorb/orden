@@ -176,6 +176,13 @@ export const pasteHere: Command = (view) => {
       const { linkedPaste, placed, plainly } = await loadLineCommands()
       if (land((state) => linkedPaste(state, clipboard.text))) return
 
+      const inCodeNow = land((state) =>
+        state.selection.ranges.some((range) => rangeInCode(state, range))
+          ? inserted(state, clipboard.text)
+          : null,
+      )
+      if (inCodeNow) return
+
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       if (markdown) land((state) => placed(state, markdown))
       else if (clipboard.text) land((state) => plainly(state, clipboard.text))
