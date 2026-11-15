@@ -1609,3 +1609,48 @@ describe('a note that is protected and shut', () => {
     }
   })
 })
+
+describe('a move that leaves a bare link pointing at a namesake', () => {
+  test('a note moved away from its linker gets a path that still reaches it', async () => {
+    await space({ 'Plan.md': '# Plan', 'X/Plan.md': '# X', 'One.md': 'see [[Plan]]\n' })
+    notes['Y/Plan.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+
+    await links.retarget(at('Plan.md'), at('Y/Plan.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('Plan.md'), at('Y/Plan.md'))
+
+    expect(notes['One.md']).toBe('see [[Y/Plan]]\n')
+    expect(links.backlinks(at('Y/Plan.md')).map((one) => one.path)).toEqual(['One.md'])
+  })
+
+  test('a folder renamed past a namesake gets a path that still reaches its note', async () => {
+    await space({ 'A/Plan.md': '# A', 'Z/Plan.md': '# Z', 'One.md': 'see [[Plan]]\n' })
+    notes['Zz/Plan.md'] = notes['A/Plan.md'] ?? ''
+    delete notes['A/Plan.md']
+
+    await links.retarget(at('A'), at('Zz'), ROOT, () => null, { moved: true })
+
+    expect(notes['One.md']).toBe('see [[Zz/Plan]]\n')
+  })
+
+  test('a note moved beside a namesake of what it links to keeps reaching the old one', async () => {
+    await space({ 'Other.md': '# Other', 'X/Other.md': '# X', 'Plan.md': 'see [[Other]]\n' })
+    notes['X/Plan.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+
+    await links.retarget(at('Plan.md'), at('X/Plan.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['X/Plan.md']).toBe('see [[/Other]]\n')
+  })
+
+  test('a link that still reaches its note after the move is left as written', async () => {
+    await space({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]\n', 'Two.md': '[[Other]]\n' })
+    notes['Y/Plan.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+
+    expect(
+      await links.retarget(at('Plan.md'), at('Y/Plan.md'), ROOT, () => null, { moved: true }),
+    ).toBe(0)
+    expect(notes['One.md']).toBe('see [[Plan]]\n')
+  })
+})

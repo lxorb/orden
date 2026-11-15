@@ -1180,10 +1180,18 @@ class Links {
     const { moved = false, only, touched: told } = how
 
     const name = comparable(nameOf(was))
-    const named = (link: { target: string }) =>
-      !!link.target && comparable(link.target).split('/').includes(name)
     const moving = (path: string) =>
       path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
+    const movingNames = new Set(
+      [...notes.map((one) => one.path), ...files]
+        .filter((path) => moving(path) !== null)
+        .map((path) => comparable(nameOf(path))),
+    )
+    const named = (link: { target: string }) => {
+      if (!link.target) return false
+      const parts = comparable(link.target).split('/')
+      return parts.includes(name) || movingNames.has(parts[parts.length - 1])
+    }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
     const reaching =
@@ -1236,10 +1244,14 @@ class Links {
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
         if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) return null
         const there = moving(found) ?? found
-        if (there === found && !(shifted && link.kind === 'markdown')) return null
+        if (there === found && !shifted) return null
+        if (link.kind === 'wikilink') {
+          const reaches = reaching(source, there)
+          return reaches(link.target) ? null : { path: there, reaches }
+        }
         const kept = nameOf(there) === nameOf(found)
         if (stillReaches(source, link, found, there, !shifted, kept)) return null
-        return link.kind === 'wikilink' ? { path: there, reaches: reaching(source, there) } : there
+        return there
       }
 
       const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
@@ -1247,9 +1259,7 @@ class Links {
       const card = rewrite?.cardsMoving(note.path, moving) ?? null
       const worth = card
         ? note.links.some((link) => card(link.target) !== null)
-        : note.links.some(
-            (link) => (named(link) || (shifted && link.kind === 'markdown')) && to(link) !== null,
-          )
+        : note.links.some((link) => (named(link) || shifted) && to(link) !== null)
       if (!worth) continue
 
       const absolute = insideSpace(root, note.path)
