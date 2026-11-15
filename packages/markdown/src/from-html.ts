@@ -226,6 +226,8 @@ function emptyHeading(table: HTMLTableElement): string {
   return `|${'  |'.repeat(across)}\n|${' --- |'.repeat(across)}`
 }
 
+const LISTS = new Set(['UL', 'OL'])
+
 const OWNS_A_LINE = new Set(['P', 'DIV', 'DD', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'SECTION', 'BODY'])
 
 const HEADING = /^H[1-6]$/
@@ -307,10 +309,10 @@ function indexer(): (parent: Element | null, node: Node) => number {
       places = new Map()
       const kids = parent.children
 
-      for (let at = 0; at < kids.length; at++) {
+      let items = 0
+      for (const kid of Array.from(kids)) {
         work.walked += 1
-        const kid = kids[at]
-        if (kid) places.set(kid, at)
+        if (kid.nodeName === 'LI') places.set(kid, items++)
       }
 
       counted.set(parent, places)
@@ -614,6 +616,25 @@ function converter(options: FromHtmlOptions): TurndownService {
 
       const ends = node.nextSibling && !body.endsWith('\n') ? '\n' : ''
       return `${marker} ${body}${ends}`
+    },
+  })
+
+  service.addRule('strayList', {
+    filter: (node) => LISTS.has(node.nodeName) && LISTS.has(node.parentNode?.nodeName ?? ''),
+    replacement: (content, node, settings) => {
+      const parent = node.parentNode as Element
+      let item = node.previousSibling
+      while (item && item.nodeName !== 'LI') item = item.previousSibling
+      if (!item) return `\n\n${content}\n\n`
+
+      const from = Number(parent.getAttribute('start') ?? 1) || 1
+      const marker =
+        parent.nodeName === 'OL'
+          ? `${from + indexIn(parent, item)}.`
+          : (settings.bulletListMarker ?? '-')
+      const indent = ' '.repeat(marker.length + 1)
+      const lines = content.replace(/^\n+|\n+$/g, '').replace(/\n/g, `\n${indent}`)
+      return `${indent}${lines}\n`
     },
   })
 
