@@ -629,11 +629,25 @@ class Workspace {
 
   restored = $state(false)
 
+  private restoring = false
+  private spacesHeard: () => void = () => undefined
+  private readonly spacesRead = new Promise<void>((heard) => {
+    this.spacesHeard = heard
+  })
+
+  async spacesKnown(): Promise<void> {
+    if (this.restored) return
+    if (this.restoring) await this.spacesRead
+    else await this.loadSpaces()
+  }
+
   async restore() {
     this.sessionKey = null
+    this.restoring = true
     try {
       await this.readSitting()
     } finally {
+      this.spacesHeard()
       this.restored = true
       ahead.forgetAhead()
       if (this.settingsAsked) {
@@ -671,6 +685,7 @@ class Workspace {
 
     if (!state) {
       await this.loadSpaces()
+      this.spacesHeard()
       if (this.activeSpaceId) await this.loadTree()
 
       await startup.shown()
@@ -699,6 +714,7 @@ class Workspace {
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
 
     await this.loadSpaces()
+    this.spacesHeard()
 
     if (this.activeSpaceId) await this.loadTree()
 
@@ -1368,8 +1384,7 @@ class Workspace {
     const here = (this.spaces.find((one) => one.id === home) ?? this.activeSpace)?.root
     if (here !== undefined) return here
 
-    const made = await this.addSpace('Notes')
-    return made?.root ?? null
+    return await this.adoptSpace('Notes')
   }
 
   spaceOf(note: NoteDoc): string | null {

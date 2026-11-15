@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
 import { identifier, samePath, invoke, windows } from '../../platform/src/api'
-import { leftGone, leftMoved } from '../../left-spaces/src/api'
+import { leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 import { services } from './services'
@@ -13,9 +13,11 @@ export async function adoptSpace(
   const existing = fresh ? undefined : ws.spaces.find((space) => space.name === name)
   if (existing) return existing.root
 
-  const created = await invoke<{ name: string; path: string }>('create_space', {
-    name: name.trim(),
-  }).catch(() => null)
+  const created =
+    (fresh ? null : await keptFolder(name.trim())) ??
+    (await invoke<{ name: string; path: string }>('create_space', {
+      name: name.trim(),
+    }).catch(() => null))
 
   if (!created) return null
 
@@ -29,6 +31,12 @@ export async function adoptSpace(
   }
 
   return created.path
+}
+
+async function keptFolder(name: string): Promise<{ name: string; path: string } | null> {
+  const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)
+  const who = account.user?.id ?? null
+  return listed?.find((one) => one.name === name && !leftByAnother(one.path, who)) ?? null
 }
 
 export async function addSpace(ws: HoldsSpaces, name: string) {

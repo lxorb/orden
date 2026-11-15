@@ -6,6 +6,7 @@ let listed: { name: string; path: string }[] = []
 let refuses = false
 let reading: (() => void) | null = null
 let filtering: (() => void) | null = null
+let theirs = new Set<string>()
 const who = vi.hoisted(() => ({ user: null as { id: string } | null }))
 
 vi.mock('../../platform/src/tauri', () => ({
@@ -20,7 +21,16 @@ vi.mock('../../platform/src/tauri', () => ({
     }
     if (refuses) return Promise.reject(new Error('the disk said no'))
 
-    if (command === 'create_space' || command === 'rename_space') {
+    if (command === 'create_space') {
+      const wanted = typeof args?.name === 'string' ? args.name : ''
+      let name = wanted
+      for (let count = 2; listed.some((one) => one.name === name); count += 1) {
+        name = `${wanted} ${count}`
+      }
+      return Promise.resolve({ name, path: `/spaces/${name}` })
+    }
+
+    if (command === 'rename_space') {
       const name = typeof args?.name === 'string' ? args.name : ''
       return Promise.resolve({ name, path: `/spaces/${name}` })
     }
@@ -40,16 +50,16 @@ vi.mock('../../accounts/src/account.svelte', () => ({
 
 vi.mock('../../left-spaces/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../left-spaces/src/api')>()),
-  leftByAnother: () => {
+  leftByAnother: (root: string) => {
     const now = filtering
     filtering = null
     now?.()
-    return false
+    return theirs.has(root)
   },
 }))
 
 const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
-const { deleteSpace, renameSpace } = await import('./space-changes')
+const { adoptSpace, deleteSpace, renameSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('./workspace.svelte').Space
 
@@ -91,6 +101,7 @@ beforeEach(() => {
   refuses = false
   reading = null
   filtering = null
+  theirs = new Set()
   who.user = null
 })
 
@@ -293,5 +304,33 @@ describe('a space deleted', () => {
     await deleteSpace(ws, 'w')
 
     expect(ws.spaces.map((one) => one.id)).toEqual(['w', 'h'])
+  })
+})
+
+describe('a space of the account taken in', () => {
+  test('lands in the folder of its name the window has not listed yet, not in a copy beside it', async () => {
+    const { ws } = store([])
+    listed = [{ name: 'Notes', path: '/spaces/Notes' }]
+
+    const root = await adoptSpace(ws, 'Notes')
+
+    expect(root).toBe('/spaces/Notes')
+    expect(sent.map((one) => one.command)).not.toContain('create_space')
+    expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Notes'])
+  })
+
+  test('but not in one another account left on this device', async () => {
+    const { ws } = store([])
+    listed = [{ name: 'Notes', path: '/spaces/Notes' }]
+    theirs = new Set(['/spaces/Notes'])
+
+    expect(await adoptSpace(ws, 'Notes')).toBe('/spaces/Notes 2')
+  })
+
+  test('and one asked for beside a space of the same name gets a folder of its own', async () => {
+    const { ws } = store([])
+    listed = [{ name: 'Notes', path: '/spaces/Notes' }]
+
+    expect(await adoptSpace(ws, 'Notes', true)).toBe('/spaces/Notes 2')
   })
 })

@@ -68,6 +68,7 @@ vi.mock('../../workspace/src/api', () => ({
     get spaces() {
       return world.local
     },
+    spacesKnown: () => Promise.resolve(),
     loadSpaces: () => Promise.resolve(),
     deleteSpace: () => Promise.resolve(),
     adoptSpace: (name: string) => {

@@ -63,7 +63,7 @@ async function iconSent(token: string, who: string, spaceId: string): Promise<bo
 }
 
 async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
-  if (!workspace.restored) await workspace.loadSpaces()
+  await workspace.spacesKnown()
   const seeded = seedSpaceRoot()
   const who = account.user?.id ?? null
   const theirs = (root: string) => leftByAnother(root, who)

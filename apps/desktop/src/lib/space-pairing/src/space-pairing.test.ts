@@ -16,6 +16,7 @@ const world = vi.hoisted(() => ({
   adopted: [] as { name: string; fresh: boolean }[],
   restored: true,
   onDisk: [] as { id: string; name: string; root: string }[],
+  reading: null as Promise<void> | null,
 }))
 
 vi.mock('../../accounts/src/client', async (importOriginal) => {
@@ -89,6 +90,13 @@ vi.mock('../../workspace/src/api', () => ({
       }
       return Promise.resolve()
     },
+    spacesKnown: async () => {
+      if (world.restored) return
+      await world.reading
+      for (const one of world.onDisk) {
+        if (!world.spaces.some((space) => space.root === one.root)) world.spaces.push(one)
+      }
+    },
     deleteSpace: () => Promise.resolve(),
     adoptSpace: (name: string, fresh: boolean) => {
       world.adopted.push({ name, fresh })
@@ -152,6 +160,7 @@ beforeEach(() => {
   world.onMade = null
   world.restored = true
   world.onDisk = []
+  world.reading = null
 })
 
 describe('signing in on a device another account signed out of', () => {
@@ -197,6 +206,27 @@ describe('a round of pairing that starts before the window has read its spaces',
     expect(world.adopted).toEqual([])
     expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
     expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: false }])
+  })
+
+  test('waits for the window to read them, so a space made there meanwhile is paired, not copied', async () => {
+    world.restored = false
+    world.spaces = []
+    let read: () => void = () => undefined
+    world.reading = new Promise<void>((done) => {
+      read = done
+    })
+    signedIn('a', ['Notes'])
+    const { pairs, pairing: held } = pairing()
+
+    const round = pairSpaces('token-a', held)
+    await new Promise((done) => setTimeout(done, 0))
+    world.onDisk = [{ id: '1', name: 'Notes', root: '/Notes' }]
+    read()
+    await round
+
+    expect(world.adopted).toEqual([])
+    expect(world.spaces.map((one) => one.root)).toEqual(['/Notes'])
+    expect(pairs).toEqual([{ root: '/Notes', spaceId: 'a-Notes', shared: false }])
   })
 })
 
