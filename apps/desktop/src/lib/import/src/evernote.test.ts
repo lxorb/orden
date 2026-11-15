@@ -281,6 +281,50 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
     expect(noteAt(plan, 'Two.md')).toContain('![](assets/p.png)')
   })
 
+  test('an attachment is given the extension its type has, and keeps a long one of its own', async () => {
+    const kinds: [string, string][] = [
+      ['image/svg+xml', ''],
+      ['video/quicktime', ''],
+      ['audio/x-m4a', ''],
+      ['application/vnd.ms-excel.sheet.macroEnabled.12', ''],
+      ['application/octet-stream', 'Budget.numbers'],
+      ['application/pdf', 'Version 1.2'],
+    ]
+    const resources = kinds.map(([mime, name], at) => {
+      const bytes = Uint8Array.from([at, 7, 7])
+      const named = name
+        ? `<resource-attributes><file-name>${name}</file-name></resource-attributes>`
+        : ''
+      return {
+        tag: `<en-media type="${mime}" hash="${md5(bytes)}"/>`,
+        xml: `<resource><data encoding="base64">${Buffer.from(bytes).toString('base64')}</data><mime>${mime}</mime>${named}</resource>`,
+        hash: md5(bytes).slice(0, 16),
+      }
+    })
+    const plan = await readEvernote([
+      file(
+        'A.enex',
+        enex(
+          bodied(
+            'Kinds',
+            resources.map((one) => one.tag).join(''),
+            resources.map((one) => one.xml).join(''),
+          ),
+        ),
+      ),
+    ])
+
+    const [svg, mov, m4a, sheet] = resources.map((one) => one.hash)
+    expect(plan.files.filter((one) => one.kind === 'file').map((one) => one.path)).toEqual([
+      `assets/${svg}.svg`,
+      `assets/${mov}.mov`,
+      `assets/${m4a}.m4a`,
+      `assets/${sheet}.bin`,
+      'assets/Budget.numbers',
+      'assets/Version 1.2.pdf',
+    ])
+  })
+
   test('a file name that is a whole Windows path is named after the file', async () => {
     const plan = await readEvernote([
       file(

@@ -1,4 +1,4 @@
-import { fromBase64 } from '../../platform/src/api'
+import { fromBase64, MIME_TYPES } from '../../platform/src/api'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 import { taskLine } from '@orden/markdown/task-edits'
 import { NO_PRIORITY, plainTaskWords, type Remind } from '@orden/markdown/task-line'
@@ -13,16 +13,28 @@ import { closingOf, element, elements, plainText, textOf, textsOf } from './xml'
 
 const ASSETS = 'assets'
 
-const EXTENSIONS: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/gif': 'gif',
-  'image/webp': 'webp',
-  'application/pdf': 'pdf',
-  'audio/mpeg': 'mp3',
-  'audio/mp4': 'm4a',
-  'video/mp4': 'mp4',
+const EXTENSIONS: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(
+    Object.entries(MIME_TYPES)
+      .reverse()
+      .map(([extension, mime]) => [mime, extension]),
+  ),
+  'audio/x-m4a': 'm4a',
+  'audio/m4a': 'm4a',
+  'audio/x-wav': 'wav',
+  'audio/wave': 'wav',
+  'audio/amr': 'amr',
   'text/plain': 'txt',
+  'text/html': 'html',
+  'text/csv': 'csv',
+  'application/rtf': 'rtf',
+  'application/zip': 'zip',
+  'application/msword': 'doc',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
 }
 
 interface Attachment {
@@ -152,9 +164,10 @@ function fileName(said: string | null, mime: string, hash: string): string {
   const whole = said?.trim() ?? ''
   const own = /^(?:[A-Za-z]:)?[\\/]/.test(whole) ? (whole.split(/[\\/]/).pop() ?? '') : whole
   const named = own ? safeName(own) : ''
-  if (named && /\.[A-Za-z0-9]{1,5}$/.test(named)) return named
+  if (named && /\.[A-Za-z0-9]*[A-Za-z][A-Za-z0-9]*$/.test(named)) return named
 
-  const extension = EXTENSIONS[mime] ?? mime.split('/')[1]?.replace(/[^a-z0-9]/g, '') ?? 'bin'
+  const subtype = mime.split('/')[1]?.replace(/^x-/, '') ?? ''
+  const extension = EXTENSIONS[mime] ?? (/^[a-z0-9]{1,8}$/.test(subtype) ? subtype : 'bin')
   return named ? `${named}.${extension}` : `${hash.slice(0, 16)}.${extension}`
 }
 
