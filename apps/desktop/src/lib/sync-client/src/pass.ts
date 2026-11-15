@@ -605,6 +605,7 @@ async function mergeDays(core: Core, space: SpaceState) {
 
     const theirs = await core.doc(into)
     if (!theirs || !target || core.hasPending(into) || core.isHeld(into)) continue
+    changes.push(...(await handedOver(core, space, mine, target)))
     const base = create.mergeable?.text ?? ''
     const remote = theirs.text()
     if (target.parent === null && carriedOwn(target.name)) {
@@ -650,17 +651,32 @@ async function mergeDays(core: Core, space: SpaceState) {
       }
     }
 
-    const own = space.entries.get(mine)
-    if (own?.local_path && !core.pinned.has(mine)) {
-      const full = core.world.join(space.row.root, own.local_path)
-      if (await core.world.disk.exists(full)) await core.world.disk.remove(full, 'file')
-    }
-    space.entries.delete(mine)
-    changes.push(remove('entries', mine), ...core.forgetChanges(mine))
     done()
     space.changed()
     await core.commit(changes)
   }
+}
+
+async function handedOver(
+  core: Core,
+  space: SpaceState,
+  mine: string,
+  target: EntryRow,
+): Promise<Change[]> {
+  const own = space.entries.get(mine)
+  const path = own?.local_path
+  const open = core.pinned.has(mine)
+  if (path && !open) {
+    const full = core.world.join(space.row.root, path)
+    if (await core.world.disk.exists(full)) await core.world.disk.remove(full, 'file')
+  }
+  space.entries.delete(mine)
+  const changes = [remove('entries', mine), ...core.forgetChanges(mine)]
+  if (path && open && !target.local_path) {
+    target.local_path = path
+    changes.push(...core.entryChanges([target]))
+  }
+  return changes
 }
 
 function pushable(core: Core, entry: EntryRow): boolean {

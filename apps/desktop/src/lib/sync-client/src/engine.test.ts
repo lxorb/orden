@@ -2098,3 +2098,51 @@ describe('a note another device renames', () => {
     expect(found.every((id) => id === PLAN)).toBe(true)
   })
 })
+
+describe('a note made here that the account already has', () => {
+  async function madeTwice(here: string, open = false) {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd0')
+    await there.disk.write(`${ROOT}/.Inbox.md`, '- [ ] milk\n')
+    await there.engine.created(`${ROOT}/.Inbox.md`, false, '- [ ] milk\n')
+    await there.engine.pass(SPACE)
+
+    const made = await device(account, 'd1')
+    await made.disk.write(`${ROOT}/.Inbox.md`, here)
+    await made.engine.created(`${ROOT}/.Inbox.md`, false, here)
+    const mine = made.engine.entryAt(`${ROOT}/.Inbox.md`)
+    if (open && mine) await made.engine.hold(mine.id)
+    await made.engine.pass(SPACE)
+    return made
+  }
+
+  test('is merged into the account’s note and stays on disk with both sides', async () => {
+    const here = await madeTwice('- [ ] eggs\n')
+
+    const kept = here.disk.files.get(`${ROOT}/.Inbox.md`)
+    expect(kept).toContain('milk')
+    expect(kept).toContain('eggs')
+  })
+
+  test('open in an editor, is the account’s note on disk afterwards, saved into it and not made again', async () => {
+    const here = await madeTwice('- [ ] eggs\n', true)
+    const placed = here.engine.entryAt(`${ROOT}/.Inbox.md`)
+
+    await here.engine.saved(`${ROOT}/.Inbox.md`, '- [ ] eggs\n- [ ] bread\n')
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const inboxes = (await here.account.view()).entries.filter((one) =>
+      one.name.startsWith('.Inbox'),
+    )
+    expect(inboxes).toHaveLength(1)
+    expect(placed?.id).toBe(inboxes[0]?.id)
+  })
+
+  test('stays on disk when the merge changes nothing on the account', async () => {
+    const here = await madeTwice('- [ ] milk\n')
+    await here.engine.pass(SPACE)
+
+    expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toContain('milk')
+  })
+})
