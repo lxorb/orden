@@ -25,8 +25,6 @@ export function linkAsk(press: Press): LinkAsk {
 
 import type { OpenHow } from '@orden/contracts'
 
-export type { OpenHow }
-
 export function howFor(ask: TabAsk, plain: OpenHow = {}): OpenHow {
   if (ask === 'plain') return plain
   return ask === 'behind' ? { activate: false, beside: true } : { beside: true }

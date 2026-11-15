@@ -34,6 +34,9 @@
     workspace,
   } from '../../workspace/src/api'
   import {
+    howFor,
+    middleOpens,
+    tabAsk,
     carried,
     carriedNothing,
     carry,
@@ -50,7 +53,6 @@
     viewport,
   } from '../../ui-kit/src/api'
   import NameField from './NameField.svelte'
-  import { howFor, middleOpens, tabAsk } from '../../new-tab'
   import { extensionOf } from '../../platform/src/api'
   import { rowName } from '../../platform/src/api'
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'

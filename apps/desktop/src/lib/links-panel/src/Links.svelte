@@ -1,15 +1,14 @@
 <script lang="ts">
   import type { Component } from 'svelte'
-  import { surfaceLoad } from '@orden/contracts'
+  import { surfaceLoad, type OpenHow } from '@orden/contracts'
   import { neighbourhood, type NoteGraph, without } from '../../graph/src/api'
   import { account } from '../../accounts/src/api'
   import { chatsOn } from '../../gates/src/api'
   import { graphSurface } from '../../surfaces/src/api'
-  import { held } from '../../ui-kit/src/api'
+  import { howFor, tabAsk, held } from '../../ui-kit/src/api'
   import { links, type Outgoing, type Reference } from '../../link-index/src/api'
   import { insideSpace } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
-  import { howFor, type OpenHow, tabAsk } from '../../new-tab'
   import HitList from './HitList.svelte'
 
   const {

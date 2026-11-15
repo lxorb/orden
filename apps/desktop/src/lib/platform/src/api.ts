@@ -135,3 +135,5 @@ export const droppedPaths = async (files: readonly File[]): Promise<string[]> =>
   (await import('./dropped-paths')).droppedPaths(files)
 export { imagePath, imageUrl } from './images'
 export { takeKeyboard } from './take-keyboard'
+export { escapeLeaves, fullscreen } from './fullscreen.svelte'
+export { isPlugin, markPlugin } from './plugin'

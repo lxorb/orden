@@ -2,7 +2,8 @@ import { expect, test, vi } from 'vitest'
 
 const left = vi.hoisted(() => ({ times: 0 }))
 
-vi.mock('../../fullscreen.svelte', () => ({
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/api')>()),
   fullscreen: {
     leave: () => {
       left.times += 1

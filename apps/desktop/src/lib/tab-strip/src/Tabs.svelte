@@ -2,6 +2,8 @@
   import { webPages } from '@orden/contracts'
   import { droppedAddress } from '@orden/scan/web-address'
   import {
+    middleOpens,
+    tabAsk,
     carried,
     carriedMark,
     Cross,
@@ -26,7 +28,6 @@
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from '../../agent-marks.svelte'
   import { chrome } from '../../theme/src/api'
-  import { middleOpens, tabAsk } from '../../new-tab'
   import { rooms } from '../../collab/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { privateMark, syncMark } from '../../surfaces/src/api'

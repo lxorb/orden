@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fullscreen } from '../../fullscreen.svelte'
+  import { fullscreen } from '../../platform/src/api'
 </script>
 
 <button

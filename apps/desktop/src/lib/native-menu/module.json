@@ -21,9 +21,5 @@
     "ui-controls",
     "updates"
   ],
-  "pending": [
-    "apps/desktop/src/lib/fullscreen.svelte.ts",
-    "apps/desktop/src/lib/links.ts",
-    "apps/desktop/src/lib/open-out.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/links.ts", "apps/desktop/src/lib/open-out.ts"]
 }

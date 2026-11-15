@@ -1,11 +1,14 @@
 <script lang="ts">
-  import type { Entry } from '@orden/contracts'
+  import type { Entry, OpenHow } from '@orden/contracts'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { standing } from './archive-plan'
   import { archiveList } from './archive-list.svelte'
   import { archive, unarchive } from './archiving'
   import {
+    howFor,
+    middleOpens,
+    tabAsk,
     carriedRows,
     DIVIDER,
     dropOver,
@@ -21,7 +24,6 @@
   import FileMark from '../../FileMark.svelte'
   import { folderNote, nestedIn } from '../../tree/src/api'
   import { dur, slide } from '../../platform/src/api'
-  import { howFor, middleOpens, type OpenHow, tabAsk } from '../../new-tab'
   import { rowName } from '../../platform/src/api'
   import { folderOf, insideSpace } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'

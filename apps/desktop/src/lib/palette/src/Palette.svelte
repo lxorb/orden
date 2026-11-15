@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    middleOpens,
     OUTLINE_MARK,
     GRAPH_MARK,
     SEARCH_MARK,
@@ -22,7 +23,6 @@
   import FileMark from '../../FileMark.svelte'
   import Icon from '../../Icon.svelte'
   import { links } from '../../link-index/src/api'
-  import { middleOpens } from '../../new-tab'
   import { AGENTS_NAME, shownName } from '../../platform/src/api'
   import { browse, RECENT } from './browse'
   import { candidates, headingCandidates, resting, rowKey, type World } from './kinds'

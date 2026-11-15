@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const asked: boolean[] = []
 let refuses = false
 
-vi.mock('./platform/src/tauri', async (actual) => ({
-  whenScreenGivenBack: (await actual<typeof import('./platform/src/tauri')>()).whenScreenGivenBack,
+vi.mock('./tauri', async (actual) => ({
+  whenScreenGivenBack: (await actual<typeof import('./tauri')>()).whenScreenGivenBack,
   isMobile: false,
   currentWindow: () =>
     Promise.resolve({
@@ -230,7 +230,7 @@ describe('what is kept of it', () => {
 })
 
 describe('the shell', () => {
-  const SOURCE = fileURLToPath(new URL('../', import.meta.url))
+  const SOURCE = fileURLToPath(new URL('../../../', import.meta.url))
   const app = readFileSync(`${SOURCE}App.svelte`, 'utf8')
   const wayOut = readFileSync(`${SOURCE}lib/surfaces/src/FullscreenLeave.svelte`, 'utf8')
   const menu = readFileSync(`${SOURCE}lib/native-menu/src/app-menu.ts`, 'utf8')

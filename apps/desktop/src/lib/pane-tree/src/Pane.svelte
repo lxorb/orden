@@ -56,7 +56,7 @@
   import { pull } from '../../pull.svelte'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { commandRowsLoaded, settingsWindow } from '@orden/contracts'
+  import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -85,7 +85,6 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { storeAttachment, storeImage } from '../../assets'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
-  import type { OpenHow } from '../../new-tab'
   import { usage } from '../../accounts/src/api'
 
   const { pane }: { pane: Pane } = $props()

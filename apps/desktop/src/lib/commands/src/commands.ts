@@ -86,9 +86,8 @@ import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
 import { agentMarks } from '../../agent-marks.svelte'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
-import { fullscreen } from '../../fullscreen.svelte'
-import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
 import {
+  fullscreen,
   closeWindow,
   internal,
   invoke,
@@ -98,6 +97,7 @@ import {
   isMarkdownPath,
   samePath,
 } from '../../platform/src/api'
+import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
 import { exportSpace } from '../../web-backend/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
 import { theme } from '../../theme/src/api'

@@ -35,7 +35,15 @@
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
   import { swipeOpens } from './lib/swipe-opens'
-  import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
+  import {
+    escapeLeaves,
+    fullscreen,
+    invoke,
+    isDesktop,
+    isNative,
+    platform,
+    storedText,
+  } from './lib/platform/src/api'
   import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
@@ -86,9 +94,7 @@
   import Titlebar from './lib/Titlebar.svelte'
   import { choices, modes, watchTextSize } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
-  import { invoke, isDesktop, isNative, platform } from './lib/platform/src/api'
   import { startup } from './lib/launch/src/api'
-  import { storedText } from './lib/platform/src/api'
   import { windowDocuments } from './lib/windows/src/api'
   import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/panes/src/api'

@@ -7,6 +7,7 @@ import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { type ITheme, Terminal } from '@xterm/xterm'
 import { chrome } from '../../theme/src/api'
 import {
+  tabAsk,
   dragged,
   isExplorerDrag,
   isFileDrop,
@@ -24,7 +25,6 @@ import { untrack } from 'svelte'
 import { copyText } from '../../ui-controls/src/api'
 import { droppedPaths, identifier, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
-import { tabAsk } from '../../new-tab'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'
 import { hostReached } from './remote/hosts'

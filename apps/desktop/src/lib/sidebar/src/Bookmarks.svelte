@@ -1,6 +1,10 @@
 <script lang="ts">
-  import type { Bookmark, Entry } from '@orden/contracts'
+  import type { Bookmark, Entry, OpenHow } from '@orden/contracts'
   import {
+    howFor,
+    middleOpens,
+    type TabAsk,
+    tabAsk,
     carried,
     carriedNothing,
     carriedRows,
@@ -28,7 +32,6 @@
   import { folderNote } from '../../tree/src/api'
   import { bookmarkEntry, iconEntries } from '../../row-menu/src/api'
   import { dur, scale } from '../../platform/src/api'
-  import { howFor, middleOpens, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
   import { rowName } from '../../platform/src/api'
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'

@@ -1,4 +1,4 @@
-import type { Bookmark, Entry } from '@orden/contracts'
+import type { Bookmark, Entry, OpenHow } from '@orden/contracts'
 import {
   carriedRows,
   draggedBookmark,
@@ -6,7 +6,6 @@ import {
   isTreeDrag,
   chorded,
 } from '../../ui-kit/src/api'
-import type { OpenHow } from '../../new-tab'
 import { moving } from './list-landing.svelte'
 import { workspace } from './workspace.svelte'
 import { canWriteAt } from '../../sharing/src/api'

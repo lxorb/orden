@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { type Press, tabAsk } from '../../new-tab'
+import { type Press, tabAsk } from '../../ui-kit/src/api'
 import { type LinkPlace, opensLink, placeFor, settingsPane, webHref } from './open-link'
 import { viewport } from '../../ui-kit/src/viewport.svelte'
 

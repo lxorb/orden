@@ -1,5 +1,5 @@
+import type { OpenHow } from '@orden/contracts'
 import { account } from '../../../accounts/src/api'
-import type { OpenHow } from '../../../new-tab'
 import { termText } from '@orden/online/term'
 import { nameOf, samePath } from '../../../platform/src/api'
 import type { Tab } from '../../../documents/src/api'

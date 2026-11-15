@@ -1,4 +1,4 @@
-import type { OpenHow } from '../../new-tab'
+import type { OpenHow } from '@orden/contracts'
 import { appsOn } from '../../gates/src/api'
 import { nameOf, samePath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'

@@ -10,8 +10,7 @@ import {
   SETTLE_MIN,
   settleOpen,
 } from './swipe'
-import { fullscreen } from './fullscreen.svelte'
-import { dur } from './platform/src/api'
+import { fullscreen, dur } from './platform/src/api'
 import { isThumbCarrying, viewport } from './ui-kit/src/api'
 import { drawer, rightDrawer } from './drawer.svelte'
 

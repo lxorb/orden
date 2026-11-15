@@ -1,7 +1,7 @@
+import type { OpenHow } from '@orden/contracts'
 import { chatLinkOf } from '@orden/chats/links'
 import { account } from '../../../accounts/src/api'
 import { busy } from '../../../ui-kit/src/api'
-import type { OpenHow } from '../../../new-tab'
 import { chatsOn } from '../../../gates/src/api'
 import { canWriteAt } from '../../../sharing/src/api'
 import { nameOf as fileName, samePath } from '../../../platform/src/api'
