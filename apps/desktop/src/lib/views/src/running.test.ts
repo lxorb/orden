@@ -306,3 +306,21 @@ describe('a note renamed or moved', () => {
     expect(before).toEqual([[]])
   })
 })
+
+describe('a note saved before its space is first read', () => {
+  test('is not looked at as a note just made, since what it was is not known yet', async () => {
+    await readHeld('/s/Shared/Tasks.base')
+    const row = { kind: 'note', space: 'Shared', path: 'Bugs/Old.md', note: { status: 'Done' } }
+    heardChange({
+      root: '/s/Shared',
+      space: 'Shared',
+      path: 'Bugs/Old.md',
+      removed: [],
+      added: [row] as never,
+      firstRead: true,
+    })
+    await new Promise((done) => setTimeout(done, 150))
+
+    expect(before).toEqual([])
+  })
+})

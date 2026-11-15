@@ -25,6 +25,7 @@ export interface RowsChange {
   removed: readonly Row[]
   added: readonly Row[]
   from?: { space: string; path: string; rows: readonly Row[] }
+  firstRead?: true
 }
 
 export type RowsListener = (change: RowsChange) => void
@@ -48,6 +49,7 @@ interface Held {
   files: Map<string, Row[]>
   flat: Row[] | null
   reading: boolean
+  known: boolean
   since: ((files: Map<string, Row[]>) => void)[]
   vault: boolean
 }
@@ -225,6 +227,7 @@ export class RowsStore {
       path,
       removed: before,
       added: after,
+      ...(held.known ? {} : { firstRead: true as const }),
     }
     this.tell(from ? { ...told, from } : told)
   }
@@ -236,6 +239,7 @@ export class RowsStore {
       files: new Map(),
       flat: null,
       reading: true,
+      known: false,
       since: [],
       vault: false,
     }
@@ -410,6 +414,7 @@ export class RowsStore {
     held.files = files
     held.flat = null
     held.reading = false
+    held.known = true
     this.tell({ root: held.root, space: held.name, path: null, removed, added: this.flat(held) })
   }
 

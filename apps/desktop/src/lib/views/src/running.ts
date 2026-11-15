@@ -179,7 +179,7 @@ async function run(space: string, path: string, removed: readonly Row[]) {
 }
 
 export function heardChange(change: RowsChange) {
-  if (change.path === null || !running()) return
+  if (change.path === null || change.firstRead || !running()) return
   if (!change.added.some((row) => row.kind === 'note')) return
   if (change.from) heard(change.space, change.path, change.from.rows, change.from)
   else {

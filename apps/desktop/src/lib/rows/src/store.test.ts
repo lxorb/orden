@@ -378,6 +378,28 @@ describe('the rows of every space', () => {
     ).toBe(true)
   })
 
+  test('a note saved before its space is first read says its rows before it are not known yet', async () => {
+    const { store, heard, answer, settled } = rig({
+      [`${WORK}/Bugs/Old.md`]: '---\nstatus: Done\n---\nmore\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+
+    store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nmore and more\n')
+    expect(heard.filter((one) => one.path === 'Bugs/Old.md').map((one) => one.firstRead)).toEqual([
+      true,
+    ])
+
+    answer(WORK)
+    await settled()
+    store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nless\n')
+    store.again(WORK)
+    store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nless again\n')
+    const told = heard.filter((one) => one.path === 'Bugs/Old.md').slice(1)
+    expect(told.map((one) => one.firstRead)).toEqual([undefined, undefined])
+    expect(told.every((one) => one.removed.length > 0)).toBe(true)
+  })
+
   test('a space renamed keeps its rows under its new name, and one gone takes them', async () => {
     const { store, heard, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Go\n' }, WORK)
     store.spacesAre([{ root: WORK, name: 'Work' }])
