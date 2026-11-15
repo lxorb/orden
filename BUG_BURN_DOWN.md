@@ -1111,3 +1111,14 @@ The reviews found many bugs in the fixes, folded above, and older ones with thei
 No Critical, High or Medium is wholly open. Left in part or as a limit: a typed reply with no window on macOS (B683); plain `<a href=/delete-account>` and a listener on a link's ancestor stay free, and a button that says nothing goes (B713, B717); a secret field shown and gone inside 70 ms between two scans (B702); an app killed in a pull batch can double those notes, up to `PULL_BATCH` (B705); a kill after the crate's write and before the session's persist writes old words back (B737); a fold's first stall in WebKit, cause not found (hunt-known 8); wayland deb's "a click on another tab" until `f645b7fb6` reaches this branch (hunt4-integ).
 Needs a decision: H1-TAURI2-17, H1-TAURI2-18, H4-SYNC-L3 (B770, B780); `write_note`'s whole-text replace (B773).
 Not run on platform or at all: B607, B620 to B622, B665, B666, B683 to B685; the windows rows of rounds 3 and 4 ran on the web build only.
+
+## Editor core
+
+Burn-down of 2026-11-15 on `claude/project-thread-19rxjr`, from `unstable`: markdown editing and
+rendering, undo/redo, paste and drop, embeds, front matter and autosave. Found by reading the code
+by area and by a round-trip fuzz of the editor's commands; each bug reproduced with a failing test
+first.
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| EC1 | Medium | Numbered list over a bullet list gave `1. - one`, bullet list over a numbered one gave `- 1. one`, and taking numbers off a nested list dropped its indent | Fixed | `toggleOrderedList` inserted at the line start and only knew numbers; `toggleBulletList` only knew bullets | Both replace whichever list marker is there and keep the indent and the task box; numbers count per indent | 4 `commands.test.ts` tests (failed before); the old test that expected `1. - one` corrected; editor suite passed |

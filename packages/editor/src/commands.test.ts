@@ -251,7 +251,24 @@ describe('line prefixes', () => {
   })
 
   test('converts a bullet list to an ordered one', () => {
-    expect(run(toggleOrderedList, '[- one\n- two]')).toBe('1. - one\n2. - two')
+    expect(run(toggleOrderedList, '[- one\n- two]')).toBe('1. one\n2. two')
+  })
+
+  test('converts an ordered list to a bullet one', () => {
+    expect(run(toggleBulletList, '[1. one\n2. two]')).toBe('- one\n- two')
+  })
+
+  test('keeps the task box and the nesting when a list changes kind', () => {
+    const doc = '- [ ] a\n  - b\n- c'
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('1. [ ] a\n  1. b\n2. c')
+    const back = '1. [x] a\n   1. b'
+    expect(apply(toggleBulletList, back, 0, back.length).doc).toBe('- [x] a\n   - b')
+  })
+
+  test('takes the numbers off a nested ordered list without the indent', () => {
+    const doc = '1. a\n   1. b\n2. c'
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('a\n   b\nc')
+    expect(at(toggleOrderedList, '1. [ ] a', 7)).toBe('a')
   })
 })
 

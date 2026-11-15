@@ -164,13 +164,13 @@ export function shiftHeading(delta: number): StateCommand {
   }
 }
 
-function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
+function toggleLinePrefix(prefix: string, pattern: RegExp, replaces = pattern): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
     const allPrefixed = lines.every((line) => pattern.test(line.text))
 
     const changes: ChangeSpec[] = lines.map((line) => {
-      const existing = pattern.exec(line.text)
+      const existing = (allPrefixed ? pattern : replaces).exec(line.text)
       const matched = existing?.[0] ?? ''
       const indent = matched.length - matched.trimStart().length
 
@@ -187,10 +187,10 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   }
 }
 
-export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
-export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
-
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
+
+export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
+export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/, MARKER)
 const INDENT = /^\s*/
 
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
@@ -291,18 +291,27 @@ export const tickTaskAtCaret: StateCommand = (target) => {
   return toggleTask(target)
 }
 
+const NUMBERED = /^\s*\d+[.)]\s+/
+
 export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
-  const pattern = /^\s*\d+[.)]\s+/
-  const allNumbered = lines.every((line) => pattern.test(line.text))
+  const allNumbered = lines.every((line) => NUMBERED.test(line.text))
+  const counts = new Map<number, number>()
 
-  const changes: ChangeSpec[] = lines.map((line, index) => {
-    const existing = pattern.exec(line.text)
-    return {
-      from: line.from,
-      to: line.from + (existing?.[0].length ?? 0),
-      insert: allNumbered ? '' : `${index + 1}. `,
+  const changes: ChangeSpec[] = lines.map((line) => {
+    const matched = (allNumbered ? NUMBERED : MARKER).exec(line.text)?.[0] ?? ''
+    const indent = matched.length - matched.trimStart().length
+
+    if (allNumbered) {
+      const task = taskAt(line.text)
+      const end = task ? Math.max(task.marker, matched.length) : matched.length
+      return { from: line.from + indent, to: line.from + end, insert: '' }
     }
+
+    for (const depth of counts.keys()) if (depth > indent) counts.delete(depth)
+    const count = (counts.get(indent) ?? 0) + 1
+    counts.set(indent, count)
+    return { from: line.from + indent, to: line.from + matched.length, insert: `${count}. ` }
   })
 
   dispatch(state.update({ changes, userEvent: 'input' }))
