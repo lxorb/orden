@@ -196,6 +196,10 @@ function fileNamed(
       else parts.push(part)
     }
     files = named.whole.get(foldName(parts.join('/')))
+    if (!files && !/^(?:\.{1,2}(?:\/|$)|\/)/.test(target.trim())) {
+      const last = target.trim().split('/').pop() ?? ''
+      files = named.whole.get(foldName(target.trim())) ?? named.last.get(foldName(last))
+    }
   } else {
     const last = link.target.trim().replace(/\\/g, '/').split('/').pop() ?? ''
     files = named.last.get(foldName(last))

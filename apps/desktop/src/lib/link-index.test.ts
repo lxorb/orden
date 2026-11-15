@@ -1719,6 +1719,24 @@ describe('a markdown link written from the top or by name alone', () => {
   })
 })
 
+describe('an attachment reached by name or from the top', () => {
+  test('is followed by a rename however the link was written', async () => {
+    await space(
+      {
+        'journal/Monday.md':
+          '![](../files/pic.png) and ![](pic.png) and ![](files/pic.png) and [r](report.docx)\n',
+      },
+      ['files/pic.png', 'files/report.docx'],
+    )
+
+    expect(await links.retarget(at('files/pic.png'), at('files/photo.png'), ROOT)).toBe(1)
+    expect(await links.retarget(at('files/report.docx'), at('files/rep.docx'), ROOT)).toBe(1)
+    expect(notes['journal/Monday.md']).toBe(
+      '![](../files/photo.png) and ![](../files/photo.png) and ![](../files/photo.png) and [r](../files/rep.docx)\n',
+    )
+  })
+})
+
 describe('a file renamed across the note extension', () => {
   test('becomes a note when it takes the extension and stops being one when it drops it', async () => {
     await space(
