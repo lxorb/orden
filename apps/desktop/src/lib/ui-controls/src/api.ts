@@ -1,5 +1,6 @@
 export { default as CanvasColours } from './CanvasColours.svelte'
 export { copySelection, copyText, cutSelection } from './clipboard'
+export { copyPicture } from './copy-picture'
 export {
   alphaFor,
   CONTENT_INITIAL,

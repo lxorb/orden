@@ -7,8 +7,8 @@
   import { iconChoice } from './icon-choice.svelte'
   import { tintOf, wear, wornBy } from './icon-target'
   import { iconLibrary } from './icon-library.svelte'
-  import { iconRecent } from './icon-recent.svelte'
   import {
+    iconRecent,
     LATER_SETS,
     type LoadedSet,
     mergeSets,
