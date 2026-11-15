@@ -14,13 +14,13 @@
     "platform",
     "sharing",
     "tab-fill",
-    "ui-kit"
+    "ui-kit",
+    "icon-picker"
   ],
   "pending": [
     "apps/desktop/src/lib/FeedbackSheet.svelte",
     "apps/desktop/src/lib/FormatBar.svelte",
     "apps/desktop/src/lib/FullscreenLeave.svelte",
-    "apps/desktop/src/lib/IconPicker.svelte",
     "apps/desktop/src/lib/Links.svelte",
     "apps/desktop/src/lib/NewHere.svelte",
     "apps/desktop/src/lib/OutsideFolder.svelte",

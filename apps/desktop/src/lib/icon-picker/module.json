@@ -1,0 +1,21 @@
+{
+  "name": "icon-picker",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "icons",
+    "platform",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "workspace"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/Icon.svelte",
+    "apps/desktop/src/lib/chosen-icon.ts",
+    "apps/desktop/src/lib/file-icon.ts",
+    "apps/desktop/src/lib/icon-choice.svelte.ts",
+    "apps/desktop/src/lib/icon-library.svelte.ts"
+  ]
+}

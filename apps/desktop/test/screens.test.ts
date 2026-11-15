@@ -90,13 +90,13 @@ describe('every layer in the middle of the window', () => {
   test('is found', () => {
     expect(layers.map((one) => one.name).sort()).toEqual([
       'lib/FeedbackSheet.svelte',
-      'lib/IconPicker.svelte',
       'lib/PromptSheet.svelte',
       'lib/SpacePicker.svelte',
       'lib/accounts-ui/src/SignIn.svelte',
       'lib/ai-sidebar/src/QuickQuestion.svelte',
       'lib/crash-reports/src/CrashAsk.svelte',
       'lib/history/src/History.svelte',
+      'lib/icon-picker/src/IconPicker.svelte',
       'lib/palette/src/Palette.svelte',
       'lib/quick-add/src/QuickAddSheet.svelte',
       'lib/quitting/src/QuitSheet.svelte',

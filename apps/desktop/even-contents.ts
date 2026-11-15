@@ -139,6 +139,7 @@ export const APP_FOLDERS = [
   'held-database',
   'highlight',
   'history',
+  'icon-picker',
   'icons',
   'import',
   'kept-for-good',

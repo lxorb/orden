@@ -222,7 +222,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/accounts-ui/src/ShareSheet.svelte', 'the share sheet'],
     ['/lib/publishing/src/PublishSheet.svelte', 'the publish sheet'],
     ['/lib/import/src/ImportSheet.svelte', 'the import sheet'],
-    ['/lib/IconPicker.svelte', 'the icon picker'],
+    ['/lib/icon-picker/src/IconPicker.svelte', 'the icon picker'],
     ['/lib/collab-rooms/src/room.ts', "a note's room"],
     ['/lib/collab-rooms/src/plane.ts', "a canvas's room"],
     ['/rooms/src/index.ts', 'the room protocol'],

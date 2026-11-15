@@ -38,6 +38,12 @@ export interface OpenHow {
   readonly beside?: boolean
 }
 
+interface TabIcon {
+  readonly worn: (tab: string) => string | null
+  readonly tint: (tab: string) => string | null
+  readonly wear: (tab: string, icon: string | null, colour: string | null) => void
+}
+
 export interface TabKindParts {
   readonly open?: (path: string, how: OpenHow) => Promise<void>
   readonly make?: (folder: string, name: string) => Promise<void>
@@ -45,6 +51,7 @@ export interface TabKindParts {
   readonly facts?: (tab: string) => Promise<TabFacts | null>
   readonly hold?: (tab: string) => (() => void) | null
   readonly rename?: (tab: string, name: string) => Promise<void>
+  readonly icon?: TabIcon
 }
 
 export const NO_TAB_KIND: TabKindParts = {}

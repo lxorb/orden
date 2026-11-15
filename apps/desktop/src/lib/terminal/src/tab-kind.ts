@@ -4,6 +4,7 @@ import { iconEntries } from '../../menu-entries'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { workspace } from '../../workspace/src/api'
 import { openOnline, openTerm, renameTerminal, usageOfTab } from './api'
+import { setTerminalIcon } from './icon'
 import { openTerminal, shellRows } from './open'
 import { readSpec } from './spec'
 
@@ -30,6 +31,11 @@ function menu(id: string): TabMenuEntry[] {
   ]
 }
 
+const specOf = (id: string) => {
+  const tab = terminalOf(id)
+  return tab ? readSpec(tab.doc) : null
+}
+
 export const terminalTabKind: TabKindParts = {
   open: async (path, how) => {
     await openTerm(path, how)
@@ -43,5 +49,10 @@ export const terminalTabKind: TabKindParts = {
   rename: async (id, name) => {
     const tab = workspace.tabs.find((one) => one.id === id)
     if (tab) await renameTerminal(tab, name)
+  },
+  icon: {
+    worn: (id) => specOf(id)?.icon ?? null,
+    tint: (id) => specOf(id)?.iconColor ?? null,
+    wear: setTerminalIcon,
   },
 }

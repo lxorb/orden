@@ -307,7 +307,7 @@ describe('what hides a web page', () => {
     'lib/collab/src/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/history/src/History.svelte': 'sheet',
     'lib/sharing/src/JoinSheet.svelte': 'sheet',
-    'lib/IconPicker.svelte': 'sheet',
+    'lib/icon-picker/src/IconPicker.svelte': 'sheet',
     'lib/palette/src/Palette.svelte': 'dialog',
     'lib/PromptSheet.svelte': 'dialog',
     'lib/ai-sidebar/src/QuickQuestion.svelte': 'dialog',
