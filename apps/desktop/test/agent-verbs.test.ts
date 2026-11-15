@@ -2224,6 +2224,33 @@ describe('a note the reader protected', () => {
     }
   })
 
+  test('is not moved out of its lock or trashed by an agent, nor a folder holding it', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    files.set('/s/Home/Books/Dune.md', 'the secret words\n')
+    files.set('/s/Home/Shelf/Emma.md', 'the other words\n')
+    protection.set('/s/Home', '/s/Home/Books', 'password')
+    protection.set('/s/Home', '/s/Home/Shelf/Emma.md', 'password')
+    protection.set('/s/Home', '/s/Home/Soup.md', 'password')
+    try {
+      for (const [verb, args] of [
+        ['move_file', { space: 'Home', path: 'Books/Dune.md', to: 'Dune.md' }],
+        ['move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup.md' }],
+        ['trash_file', { space: 'Home', path: 'Soup' }],
+        ['trash_file', { space: 'Home', path: 'Books/Dune.md' }],
+        ['trash_file', { space: 'Home', path: 'Shelf' }],
+      ] as const) {
+        expect(await call(verb, args)).toMatchObject({ code: 'protected' })
+      }
+      expect(files.has('/s/Home/Books/Dune.md')).toBe(true)
+      expect(files.has('/s/Home/Soup.md')).toBe(true)
+      expect(workspace.remove).not.toHaveBeenCalled()
+    } finally {
+      protection.set('/s/Home', '/s/Home/Books', null)
+      protection.set('/s/Home', '/s/Home/Shelf/Emma.md', null)
+      protection.set('/s/Home', '/s/Home/Soup.md', null)
+    }
+  })
+
   test('is refused to an agent until it is unlocked and agents are let read it', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')

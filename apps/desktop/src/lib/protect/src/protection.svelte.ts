@@ -197,6 +197,18 @@ export class Protection {
     return !locks.length || unlocks.agentsMay(locks)
   }
 
+  agentsMayAll(path: string | null | undefined): boolean {
+    if (!path || !this.any) return true
+    if (!this.agentsMay(path)) return false
+    return Object.entries(this.spaces).every(([root, kept]) => {
+      const at = within(root, path, root)
+      if (at === null) return true
+      return Object.keys(kept.ways)
+        .filter((key) => key !== SPACE && within(at, key, root) !== null)
+        .every((key) => this.agentsMay(insideSpace(root, key)))
+    })
+  }
+
   get password(): Hashed | null {
     return this.hashed
   }
