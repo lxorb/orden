@@ -633,7 +633,10 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 
             if matches!(compare, Compare::Null) {
                 return held
-                    .is_none_or(|all| all.iter().all(|one| one.trim().is_empty()))
+                    .is_none_or(|all| {
+                        all.iter()
+                            .all(|one| matches!(one.trim(), "" | "~" | "null" | "Null" | "NULL"))
+                    })
                     .then(Vec::new);
             }
 
@@ -1325,6 +1328,15 @@ mod tests {
         ));
         assert!(answers(&pair("5", "is"), "---\nn: 5.0\ndue: 5.0\n---\n"));
         assert!(!answers(&pair("5", "is"), "---\ndue: 50\n---\n"));
+    }
+
+    #[test]
+    fn a_key_yaml_reads_as_null_holds_nothing() {
+        let null = r#"{"kind":"property","name":"n","value":null,"compare":"null"}"#;
+        for written in ["null", "Null", "NULL", "~"] {
+            assert!(answers(null, &format!("---\nn: {written}\n---\n")));
+        }
+        assert!(!answers(null, "---\nn: nullable\n---\n"));
     }
 
     #[test]

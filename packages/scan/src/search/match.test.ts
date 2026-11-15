@@ -526,6 +526,13 @@ Words.
     expect(asked('[empty:null]')).toBe(true)
   })
 
+  test('and a key YAML reads as null holds nothing', () => {
+    for (const written of ['null', 'Null', 'NULL', '~']) {
+      expect(answers('[n:null]', { body: `---\nn: ${written}\n---\n` })).toBe(true)
+    }
+    expect(answers('[n:null]', { body: '---\nn: nullable\n---\n' })).toBe(false)
+  })
+
   test('and falls back to the words where the two are not the same kind of thing', () => {
     expect(asked('[status:>a]')).toBe(true)
     expect(asked('[status:>z]')).toBe(false)

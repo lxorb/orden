@@ -240,6 +240,12 @@ function alike(value: string, asked: string): boolean {
   return measured ? order(one, other) === 0 : one.toLowerCase() === other.toLowerCase()
 }
 
+const NULLS = new Set(['', '~', 'null', 'Null', 'NULL'])
+
+function heldValue(value: string): boolean {
+  return !NULLS.has(value.trim())
+}
+
 function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>): boolean {
   const asked = query.value
   if (asked === null) return true
@@ -472,7 +478,7 @@ export class Matcher {
       case 'property': {
         const values = propertyOf(facts, query.name)
 
-        if (query.compare === 'null') return values?.some((one) => one.trim()) ? null : []
+        if (query.compare === 'null') return values?.some(heldValue) ? null : []
         if (values === undefined) return null
         if (query.value === null) return []
 
