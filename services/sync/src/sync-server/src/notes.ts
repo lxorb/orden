@@ -6,7 +6,7 @@ import { isPagesTarget } from '@orden/markdown/links'
 import { conflictPath, freePath, numbered } from '@orden/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './site/front'
-import { rememberOldPaths } from './site/paths'
+import { followOnlyNote, rememberOldPaths } from './site/paths'
 import { keepWords } from './site/words'
 import { hooks } from './hooks'
 import { keepPictures } from './pictures'
@@ -341,6 +341,9 @@ export async function saveNote(
   )
 
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
+  await followOnlyNote(env, note.space_id, [{ from: note.path, to: path }], []).catch(
+    () => undefined,
+  )
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
   await keepPictures(env, updated, content)
   await hooks()
@@ -776,6 +779,7 @@ notes.delete('/notes/:id', async (context) => {
         where id = ?3`,
     ).bind(note.space_id, at, note.id),
   )
+  await followOnlyNote(context.env, note.space_id, [], [note.path]).catch(() => undefined)
 
   return context.json({ ok: true })
 })

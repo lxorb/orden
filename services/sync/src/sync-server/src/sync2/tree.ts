@@ -18,7 +18,7 @@ import {
   type TreeState,
 } from '@orden/sync-core'
 import { chunks } from '../bound'
-import { type Moved, rememberMoves } from '../site/paths'
+import { followOnlyNote, type Moved, rememberMoves } from '../site/paths'
 import { picturesOfMeta } from '../pictures'
 import { newId, now } from '../crypto'
 import type { Env } from '../types'
@@ -189,6 +189,7 @@ export class Tree {
   private readonly answered = new Map<string, OpResult>()
   private unmarked = false
   moves: Moved[] = []
+  gone: string[] = []
 
   constructor(
     readonly spaceId: string,
@@ -382,6 +383,11 @@ export class Tree {
       const from = this.paths.get(id)
       const entry = this.state.entries.get(id)
       return from === undefined || !entry || entry.deleted ? [] : [{ id, from, to }]
+    })
+    this.gone = [...this.state.entries.values()].flatMap((entry) => {
+      const from = this.paths.get(entry.id)
+      const wasLive = this.before.get(entry.id)?.deleted === false
+      return entry.kind !== 'folder' && entry.deleted && wasLive && from !== undefined ? [from] : []
     })
 
     const folders: Record<string, unknown>[] = []
@@ -1022,6 +1028,7 @@ export async function changeTree<T>(
     try {
       await env.DB.batch(batch)
       await rememberMoves(env, spaceId, tree.moves).catch(() => undefined)
+      await followOnlyNote(env, spaceId, tree.moves, tree.gone).catch(() => undefined)
       return {
         value,
         cursor: tree.state.cursor,
