@@ -306,6 +306,17 @@ describe('every row writes the link the app spells', () => {
     )
   })
 
+  test('a note and a web shortcut that answer to one name are each named so the link reaches it', async () => {
+    const both = [note('Docs.md'), { ...note('x/Docs.url'), name: 'Docs.url' }]
+
+    expect((await picked('[[Doc', space(both, { path: 'x/One.md' }), 'Docs', spelled)).doc).toBe(
+      '[/Docs](Docs.md|x/One.md|)',
+    )
+    expect((await picked('[[Doc', space(both, { path: 'One.md' }), 'Docs.url', spelled)).doc).toBe(
+      '[x/Docs.url](x/Docs.url|One.md|)',
+    )
+  })
+
   test('an alias row writes the alias over the note it belongs to', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })
 

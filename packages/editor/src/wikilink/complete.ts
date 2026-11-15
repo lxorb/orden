@@ -84,15 +84,16 @@ export function about(index: NoteIndex, note: NoteRef): LinkWrite {
 }
 
 function nameFor(index: NoteIndex, note: NoteRef): string {
-  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
-  if (same.length <= 1) return note.name.normalize('NFC')
+  const reaches = (written: string) => resolveNote(index, written)?.path === note.path
+  if (reaches(note.name)) return note.name.normalize('NFC')
 
   const parts = note.path.replace(MARKDOWN, '').split('/')
   for (let from = parts.length - 1; from >= 0; from--) {
     const written = parts.slice(from).join('/')
-    if (resolveNote(index, written)?.path === note.path) return written.normalize('NFC')
+    if (reaches(written)) return written.normalize('NFC')
   }
-  return `/${parts.join('/')}`.normalize('NFC')
+  const fromTop = `/${parts.join('/')}`
+  return (reaches(fromTop) ? fromTop : note.name).normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {
