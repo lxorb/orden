@@ -18,4 +18,16 @@ describe('a timeline bar moved by days', () => {
       'note.end': '2026-01-09T18:30',
     })
   })
+
+  test('keeps a time written in UTC with its Z, so it still reads as a date', () => {
+    const row = noteRow('a.md', 'start: 2026-01-07T10:00:00Z\nend: 2026-01-07T18:30:00+02:00')
+    const bar = barOf(row, { start: 'note.start', end: 'note.end' }, (one, property) =>
+      cellValue(base, property, one, context),
+    )
+    if (!bar) throw new Error('no bar')
+    expect(dragged(bar, 'move', 2)).toEqual({
+      'note.start': '2026-01-09T10:00Z',
+      'note.end': '2026-01-09T18:30+02:00',
+    })
+  })
 })
