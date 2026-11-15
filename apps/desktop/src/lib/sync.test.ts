@@ -1,5 +1,5 @@
+import type { Bookmark } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Bookmark } from './workspace/bookmarks.svelte'
 
 const { ApiError } = await import('./accounts/src/client')
 

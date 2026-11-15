@@ -36,7 +36,7 @@ vi.mock('../sharing/src/api', () => ({
 
 const { freePath } = await import('@orden/markdown/paths')
 const { extractSelection, mergeInto, splitAtCaret } = await import('./composing')
-const { FileActions } = await import('./undo.svelte')
+const { FileActions } = await import('../file-undo/src/api')
 type Composes = import('./composing').Composes
 
 const SPACE = '/space'

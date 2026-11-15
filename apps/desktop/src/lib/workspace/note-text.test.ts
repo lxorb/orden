@@ -50,7 +50,7 @@ vi.mock('../sharing/src/api', () => ({
 
 const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } =
   await import('./note-text')
-const { FileActions } = await import('./undo.svelte')
+const { FileActions } = await import('../file-undo/src/api')
 const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
 const { NoteDoc } = await import('./documents.svelte')

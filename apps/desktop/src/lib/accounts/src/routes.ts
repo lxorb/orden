@@ -1,6 +1,6 @@
+import type { Bookmark } from '@orden/contracts'
 import { ApiError, BASE, request } from './client'
 import { isRecord, isString, parsed } from '../../platform/src/api'
-import type { Bookmark } from '../../workspace/bookmarks.svelte'
 import type { Avatar, Status } from './face'
 
 export interface Account {

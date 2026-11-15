@@ -1,4 +1,4 @@
-import type { FileAction } from '../../workspace/undo.svelte'
+import type { FileAction } from '../../file-undo/src/api'
 
 export { ARCHIVE_MARK } from './archive-marks'
 
@@ -9,15 +9,15 @@ export const loadArchive = () => import('./Archive.svelte')
 export const loadArchivedStrip = () => import('./ArchivedStrip.svelte')
 
 export const archive = async (paths: readonly string[]): Promise<void> => {
-  ;(await import('./archiving')).archive(paths)
+  await (await import('./archiving')).archive(paths)
 }
 
 export const unarchive = async (path: string): Promise<void> => {
-  ;(await import('./archiving')).unarchive(path)
+  await (await import('./archiving')).unarchive(path)
 }
 
 export const archiveAgain = async (action: Archiving): Promise<void> => {
-  ;(await import('./archiving')).archiveAgain(action)
+  await (await import('./archiving')).archiveAgain(action)
 }
 
 export const showArchive = async (path: string | null = null): Promise<void> => {

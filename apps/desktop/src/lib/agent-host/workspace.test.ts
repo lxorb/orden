@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../automation/src/api'
 import { AGENT_WINDOW_VERBS } from '../agents/src/verbs'
-import { type FileOp, FileOps, type Kind } from '../workspace/file-ops'
+import { type FileOp, FileOps, type Kind } from '../file-ops/src/api'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

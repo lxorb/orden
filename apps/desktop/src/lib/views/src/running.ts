@@ -24,7 +24,7 @@ import { type HeldBase, planned } from './automate'
 import { guardedAt } from './guard'
 import { contextFor } from './context'
 import { leaveIdsBy } from './copied'
-import { landing, onLanded } from '../../workspace/landing'
+import { landing, onLanded } from '../../file-ops/src/api'
 import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
 

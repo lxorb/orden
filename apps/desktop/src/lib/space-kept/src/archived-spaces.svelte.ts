@@ -1,4 +1,4 @@
-import { samePath, keepJson, stored, stringList } from '../platform/src/api'
+import { samePath, keepJson, stored, stringList } from '../../platform/src/api'
 
 const KEY = 'orden:archived-spaces'
 

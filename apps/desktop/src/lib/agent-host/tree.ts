@@ -8,7 +8,7 @@ import { revOf } from '../agent-docs/src/api'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, needScope, sourceOf } from './call'
 import { indexOf } from './links'
-import { moving } from '../workspace/landing'
+import { inFlight as moving } from '../file-ops/src/api'
 import { Refused } from './problem'
 import {
   judged,

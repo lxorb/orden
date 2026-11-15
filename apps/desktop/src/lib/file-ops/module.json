@@ -1,0 +1,5 @@
+{
+  "name": "file-ops",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform"]
+}

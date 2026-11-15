@@ -18,7 +18,6 @@
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/seeded.ts",
     "apps/desktop/src/lib/space-watch.ts",
-    "apps/desktop/src/lib/welcome.ts",
-    "apps/desktop/src/lib/workspace/spaces.ts"
+    "apps/desktop/src/lib/welcome.ts"
   ]
 }

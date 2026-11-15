@@ -18,7 +18,7 @@ import {
 import { links } from '../link-index/src/api'
 import { owesLast, surfacesToWords, writeOwed } from '../parting/src/api'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
-import type { FileOp } from './file-ops'
+import type { FileOp } from '../file-ops/src/api'
 import { isDraft } from './drafts'
 import type { Across } from './across'
 import type { Status } from '../sync.svelte'

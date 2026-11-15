@@ -1,6 +1,7 @@
+import type { Bookmark } from '@orden/contracts'
 import type { AgentAnswer } from '../automation/src/api'
 import { notePath } from '../platform/src/api'
-import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../workspace/bookmarks.svelte'
+import { MOST_BOOKMARKS, sameBookmark } from '../space-kept/src/api'
 import { workspace } from '../workspace.svelte'
 import { asked } from './asks'
 import { type Call, done, maybe, need, short } from './call'

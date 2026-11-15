@@ -35,7 +35,6 @@
     "apps/desktop/src/lib/typing-pointer.ts",
     "apps/desktop/src/lib/whole-rows.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/bookmarks.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
     "apps/desktop/src/lib/workspace/drafts.ts"
   ]

@@ -10,7 +10,7 @@ import {
   within,
 } from '../../platform/src/api'
 import { scanRows } from '@orden/bases/scan'
-import { type FileOp } from '../../workspace/file-ops'
+import { type FileOp } from '../../file-ops/src/api'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
 
 export interface SpaceName {

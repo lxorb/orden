@@ -1,9 +1,9 @@
-import { within } from '../platform/src/api'
+import { within } from '../../platform/src/api'
 
 const flying: string[] = []
 const landed = new Set<() => void>()
 
-export async function moving<T>(to: string, run: () => Promise<T>): Promise<T> {
+export async function inFlight<T>(to: string, run: () => Promise<T>): Promise<T> {
   flying.push(to)
   try {
     return await run()

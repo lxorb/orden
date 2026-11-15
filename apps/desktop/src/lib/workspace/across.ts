@@ -12,7 +12,7 @@ import {
   windows as theWindows,
 } from '../platform/src/api'
 import { type NoteDoc, unixLines } from './documents.svelte'
-import type { FileOp } from './file-ops'
+import type { FileOp } from '../file-ops/src/api'
 
 interface Joined {
   text(): string

@@ -8,7 +8,8 @@
     "platform",
     "sharing",
     "tasks-model",
-    "ui-kit"
+    "ui-kit",
+    "space-kept"
   ],
   "pending": [
     "apps/desktop/src/lib/attachments.ts",
@@ -16,7 +17,6 @@
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/bookmarks.svelte.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

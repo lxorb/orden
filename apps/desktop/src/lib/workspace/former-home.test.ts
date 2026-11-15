@@ -82,7 +82,7 @@ async function start(): Promise<boolean> {
   pageStarts(said())
   return finishFormerHome()
 }
-const { ItemMetaStore } = await import('./item-meta.svelte')
+const { ItemMetaStore } = await import('../space-kept/src/api')
 const { ROOTS_MOVED } = await import('./roots-moved')
 
 interface Profile {

@@ -1,3 +1,4 @@
+import { push } from '../../space-kept/src/api'
 import {
   isBoolean,
   isNumber,
@@ -251,7 +252,6 @@ export class SpaceGraphSettings {
   }
 
   private async push(root: string) {
-    const { push } = await import('../../workspace/pushing')
     await push(root, (api, token, spaceId) => api.saveGraphSettings(token, spaceId, this.of(root)))
   }
 

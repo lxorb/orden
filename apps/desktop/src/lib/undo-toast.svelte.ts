@@ -1,4 +1,4 @@
-import type { FileAction, OutsideStep } from './workspace/undo.svelte'
+import type { FileAction, OutsideStep } from './file-undo/src/api'
 
 export type Said = 'done' | 'scheduled' | 'moved' | 'deleted'
 

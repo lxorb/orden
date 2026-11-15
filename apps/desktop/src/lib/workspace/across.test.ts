@@ -3,7 +3,7 @@ import { EditorState } from '@orden/editor'
 import { oneWriteAt, Windows } from '../platform/src/windows'
 import { NoteDoc } from './documents.svelte'
 import { Across, type Desk } from './across'
-import type { FileOp } from './file-ops'
+import type { FileOp } from '../file-ops/src/api'
 
 vi.mock('../platform/src/log', () => ({ log: vi.fn() }))
 

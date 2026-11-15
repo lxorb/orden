@@ -222,7 +222,7 @@ import {
 import { pairSpaces, type Pairing } from '../../space-pairing'
 import type { RemoteSpace, SharedItem } from '../../accounts/src/routes'
 import type { NoteDoc } from '../../workspace/documents.svelte'
-import type { FileOp } from '../../workspace/file-ops'
+import type { FileOp } from '../../file-ops/src/api'
 import { memoryStorage } from '../../../../test/disk'
 
 const storage = memoryStorage()

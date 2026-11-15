@@ -10,11 +10,18 @@ import {
   samePath,
 } from '../../../platform/src/api'
 import { invoke as crate } from '../../../crate/src/api'
-import type { HoldsSpaces } from '../../../workspace/spaces'
 import { folderBytes } from './bytes'
 import { InternalFolder } from './folder'
 import { mountOf } from './roots'
 import { CONVERTING, freeName, keptCameFrom, keptFrom, mountKept } from './spaces'
+
+interface HoldsSpaces {
+  spaces: { id: string; name: string; root: string }[]
+  holdingUnder(path: string, run: () => Promise<void>): Promise<void>
+  fileMoved(from: string, to: string, kind: 'space'): Promise<void>
+  persist(): void
+  loadTree(): Promise<void>
+}
 
 interface Listed {
   name: string

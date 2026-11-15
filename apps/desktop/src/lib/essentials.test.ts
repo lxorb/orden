@@ -1,3 +1,4 @@
+import type { Bookmark } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import {
   columnsOf,
@@ -10,7 +11,7 @@ import {
   stepInGrid,
 } from './essentials.svelte'
 import { faceOf, initialOf } from './file-mark'
-import { type Bookmark, isTile, MOST_BOOKMARKS } from './workspace/bookmarks.svelte'
+import { isTile, MOST_BOOKMARKS } from './space-kept/src/api'
 
 const mark = (kind: Bookmark['kind'], parent?: string): Bookmark => ({
   kind,

@@ -10,8 +10,8 @@ import {
   readSpaces,
   without,
   coveredBy,
-} from '../platform/src/api'
-import { carried, moving } from './file-ops'
+} from '../../platform/src/api'
+import { carried, moving } from '../../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:archived'
 

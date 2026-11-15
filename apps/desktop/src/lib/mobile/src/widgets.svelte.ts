@@ -9,7 +9,7 @@ import {
 } from '../../platform/src/api'
 import { todos } from '../../tasks-model/src/api'
 import { type Entry, workspace } from '../../workspace.svelte'
-import { isTile } from '../../workspace/bookmarks.svelte'
+import { isTile } from '../../space-kept/src/api'
 
 const MOST = 5
 

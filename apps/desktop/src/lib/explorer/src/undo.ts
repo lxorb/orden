@@ -1,6 +1,6 @@
 import { folderOf, nameOf, pathKey, joinPath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
-import type { FileAction, OutsideStep } from '../../workspace/undo.svelte'
+import type { FileAction, OutsideStep } from '../../file-undo/src/api'
 import { type Pair, put, trashPaths, type Transferred, untrash } from './commands'
 import { jobs } from './jobs.svelte'
 import { swapping } from './renaming'

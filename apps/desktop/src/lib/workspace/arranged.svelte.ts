@@ -1,3 +1,4 @@
+import { push } from '../space-kept/src/api'
 import { untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
 import {
@@ -20,7 +21,7 @@ import {
   without,
 } from '../platform/src/api'
 import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '../tree-order'
-import { carried, type Moving, moving } from './file-ops'
+import { carried, type Moving, moving } from '../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:arranged'
 
@@ -513,7 +514,6 @@ export class SpaceSorting {
   }
 
   private async push(root: string) {
-    const { push } = await import('./pushing')
     await push(
       root,
       (api, token, spaceId) => api.saveSort(token, spaceId, this.of(root)),

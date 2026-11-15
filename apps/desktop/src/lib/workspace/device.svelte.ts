@@ -16,7 +16,7 @@ import {
   within,
   withinSpace,
 } from '../platform/src/api'
-import type { FileOp } from './file-ops'
+import type { FileOp } from '../file-ops/src/api'
 
 export const RECENT_KEY = 'orden:recent'
 export const ICONS_KEY = 'orden:icons'

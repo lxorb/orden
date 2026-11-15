@@ -265,4 +265,5 @@ export type {
   SyncWorkspacePort,
   SyncWriteHearing,
 } from './sync-client'
+export { BOOKMARK_KINDS, type Bookmark, type BookmarkKind } from './bookmark'
 export type { OpenNote, TextChange, WorkspaceNotesPort, WorkspacePorts } from './workspace'

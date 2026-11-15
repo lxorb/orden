@@ -1,7 +1,7 @@
 import { busy } from '../../../ui-kit/src/api'
 import { shownName, insideSpace, nameOf, samePath } from '../../../platform/src/api'
 import { workspace } from '../../../workspace.svelte'
-import type { FileAction } from '../../../workspace/undo.svelte'
+import type { FileAction } from '../../../file-undo/src/api'
 import type { Thread } from '../../../ai-providers/src/api'
 import { type FileChange, spaceNamed } from './files'
 

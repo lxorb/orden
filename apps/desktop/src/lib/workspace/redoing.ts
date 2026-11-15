@@ -1,8 +1,8 @@
+import type { Bookmark } from '@orden/contracts'
 import { folderOf, nameOf } from '../platform/src/api'
 import { copyAgain, type Copies } from './copying'
-import type { FileAction } from './undo.svelte'
+import type { FileAction } from '../file-undo/src/api'
 import { putBack } from './undoing'
-import type { Bookmark } from './bookmarks.svelte'
 import { archiveAgain } from '../archive/src/api'
 
 export interface DoesAgain extends Copies {

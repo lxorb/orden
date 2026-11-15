@@ -17,11 +17,11 @@ import { links, type Retargeting } from '../link-index/src/api'
 import type { HoldCheck } from '@orden/sync-core'
 import { keptAway } from '../away/src/api'
 import type { Entry } from '../workspace.svelte'
-import type { Archive } from './archive.svelte'
+import type { Bookmark } from '@orden/contracts'
+import type { Archive } from '../space-kept/src/api'
 import type { NoteDoc } from './documents.svelte'
-import type { Kind } from './file-ops'
-import type { Binning, FileAction, FileActions, Kept } from './undo.svelte'
-import type { Bookmark } from './bookmarks.svelte'
+import { inFlight, type Kind } from '../file-ops/src/api'
+import type { Binning, FileAction, FileActions, Kept } from '../file-undo/src/api'
 import { writeEdited } from './in-turn'
 import { writeFile } from './write-file'
 
@@ -376,8 +376,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       ? await (await import('./chat-leaving')).chatsCarried(action.to, folderOf(action.from))
       : null
 
-  const { moving: underWay } = await import('./landing')
-  await underWay(action.from, () =>
+  await inFlight(action.from, () =>
     ws.holdingUnder(action.to, async () => {
       await ws.renameOnDisk(action.to, action.from, kind).catch(async (error: unknown) => {
         await back?.()

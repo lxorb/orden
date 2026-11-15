@@ -5,7 +5,7 @@ import { hub } from '../../sync-client/src/api'
 import { chatsOn } from '../../settings.svelte'
 import { isMobile } from '../../platform/src/api'
 import { type Entry, workspace } from '../../workspace.svelte'
-import type { FileOp } from '../../workspace/file-ops'
+import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
 
 const isPointer = (path: string) => path.toLowerCase().endsWith(CHAT_EXTENSION)

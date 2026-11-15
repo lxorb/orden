@@ -89,7 +89,7 @@ vi.mock('../../sharing/src/api', () => ({
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../settings.svelte')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
-const { moving } = await import('../../workspace/landing')
+const { inFlight: moving } = await import('../../file-ops/src/api')
 
 beforeEach(() => {
   before.length = 0

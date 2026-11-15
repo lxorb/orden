@@ -1,3 +1,4 @@
+import { push } from '../space-kept/src/api'
 import { arrangedMap, type Arranged } from './arranged.svelte'
 import { type Folding, meet } from '../platform/src/api'
 
@@ -33,7 +34,6 @@ export async function fold(
 }
 
 export async function send(store: Arranged, root: string): Promise<void> {
-  const { push } = await import('./pushing')
   await push(
     root,
     (api, token, spaceId) => api.saveArranged(token, spaceId, store.of(root)),

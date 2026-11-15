@@ -1,5 +1,5 @@
+import type { Bookmark } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
-import type { Bookmark } from './workspace/bookmarks.svelte'
 import {
   carriedIntoNotes,
   carriedNothing,

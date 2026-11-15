@@ -23,10 +23,10 @@ await import('./features')
 const { startup } = await import('./startup.svelte')
 const { undoToast } = await import('./undo-toast.svelte')
 const { failed } = await import('./failed.svelte')
-const { LANDS_WITHIN } = await import('./workspace/undo.svelte')
-const { keeping } = await import('./workspace/file-ops')
+const { LANDS_WITHIN } = await import('./file-undo/src/api')
+const { keeping } = await import('./file-ops/src/api')
 const { movedTo, within } = await import('./platform/src/space-paths')
-type FileOp = import('./workspace/file-ops').FileOp
+type FileOp = import('./file-ops/src/api').FileOp
 
 const ROOT = '/space'
 

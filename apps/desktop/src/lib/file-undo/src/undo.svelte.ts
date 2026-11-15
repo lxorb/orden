@@ -1,5 +1,5 @@
+import type { Bookmark } from '@orden/contracts'
 import type { Edit } from '@orden/scan/search/replace'
-import type { Bookmark } from './bookmarks.svelte'
 
 export type FileAction =
   | {
@@ -82,8 +82,8 @@ export interface Copied {
   from?: string
 }
 
-import { shownName, folderOf, nameOf, samePath } from '../platform/src/api'
-import type { FileOp } from './file-ops'
+import { shownName, folderOf, nameOf, samePath } from '../../platform/src/api'
+import type { FileOp } from '../../file-ops/src/api'
 
 const KEPT = 20
 

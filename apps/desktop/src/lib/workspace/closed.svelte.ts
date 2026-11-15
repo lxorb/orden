@@ -1,6 +1,6 @@
 import { movedTo, nameOf, samePath, within } from '../platform/src/api'
 import { unixLines } from './documents.svelte'
-import type { FileOp } from './file-ops'
+import type { FileOp } from '../file-ops/src/api'
 import type { ClosedTab, Draft } from './session'
 
 export const MOST_CLOSED = 20

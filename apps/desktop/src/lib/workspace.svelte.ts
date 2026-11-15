@@ -81,13 +81,15 @@ import {
   writeSession,
 } from './workspace/session'
 import type { Across } from './workspace/across'
-import { Bookmarks } from './workspace/bookmarks.svelte'
-import { FolderIcons } from './workspace/folder-icons.svelte'
-import { ItemMetaStore } from './workspace/item-meta.svelte'
-import { Excluded } from './workspace/excluded.svelte'
+import {
+  Bookmarks,
+  FolderIcons,
+  ItemMetaStore,
+  Excluded,
+  Archive,
+  ArchivedSpaces,
+} from './space-kept/src/api'
 import { protection, unlocks } from './protect/src/api'
-import { Archive } from './workspace/archive.svelte'
-import { ArchivedSpaces } from './workspace/archived-spaces.svelte'
 import { SpaceGraphSettings } from './graph-view/src/api'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
@@ -107,7 +109,7 @@ import { type Landing, Panes } from './workspace/panes.svelte'
 import { type Around, closedAround } from './workspace/closing-around'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
-import { FileOps, keeping, type Kind } from './workspace/file-ops'
+import { FileOps, inFlight, keeping, type Kind } from './file-ops/src/api'
 import * as composing from './workspace/composing'
 import * as panels from './workspace/panels'
 import { type Filling, fills } from './panel-tab'
@@ -119,7 +121,7 @@ import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
 import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
-import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
+import { type Binning, type FileAction, FileActions, type Kept } from './file-undo/src/api'
 import { fetchAcross, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, pad as padNow, shown as pad } from './scratchpad/src/api'
@@ -2302,8 +2304,7 @@ class Workspace {
     this.showMove(from, target)
 
     await this.undone.batch(async () => {
-      const { moving } = await import('./workspace/landing')
-      await moving(target, () =>
+      await inFlight(target, () =>
         this.saving.holdingUnder(from, async () => {
           try {
             await this.renameOnDisk(from, target, kind)
@@ -3435,8 +3436,7 @@ class Workspace {
   }
 
   private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
-    const { moving } = await import('./workspace/landing')
-    await moving(target, () => this.renamingFile(path, target, undoable, hold))
+    await inFlight(target, () => this.renamingFile(path, target, undoable, hold))
   }
 
   private async renamingFile(path: string, target: string, undoable: boolean, hold: boolean) {

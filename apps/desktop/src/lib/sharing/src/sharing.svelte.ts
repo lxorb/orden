@@ -15,7 +15,7 @@ import { within } from '../../sync-mirror/src/api'
 import { sync } from '../../sync.svelte'
 import { type Origin, originOf, trustsHtml } from '../../trust'
 import type { NoteDoc } from '../../workspace/documents.svelte'
-import { keeping } from '../../workspace/file-ops'
+import { keeping } from '../../file-ops/src/api'
 import { type Space, workspace } from '../../workspace.svelte'
 
 function remoteOf(root: string): RemoteSpace | null {

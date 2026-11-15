@@ -1,4 +1,4 @@
-import { insideItsSpace } from '../platform/src/api'
+import { insideItsSpace } from '../../platform/src/api'
 import { type Archive, type ArchiveMap, archiveMap, MOST_ARCHIVED } from './archive.svelte'
 
 export function stampAfter(held: number | undefined, now: number): number {

@@ -13,8 +13,8 @@ import {
   readSpaces,
   without,
   withOrWithout,
-} from '../platform/src/api'
-import { carried, type Moving, moving } from './file-ops'
+} from '../../platform/src/api'
+import { carried, type Moving, moving } from '../../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:folder-icons'
 

@@ -30,7 +30,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void stored.delete(key),
 })
 
-const { ItemMetaStore } = await import('./item-meta.svelte')
+const { ItemMetaStore } = await import('../space-kept/src/api')
 const { moveOwnKeysSoon } = await import('./own-keys-moved')
 
 const workspace = {
