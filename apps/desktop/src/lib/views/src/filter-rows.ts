@@ -29,12 +29,14 @@ const askedByNull = (holds: Holds | undefined) => holds === 'truth' || holds ===
 
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
 
+const CLOCK = /^(today|now)\(\)(\s*[+-]\s*"[^"]*")?$/
+
 function literal(value: string): string {
   const trimmed = value.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return trimmed
   if (trimmed === 'true' || trimmed === 'false') return trimmed
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return `date(${JSON.stringify(trimmed)})`
-  if (/^(today|now)\(\)(\s*[+-]\s*"[^"]*")?$/.test(trimmed)) return trimmed
+  if (CLOCK.test(trimmed)) return trimmed
   return JSON.stringify(value)
 }
 
@@ -43,7 +45,7 @@ function unliteral(written: string): string | null {
   if (/^-?\d+(\.\d+)?$/.test(trimmed) || trimmed === 'true' || trimmed === 'false') return trimmed
   const dated = /^date\(("(?:[^"\\]|\\.)*")\)$/.exec(trimmed)
   if (dated?.[1]) return String(JSON.parse(dated[1]))
-  if (/^(today|now)\(\)/.test(trimmed)) return trimmed
+  if (CLOCK.test(trimmed)) return trimmed
   if (/^"(?:[^"\\]|\\.)*"$/.test(trimmed)) return String(JSON.parse(trimmed))
   return null
 }
