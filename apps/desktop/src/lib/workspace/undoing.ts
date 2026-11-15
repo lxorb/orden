@@ -22,6 +22,7 @@ import { type NoteDoc, writeEdited } from '../documents/src/api'
 import { writeFile } from '../file-writes/src/api'
 import { inFlight, type Kind } from '../file-ops/src/api'
 import type { Binning, FileAction, FileActions, Kept } from '../file-undo/src/api'
+import { services } from './services'
 
 export interface PutsBack {
   readonly undone: FileActions
@@ -139,7 +140,7 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         await unarchive(ws, action)
         break
       case 'outside':
-        if (!__EVEN_PLUGIN__) await (await import('../explorer/src/api')).undoOutside(action)
+        if (!__EVEN_PLUGIN__) await services().undoOutside(action)
         break
     }
   } catch {
@@ -370,9 +371,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
   const back =
-    action.kind === 'move'
-      ? await (await import('./chat-leaving')).chatsCarried(action.to, folderOf(action.from))
-      : null
+    action.kind === 'move' ? await services().chatsCarried(action.to, folderOf(action.from)) : null
 
   await inFlight(action.from, () =>
     ws.holdingUnder(action.to, async () => {

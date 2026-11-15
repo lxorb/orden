@@ -1,4 +1,5 @@
 import { tick } from 'svelte'
+import { webPages } from '@orden/contracts'
 import { focusEditor } from '../focus'
 import {
   identifier,
@@ -12,7 +13,6 @@ import {
 } from '../platform/src/api'
 import { spaceSound } from '../surfaces.svelte'
 import { IN_A_PAGE } from '../ui-controls/src/api'
-import { pages } from '../web-tab/src/api'
 import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from '../panes/src/api'
@@ -354,7 +354,7 @@ class Sets {
       const panes = panesIn(set.frame).map((one) => one.id)
       if (key === GLOBAL || out.includes(key)) continue
       const sounds = workspace.tabs.some(
-        (tab) => tab.kind === 'web' && panes.includes(tab.paneId) && pages.of(tab.id).playing,
+        (tab) => tab.kind === 'web' && panes.includes(tab.paneId) && webPages().of(tab.id).playing,
       )
       if (sounds) out.push(key)
     }

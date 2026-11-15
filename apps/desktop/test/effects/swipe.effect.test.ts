@@ -44,6 +44,7 @@ const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
 const PAGE = {
   url: null,
   title: '',
+  kept: null,
   back: true,
   forward: false,
   zoom: 2,

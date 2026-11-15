@@ -15,7 +15,7 @@ import {
   sameGraph,
   SpaceGraphSettings,
   STORAGE_KEY,
-} from './settings.svelte'
+} from './graph.svelte'
 
 let writes = 0
 

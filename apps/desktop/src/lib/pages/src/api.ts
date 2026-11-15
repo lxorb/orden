@@ -15,6 +15,4 @@ export const pagesOut = () =>
     ? Promise.reject(new Error('no page notes in the Even Realities plugin'))
     : import('./out')
 
-export const fromPdf = () => import('./from-pdf')
-
-export const turning = () => import('./turning')
+export const pdfTabs = () => import('./pdf-tabs')

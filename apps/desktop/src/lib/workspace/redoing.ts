@@ -3,7 +3,7 @@ import { folderOf, nameOf } from '../platform/src/api'
 import { copyAgain, type Copies } from './copying'
 import type { FileAction } from '../file-undo/src/api'
 import { putBack } from './undoing'
-import { archiveAgain } from '../archive/src/api'
+import { services } from './services'
 
 export interface DoesAgain extends Copies {
   move(from: string, intoFolder: string, how?: 'carries'): Promise<void>
@@ -67,10 +67,10 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       break
     case 'archive':
     case 'unarchive':
-      if (!__EVEN_PLUGIN__) await archiveAgain(action)
+      if (!__EVEN_PLUGIN__) await services().archiveAgain(action)
       break
     case 'outside':
-      if (!__EVEN_PLUGIN__) await (await import('../explorer/src/api')).redoOutside(action)
+      if (!__EVEN_PLUGIN__) await services().redoOutside(action)
       break
     case 'merge':
     case 'split':

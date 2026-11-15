@@ -52,6 +52,8 @@ export interface WorkspaceViewPort {
   readonly tree: Entry | null
   readonly activeRoot: string | null
   showSpace(id: string): Promise<void>
+  renameSpace(id: string, name: string): Promise<void>
+  openEntry(path: string): Promise<void>
   reload(path: string, text: string): void
   openShared(item: SharedNote, text: string): void
   showingShared(id: string): boolean
@@ -78,6 +80,8 @@ export const NO_WORKSPACE_VIEW: WorkspaceViewPort = {
   tree: null,
   activeRoot: null,
   showSpace: () => Promise.resolve(),
+  renameSpace: () => Promise.resolve(),
+  openEntry: () => Promise.resolve(),
   reload: () => undefined,
   openShared: () => undefined,
   showingShared: () => false,

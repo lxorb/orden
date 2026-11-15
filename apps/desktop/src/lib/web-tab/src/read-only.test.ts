@@ -86,6 +86,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../../workspace.svelte')
+await import('../../workspace-ports')
 const { pages } = await import('./pages.svelte')
 
 const WRITES = /write|rename|delete|trash|copy|create|move|snapshot|bring|remove/

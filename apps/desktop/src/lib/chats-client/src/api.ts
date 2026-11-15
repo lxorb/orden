@@ -27,21 +27,8 @@ export const wakeChats = () =>
 export const retireChats = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./retired')>() : import('./retired')
 
-export const chatLeaving = () =>
-  __EVEN_PLUGIN__
-    ? away<never>()
-    : Promise.all([import('./http'), import('./pointers'), import('./places')]).then(
-        ([http, pointers, places]) => ({
-          listChats: http.listChats,
-          moveChat: http.moveChat,
-          chatName: pointers.chatName,
-          readPointer: pointers.readPointer,
-          keepOwnPointer: places.keepOwnPointer,
-          lastMoved: places.lastMoved,
-          movedHere: places.movedHere,
-          ownPointer: places.ownPointer,
-        }),
-      )
+export const chatsCarried = async (path: string, folder: string) =>
+  (await import('./leaving')).chatsCarried(path, folder)
 
 export const loadChatTab = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./view/ChatTab.svelte')>() : import('./view/ChatTab.svelte')

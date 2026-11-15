@@ -1,7 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { Archive, ArchivedSpaces, isTile, sameBookmark } from '../src/api'
+import {
+  Archive,
+  ArchivedSpaces,
+  DEEPEST,
+  isTile,
+  sameBookmark,
+  SHALLOWEST,
+  SpaceGraphSettings,
+} from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -91,5 +99,22 @@ describe('what a space keeps beside its files', () => {
     expect(sameBookmark(plan, { ...plan, kind: 'folder' })).toBe(false)
     expect(isTile(plan)).toBe(true)
     expect(isTile({ ...plan, parent: 'g1' })).toBe(false)
+  })
+})
+
+describe("a space's graph settings", () => {
+  test('with no space open there is nothing to change', () => {
+    const settings = new SpaceGraphSettings(() => null)
+    const before = settings.here
+    settings.set({ depth: DEEPEST })
+    expect(settings.here).toEqual(before)
+  })
+
+  test('a depth is held between the shallowest and the deepest', () => {
+    const settings = new SpaceGraphSettings(() => '/space')
+    settings.set({ depth: DEEPEST + 10 })
+    expect(settings.here.depth).toBe(DEEPEST)
+    settings.set({ depth: 0 })
+    expect(settings.here.depth).toBe(SHALLOWEST)
   })
 })

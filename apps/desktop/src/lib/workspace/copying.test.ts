@@ -35,17 +35,6 @@ vi.mock('../file-writes/src/api', async (original) => ({
   writeBytes: async () => undefined,
   writeFile: async (path: string, content: string) => void disk.set(path, content),
 }))
-vi.mock('../views/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../views/src/api')>()),
-  rowsCopied: () =>
-    Promise.resolve({
-      numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
-      withoutIds: (path: string, text: string) =>
-        path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text)
-          ? text.replace(/^id: .*\n/m, '')
-          : null,
-    }),
-}))
 
 const stored = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -54,6 +43,17 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void stored.delete(key),
 })
 
+const { serveWorkspace } = await import('./services')
+serveWorkspace({
+  rowsCopied: () =>
+    Promise.resolve({
+      numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
+      withoutIds: (path: string, text: string) =>
+        path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text)
+          ? text.replace(/^id: .*\n/m, '')
+          : null,
+    }),
+})
 const { copyRows } = await import('./copying')
 const { ItemMetaStore } = await import('../space-kept/src/api')
 const { Protection } = await import('../protect/src/protection.svelte')

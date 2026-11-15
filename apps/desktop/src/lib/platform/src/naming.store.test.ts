@@ -220,6 +220,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { nameFault } = await import('./naming')
 const { workspace } = await import('../../workspace.svelte')
+await import('../../workspace-ports')
 const { sync } = await import('../../sync.svelte')
 const { unread } = await import('../../unread.svelte')
 const { account } = await import('../../accounts/src/account.svelte')

@@ -1160,6 +1160,21 @@ providePort('web.pages', {
     page.title = pages.of(from).title
     page.inPrivate = inPrivate
   },
+  named: (tab, url, title) => {
+    const page = pages.of(tab)
+    page.url = url
+    page.title = title
+  },
+  privately: (tab, inPrivate) => {
+    pages.of(tab).inPrivate = inPrivate
+  },
+  typedInto: (tab) => pages.typedInto(tab),
+  step: (tab, way) => pages.step(tab, way),
+  stepAddress: (tab, by) => pages.stepAddress(tab, by),
+  freeze: (tab) => pages.freeze(tab),
+  thaw: (tab) => pages.thaw(tab),
+  forget: (tab) => pages.forget(tab),
+  keepOnly: (tabs) => pages.keepOnly(tabs),
   shoot: (tab) => pages.shoot(tab),
   clip: (tab, selection) => pages.read(tab, selection),
   faviconOf: (url) => favicons.of(url),

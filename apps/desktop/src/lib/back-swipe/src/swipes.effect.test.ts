@@ -12,6 +12,7 @@ const { swiping } = await import('./shown.svelte')
 const PAGE = {
   url: null,
   title: '',
+  kept: null,
   back: true,
   forward: false,
   zoom: 1,

@@ -1,12 +1,12 @@
 import { log, isAgentsName, nameOf, samePath } from '../platform/src/api'
 import { canWriteAt } from '../sharing/src/api'
-import { moveHistory, readSpec } from '../terminal/src/api'
 import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
 import { mayCarry } from './chat-carry'
 import type { Draft } from '../session/src/api'
 import { ownerOf } from './sets'
 import { carried, movingOf, spacesFor } from './space-move'
+import { services } from './services'
 
 export async function moveToSpace(ids: readonly string[], space: string): Promise<boolean> {
   const ws = workspace
@@ -28,7 +28,7 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
         continue
       }
     } else if (how === 'home') {
-      homed(tab, space)
+      await homed(tab, space)
     }
     const views = how === 'file' ? ws.tabs.filter((one) => one.note === tab.note) : [tab]
     moved.push(...views.filter((one) => !moved.includes(one)))
@@ -98,10 +98,11 @@ async function fileMoved(path: string, root: string, done: Map<string, boolean |
   return ok
 }
 
-function homed(tab: Tab, space: string) {
-  if (tab.kind === 'terminal') {
-    const key = readSpec(tab.doc)?.key ?? ''
-    moveHistory({ space: tab.note.home, key }, { space, key })
-  }
+async function homed(tab: Tab, space: string) {
+  const from = tab.note.home
   tab.note.home = space
+  if (tab.kind === 'terminal')
+    await services()
+      .terminalMoved(tab.doc, from, space)
+      .catch(() => undefined)
 }

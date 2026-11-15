@@ -34,7 +34,7 @@ for (const on of [false, true]) {
   test(`Enter answers Only the file${on ? ', on a Mac too' : ''}`, async () => {
     mac.on = on
     const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
-    const { carryQuestion } = await import('../../src/lib/workspace/carry-question')
+    const { carryQuestion } = await import('../../src/lib/chats-client/src/carry-question')
     const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
     const shown = mount(PromptSheet, { target })
     close = () => void unmount(shown)

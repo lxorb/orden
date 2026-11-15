@@ -16,7 +16,7 @@
     MOST_PUSH,
     MOST_SPREAD,
     SHALLOWEST,
-  } from './settings.svelte'
+  } from '../../space-kept/src/api'
 
   const {
     open,

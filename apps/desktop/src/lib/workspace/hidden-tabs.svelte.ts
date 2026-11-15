@@ -1,6 +1,6 @@
 import { agentMarks } from '../agent-marks.svelte'
+import { webPages } from '@orden/contracts'
 import { keepJson, stored } from '../platform/src/api'
-import { pages } from '../web-tab/src/api'
 import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
 import { type HiddenTabs, isHiddenTabs, onLeaving } from './sets'
@@ -13,7 +13,7 @@ function read(): HiddenTabs {
 }
 
 function running(tab: Tab): boolean {
-  return tab.kind === 'web' && pages.of(tab.id).live && !(tab.id in agentMarks.on)
+  return tab.kind === 'web' && webPages().of(tab.id).live && !(tab.id in agentMarks.on)
 }
 
 class Hidden {
@@ -72,12 +72,12 @@ class Hidden {
 
   private pause(tab: string) {
     this.paused.add(tab)
-    pages.freeze(tab)
+    webPages().freeze(tab)
   }
 
   private resume(tab: string) {
     this.paused.delete(tab)
-    void pages.thaw(tab)
+    void webPages().thaw(tab)
   }
 }
 

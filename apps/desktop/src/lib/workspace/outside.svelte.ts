@@ -12,13 +12,13 @@ import {
   afterQuiet,
   windows,
 } from '../platform/src/api'
-import { paperRewritten, sheetArrived } from '../pdf/src/api'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
 import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync-client/src/api'
 import { type FileOp, landing } from '../file-ops/src/api'
 import { workspace } from '../workspace.svelte'
 import { holdsWords, unixLines } from '../documents/src/api'
+import { services } from './services'
 
 const NO_ENGINE = 'no-engine'
 
@@ -96,10 +96,10 @@ async function came(path: string, dir: boolean) {
 
 export async function heardChange(change: SpaceChange): Promise<void> {
   if (dotted(change.path)) return
-  if (!change.dir) sheetArrived(change.path)
-  if (!change.dir && change.kind !== 'removed' && /\.pdf$/i.test(change.path)) {
-    const path = change.path
-    paperRewritten(path)
+  if (!change.dir) {
+    const { paperRewritten, sheetArrived } = await services().sheets()
+    sheetArrived(change.path)
+    if (change.kind !== 'removed' && /\.pdf$/i.test(change.path)) paperRewritten(change.path)
   }
   if (change.kind === 'removed') return gone(change.path, change.dir)
   if (change.kind === 'renamed') {

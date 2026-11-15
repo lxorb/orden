@@ -6,6 +6,7 @@ interface World {
 class Page {
   url = $state<string | null>(null)
   readonly title = ''
+  readonly kept = null
   readonly back = false
   readonly forward = false
   readonly zoom = 1

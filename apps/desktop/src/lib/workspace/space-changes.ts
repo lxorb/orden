@@ -3,6 +3,7 @@ import { identifier, samePath, invoke, windows } from '../platform/src/api'
 import { leftGone, leftMoved } from '../left-spaces'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
+import { services } from './services'
 
 export async function adoptSpace(
   ws: HoldsSpaces,
@@ -135,8 +136,7 @@ export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean>
       ? ws.tabs
       : []
   if (!tabs.some((tab) => tab.kind === 'terminal')) return true
-  const { mayEnd } = await import('../terminal/src/api')
-  return await mayEnd(tabs)
+  return await services().mayEnd(tabs)
 }
 
 async function accountHoldsSpace(root: string): Promise<boolean> {
