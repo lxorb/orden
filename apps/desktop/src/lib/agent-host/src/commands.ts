@@ -189,7 +189,13 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   for (const scope of scopes ?? []) needScope(call, scope, id)
 
   reachesNothingShut(id, scopes ?? [])
-  if (id === 'undo-file' || id === 'redo-file') await nothingLockedWaits(null)
+  if (id === 'undo-file' || id === 'redo-file') {
+    const agent = call.caller.agent
+    if (agent !== null && agent.spaces !== 'all') {
+      throw new Refused('no_such_space', `${id} reaches every space, and you reach only some`)
+    }
+    await nothingLockedWaits(null)
+  }
 
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)

@@ -1102,8 +1102,12 @@ describe('what asks the reader first', () => {
         message: expect.stringContaining(scope),
       })
       expect(ran, id).toEqual([])
-      expect(await call('run_command', { id }), id).toMatchObject({ result: { id } })
+      const every = id === 'undo-file' ? agent({ spaces: 'all' }) : undefined
+      expect(await call('run_command', { id }, every), id).toMatchObject({ result: { id } })
     }
+    expect(await call('run_command', { id: 'undo-file' })).toMatchObject({
+      code: 'no_such_space',
+    })
     ran.length = 0
     expect(await call('run_command', { id: 'files' }, plain)).toMatchObject({
       result: { id: 'files' },
@@ -1133,8 +1137,12 @@ describe('what asks the reader first', () => {
         id,
       ).toMatchObject({ code: 'not_granted', message: expect.stringContaining('workspace.focus') })
       expect(ran, id).toEqual([])
-      expect(await call('run_command', { id }), id).toMatchObject({ result: { id } })
+      const every = id === 'undo-file' ? agent({ spaces: 'all' }) : undefined
+      expect(await call('run_command', { id }, every), id).toMatchObject({ result: { id } })
     }
+    expect(await call('run_command', { id: 'undo-file' })).toMatchObject({
+      code: 'no_such_space',
+    })
     for (const id of ['export-pdf', 'copy-uri']) {
       expect(await call('run_command', { id }), id).toMatchObject({ code: 'by_hand' })
     }

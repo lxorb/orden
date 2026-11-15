@@ -75,6 +75,7 @@ function call(id: string, path: string | null = '/tmp/out') {
       id: 'claude',
       name: 'Claude',
       scopes: ['workspace', 'notes.write', 'tree'],
+      spaces: 'all',
       mode: 'unsupervised',
     }),
   }
@@ -141,5 +142,20 @@ describe('an agent undoing a file change', () => {
   test('can when no lock waits', async () => {
     await runCommand(call('undo-file', null))
     expect(ran).toEqual(['undo-file'])
+  })
+
+  test('cannot when it reaches only some spaces, since the last change may be in another', async () => {
+    const narrow = {
+      ...call('undo-file', null),
+      caller: callerOf({
+        id: 'claude',
+        name: 'Claude',
+        scopes: ['workspace', 'notes.write', 'tree'],
+        spaces: ['Work'],
+        mode: 'unsupervised',
+      }),
+    }
+    await expect(runCommand(narrow)).rejects.toMatchObject({ code: 'no_such_space' })
+    expect(ran).toEqual([])
   })
 })

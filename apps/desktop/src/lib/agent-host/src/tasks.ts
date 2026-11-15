@@ -32,6 +32,7 @@ import {
   type Place,
   placeFor,
   placeOf,
+  reachable,
   writableAt,
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
@@ -113,7 +114,14 @@ function todoOut(todo: Todo) {
 function spaceIdOf(call: Call): string | null {
   const named = maybe(call, 'space')
   if (named !== null) return placeFor(call, named).space.id
-  return workspace.activeSpace?.id ?? null
+  if (reachesTodo(call, null)) return workspace.activeSpace?.id ?? null
+  return placeFor(call, null).space.id
+}
+
+function reachesTodo(call: Call, space: string | null): boolean {
+  const agent = call.caller.agent
+  if (agent === null || agent.spaces === 'all') return true
+  return space !== null && reachable(call).some((one) => one.id === space)
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -166,7 +174,7 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   const shown = sortedTodos(
     shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
     'deadline',
-  ).filter((one) => flag(call, 'done') || !one.done)
+  ).filter((one) => (flag(call, 'done') || !one.done) && reachesTodo(call, one.space))
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 
@@ -179,7 +187,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const made = await todos.add({
     ...patch,
     title,
-    space: 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null),
+    space: 'space' in call.args ? (patch.space ?? null) : spaceIdOf(call),
   })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
@@ -189,7 +197,9 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
+  if (!was || !reachesTodo(call, was.space)) {
+    throw new Refused('no_such_file', `there is no todo ${id}`)
+  }
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
   const kept = await todos.update(id, patchOf(call))
