@@ -97,3 +97,15 @@ test('a move another window already kept is not kept again from a copy read befo
   expect(movesAfter(0)).toEqual([{ from: 'openai', to: 'openai-2', at: 5 }])
   expect(rightsKey('openai')).toBe('openai_5')
 })
+
+test('moves kept where web storage cannot be written are still known to the window', async () => {
+  vi.stubGlobal('localStorage', undefined)
+  const { keepMoves, movedSince, rightsKey } = await moves()
+
+  keepMoves({ openai: 'openai-2' }, 5)
+  keepMoves({ anthropic: 'anthropic-2' }, 6)
+
+  expect(movedSince('openai', 0)).toBe('openai-2')
+  expect(rightsKey('openai-2')).toBe('openai')
+  expect(rightsKey('anthropic-2')).toBe('anthropic')
+})

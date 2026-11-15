@@ -25,11 +25,22 @@ function isMove(value: unknown): value is Move {
   )
 }
 
+const same = (one: Move, other: Move) =>
+  one.from === other.from && one.to === other.to && one.at === other.at && one.who === other.who
+
 function kept(): Move[] {
   if (ledger) return ledger
   const value = stored(KEY)
   ledger = Array.isArray(value) ? value.filter(isMove) : []
   return ledger
+}
+
+function readAgain(): void {
+  const held = ledger ?? []
+  ledger = null
+  const read = kept()
+  const missing = held.filter((one) => !read.some((other) => same(one, other)))
+  if (missing.length) ledger = [...read, ...missing].sort((one, other) => one.at - other.at)
 }
 
 export function lastMove(moves: readonly Move[]): number {
@@ -47,7 +58,7 @@ function told(moves: readonly Move[]): void {
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (event) => {
     if (event.key !== KEY && event.key !== null) return
-    ledger = null
+    readAgain()
     told(movesAfter(known))
   })
 }
@@ -61,7 +72,7 @@ export function keepMoves(
   at = Date.now(),
   who: Record<string, string> = {},
 ): void {
-  ledger = null
+  readAgain()
   const added = Object.entries(moved)
     .filter(([from, to]) => from !== to)
     .map(([from, to]): Move => ({ from, to, at, ...(who[from] ? { who: who[from] } : {}) }))

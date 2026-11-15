@@ -58,14 +58,14 @@ async function signIns(): Promise<Record<string, string>> {
   return seen
 }
 
-async function whoMoved(
-  before: Contents,
+async function whoStayed(
+  after: Contents,
   moved: Record<string, string>,
 ): Promise<Record<string, string>> {
   const who: Record<string, string> = {}
   for (const from of Object.keys(moved)) {
-    const one = before.accounts.accounts.find((account) => account.id === from)
-    const key = before.keys[from]
+    const one = after.accounts.accounts.find((account) => account.id === from)
+    const key = after.keys[from]
     const print = key ? await fingerprint(key) : ''
     if (one) who[from] = `${one.kind}|${one.baseUrl ?? ''}|${print}`
   }
@@ -103,7 +103,8 @@ export const world: VaultWorld = {
     for (const id of Object.keys(before.keys)) {
       if (!(id in contents.keys)) await forgetKey(id, true)
     }
-    keepMoves(moved, Date.now(), await whoMoved(before, moved))
+    const who = await whoStayed(contents, moved)
+    keepMoves(moved, Date.now(), who)
     ai.adopt(contents.accounts)
   },
   loadBase: (id) => (parsed(storedText(baseKey(id))) as Base | null) ?? null,

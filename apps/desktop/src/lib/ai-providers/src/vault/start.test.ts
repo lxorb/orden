@@ -21,6 +21,9 @@ vi.mock('../keys', async (original) => ({
   },
 }))
 
+const { memoryStorage } = await import('../../../../../test/disk')
+vi.stubGlobal('localStorage', memoryStorage())
+
 const { ai } = await import('../store.svelte')
 const { startVault, vault, world } = await import('./start.svelte')
 const { movedSince } = await import('../moves')
@@ -70,24 +73,21 @@ test('nothing is kept as moved when the keys of a merge could not be written', a
   expect(adopt).not.toHaveBeenCalled()
 })
 
-test('a move is kept with the account it moved, so the same move said by another window is kept once', async () => {
-  const mine = {
-    accounts: {
-      accounts: [{ id: 'openai', kind: 'openai' as const, name: 'OpenAI', model: '' }],
-      active: {},
-      defaultVendor: '',
-      uses: {},
-    },
-    keys: {},
-    seen: {},
-  }
+test('a move is kept with the account that stayed on its id, so the same move said by a window that read the keys later is kept once', async () => {
+  const account = { id: 'openai', kind: 'openai' as const, name: 'OpenAI', model: '' }
+  const accounts = { accounts: [account], active: {}, defaultVendor: '', uses: {} }
+  const merged = { accounts, keys: { openai: 'sk-theirs' }, seen: {} }
   vi.spyOn(ai, 'adopt').mockImplementation(() => undefined)
 
-  await world.apply(mine, mine, { openai: 'openai-9' })
-  await world.apply(mine, mine, { openai: 'openai-9' })
+  await world.apply(merged, { ...merged, keys: { openai: 'sk-mine' } }, { openai: 'openai-9' })
+  await world.apply(merged, { ...merged, keys: { openai: 'sk-theirs' } }, { openai: 'openai-9' })
 
   const { movesAfter } = await import('../moves')
   expect(movesAfter(0).filter((one) => one.to === 'openai-9')).toEqual([
-    expect.objectContaining({ from: 'openai', to: 'openai-9', who: 'openai||' }),
+    expect.objectContaining({
+      from: 'openai',
+      to: 'openai-9',
+      who: expect.stringMatching(/^openai\|\|.+/) as string,
+    }),
   ])
 })
