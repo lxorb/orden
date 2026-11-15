@@ -514,3 +514,60 @@ describe('the ambiguous cases stay words', () => {
     expect(said(en('Morgen planen'))).toEqual({ text: 'Morgen planen' })
   })
 })
+
+describe('on a Sunday in November', () => {
+  const SUNDAY = new Date(2026, 10, 15, 10, 0)
+  const on = (text: string, lang = 'en') => said(parseQuickAdd(text, [lang], SUNDAY))
+
+  test.each([
+    ['call mom at 7 tomorrow morning', 'en', 'call mom', '2026-11-16', '07:00'],
+    ['call mom at 8 tonight', 'en', 'call mom', '2026-11-15', '20:00'],
+    ['call mom at 8 tomorrow evening', 'en', 'call mom', '2026-11-16', '20:00'],
+    ['Anruf um 8 heute Abend', 'de', 'Anruf', '2026-11-15', '20:00'],
+    ['Anruf um 8 Uhr abends', 'de', 'Anruf', '2026-11-15', '20:00'],
+  ])(
+    'a time said before its part of the day is in that part: %s',
+    (text, lang, title, due, time) => {
+      expect(on(text, lang)).toEqual({ text: title, due, time })
+    },
+  )
+
+  test.each([
+    ['call friday morning', '2026-11-20', '09:00'],
+    ['call monday evening', '2026-11-16', '19:00'],
+    ['call on monday evening', '2026-11-16', '19:00'],
+    ['call friday morning at 7', '2026-11-20', '07:00'],
+    ['call at 8 friday evening', '2026-11-20', '20:00'],
+  ])('a part of the day after a weekday is its time: %s', (text, due, time) => {
+    expect(on(text)).toEqual({ text: 'call', due, time })
+  })
+
+  test.each([
+    ['Pay every 15th of the month', 'en', 'every month on the 15th', '2026-11-15', undefined],
+    ['Pay jeden 1. des Monats', 'de', 'every month on the 1st', '2026-12-01', undefined],
+    ['Pay every day at 9 starting tomorrow', 'en', 'every day', '2026-11-16', '09:00'],
+    [
+      'Pay every day at 9 until dec 24',
+      'en',
+      'every day until December 24, 2026',
+      '2026-11-16',
+      '09:00',
+    ],
+    [
+      'Pay every 2nd monday of the month',
+      'en',
+      'every month on the 2nd Monday',
+      '2026-12-14',
+      undefined,
+    ],
+    [
+      'Pay jeden letzten Freitag des Monats',
+      'de',
+      'every month on the last Friday',
+      '2026-11-27',
+      undefined,
+    ],
+  ])('the words of a repeat leave the title: %s', (text, lang, recurrence, due, time) => {
+    expect(on(text, lang)).toEqual({ text: 'Pay', recurrence, due, ...(time ? { time } : {}) })
+  })
+})

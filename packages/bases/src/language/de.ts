@@ -141,6 +141,10 @@ export const DE: Grammar = {
     werktags: 'every weekday',
     ...everyDay,
   },
+  ofTheMonth: [
+    ['des', 'monats'],
+    ['im', 'monat'],
+  ],
   starting: new Set(['ab']),
   until: new Set(['bis']),
   workdays: new Set(['werktag', 'werktage', 'arbeitstag', 'arbeitstage']),

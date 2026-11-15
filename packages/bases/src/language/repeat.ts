@@ -1,8 +1,8 @@
 import { daysInMonth } from '../dates'
 import { type Rule, parseRule } from '../recurrence'
 import type { Grammar } from './grammar'
-import { type Clock, dayAt, timeInPart } from './when'
-import { bare, type Word } from './words'
+import { askedTime, type Clock, dayAt, timeInPart } from './when'
+import { bare, longestAt, type Word } from './words'
 
 export interface Repeat {
   end: number
@@ -182,18 +182,22 @@ export function repeatAt(
   const read = g.lang === 'de' ? germanRule(words, at, g) : englishRule(words, at, g)
   if (!read) return null
 
-  let { end } = read
   const rule = { ...read.rule }
+  let end = read.end + (rule.unit === 'month' ? longestAt(words, read.end, g.ofTheMonth) : 0)
   let first: string | undefined
+  let time: string | undefined
   for (let turn = 0; turn < 2; turn++) {
-    const key = bare(words[end])
+    const said = time === undefined ? askedTime(words, end, g) : null
+    const from = said?.time ? said.end : end
+    const key = bare(words[from])
     const isStart = g.starting.has(key)
     if (!isStart && !g.until.has(key)) break
-    const day = dayAt(words, end + 1, g, clock, true)
+    const day = dayAt(words, from + 1, g, clock, true)
     if (!day?.day) break
+    if (said?.time) time = said.time
     if (isStart) first = day.day
     else rule.until = day.day
     end = day.end
   }
-  return first ? { end, rule, first } : { end, rule }
+  return { end, rule, ...(first ? { first } : {}), ...(time ? { time } : {}) }
 }

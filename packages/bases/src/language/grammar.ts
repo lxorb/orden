@@ -39,6 +39,7 @@ export interface Grammar {
   other: ReadonlySet<string>
   last: ReadonlySet<string>
   rules: Readonly<Record<string, string>>
+  ofTheMonth: readonly (readonly string[])[]
   starting: ReadonlySet<string>
   until: ReadonlySet<string>
   workdays: ReadonlySet<string>
