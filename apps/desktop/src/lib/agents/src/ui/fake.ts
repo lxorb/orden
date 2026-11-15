@@ -7,7 +7,7 @@ import type {
   Overview,
   Picture,
   ShellWords,
-} from '../verbs'
+} from '../../../agent-protocol/src/api'
 import type { LogRead, Source } from './source'
 
 function grantFor(id: string, name: string): Grant {

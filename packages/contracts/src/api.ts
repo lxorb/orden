@@ -197,7 +197,15 @@ export {
   workspaceView,
 } from './ports'
 export { whenLoaded } from './loading'
-export type { AgentPorts, AgentScope, AgentWritesPort } from './agents'
+export type {
+  AgentHeard,
+  AgentMarksPort,
+  AgentPorts,
+  AgentQuestion,
+  AgentReaderPort,
+  AgentScope,
+  AgentWritesPort,
+} from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
 export type { PandocPicture, PickedFile } from './files'

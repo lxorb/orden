@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { AGENT_WINDOW_VERBS } from '../../agents/src/verbs'
+import { AGENT_WINDOW_VERBS } from '../../agent-protocol/src/api'
 import { callerOf, READER } from './caller'
 
 function memoryStorage(): Storage {

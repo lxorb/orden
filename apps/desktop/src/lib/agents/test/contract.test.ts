@@ -3,10 +3,8 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { settingsPartsIn } from '@orden/contracts'
 import {
-  AGENT_WINDOW_VERBS,
   agentsUi,
   agentStandIn,
-  CAPTURE_AS,
   loadAgentRows,
   loadAgentSession,
   loadTakeoverBar,
@@ -58,16 +56,5 @@ describe('the module stands on its own', () => {
     for (const one of [agentsUi, agentStandIn, loadAgentRows, loadAgentSession, loadTakeoverBar]) {
       expect(typeof one).toBe('function')
     }
-  })
-})
-
-describe('what an agent may do from a window', () => {
-  test('every window verb names the scope it needs, or none', () => {
-    expect(AGENT_WINDOW_VERBS.list_notes).toBe('notes.read')
-    expect(AGENT_WINDOW_VERBS.list_spaces).toBeNull()
-  })
-
-  test('a page is captured as a clip, a screenshot or a pdf', () => {
-    expect([...CAPTURE_AS]).toEqual(['clip', 'screenshot', 'pdf'])
   })
 })

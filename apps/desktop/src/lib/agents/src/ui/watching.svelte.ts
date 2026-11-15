@@ -1,4 +1,4 @@
-import type { Picture } from '../verbs'
+import type { Picture } from '../../../agent-protocol/src/api'
 
 export const LOOK_EVERY = 2000
 

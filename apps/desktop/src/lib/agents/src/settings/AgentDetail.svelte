@@ -6,7 +6,7 @@
   import { Cross, prompt } from '../../../ui-kit/src/api'
   import { Select, Switch } from '../../../ui-controls/src/api'
   import { workspace } from '../../../workspace.svelte'
-  import type { Grant, Scope } from '../verbs'
+  import type { Grant, Scope } from '../../../agent-protocol/src/api'
   import AgentLog from './AgentLog.svelte'
   import AgentMark from './AgentMark.svelte'
   import {

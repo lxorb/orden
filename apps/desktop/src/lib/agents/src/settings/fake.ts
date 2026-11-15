@@ -1,5 +1,5 @@
 import { isRecord } from '../../../platform/src/api'
-import type { Grant, Minted } from '../verbs'
+import type { Grant, Minted } from '../../../agent-protocol/src/api'
 import type { AgentsCrate, Heard } from './crate'
 import { ownGrant, thirdPartyGrant } from './grant'
 import { reach } from './reach.svelte'

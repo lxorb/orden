@@ -1,3 +1,4 @@
+import { type AgentReaderPort, portOf } from '@orden/contracts'
 import type { Call } from './call'
 import { Refused } from './problem'
 
@@ -6,16 +7,23 @@ const halts = new Map<string, number>()
 const heeding = new Set<{ agent: string; halt: () => void }>()
 let hearing: Promise<unknown> | null = null
 
+export function readerPort(): AgentReaderPort {
+  const port = portOf('agents.reader')
+  if (!port.ok) throw new Refused('failed', 'the agents are not running')
+  return port.value
+}
+
 function heedStops(): Promise<unknown> {
-  hearing ??= import('../agents/src/api')
-    .then(({ tauriCrate }) =>
-      tauriCrate.hear((heard) => {
+  hearing ??= Promise.resolve()
+    .then(() =>
+      readerPort().hear((heard) => {
         if (heard.kind === 'stopped') {
           stops += 1
           for (const one of [...heeding]) one.halt()
-        } else if (heard.kind === 'paused' && heard.agent !== null) {
-          halts.set(heard.agent, (halts.get(heard.agent) ?? 0) + 1)
-          for (const one of [...heeding]) if (one.agent === heard.agent) one.halt()
+        } else if (heard.kind === 'paused' && typeof heard.agent === 'string') {
+          const agent = heard.agent
+          halts.set(agent, (halts.get(agent) ?? 0) + 1)
+          for (const one of [...heeding]) if (one.agent === agent) one.halt()
         }
       }),
     )

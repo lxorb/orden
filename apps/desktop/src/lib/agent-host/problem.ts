@@ -1,6 +1,6 @@
 import { type AgentAnswer, refusal } from '../automation/src/api'
 import { DocError } from '../agent-docs/src/api'
-import type { Code as CrateCode } from '../agents/src/api'
+import type { Code as CrateCode } from '../agent-protocol/src/api'
 
 export type Code =
   | CrateCode

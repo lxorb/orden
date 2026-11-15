@@ -1,3 +1,4 @@
+import { type AgentHeard, providePort } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller } from '../automation/src/api'
 
@@ -138,20 +139,22 @@ vi.mock('../platform/src/tauri', async (original) => ({
   },
 }))
 
-const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
+const heard: ((event: AgentHeard) => void)[] = []
 vi.mock('../agent-docs/src/api', async (original) => ({
   ...(await original<typeof import('../agent-docs/src/api')>()),
   agentDocs: () => Promise.resolve({ notes: docs }),
 }))
-vi.mock('../agents/src/api', async (original) => ({
-  ...(await original<typeof import('../agents/src/api')>()),
-  tauriCrate: {
-    hear: (on: (event: { kind: string; agent: string | null }) => void) => {
-      heard.push(on)
-      return Promise.resolve(() => undefined)
-    },
+providePort('agents.reader', {
+  knows: () => Promise.resolve(false),
+  waiting: () => Promise.resolve(0),
+  ask: () => Promise.resolve(''),
+  answer: () => undefined,
+  heard: () => Promise.resolve(null),
+  hear: (on) => {
+    heard.push(on)
+    return Promise.resolve(() => undefined)
   },
-}))
+})
 
 let readOnly = false
 vi.mock('../sharing/src/api', () => ({

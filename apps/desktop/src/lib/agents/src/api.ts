@@ -1,18 +1,7 @@
 import './shell-parts'
 export { tauriCrate } from './settings/crate'
 export { asking } from './ui/asking.svelte'
-export { ACTIVE_FOR } from './ui/marks'
 export { default as Spark } from './ui/Spark.svelte'
-export {
-  AGENT_WINDOW_VERBS,
-  CAPTURE_AS,
-  type CaptureAs,
-  type Category,
-  type Code,
-  type Overview,
-  type ReaderTab,
-  type StoreSaid,
-} from './verbs'
 
 export const agentsUi = () =>
   __EVEN_PLUGIN__

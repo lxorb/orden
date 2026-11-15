@@ -4,7 +4,7 @@
   import { dur, fly } from '../../../platform/src/api'
   import { webPages } from '@orden/contracts'
   import { workspace } from '../../../workspace.svelte'
-  import type { Approval } from '../verbs'
+  import type { Approval } from '../../../agent-protocol/src/api'
   import type { Activity } from './activity.svelte'
   import { hostOf } from './session'
 

@@ -29,13 +29,38 @@ providePort('chats', {
   },
 })
 
+const agentsApi = () =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no agents in the Even Realities plugin'))
+    : import('./agents/src/api')
+
 providePort('agents.writes', {
   wrote: (agent, tabs) => {
     if (!__EVEN_PLUGIN__) {
-      void import('./agents/src/api')
+      void agentsApi()
         .then((one) => one.agentsUi())
         .then((ui) => ui.wrote(agent, tabs))
     }
+  },
+})
+
+providePort('agents.reader', {
+  knows: (agent, id) => agentsApi().then(({ asking }) => asking.knows(agent, id)),
+  waiting: (agent) => agentsApi().then(({ asking }) => asking.of(agent).length),
+  ask: (question) =>
+    agentsApi().then(
+      ({ asking }) => asking.ask({ ...question, choices: [...question.choices] }).id,
+    ),
+  answer: (id, answer) => void agentsApi().then(({ asking }) => asking.answer(id, answer)),
+  heard: (id, patience, signal) =>
+    agentsApi().then(({ asking }) => asking.heard(id, patience, signal)),
+  hear: (on) => agentsApi().then(({ tauriCrate }) => tauriCrate.hear(on)),
+})
+
+providePort('agents.marks', {
+  keepMarksOf: (agents) => {
+    if (!__EVEN_PLUGIN__)
+      void import('./agent-host/editor').then(({ keepMarksOf }) => keepMarksOf(agents))
   },
 })
 

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import { mcpLine } from './mcp'
-import { AGENT_WINDOW_VERBS, BROWSER_VERBS } from './verbs'
+import { AGENT_WINDOW_VERBS, BROWSER_VERBS } from '../../agent-protocol/src/api'
 
 describe('the line that adds Orden to a client', () => {
   it('names the installed exe in quotes on Windows, at user scope', () => {

@@ -1,6 +1,6 @@
 import { SvelteMap } from 'svelte/reactivity'
 import { message } from '../../../ui-kit/src/api'
-import type { Grant, Minted } from '../verbs'
+import type { Grant, Minted } from '../../../agent-protocol/src/api'
 import type { AgentsCrate, Heard } from './crate'
 import { type Call, readCall } from '../ui/session'
 import { lastActive } from './sessions'

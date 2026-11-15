@@ -1,7 +1,7 @@
 <script lang="ts">
   import { asking } from './asking.svelte'
   import { started } from './live.svelte'
-  import { ACTIVE_FOR } from './marks'
+  import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
   import Spark from './Spark.svelte'
 
   const { open, onopen }: { open: string | null; onopen: (agent: string) => void } = $props()

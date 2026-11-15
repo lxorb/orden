@@ -1,7 +1,6 @@
 import type { Worn } from '../../../agent-marks.svelte'
+import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
 import type { Seen } from './seen'
-
-export const ACTIVE_FOR = 15_000
 
 export type ColourOf = (agent: string) => string
 
