@@ -3,6 +3,8 @@ import { describe, expect, test, vi } from 'vitest'
 const found: Record<string, string> = {
   'shot.png': 'assets/shot.png',
   'deep.png': 'notes/pictures/deep.png',
+  'Pasted image 2024.png': 'attachments/Pasted image 2024.png',
+  'Café.png': 'attachments/Café.png',
 }
 
 vi.mock('./links.svelte', () => ({
@@ -19,6 +21,15 @@ describe('a picture a note names', () => {
     expect(notePicture('shot.png', '/Work/notes/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
     expect(notePicture('shot.png', '/Work/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
     expect(notePicture('deep.png', '/Work/Q1.md', '')).toBe('/asset/Work/notes/pictures/deep.png')
+  })
+
+  test('a name written the way a link address is, with its spaces and accents encoded', () => {
+    expect(notePicture('Pasted%20image%202024.png', '/Work/notes/Q1.md', '')).toBe(
+      '/asset/Work/attachments/Pasted%20image%202024.png',
+    )
+    expect(notePicture('Caf%C3%A9.png', '/Work/Q1.md', '')).toBe(
+      '/asset/Work/attachments/Caf%C3%A9.png',
+    )
   })
 
   test('a path is a path beside the note, index or no index', () => {

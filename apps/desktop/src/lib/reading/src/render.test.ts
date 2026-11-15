@@ -9,7 +9,11 @@ const bodies: Record<string, string> = {
   'Plan.md': '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n',
 }
 
-const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from: [] }
+const asked: { embeds: string[]; from: (string | null)[]; pictures: string[] } = {
+  embeds: [],
+  from: [],
+  pictures: [],
+}
 
 vi.mock('../../link-index/src/api', () => ({
   links: {
@@ -32,7 +36,10 @@ vi.mock('../../link-index/src/api', () => ({
       )
     },
   },
-  notePicture: (src: string) => `asset://${src}`,
+  notePicture: (src: string) => {
+    asked.pictures.push(src)
+    return `asset://${src}`
+  },
 }))
 
 const { readingHtml, unreadableHtml } = await import('./render')
@@ -228,5 +235,15 @@ describe('a note the renderer cannot read', () => {
     const html = unreadableHtml('> [!note] <b>x</b> & y\n')
 
     expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
+  })
+})
+
+describe('a picture the reading view draws', () => {
+  test('is looked up by its name, not by the way an attribute writes it', async () => {
+    asked.pictures.length = 0
+    const html = await readingHtml(note('![[Q&A.png]]\n'), 'light', true)
+
+    expect(asked.pictures).toEqual(['Q&A.png'])
+    expect(html).toContain('src="asset://Q&amp;A.png"')
   })
 })

@@ -14,6 +14,19 @@ export function escapeAll(text: string): string {
   return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 }
 
+const NAMED: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
+
+export function attributeText(written: string): string {
+  return written.replace(
+    /&(?:#(\d+)|#x([\da-f]+)|(amp|lt|gt|quot|apos));/gi,
+    (whole, decimal?: string, hex?: string, name?: string) => {
+      if (name) return NAMED[name.toLowerCase()] ?? whole
+      const code = decimal === undefined ? Number.parseInt(hex ?? '', 16) : Number(decimal)
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
+    },
+  )
+}
+
 const SAFE_SCHEMES = new Set(['http', 'https', 'mailto', 'tel'])
 
 const SAFE_DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|x-icon);/i

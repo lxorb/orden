@@ -1,5 +1,5 @@
 import { renderMarkdown, type Wikilink } from '@orden/markdown'
-import { escapeAll } from '@orden/markdown/html'
+import { attributeText, escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
 import { keptCoverOf } from '../../workspace/src/api'
@@ -21,7 +21,7 @@ export function pointer(note: Note): (link: Wikilink) => { href: string | null }
 }
 
 export function withPictures(html: string, note: Note): string {
-  return mapSources(html, (src) => notePicture(src, note.path, note.text))
+  return mapSources(html, (src) => escapeAll(notePicture(attributeText(src), note.path, note.text)))
 }
 
 const MEASURE = 'orden:reading'
