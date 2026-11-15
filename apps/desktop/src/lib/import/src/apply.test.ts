@@ -1,3 +1,4 @@
+import { type NoteIndex, resolveFile, resolveNote } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { ImportPlan, Planned } from './plan'
@@ -537,6 +538,89 @@ describe('a vault landed beside notes of the same name', () => {
 
     expect(files.map((one) => one.path)).toContain('Inbox/Screenshot (1) 2.png')
     expect(textAt(files, 'Inbox/Trip.md')).toBe('![](Screenshot%20%281%29%202.png)\n')
+  })
+})
+
+function spaceIndex(notes: readonly string[], files: readonly string[], from: string): NoteIndex {
+  const ref = (path: string) => ({
+    path,
+    name: (path.split('/').pop() ?? path).replace(/\.md$/, ''),
+    headings: [],
+    blocks: [],
+    aliases: [],
+  })
+  return { notes: notes.map(ref), files, path: from, read: () => Promise.resolve(null) }
+}
+
+function targetsIn(text: string): string[] {
+  return [...text.matchAll(/\[\[([^\]|#]+)/g)].map((one) => one[1] ?? '')
+}
+
+describe('a vault landed in a folder of a space that holds notes of the same name', () => {
+  test('has a link by name reach the note it came with, not the namesake already there', async () => {
+    const files = await vaultLanded(
+      ['Ideas.md', 'cover.png'],
+      ['Ideas.md', '# v'],
+      ['cover.png'],
+      ['Daily/Day.md', 'See [[Ideas]], [[Ideas#Later]] and ![[cover.png]].'],
+    )
+    const landed = files.map((one) => one.path)
+    const index = spaceIndex(
+      ['Ideas.md', ...landed.filter((path) => path.endsWith('.md'))],
+      ['cover.png', ...landed.filter((path) => !path.endsWith('.md'))],
+      'Inbox/Daily/Day.md',
+    )
+    const [ideas, later, cover] = targetsIn(textAt(files, 'Inbox/Daily/Day.md'))
+
+    expect(resolveNote(index, ideas ?? '')?.path).toBe('Inbox/Ideas.md')
+    expect(resolveNote(index, later ?? '')?.path).toBe('Inbox/Ideas.md')
+    expect(resolveFile(index, cover ?? '', 'wikilink')).toBe('Inbox/cover.png')
+    expect(textAt(files, 'Inbox/Daily/Day.md')).toBe(
+      'See [[Inbox/Ideas|Ideas]], [[Inbox/Ideas#Later]] and ![[Inbox/cover.png]].\n',
+    )
+  })
+
+  test('keeps a link by name that already reaches the note it came with', async () => {
+    const files = await vaultLanded(
+      ['Ideas.md', 'Archive/Old/Plan.md'],
+      ['Ideas.md', '# v'],
+      ['Plan.md', '# p'],
+      ['Day.md', 'See [[Ideas]] and [[Plan]].'],
+    )
+
+    expect(textAt(files, 'Inbox/Day.md')).toBe('See [[Ideas]] and [[Plan]].\n')
+  })
+
+  test('has a link in a table keep its cell when it names the note from the top', async () => {
+    const files = await vaultLanded(
+      ['Ideas.md'],
+      ['Ideas.md', '# v'],
+      ['Daily/Day.md', '| What |\n| --- |\n| [[Ideas]] |\n'],
+    )
+
+    expect(textAt(files, 'Inbox/Daily/Day.md')).toBe(
+      '| What |\n| --- |\n| [[Inbox/Ideas\\|Ideas]] |\n',
+    )
+  })
+
+  test('names the note from the very top when even its path is held beside the link', () => {
+    const stamped = restamped(
+      planOf([
+        note('Projects/Ideas.md', '# v'),
+        note('Daily/Projects/Day.md', 'See [[Projects/Ideas]].'),
+      ]),
+      new Set(['Daily/Projects/Ideas.md']),
+      '',
+    )
+    const index = spaceIndex(
+      ['Daily/Projects/Ideas.md', 'Projects/Ideas.md', 'Daily/Projects/Day.md'],
+      [],
+      'Daily/Projects/Day.md',
+    )
+    const text = textAt(stamped.files, 'Daily/Projects/Day.md')
+
+    expect(text).toBe('See [[/Projects/Ideas|Projects/Ideas]].')
+    expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Projects/Ideas.md')
   })
 })
 

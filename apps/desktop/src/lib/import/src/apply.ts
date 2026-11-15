@@ -10,6 +10,7 @@ import type { ImportPlan, Planned } from './plan'
 import {
   baseFollowed,
   basesFollowed,
+  calledBy,
   canvasFollowed,
   isBase,
   isCanvas,
@@ -123,7 +124,7 @@ async function restampedOnDisk(
       return there.get(file.path) === true || (other !== null && there.get(other) === true)
     })
     if (!held.length) return { files, stepped: stamped.stepped }
-    for (const file of held) taken.add(nameKey(file.path))
+    for (const file of held) taken.add(file.path)
   }
 }
 
@@ -134,12 +135,10 @@ function takenIn(target: ImportTarget): Set<string> {
   for (const entry of workspace.files) {
     if (!entry.path.startsWith(root)) continue
     taken.add(
-      nameKey(
-        entry.path
-          .slice(root.length)
-          .replace(/^[\\/]+/, '')
-          .replace(/\\/g, '/'),
-      ),
+      entry.path
+        .slice(root.length)
+        .replace(/^[\\/]+/, '')
+        .replace(/\\/g, '/'),
     )
   }
 
@@ -220,6 +219,7 @@ export function restamped(
   }
 
   const paths = plan.files.map((file) => file.path)
+  const space = calledBy([...taken])
   const files = plan.files.map((file) => {
     const was = file.path
     const now = placed.get(file) ?? was
@@ -233,7 +233,9 @@ export function restamped(
       return { ...file, path: now, bytes }
     }
     const linked =
-      moved.size || under ? linksFollowed(file.text, was, moved, paths, under) : file.text
+      moved.size || under || there.size
+        ? linksFollowed(file.text, was, moved, paths, under, space)
+        : file.text
     const text = under ? basesFollowed(linked, under) : linked
     return { ...file, path: now, text }
   })
