@@ -71,7 +71,7 @@ test('in a picture wrapped in HTML, is written to its img tag and leaves the wra
   view.focus()
   await Promise.resolve()
   expect(view.state.doc.toString()).toBe(
-    'words\n\n<p align="center"><img src="cat.png" alt="A dog" /></p>\n\nend',
+    'words\n\n<p align="center"><img src="cat.png" alt="A dog"></p>\n\nend',
   )
   view.destroy()
 })

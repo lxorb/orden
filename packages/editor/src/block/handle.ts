@@ -154,8 +154,19 @@ class BlockHandleWidget extends OrdenWidget {
 
 function carry(view: EditorView, mark: HTMLElement, span: BlockSpan, start: MouseEvent) {
   let dragging = false
+  const pressedOn = view.state.doc
+
+  const letGo = () => {
+    view.dom.ownerDocument.removeEventListener('mousemove', move)
+    view.dom.ownerDocument.removeEventListener('mouseup', up)
+    if (view.state.field(carrying, false)) view.dispatch({ effects: drop.of(null) })
+  }
 
   const move = (event: MouseEvent) => {
+    if (view.state.doc !== pressedOn) {
+      letGo()
+      return
+    }
     const travelled =
       Math.abs(event.clientY - start.clientY) + Math.abs(event.clientX - start.clientX)
     if (!dragging && travelled < A_DRAG) return
@@ -168,6 +179,10 @@ function carry(view: EditorView, mark: HTMLElement, span: BlockSpan, start: Mous
   }
 
   const up = (event: MouseEvent) => {
+    if (view.state.doc !== pressedOn) {
+      letGo()
+      return
+    }
     view.dom.ownerDocument.removeEventListener('mousemove', move)
     view.dom.ownerDocument.removeEventListener('mouseup', up)
 

@@ -15,6 +15,7 @@ import {
   leaveSelectedImage,
   parseHtmlImage,
   resizeTo,
+  retag,
   selectImageAhead,
   selectImageBehind,
   selectedImage,
@@ -366,5 +367,34 @@ describe('brackets in alt text', () => {
     expect(insert).toBe('![a\\]b\\[c](a.png)')
 
     expect(imageAt(state(insert), 0)?.alt).toBe('a]b[c')
+  })
+})
+
+describe('a picture written again after an edit', () => {
+  test('keeps the attributes of its tag that the edit does not touch', () => {
+    const tag = '<img src="a.png" class="hero" height="200">'
+    const image = imageAt(state(tag), 0)!
+    expect(retag(tag, { ...image, alt: 'b' })).toBe(
+      '<img src="a.png" class="hero" height="200" alt="b">',
+    )
+    expect(retag('<img src="a.png" width="300" style="float:left">', { ...image, zoom: 50 })).toBe(
+      '<img src="a.png" style="zoom:50%; float:left">',
+    )
+  })
+
+  test('reads src and alt, not the data- attributes that end in those names', () => {
+    expect(
+      parseHtmlImage('<img data-src="lazy.png" src="a.png" data-alt="no" alt="yes">'),
+    ).toMatchObject({ src: 'a.png', alt: 'yes' })
+  })
+
+  test('keeps a title with quotes in it, and words ending in a backslash, a picture', () => {
+    const quoted = imageAt(state(`![a](x.png 'say "hi"')`), 0)!
+    expect(quoted.title).toBe('say "hi"')
+    const written = imageMarkup({ ...quoted, alt: 'b' })
+    expect(imageAt(state(written), 0)).toMatchObject({ alt: 'b', title: 'say "hi"' })
+
+    const slashed = imageMarkup({ src: 'a.png', alt: 'C:\\', title: '', zoom: 100 })
+    expect(imageAt(state(slashed), 0)).toMatchObject({ src: 'a.png', alt: 'C:\\' })
   })
 })

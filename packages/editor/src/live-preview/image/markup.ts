@@ -32,7 +32,7 @@ function unescapeAttr(value: string): string {
 }
 
 function attribute(tag: string, name: string): string | undefined {
-  const match = new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag)
+  const match = new RegExp(`(?<![\\w-])${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag)
   const value = match?.[1] ?? match?.[2]
   return value === undefined ? undefined : unescapeAttr(value)
 }
@@ -43,7 +43,7 @@ export function parseHtmlImage(tag: string): ImageSpec | null {
   if (!src) return null
 
   const zoom = /zoom\s*:\s*(\d+(?:\.\d+)?)\s*%/i.exec(tag)
-  const width = /\bwidth\s*=\s*["']?(\d+)/i.exec(tag)
+  const width = /(?<![\w-])width\s*=\s*["']?(\d+)/i.exec(tag)
 
   const spec: ImageSpec = {
     src,
@@ -68,11 +68,19 @@ function writtenAddress(src: string): string {
 }
 
 function writtenAlt(alt: string): string {
-  return alt.replace(/[[\]]/g, '\\$&')
+  return alt.replace(/[\\[\]]/g, '\\$&')
 }
 
 function readAlt(written: string): string {
-  return written.replace(/\\([[\]])/g, '$1')
+  return written.replace(/\\([\\[\]])/g, '$1')
+}
+
+function writtenTitle(title: string): string {
+  return `"${title.replace(/[\\"]/g, '\\$&')}"`
+}
+
+function readTitle(written: string): string {
+  return written.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
 
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {
@@ -88,7 +96,7 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   return {
     src: bareAddress(state.doc.sliceString(url.from, url.to)),
     alt,
-    title: title ? state.doc.sliceString(title.from + 1, title.to - 1) : '',
+    title: title ? readTitle(state.doc.sliceString(title.from + 1, title.to - 1)) : '',
     zoom: 100,
     ...(size ? { width: size.width, size: between.slice(written.length) } : {}),
   }
@@ -146,7 +154,7 @@ export function imageMarkup(spec: ImageSpec, asTag = false): string {
   const zoomed = spec.zoom !== 100
   const sized = spec.width ? (spec.size ?? '') : ''
   if (!zoomed && (!spec.width || sized) && !asTag) {
-    return `![${writtenAlt(spec.alt)}${sized}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
+    return `![${writtenAlt(spec.alt)}${sized}](${writtenAddress(spec.src)}${spec.title ? ` ${writtenTitle(spec.title)}` : ''})`
   }
 
   const attrs = [`src="${attributeValue(spec.src)}"`, `alt="${attributeValue(spec.alt)}"`]
@@ -154,6 +162,38 @@ export function imageMarkup(spec: ImageSpec, asTag = false): string {
   if (zoomed) attrs.push(`style="zoom:${spec.zoom}%;"`)
   else if (spec.width) attrs.push(`width="${spec.width}"`)
   return `<img ${attrs.join(' ')} />`
+}
+
+function attributeAt(tag: string, name: string): RegExpExecArray | null {
+  return new RegExp(`(\\s)${name}\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s"'>]+)`, 'i').exec(tag)
+}
+
+function withAttribute(tag: string, name: string, value: string | null): string {
+  const found = attributeAt(tag, name)
+  const after = found ? tag.slice(found.index + found[0].length) : ''
+  if (value === null) return found ? tag.slice(0, found.index) + after : tag
+
+  const written = `${name}="${attributeValue(value)}"`
+  if (found) return `${tag.slice(0, found.index)}${found[1] ?? ' '}${written}${after}`
+
+  const end = /\s*\/?>$/.exec(tag)
+  const at = end ? end.index : tag.length
+  return `${tag.slice(0, at)} ${written}${tag.slice(at)}`
+}
+
+function withZoomStyle(tag: string, zoom: number): string {
+  const rest = (attribute(tag, 'style') ?? '').replace(/zoom\s*:\s*[^;]*;?\s*/i, '').trim()
+  const style = zoom === 100 ? rest : `zoom:${zoom}%;${rest ? ` ${rest}` : ''}`
+  return withAttribute(tag, 'style', style || null)
+}
+
+export function retag(tag: string, spec: ImageSpec): string {
+  let written = withAttribute(tag, 'src', spec.src)
+  written = withAttribute(written, 'alt', spec.alt || (attributeAt(tag, 'alt') ? '' : null))
+  written = withAttribute(written, 'title', spec.title || null)
+  written = withZoomStyle(written, spec.zoom)
+  const width = spec.zoom === 100 && spec.width ? String(spec.width) : null
+  return withAttribute(written, 'width', width)
 }
 
 export function sourceCaret(state: EditorState, image: ImageSpan): number {

@@ -22,16 +22,18 @@ export function mountPreview(
   const locked = note.readOnly || !canWriteAt(path)
 
   let said = note.text
+  let base = note.text
   let typed = false
   let settling: ReturnType<typeof setTimeout> | undefined
 
   const write = async () => {
     settling = undefined
     if (!typed || locked) return
+    const before = base
     const after = said
-    const before = await workspace.noteText(path)
-    if (before === null || before === after) return
+    if (before === after || (await workspace.noteText(path)) === null) return
 
+    base = after
     await workspace.writeNoteText(path, before, after)
   }
 

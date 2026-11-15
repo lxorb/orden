@@ -9,6 +9,7 @@ import {
   type ImageSpan,
   type ImageSpec,
   imageMarkup,
+  retag,
   sourceCaret,
   withZoom,
 } from './markup'
@@ -93,9 +94,12 @@ function rewritten(
   next: ImageSpec,
   userEvent: string,
 ): TransactionSpec {
-  const insert = imageMarkup(next, image.tag !== undefined)
-  const wasSelected = selectedImage(state)?.from === image.from
   const written = image.tag ?? image
+  const original = state.doc.sliceString(written.from, written.to)
+  const insert = /^<img\b/i.test(original)
+    ? retag(original, next)
+    : imageMarkup(next, image.tag !== undefined)
+  const wasSelected = selectedImage(state)?.from === image.from
   const changes = state.changes({ from: written.from, to: written.to, insert })
 
   return {
