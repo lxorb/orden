@@ -42,7 +42,7 @@
   import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
   import { drawer, rightDrawer } from '../../drawer.svelte'
   import { claimsGesture, isFinger } from '../../swipe'
-  import { type Drop, dropInto } from './drop'
+  import { dropInto, inTurn } from './drop'
   import {
     placeColumn,
     prunedOrder,
@@ -309,25 +309,6 @@
     const key = cardKey(row)
     const was = rowsOf(group, laneKey).findIndex((one) => cardKey(one) === key)
     carryTo(row, group, laneKey, indexWithout(indexAt(place, at), was), at)
-  }
-
-  function inTurn(drops: readonly (Drop | null)[]): Drop[] {
-    const given = drops.filter((one): one is Drop => one !== null)
-    const changes = given.flatMap((one) => ('change' in one ? [one.change] : []))
-    const change: Drop[] = changes.length
-      ? [
-          {
-            change: changes.reduce((one, next) => ({
-              note: { ...one.note, ...next.note },
-            })),
-          },
-        ]
-      : []
-    return [
-      ...change,
-      ...given.filter((one) => 'tick' in one),
-      ...given.filter((one) => 'move' in one),
-    ]
   }
 
   function carryTo(

@@ -1,6 +1,6 @@
 import type { Row } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
-import { dropInto } from './drop'
+import { dropInto, inTurn } from './drop'
 
 const task = (fields: Record<string, unknown>) =>
   ({
@@ -40,5 +40,30 @@ describe('a task card dropped on a board grouped by one of its fields', () => {
     expect(dropInto('formula.day', '2026-11-21', task({}), undefined, '2026-11-15')).toEqual({
       change: { task: { start: '2026-11-21' } },
     })
+  })
+})
+
+describe('a card dragged across a column and a lane at once', () => {
+  test('writes both of the changes it takes', () => {
+    const row = task({})
+    const drops = inTurn([dropInto('task.status', 'x', row), dropInto('task.priority', 1, row)])
+    expect(drops).toEqual([{ change: { task: { done: true, priority: 1 } } }])
+  })
+
+  test('keeps the fields of a note and a task change together', () => {
+    const drops = inTurn([
+      { change: { note: { stage: 'Done' } } },
+      null,
+      { change: { task: { priority: 2 }, list: { tags: { add: 'home' } } } },
+    ])
+    expect(drops).toEqual([
+      {
+        change: { note: { stage: 'Done' }, task: { priority: 2 }, list: { tags: { add: 'home' } } },
+      },
+    ])
+  })
+
+  test('changes nothing when neither drop does', () => {
+    expect(inTurn([null, null])).toEqual([])
   })
 })

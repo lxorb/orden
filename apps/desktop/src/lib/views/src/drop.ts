@@ -117,3 +117,16 @@ function swapped(now: readonly Value[], key: Value, from: Value | undefined): Va
   if (key === null || named(key) === '') return kept.length ? kept : null
   return kept.some((one) => named(one) === named(key)) ? kept : [...kept, key]
 }
+
+function joined(one: RowChange, next: RowChange): RowChange {
+  const change: RowChange = {}
+  if (one.note || next.note) change.note = { ...one.note, ...next.note }
+  if (one.task || next.task) change.task = { ...one.task, ...next.task }
+  if (one.list || next.list) change.list = { ...one.list, ...next.list }
+  return change
+}
+
+export function inTurn(drops: readonly (Drop | null)[]): Drop[] {
+  const changes = drops.flatMap((one) => (one ? [one.change] : []))
+  return changes.length ? [{ change: changes.reduce(joined) }] : []
+}
