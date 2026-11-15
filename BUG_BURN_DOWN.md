@@ -1193,6 +1193,7 @@ first.
 | EC69 | Medium | Making or taking off a list over a selection with blank lines filled them with markers (`- a`, blank, `- b` became `- a`, `- `, `- b`), so a loose list could not be taken off | Fixed | Picked blank lines were treated as list lines | Blank lines in a selection with words are left alone, and numbering runs on across them | `commands.test.ts` "leaves blank lines in the selection blank" (fails before) |
 | EC70 | Low | One `$` on a line (a price) turned smart punctuation off for the rest of it (regression of EC61) | Fixed | Any odd count of `$` read as open maths | `$` opens maths only before a non-space, non-digit, and closes only after a non-space | `typography.test.ts` price expectations (fail before) |
 | EC71 | Low | Rewriting an `<img>` (alt edit, resize, reset) dropped unquoted values, turned `width="50%"` into pixels, matched `width` inside another attribute's value, and reset or resize kept `height` (distorted); a markdown alt with an escape (`my\_shot`) gained a second backslash (regressions of EC57) | Fixed | Attributes were found by regex over the whole tag and rewritten whether changed or not; the alt writer escaped every backslash | Attributes are read as tokens, only changed ones are rewritten, height goes with a changed width, and a backslash is escaped only where it would read as an escape | `image.test.ts` 3 new tests (fail before) |
+| EC72 | Low | After EC71: Reset size left the width on a zoomed `<img>` that also had one, a tag with an attribute written right after a quote (`alt="x"src="a.png"`, `<img/src=…>`) stopped being a picture or lost its zoom and gained a style on each resize, `width=300/>` lost its width, and Edit markdown put the caret short of the alt's end when the alt held `\\` (second re-audit) | Fixed | The width was left alone whenever the parsed width matched, even when the zoom changed; the attribute reader needed whitespace before each name; the width value kept the `/`; the caret was measured from the rewritten alt, not the source | The width goes when the zoom changes too; attributes may follow a quote or `/`; a trailing `/` is ignored; the caret goes to the alt's closing bracket in the source | `image.test.ts` 3 new tests (fail before) |
 ### Editor core: open Lows
 
 Seen, judged minor, left as they are:
@@ -1214,6 +1215,8 @@ Seen, judged minor, left as they are:
 - The link preview card can send two writes from the same base when the card is let go during the disk read of the first.
 - Enter in code inside a quote or list reads a `>` or list marker in the code's own text as a container and adds spaces inside the code.
 - Pending cell words are dropped when another writer edits the first cell of a table written without a leading pipe.
+- An alt typed as `size\|300` is written so that it reads back as a size.
+- A task box pressed in a preview tab in the moment before the tab takes on another note, while the tick code is first loading, can tick the same line in the new note.
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

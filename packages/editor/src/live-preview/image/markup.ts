@@ -32,6 +32,7 @@ function unescapeAttr(value: string): string {
 }
 
 interface Attribute {
+  lead: string
   name: string
   value: string | undefined
   from: number
@@ -39,13 +40,15 @@ interface Attribute {
 }
 
 const TAG_NAME = /^<[a-z][\w-]*/i
-const ATTRIBUTE = /(\s+)([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?|\s*\/?>?/y
+const ATTRIBUTE =
+  /(\s*\/?\s*)([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?|\s*\/?>?/y
 
 function attributesOf(tag: string): Attribute[] {
   const found: Attribute[] = []
   ATTRIBUTE.lastIndex = TAG_NAME.exec(tag)?.[0].length ?? 0
   for (let match = ATTRIBUTE.exec(tag); match?.[2]; match = ATTRIBUTE.exec(tag)) {
     found.push({
+      lead: match[1] ?? '',
       name: match[2].toLowerCase(),
       value: match[3] ?? match[4] ?? match[5],
       from: match.index,
@@ -70,7 +73,7 @@ export function parseHtmlImage(tag: string): ImageSpec | null {
   if (!src) return null
 
   const zoom = /zoom\s*:\s*(\d+(?:\.\d+)?)\s*%/i.exec(attribute(tag, 'style') ?? '')
-  const width = /^\s*(\d+)\s*(?:px)?\s*$/i.exec(attribute(tag, 'width') ?? '')
+  const width = /^\s*(\d+)\s*(?:px)?\s*\/?$/i.exec(attribute(tag, 'width') ?? '')
 
   const spec: ImageSpec = {
     src,
@@ -197,10 +200,7 @@ function withAttribute(tag: string, name: string, value: string | null): string 
   if (value === null) return found ? tag.slice(0, found.from) + after : tag
 
   const written = `${name}="${attributeValue(value)}"`
-  if (found) {
-    const space = /^\s+/.exec(tag.slice(found.from))?.[0] ?? ' '
-    return `${tag.slice(0, found.from)}${space}${written}${after}`
-  }
+  if (found) return `${tag.slice(0, found.from)}${found.lead || ' '}${written}${after}`
 
   const end = /\s*\/?>$/.exec(tag)
   const at = end ? end.index : tag.length
@@ -224,14 +224,18 @@ export function retag(tag: string, spec: ImageSpec): string {
   if (was?.zoom !== spec.zoom) written = withZoomStyle(written, spec.zoom)
 
   const width = spec.zoom === 100 ? spec.width : undefined
-  if (was?.width === width) return written
-  written = withAttribute(written, 'height', null)
+  if (was?.width === width && was?.zoom === spec.zoom) return written
+  if (was?.width !== width) written = withAttribute(written, 'height', null)
   return withAttribute(written, 'width', width ? String(width) : null)
 }
 
 export function sourceCaret(state: EditorState, image: ImageSpan): number {
   const text = state.doc.sliceString(image.from, image.to)
-  if (text.startsWith('![')) return image.from + 2 + writtenAlt(image.alt).length
+  if (text.startsWith('![')) {
+    const close = imageNode(state, image.from, 1)?.getChildren('LinkMark')[1]
+    if (close) return close.from - (image.size?.length ?? 0)
+    return image.from + 2 + writtenAlt(image.alt).length
+  }
 
   const alt = /\balt\s*=\s*(["'])(.*?)\1/i.exec(text)
   return alt ? image.from + alt.index + alt[0].length - 1 : image.from + 1

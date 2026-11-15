@@ -415,6 +415,29 @@ describe('a picture written again after an edit', () => {
     )
   })
 
+  test('reads attributes written with no space before them, and an unquoted width before />', () => {
+    expect(parseHtmlImage('<img alt="x"src="a.png">')).toMatchObject({ src: 'a.png', alt: 'x' })
+    expect(parseHtmlImage('<img/src="a.png">')).toMatchObject({ src: 'a.png' })
+    expect(parseHtmlImage('<img src="a.png"style="zoom:50%;">')).toMatchObject({ zoom: 50 })
+    expect(parseHtmlImage('<img src="a.png" width=300/>')).toMatchObject({ width: 300 })
+    const tag = '<img src="a.png"style="zoom:50%;">'
+    expect(retag(tag, { ...parseHtmlImage(tag)!, zoom: 60 })).toBe(
+      '<img src="a.png" style="zoom:60%;">',
+    )
+  })
+
+  test('resets a zoomed picture that also had a width', () => {
+    const tag = '<img src="a.png" width="300" style="zoom:50%;">'
+    expect(retag(tag, { ...parseHtmlImage(tag)!, zoom: 100 })).toBe('<img src="a.png">')
+  })
+
+  test('puts the caret for the markdown at the end of the words as written', () => {
+    const doc = '![a\\\\b](x.png)'
+    expect(sourceCaret(state(doc), imageAt(state(doc), 0)!)).toBe(doc.indexOf(']'))
+    const sized = '![a\\_b|300](x.png)'
+    expect(sourceCaret(state(sized), imageAt(state(sized), 0)!)).toBe(sized.indexOf('|'))
+  })
+
   test('keeps an escape written in its words as it was', () => {
     const image = imageAt(state('![my\\_shot|300](a.png)'), 0)!
     expect(imageMarkup({ src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe(
