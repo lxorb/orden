@@ -23,7 +23,7 @@ const MOST = 200
 
 const SHORTEST = 2
 
-const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
+export const hitKey = (hit: Hit) => `${hit.path}:${hit.page ?? ''}:${hit.line}`
 
 const SORT_KEY = 'orden:search-sort'
 
@@ -115,16 +115,16 @@ class Search {
         !hit.bare &&
         isMarkdownPath(hit.path) &&
         !isScratchpad(hit.path) &&
-        !this.skipped.has(keyOf(hit)),
+        !this.skipped.has(hitKey(hit)),
     ),
   )
 
   keeps(hit: Hit): boolean {
-    return !hit.bare && !this.skipped.has(keyOf(hit))
+    return !hit.bare && !this.skipped.has(hitKey(hit))
   }
 
   toggle(hit: Hit) {
-    const key = keyOf(hit)
+    const key = hitKey(hit)
     if (this.skipped.has(key)) this.skipped.delete(key)
     else this.skipped.add(key)
   }

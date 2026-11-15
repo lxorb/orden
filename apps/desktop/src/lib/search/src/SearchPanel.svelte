@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { shownName } from '../../platform/src/api'
   import { ARCHIVE_MARK, roving, SEARCH_MARK } from '../../ui-kit/src/api'
-  import { search } from './panel.svelte'
+  import { hitKey, search } from './panel.svelte'
   import { OPERATORS } from '@orden/scan/search/query'
   import { searchWarmth, type Warming } from './api'
   import { chosen, completing, naming, nearest, offered } from '@orden/scan/search/suggest'
@@ -367,7 +367,7 @@
             >{/if}{shownName(group.name)}
         </div>
 
-        {#each group.hits as hit (hit.line)}
+        {#each group.hits as hit (hitKey(hit))}
           {@const task = hit.tab === undefined ? taskOf(hit) : null}
           <div class="line">
             {#if search.replacing && hit.tab === undefined && !hit.bare}
