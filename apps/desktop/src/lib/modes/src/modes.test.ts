@@ -653,6 +653,24 @@ describe('taking over what the account holds', () => {
     return { release, settingsCall }
   }
 
+  test('a change the account was not told of before a restart is sent first, not undone', async () => {
+    const sent: Held[] = []
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    api.saveSettings = async (_token, patch) => {
+      sent.push(patch)
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: { silent: false } })
+    modes.toggleSilent()
+    expect(modes.silent).toBe(true)
+
+    modes = await restarted()
+    await modes.adopt('token')
+
+    expect(sent).toEqual([expect.objectContaining({ silent: true })])
+    Object.assign(api, was)
+  })
+
   test('brings the formatting marks kept quiet', async () => {
     const { release, settingsCall } = heldAnswer({ quietMarks: true })
     api.settings = settingsCall
