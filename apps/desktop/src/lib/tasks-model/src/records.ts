@@ -98,7 +98,9 @@ export class TodoRecords {
   }
 
   private stamp(over: readonly (string | undefined)[] = []): string {
-    const at = over.reduce((most, one) => Math.max(most, justAfter(one)), this.now())
+    const floor = over.reduce((most, one) => Math.max(most, justAfter(one)), 0)
+    const at = this.now()
+    if (floor > Math.max(at, this.last)) return inboxStamp(floor, 0, this.device)
     if (at > this.last) {
       this.last = at
       this.count = 0

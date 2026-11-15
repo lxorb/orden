@@ -49,6 +49,35 @@ describe('a todo changed on a device whose clock is behind', () => {
   })
 })
 
+describe('a todo changed over a stamp from a clock far ahead', () => {
+  test('does not carry that clock into the stamps of other todos', async () => {
+    const server = new MemoryTodoServer()
+    const ahead = inboxStamp(NOON + 365 * 86_400_000, 0, 'other')
+    await server.forUser('u').push([
+      {
+        id: 'tahead',
+        fields: { kind: 'todo', title: 'From the future', done: false },
+        stamps: { kind: ahead, title: ahead, done: ahead },
+      },
+    ])
+    let clock = NOON
+    const laptop = device(server, 'u', () => (clock += 1))
+    await laptop.open()
+    await laptop.store.exchange()
+    await laptop.store.update('tahead', { done: true })
+    const made = await laptop.store.add({ title: 'Today' })
+    if (!made.ok) throw new Error(made.error.message)
+    await laptop.store.exchange()
+    const stampOf = (id: string, key: string) =>
+      server
+        .forUser('u')
+        .pull(0)
+        .then((page) => page?.items.find((one) => one.id === id)?.stamps[key] ?? '')
+    expect(await stampOf('tahead', 'done')).not.toBe(ahead)
+    expect((await stampOf(made.value.id, 'title')) < ahead).toBe(true)
+  })
+})
+
 describe('a todo too long for one change to the account', () => {
   test('is refused instead of staying on this device only, and one that fits reaches the other device', async () => {
     const server = new MemoryTodoServer()
