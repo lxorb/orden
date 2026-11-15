@@ -1,5 +1,6 @@
 import './shell-parts'
 import { type TabKind, tabKindLoaded } from '@orden/contracts'
+import { door } from '@orden/markdown/door'
 export type { ClosingWidths } from './closing.svelte'
 export { arrival, handOver, keyOf, picks, register, stripOf, TabDrag } from './drag.svelte'
 export { flushFirst, flushStart } from './flush'
@@ -45,7 +46,7 @@ export const tabClosing = () => import('./closing.svelte')
 
 export const loadTabChip = () => import('./TabChip.svelte')
 
-export const loadTabNameField = () => import('./TabNameField.svelte')
+export const tabNameField = door(() => import('./TabNameField.svelte').then((one) => one.default))
 
 export const tabCarrying = () => import('./carrying')
 

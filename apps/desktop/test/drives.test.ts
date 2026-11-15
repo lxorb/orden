@@ -147,6 +147,21 @@ function drawnBy(path: string, found = new Set<string>()): Set<string> {
   found.add(path)
   for (const one of read(path).matchAll(/from\s+'(\.{1,2}\/[^']+\.svelte)'/g))
     drawnBy(join(path, '..', caught(one)), found)
+  for (const one of read(path).matchAll(
+    /import\s+\{([^}]*)\}\s+from\s+'(\.{1,2}\/[^']+\/src\/api)'/g,
+  )) {
+    const api = join(path, '..', `${caught(one, 2)}.ts`)
+    if (!existsSync(api)) continue
+    const names = new Set(
+      caught(one)
+        .split(',')
+        .map((name) => name.trim()),
+    )
+    for (const part of read(api).matchAll(
+      /export \{ default as (\w+) \} from '(\.\/[^']+\.svelte)'/g,
+    ))
+      if (names.has(caught(part))) drawnBy(join(api, '..', caught(part, 2)), found)
+  }
   return found
 }
 
