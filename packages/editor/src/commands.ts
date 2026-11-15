@@ -430,11 +430,22 @@ function shiftsOf(parents: Parent[], line: Quoted): number[] {
   return shifts
 }
 
+function quotePrefix(line: Quoted, shifts: number[]): string {
+  return line.leads
+    .map((lead, at) => shiftedSpace(lead, shifts[at] ?? 0) + (line.marks[at] ?? ''))
+    .join('')
+}
+
 function prefixOf(line: Quoted, shifts: number[]): string {
-  const quote = line.leads.map(
-    (lead, at) => shiftedSpace(lead, shifts[at] ?? 0) + (line.marks[at] ?? ''),
-  )
-  return quote.join('') + shiftedSpace(line.space, shifts[line.depth] ?? 0)
+  return quotePrefix(line, shifts) + shiftedSpace(line.space, shifts[line.depth] ?? 0)
+}
+
+function leadShifts(parents: Parent[], line: Quoted): number[] {
+  const probe = [...line.levels.slice(0, -1), Number.POSITIVE_INFINITY]
+  const shifts = Array.from({ length: line.depth + 1 }, () => 0)
+  for (const parent of parents)
+    if (encloses(parent.levels, probe, false)) shifts[parent.depth] = parent.shift
+  return shifts
 }
 
 function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
@@ -466,9 +477,14 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
     const first = chosen[0]?.number ?? 1
     for (let number = first; number <= state.doc.lines; number++) {
       const line = quotedLine(state.doc.line(number))
-      if (skipsBlank && !line.text.trim()) continue
+      if (!line.text.trim() && (skipsBlank || !picked.has(number))) {
+        const shifts = leadShifts(parents, line)
+        if (shifts.slice(0, line.depth).some(Boolean)) {
+          changes.push({ from: line.start, to: line.from, insert: quotePrefix(line, shifts) })
+        }
+        continue
+      }
       if (!picked.has(number)) {
-        if (!line.text.trim()) continue
         const shifts = shiftsOf(parents, line)
         if (!parents.length && number > last) break
         parents.push({ depth: line.depth, levels: line.levels, shift: shifts[line.depth] ?? 0 })

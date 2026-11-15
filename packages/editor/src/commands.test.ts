@@ -319,6 +319,14 @@ describe('line prefixes', () => {
     expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe('> 1. a\n1. b')
   })
 
+  test('carries a blank line of a quote inside an item along with the item', () => {
+    const doc = '- a\n  > x\n  >\n  > y'
+    expect(at(toggleOrderedList, doc, 0)).toBe('1. a\n   > x\n   >\n   > y')
+    expect(apply(toggleOrderedList, doc, 0, doc.length).doc).toBe(
+      '1. a\n   > 1. x\n   >\n   > 2. y',
+    )
+  })
+
   test('leaves blank lines in the selection blank', () => {
     const loose = '- a\n\n- b'
     expect(apply(toggleBulletList, loose, 0, loose.length).doc).toBe('a\n\nb')

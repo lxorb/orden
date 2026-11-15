@@ -110,6 +110,7 @@ export class TableView {
   private land: ReturnType<typeof later> | null = null
   private start: number | null = null
   private rewritten = false
+  private writing = false
 
   private focusAfter: Focus | null = null
 
@@ -233,6 +234,7 @@ export class TableView {
     const { pending } = this
     if (!pending || this.editor.state.readOnly || this.start !== text.from) return null
     if (model.header.length !== this.model.header.length) return null
+    if (this.writing) return pending.at
 
     const { row, column } = pending.at
     const before = textIn(this.model, pending.at)
@@ -246,15 +248,16 @@ export class TableView {
       cells.every((text, at) => loose || at === column || text === old[at])
 
     if (same(model.rows[row], false)) return pending.at
+    const shapeKept = model.rows.length === rows.length
+    if (!this.rewritten && shapeKept && same(model.rows[row], true)) return pending.at
+
     const found = model.rows.flatMap((cells, at) => (same(cells, false) ? [at] : []))
     if (found.length === 1 && found[0] !== undefined) return { row: found[0], column }
 
     const othersKept = model.rows.every(
       (cells, at) => at === row || cells.join('|') === rows[at]?.join('|'),
     )
-    const shapeKept = model.rows.length === rows.length
-    const loose = shapeKept && (!this.rewritten || othersKept)
-    return loose && same(model.rows[row], true) ? pending.at : null
+    return shapeKept && othersKept && same(model.rows[row], true) ? pending.at : null
   }
 
   adopt(text: TableSource, model: TableModel) {
@@ -284,7 +287,8 @@ export class TableView {
 
   destroy() {
     const left = this.pending ? serializeTable(this.current()) : null
-    const { from, source, land } = this
+    const { source, land } = this
+    const from = this.start ?? this.from
     this.clearPending()
     this.dragging?.()
     this.unfollow()
@@ -381,10 +385,16 @@ export class TableView {
     const span = this.span()
     const current = span && editor.state.doc.sliceString(span.from, span.to) === this.source
 
-    this.clearPending()
     if (text !== this.source && span && current) {
-      editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
+      this.writing = !focus && text === serializeTable(this.current())
+      if (!this.writing) this.clearPending()
+      try {
+        editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
+      } finally {
+        this.writing = false
+      }
     }
+    this.clearPending()
     this.focusAfter = null
   }
 

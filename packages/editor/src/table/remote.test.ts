@@ -205,3 +205,18 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     expect(view.state.doc.toString()).toBe(TABLE.replace('| 1 |', '| 1z |'))
   })
 })
+
+describe('a cell typed in and not yet written, when one change covers the whole table', () => {
+  test('keeps its words when the note is changed above and below the table at once', async () => {
+    const shared = new SharedDoc(TABLE)
+    const view = note(shared)
+    typeInCell(view)
+
+    shared.replace(TABLE.replace('words', 'w').replace('end', 'end!'))
+    await settled()
+    flushTableEdits()
+    await settled()
+
+    expect(shared.text.toString()).toBe('w\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2   |\n\nend!')
+  })
+})
