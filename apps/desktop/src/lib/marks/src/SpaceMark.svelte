@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from './Icon.svelte'
-  import { iconLibrary } from './icon-library.svelte'
-  import { initial, readIcon } from './ui-kit/src/api'
-  import { workspace } from './workspace/src/api'
+  import { Icon } from '../../glyphs/src/api'
+  import { iconLibrary } from '../../glyphs/src/api'
+  import { initial, readIcon } from '../../ui-kit/src/api'
+  import { workspace } from '../../workspace/src/api'
 
   const {
     id,

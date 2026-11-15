@@ -1,13 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import {
-  claimsGesture,
-  fromEdge,
-  isFinger,
-  opensDrawer,
-  ownsEveryTouch,
-  ownsGesture,
-  settleOpen,
-} from './swipe'
+import { claimsGesture, isFinger } from './drawer.svelte'
+import { fromEdge, opensDrawer, ownsEveryTouch, ownsGesture, settleOpen } from './swipe'
 
 const WIDTH = 300
 

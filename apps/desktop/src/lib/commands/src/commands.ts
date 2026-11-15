@@ -83,7 +83,7 @@ import { archiveEntry } from '../../row-menu/src/api'
 import { updates } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from '../../workspace/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
 import {

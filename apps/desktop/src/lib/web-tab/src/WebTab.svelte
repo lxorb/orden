@@ -2,7 +2,7 @@
   import { whenLoaded, settingsWindow } from '@orden/contracts'
   import { dropOver, Cross, overlays, menu, fullscreen } from '../../ui-kit/src/api'
   import { onMount, untrack } from 'svelte'
-  import { agentMarks } from '../../agent-marks.svelte'
+  import { agentMarks } from '../../workspace/src/api'
   import Door from '../../Door.svelte'
   import { dur, fade, invoke, isDesktop, openExternal } from '../../platform/src/api'
   import { chrome, landed } from '../../theme/src/api'

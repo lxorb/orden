@@ -10,7 +10,7 @@ import {
   slotFor,
   stepInGrid,
 } from './essentials.svelte'
-import { faceOf, initialOf } from '../../file-mark'
+import { faceOf, initialOf } from '../../marks/src/api'
 import { isTile, MOST_BOOKMARKS } from '../../space-kept/src/api'
 
 const mark = (kind: Bookmark['kind'], parent?: string): Bookmark => ({

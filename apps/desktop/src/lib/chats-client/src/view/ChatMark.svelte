@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { chosenIcon, chosenTint } from '../../../chosen-icon'
-  import Icon from '../../../Icon.svelte'
+  import { chosenIcon, chosenTint } from '../../../marks/src/api'
+  import { Icon } from '../../../glyphs/src/api'
   import { readIcon } from '../../../ui-kit/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
 

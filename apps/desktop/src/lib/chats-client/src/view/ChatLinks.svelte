@@ -1,5 +1,5 @@
 <script lang="ts">
-  import FileMark from '../../../FileMark.svelte'
+  import { FileMark } from '../../../marks/src/api'
   import { nameOf as fileName, relativeTo, withoutExtension } from '../../../platform/src/api'
   import { workspace } from '../../../workspace/src/api'
   import type { Hit } from '../shapes'

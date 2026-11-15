@@ -24,7 +24,7 @@
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
   import { OUTSIDE_FOLDER, whenLoaded } from '@orden/contracts'
-  import { iconChoice } from './lib/icon-choice.svelte'
+  import { iconChoice } from './lib/icon-picker/src/api'
   import { PaneTree } from './lib/pane-tree/src/api'
   import FirstScreen from './lib/FirstScreen.svelte'
   import { Sidebar } from './lib/sidebar/src/api'
@@ -36,8 +36,10 @@
   import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
-  import { drawer, rightDrawer } from './lib/drawer.svelte'
   import {
+    drawer,
+    drawerFollowing,
+    rightDrawer,
     swipeOpens,
     alone,
     hasStatusBar,
@@ -371,10 +373,7 @@
     if (!host || !swipeOpens()) return
 
     let stop: (() => void) | null = null
-    const off = whenLoaded(
-      () => import('./lib/drawer-follow'),
-      (one) => (stop = one.followDrawers(host)),
-    )
+    const off = whenLoaded(drawerFollowing, (one) => (stop = one.followDrawers(host)))
 
     return () => {
       off()

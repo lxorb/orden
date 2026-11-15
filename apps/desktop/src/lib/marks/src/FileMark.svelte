@@ -1,12 +1,11 @@
 <script lang="ts">
   import { isTermTarget } from '@orden/markdown/links'
   import { chosenIcon, chosenTint, faviconFor, sourceMark } from './chosen-icon'
-  import { type FileMark, MARKS } from './file-mark'
-  import Icon from './Icon.svelte'
-  import { readIcon, takesTint } from './ui-kit/src/api'
-  import { samePath } from './platform/src/api'
-  import { terminalMark } from './surfaces/src/api'
-  import { workspace } from './workspace/src/api'
+  import { type FileMark, MARKS, terminalMark } from './file-mark'
+  import { Icon } from '../../glyphs/src/api'
+  import { readIcon, takesTint } from '../../ui-kit/src/api'
+  import { samePath } from '../../platform/src/api'
+  import { workspace } from '../../workspace/src/api'
 
   const {
     mark,

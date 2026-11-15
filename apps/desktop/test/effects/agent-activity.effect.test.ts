@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { agentMarks } from '../../src/lib/agent-marks.svelte'
+import { agentMarks } from '../../src/lib/workspace/src/api'
 import AgentSession from '../../src/lib/agents/src/ui/AgentSession.svelte'
 import { FakeCrate } from '../../src/lib/agents/src/ui/fake'
 import { ended, start, started } from '../../src/lib/agents/src/ui/index'

@@ -39,7 +39,7 @@
   import { cubicOut } from 'svelte/easing'
   import { landsIn, dropTarget } from '../../tree/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { agentMarks } from '../../agent-marks.svelte'
+  import { agentMarks } from '../../workspace/src/api'
   import { searching, sidebarPart } from '@orden/contracts'
   import { account, arriving } from '../../accounts/src/api'
   import { newSpace } from '../../spaces/src/api'

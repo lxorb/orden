@@ -1,5 +1,5 @@
 import type { Panel } from '../../session/src/api'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from './agent-marks.svelte'
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
 import { workspace } from './workspace.svelte'
 

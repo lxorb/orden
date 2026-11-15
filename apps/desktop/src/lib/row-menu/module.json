@@ -14,11 +14,9 @@
     "theme-looks",
     "tree",
     "ui-kit",
-    "workspace"
+    "workspace",
+    "icon-picker",
+    "new-here"
   ],
-  "pending": [
-    "apps/desktop/src/lib/icon-choice.svelte.ts",
-    "apps/desktop/src/lib/kind-words.ts",
-    "apps/desktop/src/lib/note-cover.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/note-cover.ts"]
 }

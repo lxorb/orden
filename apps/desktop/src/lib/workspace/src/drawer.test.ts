@@ -70,9 +70,9 @@ async function opened(device: 'phone' | 'tablet' = 'phone', right: string[] = []
       else this.panel = null
     },
   }
-  vi.doMock('./workspace/src/api', () => ({ workspace }))
-  vi.doMock('./ui-kit/src/api', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('./ui-kit/src/api')>()),
+  vi.doMock('./workspace.svelte', () => ({ workspace }))
+  vi.doMock('../../ui-kit/src/api', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
     viewport: { device },
   }))
 

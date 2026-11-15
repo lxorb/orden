@@ -15,11 +15,11 @@
     viewport,
     writtenIcon,
   } from '../../ui-kit/src/api'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { TickBox, trap } from '../../ui-controls/src/api'
-  import { iconChoice } from '../../icon-choice.svelte'
+  import { iconChoice } from './icon-choice.svelte'
   import { tintOf, wear, wornBy } from './icon-target'
-  import { iconLibrary } from '../../icon-library.svelte'
+  import { iconLibrary } from '../../glyphs/src/api'
   import {
     iconRecent,
     LATER_SETS,

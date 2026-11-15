@@ -1,24 +1,23 @@
 <script lang="ts">
   import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs'
-  import { agentMarks } from './agent-marks.svelte'
-  import { wearsChosen } from './chosen-icon'
-  import { markOf } from './file-mark'
+  import { agentMarks } from '../../workspace/src/api'
+  import { siteMark, wearsChosen } from './chosen-icon'
+  import { terminalMark } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { ASK_MARK, GRAPH_MARK } from './ui-kit/src/api'
-  import { terminalMark } from './surfaces/src/api'
-  import { type Page, pages, siteMark } from './web-tab/src/api'
+  import { ASK_MARK, GRAPH_MARK } from '../../ui-kit/src/api'
+  import { webPages, type WebPageSeen } from '@orden/contracts'
   import { readWebFile } from '@orden/scan/shortcut'
-  import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace/src/api'
-  import { TAB_KINDS } from './tab-kinds/src/api'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { TAB_KINDS } from '../../tab-kinds/src/api'
 
   const { tab }: { tab: Tab } = $props()
 
-  const mark = $derived(markOf(tab.kind))
-
   const traits = $derived(TAB_KINDS[tab.kind])
 
-  const page = $derived<Page | null>(mark === 'web' ? pages.of(tab.id) : null)
+  const mark = $derived(traits.mark)
+
+  const page = $derived<WebPageSeen | null>(mark === 'web' ? webPages().of(tab.id) : null)
 
   const file = $derived(page && tab.path !== null ? readWebFile(tab.path, tab.doc) : null)
 

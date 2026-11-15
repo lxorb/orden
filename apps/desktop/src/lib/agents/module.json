@@ -13,11 +13,8 @@
     "ui-controls",
     "ui-kit",
     "workspace",
-    "notify"
+    "notify",
+    "marks"
   ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/connectors.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/connectors.svelte.ts"]
 }

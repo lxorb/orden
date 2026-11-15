@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { accentColour } from './theme/src/api'
+  import { accentColour } from '../../theme/src/api'
   import { iconLibrary } from './icon-library.svelte'
-  import { type IconNode, readTint, takesTint, type WrittenIcon } from './ui-kit/src/api'
-  import { theme } from './theme/src/api'
+  import { type IconNode, readTint, takesTint, type WrittenIcon } from '../../ui-kit/src/api'
+  import { theme } from '../../theme/src/api'
 
   const {
     icon,

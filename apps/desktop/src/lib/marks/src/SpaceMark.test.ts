@@ -3,15 +3,15 @@ import { render } from 'svelte/server'
 
 const icons: Record<string, string | null> = {}
 
-vi.mock('./workspace/src/api', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     iconFor: (id: string) => icons[id] ?? null,
     tintFor: () => null,
   },
 }))
 
-const { iconLibrary } = await import('./icon-library.svelte')
-const { loadIcons } = await import('./ui-kit/src/icons')
+const { iconLibrary } = await import('../../glyphs/src/api')
+const { loadIcons } = await import('../../ui-kit/src/api')
 const SpaceMark = (await import('./SpaceMark.svelte')).default
 
 iconLibrary.set = await loadIcons()

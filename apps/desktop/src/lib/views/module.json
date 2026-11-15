@@ -32,9 +32,5 @@
     "undo-toast",
     "gates"
   ],
-  "pending": [
-    "apps/desktop/src/lib/drawer.svelte.ts",
-    "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/swipe.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/layer-keys.ts"]
 }

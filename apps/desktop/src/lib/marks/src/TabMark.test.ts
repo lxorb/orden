@@ -2,12 +2,13 @@ import { describe, expect, test, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { render } from 'svelte/server'
-import type { TabKind } from './documents/src/api'
+import type { TabKind } from '../../documents/src/api'
 
 const chosen: Record<string, string | null> = {}
 const marks: Record<string, string | null> = {}
 
-vi.mock('./chosen-icon', () => ({
+vi.mock('./chosen-icon', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./chosen-icon')>()),
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: () => null,
   faviconFor: (path: string) => marks[path] ?? null,
@@ -15,12 +16,12 @@ vi.mock('./chosen-icon', () => ({
   sourceMark: (mark: string) => ({ mark, icon: null }),
 }))
 
-const { iconLibrary } = await import('./icon-library.svelte')
-const { loadIcons } = await import('./ui-kit/src/icons')
+const { iconLibrary } = await import('../../glyphs/src/api')
+const { loadIcons } = await import('../../ui-kit/src/api')
 const { MARKS } = await import('./file-mark')
-const { GRAPH_MARK } = await import('./ui-kit/src/api')
-const { NoteDoc, Tab } = await import('./documents/src/api')
-const { pages } = await import('./web-tab/src/pages.svelte')
+const { GRAPH_MARK } = await import('../../ui-kit/src/api')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
+const { pages } = await import('../../web-tab/src/api')
 const { writeShortcut } = await import('@orden/scan/shortcut')
 const TabMark = (await import('./TabMark.svelte')).default
 

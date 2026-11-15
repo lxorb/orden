@@ -1,5 +1,5 @@
 import { tabKindParts, webPages } from '@orden/contracts'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from '../../workspace/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import {
   archiveEntry,
