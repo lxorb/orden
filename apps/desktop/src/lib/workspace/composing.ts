@@ -9,7 +9,7 @@ import {
   joinPath,
 } from '../platform/src/api'
 import { type Tab, UNTITLED } from './documents.svelte'
-import type { FileActions } from './undo.svelte'
+import type { FileActions } from '../file-undo/src/api'
 import { writeFile } from './write-file'
 
 export interface Composes {

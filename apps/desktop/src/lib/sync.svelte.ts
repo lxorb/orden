@@ -38,8 +38,8 @@ import {
 } from './sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
 import { workspace } from './workspace.svelte'
-import { sayEntryIds } from './workspace/entry-ids'
-import type { FileOp } from './workspace/file-ops'
+import { sayEntryIds } from './space-kept/src/api'
+import type { FileOp } from './file-ops/src/api'
 import { unixLines } from './workspace/documents.svelte'
 
 export const STORAGE_KEY = MIRRORS_KEY

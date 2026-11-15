@@ -16,10 +16,9 @@ import { paperRewritten, sheetArrived } from '../pdf/src/api'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
 import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync-client/src/api'
-import { landing } from './landing'
+import { type FileOp, landing } from '../file-ops/src/api'
 import { workspace } from '../workspace.svelte'
 import { holdsWords, unixLines } from './documents.svelte'
-import type { FileOp } from './file-ops'
 
 const NO_ENGINE = 'no-engine'
 

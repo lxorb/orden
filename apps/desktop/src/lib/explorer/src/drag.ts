@@ -12,7 +12,7 @@ import {
 import { message } from '../../ui-kit/src/api'
 import { invoke, joinPath, platform } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
-import type { OutsideStep } from '../../workspace/undo.svelte'
+import type { OutsideStep } from '../../file-undo/src/api'
 import { carry, changeable, freeName, takenNames } from './changes'
 import { listFolder } from './commands'
 import { inASpace } from './open'

@@ -1,3 +1,4 @@
+import { gatherLast, joinLast } from '../../file-undo/src/api'
 import type { Row } from '@orden/bases'
 import { oneEdit } from '@orden/markdown/edits'
 import { rows } from '../../rows/src/api'
@@ -40,8 +41,7 @@ export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Pro
     if (said === false) break
   }
   if (made < 2) return
-  const { gatherLast } = await import('../../workspace/undo-join')
-  for (; made > 1; made--) if (!gatherLast(workspace.undone)) return
+  for (; made > 1; made--) if (!(await gatherLast(workspace.undone))) return
 }
 
 export function writeRow(row: Row, change: RowChange): Promise<boolean> {
@@ -74,7 +74,7 @@ export async function writeEach(
   }
   if (!changes.length) return false
   if (!(await replaced(changes, said))) return false
-  if (join) (await import('../../workspace/undo-join')).joinLast(workspace.undone)
+  if (join) await joinLast(workspace.undone)
   return true
 }
 

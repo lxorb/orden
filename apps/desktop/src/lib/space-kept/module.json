@@ -1,0 +1,6 @@
+{
+  "name": "space-kept",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "accounts", "file-ops", "platform", "sync-core"],
+  "pending": ["apps/desktop/src/lib/sync.svelte.ts"]
+}

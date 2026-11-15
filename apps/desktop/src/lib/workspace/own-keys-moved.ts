@@ -4,7 +4,7 @@ import { links } from '../link-index/src/api'
 import { log, isMarkdownPath, samePath, joinPath } from '../platform/src/api'
 import { ownKeysTaken } from '../own-keys'
 import { type Change, changeOf } from '@orden/scan/search/replace'
-import type { ItemMetaStore } from './item-meta.svelte'
+import type { ItemMetaStore } from '../space-kept/src/api'
 import type { Keeping } from './note-text'
 
 export interface Notes {

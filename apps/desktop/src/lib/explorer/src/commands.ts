@@ -1,5 +1,5 @@
 import { invoke } from '../../platform/src/api'
-import type { OutsideTicket } from '../../workspace/undo.svelte'
+import type { OutsideTicket } from '../../file-undo/src/api'
 import { moved } from './follow'
 
 export interface Entry {

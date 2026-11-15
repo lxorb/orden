@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent = vi.hoisted(() => [] as { root: string; sort: string }[])
-vi.mock('./pushing', () => ({
+vi.mock('../space-kept/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../space-kept/src/api')>()),
   push: async (
     root: string,
     save: (

@@ -1,10 +1,9 @@
 import type { Command } from '../../commands/src/api'
 import type { Visit } from '@orden/scan/visits'
-import type { Bookmark } from '../../workspace/bookmarks.svelte'
 import type { Entry } from '../../workspace.svelte'
 import type { World } from './kinds'
 import type { OpenTab, Row } from './rows'
-import type { PaletteSetting } from '@orden/contracts'
+import type { Bookmark, PaletteSetting } from '@orden/contracts'
 
 export const ROOT = '/Space'
 

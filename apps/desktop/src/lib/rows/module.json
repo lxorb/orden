@@ -1,10 +1,9 @@
 {
   "name": "rows",
   "layer": "content",
-  "dependsOn": ["contracts", "bases", "markdown", "platform", "scan", "link-index"],
+  "dependsOn": ["contracts", "bases", "markdown", "platform", "scan", "link-index", "file-ops"],
   "pending": [
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/file-ops.ts",
     "apps/desktop/src/lib/workspace/note-text.ts"
   ]
 }

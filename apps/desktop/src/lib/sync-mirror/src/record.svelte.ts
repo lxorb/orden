@@ -9,7 +9,7 @@ import {
   stored,
   invoke,
 } from '../../platform/src/api'
-import type { FileOp } from '../../workspace/file-ops'
+import type { FileOp } from '../../file-ops/src/api'
 import type { Answer, Clash } from './conflicts'
 
 const STORAGE_KEY = 'orden:sync-log'

@@ -16,7 +16,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { ArchivedSpaces } = await import('./workspace/archived-spaces.svelte')
+const { ArchivedSpaces } = await import('./space-kept/src/api')
 
 interface Space {
   id: string

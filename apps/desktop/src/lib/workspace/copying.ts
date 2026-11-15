@@ -6,8 +6,8 @@ import { copiesInto } from '../move-targets'
 import { copyName, isMarkdownPath, nameOf, invoke, joinPath } from '../platform/src/api'
 import type { Entry } from '../workspace.svelte'
 import type { Protection } from '../protect/src/api'
-import type { ItemMetaStore } from './item-meta.svelte'
-import type { Copied, FileActions } from './undo.svelte'
+import type { ItemMetaStore } from '../space-kept/src/api'
+import type { Copied, FileActions } from '../file-undo/src/api'
 import { copyPath, writeBytes, writeFile } from './write-file'
 
 export interface Copies {

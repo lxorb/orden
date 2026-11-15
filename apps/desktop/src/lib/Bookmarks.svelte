@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Bookmark } from '@orden/contracts'
   import { dropOver } from './drag-paths'
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
@@ -27,7 +28,7 @@
   } from './drag-paths'
   import { basesOn } from './settings.svelte'
   import { insideSpace, samePath } from './platform/src/api'
-  import { type Bookmark, isTile, sameBookmark } from './workspace/bookmarks.svelte'
+  import { isTile, sameBookmark } from './space-kept/src/api'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { tabLetters, tabUnloading } from './tab-strip/src/api'

@@ -1,5 +1,7 @@
 import type { SyncFileKind, SyncFileOp } from '@orden/contracts'
-import { log, movedTo, relativeTo, samePath, within } from '../platform/src/api'
+import { log, movedTo, relativeTo, samePath, within } from '../../platform/src/api'
+
+export { inFlight, landing, onLanded } from './landing'
 
 export type Kind = SyncFileKind
 

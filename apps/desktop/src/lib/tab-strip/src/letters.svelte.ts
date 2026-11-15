@@ -2,7 +2,7 @@ import { defaultKeyFor } from '@orden/editor'
 import { rowName, insideSpace, isRecord, keepJson, stored } from '../../platform/src/api'
 import { FIXED_ENTRIES, SHORTCUTS } from '../../shortcuts/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
-import { isTile } from '../../workspace/bookmarks.svelte'
+import { isTile } from '../../space-kept/src/api'
 import { workspace } from '../../workspace.svelte'
 import { lettersFor, takenUnderAlt } from './letters'
 

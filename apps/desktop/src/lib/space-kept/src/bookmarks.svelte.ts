@@ -1,3 +1,4 @@
+import { BOOKMARK_KINDS, type Bookmark, type BookmarkKind } from '@orden/contracts'
 import {
   movedTo,
   relativeTo,
@@ -11,35 +12,15 @@ import {
   isRecord,
   isString,
   keepJson,
-} from '../platform/src/api'
+} from '../../platform/src/api'
 import { type EntryIds, entryIds } from './entry-ids'
-import { carried, moving } from './file-ops'
+import { carried, moving } from '../../file-ops/src/api'
 
 const STORAGE_KEY = 'orden:bookmarks'
 
 export const MOST_BOOKMARKS = 60
 
-export const BOOKMARK_KINDS = [
-  'note',
-  'folder',
-  'heading',
-  'search',
-  'block',
-  'group',
-  'graph',
-] as const
-type BookmarkKind = (typeof BOOKMARK_KINDS)[number]
-
 const POINTS_AT_A_FILE: ReadonlySet<BookmarkKind> = new Set(['note', 'folder', 'heading', 'block'])
-
-export interface Bookmark {
-  kind: BookmarkKind
-  path: string
-  text: string
-  parent?: string
-  view?: string
-  id?: string
-}
 
 const LONGEST_ID = 64
 
@@ -422,7 +403,7 @@ export class Bookmarks {
     }
     this.write()
 
-    this.offered = import('../sync.svelte').then(({ sync }) => sync.pushBookmarks(root))
+    this.offered = import('../../sync.svelte').then(({ sync }) => sync.pushBookmarks(root))
   }
 
   private write() {

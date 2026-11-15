@@ -20,7 +20,7 @@ import {
   readSpaces,
   without,
 } from '../../platform/src/api'
-import { carried, moving } from '../../workspace/file-ops'
+import { carried, moving } from '../../file-ops/src/api'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
 

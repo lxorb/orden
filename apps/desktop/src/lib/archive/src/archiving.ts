@@ -1,7 +1,6 @@
 import { toArchive, toRestore } from './archive-plan'
 import { relativeTo, insideSpace, withinSpace, coveredBy } from '../../platform/src/api'
-import { changed } from '../../workspace/archive-map'
-import type { FileAction } from '../../workspace/undo.svelte'
+import type { FileAction } from '../../file-undo/src/api'
 import { workspace } from '../../workspace.svelte'
 
 type Archiving = Extract<FileAction, { kind: 'archive' | 'unarchive' }>
@@ -14,16 +13,16 @@ function place(path: string): { root: string; at: string } | null {
   return at ? { root, at } : null
 }
 
-export function archive(paths: readonly string[]): void {
+export async function archive(paths: readonly string[]): Promise<void> {
   const root = workspace.activeSpace?.root
   if (!root) return
 
   const at = paths.flatMap((path) => place(path)?.at ?? [])
   const fresh = toArchive(at, workspace.archive.keysOf(root))
-  if (fresh.length) done({ kind: 'archive', root, archived: fresh, restored: [], closed: [] })
+  if (fresh.length) await done({ kind: 'archive', root, archived: fresh, restored: [], closed: [] })
 }
 
-export function unarchive(path: string): void {
+export async function unarchive(path: string): Promise<void> {
   const found = place(path)
   if (!found) return
 
@@ -31,21 +30,21 @@ export function unarchive(path: string): void {
   const plan = toRestore(workspace.archive.keysOf(root), at, (folder) => childrenOf(root, folder))
   if (!plan.restore.length) return
 
-  done({ kind: 'unarchive', root, archived: plan.archive, restored: plan.restore, closed: [] })
+  await done({
+    kind: 'unarchive',
+    root,
+    archived: plan.archive,
+    restored: plan.restore,
+    closed: [],
+  })
 }
 
-export function archiveAgain(action: Archiving): void {
-  done({ ...action, closed: [] })
+export async function archiveAgain(action: Archiving): Promise<void> {
+  await done({ ...action, closed: [] })
 }
 
-function done(action: Archiving) {
-  const map = changed(
-    workspace.archive.of(action.root),
-    action.archived,
-    action.restored,
-    Date.now(),
-  )
-  if (map) workspace.archive.put(action.root, map)
+async function done(action: Archiving) {
+  await workspace.archive.change(action.root, action.archived, action.restored)
   const closed = action.kind === 'archive' ? closeHidden(action.root) : []
   workspace.undone.record({ ...action, closed })
 }

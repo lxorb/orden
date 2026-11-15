@@ -54,7 +54,7 @@ vi.stubGlobal('localStorage', {
 })
 
 const { copyRows } = await import('./copying')
-const { ItemMetaStore } = await import('./item-meta.svelte')
+const { ItemMetaStore } = await import('../space-kept/src/api')
 const { Protection } = await import('../protect/src/protection.svelte')
 
 const meta = new ItemMetaStore((path) => (path?.startsWith('/t/') ? '/t' : '/s'))

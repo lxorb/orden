@@ -23,7 +23,7 @@ import {
 } from '@orden/scan/search/replace'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
-import type { FileAction, FileActions } from './undo.svelte'
+import type { FileAction, FileActions } from '../file-undo/src/api'
 import { writeEdited } from './in-turn'
 
 export interface HoldsNotes {

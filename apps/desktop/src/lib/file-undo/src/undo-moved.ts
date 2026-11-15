@@ -1,6 +1,5 @@
-import { movedTo } from '../platform/src/api'
-import { landing } from './landing'
-import type { FileOp } from './file-ops'
+import { movedTo } from '../../platform/src/api'
+import { landing, type FileOp } from '../../file-ops/src/api'
 import type { FileAction } from './undo.svelte'
 
 function did(action: FileAction, from: string, to: string): boolean {

@@ -1,15 +1,11 @@
+import type { Bookmark } from '@orden/contracts'
 import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag } from './drag-paths'
 import { chorded } from './ui-kit/src/api'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
 import { canWriteAt } from './sharing/src/api'
 import { folderOf, insideSpace, samePath } from './platform/src/api'
-import {
-  type Bookmark,
-  filedUnder,
-  MOST_BOOKMARKS,
-  sameBookmark,
-} from './workspace/bookmarks.svelte'
+import { filedUnder, MOST_BOOKMARKS, sameBookmark } from './space-kept/src/api'
 import { workspace, type Entry } from './workspace.svelte'
 
 class Landing {

@@ -93,7 +93,7 @@
       { label: 'Open', run: () => void workspace.openRow(path) },
       { label: 'Open in new tab', run: () => void workspace.openRow(path, howFor('behind')) },
       DIVIDER,
-      { label: 'Unarchive', run: () => unarchive(path) },
+      { label: 'Unarchive', run: () => void unarchive(path) },
     ]
   }
 
@@ -123,7 +123,7 @@
     if (!carried.length) return
 
     event.preventDefault()
-    archive(carried)
+    void archive(carried)
   }
 </script>
 
@@ -202,7 +202,7 @@
               class="end back"
               title="Unarchive"
               aria-label="Unarchive"
-              onclick={() => unarchive(row.entry.path)}
+              onclick={() => void unarchive(row.entry.path)}
             >
               <svg viewBox="0 0 13 13"><path d={UNARCHIVE_MARK} /></svg>
             </button>

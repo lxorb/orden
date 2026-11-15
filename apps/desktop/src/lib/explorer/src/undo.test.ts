@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { FileAction } from '../../workspace/undo.svelte'
+import type { FileAction } from '../../file-undo/src/api'
 
 const asked: string[] = []
 const ok = (pairs: { from: string; to: string }[]) => ({

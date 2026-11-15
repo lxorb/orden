@@ -18,7 +18,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const pushed: string[] = []
-vi.mock('../sync.svelte', () => ({
+vi.mock('../../sync.svelte', () => ({
   sync: {
     pushBookmarks: (root: string) => {
       pushed.push(root)
@@ -27,8 +27,8 @@ vi.mock('../sync.svelte', () => ({
   },
 }))
 
+const { BOOKMARK_KINDS } = await import('@orden/contracts')
 const {
-  BOOKMARK_KINDS,
   Bookmarks,
   bookmarkList,
   isBookmark,
@@ -39,7 +39,7 @@ const {
 } = await import('./bookmarks.svelte')
 const { sayEntryIds } = await import('./entry-ids')
 
-type Bookmark = import('./bookmarks.svelte').Bookmark
+type Bookmark = import('@orden/contracts').Bookmark
 
 const note = (path: string): Bookmark => ({ kind: 'note', path, text: '' })
 const folder = (path: string): Bookmark => ({ kind: 'folder', path, text: '' })

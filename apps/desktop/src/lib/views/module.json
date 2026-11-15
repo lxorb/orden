@@ -20,7 +20,9 @@
     "commands",
     "automation",
     "windows",
-    "link-index"
+    "link-index",
+    "file-ops",
+    "file-undo"
   ],
   "pending": [
     "apps/desktop/src/lib/drawer.svelte.ts",
@@ -37,9 +39,7 @@
     "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
     "apps/desktop/src/lib/workspace/documents.svelte.ts",
-    "apps/desktop/src/lib/workspace/landing.ts",
     "apps/desktop/src/lib/workspace/note-text.ts",
-    "apps/desktop/src/lib/workspace/undo-join.ts",
     "apps/desktop/src/lib/workspace/write-file.ts"
   ]
 }

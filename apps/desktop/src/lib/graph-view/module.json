@@ -10,14 +10,14 @@
     "platform",
     "scan",
     "theme",
-    "ui-kit"
+    "ui-kit",
+    "space-kept"
   ],
   "pending": [
     "apps/desktop/src/lib/Twist.svelte",
     "apps/desktop/src/lib/hints.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/pixel-ratio.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/pushing.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts"
   ]
 }

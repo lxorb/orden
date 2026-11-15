@@ -1,3 +1,4 @@
+import type { Bookmark } from '@orden/contracts'
 import {
   isCanvasTarget,
   isChatTarget,
@@ -11,7 +12,6 @@ import { iconChoice } from './icon-choice.svelte'
 import { links } from './link-index/src/api'
 import { canShareItem, canWriteAt, shareThisFile } from './sharing/src/api'
 import { isMarkdownPath, withinSpace } from './platform/src/api'
-import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 import { archive, unarchive } from './archive/src/api'
 

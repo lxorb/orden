@@ -45,9 +45,9 @@ vi.mock('../link-index/src/api', () => ({
 
 const { accountHoldsAll, undoLastFileAction } = await import('./undoing')
 const { redoLastFileAction } = await import('./redoing')
-const { FileActions } = await import('./undo.svelte')
+const { FileActions } = await import('../file-undo/src/api')
 type PutsBack = import('./undoing').PutsBack
-type FileAction = import('./undo.svelte').FileAction
+type FileAction = import('../file-undo/src/api').FileAction
 
 function store(action: FileAction): PutsBack & { loaded: number; wrote: number } {
   const undone = new FileActions()
