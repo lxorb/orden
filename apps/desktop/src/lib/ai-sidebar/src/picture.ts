@@ -1,5 +1,4 @@
-import type { Drawing } from '../../feedback-pictures'
-import { pictureOf } from '../../pictures-away'
+import { type Drawing, pictureOf } from '../../feedback/src/api'
 
 export const MOST_CHAT_PICTURES = 20
 

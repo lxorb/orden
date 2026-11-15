@@ -3,7 +3,7 @@
   import { ACCENTS } from './theme/src/api'
   import { closeOnBack } from './ui-kit/src/api'
   import Icon from './Icon.svelte'
-  import TickBox from './TickBox.svelte'
+  import { TickBox } from './ui-controls/src/api'
   import { iconChoice } from './icon-choice.svelte'
   import { tintOf, wear, wornBy } from './icon-target'
   import { iconLibrary } from './icon-library.svelte'

@@ -54,7 +54,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { saver } = await import('../../src/lib/web-tab/src/saver.svelte')
 const { startup } = await import('../../src/lib/launch/src/api')
-const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
+const { cycleTab } = await import('../../src/lib/tab-cycle/src/api')
 const { default: Cycling } = await import('./Cycling.svelte')
 
 await Promise.all([

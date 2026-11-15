@@ -1,0 +1,5 @@
+{
+  "name": "undo-toast",
+  "layer": "foundation",
+  "dependsOn": ["file-undo"]
+}

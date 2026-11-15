@@ -6,7 +6,7 @@ import { changed, type RowChange } from '../../rows/src/api'
 import { type Change, changeOf } from '@orden/scan/search/replace'
 import { insideSpace } from '../../platform/src/api'
 import { noteText, replaceInNotes, workspace } from '../../workspace/src/api'
-import { type Said, undoToast } from '../../undo-toast.svelte'
+import { type Said, undoToast } from '../../undo-toast/src/api'
 import type { Drop } from './drop'
 
 function pathOf(row: Row): string | null {

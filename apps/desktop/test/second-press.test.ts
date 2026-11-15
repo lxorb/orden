@@ -20,7 +20,7 @@ function sources(): string[] {
 
 const NOT_LAYERS: Record<string, string> = {
   'lib/ui-controls/src/spent-click.ts': 'spends the click a catch took the press of',
-  'lib/tab-cycle.svelte.ts': 'a press ends Ctrl+Tab, which has no button',
+  'lib/tab-cycle/src/tab-cycle.svelte.ts': 'a press ends Ctrl+Tab, which has no button',
   'lib/tab-strip/src/hover-card.svelte.ts': 'a press hushes a card shown by hovering',
   'lib/RenameNotice.svelte': 'a notice nothing opened, gone at the first press or key',
   'lib/web-tab/src/WebTab.svelte': 'a press hides the native page before what it opens is drawn',

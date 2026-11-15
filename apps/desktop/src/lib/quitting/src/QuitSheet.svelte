@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack, overlays } from '../../ui-kit/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
-  import TickBox from '../../TickBox.svelte'
+  import { TickBox } from '../../ui-controls/src/api'
   import { sparkMark, terminalMark } from '../../surfaces.svelte'
   import { trap } from '../../ui-controls/src/api'
   import { quitAsk } from './state.svelte'

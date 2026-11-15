@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import type { Drawing } from '../../feedback-pictures'
+import type { Drawing } from '../../feedback/src/api'
 import { chatPicture } from './picture'
 
 function drawing(size: { width: number; height: number } | null, asked: string[] = []): Drawing {

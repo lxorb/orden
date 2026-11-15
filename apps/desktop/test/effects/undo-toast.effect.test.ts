@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import * as focusing from '../../src/lib/focus'
 import { said } from '../../src/lib/ui-kit/src/api'
 import UndoToast from '../../src/lib/UndoToast.svelte'
-import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast.svelte'
+import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast/src/api'
 import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.animate = () =>

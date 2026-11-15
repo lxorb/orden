@@ -38,7 +38,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { asking, QUIET } = await import('../../src/lib/sync-client/src/asking.svelte')
 const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')
 const { back } = await import('../../src/lib/sync-client/src/resurrected.svelte')
-const { UNDO_LINGER } = await import('../../src/lib/undo-toast.svelte')
+const { UNDO_LINGER } = await import('../../src/lib/undo-toast/src/api')
 const HeldMark = (await import('../../src/lib/sync-client/src/HeldMark.svelte')).default
 const UndoToast = (await import('../../src/lib/UndoToast.svelte')).default
 

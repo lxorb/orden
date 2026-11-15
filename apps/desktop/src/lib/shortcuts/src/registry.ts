@@ -1327,7 +1327,7 @@ function toggleSpacePicker() {
   void import('../../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }
 
-let cycling: typeof import('../../tab-cycle.svelte') | null = null
+let cycling: typeof import('../../tab-cycle/src/api') | null = null
 
 function cycleTab(direction: number, mayUseOrder = false) {
   if (cycling) {
@@ -1335,7 +1335,7 @@ function cycleTab(direction: number, mayUseOrder = false) {
     return
   }
 
-  void import('../../tab-cycle.svelte').then((one) => {
+  void import('../../tab-cycle/src/api').then((one) => {
     cycling = one
     one.cycleTab(direction, mayUseOrder)
   })

@@ -11,7 +11,7 @@
   import { newSpace, spaceMenu } from './space-actions'
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
-  import { SpaceTyping } from './space-typing.svelte'
+  import { SpaceTyping } from './space-pick/src/api'
   import { sharedWithYou } from './sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
   import { spendClick } from './ui-controls/src/api'

@@ -5,7 +5,7 @@
   import { segmented } from '../../ui-kit/src/api'
   import { shownName } from '../../platform/src/api'
   import { nameOf } from '../../platform/src/api'
-  import Facts from '../../Facts.svelte'
+  import { Facts } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { Sheet } from '../../ui-controls/src/api'
   import { chooseTarget, download, writeFile } from '../../files-out/src/api'

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Facts from '../../Facts.svelte'
+  import { Facts } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'

@@ -3,9 +3,13 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './ui-kit/src/api'
   import { Cross } from './ui-kit/src/api'
-  import { feedback } from './feedback/src/api'
-  import { MOST_PICTURES, type Picture, picturesAmong } from './feedback-pictures'
-  import { pictureOf } from './pictures-away'
+  import {
+    MOST_PICTURES,
+    type Picture,
+    picturesAmong,
+    pictureOf,
+    feedback,
+  } from './feedback/src/api'
   import { fade, LAYER, scale } from './platform/src/api'
   import { followHref } from './open-link'
   import { overlays } from './ui-kit/src/api'

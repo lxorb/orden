@@ -1,7 +1,7 @@
 <script lang="ts">
   import { portOf } from '@orden/contracts'
   import { localDate } from '../../../platform/src/api'
-  import Facts from '../../../Facts.svelte'
+  import { Facts } from '../../../ui-kit/src/api'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import { Cross, prompt } from '../../../ui-kit/src/api'
   import { Select, Switch } from '../../../ui-controls/src/api'

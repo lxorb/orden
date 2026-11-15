@@ -1,6 +1,6 @@
 <script lang="ts">
   import { localDate } from '../../../platform/src/api'
-  import Facts from '../../../Facts.svelte'
+  import { Facts } from '../../../ui-kit/src/api'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { account } from '../../../accounts/src/api'

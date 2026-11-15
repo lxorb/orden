@@ -1,7 +1,7 @@
 <script lang="ts">
   import { dropOver } from '../../drag-paths'
 
-  import Facts from '../../Facts.svelte'
+  import { Facts } from '../../ui-kit/src/api'
   import { droppedFiles, pickFiles } from '../../picking'
   import { settings } from '../../settings.svelte'
   import { dur, fade } from '../../platform/src/api'

@@ -24,7 +24,8 @@
     "kept-for-good",
     "link-index",
     "tree",
-    "notify"
+    "notify",
+    "undo-toast"
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
@@ -33,7 +34,6 @@
     "apps/desktop/src/lib/space-pairing.ts",
     "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/undo-toast.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

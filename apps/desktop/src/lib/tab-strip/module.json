@@ -26,7 +26,6 @@
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/SpaceMark.svelte",
     "apps/desktop/src/lib/TabMark.svelte",

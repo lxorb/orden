@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Entry } from '@orden/contracts'
-  import Facts from '../../Facts.svelte'
+  import { Facts } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import { region, dur, fly, samePath, withinSpace } from '../../platform/src/api'
   import { Cross } from '../../ui-kit/src/api'
