@@ -69,7 +69,7 @@ describe('where the panel draws it', () => {
     const written = drawn.filter(
       (one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />',
     )
-    expect(written.length).toBeGreaterThan(5)
+    expect(written.length).toBeGreaterThan(2)
     for (const one of written) expect(one).toMatch(/^<Hint text="[^"]+\." \/>$/)
   })
 

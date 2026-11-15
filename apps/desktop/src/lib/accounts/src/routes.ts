@@ -224,8 +224,6 @@ export interface AccountSettings {
   glassesWords?: Record<string, string>
   glassesSeen?: boolean
   mobileSeen?: boolean
-  glassesModel?: string
-  glassesEffort?: string
   attachments?: string
   remindBefore?: number
   undatedInToday?: boolean
@@ -254,7 +252,7 @@ export interface AccountSettings {
   developer?: boolean
 }
 
-export interface KeyState {
+interface KeyState {
   set: boolean
   tail: string
 }
@@ -371,7 +369,7 @@ export const routes = {
   usage: (token: string) => request<{ used: number; limit: number }>('/v1/usage', { token }),
 
   settings: (token: string) =>
-    request<{ settings: AccountSettings; key: KeyState }>('/v1/settings', { token }),
+    request<{ settings: AccountSettings; key?: KeyState }>('/v1/settings', { token }),
   saveSettings: (token: string, patch: AccountSettings) =>
     request<{ settings: AccountSettings }>('/v1/settings', {
       method: 'PATCH',
@@ -379,15 +377,7 @@ export const routes = {
       body: patch,
     }),
 
-  setAskKey: (token: string, key: string) =>
-    request<KeyState>('/v1/ask/key', { method: 'PUT', token, body: { key } }),
-
   removeAskKey: (token: string) => request<KeyState>('/v1/ask/key', { method: 'DELETE', token }),
-
-  askModels: (token: string) => request<{ models: string[] }>('/v1/ask/models', { token }),
-
-  ask: (token: string, question: string, model: string, effort: string) =>
-    request<{ answer: string }>('/v1/ask', { token, body: { question, model, effort } }),
 
   warm: async (): Promise<void> => {
     await fetch(`${BASE}/health`, { method: 'GET', keepalive: true }).catch(() => undefined)

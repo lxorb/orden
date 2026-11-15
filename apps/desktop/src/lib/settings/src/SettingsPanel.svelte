@@ -56,8 +56,6 @@
   import ThemeStore from '../../ThemeStore.svelte'
   import { store } from '../../theme-looks/src/api'
   import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
-  import { glassesKey } from '../../accounts/src/api'
-  import { EFFORT_WORDS, Offered } from '../../glasses-choices/src/api'
   import { modes } from '../../modes.svelte'
   import { readableSize, usage } from '../../usage.svelte'
   import { viewport } from '../../ui-kit/src/api'
@@ -66,9 +64,6 @@
   import { waited } from '../../platform/src/api'
   import { Cross } from '../../ui-kit/src/api'
 
-  const offered = new Offered()
-
-  let replacingKey = $state(false)
   let customBad = $state(false)
 
   let leaving = $state(false)
@@ -1117,84 +1112,9 @@
 
 {#snippet glassesExtras()}
   <h3>Questions</h3>
-  <div class="card">
-    {#if glassesKey.set && !replacingKey}
-      <div class="orden-setting setting keyed">
-        <span class="name"
-          ><span class="what"
-            >OpenAI key<Hint text="The OpenAI key the glasses ask their questions with." /></span
-          ></span
-        >
-        <div class="row">
-          <span class="hint">set, ends in …{glassesKey.tail}</span>
-          <button class="orden-chip" onclick={() => (replacingKey = true)}>Replace</button>
-          <button class="orden-chip is-quiet" onclick={() => void offered.remove()}>Remove</button>
-        </div>
-      </div>
-    {:else}
-      <!-- svelte-ignore a11y_autofocus -->
-      <label class="orden-setting setting">
-        <span class="name"
-          ><span class="what"
-            >OpenAI key<Hint text="The OpenAI key the glasses ask their questions with." /></span
-          ></span
-        >
-        <input
-          class="orden-field is-value"
-          type="password"
-          value=""
-          placeholder="sk-"
-          spellcheck="false"
-          autocomplete="off"
-          autofocus={replacingKey}
-          onchange={(event) => {
-            replacingKey = false
-            void offered.take(event.currentTarget.value)
-          }}
-        />
-      </label>
-    {/if}
-
-    {#if offered.models.length}
-      <div class="orden-setting setting">
-        <span class="name"
-          ><span class="what"
-            >Model<Hint text="The model that answers what you ask on the glasses." /></span
-          ></span
-        >
-        <div class="orden-setting-value">
-          <Select
-            value={modes.glassesModel}
-            options={offered.models.map((one) => ({ value: one, label: one }))}
-            onchange={(value: string) => modes.setGlassesModel(value)}
-            label="Model"
-            plain={viewport.touch}
-          />
-        </div>
-      </div>
-      <div class="orden-setting setting">
-        <span class="name"
-          ><span class="what"
-            >Reasoning<Hint
-              text="How long the model thinks before it answers; longer is slower."
-            /></span
-          ></span
-        >
-        <div class="orden-setting-value">
-          <Select
-            value={modes.glassesEffort}
-            options={EFFORT_WORDS.map((one) => ({ value: one.value, label: one.label }))}
-            onchange={(value: string) => modes.setGlassesEffort(value)}
-            label="Reasoning"
-            plain={viewport.touch}
-          />
-        </div>
-      </div>
-    {/if}
-  </div>
-
   <p class="hint caption">
-    {#if offered.said}{offered.said}{:else}Kept encrypted on your account, and never shown again.{/if}
+    The glasses ask the default AI account.
+    <button class="link" onclick={() => settings.show('ai')}>Choose it in Settings, AI</button>
   </p>
 {/snippet}
 

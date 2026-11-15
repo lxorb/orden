@@ -103,8 +103,6 @@ const AWAY = {
   glassesWords: { next: 'onwards' },
   glassesSeen: true,
   mobileSeen: true,
-  glassesModel: 'gpt-4o-mini',
-  glassesEffort: 'high',
   vim: true,
   attachments: 'note',
   pagesPaper: 'letter',

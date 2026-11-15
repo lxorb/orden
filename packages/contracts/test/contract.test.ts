@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ASK_EFFORTS,
   commandRows,
   commandRowsLoaded,
   attempt,
@@ -10,7 +9,6 @@ import {
   err,
   failure,
   isEntryId,
-  isAskEffort,
   isEntryKind,
   isEventName,
   isOk,
@@ -97,16 +95,6 @@ describe('branded ids', () => {
     expect(notePath('Notes/One.md')).toBe('Notes/One.md')
     expect(notePath('')).toBeNull()
     expect(notePath('a\0b')).toBeNull()
-  })
-})
-
-describe('ask efforts', () => {
-  it('names every effort a model is asked with, from none to the most, and nothing else', () => {
-    expect(ASK_EFFORTS[0]).toBe('none')
-    expect(ASK_EFFORTS.at(-1)).toBe('max')
-    expect(ASK_EFFORTS.every(isAskEffort)).toBe(true)
-    expect(isAskEffort('auto')).toBe(false)
-    expect(isAskEffort(3)).toBe(false)
   })
 })
 
