@@ -32,7 +32,6 @@
     "apps/desktop/src/lib/SpacePicker.svelte",
     "apps/desktop/src/lib/SpaceSound.svelte",
     "apps/desktop/src/lib/SyncMark.svelte",
-    "apps/desktop/src/lib/app-menu.ts",
     "apps/desktop/src/lib/first-space.svelte.ts"
   ]
 }

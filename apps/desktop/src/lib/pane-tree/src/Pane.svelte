@@ -55,7 +55,7 @@
   import { pull } from '../../pull.svelte'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { settingsWindow } from '@orden/contracts'
+  import { commandRowsLoaded, settingsWindow } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -272,9 +272,10 @@
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
-    void here(import('../../editor-menu')).then(({ showEditorMenu }) =>
-      showEditorMenu(event, on, path),
-    )
+    void here(import('../../editor-menu/src/api')).then(async ({ showEditorMenu }) => {
+      await commandRowsLoaded()
+      showEditorMenu(event, on, path)
+    })
   }
 
   async function saveImage(file: File, into: Tab): Promise<string | null> {

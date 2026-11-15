@@ -17,7 +17,7 @@ import {
   whenPortProvided,
 } from '@orden/contracts'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
-import { askPart, loadRewriteSheet } from './ai-chat/src/api'
+import { askPart, loadRewriteSheet, rewritingStore } from './ai-chat/src/api'
 import { outlinePart } from './pages/src/api'
 import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
@@ -35,7 +35,6 @@ import { breathe } from './platform/src/api'
 import { focusEditor } from './focus'
 import { startup } from './launch/src/api'
 import {
-  appMenuRows,
   contextMenu,
   fillBar,
   findBar,
@@ -141,6 +140,8 @@ registerCommands('import.', async () => (await import('./import/src/api')).impor
 registerCommands('views.', async () => (await import('./views/src/api')).viewCommands)
 registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
+registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)
+registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
 
 if (__EVEN_PLUGIN__) {
   const waits = () => new Promise<never>(() => undefined)
@@ -284,7 +285,9 @@ export async function warmDoors(): Promise<void> {
     () => findBar(),
     () => searchPanel(),
     () => linksPanel(),
-    () => appMenuRows(),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./native-menu/src/api').then((one) => one.appMenuRows()),
     () => readingSurface(),
     () => loadFind(),
     () => loadLineCommands(),
@@ -308,7 +311,7 @@ export async function warmDoors(): Promise<void> {
     () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
     () => import('./row-menu/src/api').then((one) => one.rowMenus()),
-    () => import('./editor-menu'),
+    () => import('./editor-menu/src/api'),
     () => import('./tab-cycle/src/api'),
     __EVEN_PLUGIN__
       ? undefined

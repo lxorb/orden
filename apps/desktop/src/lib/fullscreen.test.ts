@@ -233,7 +233,7 @@ describe('the shell', () => {
   const SOURCE = fileURLToPath(new URL('../', import.meta.url))
   const app = readFileSync(`${SOURCE}App.svelte`, 'utf8')
   const wayOut = readFileSync(`${SOURCE}lib/FullscreenLeave.svelte`, 'utf8')
-  const menu = readFileSync(`${SOURCE}lib/app-menu.ts`, 'utf8')
+  const menu = readFileSync(`${SOURCE}lib/native-menu/src/app-menu.ts`, 'utf8')
   const registry = readFileSync(`${SOURCE}lib/shortcuts/src/registry.ts`, 'utf8')
 
   function branches(text: string): string[] {

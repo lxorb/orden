@@ -36,22 +36,18 @@ import {
   showPicture,
   turnBlocksInto,
 } from '@orden/editor/menu'
-import { account } from './accounts/src/api'
-import { rewritingStore } from './ai-chat/src/api'
-import { chatsOn } from './gates/src/api'
-import { canTranscribe } from './ai-providers/src/api'
-import { copyPicture, copySelection, copyText, cutSelection } from './ui-controls/src/api'
-import { countText } from './documents/src/api'
-import { linkTo } from './composer'
-import { composerEntries } from './composer-commands'
-import { DIVIDER, type MenuEntry, menu, viewport } from './ui-kit/src/api'
-import { modes } from './modes/src/api'
-import { webHref } from './open-link'
-import { recordingAt, transcribeEmbed } from './dictation/src/api'
-import { openExternal, isMarkdownPath, noteName, relativeTo } from './platform/src/api'
-import { shortcuts } from './shortcuts/src/api'
-import { workspace } from './workspace/src/api'
-import { unlocks } from './protect/src/api'
+import { type CommandPlace, commandRows } from '@orden/contracts'
+import { copyPicture, copySelection, copyText, cutSelection } from '../../ui-controls/src/api'
+import { countText } from '../../documents/src/api'
+import { linkTo } from '../../composer'
+import { composerEntries } from '../../composer-commands'
+import { DIVIDER, type MenuEntry, menu, viewport } from '../../ui-kit/src/api'
+import { modes } from '../../modes/src/api'
+import { webHref } from '../../open-link'
+import { openExternal, isMarkdownPath, noteName, relativeTo } from '../../platform/src/api'
+import { shortcuts } from '../../shortcuts/src/api'
+import { workspace } from '../../workspace/src/api'
+import { unlocks } from '../../protect/src/api'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
@@ -190,7 +186,7 @@ const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
 ]
 
 async function turnInto(view: EditorView, at: number) {
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const chosen = await prompt.find({
     title: 'Turn into',
     options: SHAPES.map((one) => ({ id: one.shape, label: one.label() })),
@@ -241,24 +237,8 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
   ]
 }
 
-async function rewrite(view: EditorView) {
-  const { rewriting } = await rewritingStore()
-  rewriting.show(view)
-}
-
-function sendEntry(view: EditorView): MenuEntry[] {
-  const tab = workspace.active
-  const note = tab?.kind === 'note' ? tab.path : null
-  if (__EVEN_PLUGIN__ || !note || !account.accountToken || !chatsOn()) return []
-  const run = () => {
-    const range = view.state.selection.main
-    void import('./chats-client/src/api')
-      .then((one) => one.chatSending())
-      .then(({ sendSelection }) =>
-        sendSelection(note, view.state.doc.toString(), range.from, range.to),
-      )
-  }
-  return [{ label: 'Send to chat', run }]
+function rowsFor(place: CommandPlace, on: object | undefined): MenuEntry[] {
+  return commandRows(place, on).map(({ label, run }) => ({ label, run }))
 }
 
 function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
@@ -306,9 +286,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
   return [
     ...clipboard,
     ...block,
-    ...(selected
-      ? [DIVIDER, { label: 'Rewrite…', run: () => void rewrite(view) }, ...sendEntry(view)]
-      : []),
+    ...(selected ? [DIVIDER, ...rowsFor('rewrite', view), ...rowsFor('send', view)] : []),
     DIVIDER,
     { label: 'Bold', hint: shortcuts.hint('format.bold'), run: run(toggleWrap('**')) },
     { label: 'Italic', hint: shortcuts.hint('format.italic'), run: run(toggleWrap('*')) },
@@ -361,10 +339,8 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
 }
 
 function recordingEntries(view: EditorView | undefined, at: number | null): MenuEntry[] {
-  if (!view || at === null || view.state.readOnly || !canTranscribe()) return []
-  if (!recordingAt(view, at)) return []
-
-  return [DIVIDER, { label: 'Transcribe', run: () => void transcribeEmbed(view, at) }]
+  const rows = view && at !== null ? rowsFor('transcribe', { view, at }) : []
+  return rows.length ? [DIVIDER, ...rows] : []
 }
 
 function linkEntries(

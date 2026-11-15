@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { registerCommandRows } from '@orden/contracts'
 
 vi.mock('../../../history/src/versions', () => ({
   versionsOf: () => Promise.resolve([{ at: 1, size: 20, path: null, by: '' }]),
@@ -10,7 +11,8 @@ const { workspace } = await import('../../../workspace/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const { appCommands } = await import('../../../commands/src/api')
 const { exportCommands } = await import('../../../export/src/api')
-const { appMenu } = await import('../../../app-menu')
+registerCommandRows('export', () => Promise.resolve(exportCommands))
+const appMenu = await (await import('../../../native-menu/src/api')).appMenuRows()
 const { openTarget } = await import('../../../export/src/context')
 const { choices } = await import('../../../modes/src/api')
 const { menu } = await import('../../../ui-kit/src/api')
@@ -74,7 +76,7 @@ describe('a shut note in front', () => {
 
   test('takes away the editor menu that was open when it locked', async () => {
     unlocks.unlock([LOCK])
-    const { showEditorMenu } = await import('../../../editor-menu')
+    const { showEditorMenu } = await import('../../../editor-menu/src/api')
     showEditorMenu(new MouseEvent('contextmenu'), undefined, NOTE)
     expect(menu.open).toBe(true)
     unlocks.close([LOCK])

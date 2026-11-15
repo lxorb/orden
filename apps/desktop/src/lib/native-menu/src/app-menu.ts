@@ -21,8 +21,9 @@ import {
   undoEdit,
   unfoldEverything,
 } from '@orden/editor'
+import { commandRows } from '@orden/contracts'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
-import { account } from './accounts/src/api'
+import { account } from '../../accounts/src/api'
 import {
   busy,
   DIVIDER,
@@ -30,26 +31,26 @@ import {
   type MenuItem,
   type MenuRow,
   viewport,
-} from './ui-kit/src/api'
-import { copySelection, cutSelection } from './ui-controls/src/api'
-import { blockCommands } from './commands/src/api'
-import { fullscreen } from './fullscreen.svelte'
-import { exportCommands, frontShut } from './export/src/api'
+} from '../../ui-kit/src/api'
+import { copySelection, cutSelection } from '../../ui-controls/src/api'
+import { blockCommands } from '../../commands/src/api'
+import { fullscreen } from '../../fullscreen.svelte'
+import { protection } from '../../protect/src/api'
 import {
   canPrint,
   EXPORT_EXTRAS,
   EXPORT_FORMATS,
   EXPORT_VARIANTS,
   printable,
-} from './export-formats/src/api'
-import { printOpen } from './open-out'
-import { modes } from './modes/src/api'
-import { shortcuts } from './shortcuts/src/api'
-import { toggleFill } from './tab-fill/src/api'
-import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
-import { isDesktop, isNative, openExternal } from './platform/src/api'
-import { updates } from './updates/src/api'
-import { workspace } from './workspace/src/api'
+} from '../../export-formats/src/api'
+import { printOpen } from '../../open-out'
+import { modes } from '../../modes/src/api'
+import { shortcuts } from '../../shortcuts/src/api'
+import { toggleFill } from '../../tab-fill/src/api'
+import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
+import { isDesktop, isNative, openExternal } from '../../platform/src/api'
+import { updates } from '../../updates/src/api'
+import { workspace } from '../../workspace/src/api'
 
 interface Context {
   view?: EditorView | undefined
@@ -66,7 +67,7 @@ function exportRows(): MenuRow[] {
   const rows: MenuRow[] = []
   let last: string | null = null
 
-  for (const command of exportCommands()) {
+  for (const command of commandRows('export')) {
     const kind = formats.has(command.id) ? 'format' : variants.has(command.id) ? 'variant' : 'rest'
     if (last !== null && kind !== last) rows.push(DIVIDER)
     last = kind
@@ -82,6 +83,10 @@ function exportRows(): MenuRow[] {
   }
 
   return rows
+}
+
+function shut(): boolean {
+  return protection.locked(workspace.active?.path)
 }
 
 function keyed(id: string): Pick<MenuItem, 'hint' | 'command'> {
@@ -142,7 +147,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 label: 'Print',
                 ...keyed('app.print'),
                 asks: true,
-                disabled: !printable(workspace.active?.kind) || frontShut(),
+                disabled: !printable(workspace.active?.kind) || shut(),
                 run: () => busy.start('Printing', () => printOpen(), 'print'),
               },
             ]
@@ -151,7 +156,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: 'Version history',
           asks: true,
-          disabled: !hasNote || frontShut(),
+          disabled: !hasNote || shut(),
           run: () => context.onhistory(),
         },
       ],
@@ -502,7 +507,7 @@ export function appMenu(context: Context): MenuGroup[] {
             account.user
               ? __EVEN_PLUGIN__
                 ? void account.signOut('asked')
-                : void import('./ai-providers/src/api').then((one) => one.signOut())
+                : void account.leave()
               : (account.open = true),
         },
         DIVIDER,

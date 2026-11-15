@@ -1,0 +1,21 @@
+{
+  "name": "editor-menu",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "documents",
+    "editor",
+    "modes",
+    "platform",
+    "protect",
+    "shortcuts",
+    "ui-controls",
+    "ui-kit",
+    "workspace"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/composer-commands.ts",
+    "apps/desktop/src/lib/composer.ts",
+    "apps/desktop/src/lib/open-link.ts"
+  ]
+}
