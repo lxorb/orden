@@ -73,10 +73,10 @@ export function lineBeside(state: EditorState, span: TableSpan, side: Side): Lin
       return { from: line.from, to: line.to, made: false, changes: [] }
     }
     return {
-      from: span.to + 1,
-      to: span.to + 1,
+      from: span.to + 2,
+      to: span.to + 2,
       made: true,
-      changes: { from: span.to, insert: '\n' },
+      changes: { from: span.to, insert: '\n\n' },
     }
   }
 

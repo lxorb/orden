@@ -22,7 +22,7 @@
     fullscreen,
   } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
-  import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
+  import { EditorView, landOnLine, setVimCommands, showLine, topLine } from '@orden/editor'
   import { OUTSIDE_FOLDER, whenLoaded } from '@orden/contracts'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { PaneTree } from './lib/pane-tree/src/api'
@@ -588,14 +588,7 @@
   function land(on: EditorView, line: number) {
     if (viewport.drawer) workspace.closePanel()
 
-    const target = on.state.doc.line(Math.min(line + 1, on.state.doc.lines))
-    on.dispatch({
-      selection: { anchor: target.from },
-      effects: [
-        EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
-        landed.of(target.from),
-      ],
-    })
+    landOnLine(on, line)
     on.focus()
   }
 

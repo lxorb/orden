@@ -6,7 +6,7 @@ import {
   Prec,
   type SelectionRange,
 } from '@codemirror/state'
-import { type EditorView, keymap } from '@codemirror/view'
+import { Direction, type EditorView, keymap } from '@codemirror/view'
 import { quietMarks } from './reveal'
 
 const QUOTE = /^(?:[ \t]*>[ \t]?)*/
@@ -60,10 +60,11 @@ function kept(before: EditorState, after: EditorState, range: SelectionRange, at
   return EditorSelection.cursor(run.to)
 }
 
-function leftOutOfWords(view: EditorView): boolean {
+function backOutOfWords(view: EditorView, toward: Direction): boolean {
   const { state } = view
   const main = state.selection.main
   if (state.selection.ranges.length > 1 || !main.empty) return false
+  if (view.textDirectionAt(main.head) !== toward) return false
   const line = state.doc.lineAt(main.head)
   const run = hiddenRun(state, line)
   if (run?.to !== main.head || line.number < 2) return false
@@ -95,5 +96,10 @@ const snapped = EditorState.transactionFilter.of((transaction) => {
 
 export const itemStart = [
   snapped,
-  Prec.high(keymap.of([{ key: 'ArrowLeft', run: leftOutOfWords }])),
+  Prec.high(
+    keymap.of([
+      { key: 'ArrowLeft', run: (view) => backOutOfWords(view, Direction.LTR) },
+      { key: 'ArrowRight', run: (view) => backOutOfWords(view, Direction.RTL) },
+    ]),
+  ),
 ]

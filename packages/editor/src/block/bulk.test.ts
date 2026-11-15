@@ -1,4 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
 import {
   EditorSelection,
   EditorState,
@@ -293,6 +294,22 @@ describe('a link to a block', () => {
     expect(target).toMatch(/^#\^[a-z0-9]+$/u)
     expect(said).toBe(wanted.replace('^ID', target?.slice(1) ?? ''))
     expect(blockIds(said).map((one) => one.id)).toEqual([target?.slice(2)])
+  })
+
+  test('a fence in a list item takes it inside the item, so the list stays one list', () => {
+    const doc = '1. a\n\n   ```js\n   x()\n   ```\n2. b\n'
+    const pos = doc.indexOf('```js')
+    const { view, said } = viewOf(doc, pos)
+    const [target] = blockTargets(view, pos)
+
+    const top: string[] = []
+    for (let node = syntaxTree(view.state).topNode.firstChild; node; node = node.nextSibling) {
+      top.push(node.name)
+    }
+    expect(top).toEqual(['OrderedList'])
+    expect(said()).toBe(
+      `1. a\n\n   \`\`\`js\n   x()\n   \`\`\`\n\n   ${target?.slice(1) ?? ''}\n\n2. b\n`,
+    )
   })
 
   test('asked twice gives the name it already has', () => {

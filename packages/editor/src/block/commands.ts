@@ -122,7 +122,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
   if (verbatim.has(last.number)) {
     const below = last.number < doc.lines ? doc.line(last.number + 1).text.trim() : ''
-    const insert = `\n\n^${id}${below ? '\n' : ''}`
+    const insert = `\n\n${itemIndent(view.state, span, last)}^${id}${below ? '\n' : ''}`
     view.dispatch({ changes: { from: last.to, to: last.to, insert } })
     return `#^${id}`
   }
@@ -130,6 +130,19 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const end = last.from + last.text.trimEnd().length
   view.dispatch({ changes: { from: end, to: end, insert: ` ^${id}` } })
   return `#^${id}`
+}
+
+function itemIndent(state: EditorState, span: BlockSpan, last: Line): string {
+  const item = [...enclosing(syntaxTree(state).resolveInner(last.to, -1))].find(
+    (node) => node.name === 'ListItem' && node.from < span.from,
+  )
+  if (!item) return ''
+
+  const line = state.doc.lineAt(item.from)
+  const marked = (item.getChild('ListMark')?.to ?? item.from) - line.from
+  const space = INDENT.exec(line.text.slice(marked))?.[0].length ?? 0
+  const column = marked + (space >= 1 && space <= 4 ? space : 1)
+  return INDENT.exec(last.text.slice(0, column))?.[0] ?? ''
 }
 
 function ownEnd(state: EditorState, span: BlockSpan): number {

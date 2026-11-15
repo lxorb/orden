@@ -496,6 +496,10 @@ function mayMakeAnHtmlBlock(doc: Text, at: number): boolean {
   return doc.lineAt(at).text.includes('<')
 }
 
+function mayMoveMaths(doc: Text, at: number): boolean {
+  return doc.lineAt(at).text.includes('$$')
+}
+
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
   if (value.toc) return false
 
@@ -522,7 +526,11 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       ordinary =
         PUNCTUATION.test(written) && !BLOCK_MARKS.test(written) && insideALine(after, fromB)
     }
-    ordinary = ordinary && !mayMakeATable(after, fromB) && !mayMakeAnHtmlBlock(after, fromB)
+    ordinary =
+      ordinary &&
+      !mayMakeATable(after, fromB) &&
+      !mayMakeAnHtmlBlock(after, fromB) &&
+      !mayMoveMaths(after, fromB)
   })
 
   return ordinary

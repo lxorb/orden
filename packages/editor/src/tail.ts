@@ -4,7 +4,7 @@ import { EditorSelection } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { enclosingNamed } from './nodes'
 
-const CLOSED = new Set(['Table', 'FencedCode', 'CodeBlock', 'BlockMath'])
+const CLOSED = new Set(['FencedCode', 'CodeBlock', 'BlockMath'])
 
 const PICTURE = /^\s*(?:!\[[^\]]*\]\([^)]*\)|!\[\[[^\]]*\]\])\s*$/
 
@@ -14,6 +14,7 @@ export function tailOf(state: EditorState): { at: number; insert: string } | nul
   if (!last.text.trim()) return null
 
   const end = syntaxTree(state).resolveInner(doc.length, -1)
+  if (enclosingNamed(end, 'Table')) return { at: doc.length, insert: '\n\n' }
   if (enclosingNamed(end, CLOSED)) return { at: doc.length, insert: '\n' }
 
   return PICTURE.test(last.text) ? { at: doc.length, insert: '\n\n' } : null

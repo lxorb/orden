@@ -13,7 +13,15 @@ export function rangeInCode(state: EditorState, range: SelectionRange): boolean 
   return inCode(state, range.from) || inCode(state, range.to, -1)
 }
 
-const VERBATIM_BLOCKS = new Set(['FencedCode', 'CodeBlock', 'Table'])
+const VERBATIM_BLOCKS = new Set([
+  'FencedCode',
+  'CodeBlock',
+  'Table',
+  'BlockMath',
+  'FrontMatter',
+  'HTMLBlock',
+  'CommentBlock',
+])
 
 export function verbatimBlockAt(
   state: EditorState,

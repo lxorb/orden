@@ -128,7 +128,7 @@ export function spansLines(state: EditorState, range: SelectionRange): boolean {
 }
 
 export const OPENING =
-  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|\[\^[^\]\s]+\]:[ \t]*)?/u
+  /^(?:[ \t]*(?:>[ \t]?)+[ \t]*\[![^\]\s]+\][+-]?[ \t]*|[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|\[\^[^\]\s]+\]:[ \t]*)?)/u
 
 function pastOpening(state: EditorState, start: number, end: number): number {
   const first = state.doc.lineAt(start)
@@ -189,9 +189,27 @@ interface Words {
   text: string
 }
 
-function wordsOfLine(line: Line): Words {
+const ITEM_HEADING = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(?=#{1,6}(?:[ \t]|$))/
+
+function inItemBody(state: EditorState, line: Line): boolean {
+  const start = line.from + line.text.length - line.text.trimStart().length
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(start, 1);
+    node;
+    node = node.parent
+  ) {
+    if (node.name === 'ListItem') return node.from < line.from
+  }
+  return false
+}
+
+function wordsOfLine(state: EditorState, line: Line): Words {
   const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
-  return { from: line.from + quote, text: line.text.slice(quote) }
+  const rest = line.text.slice(quote)
+  const item = ITEM_HEADING.exec(rest)?.[0].length ?? 0
+  const indent = !item && inItemBody(state, line) ? rest.length - rest.trimStart().length : 0
+  const from = quote + item + indent
+  return { from: line.from + from, text: line.text.slice(from) }
 }
 
 function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
@@ -201,9 +219,9 @@ function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
 
 function headingLines(state: EditorState): Words[] {
   const lines = selectedLines(state)
-  if (lines.length < 2) return lines.map(wordsOfLine)
+  if (lines.length < 2) return lines.map((line) => wordsOfLine(state, line))
   const written = lines.filter((line) => line.text.trim() !== '' && !inVerbatimBlock(state, line))
-  return (written.length ? written : lines).map(wordsOfLine)
+  return (written.length ? written : lines).map((line) => wordsOfLine(state, line))
 }
 
 export function setHeading(level: number): StateCommand {

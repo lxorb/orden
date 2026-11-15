@@ -1288,6 +1288,17 @@ first.
 | EC164 | Low | Bold or other marks over a whole footnote definition wrapped its `[^1]: ` label (thirteenth re-audit) | Fixed | The line opening skipped headings, items and quotes, not footnote labels | Footnote labels are skipped too | `marks-footnote.test.ts` (fails before) |
 | EC165 | Medium | Numbered headings showed wrong numbers in any note longer than a screen or two: they restarted once the top was scrolled out (thirteenth re-audit) | Fixed | The numbers were style counters, which only count the lines the editor has drawn | Each heading's number is worked out from the whole note and written on its line, and the style shows that | `modes.test.ts` "numbered headings" (4 tests, fail before) |
 | EC166 | Low | An edit in an HTML block's opener left the blocks below it stale (thirteenth re-audit) | Fixed | A letter typed or taken out there was treated as prose, and an HTML block that is not a card has no span | An edit on a line with a `<` takes the local rebuild | `blocks.test.ts` "a letter taken out of an HTML block opener draws the maths the block no longer holds" (fails before) |
+| EC167 | Medium | Words typed on the line opened under a table that ends the note (a click below the note, ArrowDown or Escape out of the last row, Insert table at the end) became another row of the table (fourteenth re-audit) | Fixed | That line was opened with a single line break, and a non-blank line right under a table is one of its rows | The line under a closing table is opened a blank line away | `tail.test.ts` "words written under a table that ends the note are no row of it"; `navigation.test.ts` "made under a table that ends the document takes words that are no row of it" (fail before) |
+| EC168 | Medium | Bold, italic, highlight, typed marks, Mod-K and a pasted link over a callout's title line wrapped `[!NOTE]` and broke the callout (fourteenth re-audit, EC125 for callouts) | Fixed | The line opening skipped heading, item, task and footnote openings, not a callout marker | A quoted callout marker is part of the opening | `marks-callout.test.ts` (4 tests, fail before) |
+| EC169 | Medium | Heading commands over front matter, a `$$` block or an HTML block wrote `## ` on its lines, which wiped the note's properties (fourteenth re-audit, gap in EC157) | Fixed | Only fenced and indented code and tables counted as blocks to leave alone | Front matter, maths, HTML and comment blocks count too | `heading-blocks.test.ts` "front matter keeps its lines" and two more (fail before) |
+| EC170 | Medium | Sort lines in front matter, a `$$` block or a comment sorted its delimiter lines in, losing the properties or leaving a comment open over the rest of the note (fourteenth re-audit, gap in EC159) | Fixed | Same gap as EC169 | Those blocks sort only their inner lines | `sort-verbatim.test.ts` (3 tests, fail before) |
+| EC171 | Medium | Heading commands on a heading or paragraph inside a list item doubled the hashes, could not take a heading off, or moved the paragraph out of the item (fourteenth re-audit) | Fixed | The heading was read only at column 0, past quote marks | The words of a line start after an item marker that holds a heading, and after the indent of an item's later lines | `heading-blocks.test.ts` "a heading written in an item changes level instead of gaining a second run of hashes" and two more (fail before) |
+| EC172 | Medium | Typing `- ` or `1. ` in front of a `$$` line hid the rest of the note behind a broken maths picture (fourteenth re-audit) | Fixed | The space was treated as prose, and the maths it closed again sat lines away from the edit | An edit on a line with `$$` takes the local rebuild | `maths-item-marker.test.ts` (2 tests, fail before) |
+| EC173 | Medium | A note embed kept showing the embedded note's old words after it was saved, and after it was locked (fourteenth re-audit) | Fixed | The embed compared only its path and link, so it was never drawn again | It also compares the note index, as query blocks do | `embed-refresh.test.ts` (2 tests, fail before) |
+| EC174 | Medium | At the start of a right-to-left list item, ArrowLeft jumped to the line above and ArrowRight was stuck (fourteenth re-audit, from EC161) | Fixed | The back-out key was bound to ArrowLeft whatever the line's direction | It is bound to the key that goes backward on that line | `item-start-rtl.test.ts` (2 tests, fail before) |
+| EC175 | Medium | Outline and palette jumps put the caret before a heading's hidden `## ` with quiet marks on (fourteenth re-audit, found in the app, as EC162) | Fixed | The app's jump was not marked as a selection | The jump moved into the editor as `landOnLine`, a selection like any other | `landing.test.ts` (fails before) |
+| EC176 | Low | In Read-only mode Find never showed a match inside a picture's description (fourteenth re-audit, gap in EC163) | Fixed | The picture's own reveal check ignored the found match | It uses the same reveal rule | `find-read-only-image.test.ts` (fails before) |
+| EC177 | Low | Copy link on a code fence inside a list item wrote `^id` at column 0, which split the list (fourteenth re-audit) | Fixed | The id line had no indent | It takes the item's content indent | `bulk.test.ts` "a fence in a list item takes it inside the item, so the list stays one list" (fails before) |
 ### Editor core: open Lows
 
 Seen, judged minor, left as they are:
@@ -1387,6 +1398,18 @@ Seen, judged minor, left as they are:
 - Shift-ArrowLeft from an item's words leaves the selection head before the hidden marker; on `- # Heading` with quiet marks Home stops before the hidden `# `.
 - `$$a$$ ^id`, a one-line equation with a block id, is not drawn.
 - `paste.ts` `readClipboard` carries a code comment that was already on `unstable`; left alone as it is outside this change.
+- A note saved ending in a table and one line break: words typed on that line still become a row.
+- Reverse lines in a callout moves its title line; the quote toggle over front matter quotes the `---` lines.
+- Edit link on a table-cell wikilink `[[Note\|Alias]]` selects the backslash with the target (source view only).
+- Toggling a mark between two runs (`a** b **c` picked) inverts the formatting; a link pasted over a selection holding a link nests them.
+- Pasting several lines on a fence's info line or at the end of its closer writes them there.
+- Changing case with two ranges that overlap after widening makes overlapping changes.
+- Insert footnote at the start of a note holding only front matter writes the label into it.
+- Typing on a blank line under an HTML block can leave a `$$` block below drawn.
+- Folding with the caret at the very end of a section leaves it at the fold's end; typing right after pressing fold drops the fold.
+- A quote with two spaces after `>`, with quiet marks on, can take the caret between the hidden spaces.
+- ArrowDown on a wrapped last line of a note ending in a table or code adds a line.
+- A sequence diagram participant with a dash (`Front-end->API`) is split wrongly.
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

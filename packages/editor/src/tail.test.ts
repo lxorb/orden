@@ -1,4 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { ordenMarkdownExtensions } from './markdown/extensions'
@@ -29,9 +30,26 @@ describe('a note that ends in a block', () => {
     expect(tail(doc)).toEqual({ at: doc.length, insert: '\n' })
   })
 
-  test('a table gets one line', () => {
+  test('a table gets a blank line as well', () => {
     const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |'
-    expect(tail(doc)).toEqual({ at: doc.length, insert: '\n' })
+    expect(tail(doc)).toEqual({ at: doc.length, insert: '\n\n' })
+  })
+
+  test('words written under a table that ends the note are no row of it', () => {
+    const doc = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |'
+    const opened = tail(doc)
+    if (!opened) throw new Error('no line opened')
+    const written = state(doc).update({
+      changes: { from: opened.at, insert: `${opened.insert}next` },
+    }).state
+
+    const tables: string[] = []
+    syntaxTree(parsed(written)).iterate({
+      enter: (node) => {
+        if (node.name === 'Table') tables.push(written.sliceDoc(node.from, node.to))
+      },
+    })
+    expect(tables).toEqual(['| a | b |\n| --- | --- |\n| 1 | 2 |'])
   })
 
   test('a formula gets one line', () => {

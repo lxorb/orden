@@ -17,7 +17,15 @@ import { BaseWidget } from '../live-preview/render'
 import { OrdenWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
-import { type FileDrawing, jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
+import {
+  type FileDrawing,
+  jumpFor,
+  type NoteIndex,
+  noteIndex,
+  noteOpener,
+  resolveFile,
+  resolveLink,
+} from './notes'
 
 const MOST_EMBEDDED = 40_000
 
@@ -50,6 +58,7 @@ export class EmbedWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly path: string | null,
+    private readonly index?: NoteIndex,
   ) {
     super()
   }
@@ -57,6 +66,7 @@ export class EmbedWidget extends OrdenWidget {
   override eq(other: EmbedWidget) {
     return (
       other.path === this.path &&
+      other.index === this.index &&
       other.link.target === this.link.target &&
       other.link.heading === this.link.heading &&
       other.link.block === this.link.block &&
@@ -154,7 +164,7 @@ export function embedWidget(
   }
 
   const path = link.target ? (resolveLink(index, link, link.kind)?.path ?? null) : index.path
-  return new EmbedWidget(link, path)
+  return new EmbedWidget(link, path, index)
 }
 
 export class EmbedImageWidget extends OrdenWidget {

@@ -62,7 +62,9 @@ function rowsOf(state: EditorState, block: SyntaxNode): Lines | null {
     const [top, bottom] = [rows[0], rows.at(-1)]
     return top && bottom ? { first: lineOf(top.from), last: lineOf(bottom.from) } : null
   }
-  return { first: lineOf(block.from), last: lineOf(block.to) }
+  const last = lineOf(Math.max(block.from, block.to - 1))
+  if (block.name === 'CodeBlock') return { first: lineOf(block.from), last }
+  return { first: lineOf(block.from) + 1, last: last - 1 }
 }
 
 function verbatimRows(state: EditorState, line: Line): Lines | null {

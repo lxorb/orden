@@ -86,14 +86,24 @@ describe('the line beside a table', () => {
     })
   })
 
-  test('is made when the table ends the document', () => {
+  test('is made a blank line away when the table ends the document', () => {
     const span = { from: 7, to: 7 + TABLE.length }
     expect(lineBeside(state(`|above\n\n${TABLE}`), span, 'below')).toEqual({
-      from: span.to + 1,
-      to: span.to + 1,
+      from: span.to + 2,
+      to: span.to + 2,
       made: true,
-      changes: { from: span.to, insert: '\n' },
+      changes: { from: span.to, insert: '\n\n' },
     })
+  })
+
+  test('made under a table that ends the document takes words that are no row of it', () => {
+    const before = state(`|above\n\n${TABLE}`)
+    const span = { from: 7, to: 7 + TABLE.length }
+    const line = lineBeside(before, span, 'below')
+    const opened = before.update({ changes: line.changes }).state
+    const after = parsed(opened.update({ changes: { from: line.from, insert: 'next' } }).state)
+
+    expect(tableAt(after, span.from + 1)).toEqual(span)
   })
 
   test('is made when the table starts the document', () => {
