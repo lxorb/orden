@@ -1,4 +1,5 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
+import type { EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
@@ -151,13 +152,31 @@ async function blockOptions(
 
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
-    void view.state
+    const asked = view.state
+    const typed = asked.sliceDoc(from, to)
+    void asked
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (id) insert({ ...target, fragment: `^${id}` })(view, completion, from, to)
+        const shift = shiftSince(asked, view.state, from, to, typed)
+        if (id && shift !== null)
+          insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
       })
       .catch(() => undefined)
   }
+}
+
+function shiftSince(
+  asked: EditorState,
+  now: EditorState,
+  from: number,
+  to: number,
+  typed: string,
+): number | null {
+  const shifts = [0, now.doc.length - asked.doc.length]
+  return (
+    shifts.find((shift) => from + shift >= 0 && now.sliceDoc(from + shift, to + shift) === typed) ??
+    null
+  )
 }
 
 function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
