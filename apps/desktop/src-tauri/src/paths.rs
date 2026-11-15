@@ -14,6 +14,8 @@ pub const MARKDOWN: [&str; 4] = ["md", "markdown", "mdown", "mkd"];
 
 pub const TRASH: &str = ".trash";
 
+const ORDEN_DIR: &str = ".orden";
+
 pub const MAX_DEPTH: usize = 32;
 
 static WRITES: AtomicU64 = AtomicU64::new(0);
@@ -536,6 +538,18 @@ fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
     judged_as(NAMING, root, path)
 }
 
+pub fn below_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    judged_below(&spaces_dir(app)?, path)
+}
+
+fn judged_below(root: &Path, path: &str) -> Result<PathBuf, String> {
+    let target = judged(root, path)?;
+    if inside(&target, root) || inside(&root.join(ORDEN_DIR), &target) {
+        return Err(format!("{path} is not a folder to take away"));
+    }
+    Ok(target)
+}
+
 fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
@@ -971,8 +985,9 @@ mod tests {
         a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
-        judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, path_key_as,
-        same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked, ORIGIN,
+        judged_below, judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of,
+        path_key_as, same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked,
+        ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1183,6 +1198,19 @@ mod tests {
         assert!(said(&["Documents", "Nibble", "a.md"]).is_err());
         assert!(said(&["Documents"]).is_err());
         assert!(judged(&root, "").is_err());
+    }
+
+    #[test]
+    fn neither_the_spaces_folder_nor_its_own_folder_is_taken_away_whole() {
+        let root = path(&["Documents", "Orden"]);
+        let said = |one: &[&str]| judged_below(&root, &path(one).to_string_lossy());
+
+        assert!(said(&["Documents", "Orden"]).is_err());
+        assert!(said(&["Documents", "Orden", "Work", ".."]).is_err());
+        assert!(said(&["Documents", "Orden", ".orden"]).is_err());
+        assert!(said(&["Documents", "Orden", ".orden", "kept"]).is_err());
+        assert!(said(&["Documents", "Orden", "Work"]).is_ok());
+        assert!(said(&["Documents", "Orden", "Work", "Old"]).is_ok());
     }
 
     #[test]
