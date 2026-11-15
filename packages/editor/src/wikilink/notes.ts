@@ -114,6 +114,7 @@ export interface NoteJump {
   heading: string | null
   block: string | null
   page: number | null
+  kind?: LinkKind
 }
 
 export type NoteOpener = (jump: NoteJump, press?: LinkPress) => void
@@ -280,11 +281,19 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
       heading: null,
       block: null,
       page: pageFragment(link.heading),
+      kind,
     }
   }
 
   if (!link.target) {
-    return { path: index.path, target: '', heading: link.heading, block: link.block, page: null }
+    return {
+      path: index.path,
+      target: '',
+      heading: link.heading,
+      block: link.block,
+      page: null,
+      kind,
+    }
   }
   const note = resolveLink(index, link, kind)?.path ?? null
   const file = note === null ? resolveFile(index, link.target, kind) : null
@@ -294,5 +303,6 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     heading: file === null ? link.heading : null,
     block: file === null ? link.block : null,
     page: null,
+    kind,
   }
 }

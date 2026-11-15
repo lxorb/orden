@@ -4696,6 +4696,20 @@ describe('a tab asked for with a modifier', () => {
     }
   })
 
+  test('a markdown link to no note makes it in the folder its path reads from', async () => {
+    const made = async (target: string) => {
+      sent.length = 0
+      const asked = { ...jump(target), path: null, kind: 'markdown' as const }
+      await workspace.followLink(asked, 'plain', '/space/B/x.md')
+      return sent.filter((one) => one.command === 'write_note').map((one) => one.path)
+    }
+
+    expect(await made('./New.md')).toEqual(['/space/B/New.md'])
+    expect(await made('../Up.md')).toEqual(['/space/Up.md'])
+    expect(await made('sub/Deep.md')).toEqual(['/space/B/sub/Deep.md'])
+    expect(await made('../../Out.md')).toEqual([])
+  })
+
   test('a paper followed the same way opens behind too, as its page note', async () => {
     notes['/space/paper.pages'] = BESIDE_PAPER
     await workspace.open('/space/a.md')

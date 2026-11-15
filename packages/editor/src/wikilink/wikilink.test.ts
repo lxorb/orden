@@ -439,6 +439,7 @@ describe('where a link goes', () => {
       heading: 'Later',
       block: null,
       page: null,
+      kind: 'wikilink',
     })
   })
 
@@ -458,6 +459,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: 3,
+      kind: 'wikilink',
     })
   })
 
@@ -468,6 +470,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: null,
+      kind: 'wikilink',
     })
   })
 
@@ -476,6 +479,7 @@ describe('where a link goes', () => {
     expect(jumpFor(here, wiki('../reading/paper.pdf', 'page=2'), 'markdown')).toMatchObject({
       path: 'reading/paper.pdf',
       page: 2,
+      kind: 'markdown',
     })
   })
 
@@ -486,6 +490,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['files/spec.docx'])
     expect(jumpFor(here, wiki('../files/spec.docx'), 'markdown').path).toBe('files/spec.docx')
@@ -522,6 +527,7 @@ describe('where a link goes', () => {
       heading: 'Later',
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     expect(jumpAt(where, doc.indexOf('Nowhere'))).toEqual({
       path: null,
@@ -529,6 +535,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     expect(jumpAt(where, doc.indexOf('plain'))).toBeNull()
   })

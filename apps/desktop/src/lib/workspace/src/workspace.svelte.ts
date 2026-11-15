@@ -24,6 +24,7 @@ import {
   isPdfTarget,
   isTabFile,
   isWebTarget,
+  type LinkKind,
 } from '@orden/markdown/links'
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
@@ -234,6 +235,16 @@ const essentials = () => import('./essentials.svelte')
 const paneStays = (strip: number, showing: Tab | null) =>
   strip > 0 || (showing?.essential ?? null) !== null
 const sets = () => import('./sets.svelte').then((one) => one.sets)
+
+function fromFolder(folder: string, target: string): string | null {
+  const parts = folder.split('/').filter(Boolean)
+  for (const part of target.split('/')) {
+    if (part === '' || part === '.') continue
+    if (part !== '..') parts.push(part)
+    else if (parts.pop() === undefined) return null
+  }
+  return parts.length ? parts.join('/') : null
+}
 
 function lineOfTarget(doc: string, jump: NoteJump): number | null {
   if (jump.block !== null) {
@@ -3781,14 +3792,18 @@ class Workspace {
     root: string,
     source: string | null,
   ): Promise<string | null> {
-    const known = await links.targetWhenRead(source, { kind: 'wikilink', target: jump.target })
-    return known === null ? this.makeLinked(jump.target, root, source) : insideSpace(root, known)
+    const kind = jump.kind ?? 'wikilink'
+    const known = await links.targetWhenRead(source, { kind, target: jump.target })
+    return known === null
+      ? this.makeLinked(jump.target, root, source, kind)
+      : insideSpace(root, known)
   }
 
   private async makeLinked(
     target: string,
     root: string,
     source: string | null,
+    kind: LinkKind = 'wikilink',
   ): Promise<string | null> {
     const slashed = target.replace(/[\\]/g, '/')
     if (slashed.trimStart().startsWith('//')) return null
@@ -3797,7 +3812,13 @@ class Workspace {
 
     const inside = source === null ? null : withinSpace(root, source)
     const here = inside === null || slashed.trimStart().startsWith('/') ? '' : folderOf(inside)
-    const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
+    const relative =
+      kind === 'markdown'
+        ? fromFolder(here, clean)
+        : clean.includes('/') || !here
+          ? clean
+          : `${here}/${clean}`
+    if (relative === null) return null
 
     const safe = insideOnly(isMarkdownPath(relative) ? relative : `${relative}.md`)
     if (safe === null) return null
