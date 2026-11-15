@@ -2111,9 +2111,9 @@ describe('a note made here that the account already has', () => {
     await made.disk.write(`${ROOT}/.Inbox.md`, here)
     await made.engine.created(`${ROOT}/.Inbox.md`, false, here)
     const mine = made.engine.entryAt(`${ROOT}/.Inbox.md`)
-    if (open && mine) await made.engine.hold(mine.id)
+    const doc = open && mine ? await made.engine.hold(mine.id) : null
     await made.engine.pass(SPACE)
-    return made
+    return { ...made, doc, mine }
   }
 
   test('is merged into the account’s note and stays on disk with both sides', async () => {
@@ -2124,19 +2124,26 @@ describe('a note made here that the account already has', () => {
     expect(kept).toContain('eggs')
   })
 
-  test('open in an editor, is the account’s note on disk afterwards, saved into it and not made again', async () => {
+  test('open in an editor, waits for the editor to let go, then merges what was typed', async () => {
     const here = await madeTwice('- [ ] eggs\n', true)
-    const placed = here.engine.entryAt(`${ROOT}/.Inbox.md`)
+    const { doc, mine } = here
+    expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toBe('- [ ] eggs\n')
 
-    await here.engine.saved(`${ROOT}/.Inbox.md`, '- [ ] eggs\n- [ ] bread\n')
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(11, '- [ ] bread\n'), HERE)
+    await here.disk.write(`${ROOT}/.Inbox.md`, doc?.text() ?? '')
+    await here.engine.saved(`${ROOT}/.Inbox.md`, doc?.text() ?? '')
+    if (mine) await here.engine.letGo(mine.id)
     await here.engine.pass(SPACE)
     await here.engine.pass(SPACE)
 
-    const inboxes = (await here.account.view()).entries.filter((one) =>
-      one.name.startsWith('.Inbox'),
-    )
+    const view = await here.account.view()
+    const inboxes = view.entries.filter((one) => one.name.startsWith('.Inbox'))
     expect(inboxes).toHaveLength(1)
-    expect(placed?.id).toBe(inboxes[0]?.id)
+    const text = view.texts[inboxes[0]?.id ?? ''] ?? ''
+    for (const task of ['milk', 'eggs', 'bread']) expect(text).toContain(task)
+    for (const task of ['milk', 'eggs', 'bread']) {
+      expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toContain(task)
+    }
   })
 
   test('stays on disk when the merge changes nothing on the account', async () => {
