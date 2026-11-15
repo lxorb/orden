@@ -34,15 +34,10 @@
     "notify",
     "sync-store",
     "modes",
-    "gates"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/sidebar-width.svelte.ts"
+    "gates",
+    "marks",
+    "glyphs",
+    "link-format",
+    "sidebar"
   ]
 }

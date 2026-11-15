@@ -135,3 +135,7 @@ export const outsideDrops = () => import('./outside-drops')
 
 export const reloadWhen = () => import('./reload-when')
 export { escapeLeaves, fullscreen } from './fullscreen.svelte'
+export { keyboardStays, staysOn, takesCaret } from './caret'
+export { keyElsewhere } from './layer-keys'
+export { default as Door } from './Door.svelte'
+export { guardDrops } from './drops'

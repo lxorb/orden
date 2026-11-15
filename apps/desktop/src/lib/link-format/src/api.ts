@@ -3,7 +3,7 @@ export {
   isLinkFormat,
   LINK_FORMATS,
   type LinkFormat,
-  type LinkTarget,
   linkWriting,
   setLinkWriting,
 } from './link-format'
+export { extracted, linkTo, merged, pickedLink, type Split, splitAt } from './composer'

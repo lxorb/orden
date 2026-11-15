@@ -3,14 +3,13 @@ import { taskAt } from '@orden/markdown/tasks'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { flowItem, scalar } from '@orden/markdown/yaml'
 import type { AgentAnswer } from '../../automation/src/api'
-import { OWN_KEYS } from '../../own-keys'
+import { ownKeys } from '../../web-backend/src/api'
 import { notePath, joinPath, isRecord } from '../../platform/src/api'
 import { isDraft } from '../../documents/src/api'
 import { writeIfAbsent } from '../../file-writes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import { DocError, type NoteRead } from '../../agent-docs/src/api'
-import { SCRATCHPAD_TAB } from '../../agent-docs/src/api'
+import { DocError, type NoteRead, SCRATCHPAD_TAB } from '../../agent-docs/src/api'
 import { SCRATCHPAD } from '../../scratchpad/src/api'
 import {
   asked,
@@ -192,6 +191,7 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Set ${key} of ${relative}`)
   if (question) return question
 
+  const { OWN_KEYS } = await ownKeys()
   const own = OWN_KEYS.find((one) => one === key.toLowerCase())
   if (own) {
     const said = call.args.value

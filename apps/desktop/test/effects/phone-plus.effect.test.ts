@@ -37,7 +37,7 @@ window.matchMedia = ((query: string) => ({
 })) as unknown as typeof window.matchMedia
 
 const { workspace } = await import('../../src/lib/workspace/src/api')
-const { writeNew } = await import('../../src/lib/write-new')
+const { writeNew } = await import('../../src/lib/workspace/src/write-new')
 const { isDraft } = await import('../../src/lib/documents/src/api')
 const Pane = (await import('../../src/lib/pane-tree/src/Pane.svelte')).default
 

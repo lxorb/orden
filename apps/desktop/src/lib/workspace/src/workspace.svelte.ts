@@ -69,7 +69,7 @@ import {
 import { startup } from '../../launch/src/api'
 import { besideAt, howFor, type LinkAsk, type TabAsk } from './new-tab'
 import { carriedRows, busy, readTint, viewport } from '../../ui-kit/src/api'
-import type { TreeRow } from '../../tree-keys'
+import type { TreeRow } from './tree-keys'
 import { scanFootnotes } from './footnotes'
 import type { Change } from '@orden/scan/search/replace'
 import { GIVE_UP } from '../../parting/src/api'
@@ -180,7 +180,7 @@ import {
 } from '../../tree/src/api'
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from './agent-marks.svelte'
 import { services } from './services'
 
 function isInstructions(root: string, path: string): boolean {

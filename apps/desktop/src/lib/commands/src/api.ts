@@ -8,3 +8,4 @@ export {
   tidies,
 } from './commands'
 export { putPicture, writeAtCaret } from './insert-picture'
+export { composerEntries } from './composer-commands'

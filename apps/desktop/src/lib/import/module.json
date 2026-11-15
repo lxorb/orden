@@ -21,12 +21,7 @@
     "protect",
     "sync-store",
     "modes",
-    "tree"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/attachments.ts",
-    "apps/desktop/src/lib/composer.ts"
+    "tree",
+    "glyphs"
   ]
 }

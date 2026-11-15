@@ -1,5 +1,5 @@
 import { accentFor, theme } from '../../../theme/src/api'
-import type { TabAct } from '../../../agent-marks.svelte'
+import type { TabAct } from '../../../workspace/src/api'
 import { portOf } from '@orden/contracts'
 import { workspace } from '../../../workspace/src/api'
 import type { AgentEvent, Approval, Grant, Picture } from '../../../agent-protocol/src/api'

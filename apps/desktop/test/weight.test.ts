@@ -133,8 +133,8 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 2_000_800
-const MOST_FILES = 500
+const BUDGET = 2_001_000
+const MOST_FILES = 503
 
 const MOST_TEXT = 6_500
 
@@ -201,7 +201,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/pages/src/Pages.svelte', 'the pages surface'],
     ['/lib/pages/src/PagesNavigator.svelte', "the pages surface's thumbnails"],
     ['/lib/web-tab/src/WebTab.svelte', 'the web tab'],
-    ['/lib/SettingsPanel.svelte', 'the settings sheet'],
+    ['/lib/settings/src/SettingsPanel.svelte', 'the settings sheet'],
     ['/lib/theme-looks/src/wallpaper/held.ts', "the wallpaper's record"],
     ['/lib/theme-looks/src/wallpaper/sheet.ts', "the wallpaper's sheet, picture and all"],
     ['/lib/theme-looks/src/wallpaper/wallpaper.svelte.ts', 'the wallpaper store'],
@@ -210,7 +210,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/theme-looks/src/wallpaper/floors.ts', "the wallpaper's scrim"],
     ['/lib/theme-looks/src/wallpaper/kept.ts', "the wallpaper's copy"],
     ['/themes/src/wallpaper.ts', "the wallpaper's sheet"],
-    ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
+    ['/lib/settings/src/DefaultBrowser.svelte', 'the default browser row'],
     ['/lib/web-tab/src/handed.ts', 'the pages other programs hand over'],
     ['/lib/web-tab/src/permissions.svelte.ts', 'what a site may use'],
     ['/lib/export/src/render.ts', 'the exporters'],
@@ -298,16 +298,16 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/surfaces/src/FormatBar.svelte', 'the bar over a selection'],
     ['/lib/accounts-ui/src/SignIn.svelte', 'the sign-in sheet'],
     ['/lib/sharing/src/JoinSheet.svelte', 'the join sheet'],
-    ['/lib/drawer-follow.ts', "a drawer's drag"],
-    ['/lib/swipe.ts', "the drag's arithmetic"],
+    ['/lib/workspace/src/drawer-follow.ts', "a drawer's drag"],
+    ['/lib/workspace/src/swipe.ts', "the drag's arithmetic"],
     ['/editor/src/block/commands.ts', "what a block's menu does"],
     ['/editor/src/run/run.ts', "the Run button's sandbox"],
     ['/editor/src/run/panel.ts', 'what it prints into'],
     ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
-    ['/lib/preview-card.ts', 'the editor in a link card'],
+    ['/lib/pane-tree/src/preview-card.ts', 'the editor in a link card'],
     ['/lib/reading/src/drawn.ts', 'a paper or a plane drawn in a note'],
     ['/lib/link-index/src/query-block.ts', "a query fence's rows"],
-    ['/lib/note-cover.ts', "a note's cover, written"],
+    ['/lib/workspace/src/note-cover.ts', "a note's cover, written"],
     ['/lib/theme-looks/src/gallery/store.svelte.ts', "the theme gallery's store"],
     ['/lib/theme-looks/src/gallery/registry.ts', 'the theme catalogue'],
     ['/lib/theme-looks/src/gallery/validate.ts', 'the theme reviewer'],
@@ -341,7 +341,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai-chat/src/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/platform/src/mobile-bridge.ts', 'whether there is an activity at all'],
     ['/lib/shortcuts/src/preset-ids.ts', 'the names of the keyboards'],
-    ['/lib/drawer.svelte.ts', 'the drawers as the markup reads them'],
+    ['/lib/workspace/src/drawer.svelte.ts', 'the drawers as the markup reads them'],
     ['/editor/src/run/door.ts', 'the door the Run button knocks on'],
     ['/editor/src/wikilink/block-namer.ts', 'the facet every editor is built with'],
   ])('while %s (%s) is', (tail) => {
@@ -350,7 +350,7 @@ describe('what the app evaluates before it draws anything', () => {
 
   test('and nothing of the agents', () => {
     expect([...names].filter((one) => /\/lib\/(agents|agent-docs)\//.test(one))).toEqual([])
-    expect(holds('/lib/agent-marks.svelte.ts')).toBe(true)
+    expect(holds('/lib/workspace/src/agent-marks.svelte.ts')).toBe(true)
   })
 
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {

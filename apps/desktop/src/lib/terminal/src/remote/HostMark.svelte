@@ -1,6 +1,6 @@
 <script lang="ts">
   import Server from 'lucide/dist/esm/icons/server.mjs'
-  import Icon from '../../../Icon.svelte'
+  import { Icon } from '../../../glyphs/src/api'
   import type { Colour } from './hosts'
 
   const { colour = null }: { colour?: Colour | null } = $props()

@@ -4,7 +4,7 @@
 
 <script lang="ts">
   import { agoShort } from '../../ui-controls/src/api'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { brandIcon, readIcon } from '../../ui-kit/src/api'
   import { region } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'

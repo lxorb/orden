@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { VaultColor, VaultIcon } from '@orden/pass/types'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { readIcon } from '../../ui-kit/src/api'
   import { theme } from '../../theme/src/api'
   import Glyph from './Glyph.svelte'

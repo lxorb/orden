@@ -2,8 +2,7 @@
   import { tick, untrack } from 'svelte'
   import { searching } from '@orden/contracts'
   import FindBar from './FindBar.svelte'
-  import { keyElsewhere } from '../../layer-keys'
-  import { menu, scrollbar } from '../../ui-kit/src/api'
+  import { keyElsewhere, menu, scrollbar } from '../../ui-kit/src/api'
   import { modes } from '../../modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
   import { inlineFiles } from './drawn'
@@ -23,8 +22,7 @@
     isTabFile,
     pageFragment,
   } from '@orden/markdown/links'
-  import { links } from '../../link-index/src/api'
-  import { pressQueryRow } from '../../link-index/src/api'
+  import { links, pressQueryRow } from '../../link-index/src/api'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
