@@ -2,7 +2,7 @@ import { workspaceNotes } from '@orden/contracts'
 import { escapeAll } from '@orden/markdown/html'
 import { shownName } from '../../platform/src/api'
 import type { Hit } from '@orden/scan/search/match'
-import { taskOf } from '@orden/scan/search/task'
+import { taskOf, taskWordsOf } from '@orden/scan/search/task'
 import { parseQuery } from '@orden/scan/search/query'
 import { services } from './services'
 
@@ -40,7 +40,7 @@ function marked(text: string, ranges: readonly { from: number; to: number }[]): 
   return out + escapeAll(text.slice(at))
 }
 
-function row(hit: Hit): string {
+function row(hit: Hit, hashOf: (words: string) => string): string {
   const where = `data-path="${escapeAll(hit.path)}" data-line="${hit.line}"`
   const task = taskOf(hit)
 
@@ -48,8 +48,10 @@ function row(hit: Hit): string {
     return `<button type="button" class="orden-row is-short" ${where}>${marked(hit.text, hit.ranges)}</button>`
   }
 
+  const words = taskWordsOf(hit)
+  const hash = words === null ? '' : ` data-hash="${escapeAll(hashOf(words))}"`
   const box =
-    `<input type="checkbox" class="orden-checkbox" data-task ${where}` +
+    `<input type="checkbox" class="orden-checkbox" data-task ${where}${hash}` +
     `${task.done ? ' checked' : ''} aria-label="${escapeAll(task.text)}">`
 
   return `<button type="button" class="orden-row is-short" ${where}>${box}${marked(task.text, task.ranges)}</button>`
@@ -82,9 +84,10 @@ export async function queryRowsHtml(
   if (!hits.length)
     return `<div class="orden-query"><p class="orden-query-none">${escapeAll(nothing)}</p></div>`
 
+  const { taskHash } = await import('@orden/bases')
   const groups = grouped(hits)
     .map((group) => {
-      const rows = group.hits.map(row).join('')
+      const rows = group.hits.map((one) => row(one, taskHash)).join('')
 
       return `<p class="orden-section">${escapeAll(shownName(group.name))}<span>${group.hits.length}</span></p>${rows}`
     })
