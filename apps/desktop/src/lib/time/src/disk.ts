@@ -1,4 +1,4 @@
-import { heldDatabase } from '../../held-database'
+import { heldDatabase } from '../../held-database/src/api'
 import type { Row } from './ledger'
 import { type Minute, minuteValue } from './minutes'
 

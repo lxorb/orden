@@ -28,7 +28,6 @@ vi.mock('../../platform/src/api', () => ({
   joinPath: (root: string, name: string) => `${root}/${name}`,
 }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
-vi.mock('../../commands/src/api', () => ({ appCommands: () => [] }))
 vi.mock('../../tasks-model/src/api', () => ({ todos: { todos: [] } }))
 vi.mock('../../ui-kit/src/api', () => ({
   prompt: {
@@ -40,7 +39,8 @@ vi.mock('../../ui-kit/src/api', () => ({
 }))
 vi.mock('../../modes.svelte', () => ({ modes: { attachments: 'space' } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
-vi.mock('../../insert-picture', () => ({
+vi.mock('../../commands/src/api', () => ({
+  appCommands: () => [],
   putPicture: () => undefined,
   writeAtCaret: () => undefined,
 }))

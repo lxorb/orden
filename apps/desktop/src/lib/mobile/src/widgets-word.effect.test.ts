@@ -29,7 +29,10 @@ vi.mock('../../workspace/src/api', () => ({
     protection: { seen: '' },
   },
 }))
-vi.mock('../../task-actions', () => ({ listed: () => ({ total: 0, tasks: [] }) }))
+vi.mock('../../tasks-model/src/api', async (original) => ({
+  ...(await original<typeof import('../../tasks-model/src/api')>()),
+  listed: () => ({ total: 0, tasks: [] }),
+}))
 
 const { watchWidgets } = await import('./widgets.svelte')
 

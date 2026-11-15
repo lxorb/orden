@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import type { Thread } from '../../../ai-providers/src/chat/types'
 import type { Host } from '../commands/host'
 
-vi.mock('../../../task-actions', () => ({
+vi.mock('../../../tasks-model/src/api', () => ({
   listed: () => ({
     total: 2,
     tasks: [

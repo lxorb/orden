@@ -60,6 +60,10 @@ registerCommand('app.random-note', async () => {
   const { runRow } = await import('./commands/src/api')
   return () => void runRow('random-note')
 })
+registerCommand('import.convert-syntax', async () => {
+  const { convertSyntax } = await import('./import/src/api')
+  return () => void convertSyntax()
+})
 registerCommand('app.print', async () => {
   const { runRow } = await import('./commands/src/api')
   return () => void runRow('print')

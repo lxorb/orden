@@ -18,7 +18,9 @@
     "windows",
     "link-index",
     "protect",
-    "workspace"
+    "workspace",
+    "chat-kit",
+    "tasks-model"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -29,7 +31,6 @@
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/feedback-pictures.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/markdown-view.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/note-images.ts",
@@ -37,7 +38,6 @@
     "apps/desktop/src/lib/pictures-away.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/todos-entry.ts",
     "apps/desktop/src/lib/views.svelte.ts",
     "apps/desktop/src/lib/when.ts"

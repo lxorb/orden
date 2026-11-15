@@ -12,11 +12,8 @@
     "ui-kit",
     "ui-controls",
     "scan",
-    "workspace"
+    "workspace",
+    "held-database"
   ],
-  "pending": [
-    "apps/desktop/src/lib/choose-files.ts",
-    "apps/desktop/src/lib/held-database.ts",
-    "apps/desktop/src/lib/settings.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/choose-files.ts", "apps/desktop/src/lib/settings.svelte.ts"]
 }

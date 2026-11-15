@@ -1,5 +1,5 @@
 import { links } from '../../../link-index/src/api'
-import { drawing, viewHtml } from '../../../markdown-view.svelte'
+import { drawing, viewHtml } from '../../../chat-kit/src/api'
 
 const MOST_KEPT = 2000
 

@@ -14,9 +14,7 @@
   ],
   "pending": [
     "apps/desktop/src/lib/attachments.ts",
-    "apps/desktop/src/lib/insert-picture.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
-    "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
 }

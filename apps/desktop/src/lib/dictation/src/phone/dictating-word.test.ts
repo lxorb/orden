@@ -18,7 +18,7 @@ vi.mock('../../../ui-kit/src/api', async (original) => ({
     },
   },
 }))
-vi.mock('../../../insert-picture', () => ({ writeAtCaret: () => undefined }))
+vi.mock('../../../commands/src/api', () => ({ writeAtCaret: () => undefined }))
 vi.mock('../../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../../workspace/src/api', () => ({ workspace: { panes: { focusedId: 'a' } } }))
 

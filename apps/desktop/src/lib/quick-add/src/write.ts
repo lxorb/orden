@@ -1,5 +1,4 @@
-import { priorityOf } from '../../task-actions'
-import { todos, type Todo } from '../../tasks-model/src/api'
+import { priorityOf, todos, type Todo } from '../../tasks-model/src/api'
 import type { Entry } from './entry'
 
 let adding: Promise<unknown> = Promise.resolve()

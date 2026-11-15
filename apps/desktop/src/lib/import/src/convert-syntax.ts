@@ -1,10 +1,9 @@
 import { oneEdit } from '@orden/markdown/edits'
-
-import { converted } from './import/src/api'
-import { protection } from './protect/src/api'
+import { converted } from './convert'
+import { protection } from '../../protect/src/api'
 import { type Change, changeOf } from '@orden/scan/search/replace'
-import { isMarkdownPath } from './platform/src/api'
-import { workspace } from './workspace/src/api'
+import { isMarkdownPath } from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
 
 export function syntaxChanges(
   notes: readonly { path: string; text: string }[],
@@ -30,7 +29,7 @@ export function syntaxChanges(
 }
 
 export async function convertSyntax() {
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const open = workspace.active
   const names = workspace.notes.map((one) => one.name)
 

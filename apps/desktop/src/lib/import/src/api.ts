@@ -15,6 +15,10 @@ export { zenProfiles } from './zen-profiles'
 
 export const macNotes = () => import('./apple')
 
+export async function convertSyntax(): Promise<void> {
+  await (await import('./convert-syntax')).convertSyntax()
+}
+
 export const bringing = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no import in the Even Realities plugin'))

@@ -1,6 +1,6 @@
 import type { RenderOptions } from '@orden/markdown'
 import { escape } from '@orden/markdown/html'
-import { viewHtml } from '../../markdown-view.svelte'
+import { viewHtml } from '../../chat-kit/src/api'
 import { notePicture } from '../../note-images'
 
 type LinkResolver = NonNullable<RenderOptions['resolveLink']>
