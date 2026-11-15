@@ -21,7 +21,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { protection } = await import('../../protect/src/api')
+const { buried, protection } = await import('../../protect/src/api')
 const { calledAlso, revived } = await import('./revived')
 
 beforeEach(() => localStorage.clear())
@@ -72,5 +72,28 @@ describe('a locked note deleted here that sync brings back', () => {
     await revived('/s/Private/Diary.md', () => 'note-id', ['/s'])
     expect(protection.locked('/s/Private/Diary.md')).toBe(true)
     protection.set('/s', '/s/Private/Diary.md', null)
+  })
+})
+
+describe('the deleted copy of a locked note that sync brought back', () => {
+  test('stays locked when it is put back from Recently deleted beside it', async () => {
+    protection.set('/s', '/s/Plan.md', 'password')
+    await calledAlso('trash-7', 'n7')
+    await protection.gone('/s/Plan.md', '/s', 'trash-7')
+    await revived('/s/Plan.md', () => 'n7', ['/s'])
+    expect(protection.locked('/s/Plan.md')).toBe(true)
+    expect((await buried()).waits('trash-7', '/s', 'Plan.md')).toBe(true)
+    await protection.cameBack('/s/Plan 2.md', '/s', 'trash-7')
+    expect(protection.locked('/s/Plan 2.md')).toBe(true)
+    expect(protection.agentsMay('/s/Plan 2.md')).toBe(false)
+  })
+
+  test('stays locked when its account delete is undone beside it', async () => {
+    protection.set('/s', '/s/Diary.md', 'password')
+    await protection.gone('/s/Diary.md', '/s', 'n1')
+    await revived('/s/Diary.md', () => 'n1', ['/s'])
+    expect((await buried()).waits(null, null, '')).toBe(true)
+    await protection.cameBack('/s/Diary 2.md', '/s', 'n1')
+    expect(protection.locked('/s/Diary 2.md')).toBe(true)
   })
 })

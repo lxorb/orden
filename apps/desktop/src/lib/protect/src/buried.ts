@@ -111,10 +111,12 @@ async function exactly(
   root: string,
   at: string,
   held: Record<string, Way>,
+  kept: boolean,
 ): Promise<Record<string, Way> | null> {
   const histories = readHistories()
   const away = histories[named]
-  const twins = (name: string) => name === named || (away !== undefined && histories[name] === away)
+  const twins = (name: string) =>
+    !kept && (name === named || (away !== undefined && histories[name] === away))
   keepJson(
     HISTORY_KEY,
     Object.fromEntries(Object.entries(histories).filter(([name]) => !twins(name))),
@@ -174,7 +176,7 @@ export async function unburied(
   const named = back !== null && buried.includes(back) ? back : only ? null : place
   const came = {
     ...(await under(root, was, at, held)),
-    ...(named === null ? {} : await exactly(named, root, at, held)),
+    ...(named === null ? {} : await exactly(named, root, at, held, only)),
   }
   return Object.keys(came).length ? came : null
 }

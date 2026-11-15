@@ -89,4 +89,6 @@ test('a locked note deleted here and brought back by an edit elsewhere is locked
   await Promise.all(pending)
   expect(gone).toEqual([note])
   expect(protection.locked(note)).toBe(true)
+  await protection.cameBack(`${root}/Plan 2.md`, root, 'trash-1')
+  expect(protection.locked(`${root}/Plan 2.md`)).toBe(true)
 })
