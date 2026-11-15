@@ -12,6 +12,7 @@ import {
   log,
   without,
   isNumber,
+  iCloud,
   isRecord,
   isString,
   folderOf,
@@ -23,7 +24,6 @@ import {
   joinPath,
   passing,
 } from '../../platform/src/api'
-import { evictedHere } from '../../icloud-placeholder'
 import { syncMark } from '../../surfaces.svelte'
 import { settleShortcuts } from '@orden/scan/settle'
 import { isUntouchedWelcome } from '../../welcome'
@@ -1129,7 +1129,7 @@ export async function push(
       continue
 
     if (isAside(path) && (await present(joinPath(root, path)))) continue
-    if (await evictedHere(joinPath(root, path))) continue
+    if (await (await iCloud()).evictedHere(joinPath(root, path))) continue
     const aside = await asideFound(root, path, tracked.id)
     if (aside !== null) {
       await shownAgain(mirror, aside, tracked.id, new Set())

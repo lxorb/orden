@@ -1,8 +1,7 @@
 import { OWN_FILE as INBOX_PATH, syncDeletes } from '@orden/sync-core'
-import { fileBytes, sha256, deviceName, onDisk } from '../../platform/src/api'
+import { fileBytes, sha256, deviceName, iCloud, onDisk } from '../../platform/src/api'
 import { keptMounts } from '../../web-backend/src/api'
 import { links } from '../../link-index/src/api'
-import { evictedHere } from '../../icloud-placeholder'
 import { holderOf } from '@orden/markdown/pages'
 import { scanSpace } from '../../space-watch'
 import { windowsPath } from './places'
@@ -89,7 +88,7 @@ function diskOf(telling: Telling): Disk {
     },
     mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
     exists: thereOrUnsure,
-    evicted: evictedHere,
+    evicted: async (path) => (await iCloud()).evictedHere(path),
   }
 }
 
