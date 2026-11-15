@@ -1765,6 +1765,54 @@ describe('to-dos and bases', () => {
     for (const one of made) await todos.remove((one as { result: { id: string } }).result.id)
   })
 
+  test('an agent granted Work and Home neither lists nor changes a Secret todo', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const hidden = await todos.add({ title: 'Secret plan', space: secret.id })
+    const loose = await todos.add({ title: 'Anywhere', space: null })
+    const id = hidden.ok ? hidden.value.id : ''
+    const listed = (await call('list_tasks', {})) as { result: { todos: { title: string }[] } }
+    const updated = await call('update_task', { id, title: 'Changed' })
+    const byReader = (await call('list_tasks', {}, READER)) as {
+      result: { todos: { title: string }[] }
+    }
+    const kept = todos.todo(id)?.title
+    await todos.remove(id)
+    if (loose.ok) await todos.remove(loose.value.id)
+    expect({
+      listed: listed.result.todos.map((one) => one.title),
+      updated,
+      kept,
+      byReader: byReader.result.todos.map((one) => one.title).sort(),
+    }).toEqual({
+      listed: ['Anywhere'],
+      updated: {
+        ok: false,
+        status: 'error',
+        code: 'no_such_file',
+        message: `there is no todo ${id}`,
+        error: `there is no todo ${id}`,
+      },
+      kept: 'Secret plan',
+      byReader: ['Anywhere', 'Secret plan'],
+    })
+  })
+
+  test('a todo is not added into an open space the agent was not granted', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    workspace.activeSpaceId = 'secret'
+    try {
+      expect(await call('add_task', { text: 'Sneak in' })).toMatchObject({
+        code: 'no_such_space',
+      })
+      expect(todos.todos.map((one) => one.title)).not.toContain('Sneak in')
+      const own = await call('add_task', { text: 'Mine' }, READER)
+      expect(own).toMatchObject({ result: { title: 'Mine', space: secret.id } })
+      await todos.remove((own as { result: { id: string } }).result.id)
+    } finally {
+      workspace.activeSpaceId = 'work'
+    }
+  })
+
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
     const { madeOrChanged } = await import('../src/lib/agent-host/src/notes')
     const place = { space: home, open: false } as Parameters<typeof madeOrChanged>[0]

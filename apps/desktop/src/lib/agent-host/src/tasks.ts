@@ -34,6 +34,7 @@ import {
   type Place,
   placeFor,
   placeOf,
+  reachesSpaceId,
   writableAt,
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
@@ -115,7 +116,7 @@ function todoOut(todo: Todo) {
 function spaceIdOf(call: Call): string | null {
   const named = maybe(call, 'space')
   if (named !== null) return placeFor(call, named).space.id
-  return workspace.activeSpace?.id ?? null
+  return workspace.activeSpace ? placeFor(call, null).space.id : null
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -162,27 +163,25 @@ function patchOf(call: Call): TodoPatch {
 
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const { todos, shownTodos, sortedTodos, dayOf } = await model()
-  const only = maybe(call, 'space') !== null
+  const named = maybe(call, 'space')
+  const space = named === null ? null : placeFor(call, named).space.id
   const label = maybe(call, 'label')
   const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
   const shown = sortedTodos(
-    shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
+    shownTodos(todos.todos, { onlySpace: named !== null, space, label, today: dayOf() }),
     'deadline',
-  ).filter((one) => flag(call, 'done') || !one.done)
+  ).filter((one) => reachesSpaceId(call, one.space) && (flag(call, 'done') || !one.done))
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const title = maybe(call, 'title') ?? need(call, 'text')
+  const patch = patchOf(call)
+  const space = 'space' in call.args ? (patch.space ?? null) : spaceIdOf(call)
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
-  const patch = patchOf(call)
-  const made = await todos.add({
-    ...patch,
-    title,
-    space: 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null),
-  })
+  const made = await todos.add({ ...patch, title, space })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
@@ -191,7 +190,8 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
+  if (!was || !reachesSpaceId(call, was.space))
+    throw new Refused('no_such_file', `there is no todo ${id}`)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
   const kept = await todos.update(id, patchOf(call))
