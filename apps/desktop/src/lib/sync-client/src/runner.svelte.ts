@@ -15,6 +15,7 @@ import {
 import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import { isRecord } from './shape'
+import { revived } from './revived'
 import {
   type SyncFileDoer,
   type SyncFileOp,
@@ -1017,9 +1018,13 @@ class Runner {
         this.own.delete(`removed:${path}`)
       }
     },
-    written: (path) => {
+    written: (path, fresh) => {
       this.treeStale()
       workspace().fileWritten(path)
+      if (fresh) {
+        const roots = workspace().spaces.map((one) => one.root)
+        void revived(path, this.tracked(path)?.id, roots).catch(() => undefined)
+      }
     },
     writing: async (path, text, write) => {
       if (windows.alone) {

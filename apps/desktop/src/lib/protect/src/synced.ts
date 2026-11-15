@@ -15,14 +15,30 @@ function remoteOf(value: unknown): Remote | null {
 
 const BASE_KEY = 'orden:protected-base'
 
-function bases(): Record<string, Record<string, Way>> {
-  const saved = stored(BASE_KEY)
-  if (!isRecord(saved)) return {}
-  return Object.fromEntries(Object.entries(saved).map(([root, ways]) => [root, protectedMap(ways)]))
+interface Base {
+  space: string
+  ways: Record<string, Way>
 }
 
-const keepBase = (root: string, ways: Record<string, Way>) =>
-  keepJson(BASE_KEY, { ...bases(), [root]: ways })
+function bases(): Record<string, Base> {
+  const saved = stored(BASE_KEY)
+  if (!isRecord(saved)) return {}
+  const out: Record<string, Base> = {}
+  for (const [root, one] of Object.entries(saved)) {
+    if (isRecord(one) && typeof one.space === 'string') {
+      out[root] = { space: one.space, ways: protectedMap(one.ways) }
+    }
+  }
+  return out
+}
+
+const baseOf = (root: string, space: string) => {
+  const known = bases()[root]
+  return known?.space === space ? known.ways : null
+}
+
+const keepBase = (root: string, space: string, ways: Record<string, Way>) =>
+  keepJson(BASE_KEY, { ...bases(), [root]: { space, ways } })
 
 const queued = new Map<string, Promise<void>>()
 const stirred = new Map<string, number>()
@@ -45,7 +61,7 @@ async function pushNow(root: string): Promise<void> {
   const spaceId = syncStore()?.remoteIdFor(root) ?? null
   if (!token || !spaceId) return
   const ways: Record<string, Way> = protection.ways(root)
-  const base = bases()[root]
+  const base = baseOf(root, spaceId)
   const answer = await request<unknown>(`/v1/protected/spaces/${encodeURIComponent(spaceId)}`, {
     method: 'PUT',
     token,
@@ -59,7 +75,7 @@ async function pushNow(root: string): Promise<void> {
   protection.said(root, answer !== null && now)
   if (!answer) return
   const held = protectedMap(answer.spaces[spaceId])
-  if (now || !base) keepBase(root, held)
+  if (now || !base) keepBase(root, spaceId, held)
   const accountId = account.user?.id
   if (now && accountId && !alike(held, ways)) protection.adopt(root, held, accountId)
 }
@@ -87,7 +103,8 @@ export async function pulled(
   for (const { root, spaceId } of pairs) {
     if ((stirred.get(root) ?? 0) !== before.get(root)) continue
     const theirs = protectedMap(remote.spaces[spaceId])
-    keepBase(root, theirs)
+    if (!baseOf(root, spaceId)) protection.said(root, false)
+    keepBase(root, spaceId, theirs)
     if (protection.adopt(root, theirs, accountId)) await pushWays(root)
   }
   if (protection.adoptPassword(hashedOf(remote.password), accountId)) {
