@@ -133,6 +133,7 @@ struct Trail {
     urls: Vec<String>,
     at: usize,
     engine: bool,
+    asked: bool,
 }
 
 impl Default for Trail {
@@ -141,6 +142,7 @@ impl Default for Trail {
             urls: Vec::new(),
             at: 0,
             engine: true,
+            asked: false,
         }
     }
 }
@@ -152,6 +154,7 @@ impl Trail {
             engine: urls.len() < 2,
             urls,
             at,
+            asked: false,
         }
     }
 
@@ -181,6 +184,19 @@ impl Trail {
         }
 
         self.urls.push(url.to_string());
+    }
+
+    fn asked_for(&mut self, url: &str) {
+        self.visited(url);
+        self.asked = true;
+    }
+
+    fn loaded(&mut self, url: &str) {
+        let asked = std::mem::take(&mut self.asked);
+        match self.urls.get_mut(self.at) {
+            Some(here) if asked && here != url => url.clone_into(here),
+            _ => self.visited(url),
+        }
     }
 
     fn back(&self) -> bool {
@@ -235,7 +251,7 @@ impl WebTabs {
 
     fn walked(&self, tab: &str, url: &str) {
         if let Ok(mut trails) = self.trails.lock() {
-            trails.entry(tab.to_string()).or_default().visited(url);
+            trails.entry(tab.to_string()).or_default().asked_for(url);
         }
     }
 
@@ -798,7 +814,7 @@ fn say(
         tabs.trails.lock().ok().map(|mut open| {
             let trail = open.entry(tab.to_string()).or_default();
             if !loading && !url.is_empty() {
-                trail.visited(url);
+                trail.loaded(url);
             }
             (trail.back(), trail.forward())
         })
@@ -1481,6 +1497,25 @@ mod tests {
         assert_eq!(trail.urls, ["https://a.example/", "https://c.example/"]);
         assert!(trail.back());
         assert!(!trail.forward());
+    }
+
+    #[test]
+    fn an_address_that_redirects_is_one_step_where_it_landed() {
+        let mut trail = Trail::default();
+        trail.asked_for("http://short.example/a");
+        trail.loaded("https://long.example/a");
+        assert_eq!(trail.urls, ["https://long.example/a"]);
+        assert!(!trail.back());
+
+        trail.loaded("https://long.example/b");
+        assert!(trail.back());
+        assert_eq!(trail.urls.len(), 2);
+
+        let mut plain = Trail::default();
+        plain.asked_for("https://a.example/");
+        plain.loaded("https://a.example/");
+        plain.loaded("https://c.example/");
+        assert_eq!(plain.urls, ["https://a.example/", "https://c.example/"]);
     }
 
     #[test]
