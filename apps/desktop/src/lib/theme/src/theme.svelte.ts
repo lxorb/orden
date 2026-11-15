@@ -9,7 +9,8 @@ import type { Look } from '@orden/sync-core'
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
-import { tintSystemBars, startup } from '../../platform/src/api'
+import { tintSystemBars } from '../../platform/src/api'
+import { startup } from '../../launch/src/api'
 import {
   log,
   without,

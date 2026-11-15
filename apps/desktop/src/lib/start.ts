@@ -5,20 +5,8 @@ import { busy, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai-chat/src/api'
 import { guardDrops } from './drops'
 import { joining } from './sharing/src/api'
-import {
-  collectErrors,
-  log,
-  currentWindow,
-  internal,
-  isDesktop,
-  isMobile,
-  platform,
-  waited,
-  onTheActivity,
-  startup,
-  factsOfLaunch,
-  mark,
-} from './platform/src/api'
+import { collectErrors, log, currentWindow, internal, isDesktop, isMobile, platform, waited, onTheActivity, factsOfLaunch, mark } from './platform/src/api'
+import { startup } from './launch/src/api'
 import { modes } from './modes/src/api'
 import {
   anythingRuns,

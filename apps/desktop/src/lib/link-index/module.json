@@ -12,6 +12,7 @@
     "platform",
     "scan",
     "sharing",
-    "ui-kit"
+    "ui-kit",
+    "launch"
   ]
 }

@@ -1,4 +1,4 @@
-import { mark, sendTrace } from './trace'
+import { mark, sendTrace } from '../../platform/src/api'
 
 const STAGES = ['index', 'search', 'icons', 'rooms', 'doors', 'left', 'right'] as const
 

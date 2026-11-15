@@ -1,6 +1,7 @@
 import { isPagesTarget, isPdfTarget } from '@orden/markdown/links'
 import { holderOf } from '@orden/markdown/pages'
-import { pathKey, invoke, breathe, startup, mark } from '../../platform/src/api'
+import { pathKey, invoke, breathe, mark } from '../../platform/src/api'
+import { startup } from '../../launch/src/api'
 import type { Entry } from '@orden/contracts'
 import { openDocument, textOf } from './document'
 import { paperOpened, paperRead, papersFor, papersListed, type Walked, writePapers } from './papers'

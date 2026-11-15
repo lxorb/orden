@@ -8,7 +8,8 @@ import { loadSettingsPanel } from './settings/src/api'
 import { loadGraph } from './graph-view/src/api'
 import { loadHistory } from './history/src/api'
 import { warmCalls } from './accounts/src/api'
-import { storedText, breathe, startup } from './platform/src/api'
+import { storedText, breathe } from './platform/src/api'
+import { startup } from './launch/src/api'
 import { loadArchive, loadArchivedStrip } from './archive/src/api'
 
 export function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {

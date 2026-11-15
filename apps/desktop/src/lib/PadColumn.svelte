@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { dur, startup } from './platform/src/api'
+  import { dur } from './platform/src/api'
+  import { startup } from './launch/src/api'
   import { scratchpadCard } from './surfaces.svelte'
   import { shown } from './scratchpad/src/api'
 
