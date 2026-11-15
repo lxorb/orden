@@ -187,11 +187,22 @@ async function listNotes(env: Env, space: Space): Promise<string> {
     `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
-    .bind(space.id, MOST_NOTES)
+    .bind(space.id, MOST_NOTES + 1)
     .all<{ path: string }>()
 
   if (!results.length) return 'No notes yet.'
-  return marked(spaceSource(space), results.map((row) => row.path).join('\n'))
+  const listed = marked(
+    spaceSource(space),
+    results
+      .slice(0, MOST_NOTES)
+      .map((row) => row.path)
+      .join('\n'),
+  )
+  return results.length > MOST_NOTES ? `${listed}\n${stoppedAt(MOST_NOTES)}` : listed
+}
+
+function stoppedAt(count: number): string {
+  return `I stopped after ${count} notes, so the others are not listed.`
 }
 
 async function readNote(
@@ -287,25 +298,42 @@ function wikilinkReaches(said: string, parts: readonly string[], names: Readonly
   return said.startsWith('/') ? said.slice(1) === parts.join('/') : names.has(said)
 }
 
-function markdownReaches(
-  from: string,
-  target: string,
-  wanted: string,
-  held: ReadonlySet<string>,
-): boolean {
-  const written = target.replace(/\\/g, '/')
-  const anchored = written.startsWith('/')
-  const parts = anchored ? [] : from.split('/').slice(0, -1)
+function climbed(start: string[], written: string): string[] {
+  const parts = [...start]
   for (const part of written.split('/')) {
     if (part === '' || part === '.') continue
     if (part === '..') parts.pop()
     else parts.push(part)
   }
-  const whole = comparable(parts.join('/'))
-  if (!whole) return false
-  if (whole === wanted) return true
-  if (anchored || held.has(whole)) return false
-  return wanted.endsWith(`/${whole}`)
+  return parts
+}
+
+function nearestNamed(held: readonly string[], name: string, from: string): string | null {
+  if (!name) return null
+  const here = from.split('/').slice(0, -1).join('/')
+  const folder = (path: string) => path.split('/').slice(0, -1).join('/')
+  const found = held.filter((path) => path === name || path.endsWith(`/${name}`))
+  found.sort(
+    (one, other) =>
+      Number(folder(one) !== here) - Number(folder(other) !== here) ||
+      one.split('/').length - other.split('/').length ||
+      (one < other ? -1 : 1),
+  )
+  return found[0] ?? null
+}
+
+function markdownTarget(from: string, target: string, held: readonly string[]): string | null {
+  const written = target.replace(/\\/g, '/')
+  const anchored = written.startsWith('/')
+  const folder = foldName(from).split('/').slice(0, -1)
+  const parts = comparable(climbed(anchored ? [] : folder, foldName(written)).join('/'))
+  if (!parts) return null
+  if (held.includes(parts)) return parts
+  if (anchored) return null
+  if (/^\.\.?\//.test(written)) return nearestNamed(held, parts, from)
+  const top = comparable(climbed([], foldName(written)).join('/'))
+  if (held.includes(top)) return top
+  return nearestNamed(held, parts, from) ?? nearestNamed(held, top, from)
 }
 
 async function listBacklinks(
@@ -325,11 +353,13 @@ async function listBacklinks(
     `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
         order by path limit ?`,
   )
-    .bind(space.id, MOST_NOTES)
+    .bind(space.id, MOST_NOTES + 1)
     .all<{ id: string; path: string }>()
+  const stopped = results.length > MOST_NOTES ? [stoppedAt(MOST_NOTES)] : []
+  results.splice(MOST_NOTES)
 
   const wanted = comparable(path)
-  const held = new Set(results.map((row) => comparable(row.path)))
+  const held = results.map((row) => comparable(row.path))
   const found: string[] = []
 
   for (const row of results) {
@@ -339,7 +369,7 @@ async function listBacklinks(
     for (const link of findLinks(body)) {
       const reaches =
         link.kind === 'markdown'
-          ? markdownReaches(row.path, link.target, wanted, held)
+          ? markdownTarget(row.path, link.target, held) === wanted
           : wikilinkReaches(link.target.replace(MARKDOWN, '').toLowerCase(), parts, names)
       if (!reaches) continue
       found.push(`${row.path}:${lineAt(body, link.from) + 1}`)
@@ -347,8 +377,8 @@ async function listBacklinks(
     }
   }
 
-  if (!found.length) return `Nothing links to ${path}.`
-  return marked(spaceSource(space), found.join('\n'))
+  if (!found.length) return [`Nothing links to ${path}.`, ...stopped].join(' ')
+  return [marked(spaceSource(space), found.join('\n')), ...stopped].join('\n')
 }
 
 async function writeNote(

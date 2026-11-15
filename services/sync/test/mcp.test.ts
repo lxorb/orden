@@ -517,6 +517,49 @@ describe('relative markdown links', () => {
   })
 })
 
+describe('markdown links the app reads from the top and by name', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('are found as the app finds them', async () => {
+    await addNote('projects/roadmap.md', '# Plan\n')
+    await addNote('daily/today.md', 'see [roadmap](projects/roadmap.md)\n')
+    await addNote('daily/later.md', 'see [roadmap](roadmap.md)\n')
+    await addNote('daily/gone.md', 'see [roadmap](../roadmap.md)\n')
+    await addNote('daily/deep/typo.md', 'see [roadmap](./roadmap.md)\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'projects/roadmap.md',
+    })
+    expect(text).toContain('daily/today.md:1')
+    expect(text).toContain('daily/later.md:1')
+    expect(text).not.toContain('typo.md')
+  })
+})
+
+describe('lists past the most read', () => {
+  function filler(count: number) {
+    const insert = env.db.prepare(
+      `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, kind)
+       values (?, ?, ?, ?, 1, 1, 0, 0, '', 'note')`,
+    )
+    for (let at = 0; at < count; at++) {
+      insert.run(`f${at}`, space, `filler/f${String(at).padStart(4, '0')}.md`, 5000 + at)
+    }
+  }
+
+  test('say when they stopped', async () => {
+    filler(1000)
+    const key = await connector()
+    expect(await tool(key, 'list_notes', { space: 'Work' })).toMatch(/stopped/i)
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'plan.md' })).toMatch(
+      /stopped/i,
+    )
+  })
+})
+
 describe('notifications', () => {
   test('any of them is answered with no body', async () => {
     const response = await call(env, '/mcp', {
