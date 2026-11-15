@@ -716,6 +716,7 @@ export function encodeTarget(path: string): string {
     .replace(/ /g, '%20')
     .replace(/\(/g, '%28')
     .replace(/\)/g, '%29')
+    .replace(/\s/gu, (blank) => encodeURIComponent(blank))
 }
 
 export class ExportFiles {
