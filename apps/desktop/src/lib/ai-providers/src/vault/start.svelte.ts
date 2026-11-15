@@ -8,6 +8,7 @@ import {
   log,
   parsed,
   storedText,
+  isDesktop,
   isNative,
   NoWord,
   wordSaid,
@@ -90,6 +91,13 @@ export const world: VaultWorld = {
     }
     keepMoves(moved)
     ai.adopt(contents.accounts)
+    if (isDesktop && Object.keys(moved).length) {
+      await import('../grants-moved')
+        .then(({ carryGrants }) => carryGrants(moved, ai.accounts))
+        .catch((error: unknown) =>
+          log('warn', `ai vault: could not carry the rights of a moved account: ${String(error)}`),
+        )
+    }
   },
   loadBase: (id) => (parsed(storedText(baseKey(id))) as Base | null) ?? null,
   keepBase: (id, base) => {

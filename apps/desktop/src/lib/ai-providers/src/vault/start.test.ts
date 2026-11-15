@@ -21,6 +21,17 @@ vi.mock('../keys', async (original) => ({
   },
 }))
 
+const carried = vi.hoisted(() => [] as Record<string, string>[])
+vi.mock('../grants-moved', () => ({
+  carryGrants: async (moved: Record<string, string>) => {
+    carried.push(moved)
+  },
+}))
+vi.mock('../../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../../platform/src/api')>()),
+  isDesktop: true,
+}))
+
 const { ai } = await import('../store.svelte')
 const { startVault, vault, world } = await import('./start.svelte')
 const { movedSince } = await import('../moves')
@@ -68,4 +79,18 @@ test('nothing is kept as moved when the keys of a merge could not be written', a
   keys.refuse = false
   expect(movedSince('openai', 0)).toBe('openai')
   expect(adopt).not.toHaveBeenCalled()
+})
+
+test('the agent rights of an account moved to a fresh id are carried to it', async () => {
+  const none = {
+    accounts: { accounts: [], active: {}, defaultVendor: '', uses: {} },
+    keys: {},
+    seen: {},
+  }
+  vi.spyOn(ai, 'adopt').mockImplementation(() => undefined)
+  carried.length = 0
+
+  await world.apply(none, none, { anthropic: 'anthropic-2' })
+
+  expect(carried).toEqual([{ anthropic: 'anthropic-2' }])
 })
