@@ -15,11 +15,7 @@ export const linkOpener = Facet.define<
 })
 
 export function hrefOf(target: string): string | null {
-  const written = target.trim()
-  const trimmed =
-    written.startsWith('<') && written.endsWith('>')
-      ? written.slice(1, -1)
-      : written.replace(AN_ESCAPE, '$1')
+  const trimmed = target.trim()
   if (/^(https?|mailto):/i.test(trimmed)) return trimmed
   if (/^(orden|nib):\/\/chat\//i.test(trimmed)) return trimmed
   if (/^(orden|nib):\/\/settings\/import\/?$/i.test(trimmed)) return trimmed
@@ -28,6 +24,13 @@ export function hrefOf(target: string): string | null {
 }
 
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+export function linkDestination(written: string): string {
+  const trimmed = written.trim()
+  return trimmed.startsWith('<') && trimmed.endsWith('>')
+    ? trimmed.slice(1, -1)
+    : trimmed.replace(AN_ESCAPE, '$1')
+}
 
 const PUNCTUATION = /^[!-/:-@[-`{-~]$/
 

@@ -18,7 +18,7 @@ import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
 import { HEADING_LEVEL } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
-import { bareTarget, hrefOf, linkTitle } from '../links'
+import { bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
 import { enclosingNamed } from '../nodes'
 import { tagTitle } from '../tag-press'
 import { calloutOf } from '@orden/markdown/callouts'
@@ -209,7 +209,7 @@ class Decorator {
     }
 
     const url = node.getChild('URL')
-    const target = url ? this.state.doc.sliceString(url.from, url.to) : ''
+    const target = url ? linkDestination(this.state.doc.sliceString(url.from, url.to)) : ''
     this.linkText(open.to, close.from, target)
   }
 

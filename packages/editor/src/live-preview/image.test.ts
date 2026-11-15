@@ -342,6 +342,17 @@ describe('a markdown picture with a size after a bar', () => {
     expect(imageAt(state('![\\|100x200](a.png)'), 0)).toMatchObject({ alt: '', width: 100 })
     expect(imageAt(state('![a|b](a.png)'), 0)).toMatchObject({ alt: 'a|b' })
   })
+
+  test('keeps its size, and stays markdown, when its words change', () => {
+    for (const [doc, written] of [
+      ['![a cat|300](a.png)', '![a dog|300](a.png)'],
+      ['![a cat|300x200](a.png "Cat")', '![a dog|300x200](a.png "Cat")'],
+      ['![a cat\\|300](a.png)', '![a dog\\|300](a.png)'],
+    ] as const) {
+      const image = imageAt(state(doc), 0)!
+      expect(imageMarkup({ ...image, alt: 'a dog' })).toBe(written)
+    }
+  })
 })
 
 describe('brackets in alt text', () => {

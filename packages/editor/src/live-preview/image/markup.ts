@@ -11,6 +11,7 @@ export interface ImageSpec {
   title: string
   zoom: number
   width?: number
+  size?: string
 }
 
 export interface ImageSpan extends ImageSpec {
@@ -79,9 +80,8 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   if (!url) return null
 
   const [open, close] = node.getChildren('LinkMark')
-  const { alt: written, size } = sizedAlt(
-    open && close ? state.doc.sliceString(open.to, close.from) : '',
-  )
+  const between = open && close ? state.doc.sliceString(open.to, close.from) : ''
+  const { alt: written, size } = sizedAlt(between)
   const alt = readAlt(written)
   const title = node.getChild('LinkTitle')
 
@@ -90,7 +90,7 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
     alt,
     title: title ? state.doc.sliceString(title.from + 1, title.to - 1) : '',
     zoom: 100,
-    ...(size ? { width: size.width } : {}),
+    ...(size ? { width: size.width, size: between.slice(written.length) } : {}),
   }
 }
 
@@ -142,8 +142,9 @@ export function imageEndingAt(state: EditorState, pos: number): ImageSpan | null
 
 export function imageMarkup(spec: ImageSpec, asTag = false): string {
   const zoomed = spec.zoom !== 100
-  if (!zoomed && !spec.width && !asTag) {
-    return `![${writtenAlt(spec.alt)}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
+  const sized = spec.width ? (spec.size ?? '') : ''
+  if (!zoomed && (!spec.width || sized) && !asTag) {
+    return `![${writtenAlt(spec.alt)}${sized}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
   }
 
   const attrs = [`src="${attributeValue(spec.src)}"`, `alt="${attributeValue(spec.alt)}"`]
