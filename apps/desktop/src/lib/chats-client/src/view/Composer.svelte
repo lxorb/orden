@@ -4,7 +4,7 @@
   import { createEditor, EditorView, modeEffects, setNoteIndex } from '@orden/editor'
   import { onMount, untrack } from 'svelte'
   import { chatReplies } from '../../../ai-chat/src/api'
-  import { chooseFiles } from '../../../choose-files'
+  import { chooseFiles } from '../../../ui-controls/src/api'
   import { pickedLink } from '../../../composer'
   import { localDate, localNumber } from '../../../platform/src/api'
   import { links } from '../../../link-index/src/api'

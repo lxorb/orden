@@ -684,7 +684,7 @@ const APP_ENTRIES: Shortcut[] = [
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-y',
-          run: () => void import('../../todos-entry').then(({ showTodos }) => showTodos()),
+          run: () => void runCommand('views.todos'),
         } satisfies Shortcut,
         {
           id: 'app.chats',

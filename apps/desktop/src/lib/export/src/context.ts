@@ -1,6 +1,6 @@
 import { protection } from '../../protect/src/api'
 import type { HtmlOptions } from './render'
-import { imagePath } from '../../images'
+import { imagePath } from '../../platform/src/api'
 import { links } from '../../link-index/src/api'
 import { modes } from '../../modes.svelte'
 import { settings } from '../../settings.svelte'

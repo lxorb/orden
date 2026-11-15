@@ -2,10 +2,9 @@ import { DIAGRAM_LANGUAGES, fenceLanguages, RENDERED_LANGUAGES } from '@orden/ed
 import { renderMarkdown, type RenderOptions } from '@orden/markdown'
 import { loadFor, loadMaths, mathsEngine, onEngines } from '@orden/markdown/engines'
 import { dollarMaths, settled } from '@orden/markdown/streamed'
-import { fenceFrom } from '../../before-render'
-import { drawDiagram } from '../../diagrams'
-import { loadParsers, type Parser } from '../../highlight'
-import { theme, type Scheme } from '../../theme/src/api'
+import { drawDiagram, fenceFrom } from '../../fences/src/api'
+import { loadParsers, type Parser } from '../../highlight/src/api'
+import { type Scheme, theme } from '../../theme/src/api'
 
 let version = $state(0)
 let bumping = false

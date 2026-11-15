@@ -14,7 +14,7 @@
   import { SpaceTyping } from './space-typing.svelte'
   import { sharedWithYou } from './sharing/src/api'
   import SpaceBadge from './SpaceBadge.svelte'
-  import { spendClick } from './spent-click'
+  import { spendClick } from './ui-controls/src/api'
   import { trap } from './ui-controls/src/api'
   import { type Space, workspace } from './workspace/src/api'
 

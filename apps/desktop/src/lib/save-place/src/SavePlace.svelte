@@ -5,7 +5,7 @@
   import { rank } from '../../ui-kit/src/api'
   import { LAYER, scale } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { selectAll } from '../../select-all'
+  import { selectAll } from '../../ui-kit/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import SpaceMark from '../../SpaceMark.svelte'
   import { trap } from '../../ui-controls/src/api'

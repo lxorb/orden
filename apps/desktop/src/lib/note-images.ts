@@ -1,4 +1,4 @@
-import { imageUrl } from './images'
+import { imageUrl } from './platform/src/api'
 import { links } from './link-index/src/api'
 import { assetUrl } from './platform/src/api'
 

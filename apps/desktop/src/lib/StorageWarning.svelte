@@ -3,7 +3,7 @@
   import { settings } from './settings.svelte'
   import { readableSize, usage } from './usage.svelte'
   import { dur, fly } from './platform/src/api'
-  import { told } from './said.svelte'
+  import { told } from './ui-kit/src/api'
 
   const words = $derived(`${readableSize(usage.used)} of ${readableSize(usage.limit)} used.`)
 </script>

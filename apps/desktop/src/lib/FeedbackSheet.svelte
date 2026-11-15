@@ -10,7 +10,7 @@
   import { followHref } from './open-link'
   import { overlays } from './ui-kit/src/api'
   import { trap } from './ui-controls/src/api'
-  import { chooseFiles } from './choose-files'
+  import { chooseFiles } from './ui-controls/src/api'
 
   let text = $state('')
   let pictures = $state<Picture[]>([])

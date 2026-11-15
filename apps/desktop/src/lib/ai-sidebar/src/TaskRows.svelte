@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { runCommand } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
   import type { Listed } from './chat-parts'
@@ -51,7 +52,7 @@
   }
 
   function open() {
-    void import('../../todos-entry').then(({ showTodos }) => showTodos())
+    void runCommand('views.todos')
   }
 
   const when = (one: Task) => [one.due, one.time].filter(Boolean).join(' ')

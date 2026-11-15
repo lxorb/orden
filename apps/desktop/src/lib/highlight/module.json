@@ -1,0 +1,5 @@
+{
+  "name": "highlight",
+  "layer": "foundation",
+  "dependsOn": ["editor", "themes"]
+}

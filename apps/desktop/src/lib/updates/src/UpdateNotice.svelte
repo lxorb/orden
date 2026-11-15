@@ -4,7 +4,7 @@
   import { Cross } from '../../ui-kit/src/api'
   import { type Channel, restartToUpdate } from './updater'
   import { dur, fly, log } from '../../platform/src/api'
-  import { told } from '../../said.svelte'
+  import { told } from '../../ui-kit/src/api'
 
   const {
     version,

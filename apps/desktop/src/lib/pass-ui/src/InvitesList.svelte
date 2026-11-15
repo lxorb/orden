@@ -2,7 +2,7 @@
   import type { VaultMeta } from '@orden/pass/types'
   import type { Invite } from '@orden/pass/wire'
   import { message } from '../../ui-kit/src/api'
-  import { said } from '../../said.svelte'
+  import { said } from '../../ui-kit/src/api'
   import { roleName } from '../../pass-sync/src/api'
   import { pass } from '../../pass-sync/src/api'
   import { passSync } from '../../pass-sync/src/api'

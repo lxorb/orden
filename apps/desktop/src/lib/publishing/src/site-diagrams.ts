@@ -7,9 +7,9 @@ import {
   isDiagram,
 } from '@orden/markdown/diagrams'
 import { api } from '../../accounts/src/api'
-import { drawDiagram } from '../../diagrams'
+import { drawDiagram } from '../../fences/src/api'
 import { keepJson, stored, invoke } from '../../platform/src/api'
-import { shapesOnly } from '../../svg-file'
+import { shapesOnly } from './svg-file'
 
 const MOST = 100
 

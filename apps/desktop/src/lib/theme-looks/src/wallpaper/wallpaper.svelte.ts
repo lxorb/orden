@@ -1,6 +1,6 @@
 import type { Scheme } from '@orden/contracts'
 import { accentColour, theme } from '../../../theme/src/api'
-import { chooseFiles, PICTURES } from '../../../choose-files'
+import { chooseFiles, PICTURES } from '../../../ui-controls/src/api'
 import { fileBytes, forget, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
 import { message } from '../../../ui-kit/src/api'
 import { settings } from '../../../settings.svelte'

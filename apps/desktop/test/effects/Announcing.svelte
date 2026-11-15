@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { said } from '../../src/lib/said.svelte'
+  import { said } from '../../src/lib/ui-kit/src/api'
 
   interface Props {
     status: 'idle' | 'syncing' | 'error'

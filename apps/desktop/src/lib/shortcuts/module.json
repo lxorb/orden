@@ -25,7 +25,6 @@
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/tab-cycle.svelte.ts",
-    "apps/desktop/src/lib/todos-entry.ts"
+    "apps/desktop/src/lib/tab-cycle.svelte.ts"
   ]
 }

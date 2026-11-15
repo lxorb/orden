@@ -130,3 +130,4 @@ export { answer, frameWord, method, NoWord, onTheActivity, wordSaid } from './mo
 export { startInsets, tintSystemBars } from './insets'
 export { identifier } from './identifier'
 export const iCloud = () => import('./icloud-placeholder')
+export { imagePath, imageUrl } from './images'

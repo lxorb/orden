@@ -1,7 +1,7 @@
 import { webPages } from '@orden/contracts'
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
 import { calm, dur, stillness } from '../../platform/src/api'
-import { said } from '../../said.svelte'
+import { said } from '../../ui-kit/src/api'
 import { lastPress, type Origin, type Press } from './api'
 import {
   cornerOf,

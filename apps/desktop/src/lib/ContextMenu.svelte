@@ -4,7 +4,7 @@
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './ui-kit/src/api'
   import { released, shortcutPassesBy } from './menu-release'
-  import { spendClick } from './spent-click'
+  import { spendClick } from './ui-controls/src/api'
   import { pullsAway } from './ui-controls/src/api'
   import { trap } from './ui-controls/src/api'
   import { viewport } from './ui-kit/src/api'

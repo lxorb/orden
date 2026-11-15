@@ -95,7 +95,7 @@
   import { dur, fade } from '../../platform/src/api'
   import { rooms } from '../../collab/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
-  import { pastesMarkup } from '../../trust'
+  import { pastesMarkup } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { modes } from '../../modes.svelte'
   import { viewport } from '../../ui-kit/src/api'

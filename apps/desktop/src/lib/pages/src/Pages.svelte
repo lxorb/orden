@@ -91,7 +91,7 @@
   import { inSight } from './sight'
   import { PagesStore } from './store.svelte'
   import { rooms } from '../../collab/src/api'
-  import { said } from '../../said.svelte'
+  import { said } from '../../ui-kit/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
 

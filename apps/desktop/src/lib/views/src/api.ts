@@ -16,6 +16,9 @@ export const baseMounting = () =>
 
 export const rowsCopied = () => import('./copied')
 
+const todosEntry = () =>
+  __EVEN_PLUGIN__ ? away<typeof import('./todos-entry')>() : import('./todos-entry')
+
 export const createDatabase: typeof import('./new-database').createDatabase = (...args) =>
   import('./new-database').then((one) => one.createDatabase(...args))
 
@@ -25,6 +28,7 @@ export const pickTemplate: typeof import('./templates').pickTemplate = () =>
 export const viewCommands = {
   'views.new-database': () => void createDatabase(),
   'views.pick-template': () => void pickTemplate(),
+  'views.todos': () => void todosEntry().then(({ showTodos }) => showTodos()),
 }
 
 export const orderMoved: typeof import('./order-paths').orderMoved = (...args) =>

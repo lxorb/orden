@@ -1,6 +1,7 @@
 import { CODE_PALETTES } from '@orden/editor'
 import { describe, expect, test } from 'vitest'
-import { highlightCode, loadParsers, paletteCss } from './highlight'
+import { highlightCode } from '@orden/markdown/highlight'
+import { loadParsers, paletteCss } from './highlight'
 
 describe('loading parsers', () => {
   test('finds a language by name or alias', async () => {

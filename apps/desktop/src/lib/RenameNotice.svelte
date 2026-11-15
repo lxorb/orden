@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { dur, fly, scale } from './platform/src/api'
   import { renamed } from './renamed.svelte'
-  import { told } from './said.svelte'
+  import { told } from './ui-kit/src/api'
 
   const STAYS = 6000
 

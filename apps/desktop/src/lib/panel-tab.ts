@@ -1,10 +1,11 @@
+import { runCommand } from '@orden/contracts'
 import type { Panel } from './session/src/api'
 import { chatReveal } from './ai-chat/src/api'
 
 export type PanelTab = Panel | 'scratchpad'
 
 const OPENS: Record<PanelTab, (() => Promise<void>) | null> = {
-  tasks: () => import('./todos-entry').then(({ showTodos }) => showTodos()),
+  tasks: () => runCommand('views.todos').then(() => undefined),
   ask: () => chatReveal().then(({ chatToTab }) => chatToTab()),
   scratchpad: () => import('./scratchpad/src/api').then(async (one) => (await one.pad()).asNote()),
   tree: null,

@@ -8,7 +8,7 @@
   import { offsetOf, type Rows, windowFor } from './windows/src/api'
   import { ListView, measuredRow } from './windows/src/api'
   import { prompt } from './ui-kit/src/api'
-  import { selectAll } from './select-all'
+  import { selectAll } from './ui-kit/src/api'
   import SpaceMark from './SpaceMark.svelte'
   import TickBox from './TickBox.svelte'
   import { fade, LAYER, scale } from './platform/src/api'
