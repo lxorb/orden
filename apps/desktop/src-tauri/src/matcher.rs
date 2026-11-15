@@ -534,6 +534,15 @@ impl Matcher {
     }
 }
 
+fn patterned_in(term: &Term) -> bool {
+    match term {
+        Term::Regex(_) => true,
+        Term::All(of) | Term::Any(of) => of.iter().any(patterned_in),
+        Term::Not(of) | Term::Scope { of, .. } => patterned_in(of),
+        _ => false,
+    }
+}
+
 fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<Span>> {
     match term {
         Term::All(of) => {
@@ -558,7 +567,8 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 
         Term::Not(of) => {
             let found = walk(of, note, facts, region);
-            (found.is_none() && facts.budget.get() > 0).then(Vec::new)
+            let undecided = facts.budget.get() == 0 && patterned_in(of);
+            (found.is_none() && !undecided).then(Vec::new)
         }
 
         Term::Text {
@@ -1247,6 +1257,11 @@ mod tests {
         assert!(!answers(&hopeless, &body));
         assert!(!answers(
             &format!(r#"{{"kind":"not","of":{hopeless}}}"#),
+            &body
+        ));
+        let absent = format!(r#"{{"kind":"not","of":{}}}"#, text("zzz"));
+        assert!(answers(
+            &format!(r#"{{"kind":"any","of":[{hopeless},{absent}]}}"#),
             &body
         ));
     }
