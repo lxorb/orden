@@ -170,6 +170,7 @@ UNNAMED = f"""
       if (node.getAttribute('aria-label')?.trim()) return false
       if (node.getAttribute('aria-labelledby')) return false
       if (node.getAttribute('title')?.trim()) return false
+      if ([...(node.labels ?? [])].some((one) => (one.textContent ?? '').trim())) return false
       // A field says what it is with its placeholder where it has no label, which
       // axe counts and so does this.
       if (node.getAttribute('placeholder')?.trim()) return false
