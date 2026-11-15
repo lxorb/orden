@@ -8,7 +8,7 @@ import {
 } from '../platform/src/api'
 import { isOnlineTab } from '../online-terms/src/api'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
-import { TAB_KINDS } from './tab-kinds'
+import { TAB_KINDS } from '../tab-kinds/src/api'
 
 export function isDraft(note: NoteDoc): boolean {
   return note.path === null && note.shared === null && holdsWords(note.kind)

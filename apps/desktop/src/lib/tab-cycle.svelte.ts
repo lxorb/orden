@@ -1,7 +1,7 @@
 import { keep, storedText } from './platform/src/api'
 import { workspace } from './workspace.svelte'
 import type { Tab } from './workspace/documents.svelte'
-import { Walk } from './workspace/recency'
+import { Walk } from './panes/src/api'
 
 const KEY = 'orden:tab-order'
 

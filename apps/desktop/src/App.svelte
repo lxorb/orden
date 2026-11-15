@@ -100,7 +100,7 @@
   import PadColumn from './lib/PadColumn.svelte'
   import { shown as pad } from './lib/scratchpad/src/api'
   import { isDraft } from './lib/workspace/drafts'
-  import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
+  import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
   import { shortcuts } from './lib/shortcuts/src/api'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'

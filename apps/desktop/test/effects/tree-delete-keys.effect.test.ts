@@ -17,7 +17,7 @@ const { Disk } = await import('../disk')
 disk.current = new Disk()
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pane } = await import('../../src/lib/workspace/pane-tree')
+const { pane } = await import('../../src/lib/panes/src/api')
 const Tree = (await import('../../src/lib/Tree.svelte')).default
 const { keyboardStays } = await import('../../src/lib/caret')
 

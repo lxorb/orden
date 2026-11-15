@@ -19,7 +19,7 @@
   import { startup } from './startup.svelte'
   import { viewport } from './ui-kit/src/api'
   import { WindowState } from './windows/src/api'
-  import { topRow } from './workspace/pane-tree'
+  import { topRow } from './panes/src/api'
   import { workspace } from './workspace.svelte'
 
   const {

@@ -1,5 +1,5 @@
 import { without } from '../../platform/src/api'
-import type { Landing } from '../../workspace/panes.svelte'
+import type { Landing } from '../../panes/src/api'
 import { clampedStart, nearestSlot, reorderSlack } from './layout'
 
 export const THRESHOLD = 10

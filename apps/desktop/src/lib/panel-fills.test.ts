@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Filling, fills } from './panel-tab'
-import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
+import { TAB_KINDS, type TabKind } from './tab-kinds/src/api'
 
 const tab = (kind: TabKind, more: Partial<Filling> = {}): Filling => ({
   kind,

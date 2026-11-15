@@ -1,7 +1,7 @@
 <script lang="ts">
   import Tabs from './Tabs.svelte'
   import TopStrips from './TopStrips.svelte'
-  import { type Frame, tracks } from './workspace/pane-tree'
+  import { type Frame, tracks } from './panes/src/api'
   import { workspace } from './workspace.svelte'
 
   const {

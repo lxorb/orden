@@ -103,11 +103,20 @@ import {
 } from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
 import { OpenDocuments, secondWebTabs } from './workspace/open'
-import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
-import { successor } from './workspace/recency'
-import { type Landing, Panes } from './workspace/panes.svelte'
-import { type Around, closedAround } from './workspace/closing-around'
-import { alongOf, madeFirst, type Side } from './workspace/zones'
+import {
+  type Along,
+  type Frame,
+  panesIn,
+  withoutPane,
+  successor,
+  type Landing,
+  Panes,
+  type Around,
+  closedAround,
+  alongOf,
+  madeFirst,
+  type Side,
+} from './panes/src/api'
 import { Positions } from './workspace/positions'
 import { FileOps, inFlight, keeping, type Kind } from './file-ops/src/api'
 import * as composing from './workspace/composing'
@@ -120,7 +129,7 @@ import { firstScreen } from './first-screen/src/api'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace/drafts'
-import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
+import { TAB_KINDS, type TabKind } from './tab-kinds/src/api'
 import { type Binning, type FileAction, FileActions, type Kept } from './file-undo/src/api'
 import { fetchAcross, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'

@@ -1,5 +1,4 @@
-import { identifier } from '../../identifier'
-import { within, isDesktop } from '../../platform/src/api'
+import { identifier, within, isDesktop } from '../../platform/src/api'
 import { cancelJob, type Entry, FOUND, type Found, searchBelow } from './commands'
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the searches by job, never drawn

@@ -58,7 +58,7 @@
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { spaceDropping } from './tab-strip/src/api'
-  import { inside } from './workspace/zones'
+  import { inside } from './panes/src/api'
   import Twist from './Twist.svelte'
   import { dur } from './platform/src/api'
   import { keptAway } from './away/src/api'

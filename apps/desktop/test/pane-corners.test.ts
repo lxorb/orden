@@ -49,7 +49,7 @@ describe('the note’s corners', () => {
 
   test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
     expect(read('lib/PaneTree.svelte')).toContain('tracks(split)')
-    const tree = read('lib/workspace/pane-tree.ts')
+    const tree = read('lib/panes/src/pane-tree.ts')
     const share =
       /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
     expect(share).toContain('var(--card-gap)')

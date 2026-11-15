@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import type { MenuItem } from '../../ui-kit/src/menu-item'
-import { TAB_KINDS } from '../../workspace/tab-kinds'
+import { TAB_KINDS } from '../../tab-kinds/src/api'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 import {
   EXPORT_EXTRAS,

@@ -18,8 +18,7 @@ import {
   listenOver,
   outsideRows,
 } from '../../drag-paths'
-import { localDate, platform } from '../../platform/src/api'
-import { identifier } from '../../identifier'
+import { identifier, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify'
 import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
 import { tabAsk } from '../../new-tab'

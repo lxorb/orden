@@ -1,7 +1,7 @@
 import { untrack } from 'svelte'
 import { gateNote } from './gate-note.svelte'
 import { appsOn, chatsOn, explorerOn, passOn, timeOn } from './settings.svelte'
-import type { TabKind } from './workspace/tab-kinds'
+import type { TabKind } from './tab-kinds/src/api'
 import { workspace } from './workspace.svelte'
 
 interface Gate {

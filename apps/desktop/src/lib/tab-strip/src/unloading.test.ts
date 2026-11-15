@@ -29,7 +29,7 @@ const { tabMenu } = await import('./menu')
 const { mayUnload, unload, unloadEntries, unloadsAround } = await import('./unloading.svelte')
 const { unloadTabs } = await import('./unload-choice.svelte')
 type Tab = import('../../workspace.svelte').Tab
-type TabKind = import('../../workspace/tab-kinds').TabKind
+type TabKind = import('../../tab-kinds/src/api').TabKind
 
 function add(kind: TabKind, name: string): Tab {
   const doc = new NoteDoc({ kind, path: null, name, text: '', dirty: false }, () => undefined)

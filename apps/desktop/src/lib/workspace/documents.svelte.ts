@@ -1,11 +1,10 @@
 import { type FoldLines, SharedDoc } from '@orden/editor'
 import type { Camera } from '../camera/src/api'
-import { identifier } from '../identifier'
-import { draftName, shownName, TITLE_CHARS, samePath } from '../platform/src/api'
+import { identifier, draftName, shownName, TITLE_CHARS, samePath } from '../platform/src/api'
 import { oneEdit } from '@orden/markdown/edits'
 import { applied, appliedToFile, type Edit, flatEdits } from '@orden/scan/search/replace'
 import { writeEdited } from './in-turn'
-import { type TabKind, TAB_KINDS } from './tab-kinds'
+import { type TabKind, TAB_KINDS } from '../tab-kinds/src/api'
 
 export const UNTITLED = 'Untitled'
 

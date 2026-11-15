@@ -1,5 +1,5 @@
 import { type Panel, type PanelSide, workspace } from './workspace.svelte'
-import { TAB_KINDS } from './workspace/tab-kinds'
+import { TAB_KINDS } from './tab-kinds/src/api'
 
 class Drawer {
   at = $state<number | null>(null)

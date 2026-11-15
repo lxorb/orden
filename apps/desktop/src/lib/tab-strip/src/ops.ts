@@ -4,7 +4,7 @@ import { canWriteAt } from '../../sharing/src/api'
 import { folderOf, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace.svelte'
 import type { Tab } from '../../workspace/documents.svelte'
-import { nextPane } from '../../workspace/pane-tree'
+import { nextPane } from '../../panes/src/api'
 
 export function duplicateTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)

@@ -27,7 +27,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/web-tab/src/AddressField.svelte': 'a press says where the keyboard goes once it is over',
   'lib/downloads/src/api.ts': 'a press says where a download was asked for, to fly from',
   'lib/select-all.ts': 'a press inside a name field leaves its second take of the words alone',
-  'lib/workspace/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
+  'lib/panes/src/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
 }
 
 const NOT_YET = new Set(['lib/web-tab/src/WebExtensionPopup.svelte'])

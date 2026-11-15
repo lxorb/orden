@@ -1,7 +1,7 @@
 import { tabOverview } from './surfaces.svelte'
 import { invoke, isDesktop } from './platform/src/api'
 import { IN_A_PAGE } from './ui-controls/src/api'
-import type { Toward } from './workspace/pane-tree'
+import type { Toward } from './panes/src/api'
 import { workspace } from './workspace.svelte'
 
 export function movePane(toward: Toward): void {

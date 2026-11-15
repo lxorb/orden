@@ -1,7 +1,6 @@
 import { account } from '../accounts/src/api'
-import { identifier } from '../identifier'
+import { identifier, samePath, invoke, windows } from '../platform/src/api'
 import { leftGone, leftMoved } from '../left-spaces'
-import { samePath, invoke, windows } from '../platform/src/api'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 

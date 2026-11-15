@@ -1,5 +1,4 @@
-import { identifier } from '../../identifier'
-import { isDesktop } from '../../platform/src/api'
+import { identifier, isDesktop } from '../../platform/src/api'
 import { cancelJob, PROGRESS } from './commands'
 
 interface Running {

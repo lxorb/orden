@@ -1,5 +1,5 @@
 import { successor } from './recency'
-import { identifier } from '../identifier'
+import { identifier } from '../../platform/src/api'
 import {
   type Along,
   canSplit,

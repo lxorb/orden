@@ -30,7 +30,7 @@ disk.current = new Disk()
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 await import('../../src/lib/workspace/sets.svelte')
-const { pane } = await import('../../src/lib/workspace/pane-tree')
+const { pane } = await import('../../src/lib/panes/src/api')
 const { moveToSpace } = await import('../../src/lib/workspace/moving-space')
 const { written } = await import('../../src/lib/parting/src/api')
 

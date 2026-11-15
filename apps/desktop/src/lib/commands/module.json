@@ -18,7 +18,8 @@
     "updates",
     "web-backend",
     "ui-controls",
-    "link-index"
+    "link-index",
+    "panes"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -43,7 +44,6 @@
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/todos-entry.ts",
     "apps/desktop/src/lib/workspace.svelte.ts",
-    "apps/desktop/src/lib/workspace/closing-around.ts",
     "apps/desktop/src/lib/workspace/drafts.ts"
   ]
 }

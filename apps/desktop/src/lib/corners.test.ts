@@ -30,7 +30,7 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
   const readers: Record<string, string[]> = {
     'Pane.svelte': ['--card-radius', '--card-shadow', '--card-edge'],
     'PaneTree.svelte': ['--chrome-seam'],
-    'workspace/pane-tree.ts': ['--card-gap'],
+    'panes/src/pane-tree.ts': ['--card-gap'],
     '../App.svelte': ['--card-inset', '--chrome-ground'],
     'Sidebar.svelte': ['--side-ground', '--chrome-seam'],
     'SidebarFoot.svelte': ['--chrome-seam'],

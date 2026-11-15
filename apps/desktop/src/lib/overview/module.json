@@ -13,7 +13,9 @@
     "ui-kit",
     "reading",
     "shortcuts",
-    "link-index"
+    "link-index",
+    "panes",
+    "tab-kinds"
   ],
   "pending": [
     "apps/desktop/src/lib/TabMark.svelte",
@@ -23,9 +25,7 @@
     "apps/desktop/src/lib/workspace/chat-carry.ts",
     "apps/desktop/src/lib/workspace/drafts.ts",
     "apps/desktop/src/lib/workspace/moving-space.ts",
-    "apps/desktop/src/lib/workspace/pane-tree.ts",
     "apps/desktop/src/lib/workspace/sets.svelte.ts",
-    "apps/desktop/src/lib/workspace/space-move.ts",
-    "apps/desktop/src/lib/workspace/tab-kinds.ts"
+    "apps/desktop/src/lib/workspace/space-move.ts"
   ]
 }

@@ -14,7 +14,6 @@
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/identifier.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/list-landing.svelte.ts",
     "apps/desktop/src/lib/menu.svelte.ts",

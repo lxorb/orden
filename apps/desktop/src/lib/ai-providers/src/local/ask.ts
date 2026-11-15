@@ -1,6 +1,5 @@
-import { identifier } from '../../../identifier'
+import { identifier, invoke, isDesktop } from '../../../platform/src/api'
 import { Channel } from '../../../crate/src/api'
-import { invoke, isDesktop } from '../../../platform/src/api'
 import type { Ask } from '../complete'
 import { KIND_NAMES, type LocalKind } from '../providers'
 import { claudeReader } from './claude'

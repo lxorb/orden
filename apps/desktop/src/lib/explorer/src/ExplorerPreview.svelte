@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { identifier } from '../../identifier'
+  import { identifier } from '../../platform/src/api'
   import { readableSize } from '../../usage.svelte'
   import { when } from '../../when'
   import {

@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { type Frame, pane, panesIn } from './pane-tree'
-import { successor } from './recency'
+import { type Frame, pane, panesIn, successor } from '../panes/src/api'
 import {
   focusIn,
   GLOBAL,
