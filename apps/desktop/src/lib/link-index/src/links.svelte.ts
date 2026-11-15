@@ -1206,15 +1206,24 @@ class Links {
         .filter((path) => moving(path) !== null)
         .map((path) => comparable(nameOf(path))),
     )
+    const arrivingNames = new Set(
+      [...notes.map((one) => one.path), ...files]
+        .map(moving)
+        .filter((path) => path !== null)
+        .map((path) => comparable(nameOf(path))),
+    )
+    const lastOf = (link: { target: string }) => comparable(link.target).split('/').at(-1) ?? ''
     const named = (link: { target: string }) => {
       if (!link.target) return false
       const parts = comparable(link.target).split('/')
-      return parts.includes(name) || movingNames.has(parts.at(-1) ?? '')
+      return (
+        parts.includes(name) || movingNames.has(lastOf(link)) || arrivingNames.has(lastOf(link))
+      )
     }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
     const reaching =
-      (source: string, there: string) =>
+      (source: string, there: string, kind: LinkKind = 'wikilink') =>
       (written: string): boolean => {
         const key = comparable(nameOf(there))
         let called = calledAfter.get(key)
@@ -1231,10 +1240,12 @@ class Links {
           calledAfter.set(key, called)
         }
         const index: NoteIndex = { ...called, path: source, read: nothing }
-        const found = isTabFile(written)
-          ? resolveFile(index, written, 'wikilink')
-          : (resolveNote(index, written)?.path ?? resolveFile(index, written, 'wikilink'))
-        return found === there
+        const note = isTabFile(written)
+          ? null
+          : kind === 'markdown'
+            ? resolveRelative(index, written)
+            : resolveNote(index, written)
+        return (note?.path ?? resolveFile(index, written, kind)) === there
       }
     let touched = 0
     let walked = 0
@@ -1263,7 +1274,12 @@ class Links {
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
         if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) return null
         const there = moving(found) ?? found
-        if (there === found && !shifted) return null
+        if (there === found && !shifted) {
+          if (!arrivingNames.has(lastOf(link))) return null
+          const reaches = reaching(source, there, link.kind)
+          if (reaches(link.target)) return null
+          return link.kind === 'wikilink' ? { path: there, reaches } : there
+        }
         if (link.kind === 'wikilink') {
           const reaches = reaching(source, there)
           return reaches(link.target) ? null : { path: there, reaches }

@@ -1656,6 +1656,35 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     expect(notes['X/Plan.md']).toBe('see [[/Other]]\n')
   })
 
+  test('a note renamed beside a link to its new namesake leaves that link reaching the old one', async () => {
+    await space({ 'Plan.md': '# Plan', 'a/Draft.md': '# Draft', 'a/n.md': 'see [[Plan]]\n' })
+    notes['a/Plan.md'] = notes['a/Draft.md'] ?? ''
+    delete notes['a/Draft.md']
+
+    await links.retarget(at('a/Draft.md'), at('a/Plan.md'), ROOT)
+    links.notesMoved(at('a/Draft.md'), at('a/Plan.md'))
+
+    expect(notes['a/n.md']).toBe('see [[/Plan]]\n')
+    expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['a/n.md'])
+    expect(links.backlinks(at('a/Plan.md'))).toEqual([])
+  })
+
+  test('a note moved beside a link to its namesake leaves that link reaching the old one', async () => {
+    await space({
+      'Plan.md': '# Plan',
+      'b/Plan.md': '# B',
+      'a/n.md': 'see [[Plan]] and [x](Plan.md)\n',
+    })
+    notes['a/Plan.md'] = notes['b/Plan.md'] ?? ''
+    delete notes['b/Plan.md']
+
+    await links.retarget(at('b/Plan.md'), at('a/Plan.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('b/Plan.md'), at('a/Plan.md'))
+
+    expect(notes['a/n.md']).toBe('see [[/Plan]] and [x](../Plan.md)\n')
+    expect(links.backlinks(at('a/Plan.md'))).toEqual([])
+  })
+
   test('a link that still reaches its note after the move is left as written', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]\n', 'Two.md': '[[Other]]\n' })
     notes['Y/Plan.md'] = notes['Plan.md'] ?? ''
