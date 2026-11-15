@@ -1469,6 +1469,16 @@
   display: inline;
 }
 
+.orden-block-slot::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0;
+  inline-size: calc(var(--space-5) + var(--line-inset, 0px) + 15px);
+  block-size: max(19px, 1lh);
+  transform: translateY(-50%);
+}
+
 .orden-block-handle {
   position: absolute;
   top: 50%;
@@ -1488,7 +1498,7 @@
   cursor: grab;
   opacity: 0;
   transition:
-    opacity var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out) 300ms,
     background var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
 }
@@ -1496,6 +1506,7 @@
 .cm-line:hover > .orden-block-slot .orden-block-handle,
 .orden-block-handle:focus-visible {
   opacity: 1;
+  transition-delay: 0s;
 }
 
 .orden-block-handle:hover {
@@ -1517,7 +1528,8 @@
 }
 
 @media (hover: none) {
-  .orden-block-handle {
+  .orden-block-handle,
+  .orden-block-slot::before {
     display: none;
   }
 }
