@@ -49,6 +49,12 @@ describe('a task item', () => {
     expect(taskAt('- [xx] buy milk')).toBeNull()
     expect(taskAt('-[ ] buy milk')).toBeNull()
     expect(taskAt('')).toBeNull()
+    expect(taskAt('- []] buy milk')).toBeNull()
+  })
+
+  test('holds an emoji in its box as one mark', () => {
+    expect(taskAt('- [🎉] party')?.mark).toBe('🎉')
+    expect(words('- [🎉] party')).toBe('party')
   })
 })
 

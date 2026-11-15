@@ -507,6 +507,10 @@ describe('ticking the task under the caret', () => {
     expect(apply(toggleTask, '- [x] wash up', 10).doc).toBe('- [ ] wash up')
   })
 
+  test('unticks a box holding an emoji whole', () => {
+    expect(apply(toggleTask, '- [🎉] wash up', 11).doc).toBe('- [ ] wash up')
+  })
+
   test('ticks every task in the selection', () => {
     const doc = '- [ ] one\n- [ ] two'
     expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [x] two')

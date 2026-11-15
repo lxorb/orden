@@ -257,7 +257,7 @@ export const toggleTask: StateCommand = (target) => {
     }
     if (task) {
       const at = line.from + task.box + 1
-      changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
+      changes.push({ from: at, to: at + task.mark.length, insert: task.done ? ' ' : 'x' })
       continue
     }
 
