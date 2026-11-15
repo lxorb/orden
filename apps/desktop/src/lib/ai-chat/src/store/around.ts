@@ -25,8 +25,8 @@ export const SHUT_TO_AGENTS =
   'This note is protected: unlock it and choose Let agents read in its menu.'
 
 export function agentsMayRead(shows: SharedDoc | null): boolean {
-  const path = shows ? workspace.tabs.find((tab) => tab.note.live === shows)?.path : undefined
-  if (path) return protection.agentsMay(path)
+  const tab = shows ? workspace.tabs.find((one) => one.note.live === shows) : undefined
+  if (tab) return protection.agentsMay(tab.path)
   const open = workspace.activeSpace?.root
   return open ? protection.agentsMayAll(open) : !protection.any
 }
