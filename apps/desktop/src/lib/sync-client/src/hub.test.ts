@@ -202,6 +202,54 @@ describe('a device’s hub socket', () => {
     asked.mockRestore()
   })
 
+  test('waits longer each time it is shut out again while the session still holds', async () => {
+    const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
+    account.token = 'token-1'
+    const hub = new Hub(world())
+    hub.follow('token-1')
+
+    const until = Date.now() + 60_000
+    while (Date.now() < until) {
+      const socket = sockets.at(-1)
+      if (socket && !socket.open) {
+        socket.open = true
+        socket.events.opened()
+        await vi.advanceTimersByTimeAsync(0)
+        socket.events.closed(1008)
+      }
+      await vi.advanceTimersByTimeAsync(100)
+    }
+
+    expect(sockets.length).toBeLessThanOrEqual(12)
+    expect(asked.mock.calls.length).toBeLessThanOrEqual(12)
+    hub.follow(null)
+    account.token = null
+    asked.mockRestore()
+  })
+
+  test('comes back at its first wait once a socket has kept its beat', async () => {
+    const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
+    account.token = 'token-1'
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    for (let turn = 0; turn < 4; turn++) {
+      const socket = await open()
+      socket.events.closed(1008)
+      while (sockets.length === turn + 1) await vi.advanceTimersByTimeAsync(100)
+    }
+
+    const kept = await open()
+    for (const tick of [...ticks]) tick()
+    kept.events.heard('ok')
+    kept.events.closed(1006)
+    await vi.advanceTimersByTimeAsync(600)
+
+    expect(sockets).toHaveLength(6)
+    hub.follow(null)
+    account.token = null
+    asked.mockRestore()
+  })
+
   test('goes with the session', async () => {
     const hub = new Hub(world())
     hub.follow('token-1')

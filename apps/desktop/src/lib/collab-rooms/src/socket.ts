@@ -104,6 +104,7 @@ export class RoomSocket {
         this.lost(socket)
         return
       }
+      this.tries = 0
       try {
         socket.send(BEAT)
       } catch {
@@ -134,7 +135,6 @@ export class RoomSocket {
     socket.onopen = () => {
       if (this.opening) clearTimeout(this.opening)
       this.opening = null
-      this.tries = 0
       this.beating(socket)
       this.wire.opened()
     }

@@ -196,7 +196,6 @@ export class Hub {
         {
           opened: () => {
             clearTimeout(this.opening)
-            this.tries = 0
             this.quiet = 0
             void this.hello()
             this.stopBeat?.()
@@ -240,6 +239,7 @@ export class Hub {
       this.again()
       return
     }
+    this.tries = 0
     this.write(BEAT)
   }
 
