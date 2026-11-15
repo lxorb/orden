@@ -49,10 +49,8 @@ const workspace = {
   bringIn: vi.fn(() => Promise.resolve()),
   loadTree: vi.fn(() => Promise.resolve()),
 }
-vi.mock('../../workspace/src/api', () => ({ workspace }))
-
 const fileClipboard = { paths: [] as string[], cut: false, hold: vi.fn() }
-vi.mock('../../list-landing.svelte', () => ({ fileClipboard }))
+vi.mock('../../workspace/src/api', () => ({ workspace, fileClipboard }))
 
 const asked: string[] = []
 let answer: string | null = 'keep'

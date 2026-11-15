@@ -111,7 +111,7 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         for (const step of [...action.steps].reverse()) if (!(await undoOne(ws, step))) return false
         break
       case 'keep': {
-        const { moving } = await import('../../list-landing.svelte')
+        const { moving } = await import('./list-landing.svelte')
         moving(() => ws.bookmarks.put(action.root, action.before))
         break
       }

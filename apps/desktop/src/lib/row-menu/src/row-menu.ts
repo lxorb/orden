@@ -1,5 +1,4 @@
-import type { Entry } from '@orden/contracts'
-import { webDataSheet } from './web-tab/src/api'
+import { type Entry, portOf, tabKindLoaded } from '@orden/contracts'
 import { foreignCopy } from '@orden/sync-core'
 import { isChatTarget } from '@orden/markdown/links'
 import {
@@ -9,18 +8,19 @@ import {
   folderNote,
   nestedIn,
   entryAt,
-} from './tree/src/api'
-import { basesOn, hiddenKinds, type KindName } from './gates/src/api'
-import { kindLabel } from './kind-words'
-import { DIVIDER, type MenuEntry, viewport } from './ui-kit/src/api'
+} from '../../tree/src/api'
+import { basesOn, hiddenKinds, type KindName } from '../../gates/src/api'
+import { kindLabel } from '../../kind-words'
+import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import {
   archiveEntry,
   coverEntries,
   iconEntries,
   searchAgainEntry,
   shareEntry,
-} from './menu-entries'
-import { howFor } from './new-tab'
+  webDataEntry,
+} from './api'
+import { howFor } from '../../new-tab'
 import {
   rowName,
   folderOf,
@@ -29,25 +29,11 @@ import {
   relativeTo,
   isDesktop,
   joinPath,
-} from './platform/src/api'
-import { canWriteAt, protectEntries } from './sharing/src/api'
-import { shortcuts } from './shortcuts/src/api'
-import { reveal, showLabel } from './files-out/src/api'
-import { workspace } from './workspace/src/api'
-import { archive, showArchive } from './archive/src/api'
-
-export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
-  if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
-  if (!canWriteAt(entry.path)) return []
-  const path = entry.path
-  return [
-    {
-      label: 'Web data',
-      keep: true,
-      run: () => void webDataSheet().then((one) => one.showWebData(path)),
-    },
-  ]
-}
+} from '../../platform/src/api'
+import { canWriteAt, protectEntries } from '../../sharing/src/api'
+import { shortcuts } from '../../shortcuts/src/api'
+import { reveal, showLabel } from '../../files-out/src/api'
+import { workspace } from '../../workspace/src/api'
 
 export function rowMenu(entry: Entry): MenuEntry[] {
   const several = selectionMenu(entry)
@@ -111,7 +97,7 @@ function wallpaperEntry(entry: Entry): MenuEntry[] {
     {
       label: 'Use as wallpaper',
       run: () =>
-        void import('./theme-looks/src/api').then(({ wallpaper }) =>
+        void import('../../theme-looks/src/api').then(({ wallpaper }) =>
           wallpaper.takeFrom(entry.path),
         ),
     },
@@ -162,36 +148,12 @@ async function openAll(paths: readonly string[]) {
   for (const path of rest) await workspace.openRow(path, howFor('behind'))
 }
 
-export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
-  const marks = paths.flatMap((path) => {
-    const entry = entryAt(workspace.tree, path)
-    const mark = entry && workspace.bookmarks.forEntry(folderNote(entry) ?? entry)
-    return mark ? [mark] : []
-  })
-  if (!marks.length) return []
-
-  const all = marks.every((mark) => workspace.bookmarks.has(mark))
-  return [
-    {
-      label: all ? 'Remove from Essentials' : 'Add to Essentials',
-      run: () => workspace.bookmarks.toggleAll(marks),
-    },
-  ]
-}
-
 function archiveAll(paths: readonly string[]): MenuEntry[] {
   const [first] = paths
-  const entry = first === undefined ? [] : archiveEntry(first)
-  if (!entry.length) return []
+  const archiving = portOf('archive')
+  if (first === undefined || !archiving.ok || !archiveEntry(first).length) return []
 
-  return __EVEN_PLUGIN__
-    ? []
-    : [
-        {
-          label: 'Archive',
-          run: () => void archive(paths),
-        },
-      ]
+  return [{ label: 'Archive', run: () => void archiving.value.archive(paths) }]
 }
 
 function moveEntry(entry: Entry): MenuEntry[] {
@@ -223,13 +185,13 @@ async function moveAllTo(paths: readonly string[]) {
       paths.every((path, at) => each[at]?.has(target.id) === true || folderOf(path) === target.id),
   )
 
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const into = await prompt.find({ title: 'Move to', options: targets })
   if (into) await workspace.moveMany([...paths], into)
 }
 
 async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const into = await prompt.find({ title: 'Move to', options: [...targets] })
 
   if (into) await workspace.moveMany([entry.path], into)
@@ -247,7 +209,7 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
     return
   }
 
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const sure = await prompt.confirm({
     title: `Delete ${rowName(marked.name, marked.is_dir)}?`,
     detail: 'The notes inside it go too.',
@@ -259,10 +221,9 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
 }
 
 async function chatsKept(paths: readonly string[]): Promise<boolean> {
-  if (__EVEN_PLUGIN__ || !paths.some((path) => isChatTarget(path))) return false
-  const { chatDeleting } = await import('./chats-client/src/api')
-  const { mayDelete } = await chatDeleting()
-  return !(await mayDelete(paths))
+  const chats = portOf('chats')
+  if (!chats.ok || !paths.some((path) => isChatTarget(path))) return false
+  return !(await chats.value.mayDelete(paths))
 }
 
 export async function removeAsking(paths: readonly string[]) {
@@ -279,16 +240,15 @@ export async function refuseDeleting(paths: readonly string[]) {
     }),
   ).length
 
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const show = await prompt.confirm({
     title: 'Nothing archived is deleted',
     detail: held === 1 ? '1 archived item inside' : `${held} archived items inside`,
     confirmLabel: 'Show them',
   })
 
-  if (show) {
-    await showArchive()
-  }
+  const archiving = portOf('archive')
+  if (show && archiving.ok) await archiving.value.show(null)
 }
 
 function revealEntry(entry: Entry): MenuEntry[] {
@@ -308,12 +268,7 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
   web: (folder) => workspace.createWebsite(folder),
   ...(__EVEN_PLUGIN__
     ? {}
-    : {
-        chat: (folder?: string) =>
-          import('./chats-client/src/api')
-            .then((one) => one.chatOpening())
-            .then(({ makeChat }) => makeChat(folder)),
-      }),
+    : { chat: (folder?: string) => tabKindLoaded('chat').then((kind) => kind.make?.(folder)) }),
 }
 
 export function newFileRows(inside?: string): MenuEntry[] {
@@ -332,7 +287,7 @@ export function newFileRows(inside?: string): MenuEntry[] {
       : [
           {
             label: 'New database',
-            run: () => void import('./views/src/api').then((one) => one.createDatabase()),
+            run: () => void tabKindLoaded('view').then((kind) => kind.make?.()),
           },
         ]),
   ]
