@@ -163,3 +163,14 @@ export function overlaps(a: Box, b: Box, named = 0): boolean {
 export function keptAt<T extends Box>(slot: T, box: Box): T {
   return { ...slot, x: box.x, y: box.y, w: box.w, h: (box.w * slot.h) / Math.max(slot.w, 1) }
 }
+
+export function stripPlace(
+  strip: readonly string[],
+  id: string,
+  before: string | null,
+): number | null {
+  const back = strip.filter((one) => one !== id)
+  const found = before === null ? -1 : back.indexOf(before)
+  const into = found < 0 ? back.length : found
+  return strip.indexOf(id) === into ? null : into
+}
