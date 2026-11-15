@@ -400,6 +400,17 @@ describe('the rows of every space', () => {
     expect(told.every((one) => one.removed.length > 0)).toBe(true)
   })
 
+  test('a note saved or read here gives its size in bytes, as the scan of the disk does', async () => {
+    const { store, answer, settled } = rig({ [`${WORK}/Notiz.md`]: 'Grüße\n' })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    answer(WORK)
+    await settled()
+
+    store.saved(`${WORK}/Notiz.md`, 'Grüße 😀\n')
+    const row = store.of().find((one) => one.path === 'Notiz.md')
+    expect(row?.file.size).toBe(new TextEncoder().encode('Grüße 😀\n').length)
+  })
+
   test('a space renamed keeps its rows under its new name, and one gone takes them', async () => {
     const { store, heard, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Go\n' }, WORK)
     store.spacesAre([{ root: WORK, name: 'Work' }])
