@@ -391,14 +391,34 @@ pub const SCRIPT: &str = r"(function () {
     if (event.isTrusted && typeof asking === 'function') asking(JSON.stringify(['', 'orden-pressed']))
   }, true)
 
+  var pressed = -1
+  var spent = -1
+  ;['keydown', 'mousedown', 'pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (type) {
+    addEventListener(type, function (event) {
+      if (!event.isTrusted) return
+      pressed = Date.now()
+    }, true)
+  })
+  function pressSpent() {
+    var activation = navigator.userActivation
+    var fresh = pressed >= 0 && Date.now() - pressed < 5000 && spent !== pressed
+    if (!fresh || (activation && !activation.isActive)) return false
+    spent = pressed
+    return true
+  }
+  function blocked(url) {
+    var asking = globalThis.ordenAsked
+    if (typeof asking === 'function') asking(JSON.stringify([url, 'orden-popup-blocked']))
+    else open(url, 'orden-popup-blocked')
+  }
+
   addEventListener('orden-open-tab', function (event) {
-    if (typeof event.detail === 'string') open(event.detail, 'orden-front')
+    if (typeof event.detail !== 'string') return
+    if (pressSpent()) open(event.detail, 'orden-front')
+    else blocked(event.detail)
   })
   addEventListener('orden-popup-blocked', function (event) {
-    if (typeof event.detail !== 'string') return
-    var asking = globalThis.ordenAsked
-    if (typeof asking === 'function') asking(JSON.stringify([event.detail, 'orden-popup-blocked']))
-    else open(event.detail, 'orden-popup-blocked')
+    if (typeof event.detail === 'string') blocked(event.detail)
   })
 
   last('keydown', function (event, stopped) {

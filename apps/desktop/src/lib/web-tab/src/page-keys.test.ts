@@ -143,3 +143,37 @@ describe('the other chords, which only a preventDefault keeps', () => {
     expect(await pressedWithCtrl('takes', code, shift)).toEqual([])
   })
 })
+
+describe('a tab a page asks to open in front', () => {
+  function opening() {
+    const dom = new JSDOM('<button id="press">', { runScripts: 'outside-only' })
+    const asked: string[] = []
+    const inside = dom.window as unknown as Window & typeof globalThis
+    inside.open = (_url?: string | URL, name?: string) => {
+      asked.push(name ?? '')
+      return null
+    }
+    inside.eval(script.replaceAll('!event.isTrusted', 'false'))
+    const asks = (url: string) =>
+      inside.dispatchEvent(new inside.CustomEvent('orden-open-tab', { detail: url }))
+    const press = () =>
+      inside.document
+        .getElementById('press')
+        ?.dispatchEvent(new inside.MouseEvent('mousedown', { bubbles: true }))
+    return { asked, asks, press }
+  }
+
+  test('is blocked when nobody pressed anything', () => {
+    const { asked, asks } = opening()
+    for (let one = 0; one < 3; one++) asks(`https://ads.example/${one}`)
+    expect(asked).toEqual(['orden-popup-blocked', 'orden-popup-blocked', 'orden-popup-blocked'])
+  })
+
+  test('opens once for a press, and the next ask in that press is blocked', () => {
+    const { asked, asks, press } = opening()
+    press()
+    asks('https://example.com/a')
+    asks('https://ads.example/b')
+    expect(asked).toEqual(['orden-front', 'orden-popup-blocked'])
+  })
+})
