@@ -80,8 +80,8 @@ function fileMethod(
       return {
         value:
           display === undefined || display === null
-            ? { kind: 'link', target: row.file.path }
-            : { kind: 'link', target: row.file.path, display: text(display) },
+            ? { kind: 'link', target: row.file.path, exact: true }
+            : { kind: 'link', target: row.file.path, display: text(display), exact: true },
       }
     }
     case 'hasLink':

@@ -66,13 +66,23 @@ export function isObject(value: Val): value is ValueRecord {
 export function fileOf(value: Val, scope: Scope): Row | null {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row
   if (isLink(value) || typeof value === 'string') {
-    const target = typeof value === 'string' ? value : value.target
     const from = scope.row ?? scope.context.this
     if (!from) return null
-    const path = scope.context.resolve?.(target, from)
+    const path =
+      typeof value === 'string'
+        ? reachedFrom(value, from, scope.context)
+        : linkPath(value, from, scope.context)
     return path ? (scope.context.row?.(path, from.space) ?? null) : null
   }
   return null
+}
+
+function reachedFrom(target: string, from: Row, context: Context): string | null {
+  return context.resolve?.(target, from) ?? null
+}
+
+function linkPath(link: LinkValue, from: Row, context: Context): string | null {
+  return link.exact ? link.target : reachedFrom(link.target, from, context)
 }
 
 export function plainTarget(target: string): string {
@@ -119,6 +129,7 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
   const pathA = pathOf(a)
   const pathB = pathOf(b)
   if (pathA !== null && pathB !== null) return pathA === pathB
+  if (pathA !== null && isLink(b) && b.exact) return b.target === pathA
   if (pathA !== null && (isLink(b) || typeof b === 'string')) {
     return pointsAt(typeof b === 'string' ? b : b.target, pathA, scope.row, scope.context)
   }
@@ -128,9 +139,10 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
     const textA = isLink(a) ? a.target : typeof a === 'string' ? a : null
     const textB = isLink(b) ? b.target : typeof b === 'string' ? b : null
     if (textA === null || textB === null) return false
-    if (isLink(a) && isLink(b) && scope.row && scope.context.resolve) {
-      const resolvedA = scope.context.resolve(textA, scope.row)
-      const resolvedB = scope.context.resolve(textB, scope.row)
+    if (isLink(a) && isLink(b) && a.exact && b.exact) return a.target === b.target
+    if (isLink(a) && isLink(b) && scope.row) {
+      const resolvedA = linkPath(a, scope.row, scope.context)
+      const resolvedB = linkPath(b, scope.row, scope.context)
       if (resolvedA !== null && resolvedB !== null) return resolvedA === resolvedB
     }
     return plainTarget(textA) === plainTarget(textB)
@@ -436,7 +448,7 @@ export function settled(value: Val): Value {
   }
   if (value instanceof RegExp) return `/${value.source}/${value.flags}`
   if (value instanceof FileRef || value instanceof ThisRef)
-    return { kind: 'link', target: value.row.path }
+    return { kind: 'link', target: value.row.path, exact: true }
   if (value instanceof NoteRef) return value.row.note
   if (value instanceof TaskRef) return value.row.task ? { text: value.row.task.text } : null
   if (value instanceof Rendered) return value.value

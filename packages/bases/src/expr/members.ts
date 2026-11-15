@@ -52,6 +52,7 @@ export function fileField(row: Row, name: string, scope: Scope): Val {
       return (scope.context.backlinks?.(row) ?? []).map((target): Value => ({
         kind: 'link',
         target,
+        exact: true,
       }))
     case 'file':
       return new FileRef(row)

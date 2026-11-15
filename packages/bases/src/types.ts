@@ -20,6 +20,7 @@ export interface LinkValue {
   kind: 'link'
   target: string
   display?: string
+  exact?: true
 }
 
 export type RenderedValue =
