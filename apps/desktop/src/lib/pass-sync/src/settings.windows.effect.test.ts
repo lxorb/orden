@@ -16,4 +16,12 @@ describe('password settings changed in another window', () => {
       clipboardClear: 15,
     })
   })
+
+  test('leave the lock to what this window holds of the device', () => {
+    const lock = pass.settings.lock
+    localStorage.setItem('orden:pass-settings', JSON.stringify({ lock: 'pin', relockAfter: 2 }))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'orden:pass-settings' }))
+    expect(pass.settings.relockAfter).toBe(2)
+    expect(pass.settings.lock).toBe(lock)
+  })
 })

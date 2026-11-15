@@ -564,6 +564,10 @@ export class PassStore {
     })
   }
 
+  heardSettings(): void {
+    this.settings = { ...readSettings(), lock: this.settings.lock }
+  }
+
   setSetting<K extends keyof PassSettings>(key: K, value: PassSettings[K]): void {
     this.settings = { ...this.settings, [key]: value }
     keepSettings(this.settings)
@@ -1042,6 +1046,6 @@ export const pass = new PassStore()
 
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
   window.addEventListener('storage', (event) => {
-    if (event.key === SETTINGS_KEY) pass.settings = readSettings()
+    if (event.key === SETTINGS_KEY) pass.heardSettings()
   })
 }
