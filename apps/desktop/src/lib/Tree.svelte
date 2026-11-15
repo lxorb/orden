@@ -297,8 +297,11 @@
       if (!workspace.selection.every((path) => canWriteAt(path))) return
       keyedOn = true
       const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
-      void workspace.removeMany(workspace.selection)
-      if (kept.length) void import('./row-menu').then((one) => one.refuseDeleting(kept))
+      const going = workspace.selection
+      void import('./row-menu').then((one) => {
+        void one.removeAsking(going)
+        if (kept.length) void one.refuseDeleting(kept)
+      })
       return
     }
 

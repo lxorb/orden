@@ -14,6 +14,9 @@ export const chatOpening = () =>
 export const chatSending = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./send')>() : import('./send')
 
+export const chatDeleting = () =>
+  __EVEN_PLUGIN__ ? away<typeof import('./deleting')>() : import('./deleting')
+
 export const chatContext = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./context')>() : import('./context')
 
