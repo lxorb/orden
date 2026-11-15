@@ -38,7 +38,8 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
 
-  const label = (shown || target.name || bareFragment(fragment)).replace(/[\\[\]|]/g, '\\$&')
+  const named = target.name.replace(/^\/+/, '')
+  const label = (shown || named || bareFragment(fragment)).replace(/[\\[\]|]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
   const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
 
@@ -54,7 +55,10 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
 
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
-  if (format === 'shortest') return target.name.includes('/') ? path : withExtension(nameOf(path))
+  if (format === 'shortest') {
+    if (target.name.startsWith('/')) return `/${path.replace(/^\/+/, '')}`
+    return target.name.includes('/') ? path : withExtension(nameOf(path))
+  }
   return target.from ? relativePath(folderOf(target.from), path) : path
 }
 

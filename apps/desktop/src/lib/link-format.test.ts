@@ -48,6 +48,15 @@ describe('the three markdown spellings', () => {
     expect(formatLink(PLAN, 'absolute')).toBe('[Plan](ideas/Plan.md)')
   })
 
+  test('write the path from the top, slash and all, when only that says which', () => {
+    expect(formatLink({ ...PLAN, name: '/ideas/Plan' }, 'shortest')).toBe(
+      '[ideas/Plan](/ideas/Plan.md)',
+    )
+    expect(formatLink({ name: '/Plan', path: 'Plan.md', from: 'b/n.md' }, 'shortest')).toBe(
+      '[Plan](/Plan.md)',
+    )
+  })
+
   test('write the folder in the shortest name when the name needs it to say which', () => {
     expect(formatLink({ ...PLAN, name: 'ideas/Plan' }, 'shortest')).toBe(
       '[ideas/Plan](ideas/Plan.md)',
