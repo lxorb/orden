@@ -58,6 +58,8 @@ class Unlocks {
   }
   relock = $state(readRelock())
   private timer: ReturnType<typeof setTimeout> | null = null
+  private proven = false
+  private grace: ReturnType<typeof setTimeout> | null = null
   private watching = false
 
   get any(): boolean {
@@ -75,10 +77,32 @@ class Unlocks {
   unlock(locks: readonly Lock[]): void {
     if (!locks.length) return
     this.open = new Set([...this.open, ...locks.map(keyOf)])
+    this.prove()
     this.watch()
   }
 
+  stillProven(locks: readonly Lock[]): boolean {
+    if (!this.proven || !locks.length) return false
+    this.open = new Set([...this.open, ...locks.map(keyOf)])
+    return true
+  }
+
+  private prove(): void {
+    this.unprove()
+    this.proven = this.relock !== 0
+    if (this.proven && this.relock !== NEVER) {
+      this.grace = setTimeout(() => this.unprove(), this.relock * 60_000)
+    }
+  }
+
+  private unprove(): void {
+    if (this.grace !== null) clearTimeout(this.grace)
+    this.grace = null
+    this.proven = false
+  }
+
   close(locks: readonly Lock[]): void {
+    this.unprove()
     const shut = new Set(locks.map(keyOf))
     if ([...shut].some((one) => this.open.has(one))) {
       this.open = new Set([...this.open].filter((one) => !shut.has(one)))
@@ -88,6 +112,7 @@ class Unlocks {
 
   lockAll(): void {
     this.settle()
+    this.unprove()
     if (!this.open.size) return
     this.open = new Set()
     this.shutting()

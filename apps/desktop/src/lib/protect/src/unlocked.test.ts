@@ -76,6 +76,45 @@ describe('locking again', () => {
   })
 })
 
+describe('a proof of who reads', () => {
+  test('opens every other lock without asking for the minutes chosen', () => {
+    unlocks.unlock([NOTE])
+    vi.advanceTimersByTime(5 * 60_000 - 1)
+    expect(unlocks.stillProven([FOLDER])).toBe(true)
+    expect(unlocks.shut([FOLDER])).toBe(false)
+  })
+
+  test('asks again once the minutes are over, while what it opened stays open', () => {
+    unlocks.unlock([NOTE])
+    vi.advanceTimersByTime(5 * 60_000)
+    expect(unlocks.stillProven([FOLDER])).toBe(false)
+    expect(unlocks.shut([FOLDER])).toBe(true)
+    expect(unlocks.shut([NOTE])).toBe(false)
+  })
+
+  test('opens nothing more where the reader chose to lock at once', () => {
+    unlocks.relock = 0
+    unlocks.unlock([NOTE])
+    expect(unlocks.stillProven([FOLDER])).toBe(false)
+  })
+
+  test('lasts until everything locks where the reader chose never', () => {
+    unlocks.relock = NEVER
+    unlocks.unlock([NOTE])
+    vi.advanceTimersByTime(24 * 60 * 60_000)
+    expect(unlocks.stillProven([FOLDER])).toBe(true)
+    unlocks.lockAll()
+    expect(unlocks.stillProven([FOLDER])).toBe(false)
+  })
+
+  test('ends when one lock is shut by hand', () => {
+    unlocks.unlock([NOTE])
+    unlocks.close([NOTE])
+    expect(unlocks.stillProven([FOLDER])).toBe(false)
+    expect(unlocks.stillProven([NOTE])).toBe(false)
+  })
+})
+
 describe('agents', () => {
   test('read nothing protected until it is open and the reader lets them', () => {
     expect(unlocks.agentsMay([NOTE])).toBe(false)

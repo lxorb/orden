@@ -56,6 +56,13 @@ describe('a lock the device opens', () => {
     expect(workspace.protection.locked(NOTE)).toBe(false)
   })
 
+  test('opens without asking while another unlock a moment ago still holds', async () => {
+    unlocks.unlock([{ root: ROOT, key: 'Other.md', way: 'device' }])
+    await show()
+    expect(owner.asked).toBe(0)
+    expect(workspace.protection.locked(NOTE)).toBe(false)
+  })
+
   test('stays shut when the system says no', async () => {
     owner.says = false
     await show()
