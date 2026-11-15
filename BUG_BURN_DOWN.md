@@ -1145,6 +1145,7 @@ test`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` on th
 | DB19 | Medium | Search by property missed block lists (`authors:` then `- Herbert`), flow lists (`tags: [a, b]`), quoted values and values with a comment | Fixed `d7116315` | `front_matter` kept the raw text after the colon of top-level lines only | Every key reads its members through `front_matter::list`, which now drops a trailing comment the way the web twin's `uncommented` does; a property matches when any member does. Reported by the CLI/MCP thread; the web twin (`packages/scan` matcher and `tagsIn`) is fixed on that thread's branch, and until it lands, unsaved-note search and replace-all disagree with saved-note search on these notes | `front_matter_answers_for_every_member_of_a_list_and_a_value_however_written` |
 | DB20 | Low | A comment after front matter tags (`- project # active`, `tags: [a] # old`) was read as a tag | Fixed `27bbade5` | `read_front` and `read_items` read the single-line rest and list items without `without_comment` | Both drop the comment first | `a_comment_after_the_tags_is_no_tag` |
 | DB21 | Medium | Renaming a chain of three or more notes outside Orden in one watch batch (`mv c d; mv b c; mv a b`) reported the first as removed, so sync deleted it on the account and other devices, and the note at its new name went unwatched | Fixed `456d0609` | `settle` ran the arrival pass a fixed two times, and each pass resolves one link of the chain | The arrival passes repeat until one finds nothing new, at most once per touched path | `a_chain_of_renames_in_one_batch_is_every_rename_and_nothing_removed` (failed before: "removed a.md") |
+| DB22 | Medium | Opening Recently deleted could erase a different note from the device trash: one the reader deleted at the same place after the account's copy went (a note made again and deleted before it synced, or one differing only in case on a case-sensitive disk) was taken for the account's copy and purged (F17, from the frontend audit) | Fixed `874cd97a` | A device `TrashEntry` did not say whether sync or the reader put it there, so `doublesOf` could only match on place and deletion time | `trash_item` takes `arrived`, the entry records it (`arrived` in the manifest, absent on older entries); the mirror and the sync client pass it when they apply a deletion from elsewhere, the web backend's twin stores it too, and `doublesOf` only takes entries sync made | `doubles.test.ts` reader's own entry at the same place (failed before), Rust tests for the recorded flag and an old manifest, web backend tests for both stores (failed before); vitest for trash, sync-client, sync-mirror, web-backend, svelte-check, eslint, full `cargo test`, clippy, fmt |
 
 ### Desktop backend status
 
@@ -1152,13 +1153,13 @@ test`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` on th
 | --- | --: | --: | --: |
 | Critical | 0 | 0 | 0 |
 | High | 2 | 2 | 0 |
-| Medium | 11 | 10 | 1, not reproduced |
+| Medium | 12 | 11 | 1, not reproduced |
 | Low | about 40 | 9 | the rest accepted, listed below |
 
 The open Medium is the Linux file drop below, which needs a real drag on a Linux build to
 confirm. The last pass (a review of the second-round fixes and a re-audit of the areas the
 first passes read in part) found no Critical or High; its Mediums are fixed above. Full
-`cargo test` on the CEF manifest at the last fix: 1919 passed, 6 ignored, the one root-only permission test
+`cargo test` on the CEF manifest at the last fix: 1921 passed, 6 ignored, the one root-only permission test
 passing as an ordinary user. Clippy and fmt clean. `pnpm test`: three failures outside this
 crate, all of the container (no `ssh-keygen`, the machine service's fork-bomb limit, and
 `tab-fill.effect` under load, which passes alone). This is what the audit checked, not a claim
