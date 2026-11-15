@@ -182,6 +182,7 @@ import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from '../../agent-marks.svelte'
 import { services } from './services'
+import { fileMark } from '../../file-mark'
 
 function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
@@ -3722,7 +3723,7 @@ class Workspace {
   }
 
   private opensInNoTab(path: string): boolean {
-    if (isMarkdownPath(path)) return false
+    if (isMarkdownPath(path) || fileMark(nameOf(path)) === 'note') return false
     const isUrlNote = (one: string) => links.urlOf(one) !== null
     return (
       openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() }) === 'note'

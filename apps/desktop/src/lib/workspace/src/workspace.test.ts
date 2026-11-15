@@ -3958,6 +3958,23 @@ describe('following a link to a note the space has not got', () => {
     expect(shown).toEqual(['/space/files/spec.docx', '/space/files/spec.docx'])
   })
 
+  test('opens a linked plain text file in a tab rather than showing it where it lies', async () => {
+    const shown: string[] = []
+    const stop = providePort('explorer.show', {
+      offered: () => true,
+      show: async (path: string) => {
+        shown.push(path)
+        return true
+      },
+    })
+    notes['/space/notes.txt'] = 'plain words'
+    await workspace.followLink({ ...asked('notes.txt'), path: 'notes.txt' })
+    stop()
+
+    expect(shown).toEqual([])
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/notes.txt'])
+  })
+
   test('and writes nothing at all for a link that climbs out of the space', async () => {
     for (const target of [
       '../../../.bashrc',
