@@ -75,7 +75,7 @@ import { deviceOfSyncStore, forgetSyncStore, get, openSyncStore, put, remove } f
 import { eachDue, reachable, sentAll } from './rounds'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../../usage.svelte'
-import { forgetAccount, leaveSpaces } from '../../left-spaces'
+import { forgetAccount, leaveSpaces } from '../../left-spaces/src/api'
 import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'

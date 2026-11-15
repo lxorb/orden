@@ -1425,7 +1425,7 @@ describe('a note the mirror has no entry for', () => {
   })
 
   test('is simply replaced when what is here is the untouched welcome note', async () => {
-    const { WELCOME, WELCOME_NAME } = await import('../../welcome')
+    const { WELCOME, WELCOME_NAME } = await import('@orden/contracts')
     const { mirror } = unrecorded(WELCOME_NAME, WELCOME, '# the account’s own read me\n')
 
     await pull(mirror, 'token', NOBODY)

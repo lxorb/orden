@@ -50,7 +50,7 @@ import {
   trees,
 } from './store'
 import { markSeedSpace, markSeeded, wasSeeded } from '../../../seeded/src/api'
-import { WELCOME, WELCOME_PATH, WELCOME_SPACE } from '../../../welcome'
+import { WELCOME, WELCOME_PATH, WELCOME_SPACE } from '@orden/contracts'
 
 interface Entry {
   name: string

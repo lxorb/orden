@@ -38,8 +38,8 @@ vi.mock('../../accounts/src/account.svelte', () => ({
   },
 }))
 
-vi.mock('../../left-spaces', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../left-spaces')>()),
+vi.mock('../../left-spaces/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../left-spaces/src/api')>()),
   leftByAnother: () => {
     const now = filtering
     filtering = null

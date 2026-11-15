@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { SpaceChange, SpaceNews } from '../../../space-watch'
+import type { SpaceChange, SpaceNews } from '../../../crate/src/api'
 import { InternalFolder } from './folder'
 import { MemoryBytes } from './memory'
 import { carried, Mirror, type WorkDisk, workFolderOf } from './work'

@@ -1,4 +1,11 @@
-import { type Entry, type PickedFile, providePort, tabKindLoaded, webPages } from '@orden/contracts'
+import {
+  type Entry,
+  type PickedFile,
+  providePort,
+  tabKindLoaded,
+  WELCOME_PATH,
+  webPages,
+} from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account, arriving } from '../../accounts/src/api'
 import { seed } from '../../web-backend/src/api'
@@ -85,7 +92,6 @@ import {
   lineOfHeading,
   scanHeadings,
 } from '../../documents/src/api'
-import { WELCOME_PATH } from '../../welcome'
 import {
   arrangementIn,
   arrivingWith,

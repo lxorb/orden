@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { WELCOME, WELCOME_NAME } from '../../welcome'
+import { WELCOME, WELCOME_NAME } from '@orden/contracts'
 
 const fake = vi.hoisted(() => {
   interface Entry {

@@ -17,7 +17,8 @@ import { mountRoot } from './roots'
 import { internalRows } from './rows'
 
 const watch = vi.hoisted(() => ({ roots: [] as string[][], scans: [] as string[] }))
-vi.mock('../../../space-watch', () => ({
+vi.mock('../../../crate/src/api', async (original) => ({
+  ...(await original<typeof import('../../../crate/src/api')>()),
   watchSpaces: (roots: string[]) => {
     watch.roots.push(roots)
     return Promise.resolve()

@@ -4,7 +4,7 @@ import { madeSpace } from './space-actions'
 import { beginSetup } from './onboarding/src/api'
 import { joinPath } from './platform/src/api'
 import { viewport } from './ui-kit/src/api'
-import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
+import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from '@orden/contracts'
 import { writeFile } from './file-writes/src/api'
 import { type Space, workspace } from './workspace/src/api'
 

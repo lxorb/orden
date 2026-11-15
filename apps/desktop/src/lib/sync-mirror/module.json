@@ -11,9 +11,5 @@
     "file-ops",
     "ui-kit"
   ],
-  "pending": [
-    "apps/desktop/src/lib/agents-seed.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/welcome.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/agents-seed.ts", "apps/desktop/src/lib/surfaces.svelte.ts"]
 }

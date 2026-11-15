@@ -1,4 +1,4 @@
-import { samePath, isRecord, isString, keepJson, recordOf, stored } from './platform/src/api'
+import { samePath, isRecord, isString, keepJson, recordOf, stored } from '../../platform/src/api'
 
 const KEY = 'orden:left-spaces'
 

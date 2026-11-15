@@ -140,6 +140,7 @@ export const APP_FOLDERS = [
   'import',
   'kept-for-good',
   'launch',
+  'left-spaces',
   'link-format',
   'link-index',
   'matching',
