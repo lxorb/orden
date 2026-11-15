@@ -378,6 +378,16 @@ describe('which note a name means', () => {
     )
   })
 
+  test('a file a markdown link names from the top of the space or by name alone', () => {
+    const here = index([], 'Notes/Day/x.md', {}, ['attachments/report.pdf', 'Notes/report.pdf'])
+    expect(resolveFile(here, 'attachments/report.pdf', 'markdown')).toBe('attachments/report.pdf')
+    expect(resolveFile(here, 'report.pdf', 'markdown')).toBe('Notes/report.pdf')
+    expect(resolveFile(here, '../report.pdf', 'markdown')).toBe('Notes/report.pdf')
+    expect(resolveFile(here, './report.pdf', 'markdown')).toBeNull()
+    expect(resolveFile(here, '/report.pdf', 'markdown')).toBeNull()
+    expect(resolveFile(here, '../attachments/report.pdf', 'markdown')).toBeNull()
+  })
+
   test('a link written as relative names only what is there, never a namesake elsewhere', () => {
     const here = index([note('Archive/Plan.md'), note('Projects/Plan.md')], 'Notes/Day/x.md')
     expect(resolveRelative(here, './Plan.md')).toBeNull()

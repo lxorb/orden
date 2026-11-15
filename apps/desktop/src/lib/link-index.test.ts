@@ -1622,6 +1622,39 @@ describe('a relative link to a note that is not there', () => {
   })
 })
 
+describe('a markdown link to a file written from the top of the space or by its name', () => {
+  test('names the file, follows it when it is renamed and shows it as a picture', async () => {
+    await space({ 'Notes/Day/x.md': '[r](attachments/report.pdf) and [s](report.pdf)' }, [
+      'attachments/report.pdf',
+      'attachments/cat.png',
+      'attachments/my cat.png',
+    ])
+    const from = at('Notes/Day/x.md')
+
+    expect(links.targetOf(from, { kind: 'markdown', target: 'attachments/report.pdf' })).toBe(
+      'attachments/report.pdf',
+    )
+    expect(links.targetOf(from, { kind: 'markdown', target: 'report.pdf' })).toBe(
+      'attachments/report.pdf',
+    )
+    expect(links.targetOf(from, { kind: 'markdown', target: '/report.pdf' })).toBeNull()
+    expect(links.targetOf(from, { kind: 'markdown', target: './report.pdf' })).toBeNull()
+    expect(
+      links.targetOf(from, { kind: 'markdown', target: '../attachments/report.pdf' }),
+    ).toBeNull()
+    expect(notePicture('attachments/cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+    expect(notePicture('cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+    expect(notePicture('attachments/my%20cat.png', from, '')).toBe(
+      '/asset/space/attachments/my%20cat.png',
+    )
+
+    await links.retarget(at('attachments/report.pdf'), at('attachments/summary.pdf'), ROOT)
+    expect(notes['Notes/Day/x.md']).toBe(
+      '[r](../../attachments/summary.pdf) and [s](../../attachments/summary.pdf)',
+    )
+  })
+})
+
 describe('a file named by a name that more than one folder holds', () => {
   test('is the one beside the note', async () => {
     await space({ 'Trips/Paris.md': '![](cover.jpg) [[guide.pdf]]' }, [

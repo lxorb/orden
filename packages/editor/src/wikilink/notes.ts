@@ -233,19 +233,21 @@ function relativeParts(index: NoteIndex, target: string): string[] {
 }
 
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const { wanted, anchored } = targetOf(
-    foldName(
-      kind === 'markdown'
-        ? relativeParts(index, target).join('/')
-        : target.trim().replace(/\\/g, '/'),
-    ),
+  const written = target.trim().replace(/\\/g, '/')
+  if (kind !== 'markdown') return fileAt(index, written)
+  return (
+    fileAt(index, `/${relativeParts(index, target).join('/')}`) ??
+    (/^\.{0,2}\//.test(written) ? null : (fileAt(index, `/${written}`) ?? fileAt(index, written)))
   )
+}
+
+function fileAt(index: NoteIndex, target: string) {
+  const { wanted, anchored } = targetOf(foldName(target))
   if (!wanted) return null
 
-  const whole = kind === 'markdown' || anchored
   const found = index.files.flatMap((path) => {
     const held = foldName(path)
-    return held === wanted || (!whole && held.endsWith(`/${wanted}`)) ? [{ path }] : []
+    return held === wanted || (!anchored && held.endsWith(`/${wanted}`)) ? [{ path }] : []
   })
 
   return nearest(found, index.path)?.path ?? null

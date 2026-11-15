@@ -13,6 +13,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import {
   blockIdOf,
   blockIds,
+  decodeTarget,
   foldName,
   type FoundLink,
   freeBlockId,
@@ -1470,7 +1471,7 @@ class Links {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null
-    const found = resolveFile(this.index(notePath), name, 'wikilink')
+    const found = resolveFile(this.index(notePath), decodeTarget(name), 'markdown')
     return found === null ? null : insideSpace(root, found)
   }
 
