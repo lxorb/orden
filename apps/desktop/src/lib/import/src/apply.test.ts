@@ -252,6 +252,23 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Home.md')).toBe('See [[Tasks 2]] and [[Buy milk]].')
   })
 
+  test('a link that names the folder follows the folder when it steps aside', () => {
+    const stamped = restamped(
+      planOf([
+        note('Home.md', 'See [[Tasks/Buy milk]], [[tasks/Sub/Deep|deep]] and [[Sub/Deep]].'),
+        note('Tasks.md', '# T'),
+        note('Tasks/Buy milk.md', '# B'),
+        note('Tasks/Sub/Deep.md', '# D'),
+      ]),
+      new Set(['tasks.md']),
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Home.md')).toBe(
+      'See [[Tasks 2/Buy milk]], [[Tasks 2/Sub/Deep|deep]] and [[Sub/Deep]].',
+    )
+  })
+
   test('a folder the space already fills moves its folder note aside with it', () => {
     const stamped = restamped(
       planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),

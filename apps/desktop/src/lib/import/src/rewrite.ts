@@ -293,7 +293,8 @@ function nearest(
 }
 
 function respelled(said: string, from: string, to: string): string | null {
-  const parts = said.split('/')
+  const lead = /^\/*/.exec(said)?.[0] ?? ''
+  const parts = said.slice(lead.length).split('/')
   const last = parts.pop() ?? said
   const whole = from.split('/').pop() ?? from
   const name = [whole, withoutExtension(whole)].find((one) => foldName(one) === foldName(last))
@@ -302,7 +303,15 @@ function respelled(said: string, from: string, to: string): string | null {
   const fresh = to.split('/').pop() ?? to
   const after = name === whole ? fresh : withoutExtension(fresh)
   const spelled = after.startsWith(name) ? last + after.slice(name.length) : after
-  return [...parts, spelled].join('/')
+  const was = from.split('/').slice(0, -1)
+  const now = to.split('/').slice(0, -1)
+  const folders = parts.map((part, at) => {
+    const back = parts.length - at
+    const before = was[was.length - back]
+    const moved = now[now.length - back]
+    return moved === undefined || foldName(before ?? '') === foldName(moved) ? part : moved
+  })
+  return `${lead}${[...folders, spelled].join('/')}`
 }
 
 function jsonString(said: string): string | null {
