@@ -37,7 +37,7 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
                 at = closes + 1;
                 continue;
             }
-            read_values(rest, found);
+            read_values(without_comment(rest), found);
             at = read_items(body, end + 1, front, found);
             continue;
         }
@@ -85,7 +85,7 @@ fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) ->
             return at;
         };
 
-        read_values(item, found);
+        read_values(without_comment(item), found);
         if end >= front {
             return front;
         }
@@ -477,6 +477,16 @@ mod tests {
             tags_in("---\nstatus: done # not a tag\n---\n\nwords\n"),
             Vec::<String>::new()
         );
+    }
+
+    #[test]
+    fn a_comment_after_the_tags_is_no_tag() {
+        assert_eq!(
+            tags_in("---\ntags:\n  - project # active\n---\n\nwords\n"),
+            vec!["#project"]
+        );
+        assert_eq!(tags_in("---\ntags: [a] # old\n---\n\nwords\n"), vec!["#a"]);
+        assert_eq!(tags_in("---\ntags: a # old\n---\n"), vec!["#a"]);
     }
 
     #[test]
