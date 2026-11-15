@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { homedir, platform, tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 for (const [name, value] of Object.entries(process.env)) {
@@ -28,7 +28,8 @@ function endpointFile() {
     return join(home, 'Library', 'Application Support', identifier, 'automation.json')
   }
 
-  const config = process.env.XDG_CONFIG_HOME ?? join(home, '.config')
+  const xdg = process.env.XDG_CONFIG_HOME
+  const config = xdg && isAbsolute(xdg) ? xdg : join(home, '.config')
   return join(config, identifier, 'automation.json')
 }
 

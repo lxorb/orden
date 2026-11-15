@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -101,3 +101,39 @@ test('a verb the app answers in an agent’s shape reads as done when it is done
   ).toEqual({ out: '', err: 'Approve?\n', code: 1 })
   expect((await ran(['browser_tabs', '--json'], { status: 'ok', result: {} })).code).toBe(0)
 })
+
+test.skipIf(process.platform !== 'linux')(
+  'an empty or relative XDG_CONFIG_HOME is passed over for ~/.config, as the app does',
+  async () => {
+    let heard = 0
+    const server = createServer((request, response) => {
+      heard += 1
+      request.resume()
+      request.on('end', () => response.end(JSON.stringify({ ok: true, value: {} })))
+    })
+    await new Promise<void>((settle) => server.listen(0, '127.0.0.1', settle))
+    const { port } = server.address() as AddressInfo
+    const home = mkdtempSync(join(tmpdir(), 'orden-home-'))
+    mkdirSync(join(home, '.config', 'so.orden.Orden'), { recursive: true })
+    writeFileSync(
+      join(home, '.config', 'so.orden.Orden', 'automation.json'),
+      JSON.stringify({ port, secret: 's', pid: 1 }),
+    )
+    const env = Object.fromEntries(
+      Object.entries(process.env).filter(([name]) => !/^(ORDEN|NIB)_/.test(name)),
+    )
+
+    const codes: (number | null)[] = []
+    for (const config of ['', 'relative/config']) {
+      const child = spawn(process.execPath, [CLI, 'tags'], {
+        cwd: home,
+        env: { ...env, HOME: home, XDG_CONFIG_HOME: config },
+      })
+      codes.push(await new Promise<number | null>((settle) => child.on('close', settle)))
+    }
+    server.close()
+
+    expect(codes).toEqual([0, 0])
+    expect(heard).toBe(2)
+  },
+)
