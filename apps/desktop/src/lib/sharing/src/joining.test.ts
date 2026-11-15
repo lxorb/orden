@@ -111,20 +111,19 @@ vi.mock('../../sync.svelte', () => ({
   },
 }))
 
-vi.mock('../../workspace.svelte', () => ({
-  workspace: {
-    spaces: [{ id: 'here', name: 'Plans', root: '/Plans' }],
-    fileOps: { follow: () => () => undefined },
-    showSpace: (id: string) => {
-      world.shown = id
-      return Promise.resolve()
-    },
-    showingShared: (id: string) => world.opened.some((one) => one.id === id),
-    openShared: (item: { id: string }) => {
-      world.opened.push({ id: item.id, holding: world.holding() })
-    },
+const shown = vi.hoisted(() => ({
+  spaces: [{ id: 'here', name: 'Plans', root: '/Plans' }],
+  showSpace: (id: string) => {
+    world.shown = id
+    return Promise.resolve()
+  },
+  showingShared: (id: string) => world.opened.some((one) => one.id === id),
+  openShared: (item: { id: string }) => {
+    world.opened.push({ id: item.id, holding: world.holding() })
   },
 }))
+
+vi.mock('../../workspace.svelte', () => ({ workspace: shown }))
 
 vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>
@@ -189,6 +188,8 @@ beforeEach(async () => {
   world.withdrawFails = null
 
   vi.resetModules()
+  const contracts = await import('@orden/contracts')
+  contracts.providePort('workspace.view', { ...contracts.workspaceView(), ...shown })
   await import('../../sharing-ports')
   ;({ joining } = await import('./joining.svelte'))
   ;({ account } = await import('../../accounts/src/account.svelte'))

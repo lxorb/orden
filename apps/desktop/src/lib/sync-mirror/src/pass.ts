@@ -39,7 +39,7 @@ import {
 } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
-import type { Entry } from '../../workspace.svelte'
+import type { Entry } from '@orden/contracts'
 
 function ordered<T extends { path: string }>(
   notes: readonly T[],

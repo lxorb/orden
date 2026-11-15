@@ -1,9 +1,9 @@
+import { workspaceView } from '@orden/contracts'
 import { api, fromServer, type Invitation, type Joined, account } from '../../accounts/src/api'
 import { passing, pollDelay, forget, keep, storedText } from '../../platform/src/api'
 import { message } from '../../ui-kit/src/api'
 import { deviceName } from '../../collab/src/api'
 import { sync } from '../../sync.svelte'
-import { workspace } from '../../workspace.svelte'
 
 const PATH = /^\/join\/([a-f0-9]{16,128})$/
 
@@ -185,8 +185,8 @@ class Joining {
     await account.loadSpaces().catch(() => undefined)
     await sync.pass()
 
-    const here = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === space.id)
-    if (here) await workspace.showSpace(here.id)
+    const here = workspaceView().spaces.find((one) => sync.remoteIdFor(one.root) === space.id)
+    if (here) await workspaceView().showSpace(here.id)
   }
 
   private arrived() {

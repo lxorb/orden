@@ -1,6 +1,5 @@
 import { log, invoke } from '../../platform/src/api'
 import { sameWebNote, settleShortcuts } from '@orden/scan/settle'
-import type { Entry } from '../../workspace.svelte'
 import { writeDown } from './write-down'
 
 const STAMP = / \(from another device \d{4}-\d{2}-\d{2}\)(?: \d+)?/gu
@@ -14,12 +13,17 @@ export function copiedFrom(path: string): string | null {
   return plain === stem ? null : plain + ending[0]
 }
 
+interface Listed {
+  readonly path: string
+  modified: number
+}
+
 export interface Folded {
   kept: string
   gone: string
 }
 
-export async function foldWebCopies(files: readonly Entry[]): Promise<Folded[]> {
+export async function foldWebCopies(files: readonly Listed[]): Promise<Folded[]> {
   const byPath = new Map(files.map((one) => [one.path, one]))
   const copies = files.filter((one) => copiedFrom(one.path) !== null)
   if (copies.length === 0) return []
@@ -39,7 +43,7 @@ export async function foldWebCopies(files: readonly Entry[]): Promise<Folded[]> 
   return folded
 }
 
-async function foldInto(note: Entry, copy: Entry): Promise<boolean> {
+async function foldInto(note: Listed, copy: Listed): Promise<boolean> {
   const [ours, theirs] = await Promise.all([
     invoke<string>('read_note', { path: note.path }),
     invoke<string>('read_note', { path: copy.path }),

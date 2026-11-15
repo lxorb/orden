@@ -54,6 +54,7 @@ import {
   userId,
   webPages,
   workspaceNotes,
+  workspaceView,
   whenLoaded,
   whenPortProvided,
   type Result,
@@ -574,5 +575,19 @@ describe('loads', () => {
     expect(workspaceNotes().activeRoot).toBe('/space')
     unbind()
     expect(workspaceNotes().activeRoot).toBeNull()
+  })
+
+  it('answers the shown spaces and tabs with nothing until the workspace binds them', async () => {
+    const view = workspaceView()
+    expect(view.spaces).toEqual([])
+    expect(view.tabs).toEqual([])
+    expect(view.showingShared('x')).toBe(false)
+    await expect(view.showSpace('x')).resolves.toBeUndefined()
+    expect(() => view.follow(() => undefined)()).not.toThrow()
+    const spaces = [{ id: 's', name: 'S', root: '/s' }]
+    const unbind = providePort('workspace.view', { ...view, spaces })
+    expect(workspaceView().spaces).toBe(spaces)
+    unbind()
+    expect(workspaceView().spaces).toEqual([])
   })
 })

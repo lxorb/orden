@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { providePort, workspaceView } from '@orden/contracts'
 
 const world = vi.hoisted((): { mirrors: Record<string, string> } => ({ mirrors: {} }))
 
@@ -34,6 +35,8 @@ vi.mock('./sharing/src/api', async (importOriginal) => ({
 const { account } = await import('./accounts/src/account.svelte')
 const { spaceMenu } = await import('./space-actions')
 const { workspace } = await import('./workspace.svelte')
+
+providePort('workspace.view', { ...workspaceView(), spaces: workspace.spaces })
 
 const ICON = 'Choose an icon'
 
