@@ -586,6 +586,26 @@ describe('compaction', () => {
     expect(sent[2]?.headers['anthropic-beta']).toContain('compact-2026-09-04')
   })
 
+  test('Orden’s own summary over calls made still lists the tools, as Claude asks', async () => {
+    answers = [
+      stream('anthropic-1'),
+      stream('anthropic-2'),
+      json(400, { type: 'error', error: { type: 'invalid_request_error', message: 'no' } }),
+      stream('anthropic-2'),
+    ]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    await send(thread, 'What is in Birds.md?')
+    await engine.compact(thread)
+
+    const asked = sent[3]?.body as { messages: unknown[]; tools?: { name: string }[] }
+    expect(JSON.stringify(asked.messages)).toContain('tool_use')
+    expect(asked.tools?.map((one) => one.name)).toContain('read_note')
+    expect(thread.compaction).toMatchObject({
+      kind: 'summary',
+      summary: 'Herons stand still, then they do not.',
+    })
+  })
+
   test('Orden’s own summary where the provider has none, and on its own near the top', async () => {
     const said = (words: string) =>
       lines(
