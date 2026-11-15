@@ -23,7 +23,7 @@ export function shapeFor(
   library: Record<string, IconNode>,
   chosen: string | null,
 ): IconNode | null {
-  return chosen ? (library[chosen] ?? null) : null
+  return chosen && Object.hasOwn(library, chosen) ? (library[chosen] ?? null) : null
 }
 
 export type WrittenIcon =
