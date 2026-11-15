@@ -265,3 +265,45 @@ describe('a link in quoted front matter', () => {
     )
   })
 })
+
+describe('a link in plain front matter', () => {
+  const renamed = (to: string) => ({ from: 'Plan.md', to: `${to}.md` })
+
+  test.each(['@Alice', 'a{b}', '%20', '*x', 'a, b', 'a: b'])(
+    'a new name %s that plain YAML cannot hold is quoted, in a value and in a list',
+    (name) => {
+      const text = '---\nup: [[Plan]]\nlist:\n  - [[Plan]]\n---\n[[Plan]]'
+      const out = rewriteLinks(text, 'One.md', renamed(name), pointsAt('plan')) ?? ''
+      expect(out).toBe(`---\nup: "[[${name}]]"\nlist:\n  - "[[${name}]]"\n---\n[[${name}]]`)
+      expect(findLinks(out).map((link) => link.target)).toEqual([name, name, name])
+    },
+  )
+
+  test('a link written as markdown for a name with a hash is quoted', () => {
+    const text = '---\nup: [[Plan]]\nnote: see [[Plan]] first\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('Issue #12'), pointsAt('plan'))).toBe(
+      '---\nup: "[Issue #12](Issue%20%2312.md)"\nnote: "see [Issue #12](Issue%20%2312.md) first"\n---\n',
+    )
+  })
+
+  test('a quoted name with double quotes takes single quotes', () => {
+    const text = '---\nup: [[Plan]]\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('@"x"'), pointsAt('plan'))).toBe(
+      '---\nup: \'[[@"x"]]\'\n---\n',
+    )
+  })
+
+  test('a name plain YAML holds stays plain', () => {
+    const text = '---\nup: [[Plan]]\nlist:\n  - [[Plan|p]]\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('Road map 2'), pointsAt('plan'))).toBe(
+      '---\nup: [[Road map 2]]\nlist:\n  - [[Road map 2|p]]\n---\n',
+    )
+  })
+
+  test('a value that was not plain YAML before is left as it was', () => {
+    const text = '---\nrel: [[[Plan]], [[Other]]]\ntext: |\n  see [[Plan]]\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('@Alice'), pointsAt('plan'))).toBe(
+      '---\nrel: [[[@Alice]], [[Other]]]\ntext: |\n  see [[@Alice]]\n---\n',
+    )
+  })
+})

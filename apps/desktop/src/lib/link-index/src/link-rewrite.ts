@@ -6,6 +6,7 @@ import {
   wikilinkCannotName,
 } from '@orden/markdown/links'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { readProperties } from '@orden/markdown/properties'
 import { formatLink } from '../../link-format/src/api'
 import { shownName, folderOf, nameOf, relativePath } from '../../platform/src/api'
 
@@ -55,7 +56,7 @@ export function retargetLinks(
   }
 
   if (!edits.length) return null
-  return applied(text, quotedInMatter(text, edits))
+  return applied(text, quotedInMatter(text, plainInMatter(text, edits)))
 }
 
 const OTHER_WIKILINKS = /\[\[[^\]\n]*\]\]/g
@@ -108,6 +109,63 @@ function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
     while ((edits[last + 1]?.to ?? Infinity) <= scalar.close) last++
     out.push(...requoted(text, scalar, edits.slice(at, last + 1)))
     at = last + 1
+  }
+  return out
+}
+
+const VALUE_OPENS = /^(?:[ \t]*-[ \t]+|[ \t]*[^\s#-][^:]*?[ \t]*:[ \t]+)/
+
+const INDICATOR = /^(?:[-?:](?:\s|$)|[,[\]{}#&*!|>'"%@`])/
+
+function plainHolds(value: string): boolean {
+  const link = /^\[\[([^\]]*)\]\]$/.exec(value)
+  if (value.startsWith('[') && !link) return false
+  const inner = link ? (link[1] ?? '') : value
+  if (inner === '' || INDICATOR.test(inner) || /:(?:\s|$)|\s#/.test(inner)) return false
+  return !link || !/[,[\]{}]|:$/.test(inner)
+}
+
+function quotedValue(value: string): string {
+  if (!/["\\]/.test(value)) return `"${value}"`
+  return `'${value.replace(/'/g, "''")}'`
+}
+
+function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
+  const matter = frontMatterBlock(text)
+  if (!matter || !readProperties(text)) return [...edits]
+
+  const out: Edit[] = []
+  let at = 0
+  while (at < edits.length) {
+    const edit = edits[at]
+    if (edit === undefined) break
+    const start = text.lastIndexOf('\n', edit.from - 1) + 1
+    const lineEnd = text.indexOf('\n', edit.from)
+    const end = lineEnd === -1 ? text.length : lineEnd
+    let last = at
+    while ((edits[last + 1]?.to ?? Infinity) <= end) last++
+    const line = edits.slice(at, last + 1)
+    at = last + 1
+
+    const opens = edit.from < matter.close ? VALUE_OPENS.exec(text.slice(start, end)) : null
+    const from = start + (opens?.[0].length ?? 0)
+    const to = start + text.slice(start, end).trimEnd().length
+    const inValue = line.every((one) => one.from >= from && one.to <= to)
+    if (!opens || !inValue || line.some((one) => scalarAround(text, one.from))) {
+      out.push(...line)
+      continue
+    }
+
+    const before = text.slice(from, to)
+    const after = applied(
+      before,
+      line.map((one) => ({ ...one, from: one.from - from, to: one.to - from })),
+    )
+    if (plainHolds(before) && !plainHolds(after)) {
+      out.push({ from, to, insert: quotedValue(after) })
+    } else {
+      out.push(...line)
+    }
   }
   return out
 }
