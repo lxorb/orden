@@ -3,6 +3,7 @@ import type { Text } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { fold } from '@orden/rooms/fold'
 import { blocksOf, foldName } from '@orden/markdown/links'
+import { inCode } from '../code'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -33,14 +34,32 @@ function typing(context: CompletionContext) {
   return context.matchBefore(/\[\[[^[\]\n]*/)
 }
 
+function restOfLink(view: EditorView, to: number, written: string): { end: number; text: string } {
+  const rest = view.state.doc.sliceString(to, view.state.doc.lineAt(to).to)
+  const part = /^[^\]|#[\n]*/.exec(rest)?.[0] ?? ''
+  const after = rest.slice(part.length)
+
+  if (after.startsWith(']]')) return { end: to + part.length + 2, text: written }
+
+  const closes = after.indexOf(']]')
+  const reopens = after.indexOf('[[')
+  const kept = /^[|#]/.test(after) && closes > 0 && (reopens === -1 || reopens > closes)
+  const fragmentTwice = after.startsWith('#') && written.includes('#')
+  if (kept && written.endsWith(']]') && !fragmentTwice) {
+    return { end: to + part.length, text: written.slice(0, -2) }
+  }
+
+  return { end: to, text: written }
+}
+
 function insert(target: LinkWrite) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
-    const closed = view.state.doc.sliceString(to, to + 2) === ']]'
-    const text = view.state.facet(linkWriter)(target)
+    const written = view.state.facet(linkWriter)(target)
+    const { end, text } = restOfLink(view, to, written)
 
     view.dispatch({
-      changes: { from: start, to: closed ? to + 2 : to, insert: text },
+      changes: { from: start, to: end, insert: text },
       selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
@@ -267,7 +286,7 @@ export function wikilinkCompletions(
   context: CompletionContext,
 ): CompletionResult | Promise<CompletionResult | null> | null {
   const typed = typing(context)
-  if (!typed) return null
+  if (!typed || inCode(context.state, typed.from)) return null
 
   const index = context.state.facet(noteIndex)
   const inner = typed.text.slice(2)
