@@ -1,3 +1,4 @@
+import './lib/backend-ports'
 import { LEGACY_WEB, pack, WEB } from './lib/handoff/src/api'
 
 const LINGER = 200

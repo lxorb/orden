@@ -36,7 +36,7 @@ import {
   within,
 } from '../../sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
-import { portOf, providePort, type SyncWorkspacePort, whenPortProvided } from '@orden/contracts'
+import { needPort, providePort, type SyncWorkspacePort, whenPortProvided } from '@orden/contracts'
 import type { FileOp } from '../../file-ops/src/api'
 import { unixLines } from '../../documents/src/api'
 
@@ -49,9 +49,7 @@ type Runner = (typeof import('../../sync-client/src/api'))['runner']
 const V2 = !__EVEN_PLUGIN__
 
 function workspace(): SyncWorkspacePort {
-  const port = portOf('sync.workspace')
-  if (!port.ok) throw new Error(port.error.message)
-  return port.value
+  return needPort('sync.workspace')
 }
 
 class Sync {
