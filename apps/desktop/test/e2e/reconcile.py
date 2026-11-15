@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import time
 
 import harness
 from harness import Drive
@@ -25,6 +26,8 @@ first = sibling("first-sync")
 speed = sibling("speed")
 
 NOTES = 5000
+
+WATCHED = 60
 
 WATCH = """
 window.__sync = { tasks: [], heap: 0 }
@@ -113,14 +116,15 @@ def drive(browser, token: str) -> dict[str, object]:
     )
     first_pass = when(
         "() => { const s = window.ordenApp?.sync;"
-        " return !!s && !s.running && (s.reconciledAt ?? 0) > 0 }",
-        "the first pass has come back",
+        " return !!s && ((s.pushed ?? 0) > 0 || (!s.running && (s.lastSyncedAt ?? 0) > 0)) }",
+        "the first pass is sending",
         patience=420_000,
     )
 
     seen = -1
     still = 0
-    while still < 20:
+    until = time.monotonic() + WATCHED
+    while still < 20 and time.monotonic() < until:
         now = page.evaluate("() => window.ordenApp?.sync?.pushed ?? 0")
         if now != seen:
             if now and (seen < 0 or now // 500 != seen // 500):
@@ -136,7 +140,9 @@ def drive(browser, token: str) -> dict[str, object]:
         page.wait_for_timeout(500)
 
     uploaded = page.evaluate("() => window.ordenApp?.sync?.pushed ?? 0")
-    say(f"the pass in flight has sent {uploaded} of {NOTES}; see the note in this file")
+    say(f"the pass in flight has sent {uploaded} of {NOTES} in {WATCHED}s at most")
+    if not uploaded:
+        raise SystemExit("signing in with notes on the machine sent none of them")
 
     told = page.evaluate(SAYS)
     held = page.evaluate("() => window.__sync")

@@ -1297,6 +1297,7 @@ async function create(
     const { note } = await api.createNote(token, mirror.spaceId, path, content)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     mirror.offered = without(mirror.offered, path)
+    sending.sent?.(path)
     return true
   } catch (error) {
     if (refusesIt(error)) {

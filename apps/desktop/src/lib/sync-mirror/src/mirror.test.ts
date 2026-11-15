@@ -2245,3 +2245,17 @@ describe('a paper the account was never sent', () => {
     expect(mirror.files['paper.pdf']?.hash).toBe(fake.blobsPut[0])
   })
 })
+
+describe('what a pass says it sent', () => {
+  test('is each note it made on the account as well as each it changed there', async () => {
+    const { mirror } = await paired('Old.md', 'one\n')
+    fake.disk.set(`${ROOT}/Old.md`, 'two\n')
+    fake.disk.set(`${ROOT}/New.md`, 'new\n')
+    const sent: string[] = []
+
+    await push(mirror, 'token', NOBODY, { sent: (path) => sent.push(path) })
+
+    expect(fake.calls).toContain('createNote New.md')
+    expect(sent.sort()).toEqual(['New.md', 'Old.md'])
+  })
+})
