@@ -1,6 +1,9 @@
 import { untrack } from 'svelte'
 import { theme } from '../../../theme/src/api'
+import { forget, keep, storedText } from '../../../platform/src/api'
 import { LookSync } from './look-sync'
+
+const OWED_KEY = 'orden:look-owed'
 
 let started = false
 
@@ -19,6 +22,8 @@ export async function syncLook(): Promise<void> {
     wear: (look) => theme.wearLook(look),
     read: async (token) => (await api.settings(token)).settings,
     save: (token, look) => api.saveSettings(token, { look }),
+    owedKept: () => storedText(OWED_KEY) === 'yes',
+    keepOwed: (owed) => (owed ? keep(OWED_KEY, 'yes') : forget(OWED_KEY)),
   })
 
   const adopt = () => {
