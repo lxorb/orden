@@ -1,4 +1,5 @@
 import { isReserved } from '@orden/markdown/note-name'
+import { platform } from './tauri'
 
 const CONTROL = 0x20
 
@@ -15,6 +16,7 @@ export function insideOnly(said: string): string | null {
   if (!steps.length) return null
   if (steps.some((step) => step === '..')) return null
   if (steps.some(isReserved)) return null
+  if (platform() === 'windows' && steps.some((step) => /[. ]$/.test(step))) return null
 
   return steps.join('/')
 }
