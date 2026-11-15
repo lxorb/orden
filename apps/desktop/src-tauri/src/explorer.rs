@@ -26,7 +26,7 @@ pub fn shown(app: &tauri::AppHandle, path: &str) -> Result<std::path::PathBuf, S
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     const SOURCES: [(&str, &str); 6] = [
         ("bin.rs", include_str!("explorer/bin.rs")),
         ("changes.rs", include_str!("explorer/changes.rs")),
