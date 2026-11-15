@@ -1,6 +1,6 @@
 <script lang="ts">
   import { account, arriving } from './accounts/src/api'
-  import Sweep from './Sweep.svelte'
+  import { Sweep } from './ui-kit/src/api'
   import { dur, fade } from './platform/src/api'
   import { workspace } from './workspace/src/api'
 

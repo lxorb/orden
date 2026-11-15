@@ -29,7 +29,6 @@
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/Sweep.svelte",
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/icon-choice.svelte.ts",
     "apps/desktop/src/lib/menu-entries.ts",
