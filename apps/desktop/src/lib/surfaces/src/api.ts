@@ -107,7 +107,7 @@ export const joinPending = latched(() =>
   import('../../sharing/src/api').then((one) => one.loadJoinPending()),
 )
 
-export const renameNotice = latched(() => import('../../RenameNotice.svelte'))
+export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 export const keysMovedNotice = latched(from('keys-moved') as Shown)
 
 export const outsideNotice = latched(() => {
@@ -138,20 +138,20 @@ export const terminalMark = held(
 )
 
 export const syncMark = latched(() =>
-  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('../../SyncMark.svelte'),
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
 )
 
 export const spacePickerDialog = latched(() => import('../../SpacePicker.svelte'))
 export const tabOverviewLayer = latched(from('overview') as Shown)
 export const hostPickerDialog = latched(from('host-picker') as Shown)
 export const spacesMenu = held(() => import('../../SpaceMenu.svelte'))
-export const promptSheet = latched(() => import('../../PromptSheet.svelte'))
+export const promptSheet = latched(() => import('./PromptSheet.svelte'))
 
 export const contextMenu = latched(() =>
   import('../../context-menu/src/api').then((one) => one.loadContextMenu()),
 )
 
-export const formatBar = latched(() => import('../../FormatBar.svelte'))
+export const formatBar = latched(() => import('./FormatBar.svelte'))
 
 export const signInSheet = latched(() =>
   import('../../accounts-ui/src/api').then((one) => ({ default: one.SignIn })),
@@ -161,7 +161,7 @@ export const joinSheet = latched(() =>
   import('../../sharing/src/api').then((one) => one.loadJoinSheet()),
 )
 
-export const feedbackSheet = latched(() => import('../../FeedbackSheet.svelte'))
+export const feedbackSheet = latched(() => import('./FeedbackSheet.svelte'))
 
 export function showFeedback(): void {
   void import('../../feedback/src/api').then(({ feedback }) => {
@@ -173,7 +173,7 @@ export function showFeedback(): void {
 export const quickAddSheet = latched(from('quick-add') as Shown)
 
 export const fillBar = held(() => import('../../tab-fill/src/api').then((one) => one.loadFillBar()))
-export const fullscreenWayOut = held(() => import('../../FullscreenLeave.svelte'))
+export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 
 export const guestCorner = held(() =>
   import('../../collab/src/api').then((one) => one.loadGuestCorner()),

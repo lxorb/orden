@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly, scale } from './platform/src/api'
-  import { renamed } from './renamed.svelte'
-  import { told } from './ui-kit/src/api'
+  import { dur, fly, scale } from '../../platform/src/api'
+  import { renamed } from '../../renamed.svelte'
+  import { told } from '../../ui-kit/src/api'
 
   const STAYS = 6000
 

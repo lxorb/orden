@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dropOver, closeOnBack, Cross, overlays } from './ui-kit/src/api'
+  import { dropOver, closeOnBack, Cross, overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import {
     MOST_PICTURES,
@@ -7,11 +7,11 @@
     picturesAmong,
     pictureOf,
     feedback,
-  } from './feedback/src/api'
-  import { fade, LAYER, scale } from './platform/src/api'
-  import { followHref } from './open-link'
-  import { trap } from './ui-controls/src/api'
-  import { chooseFiles } from './ui-controls/src/api'
+  } from '../../feedback/src/api'
+  import { fade, LAYER, scale } from '../../platform/src/api'
+  import { followHref } from '../../open-link'
+  import { trap } from '../../ui-controls/src/api'
+  import { chooseFiles } from '../../ui-controls/src/api'
 
   let text = $state('')
   let pictures = $state<Picture[]>([])
