@@ -16,7 +16,7 @@ import { sync } from '../../sync.svelte'
 import { type Origin, originOf, trustsHtml } from '../../trust'
 import type { NoteDoc } from '../../documents/src/api'
 import { keeping } from '../../file-ops/src/api'
-import { type Space, workspace } from '../../workspace.svelte'
+import { whenPortProvided, workspaceView, type WorkspaceSpace } from '@orden/contracts'
 
 function remoteOf(root: string): RemoteSpace | null {
   const id = sync.remoteIdFor(root)
@@ -56,8 +56,10 @@ function rekeep(from: string, to: string | null): void {
   keepJson(ROLES_KEY, to === null ? rest : { ...rest, [to]: one })
 }
 
-workspace.fileOps.follow(
-  keeping({ spaceMoved: (from, to) => rekeep(from, to), forget: (root) => rekeep(root, null) }),
+whenPortProvided('workspace.view', (view) =>
+  view.follow(
+    keeping({ spaceMoved: (from, to) => rekeep(from, to), forget: (root) => rekeep(root, null) }),
+  ),
 )
 
 function remembered(root: string): SpaceRole | null {
@@ -105,7 +107,7 @@ function roleIn(value: unknown): SpaceRole | null {
 export function rememberRoles(): void {
   const roles: Record<string, Kept> = {}
   let paired = false
-  for (const space of workspace.spaces) {
+  for (const space of workspaceView().spaces) {
     const id = sync.remoteIdFor(space.root)
     if (!id) continue
     paired = true
@@ -139,14 +141,14 @@ export function isSharedItem(path: string): boolean {
 export function canShareItem(path: string | null | undefined): boolean {
   if (!path) return false
 
-  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
   if (!space || !ownsRemotely(space)) return false
 
   return !!sync.tracked(path)?.id
 }
 
 export function othersIn(path: string): boolean {
-  for (const tab of workspace.tabs) {
+  for (const tab of workspaceView().tabs) {
     if (tab.path === path && (rooms.seen[tab.note.key]?.people.length ?? 0) > 0) return true
   }
 
@@ -159,7 +161,7 @@ function canWrite(root: string): boolean {
 }
 
 export function canWriteAt(path: string): boolean {
-  const space = workspace.spaces.find(
+  const space = workspaceView().spaces.find(
     (one) => samePath(one.root, path) || within(one.root, path) !== null,
   )
   return !space || canWrite(space.root)
@@ -182,14 +184,14 @@ export function reachedByOthers(path: string | null): boolean {
 export function reachedAs(path: string | null): Reach {
   if (path === null) return null
 
-  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
   return space ? reached(space.root, path) : null
 }
 
 export type Reach = 'space' | 'note' | null
 
 export function reachedByOthersIn(root: string): boolean {
-  const space = workspace.spaces.find((one) => samePath(one.root, root))
+  const space = workspaceView().spaces.find((one) => samePath(one.root, root))
   return !!space && reached(space.root, null) !== null
 }
 
@@ -231,7 +233,7 @@ function onceReached(root: string, path: string | null): Reach {
   return id && items.includes(id) ? 'note' : null
 }
 
-export function canTrustAgain(space: Space): boolean {
+export function canTrustAgain(space: WorkspaceSpace): boolean {
   if (!ownsRemotely(space)) return false
 
   const listed = remoteOf(space.root)
@@ -242,7 +244,7 @@ export function canTrustAgain(space: Space): boolean {
   return (listed.onceSharedItems ?? []).length > 0 || (held?.onceItems ?? []).length > 0
 }
 
-export async function trustAgain(space: Space): Promise<void> {
+export async function trustAgain(space: WorkspaceSpace): Promise<void> {
   const token = account.accountToken
   const id = sync.remoteIdFor(space.root)
   if (!token || !id || !canTrustAgain(space)) return
@@ -310,7 +312,7 @@ export function looksLikeAddress(one: string): boolean {
 
 class Share {
   open = $state(false)
-  space = $state<Space | null>(null)
+  space = $state<WorkspaceSpace | null>(null)
   spaceId = $state<string | null>(null)
 
   item = $state<{ id: string; path: string } | null>(null)
@@ -336,18 +338,18 @@ class Share {
     return this.working === about
   }
 
-  async show(space: Space) {
+  async show(space: WorkspaceSpace) {
     await this.about(space, null)
   }
 
-  async showItem(space: Space, path: string) {
+  async showItem(space: WorkspaceSpace, path: string) {
     const id = sync.tracked(path)?.id
     if (!id) return
 
     await this.about(space, { id, path })
   }
 
-  private async about(space: Space, item: { id: string; path: string } | null) {
+  private async about(space: WorkspaceSpace, item: { id: string; path: string } | null) {
     const id = sync.remoteIdFor(space.root)
     if (!id) return
 
@@ -527,20 +529,20 @@ function gone(error: unknown): boolean {
 
 export const share = new Share()
 
-function ownsRemotely(space: Space): boolean {
+function ownsRemotely(space: WorkspaceSpace): boolean {
   return !!account.user && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
 }
 
-export function canShare(space: Space): boolean {
+export function canShare(space: WorkspaceSpace): boolean {
   return ownsRemotely(space)
 }
 
-export function canPublish(space: Space): boolean {
+export function canPublish(space: WorkspaceSpace): boolean {
   return ownsRemotely(space)
 }
 
 export async function shareThisFile(path: string) {
-  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
   if (!space) return
 
   await share.showItem(space, path)
@@ -589,7 +591,7 @@ class SharedWithYou {
       this.items = shared
 
       const now = new Set(shared.map((one) => one.id))
-      for (const id of before) if (!now.has(id)) workspace.closeShared(id)
+      for (const id of before) if (!now.has(id)) workspaceView().closeShared(id)
 
       if (shared.length) this.keepAsking()
       else this.stop()
@@ -619,15 +621,15 @@ class SharedWithYou {
     const token = account.token
     if (!token || this.opening) return
 
-    if (workspace.showingShared(item.id)) {
-      workspace.openShared(item, '')
+    if (workspaceView().showingShared(item.id)) {
+      workspaceView().openShared(item, '')
       return
     }
 
     this.opening = item.id
     try {
       const { content } = await api.readNote(token, item.id)
-      workspace.openShared(item, content)
+      workspaceView().openShared(item, content)
     } catch {
       await this.load()
     } finally {
@@ -641,7 +643,7 @@ class SharedWithYou {
 
     this.listed += 1
     this.items = this.items.filter((one) => one.id !== item.id)
-    workspace.closeShared(item.id)
+    workspaceView().closeShared(item.id)
 
     try {
       await api.leaveShared(token, item.id)

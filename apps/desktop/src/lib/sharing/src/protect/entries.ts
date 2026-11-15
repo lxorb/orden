@@ -1,8 +1,8 @@
+import { workspaceView } from '@orden/contracts'
 import { busy } from '../../../ui-kit/src/api'
 import type { IconNode } from 'lucide'
 import type { MenuItem } from '../../../ui-kit/src/api'
 import { samePath, within } from '../../../platform/src/api'
-import { workspace } from '../../../workspace.svelte'
 import { protectionOn } from './gate'
 import { unlocks, protection } from '../../../protect/src/api'
 
@@ -25,7 +25,7 @@ export interface ProtectRow extends MenuItem {
 }
 
 function rootOf(path: string): string | null {
-  return workspace.spaces.find((one) => within(one.root, path) !== null)?.root ?? null
+  return workspaceView().spaces.find((one) => within(one.root, path) !== null)?.root ?? null
 }
 
 export function protectEntries(path: string | null | undefined): ProtectRow[] {

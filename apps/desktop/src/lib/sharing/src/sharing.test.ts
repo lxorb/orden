@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { providePort, workspaceView } from '@orden/contracts'
 import '../../sharing-ports'
 
 interface Held {
@@ -163,32 +164,45 @@ vi.mock('../../sync.svelte', () => ({
   },
 }))
 
+const spacesOf = vi.hoisted(
+  () => () =>
+    [...Object.keys(world.mirrors), ...world.locals].map((root) => ({
+      id: root,
+      name: root,
+      root,
+    })),
+)
+
 vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get spaces() {
-      return [...Object.keys(world.mirrors), ...world.locals].map((root) => ({
-        id: root,
-        name: root,
-        root,
-      }))
+      return spacesOf()
     },
-    get tabs() {
-      return world.tabs
-    },
-    openShared: (item: { id: string; name: string; path: string }, text: string) =>
-      world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
-    closeShared: (id: string) => world.closed.push(id),
-    showingShared: (id: string) => world.showing.includes(id),
     restored: true,
     adoptSpace: (name: string) => Promise.resolve(name),
     applyIcon: () => null,
     applySpaceOrder: () => false,
     bookmarks: { adopt: () => null },
-    fileOps: {
-      follow: (follower: (op: FileOp) => unknown) => world.followers.push(follower),
-    },
   },
 }))
+
+providePort('workspace.view', {
+  ...workspaceView(),
+  get spaces() {
+    return spacesOf()
+  },
+  get tabs() {
+    return world.tabs
+  },
+  openShared: (item, text) =>
+    world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
+  closeShared: (id) => world.closed.push(id),
+  showingShared: (id) => world.showing.includes(id),
+  follow: (follower) => {
+    world.followers.push(follower)
+    return () => undefined
+  },
+})
 
 vi.mock('../../ui-kit/src/message', () => ({
   message: (error: unknown, fallback: string) =>

@@ -1,6 +1,6 @@
 {
   "name": "history",
-  "layer": "foundation",
+  "layer": "shell",
   "dependsOn": [
     "contracts",
     "accounts",

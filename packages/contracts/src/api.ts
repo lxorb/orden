@@ -193,6 +193,7 @@ export {
   webPages,
   whenPortProvided,
   workspaceNotes,
+  workspaceView,
 } from './ports'
 export { whenLoaded } from './loading'
 export type { AgentPorts, AgentScope, AgentWritesPort } from './agents'
@@ -266,4 +267,13 @@ export type {
   SyncWriteHearing,
 } from './sync-client'
 export { BOOKMARK_KINDS, type Bookmark, type BookmarkKind } from './bookmark'
-export type { OpenNote, TextChange, WorkspaceNotesPort, WorkspacePorts } from './workspace'
+export {
+  type OpenNote,
+  type SharedNote,
+  type TextChange,
+  type WorkspaceNotesPort,
+  type WorkspacePorts,
+  type WorkspaceSpace,
+  type WorkspaceTab,
+  type WorkspaceViewPort,
+} from './workspace'

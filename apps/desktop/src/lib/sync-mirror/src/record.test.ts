@@ -1,20 +1,20 @@
 import { conflictPath } from '@orden/markdown/paths'
+import { providePort, workspaceView } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { Clash } from './conflicts'
 
 const KEY = 'orden:sync-log'
 
-const spaces = [{ root: '/Work' }]
+const spaces = [{ id: 'work', name: 'Work', root: '/Work' }]
 
 const reloaded: { path: string; content: string }[] = []
 
-vi.mock('../../workspace.svelte', () => ({
-  workspace: {
-    spaces,
-    reload: (path: string, content: string) => void reloaded.push({ path, content }),
-  },
-}))
+providePort('workspace.view', {
+  ...workspaceView(),
+  spaces,
+  reload: (path, content) => void reloaded.push({ path, content }),
+})
 
 const invoked: { command: string; path: string }[] = []
 

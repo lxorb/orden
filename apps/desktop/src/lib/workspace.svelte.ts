@@ -4259,6 +4259,21 @@ links.spaceOf = (path) => workspace.rootHolding(path)
 links.lockedAt = (path) => protection.locked(path)
 links.locksSeen = () => protection.seen
 
+providePort('workspace.view', {
+  get spaces() {
+    return workspace.spaces
+  },
+  get tabs() {
+    return workspace.tabs
+  },
+  showSpace: (id) => workspace.showSpace(id),
+  reload: (path, text) => workspace.reload(path, text),
+  openShared: (item, text) => workspace.openShared(item, text),
+  showingShared: (id) => workspace.showingShared(id),
+  closeShared: (id) => workspace.closeShared(id),
+  follow: (follower) => workspace.fileOps.follow(follower),
+})
+
 providePort('workspace.notes', {
   get activeRoot() {
     return workspace.activeSpace?.root ?? null

@@ -1,6 +1,6 @@
 {
   "name": "accounts-ui",
-  "layer": "foundation",
+  "layer": "shell",
   "dependsOn": [
     "contracts",
     "accounts",

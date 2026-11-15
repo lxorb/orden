@@ -1,3 +1,4 @@
+import { workspaceView } from '@orden/contracts'
 import { isWebTarget } from '@orden/markdown/links'
 import {
   log,
@@ -104,7 +105,7 @@ class Record {
 
   async settle(clash: Clash, answer: Answer): Promise<void> {
     const recorded = this.notes?.at(clash.id) ?? null
-    const judged = await placed(clash.path)
+    const judged = placed(clash.path)
     const followed =
       recorded !== null &&
       judged !== null &&
@@ -117,7 +118,7 @@ class Record {
     const now = followed ? null : recorded
     const there = now === null && !followed ? (this.notes?.of(clash.path) ?? null) : null
     const elsewhere = there !== null && there !== clash.id
-    const path = await placed(now ?? clash.path)
+    const path = placed(now ?? clash.path)
     if (path === null) {
       log('warn', 'sync: a note waiting to be settled is in no space, so it was let go of')
       this.forget(clash.path)
@@ -140,8 +141,7 @@ class Record {
     if (answer === 'theirs') {
       const { writeDown } = await import('./write-down')
       await writeDown(path, clash.theirs)
-      const { workspace } = await import('../../workspace.svelte')
-      workspace.reload(path, clash.theirs)
+      workspaceView().reload(path, clash.theirs)
     }
 
     if (answer === 'both' && isWebTarget(path)) {
@@ -153,8 +153,7 @@ class Record {
       if (ours !== null) {
         const one = settleShortcuts(path, ours, clash.theirs, false)
         await writeDown(path, one, ours)
-        const { workspace } = await import('../../workspace.svelte')
-        workspace.reload(path, one)
+        workspaceView().reload(path, one)
       }
     } else if (answer === 'both') {
       const [{ conflictPath }, { writeDown }] = await Promise.all([
@@ -192,10 +191,8 @@ class Record {
 
 export const record = new Record()
 
-async function placed(path: string): Promise<string | null> {
-  const { workspace } = await import('../../workspace.svelte')
-
-  for (const space of workspace.spaces) {
+function placed(path: string): string | null {
+  for (const space of workspaceView().spaces) {
     const relative = withinSpace(space.root, path)
     if (relative !== null) return insideSpace(space.root, relative)
   }
