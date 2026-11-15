@@ -1,7 +1,9 @@
+import { providePort } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { settings } = await import('./settings.svelte')
+const { settings } = await import('./settings/src/api')
+providePort('settings.window', settings)
 const { workspace } = await import('./workspace/src/api')
 const { reservedName } = await import('./workspace/src/notices.svelte')
 const NameField = (await import('./sidebar/src/NameField.svelte')).default

@@ -1,15 +1,15 @@
+import type { SettingsSectionId } from '@orden/contracts'
 import type { Field, Group, Pane } from './preferences'
-import type { Section } from '../../settings.svelte'
 
 export interface Place {
-  section: Section
+  section: SettingsSectionId
   label: string
   text: string[]
 }
 
 export type Hit =
-  | { kind: 'field'; section: Section; pane: Pane; group: Group; field: Field }
-  | { kind: 'place'; section: Section; label: string }
+  | { kind: 'field'; section: SettingsSectionId; pane: Pane; group: Group; field: Field }
+  | { kind: 'place'; section: SettingsSectionId; label: string }
 
 export function search(query: string, panes: Pane[], places: Place[]): Hit[] {
   const needle = query.trim().toLowerCase()

@@ -1,9 +1,14 @@
 import type { EditorView } from '@orden/editor'
 import { CODE_PALETTES } from '@orden/editor'
 import { paletteName } from '../../highlight/src/api'
-import { DEFAULTS, modes } from '../../modes/src/api'
-import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../../note-id'
-import { settings } from '../../settings.svelte'
+import {
+  DEFAULTS,
+  modes,
+  choices,
+  DEFAULT_ID_FORMAT,
+  ID_FORMATS,
+  noteId,
+} from '../../modes/src/api'
 import type { Pane } from './fields'
 
 export function editorPane(view: EditorView | undefined, moment: Date): Pane {
@@ -179,8 +184,8 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
               label: noteId(format, moment),
             })),
             initial: DEFAULT_ID_FORMAT,
-            get: () => settings.noteIdFormat,
-            set: (value) => settings.setNoteIdFormat(value),
+            get: () => choices.noteIdFormat,
+            set: (value) => choices.setNoteIdFormat(value),
           },
         ],
       },

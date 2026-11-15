@@ -1,6 +1,6 @@
 import { account } from './accounts/src/api'
 import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
-import { settings } from './settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { shortcuts } from './shortcuts/src/api'
 
 export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true) {
@@ -16,8 +16,12 @@ export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true
   menu.show(
     at,
     [
-      { label: 'Account', run: () => settings.show('account') },
-      { label: 'Settings', hint: shortcuts.hint('app.settings'), run: () => settings.show() },
+      { label: 'Account', run: () => settingsWindow().show('account') },
+      {
+        label: 'Settings',
+        hint: shortcuts.hint('app.settings'),
+        run: () => settingsWindow().show(),
+      },
       ...more,
       DIVIDER,
       account.user

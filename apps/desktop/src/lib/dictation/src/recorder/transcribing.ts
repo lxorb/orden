@@ -2,7 +2,7 @@ import type { EditorView } from '@orden/editor'
 import { busy, message } from '../../../ui-kit/src/api'
 import { region, assetUrl, joinPath } from '../../../platform/src/api'
 import { links } from '../../../link-index/src/api'
-import { settings } from '../../../settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { workspace } from '../../../workspace/src/api'
 import { transcribedBy, wordsInFile } from './transcribe'
 import { languageName, transcriptCallout } from './transcript'
@@ -34,7 +34,7 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
     })
 
     if (!words.text) {
-      settings.error = 'Nothing could be heard in that recording.'
+      settingsWindow().error = 'Nothing could be heard in that recording.'
       return
     }
 
@@ -49,6 +49,6 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
       userEvent: 'input.complete',
     })
   } catch (error) {
-    settings.error = message(error, 'That recording could not be turned into words.')
+    settingsWindow().error = message(error, 'That recording could not be turned into words.')
   }
 }

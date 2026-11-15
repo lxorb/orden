@@ -49,7 +49,7 @@ describe('the module stands on its own', () => {
 describe('the exporters behind their door', () => {
   test('name every exporter the shell reaches', async () => {
     const kit = await exporters()
-    for (const one of [kit.runExport, kit.exportPandoc, kit.pandocAvailable]) {
+    for (const one of [kit.runExport, kit.exportPandoc]) {
       expect(typeof one).toBe('function')
     }
   })

@@ -14,6 +14,5 @@
     "scan",
     "workspace",
     "held-database"
-  ],
-  "pending": ["apps/desktop/src/lib/settings.svelte.ts"]
+  ]
 }

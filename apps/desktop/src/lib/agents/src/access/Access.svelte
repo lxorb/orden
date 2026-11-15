@@ -11,7 +11,7 @@
   import { closeOnBack } from '../../../ui-kit/src/api'
   import { connectors } from '../../../connectors.svelte'
   import { dur, slide } from '../../../platform/src/api'
-  import { settings } from '../../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { arrive, segmented } from '../../../ui-kit/src/api'
   import { keep, storedText } from '../../../platform/src/api'
   import { invoke, isDesktop, platform } from '../../../platform/src/api'
@@ -120,8 +120,8 @@
   }
 
   onMount(() => {
-    if (settings.at !== 'access') return
-    settings.at = null
+    if (settingsWindow().at !== 'access') return
+    settingsWindow().at = null
     requestAnimationFrame(() => root?.scrollIntoView({ block: 'start' }))
   })
 </script>

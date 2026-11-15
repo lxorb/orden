@@ -30,7 +30,6 @@
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/picking.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts"
   ]
 }

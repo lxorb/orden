@@ -14,7 +14,7 @@
   import { AGENTS_NAME } from '../../platform/src/api'
   import { onDisk } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settings } from './window.svelte'
   import { folderOf, rootedAt, samePath } from '../../platform/src/api'
   import { joinPath } from '../../platform/src/api'
   import { noteText, workspace, writeNoteText } from '../../workspace/src/api'

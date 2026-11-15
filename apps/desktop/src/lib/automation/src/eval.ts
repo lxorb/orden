@@ -1,9 +1,8 @@
 import { links } from '../../link-index/src/api'
 import { search } from '../../search.svelte'
-import { settings } from '../../settings.svelte'
 import { invoke } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
-import { portOf } from '@orden/contracts'
+import { portOf, settingsWindow } from '@orden/contracts'
 
 async function working(path: string): Promise<string | null> {
   const { workingFolder } = await import('../../web-backend/src/api')
@@ -13,7 +12,7 @@ async function working(path: string): Promise<string | null> {
 function surface(): Record<string, unknown> {
   const web = portOf('web.scripts')
   const pages = web.ok ? web.value.pages : undefined
-  return { workspace, links, search, settings, pages, invoke, working }
+  return { workspace, links, search, settings: settingsWindow(), pages, invoke, working }
 }
 
 export async function evaluate(code: string): Promise<unknown> {

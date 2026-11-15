@@ -6,7 +6,7 @@
   import { dur, fade, fly } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import type { ThreadHead } from '../../ai-providers/src/api'
   import { beside, ordered, stateOf } from '../../ai-providers/src/api'
   import { chat } from './chat-parts'
@@ -154,7 +154,7 @@
     {#if !ready}
       <p class="empty-text">
         Add an AI provider in Settings first.
-        <button class="link" onclick={() => settings.show('ai')}>Settings › AI</button>
+        <button class="link" onclick={() => settingsWindow().show('ai')}>Settings › AI</button>
       </p>
     {/if}
 

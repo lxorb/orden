@@ -39,7 +39,7 @@
   import { said } from './lib/ui-kit/src/api'
   import { search } from './lib/search.svelte'
   import { prompt } from './lib/ui-kit/src/api'
-  import { settings } from './lib/settings.svelte'
+  import { settings } from './lib/settings/src/api'
   import { hiddenKinds } from './lib/gates/src/api'
   import {
     contextMenu,
@@ -84,7 +84,7 @@
   import StatusBar from './lib/StatusBar.svelte'
   import { paneCorners } from './lib/ui-kit/src/api'
   import Titlebar from './lib/Titlebar.svelte'
-  import { modes } from './lib/modes/src/api'
+  import { choices, modes } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/platform/src/api'
@@ -429,6 +429,7 @@
         settings,
         setup: gate,
         modes,
+        choices,
         shortcuts,
         theme,
         toolbar,

@@ -11,3 +11,5 @@ export {
   VIM_WORDS,
   WIDTHS,
 } from './modes.svelte'
+export { choices } from './choices.svelte'
+export { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'

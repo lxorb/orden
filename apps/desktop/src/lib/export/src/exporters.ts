@@ -1,2 +1,2 @@
-export { exportPandoc, pandocAvailable } from './render'
+export { exportPandoc } from './render'
 export { runExport } from './run'

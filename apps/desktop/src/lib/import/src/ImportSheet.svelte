@@ -3,7 +3,7 @@
 
   import { Facts } from '../../ui-kit/src/api'
   import { droppedFiles, pickFiles } from '../../picking'
-  import { settings } from '../../settings.svelte'
+  import { choices } from '../../modes/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { Sheet } from '../../ui-controls/src/api'
   import { segmented, viewport } from '../../ui-kit/src/api'
@@ -169,7 +169,7 @@
     </div>
 
     {#if importing.needsPandoc}
-      {#if settings.pandoc}
+      {#if choices.pandoc}
         <p class="note">Pandoc reads this one, from the file on your disk.</p>
         <button class="orden-button" onclick={() => void importing.readWithPandoc()}>
           Read it with pandoc

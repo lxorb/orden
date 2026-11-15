@@ -19,7 +19,7 @@ import {
   writtenPdf,
   zipOf,
 } from '../../files-out/src/api'
-import { DEFAULT_PAGE_SETUP } from '../../paper'
+import { DEFAULT_PAGE_SETUP } from '@orden/contracts'
 import { nameOf, invoke, isDesktop, isNative } from '../../platform/src/api'
 import { documentOf, picturesIn } from './document'
 import {

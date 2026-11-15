@@ -1,5 +1,5 @@
-import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from '../../paper'
-import { settings } from '../../settings.svelte'
+import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from '@orden/contracts'
+import { choices } from '../../modes/src/api'
 import type { Pane } from './fields'
 
 export function exportPane(): Pane {
@@ -16,8 +16,8 @@ export function exportPane(): Pane {
             label: 'Paper',
             hint: 'The paper size of a PDF or a print.',
             options: PAPER_SIZES.map((size) => ({ value: size, label: size })),
-            get: () => settings.page.paper,
-            set: (value) => settings.setPage({ paper: value as never }),
+            get: () => choices.page.paper,
+            set: (value) => choices.setPage({ paper: value as never }),
           },
           {
             kind: 'select',
@@ -25,8 +25,8 @@ export function exportPane(): Pane {
             label: 'Orientation',
             hint: 'Whether pages are upright or on their side.',
             options: ORIENTATIONS.map((one) => ({ value: one, label: one })),
-            get: () => settings.page.orientation,
-            set: (value) => settings.setPage({ orientation: value as never }),
+            get: () => choices.page.orientation,
+            set: (value) => choices.setPage({ orientation: value as never }),
           },
           {
             kind: 'text',
@@ -35,8 +35,8 @@ export function exportPane(): Pane {
             hint: 'The space around the edge of each page, such as 20mm or 1in.',
             placeholder: DEFAULT_PAGE_SETUP.margin,
             live: true,
-            get: () => settings.page.margin,
-            set: (value) => settings.setPage({ margin: value }),
+            get: () => choices.page.margin,
+            set: (value) => choices.setPage({ margin: value }),
           },
           {
             kind: 'text',
@@ -45,8 +45,8 @@ export function exportPane(): Pane {
             hint: 'Text at the top of every page; ${title}, ${date} and ${year} are filled in.',
             placeholder: '${title}',
             live: true,
-            get: () => settings.page.header,
-            set: (value) => settings.setPage({ header: value }),
+            get: () => choices.page.header,
+            set: (value) => choices.setPage({ header: value }),
           },
           {
             kind: 'text',
@@ -55,8 +55,8 @@ export function exportPane(): Pane {
             hint: 'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.',
             placeholder: '${date}',
             live: true,
-            get: () => settings.page.footer,
-            set: (value) => settings.setPage({ footer: value }),
+            get: () => choices.page.footer,
+            set: (value) => choices.setPage({ footer: value }),
           },
           {
             kind: 'select',
@@ -68,8 +68,8 @@ export function exportPane(): Pane {
               { value: 'dark', label: 'Dark' },
               { value: 'app', label: 'Match the app' },
             ],
-            get: () => settings.exportAppearance,
-            set: (value) => settings.setExportAppearance(value as never),
+            get: () => choices.exportAppearance,
+            set: (value) => choices.setExportAppearance(value as never),
           },
         ],
       },

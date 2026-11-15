@@ -1,19 +1,17 @@
-import type { SettingsSectionId } from '@orden/contracts'
+import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from '@orden/contracts'
 import { setSnippets } from '@orden/editor'
-import { connectors } from './connectors.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
-import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
 import {
+  invoke,
+  isDesktop,
+  isNative,
   isRecord,
   isString,
   keep,
   keepJson,
   stored,
   storedText,
-  invoke,
-  isNative,
-} from './platform/src/api'
-import { settingsTab } from './settings-tab'
+} from '../../platform/src/api'
 
 const PAGE_KEY = 'orden:page'
 const APPEARANCE_KEY = 'orden:export-appearance'
@@ -21,13 +19,7 @@ const NOTE_ID_KEY = 'orden:note-id'
 
 type ExportAppearance = 'light' | 'dark' | 'app'
 
-export type Section = SettingsSectionId
-
-class Settings {
-  section = $state<Section>('general')
-  listing = $state(true)
-  historyOpen = $state(false)
-
+class Choices {
   pandoc = $state(false)
 
   page = $state<PageSetup>({ ...DEFAULT_PAGE_SETUP })
@@ -36,11 +28,7 @@ class Settings {
 
   noteIdFormat = $state(DEFAULT_ID_FORMAT)
 
-  error = $state<string | null>(null)
-
   restore() {
-    connectors.restore()
-
     const saved = stored(PAGE_KEY)
     if (isRecord(saved)) {
       this.page = {
@@ -61,9 +49,11 @@ class Settings {
       this.exportAppearance = appearance
     }
 
-    void import('./export/src/api')
-      .then((one) => one.exporters())
-      .then(({ pandocAvailable }) => pandocAvailable().then((found) => (this.pandoc = found)))
+    if (isDesktop) {
+      void invoke<boolean>('has_pandoc')
+        .catch(() => false)
+        .then((found) => (this.pandoc = found))
+    }
 
     void this.loadSnippets()
   }
@@ -98,38 +88,6 @@ class Settings {
       setSnippets({})
     }
   }
-
-  at = $state<'access' | null>(null)
-
-  space = $state<string | null>(null)
-  landsOnField = $state(false)
-  asked = $state(0)
-
-  get open(): boolean {
-    return settingsTab.seen()
-  }
-
-  set open(on: boolean) {
-    if (on) settingsTab.reveal()
-    else settingsTab.hide()
-  }
-
-  show(section?: Section, space: string | null = null, landsOnField = false) {
-    if (!landsOnField) this.asked++
-    if (section === undefined && space === null && settingsTab.present()) {
-      settingsTab.reveal()
-      return
-    }
-    this.space = space
-    this.landsOnField = landsOnField
-    const moved = section === 'agents' || section === 'llm'
-    this.at = moved ? 'access' : null
-    this.section = moved ? 'ai' : (section ?? 'general')
-    this.listing = section === undefined
-    this.error = null
-    connectors.freshToken = null
-    settingsTab.reveal()
-  }
 }
 
-export const settings = new Settings()
+export const choices = new Choices()

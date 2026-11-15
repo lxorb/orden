@@ -22,7 +22,6 @@
     "apps/desktop/src/lib/counts.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/search.svelte.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
 }

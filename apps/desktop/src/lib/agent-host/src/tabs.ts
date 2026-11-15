@@ -5,11 +5,11 @@ import {
   portOf,
   tabKindLoaded,
   webPages,
+  type SettingsSectionId,
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
 import { seen } from './guarded'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
-import type { Section } from '../../settings.svelte'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '@orden/scan/web-address'
@@ -221,7 +221,7 @@ function openPage(call: Call, url: string): AgentAnswer {
   return answered(view.openPage(call, webOf(call, url)))
 }
 
-const SECTIONS: readonly Section[] = [
+const SECTIONS: readonly SettingsSectionId[] = [
   'general',
   'editor',
   'shortcuts',

@@ -1,4 +1,4 @@
-import { settings } from '../../../settings.svelte'
+import { settingsWindow } from '@orden/contracts'
 import { hostPickerDialog } from '../../../surfaces.svelte'
 import { workspace } from '../../../workspace/src/api'
 import { type Destination, groupHosts, type Host } from './hosts'
@@ -39,7 +39,7 @@ class HostPicker {
 
   manage(): void {
     this.dismiss()
-    settings.show('remote')
+    settingsWindow().show('remote')
   }
 
   dismiss(): void {

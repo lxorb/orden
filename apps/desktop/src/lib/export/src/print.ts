@@ -1,5 +1,5 @@
 import { pageSetupFor, paperInches } from '../../files-out/src/api'
-import { DEFAULT_PAGE_SETUP } from '../../paper'
+import { DEFAULT_PAGE_SETUP } from '@orden/contracts'
 import { openTarget, renderOptions } from './context'
 
 export async function printNote(): Promise<void> {

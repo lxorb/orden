@@ -21,9 +21,5 @@
     "workspace",
     "gates"
   ],
-  "pending": [
-    "apps/desktop/src/lib/Sweep.svelte",
-    "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/settings.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/Sweep.svelte", "apps/desktop/src/lib/new-tab.ts"]
 }

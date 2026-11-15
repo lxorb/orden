@@ -20,7 +20,7 @@ import {
 import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
 import { paletteCss } from '../../highlight/src/api'
 import { mathCss } from './math-fonts'
-import { DEFAULT_PAGE_SETUP, type PageSetup } from '../../paper'
+import { DEFAULT_PAGE_SETUP, type PageSetup } from '@orden/contracts'
 import type { Scheme } from '../../theme/src/api'
 import { diskPathOf } from '../../web-backend/src/api'
 
@@ -136,11 +136,6 @@ export async function renderNote(
   if (pictures) return inlinePictures(html, pictures)
 
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
-}
-
-export async function pandocAvailable(): Promise<boolean> {
-  if (!isDesktop) return false
-  return invoke<boolean>('has_pandoc').catch(() => false)
 }
 
 export async function exportPandoc(

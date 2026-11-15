@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { pageSetupFor, paperTwips } from '../../files-out/src/api'
-import { DEFAULT_PAGE_SETUP, type PageSetup } from '../../paper'
+import { DEFAULT_PAGE_SETUP, type PageSetup } from '@orden/contracts'
 import { documentOf } from './document'
 import { toDocx } from './docx'
 import { toRtf } from './rtf'

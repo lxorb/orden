@@ -61,7 +61,7 @@ vi.mock('../../file-writes/src/api', async (original) => ({
   },
 }))
 
-const { settings } = await import('../../settings.svelte')
+const { settings } = await import('./window.svelte')
 const { settleUp, stillWriting } = await import('../../parting/src/api')
 disk.tabs = () => settings.section
 const SpacePane = (await import('./SpacePane.svelte')).default

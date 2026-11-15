@@ -1,3 +1,4 @@
+import { settingsWindow } from '@orden/contracts'
 import { isEffort } from '../chat/effort'
 import type { Effort, Thread } from '../../../ai-providers/src/api'
 import { sign, doctor, status, usage } from './account'
@@ -49,11 +50,6 @@ export function effortIn(args: string): Effort | 'next' {
 function onOff(args: string): boolean | undefined {
   const word = args.trim().toLowerCase()
   return word === 'on' ? true : word === 'off' ? false : undefined
-}
-
-async function settingsAt(section: 'ai' | 'agents' | 'shortcuts'): Promise<void> {
-  const { settings } = await import('../../../settings.svelte')
-  settings.show(section)
 }
 
 type Run = (context: CommandContext, host: Host) => void | Promise<void>
@@ -109,7 +105,10 @@ const RUNS: Record<string, Run> = {
   },
   focus: ({ panel }) => panel.toggleFolded(),
   help: ({ panel }) => {
-    if (panel.text === undefined) return settingsAt('shortcuts')
+    if (panel.text === undefined) {
+      settingsWindow().show('shortcuts')
+      return
+    }
     panel.text = '/'
   },
 
@@ -137,7 +136,7 @@ const RUNS: Record<string, Run> = {
     if (args) panel.send(args)
   },
   agents: ({ args, thread }, host) => agents(host, thread, args),
-  permissions: () => settingsAt('agents'),
+  permissions: () => settingsWindow().show('agents'),
   goal: (context, host) => {
     const thread = threadOf(context)
     if (thread) goal(host, thread, context.args)
@@ -168,7 +167,7 @@ const RUNS: Record<string, Run> = {
   memory: ({ args, thread }, host) => memory(host, thread, args),
   init: ({ thread }, host) => init(host, thread),
   skills: ({ args, thread }, host) => skills(host, thread, args),
-  mcp: () => settingsAt('agents'),
+  mcp: () => settingsWindow().show('agents'),
 
   shorter: () => void rewrite('shorter'),
   longer: () => void rewrite('longer'),
@@ -199,8 +198,8 @@ const RUNS: Record<string, Run> = {
   login: (_context, host) => sign(host.panel.provider ?? null, false),
   logout: (_context, host) => sign(host.panel.provider ?? null, true),
   doctor: (context, host) => report(host, context, doctor(host.panel.provider ?? null)),
-  config: () => settingsAt('ai'),
-  keybindings: () => settingsAt('shortcuts'),
+  config: () => settingsWindow().show('ai'),
+  keybindings: () => settingsWindow().show('shortcuts'),
   theme: async () => (await import('../../../theme-looks/src/api')).pickTheme(),
   vim: async () => {
     const { modes } = await import('../../../modes/src/api')

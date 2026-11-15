@@ -1,4 +1,5 @@
-import type { CommandExtension } from '@orden/contracts'
+import { choices } from '../../modes/src/api'
+import { type CommandExtension, settingsWindow } from '@orden/contracts'
 import {
   EXPORT_FORMATS,
   type Exportable,
@@ -11,7 +12,6 @@ import {
 } from '../../export-formats/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { busy } from '../../ui-kit/src/api'
-import { settings } from '../../settings.svelte'
 import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 import { frontShut, openOut, openTarget, renderOptions } from './context'
@@ -93,11 +93,11 @@ export function exportCommands(): Row[] {
     commands.push({
       id: 'page-setup',
       label: 'Page setup for export',
-      run: () => settings.show('export'),
+      run: () => settingsWindow().show('export'),
     })
   }
 
-  if (!settings.pandoc || !asNote) return shut(commands)
+  if (!choices.pandoc || !asNote) return shut(commands)
 
   for (const format of PANDOC_FORMATS) {
     commands.push({

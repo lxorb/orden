@@ -42,16 +42,14 @@
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
+    "apps/desktop/src/lib/connectors.svelte.ts",
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/kept-scroll.ts",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/kind-words.ts",
     "apps/desktop/src/lib/new-kinds.ts",
-    "apps/desktop/src/lib/note-id.ts",
     "apps/desktop/src/lib/panel-marks.ts",
-    "apps/desktop/src/lib/paper.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

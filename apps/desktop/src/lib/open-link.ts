@@ -1,3 +1,4 @@
+import { settingsWindow } from '@orden/contracts'
 import type { LinkPress, NoteJump, NoteOpener } from '@orden/editor'
 import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
@@ -40,7 +41,7 @@ export function settingsPane(href: string): 'import' | null {
 export function followHref(href: string, press: LinkPress): void {
   const pane = settingsPane(href)
   if (pane) {
-    void import('./settings.svelte').then(({ settings }) => settings.show(pane))
+    settingsWindow().show(pane)
     return
   }
   const ask = tabAsk(press, true)

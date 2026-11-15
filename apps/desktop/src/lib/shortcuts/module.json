@@ -24,7 +24,6 @@
     "apps/desktop/src/lib/pane-moves.ts",
     "apps/desktop/src/lib/refresh.ts",
     "apps/desktop/src/lib/search.svelte.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts"

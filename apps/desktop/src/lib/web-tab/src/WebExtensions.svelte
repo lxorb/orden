@@ -6,7 +6,7 @@
   import Settings from 'lucide/dist/esm/icons/settings.mjs'
   import { dur, fly } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import ExtensionGaps from './ExtensionGaps.svelte'
   import { extensions, type Extension } from './extensions.svelte'
 
@@ -111,7 +111,7 @@
     class="orden-row manage"
     onclick={() => {
       onclose()
-      settings.show('general')
+      settingsWindow().show('general')
     }}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">

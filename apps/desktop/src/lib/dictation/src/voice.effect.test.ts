@@ -70,7 +70,6 @@ vi.mock('../../platform/src/stored', () => ({
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),
 }))
-vi.mock('../../settings.svelte', () => ({ settings: { error: null } }))
 vi.mock('../../shortcuts/src/api', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) =>

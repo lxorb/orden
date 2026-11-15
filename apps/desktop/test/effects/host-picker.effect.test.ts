@@ -1,3 +1,4 @@
+import { providePort } from '@orden/contracts'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -54,7 +55,8 @@ const { hostPicker } = await import('../../src/lib/terminal/src/remote/picker.sv
 const { remote } = await import('../../src/lib/terminal/src/remote/hosts.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { readSpec } = await import('../../src/lib/terminal/src/spec')
-const { settings } = await import('../../src/lib/settings.svelte')
+const { settings } = await import('../../src/lib/settings/src/api')
+providePort('settings.window', settings)
 
 const NOW = Date.now()
 

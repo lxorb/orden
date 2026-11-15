@@ -1,3 +1,4 @@
+import { noteId } from '../../modes/src/api'
 import {
   type Entry,
   type PickedFile,
@@ -10,7 +11,6 @@ import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/
 import { account, arriving } from '../../accounts/src/api'
 import { seed } from '../../web-backend/src/api'
 import { appsOn, basesOn, hiddenKinds } from '../../gates/src/api'
-import { settingsTab } from '../../settings-tab'
 import { keptAway } from '../../away/src/api'
 import {
   blockIds,
@@ -63,7 +63,6 @@ import {
   markPainted,
 } from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
-import { noteId } from '../../note-id'
 import { busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'
 import { isPlugin } from '../../plugin'
@@ -4182,11 +4181,6 @@ function firstOnes(tabs: (Tab | null)[], ones: Set<string>): (Tab | null)[] {
 }
 
 export const workspace = new Workspace()
-
-settingsTab.reveal = () => workspace.openSettings()
-settingsTab.hide = () => workspace.closeSettings()
-settingsTab.seen = () => workspace.settingsShown
-settingsTab.present = () => workspace.settingsTab !== null
 
 oweTo((note) => workspace.owedWords(note))
 

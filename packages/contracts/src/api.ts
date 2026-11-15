@@ -195,6 +195,7 @@ export {
   portOf,
   portProvided,
   providePort,
+  settingsWindow,
   syncStore,
   webPages,
   whenPortProvided,
@@ -275,7 +276,9 @@ export {
   type StopAskingPort,
   type StopReason,
 } from './quitting'
+export type { SettingsPorts, SettingsWindowPort } from './settings'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
+export { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, type Paper, PAPER_SIZES } from './page'
 export type { VoicePort, VoicePorts, VoiceRecording } from './voice'
 export type {
   SyncAccountPort,

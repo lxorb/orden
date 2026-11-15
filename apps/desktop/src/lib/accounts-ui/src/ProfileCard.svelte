@@ -4,7 +4,7 @@
   import { localDate } from '../../platform/src/api'
   import { fly, LAYER } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { openExternal } from '../../platform/src/api'
   import Avatar from './Avatar.svelte'
   import { card } from './card.svelte'
@@ -127,7 +127,7 @@
           class="orden-chip edit"
           onclick={() => {
             close()
-            settings.show('account')
+            settingsWindow().show('account')
           }}>Edit profile</button
         >
       {/if}

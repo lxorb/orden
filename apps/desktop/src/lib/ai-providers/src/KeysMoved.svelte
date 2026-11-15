@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
   import { told } from '../../ui-kit/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { keysMoved } from './keys-moved.svelte'
 
   const words = $derived(
@@ -23,7 +23,7 @@
         class="link"
         onclick={() => {
           keysMoved.dismiss()
-          settings.show('ai')
+          settingsWindow().show('ai')
         }}
       >
         Settings › AI

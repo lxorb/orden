@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from '../../ui-controls/src/api'
   import { region } from '../../platform/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settings } from './window.svelte'
   import { trash, type TrashItem } from '../../trash/src/api'
   import { rowName } from '../../platform/src/api'
   import { dur, slide } from '../../platform/src/api'

@@ -25,9 +25,9 @@ vi.mock('../../files-out/src/api', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
+vi.mock('../../modes/src/api', () => ({ choices: { exportAppearance: 'light' } }))
 
-const { settings } = await import('../../settings.svelte')
+const { choices } = await import('../../modes/src/api')
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: (command: string, args?: { path?: string }) =>
@@ -158,7 +158,7 @@ describe('the colours of a picture leaving the app', () => {
   }
 
   test('are the ones Appearance chooses, whichever side the window is on', async () => {
-    settings.exportAppearance = 'light'
+    choices.exportAppearance = 'light'
     const svg = await saved()
 
     expect(svg).toContain('fill="#fafbfc"')
@@ -166,7 +166,7 @@ describe('the colours of a picture leaving the app', () => {
   })
 
   test('are the window’s where Appearance says as the app is', async () => {
-    settings.exportAppearance = 'app'
+    choices.exportAppearance = 'app'
 
     expect(await saved()).toContain('fill="#0e1013"')
   })

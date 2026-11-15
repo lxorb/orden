@@ -1,4 +1,10 @@
-import { type AgentHeard, providePort, runAgentVerb, webPages } from '@orden/contracts'
+import {
+  type AgentHeard,
+  providePort,
+  runAgentVerb,
+  settingsWindow,
+  webPages,
+} from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller } from '../src/lib/automation/src/api'
 
@@ -169,9 +175,11 @@ providePort('web.pages', { ...webPages(), addressOf: () => null })
 vi.mock('../src/lib/views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../src/lib/sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../src/lib/link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
-vi.mock('../src/lib/modes/src/api', () => ({ modes: { pagesPaper: 'a4' } }))
-const settings = { show: vi.fn() }
-vi.mock('../src/lib/settings.svelte', () => ({ settings }))
+vi.mock('../src/lib/modes/src/api', () => ({
+  modes: { pagesPaper: 'a4' },
+  choices: { page: undefined },
+}))
+const settings = { ...settingsWindow(), show: vi.fn() }
 
 const openDocument = vi.fn((_path: string) => Promise.reject(new Error('no PDF here')))
 vi.mock('../src/lib/pdf/src/api', async (importOriginal) => ({
@@ -373,6 +381,7 @@ const madeOnline = vi.fn((_beside: string | null, _activate: boolean) => {
 vi.mock('../src/lib/terminal/src/online/open', () => ({ madeOnline }))
 
 await import('./agent-verbs-wired')
+providePort('settings.window', settings)
 
 const EVERY = ['context', 'notes.read', 'notes.write', 'tree', 'workspace', 'terminal']
 

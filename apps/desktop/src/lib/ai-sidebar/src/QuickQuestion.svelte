@@ -17,7 +17,7 @@
   import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
   import { overlays } from '../../ui-kit/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { grow } from './grow'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
@@ -232,7 +232,7 @@
           data-lands
           onclick={() => {
             quick.close()
-            settings.show('ai')
+            settingsWindow().show('ai')
           }}>Settings › AI</button
         >
       </p>

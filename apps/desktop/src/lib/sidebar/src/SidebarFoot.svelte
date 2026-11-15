@@ -4,19 +4,18 @@
   import { AccountBadge } from '../../accounts/src/api'
   import { DOWNLOAD_URL } from '../../links'
   import { dur, fade } from '../../platform/src/api'
-  import { settings } from '../../settings.svelte'
   import { showFeedback } from '../../surfaces.svelte'
   import { isNative, openExternal } from '../../platform/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { SCRATCHPAD_MARK } from '../../panel-marks'
-  import { sidebarPart } from '@orden/contracts'
+  import { sidebarPart, settingsWindow } from '@orden/contracts'
 
   const {
     theming = true,
     scratch = true,
     onwho = showAccount,
-    onsettings = () => settings.show(),
+    onsettings = () => settingsWindow().show(),
   }: {
     theming?: boolean
     scratch?: boolean

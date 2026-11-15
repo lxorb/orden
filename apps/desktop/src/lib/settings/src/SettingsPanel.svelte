@@ -27,7 +27,8 @@
   import { holdScroll } from '../../kept-scroll'
   import { whileHere } from '../../ui-kit/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
-  import { settings, type Section } from '../../settings.svelte'
+  import type { SettingsSectionId } from '@orden/contracts'
+  import { settings } from './window.svelte'
   import { glassesOn } from '../../gates/src/api'
   import {
     CATEGORIES,
@@ -70,7 +71,7 @@
   const GROUPS = $derived(sectionGroups())
 
   const SECTIONS = $derived(GROUPS.flat())
-  const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
+  const titleOf = (id: SettingsSectionId) => SECTIONS.find((one) => one.id === id)?.label ?? ''
 
   const SIDE_BY_SIDE = 560
 
@@ -161,7 +162,7 @@
     return () => cancelAnimationFrame(frame)
   })
 
-  function go(section: Section) {
+  function go(section: SettingsSectionId) {
     query = ''
     settings.section = section
     settings.listing = false
@@ -701,7 +702,7 @@
   {@render parts('general')}
 {/snippet}
 
-{#snippet parts(section: Section)}
+{#snippet parts(section: SettingsSectionId)}
   {#each settingsPartsIn(section) as part, index (index)}
     {#if part.shown() && (detailed?.section !== part.section || detailed === part)}
       {#if part.title}<h3>{part.title}</h3>{/if}

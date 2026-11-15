@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { whenLoaded } from '@orden/contracts'
+  import { whenLoaded, settingsWindow } from '@orden/contracts'
   import { dropOver } from '../../drag-paths'
   import { onMount, untrack } from 'svelte'
   import { agentMarks } from '../../agent-marks.svelte'
@@ -13,7 +13,6 @@
   import { startup } from '../../launch/src/api'
   import { tabAsk, type TabAsk } from '../../new-tab'
   import { overlays } from '../../ui-kit/src/api'
-  import { settings } from '../../settings.svelte'
   import { hiddenKinds, passOn } from '../../gates/src/api'
   import { shareThisFile } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
@@ -579,7 +578,7 @@
     share: () => {
       if (tab.path !== null) void shareThisFile(tab.path)
     },
-    settings: () => settings.show(),
+    settings: () => settingsWindow().show(),
   }
 </script>
 

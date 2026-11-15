@@ -3,7 +3,7 @@
   import { account } from '../../accounts/src/api'
   import { bridge } from './bridge.svelte'
   import { Frame, MOVE } from './frame.svelte'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { viewport } from '../../ui-kit/src/api'
   import { views } from '../../views.svelte'
   import { workspace } from '../../workspace/src/api'
@@ -29,7 +29,7 @@
 
   let overlaid = $state(false)
   const covered = $derived(
-    overlaid || settings.open || account.open || (viewport.drawer && !!workspace.panel),
+    overlaid || settingsWindow().open || account.open || (viewport.drawer && !!workspace.panel),
   )
 
   interface Region {

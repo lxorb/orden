@@ -4,11 +4,14 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { overlays } from '../../src/lib/ui-kit/src/overlays'
 import SidebarFoot from '../../src/lib/sidebar/src/SidebarFoot.svelte'
-import { settings } from '../../src/lib/settings.svelte'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
 import { theme } from '../../src/lib/theme/src/theme.svelte'
 import { store } from '../../src/lib/theme-looks/src/gallery/store.svelte'
 import { picking, pickTheme } from '../../src/lib/theme-looks/src/picker/picking.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
+
+providePort('settings.window', settings)
 import '../../src/lib/theme-ports'
 
 await Promise.all([

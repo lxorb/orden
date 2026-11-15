@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { settings } from './settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import { readableSize, usage } from './usage.svelte'
   import { dur, fly } from './platform/src/api'
   import { told } from './ui-kit/src/api'
@@ -22,7 +22,7 @@
         class="link"
         onclick={() => {
           usage.dismissed = true
-          settings.show('account')
+          settingsWindow().show('account')
         }}
       >
         Manage storage

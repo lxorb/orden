@@ -142,8 +142,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 await import('../../workspace-ports')
+const { providePort } = await import('@orden/contracts')
+providePort('settings.window', (await import('../../settings/src/api')).settings)
 const { panesOf } = await import('../../session/src/api')
-const { noteId } = await import('../../note-id')
+const { noteId } = await import('../../modes/src/api')
 const { answeredCase } = await import('../../platform/src/space-paths')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { pages } = await import('../../web-tab/src/pages.svelte')
@@ -5180,7 +5182,7 @@ describe('Settings', () => {
   })
 
   test('opens as a tab of its own, not a sheet over the app', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     settings.show()
 
     const [tab] = workspace.tabs
@@ -5192,7 +5194,7 @@ describe('Settings', () => {
   })
 
   test('is one tab however often it is asked for, and asking brings it to the front', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     settings.show()
     const first = workspace.active?.id
     await workspace.open('/space/a.md')
@@ -5210,7 +5212,7 @@ describe('Settings', () => {
   })
 
   test('a page asked for is the one shown, and the button keeps the page it was left on', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     settings.show('appearance')
     expect(settings.section).toBe('appearance')
     expect(settings.listing).toBe(false)
@@ -5226,7 +5228,7 @@ describe('Settings', () => {
 
   test('asked for before the tabs are back, it opens once they are', async () => {
     vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     workspace.restored = false
     settings.show('appearance')
     expect(workspace.tabs).toHaveLength(0)
@@ -5238,7 +5240,7 @@ describe('Settings', () => {
   })
 
   test('on a phone it stands over the note it was opened from, and closing it brings that note back', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     const was = viewport.device
     viewport.device = 'phone'
     try {
@@ -5254,7 +5256,7 @@ describe('Settings', () => {
   })
 
   test('closing it leaves no tab, and it is no kind the new tab offers', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     const { newKinds } = await import('../../new-kinds')
     settings.show()
     settings.open = false
@@ -5289,7 +5291,7 @@ describe('a space and its AGENTS.md', () => {
       entry('/space/a.md'),
       entry('/space/sub', [entry(NESTED)]),
     ])
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     workspace.restored = true
     settings.open = false
     sent.length = 0
@@ -5345,7 +5347,7 @@ describe('a space and its AGENTS.md', () => {
   })
 
   test('opened from anywhere, it is the field and no tab', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     await workspace.open(AGENTS)
     expect(workspace.tabs.map((one) => one.path)).not.toContain(AGENTS)
     expect(settings.open).toBe(true)
@@ -5354,7 +5356,7 @@ describe('a space and its AGENTS.md', () => {
   })
 
   test('opened behind the reader, it moves nothing', async () => {
-    const { settings } = await import('../../settings.svelte')
+    const { settings } = await import('../../settings/src/api')
     await workspace.open(AGENTS, { activate: false })
     expect(workspace.tabs.map((one) => one.path)).not.toContain(AGENTS)
     expect(settings.open).toBe(false)
@@ -5428,7 +5430,7 @@ describe('a space and its AGENTS.md', () => {
     })
 
     test('a root agents.md is the one file, so it has no row and is the field', async () => {
-      const { settings } = await import('../../settings.svelte')
+      const { settings } = await import('../../settings/src/api')
       expect(workspace.instructionsAt(LOWER)).toBe(true)
       expect(walked(workspace.shownTree)).not.toContain(LOWER)
       expect(workspace.files.map((one) => one.path)).not.toContain(LOWER)

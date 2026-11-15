@@ -11,7 +11,8 @@
     "platform",
     "reading",
     "ui-kit",
-    "link-index"
+    "link-index",
+    "modes"
   ],
-  "pending": ["apps/desktop/src/lib/assets.ts", "apps/desktop/src/lib/settings.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/assets.ts"]
 }

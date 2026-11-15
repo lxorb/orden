@@ -1,3 +1,4 @@
+import { settingsWindow } from '@orden/contracts'
 import { localDate, invoke } from '../../../platform/src/api'
 import { isLocal, KIND_NAMES, type Provider } from '../../../ai-providers/src/api'
 import type { Thread } from '../../../ai-providers/src/api'
@@ -91,9 +92,8 @@ export async function doctor(provider: Provider | null): Promise<string> {
 }
 
 export async function sign(provider: Provider | null, out: boolean): Promise<void> {
-  const { settings } = await import('../../../settings.svelte')
   if (!provider || (!isLocal(provider.kind) && provider.kind !== 'chatgpt')) {
-    settings.show('ai')
+    settingsWindow().show('ai')
     return
   }
   const plans = await plansOf()
@@ -106,7 +106,7 @@ export async function sign(provider: Provider | null, out: boolean): Promise<voi
   const known = plans.of(account.id)
   const plan = known.program ? known : await plans.check(account)
   if (!plan.program) {
-    settings.show('ai')
+    settingsWindow().show('ai')
     return
   }
   const { signIn, signOut } = await (await import('../../../ai-providers/src/api')).localCli()

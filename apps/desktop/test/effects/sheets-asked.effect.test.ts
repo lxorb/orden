@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte'
 import { beforeEach, expect, test } from 'vitest'
-import { settings } from '../../src/lib/settings.svelte'
+import { settings } from '../../src/lib/settings/src/api'
 import { reactive, root, watch } from './runes.svelte'
 
 function stores() {

@@ -2,8 +2,7 @@ import { protection } from '../../protect/src/api'
 import type { HtmlOptions } from './render'
 import { imagePath } from '../../platform/src/api'
 import { links } from '../../link-index/src/api'
-import { modes } from '../../modes/src/api'
-import { settings } from '../../settings.svelte'
+import { modes, choices } from '../../modes/src/api'
 import { trustsHtmlIn } from '../../sharing/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
 import { invoke, isNative } from '../../platform/src/api'
@@ -46,7 +45,7 @@ export function openOut() {
 
 async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
   const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
-  if (settings.exportAppearance !== 'app') return { ...chosen, scheme: settings.exportAppearance }
+  if (choices.exportAppearance !== 'app') return { ...chosen, scheme: choices.exportAppearance }
 
   const file = theme.active.path
   const sheets = await Promise.all([
@@ -68,7 +67,7 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
 export async function renderOptions(target: Target): Promise<RunOptions> {
   await links.spaceRead(target.path)
   return {
-    page: settings.page,
+    page: choices.page,
     resolveImage: (src: string) => imagePath(src, target.path, target.source) ?? src,
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),

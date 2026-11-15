@@ -5,7 +5,10 @@ import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
 import { showEditorMenu } from '../../src/lib/editor-menu'
 import { menu } from '../../src/lib/menu.svelte'
 import { modes } from '../../src/lib/modes/src/api'
-import { settings } from '../../src/lib/settings.svelte'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
+
+providePort('settings.window', settings)
 
 Element.prototype.animate = () =>
   ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation

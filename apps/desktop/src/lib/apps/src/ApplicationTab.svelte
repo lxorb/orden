@@ -16,7 +16,7 @@
   import { onMount, untrack } from 'svelte'
   import { account } from '../../accounts/src/api'
   import { heldLine } from '../../online-link/src/api'
-  import { settings } from '../../settings.svelte'
+  import { settingsWindow } from '@orden/contracts'
   import Sweep from '../../Sweep.svelte'
   import type { Tab } from '../../documents/src/api'
   import { appSessionOf, type Unread } from './session.svelte'
@@ -450,7 +450,7 @@
       <button type="button" class="orden-button" onclick={() => account.ask()}>Sign in</button>
     {:else if again}
       {#if status.is === 'outside'}
-        <button type="button" class="orden-button" onclick={() => settings.show('sync')}
+        <button type="button" class="orden-button" onclick={() => settingsWindow().show('sync')}
           >Sync settings</button
         >
       {/if}

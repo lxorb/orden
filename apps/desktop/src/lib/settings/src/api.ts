@@ -1,4 +1,5 @@
 import './shell-parts'
+export { settings } from './window.svelte'
 export { clipboardSharing } from './apps-clipboard.svelte'
 export type { Field } from './fields'
 

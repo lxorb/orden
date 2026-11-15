@@ -12,7 +12,7 @@ const { appCommands } = await import('../../../commands/src/api')
 const { exportCommands } = await import('../../../export/src/api')
 const { appMenu } = await import('../../../app-menu')
 const { openTarget } = await import('../../../export/src/context')
-const { settings } = await import('../../../settings.svelte')
+const { choices } = await import('../../../modes/src/api')
 const { menu } = await import('../../../menu.svelte')
 const { DIVIDER } = await import('../../../ui-kit/src/menu-item')
 const History = (await (await import('../../../history/src/api')).loadHistory()).default
@@ -41,7 +41,7 @@ afterEach(() => {
   menu.hide()
   unlocks.lockAll()
   workspace.protection.set(ROOT, NOTE, null)
-  settings.pandoc = false
+  choices.pandoc = false
 })
 
 const rows = (groups: ReturnType<typeof appMenu>): MenuItem[] =>
@@ -50,7 +50,7 @@ const rows = (groups: ReturnType<typeof appMenu>): MenuItem[] =>
 describe('a shut note in front', () => {
   test('offers no export, with Pandoc or without', () => {
     expect(exportCommands().filter((one) => !one.disabled)).toEqual([])
-    settings.pandoc = true
+    choices.pandoc = true
     expect(exportCommands().filter((one) => !one.disabled)).toEqual([])
   })
 
