@@ -114,4 +114,11 @@ describe('the menu of a task card', () => {
     const id = link?.slice(link.indexOf('^') + 1, -2) ?? ''
     expect(notes.get(PATH)).toContain(`- [ ] buy milk ^${id}\n`)
   })
+
+  test('Duplicate leaves out the task id, so the copy is not a second task of that id', async () => {
+    const note = '- [ ] ship 🆔 abc123 📅 2026-11-20\r\n'
+    notes.set(PATH, note)
+    await pick('Duplicate', taskRow(note, 'ship'))
+    expect(notes.get(PATH)).toBe(`${note}- [ ] ship 📅 2026-11-20\r\n`)
+  })
 })

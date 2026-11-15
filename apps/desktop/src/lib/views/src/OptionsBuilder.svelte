@@ -68,7 +68,7 @@
     if (!base || !id) return
     const next = words.trim().replace(/\s+/g, '-')
     if (next === id.prefix) return
-    kit.change((one) => setBaseOrden(one, 'id', { property: id.property, prefix: next }))
+    kit.change((one) => setBaseOrden(one, 'id', { ...id, prefix: next }))
     const own = live.rows.filter((row) => inBase(base, row, live.context))
     void writeEach(reprefixed(own, id.property, id.prefix, next))
   }

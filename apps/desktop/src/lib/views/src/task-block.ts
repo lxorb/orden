@@ -1,4 +1,6 @@
 import { lineOfTask } from '@orden/bases'
+import { changedTask } from '@orden/markdown/task-edits'
+import { readTask } from '@orden/markdown/task-line'
 
 interface Anchor {
   line: number
@@ -26,6 +28,13 @@ function blockAt(lines: readonly string[], index: number): [number, number] {
   return [index, end]
 }
 
+function copiedLine(line: string): string {
+  const unblocked = line.replace(/[ \t]\^[\w-]+[ \t]*(\r?)$/, '$1')
+  const end = unblocked.endsWith('\r') ? '\r' : ''
+  const text = end ? unblocked.slice(0, -1) : unblocked
+  return readTask(text)?.id === undefined ? unblocked : `${changedTask(text, { id: null })}${end}`
+}
+
 export function withoutTask(text: string, anchor: Anchor): string | null {
   const index = lineAt(text, anchor)
   if (index === null) return null
@@ -40,7 +49,7 @@ export function duplicatedTask(text: string, anchor: Anchor): string | null {
   if (index === null) return null
   const lines = text.split('\n')
   const [from, to] = blockAt(lines, index)
-  const copy = lines.slice(from, to).map((one) => one.replace(/[ \t]\^[\w-]+[ \t]*(\r?)$/, '$1'))
+  const copy = lines.slice(from, to).map(copiedLine)
   lines.splice(to, 0, ...copy)
   return lines.join('\n')
 }

@@ -60,8 +60,8 @@
 
   function saveTitle() {
     const next = title.trim()
-    if (next === '') title = todo.title
-    else if (next !== todo.title) void change({ title: next })
+    title = next === '' ? todo.title : next
+    if (next !== '' && next !== todo.title) void change({ title: next })
   }
 
   function saveDescription() {

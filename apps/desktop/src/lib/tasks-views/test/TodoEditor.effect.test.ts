@@ -86,4 +86,18 @@ describe('the todo editor, while the todo changes elsewhere', () => {
     flushSync()
     expect(onchange).toHaveBeenCalledWith({ title: 'Call Ann today' })
   })
+
+  test('follows a change elsewhere after a blur that only trimmed what was typed', () => {
+    const { props, onchange, field } = editor(todo({}))
+    const title = field('Title')
+    title.focus()
+    title.value = 'Call Ann '
+    title.dispatchEvent(new Event('input', { bubbles: true }))
+    title.blur()
+    flushSync()
+    props.todo = todo({ title: 'Call Ann at noon' })
+    flushSync()
+    expect(title.value).toBe('Call Ann at noon')
+    expect(onchange).not.toHaveBeenCalled()
+  })
 })
