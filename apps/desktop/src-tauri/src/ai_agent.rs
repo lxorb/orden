@@ -223,6 +223,30 @@ pub async fn ai_agent_call(
     .await
 }
 
+#[tauri::command]
+pub async fn ai_agent_moved(
+    webview: tauri::Webview,
+    app: AppHandle,
+    from: String,
+    to: String,
+) -> Result<bool, String> {
+    crate::lane::off_the_runtime(move || -> Result<bool, String> {
+        crate::agents::from_the_app(&webview)?;
+        let target = grant_id(&to)?;
+        let sources = [grant_id(&from)?, grant_id_from(BUILT_IN_BEFORE, &from)?];
+        let moved = state(&app).grants.carry(&app, &sources, &target)?;
+        if moved {
+            for one in lent_now().iter_mut() {
+                if sources.contains(&one.grant) {
+                    one.grant.clone_from(&target);
+                }
+            }
+        }
+        Ok(moved)
+    })
+    .await
+}
+
 const CONTEXT: &str = "get_context";
 
 #[tauri::command]

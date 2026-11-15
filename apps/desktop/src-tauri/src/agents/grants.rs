@@ -304,6 +304,30 @@ fn built_in_id(grant: &Grant, taken: &[String]) -> Option<String> {
     (grant.built_in && !taken.contains(&id)).then_some(id)
 }
 
+fn carried(kept: &mut Vec<Kept>, from: &[String], to: &str) -> bool {
+    let Some(source) = from.iter().find_map(|id| {
+        kept.iter()
+            .find(|one| one.grant.built_in && one.grant.id == *id)
+            .map(|one| one.grant.id.clone())
+    }) else {
+        return false;
+    };
+    if kept
+        .iter()
+        .any(|one| one.grant.id == to && !one.grant.built_in)
+    {
+        return false;
+    }
+    kept.retain(|one| {
+        one.grant.id == source
+            || !(one.grant.built_in && (one.grant.id == to || from.contains(&one.grant.id)))
+    });
+    for one in kept.iter_mut().filter(|one| one.grant.id == source) {
+        one.grant.id = to.to_string();
+    }
+    true
+}
+
 fn with_helpers(grant: &mut Grant) {
     if grant.holds(Scope::Context) && !grant.holds(Scope::Agents) {
         grant.scopes.push(Scope::Agents);
@@ -436,6 +460,10 @@ impl Grants {
             *kept = next;
             Ok(kept.iter().map(|one| one.grant.clone()).collect())
         })
+    }
+
+    pub fn carry(&self, app: &AppHandle, from: &[String], to: &str) -> Result<bool, String> {
+        self.changed(app, |kept| Ok(carried(kept, from, to)))
     }
 
     pub fn change(
@@ -908,6 +936,48 @@ mod tests {
         assert_eq!(one.len(), TOKEN_BYTES * 2);
         assert!(one.bytes().all(|byte| byte.is_ascii_hexdigit()));
         assert_ne!(one, two);
+    }
+
+    #[test]
+    fn the_rights_of_an_account_moved_to_a_fresh_id_go_with_it_and_its_old_id_starts_afresh() {
+        let built = |id: &str, token: &str| {
+            let mut one = kept(id, token);
+            one.grant.built_in = true;
+            one
+        };
+        let mut narrow = built("orden-openai", "mine");
+        narrow.grant.spaces = Spaces::Named(vec!["work".into()]);
+        narrow.grant.mode = Mode::Autonomous;
+        let mut all = vec![
+            built("nib-openai", "older"),
+            narrow,
+            built("orden-openai-2", "minted"),
+            kept("codex", "theirs"),
+        ];
+        let from = ["orden-openai".to_string(), "nib-openai".to_string()];
+
+        assert!(carried(&mut all, &from, "orden-openai-2"));
+
+        let ids: Vec<&str> = all.iter().map(|one| one.grant.id.as_str()).collect();
+        assert_eq!(ids, ["orden-openai-2", "codex"]);
+        let moved = &all[0];
+        assert_eq!(moved.grant.spaces, Spaces::Named(vec!["work".into()]));
+        assert_eq!(moved.grant.mode, Mode::Autonomous);
+        assert_eq!(moved.token, hashed("mine"));
+    }
+
+    #[test]
+    fn nothing_is_carried_from_a_grant_that_is_not_built_in_or_onto_one_that_is_not() {
+        let mut theirs = vec![kept("orden-openai", "a")];
+        let from = ["orden-openai".to_string()];
+        assert!(!carried(&mut theirs, &from, "orden-openai-2"));
+        assert_eq!(theirs[0].grant.id, "orden-openai");
+
+        let mut built = kept("orden-openai", "a");
+        built.grant.built_in = true;
+        let mut clash = vec![built, kept("orden-openai-2", "b")];
+        assert!(!carried(&mut clash, &from, "orden-openai-2"));
+        assert_eq!(clash.len(), 2);
     }
 
     #[test]

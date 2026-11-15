@@ -8,6 +8,7 @@ import {
   log,
   parsed,
   storedText,
+  invoke,
   isDesktop,
   isNative,
   NoWord,
@@ -58,6 +59,14 @@ async function signIns(): Promise<Record<string, string>> {
   return seen
 }
 
+async function carryRights(moved: Record<string, string>): Promise<void> {
+  for (const [from, to] of Object.entries(moved)) {
+    await invoke('ai_agent_moved', { from, to }).catch((error: unknown) =>
+      log('warn', `ai vault: could not carry the rights of a moved account: ${String(error)}`),
+    )
+  }
+}
+
 export const world: VaultWorld = {
   account: () =>
     account.user && account.token && (isNative || browserVault.on) ? account.user.id : null,
@@ -89,15 +98,9 @@ export const world: VaultWorld = {
     for (const id of Object.keys(before.keys)) {
       if (!(id in contents.keys)) await forgetKey(id, true)
     }
+    if (isDesktop) await carryRights(moved)
     keepMoves(moved)
     ai.adopt(contents.accounts)
-    if (isDesktop && Object.keys(moved).length) {
-      await import('../grants-moved')
-        .then(({ carryGrants }) => carryGrants(moved, ai.accounts))
-        .catch((error: unknown) =>
-          log('warn', `ai vault: could not carry the rights of a moved account: ${String(error)}`),
-        )
-    }
   },
   loadBase: (id) => (parsed(storedText(baseKey(id))) as Base | null) ?? null,
   keepBase: (id, base) => {
