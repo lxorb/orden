@@ -126,10 +126,19 @@ export interface Joined {
   words?(id: string): string | null
 }
 
-function carriedElsewhere(joined: Joined, id: string, content: string): boolean {
+async function carriedElsewhere(
+  joined: Joined,
+  id: string,
+  path: string,
+  content: string,
+): Promise<boolean> {
   if (!joined.has(id)) return false
   const held = joined.words?.(id) ?? null
-  return held !== null && unixLines(held) !== unixLines(content)
+  if (held === null) return false
+  if (!isCanvasTarget(path) && !isPagesTarget(path)) return unixLines(held) !== unixLines(content)
+
+  const { readCanvas, writeCanvas } = await import('@orden/markdown/canvas')
+  return writeCanvas(readCanvas(held)) !== writeCanvas(readCanvas(content))
 }
 
 export interface Waiting {
@@ -247,7 +256,9 @@ export async function pull(
         }
 
         const { content } = await api.readNote(token, remote.id)
-        if (local !== null && carriedElsewhere(joined, remote.id, content)) continue
+        if (local !== null && (await carriedElsewhere(joined, remote.id, remote.path, content))) {
+          continue
+        }
 
         const news =
           remote.hash !== tracked?.hash &&

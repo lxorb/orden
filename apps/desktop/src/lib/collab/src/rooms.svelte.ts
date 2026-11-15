@@ -77,7 +77,7 @@ class Rooms {
 
   wordsOf(noteId: string): string | null {
     for (const one of this.held.values()) {
-      if (one.noteId === noteId && one.kind === 'words' && one.room.settled) return one.room.words
+      if (one.noteId === noteId && one.room.settled) return one.room.words
     }
 
     return null

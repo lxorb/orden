@@ -383,6 +383,41 @@ describe('which shape of room a file joins', () => {
   })
 })
 
+describe('what a room holds, for the sync that would write the file under it', () => {
+  test('is the words of a note', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    await following(note, new Server('# A\ntyped in the room\n'))
+
+    expect(rooms.wordsOf('note-1')).toBe('# A\ntyped in the room\n')
+  })
+
+  test('is the canvas of a canvas', async () => {
+    const { readCanvas } = await import('@orden/markdown/canvas')
+    const note = documentOn('/Notes/Board.canvas', '{}', 'canvas')
+    const drawing: PlaneSurface = {
+      ...surface(),
+      canvas: {
+        ...emptyCanvas(),
+        nodes: [
+          { id: 'card', type: 'text', text: 'drawn here', x: 0, y: 0, width: 90, height: 40 },
+        ],
+      },
+    }
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '{}', version: 1 }])
+    rooms.drawing(note.key, drawing)
+
+    const server = new Server('')
+    const socket = latest()
+    socket.arrive()
+    carry(socket, server)
+    await until(() => rooms.carries('note-1'), 'the canvas room to catch up')
+
+    const held = rooms.wordsOf('note-1')
+    expect(held).not.toBeNull()
+    expect(readCanvas(held ?? '').nodes.map((one) => one.id)).toEqual(['card'])
+  })
+})
+
 describe('a room the service threw away and will build again', () => {
   test('is joined again rather than reconnected to', async () => {
     const note = documentOn('/Notes/a.md', '# A\n')
