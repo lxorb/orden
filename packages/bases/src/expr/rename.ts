@@ -1,3 +1,5 @@
+import { isMap, isScalar, isSeq, parseDocument } from 'yaml'
+
 import { type Node, parseExpression } from './parse'
 
 const COMPARE = new Set(['==', '!=', '<', '>', '<=', '>='])
@@ -78,4 +80,97 @@ export function renamedLiteral(source: string, property: string, from: string, t
   return spans
     .sort((one, other) => other[0] - one[0])
     .reduce((text, [at, end]) => text.slice(0, at) + JSON.stringify(to) + text.slice(end), source)
+}
+
+const PLACES = new Set(['folder', 'path'])
+
+const isFile = (node: Node) => node.type === 'name' && node.name === 'file'
+
+const isPlace = (node: Node) =>
+  node.type === 'member' && PLACES.has(node.name) && isFile(node.object)
+
+function children(node: Node): Node[] {
+  switch (node.type) {
+    case 'binary':
+    case 'logical':
+      return [node.left, node.right]
+    case 'call':
+      return [node.callee, ...node.args]
+    case 'unary':
+      return [node.argument]
+    case 'member':
+      return [node.object]
+    case 'index':
+      return [node.object, node.index]
+    case 'list':
+      return node.items
+    case 'object':
+      return node.entries.map(([, value]) => value)
+    case 'literal':
+    case 'regex':
+    case 'name':
+      return []
+  }
+}
+
+function placeLiterals(node: Node): Node[] {
+  const named: Node[] = []
+  if (node.type === 'binary' && COMPARE.has(node.op)) {
+    if (isPlace(node.left)) named.push(node.right)
+    else if (isPlace(node.right)) named.push(node.left)
+  }
+  if (node.type === 'call' && node.callee.type === 'member') {
+    const { name, object } = node.callee
+    if ((name === 'inFolder' && isFile(object)) || (name === 'startsWith' && isPlace(object)))
+      named.push(...node.args.slice(0, 1))
+  }
+  return [...named, ...children(node).flatMap(placeLiterals)]
+}
+
+export function placedUnder(source: string, under: string): string {
+  const folder = under.replace(/^\/+|\/+$/g, '')
+  if (!folder) return source
+  let tree: Node
+  try {
+    tree = parseExpression(source)
+  } catch {
+    return source
+  }
+  const spans = placeLiterals(tree).flatMap((node): [number, number, string][] =>
+    node.type === 'literal' && typeof node.value === 'string' && node.at !== undefined
+      ? [[node.at, node.end ?? node.at, node.value.replace(/^\/+/, '')]]
+      : [],
+  )
+  return spans
+    .sort((one, other) => other[0] - one[0])
+    .reduce(
+      (text, [at, end, value]) =>
+        text.slice(0, at) + JSON.stringify(value ? `${folder}/${value}` : folder) + text.slice(end),
+      source,
+    )
+}
+
+export function baseUnder(yaml: string, under: string): string {
+  const document = parseDocument(yaml)
+  if (document.errors.length || !isMap(document.contents)) return yaml
+  const follow = (node: unknown): number => {
+    if (isScalar(node) && typeof node.value === 'string') {
+      const placed = placedUnder(node.value, under)
+      if (placed === node.value) return 0
+      node.value = placed
+      return 1
+    }
+    if (isSeq(node)) return node.items.reduce((sum: number, one) => sum + follow(one), 0)
+    if (isMap(node)) return node.items.reduce((sum: number, pair) => sum + follow(pair.value), 0)
+    return 0
+  }
+  const views = document.contents.get('views', true)
+  const filters = [
+    document.contents.get('filters', true),
+    ...(isSeq(views)
+      ? views.items.map((view) => (isMap(view) ? view.get('filters', true) : null))
+      : []),
+  ]
+  const changed = filters.reduce((sum: number, one) => sum + follow(one), 0)
+  return changed ? document.toString({ lineWidth: 0 }) : yaml
 }

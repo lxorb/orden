@@ -7,7 +7,14 @@ import { writeBytes, writeFile } from '../../file-writes/src/api'
 
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
-import { canvasFollowed, isCanvas, linksFollowed } from './rewrite'
+import {
+  baseFollowed,
+  basesFollowed,
+  canvasFollowed,
+  isBase,
+  isCanvas,
+  linksFollowed,
+} from './rewrite'
 
 type Written = Pick<ImportPlan, 'files'>
 
@@ -217,10 +224,16 @@ export function restamped(
     const was = file.path
     const now = placed.get(file) ?? was
     if (file.kind === 'file') {
-      const bytes = moved.size && isCanvas(was) ? canvasFollowed(file.bytes, moved) : file.bytes
+      const bytes =
+        (moved.size || under) && isCanvas(was)
+          ? canvasFollowed(file.bytes, moved, under)
+          : under && isBase(was)
+            ? baseFollowed(file.bytes, under)
+            : file.bytes
       return { ...file, path: now, bytes }
     }
-    const text = moved.size ? linksFollowed(file.text, was, moved, paths) : file.text
+    const linked = moved.size ? linksFollowed(file.text, was, moved, paths) : file.text
+    const text = under ? basesFollowed(linked, under) : linked
     return { ...file, path: now, text }
   })
 

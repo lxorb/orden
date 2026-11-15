@@ -56,4 +56,4 @@ export {
 export { csvText, csvValue, sheetSafe } from './csv'
 export { compile } from './expr/compile'
 export { GLOBALS } from './expr/globals'
-export { renamedLiteral } from './expr/rename'
+export { baseUnder, placedUnder, renamedLiteral } from './expr/rename'

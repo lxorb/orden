@@ -1,3 +1,4 @@
+import { baseUnder } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { foldName } from '@orden/markdown/links'
 
@@ -170,7 +171,11 @@ function definitionsFollowed(text: string, follow: (path: string) => string | nu
   )
 }
 
-export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, string>): Uint8Array {
+export function canvasFollowed(
+  bytes: Uint8Array,
+  moved: ReadonlyMap<string, string>,
+  under = '',
+): Uint8Array {
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -181,8 +186,9 @@ export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, str
   const followed = text.replace(
     /("(?:file|background)"\s*:\s*)("(?:[^"\\]|\\.)*")/g,
     (whole, key: string, said: string) => {
-      const now = moved.get(jsonString(said) ?? '')
-      return now === undefined ? whole : `${key}${JSON.stringify(now)}`
+      const was = jsonString(said) ?? ''
+      const now = moved.get(was) ?? (under && isSpacePath(was) ? was : undefined)
+      return now === undefined ? whole : `${key}${JSON.stringify(under ? `${under}/${now}` : now)}`
     },
   )
   return followed === text ? bytes : new TextEncoder().encode(followed)
@@ -312,6 +318,35 @@ function respelled(said: string, from: string, to: string): string | null {
     return moved === undefined || foldName(before ?? '') === foldName(moved) ? part : moved
   })
   return `${lead}${[...folders, spelled].join('/')}`
+}
+
+export function baseFollowed(bytes: Uint8Array, under: string): Uint8Array {
+  let text: string
+  try {
+    text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
+  } catch {
+    return bytes
+  }
+
+  const followed = baseUnder(text, under)
+  return followed === text ? bytes : new TextEncoder().encode(followed)
+}
+
+const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\n]*)?\n([\s\S]*?)^\1[`~]*[ \t]*$/gm
+
+export function basesFollowed(text: string, under: string): string {
+  return text.replace(BASE_FENCE, (whole, _fence: string, yaml: string) => {
+    const followed = baseUnder(yaml, under)
+    return followed === yaml ? whole : whole.replace(yaml, () => followed)
+  })
+}
+
+export function isBase(path: string): boolean {
+  return /\.base$/i.test(path)
+}
+
+function isSpacePath(path: string): boolean {
+  return path !== '' && !/^[/\\]/.test(path) && !/^[a-z][a-z0-9+.-]*:/i.test(path)
 }
 
 function jsonString(said: string): string | null {

@@ -228,6 +228,78 @@ describe('a name that is already taken', () => {
     )
   })
 
+  test('a canvas landed in a folder still shows the notes and pictures it showed', () => {
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Plan.md' },
+        { id: 'b', type: 'file', file: 'Trips/Map.png' },
+        { id: 'c', type: 'group', label: 'G', background: 'Trips/Map.png' },
+        { id: 'd', type: 'file', file: 'https://example.com/a.png' },
+      ],
+      edges: [],
+    })
+    const stamped = restamped(
+      planOf([
+        note('Plan.md', '# Plan'),
+        file('Trips/Map.png'),
+        { kind: 'file', path: 'Boards/Board.canvas', bytes: new TextEncoder().encode(board) },
+      ]),
+      new Set(['vault/plan.md']),
+      'Vault',
+    )
+    const canvas = stamped.files.find((one) => one.path === 'Vault/Boards/Board.canvas')
+
+    expect(
+      JSON.parse(canvas?.kind === 'file' ? new TextDecoder().decode(canvas.bytes) : '{}'),
+    ).toEqual({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Vault/Plan 2.md' },
+        { id: 'b', type: 'file', file: 'Vault/Trips/Map.png' },
+        { id: 'c', type: 'group', label: 'G', background: 'Vault/Trips/Map.png' },
+        { id: 'd', type: 'file', file: 'https://example.com/a.png' },
+      ],
+      edges: [],
+    })
+  })
+
+  test('a base landed in a folder still filters the folders it filtered', () => {
+    const base = [
+      'filters:',
+      '  and:',
+      '    - file.inFolder("Projects")',
+      '    - file.folder != "Projects/Old"',
+      'views:',
+      '  - type: table',
+      '    name: Mine',
+      '    filters: file.path.startsWith("Projects/Mine") && status == "Projects"',
+      '',
+    ].join('\n')
+    const stamped = restamped(
+      planOf([
+        note('Projects/Plan.md', '# Plan'),
+        { kind: 'file', path: 'Projects.base', bytes: new TextEncoder().encode(base) },
+      ]),
+      new Set(),
+      'Vault',
+    )
+    const landed = stamped.files.find((one) => one.path === 'Vault/Projects.base')
+
+    expect(landed?.kind === 'file' && new TextDecoder().decode(landed.bytes)).toBe(
+      base
+        .replace('"Projects")', '"Vault/Projects")')
+        .replace('"Projects/Old"', '"Vault/Projects/Old"')
+        .replace('"Projects/Mine"', '"Vault/Projects/Mine"'),
+    )
+  })
+
+  test('a base drawn in a note landed in a folder still filters the folders it filtered', () => {
+    const said = (folder: string) =>
+      `# Home\n\n\`\`\`base\nfilters: file.inFolder("${folder}")\n\`\`\`\n\n    file.inFolder("Projects")\n`
+    const stamped = restamped(planOf([note('Home.md', said('Projects'))]), new Set(), 'Vault')
+
+    expect(textAt(stamped.files, 'Vault/Home.md')).toBe(said('Vault/Projects'))
+  })
+
   test('a folder note and its folder step aside together', () => {
     const base = '```base\nfilters:\n  and:\n    - file.folder + ".md" == this.file.path\n```\n'
     const stamped = restamped(
