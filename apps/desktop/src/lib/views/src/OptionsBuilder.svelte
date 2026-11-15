@@ -47,8 +47,12 @@
   function carry(event: PointerEvent, from: number) {
     event.preventDefault()
     const list = (event.currentTarget as HTMLElement).closest('.options')
-    const up = (one: PointerEvent) => {
+    const done = () => {
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', done)
+    }
+    const up = (one: PointerEvent) => {
+      done()
       const rows = [...(list?.querySelectorAll<HTMLElement>('.row') ?? [])]
       const to = rows.findIndex((row) => {
         const box = row.getBoundingClientRect()
@@ -61,6 +65,7 @@
       write(next)
     }
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', done)
   }
 
   function prefix(words: string) {

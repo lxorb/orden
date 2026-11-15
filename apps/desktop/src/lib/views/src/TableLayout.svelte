@@ -119,18 +119,28 @@
     const start = event.clientX
     const was = widthOf(column)
     const cell = (event.currentTarget as HTMLElement).parentElement
+    const drawn = cell?.style.width ?? ''
     const move = (one: PointerEvent) => {
       if (cell) cell.style.width = `${Math.max(60, was + one.clientX - start)}px`
     }
-    const up = (one: PointerEvent) => {
+    const done = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', cancel)
+    }
+    const cancel = () => {
+      done()
+      if (cell) cell.style.width = drawn
+    }
+    const up = (one: PointerEvent) => {
+      done()
       const width = Math.max(60, Math.round(was + one.clientX - start))
       if (width !== was)
         kit.change((b, i) => setViewOption(b, i, 'columnSize', { ...widths, [column]: width }))
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', cancel)
   }
 
   function reorder(event: PointerEvent, column: string) {
@@ -145,9 +155,13 @@
     const move = (one: PointerEvent) => {
       if (Math.abs(one.clientX - startX) > 6) moved = true
     }
-    const up = (one: PointerEvent) => {
+    const done = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', done)
+    }
+    const up = (one: PointerEvent) => {
+      done()
       if (!moved) return
       const target = heads.findIndex((head) => {
         const box = head.getBoundingClientRect()
@@ -165,6 +179,7 @@
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', done)
   }
 
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {

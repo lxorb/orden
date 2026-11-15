@@ -19,7 +19,13 @@
       run()
       return
     }
-    window.addEventListener('pointerup', () => setTimeout(run, 0), { once: true, capture: true })
+    const ended = () => {
+      window.removeEventListener('pointerup', ended, true)
+      window.removeEventListener('pointercancel', ended, true)
+      setTimeout(run, 0)
+    }
+    window.addEventListener('pointerup', ended, true)
+    window.addEventListener('pointercancel', ended, true)
   }
 </script>
 
