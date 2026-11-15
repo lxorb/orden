@@ -317,7 +317,7 @@ async function blocksById(sources: readonly Source[]): Promise<Map<string, strin
 
 function namesIn(value: string): string[] {
   return value
-    .split(',')
+    .split(/,(?![^[]*\]\])/)
     .map((one) =>
       one
         .trim()

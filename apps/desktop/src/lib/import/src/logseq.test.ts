@@ -322,4 +322,13 @@ describe('a Logseq graph', () => {
 
     expect(said.meta.extra).toEqual([['type', 'book']])
   })
+
+  test('a page name with a comma in it stays one tag and one alias', () => {
+    const said = logseqNote(
+      'alias:: [[Smith, John]], JS\ntags:: [[Guns, Germs, and Steel]], history, #[[Nov 15th, 2026]]\n\n- body\n',
+    )
+
+    expect(said.aliases).toEqual(['Smith, John', 'JS'])
+    expect(said.meta.tags).toEqual(['Guns, Germs, and Steel', 'history', 'Nov 15th, 2026'])
+  })
 })
