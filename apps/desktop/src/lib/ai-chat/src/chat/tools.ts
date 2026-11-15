@@ -1,6 +1,6 @@
 import { isDesktop, invoke } from '../../../platform/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
-import { READER_TABS } from '../../../ai-providers/src/api'
+import { READER_TABS, rightsKey } from '../../../ai-providers/src/api'
 import type { Mode, ToolOutput } from '../../../ai-providers/src/api'
 import { record, text, type ToolDef } from './wire'
 
@@ -22,7 +22,7 @@ interface Listed {
 }
 
 function agentOf(provider: Provider) {
-  return { id: provider.id, name: provider.name, readerTabs: READER_TABS }
+  return { id: rightsKey(provider.id), name: provider.name, readerTabs: READER_TABS }
 }
 
 function toolIn(value: unknown): ToolDef | null {

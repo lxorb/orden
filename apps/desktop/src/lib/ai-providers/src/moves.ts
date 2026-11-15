@@ -46,7 +46,9 @@ if (typeof window !== 'undefined') {
 }
 
 export function keepMoves(moved: Record<string, string>, at = Date.now()): void {
-  const added = Object.entries(moved).map(([from, to]) => ({ from, to, at }))
+  const added = Object.entries(moved)
+    .filter(([from, to]) => !kept().some((one) => one.from === from && one.to === to))
+    .map(([from, to]) => ({ from, to, at }))
   if (!added.length) return
   ledger = [...kept(), ...added]
   keepJson(KEY, ledger)
@@ -86,4 +88,31 @@ export function movedKeys<T>(record: Record<string, T>, moves: readonly Move[]):
   }
   for (const [key, one] of moving) out[key] = one
   return out
+}
+
+const LONGEST_KEY = 48
+
+function freshKey(move: Move): string {
+  const stamp = `_${move.at.toString(36)}`
+  return `${move.from.slice(0, LONGEST_KEY - stamp.length)}${stamp}`
+}
+
+function rightsKeys(): Map<string, string> {
+  const keys = new Map<string, string>()
+  for (const one of kept()) {
+    const had = keys.get(one.from) ?? one.from
+    keys.set(one.from, freshKey(one))
+    keys.set(one.to, had)
+  }
+  return keys
+}
+
+export function rightsKey(id: string): string {
+  return rightsKeys().get(id) ?? id
+}
+
+export function rightsHolder(key: string): string | null {
+  const keys = rightsKeys()
+  for (const [id, one] of keys) if (one === key) return id
+  return keys.has(key) ? null : key
 }

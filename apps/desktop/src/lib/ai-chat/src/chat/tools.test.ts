@@ -173,3 +173,15 @@ describe('an answer, as orden mcp writes it', () => {
     ).toMatchObject({ approval: 'a18' })
   })
 })
+
+describe('an account the vault moved to a fresh id', () => {
+  test('asks the crate under the agent rights it had before the move', async () => {
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ anthropic: 'anthropic-7' })
+    answer = { instructions: '', tools: [] }
+
+    await crateTools.list({ ...CLAUDE, id: 'anthropic-7' }, 'plan')
+
+    expect(asked.at(-1)?.args.agent).toEqual({ id: 'anthropic', name: 'Claude', readerTabs: true })
+  })
+})

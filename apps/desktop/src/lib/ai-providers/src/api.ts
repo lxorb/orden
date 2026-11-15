@@ -61,6 +61,8 @@ export {
   movedTo,
   movesAfter,
   onMoves,
+  rightsHolder,
+  rightsKey,
 } from './moves'
 export { providerBrand } from './provider-brand'
 export {
