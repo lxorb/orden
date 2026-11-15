@@ -29,7 +29,7 @@ vi.mock('@orden/contracts', async (original) => ({
 }))
 
 vi.mock('../../commands/src/api', () => ({
-  appCommands: () => [row('export-space'), row('export-pdf')],
+  appCommands: () => [row('export-space'), row('export-pdf'), row('reformat'), row('protect.let-agents')],
 }))
 
 vi.mock('../../agent-verbs/src/api', async (original) => ({
@@ -43,6 +43,7 @@ vi.mock('../../workspace/src/api', () => ({
   workspace: {
     panes: { focusedId: 'p1' },
     activeSpace: { root: '/s/Work' },
+    spaces: [{ root: '/s/Work' }, { root: '/s/Home' }],
     active: { path: '/s/Work/Plan.md' },
   },
 }))
@@ -51,23 +52,48 @@ const shut = new Set<string>()
 vi.mock('../../protect/src/api', () => ({
   protection: {
     agentsMay: (path: string) => !shut.has(path),
-    ways: () => ({ 'Diary.md': 'password' }),
+    ways: (root: string) =>
+      root === '/s/Home' ? { Journal: 'device' } : { 'Diary.md': 'password' },
   },
 }))
 
 const { runCommand } = await import('./commands')
 
-function call(id: string) {
+function call(id: string, path: string | null = '/tmp/out') {
   return {
     verb: 'run_command',
-    args: { id, path: '/tmp/out' },
-    caller: callerOf({ id: 'claude', name: 'Claude', scopes: ['workspace'], mode: 'unsupervised' }),
+    args: path === null ? { id } : { id, path },
+    caller: callerOf({
+      id: 'claude',
+      name: 'Claude',
+      scopes: ['workspace', 'notes.write'],
+      mode: 'unsupervised',
+    }),
   }
 }
 
 beforeEach(() => {
   ran.length = 0
   shut.clear()
+})
+
+describe('an agent running a command that writes the note in front', () => {
+  test('cannot when that note is locked to agents', async () => {
+    shut.add('/s/Work/Plan.md')
+    await expect(runCommand(call('reformat', null))).rejects.toMatchObject({ code: 'protected' })
+    expect(ran).toEqual([])
+  })
+})
+
+describe('an agent asking to open a lock to agents', () => {
+  test('is refused, even with every permission', async () => {
+    const all = {
+      ...call('protect.let-agents', null),
+      caller: callerOf({ id: 'claude', name: 'Claude', scopes: ['workspace'], mode: 'autonomous' }),
+    }
+    await expect(runCommand(all)).rejects.toMatchObject({ code: 'by_hand' })
+    expect(ran).toEqual([])
+  })
 })
 
 describe('an agent exporting', () => {
@@ -79,6 +105,12 @@ describe('an agent exporting', () => {
 
   test('cannot export the note in front when it is locked to agents', async () => {
     shut.add('/s/Work/Plan.md')
+    await expect(runCommand(call('export-pdf'))).rejects.toMatchObject({ code: 'protected' })
+    expect(ran).toEqual([])
+  })
+
+  test('cannot export a note that could embed one locked to agents in another space', async () => {
+    shut.add('/s/Home/Journal')
     await expect(runCommand(call('export-pdf'))).rejects.toMatchObject({ code: 'protected' })
     expect(ran).toEqual([])
   })

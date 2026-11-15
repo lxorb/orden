@@ -176,6 +176,9 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   )
   if (!found) throw new Refused('no_such_command', `there is no command called ${id}`)
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
+  if (id.startsWith('protect.')) {
+    throw new Refused('by_hand', `${id} is the reader's to press, whatever the agent may do`)
+  }
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }
@@ -184,7 +187,7 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
   for (const scope of scopes ?? []) needScope(call, scope, id)
 
-  if (id.startsWith('export-')) carriesNothingShut(id)
+  reachesNothingShut(id, scopes ?? [])
 
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)
@@ -197,14 +200,13 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   return withPath(call, found, path)
 }
 
-function carriesNothingShut(id: string): void {
-  const space = workspace.activeSpace?.root
-  if (id === 'export-space') {
-    if (space) spaceReadable(space)
-    return
+function reachesNothingShut(id: string, scopes: readonly Scope[]): void {
+  if (id.startsWith('export-')) {
+    for (const space of workspace.spaces) spaceReadable(space.root)
   }
   const note = workspace.active?.path
-  if (note) readable(note, 'The note in front')
+  const touches = id.startsWith('export-') || scopes.includes('notes.write')
+  if (note && touches) readable(note, 'The note in front')
 }
 
 const DIALOG_WITHIN = 15_000
