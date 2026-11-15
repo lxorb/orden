@@ -53,7 +53,7 @@ describe('a mark that fills the box it was given', () => {
   })
 
   test('and the title bar names no space of its own', () => {
-    const bar = named('lib/Titlebar.svelte')
+    const bar = named('lib/titlebar/src/Titlebar.svelte')
     expect(bar.text).not.toContain('<SpaceSwitcher')
     expect(bar.text).not.toContain('<SpaceMark')
     expect(bar.text).not.toContain('{space.name}')
@@ -151,7 +151,7 @@ describe('the mark that says shared', () => {
 
 describe('the sidebar button', () => {
   test('is one glyph, drawn one way in both states', () => {
-    const style = declarations(named('lib/SidebarToggle.svelte').style)
+    const style = declarations(named('lib/titlebar/src/SidebarToggle.svelte').style)
     const edge = [...style.matchAll(/\.edge\s*\{([^}]*)\}|\.edge[^{]*\{([^}]*)\}/g)]
       .map((one) => one[1] ?? one[2] ?? '')
       .join(';')
@@ -161,7 +161,7 @@ describe('the sidebar button', () => {
   })
 
   test('and nothing in the component picks a second drawing by state', () => {
-    const text = named('lib/SidebarToggle.svelte').text
+    const text = named('lib/titlebar/src/SidebarToggle.svelte').text
     expect(text.match(/<svg/g)).toHaveLength(1)
     expect(text).not.toMatch(/\{#if[^}]*open[^}]*\}[\s\S]{0,200}<svg/)
   })
@@ -169,7 +169,7 @@ describe('the sidebar button', () => {
 
 describe('the row across the top of the app', () => {
   test('is the header height', () => {
-    const style = declarations(named('lib/Titlebar.svelte').style)
+    const style = declarations(named('lib/titlebar/src/Titlebar.svelte').style)
     expect(style).toMatch(/height\s*:\s*var\(--header-height\)/)
   })
 })

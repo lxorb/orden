@@ -2,7 +2,7 @@
   import type { Camera } from '../../camera/src/api'
   import { approach, arrived } from './ease'
   import { ALONE_INSET, heldAtEdge, INSET } from './edge'
-  import { alone } from '../../alone.svelte'
+  import { alone } from '../../workspace/src/api'
   import { INK_STYLES, inkOpacity, inkPath, outlineOf } from '../../plane/src/api'
   import type { Palette } from '../../plane/src/api'
   import type { Hand } from '@orden/markdown/plane'

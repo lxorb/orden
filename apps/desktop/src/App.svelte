@@ -34,7 +34,14 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
-  import { swipeOpens } from './lib/swipe-opens'
+  import {
+    swipeOpens,
+    alone,
+    hasStatusBar,
+    paletteWords,
+    tabOverview,
+    workspace,
+  } from './lib/workspace/src/api'
   import {
     escapeLeaves,
     fullscreen,
@@ -44,12 +51,10 @@
     platform,
     storedText,
   } from './lib/platform/src/api'
-  import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
   import { linkScroll, type ScrollEnd, systemMenu } from './lib/ui-kit/src/api'
   import { recovery } from './lib/history/src/api'
-  import { hasStatusBar, paletteWords, tabOverview, workspace } from './lib/workspace/src/api'
   import { pages } from './lib/pages/src/api'
   import { inRooms, rooms } from './lib/collab/src/api'
   import { search } from './lib/search/src/api'
@@ -91,7 +96,7 @@
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
   import StatusBar from './lib/StatusBar.svelte'
-  import Titlebar from './lib/Titlebar.svelte'
+  import { Titlebar } from './lib/titlebar/src/api'
   import { choices, modes, watchTextSize } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
   import { startup } from './lib/launch/src/api'

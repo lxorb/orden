@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-const SidebarToggle = (await import('../../src/lib/SidebarToggle.svelte')).default
+const { SidebarToggle } = await import('../../src/lib/titlebar/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 
 let shown: ReturnType<typeof mount>
@@ -57,7 +57,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
   const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
   const { fullscreen } = await import('../../src/lib/platform/src/api')
   const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')
-  const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
+  const { Titlebar } = await import('../../src/lib/titlebar/src/api')
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
   workspace.activeSpaceId = 'work'
   workspace.tabs = []

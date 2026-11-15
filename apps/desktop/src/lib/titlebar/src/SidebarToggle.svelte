@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { PanelSide } from './session/src/api'
+  import type { PanelSide } from '../../session/src/api'
   import { tick } from 'svelte'
-  import { intoSide, workspace } from './workspace/src/api'
-  import { shortcuts } from './shortcuts/src/api'
+  import { intoSide, workspace } from '../../workspace/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
 
   const {
     side = 'left',
