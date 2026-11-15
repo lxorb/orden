@@ -1264,7 +1264,7 @@ class Links {
       const rewrite = plane ? await import('./canvas-rewrite') : null
       const card = rewrite?.cardsMoving(note.path, moving) ?? null
       const worth = card
-        ? note.links.some((link) => card(link.target) !== null)
+        ? isCanvasTarget(note.path) || note.links.some((link) => card(link.target) !== null)
         : note.links.some((link) => (named(link) || shifted) && to(link) !== null)
       if (!worth) continue
 

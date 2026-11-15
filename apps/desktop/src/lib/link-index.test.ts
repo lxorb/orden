@@ -1719,3 +1719,22 @@ describe('a rename before the space is read at all', () => {
     expect(notes['One.md']).toBe('see [[Roadmap]]\n')
   })
 })
+
+describe('a link written in a text card of a canvas', () => {
+  test('follows its note when the note is renamed, with no card naming the note', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'see [[Plan]]', ...card }],
+      edges: [],
+    })
+    await import('@orden/scan/canvas')
+    await space({ 'Plan.md': '# Plan' }, ['Board.canvas'])
+    notes['Board.canvas'] = board
+    links.canvasRead(at('Board.canvas'), board)
+    await vi.waitFor(() => expect(links.held().map((one) => one.path)).toContain('Board.canvas'))
+
+    expect(await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)).toBe(1)
+    const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
+    expect(after.nodes.map((one) => one.text)).toEqual(['see [[Roadmap]]'])
+  })
+})
