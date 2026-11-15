@@ -9,6 +9,7 @@ import { describe, expect, test } from 'vitest'
 import {
   calloutSign,
   closeFence,
+  continueInCode,
   insertAiBlock,
   insertCallout,
   insertCodeFence,
@@ -478,6 +479,14 @@ describe('pressing Enter after a code fence', () => {
     expect(press('```|\nmore text').doc).toBe('```\n\n```\nmore text')
   })
 
+  test('closes a fence inside a list item or a quote inside it', () => {
+    expect(press('- step\n  ```bash|\nmore text').doc).toBe(
+      '- step\n  ```bash\n  \n  ```\nmore text',
+    )
+    expect(press('- ```js|').doc).toBe('- ```js\n  \n  ```')
+    expect(press('> ```js|').doc).toBe('> ```js\n> \n> ```')
+  })
+
   test('closes tildes with tildes, and as many of them', () => {
     expect(press('~~~~|').doc).toBe('~~~~\n\n~~~~')
   })
@@ -732,6 +741,28 @@ describe('a heading over a list item', () => {
     expect(run(setHeading(2), '- ite|m')).toBe('## item')
     expect(run(setHeading(2), '1. ite|m')).toBe('## item')
     expect(at(setHeading(2), '- [ ] item', 8)).toBe('## item')
+  })
+})
+
+describe('Enter in code inside a quote or a list item', () => {
+  function enter(marked: string): string {
+    const caret = marked.indexOf('|')
+    return at(continueInCode, marked.replace('|', ''), caret)
+  }
+
+  test('keeps the quote going', () => {
+    expect(enter('> a\n> ```\n> x|\n> ```')).toBe('> a\n> ```\n> x\n> \n> ```')
+    expect(enter('> ```js\n>   x|\n> ```')).toBe('> ```js\n>   x\n>   \n> ```')
+    expect(enter('> [!note]\n> ```js|\n> ```')).toBe('> [!note]\n> ```js\n> \n> ```')
+  })
+
+  test('keeps the list item going from its fence line', () => {
+    expect(enter('- ```js|\n  x\n  ```')).toBe('- ```js\n  \n  x\n  ```')
+  })
+
+  test('leaves code nothing holds to the usual Enter', () => {
+    expect(took(continueInCode, '```\nx|\n```')).toBe(false)
+    expect(took(continueInCode, '> plain|')).toBe(false)
   })
 })
 

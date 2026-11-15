@@ -1,4 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
+import type { SyntaxNode } from '@lezer/common'
 import {
   type ChangeSpec,
   type EditorState,
@@ -501,6 +502,18 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
+const CONTAINER = /^(?:[ \t]*>[ \t]?)*(?:[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+)?/
+
+function heldIn(prefix: string): string {
+  return prefix.replace(/(?:[-*+]|\d{1,9}[.)])(?=[ \t]+$)/, (marker) => ' '.repeat(marker.length))
+}
+
+function fenceLine(text: string): { pad: string; rest: string } {
+  const prefix = CONTAINER.exec(text)?.[0] ?? ''
+  const rest = text.slice(prefix.length)
+  return { pad: heldIn(prefix) + (/^ {0,3}/.exec(rest)?.[0] ?? ''), rest }
+}
+
 export const closeFence: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
@@ -508,12 +521,13 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   const line = state.doc.lineAt(range.head)
   if (range.head !== line.to) return false
 
-  const fence = fenceOf(line.text)
+  const { pad, rest } = fenceLine(line.text)
+  const fence = fenceOf(rest)
   if (!fence) return false
 
   let open: string | null = null
   for (let number = 1; number < line.number; number++) {
-    const text = state.doc.line(number).text
+    const text = fenceLine(state.doc.line(number).text).rest
     if (open) {
       if (closesFence(text, open)) open = null
     } else {
@@ -523,19 +537,52 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   if (open) return false
 
   for (let number = line.number + 1; number <= state.doc.lines; number++) {
-    if (closesFence(state.doc.line(number).text, fence.mark)) return false
+    if (closesFence(fenceLine(state.doc.line(number).text).rest, fence.mark)) return false
   }
 
   dispatch(
     state.update({
-      changes: { from: line.to, insert: `\n\n${fence.mark}` },
-      selection: { anchor: line.to + 1 },
+      changes: { from: line.to, insert: `\n${pad}\n${pad}${fence.mark}` },
+      selection: { anchor: line.to + 1 + pad.length },
       scrollIntoView: true,
       userEvent: 'input',
     }),
   )
   return true
 }
+
+const HOLDERS = new Set(['Blockquote', 'ListItem'])
+
+function heldCode(state: EditorState, pos: number): SyntaxNode | null {
+  const code = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'FencedCode')
+  return code && enclosingNamed(code, HOLDERS) ? code : null
+}
+
+export const continueInCode: StateCommand = ({ state, dispatch }) => {
+  if (!state.selection.ranges.every((range) => heldCode(state, range.head))) return false
+
+  const update = state.changeByRange((range) => {
+    const code = heldCode(state, range.head)
+    const opener = state.doc.lineAt(code?.from ?? range.head)
+    const line = state.doc.lineAt(range.head)
+    const own = fenceLine(line.text)
+    const first = line.number === opener.number
+    const pad = first
+      ? heldIn(opener.text.slice(0, (code?.from ?? opener.from) - opener.from))
+      : own.pad
+    const indent = first ? '' : (/^[ \t]*/.exec(line.text.slice(own.pad.length))?.[0] ?? '')
+    const insert = `\n${pad}${indent}`
+
+    return {
+      changes: { from: range.from, to: range.to, insert },
+      range: EditorSelection.cursor(range.from + insert.length),
+    }
+  })
+
+  dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
+  return true
+}
+
 export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }), {
   wrap: (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
 })

@@ -39,7 +39,7 @@ import {
 } from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
-import { closeFence, leaveQuote } from './commands'
+import { closeFence, continueInCode, leaveQuote } from './commands'
 import { refuseControlCharacters } from './control'
 import { ordenBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
@@ -167,6 +167,7 @@ export function editorState(options: StateOptions): EditorState {
         keymap.of([
           { key: 'Enter', run: leaveQuote },
           { key: 'Enter', run: insertNewlineContinueMarkupCommand({ nonTightLists: false }) },
+          { key: 'Enter', run: continueInCode },
           { key: 'Backspace', run: deleteMarkupBackward },
         ]),
       ),
