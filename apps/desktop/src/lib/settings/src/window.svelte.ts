@@ -1,5 +1,5 @@
 import type { SettingsSectionId } from '@orden/contracts'
-import { connectors } from '../../connectors.svelte'
+import { connectors } from '../../accounts/src/api'
 import { workspace } from '../../workspace/src/api'
 
 class SettingsWindow {

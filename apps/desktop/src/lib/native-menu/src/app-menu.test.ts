@@ -24,7 +24,7 @@ registerCommandRows('export', async () => (await import('../../export/src/api'))
 await commandRowsLoaded()
 
 const { appMenu } = await import('./app-menu')
-const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('../../links')
+const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('../../updates/src/links')
 const { isSubmenu, walkableRows } = await import('../../ui-kit/src/api')
 const { appCommands } = await import('../../commands/src/api')
 const { BY_ID } = await import('../../shortcuts/src/api')

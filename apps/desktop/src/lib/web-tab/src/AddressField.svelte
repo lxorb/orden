@@ -25,7 +25,7 @@
 
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import FileMark from '../../FileMark.svelte'
+  import { FileMark } from '../../marks/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { Suggest } from '../../matching/src/api'
   import { links } from '../../link-index/src/api'

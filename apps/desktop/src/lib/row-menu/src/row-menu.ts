@@ -10,7 +10,7 @@ import {
   entryAt,
 } from '../../tree/src/api'
 import { basesOn, hiddenKinds, type KindName } from '../../gates/src/api'
-import { kindLabel } from '../../kind-words'
+import { kindLabel } from '../../new-here/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import {
   archiveEntry,

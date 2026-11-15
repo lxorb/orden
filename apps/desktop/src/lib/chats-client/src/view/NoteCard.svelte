@@ -1,7 +1,7 @@
 <script lang="ts">
   import { protection } from '../../../protect/src/api'
-  import FileMark from '../../../FileMark.svelte'
-  import { fileMark } from '../../../file-mark'
+  import { FileMark } from '../../../marks/src/api'
+  import { fileMark } from '../../../marks/src/api'
   import { links } from '../../../link-index/src/api'
   import { folderOf, insideSpace, nameOf, withoutExtension } from '../../../platform/src/api'
   import { workspace } from '../../../workspace/src/api'

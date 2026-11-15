@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { HTMLButtonAttributes } from 'svelte/elements'
-  import { chosenIcon } from '../../chosen-icon'
-  import { faceOf, type FileMark as Mark, initialOf } from '../../file-mark'
-  import FileMark from '../../FileMark.svelte'
+  import { chosenIcon } from '../../marks/src/api'
+  import { faceOf, initialOf } from '../../marks/src/api'
+  import type { FileMark as Mark } from '@orden/contracts'
+  import { FileMark } from '../../marks/src/api'
   import { middleOpens, type TabAsk, tabAsk } from '../../workspace/src/api'
   import { longPress, readIcon } from '../../ui-kit/src/api'
 

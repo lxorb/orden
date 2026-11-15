@@ -37,7 +37,7 @@ const {
   passOn,
   timeOn,
 } = settings
-const { receive } = await import('./kind-choice')
+const { receive } = await import('./gates/src/api')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 const { kindsPane } = await import('./settings/src/kinds-pane')
 const { openApplication } = await import('./apps/src/open')

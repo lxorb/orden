@@ -80,7 +80,7 @@ class Drag extends MouseEvent {
 
 Object.assign(globalThis, { DataTransfer: Transfer, DragEvent: Drag })
 
-const { guardDrops } = await import('./drops')
+const { guardDrops } = await import('./ui-kit/src/api')
 const { explorerDragged, isExplorerDrag, outsideDrops } = await import('./ui-kit/src/api')
 const { filesAt, OutsideDrops } = await outsideDrops()
 

@@ -23,7 +23,7 @@ const found = components(SOURCE).flatMap((path) =>
 
 test('the app draws pictures, so this is looking at something', () => {
   expect(found.map((one) => one.file.replaceAll('\\', '/'))).toEqual(
-    expect.arrayContaining(['lib/TabMark.svelte', 'lib/FileMark.svelte']),
+    expect.arrayContaining(['lib/marks/src/TabMark.svelte', 'lib/marks/src/FileMark.svelte']),
   )
 })
 

@@ -23,3 +23,4 @@ export {
   TIME_WORD,
   timeOn,
 } from './gates.svelte'
+export { locked, receive, setKind, setWord, turnedOff } from './kind-choice'

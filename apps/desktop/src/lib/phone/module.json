@@ -12,11 +12,7 @@
     "session",
     "workspace",
     "gates",
-    "surfaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/account-menu.ts",
-    "apps/desktop/src/lib/note-menu.ts",
-    "apps/desktop/src/lib/write-new.ts"
+    "surfaces",
+    "settings"
   ]
 }

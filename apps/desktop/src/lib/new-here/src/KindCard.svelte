@@ -2,8 +2,8 @@
   import type { HTMLButtonAttributes } from 'svelte/elements'
   import { cubicOut } from 'svelte/easing'
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
-  import { MARKS } from '../../file-mark'
-  import Icon from '../../Icon.svelte'
+  import { MARKS } from '../../marks/src/api'
+  import { Icon } from '../../glyphs/src/api'
   import { dur, fly } from '../../platform/src/api'
   import type { NewKindRow } from './new-kinds'
 

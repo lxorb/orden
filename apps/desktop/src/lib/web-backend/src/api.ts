@@ -100,3 +100,5 @@ export const exportSpace = async (
   name: string,
   metaOf: (path: string) => ItemMeta | null = () => null,
 ): Promise<string | null> => (await import('./internal/export')).exportSpace(root, name, metaOf)
+
+export const ownKeys = () => import('./own-keys')

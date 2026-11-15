@@ -7,8 +7,8 @@ import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 const stored = vi.hoisted(() => ({ pictures: 0 }))
 
-vi.mock('../../src/lib/assets', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/assets')>()),
+vi.mock('../../src/lib/workspace/src/api', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/workspace/src/api')>()),
   storeImage: () => {
     stored.pictures += 1
     return Promise.resolve('/space/assets/shot.png')

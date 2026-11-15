@@ -2,15 +2,16 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { dur, fly, scale } from '../../platform/src/api'
-  import { renamed } from '../../renamed.svelte'
   import { told } from '../../ui-kit/src/api'
+
+  const { ongone }: { ongone: () => void } = $props()
 
   const STAYS = 6000
 
   const said = $derived('nibeditor is now Orden')
 
   onMount(() => {
-    const gone = () => renamed.dismiss()
+    const gone = () => ongone()
     const timer = setTimeout(gone, STAYS)
     window.addEventListener('pointerdown', gone, { capture: true })
     window.addEventListener('keydown', gone, { capture: true })
