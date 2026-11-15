@@ -310,7 +310,7 @@ function climbed(start: string[], written: string): string[] {
 
 function nearestNamed(held: readonly string[], name: string, from: string): string | null {
   if (!name) return null
-  const here = from.split('/').slice(0, -1).join('/')
+  const here = comparable(from).split('/').slice(0, -1).join('/')
   const folder = (path: string) => path.split('/').slice(0, -1).join('/')
   const found = held.filter((path) => path === name || path.endsWith(`/${name}`))
   found.sort(

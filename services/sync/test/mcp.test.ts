@@ -539,6 +539,23 @@ describe('markdown links the app reads from the top and by name', () => {
   })
 })
 
+describe('a link by name with namesakes in folders of capitals', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('counts for the namesake beside it', async () => {
+    await addNote('A/Sub/Plan.md', '# a\n')
+    await addNote('Z/Sub/Plan.md', '# z\n')
+    await addNote('Z/Sub/Index.md', 'see [plan](Sub/Plan.md)\n')
+    const key = await connector()
+    const near = await tool(key, 'list_backlinks', { space: 'Work', path: 'Z/Sub/Plan.md' })
+    const far = await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Sub/Plan.md' })
+    expect(near).toContain('Z/Sub/Index.md:1')
+    expect(far).not.toContain('Z/Sub/Index.md')
+  })
+})
+
 describe('lists past the most read', () => {
   function filler(count: number) {
     const insert = env.db.prepare(
