@@ -61,7 +61,7 @@ describe('deleting a chat', () => {
 
 test('every way the sidebar deletes asks through it', () => {
   const read = (path: string) => readFileSync(join(import.meta.dirname, path), 'utf8')
-  const menu = read('../../row-menu.ts')
+  const menu = read('../../row-menu/src/row-menu.ts')
   expect(menu).toMatch(/if \(!inside\) \{\s*if \(await chatsKept\(\[entry\.path\]\)\) return/)
   expect(menu).toContain('run: () => void removeAsking(paths)')
   expect(read('../../sidebar/src/Tree.svelte')).toContain('one.removeAsking(going)')

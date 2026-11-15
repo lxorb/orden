@@ -246,7 +246,14 @@ export {
 } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
-export type { ExplorerShowPort, FilePorts, PandocPicture, PickedFile } from './files'
+export type {
+  ArchivePort,
+  ExplorerCarryPort,
+  ExplorerShowPort,
+  FilePorts,
+  PandocPicture,
+  PickedFile,
+} from './files'
 export type {
   Arrived,
   BrowserId,
@@ -281,6 +288,7 @@ export type {
   WebPagesPort,
   WebPorts,
   WebScriptsPort,
+  WebSitesPort,
 } from './web'
 export { type Hearing, registerHearing, startHearings } from './hearing'
 export {
