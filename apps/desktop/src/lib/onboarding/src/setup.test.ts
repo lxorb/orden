@@ -80,6 +80,33 @@ describe('the first-launch setup', () => {
     expect(setup.step).toBe('account')
   })
 
+  test('never goes back to the log in once signed in', async () => {
+    const setup = await fresh()
+    setup.begin(false)
+    setup.signedIn = true
+    setup.next()
+    expect(setup.step).toBe('appearance')
+    expect(setup.canGoBack).toBe(false)
+    setup.back()
+    expect(setup.step).toBe('appearance')
+
+    setup.next()
+    setup.back()
+    expect(setup.step).toBe('appearance')
+  })
+
+  test('moves on late only from the step that asked for it', async () => {
+    const setup = await fresh()
+    setup.begin(false)
+    setup.next()
+    setup.next()
+    setup.back()
+    setup.next('heard')
+    expect(setup.step).toBe('appearance')
+    setup.next('appearance')
+    expect(setup.step).toBe('heard')
+  })
+
   test('is over for good once finished', async () => {
     const setup = await fresh()
     setup.begin(false)

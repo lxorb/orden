@@ -69,7 +69,7 @@
     }
     setup.answer({ notes: app })
     await settleMarkdown(app)
-    setup.next()
+    setup.next('notes')
   }
 </script>
 
