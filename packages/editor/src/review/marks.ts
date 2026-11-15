@@ -74,7 +74,6 @@ function drawn(state: EditorState, marks: readonly ReviewMark[]): Held {
   const length = state.doc.length
   const kept: ReviewMark[] = []
   const ranges: Range<Decoration>[] = []
-  const lines = new Set<number>()
 
   for (const mark of marks) {
     const from = Math.min(Math.max(0, mark.from), length)
@@ -98,13 +97,6 @@ function drawn(state: EditorState, marks: readonly ReviewMark[]): Held {
         }).range(from, to),
       )
     }
-    if (mark.fading) continue
-    for (let line = state.doc.lineAt(from).number; line <= state.doc.lineAt(to).number; line++)
-      lines.add(line)
-  }
-
-  for (const line of lines) {
-    ranges.push(Decoration.line({ class: 'cm-review-line' }).range(state.doc.line(line).from))
   }
 
   return { marks: kept, drawn: Decoration.set(ranges, true) }
@@ -170,6 +162,7 @@ const offer = hoverTooltip(
           })
           button.addEventListener('click', () => {
             act(mark.id, keep)
+            view.focus()
           })
         }
         return { dom: bar }
@@ -190,9 +183,6 @@ const style = EditorView.baseTheme({
     borderRadius: '2px',
     marginInlineEnd: '2px',
     textDecorationThickness: '1px',
-  },
-  '.cm-review-line': {
-    boxShadow: 'inset 2px 0 0 color-mix(in srgb, var(--success) 70%, transparent)',
   },
   '.cm-review-added.is-fading, .cm-review-removed.is-fading': {
     animation: 'cm-review-fade var(--dur-stage) var(--ease-out) forwards',
