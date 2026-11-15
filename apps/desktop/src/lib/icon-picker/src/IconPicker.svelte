@@ -1,12 +1,25 @@
 <script lang="ts">
-  import { account } from './accounts/src/api'
-  import { ACCENTS } from './theme/src/api'
-  import { closeOnBack } from './ui-kit/src/api'
-  import Icon from './Icon.svelte'
-  import { TickBox } from './ui-controls/src/api'
-  import { iconChoice } from './icon-choice.svelte'
+  import { account } from '../../accounts/src/api'
+  import { ACCENTS } from '../../theme/src/api'
+  import {
+    closeOnBack,
+    EMOJI_OUTLINE,
+    type IconEntry,
+    inOneColour,
+    overlays,
+    rankIcons,
+    readIcon,
+    sameIcon,
+    SITE_ICONS,
+    takesTint,
+    viewport,
+    writtenIcon,
+  } from '../../ui-kit/src/api'
+  import Icon from '../../Icon.svelte'
+  import { TickBox, trap } from '../../ui-controls/src/api'
+  import { iconChoice } from '../../icon-choice.svelte'
   import { tintOf, wear, wornBy } from './icon-target'
-  import { iconLibrary } from './icon-library.svelte'
+  import { iconLibrary } from '../../icon-library.svelte'
   import {
     iconRecent,
     LATER_SETS,
@@ -15,22 +28,8 @@
     PICKER_SETS,
     pickerCredit,
     refreshSites,
-  } from './icons/src/api'
-  import {
-    EMOJI_OUTLINE,
-    type IconEntry,
-    inOneColour,
-    rankIcons,
-    readIcon,
-    sameIcon,
-    SITE_ICONS,
-    takesTint,
-    writtenIcon,
-  } from './ui-kit/src/api'
-  import { dur, fade, LAYER, scale } from './platform/src/api'
-  import { overlays } from './ui-kit/src/api'
-  import { trap } from './ui-controls/src/api'
-  import { viewport } from './ui-kit/src/api'
+  } from '../../icons/src/api'
+  import { dur, fade, LAYER, scale } from '../../platform/src/api'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
 

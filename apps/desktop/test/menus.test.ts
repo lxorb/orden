@@ -159,7 +159,7 @@ describe('what a row of the file list offers', () => {
 
   test('and the way back to no icon is in the picker, not the menu', () => {
     expect(entries).not.toContain('Remove icon')
-    const picker = read('lib/IconPicker.svelte')
+    const picker = read('lib/icon-picker/src/IconPicker.svelte')
     expect(picker).toMatch(
       /\(worn !== null \|\| tint !== null\)[\s\S]{0,80}onclick=\{remove\}>Remove icon</,
     )

@@ -11,6 +11,7 @@ import {
 import type { Tab } from '../../documents/src/api'
 import type { NoteGraph } from '../../graph/src/api'
 import { loadHistory } from '../../history/src/api'
+import { loadIconPicker } from '../../icon-picker/src/api'
 import { storedText } from '../../platform/src/api'
 import { held, type Latched, latched } from '../../ui-kit/src/api'
 
@@ -95,7 +96,7 @@ export const shareSheet = latched(() =>
 export const publishSheet = latched(from('publish') as Shown)
 export const exportSheet = latched(from('export') as Shown)
 export const importSheet = latched(from('import') as Shown)
-export const iconPicker = latched(() => import('../../IconPicker.svelte'))
+export const iconPicker = latched(loadIconPicker)
 export const rewriteSheet = latched(from('rewrite') as Shown)
 export const quickSheet = latched(from('quick-question') as Shown)
 export const scratchpadCard = held(
