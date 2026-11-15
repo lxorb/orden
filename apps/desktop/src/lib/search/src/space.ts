@@ -2,6 +2,7 @@ import { protection } from '../../protect/src/api'
 import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
 import { searchInternal, searchInWorker } from '../../web-backend/src/api'
+import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -67,8 +68,23 @@ export async function searchSpace(
   })
 
   try {
-    await invoke('search_space', { root, query, terms, limit, id, excluded })
+    await invoke('search_space', { root, query: judged(query), terms, limit, id, excluded })
   } finally {
     stop()
+  }
+}
+
+function judged(query: Query): Query {
+  switch (query.kind) {
+    case 'all':
+    case 'any':
+      return { ...query, of: query.of.map(judged) }
+    case 'not':
+    case 'scope':
+      return { ...query, of: judged(query.of) }
+    case 'regex':
+      return backtracksWildly(query.source) ? { ...query, refused: true } : query
+    default:
+      return query
   }
 }

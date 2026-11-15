@@ -850,7 +850,15 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
             body: true,
         },
 
-        Query::Regex { source, fold } => Term::Regex(Pattern::compile(&source, fold)),
+        Query::Regex {
+            source,
+            fold,
+            refused,
+        } => Term::Regex(if refused {
+            None
+        } else {
+            Pattern::compile(&source, fold)
+        }),
 
         Query::Path { text, fold: folded } => Term::Path {
             needle: if folded { text.to_lowercase() } else { text },
@@ -985,6 +993,15 @@ mod tests {
 
     fn pattern(source: &str, fold: bool) -> String {
         format!(r#"{{"kind":"regex","source":"{source}","fold":{fold}}}"#)
+    }
+
+    #[test]
+    fn a_pattern_the_page_refused_finds_nothing() {
+        let refused = r#"{"kind":"regex","source":"(\\d+\\.?)+","fold":false,"refused":true}"#;
+        assert!(!answers(refused, "Version 1.2.3 shipped"));
+        assert!(answers(&pattern(r"(\\d+\\.?)+", false), "Version 1.2.3 shipped"));
+        let not = format!(r#"{{"kind":"not","of":{refused}}}"#);
+        assert!(answers(&not, "Version 1.2.3 shipped"));
     }
 
     #[test]

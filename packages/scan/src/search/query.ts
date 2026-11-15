@@ -14,7 +14,7 @@ export type Query =
   | { kind: 'not'; of: Query }
   | { kind: 'text'; text: string; fold: boolean }
   | { kind: 'content'; text: string; fold: boolean }
-  | { kind: 'regex'; source: string; fold: boolean }
+  | { kind: 'regex'; source: string; fold: boolean; refused?: true }
   | { kind: 'path'; text: string; fold: boolean }
   | { kind: 'file'; text: string; fold: boolean }
   | { kind: 'tag'; tag: string }

@@ -1,16 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Hit } from '@orden/scan/search/match'
 
-const asked = vi.hoisted(() => ({ excluded: null as string[] | null, hits: [] as Hit[] }))
+const asked = vi.hoisted(() => ({
+  excluded: null as string[] | null,
+  hits: [] as Hit[],
+  query: null as unknown,
+}))
 let told: ((event: { payload: { id: number; hits: Hit[] } }) => void) | null = null
 
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isNative: true,
   internal: { routed: false },
-  invoke: (command: string, args: { id: number; excluded: string[] }) => {
+  invoke: (command: string, args: { id: number; excluded: string[]; query: unknown }) => {
     if (command !== 'search_space') return Promise.resolve(null)
     asked.excluded = args.excluded
+    asked.query = args.query
     told?.({ payload: { id: args.id, hits: asked.hits } })
     return Promise.resolve(null)
   },
@@ -66,5 +71,19 @@ describe('a search', () => {
     workspace.protection.set(ROOT, ROOT, 'password')
     expect(await found()).toEqual([])
     expect(asked.excluded).toBeNull()
+  })
+})
+
+describe('a pattern the web search refuses as too costly', () => {
+  test('is refused on desktop too, so its rows and replace-all agree', async () => {
+    const wild = { kind: 'regex', source: '(\\d+\\.?)+', fold: false }
+    const plain = { kind: 'regex', source: '\\d+', fold: false }
+    const query = { kind: 'all', of: [{ kind: 'not', of: wild }, plain] } as never
+    await searchSpace(ROOT, query, [], 50, () => undefined)
+
+    expect(asked.query).toEqual({
+      kind: 'all',
+      of: [{ kind: 'not', of: { ...wild, refused: true } }, plain],
+    })
   })
 })
