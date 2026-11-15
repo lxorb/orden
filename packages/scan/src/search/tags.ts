@@ -111,6 +111,7 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
 
   const gap = spaces(body, to, after)
   if (body.charAt(to + gap) === ',') {
+    if (body.charAt(to + gap + 1) === '#') return { from, to: to + gap }
     return { from, to: to + gap + 1 + spaces(body, to + gap + 1, after) }
   }
 

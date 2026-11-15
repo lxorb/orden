@@ -179,6 +179,11 @@ describe('two tags taken away side by side', () => {
     )
   })
 
+  test('a comma right before another mark stays, so that mark makes no new tag', () => {
+    expect(change('home', null, '#home,#plan\n')?.after).toBe(',#plan\n')
+    expect(change('work', null, '#work,#work/sub\n')?.after).toBe(',#work/sub\n')
+  })
+
   test('a space before the comma that follows goes with the tag', () => {
     expect(change('work', null, '---\ntags: [work , home]\n---\n')?.after).toBe(
       '---\ntags: [home]\n---\n',
