@@ -125,7 +125,7 @@
     })
   })
 
-  const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups))
+  const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups, live.answer?.lanes))
   const noteCounts = $derived(noteNames(groups.map((one) => one.key)))
   const laneNames = $derived(noteNames(lanes))
   const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])

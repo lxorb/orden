@@ -1,7 +1,7 @@
 import * as bases from '@orden/bases'
 import { describe, expect, test, vi } from 'vitest'
 import { taskRow } from './fixture'
-import { listItems } from './list-items'
+import { laneKeys, listItems } from './list-items'
 
 vi.mock('@orden/bases', { spy: true })
 
@@ -30,5 +30,21 @@ describe('the list of 5,000 tasks drawn again after a tick', () => {
       Math.floor((TASKS - 1) / 2),
     )
     expect(vi.mocked(bases.rowId).mock.calls.length).toBeLessThanOrEqual(TASKS * 2 + 1)
+  })
+})
+
+describe('the lanes of a board', () => {
+  const lane = (key: bases.Group['key']): bases.Group => ({ key, rows: [], summaries: {} })
+  const columns: bases.Group[] = [
+    { key: 'Doing', rows: [], summaries: {}, sub: [lane(1), lane(3), lane(null)] },
+    { key: 'Todo', rows: [], summaries: {}, sub: [lane(2)] },
+  ]
+
+  test('come in the order the answer gives across every column', () => {
+    expect(laneKeys(columns, [1, 2, 3, null])).toEqual([1, 2, 3, null])
+  })
+
+  test('leave out a lane no shown column holds', () => {
+    expect(laneKeys(columns.slice(1), [1, 2, 3, null])).toEqual([2])
   })
 })
