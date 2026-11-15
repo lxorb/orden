@@ -15,6 +15,7 @@ export interface Bar {
   to: string
   fromTime?: string
   toTime?: string
+  ownDates?: boolean
 }
 
 function timeIn(value: Value): string {
@@ -44,7 +45,7 @@ export function barOf(
     const to = deadline && from !== 'task.deadline' ? 'task.deadline' : from
     let end = deadline && from !== 'task.deadline' ? deadline : start
     if (end < start) end = start
-    return { row, start, end, from, to }
+    return { row, start, end, from, to, ownDates: true }
   }
 
   const fromProperty = dates.start ?? 'file.ctime'
@@ -116,7 +117,7 @@ export function dragged(
 }
 
 function stretched(bar: Bar, part: 'start' | 'end', days: number): Record<string, string> {
-  if (!bar.row.task) return {}
+  if (!bar.ownDates) return {}
   const start = part === 'start' ? addDays(bar.start, days) : bar.start
   const end = part === 'end' ? addDays(bar.end, days) : bar.end
   if (start >= end) return {}

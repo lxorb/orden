@@ -1,6 +1,6 @@
 import type { Row } from '@orden/bases'
 import { expect, test } from 'vitest'
-import { type Bar, dragged } from './timeline'
+import { type Bar, barOf, dragged } from './timeline'
 
 const taskRow = { kind: 'task', task: { text: 'Draft' } } as unknown as Row
 const noteRow = { kind: 'note', note: {} } as unknown as Row
@@ -11,6 +11,7 @@ const single = (row: Row, field: string): Bar => ({
   end: '2026-03-05',
   from: field,
   to: field,
+  ...(row.task ? { ownDates: true } : {}),
 })
 
 test.each(['task.start', 'task.scheduled'])(
@@ -66,4 +67,20 @@ test('a bar with two ends still stretches the end it is dragged by', () => {
   expect(dragged(bar, 'end', 1)).toEqual({ 'note.end': '2026-03-08' })
   expect(dragged(bar, 'start', -1)).toEqual({ 'note.start': '2026-03-04' })
   expect(dragged(bar, 'move', 1)).toEqual({ 'note.start': '2026-03-06', 'note.end': '2026-03-08' })
+})
+
+test('an edge of a task bar drawn from a date property the view names, with no end, writes nothing', () => {
+  const bar = barOf(taskRow, { start: 'task.scheduled' }, () => ({
+    kind: 'date',
+    iso: '2026-03-05',
+  }))
+  if (!bar) throw new Error('no bar')
+  expect(dragged(bar, 'end', 3)).toEqual({})
+  expect(dragged(bar, 'start', -2)).toEqual({})
+  expect(dragged(bar, 'move', 1)).toEqual({ 'task.scheduled': '2026-03-06' })
+})
+
+test('a task with only a date in the default timeline gets its own dates', () => {
+  const row = { kind: 'task', task: { text: 'Draft', scheduled: '2026-03-05' } } as unknown as Row
+  expect(barOf(row, {}, () => null)).toMatchObject({ from: 'task.scheduled', ownDates: true })
 })
