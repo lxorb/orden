@@ -13,7 +13,7 @@ import { touch, touchedBy, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
 import { inTurn } from './turns'
 
-export const PATIENCE = 30_000
+export const PATIENCE = 20_000
 
 export interface NoteEdited {
   path: string
@@ -208,9 +208,10 @@ export async function editNote(
 ): Promise<NoteEdited> {
   const asked = readEdits(edits)
   const note = reachable(desk, at)
+  const started = Date.now()
 
   return inTurn(keyOf(agent.id, note.path), () =>
-    change(desk, agent, note, ifRev, (text, selected, _open, again) => {
+    change(desk, agent, note, ifRev, started, (text, selected, _open, again) => {
       try {
         return plan(asked, text, selected)
       } catch (error) {
@@ -237,9 +238,10 @@ export async function writeNote(
   const note = reachable(desk, at)
   const wanted = text.replace(/\r\n?/g, '\n')
   let first: { text: string; edits: Replacement[] } | null = null
+  const started = Date.now()
 
   return inTurn(keyOf(agent.id, note.path), () =>
-    change(desk, agent, note, ifRev, (words, _selected, open) => {
+    change(desk, agent, note, ifRev, started, (words, _selected, open) => {
       if (first && open) {
         const edits = open.live.carried(first.edits, first.text, true) ?? first.edits
         return { edits, places: [] }
@@ -257,9 +259,9 @@ async function change(
   agent: Agent,
   note: Located,
   ifRev: string | undefined,
+  started: number,
   planner: Planner,
 ): Promise<NoteEdited> {
-  const started = Date.now()
   let again = false
 
   for (;;) {

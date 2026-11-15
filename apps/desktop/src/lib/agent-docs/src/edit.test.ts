@@ -9,6 +9,9 @@ import { revOf } from './rev'
 import { deskWith } from './test-desk'
 import { touchedBy } from './touched'
 
+const ENDPOINT_PATIENCE = 30_000
+const DELIVERY = 5000
+
 let made = 0
 function anAgent(name = 'Claude Code') {
   made++
@@ -234,6 +237,59 @@ describe('the reader’s typing wins', () => {
     }
 
     expect(await editing).toBe('reader_typing')
+  })
+
+  test('answers well before the endpoint stops waiting on the window, however long they type', async () => {
+    const { desk, panes } = deskWith({ 'plan.md': 'word' }, ['plan.md'])
+    const pane = panes['plan.md']
+    if (!pane) throw new Error('open')
+    pane.type(4, '!')
+
+    const started = Date.now()
+    let answeredAt = -1
+    const editing = refusal(
+      editNote(desk, anAgent(), { path: 'plan.md' }, [
+        { at: { quote: 'word' }, insert_after: '?' },
+      ]),
+    ).then((said) => {
+      answeredAt = Date.now() - started
+      return said
+    })
+    for (let at = 0; at < 57; at++) {
+      pane.type(4, '!')
+      await vi.advanceTimersByTimeAsync(500)
+    }
+    await vi.advanceTimersByTimeAsync(ENDPOINT_PATIENCE)
+
+    expect(await editing).toBe('reader_typing')
+    expect(answeredAt).toBeLessThan(ENDPOINT_PATIENCE - DELIVERY)
+  })
+
+  test('and so does an edit that waited its turn behind one of theirs', async () => {
+    const { desk, panes } = deskWith({ 'plan.md': 'word' }, ['plan.md'])
+    const pane = panes['plan.md']
+    if (!pane) throw new Error('open')
+    pane.type(4, '!')
+    const agent = anAgent()
+
+    const started = Date.now()
+    const answered = (said: string) => ({ said, after: Date.now() - started })
+    const first = refusal(
+      editNote(desk, agent, { path: 'plan.md' }, [{ at: { quote: 'word' }, insert_after: '?' }]),
+    ).then(answered)
+    const second = refusal(
+      editNote(desk, agent, { path: 'plan.md' }, [{ at: { quote: 'word' }, insert_after: '#' }]),
+    ).then(answered)
+    for (let at = 0; at < 57; at++) {
+      pane.type(4, '!')
+      await vi.advanceTimersByTimeAsync(500)
+    }
+    await vi.advanceTimersByTimeAsync(ENDPOINT_PATIENCE)
+
+    for (const one of [await first, await second]) {
+      expect(one.said).toBe('reader_typing')
+      expect(one.after).toBeLessThan(ENDPOINT_PATIENCE - DELIVERY)
+    }
   })
 })
 

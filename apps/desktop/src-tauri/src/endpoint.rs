@@ -1028,6 +1028,20 @@ mod tests {
     }
 
     #[test]
+    fn an_edit_waiting_on_a_typing_reader_answers_before_the_window_is_given_up_on() {
+        let edit = include_str!("../../src/lib/agent-docs/src/edit.ts");
+        assert!(edit.contains("export const PATIENCE = 20_000\n"));
+        let desk = include_str!("../../src/lib/agent-docs/src/desk.ts");
+        assert!(desk.contains("export const TYPING = 2000\n"));
+        let tried = include_str!("../../src/lib/agent-docs/src/edit.test.ts");
+        assert!(tried.contains("const ENDPOINT_PATIENCE = 30_000\nconst DELIVERY = 5000\n"));
+        assert_eq!(PATIENCE, Duration::from_secs(30));
+        let waits_out_the_reader = Duration::from_secs(20 + 2);
+        let delivery = Duration::from_secs(5);
+        assert!(waits_out_the_reader + delivery < PATIENCE);
+    }
+
+    #[test]
     fn the_waits_are_the_ones_the_window_verbs_take() {
         let ask = include_str!("../../src/lib/agent-host/src/ask.ts");
         assert!(ask.contains("const WAIT = 60_000\nconst MOST_WAIT = 120_000\n"));
