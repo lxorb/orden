@@ -1,4 +1,10 @@
-import { type Extension, StateEffect, StateField } from '@codemirror/state'
+import {
+  type EditorState,
+  type Extension,
+  type Line,
+  StateEffect,
+  StateField,
+} from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -8,7 +14,7 @@ import {
 } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { landing, moveBlock } from './move'
-import { blockAt, blocksIn, type BlockSpan } from './span'
+import { blockAt, blocksIn, type BlockSpan, writtenLine } from './span'
 
 interface Carrying {
   span: BlockSpan
@@ -47,11 +53,11 @@ const carrying = StateField.define<Carrying | null>({
       }
 
       if (held.at !== null) {
-        const landing = held.at >= doc.length ? doc.line(doc.lines) : doc.lineAt(held.at)
+        const { line, under } = landingMark(state, held.at)
         marks.push(
-          Decoration.line({
-            class: held.at >= doc.length ? 'orden-block-under' : 'orden-block-over',
-          }).range(landing.from),
+          Decoration.line({ class: under ? 'orden-block-under' : 'orden-block-over' }).range(
+            line.from,
+          ),
         )
       }
 
@@ -70,21 +76,38 @@ function grip(): SVGElement {
   return svg
 }
 
+export function landingMark(state: EditorState, at: number): { line: Line; under: boolean } {
+  const doc = state.doc
+  if (at < doc.length) return { line: doc.lineAt(at), under: false }
+  return { line: writtenLine(state, doc.lines, -1) ?? doc.line(doc.lines), under: true }
+}
+
+export function dropAt(
+  state: EditorState,
+  pos: number,
+  upperHalf: (block: BlockSpan) => boolean,
+): number | null {
+  const doc = state.doc
+  const line = doc.lineAt(pos)
+  const block = blockAt(state, pos)
+  if (!block) {
+    const down = writtenLine(state, line.number + 1, 1)
+    if (down) return down.from
+    return writtenLine(state, line.number - 1, -1) ? doc.length : null
+  }
+  if (upperHalf(block)) return block.from
+
+  return writtenLine(state, doc.lineAt(block.to).number + 1, 1)?.from ?? doc.length
+}
+
 function landingAt(view: EditorView, y: number): number | null {
   const edge = view.contentDOM.getBoundingClientRect()
   const pos = view.posAtCoords({ x: edge.left + 1, y }, false)
-  const block = blockAt(view.state, pos)
-  if (!block) return null
-
-  const top = view.documentTop + view.lineBlockAt(block.from).top
-  const bottom = view.documentTop + view.lineBlockAt(block.to).bottom
-  if (y < (top + bottom) / 2) return block.from
-
-  const doc = view.state.doc
-  let next = doc.lineAt(block.to).number + 1
-  while (next <= doc.lines && doc.line(next).text.trim() === '') next++
-
-  return next > doc.lines ? doc.length : doc.line(next).from
+  return dropAt(view.state, pos, (block) => {
+    const top = view.documentTop + view.lineBlockAt(block.from).top
+    const bottom = view.documentTop + view.lineBlockAt(block.to).bottom
+    return y < (top + bottom) / 2
+  })
 }
 
 function landingFor(view: EditorView, span: BlockSpan, y: number): number | null {
