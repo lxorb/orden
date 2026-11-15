@@ -112,7 +112,7 @@ vi.mock('./search/src/api', async (importOriginal) => ({
   },
 }))
 
-const { links, serveLinks } = await import('./link-index/src/api')
+const { links, notePicture, serveLinks } = await import('./link-index/src/api')
 serveLinks({ search: (await import('./search/src/api')).searchSpace })
 const { startup } = await import('./launch/src/api')
 
@@ -1619,5 +1619,25 @@ describe('a relative link to a note that is not there', () => {
     expect(links.backlinks(at('Archive/Plan.md'))).toEqual([])
     await links.retarget(at('Archive/Plan.md'), at('Archive/Strategy.md'), ROOT)
     expect(notes['Notes/Day/x.md']).toBe('see [p](./Plan.md) and [q](../Plan.md)')
+  })
+})
+
+describe('a file named by a name that more than one folder holds', () => {
+  test('is the one beside the note', async () => {
+    await space({ 'Trips/Paris.md': '![](cover.jpg) [[guide.pdf]]' }, [
+      'Home/cover.jpg',
+      'Home/guide.pdf',
+      'Trips/cover.jpg',
+      'Trips/guide.pdf',
+    ])
+
+    expect(notePicture('cover.jpg', at('Trips/Paris.md'), '')).toBe('/asset/space/Trips/cover.jpg')
+    expect(links.fileFor('cover.jpg', at('Trips/Paris.md'))).toBe(at('Trips/cover.jpg'))
+    expect(links.targetOf(at('Trips/Paris.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe(
+      'Trips/guide.pdf',
+    )
+    expect(links.targetOf(at('Notes/x.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe(
+      'Home/guide.pdf',
+    )
   })
 })

@@ -368,6 +368,16 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, 'Nothing.md')).toBeNull()
   })
 
+  test('a file named by its name alone is the one beside the note first', () => {
+    const files = ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']
+    expect(resolveFile(index([], 'Trips/Paris.md', {}, files), 'cover.jpg', 'wikilink')).toBe(
+      'Trips/cover.jpg',
+    )
+    expect(resolveFile(index([], 'Notes/x.md', {}, files), 'cover.jpg', 'wikilink')).toBe(
+      'Home/cover.jpg',
+    )
+  })
+
   test('a link written as relative names only what is there, never a namesake elsewhere', () => {
     const here = index([note('Archive/Plan.md'), note('Projects/Plan.md')], 'Notes/Day/x.md')
     expect(resolveRelative(here, './Plan.md')).toBeNull()

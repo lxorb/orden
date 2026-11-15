@@ -1470,10 +1470,7 @@ class Links {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null
-    const found =
-      other !== null && notePath !== null
-        ? resolveFile(this.otherIndex(other, notePath), name, 'wikilink')
-        : this.fileNamed(name)
+    const found = resolveFile(this.index(notePath), name, 'wikilink')
     return found === null ? null : insideSpace(root, found)
   }
 

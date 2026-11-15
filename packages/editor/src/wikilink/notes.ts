@@ -169,10 +169,10 @@ function targetOf(folded: string): { wanted: string; anchored: boolean } {
   return { wanted: anchored ? folded.slice(1) : folded, anchored }
 }
 
-function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef | null {
+function nearest<T extends { path: string }>(candidates: readonly T[], from: string | null) {
   const here = from === null ? null : folderOf(from)
   const depth = (path: string) => path.split('/').length
-  const beside = (note: NoteRef) => (folderOf(note.path) === here ? 0 : 1)
+  const beside = (note: T) => (folderOf(note.path) === here ? 0 : 1)
 
   return (
     [...candidates].sort(
@@ -243,16 +243,12 @@ export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): s
   if (!wanted) return null
 
   const whole = kind === 'markdown' || anchored
-  const found = index.files.filter((path) => {
+  const found = index.files.flatMap((path) => {
     const held = foldName(path)
-    return held === wanted || (!whole && held.endsWith(`/${wanted}`))
+    return held === wanted || (!whole && held.endsWith(`/${wanted}`)) ? [{ path }] : []
   })
 
-  return (
-    [...found].sort(
-      (one, other) => one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
-    )[0] ?? null
-  )
+  return nearest(found, index.path)?.path ?? null
 }
 
 export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteRef | null {
