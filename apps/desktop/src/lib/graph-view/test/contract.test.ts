@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
-import { afterEach, describe, expect, test, vi } from 'vitest'
-import { DEEPEST, loadGraph, SHALLOWEST, SpaceGraphSettings } from '../src/api'
+import { describe, expect, test } from 'vitest'
+import { loadGraph } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -44,48 +44,8 @@ describe('the module stands on its own', () => {
     const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([A-Za-z.-]+)'/gm)].map(
       (found) => found[1],
     )
-    expect(statics).toEqual(['settings.svelte'])
+    expect(statics).toEqual([])
     expect(api).toMatch(/import\('\.\/Graph\.svelte'\)/)
     expect(typeof loadGraph).toBe('function')
-  })
-})
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
-
-afterEach(() => {
-  vi.clearAllTimers()
-  vi.useRealTimers()
-  vi.unstubAllGlobals()
-})
-
-describe("a space's graph settings", () => {
-  test('with no space open there is nothing to change', () => {
-    vi.stubGlobal('localStorage', memoryStorage())
-    const settings = new SpaceGraphSettings(() => null)
-    const before = settings.here
-    settings.set({ depth: DEEPEST })
-    expect(settings.here).toEqual(before)
-  })
-
-  test('a depth is held between the shallowest and the deepest', () => {
-    vi.useFakeTimers()
-    vi.stubGlobal('localStorage', memoryStorage())
-    const settings = new SpaceGraphSettings(() => '/space')
-    settings.set({ depth: DEEPEST + 10 })
-    expect(settings.here.depth).toBe(DEEPEST)
-    settings.set({ depth: 0 })
-    expect(settings.here.depth).toBe(SHALLOWEST)
   })
 })

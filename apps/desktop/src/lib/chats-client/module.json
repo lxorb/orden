@@ -36,6 +36,7 @@
     "apps/desktop/src/lib/chosen-icon.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/drag-paths.ts",
+    "apps/desktop/src/lib/failed.svelte.ts",
     "apps/desktop/src/lib/file-mark.ts",
     "apps/desktop/src/lib/longpress.ts",
     "apps/desktop/src/lib/markdown-view.svelte.ts",
@@ -50,6 +51,7 @@
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/workspace.svelte.ts"
+    "apps/desktop/src/lib/workspace.svelte.ts",
+    "apps/desktop/src/lib/workspace/chat-carry.ts"
   ]
 }

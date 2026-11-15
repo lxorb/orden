@@ -1,12 +1,12 @@
-import type { Entry } from '@orden/contracts'
+import { type Entry, webPages } from '@orden/contracts'
 import { nameFromTitle, shownName, nameOf, invoke, isDesktop, joinPath } from '../platform/src/api'
-import { pages, webDataStores } from '../web-tab/src/api'
 import { sameSite, settleShortcuts } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 import type { Space } from '../workspace.svelte'
 import type { ClosedTabs } from '../session/src/api'
 import { type NoteDoc, type Tab, UNTITLED, draftFile } from '../documents/src/api'
 import { writeFile } from '../file-writes/src/api'
+import { services } from './services'
 
 export interface Places {
   readonly spaces: readonly Space[]
@@ -50,6 +50,7 @@ export async function keepWeb(
 ): Promise<string | null> {
   const { canWriteAt } = await import('../sharing/src/api')
   if (!canWriteAt(dir)) return null
+  const pages = webPages()
   const title = file ? shownName(file) : (pages.of(tab.id).title || tab.name || UNTITLED).trim()
   const named = file ?? `${nameFromTitle(title) ?? UNTITLED}.url`
   const page = pages.of(tab.id)
@@ -115,7 +116,7 @@ export async function keepTerm(
 
 async function ownFor(tab: Tab, url: string): Promise<string | null> {
   if (!tab.apart) return null
-  const { copyingOut, freshOwn, ownStore } = await webDataStores()
+  const { copyingOut, freshOwn, ownStore } = await services().webData()
   const own = freshOwn()
   const from = tab.apart
   if (isDesktop) {

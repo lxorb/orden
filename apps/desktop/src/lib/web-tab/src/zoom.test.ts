@@ -19,6 +19,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 const { pages } = await import('./pages.svelte')
 const { workspace } = await import('../../workspace.svelte')
+await import('../../workspace-ports')
 const { zoomStep } = await import('./zoom')
 
 beforeEach(() => {

@@ -34,6 +34,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 await import('../../pdf/src/api')
 const { workspace } = await import('../../workspace.svelte')
+await import('../../workspace-ports')
 
 const ROOT = '/theirs'
 const PAPER = `${ROOT}/paper.pdf`

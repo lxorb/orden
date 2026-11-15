@@ -20,12 +20,6 @@ vi.mock('../platform/src/tauri', async (importOriginal) => ({
 }))
 
 const ending = vi.hoisted(() => ({ answer: true, asked: [] as string[][] }))
-vi.mock('../terminal/src/closing', () => ({
-  mayEnd: (tabs: readonly { kind: string }[]) => {
-    ending.asked.push(tabs.map((one) => one.kind))
-    return Promise.resolve(ending.answer)
-  },
-}))
 
 const { Disk, memoryStorage } = await import('../../../test/disk')
 disk.current = new Disk()
@@ -38,6 +32,13 @@ async function window(spaces: (typeof WORK)[], active: string | null, setsRead?:
   await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace } = await import('../workspace.svelte')
+  const { serveWorkspace } = await import('./services')
+  serveWorkspace({
+    mayEnd: (tabs) => {
+      ending.asked.push(tabs.map((one) => one.kind))
+      return Promise.resolve(ending.answer)
+    },
+  })
   workspace.spaces = spaces.map((one) => ({ ...one }))
   workspace.activeSpaceId = active
   workspace.setsRead = setsRead

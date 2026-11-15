@@ -155,6 +155,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { workspace } = await import('../../workspace.svelte')
+await import('../../workspace-ports')
 const { exportCommands } = await import('../../export/src/api')
 const { appMenu } = await import('../../app-menu')
 const { isSubmenu } = await import('../../ui-kit/src/menu-item')

@@ -1,0 +1,46 @@
+import { invoke, onDisk } from '../../platform/src/api'
+import { pageSizes } from '../../pdf/src/api'
+import {
+  adoptBeside as adopt,
+  asItself as itself,
+  asPageNote as pageNote,
+  noteHolding,
+} from './from-pdf'
+import { turningIn } from './turning'
+
+const drafts = () =>
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no PDF drafts in the plugin')) : import('./drafts')
+
+export const draftPdf: typeof import('./drafts').draftPdf = async (ws, from) =>
+  (await drafts()).draftPdf(ws, from)
+
+export const keepPaper: typeof import('./drafts').keepPaper = async (ws, note, path) =>
+  (await drafts()).keepPaper(ws, note, path)
+
+export function heldBy(path: string, root: string | null): Promise<string | null> {
+  return noteHolding(path, {
+    root,
+    exists: onDisk,
+    read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
+  })
+}
+
+export function asItself(path: string): Promise<string> {
+  return itself(path, pageSizes)
+}
+
+export function asPageNote(
+  path: string,
+  root: string | null,
+  move: (from: string, to: string) => Promise<void>,
+): Promise<string> {
+  return pageNote(path, turningIn(root, move))
+}
+
+export function adoptBeside(
+  path: string,
+  root: string | null,
+  move: (from: string, to: string) => Promise<void>,
+): Promise<boolean> {
+  return adopt(path, turningIn(root, move))
+}

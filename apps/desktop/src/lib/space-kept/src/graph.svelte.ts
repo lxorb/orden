@@ -1,4 +1,4 @@
-import { push } from '../../space-kept/src/api'
+import { push } from './api'
 import {
   isBoolean,
   isNumber,

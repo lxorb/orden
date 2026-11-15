@@ -286,6 +286,7 @@ describe('ports', () => {
     expect(none.of('t')).toEqual({
       url: null,
       title: '',
+      kept: null,
       back: false,
       forward: false,
       zoom: 1,
@@ -315,6 +316,7 @@ describe('ports', () => {
     const page = {
       url: 'https://a.example/',
       title: 'A',
+      kept: null,
       back: true,
       forward: false,
       zoom: 2,
@@ -583,6 +585,8 @@ describe('loads', () => {
     expect(view.tabs).toEqual([])
     expect(view.showingShared('x')).toBe(false)
     await expect(view.showSpace('x')).resolves.toBeUndefined()
+    await expect(view.renameSpace('x', 'Y')).resolves.toBeUndefined()
+    await expect(view.openEntry('/x/A.md')).resolves.toBeUndefined()
     expect(() => view.follow(() => undefined)()).not.toThrow()
     const spaces = [{ id: 's', name: 'S', root: '/s' }]
     const unbind = providePort('workspace.view', { ...view, spaces })

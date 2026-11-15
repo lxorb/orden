@@ -19,7 +19,7 @@
   import { pixelRatio } from '../../pixel-ratio.svelte'
   import { theme } from '../../theme/src/api'
   import { workspace } from '../../workspace.svelte'
-  import { MOST_GROUPS } from './settings.svelte'
+  import { MOST_GROUPS } from '../../space-kept/src/api'
 
   const {
     graph,

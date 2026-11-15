@@ -44,6 +44,8 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../../workspace.svelte')
+const { serveWorkspace } = await import('../../workspace/services')
+serveWorkspace({ mayEnd: (await import('./closing')).mayEnd })
 
 function online(session: string, name = 'Terminal') {
   return workspace.openUnsaved(

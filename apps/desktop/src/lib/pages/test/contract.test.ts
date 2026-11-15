@@ -44,7 +44,7 @@ describe('the module stands on its own', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
     const loaded = [...api.matchAll(/^export \{[^}]*\} from '([^']+)'/gm)].map((one) => one[1])
     expect(loaded).toEqual(['./showing.svelte'])
-    for (const door of ['loadPages', 'loadNavigator', 'pagesOut', 'fromPdf', 'turning']) {
+    for (const door of ['loadPages', 'loadNavigator', 'pagesOut', 'pdfTabs']) {
       expect(api).toMatch(new RegExp(`export const ${door} = \\(\\) =>`))
     }
   })

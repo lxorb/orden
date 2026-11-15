@@ -1,6 +1,7 @@
 export interface WebPageSeen {
   readonly url: string | null
   readonly title: string
+  readonly kept: string | null
   readonly back: boolean
   readonly forward: boolean
   readonly zoom: number
@@ -44,6 +45,15 @@ export interface WebPagesPort {
   reload(tab: string): Promise<void>
   park(tab: string, hidden: boolean): Promise<void>
   copyPage(from: string, to: string, url: string | null, inPrivate: boolean): void
+  named(tab: string, url: string | null, title: string): void
+  privately(tab: string, inPrivate: boolean): void
+  typedInto(tab: string): boolean
+  step(tab: string, way: 'back' | 'forward'): Promise<void>
+  stepAddress(tab: string, by: -1 | 1): Promise<string | null>
+  freeze(tab: string): void
+  thaw(tab: string): Promise<void>
+  forget(tab: string): void
+  keepOnly(tabs: readonly string[]): void
   shoot(tab: string): Promise<void>
   clip(tab: string, selection: boolean): Promise<WebClip | null>
   faviconOf(url: string | null | undefined): string | null
@@ -86,6 +96,7 @@ export interface WebPorts {
 const BLANK: WebPageSeen = {
   url: null,
   title: '',
+  kept: null,
   back: false,
   forward: false,
   zoom: 1,
@@ -109,6 +120,15 @@ export const NO_WEB_PAGES: WebPagesPort = {
   reload: () => Promise.resolve(),
   park: () => Promise.resolve(),
   copyPage: () => undefined,
+  named: () => undefined,
+  privately: () => undefined,
+  typedInto: () => false,
+  step: () => Promise.resolve(),
+  stepAddress: () => Promise.resolve(null),
+  freeze: () => undefined,
+  thaw: () => Promise.resolve(),
+  forget: () => undefined,
+  keepOnly: () => undefined,
   shoot: () => Promise.resolve(),
   clip: () => Promise.resolve(null),
   faviconOf: () => null,

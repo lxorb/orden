@@ -22,6 +22,7 @@ vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
+await import('../../src/lib/workspace-ports')
 const { heldElsewhere } = await import('../../src/lib/web-tab/src/one-window.svelte')
 
 const other = new BroadcastChannel('orden:web-notes')

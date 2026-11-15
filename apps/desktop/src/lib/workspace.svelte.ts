@@ -1,4 +1,4 @@
-import { type Entry, type PickedFile, providePort, tabKindLoaded } from '@orden/contracts'
+import { type Entry, type PickedFile, providePort, tabKindLoaded, webPages } from '@orden/contracts'
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './accounts/src/api'
 import { seed } from './web-backend/src/api'
@@ -19,7 +19,6 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index/src/api'
-import { searchWarmth } from './search/src/api'
 import {
   onDisk,
   insideOnly,
@@ -116,9 +115,9 @@ import {
   Excluded,
   Archive,
   ArchivedSpaces,
+  SpaceGraphSettings,
 } from './space-kept/src/api'
 import { protection, unlocks } from './protect/src/api'
-import { SpaceGraphSettings } from './graph-view/src/api'
 import { DeviceView } from './workspace/device.svelte'
 import { writeFile } from './file-writes/src/api'
 import {
@@ -145,7 +144,6 @@ import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { TAB_KINDS, type TabKind } from './tab-kinds/src/api'
 import { type Binning, type FileAction, FileActions, type Kept } from './file-undo/src/api'
-import { isScratchpad, pad as padNow, shown as pad } from './scratchpad/src/api'
 import { outermost, Selection } from './tree/src/api'
 import {
   folderFor,
@@ -164,19 +162,9 @@ import { orderedTree, type SortMode } from './tree/src/api'
 import { Arranged, SpaceSorting } from './tree/src/api'
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
-import {
-  oneWindow,
-  pageAiming,
-  pages,
-  pageZoom,
-  siteMaking,
-  webNotes,
-  websiteConverting,
-} from './web-tab/src/api'
 import { agentMarks } from './agent-marks.svelte'
-import { beginSetup } from './onboarding/src/api'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
-import { showArchive } from './archive/src/api'
+import { services } from './workspace/services'
 
 function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
@@ -249,21 +237,16 @@ function emptyMap<T>(): Map<string, T> {
   return new Map<string, T>()
 }
 
-let paperIndex: ReturnType<typeof import('./pdf/src/api').papers> | null = null
+let paperIndex: ReturnType<ReturnType<typeof services>['papers']> | null = null
 
 function papers() {
-  paperIndex ??= import('./pdf/src/api')
-    .then((pdf) => pdf.papers())
+  paperIndex ??= services()
+    .papers()
     .catch((error: unknown) => {
       paperIndex = null
       throw error
     })
   return paperIndex
-}
-
-async function viewOfExplorer(tab: Tab): Promise<import('./explorer/src/api').ExplorerView> {
-  const { viewOf } = await import('./explorer/src/api')
-  return viewOf(tab)
 }
 
 function unfetched(): void {
@@ -300,6 +283,7 @@ class Workspace {
   }
 
   asUnsaved(tab: Tab, keeper: Tab) {
+    const pages = webPages()
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
     tab.apart = apartOf(keeper)
     tab.note = this.document({
@@ -311,8 +295,7 @@ class Workspace {
       home: this.spaceOf(keeper.note),
     })
     tab.address = url ?? undefined
-    pages.of(tab.id).url = url
-    pages.of(tab.id).title = pages.of(keeper.id).title || tab.note.name
+    pages.named(tab.id, url, pages.of(keeper.id).title || tab.note.name)
   }
   readonly panes = new Panes(() => {
     this.scheduleSession()
@@ -400,10 +383,6 @@ class Workspace {
         const to = tab.essential && movedTo(tab.essential, op.from, op.to, op.root ?? undefined)
         if (to) tab.essential = to
       }
-    })
-    this.fileOps.follow((op) => {
-      if (__EVEN_PLUGIN__ || op.op !== 'moved') return
-      return import('./explorer/src/api').then(({ moved }) => moved(op.from, op.to), unfetched)
     })
     this.fileOps.follow((op) => {
       if (op.op === 'moved') rowIds.moved(op.from, op.to)
@@ -640,7 +619,7 @@ class Workspace {
       try {
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
-          await beginSetup(account.signedIn)
+          await services().beginSetup(account.signedIn)
         }
       } catch (error) {
         log('warn', `first visit: nothing seeded - ${String(error)}`)
@@ -1057,7 +1036,7 @@ class Workspace {
           const at = Math.max(this.tabsIn(tab.paneId).indexOf(tab), 0)
           this.closed.record({ draft: this.draftOf(tab), paneId: tab.paneId, at, batch })
         }
-        pages.forget(tab.id)
+        webPages().forget(tab.id)
       }
     }
 
@@ -1087,7 +1066,7 @@ class Workspace {
 
     this.oneDocument()
 
-    pages.keepOnly(this.tabs.map((tab) => tab.id))
+    webPages().keepOnly(this.tabs.map((tab) => tab.id))
     this.persist()
   }
 
@@ -1455,11 +1434,11 @@ class Workspace {
   }
 
   isNewTab(tab: Tab): boolean {
-    return tab.nowhere && !tab.inPrivate && !pages.addressOf(tab.id)
+    return tab.nowhere && !tab.inPrivate && !webPages().addressOf(tab.id)
   }
 
   isBlankTab(tab: Tab): boolean {
-    return this.isNewTab(tab) && !pages.typedInto(tab.id) && !(tab.id in agentMarks.opened)
+    return this.isNewTab(tab) && !webPages().typedInto(tab.id) && !(tab.id in agentMarks.opened)
   }
 
   closeLeftBlank() {
@@ -1620,15 +1599,7 @@ class Workspace {
   }
 
   private async heldBy(path: string): Promise<string | null> {
-    const [{ noteHolding }, { onDisk }] = await Promise.all([
-      import('./pages/src/api').then((one) => one.fromPdf()),
-      import('./platform/src/api'),
-    ])
-    return noteHolding(path, {
-      root: this.rootHolding(path),
-      exists: onDisk,
-      read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
-    })
+    return (await services().pdfPages()).heldBy(path, this.rootHolding(path))
   }
 
   private async mayTurn(path: string): Promise<boolean> {
@@ -1656,11 +1627,8 @@ class Workspace {
   }
 
   private async paperText(path: string): Promise<string | null> {
-    const [{ asItself }, { pageSizes }] = await Promise.all([
-      import('./pages/src/api').then((one) => one.fromPdf()),
-      import('./pdf/src/api'),
-    ])
-    return asItself(path, pageSizes).catch((error: unknown) => {
+    const { asItself } = await services().pdfPages()
+    return asItself(path).catch((error: unknown) => {
       log('error', `open PDF as itself: ${path} - ${String(error)}`)
       return null
     })
@@ -1672,7 +1640,7 @@ class Workspace {
     if (existing) return existing
 
     const making = this.turning(path)
-      .then(({ from, how }) => from.asPageNote(path, how))
+      .then(({ pdf, root, move }) => pdf.asPageNote(path, root, move))
       .catch((error: unknown) => {
         log('error', `open PDF as page note: ${path} - ${String(error)}`)
         return null
@@ -1684,12 +1652,9 @@ class Workspace {
 
   private async turning(path: string) {
     if (!(await this.mayTurn(path))) throw new Error(`${path} is in a space shared to be read`)
-    const { fromPdf, turning } = await import('./pages/src/api')
-    const [from, { turningIn }] = await Promise.all([fromPdf(), turning()])
-    const how = turningIn(this.rootHolding(path), (one, to) =>
-      this.renameFile(one, to, false, true),
-    )
-    return { from, how }
+    const pdf = await services().pdfPages()
+    const move = (one: string, to: string) => this.renameFile(one, to, false, true)
+    return { pdf, root: this.rootHolding(path), move }
   }
 
   async openCanvas(asked: string, how: OpenHow = {}) {
@@ -1788,9 +1753,9 @@ class Workspace {
       return
     }
     if (isDesktop) {
-      const windows = await oneWindow()
-      if (windows.heldElsewhere(path)) {
-        windows.showElsewhere(path)
+      const { sites } = services()
+      if (await sites.heldElsewhere(path)) {
+        void sites.showElsewhere(path)
         return
       }
     }
@@ -1799,9 +1764,7 @@ class Workspace {
       await this.browseOldWebsite(path, how)
       return
     }
-    const opening = isWebTarget(path)
-      ? path
-      : await websiteConverting().then(({ asShortcut }) => asShortcut(this, path))
+    const opening = isWebTarget(path) ? path : await services().sites.asShortcut(this, path)
     if (opening === null) {
       await this.open(path, how)
       return
@@ -1812,8 +1775,7 @@ class Workspace {
 
   private async browseOldWebsite(path: string, how: OpenHow) {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
-    const { webUrlOf } = await webNotes()
-    const url = webUrlOf(text)
+    const url = await services().sites.webUrlOf(text)
     if (url === null) {
       await this.open(path, how)
       return
@@ -1855,9 +1817,7 @@ class Workspace {
     const tab = new Tab(file, this.panes.focusedId)
     if (said) tab.address = said.url
 
-    const page = pages.of(tab.id)
-    page.url = said?.url ?? null
-    page.title = said?.title ?? shownName(nameOf(opening))
+    webPages().named(tab.id, said?.url ?? null, said?.title ?? shownName(nameOf(opening)))
 
     this.arrive(tab, how)
 
@@ -1869,8 +1829,7 @@ class Workspace {
   async convertWebsites(): Promise<number> {
     const root = this.activeSpace?.root
     if (!root || !(await this.writableAt(root))) return 0
-    const { convertWebsites } = await websiteConverting()
-    return convertWebsites(this)
+    return services().sites.convertWebsites(this)
   }
 
   openWebsite(inPrivate = false) {
@@ -1886,7 +1845,7 @@ class Workspace {
     })
     const tab = new Tab(file, this.panes.focusedId)
     tab.inPrivate = inPrivate
-    pages.of(tab.id).inPrivate = inPrivate
+    webPages().privately(tab.id, inPrivate)
     this.add(tab)
     this.dropScaffolding(tab)
     this.showNote()
@@ -1912,11 +1871,10 @@ class Workspace {
     const tab = new Tab(file, pane)
     tab.address = url
 
-    const page = pages.of(tab.id)
-    page.url = url
-    page.title = plainOrigin(url)
+    const pages = webPages()
+    pages.named(tab.id, url, plainOrigin(url))
     tab.inPrivate = from?.inPrivate === true
-    page.inPrivate = tab.inPrivate
+    pages.privately(tab.id, tab.inPrivate)
     tab.apart = from ? apartOf(from) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
@@ -1936,8 +1894,7 @@ class Workspace {
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('web', dir)) return
 
-    const { newSite } = await siteMaking()
-    const path = await newSite(this, dir, named)
+    const path = await services().sites.newSite(this, dir, named)
     this.undone.record({ kind: 'create', path })
     await this.loadTree()
     await this.openWeb(path)
@@ -1949,14 +1906,13 @@ class Workspace {
   }
 
   async webAimed(tab: Tab, url: string) {
-    const { aimed } = await pageAiming()
-    await aimed(this, tab, url)
+    await services().sites.aimed(this, tab, url)
   }
 
   webWalked(tab: Tab, url: string) {
     if (tab.address === url) return
 
-    if (tab.nowhere && !pages.of(tab.id).title) tab.name = plainOrigin(url)
+    if (tab.nowhere && !webPages().of(tab.id).title) tab.name = plainOrigin(url)
     tab.address = url
     this.scheduleSession()
   }
@@ -2020,7 +1976,7 @@ class Workspace {
     if (!(await this.mayTurn(path))) return
 
     await this.turning(path)
-      .then(({ from, how }) => from.adoptBeside(path, how))
+      .then(({ pdf, root, move }) => pdf.adoptBeside(path, root, move))
       .catch((error: unknown) => {
         log('warn', `page note beside its PDF: ${path} - ${String(error)}`)
       })
@@ -2259,13 +2215,8 @@ class Workspace {
         ([{ moveOwnKeysSoon }]) => moveOwnKeysSoon(root, this, !!account.token),
         unfetched,
       )
-      void searchWarmth().then((warm) => warm.forSpace(root), unfetched)
-      const listed = this.files
-      const tree = this.tree
-      void import('./pdf/src/api').then(
-        ({ readPapers }) => readPapers(root, listed, tree),
-        unfetched,
-      )
+      void services().warmSearch(root).catch(unfetched)
+      void services().readPapers(root, this.files, this.tree).catch(unfetched)
     }
   }
 
@@ -2293,7 +2244,7 @@ class Workspace {
     const leaving = this.spaces.find((one) => within(one.root, from) !== null)
     let back = () => Promise.resolve()
     if (leaving && within(leaving.root, intoFolder) === null) {
-      back = await (await import('./workspace/chat-leaving')).chatsCarried(from, intoFolder)
+      back = await services().chatsCarried(from, intoFolder)
     }
 
     const kind = this.kindAt(from)
@@ -2359,8 +2310,8 @@ class Workspace {
 
   async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
-    if (isScratchpad(path) && !options.asNote && !this.opened.at(path)) {
-      ;(await padNow()).show()
+    if (services().scratchpad.holds(path) && !options.asNote && !this.opened.at(path)) {
+      await services().scratchpad.open()
       return
     }
     if (this.instructionsAt(path) && !this.opened.at(path)) {
@@ -2538,9 +2489,9 @@ class Workspace {
 
   zoomPage(step: 'in' | 'out' | 'reset'): boolean {
     const tab = this.active
-    if (tab?.kind !== 'web' || !pages.of(tab.id).live) return false
+    if (tab?.kind !== 'web' || !webPages().of(tab.id).live) return false
 
-    void pageZoom().then((one) => one.zoomStep(tab.id, pages.of(tab.id), step))
+    void services().sites.zoomStep(tab.id, step)
     return true
   }
 
@@ -2552,9 +2503,8 @@ class Workspace {
       return
     }
 
-    if (tab.kind === 'web') void pages.step(tab.id, 'back')
-    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer')
-      void viewOfExplorer(tab).then((view) => view.back())
+    if (tab.kind === 'web') void webPages().step(tab.id, 'back')
+    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer') void services().explorerStep(tab, -1)
     else void this.walk(tab.at - 1, tab.id)
   }
 
@@ -2566,15 +2516,14 @@ class Workspace {
       return
     }
 
-    if (tab.kind === 'web') void pages.step(tab.id, 'forward')
-    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer')
-      void viewOfExplorer(tab).then((view) => view.forward())
+    if (tab.kind === 'web') void webPages().step(tab.id, 'forward')
+    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer') void services().explorerStep(tab, 1)
     else void this.walk(tab.at + 1, tab.id)
   }
 
   private async stepAside(tab: Tab, by: -1 | 1, ask: TabAsk) {
     if (tab.kind === 'web') {
-      const url = await pages.stepAddress(tab.id, by)
+      const url = await webPages().stepAddress(tab.id, by)
       if (url !== null) this.openPage(url, ask, tab.id)
       return
     }
@@ -2626,8 +2575,7 @@ class Workspace {
       if (!(await mayLose(this, closing))) return false
     }
     if (!closing.some((tab) => tab.kind === 'terminal')) return true
-    const { mayEnd } = await import('./terminal/src/api')
-    return mayEnd(closing, this.tabs)
+    return services().mayEnd(closing, this.tabs)
   }
 
   async writeNow() {
@@ -2671,7 +2619,7 @@ class Workspace {
       if (last && isDraft(tab.note)) void this.trashWords(tab.note)
     }
 
-    pages.forget(tab.id)
+    webPages().forget(tab.id)
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null
@@ -2951,14 +2899,12 @@ class Workspace {
   }
 
   async draftPdf(from: string): Promise<void> {
-    const drafts = __EVEN_PLUGIN__ ? null : await import('./workspace/handed-drafts')
-    const open = drafts ? await drafts.draftPdf(this, from) : null
+    const open = __EVEN_PLUGIN__ ? null : await (await services().pdfPages()).draftPdf(this, from)
     if (open) this.showTab(open.note)
   }
 
   async keepPaper(note: NoteDoc, path: string): Promise<void> {
-    const drafts = __EVEN_PLUGIN__ ? null : await import('./workspace/handed-drafts')
-    await drafts?.keepPaper(this, note, path)
+    if (!__EVEN_PLUGIN__) await (await services().pdfPages()).keepPaper(this, note, path)
   }
 
   private async copied(landed: string[], into: string | null) {
@@ -3146,7 +3092,7 @@ class Workspace {
 
     if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
       this.showPanel('tree')
-      void showArchive(path)
+      services().showArchive(path)
       return
     }
 
@@ -3854,7 +3800,7 @@ class Workspace {
       panel: this.panel,
       rightPanel: this.rightPanel,
       right: this.rightHere,
-      covered: pad.on,
+      covered: services().scratchpad.on,
     }
   }
 
@@ -3864,6 +3810,7 @@ class Workspace {
     if (next.panel) this.lastLeft = next.panel
     if (!this.phone) this.right = next.right
     if (next.rightPanel) this.lastRight = next.rightPanel
+    const pad = services().scratchpad
     if (pad.on && !next.covered) pad.hide()
     this.panelChosen = true
     this.persist()
@@ -3936,7 +3883,7 @@ class Workspace {
   }
 
   get rightShows(): Panel | 'scratchpad' | null {
-    return pad.on ? 'scratchpad' : this.openOn('right')
+    return services().scratchpad.on ? 'scratchpad' : this.openOn('right')
   }
 
   private rightLast: Panel | 'scratchpad' | null = null
@@ -3947,6 +3894,7 @@ class Workspace {
       return
     }
     this.unfill()
+    const pad = services().scratchpad
     if (!pad.on) pad.show(take)
   }
 
@@ -4251,6 +4199,8 @@ providePort('workspace.view', {
     return workspace.activeSpace?.root ?? null
   },
   showSpace: (id) => workspace.showSpace(id),
+  renameSpace: (id, name) => workspace.renameSpace(id, name),
+  openEntry: (path) => workspace.openEntry(path),
   reload: (path, text) => workspace.reload(path, text),
   openShared: (item, text) => workspace.openShared(item, text),
   showingShared: (id) => workspace.showingShared(id),

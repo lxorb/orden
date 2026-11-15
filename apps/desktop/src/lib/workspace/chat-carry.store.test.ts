@@ -38,6 +38,7 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../workspace.svelte')
+await import('../workspace-ports')
 const { account } = await import('../accounts/src/account.svelte')
 const { sync } = await import('../sync.svelte')
 const { ApiError } = await import('../accounts/src/client')

@@ -7,12 +7,12 @@ import {
   samePath,
   within,
   invoke,
-} from '../platform/src/api'
-import { CanvasStore } from '../canvas/src/api'
-import { fromPdf } from '../pages/src/api'
+} from '../../platform/src/api'
+import { CanvasStore } from '../../canvas/src/api'
 import { paperOf } from '@orden/markdown/pages'
-import { pageSizes } from '../pdf/src/api'
-import { type NoteDoc, type Tab, UNTITLED, isDraft } from '../documents/src/api'
+import { pageSizes } from '../../pdf/src/api'
+import { type NoteDoc, type Tab, UNTITLED, isDraft } from '../../documents/src/api'
+import { asDraft, paperNamed, paperOutside } from './from-pdf'
 
 export interface Drafts {
   readonly tabs: Tab[]
@@ -24,7 +24,6 @@ const inSomeSpace = (ws: Drafts) => (path: string) =>
   ws.spaces.some((one) => within(one.root, path) !== null)
 
 export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
-  const { asDraft, paperOutside } = await fromPdf()
   const open = ws.tabs.find((tab) => {
     if (tab.kind !== 'pages' || !isDraft(tab.note)) return false
     const paper = paperOutside(tab.note.text, inSomeSpace(ws))
@@ -37,7 +36,7 @@ export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
     return null
   })
   if (text === null) {
-    const { unread } = await import('../unread.svelte')
+    const { unread } = await import('../../unread.svelte')
     await unread.there(from)
     return null
   }
@@ -46,7 +45,6 @@ export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
 }
 
 export async function keepPaper(ws: Drafts, note: NoteDoc, path: string): Promise<void> {
-  const { paperNamed, paperOutside } = await fromPdf()
   const from = paperOutside(note.text, inSomeSpace(ws))
   if (!from) return
 

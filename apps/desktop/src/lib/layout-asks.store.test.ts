@@ -8,18 +8,19 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
 }))
-vi.mock('./terminal/src/closing', () => ({
-  mayEnd: (closing: readonly { kind: string; id: string }[]) => {
-    asked.tabs.push(closing.filter((tab) => tab.kind === 'terminal').map((tab) => tab.id))
-    return Promise.resolve(asked.answer)
-  },
-}))
 
 const { Disk, memoryStorage } = await import('../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
+const { serveWorkspace } = await import('./workspace/services')
+serveWorkspace({
+  mayEnd: (closing) => {
+    asked.tabs.push(closing.filter((tab) => tab.kind === 'terminal').map((tab) => tab.id))
+    return Promise.resolve(asked.answer)
+  },
+})
 const { NoteDoc, Tab } = await import('./documents/src/api')
 
 function terminal() {

@@ -59,7 +59,7 @@
   import { workspace } from './workspace.svelte'
   import { links } from './link-index/src/api'
   import { worthAGraph } from './graph/src/api'
-  import { DEEPEST, SHALLOWEST } from './graph-view/src/api'
+  import { DEEPEST, SHALLOWEST } from './space-kept/src/api'
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './ui-kit/src/api'

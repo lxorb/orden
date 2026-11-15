@@ -141,6 +141,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
+await import('./workspace-ports')
 const { panesOf } = await import('./session/src/api')
 const { noteId } = await import('./note-id')
 const { answeredCase } = await import('./platform/src/space-paths')
