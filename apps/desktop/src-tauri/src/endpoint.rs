@@ -478,6 +478,10 @@ pub(crate) fn declared_wait(verb: &str, args: &serde_json::Value) -> Duration {
     }
 }
 
+fn listening_patience(left: Duration) -> Duration {
+    left.min(PATIENCE)
+}
+
 fn ask_the_window_within(
     app: &AppHandle,
     asked: &mut serde_json::Value,
@@ -497,7 +501,9 @@ fn ask_the_window_within(
     let (send, answered) = sync_channel::<String>(1);
     let waiting = app.state::<Waiting>();
     let deadline = Instant::now() + patience;
-    let Some(window) = waiting.listener_within(patience, || answering_order(app)) else {
+    let Some(window) =
+        waiting.listener_within(listening_patience(patience), || answering_order(app))
+    else {
         return Err("the window is not listening yet".to_owned());
     };
 
@@ -542,7 +548,7 @@ fn asked_of_one(
         waiting.forget(&window);
         let left = deadline.saturating_duration_since(Instant::now());
         window = waiting
-            .listener_within(left, || answering_order(app))
+            .listener_within(listening_patience(left), || answering_order(app))
             .ok_or_else(|| "the window did not answer".to_owned())?;
     }
 }
@@ -740,9 +746,9 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        as_hex, awaited, find, is_json, is_local, parse_head, read_request, reason, refused,
-        same_secret, window_patience, Admitted, Kept, Request, Waiting, MOST_AT_ONCE, MOST_BYTES,
-        PATIENCE, SECRET_BYTES, SLOWEST,
+        as_hex, awaited, find, is_json, is_local, listening_patience, parse_head, read_request,
+        reason, refused, same_secret, window_patience, Admitted, Kept, Request, Waiting,
+        MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST, TERMINAL_STARTING,
     };
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
@@ -1030,6 +1036,16 @@ mod tests {
         assert!(
             patience("read_terminal", serde_json::json!({})) > PATIENCE + started_and_connected
         );
+    }
+
+    #[test]
+    fn a_window_that_is_not_listening_is_not_waited_for_as_long_as_its_answer() {
+        let args = serde_json::json!({ "timeout_ms": 600_000 });
+        let answer = window_patience("run_terminal", &args);
+        assert!(answer > PATIENCE + TERMINAL_STARTING);
+        assert_eq!(listening_patience(answer), PATIENCE);
+        let left = Duration::from_secs(3);
+        assert_eq!(listening_patience(left), left);
     }
 
     #[test]
