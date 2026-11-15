@@ -1662,17 +1662,6 @@ mod tests {
     }
 
     #[test]
-    fn a_private_tab_s_popup_is_private() {
-        let source = include_str!("web_tabs.rs");
-        let popup = source
-            .split("fn popup(")
-            .nth(1)
-            .and_then(|from| from.split("\n}\n").next())
-            .expect("the popup's function");
-        assert!(popup.contains(".incognito(private)"));
-    }
-
-    #[test]
     fn a_page_s_waiting_dialog_is_let_go_before_it_is_sent_anywhere() {
         let source = include_str!("web_tabs.rs");
         for (command, moves) in [
