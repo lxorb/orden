@@ -605,6 +605,21 @@ describe('a session a share link handed out', () => {
     expect(told).toBe(1)
   })
 
+  test('does not tell it when a code signs the same account in again', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+    server.meFails = server.meCalls
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    account.email = 'me@example.com'
+    await account.verify('123456')
+
+    expect(account.user?.id).toBe('u1')
+    expect(told).toBe(0)
+  })
+
   test('does not tell it when the session that never answered arrives as itself', async () => {
     localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity

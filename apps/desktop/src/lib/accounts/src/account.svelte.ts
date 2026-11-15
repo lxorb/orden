@@ -20,6 +20,8 @@ export interface Vault {
 
 const TRIES = [400, 1200, 2500]
 
+const ASK_BEFORE_LEAVING = 3000
+
 function rejected(error: unknown): boolean {
   return fromServer(error) && error.status === 401
 }
@@ -226,15 +228,26 @@ class Session {
     this.open = true
   }
 
-  private leaveFor(token: string, next: { user?: Account | null; guest?: Guest | null }) {
+  private async leaveFor(token: string, next: { user?: Account | null; guest?: Guest | null }) {
     const was = this.user ? this.user.id : this.guest ? `guest:${this.guest.id}` : null
     const now = next.user ? next.user.id : next.guest ? `guest:${next.guest.id}` : null
     if (was && was !== now && !(this.guest && next.user)) this.forget()
-    if (!was && this.token && this.token !== token) this.heardNoAccount()
+
+    const unanswered = !was && this.token !== token ? this.token : null
+    if (unanswered && !(await this.heldBy(unanswered, next.user))) this.heardNoAccount()
+  }
+
+  private async heldBy(token: string, user: Account | null | undefined): Promise<boolean> {
+    if (!user) return false
+    const who = await Promise.race([
+      api.me(token).catch(() => null),
+      waited(ASK_BEFORE_LEAVING).then(() => null),
+    ])
+    return who?.user?.id === user.id
   }
 
   private async settleIn(token: string, user: Account): Promise<void> {
-    this.leaveFor(token, { user })
+    await this.leaveFor(token, { user })
     this.guest = null
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
@@ -275,7 +288,7 @@ class Session {
   }
 
   async arrive(token: string, who: { user?: Account; guest?: Guest }) {
-    this.leaveFor(token, who)
+    await this.leaveFor(token, who)
     this.stopResendTimer()
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
