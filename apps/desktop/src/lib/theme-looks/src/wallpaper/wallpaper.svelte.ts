@@ -310,6 +310,7 @@ $effect.root(() => {
   const baked = changed()
   const said = changed()
   const side = changed()
+  let slept = false
 
   $effect(() => {
     if (!following()) return
@@ -324,9 +325,12 @@ $effect.root(() => {
 
   $effect(() => {
     if (theme.id !== WALLPAPER_THEME) {
+      slept = true
       wallpaper.sleep()
       return
     }
-    if (side(theme.current)) wallpaper.rescheme()
+    const turned = side(theme.current)
+    if (turned || slept) wallpaper.rescheme()
+    slept = false
   })
 })
