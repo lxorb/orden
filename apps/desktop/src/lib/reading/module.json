@@ -10,7 +10,21 @@
     "scan",
     "theme",
     "link-index",
-    "fences"
+    "fences",
+    "documents",
+    "modes",
+    "sharing",
+    "shortcuts",
+    "ui-kit",
+    "views",
+    "workspace"
   ],
-  "pending": ["apps/desktop/src/lib/kept-cover.ts", "apps/desktop/src/lib/note-images.ts"]
+  "pending": [
+    "apps/desktop/src/lib/kept-cover.ts",
+    "apps/desktop/src/lib/layer-keys.ts",
+    "apps/desktop/src/lib/new-tab.ts",
+    "apps/desktop/src/lib/note-images.ts",
+    "apps/desktop/src/lib/open-link.ts",
+    "apps/desktop/src/lib/tag-search.ts"
+  ]
 }

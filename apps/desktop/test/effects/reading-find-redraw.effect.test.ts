@@ -2,10 +2,8 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { note } from './reading-find-redraw-world.svelte'
 
-vi.mock('../../src/lib/reading/src/api', async () => ({
-  ...(await import('../../src/lib/reading/src/find')),
-  ...(await import('../../src/lib/reading/src/places')),
-  inlineFiles: () => () => undefined,
+vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
+vi.mock('../../src/lib/reading/src/render', () => ({
   readingHtml: async (source: { text: string }) =>
     source.text
       .split('\n')
@@ -48,7 +46,7 @@ vi.mock('../../src/lib/shortcuts/src/api', () => ({
 
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const Reading = (await import('../../src/lib/Reading.svelte')).default
+const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
 
 const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
 

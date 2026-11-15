@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { Facts } from './ui-kit/src/api'
-  import { fileMark } from './file-mark'
-  import { shownName } from './platform/src/api'
-  import { nameOf } from './platform/src/api'
-  import { isShared, share } from './sharing/src/api'
-  import { called } from './accounts/src/api'
-  import type { GivenRole, Member, Sharing } from './accounts/src/api'
-  import { Copyable } from './ui-controls/src/api'
-  import FileMark from './FileMark.svelte'
-  import { Select } from './ui-controls/src/api'
-  import { Sheet } from './ui-controls/src/api'
-  import SpaceMark from './SpaceMark.svelte'
-  import { initial } from './ui-kit/src/api'
-  import type { Face } from './accounts/src/api'
-  import { dur, fade, scale } from './platform/src/api'
+  import { Facts } from '../../ui-kit/src/api'
+  import { fileMark } from '../../file-mark'
+  import { shownName } from '../../platform/src/api'
+  import { nameOf } from '../../platform/src/api'
+  import { isShared, share } from '../../sharing/src/api'
+  import { called } from '../../accounts/src/api'
+  import type { GivenRole, Member, Sharing } from '../../accounts/src/api'
+  import { Copyable } from '../../ui-controls/src/api'
+  import FileMark from '../../FileMark.svelte'
+  import { Select } from '../../ui-controls/src/api'
+  import { Sheet } from '../../ui-controls/src/api'
+  import SpaceMark from '../../SpaceMark.svelte'
+  import { initial } from '../../ui-kit/src/api'
+  import type { Face } from '../../accounts/src/api'
+  import { dur, fade, scale } from '../../platform/src/api'
 
   const ROLES = $derived([
     { value: 'write', label: 'can edit' },
@@ -53,14 +53,14 @@
     return id && !__EVEN_PLUGIN__
       ? (event: MouseEvent) => {
           const from = event.currentTarget as Element
-          void import('./accounts-ui/src/api').then((card) => {
+          void import('./card.svelte').then((card) => {
             card.showProfile(id, from, share.spaceId)
           })
         }
       : undefined
   }
 
-  const avatars = __EVEN_PLUGIN__ ? null : import('./accounts-ui/src/api')
+  const avatars = __EVEN_PLUGIN__ ? null : import('./Avatar.svelte')
 
   function menuFor(person: Member) {
     return [
@@ -91,7 +91,7 @@
 {#snippet face(worn: Face, press: ((event: MouseEvent) => void) | undefined)}
   {#await avatars then got}
     {#if got}
-      <got.Avatar face={worn} onpress={press} />
+      <got.default face={worn} onpress={press} />
     {:else}
       <span class="orden-badge" aria-hidden="true">{initial(worn.name)}</span>
     {/if}

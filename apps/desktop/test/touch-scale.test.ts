@@ -33,7 +33,7 @@ const SURFACES = [
   'lib/sidebar/src/Bookmarks.svelte',
   'lib/canvas/src/CanvasBar.svelte',
   'lib/ContextMenu.svelte',
-  'lib/FindBar.svelte',
+  'lib/reading/src/FindBar.svelte',
   'lib/Links.svelte',
   'lib/SearchPanel.svelte',
   'lib/sidebar/src/Sidebar.svelte',
