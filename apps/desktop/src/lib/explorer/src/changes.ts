@@ -9,6 +9,7 @@ import {
   type Clash,
   clashesIn,
   deleteForGood,
+  type Failed,
   listFolder,
   makeIn,
   peekAt,
@@ -97,6 +98,10 @@ export async function renamePath(view: ExplorerView, from: string, name: string)
   }
 }
 
+function stayedSaid(failed: readonly Failed[] | undefined): string | null {
+  return failed?.length ? failed.map((one) => one.why).join('; ') : null
+}
+
 export async function trash(view: ExplorerView, paths: readonly string[]) {
   if (!paths.length || !changeable(view)) return
   const { inside, outside } = split(paths)
@@ -108,7 +113,7 @@ export async function trash(view: ExplorerView, paths: readonly string[]) {
     } catch (error) {
       const stopped = error as Partial<Trashing>
       if (stopped.went?.length) record([{ op: 'trashed', tickets: stopped.went }])
-      view.tell(message(stopped.why ?? error, 'could not move this to the trash'))
+      view.tell(stayedSaid(stopped.failed) ?? message(error, 'could not move this to the trash'))
     }
   })
   await view.reload()
@@ -130,7 +135,8 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   try {
     await deleteForGood(outside)
   } catch (error) {
-    view.tell(message(error, 'could not delete this'))
+    const stayed = Array.isArray(error) ? (error as Failed[]) : undefined
+    view.tell(stayedSaid(stayed) ?? message(error, 'could not delete this'))
   }
   await view.reload()
 }
