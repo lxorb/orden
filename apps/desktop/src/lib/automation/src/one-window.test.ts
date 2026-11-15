@@ -13,6 +13,9 @@ const world = vi.hoisted(() => ({
   listeners: [] as Heard[],
   ran: [] as string[],
   claims: true,
+  hangs: false,
+  deadlines: [] as (AbortSignal | undefined)[],
+  results: [] as { id: number; result: unknown }[],
 }))
 
 function sendTo(label: string, event: string, payload: unknown) {
@@ -42,15 +45,27 @@ vi.mock('@tauri-apps/api/window', () => ({
 vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
-  invoke: (command: string) => Promise.resolve(command === 'automation_claim' ? world.claims : []),
+  invoke: (command: string, args?: { id: number; result: unknown }) => {
+    if (command === 'automation_result' && args) world.results.push(args)
+    return Promise.resolve(command === 'automation_claim' ? world.claims : [])
+  },
   openExternal: () => Promise.resolve(),
 }))
 vi.mock('../../ui-kit/src/busy.svelte', () => ({ busy: { failed: () => undefined } }))
 vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('./caller', () => ({ callerOf: () => undefined }))
 vi.mock('./verbs', () => ({
-  dispatch: (verb: string) => {
+  dispatch: (
+    verb: string,
+    _args: unknown,
+    _rest: unknown,
+    _road: unknown,
+    _caller: unknown,
+    deadline?: AbortSignal,
+  ) => {
     world.ran.push(verb)
+    world.deadlines.push(deadline)
+    if (world.hangs) return new Promise(() => undefined)
     return Promise.resolve({ ok: true, value: {} })
   },
   isVerb: () => true,
@@ -70,6 +85,9 @@ describe('with two windows open', () => {
     world.listeners.length = 0
     world.ran.length = 0
     world.claims = true
+    world.hangs = false
+    world.deadlines.length = 0
+    world.results.length = 0
     await openWindow('main')
     await openWindow('orden-2')
   })
@@ -84,6 +102,43 @@ describe('with two windows open', () => {
     sendTo('main', 'orden://automation', { id: 1, verb: 'run_terminal' })
     await new Promise((settled) => setTimeout(settled, 0))
     expect(world.ran).toEqual([])
+  })
+
+  test('a verb is told when to stop working, a moment before the endpoint stops waiting', async () => {
+    vi.useFakeTimers()
+    try {
+      world.hangs = true
+      sendTo('main', 'orden://automation', { id: 1, verb: 'append_note', within_ms: 25_000 })
+      await vi.advanceTimersByTimeAsync(23_900)
+      const deadline = world.deadlines[0]
+      expect(deadline?.aborted).toBe(false)
+      await vi.advanceTimersByTimeAsync(200)
+      expect(deadline?.aborted).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a verb still working when the time is up is answered for, in words', async () => {
+    vi.useFakeTimers()
+    try {
+      world.hangs = true
+      sendTo('main', 'orden://automation', { id: 7, verb: 'sync.now', within_ms: 25_000 })
+      await vi.advanceTimersByTimeAsync(24_900)
+      expect(world.results).toEqual([])
+      await vi.advanceTimersByTimeAsync(200)
+      expect(world.results).toEqual([
+        { id: 7, result: expect.objectContaining({ ok: false, code: 'timeout' }) },
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a request with no time given has no deadline to stop by', async () => {
+    sendTo('main', 'orden://automation', { id: 1, verb: 'run_terminal' })
+    await vi.waitFor(() => expect(world.deadlines).toHaveLength(1))
+    expect(world.deadlines[0]).toBeUndefined()
   })
 
   test('a link runs once, in the window it was sent to', async () => {

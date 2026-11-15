@@ -20,6 +20,8 @@ const MOST_BYTES: usize = 8 * 1024 * 1024;
 
 const PATIENCE: Duration = Duration::from_secs(30);
 
+const DELIVERY: Duration = Duration::from_secs(5);
+
 const TERMINAL_STARTING: Duration = Duration::from_secs(90);
 
 const SLOWEST: Duration = Duration::from_secs(10);
@@ -482,6 +484,18 @@ fn listening_patience(left: Duration) -> Duration {
     left.min(PATIENCE)
 }
 
+fn answer_within(left: Duration) -> Duration {
+    left.saturating_sub(DELIVERY.min(left / 4))
+}
+
+fn stamped(asked: &mut serde_json::Value, deadline: Instant) {
+    let left = deadline.saturating_duration_since(Instant::now());
+    let within = u64::try_from(answer_within(left).as_millis()).unwrap_or(u64::MAX);
+    if let Some(body) = asked.as_object_mut() {
+        body.insert("within_ms".to_owned(), serde_json::Value::from(within));
+    }
+}
+
 fn ask_the_window_within(
     app: &AppHandle,
     asked: &mut serde_json::Value,
@@ -533,13 +547,14 @@ fn asked_of_one(
     waiting: &Waiting,
     id: u64,
     first: String,
-    asked: &serde_json::Value,
+    asked: &mut serde_json::Value,
     deadline: Instant,
 ) -> Result<String, String> {
     let mut window = first;
     loop {
         waiting.ask_of(id, &window);
-        app.emit_to(window.as_str(), ASKED, asked)
+        stamped(asked, deadline);
+        app.emit_to(window.as_str(), ASKED, &*asked)
             .map_err(|error| format!("the window could not be asked: {error}"))?;
         let left = deadline.saturating_duration_since(Instant::now());
         if waiting.taken_within(id, left.min(TAKES)) {
@@ -747,8 +762,8 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 mod tests {
     use super::{
         as_hex, awaited, find, is_json, is_local, listening_patience, parse_head, read_request,
-        reason, refused, same_secret, window_patience, Admitted, Kept, Request, Waiting,
-        MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST, TERMINAL_STARTING,
+        reason, refused, same_secret, stamped, window_patience, Admitted, Kept, Request, Waiting,
+        DELIVERY, MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST, TERMINAL_STARTING,
     };
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
@@ -1057,9 +1072,40 @@ mod tests {
         let tried = include_str!("../../src/lib/agent-docs/src/edit.test.ts");
         assert!(tried.contains("const ENDPOINT_PATIENCE = 30_000\nconst DELIVERY = 5000\n"));
         assert_eq!(PATIENCE, Duration::from_secs(30));
+        assert_eq!(DELIVERY, Duration::from_secs(5));
         let waits_out_the_reader = Duration::from_secs(20 + 2);
-        let delivery = Duration::from_secs(5);
-        assert!(waits_out_the_reader + delivery < PATIENCE);
+        assert!(waits_out_the_reader + DELIVERY < PATIENCE);
+    }
+
+    #[test]
+    fn the_window_is_told_how_long_it_has_to_answer_with_time_left_to_carry_it_back() {
+        let millis = |one: Duration| u64::try_from(one.as_millis()).expect("short");
+        let mut asked = serde_json::json!({ "verb": "append_note", "within_ms": 999_999_999 });
+        stamped(&mut asked, Instant::now() + PATIENCE);
+        let within = asked["within_ms"].as_u64().expect("told");
+        let answered_by = millis(PATIENCE) - millis(DELIVERY);
+        assert!(within <= answered_by);
+        assert!(within > answered_by - 1000);
+
+        let mut quick = serde_json::json!({ "verb": "verbs" });
+        stamped(&mut quick, Instant::now() + Duration::from_secs(2));
+        let within = quick["within_ms"].as_u64().expect("told");
+        assert!(within > 1000 && within <= 1500, "{within}");
+
+        let mut late = serde_json::json!({ "verb": "verbs" });
+        stamped(&mut late, Instant::now());
+        assert_eq!(late["within_ms"].as_u64(), Some(0));
+    }
+
+    #[test]
+    fn the_window_stops_its_work_before_the_answer_is_too_late_to_carry_back() {
+        let start = include_str!("../../src/lib/automation/src/start.ts");
+        assert!(start.contains("dueWithin(asked.within_ms)"));
+        let due = include_str!("../../src/lib/automation/src/due.ts");
+        assert!(due.contains("export const LAST_WORD = 1000\n"));
+        let last_word = Duration::from_secs(1);
+        assert!(last_word < DELIVERY / 2);
+        assert_eq!(DELIVERY, Duration::from_secs(5));
     }
 
     #[test]

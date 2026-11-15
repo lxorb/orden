@@ -7,7 +7,7 @@ export { plan, readEdits, type Replacement } from './edits'
 export { revOf } from './rev'
 export { touchedBy } from './touched'
 export { undoRows } from './undo-rows'
-export { inTurn } from './turns'
+export { inTurn, startsBefore } from './turns'
 
 export const agentDocs = () =>
   __EVEN_PLUGIN__

@@ -5,9 +5,11 @@ import { answerOf, Refused } from './problem'
 export type Verb = (call: Call) => AgentAnswer | Promise<AgentAnswer>
 
 function ran(verb: Verb): AgentVerb {
-  return async (name, args, caller) => {
+  return async (name, args, caller, deadline) => {
     try {
-      return await verb({ verb: name, args, caller })
+      return await verb(
+        deadline ? { verb: name, args, caller, deadline } : { verb: name, args, caller },
+      )
     } catch (error) {
       return answerOf(error)
     }

@@ -185,6 +185,7 @@ export async function dispatch(
   rest: readonly string[],
   road: Road,
   caller: Caller,
+  deadline?: AbortSignal,
 ): Promise<Answered>
 export async function dispatch(
   verb: string,
@@ -192,6 +193,7 @@ export async function dispatch(
   rest: readonly string[] = [],
   road: Road = 'here',
   caller: Caller = READER,
+  deadline?: AbortSignal,
 ): Promise<Answered> {
   const [name, words] = twoWords(verb, rest)
 
@@ -200,7 +202,7 @@ export async function dispatch(
 
   const run = found.run
   if (found.agent !== undefined && (caller.agent !== null || run === undefined)) {
-    return agentVerb(name, found.agent, args, caller)
+    return agentVerb(name, found.agent, args, caller, deadline)
   }
   if (caller.agent !== null || run === undefined) {
     return refusal('not_granted', `${name} is not a verb an agent may call`)
@@ -232,12 +234,13 @@ async function agentVerb(
   scope: Scope | null,
   args: Said,
   caller: Caller,
+  deadline: AbortSignal | undefined,
 ): Promise<Answered> {
   if (scope !== null && !holds(caller, scope)) {
     return refusal('not_granted', `${name} needs ${scope}, which this agent was not granted`)
   }
 
-  const answer = await runAgentVerb(name, args, caller)
+  const answer = await runAgentVerb(name, args, caller, deadline)
   if (caller.agent !== null) return answer
 
   if (answer.status === 'ok') return { ok: true, value: answer.result }

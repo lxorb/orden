@@ -7,6 +7,7 @@ export interface Call {
   verb: string
   args: Said
   caller: Caller
+  deadline?: AbortSignal
 }
 
 export function need(call: Call, name: string): string {
@@ -49,6 +50,14 @@ export function done(result: unknown, untrusted?: string | null): AgentAnswer {
   return untrusted
     ? { ok: true, status: 'ok', result, untrusted }
     : { ok: true, status: 'ok', result }
+}
+
+export function ranOut(before: string): Refused {
+  return new Refused('timeout', `the time to answer ran out before ${before}, so nothing was done`)
+}
+
+export function inTime(call: Call, before: string): void {
+  if (call.deadline?.aborted) throw ranOut(before)
 }
 
 export function sourceOf(call: Call): string | undefined {
