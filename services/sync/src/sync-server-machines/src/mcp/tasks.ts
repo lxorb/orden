@@ -191,6 +191,20 @@ async function wordsAt(env: Env, space: Writable, path: string): Promise<string 
   return note ? noteBody(env, space.id, note.id) : null
 }
 
+async function templateAt(env: Env, space: Writable, link: string): Promise<string | null> {
+  const path = notePath(link)
+  const named = await wordsAt(env, space, path)
+  if (named !== null) return named
+  const wanted = path.toLowerCase()
+  const found = await env.DB.prepare(
+    `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
+       and (lower(path) = ? or substr(lower(path), -length(?)) = ?) order by lower(path)`,
+  )
+    .bind(space.id, wanted, `/${wanted}`, `/${wanted}`)
+    .first<{ path: string }>()
+  return found ? wordsAt(env, space, found.path) : null
+}
+
 function notePath(asked: string): string {
   const named = asked.trim()
   if (isCanvasTarget(named) || isPagesTarget(named)) throw new Said(`${asked} is not a note.`)
@@ -510,9 +524,7 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const where = rowPlace(base, words(args, 'view'))
   const folder = where.folder ?? basePath.slice(0, Math.max(0, basePath.lastIndexOf('/')))
 
-  const template = where.template
-    ? ((await wordsAt(env, space, notePath(where.template))) ?? '')
-    : ''
+  const template = where.template ? ((await templateAt(env, space, where.template)) ?? '') : ''
   const clock = contextNow(space.zone)
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {

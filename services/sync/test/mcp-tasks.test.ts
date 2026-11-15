@@ -241,6 +241,22 @@ describe('bases, with Orden closed', () => {
     }
   })
 
+  test('a row added from a template named by its name alone, as the app finds it', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Templates/Book.md', content: '# {{title}}\n' },
+    })
+    await baseFile(
+      'Books.base',
+      ['filters: file.inFolder("Books")', 'orden:', '  template: "[[book]]"', ''].join('\n'),
+    )
+    await basesTurned(true)
+    const key = await connector()
+    await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+
+    expect(await read(key, 'Books/Emma.md')).toBe('# Emma\n')
+  })
+
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
     await basesTurned(true)
