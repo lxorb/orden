@@ -6,7 +6,7 @@ import { isScratchpad, scratchpadHits } from '../../scratchpad/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
 import type { SearchOrdering, SearchSort } from '@orden/contracts'
-import { selectedWords } from './seed'
+import { asWritten, selectedWords } from './seed'
 import { searchSpace } from './space'
 import {
   isMarkdownPath,
@@ -237,7 +237,7 @@ export const search = new Search()
 
 export function searchFrom(view: EditorView | undefined): void {
   const words = view?.hasFocus ? selectedWords(view.state) : null
-  if (words) search.ask(words)
+  if (words) search.ask(asWritten(words))
 
   revealPanel('search')
 }
