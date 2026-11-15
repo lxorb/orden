@@ -14,6 +14,7 @@ import {
 import {
   AgentError,
   clockOf,
+  filledTemplate,
   noteName,
   queryBase,
   readBase,
@@ -509,14 +510,14 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const where = rowPlace(base, words(args, 'view'))
   const folder = where.folder ?? basePath.slice(0, Math.max(0, basePath.lastIndexOf('/')))
 
-  const link = base.orden.template
-    ?.replace(/^\[\[|\]\]$/g, '')
-    .split('|')[0]
-    ?.trim()
-  const template = link ? ((await wordsAt(env, space, notePath(link))) ?? '') : ''
+  const template = where.template
+    ? ((await wordsAt(env, space, notePath(where.template))) ?? '')
+    : ''
+  const clock = contextNow(space.zone)
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {
-    const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
+    const title = counter === 1 ? name : `${name} ${counter}`
+    const file = `${title}.md`
     const asked = folder ? `${folder}/${file}` : file
     const path = cleanPath(asked)
     if (!path) throw new Said(`${asked} is not a note path.`)
@@ -527,7 +528,10 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
         env,
         space,
         path,
-        withProperties(template, { ...where.properties, ...(properties as Args) }),
+        withProperties(filledTemplate(template, title, clock), {
+          ...where.properties,
+          ...(properties as Args),
+        }),
         null,
       )
     } catch (error) {

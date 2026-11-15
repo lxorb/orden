@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
 import { type InboxPage, inboxPageOf } from '@orden/sync-core'
@@ -191,6 +191,54 @@ describe('bases, with Orden closed', () => {
       }),
     ).toMatchObject({ path: 'Books/Emma.md', created: true })
     expect(await read(key, 'Books/Emma.md')).toBe('---\nstatus: next\n---\n')
+  })
+
+  test('a row added from a template is filled on the asker’s clock, the view’s template first', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.UTC(2026, 9, 7, 20))
+    try {
+      env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+      for (const [path, content] of [
+        [
+          'Templates/Book.md',
+          '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\n\nAdded {{date}} at {{time}}\n',
+        ],
+        ['Templates/Shelf.md', '# {{title}} on the shelf\n'],
+      ]) {
+        await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+      }
+      await baseFile(
+        'Books.base',
+        [
+          'filters: file.inFolder("Books")',
+          'orden:',
+          '  template: "[[Templates/Book]]"',
+          'views:',
+          '  - type: table',
+          '    name: All',
+          '  - type: cards',
+          '    name: Shelf',
+          '    orden:',
+          '      template: "[[Templates/Shelf|shelf]]"',
+          '',
+        ].join('\n'),
+      )
+      await basesTurned(true)
+      const key = await connector()
+      await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+      expect(await read(key, 'Books/Emma.md')).toBe(
+        '---\nstatus: new\n---\n# Emma\n\nAdded 2026-10-08 at 05:00\n',
+      )
+      await tool(key, 'add_row', {
+        space: 'Work',
+        base: 'Books.base',
+        view: 'Shelf',
+        title: 'Emma',
+      })
+      expect(await read(key, 'Books/Emma 2.md')).toBe('# Emma 2 on the shelf\n')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test('a base said as yaml', async () => {

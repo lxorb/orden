@@ -7,6 +7,7 @@ import {
   clockOf,
   editedBase,
   editedTask,
+  filledTemplate,
   listTasks,
   movedTask,
   newTask,
@@ -302,6 +303,25 @@ describe('bases', () => {
       folder: 'Reading/Books',
       properties: { status: 'to read', tags: ['book'] },
     })
+  })
+
+  test('a new row takes the view’s template first, then the base’s, filled and without its own keys', () => {
+    const base = readBase(
+      'orden:\n  template: "[[Templates/Book]]"\nviews:\n  - type: table\n    name: All\n  - type: cards\n    name: Shelf\n    orden:\n      template: "[[Templates/Shelf|shelf]]"\n',
+    )
+    expect(rowPlace(base).template).toBe('Templates/Book')
+    expect(rowPlace(base, 'Shelf').template).toBe('Templates/Shelf')
+    expect(rowPlace(base, 'Elsewhere').template).toBe('Templates/Book')
+    expect(rowPlace(readBase('views:\n  - type: table\n    name: All\n'))).not.toHaveProperty(
+      'template',
+    )
+    expect(
+      filledTemplate(
+        '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\nAdded {{date}} at {{time}}, due {{date+1w}}\n',
+        'Emma',
+        context,
+      ),
+    ).toBe('---\nstatus: new\n---\n# Emma\nAdded 2026-10-04 at 09:00, due 2026-10-11\n')
   })
 
   test('properties written, taken away, a list as a list', () => {

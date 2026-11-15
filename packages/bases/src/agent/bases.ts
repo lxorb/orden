@@ -1,7 +1,8 @@
 import { isPropertyName } from '@orden/markdown/front-matter'
 import { type ListItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { readFilter } from '../filter'
-import type { Base, Filter, Sort, View } from '../types'
+import { fillTemplate, withoutTemplateKeys } from '../templates'
+import type { Base, Context, Filter, Sort, View } from '../types'
 import { AgentError } from './tasks'
 
 type Args = Record<string, unknown>
@@ -60,8 +61,30 @@ const EQUALS = new RegExp(
   String.raw`^\s*(?:note\.)?([A-Za-z_][\w-]*)\s*==\s*(?:${QUOTED}|(true|false|-?\d+(?:\.\d+)?))\s*$`,
 )
 
-export function rowPlace(base: Base, view?: string): { folder?: string; properties: Args } {
+function linkName(link: string | undefined): string | undefined {
+  const name = link
+    ?.replace(/^\[\[|\]\]$/g, '')
+    .split('|')[0]
+    ?.trim()
+  return name === '' ? undefined : name
+}
+
+export function filledTemplate(
+  text: string,
+  title: string,
+  clock: Pick<Context, 'today' | 'now'>,
+): string {
+  return withoutTemplateKeys(
+    fillTemplate(text, { title, today: clock.today, time: clock.now.slice(11, 16) }),
+  )
+}
+
+export function rowPlace(
+  base: Base,
+  view?: string,
+): { folder?: string; properties: Args; template?: string } {
   const chosen = view === undefined ? base.views[0] : base.views.find((one) => one.name === view)
+  const template = linkName(chosen?.orden.template ?? base.orden.template)
   const properties: Args = {}
   const tags: string[] = []
   let folder: string | undefined
@@ -89,7 +112,11 @@ export function rowPlace(base: Base, view?: string): { folder?: string; properti
     }
   }
   if (tags.length) properties.tags = tags
-  return { ...(folder === undefined ? {} : { folder }), properties }
+  return {
+    ...(folder === undefined ? {} : { folder }),
+    properties,
+    ...(template === undefined ? {} : { template }),
+  }
 }
 
 export function noteName(title: string): string {
