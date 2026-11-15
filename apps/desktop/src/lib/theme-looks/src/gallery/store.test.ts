@@ -327,6 +327,23 @@ describe('installing, updating and removing', () => {
     expect(theme.id).toBe('default')
   })
 
+  test('removing the theme in use tells the account, so the account does not bring it back', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+    const worn = theme.look()
+    let told = 0
+    const stop = theme.picked(() => told++)
+
+    await store.remove('warm-paper')
+    stop()
+
+    expect(told).toBe(1)
+    expect(theme.look().theme).toBe('default')
+    expect(theme.look().css).toBe('')
+    expect(worn.theme).toBe('file:warm-paper')
+  })
+
   test('what the theme asked for and did not get is kept to be said', async () => {
     serving([entry()], `${sheet('#faf6ee')}\n.sidebar { display: none; }`)
     await store.load()

@@ -239,7 +239,7 @@ class Themes {
     if (this.active.translucent === true) standAsBefore()
     this.material = stoodOnNothing() || groundUnknown()
     this.apply()
-    this.listed = this.reload().catch(() => undefined)
+    this.listed = this.reload({ atLaunch: true }).catch(() => undefined)
   }
 
   private withLoaded(theme: ThemeInfo): ThemeInfo {
@@ -352,7 +352,7 @@ class Themes {
     this.wearId(CONTRAST_THEME)
   }
 
-  async reload() {
+  async reload({ atLaunch = false } = {}) {
     let found: ThemeFile[]
 
     try {
@@ -392,8 +392,9 @@ class Themes {
 
     const copy = this.files.find((file) => file.id === this.id && copiesBuiltIn(file))
     if (copy?.stamp) this.wearId(copy.stamp.id)
-    else if (!this.all.some((theme) => theme.id === this.id)) this.wearId(DEFAULT_ID)
-    else this.apply()
+    else if (this.all.some((theme) => theme.id === this.id)) this.apply()
+    else if (atLaunch) this.wearId(DEFAULT_ID)
+    else this.select(DEFAULT_ID)
 
     await this.loadCustom()
   }
