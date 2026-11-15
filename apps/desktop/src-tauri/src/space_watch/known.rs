@@ -127,9 +127,13 @@ impl Space {
         let mut seen = Vec::new();
         let mut waiting = Vec::new();
 
-        for _ in 0..2 {
+        for _ in 0..=order.len() {
+            let before = seen.len();
             for rel in &order {
                 self.arrived(root, rel, &mut seen);
+            }
+            if seen.len() == before {
+                break;
             }
         }
 
@@ -324,6 +328,24 @@ mod tests {
         assert!(
             settle(&mut space, root, &["Plan.md"]).is_empty(),
             "nothing moved since"
+        );
+    }
+
+    #[test]
+    fn a_chain_of_renames_in_one_batch_is_every_rename_and_nothing_removed() {
+        let (dir, mut space) = space_with(&["a.md", "b.md", "c.md"]);
+        let root = dir.path();
+        for (from, to) in [("c.md", "d.md"), ("b.md", "c.md"), ("a.md", "b.md")] {
+            fs::rename(root.join(from), root.join(to)).expect("renamed");
+        }
+
+        assert_eq!(
+            said(&settle(&mut space, root, &["a.md", "b.md", "c.md", "d.md"])),
+            [
+                "renamed c.md d.md",
+                "renamed b.md c.md",
+                "renamed a.md b.md"
+            ]
         );
     }
 
