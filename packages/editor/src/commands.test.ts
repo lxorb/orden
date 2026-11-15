@@ -327,6 +327,31 @@ describe('line prefixes', () => {
     )
   })
 
+  test('takes an item off without taking its children or its later paragraphs out of the list', () => {
+    expect(at(toggleBulletList, '- a\n    - b', 0)).toBe('a\n  - b')
+    expect(at(toggleOrderedList, '10. a\n    - b', 0)).toBe('a\n- b')
+    expect(at(toggleBulletList, '- a\n\n    b', 0)).toBe('a\n\n  b')
+  })
+
+  test('numbers the items after a first item that is taken off from one', () => {
+    expect(at(toggleOrderedList, '1. a\n2. b\n3. c', 0)).toBe('a\n1. b\n2. c')
+  })
+
+  test('starts the numbers again after an item that was not picked', () => {
+    const doc = '- a\n- b\n- c'
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.create([EditorSelection.cursor(0), EditorSelection.cursor(9)]),
+      extensions: [
+        markdown({ base: markdownLanguage }),
+        EditorState.allowMultipleSelections.of(true),
+      ],
+    })
+    let next = state
+    toggleOrderedList({ state, dispatch: (made: Transaction) => (next = made.state) })
+    expect(next.doc.toString()).toBe('1. a\n- b\n1. c')
+  })
+
   test('leaves blank lines in the selection blank', () => {
     const loose = '- a\n\n- b'
     expect(apply(toggleBulletList, loose, 0, loose.length).doc).toBe('a\n\nb')

@@ -448,6 +448,15 @@ function leadShifts(parents: Parent[], line: Quoted): number[] {
   return shifts
 }
 
+function siblingAbove(state: EditorState, number: number, levels: number[]): boolean {
+  for (let above = number - 1; above >= 1; above--) {
+    const line = quotedLine(state.doc.line(above))
+    if (!line.text.trim()) continue
+    return line.levels.join(',') === levels.join(',') && MARKER.test(line.text)
+  }
+  return false
+}
+
 function toggleList(own: RegExp, markerFor: (count: number) => string): StateCommand {
   return ({ state, dispatch }) => {
     const chosen = selectedLines(state)
@@ -455,24 +464,18 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
     const written = quoted.filter((line) => line.text.trim())
     const skipsBlank = written.length > 0
     const lines = skipsBlank ? written : quoted
-    const allListed = lines.every((line) => own.test(line.text))
-
-    if (allListed) {
-      const changes: ChangeSpec[] = lines.map((line) => {
-        const matched = MARKER.exec(line.text)?.[0] ?? ''
-        const task = taskAt(line.text)
-        const end = task ? Math.max(task.marker, matched.length) : matched.length
-        return { from: line.from + line.space.length, to: line.from + end, insert: '' }
-      })
-      dispatch(state.update({ changes, userEvent: 'input' }))
-      return true
-    }
+    const off = lines.every((line) => own.test(line.text))
 
     const picked = new Set(chosen.map((line) => line.number))
     const last = chosen.at(-1)?.number ?? 0
     const counts = new Map<string, { levels: number[]; count: number }>()
+    const restarts = new Map<string, { levels: number[]; count: number }>()
     const parents: Parent[] = []
     const changes: ChangeSpec[] = []
+    const drop = (held: Map<string, { levels: number[] }>, line: Quoted, orSibling: boolean) => {
+      for (const [key, one] of held)
+        if (!encloses(one.levels, line.levels, orSibling)) held.delete(key)
+    }
 
     const first = chosen[0]?.number ?? 1
     for (let number = first; number <= state.doc.lines; number++) {
@@ -484,29 +487,54 @@ function toggleList(own: RegExp, markerFor: (count: number) => string): StateCom
         }
         continue
       }
+
+      const key = line.levels.join(',')
       if (!picked.has(number)) {
+        drop(counts, line, false)
+        drop(restarts, line, true)
+        const restart = restarts.get(key)
+        const numbered = restart && NUMBERED.exec(line.text)
         const shifts = shiftsOf(parents, line)
-        if (!parents.length && number > last) break
-        parents.push({ depth: line.depth, levels: line.levels, shift: shifts[line.depth] ?? 0 })
-        if (shifts.some(Boolean)) {
-          const end = line.from + line.space.length
-          changes.push({ from: line.start, to: end, insert: prefixOf(line, shifts) })
+        if (!parents.length && number > last && !numbered) break
+        if (own.test(line.text)) counts.set(key, { levels: line.levels, count: 1 })
+
+        let widened = 0
+        let marker = ''
+        let to = line.from + line.space.length
+        if (restart && numbered) {
+          restart.count++
+          marker = `${restart.count}. `
+          widened = marker.length - (numbered[0].length - line.space.length)
+          to = line.from + numbered[0].length
+        }
+        parents.push({
+          depth: line.depth,
+          levels: line.levels,
+          shift: (shifts[line.depth] ?? 0) + widened,
+        })
+        if (shifts.some(Boolean) || marker) {
+          changes.push({ from: line.start, to, insert: prefixOf(line, shifts) + marker })
         }
         continue
       }
 
-      for (const [key, held] of counts)
-        if (!encloses(held.levels, line.levels, true)) counts.delete(key)
-      const key = line.levels.join(',')
+      drop(counts, line, true)
+      drop(restarts, line, true)
       const count = (counts.get(key)?.count ?? 0) + 1
       counts.set(key, { levels: line.levels, count })
 
       const shifts = shiftsOf(parents, line)
-      const matched = MARKER.exec(line.text)?.[0] ?? ''
-      const marker = markerFor(count)
+      const listed = MARKER.exec(line.text)?.[0] ?? ''
+      const task = off ? taskAt(line.text) : null
+      const matched = task ? line.text.slice(0, Math.max(task.marker, listed.length)) : listed
+      const marker = off ? '' : markerFor(count)
       const widened = matched ? marker.length - (matched.length - line.space.length) : 0
+      if (off) shifts[line.depth] = 0
       const shift = (shifts[line.depth] ?? 0) + widened
       parents.push({ depth: line.depth, levels: line.levels, shift })
+      if (off && NUMBERED.test(line.text) && !siblingAbove(state, number, line.levels)) {
+        restarts.set(key, { levels: line.levels, count: 0 })
+      }
 
       const to = line.from + Math.max(matched.length, line.space.length)
       changes.push({ from: line.start, to, insert: prefixOf(line, shifts) + marker })

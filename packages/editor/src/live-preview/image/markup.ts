@@ -225,7 +225,7 @@ export function retag(tag: string, spec: ImageSpec): string {
 
   const width = spec.zoom === 100 ? spec.width : undefined
   if (was?.width === width && was?.zoom === spec.zoom) return written
-  if (was?.width !== width) written = withAttribute(written, 'height', null)
+  written = withAttribute(written, 'height', null)
   return withAttribute(written, 'width', width ? String(width) : null)
 }
 
@@ -237,6 +237,8 @@ export function sourceCaret(state: EditorState, image: ImageSpan): number {
     return image.from + 2 + writtenAlt(image.alt).length
   }
 
-  const alt = /\balt\s*=\s*(["'])(.*?)\1/i.exec(text)
-  return alt ? image.from + alt.index + alt[0].length - 1 : image.from + 1
+  const alt = attributeAt(text, 'alt')
+  if (alt?.value === undefined) return image.from + 1
+  const quoted = /["']$/.test(text.slice(0, alt.to))
+  return image.from + alt.to - (quoted ? 1 : 0)
 }

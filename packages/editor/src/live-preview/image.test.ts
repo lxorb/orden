@@ -438,6 +438,16 @@ describe('a picture written again after an edit', () => {
     expect(sourceCaret(state(sized), imageAt(state(sized), 0)!)).toBe(sized.indexOf('|'))
   })
 
+  test('resets a zoomed picture with a height to its own size', () => {
+    const tag = '<img src="a.png" width="300" height="200" style="zoom:50%;">'
+    expect(retag(tag, { ...parseHtmlImage(tag)!, zoom: 100 })).toBe('<img src="a.png">')
+  })
+
+  test('puts the caret in the alt, not in an attribute that ends in alt', () => {
+    const doc = '<img data-alt="z" src="a.png" alt="real">'
+    expect(sourceCaret(state(doc), imageAt(state(doc), 0)!)).toBe(doc.indexOf('real') + 4)
+  })
+
   test('keeps an escape written in its words as it was', () => {
     const image = imageAt(state('![my\\_shot|300](a.png)'), 0)!
     expect(imageMarkup({ src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe(
