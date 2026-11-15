@@ -25,6 +25,8 @@ function isKept(file: File): boolean {
 
 const nameOf = (path: string) => foldName(path.slice(path.lastIndexOf('/') + 1))
 
+const LINK_MARKS = /[#|[\]^]/
+
 function markdownFor(file: File, path: string, index: NoteIndex): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`
 
@@ -33,7 +35,7 @@ function markdownFor(file: File, path: string, index: NoteIndex): string {
   const shared = index.files.some(
     (other) => foldName(other) !== foldName(own) && nameOf(other) === foldName(name),
   )
-  const target = shared && own ? own : name
+  const target = shared && own && !LINK_MARKS.test(own) ? own : name
   return formatWikilink({ target, heading: null, block: null, alias: null, embed: true })
 }
 

@@ -432,6 +432,7 @@ export class ImageWidget extends OrdenWidget {
     }
 
     const move = (moved: PointerEvent) => {
+      if (!dragged && moved.clientX === startX) return
       dragged = true
       zoom = resizeTo(
         startWidth,

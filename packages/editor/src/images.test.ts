@@ -173,6 +173,17 @@ describe('a dropped file named like another file in the space', () => {
     expect(editor.doc).toBe('![[assets/report.pdf]]')
   })
 
+  test('by its name when its path holds a mark a link reads as its end', async () => {
+    const editor = surface('', 0, false, space(['report.pdf']))
+    await receiveImages(
+      editor.view,
+      [file('report.pdf')],
+      () => Promise.resolve('../C# tips/report.pdf'),
+      0,
+    )
+    expect(editor.doc).toBe('![[report.pdf]]')
+  })
+
   test('and by its name alone when no other file has it', async () => {
     const editor = surface('', 0, false, space(['assets/report.pdf', 'other.pdf']))
     await receiveImages(

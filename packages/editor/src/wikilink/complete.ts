@@ -36,14 +36,14 @@ function typing(context: CompletionContext) {
 
 function restOfLink(view: EditorView, to: number, written: string): { end: number; text: string } {
   const rest = view.state.doc.sliceString(to, view.state.doc.lineAt(to).to)
-  const part = /^[^\]|#[\n]*/.exec(rest)?.[0] ?? ''
+  const part = /^(?:[^\]|#[\n\\]|\\(?!\|))*/.exec(rest)?.[0] ?? ''
   const after = rest.slice(part.length)
 
   if (after.startsWith(']]')) return { end: to + part.length + 2, text: written }
 
   const closes = after.indexOf(']]')
   const reopens = after.indexOf('[[')
-  const kept = /^[|#]/.test(after) && closes > 0 && (reopens === -1 || reopens > closes)
+  const kept = /^(?:\\?\||#)/.test(after) && closes > 0 && (reopens === -1 || reopens > closes)
   const fragmentTwice = after.startsWith('#') && written.includes('#')
   if (kept && written.endsWith(']]') && !fragmentTwice) {
     return { end: to + part.length, text: written.slice(0, -2) }

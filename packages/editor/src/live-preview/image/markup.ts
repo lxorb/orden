@@ -95,13 +95,15 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
 }
 
 const IMG_TAG = /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi
-const ANY_TAG = /<\/?[a-z][^>]*>/gi
+const ANY_TAG = /<\/?[a-z](?:[^>"']|"[^"]*"|'[^']*')*>/gi
+const BLANK = /&nbsp;|&#160;|&#xa0;/gi
 
 function htmlImageIn(state: EditorState, node: SyntaxNode): ImageSpan | null {
   const written = state.doc.sliceString(node.from, node.to)
   const tags = [...written.matchAll(IMG_TAG)]
   const [tag] = tags
-  if (!tag || tags.length > 1 || written.replace(ANY_TAG, '').trim()) return null
+  if (!tag || tags.length > 1 || written.replace(ANY_TAG, '').replace(BLANK, ' ').trim())
+    return null
 
   const spec = parseHtmlImage(tag[0])
   const from = node.from + tag.index

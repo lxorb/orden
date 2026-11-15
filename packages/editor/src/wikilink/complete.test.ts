@@ -498,6 +498,9 @@ describe('a suggestion picked inside a link already written', () => {
     expect(await pickedAt('[[Proje|ct Plan|the plan]]', 'Project Plan')).toBe(
       '[[Project Plan|the plan]]',
     )
+    expect(await pickedAt('[[Proje|ct Plan\\|the plan]]', 'Project Plan')).toBe(
+      '[[Project Plan\\|the plan]]',
+    )
   })
 })
 

@@ -222,6 +222,11 @@ describe('an HTML block with a picture in it', () => {
     expect(image?.src).toBe('a.png')
     expect(doc.slice(image?.tag?.from, image?.tag?.to)).toBe('<img src="a.png" alt="A">')
   })
+
+  test('is its one picture when its words hold a > or it has a space beside it', () => {
+    expect(imageAt(state('x\n\n<p><img src="a.png" alt="a > b"></p>\n\ny'), 3)?.alt).toBe('a > b')
+    expect(imageAt(state('x\n\n<p><img src="a.png">&nbsp;</p>\n\ny'), 3)?.src).toBe('a.png')
+  })
 })
 
 describe('what reveals the markup', () => {
