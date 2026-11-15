@@ -689,7 +689,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_single_instance::init(
             launch::second_launch_heard,
         ))
-        .manage(launch::Pending::default());
+        .manage(launch::Pending::default())
+        .manage(launch::restart_env());
     #[cfg(desktop)]
     let builder = lifecycle::managed(builder);
     #[cfg(desktop)]
