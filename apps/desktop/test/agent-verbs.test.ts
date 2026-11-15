@@ -9,7 +9,7 @@ import {
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../src/lib/automation/src/api'
 import { AGENT_WINDOW_VERBS } from '../src/lib/agent-protocol/src/api'
-import { type FileOp, FileOps, type Kind } from '../src/lib/file-ops/src/api'
+import { type FileOp, FileOps, keeping, type Kind } from '../src/lib/file-ops/src/api'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -2654,6 +2654,49 @@ describe('a note the reader protected', () => {
       })
     } finally {
       protection.set('/s/Home', '/s/Home/Recipes.md', null)
+    }
+  })
+
+  test('is never moved out from under its lock, nor trashed, by an agent that may not read it', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
+    const unfollow = workspace.fileOps.follow(keeping(protection))
+    files.set('/s/Home/Books/Dune.md', 'the secret words\n')
+    protection.set('/s/Home', '/s/Home/Books', 'password')
+    protection.set('/s/Home', '/s/Home/Soup.md', 'password')
+    files.set('/s/Home/Shelf/Emma.md', 'more secret words\n')
+    protection.set('/s/Home', '/s/Home/Shelf/Emma.md', 'password')
+    try {
+      const answers = [
+        await call('move_file', { space: 'Home', path: 'Books/Dune', to: 'Dune' }),
+        await call('move_file', { space: 'Home', path: 'Soup', to: 'Broth' }),
+        await call('trash_file', { space: 'Home', path: 'Soup' }),
+        await call('trash_file', { space: 'Home', path: 'Books/Dune' }),
+        await call('trash_file', { space: 'Home', path: 'Books' }),
+        await call('trash_file', { space: 'Home', path: 'Shelf' }),
+      ]
+      expect(answers.map((one) => (one as { code?: string }).code)).toEqual(
+        Array(6).fill('protected'),
+      )
+      expect(
+        JSON.stringify(await call('read_note', { space: 'Home', path: 'Dune' })),
+      ).not.toContain('secret')
+      expect(workspace.remove).not.toHaveBeenCalled()
+      expect(files.get('/s/Home/Books/Dune.md')).toBe('the secret words\n')
+      expect(files.has('/s/Home/Broth.md')).toBe(false)
+
+      const locks = protection.covering('/s/Home/Soup.md')
+      unlocks.unlock(locks)
+      unlocks.letAgents(locks, true)
+      expect(await call('trash_file', { space: 'Home', path: 'Soup' })).toMatchObject({
+        result: { trashed: true },
+      })
+    } finally {
+      unfollow()
+      protection.set('/s/Home', '/s/Home/Books', null)
+      protection.set('/s/Home', '/s/Home/Soup.md', null)
+      protection.set('/s/Home', '/s/Home/Shelf/Emma.md', null)
+      unlocks.lockAll()
     }
   })
 
