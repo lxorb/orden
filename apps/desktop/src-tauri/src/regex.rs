@@ -344,7 +344,7 @@ impl Pattern {
                     run.pc = after;
                 }
                 Step::Backref(group) => {
-                    let Some(to) = self.called(run, group) else {
+                    let Some(to) = self.called(run, group, budget) else {
                         return Some(false);
                     };
                     run.pos = to;
@@ -361,10 +361,11 @@ impl Pattern {
         unless_spent(seen, budget)
     }
 
-    fn called(&self, run: &Run, group: usize) -> Option<usize> {
+    fn called(&self, run: &Run, group: usize, budget: &Cell<usize>) -> Option<usize> {
         let Some((from, to)) = span(&run.cells, group) else {
             return Some(run.pos);
         };
+        budget.set(budget.get().saturating_sub(to - from));
         let wanted = run.text.get(from..to)?;
         let (mut letters, mut wants): (
             Box<dyn Iterator<Item = char>>,
@@ -1431,8 +1432,11 @@ impl Program {
         let mut splits = Vec::new();
 
         for _ in 0..count {
+            let cell = self.cell()?;
             splits.push(self.push(Step::Jump(0))?);
+            self.push(Step::Save(cell))?;
             self.emit_round(node, clear)?;
+            self.push(Step::Advanced(cell))?;
         }
 
         let after = self.steps.len();
@@ -1851,6 +1855,28 @@ mod tests {
         assert_eq!(caught(r"(?<=(\d+))x\1", "123x123"), Some(words(&["123"])));
         assert_eq!(first(r"(?<=(\d+))x\1", "123x123").as_deref(), Some("x123"));
         assert_eq!(caught(r"(?<=(a+)(a+))b", "aaab"), Some(words(&["a", "aa"])));
+    }
+
+    #[test]
+    fn a_counted_round_past_the_least_that_takes_nothing_does_not_count() {
+        assert_eq!(spans("(?:^|\\w{2})?a", "aaa", 0), Some((0, 3)));
+        assert_eq!(caught("(^|a)?(a+)", "aaa"), Some(words(&["a", "aa"])));
+        assert_eq!(caught("(a?){1,2}", "a"), Some(words(&["a"])));
+        assert_eq!(caught("([ab]??){1,2}", "ab"), Some(words(&["a"])));
+    }
+
+    #[test]
+    fn calling_a_long_group_back_spends_the_budget_it_reads() {
+        let subject = "a".repeat(20_000);
+        let pattern = Pattern::compile(r"(a*)\1b", false);
+        assert!(pattern.is_some());
+        let Some(pattern) = pattern else {
+            return;
+        };
+        let started = std::time::Instant::now();
+        let budget = Cell::new(super::budget_for(subject.len()));
+        assert_eq!(pattern.find_within(&subject, 0, &budget), None);
+        assert!(started.elapsed().as_secs() < 3, "{:?}", started.elapsed());
     }
 
     #[test]
