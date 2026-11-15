@@ -108,4 +108,23 @@ describe('an input method in a table cell', () => {
     expect(written.map((row) => row.split('|')[1]?.trim())).not.toContain('3か')
     expect(view.state.doc.toString()).toContain('3')
   })
+
+  test('does not write the words being composed into a twin row another writer moved there', () => {
+    const doc = '| task | state |\n| --- | --- |\n| A | todo |\n| B | todo |\n\nend'
+    const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
+    open.push(view)
+    const cell = view.dom.querySelector<HTMLElement>('td[data-row="0"][data-column="1"]')
+    if (!cell) throw new Error('the table drew no state cell for A')
+    cell.tabIndex = 0
+    cell.focus()
+
+    cell.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    compose(cell, 'todoか')
+    const rows = view.state.doc.toString().indexOf('| A')
+    const end = view.state.doc.toString().indexOf('\n\nend')
+    view.dispatch({ changes: { from: rows, to: end, insert: '| B | todo |\n| A | todo |' } })
+    cell.dispatchEvent(new CompositionEvent('compositionend', { data: 'か', bubbles: true }))
+
+    expect(view.state.doc.toString()).not.toMatch(/\| B +\| todoか/)
+  })
 })

@@ -1171,6 +1171,13 @@ describe('lines a list command leaves to their block', () => {
     expect(apply(toggleQuote, nested, 6, nested.length).doc).toBe('- a\n  > - b\n  >   c')
   })
 
+  test('quoting the paragraphs of an item across a blank line keeps them in the item', () => {
+    const doc = '- a\n\n  b\n\n  c\n- d'
+    expect(apply(toggleQuote, doc, doc.indexOf('b'), doc.indexOf('c') + 1).doc).toBe(
+      '- a\n\n  > b\n  > \n  > c\n- d',
+    )
+  })
+
   test('quoting a list nests a quote that is inside an item', () => {
     expect(all(toggleQuote, '- a\n  > b\n- c')).toBe('> - a\n>   > b\n> - c')
     expect(all(toggleQuote, 'a\n> b')).toBe('> a\n> b')

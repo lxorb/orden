@@ -6,6 +6,8 @@ import {
 } from '@codemirror/state'
 import { everywhere, type Landing, plainAt } from './paste'
 
+const ITEM_MARK = /^(?:[-*+]|\d+[.)])[ \t]+/
+
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
@@ -49,7 +51,7 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const found = LEAD.exec(before)
   const kept = found?.[1] ?? ''
   const marker = found?.[2] ?? ''
-  const lead = kept + ' '.repeat(marker.length)
+  const lead = kept + ' '.repeat(ITEM_MARK.exec(marker)?.[0].length ?? 0)
   const held = (lines: string) =>
     lines.replace(/\n([^\n]*)/g, (_all, one: string) => `\n${one ? lead + one : lead.trimEnd()}`)
   const gap = `\n${lead.trimEnd()}\n${lead}`

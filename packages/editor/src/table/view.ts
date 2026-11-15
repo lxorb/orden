@@ -306,6 +306,7 @@ export class TableView {
 
     const focused = this.focusedCell()?.at
     if (focused && textIn(model, focused) !== textIn(before, focused)) return false
+    if (focused && movedAway(before, model, focused.row)) return false
     for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
       const at = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) }
       if (sameCell(at, focused)) continue
@@ -1239,6 +1240,17 @@ function headerOf(text: string): string {
     .split('|')
     .map((cell) => cell.trim())
     .join('|')
+}
+
+function movedAway(before: TableModel, model: TableModel, row: number): boolean {
+  const was = before.rows[row]
+  const now = model.rows[row]
+  if (!was || !now || sameCells(was, now)) return false
+  return model.rows.some((cells, at) => at !== row && sameCells(cells, was))
+}
+
+function sameCells(one: readonly string[], other: readonly string[]): boolean {
+  return one.length === other.length && one.every((cell, at) => cell === other[at])
 }
 
 function textIn(model: TableModel, at: CellAddress): string {

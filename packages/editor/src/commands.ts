@@ -274,7 +274,9 @@ export const toggleQuote: StateCommand = ({ state, dispatch }) => {
         }
         return { from: line.from + lead.length, to: line.from + end, insert: '> ' }
       }
-      return { from: line.from + offsetAt(line.text, column), insert: '> ' }
+      const at = offsetAt(line.text, column)
+      const pad = line.text.trim() ? 0 : column - columnOf(line.text.slice(0, at))
+      return { from: line.from + at, insert: `${' '.repeat(Math.max(0, pad))}> ` }
     })
   })
 

@@ -173,6 +173,22 @@ describe('two drops written at the same time', () => {
   })
 })
 
+describe('a file still being read when it is dropped', () => {
+  test('lands where the drop point ended up after typing above it meanwhile', async () => {
+    let read: (files: File[]) => void = () => undefined
+    const reading = new Promise<File[]>((resolve) => (read = resolve))
+    const editor = surface('top\n\nend', 0)
+
+    const writing = receiveImages(editor.view, reading, () => Promise.resolve('assets/a.png'), 5)
+    editor.dispatch({ changes: { from: 3, insert: ' words' } })
+    read(PICTURE)
+    await writing
+    await settled()
+
+    expect(editor.doc).toBe('top words\n\n![](assets/a.png)end')
+  })
+})
+
 describe('a dropped file that is not a picture', () => {
   const file = (name: string, type: string) => new File([new Uint8Array([1])], name, { type })
 

@@ -85,16 +85,16 @@ let drops = 0
 
 export async function receiveImages(
   view: EditorView,
-  files: File[],
+  files: readonly File[] | Promise<readonly File[]>,
   sink: ImageSink,
   at: number | null,
 ) {
-  const kept = files.filter(isKept)
-  if (!kept.length) return
+  if (!(files instanceof Promise) && !files.some(isKept)) return
 
   const land = later(view)
   const key = ++drops
   if (at !== null) view.dispatch({ effects: dropAt.of({ key, at }) })
+  const kept = (files instanceof Promise ? await files : files).filter(isKept)
 
   const written: string[] = []
   for (const file of kept) {
@@ -174,10 +174,7 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
           void receiveImages(view, files, sink, at)
           return true
         }
-        void reading.then((read) => {
-          const kept = read.filter(isKept)
-          if (kept.length && !view.state.readOnly) void receiveImages(view, kept, sink, at)
-        })
+        void receiveImages(view, reading, sink, at)
         return true
       },
 

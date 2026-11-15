@@ -313,3 +313,16 @@ describe('a table with a line under the caret', () => {
     expect(at('above\n|', TABLE)).toBe(`above\n\n${TABLE}`)
   })
 })
+
+describe('paragraphs pasted into a task', () => {
+  const at = (marked: string, text: string) => {
+    const caret = marked.indexOf('|')
+    const state = EditorState.create({ doc: marked.replace('|', ''), selection: { anchor: caret } })
+    return state.update(placed(state, text)).state.doc.toString()
+  }
+
+  test('line up under the words of the item, not under its box', () => {
+    expect(at('- [ ] task |', 'one\n\ntwo')).toBe('- [ ] task one\n\n  two')
+    expect(at('1. [ ] task |', 'one\n\ntwo')).toBe('1. [ ] task one\n\n   two')
+  })
+})
