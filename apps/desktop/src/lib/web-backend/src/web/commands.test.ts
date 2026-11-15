@@ -541,6 +541,20 @@ describe('the trash', () => {
     expect(await webInvoke('list_trash')).toEqual([])
   })
 
+  test('remembers which deleted notes sync put there and which the reader did', async () => {
+    await write('/Notes/Gone elsewhere.md', 'theirs')
+    await write('/Notes/Mine.md', 'mine')
+
+    await webInvoke('trash_item', { path: '/Notes/Gone elsewhere.md', kind: 'note', arrived: true })
+    await webInvoke('trash_item', { path: '/Notes/Mine.md', kind: 'note' })
+
+    const listed = await webInvoke<{ name: string; arrived?: boolean }[]>('list_trash')
+    expect(Object.fromEntries(listed.map((one) => [one.name, one.arrived === true]))).toEqual({
+      'Gone elsewhere.md': true,
+      'Mine.md': false,
+    })
+  })
+
   test('holds a picture, which lives with the assets alone, and puts it back', async () => {
     disk.assets.set('/Notes/shot.png', {
       path: '/Notes/shot.png',

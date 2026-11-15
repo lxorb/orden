@@ -28,7 +28,7 @@ export function doublesOf(
   }
   return device
     .filter((item) => {
-      if (item.kind !== 'note') return false
+      if (item.kind !== 'note' || !item.arrived) return false
       const at = item.from === undefined ? undefined : gone.get(item.from.toLowerCase())
       return at !== undefined && item.deletedAt >= at
     })

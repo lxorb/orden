@@ -176,6 +176,7 @@ export function internalRows(
     from: address(one.from),
     trashedAt: one.trashedAt,
     ...(one.apart ? { apart: true } : {}),
+    ...(one.arrived ? { arrived: true } : {}),
   })
 
   return {

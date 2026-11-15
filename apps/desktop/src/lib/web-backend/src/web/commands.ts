@@ -483,6 +483,7 @@ interface TrashEntry {
   from: string
   trashedAt: number
   apart?: boolean
+  arrived?: boolean
 }
 
 let trashCounter = 0
@@ -490,11 +491,19 @@ let trashCounter = 0
 function entryOf(value: unknown): TrashEntry | null {
   if (!isRecord(value)) return null
 
-  const { id, kind, name, from, trashedAt, apart } = value
+  const { id, kind, name, from, trashedAt, apart, arrived } = value
   if (!isString(id) || !isString(kind) || !isString(name)) return null
   if (!isString(from) || !isNumber(trashedAt)) return null
 
-  return { id, kind, name, from, trashedAt, ...(apart === true ? { apart } : {}) }
+  return {
+    id,
+    kind,
+    name,
+    from,
+    trashedAt,
+    ...(apart === true ? { apart } : {}),
+    ...(arrived === true ? { arrived } : {}),
+  }
 }
 
 async function trashEntries(): Promise<TrashEntry[]> {
@@ -569,7 +578,12 @@ async function pairedTaken(path: string): Promise<boolean> {
   return false
 }
 
-async function trashItem(path: string, kind: string, alone = false): Promise<TrashEntry> {
+async function trashItem(
+  path: string,
+  kind: string,
+  alone = false,
+  arrived = false,
+): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
   if (!(await holds(source))) throw new Error('nothing is there')
@@ -577,7 +591,7 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
   const tree = treeAt(source)
-  if (tree) return trashInTree(tree, source, { id: `internal-${id}`, kind, name, alone })
+  if (tree) return trashInTree(tree, source, { id: `internal-${id}`, kind, name, alone, arrived })
   await bringBackUnder(source)
   await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
@@ -588,6 +602,7 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
     from: source,
     trashedAt: now(),
     ...(alone ? { apart: true } : {}),
+    ...(arrived ? { arrived: true } : {}),
   }
   await saveTrash([...(await trashEntries()), entry])
   return entry
@@ -596,7 +611,7 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
 async function trashInTree(
   tree: TreeRows,
   source: string,
-  item: { id: string; kind: string; name: string; alone: boolean },
+  item: { id: string; kind: string; name: string; alone: boolean; arrived: boolean },
 ): Promise<TrashEntry> {
   const beside: string[] = []
   if (isPdf(source) && !item.alone) beside.push(sidecarOf(source))
@@ -608,6 +623,7 @@ async function trashInTree(
     name: item.name,
     trashedAt: now(),
     ...(item.alone ? { apart: true } : {}),
+    ...(item.arrived ? { arrived: true } : {}),
   }
   if (!(await tree.trash.take(source, entry, beside))) throw new Error('nothing is there')
   return { ...entry, from: source }
@@ -1093,7 +1109,12 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'trash_item':
-      return (await trashItem(path, args.kind as string, args.alone === true)) as T
+      return (await trashItem(
+        path,
+        args.kind as string,
+        args.alone === true,
+        args.arrived === true,
+      )) as T
 
     case 'trash_words':
       return (await trashWords(path, args.content as string)) as T
