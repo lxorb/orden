@@ -129,11 +129,20 @@ fn bars() -> &'static str {
     BARS.trim().trim_start_matches(';')
 }
 
-#[derive(Default)]
 struct Trail {
     urls: Vec<String>,
     at: usize,
     engine: bool,
+}
+
+impl Default for Trail {
+    fn default() -> Self {
+        Self {
+            urls: Vec::new(),
+            at: 0,
+            engine: true,
+        }
+    }
 }
 
 impl Trail {
@@ -1472,6 +1481,16 @@ mod tests {
         assert_eq!(trail.urls, ["https://a.example/", "https://c.example/"]);
         assert!(trail.back());
         assert!(!trail.forward());
+    }
+
+    #[test]
+    fn a_tab_opened_fresh_steps_through_the_engine_s_own_history() {
+        let tabs = WebTabs::default();
+        for url in ["http://short.example/a", "https://b.example/"] {
+            tabs.walked("t", url);
+        }
+        assert_eq!(tabs.stepping("t", -1), None);
+        assert_eq!(tabs.stepping("t", 1), None);
     }
 
     #[test]
