@@ -11,6 +11,7 @@ export {
   type Todo,
   type TodoPatch,
   titledOf,
+  fittedDescription,
 } from './todo'
 export {
   ALL_LABELS,

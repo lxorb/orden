@@ -44,3 +44,21 @@ describe('a task added from long text in a script of several bytes a character',
     },
   )
 })
+
+describe('a task added from long text cut where a character of two halves stands', () => {
+  test('keeps no half of it at the end of the description', async () => {
+    const made = await addTask(`${'a'.repeat(LIMITS.description - 1)}😀b`, { typed: false })
+    if (!made) throw new Error('not added')
+    expect(todos.todo(made.id)?.description).toBe('a'.repeat(LIMITS.description - 1))
+  })
+
+  test('from quick add with a long description typed under it is kept, cut to fit', async () => {
+    const made = await quickAdd({
+      text: paragraph,
+      description: 'n'.repeat(LIMITS.description),
+      fields: { tags: [], remind: [] },
+    })
+    expect(made?.description.startsWith(`${paragraph}\n\nnnn`)).toBe(true)
+    expect(made?.description.length).toBeLessThanOrEqual(LIMITS.description)
+  })
+})

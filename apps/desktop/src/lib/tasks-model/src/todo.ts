@@ -75,11 +75,15 @@ function cutToBytes(text: string, most: number): string {
   return wholeSlice(text, low)
 }
 
+export function fittedDescription(text: string): string {
+  return cutToBytes(wholeSlice(text, LIMITS.description), DESCRIPTION_BYTES)
+}
+
 export function titledOf(text: string): { title: string; description?: string } {
   if (text.length <= LIMITS.title) return { title: text }
   return {
     title: `${wholeSlice(text, LIMITS.title - 1).trimEnd()}…`,
-    description: cutToBytes(text.slice(0, LIMITS.description), DESCRIPTION_BYTES),
+    description: fittedDescription(text),
   }
 }
 
