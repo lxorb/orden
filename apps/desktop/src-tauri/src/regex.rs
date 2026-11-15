@@ -37,12 +37,17 @@ pub struct Pattern {
     groups: usize,
     fold: bool,
     first: Option<First>,
-    lead: Option<Lead>,
+    lead: Option<Vec<Start>>,
 }
 
 struct Lead {
     prefix: Vec<Letter>,
     run: Letter,
+}
+
+enum Start {
+    Run(Lead),
+    Letters(First),
 }
 
 enum Letter {
@@ -204,7 +209,7 @@ impl Pattern {
             groups,
             fold,
             first: first_of(&node, fold).and_then(|chars| First::new(&chars)),
-            lead: lead_of(&node),
+            lead: lead_of(&node, fold),
         })
     }
 
@@ -233,10 +238,26 @@ impl Pattern {
         let next = letter_at(text, start).map_or(Some(start + 1), |letter| {
             start.checked_add(letter.len_utf8())
         });
-        let Some(lead) = &self.lead else {
+        let Some(starts) = &self.lead else {
             return next;
         };
 
+        starts
+            .iter()
+            .filter_map(|one| match one {
+                Start::Run(lead) => self.past_run(text, start, lead, next),
+                Start::Letters(first) => next.and_then(|from| self.letter_from(text, from, first)),
+            })
+            .min()
+    }
+
+    fn past_run(
+        &self,
+        text: &str,
+        start: usize,
+        lead: &Lead,
+        next: Option<usize>,
+    ) -> Option<usize> {
         let mut letters = text.get(start..)?.chars();
         for wanted in &lead.prefix {
             if !letters
@@ -250,6 +271,13 @@ impl Pattern {
             .take_while(|&letter| self.holds(&lead.run, letter))
             .count();
         advanced(text, start, run.checked_add(1)?)
+    }
+
+    fn letter_from(&self, text: &str, from: usize, first: &First) -> Option<usize> {
+        text.get(from..)?
+            .char_indices()
+            .find(|&(_, letter)| first.holds(letter, self.fold))
+            .and_then(|(at, _)| from.checked_add(at))
     }
 
     fn holds(&self, wanted: &Letter, letter: char) -> bool {
@@ -1206,32 +1234,87 @@ fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
 
 const LONGEST_LEAD: usize = 16;
 
-fn lead_of(node: &Node) -> Option<Lead> {
-    let nodes = match node {
-        Node::Group(None, inner) => return lead_of(inner),
-        Node::Seq(nodes) => nodes.as_slice(),
-        one => std::slice::from_ref(one),
+fn lead_of(node: &Node, fold: bool) -> Option<Vec<Start>> {
+    let free = !calls_back(node);
+    let Node::Alt(branches) = unwrapped(node, free) else {
+        return Some(vec![Start::Run(run_of(node, free)?)]);
     };
 
+    let starts = branches
+        .iter()
+        .map(|branch| {
+            run_of(branch, free).map(Start::Run).or_else(|| {
+                first_of(branch, fold)
+                    .and_then(|chars| First::new(&chars))
+                    .map(Start::Letters)
+            })
+        })
+        .collect::<Option<Vec<Start>>>()?;
+    starts
+        .iter()
+        .any(|one| matches!(one, Start::Run(_)))
+        .then_some(starts)
+}
+
+fn unwrapped(node: &Node, free: bool) -> &Node {
+    match node {
+        Node::Group(None, inner) => unwrapped(inner, free),
+        Node::Group(Some(_), inner) if free => unwrapped(inner, free),
+        one => one,
+    }
+}
+
+fn calls_back(node: &Node) -> bool {
+    match node {
+        Node::Backref(_) | Node::Named(_) => true,
+        Node::Group(_, inner) | Node::Look(_, inner) | Node::Repeat(inner, _) => calls_back(inner),
+        Node::Seq(nodes) | Node::Alt(nodes) => nodes.iter().any(calls_back),
+        Node::Char(_)
+        | Node::Any
+        | Node::Class(_)
+        | Node::Start
+        | Node::End
+        | Node::Boundary(_) => false,
+    }
+}
+
+fn flattened<'a>(node: &'a Node, free: bool, out: &mut Vec<&'a Node>) {
+    match node {
+        Node::Seq(nodes) => {
+            for one in nodes {
+                flattened(one, free, out);
+            }
+        }
+        Node::Group(None, inner) => flattened(inner, free, out),
+        Node::Group(Some(_), inner) if free => flattened(inner, free, out),
+        one => out.push(one),
+    }
+}
+
+fn run_of(node: &Node, free: bool) -> Option<Lead> {
+    let mut atoms = Vec::new();
+    flattened(node, free, &mut atoms);
+
     let mut prefix = Vec::new();
-    for one in nodes.iter().take(LONGEST_LEAD) {
+    for one in atoms.into_iter().take(LONGEST_LEAD) {
         if let Node::Repeat(inner, Limits { max: None, .. }) = one {
             return Some(Lead {
                 prefix,
-                run: one_letter(inner)?,
+                run: one_letter(inner, free)?,
             });
         }
-        prefix.push(one_letter(one)?);
+        prefix.push(one_letter(one, free)?);
     }
     None
 }
 
-fn one_letter(node: &Node) -> Option<Letter> {
+fn one_letter(node: &Node, free: bool) -> Option<Letter> {
     match node {
         Node::Any => Some(Letter::Any),
         Node::Char(c) => Some(Letter::Char(*c)),
         Node::Class(class) => Some(Letter::Class(class.clone())),
-        Node::Group(None, inner) => one_letter(inner),
+        Node::Group(None, inner) => one_letter(inner, free),
+        Node::Group(Some(_), inner) if free => one_letter(inner, free),
         _ => None,
     }
 }
@@ -1978,6 +2061,11 @@ mod tests {
             (r"\w.*TODO", &pairs, 100),
             (r"\w.*TODO", &paragraphs, 1),
             (r"(?:wo)rd.*TODO", &pairs, 100),
+            ("(.*)TODO", &pairs, 100),
+            ("(.+) TODO", &paragraphs, 1),
+            ("(.*)TODO(.*)", &pairs, 100),
+            (".*TODO|FIXME", &pairs, 100),
+            ("(.*TODO|FIXME)", &paragraphs, 1),
         ] {
             let pattern = Pattern::compile(source, false);
             assert!(pattern.is_some(), "{source}");
@@ -2017,6 +2105,14 @@ mod tests {
             r"a\w*?b",
             r"(?:a\u{1d49c}).+b",
             r"\u{e9}.*b",
+            "(.*)b",
+            "(a)(.*)b",
+            ".*b|x",
+            "a.*b|.+c",
+            "(?:.*b|c)",
+            "(x|.*b)",
+            r"(.*)b\1",
+            "(?<n>.*)b",
         ] {
             for fold in [false, true] {
                 let led = Pattern::compile(source, fold);
