@@ -186,20 +186,22 @@ function fileNamed(
   source: string,
   link: { kind: LinkKind; target: string },
 ): string | null {
-  let files: readonly string[] | undefined
-  if (link.kind === 'markdown') {
-    const target = link.target.replace(/\\/g, '/')
-    const parts = target.startsWith('/') ? [] : folderOf(source).split('/').filter(Boolean)
-    for (const part of target.split('/')) {
-      if (part === '' || part === '.') continue
+  const slashed = link.target.replace(/\\/g, '/')
+  const written = slashed.trim()
+  const whole = (from: string) => {
+    const parts = from.split('/').filter(Boolean)
+    for (const part of slashed.split('/')) {
       if (part === '..') parts.pop()
-      else parts.push(part)
+      else if (!/^\.?$/.test(part)) parts.push(part)
     }
-    files = named.whole.get(foldName(parts.join('/')))
-  } else {
-    const last = link.target.trim().replace(/\\/g, '/').split('/').pop() ?? ''
-    files = named.last.get(foldName(last))
+    return named.whole.get(foldName(parts.join('/')))
   }
+  const last = named.last.get(foldName(written.split('/').pop() ?? ''))
+  const files =
+    link.kind !== 'markdown'
+      ? last
+      : (whole(slashed.startsWith('/') ? '' : folderOf(source)) ??
+        (/^\.{0,2}\//.test(written) ? undefined : (whole('') ?? last)))
   if (!files) return null
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }

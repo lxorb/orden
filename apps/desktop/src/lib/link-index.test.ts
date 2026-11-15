@@ -1653,6 +1653,20 @@ describe('a markdown link to a file written from the top of the space or by its 
       '[r](../../attachments/summary.pdf) and [s](../../attachments/summary.pdf)',
     )
   })
+
+  test('a picture named from the top or by name follows its rename', async () => {
+    await space({ 'Notes/Day/x.md': '![](attachments/cat.png) and ![](cat.png)' }, [
+      'attachments/cat.png',
+    ])
+    const from = at('Notes/Day/x.md')
+    expect(notePicture('attachments/cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+    expect(notePicture('cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+
+    await links.retarget(at('attachments/cat.png'), at('attachments/dog.png'), ROOT)
+    expect(notes['Notes/Day/x.md']).toBe(
+      '![](../../attachments/dog.png) and ![](../../attachments/dog.png)',
+    )
+  })
 })
 
 describe('a file named by a name that more than one folder holds', () => {
