@@ -106,6 +106,8 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
+const { registerTabKind } = await import('@orden/contracts')
+registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { account } = await import('./accounts/src/account.svelte')

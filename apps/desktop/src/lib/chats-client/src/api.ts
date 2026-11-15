@@ -1,3 +1,4 @@
+import type { TabKindParts } from '@orden/contracts'
 import './shell-parts'
 export { hush } from './hush.svelte'
 export { sendRows } from './send-rows'
@@ -54,3 +55,12 @@ export const loadChatLinks = () =>
   __EVEN_PLUGIN__
     ? away<typeof import('./view/ChatLinks.svelte')>()
     : import('./view/ChatLinks.svelte')
+
+export const chatTabKind: TabKindParts = {
+  open: async (path, how) => {
+    ;(await chatOpening()).openChat(path, how)
+  },
+  make: async (folder, name) => {
+    await (await chatOpening()).makeChat(folder, name)
+  },
+}

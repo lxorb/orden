@@ -6,10 +6,12 @@ import {
   registerFeature,
   registerSettingsPart,
   registerTabKind,
+  whenPortProvided,
 } from '@orden/contracts'
 import { serveLinks } from './link-index/src/api'
 import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
+import { samePath } from './platform/src/api'
 
 serveLinks({
   html: async (text, path) => {
@@ -34,6 +36,19 @@ serveLinks({
   search: searchSpace,
 })
 registerFeature(() => import('./quick-add/src/api'))
+registerTabKind('view', async () => (await import('./views/src/api')).viewTabKind)
+whenPortProvided('workspace.view', (view) =>
+  view.follow((op) => {
+    const tree = view.tree
+    if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree || op.heard) return
+    const root = op.root
+    if (!samePath(root, view.activeRoot ?? '')) return
+    return (async () => {
+      const { orderMoved } = await import('./views/src/api')
+      await orderMoved(tree, root, op.from, op.to)
+    })().catch(() => undefined)
+  }),
+)
 registerCommand('app.quick-question', async () => (await import('./ai-chat/src/api')).askQuickly)
 registerCommand(
   'app.scratchpad',
@@ -81,6 +96,7 @@ if (!__EVEN_PLUGIN__) {
   registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
   registerHearing(async () => (await (await import('./pdf/src/api')).handed()).hearPdfs)
   registerTabKind('application', async () => (await import('./apps/src/api')).applicationTabKind)
+  registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
   registerSettingsPart({
     section: 'import',
     card: true,

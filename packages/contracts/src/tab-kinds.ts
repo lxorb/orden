@@ -32,7 +32,15 @@ export interface TabFacts {
   readonly stream: TabStream | null
 }
 
+export interface OpenHow {
+  readonly activate?: boolean
+  readonly preview?: boolean
+  readonly beside?: boolean
+}
+
 export interface TabKindParts {
+  readonly open?: (path: string, how: OpenHow) => Promise<void>
+  readonly make?: (folder: string, name: string) => Promise<void>
   readonly menu?: (tab: string) => TabMenuEntry[]
   readonly facts?: (tab: string) => Promise<TabFacts | null>
   readonly hold?: (tab: string) => (() => void) | null

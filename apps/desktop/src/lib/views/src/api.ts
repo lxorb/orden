@@ -1,3 +1,5 @@
+import type { TabKindParts } from '@orden/contracts'
+
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
 
 export const loadViewTab = () =>
@@ -27,3 +29,11 @@ export const viewCommands = {
 
 export const orderMoved: typeof import('./order-paths').orderMoved = (...args) =>
   import('./order-paths').then((one) => one.orderMoved(...args))
+
+export const viewTabKind: TabKindParts = {
+  open: async (path, how) => {
+    if (__EVEN_PLUGIN__) return
+    ;(await baseOpening()).openBaseFile(path, how)
+  },
+  make: (folder, name) => createDatabase(folder, name),
+}
