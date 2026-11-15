@@ -34,6 +34,7 @@ vi.mock('../../shortcuts/src/api', () => ({
   },
 }))
 vi.mock('../../workspace/src/api', () => ({
+  essentials: () => Promise.resolve({ openEssential: (path: string) => void opened.push(path) }),
   tabOverview: { open: false },
   workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
 }))
@@ -42,9 +43,6 @@ vi.mock('./letters.svelte', () => ({
     given: { '/space/Notes.md': 'N' },
     pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null),
   },
-}))
-vi.mock('../../essentials.svelte', () => ({
-  openEssential: (path: string) => void opened.push(path),
 }))
 
 vi.stubGlobal('CSS', { escape: (text: string) => text })

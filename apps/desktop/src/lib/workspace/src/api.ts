@@ -25,6 +25,8 @@ export const spaceMoving = () => import('./moving-space')
 
 export const spaceSets = () => import('./sets.svelte')
 
+export const essentials = () => import('./essentials.svelte')
+
 export const spaceChanges = () => import('./space-changes')
 
 export const fileUndoing = () => import('./undoing')

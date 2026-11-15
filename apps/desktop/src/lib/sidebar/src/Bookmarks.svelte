@@ -33,7 +33,7 @@
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'
   import { isTile, sameBookmark } from '../../space-kept/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { essentials, workspace } from '../../workspace/src/api'
   import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()
@@ -159,8 +159,8 @@
     return mark !== null && !workspace.bookmarks.has(mark)
   })
 
-  const reckoning = door(() => import('../../essentials.svelte'))
-  let hands = $state.raw<typeof import('../../essentials.svelte') | null>(null)
+  const reckoning = door(essentials)
+  let hands = $state.raw<Awaited<ReturnType<typeof essentials>> | null>(null)
   const reach = () => {
     if (!hands) void reckoning().then((one) => (hands = one))
   }
