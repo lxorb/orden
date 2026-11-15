@@ -86,5 +86,6 @@ export function watchForCrashes(sending: boolean): () => void {
     stopAnswer()
     unlisten?.()
     document.removeEventListener('visibilitychange', alive)
+    window.removeEventListener('storage', heard)
   }
 }

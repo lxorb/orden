@@ -65,3 +65,14 @@ test('reports turned off in another window are not sent from this one', () => {
 
   expect(crashReports.on).toBe(false)
 })
+
+test('a stopped watch hears no other window', () => {
+  localStorage.setItem('orden:crash-reports-told', 'true')
+  crashReports.set(true)
+  watchForCrashes(true)()
+
+  localStorage.setItem('orden:crash-reports', 'false')
+  window.dispatchEvent(new StorageEvent('storage', { key: 'orden:crash-reports' }))
+
+  expect(crashReports.on).toBe(true)
+})
