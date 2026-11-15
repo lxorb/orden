@@ -732,6 +732,7 @@ describe('a note and a canvas, by their tab', () => {
       { path: 'Scratchpad.md', space: 'work', tab: 'scratchpad' },
       'jotted',
       undefined,
+      undefined,
     )
     expect(workspace.open).not.toHaveBeenCalled()
   })

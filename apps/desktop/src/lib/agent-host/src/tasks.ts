@@ -212,7 +212,7 @@ async function rewritten<T>(
     const { text, said } = work(read.text ?? '')
     if (text === read.text) return said
     try {
-      await notes.writeNote(writerOf(call), at(note), text, read.rev)
+      await notes.writeNote(writerOf(call), at(note), text, read.rev, call.deadline)
       return said
     } catch (error) {
       if (!(error instanceof DocError && error.code === 'rev_changed') || tries > 2) throw error

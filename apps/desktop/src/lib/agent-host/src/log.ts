@@ -97,9 +97,14 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
     relative,
     () => made(place, relative, `${section}\n`, null),
     () =>
-      notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
-        { at: { end: true }, insert_after: section },
-      ]),
+      notes.editNote(
+        writerOf(call),
+        { path: relative, space: place.space.id },
+        [{ at: { end: true }, insert_after: section }],
+        undefined,
+        call.deadline,
+      ),
+    call.deadline,
   )
 
   return done({ path: relative, calls: shown.length })

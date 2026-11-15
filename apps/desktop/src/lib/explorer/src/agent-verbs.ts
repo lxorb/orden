@@ -10,6 +10,7 @@ import {
   type Call,
   done,
   gatedBy,
+  inTime,
   maybe,
   need,
   Refused,
@@ -99,6 +100,7 @@ async function changed(
   const question = await asked(call, category, summary(op, paths, to, maybe(call, 'name')), folder)
   if (question) return question
 
+  inTime(call, `the ${op} began`)
   const said: string[] = []
   const tell = view.tell.bind(view)
   view.tell = (words: string) => {

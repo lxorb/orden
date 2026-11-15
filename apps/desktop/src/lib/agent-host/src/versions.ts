@@ -71,6 +71,8 @@ export async function restoreVersion(call: Call): Promise<AgentAnswer> {
     writerOf(call),
     { path: relative, space: place.space.id },
     words,
+    undefined,
+    call.deadline,
   )
   return done({ ...wrote, restored: wanted })
 }

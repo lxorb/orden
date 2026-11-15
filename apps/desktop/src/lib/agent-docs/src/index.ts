@@ -42,8 +42,20 @@ workspace.fileOps.follow((op) => {
 
 export interface NoteDocs {
   readNote(at: NoteAt, include?: unknown): Promise<NoteRead>
-  editNote(agent: Agent, at: NoteAt, edits: unknown, ifRev?: string): Promise<NoteEdited>
-  writeNote(agent: Agent, at: NoteAt, text: string, ifRev?: string): Promise<NoteEdited>
+  editNote(
+    agent: Agent,
+    at: NoteAt,
+    edits: unknown,
+    ifRev?: string,
+    deadline?: AbortSignal,
+  ): Promise<NoteEdited>
+  writeNote(
+    agent: Agent,
+    at: NoteAt,
+    text: string,
+    ifRev?: string,
+    deadline?: AbortSignal,
+  ): Promise<NoteEdited>
   undoAgent(agent: Agent, at: NoteAt): Promise<{ undone: number }>
 }
 
@@ -85,10 +97,10 @@ async function padded(at: NoteAt): Promise<NoteAt> {
 
 export const notes: NoteDocs = {
   readNote: async (at, include) => readNote(desk, await padded(at), include),
-  editNote: async (agent, at, edits, ifRev) =>
-    editNote(desk, agent, await padded(at), edits, ifRev),
-  writeNote: async (agent, at, text, ifRev) =>
-    writeNote(desk, agent, await padded(at), text, ifRev),
+  editNote: async (agent, at, edits, ifRev, deadline) =>
+    editNote(desk, agent, await padded(at), edits, ifRev, deadline),
+  writeNote: async (agent, at, text, ifRev, deadline) =>
+    writeNote(desk, agent, await padded(at), text, ifRev, deadline),
   undoAgent: async (agent, at) => undoAgent(desk, agent, await padded(at)),
 }
 

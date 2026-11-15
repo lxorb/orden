@@ -15,6 +15,7 @@ import {
   type Call,
   done,
   flag,
+  inTime,
   maybe,
   need,
   needScope,
@@ -198,6 +199,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Capture ${page.url} into ${relative}`)
   if (question) return question
 
+  inTime(call, 'the page was kept')
   const embed = page.file ? await attachment(place, path, page.file) : null
   const words = await wordsFor(page, shape, embed)
 
@@ -212,11 +214,16 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
       return true
     },
     async () => {
-      await notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
-        { at: under === null ? { end: true } : { heading: under }, insert_after: section },
-      ])
+      await notes.editNote(
+        writerOf(call),
+        { path: relative, space: place.space.id },
+        [{ at: under === null ? { end: true } : { heading: under }, insert_after: section }],
+        undefined,
+        call.deadline,
+      )
       return false
     },
+    call.deadline,
   )
 
   return done({ path: relative, space: place.space.id, source: page.url, created }, page.url)

@@ -9,6 +9,7 @@ export type Problem =
   | 'rev_changed'
   | 'reader_edited_here'
   | 'reader_typing'
+  | 'timeout'
   | 'no_such_note'
   | 'not_a_note'
   | 'no_such_space'

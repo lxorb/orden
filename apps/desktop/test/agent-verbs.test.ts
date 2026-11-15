@@ -372,8 +372,14 @@ const docs = {
       tasks: [{ anchor: { task: 'Buy milk' }, done: false, line: 2 }],
     })
   }),
-  editNote: vi.fn((_agent: unknown, at: { path: string }) =>
-    Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] }),
+  editNote: vi.fn(
+    (
+      _agent: unknown,
+      at: { path: string },
+      _edits?: unknown,
+      _ifRev?: string,
+      _deadline?: AbortSignal,
+    ): Promise<unknown> => Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] }),
   ),
   writeNote: vi.fn((_agent: unknown, at: { path: string }, _text?: string) =>
     Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] }),
@@ -998,6 +1004,8 @@ describe('what asks the reader first', () => {
       { id: 'claude-code', name: 'Claude Code' },
       { path: 'Soup.md', space: 'home' },
       'old words',
+      undefined,
+      undefined,
     )
   })
 
@@ -1299,6 +1307,7 @@ describe('the notes, on the road', () => {
       { path: 'Soup.md', space: 'home' },
       '---\ntags: [food, warm]\n---\n# Soup\n\n- [ ] Buy milk\n',
       'r1',
+      undefined,
     )
   })
 
@@ -1309,6 +1318,7 @@ describe('the notes, on the road', () => {
       expect.anything(),
       "---\nstatus: 'yes'\n---\n# Soup\n\n- [ ] Buy milk\n",
       'r1',
+      undefined,
     )
 
     await call('set_property', {
@@ -1322,6 +1332,7 @@ describe('the notes, on the road', () => {
       expect.anything(),
       "---\ntags: ['012', 'salt, pepper', 3, true]\n---\n# Soup\n\n- [ ] Buy milk\n",
       'r1',
+      undefined,
     )
   })
 
@@ -1332,6 +1343,7 @@ describe('the notes, on the road', () => {
       { path: 'Soup.md', space: 'home' },
       '---\npriorität: Hoch\n---\n# Soup\n\n- [ ] Buy milk\n',
       'r1',
+      undefined,
     )
     for (const key of ['a: b', '#tags', '- tags'])
       expect(
@@ -1346,6 +1358,7 @@ describe('the notes, on the road', () => {
       { path: 'Soup.md', space: 'home' },
       [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
       'r1',
+      undefined,
     )
   })
 
@@ -1381,6 +1394,7 @@ describe('the notes, on the road', () => {
       { path: 'Soup.md', space: 'home' },
       [{ at: { task: 'Buy milk', nth: 2 }, replace: '- [x] Buy milk' }],
       'r1',
+      undefined,
     )
   })
 
@@ -1396,6 +1410,7 @@ describe('the notes, on the road', () => {
       { path: 'Soup.md', space: 'home' },
       [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
       'r1',
+      undefined,
     )
     expect(
       await call('set_task', {
@@ -1430,6 +1445,7 @@ describe('the notes, on the road', () => {
       { path: 'Soup.md', space: 'home' },
       [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
       'r1',
+      undefined,
     )
   })
 
@@ -1771,6 +1787,89 @@ describe('to-dos and bases', () => {
     const wrote = [files.get('/s/Home/Day.md') ?? '', ...added].join('\n')
     for (const one of ['One.', 'Two.', 'Three.']) expect(wrote).toContain(one)
     expect(added).toHaveLength(2)
+  })
+
+  test('two additions to one note while the reader types both answer before the endpoint gives up', async () => {
+    vi.useFakeTimers()
+    const ENDPOINT_PATIENCE = 30_000
+    const DELIVERY = 5000
+    const { DocError } = await import('../src/lib/agent-docs/src/api')
+    const { dueWithin } = await import('../src/lib/automation/src/due')
+    try {
+      const typing = (
+        _agent: unknown,
+        at: { path: string },
+        _edits?: unknown,
+        _ifRev?: string,
+        deadline?: AbortSignal,
+      ) =>
+        new Promise((_done, refuse) => {
+          const still = () =>
+            refuse(new DocError('reader_typing', at.path, 'the reader is still writing'))
+          const patience = setTimeout(still, 20_000)
+          deadline?.addEventListener('abort', () => {
+            clearTimeout(patience)
+            still()
+          })
+        })
+      docs.editNote.mockImplementationOnce(typing).mockImplementationOnce(typing)
+      const started = Date.now()
+      const answers = ['One.', 'Two.'].map((content) => {
+        const due = dueWithin(ENDPOINT_PATIENCE - DELIVERY)
+        return runAgentVerb(
+          'append_note',
+          { space: 'Home', path: 'Soup', content },
+          agent(),
+          due.deadline,
+        ).then((said) => ({ said, after: Date.now() - started }))
+      })
+      await vi.advanceTimersByTimeAsync(2 * ENDPOINT_PATIENCE)
+
+      for (const one of await Promise.all(answers)) {
+        expect(one.said).toMatchObject({ code: 'reader_typing' })
+        expect(one.after).toBeLessThan(ENDPOINT_PATIENCE - DELIVERY)
+      }
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a call whose deadline passed while it waited behind another on the note never runs', async () => {
+    vi.useFakeTimers()
+    try {
+      const { madeOrChanged } = await import('../src/lib/agent-host/src/notes')
+      const place = { space: home, open: false } as Parameters<typeof madeOrChanged>[0]
+      const did: string[] = []
+      const slow = madeOrChanged(
+        place,
+        'Soup.md',
+        () => Promise.resolve(did.push('made')),
+        () => new Promise((done) => setTimeout(() => done(did.push('slow')), 30_000)),
+      )
+      const due = new AbortController()
+      setTimeout(() => due.abort(), 24_000)
+      const started = Date.now()
+      const queued = madeOrChanged(
+        place,
+        'Soup.md',
+        () => Promise.resolve(did.push('made late')),
+        () => Promise.resolve(did.push('changed late')),
+        due.signal,
+      ).then(
+        () => ({ code: 'applied', after: Date.now() - started }),
+        (error: unknown) => ({
+          code: (error as { code?: string }).code,
+          after: Date.now() - started,
+        }),
+      )
+      await vi.advanceTimersByTimeAsync(40_000)
+      await slow
+
+      expect(await queued).toEqual({ code: 'timeout', after: 24_000 })
+      expect(did).toEqual(['slow'])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test('a base is refused while databases are off, and left as it was', async () => {
