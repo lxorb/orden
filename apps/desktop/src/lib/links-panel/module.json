@@ -14,9 +14,5 @@
     "windows",
     "workspace"
   ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/new-tab.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/FileMark.svelte", "apps/desktop/src/lib/file-mark.ts"]
 }

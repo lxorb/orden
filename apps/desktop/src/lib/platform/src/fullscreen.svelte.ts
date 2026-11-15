@@ -1,4 +1,5 @@
-import { currentWindow, whenScreenGivenBack, afterQuiet } from './platform/src/api'
+import { currentWindow, whenScreenGivenBack } from './tauri'
+import { afterQuiet } from './timing'
 
 interface Panes {
   fills: string | null

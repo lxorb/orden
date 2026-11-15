@@ -3,8 +3,7 @@
   import { chosenIcon } from '../../chosen-icon'
   import { faceOf, type FileMark as Mark, initialOf } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
-  import { longPress, readIcon } from '../../ui-kit/src/api'
-  import { middleOpens, type TabAsk, tabAsk } from '../../new-tab'
+  import { middleOpens, type TabAsk, tabAsk, longPress, readIcon } from '../../ui-kit/src/api'
 
   const {
     path,

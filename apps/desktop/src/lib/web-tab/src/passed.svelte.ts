@@ -1,6 +1,5 @@
 import type { Modifier } from '../../double-tap/src/api'
-import { fullscreen } from '../../fullscreen.svelte'
-import { isRecord } from '../../platform/src/api'
+import { fullscreen, isRecord } from '../../platform/src/api'
 import { doubleTaps } from '../../shortcuts/src/api'
 import type { Page } from './pages.svelte'
 import { sought } from './seek'

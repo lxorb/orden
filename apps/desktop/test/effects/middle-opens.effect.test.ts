@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'vitest'
-import { middleOpens, tabAsk } from '../../src/lib/new-tab'
+import { middleOpens, tabAsk } from '../../src/lib/ui-kit/src/api'
 
 let row: HTMLButtonElement | null = null
 let stop: (() => void) | null = null

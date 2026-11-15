@@ -1,11 +1,12 @@
 <script lang="ts">
+  import type { OpenHow } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
   import { neighbours, type NoteGraph, signature } from '../../graph/src/api'
   import { Fingers } from './fingers'
   import { graphFilter, type Keeps } from './filter'
   import { type GraphColours, Layout, paint, radiusOf } from '../../graph-drawing/src/api'
-  import { howFor, type OpenHow, type TabAsk, tabAsk } from '../../new-tab'
+  import { howFor, type TabAsk, tabAsk } from '../../ui-kit/src/api'
   import {
     type Camera,
     framing,

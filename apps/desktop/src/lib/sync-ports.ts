@@ -1,7 +1,7 @@
 import { protection } from './protect/src/api'
 import { providePort } from '@orden/contracts'
 import { account, api, ApiError, BASE, fromServer, request } from './accounts/src/api'
-import { howFor } from './new-tab'
+import { howFor } from './ui-kit/src/api'
 import {
   forget,
   keep,

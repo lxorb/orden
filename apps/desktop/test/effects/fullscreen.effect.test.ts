@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { closeOnBack } from '../../src/lib/ui-kit/src/backstack.svelte'
-import { fullscreen } from '../../src/lib/fullscreen.svelte'
+import { fullscreen } from '../../src/lib/platform/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { reactive, root, watch } from './runes.svelte'
 

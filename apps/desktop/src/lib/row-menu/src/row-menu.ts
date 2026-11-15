@@ -11,7 +11,7 @@ import {
 } from '../../tree/src/api'
 import { basesOn, hiddenKinds, type KindName } from '../../gates/src/api'
 import { kindLabel } from '../../kind-words'
-import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
+import { howFor, DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import {
   archiveEntry,
   coverEntries,
@@ -20,7 +20,6 @@ import {
   shareEntry,
   webDataEntry,
 } from './api'
-import { howFor } from '../../new-tab'
 import {
   rowName,
   folderOf,

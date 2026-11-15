@@ -62,7 +62,7 @@
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from '../../sidebar-width.svelte'
-  import { fullscreen } from '../../fullscreen.svelte'
+  import { fullscreen, dur, fade, fly } from '../../platform/src/api'
   import { alone } from '../../alone.svelte'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
@@ -72,7 +72,6 @@
   import { swipeOpens } from '../../swipe-opens'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import Tree from './Tree.svelte'
-  import { dur, fade, fly } from '../../platform/src/api'
   import { startup } from '../../launch/src/api'
 
   const {
