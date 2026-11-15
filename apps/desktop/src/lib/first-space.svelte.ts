@@ -15,9 +15,8 @@ class FirstSpace {
     if (!startsFresh(now) || this.working || workspace.spaces.length) return
     this.working = true
     try {
-      const space = await madeSpace(WELCOME_SPACE)
+      const space = await madeSpace(WELCOME_SPACE, (made) => markSeedSpace(made.root))
       if (!space) return
-      markSeedSpace(space.root)
       const note = await this.welcome(space)
       await this.arrive(space, note)
       if (note) await beginSetup(false)

@@ -29,9 +29,13 @@ export async function newSpace(): Promise<Space | undefined> {
   return name ? madeSpace(name) : undefined
 }
 
-export async function madeSpace(name: string): Promise<Space | undefined> {
+export async function madeSpace(
+  name: string,
+  made?: (space: Space) => void,
+): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
+  made?.(space)
   if (!__EVEN_PLUGIN__) {
     const { AGENTS_SEED } = await import('./agents-seed/src/api')
     await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
