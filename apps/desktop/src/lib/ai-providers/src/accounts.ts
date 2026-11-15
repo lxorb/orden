@@ -53,7 +53,7 @@ export function vendorOf(account: Pick<Provider, 'id' | 'kind'>): Vendor {
 
 function isKind(value: unknown): value is ProviderKind {
   if (value === 'claude-code' && !__CLAUDE_CODE__) return false
-  return value === 'compatible' || (isString(value) && value in FIRST)
+  return value === 'compatible' || (isString(value) && Object.hasOwn(FIRST, value))
 }
 
 function isId(value: unknown): value is string {
