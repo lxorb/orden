@@ -27,6 +27,12 @@ describe('noteLinks', () => {
     expect(noteLinks(index, ['work/Plan.md'], wikilink)).toBe('[[work/Plan]]')
   })
 
+  test('a file whose name another file shares is linked by its path', () => {
+    const twins = { ...index, files: ['image.png', 'Trips/image.png'] }
+    expect(noteLinks(twins, ['Trips/image.png'], wikilink)).toBe('![[Trips/image.png]]')
+    expect(noteLinks(index, ['pics/cat.png'], wikilink)).toBe('![[cat.png]]')
+  })
+
   test('several notes are a line each, in the order they were carried', () => {
     expect(noteLinks(index, ['Ideas.md', 'paper.pdf'], wikilink)).toBe('[[Ideas]]\n[[paper.pdf]]')
   })

@@ -1,4 +1,4 @@
-import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
+import { type EditorState, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { TextEdit } from '@orden/markdown/edits'
 import type { TaskChange } from '@orden/markdown/task-edits'
 import type { TaskFields } from '@orden/markdown/task-line'
@@ -291,4 +291,17 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     block: link.block,
     page: null,
   }
+}
+
+const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i
+
+export function nameFor(index: NoteIndex, note: NoteRef): string {
+  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
+  return (same.length > 1 ? note.path.replace(MARKDOWN_NAME, '') : note.name).normalize('NFC')
+}
+
+export function linkNameAt(state: EditorState, path: string): string | null {
+  const index = state.facet(noteIndex)
+  const note = index.notes.find((one) => one.path === path)
+  return note ? nameFor(index, note) : null
 }

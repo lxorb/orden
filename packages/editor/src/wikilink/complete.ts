@@ -7,6 +7,7 @@ import {
   type LinkWrite,
   linkWriter,
   type NoteIndex,
+  nameFor,
   noteIndex,
   type NoteRef,
   resolveNote,
@@ -47,11 +48,6 @@ function insert(target: LinkWrite) {
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
   return { name: nameFor(index, note), path: note.path, from: index.path }
-}
-
-function nameFor(index: NoteIndex, note: NoteRef): string {
-  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
-  return (same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {
@@ -283,7 +279,12 @@ export function wikilinkCompletions(
 
   const after = inner.slice(hash + 1)
   const from = typed.from + 2 + hash + 1
-  const target: LinkWrite = { name: named, path: note.path, from: index.path }
+  const target: LinkWrite = {
+    name: named,
+    path: note.path,
+    from: index.path,
+    file: nameFor(index, note),
+  }
 
   if (!after.startsWith('^')) {
     const options = headingOptions(target, note, after)

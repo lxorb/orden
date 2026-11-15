@@ -2,7 +2,9 @@ import {
   type BlockKind,
   type BlockShape,
   clearFormatting,
+  type EditorState,
   type EditorView,
+  linkNameAt,
   type NoteJump,
   insertCodeFence,
   insertHorizontalRule,
@@ -145,7 +147,7 @@ function blockEntries(
         void copyText(
           targets
             .map((target) =>
-              linkTo(name, null, {
+              linkTo((relative ? linkNameAt(view.state, relative) : null) ?? name, null, {
                 fragment: target.slice(1),
                 ...(relative ? { path: relative, from: relative } : {}),
               }),
@@ -382,7 +384,7 @@ function linkEntries(
   const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
 
   return [
-    ...(jump ? noteEntries(jump, path ?? null) : []),
+    ...(jump && view ? noteEntries(jump, path ?? null, view.state) : []),
     ...(href && webHref(href) !== null
       ? [{ label: 'Open in the browser', run: () => void openExternal(href) }]
       : []),
@@ -399,7 +401,7 @@ function linkEntries(
   ]
 }
 
-function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
+function noteEntries(jump: NoteJump, from: string | null, state: EditorState): MenuEntry[] {
   return [
     { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
     ...(viewport.touch
@@ -410,17 +412,18 @@ function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
             run: () => void workspace.followLink(jump, 'aside', from),
           },
         ]),
-    { label: 'Copy link', run: () => void copyText(linkOf(jump)) },
+    { label: 'Copy link', run: () => void copyText(linkOf(jump, state)) },
   ]
 }
 
-function linkOf(jump: NoteJump): string {
+function linkOf(jump: NoteJump, state: EditorState): string {
   const fragment =
     jump.block !== null
       ? `^${jump.block}`
       : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
 
-  return linkTo(jump.path ? noteName(jump.path) : jump.target, null, {
+  const name = jump.path ? (linkNameAt(state, jump.path) ?? noteName(jump.path)) : jump.target
+  return linkTo(name, null, {
     path: jump.path,
     fragment,
   })

@@ -7,6 +7,7 @@ import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer } from './block-namer'
 import { wikilinkCompletions } from './complete'
 import {
+  linkNameAt,
   type LinkWrite,
   linkWriter,
   type NoteIndex,
@@ -426,5 +427,30 @@ describe('a note the space has archived', () => {
 
     expect(details(await rowsFor('[[##Summ', asked))).toEqual(['New'])
     expect(labels(await rowsFor('[[^^ab', asked))).toEqual(['^abd'])
+  })
+})
+
+describe('a row after an alias and a hash', () => {
+  test('carries the name that says which file, for the shortest markdown link', async () => {
+    const asked = space(
+      [
+        { ...note('A/Project.md', ['Goals']) },
+        { ...note('B/Project.md', ['Goals']), aliases: ['Roadmap'] },
+      ],
+      { path: 'A/Journal.md' },
+    )
+    const carried = (target: LinkWrite) => `${target.name}|${target.file ?? ''}`
+
+    expect((await picked('[[Roadmap#Go', asked, 'Goals', carried)).doc).toBe('Roadmap|B/Project')
+  })
+})
+
+describe('the name a copied link to a note is written with', () => {
+  test('is enough of the path to say which, when another note shares the name', () => {
+    const asked = space([note('Plan.md'), note('Work/Plan.md'), note('Ideas.md')])
+    const built = state('', asked.index)
+    expect(linkNameAt(built, 'Work/Plan.md')).toBe('Work/Plan')
+    expect(linkNameAt(built, 'Ideas.md')).toBe('Ideas')
+    expect(linkNameAt(built, 'Gone.md')).toBeNull()
   })
 })
