@@ -6,11 +6,14 @@ import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands } from '../../commands/src/api'
 import { links } from '../../link-index/src/api'
+import { writeIfAbsent } from '../../file-writes/src/api'
 import {
+  extensionOf,
   folderOf,
   insideSpace,
   isMarkdownPath,
   nameOf,
+  nameToWrite,
   relativeTo,
   waited,
 } from '../../platform/src/api'
@@ -192,10 +195,8 @@ export async function writeFile(args: Said): Promise<unknown> {
   if (content === null) throw new Error('say the content')
 
   const before = await workspace.noteText(path)
-  if (before === null) {
-    await newNote({ ...args, path: relative, content })
-    return { path: relative, written: content.length }
-  }
+  if (before === null)
+    return { path: await madeFile(args, relative, content), written: content.length }
 
   await workspace.replaceInNotes(
     [
@@ -211,6 +212,27 @@ export async function writeFile(args: Said): Promise<unknown> {
   )
 
   return { path: relative, written: content.length }
+}
+
+async function madeFile(args: Said, relative: string, content: string): Promise<string> {
+  const folder = folderOf(relative)
+  const name = nameToWrite(nameOf(relative), extensionOf(nameOf(relative), false))
+  const named = folder ? `${folder}/${name}` : name
+
+  if (isMarkdownPath(named)) {
+    const made = (await newNote({ ...args, path: named, content })) as { path: string }
+    return made.path
+  }
+
+  const space = await spaceToWrite(args)
+  if (!(await writeIfAbsent(insideSpace(space.root, named), content))) {
+    throw new Error(`${named} is already there`)
+  }
+  await workspace.loadTree()
+  const { sync } = await import('../../sync-store/src/api')
+  sync.nudge()
+
+  return named
 }
 
 export async function moveFile(args: Said): Promise<unknown> {

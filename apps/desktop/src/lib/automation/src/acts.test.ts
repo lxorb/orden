@@ -90,6 +90,7 @@ vi.mock('../../workspace/src/api', () => ({
     },
     close: () => undefined,
     activate: () => undefined,
+    loadTree: () => Promise.resolve(),
   },
 }))
 
@@ -103,7 +104,19 @@ const ran: string[] = []
 
 vi.mock('../../commands/src/api', () => ({ appCommands: () => rows }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => undefined } }))
-vi.mock('../../sync-store/src/api', () => ({ sync: { mergeable: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({
+  sync: { mergeable: () => undefined, nudge: () => undefined },
+}))
+
+const laid: { path: string; content: string }[] = []
+vi.mock('../../file-writes/src/api', () => ({
+  writeIfAbsent: (path: string, content: string) => {
+    if (held.has(path)) return Promise.resolve(false)
+    laid.push({ path, content })
+    held.set(path, content)
+    return Promise.resolve(true)
+  },
+}))
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
@@ -421,5 +434,34 @@ describe('the space’s instructions, which a move does not make', () => {
     await expect(movedIn('/Work', 'Notes/AGENTS.md', 'Other/AGENTS.md')).resolves.toBe(
       'Other/AGENTS.md',
     )
+  })
+})
+
+describe('files.write to a path with nothing there', () => {
+  test('makes the file under the name it was given, and says that name', async () => {
+    held.clear()
+    written.length = 0
+    made.length = 0
+    laid.length = 0
+
+    expect(await writeFile({ path: 'Books.base', content: 'views: []\n' })).toEqual({
+      path: 'Books.base',
+      written: 10,
+    })
+    expect(laid).toEqual([{ path: '/Work/Books.base', content: 'views: []\n' }])
+    expect(made).toEqual([])
+  })
+
+  test('and a path with no ending is a note, reported with the ending it got', async () => {
+    held.clear()
+    made.length = 0
+    laid.length = 0
+
+    expect(await writeFile({ path: 'notes/Plan', content: '# Plan\n' })).toEqual({
+      path: 'notes/Plan.md',
+      written: 7,
+    })
+    expect(made).toEqual([{ folder: '/Work/notes', name: 'Plan.md' }])
+    expect(laid).toEqual([])
   })
 })
