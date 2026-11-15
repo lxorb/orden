@@ -44,7 +44,7 @@ export { DEVICE } from './hub/frames'
 export { AccountHub } from './hub/hub'
 export { pokeNow } from './hub/poke'
 export { askHub, tellHubs } from './hub/reach'
-export { inbox, writeInbox } from './inbox'
+export { heldInbox, inbox, writeInbox } from './inbox'
 export { ISSUES, sweepLeftovers } from './leftovers'
 export {
   machineOf,

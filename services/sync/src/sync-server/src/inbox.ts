@@ -70,6 +70,10 @@ async function heldOf(
   return new Map(results.map((row) => [row.id, itemOf(row)]))
 }
 
+export async function heldInbox(env: Env, userId: string, id: string): Promise<InboxHeld | null> {
+  return (await heldOf(env, userId, [id])).get(id) ?? null
+}
+
 function roomFor(user: string, sent: string, most: string): string {
   return `((select count(*) from inbox_items where user_id = ${user})
           + (select count(*) from json_each(${sent}) as fresh
