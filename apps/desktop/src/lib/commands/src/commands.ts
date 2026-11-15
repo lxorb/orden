@@ -102,7 +102,7 @@ import { workspace } from '../../workspace.svelte'
 import { isUnsaved } from '../../documents/src/api'
 import { askPlace } from '../../save-place/src/api'
 import { tabOps, tabToSpace } from '../../tab-strip/src/api'
-import { openRandomNote, randomChoices } from '../../random-note'
+import { openRandomNote, randomChoices } from './random-note'
 import { showFeedback, showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
 
 async function openCustomCss() {

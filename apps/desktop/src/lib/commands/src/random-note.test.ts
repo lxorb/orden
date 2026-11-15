@@ -8,7 +8,7 @@ const space = {
   opened: [] as string[],
 }
 
-vi.mock('./workspace.svelte', () => ({
+vi.mock('../../workspace.svelte', () => ({
   workspace: {
     get notes() {
       return space.notes

@@ -1,6 +1,6 @@
 import { account, people } from '../../accounts/src/api'
 import { show, unshow } from '../../notify'
-import { residency } from '../../residency.svelte'
+import { residency } from '../../quitting/src/api'
 import { deviceActivity, hub } from '../../sync-client/src/api'
 import { dndUntil, hush } from './hush.svelte'
 import { ChatNotices, type NoticeWorld } from './notify'

@@ -1,5 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import { resetFields } from '../../reset-fields'
+import { resetFields } from '../../glasses-choices/src/api'
 import { generalPane } from './general-pane'
 import { editorPane } from './editor-pane'
 import { spellingPane } from './spelling-pane'

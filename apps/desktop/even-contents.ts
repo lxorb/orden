@@ -149,6 +149,7 @@ export const APP_FOLDERS = [
   'protect',
   'publishing',
   'quick-add',
+  'quitting',
   'reading',
   'rows',
   'save-place',

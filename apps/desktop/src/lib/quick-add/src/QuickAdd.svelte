@@ -14,7 +14,7 @@
   import { onMount, tick, untrack } from 'svelte'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
-  import { longPaste } from '../../long-paste'
+  import { longPaste } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
   import type { MenuEntry } from '../../ui-kit/src/api'
   import type { Entry, Prefill } from './entry'

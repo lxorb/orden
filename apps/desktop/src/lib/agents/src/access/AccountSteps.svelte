@@ -4,7 +4,7 @@
   import { connectors } from '../../../connectors.svelte'
   import { Copyable } from '../../../ui-controls/src/api'
   import { CopyButton } from '../../../ui-controls/src/api'
-  import Outward from '../../../Outward.svelte'
+  import { Outward } from '../../../ui-controls/src/api'
   import { Switch } from '../../../ui-controls/src/api'
   import { openExternal } from '../../../platform/src/api'
   import { dur, fly, slide } from '../../../platform/src/api'

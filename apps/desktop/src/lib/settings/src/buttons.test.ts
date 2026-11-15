@@ -21,7 +21,7 @@ const SHARED =
   /\b(orden-chip|orden-button|orden-action|orden-glyph|orden-tag|orden-row|orden-setting)\b/
 
 const OWN: Record<string, RegExp> = {
-  'Swatches.svelte': /class="swatch/,
+  'ui-controls/src/Swatches.svelte': /class="swatch/,
   'settings/src/SettingsPanel.svelte': /class="(thumb|key|link)"/,
   '*': /role="(radio|tab)"/,
   'web-tab/src/ExtensionRows.svelte': /class="name"/,

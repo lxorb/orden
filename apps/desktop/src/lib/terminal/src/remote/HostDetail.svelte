@@ -1,7 +1,7 @@
 <script lang="ts">
   import { prompt } from '../../../ui-kit/src/api'
   import { Select } from '../../../ui-controls/src/api'
-  import Swatches from '../../../Swatches.svelte'
+  import { Swatches } from '../../../ui-controls/src/api'
   import { Switch } from '../../../ui-controls/src/api'
   import { invoke } from '../../../platform/src/api'
   import HostMark from './HostMark.svelte'

@@ -15,17 +15,8 @@ import { type Faces, pdfFaces } from '../../plane/src/api'
 import { inkSvg } from '../../plane/src/api'
 import { type Box } from '../../plane/src/api'
 import { busy } from '../../ui-kit/src/api'
-import { pngData } from '../../png-off'
-import { fileBytes, isDesktop } from '../../platform/src/api'
 import {
-  chooseTarget,
-  download,
-  printInFrame,
-  printsInFrame,
-  writeFile,
-  zipOf,
-} from '../../files-out/src/api'
-import {
+  pngData,
   cssColour,
   loading,
   paperIsLocked,
@@ -37,6 +28,15 @@ import {
   sharpness,
   svgToPng,
 } from '../../pdf/src/api'
+import { fileBytes, isDesktop } from '../../platform/src/api'
+import {
+  chooseTarget,
+  download,
+  printInFrame,
+  printsInFrame,
+  writeFile,
+  zipOf,
+} from '../../files-out/src/api'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
 import { escapeAll } from '@orden/markdown/html'
 

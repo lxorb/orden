@@ -6,9 +6,11 @@ import { render } from 'svelte/server'
 import Outward from './Outward.svelte'
 
 const read = (path: string) =>
-  readFileSync(fileURLToPath(new URL(path, import.meta.url)), { encoding: 'utf8' })
+  readFileSync(fileURLToPath(new URL(path, new URL('../../', import.meta.url))), {
+    encoding: 'utf8',
+  })
 
-const LIB = fileURLToPath(new URL('.', import.meta.url))
+const LIB = fileURLToPath(new URL('../../', import.meta.url))
 const sources = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((one) =>
     one.isDirectory()
@@ -48,7 +50,7 @@ describe('the arrow', () => {
 describe('every link that leaves the app', () => {
   test('carries the one arrow, not a drawing or a character of its own', () => {
     for (const one of components) {
-      if (one.path === 'Outward.svelte') continue
+      if (one.path === 'ui-controls/src/Outward.svelte') continue
       expect(one.text, one.path).not.toContain('M6 3h7v7M13 3L5 11')
       expect(one.text, one.path).not.toMatch(/↗/)
     }
@@ -85,7 +87,7 @@ describe('the mark', () => {
   })
 
   test('is what the `?` and the arrow are, with no placing of their own', () => {
-    for (const path of ['./ui-controls/src/Hint.svelte', './Outward.svelte']) {
+    for (const path of ['./ui-controls/src/Hint.svelte', './ui-controls/src/Outward.svelte']) {
       const text = read(path)
       expect(text, path).toMatch(/class="[^"]*\borden-mark\b/)
       expect(text, path).not.toMatch(/vertical-align|margin-inline-start/)

@@ -49,3 +49,4 @@ export const readPapers: typeof import('./extract').readPapers = (...args) =>
 
 export const paperText: typeof import('./text-cache').paperText = (...args) =>
   import('./text-cache').then((one) => one.paperText(...args))
+export { pngData, pngDrawn } from './png-off'

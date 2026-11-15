@@ -261,7 +261,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: null,
-    run: () => void import('../../random-note').then(({ openRandomNote }) => openRandomNote()),
+    run: () => void runCommand('app.random-note'),
   },
   {
     id: 'app.close',
