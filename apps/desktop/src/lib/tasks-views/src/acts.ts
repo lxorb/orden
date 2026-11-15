@@ -1,9 +1,9 @@
-import { todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+import { titledOf, todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
 import type { Shown } from './shown.svelte'
 
 export async function addTodo(shown: Shown, title: string): Promise<Todo | null> {
   const made = await todos.add({
-    title,
+    ...titledOf(title),
     space: shown.space?.id ?? null,
     ...(shown.filter.label === null ? {} : { labels: [shown.filter.label] }),
   })

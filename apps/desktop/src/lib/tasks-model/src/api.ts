@@ -10,6 +10,7 @@ export {
   type Subtask,
   type Todo,
   type TodoPatch,
+  titledOf,
 } from './todo'
 export {
   ALL_LABELS,

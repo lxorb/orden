@@ -52,6 +52,14 @@ export const LIMITS = {
 
 export const KIND = 'todo'
 
+export function titledOf(text: string): { title: string; description?: string } {
+  if (text.length <= LIMITS.title) return { title: text }
+  return {
+    title: `${text.slice(0, LIMITS.title - 1).trimEnd()}…`,
+    description: text.slice(0, LIMITS.description),
+  }
+}
+
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
 export const isDay = (value: unknown): value is string =>
