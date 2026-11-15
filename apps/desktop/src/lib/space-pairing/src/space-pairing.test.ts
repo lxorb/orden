@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { memoryStorage } from '../../test/disk'
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -18,8 +18,8 @@ const world = vi.hoisted(() => ({
   onDisk: [] as { id: string; name: string; root: string }[],
 }))
 
-vi.mock('./accounts/src/client', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./accounts/src/client')>()
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
   const { ApiError } = original
   return {
     ...original,
@@ -59,7 +59,7 @@ vi.mock('./accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   invoke: () => Promise.reject(new Error('no disk here')),
   isNative: true,
   isDesktop: true,
@@ -67,12 +67,15 @@ vi.mock('./platform/src/tauri', () => ({
   joinPath: (...parts: string[]) => parts.join('/'),
 }))
 
-vi.mock('./seeded/src/api', () => ({ seedSpaceRoot: () => null, forgetSeedSpace: () => undefined }))
+vi.mock('../../seeded/src/api', () => ({
+  seedSpaceRoot: () => null,
+  forgetSeedSpace: () => undefined,
+}))
 vi.mock('./seed-space', () => ({ untouchedSeedSpace: () => Promise.resolve(null) }))
-vi.mock('./sharing/src/api', () => ({ rememberRoles: () => undefined }))
-vi.mock('./protect/src/api', () => ({ pulled: () => Promise.resolve() }))
+vi.mock('../../sharing/src/api', () => ({ rememberRoles: () => undefined }))
+vi.mock('../../protect/src/api', () => ({ pulled: () => Promise.resolve() }))
 
-vi.mock('./workspace/src/api', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     get spaces() {
       return world.spaces
@@ -106,10 +109,11 @@ vi.mock('./workspace/src/api', () => ({
   },
 }))
 
-const { account } = await import('./accounts/src/account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 const { pairSpaces } = await import('./space-pairing')
-const { leaveSpaces, leftBy } = await import('./left-spaces/src/api')
-const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } = await import('./space-owed')
+const { leaveSpaces, leftBy } = await import('../../left-spaces/src/api')
+const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } =
+  await import('../../space-owed/src/api')
 
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []

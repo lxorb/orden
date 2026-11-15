@@ -17,7 +17,6 @@ import {
   samePath,
 } from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
-import type { Pairing } from '../../space-pairing'
 import { untrack } from 'svelte'
 import { rooms } from '../../collab/src/api'
 import { modes } from '../../modes/src/api'
@@ -36,7 +35,13 @@ import {
   within,
 } from '../../sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
-import { needPort, providePort, type SyncWorkspacePort, whenPortProvided } from '@orden/contracts'
+import {
+  needPort,
+  providePort,
+  type SyncPairing,
+  type SyncWorkspacePort,
+  whenPortProvided,
+} from '@orden/contracts'
 import type { FileOp } from '../../file-ops/src/api'
 import { unixLines } from '../../documents/src/api'
 
@@ -70,7 +75,7 @@ class Sync {
   private seen = false
   private owner: string | null = null
 
-  private readonly pairing: Pairing = {
+  private readonly pairing: SyncPairing = {
     pairs: () =>
       Object.values(this.mirrors).map((one) => ({
         root: one.root,
@@ -336,7 +341,7 @@ class Sync {
       this.save()
     }
 
-    const { endSpace, holder } = await import('../../space-owed')
+    const { endSpace, holder } = await import('../../space-owed/src/api')
     const accountId = holder()
     if (!token || account.token !== token || !accountId || (!theirs && !mine)) return
 
@@ -346,7 +351,7 @@ class Sync {
   async pushIcon(root: string, icon: string | null, tint: string | null = null) {
     const token = account.token
     const spaceId = this.remoteIdFor(root)
-    const { holder, sendIcon } = await import('../../space-owed')
+    const { holder, sendIcon } = await import('../../space-owed/src/api')
     const accountId = holder()
     if (!token || account.token !== token || !accountId || spaceId === null) return
 
@@ -463,15 +468,14 @@ class Sync {
       return
     }
 
-    const { pairSpaces } = await import('../../space-pairing')
-    await pairSpaces(token, this.pairing)
+    await needPort('sync.pairing').pairSpaces(token, this.pairing)
 
     this.save()
   }
 
   async pushSpaceOrder() {
     const token = account.token
-    const { holder, sendOrder } = await import('../../space-owed')
+    const { holder, sendOrder } = await import('../../space-owed/src/api')
     const accountId = holder()
     if (!token || account.token !== token || !accountId) return
 

@@ -14,6 +14,8 @@ import {
 } from './sharing/src/api'
 import { settingsWindow } from '@orden/contracts'
 import { type Space, workspace } from './workspace/src/api'
+import { writeFile } from './file-writes/src/api'
+import { AGENTS_NAME, joinPath } from './platform/src/api'
 
 const archiving = () => import('./space-archive')
 
@@ -30,7 +32,11 @@ export async function newSpace(): Promise<Space | undefined> {
 export async function madeSpace(name: string): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
-  if (!__EVEN_PLUGIN__) await (await import('./agents-seed')).seedAgents(space.root)
+  if (!__EVEN_PLUGIN__) {
+    const { AGENTS_SEED } = await import('./agents-seed/src/api')
+    await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
+    await workspace.loadTree()
+  }
 
   const { sync } = await import('./sync-store/src/api')
   sync.nudge()

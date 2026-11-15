@@ -9,7 +9,8 @@
     "scan",
     "sync-core",
     "file-ops",
-    "ui-kit"
+    "ui-kit",
+    "agents-seed"
   ],
-  "pending": ["apps/desktop/src/lib/agents-seed.ts", "apps/desktop/src/lib/surfaces.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/surfaces.svelte.ts"]
 }

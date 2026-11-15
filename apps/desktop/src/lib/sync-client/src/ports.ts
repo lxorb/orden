@@ -15,6 +15,8 @@ export const account = () => needPort('sync.account')
 
 export const remote = () => needPort('sync.api')
 
+export const spacePairing = () => needPort('sync.pairing')
+
 export const workspace = () => needPort('sync.workspace') as SyncWorkspacePort<LiveNote>
 
 export const isNative = () => host().isNative

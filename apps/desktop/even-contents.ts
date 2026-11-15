@@ -102,6 +102,7 @@ export const PACKAGES = [
 export const APP_FOLDERS = [
   'accounts',
   'accounts-ui',
+  'agents-seed',
   'ai-chat',
   'ai-providers',
   'ai-sidebar',
@@ -177,6 +178,8 @@ export const APP_FOLDERS = [
   'sidebar',
   'snapshots',
   'space-kept',
+  'space-owed',
+  'space-pairing',
   'space-pick',
   'spelling',
   'sync-client',
