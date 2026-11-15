@@ -2299,6 +2299,24 @@ describe('a note the reader protected', () => {
     }
   })
 
+  test('is not exported by an agent to a path it can read, nor the space holding it', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
+    const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
+    const front = workspace.active.path
+    protection.set('/s/Work', front, 'password')
+    unlocks.unlock(protection.covering(front))
+    try {
+      expect(
+        await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
+      ).toMatchObject({ code: 'protected' })
+      expect(ran.some((one) => one.startsWith('export-pdf'))).toBe(false)
+    } finally {
+      protection.set('/s/Work', front, null)
+      unlocks.lockAll()
+    }
+  })
+
   test('is refused to an agent until it is unlocked and agents are let read it', async () => {
     const { protection } = await import('../src/lib/protect/src/protection.svelte')
     const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
