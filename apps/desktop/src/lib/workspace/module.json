@@ -35,7 +35,9 @@
     "modes",
     "launch",
     "matching",
-    "undo-toast"
+    "undo-toast",
+    "crate",
+    "left-spaces"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -43,7 +45,6 @@
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/essentials.svelte.ts",
     "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/left-spaces.ts",
     "apps/desktop/src/lib/list-landing.svelte.ts",
     "apps/desktop/src/lib/move-targets.ts",
     "apps/desktop/src/lib/new-tab.ts",
@@ -52,9 +53,7 @@
     "apps/desktop/src/lib/plugin.ts",
     "apps/desktop/src/lib/settings-tab.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/tree-keys.ts",
-    "apps/desktop/src/lib/welcome.ts"
+    "apps/desktop/src/lib/tree-keys.ts"
   ]
 }

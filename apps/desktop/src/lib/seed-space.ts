@@ -1,5 +1,5 @@
 import { isUntouchedAgents } from './agents-seed'
-import { isUntouchedWelcome } from './welcome'
+import { isUntouchedWelcome } from '@orden/contracts'
 
 export interface Listed {
   path: string

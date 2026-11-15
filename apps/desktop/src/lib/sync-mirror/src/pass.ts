@@ -26,7 +26,6 @@ import {
 } from '../../platform/src/api'
 import { syncMark } from '../../surfaces.svelte'
 import { settleShortcuts } from '@orden/scan/settle'
-import { isUntouchedWelcome } from '../../welcome'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import {
@@ -39,7 +38,7 @@ import {
 } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
-import type { Entry } from '@orden/contracts'
+import { type Entry, isUntouchedWelcome } from '@orden/contracts'
 
 function ordered<T extends { path: string }>(
   notes: readonly T[],

@@ -1,5 +1,5 @@
 import { account, api } from './accounts/src/api'
-import { leaveSpaces, leftByAnother } from './left-spaces'
+import { leaveSpaces, leftByAnother } from './left-spaces/src/api'
 import { forgetSeedSpace, seedSpaceRoot } from './seeded/src/api'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'

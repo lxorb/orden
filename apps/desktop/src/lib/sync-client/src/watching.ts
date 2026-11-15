@@ -4,7 +4,7 @@ import {
   type SpaceNews,
   unwatchSpaces,
   watchSpaces,
-} from '../../space-watch'
+} from '../../crate/src/api'
 import { isOwnFile as carriedOwn } from '@orden/sync-core'
 import { keptMounts } from '../../web-backend/src/api'
 import { inForeignCopy } from '@orden/sync-core'

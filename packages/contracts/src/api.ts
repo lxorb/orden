@@ -310,3 +310,4 @@ export {
   type WorkspaceTab,
   type WorkspaceViewPort,
 } from './workspace'
+export { isUntouchedWelcome, WELCOME, WELCOME_NAME, WELCOME_PATH, WELCOME_SPACE } from './welcome'

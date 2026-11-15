@@ -108,7 +108,7 @@ vi.mock('./workspace/src/api', () => ({
 
 const { account } = await import('./accounts/src/account.svelte')
 const { pairSpaces } = await import('./space-pairing')
-const { leaveSpaces, leftBy } = await import('./left-spaces')
+const { leaveSpaces, leftBy } = await import('./left-spaces/src/api')
 const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } = await import('./space-owed')
 
 function pairing() {

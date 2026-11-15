@@ -1,0 +1,5 @@
+{
+  "name": "left-spaces",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform"]
+}

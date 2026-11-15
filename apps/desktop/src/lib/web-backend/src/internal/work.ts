@@ -1,6 +1,12 @@
 import { heldForLife, ifFree, locksHere, locksWork, log, joinPath } from '../../../platform/src/api'
-import { invoke as crate } from '../../../crate/src/api'
-import type { Listed, SpaceNews } from '../../../space-watch'
+import {
+  invoke as crate,
+  type Listed,
+  scanWorking,
+  type SpaceNews,
+  unwatchWorking,
+  watchWorking,
+} from '../../../crate/src/api'
 import { readsAsText } from '../web/commands'
 import type { InternalChange, InternalFolder } from './folder'
 import { type Mounted, mountOf, mounts } from './roots'
@@ -401,10 +407,7 @@ function crateDisk(folder: string): WorkDisk {
   }
   return {
     root,
-    async list() {
-      const { scanWorking } = await import('../../../space-watch')
-      return scanWorking(root)
-    },
+    list: () => scanWorking(root),
     read: (rel) =>
       crate<ArrayBuffer>('read_file', { path: at(rel) }).then(
         (bytes) => new Uint8Array(bytes),
@@ -428,7 +431,6 @@ function crateDisk(folder: string): WorkDisk {
       return stamp(to)
     },
     async watch(heard) {
-      const { watchWorking, unwatchWorking } = await import('../../../space-watch')
       await watchWorking(root, heard)
       return () => void unwatchWorking(root).catch(() => undefined)
     },

@@ -13,7 +13,7 @@ interface Bridge {
 
 const bridge = vi.hoisted((): Bridge => ({ sent: [], commands: [], answer: null }))
 
-vi.mock('./crate/src/native', () => ({
+vi.mock('./native', () => ({
   Channel: class {
     onmessage: (message: unknown) => void = () => undefined
   },

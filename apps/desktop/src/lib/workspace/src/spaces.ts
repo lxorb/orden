@@ -45,7 +45,7 @@ export async function loadSpaces(ws: HoldsSpaces) {
   if (!found) return
   const who = account.user?.id ?? null
   if (!isNative && who !== null) {
-    const { leftByAnother } = await import('../../left-spaces')
+    const { leftByAnother } = await import('../../left-spaces/src/api')
     found = found.filter((one) => !leftByAnother(one.path, who))
   }
 

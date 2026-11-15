@@ -23,11 +23,12 @@ import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
 import { GONE_KEPT, numbersRow, wantedRow } from './records'
 import type { Disk, World } from './world'
-import type { SpaceChange, SpaceNews } from '../../space-watch'
+import type { SpaceChange, SpaceNews } from '../../crate/src/api'
 import * as Y from 'yjs'
 
 const watch = vi.hoisted(() => vi.fn())
-vi.mock('../../space-watch', () => ({
+vi.mock('../../crate/src/api', async (original) => ({
+  ...(await original<typeof import('../../crate/src/api')>()),
   watchSpaces: watch,
   unwatchSpaces: () => Promise.resolve(),
   scanSpace: () => Promise.resolve([]),

@@ -1,4 +1,4 @@
-import type { Listed, SpaceChange } from '../../../space-watch'
+import type { Listed, SpaceChange } from '../../../crate/src/api'
 import { joinPath, keptShaped } from '../../../platform/src/api'
 import { mountOf } from './roots'
 

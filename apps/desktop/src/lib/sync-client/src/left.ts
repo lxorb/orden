@@ -1,4 +1,4 @@
-import { leftByAnother, leftGone } from '../../left-spaces'
+import { leftByAnother, leftGone } from '../../left-spaces/src/api'
 import { log, samePath, windows } from '../../platform/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import { workspace } from './ports'

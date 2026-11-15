@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { AGENTS_SEED } from './agents-seed'
 import { type Listed, untouchedSeedSpace } from './seed-space'
-import { WELCOME } from './welcome'
+import { WELCOME } from '@orden/contracts'
 
 const ROOT = '/spaces/Notes'
 

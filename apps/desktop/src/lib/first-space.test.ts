@@ -67,7 +67,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace/src/api')
 const { firstSpace } = await import('./first-space.svelte')
 const { insideFolder, pickedFolder } = await import('./import/src/sources')
-const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('./welcome')
+const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } =
+  await import('@orden/contracts')
 const { AGENTS_NAME, AGENTS_SEED, isUntouchedAgents } = await import('./agents-seed')
 
 const FRESH = {

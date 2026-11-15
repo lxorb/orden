@@ -1,4 +1,4 @@
-import { Channel, invoke } from './crate/src/api'
+import { Channel, invoke } from './native'
 
 export interface Listed {
   path: string

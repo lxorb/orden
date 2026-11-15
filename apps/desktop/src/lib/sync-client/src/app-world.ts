@@ -3,7 +3,7 @@ import { fileBytes, sha256, deviceName, iCloud, onDisk } from '../../platform/sr
 import { keptMounts } from '../../web-backend/src/api'
 import { links } from '../../link-index/src/api'
 import { holderOf } from '@orden/markdown/pages'
-import { scanSpace } from '../../space-watch'
+import { scanSpace } from '../../crate/src/api'
 import { windowsPath } from './places'
 import { invoke, isDesktop, isNative, joinPath, platform, remote } from './ports'
 import { classifier } from './classify'

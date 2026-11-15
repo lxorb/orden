@@ -57,7 +57,10 @@ vi.mock('../../accounts/src/client', () => ({ api: {}, BASE: '' }))
 vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: (...said: unknown[]) => saved.push(said) },
 }))
-vi.mock('../../space-watch', () => ({ scanSpace: () => Promise.resolve([]) }))
+vi.mock('../../crate/src/api', async (original) => ({
+  ...(await original<typeof import('../../crate/src/api')>()),
+  scanSpace: () => Promise.resolve([]),
+}))
 
 const { appWorld } = await import('./app-world')
 

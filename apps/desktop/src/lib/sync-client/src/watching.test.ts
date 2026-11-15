@@ -6,8 +6,8 @@ vi.mock('../../surfaces.svelte', () => ({ syncMark: { ask: () => undefined } }))
 
 const watch = vi.hoisted(() => ({ heard: (_news: unknown): void => undefined }))
 const listing = vi.hoisted(() => ({ answer: (): Promise<unknown[]> => Promise.resolve([]) }))
-vi.mock('../../space-watch', async (original) => ({
-  ...(await original<typeof import('../../space-watch')>()),
+vi.mock('../../crate/src/api', async (original) => ({
+  ...(await original<typeof import('../../crate/src/api')>()),
   scanSpace: () => listing.answer(),
   watchSpaces: (_roots: string[], heard: (news: unknown) => void) => {
     watch.heard = heard

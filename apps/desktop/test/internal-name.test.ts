@@ -120,7 +120,6 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/web-backend/src/web/sw.test.ts': ["'nib'", 'nibNotice'],
   'apps/desktop/src/lib/sync-client/src/browser-store.ts': ['nib-sync:'],
   'apps/desktop/src/lib/sync-client/src/browser-store-former.test.ts': ['nib-sync:'],
-  'apps/desktop/src/lib/welcome.ts': ['Welcome to Nib', "'nib://'"],
   'apps/desktop/src/lib/workspace/src/workspace.test.ts': ['Welcome to Nib'],
   'apps/desktop/src/site/site.ts': ["'nib:site-theme'"],
   'apps/desktop/test/android.test.ts': ['scheme="nib"'],
