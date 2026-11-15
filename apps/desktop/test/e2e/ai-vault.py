@@ -63,10 +63,7 @@ def main() -> int:
         statements = [f"insert into users (id, email, created_at) values ('{user}', 'two@example.com', {now});"]
         for token in tokens:
             digest = hashlib.sha256(token.encode()).hexdigest()
-            statements.append(
-                "insert into sessions (token_hash, user_id, created_at, expires_at)"
-                f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
-            )
+            statements.append(harness.session_row(digest, user, now))
         worker.sql("".join(statements))
         worker.start()
 

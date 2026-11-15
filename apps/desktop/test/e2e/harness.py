@@ -823,6 +823,13 @@ def opened(call: urllib.request.Request, timeout: float = 60) -> bytes:
                 ) from None
         time.sleep(0.5)
 
+def session_row(digest: str, user: str, now: int) -> str:
+    return (
+        "insert into sessions (token_hash, user_id, created_at, expires_at, id, name, last_used_at)"
+        f" values ('{digest}', '{user}', {now}, {now + 86_400_000}, '{uuid.uuid4().hex[:16]}',"
+        f" 'Drive', {now});"
+    )
+
 def request(
     path: str,
     token: str | None = None,
@@ -1003,8 +1010,7 @@ class Worker:
         user = str(uuid.uuid4())
         self.sql(
             f"insert into users (id, email, created_at) values ('{user}', '{email}', {now});"
-            "insert into sessions (token_hash, user_id, created_at, expires_at)"
-            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
+            + session_row(digest, user, now)
         )
         return token
 
