@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest'
+import { applied } from '@orden/scan/search/replace'
+import { plan, readEdits } from './edits'
 import { resolve } from './anchors'
 import { readNote } from './read'
 import { deskWith } from './test-desk'
@@ -103,5 +105,44 @@ describe('a note, read', () => {
     await expect(
       readNote(deskWith({ 'plan.md': '' }).desk, { path: 'plan.md' }, ['everything']),
     ).rejects.toThrow('include is some of')
+  })
+})
+
+describe('a note whose front matter holds a comment like a heading', () => {
+  const BOOKS = [
+    '---',
+    '# Reading list',
+    'status: draft',
+    '---',
+    '# Reading list',
+    '',
+    '- Dune',
+    '',
+  ].join('\n')
+
+  test('has in its outline only the headings of its words', async () => {
+    const { desk } = deskWith({ 'books.md': BOOKS }, [])
+    const read = await readNote(desk, { path: 'books.md' }, ['outline'])
+
+    expect(read.outline).toEqual([
+      { anchor: { heading: 'Reading list' }, level: 1, title: 'Reading list', line: 4 },
+    ])
+  })
+
+  test('takes an addition under its one heading, and keeps the front matter whole', () => {
+    const under = applied(
+      BOOKS,
+      plan(readEdits([{ at: { heading: 'Reading list' }, insert_after: '- Emma' }]), BOOKS).edits,
+    )
+    const before = applied(
+      BOOKS,
+      plan(
+        readEdits([{ at: { heading: 'Reading list' }, insert_before: 'Started in May.' }]),
+        BOOKS,
+      ).edits,
+    )
+
+    expect(under).toContain('- Dune\n\n- Emma')
+    expect(before.startsWith('---\n# Reading list\nstatus: draft\n---\n')).toBe(true)
   })
 })

@@ -177,7 +177,7 @@ export function headingsIn(text: string): HeadingAt[] {
   }
 
   for (const row of lines(text)) {
-    const hashes = row.code ? undefined : HEADING.exec(row.text)?.[1]
+    const hashes = row.code || row.matter ? undefined : HEADING.exec(row.text)?.[1]
     if (hashes) {
       close(hashes.length)
       const heading: HeadingAt = {
@@ -238,7 +238,9 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
 
 function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): Place {
   const rows = [...lines(text)]
-  const marked = rows.filter((row) => !row.code && blockIdOf(row.text) === anchor.block)
+  const marked = rows.filter(
+    (row) => !row.code && !row.matter && blockIdOf(row.text) === anchor.block,
+  )
   const row = one(marked, anchor, undefined)
 
   let first = row.line
@@ -278,7 +280,9 @@ export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: 
 
 function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
   const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
-  const found = [...lines(text)].filter((row) => !row.code && taskWords(row.text) === wanted)
+  const found = [...lines(text)].filter(
+    (row) => !row.code && !row.matter && taskWords(row.text) === wanted,
+  )
 
   const row = one(found, anchor, anchor.nth)
   return { from: row.from, to: row.from + row.text.length, shape: 'line' }
