@@ -251,7 +251,21 @@ describe('line prefixes', () => {
   })
 
   test('converts a bullet list to an ordered one', () => {
-    expect(run(toggleOrderedList, '[- one\n- two]')).toBe('1. - one\n2. - two')
+    expect(run(toggleOrderedList, '[- one\n- two]')).toBe('1. one\n2. two')
+  })
+
+  test('keeps the checkboxes and the nesting of the list it numbers', () => {
+    const tasks = '- [ ] task\n- [x] done'
+    expect(apply(toggleOrderedList, tasks, 0, tasks.length).doc).toBe('1. [ ] task\n2. [x] done')
+    expect(run(toggleOrderedList, '[- a\n   - x\n   - y\n- b\nc]')).toBe(
+      '1. a\n   1. x\n   2. y\n2. b\n3. c',
+    )
+    expect(run(toggleOrderedList, '[1. a\n   1. x\n2. b]')).toBe('a\n   x\nb')
+  })
+
+  test('turns a numbered list into bullets instead of putting bullets before the numbers', () => {
+    expect(run(toggleBulletList, '[1. one\n2. two]')).toBe('- one\n- two')
+    expect(run(toggleBulletList, '[1. a\n   2. x]')).toBe('- a\n   - x')
   })
 })
 
