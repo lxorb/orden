@@ -98,6 +98,27 @@ test('a page that moves twice in a moment is one write', async () => {
   expect(said()).toContain('URL=https://svelte.dev/b')
 })
 
+test('a page that leaves and comes back in a moment leaves the file as it was', async () => {
+  keepPage({
+    path: PATH,
+    text: () => FILE,
+    url: 'https://svelte.dev/login?next=/docs',
+    icon: null,
+    wrote: () => undefined,
+  })
+  await vi.advanceTimersByTimeAsync(200)
+  keepPage({
+    path: PATH,
+    text: () => FILE,
+    url: 'https://svelte.dev/docs',
+    icon: null,
+    wrote: () => undefined,
+  })
+  await vi.advanceTimersByTimeAsync(2500)
+
+  expect(written).toHaveLength(0)
+})
+
 test('the home already in the file is the home that stays', async () => {
   const moved =
     '[InternetShortcut]\r\nURL=https://svelte.dev/docs/one\r\n' +
