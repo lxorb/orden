@@ -618,6 +618,23 @@ describe('a vault landed in a folder of a space that holds notes of the same nam
     )
   })
 
+  test('has a picture by name reach the one it came with when the space holds one beside the link', async () => {
+    const files = await vaultLanded(
+      ['Inbox/Daily/cover.png'],
+      ['A/cover.png'],
+      ['Daily/Day.md', '![[cover.png]]'],
+    )
+    const landed = files.map((one) => one.path)
+    const index = spaceIndex(
+      landed.filter((path) => path.endsWith('.md')),
+      ['Inbox/Daily/cover.png', ...landed.filter((path) => !path.endsWith('.md'))],
+      'Inbox/Daily/Day.md',
+    )
+    const [cover] = targetsIn(textAt(files, 'Inbox/Daily/Day.md'))
+
+    expect(resolveFile(index, cover ?? '', 'wikilink')).toBe('Inbox/A/cover.png')
+  })
+
   test('keeps a link by name that already reaches the note it came with', async () => {
     const files = await vaultLanded(
       ['Ideas.md', 'Archive/Old/Plan.md'],

@@ -326,7 +326,7 @@ function captured(
   const note = isMarkdownPath(meant)
   const here = foldName(folderOf(from))
   const depth = (path: string) => path.split('/').length
-  const beside = (path: string) => (note && foldName(folderOf(path)) === here ? 0 : 1)
+  const beside = (path: string) => (foldName(folderOf(path)) === here ? 0 : 1)
   return fitting(said, space).some(
     (path) =>
       isMarkdownPath(path) === note &&
