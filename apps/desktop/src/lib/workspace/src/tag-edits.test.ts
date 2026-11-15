@@ -165,3 +165,23 @@ describe('next to an address and inside marks', () => {
     expect(change('todo', null, 'Done ==#todo== and **#todo** now\n')?.after).toBe('Done and now\n')
   })
 })
+
+describe('two tags taken away side by side', () => {
+  test('both go, wherever they stand', () => {
+    expect(change('work', null, '#work #work/sub\n')?.after).toBe('\n')
+    expect(change('todo', null, '#todo #todo\n')?.after).toBe('\n')
+    expect(change('work', null, '**#work**, #work\n')?.after).toBe('\n')
+    expect(change('work', null, '---\ntags: [work, work/sub]\n---\n')?.after).toBe(
+      '---\ntags: []\n---\n',
+    )
+    expect(change('work', null, '---\ntags: work, work/sub\n---\n')?.after).toBe(
+      '---\ntags: \n---\n',
+    )
+  })
+
+  test('a space before the comma that follows goes with the tag', () => {
+    expect(change('work', null, '---\ntags: [work , home]\n---\n')?.after).toBe(
+      '---\ntags: [home]\n---\n',
+    )
+  })
+})

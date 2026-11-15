@@ -109,8 +109,9 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
     return { from: line, to: end === -1 ? body.length : end + 1 }
   }
 
-  if (body.charAt(to) === ',') {
-    return { from, to: to + 1 + spaces(body, to + 1, after) }
+  const gap = spaces(body, to, after)
+  if (body.charAt(to + gap) === ',') {
+    return { from, to: to + gap + 1 + spaces(body, to + gap + 1, after) }
   }
 
   const before = /(,?[ \t]+|,)$/.exec(body.slice(line, from))

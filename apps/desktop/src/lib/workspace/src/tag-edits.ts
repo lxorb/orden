@@ -14,7 +14,14 @@ export function tagChange(
   let reached = 0
 
   for (const span of spans) {
-    if (span.from < reached) continue
+    const last = edits.at(-1)
+    if (span.from < reached) {
+      if (to === null && last && span.to > last.to) {
+        last.to = span.to
+        reached = span.to
+      }
+      continue
+    }
 
     edits.push({ from: span.from, to: span.to, insert: to ?? '' })
     reached = span.to
