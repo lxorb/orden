@@ -229,7 +229,7 @@ describe('a link in quoted front matter', () => {
 
   test('an escaped new name is read back as the name and renamed again cleanly', () => {
     const text = '---\nup: \'[[Plan]] "x"\'\nrel: "[[Plan]] it\'s"\n---\n'
-    const once = rewriteLinks(text, 'One.md', quoted('Bob\'s "plan".md'), pointsAt('plan'))
+    const once = rewriteLinks(text, 'One.md', quoted('Bob\'s "plan".md'), pointsAt('plan')) ?? ''
     expect(findLinks(once).map((link) => link.target)).toEqual(['Bob\'s "plan"', 'Bob\'s "plan"'])
     const back = (link: FoundLink) => link.target === 'Bob\'s "plan"'
     expect(rewriteLinks(once, 'One.md', { from: 'Bob\'s "plan".md', to: 'Plan.md' }, back)).toBe(
