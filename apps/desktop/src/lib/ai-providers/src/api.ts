@@ -52,6 +52,16 @@ export {
   nextMode,
   noMoreThan,
 } from './modes'
+export {
+  keepMoves,
+  lastMove,
+  type Move,
+  movedKeys,
+  movedSince,
+  movedTo,
+  movesAfter,
+  onMoves,
+} from './moves'
 export { providerBrand } from './provider-brand'
 export {
   compactUrl,

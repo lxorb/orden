@@ -14,6 +14,7 @@ import {
 } from '../../../platform/src/api'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
+import { keepMoves } from '../moves'
 import { ai } from '../store.svelte'
 import type { Base, Contents } from './merge'
 import { Vault, type VaultWorld } from './vault.svelte'
@@ -56,7 +57,7 @@ async function signIns(): Promise<Record<string, string>> {
   return seen
 }
 
-const world: VaultWorld = {
+export const world: VaultWorld = {
   account: () =>
     account.user && account.token && (isNative || browserVault.on) ? account.user.id : null,
   call: (path, method, body) =>
@@ -80,7 +81,8 @@ const world: VaultWorld = {
     }
     return { accounts: ai.state, keys, seen: await signIns() }
   },
-  async apply(contents, before) {
+  async apply(contents, before, moved) {
+    keepMoves(moved)
     for (const [id, key] of Object.entries(contents.keys)) {
       if (before.keys[id] !== key) await writeKey(id, key, true)
     }

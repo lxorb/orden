@@ -13,6 +13,7 @@ import {
   FIRST_MODE,
   modeIn,
   isSessionState,
+  movedSince,
   type SessionState,
 } from '../../../ai-providers/src/api'
 import { isEffort } from './effort'
@@ -416,6 +417,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     isRecord(value.compaction) && isString(value.compaction.upTo)
       ? (value.compaction as unknown as Compaction)
       : undefined
+  const updated = isNumber(value.updated) ? value.updated : 0
   const always = Array.isArray(value.always) ? value.always.filter(isString) : []
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   const rest = [
@@ -439,7 +441,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     ...timesIn(value),
     ...placeIn(value),
-    provider,
+    provider: movedSince(provider, updated),
     model,
     effort: isEffort(effort) ? effort : 'auto',
     mode: modeIn(mode) ?? FIRST_MODE,
@@ -448,7 +450,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     turns,
     usage: usageIn(value.usage),
     created: isNumber(value.created) ? value.created : 0,
-    updated: isNumber(value.updated) ? value.updated : 0,
+    updated,
     ...(compaction ? { compaction } : {}),
     ...(elsewhere ? { elsewhere } : {}),
   }
@@ -470,14 +472,15 @@ function placeIn(value: Record<string, unknown>): { state?: SessionState; pinned
 
 function headIn(value: unknown): ThreadHead | null {
   if (!isRecord(value) || !isString(value.id)) return null
+  const updated = isNumber(value.updated) ? value.updated : 0
   return {
     id: value.id,
     title: isString(value.title) ? value.title : '',
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     ...timesIn(value),
-    provider: isString(value.provider) ? value.provider : '',
+    provider: isString(value.provider) ? movedSince(value.provider, updated) : '',
     model: isString(value.model) ? value.model : '',
-    updated: isNumber(value.updated) ? value.updated : 0,
+    updated,
     ...(value.archived === true ? { archived: true } : {}),
     ...placeIn(value),
     ...(answeredElsewhere(value) ? { elsewhere: true } : {}),

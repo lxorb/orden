@@ -12,7 +12,7 @@ describe('two devices’ changes met', () => {
   test('a key typed on one and a switch on the other both stay', () => {
     const here = side({ ...start, keys: { ...start.keys, 'anthropic-2': 'sk-2' } })
     const there = side({ ...start, accounts: activated(two, 'anthropic-2') })
-    const met = merged(base, here, there)
+    const met = merged(base, here, there).contents
     expect(met.keys).toEqual({ anthropic: 'sk-1', 'anthropic-2': 'sk-2' })
     expect(met.accounts.active.claude).toBe('anthropic-2')
   })
@@ -20,7 +20,7 @@ describe('two devices’ changes met', () => {
   test('an account removed on one stays removed, with its key', () => {
     const here = side(start)
     const there = side({ accounts: removed(two, 'anthropic'), keys: {}, seen: {} })
-    const met = merged(base, here, there)
+    const met = merged(base, here, there).contents
     expect(met.accounts.accounts.map((one) => one.id)).toEqual(['anthropic-2'])
     expect(met.keys).toEqual({})
   })
@@ -28,7 +28,7 @@ describe('two devices’ changes met', () => {
   test('a change on both sides goes to this device’s', () => {
     const here = side({ ...start, accounts: updated(two, 'anthropic', { name: 'Mine' }) })
     const there = side({ ...start, accounts: updated(two, 'anthropic', { name: 'Theirs' }) })
-    expect(merged(base, here, there).accounts.accounts[0]?.name).toBe('Mine')
+    expect(merged(base, here, there).contents.accounts.accounts[0]?.name).toBe('Mine')
   })
 
   test('what only the other changed comes in', () => {
@@ -37,7 +37,7 @@ describe('two devices’ changes met', () => {
       keys: { anthropic: 'sk-new' },
       seen: { anthropic: 'reader@example.com' },
     })
-    const met = merged(base, side(start), there)
+    const met = merged(base, side(start), there).contents
     expect(met.keys.anthropic).toBe('sk-new')
     expect(met.seen.anthropic).toBe('reader@example.com')
   })
@@ -48,7 +48,7 @@ describe('two devices’ changes met', () => {
       keys: { openai: 'sk-here' },
       seen: {},
     })
-    const met = merged(null, here, side(start))
+    const met = merged(null, here, side(start)).contents
     expect(met.accounts.accounts.map((one) => one.id)).toEqual([
       'anthropic',
       'anthropic-2',
@@ -72,7 +72,8 @@ describe('two devices’ changes met', () => {
       seen: {},
     })
     const there = side({ accounts: router, keys: { 'compatible-1': 'sk-k' }, seen: {} })
-    const met = merged(null, here, there)
+    const { contents: met, moved } = merged(null, here, there)
+    expect(moved).toEqual({ 'compatible-1': 'compatible-2' })
     expect(met.accounts.accounts.map((one) => [one.id, one.name])).toEqual([
       ['compatible-1', 'OpenRouter'],
       ['compatible-2', 'Ollama'],
@@ -85,7 +86,7 @@ describe('two devices’ changes met', () => {
     const here = side({ ...start, keys: { ...start.keys, 'anthropic-2': 'sk-here' } })
     const there = side({ ...start, keys: { ...start.keys, 'anthropic-2': 'sk-there' } })
     const one = added(NONE, 'anthropic').state
-    const met = merged(baseOf({ ...start, accounts: one }, { ...start.keys }), here, there)
+    const met = merged(baseOf({ ...start, accounts: one }, { ...start.keys }), here, there).contents
     expect(met.accounts.accounts.map((each) => each.id)).toEqual([
       'anthropic',
       'anthropic-2',
@@ -99,7 +100,8 @@ describe('two devices’ changes met', () => {
   })
 
   test('the same account on both sides with nothing agreed stays one', () => {
-    const met = merged(null, side(start), side(start))
+    const { contents: met, moved } = merged(null, side(start), side(start))
+    expect(moved).toEqual({})
     expect(met.accounts.accounts.map((one) => one.id)).toEqual(['anthropic', 'anthropic-2'])
     expect(met.keys).toEqual({ anthropic: 'sk-1' })
   })

@@ -160,6 +160,24 @@ describe('the panel’s chats', () => {
     ])
   })
 
+  test('move a chat open on an account the vault moved to a fresh id along with it', async () => {
+    const plan = await had('work', 'Quarterly plan', 1_000)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await chat.openThread(plan.id, false)
+    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    chat.models = { p: [] }
+
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ p: 'p-2' })
+
+    expect(chat.thread?.provider).toBe('p-2')
+    expect(chat.head?.provider).toBe('p-2')
+    expect(chat.heads.map((one) => one.provider)).toEqual(['p-2'])
+    expect(chat.models).toEqual({ 'p-2': [] })
+  })
+
   test('let go of a chat read once another is open, so a long session holds only what it shows', async () => {
     const names = Array.from({ length: 12 }, (_, at) => `Chat ${String(at)}`)
     const made = []

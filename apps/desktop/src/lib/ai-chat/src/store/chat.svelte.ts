@@ -55,7 +55,11 @@ import {
   nextMode,
   ai,
   FIRST_STATE,
+  type Move,
+  movedKeys,
+  movedTo,
   next as nextState,
+  onMoves,
   type SessionEvent,
   type SessionState,
   statesOf,
@@ -233,6 +237,7 @@ class Chat implements Panel {
     this.started = true
     otherWindowWrote((id) => this.heardWritten(id))
     otherWindowDeleted((id) => this.heardDeleted(id))
+    onMoves((moves) => this.moved(moves))
     this.listing = false
     this.popover = null
     if (!this.open) this.show(this.fresh())
@@ -245,6 +250,17 @@ class Chat implements Panel {
     if (!open || open.turns.length || !space || open.space === space) return
     if (this.running.includes(open.id)) return
     open.space = space
+  }
+
+  private moved(moves: readonly Move[]): void {
+    for (const thread of new Set([...this.live.values(), ...(this.open ? [this.open] : [])]))
+      thread.provider = movedTo(thread.provider, moves)
+    for (const one of moves) this.asking.delete(one.from)
+    this.models = movedKeys(this.models, moves)
+    this.every = this.merged(
+      this.every.map((one) => ({ ...one, provider: movedTo(one.provider, moves) })),
+    )
+    this.redraw()
   }
 
   private async arrive(opening: boolean): Promise<void> {

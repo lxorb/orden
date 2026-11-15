@@ -1,6 +1,7 @@
 import {
   type LocalKind,
   isLocal,
+  onMoves,
   type Provider,
   type ProviderKind,
 } from '../../../ai-providers/src/api'
@@ -142,6 +143,9 @@ export function createApiEngine(setup: Setup): Engine {
   const answers = setup.answers ?? crateAnswers
   const listed = new Map<string, ModelInfo[]>()
   const steering = new Map<string, string[]>()
+  onMoves((moves) => {
+    for (const one of moves) listed.delete(one.from)
+  })
 
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)

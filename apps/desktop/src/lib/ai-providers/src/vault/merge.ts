@@ -17,6 +17,11 @@ export interface Side {
   prints: Record<string, string>
 }
 
+export interface Merged {
+  contents: Contents
+  moved: Record<string, string>
+}
+
 const EMPTY: Contents = {
   accounts: { accounts: [], active: {}, defaultVendor: '', uses: {} },
   keys: {},
@@ -96,17 +101,23 @@ function alike(mine: Account, theirs: Account, myKey?: string, theirKey?: string
   )
 }
 
-function apart(base: Base | null, local: Side, remote: Side): Side {
+function apart(
+  base: Base | null,
+  local: Side,
+  remote: Side,
+): { side: Side; moved: Record<string, string> } {
   const all = [base?.accounts, local.contents.accounts, remote.contents.accounts]
   const taken = new Set(all.flatMap((one) => one?.accounts.map((each) => each.id) ?? []))
   const agreed = new Set(base?.accounts.accounts.map((one) => one.id) ?? [])
   let side = local
+  const moves: Record<string, string> = {}
   for (const mine of local.contents.accounts.accounts) {
     const theirs = remote.contents.accounts.accounts.find((one) => one.id === mine.id)
     if (!theirs || agreed.has(mine.id)) continue
     if (alike(mine, theirs, local.contents.keys[mine.id], remote.contents.keys[mine.id])) continue
     const id = freshId(mine.kind, (one) => taken.has(one))
     taken.add(id)
+    moves[mine.id] = id
     const { contents, prints } = side
     side = {
       contents: {
@@ -117,11 +128,11 @@ function apart(base: Base | null, local: Side, remote: Side): Side {
       prints: moved(prints, mine.id, id),
     }
   }
-  return side
+  return { side, moved: moves }
 }
 
-export function merged(base: Base | null, mine: Side, remote: Side): Contents {
-  const local = apart(base, mine, remote)
+export function merged(base: Base | null, mine: Side, remote: Side): Merged {
+  const { side: local, moved: moves } = apart(base, mine, remote)
   const accounts = mergedAccounts(
     base?.accounts ?? null,
     local.contents.accounts,
@@ -145,7 +156,7 @@ export function merged(base: Base | null, mine: Side, remote: Side): Contents {
   )
   const only = (record: Record<string, string>) =>
     Object.fromEntries(Object.entries(record).filter(([id]) => ids.has(id)))
-  return { accounts, keys: only(keys), seen: only(seen) }
+  return { contents: { accounts, keys: only(keys), seen: only(seen) }, moved: moves }
 }
 
 export function baseOf(contents: Contents, prints: Record<string, string>): Base {
