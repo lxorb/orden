@@ -1,9 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { settingsWindow } from '@orden/contracts'
-  import { readableSize, usage } from './accounts/src/api'
-  import { dur, fly } from './platform/src/api'
-  import { told } from './ui-kit/src/api'
+  import { readableSize, usage } from '../../accounts/src/api'
+  import { dur, fly } from '../../platform/src/api'
+  import { told } from '../../ui-kit/src/api'
 
   const words = $derived(`${readableSize(usage.used)} of ${readableSize(usage.limit)} used.`)
 </script>

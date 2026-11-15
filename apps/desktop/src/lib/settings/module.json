@@ -43,6 +43,5 @@
     "new-here",
     "marks",
     "glyphs"
-  ],
-  "pending": ["apps/desktop/src/lib/connectors.svelte.ts", "apps/desktop/src/lib/kind-choice.ts"]
+  ]
 }

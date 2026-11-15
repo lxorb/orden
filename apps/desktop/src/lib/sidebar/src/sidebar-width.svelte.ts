@@ -1,6 +1,6 @@
-import type { PanelSide } from './session/src/api'
-import { forget, isNumber, keepJson, stored } from './platform/src/api'
-import { viewport } from './ui-kit/src/api'
+import type { PanelSide } from '../../session/src/api'
+import { forget, isNumber, keepJson, stored } from '../../platform/src/api'
+import { viewport } from '../../ui-kit/src/api'
 
 const STORAGE_KEY = 'orden:sidebar-width'
 const NARROWEST = 180

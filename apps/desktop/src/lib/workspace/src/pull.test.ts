@@ -28,9 +28,13 @@ vi.mock('./refresh', () => ({
   },
 }))
 const screen = vi.hoisted(() => ({ typing: false }))
-vi.mock('./ui-kit/src/viewport.svelte', () => ({ viewport: screen }))
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
+  viewport: screen,
+}))
 
-import { armed, CLAIM, claimsPull, pull, pulled, REACH } from './pull.svelte'
+import { CLAIM } from './drawer.svelte'
+import { armed, claimsPull, pull, pulled, REACH } from './pull.svelte'
 
 beforeEach(() => {
   localStorage.clear()

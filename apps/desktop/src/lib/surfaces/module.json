@@ -26,7 +26,7 @@
     "new-here",
     "spaces",
     "workspace",
-    "marks"
-  ],
-  "pending": ["apps/desktop/src/lib/renamed.svelte.ts"]
+    "marks",
+    "launch"
+  ]
 }

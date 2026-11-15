@@ -18,6 +18,5 @@
     "sync-store",
     "documents",
     "panes"
-  ],
-  "pending": ["apps/desktop/src/lib/own-keys.ts"]
+  ]
 }

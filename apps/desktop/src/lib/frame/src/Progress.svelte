@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { Facts } from './ui-kit/src/api'
-  import { busy } from './ui-kit/src/api'
-  import { Sweep } from './ui-kit/src/api'
+  import { Facts, busy, Sweep } from '../../ui-kit/src/api'
 
   const DELAY = 200
 

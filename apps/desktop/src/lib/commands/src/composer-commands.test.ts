@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const readOnly = new Set<string>()
 const writable = (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`))
 
-vi.mock('./sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: writable,
   canWriteIn: (note: { path: string | null } | null) => !note?.path || writable(note.path),
 }))
@@ -20,10 +20,16 @@ const workspace = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('./workspace/src/api', () => ({ workspace }))
+vi.mock('../../workspace/src/api', async () => {
+  const { carvable, mergeable } = await vi.importActual<
+    typeof import('../../workspace/src/composing')
+  >('../../workspace/src/composing')
+  return { workspace, carvable, mergeable }
+})
 
 const asked = vi.hoisted(() => ({ offered: [] as string[], answer: null as string | null }))
-vi.mock('./ui-kit/src/prompt.svelte', () => ({
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   prompt: {
     find: (question: { options: { id: string }[] }) => {
       asked.offered = question.options.map((option) => option.id)

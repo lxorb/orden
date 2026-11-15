@@ -50,6 +50,5 @@
     "sync-store",
     "modes",
     "gates"
-  ],
-  "pending": ["apps/desktop/src/lib/attachments.ts", "apps/desktop/src/lib/own-keys.ts"]
+  ]
 }

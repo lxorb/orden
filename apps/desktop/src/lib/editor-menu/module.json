@@ -11,7 +11,8 @@
     "shortcuts",
     "ui-controls",
     "ui-kit",
-    "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/composer-commands.ts", "apps/desktop/src/lib/composer.ts"]
+    "workspace",
+    "commands",
+    "link-format"
+  ]
 }

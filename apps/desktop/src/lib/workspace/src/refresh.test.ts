@@ -1,19 +1,19 @@
+import { providePort, webPages } from '@orden/contracts'
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const place = vi.hoisted(() => ({ active: null as { id: string; kind: string } | null }))
 const steps = vi.hoisted(() => [] as string[])
 const syncing = vi.hoisted(() => ({ passes: 0, status: 'idle', lastError: null as string | null }))
 
-vi.mock('./workspace/src/api', () => ({ workspace: place }))
-vi.mock('./web-tab/src/api', () => ({
-  pages: {
-    step: (id: string, how: string) => {
-      steps.push(`${id}:${how}`)
-      return Promise.resolve()
-    },
+vi.mock('./workspace.svelte', () => ({ workspace: place }))
+providePort('web.pages', {
+  ...webPages(),
+  step: (id, how) => {
+    steps.push(`${id}:${how}`)
+    return Promise.resolve()
   },
-}))
-vi.mock('./sync-store/src/api', () => ({
+})
+vi.mock('../../sync-store/src/api', () => ({
   sync: {
     get status() {
       return syncing.status

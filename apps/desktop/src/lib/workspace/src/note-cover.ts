@@ -1,13 +1,13 @@
 import { COVER_KEY, COVER_POSITION_KEY } from '@orden/markdown/cover'
 import { frontMatterEdits } from '@orden/markdown/front-matter'
 import { storeImage } from './assets'
-import { busy, message } from './ui-kit/src/api'
-import { chooseFiles, PICTURES } from './ui-controls/src/api'
+import { busy, message } from '../../ui-kit/src/api'
+import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import { changeOf } from '@orden/scan/search/replace'
 import { settingsWindow } from '@orden/contracts'
-import { isMarkdownPath } from './platform/src/api'
-import { usage } from './accounts/src/api'
-import { workspace } from './workspace/src/api'
+import { isMarkdownPath } from '../../platform/src/api'
+import { usage } from '../../accounts/src/api'
+import { workspace } from './workspace.svelte'
 
 export function canHaveCover(path: string | null | undefined): boolean {
   return !!path && isMarkdownPath(path)

@@ -1,6 +1,7 @@
-import { api, account } from './accounts/src/api'
-import { message } from './ui-kit/src/api'
-import { isRecord, keep, keepJson, stored, storedText } from './platform/src/api'
+import { api } from './client'
+import { account } from './account.svelte'
+import { message } from '../../ui-kit/src/api'
+import { isRecord, keep, keepJson, stored, storedText } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:llm'
 const CLIENT_KEY = 'orden:llm-client'
@@ -24,6 +25,8 @@ interface Token {
 const POLL = 4000
 
 class Connectors {
+  private forgetting = false
+
   clients = $state<Connected[]>([])
   token = $state<Token | null>(null)
   client = $state<Client>('claude')
@@ -35,6 +38,14 @@ class Connectors {
   error = $state<string | null>(null)
 
   restore() {
+    if (!this.forgetting) {
+      this.forgetting = true
+      account.forgetWithSession(() => {
+        this.clients = []
+        this.token = null
+        this.freshToken = null
+      })
+    }
     const saved = stored(STORAGE_KEY)
     this.readOnly = !isRecord(saved) || saved.readOnly !== false
 
@@ -134,9 +145,3 @@ class Connectors {
 }
 
 export const connectors = new Connectors()
-
-account.forgetWithSession(() => {
-  connectors.clients = []
-  connectors.token = null
-  connectors.freshToken = null
-})

@@ -17,6 +17,5 @@
     "workspace",
     "icon-picker",
     "new-here"
-  ],
-  "pending": ["apps/desktop/src/lib/note-cover.ts"]
+  ]
 }

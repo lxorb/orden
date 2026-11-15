@@ -8,8 +8,8 @@ vi.stubGlobal('localStorage', {
 })
 
 const saved = vi.hoisted(() => [] as [string, unknown][])
-vi.mock('./accounts/src/client', async (actual) => ({
-  ...(await actual<typeof import('./accounts/src/client')>()),
+vi.mock('../../accounts/src/client', async (actual) => ({
+  ...(await actual<typeof import('../../accounts/src/client')>()),
   api: {
     saveSettings: (token: string, patch: unknown) => {
       saved.push([token, patch])
@@ -19,12 +19,12 @@ vi.mock('./accounts/src/client', async (actual) => ({
 }))
 
 const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } =
-  await import('./gates/src/api')
+  await import('./api')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
-const { offeredKinds, newKinds } = await import('./new-here/src/api')
-const { newFileRows } = await (await import('./row-menu/src/api')).rowMenus()
-const { account } = await import('./accounts/src/account.svelte')
-const { viewport } = await import('./ui-kit/src/viewport.svelte')
+const { offeredKinds, newKinds } = await import('../../new-here/src/api')
+const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
+const { account } = await import('../../accounts/src/account.svelte')
+const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 
 let token: string | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })

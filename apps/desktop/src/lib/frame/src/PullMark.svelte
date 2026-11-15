@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { pull, REACH } from './pull.svelte'
-  import { stillness } from './platform/src/api'
-  import { nameFor } from './shortcuts/src/api'
+  import { pull, REACH } from '../../workspace/src/api'
+  import { stillness } from '../../platform/src/api'
+  import { nameFor } from '../../shortcuts/src/api'
 
   const waiting = $derived(pull.refreshing || pull.failed)
   const at = $derived(waiting ? REACH : pull.at)

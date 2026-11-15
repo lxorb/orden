@@ -38,7 +38,7 @@ vi.mock('./link-index/src/api', () => ({
 }))
 
 const { EditorView } = await import('@orden/editor')
-const { mountPreview } = await import('./preview-card')
+const { mountPreview } = await import('./pane-tree/src/preview-card')
 
 const settle = () => new Promise((done) => setTimeout(done, 0))
 

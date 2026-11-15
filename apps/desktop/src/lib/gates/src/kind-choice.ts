@@ -1,4 +1,4 @@
-import { account, api, type AccountSettings } from './accounts/src/api'
+import { account, api, type AccountSettings } from '../../accounts/src/api'
 import {
   chosenOn,
   gated,
@@ -7,8 +7,8 @@ import {
   type KindName,
   kindsHere,
   shownOf,
-} from './gates/src/api'
-import { forget, isString, keepJson } from './platform/src/api'
+} from './gates.svelte'
+import { forget, isString, keepJson } from '../../platform/src/api'
 
 const MOST_KINDS = 32
 const KIND = /^[a-z][a-z-]{0,23}$/

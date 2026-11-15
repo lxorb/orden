@@ -53,8 +53,8 @@ import {
 } from '@orden/editor'
 import { account } from '../../accounts/src/api'
 import { busy, prompt, viewport, type MenuItem, DIVIDER, fullscreen } from '../../ui-kit/src/api'
-import { turnedOff } from '../../kind-choice'
-import { composerCommands } from '../../composer-commands'
+import { turnedOff, basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
+import { composerCommands } from './composer-commands'
 import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
@@ -87,7 +87,6 @@ import {
 import { archiveEntry } from '../../row-menu/src/api'
 import { updates, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
-import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
 import {
