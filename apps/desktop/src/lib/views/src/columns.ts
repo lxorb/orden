@@ -295,8 +295,7 @@ function taskChange(task: TaskRow, field: string, value: Value | null): TaskChan
     case 'deadline':
       return dayChange(task, field, value)
     case 'duration': {
-      if (value === null) return { duration: null }
-      const duration = minutesOf(value)
+      const duration = value === null ? null : minutesOf(value)
       return duration === undefined ? null : { duration }
     }
     case 'priority': {
