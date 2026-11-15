@@ -1,11 +1,14 @@
 import { indentLess, indentMore, moveLineDown, moveLineUp } from '@codemirror/commands'
+import { insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import { indentUnit, syntaxTree } from '@codemirror/language'
 import {
+  ChangeSet,
   type ChangeSpec,
   EditorSelection,
   type EditorState,
   type Line,
   type StateCommand,
+  type TransactionSpec,
 } from '@codemirror/state'
 import { inCode } from './code'
 import { selectedLines } from './commands'
@@ -230,4 +233,66 @@ export function moveLineOver(delta: -1 | 1): StateCommand {
     )
     return true
   }
+}
+
+const continueMarkup = insertNewlineContinueMarkupCommand({ nonTightLists: false })
+
+const ORDERED_TASK = /^(?:[ \t]*>[ \t]?)*[ \t]*\d{1,9}[.)][ \t]+\[.\]/u
+const FRESH_NUMBER = /^(?:[ \t]*>[ \t]?)*[ \t]*\d{1,9}[.)] $/u
+
+const EMPTY_ORDERED_TASK = /^((?:[ \t]*>[ \t]?)*)[ \t]*\d{1,9}[.)][ \t]+\[.\][ \t]*$/u
+
+function endEmptyTask(state: EditorState): TransactionSpec | null {
+  const range = state.selection.main
+  if (state.selection.ranges.length > 1 || !range.empty) return null
+
+  const line = state.doc.lineAt(range.head)
+  const quote = EMPTY_ORDERED_TASK.exec(line.text)?.[1]
+  if (quote === undefined || range.head !== line.to || inCode(state, line.from)) return null
+
+  return {
+    changes: { from: line.from, to: line.to, insert: quote },
+    selection: { anchor: line.from + quote.length },
+    userEvent: 'input',
+  }
+}
+
+export const continueLists: StateCommand = ({ state, dispatch }) => {
+  const ended = endEmptyTask(state)
+  if (ended) {
+    dispatch(state.update(ended))
+    return true
+  }
+
+  return continueMarkup({
+    state,
+    dispatch: (made) => {
+      const boxes: number[] = []
+      made.newSelection.ranges.forEach((range, at) => {
+        const before = state.selection.ranges[at]
+        if (!before || !ORDERED_TASK.test(state.doc.lineAt(before.head).text)) return
+
+        const line = made.newDoc.lineAt(range.head)
+        if (FRESH_NUMBER.test(made.newDoc.sliceString(line.from, range.head)))
+          boxes.push(range.head)
+      })
+      if (!boxes.length) {
+        dispatch(made)
+        return
+      }
+
+      const boxed = ChangeSet.of(
+        boxes.map((at) => ({ from: at, insert: '[ ] ' })),
+        made.newDoc.length,
+      )
+      dispatch(
+        state.update({
+          changes: made.changes.compose(boxed),
+          selection: made.newSelection.map(boxed, 1),
+          scrollIntoView: true,
+          userEvent: 'input',
+        }),
+      )
+    },
+  })
 }

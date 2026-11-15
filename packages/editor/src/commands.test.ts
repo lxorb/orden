@@ -32,7 +32,7 @@ import {
   tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
-import { indentItems, moveLineOver, outdentItems } from './list-keys'
+import { continueLists, indentItems, moveLineOver, outdentItems } from './list-keys'
 import { clearFormatting, marksAcross } from './marks'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
@@ -763,6 +763,19 @@ describe('Enter in code inside a quote or a list item', () => {
   test('leaves code nothing holds to the usual Enter', () => {
     expect(took(continueInCode, '```\nx|\n```')).toBe(false)
     expect(took(continueInCode, '> plain|')).toBe(false)
+  })
+})
+
+describe('Enter at the end of a numbered task', () => {
+  test('numbers the next one and gives it a box too', () => {
+    expect(at(continueLists, '1. [ ] t', 8)).toBe('1. [ ] t\n2. [ ] ')
+    expect(at(continueLists, '1. [x] done', 11)).toBe('1. [x] done\n2. [ ] ')
+  })
+
+  test('and the bullets and plain numbers go on as they did', () => {
+    expect(at(continueLists, '- [ ] t', 7)).toBe('- [ ] t\n- [ ] ')
+    expect(at(continueLists, '1. a', 4)).toBe('1. a\n2. ')
+    expect(at(continueLists, '1. [ ] ', 7)).not.toContain('2.')
   })
 })
 

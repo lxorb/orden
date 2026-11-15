@@ -1,5 +1,5 @@
 import { history } from '@codemirror/commands'
-import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
+import { deleteMarkupBackward } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { EditorState, type Extension, Prec, type Text, Transaction } from '@codemirror/state'
 import type { Cover } from '@orden/markdown/cover'
@@ -40,6 +40,7 @@ import {
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
 import { closeFence, continueInCode, leaveQuote } from './commands'
+import { continueLists } from './list-keys'
 import { refuseControlCharacters } from './control'
 import { ordenBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
@@ -166,7 +167,7 @@ export function editorState(options: StateOptions): EditorState {
       Prec.high(
         keymap.of([
           { key: 'Enter', run: leaveQuote },
-          { key: 'Enter', run: insertNewlineContinueMarkupCommand({ nonTightLists: false }) },
+          { key: 'Enter', run: continueLists },
           { key: 'Enter', run: continueInCode },
           { key: 'Backspace', run: deleteMarkupBackward },
         ]),
