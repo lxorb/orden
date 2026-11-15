@@ -83,7 +83,7 @@ export async function planFor(read: AppleNotes): Promise<ImportPlan> {
   return plan
 }
 
-const FROM_HERE = /^(?:[a-z][a-z0-9+.-]*:|[/.#<])/i
+const FROM_HERE = /^(?:[a-z][a-z0-9+.-]*:|[/#<]|\.\.?\/)/i
 
 function fromTheTop(text: string): string {
   let out = text

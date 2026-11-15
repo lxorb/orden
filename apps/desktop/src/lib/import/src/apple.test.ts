@@ -99,6 +99,19 @@ describe("Apple Notes off the Mac's own database", () => {
     expect(note).toContain('See [Groceries](../Groceries.md) and [[Home/List|List]]')
   })
 
+  test('a link to a note at the top whose title starts with a dot reaches it past a namesake', async () => {
+    const plan = await planFor({
+      ...read(),
+      notes: [
+        { ...read().notes[0]!, path: '.NET.md', title: '.NET', text: '# .NET\n\ntop\n' },
+        { ...read().notes[0]!, path: 'Work/.NET.md', title: '.NET', text: '# .NET\n\nbeside\n' },
+        { ...read().notes[1]!, text: '# Ideas\n\n[.NET](.NET.md)\n' },
+      ],
+    })
+
+    expect(noteAt(plan, 'Work/Ideas.md')).toContain('../_NET')
+  })
+
   test("a title from the note's row opens no markup, as the words the crate escaped do not", async () => {
     const plan = await planFor({
       ...read(),
