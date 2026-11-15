@@ -1579,6 +1579,28 @@ describe('a page into a note', () => {
     expect(capture()).toBeUndefined()
   })
 
+  test('a reader tab whose web note is kept from agents is neither captured nor named by address', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    const { readerTabs } = await import('../src/lib/agent-host/src/tabs')
+    protection.set('/s/Work', '/s/Work/Docs.url', 'password')
+    try {
+      expect(await call('capture_to_note', { tab: 'w1', as: 'clip' })).toMatchObject({
+        code: 'protected',
+      })
+      expect(await call('capture_to_note', { tab: 'w1', as: 'link' })).toMatchObject({
+        code: 'protected',
+      })
+      expect(capture()).toBeUndefined()
+      expect(JSON.stringify(await call('workspace_tabs', { op: 'list' }))).not.toContain(
+        'docs.example',
+      )
+      expect(JSON.stringify(await call('get_context', {}))).not.toContain('docs.example')
+      expect(readerTabs().map((one) => one.id)).not.toContain('w1')
+    } finally {
+      protection.set('/s/Work', '/s/Work/Docs.url', null)
+    }
+  })
+
   test('a reader tab in a space the agent may not reach is not there', async () => {
     expect(
       await call(

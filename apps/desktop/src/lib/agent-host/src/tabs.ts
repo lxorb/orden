@@ -60,7 +60,7 @@ function front(tab: Tab): boolean {
 }
 
 function addressOf(tab: Tab): string | null {
-  if (tab.kind !== 'web') return null
+  if (tab.kind !== 'web' || (tab.path !== null && !seen(tab.path))) return null
   return webPages().addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
@@ -446,7 +446,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
 export function readerTabs(): ReaderTab[] {
   return workspace.tabs
-    .filter((tab) => tab.kind === 'web')
+    .filter((tab) => tab.kind === 'web' && (tab.path === null || seen(tab.path)))
     .map((tab) => {
       const shown = workspace.panes.at(tab.paneId) !== null && front(tab)
       const home = workspace.spaceOf(tab.note)
