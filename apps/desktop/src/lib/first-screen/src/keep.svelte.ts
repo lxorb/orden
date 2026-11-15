@@ -10,7 +10,15 @@ import {
 } from './first-screen.svelte'
 import { keep } from '../../platform/src/api'
 import { views } from '../../views.svelte'
-import { workspace } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
+import type { Frame } from '../../panes/src/api'
+
+export interface Shown {
+  readonly active: Tab | null
+  readonly panes: { readonly frame: Frame; readonly focusedId: string }
+}
+
+let shown: Shown | null = null
 
 const QUIET = 1500
 
@@ -122,8 +130,9 @@ function editorRules(): string {
 }
 
 function screenOf(view: EditorView): Kept | null {
-  const tab = workspace.active
-  const frame = workspace.panes.frame
+  if (!shown) return null
+  const tab = shown.active
+  const frame = shown.panes.frame
   if (tab?.kind !== 'note' || tab.reading) return null
   if (frame.kind !== 'pane' || frame.stacked) return null
   if (documentOf(view) !== tab.note.live || view.state.doc.length > LONGEST) return null
@@ -223,11 +232,12 @@ function follow(view: EditorView): () => void {
   }
 }
 
-export function keepFirstScreens(): void {
+export function keepFirstScreens(held: Shown): void {
+  shown = held
   $effect.root(() => {
     $effect(() => {
-      const view = views.of(workspace.panes.focusedId)
-      if (!view || workspace.active?.kind !== 'note') return
+      const view = views.of(held.panes.focusedId)
+      if (!view || held.active?.kind !== 'note') return
       return follow(view)
     })
   })

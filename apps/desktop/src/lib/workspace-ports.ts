@@ -2,6 +2,7 @@ import { whenPortProvided } from '@orden/contracts'
 import { archiveAgain, showArchive } from './archive/src/api'
 import { beginSetup } from './onboarding/src/api'
 import { pdfTabs } from './pages/src/api'
+import { askPlace } from './save-place/src/api'
 import { isScratchpad, pad, shown } from './scratchpad/src/api'
 import { searchWarmth } from './search/src/api'
 import { rowsCopied } from './views/src/api'
@@ -27,6 +28,7 @@ serveWorkspace({
     show: (take) => shown.show(take),
     hide: () => shown.hide(),
   },
+  askPlace,
   beginSetup,
   warmSearch: async (root) => (await searchWarmth()).forSpace(root),
   showArchive: (path) => void showArchive(path),
