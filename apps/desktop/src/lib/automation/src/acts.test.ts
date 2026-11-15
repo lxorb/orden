@@ -24,6 +24,12 @@ let named: string | null = null
 let beside: string | null = null
 
 let scanning: Promise<void> = Promise.resolve()
+
+const indexed: {
+  outgoing: unknown[]
+  backlinks: unknown[]
+  nodes: { path: string | null; name: string; degree: number }[]
+} = { outgoing: [], backlinks: [], nodes: [] }
 let scans = 0
 
 const opened: string[] = []
@@ -44,8 +50,11 @@ vi.mock('../../link-index/src/api', () => ({
       scans += 1
       return scanning
     },
-    outgoing: () => [],
-    backlinks: () => [],
+    outgoing: () => indexed.outgoing,
+    backlinks: () => indexed.backlinks,
+    get graph() {
+      return { nodes: indexed.nodes }
+    },
   },
 }))
 
@@ -130,6 +139,7 @@ vi.mock('../../sharing/src/api', () => ({
 const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
   await import('./acts')
 const { movedIn } = await import('./moving')
+const { listBacklinks, listLinks, listOrphans } = await import('./answers')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -520,5 +530,41 @@ describe('words prepended to a note', () => {
 
     await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
     expect(written[0]?.after).toBe('Top line.\n\n# Plan\n')
+  })
+})
+
+describe('links, backlinks and orphans asked while the index is still being built', () => {
+  const landing = (change: () => void) => {
+    indexed.outgoing = []
+    indexed.backlinks = []
+    indexed.nodes = []
+    scanning = new Promise((landed) => {
+      setTimeout(() => {
+        change()
+        landed()
+      }, 20)
+    })
+  }
+
+  test('wait for the scan and answer from the whole index', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan\n')
+
+    landing(() => (indexed.outgoing = [{ target: 'Soup' }]))
+    expect(await listLinks({ path: 'Plan.md' })).toEqual({
+      path: 'Plan.md',
+      links: [{ target: 'Soup' }],
+    })
+
+    landing(() => (indexed.backlinks = [{ path: 'Recipes.md' }]))
+    expect(await listBacklinks({ path: 'Plan.md' })).toEqual({
+      path: 'Plan.md',
+      backlinks: [{ path: 'Recipes.md' }],
+    })
+
+    landing(() => (indexed.nodes = [{ path: 'Lonely.md', name: 'Lonely', degree: 0 }]))
+    expect(await listOrphans({})).toEqual({ orphans: [{ path: 'Lonely.md', name: 'Lonely' }] })
+
+    scanning = Promise.resolve()
   })
 })
