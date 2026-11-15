@@ -1,4 +1,4 @@
-import { inTurn } from '../../../platform/src/api'
+import { inTurn, keep, storedText } from '../../../platform/src/api'
 import { readsAsText } from '../web/commands'
 import { mountRows } from '../web/store'
 import { folderBytes } from './bytes'
@@ -15,20 +15,8 @@ const NEWEST = 'orden:internal-index:'
 function newestOf(folder: string): InternalWorld['newest'] {
   const name = `${NEWEST}${folder}`
   return {
-    read: () => {
-      try {
-        return Number(localStorage.getItem(name)) || 0
-      } catch {
-        return 0
-      }
-    },
-    write: (gen) => {
-      try {
-        localStorage.setItem(name, String(gen))
-      } catch {
-        return
-      }
-    },
+    read: () => Number(storedText(name)) || 0,
+    write: (gen) => void keep(name, String(gen)),
   }
 }
 
