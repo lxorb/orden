@@ -27,13 +27,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import SharedMark from '../../SharedMark.svelte'
-  import {
-    privateMark,
-    syncMark,
-    soundMark,
-    tabNameField,
-    tabOverview,
-  } from '../../surfaces.svelte'
+  import { privateMark, syncMark, soundMark, tabOverview } from '../../surfaces.svelte'
   import TabMark from '../../TabMark.svelte'
   import UnsavedDot from '../../UnsavedDot.svelte'
   import { askPlace } from '../../save-place/src/api'
@@ -76,6 +70,7 @@
     tabClosing,
     TabDrag,
     tabMenus,
+    tabNameField,
     tabOps,
     tabPicking,
     trailing,

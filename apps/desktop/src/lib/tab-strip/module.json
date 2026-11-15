@@ -19,7 +19,8 @@
     "scan",
     "ui-controls",
     "collab",
-    "theme"
+    "theme",
+    "markdown"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
