@@ -119,6 +119,49 @@ describe('a chat’s socket', () => {
     }
   })
 
+  test('waits longer each time a socket is closed as soon as it opens', () => {
+    vi.useFakeTimers()
+    try {
+      const { sockets, dial } = dialed()
+      const socket = new ChatSocket(CHAT, 'token', null, () => 0, heard(), dial)
+      for (let at = 0; at < 600; at++) {
+        const last = sockets.at(-1)
+        if (last && !last.closed && last.sent.length === 0) {
+          last.on.opened()
+          last.on.closed(1011)
+        }
+        vi.advanceTimersByTime(100)
+      }
+      expect(sockets.length).toBeLessThanOrEqual(12)
+      socket.close()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('waits its first wait again once a socket has outlived a beat', () => {
+    vi.useFakeTimers()
+    try {
+      const { sockets, dial } = dialed()
+      const socket = new ChatSocket(CHAT, 'token', null, () => 0, heard(), dial)
+      for (let turn = 0; turn < 4; turn++) {
+        sockets.at(-1)?.on.opened()
+        sockets.at(-1)?.on.closed(1011)
+        while (sockets.length === turn + 1) vi.advanceTimersByTime(100)
+      }
+
+      const kept = sockets.at(-1)
+      kept?.on.opened()
+      vi.advanceTimersByTime(10_000)
+      kept?.on.closed(1011)
+      vi.advanceTimersByTime(600)
+      expect(sockets).toHaveLength(6)
+      socket.close()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('a socket that never opens is given up on and dialled again', () => {
     vi.useFakeTimers()
     try {

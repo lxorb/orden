@@ -111,7 +111,6 @@ export class ChatSocket {
         opened: () => {
           if (this.wire !== wire || !wire) return
           clearTimeout(this.opening)
-          this.tries = 0
           this.quiet = 0
           wire.send(text({ t: 'hello', since: this.since() }))
           this.greeted = true
@@ -125,6 +124,7 @@ export class ChatSocket {
               this.again()
               return
             }
+            this.tries = 0
             try {
               wire?.send(BEAT)
             } catch {
