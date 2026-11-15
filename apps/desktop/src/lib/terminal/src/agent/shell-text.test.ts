@@ -257,6 +257,35 @@ describe('an option in front of the command', () => {
   )
 })
 
+describe('a line another shell reads differently', () => {
+  test.each([
+    'git fetch \\x2d\\x2dupload-pack=touch\\x20pwned .',
+    'git fetch ‘--upload-pack=calc’ .',
+    'git fetch “--upload-pack=calc” .',
+    'git fetch ^--upload-pack=calc .',
+    "git fetch r#'--upload-pack=calc'# .",
+    'git log a,--output=pwned',
+    "git log a,'--output=pwned'",
+    'git log src\\ --output=pwned',
+    'git add Ünterlagen.md',
+  ])('asks: %s', (line) => {
+    expect(onBoth(line, ['git'])).toBe(false)
+  })
+
+  test('a word cmd splits inside single quotes asks on Windows, and only there', () => {
+    const line = "git log 'x --output=pwned'"
+    expect(onTheList(line, ['git'], 'windows')).toBe(false)
+    expect(onTheList(line, ['git'], 'unix')).toBe(true)
+  })
+
+  test.each(['git log --format=%h,%s', "git commit -m 'a, b'", 'git log --author=me@x.org'])(
+    'goes: %s',
+    (line) => {
+      expect(onBoth(line, ['git'])).toBe(true)
+    },
+  )
+})
+
 describe('git, by what is known to be free', () => {
   test.each([
     'git clone -ccore.sshCommand=./pwn.sh https://x/y',

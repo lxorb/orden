@@ -563,10 +563,17 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   const program = programOf(command, os)
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
-  if (/(?! )\p{Zs}/u.test(command)) return false
+  if (!readAlikeEverywhere(command, os)) return false
 
   const words = wordsOf(command.trim())
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
+}
+
+const READ_ALIKE = /^[A-Za-z0-9 _\-./:=+@%~,'"]*$/
+
+function readAlikeEverywhere(command: string, os: Os): boolean {
+  if (!READ_ALIKE.test(command) || /,['"]*-/.test(command)) return false
+  return os !== 'windows' || !/'[^']*\s-[^']*'/.test(command)
 }
 
 export function startsOnlyOne(command: string): boolean {
