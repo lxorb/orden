@@ -58,7 +58,8 @@ export function reformat(source: string): string {
       continue
     }
 
-    const table = tables.has(index) ? readTable(lines, index) : null
+    const tableEnd = tables.get(index)
+    const table = tableEnd === undefined ? null : readTable(lines, index, tableEnd)
     if (table) {
       for (const row of table.text.split('\n')) out.push(row)
       index = table.next
@@ -87,35 +88,42 @@ function readFrontMatter(source: string): number | null {
   return block && source.slice(0, block.close).split('\n').length
 }
 
-function tableStarts(tree: Tree, lines: readonly string[]): Set<number> {
-  const starts = new Set<number>()
+function tableStarts(tree: Tree, lines: readonly string[]): Map<number, number> {
+  const spans = new Map<number, number>()
   tree.iterate({
     enter(node) {
       if (node.name === 'Blockquote' || node.name === 'ListItem') return false
       if (node.name !== 'Table') return true
-      starts.add(node.from)
+      spans.set(node.from, node.to)
       return false
     },
   })
 
-  const found = new Set<number>()
+  const found = new Map<number, number>()
+  const starts: number[] = []
   let start = 0
-  for (const [index, line] of lines.entries()) {
-    if (starts.has(start + line.length - line.trimStart().length)) found.add(index)
+  for (const line of lines) {
+    starts.push(start)
     start += line.length + 1
+  }
+
+  for (const [index, line] of lines.entries()) {
+    const to = spans.get((starts[index] ?? 0) + line.length - line.trimStart().length)
+    if (to === undefined) continue
+
+    let end = index + 1
+    while (end < lines.length && (starts[end] ?? 0) < to) end += 1
+    found.set(index, end)
   }
   return found
 }
 
-function readTable(lines: string[], start: number): { text: string; next: number } | null {
+function readTable(
+  lines: string[],
+  start: number,
+  end: number,
+): { text: string; next: number } | null {
   if (!lines[start]?.includes('|')) return null
-
-  let end = start
-  while (end < lines.length) {
-    const line = lines[end]
-    if (!line?.includes('|') || !line.trim()) break
-    end += 1
-  }
 
   const block = lines.slice(start, end).join('\n')
   const model = parseTable(block)
