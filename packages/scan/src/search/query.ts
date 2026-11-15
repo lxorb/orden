@@ -178,7 +178,9 @@ class Parser {
     const inner = this.source.slice(this.at + 1, end)
     const colon = inner.indexOf(':')
     const name = (colon === -1 ? inner : inner.slice(0, colon)).trim().toLowerCase()
-    if (!name) return null
+    if (!name || name.includes('[')) return null
+    if (!/^(?:[\s)]|$)/.test(this.source.slice(end + 1))) return null
+    if (colon === -1 && Array.from(inner).length === 1) return null
 
     this.at = end + 1
     const said = colon === -1 ? '' : inner.slice(colon + 1).trim()

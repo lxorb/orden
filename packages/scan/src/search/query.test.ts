@@ -337,6 +337,12 @@ describe('front matter', () => {
     expect(parseQuery('[status')).toEqual(word('[status'))
   })
 
+  test('is an ordinary word when the brackets are a link or a task box', () => {
+    expect(parseQuery('[[Meeting]]')).toEqual(word('[[Meeting]]'))
+    expect(parseQuery('[docs](http://x)')).toMatchObject({ kind: 'text' })
+    expect(parseQuery('[x] done')).toEqual({ kind: 'all', of: [word('[x]'), word('done')] })
+  })
+
   test('holds a value against a number or a date', () => {
     const asked = (source: string) => parseQuery(source)
 
