@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { unarchive } from './archiving'
   import { dur, slide } from '../../platform/src/api'
-  import { ARCHIVE_MARK } from './archive-marks'
+  import { ARCHIVE_MARK } from '../../ui-kit/src/api'
 
   const { path }: { path: string } = $props()
 </script>

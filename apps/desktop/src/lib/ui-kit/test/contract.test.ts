@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 import {
+  ARCHIVE_MARK,
   busy,
   Cross,
   DIVIDER,
@@ -17,6 +18,7 @@ import {
   sameCombination,
   sameIcon,
   showCombination,
+  UNARCHIVE_MARK,
   walk,
   walkableRows,
   writtenIcon,
@@ -134,6 +136,16 @@ describe('icons', () => {
     expect(sameIcon('🍎', '🍎')).toBe(true)
     expect(sameIcon('🍎', '🍐')).toBe(false)
     expect(sameIcon(null, '🍎')).toBe(false)
+  })
+})
+
+describe('the panel marks', () => {
+  test('the archive marks are paths drawn in the 13 by 13 box the rows use', () => {
+    for (const mark of [ARCHIVE_MARK, UNARCHIVE_MARK]) {
+      expect(mark.startsWith('M')).toBe(true)
+      const numbers = [...mark.matchAll(/-?\d*\.?\d+/g)].map((found) => Number(found[0]))
+      expect(numbers.every((one) => one >= -13 && one <= 13)).toBe(true)
+    }
   })
 })
 
