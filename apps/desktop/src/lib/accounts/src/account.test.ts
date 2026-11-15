@@ -620,6 +620,24 @@ describe('a session a share link handed out', () => {
     expect(told).toBe(0)
   })
 
+  test('forgets the old account when it answers while another one signs in', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+    server.meFails = server.meCalls
+
+    let forgotten = 0
+    account.forgetWithSession(() => forgotten++)
+    const arriving = account.arrive('other-session', {
+      user: { id: 'u2', email: 'other@example.com', name: null },
+    })
+    await account.recheck()
+    await arriving
+
+    expect(account.user?.id).toBe('u2')
+    expect(forgotten).toBe(1)
+  })
+
   test('does not tell it when the session that never answered arrives as itself', async () => {
     localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
