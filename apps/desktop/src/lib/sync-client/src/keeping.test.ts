@@ -261,6 +261,55 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.disk.files.get(`${ROOT}/Ideas.md`)?.startsWith('Later. # Ideas')).toBe(true)
   })
 
+  test('a note asked for while a pass is bringing it too still comes, and its file is written (#2116)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+
+    const { account: talk } = browser.engine.core.world
+    const ask = talk.ask.bind(talk)
+    let answered!: () => void
+    const answering = new Promise<void>((go) => (answered = go))
+    let asking!: () => void
+    const asked = new Promise<void>((go) => (asking = go))
+    let first = true
+    talk.ask = async (route, body, space) => {
+      const answer = await ask(route, body, space)
+      if (route === 'pull' && first) {
+        first = false
+        asking()
+        await answering
+      }
+      return answer
+    }
+    const write = browser.disk.write.bind(browser.disk)
+    let written!: () => void
+    const writing = new Promise<void>((go) => (written = go))
+    let writes!: () => void
+    const wrote = new Promise<void>((go) => (writes = go))
+    let held = true
+    browser.disk.write = async (path, text) => {
+      if (held) {
+        held = false
+        writes()
+        await writing
+      }
+      return write(path, text)
+    }
+
+    const fetching = browser.engine.fetch(`${ROOT}/Plan.md`)
+    await asked
+    const passing = browser.engine.pass(SPACE)
+    await wrote
+    answered()
+    const here = await fetching
+    written()
+    await passing
+
+    expect(here).toBe(true)
+    expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+  })
+
   test('offline, a note kept away stays asked for, and the next pass brings it', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')

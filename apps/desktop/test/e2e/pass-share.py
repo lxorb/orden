@@ -100,8 +100,10 @@ def invited(ada: Page) -> None:
     code = str(wait_for(ada, f"document.querySelector('{DIALOG} [data-safety] code')?.textContent", "Bob's safety code"))
     if len(code.replace(" ", "")) != 32:
         wrong(f"the safety code reads {code!r}")
+    ada.locator(f"{DIALOG} [data-safety]").get_by_role("button", name="Codes match", exact=True).click()
+    wait_for(ada, f"document.querySelector('{DIALOG} [data-safety] [data-matched]')", "Bob's safety code checked")
     ada.get_by_role("combobox", name="Role", exact=True).click()
-    ada.get_by_role("option", name="Editor", exact=True).click()
+    ada.get_by_role("option", name="Can edit", exact=True).click()
     shot(ada, "01-share-sheet")
     ada.get_by_role("button", name="Invite", exact=True).click()
     wait_for(ada, f"document.querySelector('{DIALOG} [data-member={json.dumps(BOB)}] [data-state=pending]')", "Bob pending")

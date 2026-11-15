@@ -194,6 +194,14 @@ def open_note(page: Page, name: str) -> bool:
         )
     )
 
+def arrived(page: Page, name: str) -> bool:
+    until = time.monotonic() + PATIENCE
+    while not open_note(page, name):
+        if time.monotonic() > until:
+            return False
+        page.wait_for_timeout(500)
+    return True
+
 def close_note(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -255,7 +263,7 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
             f"[{label}/{which}] the space",
         )
         settled(page, f"[{label}/{which}] the first pass")
-        if not open_note(page, name):
+        if not arrived(page, name):
             failed(f"[{label}/{which}] never got the note")
             for one in pages.values():
                 one.context.close()

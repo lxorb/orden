@@ -339,6 +339,11 @@ export class Engine implements AskedEngine {
     for (const id of ids) this.core.asked.add(id)
     const life = this.core.life
     if (!(await pullNow(this.core, space, ids, () => this.core.life === life))) return false
+    for (const one of entries) {
+      if (one.local_path || this.core.isHeld(one.id)) continue
+      const doc = await this.core.doc(one.id)
+      if (doc) await this.core.commit(await project(this.core, space, one, doc))
+    }
     if (entries.some((one) => !one.local_path)) return false
     let kept = false
     for (const one of entries) {
