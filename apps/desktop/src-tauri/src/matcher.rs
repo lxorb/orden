@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
-use crate::regex::{Pattern, BUDGET};
+use crate::regex::{budget_for, Pattern};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -529,7 +529,7 @@ impl Matcher {
             },
             units,
             starts,
-            budget: Cell::new(BUDGET),
+            budget: Cell::new(budget_for(body.len())),
         }
     }
 }
@@ -556,7 +556,10 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             answered.then_some(out)
         }
 
-        Term::Not(of) => walk(of, note, facts, region).is_none().then(Vec::new),
+        Term::Not(of) => {
+            let found = walk(of, note, facts, region);
+            (found.is_none() && facts.budget.get() > 0).then(Vec::new)
+        }
 
         Term::Text {
             needle,
@@ -1221,6 +1224,31 @@ mod tests {
 
         assert_eq!(marked(&pattern("note", false), body), ["note", "note"]);
         assert_eq!(marked(&pattern("の.", false), body), ["のn", "のa", "のn"]);
+    }
+
+    #[test]
+    fn a_pattern_finds_its_match_in_a_note_of_a_few_pages() {
+        let body = format!(
+            "{}the zebra\n",
+            format!("{}\n", "the cat sat on the mat ".repeat(20)).repeat(10)
+        );
+        let query = pattern("the.*zebra", false);
+        assert_eq!(lines(&query, &body), ["the zebra"]);
+        assert!(!answers(
+            &format!(r#"{{"kind":"not","of":{query}}}"#),
+            &body
+        ));
+    }
+
+    #[test]
+    fn a_pattern_that_runs_out_never_counts_as_missing() {
+        let body = format!("{}\n", "a".repeat(30)).repeat(2000);
+        let hopeless = pattern("(a+)+b", false);
+        assert!(!answers(&hopeless, &body));
+        assert!(!answers(
+            &format!(r#"{{"kind":"not","of":{hopeless}}}"#),
+            &body
+        ));
     }
 
     #[test]
