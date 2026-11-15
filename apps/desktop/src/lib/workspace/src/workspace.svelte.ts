@@ -3017,9 +3017,21 @@ class Workspace {
     return root !== undefined && this.archive.holdsIn(root, path)
   }
 
+  private readonly elsewhere = new Map<string, Entry>()
+
   entryAt(path: string): Entry | null {
     const found = entryAt(this.tree, path)
-    return found && !samePath(found.path, this.tree?.path) ? found : null
+    if (found && !samePath(found.path, this.tree?.path)) return found
+    return this.elsewhere.get(path) ?? null
+  }
+
+  async carrying<T>(entries: readonly Entry[], run: () => Promise<T>): Promise<T> {
+    for (const one of entries) this.elsewhere.set(one.path, one)
+    try {
+      return await run()
+    } finally {
+      for (const one of entries) this.elsewhere.delete(one.path)
+    }
   }
 
   showEntry(entry: Entry) {
