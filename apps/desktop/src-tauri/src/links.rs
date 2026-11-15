@@ -237,7 +237,7 @@ fn note_at(relative: String, body: &str) -> Note {
 #[derive(Default, Deserialize)]
 struct CanvasFile {
     #[serde(default)]
-    nodes: Vec<CanvasCard>,
+    nodes: Vec<serde_json::Value>,
     #[serde(default)]
     orden: Option<CanvasOwn>,
     #[serde(default)]
@@ -252,12 +252,31 @@ struct CanvasOwn {
     icon_color: Option<String>,
 }
 
-#[derive(Deserialize)]
-struct CanvasCard {
-    #[serde(rename = "type")]
-    kind: Option<String>,
-    file: Option<String>,
-    subpath: Option<String>,
+fn card_field<'a>(card: &'a serde_json::Value, key: &str) -> Option<&'a str> {
+    card.get(key).and_then(serde_json::Value::as_str)
+}
+
+fn card_link(card: &serde_json::Value) -> Option<Link> {
+    card_field(card, "id").filter(|id| !id.is_empty())?;
+    if card_field(card, "type") != Some("file") {
+        return None;
+    }
+    let file = card_field(card, "file").filter(|file| !file.is_empty())?;
+    let subpath = card_field(card, "subpath").unwrap_or_default();
+
+    Some(Link {
+        kind: "wikilink",
+        target: file.to_string(),
+        heading: subpath
+            .strip_prefix('#')
+            .filter(|_| !subpath.starts_with("#^"))
+            .map(str::to_string),
+        block: subpath.strip_prefix("#^").map(str::to_string),
+        alias: None,
+        embed: false,
+        line: 0,
+        text: file.to_string(),
+    })
 }
 
 fn said(value: Option<String>) -> Option<String> {
@@ -272,29 +291,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
 
     let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
 
-    let links: Vec<Link> = read
-        .nodes
-        .iter()
-        .filter(|card| card.kind.as_deref() == Some("file"))
-        .filter_map(|card| {
-            let file = card.file.clone()?;
-            let subpath = card.subpath.as_deref().unwrap_or_default();
-
-            Some(Link {
-                kind: "wikilink",
-                target: file.clone(),
-                heading: subpath
-                    .strip_prefix('#')
-                    .filter(|_| !subpath.starts_with("#^"))
-                    .map(str::to_string),
-                block: subpath.strip_prefix("#^").map(str::to_string),
-                alias: None,
-                embed: false,
-                line: 0,
-                text: file,
-            })
-        })
-        .collect();
+    let links: Vec<Link> = read.nodes.iter().filter_map(card_link).collect();
 
     Note {
         name,
@@ -1620,6 +1617,26 @@ mod tests {
         assert_eq!(read.links[1].heading.as_deref(), Some("Later"));
         assert_eq!(read.links[2].block.as_deref(), Some("abc123"));
         assert!(read.headings.is_empty());
+    }
+
+    #[test]
+    fn a_card_without_its_own_name_or_a_file_links_nowhere_and_spoils_no_other_card() {
+        let read = canvas_note(
+            "Board.canvas".to_string(),
+            concat!(
+                r##"{"nodes":["##,
+                r##"{"type":"file","file":"Unnamed.md"},"##,
+                r##"{"id":"","type":"file","file":"Blank.md"},"##,
+                r##"{"id":"b","type":"file","file":"","subpath":"#x"},"##,
+                r##"{"id":"c","type":"file","file":"Plan.md","subpath":5},"##,
+                r##"{"id":"d","type":"file","file":"Goal.md","x":"far"}"##,
+                r##"],"edges":[]}"##
+            ),
+        );
+
+        let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
+        assert_eq!(targets, vec!["Plan.md", "Goal.md"]);
+        assert_eq!(read.links[0].heading, None);
     }
 
     #[test]
