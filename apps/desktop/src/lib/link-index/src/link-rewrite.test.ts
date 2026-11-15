@@ -234,6 +234,13 @@ describe('a link in quoted front matter', () => {
     )
   })
 
+  test('apostrophes in a plain value are words, not quotes', () => {
+    const text = "---\nnote: Bob's [[Plan]] and Jim's\n---\n"
+    expect(rewriteLinks(text, 'One.md', quoted("O'Neil.md"), pointsAt('plan'))).toBe(
+      "---\nnote: Bob's [[O'Neil]] and Jim's\n---\n",
+    )
+  })
+
   test('each link of a flow list keeps to its own quotes', () => {
     const text = "---\nrel: ['[[Plan]]', \"[[Plan]]\", '[[Other]]']\n---\n"
     expect(rewriteLinks(text, 'One.md', quoted("It's.md"), pointsAt('plan'))).toBe(

@@ -95,6 +95,8 @@ function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
   return out
 }
 
+const SCALAR_OPENS = /(?:^\s*(?:-\s+)?|[:[,]\s*)$/
+
 function scalarAround(text: string, offset: number): Scalar | null {
   const start = text.lastIndexOf('\n', offset - 1) + 1
   const lineEnd = text.indexOf('\n', offset)
@@ -106,7 +108,7 @@ function scalarAround(text: string, offset: number): Scalar | null {
     const character = text[at]
     if (quote === null) {
       if (character === '#' && (at === start || /\s/.test(text[at - 1] ?? ''))) return null
-      if (character === "'" || character === '"') {
+      if ((character === "'" || character === '"') && SCALAR_OPENS.test(text.slice(start, at))) {
         quote = character
         open = at
       }
