@@ -15,7 +15,11 @@ export const linkOpener = Facet.define<
 })
 
 export function hrefOf(target: string): string | null {
-  const trimmed = target.trim()
+  const written = target.trim()
+  const trimmed =
+    written.startsWith('<') && written.endsWith('>')
+      ? written.slice(1, -1)
+      : written.replace(AN_ESCAPE, '$1')
   if (/^(https?|mailto):/i.test(trimmed)) return trimmed
   if (/^(orden|nib):\/\/chat\//i.test(trimmed)) return trimmed
   if (/^(orden|nib):\/\/settings\/import\/?$/i.test(trimmed)) return trimmed

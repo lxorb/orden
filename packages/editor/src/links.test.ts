@@ -35,3 +35,13 @@ describe('what a link target is to a browser', () => {
     expect(hrefOf('')).toBeNull()
   })
 })
+
+describe('an address written the ways markdown lets it be', () => {
+  test('between angle brackets, as a paste writes one with odd parentheses', () => {
+    expect(hrefOf('<https://x.com/a)b>')).toBe('https://x.com/a)b')
+  })
+
+  test('with its brackets escaped', () => {
+    expect(hrefOf('https://x.com/a\\(b\\)')).toBe('https://x.com/a(b)')
+  })
+})
