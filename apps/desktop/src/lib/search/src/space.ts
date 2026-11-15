@@ -2,7 +2,6 @@ import { protection } from '../../protect/src/api'
 import { keptAway } from '../../away/src/api'
 import { internal, invoke, isNative } from '../../platform/src/api'
 import { searchInternal, searchInWorker } from '../../web-backend/src/api'
-import { searchBacktracksWildly } from '@orden/markdown/pattern-cost'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -58,6 +57,8 @@ export async function searchSpace(
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
 
+  const { searchBacktracksWildly } = await import('@orden/markdown/pattern-cost')
+  const judged = judging(searchBacktracksWildly)
   const id = ++asked
   const { hearHere } = await import('../../windows/src/api')
   const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
@@ -74,22 +75,25 @@ export async function searchSpace(
   }
 }
 
-function judged(query: Query): Query {
-  switch (query.kind) {
-    case 'all':
-    case 'any':
-      return { ...query, of: query.of.map(judged) }
-    case 'not':
-    case 'scope':
-      return { ...query, of: judged(query.of) }
-    case 'regex':
-      return searchBacktracksWildly(query.source, query.fold) ? { ...query, refused: true } : query
-    case 'text':
-    case 'content':
-    case 'path':
-    case 'file':
-    case 'tag':
-    case 'property':
-      return query
+function judging(wild: (source: string, fold: boolean) => boolean) {
+  const judged = (query: Query): Query => {
+    switch (query.kind) {
+      case 'all':
+      case 'any':
+        return { ...query, of: query.of.map(judged) }
+      case 'not':
+      case 'scope':
+        return { ...query, of: judged(query.of) }
+      case 'regex':
+        return wild(query.source, query.fold) ? { ...query, refused: true } : query
+      case 'text':
+      case 'content':
+      case 'path':
+      case 'file':
+      case 'tag':
+      case 'property':
+        return query
+    }
   }
+  return judged
 }
