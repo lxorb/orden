@@ -469,7 +469,7 @@ describe('links', () => {
 
 describe('clear formatting', () => {
   test('removes inline markers from the selection', () => {
-    expect(run(clearFormatting, '[**a** *b* ~~c~~ ==d== `e`]')).toBe('a b c d e')
+    expect(run(clearFormatting, '[**a** *b* ~~c~~ `e`]')).toBe('a b c e')
   })
 
   test('leaves text outside the selection alone', () => {
@@ -856,6 +856,27 @@ describe('clear formatting over code', () => {
 
   test("takes a code span's marks and none of what it holds", () => {
     expect(run(clearFormatting, '[`**b**` **c**]')).toBe('**b** c')
+  })
+})
+
+describe('clear formatting over what only looks like a mark', () => {
+  const cleared = (doc: string) => {
+    const state = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.range(0, doc.length),
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
+      }),
+    )
+    let next = state
+    clearFormatting({ state, dispatch: (one: Transaction) => (next = one.state) })
+    return next.doc.toString()
+  }
+
+  test('keeps star bullets, escaped stars and the stars of a formula', () => {
+    expect(cleared('* one\n* **two**')).toBe('* one\n* two')
+    expect(cleared('a \\*literal\\* *b*')).toBe('a \\*literal\\* b')
+    expect(cleared('so $a*b*c$ and ==d==')).toBe('so $a*b*c$ and d')
   })
 })
 

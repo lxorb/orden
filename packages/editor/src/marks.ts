@@ -83,33 +83,43 @@ export function marksAcross(mark: string): StateCommand {
   }
 }
 
-const INLINE_MARKERS = /(\*\*|\*|~~|==|`|(?<![\p{L}\p{N}])__?|__?(?![\p{L}\p{N}]))/gu
+const MARKS = new Set(['EmphasisMark', 'StrikethroughMark', 'HighlightMark'])
 
-function clearedOf(state: EditorState, from: number, to: number): string {
-  let out = ''
-  let at = from
-  const strip = (end: number) => {
-    if (end > at) out += state.doc.sliceString(at, end).replace(INLINE_MARKERS, '')
+function markRanges(state: EditorState, from: number, to: number): { from: number; to: number }[] {
+  const found: { from: number; to: number }[] = []
+  const take = (start: number, end: number) => {
+    const clipped = { from: Math.max(from, start), to: Math.min(to, end) }
+    if (clipped.to > clipped.from) found.push(clipped)
   }
 
   syntaxTree(state).iterate({
     from,
     to,
     enter: (node) => {
-      if (!['FencedCode', 'CodeBlock', 'InlineCode'].includes(node.name)) return true
+      if (MARKS.has(node.name)) take(node.from, node.to)
+      if (node.name !== 'InlineCode') return true
 
-      const start = Math.max(from, node.from)
-      const end = Math.min(to, node.to)
-      strip(start)
-      const said = state.doc.sliceString(start, end)
-      out += node.name === 'InlineCode' ? said.replace(/^`+ ?| ?`+$/gu, '') : said
-      at = end
+      const said = state.doc.sliceString(node.from, node.to)
+      const opening = /^`+ ?/u.exec(said)?.[0].length ?? 0
+      const closing = / ?`+$/u.exec(said.slice(opening))?.[0].length ?? 0
+      take(node.from, node.from + opening)
+      take(node.to - closing, node.to)
       return false
     },
   })
-  strip(to)
 
-  return out
+  return found
+}
+
+function clearedOf(state: EditorState, from: number, to: number): string {
+  let out = ''
+  let at = from
+  for (const mark of markRanges(state, from, to)) {
+    if (mark.from < at) continue
+    out += state.doc.sliceString(at, mark.from)
+    at = mark.to
+  }
+  return out + state.doc.sliceString(at, to)
 }
 
 export const clearFormatting: StateCommand = ({ state, dispatch }) => {
