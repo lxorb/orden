@@ -282,11 +282,12 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
-  const folder = judgedForWriting(where.folder ?? folderOf(relative)).replace(/^\.$/, '')
+  const looksIn = (where.folder ?? folderOf(relative)).trim()
+  const folder = looksIn === '' || looksIn === '.' ? '' : judgedForWriting(looksIn)
   const rows = await rowsStore()
   const template = await templateOf(place, base, rows.of(place.space.name))
   const name = noteName(maybe(call, 'title') ?? 'Untitled')
-  const path = await freePath(place, folder === '.' ? '' : folder, name)
+  const path = await freePath(place, folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
 

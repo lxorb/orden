@@ -1824,6 +1824,17 @@ describe('to-dos and bases', () => {
     expect(files.get('/s/Home/Books.base')).toContain('name: Board')
   })
 
+  test('a base at the top of a space takes a row at the top of the space', async () => {
+    files.set(
+      '/s/Home/Tasks.base',
+      'filters: file.hasTag("todo")\nviews:\n  - type: table\n    name: All\n',
+    )
+    expect(
+      await call('add_row', { space: 'Home', base: 'Tasks.base', title: 'Call' }),
+    ).toMatchObject({ result: { path: 'Call.md', created: true } })
+    expect(files.has('/s/Home/Call.md')).toBe(true)
+  })
+
   test('edits asked at once all land, none written over another', async () => {
     files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
     files.set('/s/Home/board.canvas', '{"nodes":[],"edges":[]}')
