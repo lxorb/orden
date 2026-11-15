@@ -1,4 +1,4 @@
-import { takesWords } from '../../typing-pointer'
+import { takesWords } from '../../ui-controls/src/api'
 
 export const TYPED_AHEAD_FOR = 400
 

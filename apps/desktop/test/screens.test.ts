@@ -91,7 +91,6 @@ describe('every layer in the middle of the window', () => {
     expect(layers.map((one) => one.name).sort()).toEqual([
       'lib/FeedbackSheet.svelte',
       'lib/IconPicker.svelte',
-      'lib/JoinSheet.svelte',
       'lib/PromptSheet.svelte',
       'lib/SpacePicker.svelte',
       'lib/accounts-ui/src/SignIn.svelte',
@@ -102,6 +101,7 @@ describe('every layer in the middle of the window', () => {
       'lib/quick-add/src/QuickAddSheet.svelte',
       'lib/quitting/src/QuitSheet.svelte',
       'lib/settings/src/ThemeStore.svelte',
+      'lib/sharing/src/JoinSheet.svelte',
       'lib/terminal/src/remote/HostPicker.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
       'lib/ui-controls/src/Sheet.svelte',

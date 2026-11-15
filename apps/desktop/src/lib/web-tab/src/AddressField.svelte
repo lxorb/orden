@@ -27,7 +27,7 @@
   import { onMount, untrack } from 'svelte'
   import FileMark from '../../FileMark.svelte'
   import { overlays } from '../../ui-kit/src/api'
-  import Suggest from '../../Suggest.svelte'
+  import { Suggest } from '../../matching/src/api'
   import { links } from '../../link-index/src/api'
   import { frecency, pieces } from '../../matching/src/api'
   import { dotCom, type HalfTyped } from '@orden/scan/typed'

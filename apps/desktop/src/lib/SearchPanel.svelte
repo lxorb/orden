@@ -13,7 +13,7 @@
   import type { Hit, Range } from '@orden/scan/search/match'
   import { taskOf } from '@orden/scan/search/task'
   import { relativeTo } from './platform/src/api'
-  import Suggest from './Suggest.svelte'
+  import { Suggest } from './matching/src/api'
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
   import { isScratchpad, pad } from './scratchpad/src/api'
