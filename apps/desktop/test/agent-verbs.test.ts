@@ -1870,6 +1870,31 @@ describe('to-dos and bases', () => {
     })
   })
 
+  test('every todo is listed, one that starts later and one done another day too', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const later = await todos.add({ title: 'Next week', start: '2099-01-01', space: null })
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-10T10:00:00.000Z'))
+    const finished = await todos.add({ title: 'Last week', space: home.id })
+    if (finished.ok) await todos.update(finished.value.id, { done: true })
+    vi.useRealTimers()
+    const titles = async (args: Record<string, unknown>) =>
+      ((await call('list_tasks', args)) as { result: { todos: { title: string }[] } }).result.todos
+        .map((one) => one.title)
+        .sort()
+    const listed = {
+      open: await titles({}),
+      withDone: await titles({ done: true }),
+      inHome: await titles({ space: 'Home', done: true }),
+    }
+    for (const one of [later, finished]) if (one.ok) await todos.remove(one.value.id)
+    expect(listed).toEqual({
+      open: ['Next week'],
+      withDone: ['Last week', 'Next week'],
+      inHome: ['Last week'],
+    })
+  })
+
   test('a todo is not added into an open space the agent was not granted', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     workspace.activeSpaceId = 'secret'

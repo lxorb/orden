@@ -32,7 +32,6 @@ import {
   judgedForWriting,
   onDisk,
   type Place,
-  placeFor,
   placeOf,
   reachesSpaceId,
   writableAt,
@@ -163,15 +162,21 @@ function patchOf(call: Call): TodoPatch {
 }
 
 export async function listTasks(call: Call): Promise<AgentAnswer> {
-  const { todos, shownTodos, sortedTodos, dayOf } = await model()
-  const named = maybe(call, 'space')
-  const space = named === null ? null : placeFor(call, named).space.id
+  const { todos, sortedTodos } = await model()
+  const space = maybe(call, 'space') === null ? null : placeOf(call).space.id
   const label = maybe(call, 'label')
+  const withDone = flag(call, 'done')
   const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
   const shown = sortedTodos(
-    shownTodos(todos.todos, { onlySpace: named !== null, space, label, today: dayOf() }),
+    todos.todos.filter(
+      (one) =>
+        (space === null || one.space === space) &&
+        (label === null || one.labels.includes(label)) &&
+        (withDone || !one.done) &&
+        reachesSpaceId(call, one.space),
+    ),
     'deadline',
-  ).filter((one) => reachesSpaceId(call, one.space) && (flag(call, 'done') || !one.done))
+  )
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 
