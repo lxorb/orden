@@ -30,3 +30,27 @@ test('a lock in a folding space covers every spelling the file system opens as i
   expect(pathKey(`${ROOT}/Straße`)).not.toBe(pathKey(`${ROOT}/Strasse`))
   answeredCase(ROOT, null)
 })
+
+test('a lock in a folding space stays shut however its letters fold, in the app as for agents', () => {
+  for (const ROOT of ['/Users/eleni/Σημειώσεις', '/space']) {
+    answeredCase(ROOT, true)
+    const protection = new Protection()
+    protection.set(ROOT, `${ROOT}/Diary`, 'password')
+    protection.set(ROOT, `${ROOT}/İş`, 'password')
+    protection.set(ROOT, `${ROOT}/Λόγος`, 'password')
+    protection.set(ROOT, `${ROOT}/Secrets`, 'password')
+
+    for (const path of [
+      'Diary/today.md',
+      'İş/plan.md',
+      'Λόγος/a.md',
+      'ΛΌΓΟΣ/a.md',
+      'Secrets/plan.md',
+      'ſecrets/plan.md',
+    ]) {
+      expect(protection.locked(`${ROOT}/${path}`), `${ROOT} ${path}`).toBe(true)
+    }
+    expect(protection.locked(`${ROOT}/Open/plan.md`)).toBe(false)
+    answeredCase(ROOT, null)
+  }
+})

@@ -179,7 +179,7 @@ export class Protection {
     const exact = pathKeyAs(path, false)
     let folded: string | null = null
     return shut.some(({ folds, keys }) => {
-      const at = folds ? (folded ??= exact.toLowerCase()) : exact
+      const at = folds ? (folded ??= pathKeyAs(path, true)) : exact
       return keys.some(({ key, under }) => at === key || at.startsWith(under))
     })
   }
