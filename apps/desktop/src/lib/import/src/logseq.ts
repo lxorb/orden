@@ -68,9 +68,10 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
   const names = new Names()
   const root = graphRoot(sources)
   const inside = (path: string) => (path.startsWith(root) ? path.slice(root.length) : path)
+  const graphs = (path: string) => !isJunk(path) && !isHidden(path) && !APP.test(path)
 
   const config = await configOf(sources, root)
-  const blocks = await blocksById(sources)
+  const blocks = await blocksById(sources.filter((source) => graphs(inside(source.path))))
   const days = new Map<string, string>()
   for (const source of sources) {
     const day = journalOf(inside(source.path), config.file)
@@ -84,7 +85,7 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
     format: 'logseq',
     place: (source) => {
       const path = inside(source.path)
-      if (isJunk(path) || isHidden(path) || APP.test(path)) return { to: null }
+      if (!graphs(path)) return { to: null }
 
       const to = placed(path, config.file)
       const free = names.free(to)

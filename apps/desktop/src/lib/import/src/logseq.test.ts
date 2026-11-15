@@ -337,4 +337,31 @@ describe('a Logseq graph', () => {
 
     expect(said.body).toBe('- this is ==important== now, and `^^not^^` in code\n')
   })
+
+  test('a block reference reads the page, not a copy Logseq keeps of it', async () => {
+    const id = '650c1a2b-1111-2222-3333-444455556666'
+    const plan = await readLogseq([
+      file('journals/2026_11_15.md', `- Ship on Friday\n  id:: ${id}\n`),
+      file(
+        'logseq/bak/journals/2026_11_15/2026-11-14T10_00_00.000Z.Desktop.md',
+        `- Ship on Monday\n  id:: ${id}\n`,
+      ),
+      file('logseq/version-files/base/journals/2026_11_15.md', `- Ship on Tuesday\n  id:: ${id}\n`),
+      file('.recycle/pages/Old.md', `- Ship on Sunday\n  id:: ${id}\n`),
+      file('pages/Plan.md', `- As agreed: ((${id}))\n`),
+    ])
+
+    expect(noteAt(plan, 'Plan.md')).toContain('As agreed: Ship on Friday')
+  })
+
+  test('a block reference in a graph zipped up whole skips the copies too', async () => {
+    const id = '650c1a2b-1111-2222-3333-444455556666'
+    const plan = await readLogseq([
+      file('My graph/pages/Source.md', `- Ship on Friday\n  id:: ${id}\n`),
+      file('My graph/logseq/bak/pages/Source/2026.md', `- Ship on Monday\n  id:: ${id}\n`),
+      file('My graph/pages/Plan.md', `- As agreed: ((${id}))\n`),
+    ])
+
+    expect(noteAt(plan, 'Plan.md')).toContain('As agreed: Ship on Friday')
+  })
 })
