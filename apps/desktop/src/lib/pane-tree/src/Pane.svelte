@@ -268,7 +268,9 @@
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
-    void here(import('../../editor-menu')).then(({ showEditorMenu }) => showEditorMenu(event, on, path))
+    void here(import('../../editor-menu')).then(({ showEditorMenu }) =>
+      showEditorMenu(event, on, path),
+    )
   }
 
   async function saveImage(file: File, into: Tab): Promise<string | null> {

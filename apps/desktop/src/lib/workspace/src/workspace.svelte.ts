@@ -18,7 +18,43 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from '../../link-index/src/api'
-import { onDisk, insideOnly, askCase, folderOf, insideSpace, isMarkdownPath, movedTo, nameOf, noteName, pathKey, pathKeys, relativeTo, samePath, sameSpelling, within, withinSpace, AGENTS_NAME, isAgentsName, nameFromContent, shownName, afterQuiet, waited, isRecord, keepJson, stored, log, invoke, isDesktop, isNative, joinPath, openExternal, nextTask, oneWriteAt, mark, markPainted } from '../../platform/src/api'
+import {
+  onDisk,
+  insideOnly,
+  askCase,
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  movedTo,
+  nameOf,
+  noteName,
+  pathKey,
+  pathKeys,
+  relativeTo,
+  samePath,
+  sameSpelling,
+  within,
+  withinSpace,
+  AGENTS_NAME,
+  isAgentsName,
+  nameFromContent,
+  shownName,
+  afterQuiet,
+  waited,
+  isRecord,
+  keepJson,
+  stored,
+  log,
+  invoke,
+  isDesktop,
+  isNative,
+  joinPath,
+  openExternal,
+  nextTask,
+  oneWriteAt,
+  mark,
+  markPainted,
+} from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
 import { noteId } from '../../note-id'
 import { busy, readTint, viewport } from '../../ui-kit/src/api'
@@ -28,7 +64,27 @@ import { scanFootnotes } from './footnotes'
 import type { Change } from '@orden/scan/search/replace'
 import { tabOverview } from '../../surfaces.svelte'
 import { GIVE_UP } from '../../parting/src/api'
-import { holdsRetiredTab, type DocumentStart, holdsWords, NoteDoc, unixLines, Tab, UNTITLED, OpenDocuments, secondWebTabs, draftFile, hasWords, isDraft, isUnsaved, worthAFile, fetchAcross, meetAcross, oweTo, lineOfHeading, scanHeadings } from '../../documents/src/api'
+import {
+  holdsRetiredTab,
+  type DocumentStart,
+  holdsWords,
+  NoteDoc,
+  unixLines,
+  Tab,
+  UNTITLED,
+  OpenDocuments,
+  secondWebTabs,
+  draftFile,
+  hasWords,
+  isDraft,
+  isUnsaved,
+  worthAFile,
+  fetchAcross,
+  meetAcross,
+  oweTo,
+  lineOfHeading,
+  scanHeadings,
+} from '../../documents/src/api'
 import { WELCOME_PATH } from '../../welcome'
 import {
   arrangementIn,

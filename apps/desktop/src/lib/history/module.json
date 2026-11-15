@@ -16,10 +16,5 @@
     "sync-store",
     "modes"
   ],
-  "pending": [
-    "apps/desktop/src/lib/modes.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/when.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/usage.svelte.ts"]
 }

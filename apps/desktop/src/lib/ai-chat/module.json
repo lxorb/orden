@@ -35,8 +35,6 @@
     "apps/desktop/src/lib/focus.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
-    "apps/desktop/src/lib/task-actions.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
 }
