@@ -1112,6 +1112,30 @@ describe('a chat while it answers', () => {
     expect(thread.turns[0]?.at).toBe(1)
   })
 
+  test('Ask again tells the engine the chat was cut before it sends the message again', async () => {
+    const chat = await asked()
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    const order: string[] = []
+    const rewound = vi.fn((cut: Thread) => {
+      order.push(`rewound:${cut.turns.length}`)
+    })
+    ;(engine as unknown as { rewound: unknown }).rewound = rewound
+    onTestFinished(() => {
+      delete (engine as unknown as { rewound?: unknown }).rewound
+    })
+    engine.send.mockImplementationOnce((into, _draft, on) => {
+      order.push(`send:${into.turns.length}`)
+      on({ type: 'done', stop: 'end' })
+      return Promise.resolve()
+    })
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(order).toEqual(['rewound:0', 'send:0']))
+    expect(rewound).toHaveBeenCalledWith(thread)
+  })
+
   test('keeps the message and its answer on Ask again refused before any turn', async () => {
     const chat = await asked()
     const thread = chat.thread!

@@ -1041,10 +1041,12 @@ class Chat implements Panel {
     draft: Draft,
     stopper: AbortController,
     firstAsked?: number,
+    cut = false,
   ): Promise<Ended> {
     if (isDeleted(thread.id) && (await staysDeleted(thread.id)))
       return { stop: 'stopped', turn: null, usage: null }
     const engine = await engineOf(provider.kind)
+    if (cut) engine.rewound?.(thread)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
     let askedAt = firstAsked
     await engine.send(
@@ -1241,7 +1243,7 @@ class Chat implements Panel {
   ): void {
     const at = thread.turns.length
     let stop: Stop = 'end'
-    void this.sendDraft(thread, provider, draft, stopper, taken[0]?.at)
+    void this.sendDraft(thread, provider, draft, stopper, taken[0]?.at, true)
       .then((ended) => (stop = ended.stop))
       .catch((error: unknown) => {
         stop = 'error'
