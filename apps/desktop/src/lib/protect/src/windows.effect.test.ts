@@ -62,3 +62,24 @@ describe('a shorter relock chosen in another window', () => {
     expect(unlocks.any).toBe(false)
   })
 })
+
+describe('relocking right away, chosen in this window', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    unlocks.lockAll()
+    unlocks.relock = 60
+  })
+
+  afterEach(() => {
+    unlocks.lockAll()
+    vi.useRealTimers()
+    localStorage.clear()
+  })
+
+  test('ends the grace an unlock gave, so the next lock asks again', () => {
+    const note = { root: ROOT, key: 'Plans.md', way: 'password' as const }
+    unlocks.unlock([note])
+    unlocks.setRelock(0)
+    expect(unlocks.stillProven([{ root: ROOT, key: 'Other.md', way: 'password' }])).toBe(false)
+  })
+})

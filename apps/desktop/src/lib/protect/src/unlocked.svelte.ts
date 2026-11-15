@@ -121,8 +121,8 @@ class Unlocks {
 
   setRelock(minutes: number): void {
     if (!(RELOCK_MINUTES as readonly number[]).includes(minutes)) return
-    this.relock = minutes
     keep(RELOCK_KEY, String(minutes))
+    this.retime(minutes)
   }
 
   moved(from: string, to: string, root: string | null): void {
@@ -150,7 +150,10 @@ class Unlocks {
   }
 
   heardRelock(): void {
-    const minutes = readRelock()
+    this.retime(readRelock())
+  }
+
+  private retime(minutes: number): void {
     if (minutes === this.relock) return
     this.relock = minutes
     if (this.proven) this.prove()
