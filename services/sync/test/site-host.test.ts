@@ -33,6 +33,11 @@ describe("a published site's own address", () => {
     ['GET', '/oauth/authorize?client_id=x'],
     ['GET', '/.well-known/oauth-authorization-server'],
     ['POST', '/mcp'],
+    ['GET', '/%761/me'],
+    ['POST', '/%761/auth/code'],
+    ['GET', '/%762/pass/changes'],
+    ['GET', '/%6fauth/authorize?client_id=x'],
+    ['POST', '/%6dcp'],
   ])('answers nothing of the account at %s %s', async (method, path) => {
     const asked = await call(env, path, {
       host: SITE,

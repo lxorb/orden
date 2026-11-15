@@ -115,11 +115,10 @@ app.onError(failed)
 const ACCOUNT_ONLY = /^\/(?:v1|v2|oauth|\.well-known|mcp|rooms|even)(?:\/|$)/
 
 app.use('*', async (context, next) => {
-  const url = new URL(context.req.url)
   if (
-    ACCOUNT_ONLY.test(url.pathname) &&
+    ACCOUNT_ONLY.test(context.req.path) &&
     !isAppHost(context.env, context.req.url) &&
-    (await spaceForHost(context.env, url.host))
+    (await spaceForHost(context.env, new URL(context.req.url).host))
   ) {
     return context.text('Not found', 404)
   }
