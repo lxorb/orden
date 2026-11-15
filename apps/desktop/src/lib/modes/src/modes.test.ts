@@ -653,6 +653,30 @@ describe('taking over what the account holds', () => {
     return { release, settingsCall }
   }
 
+  test('keeps a change the account never heard across a restart, and sends it before reading', async () => {
+    const sent: Held[] = []
+    let server: Held = { ligatures: 'all' }
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    modes.setLigatures('code')
+
+    const store = await restarted()
+    api.saveSettings = async (_token: string, patch: Held) => {
+      sent.push(patch)
+      server = { ...server, ...patch }
+      return { settings: server }
+    }
+    api.settings = async () => ({ settings: server })
+    await store.adopt('token')
+
+    expect(sent).toEqual([{ ligatures: 'code' }])
+    expect(store.ligatures).toBe('code')
+
+    sent.length = 0
+    await (await restarted()).adopt('token')
+    expect(sent).toEqual([])
+    Object.assign(api, was)
+  })
+
   test('brings the formatting marks kept quiet', async () => {
     const { release, settingsCall } = heldAnswer({ quietMarks: true })
     api.settings = settingsCall

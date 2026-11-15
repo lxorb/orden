@@ -44,6 +44,7 @@ import {
   type Marks,
 } from '@orden/glasses/choices'
 import {
+  forget,
   isNumber,
   isRecord,
   isString,
@@ -58,6 +59,7 @@ import { theme } from '../../theme/src/api'
 import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
+const OWED_KEY = 'orden:modes-owed'
 
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
@@ -873,7 +875,7 @@ class Modes {
       return null
     }
 
-    const unheard = this.sent === asked
+    const unheard = this.sent === asked && !Object.keys(this.owed).length
 
     const theirs = ligatureScope(remote.ligatures)
     if (theirs && unheard && theirs !== this.ligatures) {
@@ -1039,7 +1041,17 @@ class Modes {
 
   private sent = 0
 
-  private owed: AccountSettings = {}
+  private get owed(): AccountSettings {
+    const kept = stored(OWED_KEY)
+    if (!isRecord(kept) || !isRecord(kept.patch)) return {}
+    const who = account.user?.id ?? null
+    return kept.who === null || kept.who === who ? kept.patch : {}
+  }
+
+  private set owed(patch: AccountSettings) {
+    if (!Object.keys(patch).length) forget(OWED_KEY)
+    else keepJson(OWED_KEY, { who: account.user?.id ?? null, patch })
+  }
 
   private session = 0
 
@@ -1050,19 +1062,10 @@ class Modes {
 
   private share(patch: AccountSettings) {
     this.sent++
+    this.owed = { ...this.owed, ...patch }
 
     const token = account.accountToken
-    if (!token) {
-      this.owed = { ...this.owed, ...patch }
-      return
-    }
-
-    const owed = this.owed
-    const session = this.session
-    this.owed = {}
-    void api.saveSettings(token, { ...owed, ...patch }).catch(() => {
-      if (this.session === session) this.owed = { ...owed, ...patch, ...this.owed }
-    })
+    if (token) void this.settle(token)
   }
 
   private async settle(token: string): Promise<void> {
@@ -1070,12 +1073,18 @@ class Modes {
     if (!Object.keys(owed).length) return
 
     const session = this.session
-    this.owed = {}
     try {
       await api.saveSettings(token, owed)
     } catch {
-      if (this.session === session) this.owed = { ...owed, ...this.owed }
+      return
     }
+    if (this.session !== session) return
+    const said = (value: unknown) => JSON.stringify(value)
+    this.owed = Object.fromEntries(
+      Object.entries(this.owed).filter(
+        ([name, value]) => said(value) !== said(owed[name as keyof AccountSettings]),
+      ),
+    )
   }
 
   toggleCloseBrackets(view?: EditorView) {
