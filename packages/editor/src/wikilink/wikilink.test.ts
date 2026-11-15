@@ -368,6 +368,14 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, 'Nothing.md')).toBeNull()
   })
 
+  test('a link written as relative names only what is there, never a namesake elsewhere', () => {
+    const here = index([note('Archive/Plan.md'), note('Projects/Plan.md')], 'Notes/Day/x.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Projects/Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../../Projects/Plan.md')?.path).toBe('Projects/Plan.md')
+  })
+
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()

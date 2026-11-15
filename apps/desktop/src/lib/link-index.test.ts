@@ -1609,3 +1609,15 @@ describe('a note that is protected and shut', () => {
     }
   })
 })
+
+describe('a relative link to a note that is not there', () => {
+  test('is no backlink of a namesake elsewhere and is left as written when it is renamed', async () => {
+    await space({
+      'Archive/Plan.md': '# old plan',
+      'Notes/Day/x.md': 'see [p](./Plan.md) and [q](../Plan.md)',
+    })
+    expect(links.backlinks(at('Archive/Plan.md'))).toEqual([])
+    await links.retarget(at('Archive/Plan.md'), at('Archive/Strategy.md'), ROOT)
+    expect(notes['Notes/Day/x.md']).toBe('see [p](./Plan.md) and [q](../Plan.md)')
+  })
+})
