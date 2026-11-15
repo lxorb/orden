@@ -85,10 +85,13 @@ export class TableWidget extends OrdenWidget {
       const focus = table.focusState()
       const start = table.tracked
       const shown = drawnIn.get(table)
-      if (focus && start !== null) {
+      const { editor } = table
+      if (focus) {
         queueMicrotask(() => {
-          if (showing.get(table.editor) !== shown) return
-          tableViewAt(table.editor, start)?.focusCell(focus.at, focus.offset)
+          if (showing.get(editor) !== shown) return
+          const drawn = start === null ? null : tableViewAt(editor, start)
+          if (drawn) drawn.focusCell(focus.at, focus.offset)
+          else if (!editor.dom.contains(document.activeElement)) editor.focus()
         })
       }
       table.destroy()

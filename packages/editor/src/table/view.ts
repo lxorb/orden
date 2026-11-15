@@ -5,6 +5,7 @@ import {
   MapMode,
   type Text,
   type StateCommand,
+  Transaction,
 } from '@codemirror/state'
 import type { Command, EditorView } from '@codemirror/view'
 import { redoEdit, undoEdit } from '../shared'
@@ -302,6 +303,7 @@ export class TableView {
     if (!same) return false
 
     const focused = this.focusedCell()?.at
+    if (focused && textIn(model, focused) !== textIn(before, focused)) return false
     for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
       const at = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) }
       if (sameCell(at, focused)) continue
@@ -425,6 +427,7 @@ export class TableView {
     }
     if (editor.state.doc.sliceString(from, from + this.source.length) !== this.source) return false
 
+    this.keepCaretBeside(from, from + this.source.length)
     this.expected = { source: text, model, widths }
     try {
       editor.dispatch({
@@ -436,6 +439,18 @@ export class TableView {
       this.expected = null
     }
     return true
+  }
+
+  private keepCaretBeside(from: number, to: number) {
+    const { state } = this.editor
+    const beside = to < state.doc.length ? to + 1 : from > 0 ? from - 1 : null
+    if (beside === null) return
+    const { main } = state.selection
+    if (state.selection.ranges.length === 1 && main.empty && main.head === beside) return
+    this.editor.dispatch({
+      selection: { anchor: beside },
+      annotations: [tableWrite.of(true), Transaction.addToHistory.of(false)],
+    })
   }
 
   private typeIn(at: CellAddress) {
@@ -759,6 +774,7 @@ export class TableView {
   }
 
   private edited(cell: HTMLElement, at: CellAddress) {
+    if (!attached(cell)) return
     if (this.editor.state.readOnly) {
       cell.blur()
       return
@@ -878,7 +894,9 @@ export class TableView {
     event.preventDefault()
     this.flush()
     this.focusAfter = { at, offset: caretOffset(cell) }
+    const scroll = this.editor.scrollSnapshot()
     writingTable(() => command(this.editor))
+    this.editor.dispatch({ effects: scroll, annotations: tableWrite.of(true) })
     this.focusAfter = null
   }
 
