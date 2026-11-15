@@ -48,3 +48,28 @@ describe('a todo changed on a device whose clock is behind', () => {
     expect(phone.store.todo('tclaude')).toMatchObject({ done: true, priority: 3 })
   })
 })
+
+describe('a todo too long for one change to the account', () => {
+  test('is refused instead of staying on this device only, and one that fits reaches the other device', async () => {
+    const server = new MemoryTodoServer()
+    let clock = NOON
+    const laptop = device(server, 'u', () => (clock += 1))
+    await laptop.open()
+    const long = await laptop.store.add({ title: 'Trip', description: 'ü'.repeat(8000) })
+    expect(long.ok).toBe(false)
+    const made = await laptop.store.add({ title: 'Trip', description: 'u'.repeat(8000) })
+    if (!made.ok) throw new Error(made.error.message)
+    const subtasks = Array.from({ length: 50 }, (_, at) => ({
+      id: `s${at}`,
+      title: 'step "quoted" '.repeat(30),
+      done: false,
+    }))
+    expect((await laptop.store.update(made.value.id, { subtasks })).ok).toBe(false)
+    await laptop.store.exchange()
+    let other = NOON
+    const phone = device(server, 'u', () => (other += 1))
+    await phone.open()
+    await phone.store.exchange()
+    expect(phone.store.todos.map((one) => one.description.length)).toEqual([8000])
+  })
+})
