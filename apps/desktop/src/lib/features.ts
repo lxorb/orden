@@ -21,7 +21,7 @@ import { askPart, loadRewriteSheet, rewritingStore } from './ai-chat/src/api'
 import { outlinePart } from './pages/src/api'
 import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
-import { searchSpace } from './search/src/api'
+import { loadSearchPanel, search, searchFrom, searchSpace, showSearch } from './search/src/api'
 import { partView, reloadWhen } from './ui-kit/src/api'
 import { samePath } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
@@ -74,6 +74,7 @@ serveLinks({
   },
   search: searchSpace,
 })
+providePort('search', { panel: search, show: showSearch, fromView: searchFrom })
 providePort('settings.window', settings)
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
@@ -100,6 +101,8 @@ registerSurfaces({
   'terminal-mark': () => import('./terminal/src/api').then((one) => one.loadTerminalMark()),
   'quick-add': () => import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
   'private-mark': loadPrivateMark,
+  'search-panel': loadSearchPanel,
+  links: () => import('./links-panel/src/api').then((one) => one.loadLinksPanel()),
 })
 registerSidebarPart(askPart)
 registerSidebarPart(outlinePart)
@@ -149,6 +152,7 @@ if (__EVEN_PLUGIN__) {
     tasks: waits,
     todos: waits,
     channel: waits,
+    'chat-links': waits,
     chats: waits,
     'time-panel': waits,
     'pass-fill': waits,
@@ -167,6 +171,7 @@ if (!__EVEN_PLUGIN__) {
     tasks: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
     todos: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
     channel: () => import('./chats-client/src/api').then((one) => one.loadChatTab()),
+    'chat-links': () => import('./chats-client/src/api').then((one) => one.loadChatLinks()),
     chats: () => import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
     'time-panel': () => import('./time/src/api').then((one) => one.loadTimePanel()),
     time: () => import('./time/src/api').then((one) => one.loadTimeTab()),

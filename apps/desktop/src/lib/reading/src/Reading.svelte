@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
+  import { searching } from '@orden/contracts'
   import FindBar from './FindBar.svelte'
   import { keyElsewhere } from '../../layer-keys'
   import { menu, scrollbar } from '../../ui-kit/src/api'
@@ -259,7 +260,7 @@
     if (tag) {
       event.preventDefault()
       const name = tag.getAttribute('data-tag')
-      if (name && !middle) void import('../../tag-search').then(({ searchTag }) => searchTag(name))
+      if (name && !middle) searching()?.show(`tag:${name}`)
       return
     }
 

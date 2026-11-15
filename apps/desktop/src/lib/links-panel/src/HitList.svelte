@@ -1,16 +1,16 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import { fileMark } from './file-mark'
-  import FileMark from './FileMark.svelte'
-  import type { Outgoing, Reference } from './link-index/src/api'
+  import { fileMark } from '../../file-mark'
+  import FileMark from '../../FileMark.svelte'
+  import type { Outgoing, Reference } from '../../link-index/src/api'
   import { linkPieces, shownLine } from './link-line'
-  import { middleOpens } from './new-tab'
-  import { roving } from './ui-kit/src/api'
-  import { shownName } from './platform/src/api'
-  import { offsetOf, type Rows, windowFor } from './windows/src/api'
-  import { ListView, measuredRow } from './windows/src/api'
-  import { folderOf, insideSpace } from './platform/src/api'
-  import { workspace } from './workspace/src/api'
+  import { middleOpens } from '../../new-tab'
+  import { roving } from '../../ui-kit/src/api'
+  import { shownName } from '../../platform/src/api'
+  import { offsetOf, type Rows, windowFor } from '../../windows/src/api'
+  import { ListView, measuredRow } from '../../windows/src/api'
+  import { folderOf, insideSpace } from '../../platform/src/api'
+  import { workspace } from '../../workspace/src/api'
 
   type Row = Reference | Outgoing
 

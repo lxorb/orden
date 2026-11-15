@@ -3,6 +3,7 @@ import type { TabKind } from './shell'
 export interface TabMenuItem {
   readonly label: string
   readonly hint?: string | undefined
+  readonly checked?: boolean
   readonly disabled?: boolean
   readonly keep?: boolean
   readonly more?: () => Promise<TabMenuEntry[]>

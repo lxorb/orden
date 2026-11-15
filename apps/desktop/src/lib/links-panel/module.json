@@ -1,0 +1,22 @@
+{
+  "name": "links-panel",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "gates",
+    "graph",
+    "link-index",
+    "markdown",
+    "platform",
+    "surfaces",
+    "ui-kit",
+    "windows",
+    "workspace"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/FileMark.svelte",
+    "apps/desktop/src/lib/file-mark.ts",
+    "apps/desktop/src/lib/new-tab.ts"
+  ]
+}

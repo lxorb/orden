@@ -1,7 +1,7 @@
 import { MARKS } from '../../file-mark'
 import { locked, setKind } from '../../kind-choice'
 import { kindName } from '../../kind-words'
-import { kindLines, newKinds } from '../../new-kinds'
+import { kindLines, newKinds } from '../../new-here/src/api'
 import { gated, hiddenKinds } from '../../gates/src/api'
 import type { Field, Group, Pane } from './fields'
 

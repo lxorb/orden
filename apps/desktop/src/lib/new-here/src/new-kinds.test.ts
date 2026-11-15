@@ -1,3 +1,4 @@
+import { providePort, registerTabKind } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -17,26 +18,25 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const online = vi.hoisted(() => ({ made: null as string[] | null }))
-vi.mock('./terminal/src/online/open', () => ({
-  openOnline: () => {
-    online.made?.push('online')
-    return Promise.resolve(null)
-  },
-}))
-vi.mock('./pass-sync/src/api', () => ({ openPass: () => undefined }))
-vi.mock('./apps/src/make', () => ({
-  makeApplication: () => {
-    online.made?.push('application')
-    return Promise.resolve(null)
-  },
-}))
+const online = { made: null as string[] | null }
+const noting = (what: string) => () => {
+  online.made?.push(what)
+  return Promise.resolve()
+}
+providePort('terminal.making', {
+  open: noting('terminal'),
+  shells: () => Promise.resolve([]),
+  warm: () => Promise.resolve(),
+  pickHost: noting('remote'),
+  online: noting('online'),
+})
+registerTabKind('application', () => Promise.resolve({ make: noting('application') }))
 
-await import('./web-tab/src/api')
+await import('../../web-tab/src/api')
 const { kindLines, newKinds } = await import('./new-kinds')
-const { workspace } = await import('./workspace/src/api')
-const { viewport } = await import('./ui-kit/src/viewport.svelte')
-const { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('./gates/src/api')
+const { workspace } = await import('../../workspace/src/api')
+const { viewport } = await import('../../ui-kit/src/viewport.svelte')
+const { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
 
 let was: 'phone' | 'tablet' | 'desktop'
 
@@ -154,7 +154,7 @@ describe('the kinds a new tab can be', () => {
 
   test('a web note opens the search engine this device chose', async () => {
     const made = makers()
-    const { searchEngine } = await import('./web-tab/src/search-engine.svelte')
+    const { searchEngine } = await import('../../web-tab/src/search-engine.svelte')
     searchEngine.choose('duckduckgo')
 
     newKinds()

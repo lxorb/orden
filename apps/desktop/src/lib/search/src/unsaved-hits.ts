@@ -1,5 +1,5 @@
-import { workspace } from './workspace/src/api'
-import { type NoteDoc, isDraft } from './documents/src/api'
+import { workspace } from '../../workspace/src/api'
+import { type NoteDoc, isDraft } from '../../documents/src/api'
 import { type Hit, Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 

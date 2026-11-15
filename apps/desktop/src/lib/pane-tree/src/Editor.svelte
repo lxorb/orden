@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
+  import { searching } from '@orden/contracts'
   import type { Cover } from '@orden/markdown/cover'
   import {
     createEditor,
@@ -101,8 +102,7 @@
       ...(opennote
         ? { openNote: (jump: NoteJump, press?: LinkPress) => opennote(jump, press, one.path) }
         : {}),
-      openTag: (tag: string) =>
-        void import('../../tag-search').then(({ searchTag }) => searchTag(tag)),
+      openTag: (tag: string) => searching()?.show(`tag:${tag}`),
       ...(nameblock
         ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) }
         : {}),

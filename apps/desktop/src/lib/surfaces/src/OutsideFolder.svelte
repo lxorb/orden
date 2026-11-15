@@ -1,10 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { importingStore } from './import/src/api'
-  import { dur, fly } from './platform/src/api'
-  import { told } from './ui-kit/src/api'
-  import { forget, isRecord, isString, stored } from './platform/src/api'
-  import { OUTSIDE_FOLDER } from '@orden/contracts'
+  import { dur, fly } from '../../platform/src/api'
+  import { told } from '../../ui-kit/src/api'
+  import { forget, isRecord, isString, stored } from '../../platform/src/api'
+  import { OUTSIDE_FOLDER, runCommand } from '@orden/contracts'
 
   const said = stored(OUTSIDE_FOLDER)
   forget(OUTSIDE_FOLDER)
@@ -38,7 +37,7 @@
         class="link"
         onclick={() => {
           showing = false
-          void importingStore().then(({ importing }) => importing.show())
+          void runCommand('import.show')
         }}
       >
         Import

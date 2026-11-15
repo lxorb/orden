@@ -1,7 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { changesFor, searchSpace, searchWarmth, selectedWords } from '../src/api'
+import type { SearchPanel } from '@orden/contracts'
+import {
+  changesFor,
+  loadSearchPanel,
+  search,
+  searchSpace,
+  searchWarmth,
+  selectedWords,
+} from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -39,11 +47,13 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('loads only the selection and the space search with it, and the rest through doors', () => {
+  test('loads the selection, the space search and the panel store with it, and the rest through doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
     const loaded = [...api.matchAll(/^export \{[^}]*\} from '([^']+)'/gm)].map((one) => one[1])
-    expect(loaded).toEqual(['./seed', './space'])
-    for (const one of [searchSpace, searchWarmth, changesFor]) expect(typeof one).toBe('function')
+    expect(loaded).toEqual(['./seed', './space', './panel.svelte'])
+    for (const one of [searchSpace, searchWarmth, changesFor, loadSearchPanel]) {
+      expect(typeof one).toBe('function')
+    }
   })
 })
 
@@ -98,5 +108,27 @@ describe('a replacement', () => {
 describe("the search's hold on a space", () => {
   test('says nothing before a space is warmed', async () => {
     expect((await searchWarmth()).said).toBeUndefined()
+  })
+})
+
+describe('the search panel', () => {
+  test("is one store that keeps the search panel's promises", () => {
+    const panel: SearchPanel = search
+    expect(panel).toBe(search)
+  })
+
+  test('runs nothing for words too short to be a search', () => {
+    search.ask('a')
+    expect(search.running).toBe(false)
+    expect(search.hits).toEqual([])
+    search.clear()
+  })
+
+  test('turns a sort around when it is asked for twice', () => {
+    search.setSort('name')
+    expect(search.ordering).toEqual({ sort: 'name', descending: false })
+    search.setSort('name')
+    expect(search.ordering).toEqual({ sort: 'name', descending: true })
+    search.setSort('relevance')
   })
 })

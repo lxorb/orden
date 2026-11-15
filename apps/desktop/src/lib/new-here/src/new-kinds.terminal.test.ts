@@ -1,3 +1,4 @@
+import { providePort } from '@orden/contracts'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const store = new Map<string, string>()
@@ -9,35 +10,37 @@ vi.stubGlobal('localStorage', {
 
 const opened: (string | undefined)[] = []
 
-vi.mock('./platform/src/tauri', async (actual) => ({
-  ...(await actual<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
 }))
-vi.mock('./terminal/src/open', () => ({
-  openTerminal: (shell?: string) => {
+const shownPicker: (string | undefined)[] = []
+providePort('terminal.making', {
+  open: (shell) => {
     opened.push(shell)
     return Promise.resolve()
   },
-  shellRows: (make: (shell: { id: string; name: string }) => void) =>
+  shells: (open) =>
     Promise.resolve([
-      { label: 'PowerShell', checked: true, run: () => make({ id: 'pwsh', name: 'PowerShell' }) },
-      { label: 'Ubuntu', run: () => make({ id: 'wsl:Ubuntu', name: 'Ubuntu' }) },
+      { label: 'PowerShell', checked: true, run: () => open('pwsh') },
+      { label: 'Ubuntu', run: () => open('wsl:Ubuntu') },
     ]),
-}))
-
-const shownPicker: (string | undefined)[] = []
-vi.mock('./terminal/src/remote/picker.svelte', () => ({
-  hostPicker: { show: (paneId?: string) => void shownPicker.push(paneId) },
-}))
+  warm: () => Promise.resolve(),
+  pickHost: (pane) => {
+    shownPicker.push(pane)
+    return Promise.resolve()
+  },
+  online: () => Promise.resolve(),
+})
 
 const { kindLines, newKinds } = await import('./new-kinds')
 const { APPS_WORD, EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } =
-  await import('./gates/src/api')
+  await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, EXPLORER_WORD, PASS_WORD]
 
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
-const { workspace } = await import('./workspace/src/api')
-const { viewport } = await import('./ui-kit/src/viewport.svelte')
+const { workspace } = await import('../../workspace/src/api')
+const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 
 afterEach(() => {
   opened.length = 0
@@ -54,7 +57,7 @@ describe('a terminal, as a kind a new tab can be', () => {
   })
 
   test('is left out, with Remote and Online, for somebody who does not write code, applications staying', async () => {
-    const { modes } = await import('./modes/src/api')
+    const { modes } = await import('../../modes/src/api')
     modes.developer = false
     try {
       expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([

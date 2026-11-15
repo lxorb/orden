@@ -50,7 +50,9 @@ export const applicationSurface = held(from('application') as TabOnly)
 export const explorerSurface = held(from('explorer') as TabShown)
 export const passSurface = held(from('pass') as TabShown)
 export const passFill = held(from('pass-fill') as Loaded<Component<{ bubble: unknown }>>)
-export const emptySurface = held(() => import('../../NewHere.svelte'))
+export const emptySurface = held(() =>
+  import('../../new-here/src/api').then((one) => ({ default: one.NewHere })),
+)
 export const readingSurface = held(from('reading') as TabShown)
 
 export const lockScreen = held(() =>
@@ -71,14 +73,25 @@ export const agentSession = held(from('agent-session') as Loaded<Component<{ age
 export const sparkMark = held(
   from('spark') as Loaded<Component<{ colour: string; turning?: boolean; paused?: boolean }>>,
 )
-export const searchPanel = held(() => import('../../SearchPanel.svelte'))
+export const searchPanel = held(
+  from('search-panel') as Loaded<Component<{ ongoto?: ((line: number) => void) | undefined }>>,
+)
 export const phoneTabsBar = held(from('phone-tabs') as Loaded<Component<{ unread?: boolean }>>)
 export const phoneYou = held(from('phone-you') as Loaded<Component<{ scratchpad: () => void }>>)
 
 export const settingsSurface = held(from('settings') as Shown)
 
 export const pagesNavigator = held(from('pages-navigator') as Shown)
-export const linksPanel = held(() => import('../../Links.svelte'))
+export const linksPanel = held(
+  from('links') as Loaded<
+    Component<{
+      ongoto?: ((line: number) => void) | undefined
+      graph?: boolean
+      depth?: number
+      onlist?: (() => void) | undefined
+    }>
+  >,
+)
 export const askPanel = held(
   from('ask') as Loaded<
     Component<{ ongoto?: ((line: number) => void) | undefined; wide?: boolean }>
@@ -112,7 +125,7 @@ export const keysMovedNotice = latched(from('keys-moved') as Shown)
 
 export const outsideNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no spaces folder in the Even Realities plugin')
-  return import('../../OutsideFolder.svelte')
+  return import('./OutsideFolder.svelte')
 })
 
 export const CRASH_REPORTS = 'orden:crash-reports'
@@ -125,8 +138,8 @@ export const crashAskDue = (): boolean =>
 export const crashAsk = latched(from('crash-ask') as Shown)
 
 export const undoToastNotice = latched(from('undo-toast') as Shown)
-export const spaceSound = latched(() => import('../../SpaceSound.svelte'))
-export const soundMark = held(() => import('../../SoundMark.svelte'))
+export const spaceSound = latched(() => import('./SpaceSound.svelte'))
+export const soundMark = held(() => import('./SoundMark.svelte'))
 export const privateMark = held(from('private-mark') as Loaded<Component<{ large?: boolean }>>)
 
 export const terminalMark = held(

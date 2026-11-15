@@ -38,7 +38,7 @@
   import { landsIn, dropTarget } from '../../tree/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { agentMarks } from '../../agent-marks.svelte'
-  import { sidebarPart } from '@orden/contracts'
+  import { searching, sidebarPart } from '@orden/contracts'
   import { account, arriving } from '../../accounts/src/api'
   import { newSpace } from '../../space-actions'
   import { panels, type Panel, type PanelSide } from '../../session/src/api'
@@ -61,7 +61,6 @@
   import { links } from '../../link-index/src/api'
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
-  import { search } from '../../search.svelte'
   import { SidebarWidth } from '../../sidebar-width.svelte'
   import { fullscreen } from '../../fullscreen.svelte'
   import { alone } from '../../alone.svelte'
@@ -362,8 +361,7 @@
   }
 
   function runBookmarked(text: string) {
-    workspace.showPanel('search')
-    search.ask(text)
+    searching()?.show(text)
   }
 
   $effect(() => {

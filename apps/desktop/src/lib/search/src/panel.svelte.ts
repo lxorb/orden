@@ -1,11 +1,13 @@
-import { protection } from './protect/src/api'
+import { protection } from '../../protect/src/api'
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
-import { revealPanel } from './focus'
-import { isScratchpad, scratchpadHits } from './scratchpad/src/api'
+import { revealPanel } from '../../focus'
+import { isScratchpad, scratchpadHits } from '../../scratchpad/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
-import { changesFor, searchSpace, selectedWords } from './search/src/api'
+import type { SearchOrdering, SearchSort } from '@orden/contracts'
+import { selectedWords } from './seed'
+import { searchSpace } from './space'
 import {
   isMarkdownPath,
   isBoolean,
@@ -13,8 +15,8 @@ import {
   keepJson,
   stored,
   afterQuiet,
-} from './platform/src/api'
-import { workspace } from './workspace/src/api'
+} from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
 
 const WAIT = 140
 
@@ -24,20 +26,13 @@ const SHORTEST = 2
 
 const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
 
-export type SearchSort = 'relevance' | 'name' | 'modified' | 'created'
-
 const SORT_KEY = 'orden:search-sort'
 
-interface Ordering {
-  sort: SearchSort
-  descending: boolean
-}
-
-const AS_ASKED: Ordering = { sort: 'relevance', descending: false }
+const AS_ASKED: SearchOrdering = { sort: 'relevance', descending: false }
 
 const SORTS: readonly SearchSort[] = ['relevance', 'name', 'modified', 'created']
 
-function readOrdering(): Ordering {
+function readOrdering(): SearchOrdering {
   const saved = stored(SORT_KEY)
   if (!isRecord(saved)) return { ...AS_ASKED }
 
@@ -74,7 +69,7 @@ class Search {
     [...this.inOrder(this.found), ...this.inOrder(this.loose)].filter(this.open),
   )
 
-  ordering = $state<Ordering>(readOrdering())
+  ordering = $state<SearchOrdering>(readOrdering())
 
   private readonly dated = $derived.by(() => new Map(workspace.files.map((one) => [one.path, one])))
 
@@ -227,6 +222,7 @@ class Search {
     const chosen = this.chosen
     if (!root || !chosen.length) return
 
+    const { changesFor } = await import('./apply')
     const changes = await changesFor(this.query, chosen, this.replacement, root, (path) =>
       workspace.noteText(path),
     )
@@ -245,4 +241,9 @@ export function searchFrom(view: EditorView | undefined): void {
   if (words) search.ask(words)
 
   revealPanel('search')
+}
+
+export function showSearch(text: string): void {
+  workspace.showPanel('search')
+  search.ask(text)
 }

@@ -1,6 +1,5 @@
-import { sidebarPart } from '@orden/contracts'
+import { searching, type SearchSort, sidebarPart } from '@orden/contracts'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
-import { search, type SearchSort } from '../../search.svelte'
 import { panels, type Panel, type PanelSide } from '../../session/src/api'
 import { workspace } from '../../workspace/src/api'
 
@@ -16,6 +15,8 @@ function sortMenu(making: MenuEntry[]): MenuEntry[] {
 }
 
 function resultsMenu(): MenuEntry[] {
+  const search = searching()?.panel
+  if (!search) return []
   const arrow = (key: SearchSort) =>
     search.ordering.sort === key ? (search.ordering.descending ? '↓' : '↑') : undefined
 

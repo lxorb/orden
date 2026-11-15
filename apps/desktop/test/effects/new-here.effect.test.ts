@@ -1,11 +1,19 @@
+import { providePort } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import NewHere from '../../src/lib/NewHere.svelte'
+import { NewHere } from '../../src/lib/new-here/src/api'
 import { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/lib/gates/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
 
-vi.mock('../../src/lib/pass-sync/src/api', () => ({ openPass: () => undefined }))
+const nothing = () => Promise.resolve()
+providePort('terminal.making', {
+  open: nothing,
+  shells: () => Promise.resolve([]),
+  warm: nothing,
+  pickHost: nothing,
+  online: nothing,
+})
 
 await import('../../src/lib/web-tab/src/api')
 

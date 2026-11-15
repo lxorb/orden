@@ -69,7 +69,7 @@
   import { extensions, type Extension } from './extensions.svelte'
   import { runsExtensions } from './shell-parts'
   import WebSite from './WebSite.svelte'
-  import NewHere from '../../NewHere.svelte'
+  import { NewHere } from '../../new-here/src/api'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
 

@@ -4895,28 +4895,6 @@ describe('a web note', () => {
   })
 })
 
-describe('a search of the space', () => {
-  beforeEach(() => {
-    onePane()
-    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
-    workspace.activeSpaceId = 's'
-  })
-
-  test('finds the words of a note with no file, by its tab', async () => {
-    workspace.openBlank()
-    const tab = workspace.active
-    if (!tab) throw new Error('nothing opened')
-    tab.note.live.replace('# Plan\n\nbuy milk')
-    const { unsavedHits } = await import('../../unsaved-hits')
-    const { parseQuery } = await import('@orden/scan/search/query')
-
-    expect(unsavedHits(parseQuery('milk'), 's', 10)).toEqual([
-      expect.objectContaining({ tab: tab.id, line: 2, text: 'buy milk' }),
-    ])
-    expect(unsavedHits(parseQuery('milk'), 'another', 10)).toEqual([])
-  })
-})
-
 describe('an essential', () => {
   beforeEach(() => {
     onePane()
@@ -5257,7 +5235,7 @@ describe('Settings', () => {
 
   test('closing it leaves no tab, and it is no kind the new tab offers', async () => {
     const { settings } = await import('../../settings/src/api')
-    const { newKinds } = await import('../../new-kinds')
+    const { newKinds } = await import('../../new-here/src/api')
     settings.show()
     settings.open = false
     expect(workspace.tabs.some((one) => one.kind === 'settings')).toBe(false)

@@ -1,4 +1,5 @@
 import type { TabKindParts } from '@orden/contracts'
+import { makeApplication } from './make'
 import { openApplication } from './open'
 import { appSessionIfAny } from './session.svelte'
 
@@ -6,6 +7,9 @@ export const applicationTabKind: TabKindParts = {
   open: (path, how) => {
     openApplication(path, how)
     return Promise.resolve()
+  },
+  make: async () => {
+    await makeApplication()
   },
   hold: (id) => appSessionIfAny({ id })?.picture.hold() ?? null,
   facts: (id) => {

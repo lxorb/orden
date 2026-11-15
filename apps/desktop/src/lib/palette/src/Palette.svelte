@@ -34,7 +34,6 @@
   import type { OpenTab, Row } from './rows'
   import { isDraft, scanHeadings } from '../../documents/src/api'
   import { lookOf } from './trying'
-  import { search } from '../../search.svelte'
   import { chatsOn, hiddenKinds } from '../../gates/src/api'
   import { relativeTo, samePath } from '../../platform/src/api'
   import TabMark from '../../TabMark.svelte'
@@ -43,7 +42,7 @@
   import { joinPath } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { isDesktop } from '../../platform/src/api'
-  import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
+  import { type PaletteHost, paletteKind, searching, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
   import { notices, paletteWords, workspace } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
@@ -389,10 +388,7 @@
     openAtHeading: (path, heading, how) => void workspace.openAtHeading(path, heading, how),
     openAtBlock: (target, how) => void workspace.openAtBlock(target, how),
     revealFolder: (path) => workspace.revealFolder(path),
-    searchFor: (words) => {
-      workspace.showPanel('search')
-      search.ask(words)
-    },
+    searchFor: (words) => searching()?.show(words),
     openGraph: (view) => {
       workspace.graphSettings.take(view)
       workspace.openGraph()

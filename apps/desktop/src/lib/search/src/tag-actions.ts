@@ -1,8 +1,8 @@
-import { message } from './ui-kit/src/api'
+import { message } from '../../ui-kit/src/api'
 import { settingsWindow } from '@orden/contracts'
 import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
-import { workspace } from './workspace/src/api'
+import { workspace } from '../../workspace/src/api'
 
 function refusedAsTag(name: string): boolean {
   if (isTagName(name)) return false
@@ -11,7 +11,7 @@ function refusedAsTag(name: string): boolean {
 }
 
 export async function renameTag(node: TagNode) {
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
 
   const typed = await prompt.ask({
     title: `Rename ${node.name}`,
@@ -32,7 +32,7 @@ export async function renameTag(node: TagNode) {
 }
 
 export async function removeTag(node: TagNode) {
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const up = liftedFrom(node.path)
 
   const answer = await prompt.choose({
