@@ -215,3 +215,32 @@ test('two names one letter apart at the limit are told apart within it when a sp
   expect(names.every((one) => isName(one))).toBe(true)
   expect(new Set(names.map((one) => one.toLowerCase())).size).toBe(2)
 })
+
+test('notes of one folder named past the limit stay together in one folder when a space is prepared', async () => {
+  const other = (await call(env, '/v1/spaces', { token, body: { name: 'Legacy' } })).json.space.id
+  const folders = ['L'.repeat(300), '']
+  for (const folder of folders) {
+    for (const name of ['a.md', 'b.md', 'c.md']) {
+      await env.DB.prepare(
+        `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+         values (?, ?, ?, 1, 1, 1, 0, 0, '')`,
+      )
+        .bind(crypto.randomUUID(), other, `Top/${folder}/${name}`)
+        .run()
+    }
+  }
+
+  await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
+
+  const placed = (
+    await env.DB.prepare(
+      `select f.name as folder from notes n join folders f on f.id = n.folder_id
+        where n.space_id = ? and n.deleted = 0`,
+    )
+      .bind(other)
+      .all<{ folder: string }>()
+  ).results.map((one) => one.folder)
+  expect(placed).toHaveLength(6)
+  expect(new Set(placed).size).toBe(2)
+  expect(placed.every((one) => isName(one))).toBe(true)
+})

@@ -131,6 +131,7 @@ interface Folders {
 class Placing {
   private readonly folders = new Map<string, Folders>()
   private readonly taken = new Map<string | null, Set<string>>()
+  private readonly askedFor = new Map<string, Folders>()
 
   constructor(entries: Iterable<TreeEntry>) {
     for (const entry of entries) this.add(entry)
@@ -146,7 +147,13 @@ class Placing {
   }
 
   folder(parent: string | null, name: string): Folders | undefined {
-    return this.folders.get(`${parent ?? ''}\u0000${nameKey(name)}`)
+    const at = `${parent ?? ''}\u0000${nameKey(name)}`
+    return this.askedFor.get(at) ?? this.folders.get(at)
+  }
+
+  asked(parent: string | null, name: string, folder: TreeEntry) {
+    const at = `${parent ?? ''}\u0000${nameKey(name)}`
+    this.askedFor.set(at, this.slot(folder.parent, nameKey(folder.name)))
   }
 
   free(parent: string | null, wanted: string, kind: EntryKind): string {
@@ -279,6 +286,7 @@ export class Tree {
     if (!live) folder.deletedIn = seq
     this.state.entries.set(folder.id, folder)
     placing.add(folder)
+    placing.asked(parent, name, folder)
     return folder.id
   }
 
