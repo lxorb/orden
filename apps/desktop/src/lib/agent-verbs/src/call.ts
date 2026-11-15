@@ -38,7 +38,8 @@ export function flag(call: Call, name: string): boolean {
 }
 
 export function count(call: Call, name: string, fallback: number, most: number): number {
-  const value = Number(call.args[name])
+  const sent = call.args[name]
+  const value = sent === null ? Number.NaN : Number(sent)
   if (!Number.isFinite(value)) return fallback
 
   return Math.min(Math.max(1, Math.floor(value)), most)
