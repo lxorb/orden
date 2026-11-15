@@ -18,8 +18,8 @@
     setReadOnlyMode,
   } from '@orden/editor'
   import { untrack } from 'svelte'
-  import Door from '../../Door.svelte'
   import {
+    Door,
     dragged,
     dropOver,
     isTreeDrag,
@@ -29,7 +29,16 @@
     viewport,
     paneCorners,
   } from '../../ui-kit/src/api'
-  import { alone, followHref, followNote, tabOverview, workspace } from '../../workspace/src/api'
+  import {
+    alone,
+    followHref,
+    followNote,
+    tabOverview,
+    workspace,
+    pull,
+    storeAttachment,
+    storeImage,
+  } from '../../workspace/src/api'
   import type { Tab } from '../../documents/src/api'
   import {
     type Pane,
@@ -53,7 +62,6 @@
   import { without } from '../../graph/src/api'
   import { links, notePicture } from '../../link-index/src/api'
   import { modes } from '../../modes/src/api'
-  import { pull } from '../../pull.svelte'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
   import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
@@ -82,7 +90,6 @@
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { storeAttachment, storeImage } from '../../assets'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
   import { usage } from '../../accounts/src/api'
 

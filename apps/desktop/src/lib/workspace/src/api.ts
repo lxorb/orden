@@ -13,6 +13,7 @@ export {
   type TreeOptions,
   workspace,
 } from './workspace.svelte'
+export { agentMarks, type TabAct, type Worn } from './agent-marks.svelte'
 export { mayCarry, pointersMoving, spaceHolding } from './chat-carry'
 export { dropOnList, fileClipboard, listMotion, moving } from './list-landing.svelte'
 export { hiddenTabs } from './hidden-tabs.svelte'
@@ -61,6 +62,14 @@ export {
 
 export { alone, swipeOpens } from './alone.svelte'
 
+export { claimsGesture, drawer, isFinger, rightDrawer } from './drawer.svelte'
+
+export const drawerFollowing = () => import('./drawer-follow')
+
+export { writeNew } from './write-new'
+
+export { onTwist, treeStep, TREE_MOVES } from './tree-keys'
+
 export { scratchpadOn } from './services'
 
 export type { Across } from './across'
@@ -81,3 +90,19 @@ export {
   type TabAsk,
   tabAsk,
 } from './new-tab'
+
+export { carvable, mergeable } from './composing'
+
+export { accountAddress, storeAttachment, storeBeside, storeImage } from './assets'
+
+export { pull, pullable, REACH } from './pull.svelte'
+
+export const paneMoves = () => import('./pane-moves')
+
+export const noteCovers = () => import('./note-cover')
+
+export const featureGates = () => import('./feature-gate.svelte')
+
+export const refreshing = () => import('./refresh')
+
+export const closing = () => import('./closing')

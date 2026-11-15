@@ -19,7 +19,7 @@ disk.current = new Disk()
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pane } = await import('../../src/lib/panes/src/api')
 const Tree = (await import('../../src/lib/sidebar/src/Tree.svelte')).default
-const { keyboardStays } = await import('../../src/lib/caret')
+const { keyboardStays } = await import('../../src/lib/ui-kit/src/caret')
 
 const ALPHA = '/space/Alpha.md'
 const BETA = '/space/Beta.md'

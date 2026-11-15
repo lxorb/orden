@@ -127,7 +127,7 @@ describe('making a folder', () => {
   })
 
   test('and no row can be drawn as one but an empty note that holds notes', () => {
-    const marks = read('lib/file-mark.ts')
+    const marks = read('lib/marks/src/file-mark.ts')
     const byName = marks.slice(marks.indexOf('export function fileMark'))
     expect(byName.slice(0, byName.indexOf('\n}\n'))).not.toContain('folder')
     expect(everywhere).not.toContain("mark: 'folder'")

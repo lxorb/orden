@@ -1083,7 +1083,7 @@ class Pages {
         }
         const path = page.path
         if (said.icon && path) {
-          void Promise.all([import('./favicons'), import('../../chosen-icon')]).then(
+          void Promise.all([import('./favicons'), import('../../marks/src/api')]).then(
             ([one, files]) => one.saw(files.addressOf(path), said.icon),
           )
         }
@@ -1178,6 +1178,7 @@ providePort('web.pages', {
   shoot: (tab) => pages.shoot(tab),
   clip: (tab, selection) => pages.read(tab, selection),
   faviconOf: (url) => favicons.of(url),
+  iconOf: (tab) => pages.iconOf(tab),
   holdStill: () => pages.holdStill(),
   letGo: () => pages.letGo(),
   carryIn: (paths) => carried((carry) => carry.carryToPages(paths)),

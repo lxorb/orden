@@ -51,7 +51,7 @@ const place = vi.hoisted(() => ({
   open: vi.fn(() => Promise.resolve()),
 }))
 
-vi.mock('../../../workspace/src/api', () => ({ workspace: place }))
+vi.mock('../../../workspace/src/api', () => ({ workspace: place, agentMarks: { open: null } }))
 
 vi.mock('../commands/found', () => ({
   fromOthers: () => Promise.resolve(false),

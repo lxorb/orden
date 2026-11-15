@@ -17,6 +17,10 @@ vi.mock('../../../workspace/src/api', () => ({
     fileCame: () => Promise.resolve(),
     open: () => Promise.resolve(),
   },
+  storeBeside: (_bytes: ArrayBuffer, beside: string, name: string) => {
+    wrote.push(`${beside} + ${name}`)
+    return Promise.resolve(name)
+  },
 }))
 vi.mock('../../../sharing/src/api', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
@@ -26,12 +30,6 @@ vi.mock('./source.svelte', () => ({
     history: () => Promise.resolve([]),
     fileUrl: () => Promise.resolve('blob:picture'),
   }),
-}))
-vi.mock('../../../assets', () => ({
-  storeBeside: (_bytes: ArrayBuffer, beside: string, name: string) => {
-    wrote.push(`${beside} + ${name}`)
-    return Promise.resolve(name)
-  },
 }))
 vi.stubGlobal('fetch', () => Promise.resolve(new Response(new ArrayBuffer(4))))
 

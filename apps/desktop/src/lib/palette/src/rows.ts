@@ -1,5 +1,5 @@
 import type { Command } from '../../commands/src/api'
-import type { FileMark } from '../../file-mark'
+import type { FileMark } from '@orden/contracts'
 import type { Bookmark, PaletteDestination, PaletteHost, Entry } from '@orden/contracts'
 import type { TabKind } from '../../documents/src/api'
 import type { NoteToMake } from './new-note'

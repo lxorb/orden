@@ -24,6 +24,5 @@
     "fences",
     "highlight",
     "modes"
-  ],
-  "pending": ["apps/desktop/src/lib/own-keys.ts"]
+  ]
 }

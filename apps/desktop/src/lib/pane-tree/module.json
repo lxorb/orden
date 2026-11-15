@@ -25,13 +25,7 @@
     "gates",
     "surfaces",
     "editor-menu",
-    "accounts"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/preview-card.ts",
-    "apps/desktop/src/lib/pull.svelte.ts"
+    "accounts",
+    "link-format"
   ]
 }

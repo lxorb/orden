@@ -17,8 +17,9 @@
     Twist,
     UNARCHIVE_MARK,
   } from '../../ui-kit/src/api'
-  import { fileMark, type FileMark as Mark } from '../../file-mark'
-  import FileMark from '../../FileMark.svelte'
+  import { fileMark } from '../../marks/src/api'
+  import type { FileMark as Mark } from '@orden/contracts'
+  import { FileMark } from '../../marks/src/api'
   import { folderNote, nestedIn } from '../../tree/src/api'
   import { dur, slide } from '../../platform/src/api'
   import { rowName } from '../../platform/src/api'
