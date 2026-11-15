@@ -169,6 +169,7 @@ vi.mock('../../workspace/src/api', () => ({
       return spacesOf()
     },
     restored: true,
+    spacesKnown: () => Promise.resolve(),
     adoptSpace: (name: string) => Promise.resolve(name),
     applyIcon: () => null,
     applySpaceOrder: () => false,
