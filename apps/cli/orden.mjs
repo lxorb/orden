@@ -273,18 +273,26 @@ function macWindow(pid, { x, y, width, height, scale }) {
   return found.id
 }
 
+function plain(answered) {
+  if ('ok' in answered) return answered
+  if (answered.status === 'ok') return { ok: true, value: answered.result }
+
+  return { ok: false, error: answered.message ?? answered.summary ?? JSON.stringify(answered) }
+}
+
 function show(answered, asked) {
+  const said = plain(answered)
   if (asked.json) {
     console.log(JSON.stringify(answered, null, 2))
-    return answered.ok ? 0 : 1
+    return said.ok ? 0 : 1
   }
 
-  if (!answered.ok) {
-    console.error(answered.error)
+  if (!said.ok) {
+    console.error(said.error)
     return 1
   }
 
-  const value = answered.value
+  const value = said.value
   if (value === null || typeof value !== 'object') {
     console.log(String(value))
     return 0

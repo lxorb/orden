@@ -63,3 +63,41 @@ test('after a bare -- every word is a word, flag-shaped or not', async () => {
 test('the old NIB_ENDPOINT still finds the app for one release', async () => {
   expect((await sent(['search', 'plan'], 'NIB_ENDPOINT')).verb).toBe('search')
 })
+
+async function ran(
+  words: string[],
+  answer: unknown,
+): Promise<{ out: string; err: string; code: number | null }> {
+  const server = createServer((request, response) => {
+    request.resume()
+    request.on('end', () => response.end(JSON.stringify(answer)))
+  })
+  await new Promise<void>((settle) => server.listen(0, '127.0.0.1', settle))
+  const { port } = server.address() as AddressInfo
+  const file = join(mkdtempSync(join(tmpdir(), 'orden-cli-')), 'automation.json')
+  writeFileSync(file, JSON.stringify({ port, secret: 's', pid: 1 }))
+
+  const child = spawn(process.execPath, [CLI, ...words], {
+    env: { ...process.env, ORDEN_ENDPOINT: file },
+  })
+  let out = ''
+  let err = ''
+  child.stdout.on('data', (chunk: Buffer) => (out += chunk.toString()))
+  child.stderr.on('data', (chunk: Buffer) => (err += chunk.toString()))
+  const code = await new Promise<number | null>((settle) => child.on('close', settle))
+  server.close()
+  return { out, err, code }
+}
+
+test('a verb the app answers in an agent’s shape reads as done when it is done', async () => {
+  expect(
+    await ran(['browser_tabs'], { status: 'ok', result: { tabs: [{ id: 't1', title: 'Docs' }] } }),
+  ).toEqual({ out: 't1\tDocs\n', err: '', code: 0 })
+  expect(
+    await ran(['browser_tabs'], { status: 'error', code: 'failed', message: 'no browser' }),
+  ).toEqual({ out: '', err: 'no browser\n', code: 1 })
+  expect(
+    await ran(['browser_tabs'], { status: 'needs_approval', approval: 'a1', summary: 'Approve?' }),
+  ).toEqual({ out: '', err: 'Approve?\n', code: 1 })
+  expect((await ran(['browser_tabs', '--json'], { status: 'ok', result: {} })).code).toBe(0)
+})
