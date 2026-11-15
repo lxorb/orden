@@ -1,5 +1,5 @@
 import { type Scheme, settingsWindow } from '@orden/contracts'
-import { accentColour, theme } from '../../../theme/src/api'
+import { accentColour, theme, type ThemeValue } from '../../../theme/src/api'
 import { chooseFiles, PICTURES } from '../../../ui-controls/src/api'
 import { fileBytes, forget, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
 import { message } from '../../../ui-kit/src/api'
@@ -40,12 +40,22 @@ function sharpLongest(blur: number, kept: boolean): number {
   return kept ? side : Math.min(MOVING, side)
 }
 
+const DIALS = ['blur', 'saturation', 'tint', 'tint-colour'] as const
+
+function dials(): Record<string, ThemeValue> {
+  if (theme.id === WALLPAPER_THEME) return theme.values
+  const kept = DIALS.map((id) => [id, theme.keptFor(WALLPAPER_THEME, id)] as const)
+  return Object.fromEntries(
+    kept.filter((entry): entry is [string, ThemeValue] => entry[1] !== undefined),
+  )
+}
+
 function blurDial(): number {
-  return Number(theme.values.blur ?? 28)
+  return Number(dials().blur ?? 28)
 }
 
 function toneDial(): Tone {
-  const asked = toneOf(theme.values, theme.accent)
+  const asked = toneOf(dials(), theme.accent)
   return { ...asked, colour: accentColour(asked.colour, 'dark') }
 }
 
