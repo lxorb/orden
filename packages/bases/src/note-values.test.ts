@@ -89,12 +89,11 @@ describe('front matter as values', () => {
     expect(scalarValue('~')).toBeNull()
     expect(scalarValue('-3.5')).toBe(-3.5)
     expect(scalarValue('FALSE')).toBe(false)
-    inZone('UTC', () => {
-      expect(scalarValue('2026-10-03T10:00:00Z')).toEqual({
-        kind: 'date',
-        iso: '2026-10-03',
-        time: '10:00:00',
-      })
+    expect(scalarValue('2026-10-03T10:00:00Z')).toEqual({
+      kind: 'date',
+      iso: '2026-10-03',
+      time: '10:00:00',
+      zone: 'Z',
     })
   })
 })
@@ -118,7 +117,13 @@ describe('a date written with its offset', () => {
   test('is the moment it names, on the clock of whoever reads it', () => {
     inZone('America/Los_Angeles', () => {
       const row = noteRow('Clips/Page.md', '---\nclipped: 2026-11-15T17:00:00.000Z\n---\n')
-      expect(row.note.clipped).toEqual({ kind: 'date', iso: '2026-11-15', time: '09:00:00' })
+      expect(row.note.clipped).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+        zone: 'Z',
+      })
+      expect(said(row, 'clipped.hour')).toBe(9)
       expect(said(row, 'clipped.relative()')).toBe('a few seconds ago')
       expect(said(row, 'clipped <= now()')).toBe(true)
       expect(said(row, 'clipped.format("YYYY-MM-DD HH:mm")')).toBe('2026-11-15 09:00')
@@ -136,7 +141,37 @@ describe('a date written with its offset', () => {
     })
     inZone('Asia/Tokyo', () => {
       const row = noteRow('A.md', '---\na: 2026-01-01T20:00:00-0500\n---\n')
-      expect(row.note.a).toEqual({ kind: 'date', iso: '2026-01-02', time: '10:00:00' })
+      expect(row.note.a).toEqual({
+        kind: 'date',
+        iso: '2026-01-01',
+        time: '20:00:00',
+        zone: '-0500',
+      })
+      expect(said(row, 'a.format("YYYY-MM-DD HH:mm")')).toBe('2026-01-02 10:00')
+      expect(said(row, 'a.date() == date("2026-01-02")')).toBe(true)
+    })
+  })
+
+  test('is read on the clock of the zone the reader is in, not the clock of the machine', () => {
+    inZone('UTC', () => {
+      const row = noteRow(
+        'Trip.md',
+        '---\nleaves: 2026-03-11T02:00:00+09:00\nlands: 2026-03-11T01:00:00\n---\n',
+      )
+      const tokyo = contextAt({
+        today: '2026-03-11',
+        now: '2026-03-11T01:30:00',
+        zone: 'Asia/Tokyo',
+      })
+      const there = (expression: string) => compile(expression).evaluate(row, tokyo, {})
+      expect(there('leaves.date() == date("2026-03-11")')).toBe(true)
+      expect(there('leaves.hour')).toBe(2)
+      expect(there('leaves > lands')).toBe(true)
+      expect(there('leaves > now()')).toBe(true)
+      expect(there('leaves.relative()')).toBe('in 30 minutes')
+      expect(there('(leaves - lands).hours')).toBe(1)
+      expect(there('[lands, leaves, date("2026-03-11T00:30")].sort()[2] == leaves')).toBe(true)
+      expect(said(row, 'leaves.date() == date("2026-03-10")')).toBe(true)
     })
   })
 
@@ -145,8 +180,8 @@ describe('a date written with its offset', () => {
       expect(
         noteValues('---\na: "2026-06-01T10:00Z"\nb:\n  - 2026-06-01T10:00:00+02:00\n---\n'),
       ).toEqual({
-        a: { kind: 'date', iso: '2026-06-01', time: '12:00:00' },
-        b: [{ kind: 'date', iso: '2026-06-01', time: '10:00:00' }],
+        a: { kind: 'date', iso: '2026-06-01', time: '10:00', zone: 'Z' },
+        b: [{ kind: 'date', iso: '2026-06-01', time: '10:00:00', zone: '+02:00' }],
       })
     })
   })

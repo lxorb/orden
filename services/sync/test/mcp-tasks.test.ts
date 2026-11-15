@@ -200,6 +200,20 @@ describe('bases, with Orden closed', () => {
       total: 1,
     })
   })
+
+  test('a date written with its offset is read on the clock of the person asking', async () => {
+    env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Trip.md', content: '---\nleaves: 2026-03-11T02:00:00+09:00\n---\n' },
+    })
+    await basesTurned(true)
+    const answer = await json(await connector(true), 'query_base', {
+      space: 'Work',
+      yaml: 'filters: \'leaves.date() == date("2026-03-11") && leaves.hour == 2\'\n',
+    })
+    expect(answer).toMatchObject({ total: 1, groups: [{ rows: [{ path: 'Trip.md' }] }] })
+  })
 })
 
 describe('limits a device holds the todos to', () => {

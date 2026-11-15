@@ -1,4 +1,4 @@
-import type { Value } from '@orden/bases'
+import { onClock, type Value } from '@orden/bases'
 import { localNumber } from '../../platform/src/api'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { dayWords } from '@orden/editor/task-days'
@@ -20,7 +20,10 @@ export function valueText(value: Value, today: string): string {
       .map((one) => valueText(one, today))
       .filter(Boolean)
       .join(', ')
-  if (isDateValue(value)) return dayWords(value.iso, today, value.time?.slice(0, 5))
+  if (isDateValue(value)) {
+    const here = onClock(value)
+    return dayWords(here.iso, today, here.time?.slice(0, 5))
+  }
   if (isDurationValue(value)) return minutesText(Math.round(value.ms / 60_000))
   if (isLinkValue(value))
     return value.display ?? (value.target.split('/').pop() ?? value.target).replace(/\.md$/i, '')

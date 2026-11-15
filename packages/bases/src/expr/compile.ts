@@ -222,17 +222,17 @@ function compileNode(node: Node, facts: Facts): Fn {
         case '!=':
           return (scope) => !equal(left(scope), right(scope), scope)
         case '<':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) < 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) < 0
         case '>':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) > 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) > 0
         case '<=':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) <= 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) <= 0
         case '>=':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) >= 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) >= 0
         case '+':
           return (scope) => add(left(scope), right(scope))
         case '-':
-          return (scope) => subtract(left(scope), right(scope))
+          return (scope) => subtract(left(scope), right(scope), scope.context.zone)
         case '*':
         case '/':
         case '%': {

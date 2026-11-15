@@ -280,6 +280,7 @@ describe('lists', () => {
     expect(clockOf(new Date('2026-10-04T23:30:00Z'), 'Europe/Zurich')).toEqual({
       today: '2026-10-05',
       now: '2026-10-05T01:30:00',
+      zone: 'Europe/Zurich',
     })
   })
 

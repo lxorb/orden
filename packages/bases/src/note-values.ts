@@ -1,7 +1,6 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { type Property, readProperties } from '@orden/markdown/properties'
 import { isScalar, isSeq, parse, parseDocument, type Scalar, visit } from 'yaml'
-import { zonedAt } from './dates'
 import type { Value } from './types'
 
 const WIKILINK = /^!?\[\[([^\]|#]*(?:#[^\]|]*)?)(?:\|([^\]]*))?\]\]$/
@@ -28,11 +27,9 @@ function stringValue(written: string): Value {
 
   const date = DATE.exec(text)
   if (date?.[1]) {
-    const here = date[2] && date[3] ? zonedAt(date[1], date[2], date[3]) : null
-    if (here) return here
     const value: Value = { kind: 'date', iso: date[1] }
     if (date[2]) value.time = date[2]
-    if (date[3]) value.zone = date[3] === 'Z' ? 'UTC' : date[3]
+    if (date[3]) value.zone = date[3]
     return value
   }
   return text

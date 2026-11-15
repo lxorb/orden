@@ -18,7 +18,16 @@ export {
   WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
-export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
+export {
+  addDays,
+  addMonths,
+  dayNumber,
+  daysInMonth,
+  onClock,
+  rewritten,
+  todayOf,
+  weekday,
+} from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'
 export { fromTodoist } from './todoist'

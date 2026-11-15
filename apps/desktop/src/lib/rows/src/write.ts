@@ -189,7 +189,8 @@ function written(value: Value): string | null {
   if (hasKind(value, 'link')) {
     return value.display ? `[[${value.target}|${value.display}]]` : `[[${value.target}]]`
   }
-  if (hasKind(value, 'date')) return value.time ? `${value.iso}T${value.time}` : value.iso
+  if (hasKind(value, 'date'))
+    return value.time ? `${value.iso}T${value.time}${value.zone ?? ''}` : value.iso
   if (hasKind(value, 'duration')) return `${Math.round(value.ms / 60_000)}m`
   return null
 }

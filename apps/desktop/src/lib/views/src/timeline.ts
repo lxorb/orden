@@ -15,6 +15,12 @@ export interface Bar {
   to: string
   fromTime?: string
   toTime?: string
+  fromShift?: number
+  toShift?: number
+}
+
+function shiftIn(value: Value, day: string | null): number {
+  return isDateValue(value) && day !== null ? dayNumber(value.iso) - dayNumber(day) : 0
 }
 
 function timeIn(value: Value): string {
@@ -63,6 +69,8 @@ export function barOf(
     to: toProperty,
     fromTime: timeIn(startValue),
     toTime: endRead === null ? '' : timeIn(endValue),
+    fromShift: shiftIn(startValue, start),
+    toShift: endRead === null ? 0 : shiftIn(endValue, endRead),
   }
 }
 
@@ -100,20 +108,22 @@ export function dragged(
   days: number,
 ): Record<string, string> {
   if (!days) return {}
-  const { fromTime = '', toTime = '' } = bar
+  const { fromTime = '', toTime = '', fromShift = 0, toShift = 0 } = bar
+  const from = (day: string) => `${addDays(day, fromShift)}${fromTime}`
+  const to = (day: string) => `${addDays(day, toShift)}${toTime}`
   if (part === 'move') {
-    const out: Record<string, string> = { [bar.from]: `${addDays(bar.start, days)}${fromTime}` }
-    if (bar.to !== bar.from) out[bar.to] = `${addDays(bar.end, days)}${toTime}`
+    const out: Record<string, string> = { [bar.from]: from(addDays(bar.start, days)) }
+    if (bar.to !== bar.from) out[bar.to] = to(addDays(bar.end, days))
     return out
   }
   if (part === 'start') {
     const start = addDays(bar.start, days)
     const field =
       bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
-    return { [field]: `${start > bar.end ? bar.end : start}${fromTime}` }
+    return { [field]: from(start > bar.end ? bar.end : start) }
   }
   const end = addDays(bar.end, days)
-  return { [bar.to]: `${end < bar.start ? bar.start : end}${toTime}` }
+  return { [bar.to]: to(end < bar.start ? bar.start : end) }
 }
 
 export interface Arrow {

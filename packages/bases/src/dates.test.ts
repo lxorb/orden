@@ -6,8 +6,10 @@ import {
   dateAt,
   formatDate,
   msOf,
+  onClock,
   readDate,
   relative,
+  rewritten,
   weekday,
 } from './dates'
 
@@ -51,15 +53,47 @@ describe('dates on the floating clock', () => {
     const was = process.env.TZ
     process.env.TZ = 'America/Los_Angeles'
     try {
+      const read = (text: string, zone?: string) => {
+        const date = readDate(text)
+        return date && onClock(date, zone)
+      }
       expect(readDate('2026-11-15T17:00:00Z')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+        zone: 'Z',
+      })
+      expect(read('2026-11-15T17:00:00Z')).toEqual({
         kind: 'date',
         iso: '2026-11-15',
         time: '09:00:00',
       })
-      expect(readDate('2026-11-15T17:00:00.250Z')).toEqual({
+      expect(read('2026-11-15T17:00:00.250Z')).toEqual({
         kind: 'date',
         iso: '2026-11-15',
         time: '09:00:00.250',
+      })
+      expect(read('2026-11-15 17:00:00+09:00', 'Asia/Tokyo')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+      })
+      expect(read('2026-11-15T23:30-0500', 'Europe/Berlin')).toEqual({
+        kind: 'date',
+        iso: '2026-11-16',
+        time: '05:30:00',
+      })
+      expect(msOf(readDate('2026-11-15T17:00:00Z')!, 'UTC')).toBe(Date.UTC(2026, 10, 15, 17))
+      const tokyo = readDate('2026-03-10T23:00:00+09:00')!
+      expect(rewritten(tokyo, { kind: 'date', iso: '2026-03-10', time: '08:30' })).toEqual({
+        kind: 'date',
+        iso: '2026-03-11',
+        time: '00:30:00',
+        zone: '+09:00',
+      })
+      expect(rewritten(tokyo, { kind: 'date', iso: '2026-03-12' })).toEqual({
+        kind: 'date',
+        iso: '2026-03-12',
       })
       expect(readDate('2026-11-15T17:00:00')).toEqual({
         kind: 'date',

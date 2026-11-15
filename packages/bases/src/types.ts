@@ -162,6 +162,7 @@ export interface Base {
 export interface Context {
   today: string
   now: string
+  zone?: string
   this?: Row
   resolve?: (target: string, from: Row) => string | null
   row?: (path: string, space: string) => Row | undefined
