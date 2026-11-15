@@ -133,7 +133,25 @@ pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> 
 }
 
 pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
-    behind(&own_folders(app), path)
+    behind_but_spaces(
+        crate::paths::spaces_dir(app).ok().as_deref(),
+        &own_folders(app),
+        path,
+    )
+}
+
+pub(super) fn behind_but_spaces(
+    spaces: Option<&Path>,
+    own: &[PathBuf],
+    path: &Path,
+) -> Option<Answer> {
+    let in_spaces = spaces.is_some_and(|spaces| {
+        crate::paths::inside(spaces, path) && crate::paths::inside(&real(spaces), &real(path))
+    });
+    if in_spaces {
+        return None;
+    }
+    behind(own, path)
 }
 
 pub(super) fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {

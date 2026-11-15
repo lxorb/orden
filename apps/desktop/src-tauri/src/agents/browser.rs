@@ -1304,14 +1304,7 @@ fn files_of(
 }
 
 fn handed_from_own(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Result<(), Answer> {
-    let in_spaces = spaces.is_some_and(|spaces| {
-        crate::paths::inside(spaces, path)
-            && crate::paths::inside(&super::files::real(spaces), &super::files::real(path))
-    });
-    if in_spaces {
-        return Ok(());
-    }
-    super::files::behind(own, path).map_or(Ok(()), Err)
+    super::files::behind_but_spaces(spaces, own, path).map_or(Ok(()), Err)
 }
 
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
