@@ -886,6 +886,18 @@ describe('the reader tabs', () => {
       expect(every.result.map((one) => one.id)).toContain('x1')
     })
 
+    test('are not listed in the answer to a move', async () => {
+      const moved = vi.fn()
+      Object.assign(workspace, { moveTab: moved })
+      const answered = (await call(
+        'workspace_tabs',
+        { op: 'move', tab: 't2', pane: 'p1' },
+        onlyWork(),
+      )) as { result?: { id: string }[] }
+      expect(moved).toHaveBeenCalledWith('t2', 'p1', null)
+      expect(answered.result?.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
+    })
+
     test('do not exist by their id', async () => {
       for (const op of ['rename', 'focus', 'close', 'split', 'save']) {
         expect(
@@ -1046,6 +1058,15 @@ describe('what asks the reader first', () => {
       await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
     ).toMatchObject({ status: 'needs_approval' })
     await vi.waitFor(() => expect(ran).toContain('export-pdf:cancelled'))
+  })
+
+  test('a key an object holds by inheritance is no setting', async () => {
+    for (const key of ['constructor', 'toString', '__proto__']) {
+      expect(await call('read_setting', { key }), key).toMatchObject({ code: 'no_such_setting' })
+      expect(await call('write_setting', { key, value: 'x' }), key).toMatchObject({
+        code: 'no_such_setting',
+      })
+    }
   })
 
   test('a setting asks, and a value it cannot be is refused before anybody is asked', async () => {
