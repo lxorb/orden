@@ -160,3 +160,24 @@ test('--out takes no flag for its file', async () => {
   const { out } = await ran(['window', '--out', '--json'], { ok: true, value: { x: 1 } })
   expect(JSON.parse(out)).toEqual({ ok: true, value: { x: 1 } })
 })
+
+test('base query shows its rows, group by group, without --json', async () => {
+  const answer = {
+    ok: true,
+    value: {
+      total: 2,
+      groups: [
+        {
+          key: '',
+          rows: [
+            { path: 'Books/Dune.md', space: 'S', status: 'read' },
+            { path: 'Books/Emma.md', space: 'S', status: 'unread' },
+          ],
+        },
+      ],
+    },
+  }
+  const { out } = await ran(['base', 'query', 'Books.base'], answer)
+  expect(out).toContain('Books/Dune.md\tS\tread')
+  expect(out).toContain('Books/Emma.md\tS\tunread')
+})

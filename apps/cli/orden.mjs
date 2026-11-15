@@ -336,7 +336,18 @@ function show(answered, asked) {
 
   for (const [name, held] of Object.entries(value)) {
     if (Array.isArray(held)) {
-      for (const one of held) console.log(asLine(one))
+      for (const one of held) {
+        const line = asLine(one)
+        if (line) console.log(line)
+        if (one === null || typeof one !== 'object') continue
+        for (const inner of Object.values(one)) {
+          if (!Array.isArray(inner)) continue
+          for (const row of inner) {
+            if (row !== null && typeof row === 'object')
+              console.log(`${line ? '  ' : ''}${asLine(row)}`)
+          }
+        }
+      }
       continue
     }
     if (held !== null && typeof held === 'object') {
