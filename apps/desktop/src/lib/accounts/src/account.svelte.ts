@@ -66,8 +66,8 @@ class Session {
     }
   })
 
-  get signedOutForSure(): boolean {
-    return this.sessionLookedFor && !this.token
+  get noAccountForSure(): boolean {
+    return this.sessionLookedFor && !this.user && (!this.token || !!this.guest)
   }
 
   readonly signedIn = $derived(!!this.token && (!!this.user || !!this.guest))

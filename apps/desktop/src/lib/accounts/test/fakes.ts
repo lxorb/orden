@@ -9,7 +9,7 @@ export interface AccountDouble {
   spaces: RemoteSpace[]
   readonly accountToken: string | null
   readonly signedIn: boolean
-  readonly signedOutForSure: boolean
+  readonly noAccountForSure: boolean
   forgetWithSession(clear: Clear): void
   loadSpaces(): Promise<void>
   signOut(kept?: boolean): void
@@ -33,7 +33,7 @@ export function accountDouble(id: string | null = 'a'): AccountDouble {
     get signedIn() {
       return !!double.token && !!double.user
     },
-    get signedOutForSure() {
+    get noAccountForSure() {
       return !double.token
     },
     forgetWithSession: (clear) => void clears.add(clear),

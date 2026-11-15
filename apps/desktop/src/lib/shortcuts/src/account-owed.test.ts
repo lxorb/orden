@@ -17,7 +17,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => {
       get user() {
         return world.user
       },
-      get signedOutForSure() {
+      get noAccountForSure() {
         return world.token === null
       },
       get accountToken() {

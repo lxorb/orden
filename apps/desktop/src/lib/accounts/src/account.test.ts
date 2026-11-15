@@ -555,6 +555,15 @@ describe('a session a share link handed out', () => {
     expect(account.name).toBe('Windows wren')
   })
 
+  test('holds no account for sure, so nothing it changes is owed to the one it signs in to', async () => {
+    server.meIsAGuest = true
+    localStorage.setItem('orden:session', 'guest-session')
+
+    await account.restore()
+
+    expect(account.noAccountForSure).toBe(true)
+  })
+
   test('hands itself to the sign-in, so what a link lent it follows it in', async () => {
     server.meIsAGuest = true
     localStorage.setItem('orden:session', 'guest-session')
