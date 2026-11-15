@@ -595,7 +595,13 @@ fn windows_asked(
 
         let sized = features.size().is_some() || features.position().is_some();
         let address = match becomes(&url, sized, said.is_some(), heard.unasked) {
-            Becomes::Nothing => return NewWindowResponse::Deny,
+            Becomes::Nothing => {
+                eprintln!(
+                    "web tab: a {} window it asked for was refused",
+                    url.scheme()
+                );
+                return NewWindowResponse::Deny;
+            }
             Becomes::Blocked(address) => {
                 popup_blocked(&opening, &holder, &asking, &address);
                 return NewWindowResponse::Deny;
@@ -1281,6 +1287,36 @@ mod tests {
             );
         }
         assert_eq!(becomes(&at(BLANK), false, true, false), Becomes::Nothing);
+    }
+
+    #[test]
+    fn a_window_of_the_page_s_own_content_opens_where_its_address_lives() {
+        let at = |text: &str| Url::parse(text).expect("an address");
+        for own in [
+            "blob:https://shop.example/1b4e28ba-2fa1-11d2-883f-0016d3cca427",
+            "data:text/html,<p>receipt</p>",
+            "data:application/pdf;base64,JVBERi0=",
+        ] {
+            for (sized, said) in [(false, false), (true, false), (false, true)] {
+                assert_eq!(
+                    becomes(&at(own), sized, said, false),
+                    Becomes::Window,
+                    "{own}"
+                );
+            }
+            assert_eq!(becomes(&at(own), false, false, true), Becomes::Nothing);
+        }
+        for refused in [
+            "blob:http://tauri.localhost/1b4e28ba-2fa1-11d2-883f-0016d3cca427",
+            "blob:null/1b4e28ba-2fa1-11d2-883f-0016d3cca427",
+            "data:text/html,<p data-tauri-cef-internal></p>",
+        ] {
+            assert_eq!(
+                becomes(&at(refused), false, true, false),
+                Becomes::Nothing,
+                "{refused}"
+            );
+        }
     }
 
     #[test]
