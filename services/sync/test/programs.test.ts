@@ -259,3 +259,71 @@ describe('a token acting for somebody', () => {
     expect(said.json.error).toBe('sign in first')
   })
 })
+
+describe('a token, in an account that keeps notes from agents', () => {
+  let env: TestEnv
+  let token: string
+  let key: string
+  let home: string
+  let work: string
+  let diary: string
+  let plan: string
+
+  const said = (path: string, content: string, space: string) =>
+    call<ProgramView>(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  const made = async (name: string) =>
+    (await call<ProgramView>(env, '/v1/spaces', { token, body: { name } })).json.space?.id ?? ''
+  const noteId = async (path: string, content: string, space: string) =>
+    (await said(path, content, space)).json.note?.id ?? ''
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+    home = await made('Home')
+    work = await made('Work')
+    diary = await noteId('Diary/Today.md', 'the secret words', home)
+    plan = await noteId('Plan.md', 'the plan', home)
+    await said('Open.md', 'open words', work)
+    await call(env, `/v1/protected/spaces/${home}`, {
+      method: 'PUT',
+      token,
+      body: { protected: { Diary: 'password' } },
+    })
+    key = (await call<ProgramView>(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json
+      .token!
+  })
+
+  afterEach(() => env.close())
+
+  test('reads no protected note and writes nothing in that space', async () => {
+    expect((await call(env, `/v1/notes/${diary}`, { token: key })).status).toBe(403)
+    expect((await call(env, `/v1/notes/${diary}/versions`, { token: key })).status).toBe(403)
+    expect(
+      (
+        await call(env, `/v1/notes/${diary}`, {
+          method: 'PUT',
+          token: key,
+          body: { content: 'overwritten', baseVersion: 1 },
+        })
+      ).status,
+    ).toBe(403)
+    expect(
+      (
+        await call(env, `/v1/notes/${plan}`, {
+          method: 'PUT',
+          token: key,
+          body: { path: 'Diary/Plan.md', content: 'the plan', baseVersion: 1 },
+        })
+      ).status,
+    ).toBe(403)
+    expect((await call(env, `/v1/spaces/${home}/changes?since=0`, { token: key })).status).toBe(403)
+    expect((await call(env, `/v1/notes/${diary}`, { token })).json).toMatchObject({
+      content: 'the secret words',
+    })
+  })
+
+  test('still reads an open note and another space', async () => {
+    expect((await call(env, `/v1/notes/${plan}`, { token: key })).status).toBe(200)
+    expect((await call(env, `/v1/spaces/${work}/changes?since=0`, { token: key })).status).toBe(200)
+  })
+})

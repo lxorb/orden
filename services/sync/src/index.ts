@@ -17,6 +17,7 @@ import {
   cleanPersonName,
   NAME_LIMIT,
   failed,
+  keptFromProgram,
   programMayReach,
   people,
   ownProfile,
@@ -185,6 +186,8 @@ const guard: MiddlewareHandler<{ Bindings: Env; Variables: Variables }> = async 
       if (!programMayReach(context.req.method, path, who.readOnly === true)) {
         return context.json({ error: 'that is not something a token can do' }, 403)
       }
+      const kept = await keptFromProgram(context.env, who.user.id, context.req.method, path)
+      if (kept) return context.json({ error: kept }, 403)
     }
 
     context.set('user', who.user)

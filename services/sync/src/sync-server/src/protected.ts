@@ -102,6 +102,36 @@ export type Shut = (spaceId: string, path: string) => boolean
 export const PROTECTED = (path: string) =>
   `${path} is protected. The reader can open it in Orden; an agent cannot.`
 
+const SPACE_ROUTE = /^\/v[12]\/spaces\/([^/]+)\/(?:changes|notes|rollback|feed)$/
+
+const NOTE_ROUTE = /^\/v1\/notes\/([^/]+)(?:\/|$)/
+
+const KEPT_FROM_TOKENS = 'This space keeps notes from agents, so a token cannot reach it.'
+
+export async function keptFromProgram(
+  env: Env,
+  userId: string,
+  method: string,
+  path: string,
+): Promise<string | null> {
+  const { spaces } = await protectedFor(env, userId)
+  if (!Object.keys(spaces).length) return null
+  if (path === '/v2/docs/pull') return KEPT_FROM_TOKENS
+
+  const space = SPACE_ROUTE.exec(path)?.[1]
+  if (space !== undefined) return spaces[space] ? KEPT_FROM_TOKENS : null
+
+  const id = NOTE_ROUTE.exec(path)?.[1]
+  if (id === undefined) return null
+  const note = await env.DB.prepare('select space_id, path from notes where id = ?')
+    .bind(id)
+    .first<{ space_id: string; path: string }>()
+  const ways = note ? spaces[note.space_id] : undefined
+  if (!note || !ways) return null
+  if (method !== 'GET') return KEPT_FROM_TOKENS
+  return covers(ways, note.path) ? PROTECTED(note.path) : null
+}
+
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
   return (spaceId, path) => covers(held.spaces[spaceId], path)
