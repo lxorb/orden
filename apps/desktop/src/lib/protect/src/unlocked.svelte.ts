@@ -61,7 +61,7 @@ class Unlocks {
   private proven = false
   private grace: ReturnType<typeof setTimeout> | null = null
   private watching = false
-  private gone = false
+  private wasAway = false
 
   get any(): boolean {
     return this.open.size > 0
@@ -154,12 +154,12 @@ class Unlocks {
     if (minutes === this.relock) return
     this.relock = minutes
     if (this.proven) this.prove()
-    if (this.gone) this.away()
+    if (this.wasAway) this.away()
   }
 
   away(): void {
     this.settle()
-    this.gone = true
+    this.wasAway = true
     if (!this.open.size || this.relock === NEVER) return
     if (this.relock === 0) {
       this.lockAll()
@@ -170,7 +170,7 @@ class Unlocks {
 
   back(): void {
     this.settle()
-    this.gone = false
+    this.wasAway = false
   }
 
   private settle(): void {
