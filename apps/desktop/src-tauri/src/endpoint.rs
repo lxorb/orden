@@ -471,6 +471,7 @@ pub(crate) fn declared_wait(verb: &str, args: &serde_json::Value) -> Duration {
     };
     match verb {
         "ask_reader" => waited("wait_ms", 60_000, 120_000),
+        "read_terminal" => TERMINAL_STARTING,
         "run_terminal" => TERMINAL_STARTING + waited("timeout_ms", 60_000, 600_000),
         "type_terminal" => TERMINAL_STARTING + waited("wait_ms", 2_000, 30_000),
         _ => Duration::ZERO,
@@ -1025,6 +1026,10 @@ mod tests {
         assert!(patience("run_terminal", args) > Duration::from_secs(600));
         let args = serde_json::json!({ "wait_ms": 30_000 });
         assert!(patience("type_terminal", args) > Duration::from_secs(30 + 90));
+        let started_and_connected = Duration::from_secs(5 + 60);
+        assert!(
+            patience("read_terminal", serde_json::json!({})) > PATIENCE + started_and_connected
+        );
     }
 
     #[test]

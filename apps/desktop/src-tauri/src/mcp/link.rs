@@ -533,6 +533,7 @@ mod tests {
             ("ask_reader", json!({ "wait_ms": 120_000 })),
             ("run_terminal", json!({ "timeout_ms": 600_000 })),
             ("type_terminal", json!({ "tab": "t1" })),
+            ("read_terminal", json!({ "tab": "t1" })),
         ] {
             let window = crate::endpoint::window_patience(verb, &args);
             assert!(
