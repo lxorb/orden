@@ -56,16 +56,30 @@ export function pushWays(root: string): Promise<void> {
   return next
 }
 
+async function based(root: string, spaceId: string, token: string) {
+  const known = baseOf(root, spaceId)
+  if (known) return known
+  protection.said(root, false)
+  const accountId = account.user?.id
+  const remote = remoteOf(await request<unknown>('/v1/protected', { token }).catch(() => null))
+  if (!remote || !accountId) return null
+  const theirs = protectedMap(remote.spaces[spaceId])
+  keepBase(root, spaceId, theirs)
+  protection.adopt(root, theirs, accountId)
+  return theirs
+}
+
 async function pushNow(root: string): Promise<void> {
   const token = account.token
   const spaceId = syncStore()?.remoteIdFor(root) ?? null
   if (!token || !spaceId) return
+  const base = await based(root, spaceId, token)
+  if (!base) return
   const ways: Record<string, Way> = protection.ways(root)
-  const base = baseOf(root, spaceId)
   const answer = await request<unknown>(`/v1/protected/spaces/${encodeURIComponent(spaceId)}`, {
     method: 'PUT',
     token,
-    body: base ? { protected: ways, base } : { protected: ways },
+    body: { protected: ways, base },
   }).then(
     (said) => remoteOf(said) ?? remoteOf({ spaces: { [spaceId]: ways } }),
     () => null,
@@ -75,7 +89,7 @@ async function pushNow(root: string): Promise<void> {
   protection.said(root, answer !== null && now)
   if (!answer) return
   const held = protectedMap(answer.spaces[spaceId])
-  if (now || !base) keepBase(root, spaceId, held)
+  if (now) keepBase(root, spaceId, held)
   const accountId = account.user?.id
   if (now && accountId && !alike(held, ways)) protection.adopt(root, held, accountId)
 }
