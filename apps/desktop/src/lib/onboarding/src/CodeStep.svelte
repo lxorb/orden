@@ -20,7 +20,7 @@
 
   function skip() {
     setup.answer({ code: null })
-    setup.next()
+    setup.next('code')
   }
 </script>
 

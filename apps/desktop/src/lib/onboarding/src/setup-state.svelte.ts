@@ -112,7 +112,7 @@ class Setup {
     this.keep()
   }
 
-  next(from: Step = this.step) {
+  next(from: Step) {
     if (from !== this.step) return
     const step = stepAfter(this.step, this.answers, this.reach)
     this.forward = true

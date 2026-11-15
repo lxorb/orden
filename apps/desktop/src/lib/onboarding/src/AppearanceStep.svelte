@@ -14,7 +14,7 @@
 
   function skip() {
     if (theme.scheme !== was) theme.setScheme(was)
-    setup.next()
+    setup.next('appearance')
   }
 </script>
 
@@ -27,7 +27,7 @@
 
 <Screen
   title="Appearance"
-  primary={{ label: 'Continue', onclick: () => setup.next() }}
+  primary={{ label: 'Continue', onclick: () => setup.next('appearance') }}
   quiet={{ label: 'Skip', onclick: skip }}
 >
   <div class="cards rise" role="radiogroup" aria-label="Appearance">

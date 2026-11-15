@@ -92,7 +92,7 @@
     busy: bringing,
     onclick: () => void done(),
   }}
-  quiet={{ label: 'Skip', disabled: bringing, onclick: () => setup.next() }}
+  quiet={{ label: 'Skip', disabled: bringing, onclick: () => setup.next('notes') }}
 >
   {#if view === 'main'}
     <div class="o-grid rise" role="radiogroup" aria-label="Bring your notes">

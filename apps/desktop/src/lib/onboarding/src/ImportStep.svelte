@@ -42,7 +42,7 @@
     disabled: stage === 'done',
     onclick: () => void bring(),
   }}
-  quiet={{ label: 'Not now', disabled: stage !== 'asking', onclick: () => setup.next() }}
+  quiet={{ label: 'Not now', disabled: stage !== 'asking', onclick: () => setup.next('import') }}
 >
   <ul class="o-list rise">
     {#each BROUGHT as one (one)}

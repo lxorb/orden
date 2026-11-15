@@ -102,7 +102,7 @@
         busy: account.busy,
         onclick: send,
       }}
-  quiet={signed ? null : { label: 'Use without an account', onclick: () => setup.next() }}
+  quiet={signed ? null : { label: 'Use without an account', onclick: () => setup.next('account') }}
 >
   {#if signed}
     <svg class="tick" viewBox="0 0 24 24" aria-hidden="true">

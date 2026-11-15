@@ -73,7 +73,7 @@
 
   function skip() {
     setup.answer({ browser: null })
-    setup.next()
+    setup.next('browser')
   }
 </script>
 
