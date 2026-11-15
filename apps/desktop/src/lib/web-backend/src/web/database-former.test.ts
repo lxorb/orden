@@ -1,6 +1,19 @@
 import 'fake-indexeddb/auto'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { carryDatabase } from './carry-database'
+
+const dumped = vi.hoisted((): string[] => [])
+
+vi.mock('../../../handoff/src/api', async (real) => {
+  const handoff = await real<typeof import('../../../handoff/src/api')>()
+  return {
+    ...handoff,
+    dump: (name: string) => {
+      dumped.push(name)
+      return handoff.dump(name)
+    },
+  }
+})
 import { files } from './store'
 
 function opened(name: string, version: number, made: (db: IDBDatabase) => void) {
@@ -110,6 +123,20 @@ describe('what an older version kept in this browser under nib', () => {
       'older tab',
     ])
     expect(await names()).not.toContain('split-from')
+  })
+})
+
+describe('a carry that checks its work', () => {
+  test('lists what the new store holds by key, and never reads its values back', async () => {
+    const old = await opened('read-from', 2, notes)
+    await written(old, 'files', [{ path: '/a.md', content: 'a', modified: 1, created: 1 }])
+    old.close()
+
+    dumped.length = 0
+    await carryDatabase('read-from', 'read-to')
+
+    expect(dumped).not.toContain('read-to')
+    expect(await names()).not.toContain('read-from')
   })
 })
 

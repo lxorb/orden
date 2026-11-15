@@ -83,15 +83,24 @@ export async function carryDatabase(
 }
 
 async function holdsAll(old: DatabaseDump, to: string): Promise<boolean> {
-  const now = await dump(to)
-  if (!now) return false
-  return old.stores.every((store) => {
-    if (!store.keys.length) return true
-    const there = now.stores.find((one) => one.name === store.name)
-    if (!there) return false
-    const keys = new Set(there.keys.map((key) => JSON.stringify(key)))
-    return store.keys.every((key) => keys.has(JSON.stringify(key)))
-  })
+  const db = await existing(to)
+  if (!db) return false
+  try {
+    for (const store of old.stores) {
+      if (!store.keys.length) continue
+      if (!db.objectStoreNames.contains(store.name)) return false
+      const asked = db.transaction(store.name, 'readonly').objectStore(store.name).getAllKeys()
+      const there = await new Promise<IDBValidKey[]>((resolve, reject) => {
+        asked.onsuccess = () => resolve(asked.result)
+        asked.onerror = () => reject(asked.error ?? new Error(`${to} would not list`))
+      })
+      const keys = new Set(there.map((key) => JSON.stringify(key)))
+      if (!store.keys.every((key) => keys.has(JSON.stringify(key)))) return false
+    }
+    return true
+  } finally {
+    db.close()
+  }
 }
 
 async function merged(old: DatabaseDump, to: string): Promise<void> {
