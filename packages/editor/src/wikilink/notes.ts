@@ -127,6 +127,8 @@ export interface LinkWrite {
   path?: string | null
   from?: string | null
   fragment?: string | null
+  shown?: string | null
+  file?: string | null
 }
 
 export const linkWriter = Facet.define<
@@ -135,7 +137,8 @@ export const linkWriter = Facet.define<
 >({ combine: (values) => values[0] ?? wikilinkFor })
 
 function wikilinkFor(target: LinkWrite): string {
-  return `[[${target.fragment ? `${target.name}#${target.fragment}` : target.name}]]`
+  const inner = target.fragment ? `${target.name}#${target.fragment}` : target.name
+  return `[[${inner}${target.shown ? `|${target.shown}` : ''}]]`
 }
 
 export function fuzzy(text: string, needle: string): boolean {

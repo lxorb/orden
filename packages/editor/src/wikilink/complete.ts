@@ -83,7 +83,11 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
     rows.push({
       label: alias,
       detail: note.name,
-      apply: insert({ ...about(index, note), name: alias }),
+      apply: insert(
+        resolveNote(index, alias)?.path === note.path
+          ? { ...about(index, note), name: alias, file: nameFor(index, note) }
+          : { ...about(index, note), shown: alias },
+      ),
       type: 'text',
     })
   }

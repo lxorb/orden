@@ -314,6 +314,15 @@ describe('every row writes the link the app spells', () => {
     )
   })
 
+  test('an alias row whose alias reaches another note links the note it belongs to', async () => {
+    const asked = space(
+      [{ ...note('Projects/Project.md'), aliases: ['Roadmap'] }, note('Roadmap.md')],
+      { path: 'Journal.md' },
+    )
+
+    expect((await picked('[[Road', asked, 'Roadmap')).doc).toBe('[[Project|Roadmap]]')
+  })
+
   test('a heading row of one note carries the heading', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })
 

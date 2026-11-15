@@ -25,6 +25,7 @@ export interface LinkTarget {
   from?: string | null
   fragment?: string | null
   shown?: string | null
+  file?: string | null
   embed?: boolean
 }
 
@@ -54,7 +55,9 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
 
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
-  if (format === 'shortest') return target.name.includes('/') ? path : withExtension(nameOf(path))
+  if (format === 'shortest') {
+    return (target.file ?? target.name).includes('/') ? path : withExtension(nameOf(path))
+  }
   return target.from ? relativePath(folderOf(target.from), path) : path
 }
 

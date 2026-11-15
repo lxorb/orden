@@ -54,6 +54,12 @@ describe('the three markdown spellings', () => {
     )
   })
 
+  test('write the folder for an alias when the file’s own name needs it to say which', () => {
+    const roadmap = { name: 'Roadmap', path: 'B/Plan.md', from: 'Journal.md' }
+    expect(formatLink({ ...roadmap, file: 'B/Plan' }, 'shortest')).toBe('[Roadmap](B/Plan.md)')
+    expect(formatLink({ ...roadmap, file: 'Plan' }, 'shortest')).toBe('[Roadmap](Plan.md)')
+  })
+
   test('always show something, since a markdown link with no words shows none', () => {
     expect(formatLink({ ...PLAN, shown: 'the plan' }, 'absolute')).toBe('[the plan](ideas/Plan.md)')
     expect(formatLink(PLAN, 'absolute')).toContain('[Plan]')
