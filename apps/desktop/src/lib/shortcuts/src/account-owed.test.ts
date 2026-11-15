@@ -4,6 +4,7 @@ const world = vi.hoisted(() => ({
   saved: [] as unknown[],
   failing: false,
   user: null as { id: string } | null,
+  leaving: [] as (() => void)[],
 }))
 
 vi.mock('../../accounts/src/api', async (importOriginal) => {
@@ -17,7 +18,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => {
       get accountToken() {
         return world.user ? 'token' : null
       },
-      forgetWithSession: () => undefined,
+      forgetWithSession: (clear: () => void) => void world.leaving.push(clear),
     },
     api: {
       saveSettings: (_token: string, patch: unknown) => {
@@ -46,8 +47,14 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
+function signedOut() {
+  for (const clear of world.leaving) clear()
+  world.user = null
+}
+
 async function relaunched() {
   vi.resetModules()
+  world.leaving = []
   const [{ shortcuts }, { toolbar }] = await Promise.all([
     import('./shortcuts.svelte'),
     import('./toolbar.svelte'),
@@ -104,6 +111,58 @@ describe('a shortcut changed while the account could not hear it', () => {
     const { shortcuts } = await relaunched()
     shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+  })
+})
+
+describe('a shortcut changed before the account is known', () => {
+  test('is not undone once it is', async () => {
+    world.user = null
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+
+    world.user = { id: 'u1' }
+    shortcuts.receive({ shortcuts: {} })
+    await settled()
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+    expect(world.saved.at(-1)).toMatchObject({ shortcuts: { 'format.bold': 'Mod-Alt-j' } })
+  })
+
+  test('keeps a change owed to an account across a launch that does not know it yet', async () => {
+    const first = await relaunched()
+    world.failing = true
+    first.shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+
+    world.failing = false
+    world.user = null
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.italic', 'Mod-Alt-k')
+    world.user = { id: 'u1' }
+    shortcuts.receive({ shortcuts: {} })
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+    expect(shortcuts.keyFor('format.italic')).toBe('Mod-Alt-k')
+  })
+})
+
+describe('signing out', () => {
+  test('leaves nothing owed for the next account, nor for the one that left', async () => {
+    const { shortcuts } = await relaunched()
+    world.failing = true
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+    world.failing = false
+
+    signedOut()
+    world.user = { id: 'u2' }
+    shortcuts.receive({ shortcuts: { 'format.italic': 'Mod-Alt-q' } })
+    signedOut()
+    world.saved = []
+    world.user = { id: 'u1' }
+    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-j' } })
+    await settled()
+
+    expect(world.saved).toEqual([])
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
   })
 })
 

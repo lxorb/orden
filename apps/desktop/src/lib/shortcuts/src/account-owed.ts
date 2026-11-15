@@ -1,27 +1,38 @@
 import { account, api, type AccountSettings } from '../../accounts/src/api'
-import { forget, keepJson, stored } from '../../platform/src/api'
+import { forget, isRecord, keepJson, stored } from '../../platform/src/api'
 
 export class AccountOwed {
   private sent = 0
 
-  constructor(private readonly key: string) {}
+  constructor(private readonly key: string) {
+    account.forgetWithSession(() => forget(this.key))
+  }
+
+  private get owner(): string | null | undefined {
+    const kept = stored(this.key)
+    if (!isRecord(kept)) return undefined
+    return typeof kept.who === 'string' ? kept.who : null
+  }
 
   get standing(): boolean {
-    const who = account.user?.id
-    return !!who && stored(this.key) === who
+    const owner = this.owner
+    if (owner === undefined) return false
+    const who = account.user?.id ?? null
+    return owner === null || who === null || owner === who
   }
 
   send(patch: AccountSettings): void {
+    const who = account.user?.id ?? (this.standing ? this.owner : null) ?? null
+    keepJson(this.key, { who })
+
     const token = account.accountToken
-    const who = account.user?.id
-    if (!token || !who) return
+    if (!token) return
 
     const mine = ++this.sent
-    keepJson(this.key, who)
     void api
       .saveSettings(token, patch)
       .then(() => {
-        if (this.sent === mine && stored(this.key) === who) forget(this.key)
+        if (this.sent === mine && this.owner === who) forget(this.key)
       })
       .catch(() => undefined)
   }

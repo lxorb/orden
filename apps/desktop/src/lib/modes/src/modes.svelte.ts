@@ -1041,16 +1041,23 @@ class Modes {
 
   private sent = 0
 
-  private get owed(): AccountSettings {
+  private get owedTo(): { who: string | null; patch: AccountSettings } | null {
     const kept = stored(OWED_KEY)
-    if (!isRecord(kept) || !isRecord(kept.patch)) return {}
+    if (!isRecord(kept) || !isRecord(kept.patch)) return null
+    const owner = typeof kept.who === 'string' ? kept.who : null
     const who = account.user?.id ?? null
-    return kept.who === null || kept.who === who ? kept.patch : {}
+    return owner === null || who === null || owner === who
+      ? { who: owner, patch: kept.patch }
+      : null
+  }
+
+  private get owed(): AccountSettings {
+    return this.owedTo?.patch ?? {}
   }
 
   private set owed(patch: AccountSettings) {
     if (!Object.keys(patch).length) forget(OWED_KEY)
-    else keepJson(OWED_KEY, { who: account.user?.id ?? null, patch })
+    else keepJson(OWED_KEY, { who: account.user?.id ?? this.owedTo?.who ?? null, patch })
   }
 
   private session = 0

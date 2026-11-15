@@ -677,6 +677,37 @@ describe('taking over what the account holds', () => {
     Object.assign(api, was)
   })
 
+  test('keeps what is owed to an account through a launch that does not know the account yet', async () => {
+    const sent: Held[] = []
+    let server: Held = { vim: false, ligatures: 'all' }
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    const signedIn = async (id: string | null) => {
+      const { account } = await import('../../accounts/src/api')
+      account.user = id === null ? null : ({ id } as typeof account.user)
+    }
+
+    await signedIn('u1')
+    modes.setVimKeys(true)
+
+    const store = await restarted()
+    await signedIn(null)
+    store.setLigatures('code')
+    await signedIn('u1')
+    api.saveSettings = async (_token: string, patch: Held) => {
+      sent.push(patch)
+      server = { ...server, ...patch }
+      return { settings: server }
+    }
+    api.settings = async () => ({ settings: server })
+    await store.adopt('token')
+
+    expect(sent).toEqual([{ vim: true, ligatures: 'code' }])
+    expect(store.vim).toBe(true)
+    expect(store.ligatures).toBe('code')
+    await signedIn(null)
+    Object.assign(api, was)
+  })
+
   test('brings the formatting marks kept quiet', async () => {
     const { release, settingsCall } = heldAnswer({ quietMarks: true })
     api.settings = settingsCall
