@@ -24,7 +24,6 @@ import {
   joinPath,
   passing,
 } from '../../platform/src/api'
-import { syncMark } from '../../surfaces.svelte'
 import { settleShortcuts } from '@orden/scan/settle'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
@@ -38,7 +37,7 @@ import {
 } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
-import { type Entry, isUntouchedWelcome } from '@orden/contracts'
+import { askSheet, type Entry, isUntouchedWelcome } from '@orden/contracts'
 
 function ordered<T extends { path: string }>(
   notes: readonly T[],
@@ -995,7 +994,7 @@ export async function push(
 
   const all = [...flatten(tree), ...(await ownNotes(root, tree))]
   const everything = all.filter((one) => !inForeignCopy(relativeTo(root, one.path)))
-  if (!__EVEN_PLUGIN__ && everything.length < all.length) void syncMark.ask()
+  if (!__EVEN_PLUGIN__ && everything.length < all.length) void askSheet('sync-mark')
   const folded = await foldWebCopies(everything)
   for (const one of folded) sending.folded?.(one)
   const listed = everything.filter((one) => !folded.some((fold) => fold.gone === one.path))

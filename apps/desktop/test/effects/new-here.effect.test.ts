@@ -7,6 +7,8 @@ import { workspace } from '../../src/lib/workspace/src/api'
 
 vi.mock('../../src/lib/pass-sync/src/api', () => ({ openPass: () => undefined }))
 
+await import('../../src/lib/web-tab/src/api')
+
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,

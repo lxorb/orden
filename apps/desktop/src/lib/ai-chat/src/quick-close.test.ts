@@ -2,7 +2,6 @@ import { expect, test, vi } from 'vitest'
 
 const started = vi.hoisted(() => [] as string[])
 
-vi.mock('../../surfaces.svelte', () => ({ quickSheet: { ask: () => Promise.resolve() } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: { panelTab: null, panes: { focusedId: '' }, activeSpace: null, offers: () => true },

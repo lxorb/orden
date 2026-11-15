@@ -4,10 +4,10 @@
   import { dur, fly } from './platform/src/api'
   import { told } from './ui-kit/src/api'
   import { forget, isRecord, isString, stored } from './platform/src/api'
-  import { OUTSIDE } from './surfaces.svelte'
+  import { OUTSIDE_FOLDER } from '@orden/contracts'
 
-  const said = stored(OUTSIDE)
-  forget(OUTSIDE)
+  const said = stored(OUTSIDE_FOLDER)
+  forget(OUTSIDE_FOLDER)
   const folder = isRecord(said) && isString(said.folder) ? said.folder : ''
   const left = isRecord(said) && Array.isArray(said.left) ? said.left.filter(isString) : []
 

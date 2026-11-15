@@ -1,5 +1,5 @@
+import { askSheet } from '@orden/contracts'
 import { documentOf, type EditorView, type SharedDoc, type Text } from '@orden/editor'
-import { quickSheet } from '../../surfaces.svelte'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace/src/api'
 import { carried, type ContextKind, insertion } from './quick'
@@ -86,7 +86,7 @@ class Quick {
       return
     }
 
-    void quickSheet.ask()
+    void askSheet('quick-question')
     this.reset()
     this.gather()
     this.open = true

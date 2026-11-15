@@ -1,9 +1,9 @@
+import { askSheet } from '@orden/contracts'
 import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
 import { systemLocale } from '../../platform/src/api'
 import { message } from '../../ui-kit/src/api'
 import { complete, wasStopped, ai } from '../../ai-providers/src/api'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
-import { rewriteSheet } from '../../surfaces.svelte'
 
 class Rewriting {
   open = $state(false)
@@ -23,7 +23,7 @@ class Rewriting {
     const range = view.state.selection.main
     if (range.empty || view.state.readOnly) return
 
-    void rewriteSheet.ask()
+    void askSheet('rewrite')
 
     this.view = view
     this.shows = documentOf(view)

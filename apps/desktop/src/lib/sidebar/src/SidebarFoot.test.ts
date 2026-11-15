@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 
-vi.mock('../../surfaces.svelte', () => ({ showFeedback: () => undefined }))
+vi.mock('../../surfaces/src/api', () => ({ showFeedback: () => undefined }))
 
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const SidebarFoot = (await import('./SidebarFoot.svelte')).default

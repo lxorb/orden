@@ -43,7 +43,6 @@ vi.mock('../../workspace/src/api', () => ({
 }))
 
 const failed = vi.hoisted((): string[] => [])
-vi.mock('../../surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
 
 const offered: string[] = []
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({

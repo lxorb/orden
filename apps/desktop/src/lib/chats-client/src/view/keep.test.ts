@@ -33,7 +33,6 @@ vi.mock('../../../assets', () => ({
     return Promise.resolve(name)
   },
 }))
-vi.mock('../../../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
 vi.stubGlobal('fetch', () => Promise.resolve(new Response(new ArrayBuffer(4))))
 
 const { saveAsNote } = await import('./keep')

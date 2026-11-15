@@ -5,7 +5,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { commitSpaceName } from '../../space-actions'
   import SpaceBadge from '../../SpaceBadge.svelte'
-  import { spacesMenu } from '../../surfaces.svelte'
+  import { spacesMenu } from '../../surfaces/src/api'
   import { isShared } from '../../sharing/src/api'
   import { workspace } from '../../workspace/src/api'
 

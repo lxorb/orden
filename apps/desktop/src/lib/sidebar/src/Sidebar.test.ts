@@ -3,7 +3,7 @@ import { render } from 'svelte/server'
 import { panels } from '../../session/src/api'
 
 vi.mock('../../collab/src/api', () => ({ rooms: { present: {}, following: null } }))
-vi.mock('../../surfaces.svelte', () => ({
+vi.mock('../../surfaces/src/api', () => ({
   askPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
@@ -12,8 +12,6 @@ vi.mock('../../surfaces.svelte', () => ({
   phoneTabsBar: () => new Promise(() => undefined),
   phoneYou: () => new Promise(() => undefined),
   showFeedback: () => undefined,
-  toggleTabOverview: () => undefined,
-  tabOverview: { open: false },
 }))
 
 const { workspace } = await import('../../workspace/src/api')

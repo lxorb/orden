@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event'
 import { log, invoke } from '../../platform/src/api'
-import { crashAskDue } from '../../surfaces.svelte'
+import { crashAskDue } from '../../surfaces/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { crashReports } from './choice.svelte'

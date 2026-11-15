@@ -65,20 +65,20 @@
     chatSurface,
     emptySurface,
     explorerSurface,
-    passSurface,
-    settingsSurface,
-    timeSurface,
     findBar,
     graphSurface,
     lockScreen,
     pagesSurface,
+    passSurface,
     readingSurface,
-    tabOverview,
+    settingsSurface,
     terminalSurface,
-    viewSurface,
+    timeSurface,
     todosBoard,
+    viewSurface,
     webSurface,
-  } from '../../surfaces.svelte'
+  } from '../../surfaces/src/api'
+  import { tabOverview, workspace } from '../../workspace/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
@@ -88,7 +88,6 @@
   import type { OpenHow } from '../../new-tab'
   import { usage } from '../../usage.svelte'
   import { views } from '../../views.svelte'
-  import { workspace } from '../../workspace/src/api'
 
   const { pane }: { pane: Pane } = $props()
 

@@ -30,7 +30,7 @@ import {
   writeOwed,
   written,
 } from './parting/src/api'
-import { warmDoors } from './surfaces.svelte'
+import { warmDoors } from './features'
 import type { Across } from './workspace/src/across'
 import { recovery } from './history/src/api'
 import { reloading } from './reloading.svelte'

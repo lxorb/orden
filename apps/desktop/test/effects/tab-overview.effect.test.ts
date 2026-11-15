@@ -10,7 +10,7 @@ window.matchMedia = ((query: string) => ({
 Element.prototype.scrollIntoView = () => undefined
 
 const { default: Overview } = await import('../../src/lib/overview/src/Overview.svelte')
-const { tabOverview } = await import('../../src/lib/surfaces.svelte')
+const { tabOverview } = await import('../../src/lib/workspace/src/api')
 const { appCommands } = await import('../../src/lib/commands/src/api')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { runTap } = await (await import('../../src/lib/shortcuts/src/api')).doubleTaps()

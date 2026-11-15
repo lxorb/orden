@@ -4,16 +4,20 @@ import {
   registerCommand,
   registerHearing,
   registerCommandRows,
+  commandRowsLoaded,
+  registered,
   registerCommands,
   providePort,
   registerFeature,
   registerSettingsPart,
   registerSidebarPart,
+  registerSurfaces,
   registerTabKind,
   runCommand,
   whenPortProvided,
 } from '@orden/contracts'
-import { askPart } from './ai-chat/src/api'
+import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
+import { askPart, loadRewriteSheet } from './ai-chat/src/api'
 import { outlinePart } from './pages/src/api'
 import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
@@ -21,7 +25,32 @@ import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
 import { samePath } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
-import { settings } from './settings/src/api'
+import { loadSettingsPanel, settings } from './settings/src/api'
+import { paletteDoor } from './palette/src/api'
+import { loadGraph } from './graph-view/src/api'
+import { loadArchive, loadArchivedStrip } from './archive/src/api'
+import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
+import { warmCalls } from './accounts/src/api'
+import { breathe } from './platform/src/api'
+import { startup } from './launch/src/api'
+import {
+  appMenuRows,
+  contextMenu,
+  fillBar,
+  findBar,
+  formatBar,
+  joinSheet,
+  linksPanel,
+  promptSheet,
+  quickAddSheet,
+  readingSurface,
+  searchPanel,
+  sheets,
+  signInSheet,
+  spacePickerDialog,
+  spacesMenu,
+  undoToastNotice,
+} from './surfaces/src/api'
 
 serveLinks({
   html: async (text, path) => {
@@ -46,6 +75,31 @@ serveLinks({
   search: searchSpace,
 })
 providePort('settings.window', settings)
+providePort('shell.sheets', sheets)
+providePort('quick-add.show', {
+  show: (prefill = {}) => {
+    if (__EVEN_PLUGIN__) return
+    void quickAddSheet.ask()
+    void import('./quick-add/src/api').then(({ quickAdd }) => quickAdd.show(prefill))
+  },
+})
+registerSurfaces({
+  graph: loadGraph,
+  settings: () => Promise.all([loadSettingsPanel(), registered()]).then(([one]) => one),
+  view: () => import('./views/src/api').then((one) => one.loadViewTab()),
+  terminal: () => import('./terminal/src/api').then((one) => one.loadTerminalTab()),
+  reading: () => import('./reading/src/api').then((one) => one.loadReading()),
+  'find-bar': () => import('./reading/src/api').then((one) => ({ default: one.FindBar })),
+  publish: () => import('./publishing/src/api').then((one) => one.loadPublishSheet()),
+  import: () => import('./import/src/api').then((one) => one.loadImportSheet()),
+  rewrite: loadRewriteSheet,
+  'recording-pill': () => import('./dictation/src/api').then((one) => one.loadRecordingPill()),
+  overview: () => import('./overview/src/api').then((one) => one.loadOverview()),
+  'host-picker': () => import('./terminal/src/api').then((one) => one.loadHostPicker()),
+  'terminal-mark': () => import('./terminal/src/api').then((one) => one.loadTerminalMark()),
+  'quick-add': () => import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
+  'private-mark': loadPrivateMark,
+})
 registerSidebarPart(askPart)
 registerSidebarPart(outlinePart)
 registerSidebarPart(scratchpadPart)
@@ -86,7 +140,56 @@ registerCommands('views.', async () => (await import('./views/src/api')).viewCom
 registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
 
+if (__EVEN_PLUGIN__) {
+  const waits = () => new Promise<never>(() => undefined)
+  registerSurfaces({
+    tasks: waits,
+    todos: waits,
+    channel: waits,
+    chats: waits,
+    'time-panel': waits,
+    'pass-fill': waits,
+    'takeover-bar': waits,
+    'agent-rows': waits,
+    'agent-session': waits,
+    spark: waits,
+    'phone-tabs': waits,
+    'phone-you': waits,
+  })
+}
+
 if (!__EVEN_PLUGIN__) {
+  registerSurfaces({
+    canvas: () => import('./canvas/src/api').then((one) => one.loadCanvas()),
+    tasks: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
+    todos: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
+    channel: () => import('./chats-client/src/api').then((one) => one.loadChatTab()),
+    chats: () => import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
+    'time-panel': () => import('./time/src/api').then((one) => one.loadTimePanel()),
+    time: () => import('./time/src/api').then((one) => one.loadTimeTab()),
+    pages: () => import('./pages/src/api').then((one) => one.loadPages()),
+    'pages-navigator': () => import('./pages/src/api').then((one) => one.loadNavigator()),
+    web: loadWebTab,
+    application: () => import('./apps/src/api').then((one) => one.loadApplicationTab()),
+    explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
+    pass: () => import('./pass-ui/src/api').then((one) => one.loadPassTab()),
+    'pass-fill': () => import('./pass-ui/src/api').then((one) => one.loadPassFill()),
+    'takeover-bar': () => import('./agents/src/api').then((one) => one.loadTakeoverBar()),
+    'agent-rows': () => import('./agents/src/api').then((one) => one.loadAgentRows()),
+    'agent-session': () => import('./agents/src/api').then((one) => one.loadAgentSession()),
+    spark: () => import('./agents/src/api').then((one) => ({ default: one.Spark })),
+    'phone-tabs': () => import('./phone/src/api').then((one) => one.loadPhoneTabs()),
+    'phone-you': () => import('./phone/src/api').then((one) => one.loadPhoneYou()),
+    ask: () => import('./ai-sidebar/src/api').then((one) => one.loadChatPanel()),
+    archive: loadArchive,
+    'archived-strip': loadArchivedStrip,
+    export: () => import('./export/src/api').then((one) => one.loadExportSheet()),
+    'quick-question': () => import('./ai-sidebar/src/api').then((one) => one.loadQuickQuestion()),
+    'scratchpad-card': () => import('./scratchpad/src/api').then((one) => one.loadScratchpadCard()),
+    'keys-moved': () => import('./ai-providers/src/api').then((one) => one.loadKeysMoved()),
+    'crash-ask': () => import('./crash-reports/src/api').then((one) => one.loadCrashAsk()),
+    'undo-toast': () => import('./workspace/src/api').then((one) => one.loadUndoToast()),
+  })
   registerSidebarPart({
     id: 'time',
     menu: async () => (await import('./time/src/api')).trackingMenu(),
@@ -156,4 +259,68 @@ if (!__EVEN_PLUGIN__) {
       return partView((await loadMigrateRows()).default, () => ({}))
     },
   })
+}
+
+export async function warmDoors(): Promise<void> {
+  await startup.turn('doors')
+  await knock([
+    () => findBar(),
+    () => searchPanel(),
+    () => linksPanel(),
+    () => appMenuRows(),
+    () => readingSurface(),
+    () => loadFind(),
+    () => loadLineCommands(),
+    () =>
+      Promise.all([import('./commands/src/api'), commandRowsLoaded()]).then(([{ blockRows }]) =>
+        setBlocks(blockRows),
+      ),
+    () => spacePickerDialog.ask(),
+    () => spacesMenu(),
+    () => paletteDoor.ask(),
+    () => promptSheet.ask(),
+    () => contextMenu.ask(),
+    () => formatBar.ask(),
+    () => signInSheet.ask(),
+    () => joinSheet.ask(),
+    __EVEN_PLUGIN__ ? undefined : () => undoToastNotice.ask(),
+    __EVEN_PLUGIN__ ? undefined : () => import('./field-menu'),
+    () => import('./ai-providers/src/api'),
+    () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
+    () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
+    () => import('./row-menu'),
+    () => import('./editor-menu'),
+    () => import('./tab-cycle/src/api'),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./tab-strip/src/api').then((one) => one.tabNumbers()),
+    __EVEN_PLUGIN__ ? undefined : () => import('./pane-moves').then((one) => one.followPointer()),
+    __EVEN_PLUGIN__ ? undefined : () => fillBar(),
+    () => import('./preview-card'),
+    () => import('./note-cover'),
+    () => warmCalls(),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () =>
+          Promise.all([import('./first-screen/src/api'), import('./workspace/src/api')]).then(
+            ([one, { workspace }]) => one.keepFirstScreens(workspace),
+          ),
+    () => import('./reload-when'),
+    () => import('./keyboard-home'),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
+  ])
+}
+
+async function knock(doors: readonly ((() => unknown) | undefined)[]): Promise<void> {
+  const asked: Promise<unknown>[] = []
+  for (const open of doors) {
+    if (!open) continue
+    const one = Promise.resolve().then(open)
+    one.catch(() => undefined)
+    asked.push(one)
+    await breathe()
+  }
+  await Promise.all(asked)
 }

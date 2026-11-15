@@ -513,7 +513,7 @@ BOX = """
 }
 """
 
-QUICK = "() => import('/src/lib/ai-chat/src/quick-door.ts').then((door) => door.askQuickly())"
+QUICK = "() => import('/src/lib/ai-chat/src/api.ts').then((door) => door.askQuickly())"
 
 def menu_row(page: Page, words: str):
     return page.locator(".menu [role=menuitem]").filter(has_text=words).first

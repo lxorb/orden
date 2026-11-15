@@ -5,7 +5,7 @@
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { ASK_MARK, GRAPH_MARK } from './ui-kit/src/api'
-  import { terminalMark } from './surfaces.svelte'
+  import { terminalMark } from './surfaces/src/api'
   import { type Page, pages, siteMark } from './web-tab/src/api'
   import { readWebFile } from '@orden/scan/shortcut'
   import type { Tab } from './documents/src/api'

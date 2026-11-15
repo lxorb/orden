@@ -17,7 +17,8 @@
     "ui-kit",
     "documents",
     "sidebar",
-    "modes"
+    "modes",
+    "surfaces"
   ],
   "pending": [
     "apps/desktop/src/lib/Icon.svelte",
@@ -25,7 +26,6 @@
     "apps/desktop/src/lib/icon-choice.svelte.ts",
     "apps/desktop/src/lib/layer-keys.ts",
     "apps/desktop/src/lib/reloading.svelte.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/theme-ports.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]

@@ -28,7 +28,6 @@
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/attachments.ts",
     "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/picking.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts"
+    "apps/desktop/src/lib/picking.ts"
   ]
 }

@@ -25,5 +25,5 @@
     "highlight",
     "modes"
   ],
-  "pending": ["apps/desktop/src/lib/own-keys.ts", "apps/desktop/src/lib/surfaces.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/own-keys.ts"]
 }

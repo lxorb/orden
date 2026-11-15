@@ -1,7 +1,5 @@
 import { EditorState, EditorView } from '@orden/editor'
-import { expect, test, vi } from 'vitest'
-
-vi.mock('../../surfaces.svelte', () => ({ rewriteSheet: { ask: () => Promise.resolve() } }))
+import { expect, test } from 'vitest'
 
 const { rewriting } = await import('./rewriting.svelte')
 

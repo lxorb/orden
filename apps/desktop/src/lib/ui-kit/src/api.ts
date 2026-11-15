@@ -1,5 +1,6 @@
 export { closeOnBack } from './backstack.svelte'
 export { busy } from './busy.svelte'
+export { held, type Latched, latched } from './doors.svelte'
 export { default as Cross } from './Cross.svelte'
 export { default as UnreadDot } from './UnreadDot.svelte'
 export { default as Facts } from './Facts.svelte'

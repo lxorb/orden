@@ -30,7 +30,8 @@
   import { rooms } from '../../collab/src/api'
   import { roving } from '../../roving'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { privateMark, syncMark, soundMark, tabOverview } from '../../surfaces.svelte'
+  import { privateMark, soundMark, syncMark } from '../../surfaces/src/api'
+  import { tabOverview, workspace } from '../../workspace/src/api'
   import TabMark from '../../TabMark.svelte'
   import { askPlace } from '../../save-place/src/api'
   import {
@@ -86,7 +87,6 @@
   import { shownName } from '../../platform/src/api'
   import { chosenIcon } from '../../chosen-icon'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { type Landing, inside } from '../../panes/src/api'
   import { isDraft } from '../../documents/src/api'
   import { SvelteSet } from 'svelte/reactivity'

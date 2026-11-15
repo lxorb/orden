@@ -23,7 +23,8 @@
     "ui-kit",
     "windows",
     "workspace",
-    "gates"
+    "gates",
+    "surfaces"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -52,7 +53,6 @@
     "apps/desktop/src/lib/sections.ts",
     "apps/desktop/src/lib/sidebar-width.svelte.ts",
     "apps/desktop/src/lib/space-actions.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/swipe-opens.ts",
     "apps/desktop/src/lib/tree-keys.ts"
   ]

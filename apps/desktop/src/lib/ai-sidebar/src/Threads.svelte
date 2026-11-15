@@ -6,7 +6,7 @@
   import { dur, fly } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { agentRows } from '../../surfaces.svelte'
+  import { agentRows } from '../../surfaces/src/api'
   import type { ThreadHead } from '../../ai-providers/src/api'
   import { ordered, stateOf } from '../../ai-providers/src/api'
   import { chat } from './chat-parts'

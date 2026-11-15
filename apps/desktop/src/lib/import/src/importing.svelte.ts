@@ -1,9 +1,9 @@
+import { askSheet } from '@orden/contracts'
 import type { PandocPicture, PickedFile } from '@orden/contracts'
 import { relativeTo, rootedAt, invoke, joinPath } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { busy, message, prompt } from '../../ui-kit/src/api'
 import { moveTargets } from '../../tree/src/api'
-import { importSheet } from '../../surfaces.svelte'
 import { workspace } from '../../workspace/src/api'
 import { macNotes, todoistAccount } from './api'
 import { applyImport } from './apply'
@@ -46,7 +46,7 @@ class Importing {
   readonly spaceName = $derived(rootedAt(workspace.spaces, this.root)?.name ?? '')
 
   show() {
-    void importSheet.ask()
+    void askSheet('import')
     this.open = true
     if (this.stage === 'waiting') this.root = landing()
   }

@@ -1,5 +1,5 @@
 import { tick } from 'svelte'
-import { webPages } from '@orden/contracts'
+import { askSheet, webPages } from '@orden/contracts'
 import { focusEditor } from '../../focus'
 import {
   identifier,
@@ -11,7 +11,6 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { spaceSound } from '../../surfaces.svelte'
 import { IN_A_PAGE } from '../../ui-controls/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from './workspace.svelte'
@@ -60,7 +59,7 @@ class Sets {
     this.handOver()
     workspace.setsWritten = () => this.written()
     tabSets.fetched = true
-    void spaceSound.ask()
+    void askSheet('space-sound')
   }
 
   private handOver() {

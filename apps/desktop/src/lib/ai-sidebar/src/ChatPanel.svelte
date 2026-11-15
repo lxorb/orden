@@ -7,7 +7,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { ai } from '../../ai-providers/src/api'
   import { agentMarks } from '../../agent-marks.svelte'
-  import { agentSession } from '../../surfaces.svelte'
+  import { agentSession } from '../../surfaces/src/api'
   import { following, toggleFollow } from './chat-parts'
   import { chat } from './chat-parts'
   import Composer from './Composer.svelte'

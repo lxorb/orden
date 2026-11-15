@@ -1,8 +1,8 @@
+import { askSheet } from '@orden/contracts'
 import { mount, untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
 import type { Excerpt } from '@orden/sync-core'
 import { message, overlays } from '../../ui-kit/src/api'
-import { syncMark, undoToastNotice } from '../../surfaces.svelte'
 import { afterQuiet } from '../../platform/src/api'
 import { workspace } from './ports'
 import type { LogRow, SyncStore } from './store'
@@ -109,7 +109,7 @@ class Asking {
 
     const watched = $effect.root(() => {
       $effect(() => {
-        if (this.held.length) untrack(() => void Promise.all([sheet(), syncMark.ask()]))
+        if (this.held.length) untrack(() => void Promise.all([sheet(), askSheet('sync-mark')]))
       })
 
       let was: string | null = null
@@ -194,14 +194,14 @@ function sheet(): Promise<void> {
 }
 
 async function resurrected(event: Resurrected) {
-  await undoToastNotice.ask()
+  await askSheet('undo-toast')
   const { back } = await import('./resurrected.svelte')
   back.show(event)
 }
 
 export async function unsyncedToast(name: string) {
   if (__EVEN_PLUGIN__) return
-  await undoToastNotice.ask()
+  await askSheet('undo-toast')
   const { unsynced } = await import('./unsynced.svelte')
   unsynced.show(name)
 }

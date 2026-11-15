@@ -187,6 +187,7 @@ export {
   type TabUsage,
 } from './tab-kinds'
 export {
+  askSheet,
   flushHeldEdits,
   mayStop,
   type PortMap,
@@ -196,6 +197,7 @@ export {
   portProvided,
   providePort,
   settingsWindow,
+  showQuickAdd,
   syncStore,
   webPages,
   whenPortProvided,
@@ -203,6 +205,19 @@ export {
   workspaceView,
 } from './ports'
 export { whenLoaded } from './loading'
+export {
+  type FindBarProps,
+  type FindFlags,
+  OUTSIDE_FOLDER,
+  type QuickAddPort,
+  type QuickAddPrefill,
+  registerSurfaces,
+  type SheetId,
+  type SheetsPort,
+  type SurfaceId,
+  type SurfacePorts,
+  surfaceLoad,
+} from './surfaces'
 export {
   type AgentAnswer,
   type AgentCaller,

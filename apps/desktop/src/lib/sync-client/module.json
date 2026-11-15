@@ -29,5 +29,5 @@
     "left-spaces",
     "space-owed"
   ],
-  "pending": ["apps/desktop/src/lib/surfaces.svelte.ts", "apps/desktop/src/lib/usage.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/usage.svelte.ts"]
 }

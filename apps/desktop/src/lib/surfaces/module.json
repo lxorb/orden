@@ -1,0 +1,38 @@
+{
+  "name": "surfaces",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts-ui",
+    "collab",
+    "context-menu",
+    "documents",
+    "editor",
+    "feedback",
+    "graph",
+    "history",
+    "platform",
+    "sharing",
+    "tab-fill",
+    "ui-kit"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/FeedbackSheet.svelte",
+    "apps/desktop/src/lib/FormatBar.svelte",
+    "apps/desktop/src/lib/FullscreenLeave.svelte",
+    "apps/desktop/src/lib/IconPicker.svelte",
+    "apps/desktop/src/lib/Links.svelte",
+    "apps/desktop/src/lib/NewHere.svelte",
+    "apps/desktop/src/lib/OutsideFolder.svelte",
+    "apps/desktop/src/lib/PromptSheet.svelte",
+    "apps/desktop/src/lib/RenameNotice.svelte",
+    "apps/desktop/src/lib/SearchPanel.svelte",
+    "apps/desktop/src/lib/SoundMark.svelte",
+    "apps/desktop/src/lib/SpaceMenu.svelte",
+    "apps/desktop/src/lib/SpacePicker.svelte",
+    "apps/desktop/src/lib/SpaceSound.svelte",
+    "apps/desktop/src/lib/SyncMark.svelte",
+    "apps/desktop/src/lib/app-menu.ts",
+    "apps/desktop/src/lib/first-space.svelte.ts"
+  ]
+}

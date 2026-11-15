@@ -22,7 +22,8 @@
     "theme",
     "markdown",
     "modes",
-    "double-tap"
+    "double-tap",
+    "surfaces"
   ],
   "pending": [
     "apps/desktop/src/lib/Door.svelte",
@@ -38,7 +39,6 @@
     "apps/desktop/src/lib/note-menu.ts",
     "apps/desktop/src/lib/roving.ts",
     "apps/desktop/src/lib/row-menu.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
