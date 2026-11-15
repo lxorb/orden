@@ -1,17 +1,17 @@
 import 'fake-indexeddb/auto'
 import { expect, test, vi } from 'vitest'
 
-function opened(name: string) {
+function opened(name: string, version = 1) {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(name, 1)
+    const request = indexedDB.open(name, version)
     request.onupgradeneeded = () => request.result.createObjectStore('meta')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('not opened'))
   })
 }
 
-async function kept(name: string, key: string, value: string) {
-  const db = await opened(name)
+async function kept(name: string, key: string, value: string, version = 1) {
+  const db = await opened(name, version)
   await new Promise<void>((resolve) => {
     const writing = db.transaction('meta', 'readwrite')
     writing.objectStore('meta').put(value, key)
@@ -86,4 +86,21 @@ test('with no older store at all, no older tab is waited for', async () => {
   expect(Date.now() - started).toBeLessThan(200)
   expect(await names()).not.toContain('former-d')
   older.close()
+})
+
+test('a tab left on the older store by a carry that did not finish keeps it from the next tab', async () => {
+  await kept('former-e', 'note', 'written before', 2)
+  const holding = await new Promise<IDBDatabase>((resolve) => {
+    const request = indexedDB.open('new-e', 1)
+    request.onsuccess = () => resolve(request.result)
+  })
+  holding.onversionchange = () => undefined
+
+  const first = await freshTab()
+  expect(await first.databaseName('former-e', 'new-e', 'former-e')).toBe('former-e')
+  holding.close()
+
+  const later = await freshTab()
+  await later.databaseName('former-e', 'new-e', 'former-e')
+  expect(await names()).toContain('former-e')
 })

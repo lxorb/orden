@@ -47,7 +47,9 @@ export async function databaseName(
     return from
   }
   const carried = await carryDatabase(from, to, () => askedFormer(channel)).catch(() => false)
-  return carried ? to : from
+  if (carried) return to
+  answerAs(channel)
+  return from
 }
 
 function answerAs(channel: string): void {
