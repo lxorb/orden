@@ -226,14 +226,15 @@ class Session {
     this.open = true
   }
 
-  private leaveFor(next: { user?: Account | null; guest?: Guest | null }) {
+  private leaveFor(token: string, next: { user?: Account | null; guest?: Guest | null }) {
     const was = this.user ? this.user.id : this.guest ? `guest:${this.guest.id}` : null
     const now = next.user ? next.user.id : next.guest ? `guest:${next.guest.id}` : null
     if (was && was !== now && !(this.guest && next.user)) this.forget()
+    if (!was && this.token && this.token !== token) this.heardNoAccount()
   }
 
   private async settleIn(token: string, user: Account): Promise<void> {
-    this.leaveFor({ user })
+    this.leaveFor(token, { user })
     this.guest = null
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
@@ -274,7 +275,7 @@ class Session {
   }
 
   async arrive(token: string, who: { user?: Account; guest?: Guest }) {
-    this.leaveFor(who)
+    this.leaveFor(token, who)
     this.stopResendTimer()
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)

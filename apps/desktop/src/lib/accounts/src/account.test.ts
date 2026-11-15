@@ -315,18 +315,18 @@ describe('six digits, on whichever half of the sign-in', () => {
   })
 })
 
-describe('restoring a session', () => {
-  async function restore(): Promise<void> {
-    vi.useFakeTimers()
-    try {
-      const restoring = account.restore()
-      await vi.advanceTimersByTimeAsync(10_000)
-      await restoring
-    } finally {
-      vi.useRealTimers()
-    }
+async function restore(): Promise<void> {
+  vi.useFakeTimers()
+  try {
+    const restoring = account.restore()
+    await vi.advanceTimersByTimeAsync(10_000)
+    await restoring
+  } finally {
+    vi.useRealTimers()
   }
+}
 
+describe('restoring a session', () => {
   test('has looked for the session once its token is read, before the account answers', async () => {
     localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
@@ -576,6 +576,45 @@ describe('a session a share link handed out', () => {
     await account.restore()
     expect(account.user).not.toBeNull()
     expect(told).toBe(1)
+  })
+
+  test('tells it when a session that never answered gives way to another account', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    await account.arrive('other-session', {
+      user: { id: 'u2', email: 'other@example.com', name: null },
+    })
+
+    expect(told).toBe(1)
+  })
+
+  test('tells it too when a code signs in over a session that never answered', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    account.email = 'me@example.com'
+    await account.verify('123456')
+
+    expect(told).toBe(1)
+  })
+
+  test('does not tell it when the session that never answered arrives as itself', async () => {
+    localStorage.setItem('orden:session', 'session')
+    server.meFails = Infinity
+    await restore()
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    await account.arrive('session', { user: { id: 'u1', email: 'me@example.com', name: null } })
+
+    expect(told).toBe(0)
   })
 
   test('holds no account for sure, so nothing it changes is owed to the one it signs in to', async () => {
