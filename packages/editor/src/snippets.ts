@@ -1,4 +1,5 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete'
+import { inCode } from './code'
 
 let table: Record<string, string> = {}
 
@@ -20,10 +21,13 @@ export function snippetCompletions(context: CompletionContext): CompletionResult
   if (!entries.length) return null
 
   const typed = context.matchBefore(/[\w-]{2,}/)
-  if (!typed || (typed.from === typed.to && !context.explicit)) return null
+  if (!typed || inCode(context.state, typed.from)) return null
 
   const query = typed.text.toLowerCase()
-  const matches = entries.filter(([trigger]) => trigger.toLowerCase().startsWith(query))
+  const offered = context.explicit
+    ? (trigger: string) => trigger.startsWith(query)
+    : (trigger: string) => trigger === query
+  const matches = entries.filter(([trigger]) => offered(trigger.toLowerCase()))
   if (!matches.length) return null
 
   return {

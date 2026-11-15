@@ -105,6 +105,7 @@ test('a corner pressed and let go without a drag leaves a sized picture as it wa
 
   handle?.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true, clientX: 50 }))
   handle?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 50, clientY: 9 }))
+  handle?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 51, clientY: 9 }))
   handle?.dispatchEvent(new MouseEvent('pointerup', { button: 0, bubbles: true, clientX: 50 }))
   expect(view.state.doc.toString()).toBe(doc)
   view.destroy()

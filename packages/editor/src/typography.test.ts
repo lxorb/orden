@@ -217,6 +217,30 @@ describe('markdown being typed', () => {
     expect(type('see [[Q3 -', '-')).toBe('see [[Q3 --')
   })
 
+  test("a link's title keeps its straight quotes before the link is closed", () => {
+    expect(type('[a](https://x.com ', '"')).toBe('[a](https://x.com "')
+    expect(type('[a](https://x.com "Title', '"')).toBe('[a](https://x.com "Title"')
+  })
+
+  test("an HTML tag's attributes keep their straight quotes before the tag is closed", () => {
+    expect(type('<img src=', '"')).toBe('<img src="')
+    expect(type('<img src="a.png', '"')).toBe('<img src="a.png"')
+    expect(type('<img src="a.png" width=', '"')).toBe('<img src="a.png" width="')
+  })
+
+  test('maths keeps its primes before the closing dollar is typed', () => {
+    expect(type('$f', "'")).toBe("$f'")
+    expect(type('the slope $f', "'")).toBe("the slope $f'")
+  })
+
+  test('but prose after closed maths, a closed tag or a closed link still gets them', () => {
+    expect(type('$x$ don', "'")).toBe('$x$ don’')
+    expect(type('a \\$ don', "'")).toBe('a \\$ don’')
+    expect(type('<img src="a.png"> she said ', '"')).toBe('<img src="a.png"> she said “')
+    expect(type('[a](https://x.com) she said ', '"')).toBe('[a](https://x.com) she said “')
+    expect(type('a < b ', '"')).toBe('a < b “')
+  })
+
   test('but prose after a closed link or comment still gets them', () => {
     expect(type('[[Bob]] can', "'")).toBe('[[Bob]] can’')
     expect(type('<!-- x --> a -', '-')).toBe('<!-- x --> a –')

@@ -1,6 +1,7 @@
 import { EditorSelection, type EditorState } from '@codemirror/state'
 import type { Command } from '@codemirror/view'
 import { blockDecorations } from './blocks'
+import { noReveal } from './reveal'
 
 interface Drawn {
   from: number
@@ -20,6 +21,7 @@ function drawnBlocks(state: EditorState, from: number, to: number): Drawn[] {
 }
 
 function farEdge(state: EditorState, head: number, down: boolean): number | null {
+  if (!state.facet(noReveal)) return null
   const crossing = drawnBlocks(state, head, head).find((block) =>
     down ? block.from <= head && head < block.to : block.from < head && head <= block.to,
   )

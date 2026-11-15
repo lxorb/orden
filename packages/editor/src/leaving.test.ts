@@ -4,8 +4,8 @@ import { describe, expect, test } from 'vitest'
 import { editorState } from './editor'
 import { parsed } from '../test/parsed'
 
-function opened(doc: string): EditorState {
-  return parsed(editorState({ doc, selection: { anchor: doc.length } }))
+function opened(doc: string, caret = doc.length): EditorState {
+  return parsed(editorState({ doc, selection: { anchor: caret } }))
 }
 
 function enterCommands(state: EditorState): StateCommand[] {
@@ -20,8 +20,8 @@ function enterCommands(state: EditorState): StateCommand[] {
   return found
 }
 
-function pressEnter(doc: string, times: number): string {
-  let state = opened(doc)
+function pressEnter(doc: string, times: number, caret = doc.length): string {
+  let state = opened(doc, caret)
 
   for (let press = 0; press < times; press++) {
     let next = state
@@ -63,5 +63,17 @@ describe('leaving a list', () => {
     expect(pressEnter('- an item', 1)).toBe('- an item\n- ')
     expect(pressEnter('1. one', 1)).toBe('1. one\n2. ')
     expect(pressEnter('> a quote', 1)).toBe('> a quote\n> ')
+  })
+})
+
+describe('a line that only looks like an empty quote', () => {
+  test('inside quoted code, Enter adds a blank code line and keeps the block', () => {
+    const doc = '> ```\n> x\n> ```'
+    expect(pressEnter(doc, 2, doc.indexOf('x') + 1)).toBe('> ```\n> x\n> \n> \n> ```')
+  })
+
+  test('inside plain code or an HTML block, Enter is a plain new line', () => {
+    expect(pressEnter('```\n>\n```', 1, 5)).toBe('```\n>\n\n```')
+    expect(pressEnter('<div\n  class="x"\n>', 1)).toBe('<div\n  class="x"\n>\n')
   })
 })

@@ -49,6 +49,12 @@ describe('a press onto a block that draws itself', () => {
     expect(edgeBeside(state(doc, at(doc, 'below')), at(doc, 'below'), false)).toBe(null)
   })
 
+  test('never jumps over a block drawn under the caret of a note just opened for editing', () => {
+    const doc = FORMULA
+    const top = at(doc, '$$')
+    expect(edgeBeside(state(doc, top), top, true)).not.toBe(at(doc, '$$\n\nbelow') + 2)
+  })
+
   test('nothing where the line it aims at is ordinary text', () => {
     const doc = 'one\ntwo\nthree\n'
     expect(edgeBeside(state(doc, 0), 0, true)).toBe(null)

@@ -26,6 +26,11 @@ export function typingBreak(before: string): boolean {
 
 const DIVIDER_ROW = /^[ \t]*(?:>[ \t]*)*\|?[ \t:|-]*$/
 const COMMENT_OPENING = /<!-?-?$/
+const TAG_OPEN = /<[A-Za-z][\w-]*\s[^>]*$/
+
+function withinMaths(before: string): boolean {
+  return (before.replace(/\\./g, '').match(/\$/g)?.length ?? 0) % 2 === 1
+}
 
 function withinOpen(before: string, opening: string, closing: string): boolean {
   const opened = before.lastIndexOf(opening)
@@ -36,6 +41,9 @@ function writingMarkup(before: string): boolean {
   return (
     withinOpen(before, '[[', ']]') ||
     withinOpen(before, '<!--', '-->') ||
+    withinOpen(before, '](', ')') ||
+    TAG_OPEN.test(before) ||
+    withinMaths(before) ||
     COMMENT_OPENING.test(before.slice(0, -1))
   )
 }

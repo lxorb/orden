@@ -563,6 +563,13 @@ function fenceOf(text: string): { mark: string; info: string } | null {
 
 const EMPTY_QUOTE = /^ {0,3}((?:> ?)+)$/
 
+const VERBATIM = new Set(['HTMLBlock', 'CommentBlock', 'BlockMath'])
+
+function notQuoted(state: EditorState, line: Line): boolean {
+  if (inCode(state, line.to, -1)) return true
+  return enclosingNamed(syntaxTree(state).resolveInner(line.to, -1), VERBATIM) !== null
+}
+
 export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
@@ -571,7 +578,7 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   if (range.head !== line.to) return false
 
   const marks = EMPTY_QUOTE.exec(line.text)?.[1]
-  if (marks === undefined) return false
+  if (marks === undefined || notQuoted(state, line)) return false
 
   const levels = marks.split('>').length - 1
   const kept = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
@@ -600,7 +607,7 @@ function fenceLine(text: string): { pad: string; rest: string } {
 }
 
 function opensUnclosedFence(state: EditorState, line: Line): boolean {
-  const tree = ensureSyntaxTree(state, state.doc.length, 200)
+  const tree = ensureSyntaxTree(state, state.doc.length, 50)
   const code = tree && enclosingNamed(tree.resolveInner(line.to, -1), 'FencedCode')
   if (!code || state.doc.lineAt(code.from).number !== line.number) return false
   return code.getChildren('CodeMark').length < 2

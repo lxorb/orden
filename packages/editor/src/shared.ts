@@ -557,11 +557,13 @@ export function sharing(): Extension {
 }
 
 export const undoEdit: Command = (view) => {
+  if (view.state.readOnly) return false
   const shared = documentOf(view)
   return shared ? shared.undo(view) : undo(view)
 }
 
 export const redoEdit: Command = (view) => {
+  if (view.state.readOnly) return false
   const shared = documentOf(view)
   return shared ? shared.redo(view) : redo(view)
 }

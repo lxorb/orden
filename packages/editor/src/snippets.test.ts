@@ -1,71 +1,85 @@
+import { CompletionContext } from '@codemirror/autocomplete'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState } from '@codemirror/state'
+import { EditorState } from '@codemirror/state'
 import { afterEach, describe, expect, test } from 'vitest'
-import type { CompletionContext } from '@codemirror/autocomplete'
+import { parsed } from '../test/parsed'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { setSnippets, snippetCompletions } from './snippets'
 
-function completionsFor(doc: string): ReturnType<typeof snippetCompletions> {
-  const state = EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(doc.length),
-    extensions: [markdown({ base: markdownLanguage })],
-  })
+function completionsFor(written: string, explicit = false): ReturnType<typeof snippetCompletions> {
+  const caret = written.includes('|') ? written.indexOf('|') : written.length
+  const doc = written.replace('|', '')
+  const state = parsed(
+    EditorState.create({
+      doc,
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
+    }),
+  )
 
-  const context = {
-    state,
-    pos: doc.length,
-    explicit: false,
-    matchBefore(pattern: RegExp) {
-      const line = state.doc.lineAt(doc.length)
-      const before = line.text.slice(0, doc.length - line.from)
-      const match = new RegExp(`(?:${pattern.source})$`).exec(before)
-      if (!match) return null
-
-      return { from: doc.length - match[0].length, to: doc.length, text: match[0] }
-    },
-  } as unknown as CompletionContext
-
-  return snippetCompletions(context)
+  return snippetCompletions(new CompletionContext(state, caret, explicit))
 }
+
+const asked = (written: string) => completionsFor(written, true)
 
 afterEach(() => setSnippets({}))
 
 describe('snippets', () => {
   test('offers nothing when none are configured', () => {
-    expect(completionsFor('tod')).toBeNull()
+    expect(completionsFor('todo')).toBeNull()
+    expect(asked('tod')).toBeNull()
   })
 
-  test('offers a matching abbreviation', () => {
+  test('offers an abbreviation typed in full', () => {
     setSnippets({ todo: '- [ ] ' })
 
-    const result = completionsFor('tod')
+    const result = completionsFor('todo')
     expect(result?.options).toHaveLength(1)
     expect(result?.options[0]?.label).toBe('todo')
     expect(result?.options[0]?.apply).toBe('- [ ] ')
   })
 
+  test('offers the abbreviations a word begins when asked for completions', () => {
+    setSnippets({ todo: '- [ ] ', note: '> [!NOTE]\n> ' })
+    expect(asked('tod')?.options.map((option) => option.label)).toEqual(['todo'])
+  })
+
+  test('does not offer an abbreviation that an ordinary word only begins while typing', () => {
+    setSnippets({ note: '> [!NOTE]\n> ' })
+    expect(completionsFor('I said no')).toBeNull()
+    expect(completionsFor('tod')).toBeNull()
+  })
+
   test('replaces from the start of the abbreviation', () => {
     setSnippets({ todo: '- [ ] ' })
-    expect(completionsFor('text tod')?.from).toBe('text '.length)
+    expect(completionsFor('text todo')?.from).toBe('text '.length)
+    expect(asked('text tod')?.from).toBe('text '.length)
   })
 
   test('ignores a word that matches nothing', () => {
     setSnippets({ todo: '- [ ] ' })
-    expect(completionsFor('zzz')).toBeNull()
+    expect(asked('zzz')).toBeNull()
   })
 
   test('needs at least two characters', () => {
     setSnippets({ todo: '- [ ] ' })
-    expect(completionsFor('t')).toBeNull()
+    expect(asked('t')).toBeNull()
   })
 
   test('matches without regard to case', () => {
     setSnippets({ Todo: '- [ ] ' })
-    expect(completionsFor('tod')?.options).toHaveLength(1)
+    expect(completionsFor('todo')?.options).toHaveLength(1)
+    expect(asked('tod')?.options).toHaveLength(1)
+  })
+
+  test('is never offered in code', () => {
+    setSnippets({ note: '> [!NOTE]\n> ' })
+    expect(completionsFor('```py\nnote|\n```\n')).toBeNull()
+    expect(asked('```py\nno|\n```\n')).toBeNull()
+    expect(completionsFor('run `note|` here\n')).toBeNull()
   })
 
   test('summarises a multi-line body to one line', () => {
     setSnippets({ note: '> [!NOTE]\n> ' })
-    expect(completionsFor('not')?.options[0]?.detail).toBe('> [!NOTE]')
+    expect(completionsFor('note')?.options[0]?.detail).toBe('> [!NOTE]')
   })
 })

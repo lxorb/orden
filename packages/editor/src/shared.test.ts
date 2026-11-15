@@ -3,13 +3,24 @@ import {
   type ChangeSpec,
   EditorSelection,
   EditorState,
+  StateEffect,
   Text,
   Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import type { EditorView } from '@codemirror/view'
-import { type DocView, documentOf, fromInput, letGo, SharedDoc, sharedOf, sharing } from './shared'
+import {
+  type DocView,
+  documentOf,
+  fromInput,
+  letGo,
+  redoEdit,
+  SharedDoc,
+  sharedOf,
+  sharing,
+  undoEdit,
+} from './shared'
 
 class Pane implements DocView {
   private held: EditorState
@@ -420,6 +431,20 @@ describe('an undo that arrives as input rather than as a key', () => {
     expect(pane.text).toBe('Hello')
     expect(fromInput('historyRedo')?.(view)).toBe(true)
     expect(pane.text).toBe('Hello there')
+  })
+
+  test('changes nothing in a note that is read-only', () => {
+    const note = new SharedDoc('Hello')
+    const pane = new Pane(note)
+    pane.type(5, ' there')
+    pane.dispatch({ effects: StateEffect.appendConfig.of(EditorState.readOnly.of(true)) })
+
+    const view = pane as unknown as EditorView
+    expect(undoEdit(view)).toBe(false)
+    expect(fromInput('historyUndo')?.(view)).toBe(false)
+    expect(pane.text).toBe('Hello there')
+    expect(note.text.toString()).toBe('Hello there')
+    expect(redoEdit(view)).toBe(false)
   })
 
   test('and nothing else typed is one', () => {

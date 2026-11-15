@@ -16,6 +16,7 @@ import { resizeTo } from './size'
 import { selectedImage, selectionOver } from './selection'
 
 const NATURAL = new Map<string, { width: number; height: number }>()
+const DRAG_START = 3
 
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
   if (spec.zoom !== 100)
@@ -432,7 +433,7 @@ export class ImageWidget extends OrdenWidget {
     }
 
     const move = (moved: PointerEvent) => {
-      if (!dragged && moved.clientX === startX) return
+      if (!dragged && Math.abs(moved.clientX - startX) < DRAG_START) return
       dragged = true
       zoom = resizeTo(
         startWidth,
