@@ -4,7 +4,7 @@ import type { Hit } from '@orden/scan/search/match'
 const asked = vi.hoisted(() => ({
   excluded: null as string[] | null,
   hits: [] as Hit[],
-  query: null as unknown,
+  query: null as object | null,
 }))
 let told: ((event: { payload: { id: number; hits: Hit[] } }) => void) | null = null
 
@@ -12,7 +12,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isNative: true,
   internal: { routed: false },
-  invoke: (command: string, args: { id: number; excluded: string[]; query: unknown }) => {
+  invoke: (command: string, args: { id: number; excluded: string[]; query: object }) => {
     if (command !== 'search_space') return Promise.resolve(null)
     asked.excluded = args.excluded
     asked.query = args.query

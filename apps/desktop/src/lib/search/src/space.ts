@@ -84,7 +84,12 @@ function judged(query: Query): Query {
       return { ...query, of: judged(query.of) }
     case 'regex':
       return backtracksWildly(query.source) ? { ...query, refused: true } : query
-    default:
+    case 'text':
+    case 'content':
+    case 'path':
+    case 'file':
+    case 'tag':
+    case 'property':
       return query
   }
 }
