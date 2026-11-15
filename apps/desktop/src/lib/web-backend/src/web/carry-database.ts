@@ -32,9 +32,9 @@ function askedFormer(channel: string, from: string): Promise<Heard> {
     line.onmessage = (event: MessageEvent<unknown>) => {
       const said = event.data as { kind?: unknown; from?: unknown; stays?: unknown } | null
       if (said?.kind === 'hello' || said?.kind === 'bye') return
-      if (typeof said?.from === 'string' && said.from !== me) {
-        done(Array.isArray(said.stays) && said.stays.includes(from) ? 'staying' : 'older')
-      }
+      if (typeof said?.from !== 'string' || said.from === me) return
+      if (!Array.isArray(said.stays)) done('older')
+      else if (said.stays.includes(from)) done('staying')
     }
     line.postMessage({ kind: 'hello', from: me })
   })
@@ -47,6 +47,7 @@ export async function databaseName(
 ): Promise<string> {
   if (from === to || typeof indexedDB === 'undefined') return to
   if (!(await existing(from).then(closed))) return to
+  if (staying.has(from)) return from
   const channel = `${former}:windows`
   const heard = await formerTabOpen(channel, from)
   if (heard !== 'nobody') {
