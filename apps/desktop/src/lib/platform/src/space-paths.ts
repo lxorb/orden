@@ -15,11 +15,17 @@ function steps(path: string): string[] {
   return out
 }
 
+function asOpened(name: string): string {
+  const normal = name.normalize('NFC')
+  if (platform() !== 'windows') return normal
+  return normal.replace(/[. ]+$/, '') || normal
+}
+
 function sameName(one: string, other: string, folds: () => boolean): boolean {
   if (one === other) return true
 
-  const a = one.normalize('NFC')
-  const b = other.normalize('NFC')
+  const a = asOpened(one)
+  const b = asOpened(other)
   return a === b || (a.toLowerCase() === b.toLowerCase() && folds())
 }
 
@@ -59,9 +65,7 @@ export function rootedAt<T extends { readonly root: string }>(
 }
 
 export function pathKeyAs(path: string, folds: boolean): string {
-  const key = steps(path)
-    .map((one) => one.normalize('NFC'))
-    .join('/')
+  const key = steps(path).map(asOpened).join('/')
   return folds ? key.toLowerCase() : key
 }
 
