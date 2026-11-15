@@ -1,7 +1,6 @@
 <script lang="ts">
   import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
-  import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/ui-kit/src/api'
   import { closeOnBack } from './lib/ui-kit/src/api'
@@ -98,7 +97,7 @@
   import { saveFront } from './lib/save-place/src/api'
   import PadColumn from './lib/PadColumn.svelte'
   import { shown as pad } from './lib/scratchpad/src/api'
-  import { isDraft } from './lib/documents/src/api'
+  import { isDraft, scanHeadings } from './lib/documents/src/api'
   import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
   import { shortcuts } from './lib/shortcuts/src/api'
   import { toolbar } from './lib/toolbar.svelte'

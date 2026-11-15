@@ -15,11 +15,11 @@
     "windows",
     "link-index",
     "workspace",
-    "sync-store"
+    "sync-store",
+    "documents"
   ],
   "pending": [
     "apps/desktop/src/lib/counts.ts",
-    "apps/desktop/src/lib/outline.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/search.svelte.ts",
     "apps/desktop/src/lib/settings.svelte.ts",

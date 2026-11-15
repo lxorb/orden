@@ -1,5 +1,5 @@
 import { copyText } from '../../ui-controls/src/api'
-import { headingAt, lineOf, scanHeadings } from '../../outline'
+import { headingAt, lineOf, scanHeadings } from '../../documents/src/api'
 import { relativeTo } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
