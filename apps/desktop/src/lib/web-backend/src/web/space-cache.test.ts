@@ -115,6 +115,54 @@ describe('the space a search holds', () => {
     expect(space.warmth()).toMatchObject({ of: 3, warm: true })
     expect((await searched('wind')).reads).toBe(0)
   })
+
+  test('a walk that stops early while the warm pass reads leaves every note to later searches', async () => {
+    const { files } = await import('./store')
+    const reading = files.between
+    let reached = (): void => undefined
+    let resume = (): void => undefined
+    const asked = new Promise<void>((done) => (reached = done))
+    const held = new Promise<void>((done) => (resume = done))
+    files.between = async (from, to) => {
+      reached()
+      await held
+      return reading(from, to)
+    }
+
+    try {
+      const filling = space.fill(ROOT)
+      await asked
+      await space.each(ROOT, () => false)
+      resume()
+      await filling
+    } finally {
+      files.between = reading
+    }
+
+    expect(space.warmth()).toMatchObject({ of: 3, warm: true })
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
+  })
+
+  test('two walks at once leave each note listed once', async () => {
+    const { files } = await import('./store')
+    const walking = files.each
+    files.each = async (visit) => {
+      for (const path of [...disk.files.keys()].sort()) {
+        await Promise.resolve()
+        const row = disk.files.get(path)
+        if (row) visit(row)
+      }
+    }
+
+    try {
+      await Promise.all([space.each(ROOT, () => true), space.each(ROOT, () => true)])
+    } finally {
+      files.each = walking
+    }
+
+    expect(space.warmth()).toMatchObject({ of: 3, warm: true })
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
+  })
 })
 
 describe('keeping up with the store', () => {
