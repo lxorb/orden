@@ -5,6 +5,7 @@ import { metaText, isName, LONGEST_NAME, shortened, type ItemMeta } from '@orden
 import { isPagesTarget } from '@orden/markdown/links'
 import { conflictPath, freePath, numbered } from '@orden/markdown/paths'
 import { objectBody, readBody } from './body'
+import { PROTECTED, programShut } from './protected'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './site/front'
 import { followOnlyNote, rememberOldPaths } from './site/paths'
 import { keepWords } from './site/words'
@@ -27,7 +28,7 @@ import { noteKind, readsAs } from './rooms/kind'
 import { deviceOf } from './sync2/device'
 import { createByPath, deleteById, moveByPath } from './sync2/ops'
 import { DOCUMENT_KINDS, kindOfName } from './sync2/tree'
-import type { Env, Note, Variables, Whoever } from './types'
+import type { Env, Note, Variables } from './types'
 import {
   countVersionsAt,
   deviceIn,
@@ -381,8 +382,11 @@ notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context
     .bind(space.id, since)
     .all<Note>()
 
+  const shut = await programShut(context.env, context.get('who'))
+  const told = shut ? results.filter((note) => !shut(note.space_id, note.path)) : results
+
   const cursor = results.at(-1)?.seq ?? since
-  return context.json({ notes: results.map(presentNote), cursor, more: results.length === 1000 })
+  return context.json({ notes: told.map(presentNote), cursor, more: results.length === 1000 })
 })
 
 notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context) => {
@@ -399,6 +403,9 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
 
   if (!path) return context.json({ error: NOT_A_PATH }, 400)
   if (size > MAX_NOTE_BYTES) return context.json({ error: TOO_LARGE }, 413)
+  if ((await programShut(context.env, context.get('who')))?.(space.id, path)) {
+    return context.json({ error: PROTECTED(path) }, 403)
+  }
 
   const taken = await noteAt(context.env, space.id, path)
   if (taken) return await alreadyThere(context, taken)
@@ -449,12 +456,13 @@ async function alreadyThere(
 
 async function reachedNote(
   env: Env,
-  who: Whoever,
+  who: Variables['who'],
   noteId: string,
 ): Promise<{ note: Note; space: Reached; only: boolean } | null> {
   const note = await noteById(env, noteId)
 
   if (!note || HIDDEN_FROM_V1.has(note.kind ?? 'note')) return null
+  if ((await programShut(env, who))?.(note.space_id, note.path)) return null
 
   if (note.deleted && note.deleted_at === null) return null
 
@@ -596,10 +604,14 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
   const folder = under.replace(/^\/+/, '')
-  const changed = await versionsAt(context.env, space.id, folder, at)
+  const found = await versionsAt(context.env, space.id, folder, at)
+  const shut = await programShut(context.env, context.get('who'))
+  const changed = shut ? found.filter((one) => !shut(space.id, one.path)) : found
 
-  const cut = changed.length >= ROLLBACK_AT_ONCE
-  const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
+  const cut = found.length >= ROLLBACK_AT_ONCE
+  const held =
+    (cut ? await countVersionsAt(context.env, space.id, folder, at) : found.length) -
+    (found.length - changed.length)
 
   if (dry) {
     return context.json({
@@ -672,6 +684,12 @@ notes.put('/notes/:id', async (context) => {
 
   if (found.only && path !== note.path) {
     return context.json({ error: 'this note was shared with you, not its folder' }, 403)
+  }
+  if (
+    path !== note.path &&
+    (await programShut(context.env, context.get('who')))?.(note.space_id, path)
+  ) {
+    return context.json({ error: PROTECTED(path) }, 403)
   }
 
   const lands = note.name_key ? note.path : path

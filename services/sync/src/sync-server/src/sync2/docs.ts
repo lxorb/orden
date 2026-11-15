@@ -20,8 +20,11 @@ import { noteKind } from '../rooms/kind'
 import { allows, reachedItem, reachedSpace, type Role } from '../spaces/space'
 import type { Env, Note, Whoever } from '../types'
 import { keepVersionNow, versionsFit } from '../versions'
+import { programShut } from '../protected'
 import { prepareSpace } from './prepare'
 import { DOCUMENT_KINDS, DOCUMENTS_SQL } from './tree'
+
+type Asking = Whoever & { program?: true }
 
 interface Reached {
   note: Note
@@ -30,9 +33,10 @@ interface Reached {
 
 async function reachedNotes(
   env: Env,
-  who: Whoever,
+  who: Asking,
   ids: readonly string[],
 ): Promise<Map<string, Reached>> {
+  const shut = await programShut(env, who)
   const { results } = await env.DB.prepare(
     `select * from notes where id in (select value from json_each(?))
         and not (deleted = 1 and deleted_at is null)`,
@@ -43,6 +47,7 @@ async function reachedNotes(
   const spaces = new Map<string, Role | null>()
   const out = new Map<string, Reached>()
   for (const note of results) {
+    if (shut?.(note.space_id, note.path)) continue
     if (!spaces.has(note.space_id)) {
       spaces.set(note.space_id, (await reachedSpace(env, who, note.space_id))?.role ?? null)
     }
@@ -104,7 +109,7 @@ const PULL_PATIENCE = 25_000
 
 export async function pullDocs(
   env: Env,
-  who: Whoever,
+  who: Asking,
   docs: readonly PullDoc[],
   part = false,
 ): Promise<PullAnswer[] | null> {
@@ -182,7 +187,7 @@ function roomAnswer(bytes: Uint8Array): Record<string, unknown> {
 
 export async function pushDocs(
   env: Env,
-  who: Whoever,
+  who: Asking,
   device: string,
   name: string,
   docs: readonly PushDoc[],
@@ -257,7 +262,7 @@ async function pushed(
 
 export async function keepDoc(
   env: Env,
-  who: Whoever,
+  who: Asking,
   request: KeepRequest,
 ): Promise<'kept' | 'gone' | 'role' | 'full'> {
   const found = (await reachedNotes(env, who, [request.id])).get(request.id)

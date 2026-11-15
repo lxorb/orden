@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
+import { type PullResponse } from '@orden/sync-core'
+import { framed } from './sync2'
 
 let env: TestEnv
 let token: string
@@ -73,5 +75,97 @@ describe('an agent reaching the account', () => {
       'is protected',
     )
     expect(await tool('read_note', { space: 'Home', path: 'Plans.md' })).toBe(before)
+  })
+})
+
+describe('an agent’s token on the routes a token may use', () => {
+  const diaryId = () =>
+    (
+      env.db
+        .prepare("select id from notes where space_id = ? and path = 'Diary/Today.md'")
+        .get(home) as { id: string }
+    ).id
+
+  test('reads nothing the reader protected, nor its versions', async () => {
+    const id = diaryId()
+    for (const path of [`/v1/notes/${id}`, `/v1/notes/${id}/versions`]) {
+      const answer = await call(env, path, { token: key })
+      expect(answer.status, path).toBe(404)
+      expect(answer.text).not.toContain('secret words')
+    }
+    expect((await call(env, `/v1/notes/${id}`, { token })).text).toContain('secret words')
+  })
+
+  test('is told of no change in it', async () => {
+    const answer = await call<{ notes: { path: string }[] }>(
+      env,
+      `/v1/spaces/${home}/changes?since=0`,
+      { token: key },
+    )
+    const paths = answer.json.notes.map((one) => one.path)
+    expect(paths).toContain('Plans.md')
+    expect(paths).not.toContain('Diary/Today.md')
+  })
+
+  test('writes nothing into it, nor moves a note in', async () => {
+    const id = diaryId()
+    const saved = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token: key,
+      body: { path: 'Diary/Today.md', content: 'gone' },
+    })
+    expect(saved.status).toBe(404)
+
+    const made = await call(env, `/v1/spaces/${home}/notes`, {
+      token: key,
+      body: { path: 'Diary/New.md', content: 'planted' },
+    })
+    expect(made.status).toBe(403)
+
+    const plans = (
+      env.db.prepare("select id from notes where path = 'Plans.md'").get() as { id: string }
+    ).id
+    const moved = await call(env, `/v1/notes/${plans}`, {
+      method: 'PUT',
+      token: key,
+      body: { path: 'Diary/Plans.md', content: 'moved' },
+    })
+    expect(moved.status).toBe(403)
+    expect((await call(env, `/v1/notes/${id}`, { token })).text).toContain('secret words')
+  })
+
+  test('turns none of it back', async () => {
+    const id = diaryId()
+    env.db.exec('update note_versions set at = at - 360000')
+    await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'the newer words', baseVersion: 1 },
+    })
+    const at = Date.now() - 60 * 1000
+
+    const dry = await call<{ paths: string[] }>(env, `/v1/spaces/${home}/rollback`, {
+      token: key,
+      body: { at, dry: true },
+    })
+    expect(dry.json.paths).not.toContain('Diary/Today.md')
+
+    const done = await call<{ partial: boolean }>(env, `/v1/spaces/${home}/rollback`, {
+      token: key,
+      body: { at },
+    })
+    expect(done.json.partial).toBe(false)
+    expect((await call(env, `/v1/notes/${id}`, { token })).text).toContain('the newer words')
+  })
+
+  test('pulls no document of it on sync v2', async () => {
+    await call(env, `/v2/spaces/${home}/prepare`, { token, method: 'POST' })
+    const asked = { docs: [{ id: diaryId(), epoch: 1, sv: new Uint8Array([0]) }] }
+
+    const pulled = await framed<PullResponse>(env, '/v2/docs/pull', key, asked)
+    expect(pulled.value.docs[0]).toMatchObject({ refused: 'gone' })
+
+    const mine = await framed<PullResponse>(env, '/v2/docs/pull', token, asked)
+    expect(mine.value.docs[0]).not.toHaveProperty('refused')
   })
 })
