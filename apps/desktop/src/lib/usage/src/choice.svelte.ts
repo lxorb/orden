@@ -26,6 +26,13 @@ class UsageChoice {
     for (const one of this.changes) one()
   }
 
+  heard(): void {
+    const on = stored(HELP_IMPROVE) === true
+    if (on === this.helping) return
+    this.helping = on
+    for (const one of this.changes) one()
+  }
+
   install(): string {
     const kept = stored(INSTALL_ID)
     if (typeof kept === 'string' && /^[0-9a-f]{32}$/.test(kept)) return kept
@@ -36,3 +43,9 @@ class UsageChoice {
 }
 
 export const usageChoice = new UsageChoice()
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === HELP_IMPROVE) usageChoice.heard()
+  })
+}
