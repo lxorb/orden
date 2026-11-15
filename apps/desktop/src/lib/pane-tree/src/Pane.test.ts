@@ -70,3 +70,14 @@ describe('a protected tab', () => {
     expect(SOURCE).toMatch(/const writing = \$derived\([^)]*&& !locked\)/)
   })
 })
+
+describe('a column of a stacked pane', () => {
+  test('is the active tab once anything in it takes focus, so keys and menus act on it', () => {
+    expect(SOURCE).toMatch(
+      /<section\s+class="column"\s+class:is-active=\{[^}]*\}\s+onfocusin=\{\(\) => takeColumn\(one\.id\)\}\s*>/,
+    )
+    expect(SOURCE).toMatch(
+      /function takeColumn\(id: string\) \{\s*if \(id === pane\.activeTabId && workspace\.panes\.focusedId === pane\.id\) return\s*workspace\.focusPane\(pane\.id\)\s*workspace\.activate\(id\)/,
+    )
+  })
+})
