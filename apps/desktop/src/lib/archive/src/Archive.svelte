@@ -14,6 +14,7 @@
     DIVIDER,
     type MenuEntry,
     menu,
+    UNARCHIVE_MARK,
   } from '../../ui-kit/src/api'
   import { fileMark, type FileMark as Mark } from '../../file-mark'
   import FileMark from '../../FileMark.svelte'
@@ -21,7 +22,6 @@
   import { dur, slide } from '../../platform/src/api'
   import { howFor, middleOpens, type OpenHow, tabAsk } from '../../new-tab'
   import { rowName } from '../../platform/src/api'
-  import { UNARCHIVE_MARK } from './archive-marks'
   import { roving } from '../../roving'
   import { folderOf, insideSpace } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'

@@ -1,7 +1,5 @@
 import type { FileAction } from '../../file-undo/src/api'
 
-export { ARCHIVE_MARK } from './archive-marks'
-
 type Archiving = Extract<FileAction, { kind: 'archive' | 'unarchive' }>
 
 export const loadArchive = () => import('./Archive.svelte')

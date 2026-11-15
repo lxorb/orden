@@ -53,6 +53,7 @@ export { opensAt, spelled, walk } from './list-keys'
 export { stepped } from './step'
 export { longPress } from './longpress'
 export {
+  ARCHIVE_MARK,
   ASK_MARK,
   CHATS_MARK,
   FILES_MARK,
@@ -65,6 +66,7 @@ export {
   SEARCH_MARK,
   TASKS_MARK,
   TIME_MARK,
+  UNARCHIVE_MARK,
 } from './panel-marks'
 export { default as Twist } from './Twist.svelte'
 export { default as SharedMark } from './SharedMark.svelte'
