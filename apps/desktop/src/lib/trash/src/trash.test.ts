@@ -158,7 +158,7 @@ const { account } = await import('../../accounts/src/api')
 type RemoteSpace = import('../../accounts/src/api').RemoteSpace
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('../../ui-kit/src/api')
-const { sync } = await import('../../sync.svelte')
+const { sync } = await import('../../sync-store/src/api')
 const { keptAway } = await import('../../away/src/api')
 
 beforeEach(() => {

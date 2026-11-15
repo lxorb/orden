@@ -146,4 +146,13 @@ providePort('sync.workspace', {
   hearWrites: (hearing) => hearWrites(hearing),
   rootMoves: () => rootsMoved(),
   forgetRootMoves: () => forget(ROOTS_MOVED),
+  bookmarksOf: (root) => workspace.bookmarks.of(root),
+  bookmarksSaid: (root, landed, list) => workspace.bookmarks.said(root, landed, list),
+  archivedIn: (root, path) => workspace.archive.holdsIn(root, path),
+  shownText: (path) => {
+    const note = workspace.openNotes.find((one) => one.path === path)?.note
+    return note && !note.dirty ? note.text : null
+  },
+  reload: (path, text) => workspace.reload(path, text),
+  leaveTheWelcomeNote: () => workspace.leaveTheWelcomeNote(),
 })

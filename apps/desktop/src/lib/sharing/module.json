@@ -17,6 +17,7 @@
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/kind-choice.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts"
+    "apps/desktop/src/lib/sync.svelte.ts",
+    "apps/desktop/src/lib/trust.ts"
   ]
 }

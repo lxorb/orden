@@ -17,7 +17,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
     return Promise.reject(new Error(command))
   },
 }))
-vi.mock('../../sync.svelte', () => ({ sync: { tracked: () => ({ id: 'n1' }) } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { tracked: () => ({ id: 'n1' }) } }))
 vi.mock('../../accounts/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../accounts/src/api')>()),
   account: { accountToken: 't' },

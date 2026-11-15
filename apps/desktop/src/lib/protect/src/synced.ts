@@ -1,6 +1,6 @@
+import { syncStore } from '@orden/contracts'
 import { account, request } from '../../accounts/src/api'
 import { isRecord } from '../../platform/src/api'
-import { sync } from '../../sync.svelte'
 import { hashedOf, protectedMap, type Way, protection } from './protection.svelte'
 
 interface Remote {
@@ -15,7 +15,7 @@ function remoteOf(value: unknown): Remote | null {
 
 export async function pushWays(root: string): Promise<void> {
   const token = account.token
-  const spaceId = sync.remoteIdFor(root)
+  const spaceId = syncStore()?.remoteIdFor(root) ?? null
   if (!token || !spaceId) return
   const ways: Record<string, Way> = protection.ways(root)
   const landed = await request(`/v1/protected/spaces/${encodeURIComponent(spaceId)}`, {

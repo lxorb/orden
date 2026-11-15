@@ -12,14 +12,17 @@ import { message } from '../../ui-kit/src/api'
 import { rooms } from '../../collab/src/api'
 import { samePath, forget, keepJson, Shared } from '../../platform/src/api'
 import { within } from '../../sync-mirror/src/api'
-import { sync } from '../../sync.svelte'
 import { type Origin, originOf, trustsHtml } from './trust'
 import type { NoteDoc } from '../../documents/src/api'
 import { keeping } from '../../file-ops/src/api'
-import { whenPortProvided, workspaceView, type WorkspaceSpace } from '@orden/contracts'
+import { syncStore, whenPortProvided, workspaceView, type WorkspaceSpace } from '@orden/contracts'
+
+const remoteIdFor = (root: string) => syncStore()?.remoteIdFor(root) ?? null
+
+const idOf = (path: string) => syncStore()?.idOf(path) ?? null
 
 function remoteOf(root: string): RemoteSpace | null {
-  const id = sync.remoteIdFor(root)
+  const id = remoteIdFor(root)
   if (!id) return null
 
   return account.spaces.find((one) => one.id === id) ?? null
@@ -38,11 +41,11 @@ export function mayCarryBetween(from: string, to: string): boolean {
 }
 
 export function roleOf(root: string): SpaceRole | null {
-  const id = sync.remoteIdFor(root)
+  const id = remoteIdFor(root)
   const listed = id ? account.spaces.find((one) => one.id === id) : undefined
   if (listed) return listed.role
 
-  const kept = (id ? roleIn(sync.roleKept(root)) : null) ?? remembered(root)
+  const kept = (id ? roleIn(syncStore()?.roleKept(root) ?? null) : null) ?? remembered(root)
   if (id && account.listed) return kept === 'owner' ? 'owner' : null
   if (kept) return kept
 
@@ -120,7 +123,7 @@ export function rememberRoles(): void {
   const roles: Record<string, Kept> = {}
   let paired = false
   for (const space of workspaceView().spaces) {
-    const id = sync.remoteIdFor(space.root)
+    const id = remoteIdFor(space.root)
     if (!id) continue
     paired = true
     const one = account.spaces.find((listed) => listed.id === id)
@@ -144,7 +147,7 @@ export function isShared(root: string): boolean {
 }
 
 export function isSharedItem(path: string): boolean {
-  const id = sync.tracked(path)?.id
+  const id = idOf(path)
   if (!id) return false
 
   return account.spaces.some((one) => one.sharedItems?.includes(id))
@@ -156,7 +159,7 @@ export function canShareItem(path: string | null | undefined): boolean {
   const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
   if (!space || !ownsRemotely(space)) return false
 
-  return !!sync.tracked(path)?.id
+  return !!idOf(path)
 }
 
 export function othersIn(path: string): boolean {
@@ -208,7 +211,7 @@ export function reachedByOthersIn(root: string): boolean {
 }
 
 function reached(root: string, path: string | null): Reach {
-  const unknown = !account.listed || sync.remoteIdFor(root) === null
+  const unknown = !account.listed || remoteIdFor(root) === null
   const guess = unknown && !remoteOf(root) ? keptShared(root, path) : null
   const once = onceReached(root, path)
   if (guess === 'space' || once === 'space' || isShared(root) || roleOf(root) !== 'owner') {
@@ -222,13 +225,13 @@ function reached(root: string, path: string | null): Reach {
 
 function keptShared(root: string, path: string | null): Reach {
   const one = kept(root)
-  if (one === undefined) return sync.remoteIdFor(root) !== null ? 'space' : null
+  if (one === undefined) return remoteIdFor(root) !== null ? 'space' : null
   if (!one || typeof one !== 'object') return 'space'
   const { shared, items } = one as Kept
   if (shared) return 'space'
   if (!items?.length) return null
   if (path === null) return 'note'
-  const id = sync.tracked(path)?.id
+  const id = idOf(path)
   return !id || items.includes(id) ? 'note' : null
 }
 
@@ -241,7 +244,7 @@ function onceReached(root: string, path: string | null): Reach {
   if (!items.length) return null
   if (path === null) return 'note'
 
-  const id = sync.tracked(path)?.id
+  const id = idOf(path)
   return id && items.includes(id) ? 'note' : null
 }
 
@@ -258,7 +261,7 @@ export function canTrustAgain(space: WorkspaceSpace): boolean {
 
 export async function trustAgain(space: WorkspaceSpace): Promise<void> {
   const token = account.accountToken
-  const id = sync.remoteIdFor(space.root)
+  const id = remoteIdFor(space.root)
   if (!token || !id || !canTrustAgain(space)) return
 
   await api.trustSpace(token, id)
@@ -355,14 +358,14 @@ class Share {
   }
 
   async showItem(space: WorkspaceSpace, path: string) {
-    const id = sync.tracked(path)?.id
+    const id = idOf(path)
     if (!id) return
 
     await this.about(space, { id, path })
   }
 
   private async about(space: WorkspaceSpace, item: { id: string; path: string } | null) {
-    const id = sync.remoteIdFor(space.root)
+    const id = remoteIdFor(space.root)
     if (!id) return
 
     this.sheet += 1
@@ -542,7 +545,7 @@ function gone(error: unknown): boolean {
 export const share = new Share()
 
 function ownsRemotely(space: WorkspaceSpace): boolean {
-  return !!account.user && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
+  return !!account.user && !!remoteIdFor(space.root) && roleOf(space.root) === 'owner'
 }
 
 export function canShare(space: WorkspaceSpace): boolean {

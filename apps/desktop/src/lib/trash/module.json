@@ -1,6 +1,5 @@
 {
   "name": "trash",
   "layer": "shell",
-  "dependsOn": ["contracts", "accounts", "platform", "sharing", "ui-kit", "workspace"],
-  "pending": ["apps/desktop/src/lib/sync.svelte.ts"]
+  "dependsOn": ["contracts", "accounts", "platform", "sharing", "ui-kit", "workspace", "sync-store"]
 }

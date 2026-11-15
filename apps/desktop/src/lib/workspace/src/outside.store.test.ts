@@ -26,7 +26,7 @@ const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-const { sync } = await import('../../sync.svelte')
+const { sync } = await import('../../sync-store/src/api')
 const { onUnwatched, unwatchSpaces } = await import('../../space-watch')
 const { hearsUnwatched, TheWatch } = await import('./outside.svelte')
 

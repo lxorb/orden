@@ -1,8 +1,8 @@
+import { syncStore } from '@orden/contracts'
 import { inForeignCopy } from '@orden/sync-core'
 import { account, api, fromServer } from '../../accounts/src/api'
 import { log, stored } from '../../platform/src/api'
-import { type Mirror, savedRecord } from '../../sync-mirror/src/api'
-import { STORAGE_KEY, sync } from '../../sync.svelte'
+import { MIRRORS_KEY, type Mirror, savedRecord } from '../../sync-mirror/src/api'
 import type { Engine, ForeignCopies } from '../../sync-client/src/api'
 
 export interface Synced {
@@ -21,13 +21,13 @@ function fromTree(engine: ForeignCopies): Synced {
     count: engine.foreignCopies().length,
     remove: async () => {
       await engine.unsync()
-      sync.nudge()
+      syncStore()?.nudge()
     },
   }
 }
 
 function fromMirrors(): Synced {
-  const ids = savedMirrors(stored(STORAGE_KEY), account.user?.id ?? null).flatMap((mirror) =>
+  const ids = savedMirrors(stored(MIRRORS_KEY), account.user?.id ?? null).flatMap((mirror) =>
     Object.entries(mirror.notes).flatMap(([path, one]) => (inForeignCopy(path) ? [one.id] : [])),
   )
   return {
@@ -36,7 +36,7 @@ function fromMirrors(): Synced {
       const token = account.accountToken
       if (!token) return
       for (const id of ids) await deleted(token, id)
-      sync.nudge()
+      syncStore()?.nudge()
     },
   }
 }

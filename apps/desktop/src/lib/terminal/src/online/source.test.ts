@@ -14,7 +14,7 @@ const seen = vi.hoisted((): { words: string | null; written: string[]; passes: n
 vi.mock('../../../accounts/src/account.svelte', () => ({
   account: { accountToken: 'token', forgetWithSession: () => undefined },
 }))
-vi.mock('../../../sync.svelte', () => ({ sync: { version: 2 } }))
+vi.mock('../../../sync-store/src/api', () => ({ sync: { version: 2 } }))
 vi.mock('../../../sync-client/src/runner.svelte', () => ({
   runner: {
     idAt: () => Promise.resolve({ id: 'file-1', own: true }),

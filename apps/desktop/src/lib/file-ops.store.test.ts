@@ -17,7 +17,7 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace/src/api')
-const { sync } = await import('./sync.svelte')
+const { sync } = await import('./sync-store/src/api')
 const { links } = await import('./link-index/src/api')
 await import('./features')
 const { startup } = await import('./platform/src/api')

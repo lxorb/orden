@@ -25,7 +25,7 @@
   const name = $derived(rootedAt(workspace.spaces, root)?.name ?? '')
 
   async function nudged() {
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     sync.nudge()
   }
 

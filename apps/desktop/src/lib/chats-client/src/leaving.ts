@@ -1,6 +1,6 @@
 import { ApiError } from '../../accounts/src/api'
 import { onDisk, nameOf, samePath, within, joinPath } from '../../platform/src/api'
-import { sync } from '../../sync.svelte'
+import { sync } from '../../sync-store/src/api'
 import { failed } from '../../failed.svelte'
 import { mayCarry, pointersMoving, spaceHolding, workspace } from '../../workspace/src/api'
 import { carryQuestion } from './carry-question'

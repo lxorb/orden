@@ -1,7 +1,7 @@
 import { account, api } from '../../accounts/src/api'
 import { message, prompt } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
-import { sync } from '../../sync.svelte'
+import { sync } from '../../sync-store/src/api'
 import { folderOf, insideSpace, samePath, within, invoke } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 

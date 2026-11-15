@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../test/sync-store'
 import { providePort, workspaceView } from '@orden/contracts'
 
 const world = vi.hoisted((): { mirrors: Record<string, string> } => ({ mirrors: {} }))
 
-vi.mock('./sync.svelte', () => ({
-  sync: {
-    remoteIdFor: (root: string) => world.mirrors[root] ?? null,
-    roleKept: () => null,
-  },
+const store = vi.hoisted(() => ({
+  remoteIdFor: (root: string) => world.mirrors[root] ?? null,
+  roleKept: () => null,
 }))
+vi.mock('./sync-store/src/api', () => ({ sync: store }))
+serveSyncStore(store)
 
 vi.mock('./workspace/src/api', () => {
   const spaces = [

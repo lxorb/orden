@@ -1,4 +1,4 @@
-import { sync } from '../../sync.svelte'
+import { sync } from '../../sync-store/src/api'
 import { invoke } from '../../platform/src/api'
 import type { TrashItem } from './trash.svelte'
 import { workspace } from '../../workspace/src/api'

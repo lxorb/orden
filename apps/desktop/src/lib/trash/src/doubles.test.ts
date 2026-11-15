@@ -1,7 +1,10 @@
 import { describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 vi.mock('../../workspace/src/api', () => ({ workspace: { spaces: [] } }))
-vi.mock('../../sync.svelte', () => ({ sync: { remoteIdFor: () => null } }))
+const store = vi.hoisted(() => ({ remoteIdFor: () => null }))
+vi.mock('../../sync-store/src/api', () => ({ sync: store }))
+serveSyncStore(store)
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: () => Promise.resolve([]),

@@ -1,4 +1,4 @@
-import { syncNotes, workspaceView } from '@orden/contracts'
+import { syncStore, workspaceView } from '@orden/contracts'
 import { isWebTarget } from '@orden/markdown/links'
 import {
   log,
@@ -98,7 +98,7 @@ class Record {
   readonly held = $derived(new Set(this.clashes.map((one) => one.path)))
 
   async settle(clash: Clash, answer: Answer): Promise<void> {
-    const notes = syncNotes()
+    const notes = syncStore()
     const recorded = notes?.pathOf(clash.id) ?? null
     const judged = placed(clash.path)
     const followed =

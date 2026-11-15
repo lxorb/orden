@@ -1,5 +1,5 @@
 import { untrack } from 'svelte'
-import { sync } from '../../sync.svelte'
+import { sync } from '../../sync-store/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../settings.svelte'

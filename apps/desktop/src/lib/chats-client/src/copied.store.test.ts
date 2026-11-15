@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 const CHAT = `c_${'1'.repeat(32)}`
 const POINTER = '/space/Plans.chat'
@@ -7,15 +8,15 @@ const account = vi.hoisted(() => ({ chats: [] as string[], space: 'space-1', hea
 const moves = vi.hoisted(() => [] as string[])
 const disk = vi.hoisted(() => ({ pointers: new Map<string, string>(), unreadable: [] as string[] }))
 
-vi.mock('../../sync.svelte', () => ({
-  sync: {
-    remoteIdFor: (root: string) =>
-      ({ '/space': 'space-1', '/other': 'space-2', '/third': 'space-3' })[root] ?? null,
-    nudge: () => undefined,
-    tracked: () => null,
-    roleKept: () => null,
-  },
+const store = vi.hoisted(() => ({
+  remoteIdFor: (root: string) =>
+    ({ '/space': 'space-1', '/other': 'space-2', '/third': 'space-3' })[root] ?? null,
+  nudge: () => undefined,
+  tracked: () => null,
+  roleKept: () => null,
 }))
+vi.mock('../../sync-store/src/api', () => ({ sync: store }))
+serveSyncStore(store)
 
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),

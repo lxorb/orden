@@ -93,7 +93,7 @@ export async function listCommands(): Promise<unknown> {
 }
 
 export async function syncStatus(): Promise<unknown> {
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
 
   return {
     status: sync.status,
@@ -106,7 +106,7 @@ export async function publishStatus(args: Said): Promise<unknown> {
   const space = await spaceFor(args)
   const [{ account }, { sync }] = await Promise.all([
     import('../../accounts/src/api'),
-    import('../../sync.svelte'),
+    import('../../sync-store/src/api'),
   ])
 
   const id = sync.remoteIdFor(space.root)

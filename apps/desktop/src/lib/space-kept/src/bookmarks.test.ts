@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -18,16 +19,14 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const pushed: string[] = []
-vi.mock('../../sync.svelte', () => ({
-  sync: {
-    pushBookmarks: (root: string) => {
-      pushed.push(root)
-      return Promise.resolve()
-    },
+const { BOOKMARK_KINDS } = await import('@orden/contracts')
+const pushing = {
+  pushBookmarks: (root: string) => {
+    pushed.push(root)
+    return Promise.resolve()
   },
-}))
-
-const { BOOKMARK_KINDS, providePort } = await import('@orden/contracts')
+}
+serveSyncStore(pushing)
 const {
   Bookmarks,
   bookmarkList,
@@ -332,15 +331,10 @@ describe('changing the list around a graph view', () => {
 
 describe('a bookmark found by the id of what it points at (#1068)', () => {
   const ROOT = '/spaces/Work'
-  let stop: () => void = () => undefined
-  beforeEach(() => {
-    stop = providePort('sync.notes', ids)
-  })
-  afterEach(() => stop())
+  beforeEach(() => void serveSyncStore(ids))
+  afterEach(() => void serveSyncStore(pushing))
   const ids = {
-    pathOf: () => null,
-    idOf: () => null,
-    moved: () => undefined,
+    ...pushing,
     entryIdAt: (_root: string, path: string) =>
       (({ 'Notes/Plan.md': 'p', Notes: 'n' }) as Record<string, string>)[path] ?? null,
     entryPathOf: (_root: string, id: string) =>

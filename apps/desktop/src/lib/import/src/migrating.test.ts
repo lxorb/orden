@@ -98,7 +98,7 @@ vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))
-vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: { drawer: false },

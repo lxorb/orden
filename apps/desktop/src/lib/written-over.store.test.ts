@@ -21,7 +21,7 @@ const { account } = await import('./accounts/src/account.svelte')
 const { links } = await import('./link-index/src/api')
 const { pages } = await import('./web-tab/src/pages.svelte')
 type RemoteSpace = import('./accounts/src/routes').RemoteSpace
-const { sync } = await import('./sync.svelte')
+const { sync } = await import('./sync-store/src/api')
 
 function files(): Map<string, string> {
   if (!disk.current) throw new Error('no disk')

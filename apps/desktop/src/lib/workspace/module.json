@@ -30,7 +30,8 @@
     "tree",
     "ui-controls",
     "ui-kit",
-    "web-backend"
+    "web-backend",
+    "sync-store"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -56,7 +57,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/tree-keys.ts",
     "apps/desktop/src/lib/unread.svelte.ts",
     "apps/desktop/src/lib/welcome.ts"

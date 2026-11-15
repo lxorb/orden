@@ -130,6 +130,6 @@ export { answer, frameWord, method, NoWord, onTheActivity, wordSaid } from './mo
 export { startInsets, tintSystemBars } from './insets'
 export { identifier } from './identifier'
 export { startup } from './startup.svelte'
-export { factsOfLaunch, mark, markPainted, sendTrace, watchFirstInput } from './trace'
+export { factsOfLaunch, mark, markPainted, watchFirstInput } from './trace'
 export const iCloud = () => import('./icloud-placeholder')
 export { imagePath, imageUrl } from './images'

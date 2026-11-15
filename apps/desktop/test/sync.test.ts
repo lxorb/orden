@@ -1,7 +1,7 @@
 import type { Bookmark } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { ApiError } = await import('./accounts/src/client')
+const { ApiError } = await import('../src/lib/accounts/src/client')
 
 const fake = vi.hoisted(() => {
   interface Entry {
@@ -341,19 +341,19 @@ const fake = vi.hoisted(() => {
   }
 })
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   invoke: fake.invoke,
 }))
 
-vi.mock('./accounts/src/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./accounts/src/client')>()),
+vi.mock('../src/lib/accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/lib/accounts/src/client')>()),
   api: fake.api,
 }))
 
 const lettingGo = vi.hoisted(() => [] as string[])
 
-vi.mock('./collab/src/api', () => ({
+vi.mock('../src/lib/collab/src/api', () => ({
   rooms: {
     carries: (noteId: string) => fake.rooms.has(noteId),
     letGoUnreached: (noteId: string) => lettingGo.push(noteId),
@@ -378,14 +378,14 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-let account: typeof import('./accounts/src/account.svelte').account
-let sync: typeof import('./sync.svelte').sync
-let workspace: typeof import('./workspace/src/api').workspace
+let account: typeof import('../src/lib/accounts/src/account.svelte').account
+let sync: typeof import('../src/lib/sync-store/src/api').sync
+let workspace: typeof import('../src/lib/workspace/src/api').workspace
 
 await Promise.all([
-  import('./accounts/src/account.svelte'),
-  import('./sync.svelte'),
-  import('./workspace/src/api'),
+  import('../src/lib/accounts/src/account.svelte'),
+  import('../src/lib/sync-store/src/api'),
+  import('../src/lib/workspace/src/api'),
 ])
 
 let everStarted = false
@@ -398,9 +398,9 @@ beforeEach(async () => {
   vi.stubGlobal('localStorage', memoryStorage())
 
   vi.resetModules()
-  ;({ account } = await import('./accounts/src/account.svelte'))
-  ;({ sync } = await import('./sync.svelte'))
-  ;({ workspace } = await import('./workspace/src/api'))
+  ;({ account } = await import('../src/lib/accounts/src/account.svelte'))
+  ;({ sync } = await import('../src/lib/sync-store/src/api'))
+  ;({ workspace } = await import('../src/lib/workspace/src/api'))
 
   vi.useFakeTimers({ shouldAdvanceTime: true })
 })
@@ -444,7 +444,7 @@ function standInForTheWindow(): void {
 }
 
 async function afterTheReconcileInterval(run: () => Promise<unknown>) {
-  const { RECONCILE_INTERVAL } = await import('./platform/src/backoff')
+  const { RECONCILE_INTERVAL } = await import('../src/lib/platform/src/backoff')
 
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.setSystemTime(Date.now() + RECONCILE_INTERVAL + 1)
@@ -848,7 +848,7 @@ describe('a space somebody shared', () => {
 
     expect(fake.remote.calls).toEqual(['createNote Z.md'])
     expect(sync.status).not.toBe('error')
-    const { unsynced } = await import('./sync-client/src/unsynced.svelte')
+    const { unsynced } = await import('../src/lib/sync-client/src/unsynced.svelte')
     await vi.waitFor(() => expect(unsynced.said).toBe('A too big.md'))
     unsynced.dismiss()
   })
@@ -1266,11 +1266,11 @@ describe('turning syncing off while a pass is in the air', () => {
 })
 
 describe('the first pass, which somebody is waiting on', () => {
-  let arriving: typeof import('./accounts/src/api').arriving
+  let arriving: typeof import('../src/lib/accounts/src/api').arriving
 
   beforeEach(async () => {
     standInForTheWindow()
-    ;({ arriving } = await import('./accounts/src/api'))
+    ;({ arriving } = await import('../src/lib/accounts/src/api'))
   })
 
   afterEach(() => {
@@ -1535,11 +1535,11 @@ describe('two passes asked for at once', () => {
 })
 
 describe('a pass that fails partway through', () => {
-  let arriving: typeof import('./accounts/src/api').arriving
+  let arriving: typeof import('../src/lib/accounts/src/api').arriving
 
   beforeEach(async () => {
     standInForTheWindow()
-    ;({ arriving } = await import('./accounts/src/api'))
+    ;({ arriving } = await import('../src/lib/accounts/src/api'))
   })
 
   afterEach(() => {
@@ -1553,7 +1553,7 @@ describe('a pass that fails partway through', () => {
     account.settled()
     await sync.pass()
 
-    const { record } = await import('./sync-mirror/src/api')
+    const { record } = await import('../src/lib/sync-mirror/src/api')
     const real = fake.api.changes
     fake.api.changes = () => Promise.reject(new Error('the account is having a day'))
     try {
@@ -1574,7 +1574,7 @@ describe('a pass that fails partway through', () => {
     account.settled()
     await sync.pass()
 
-    const { ApiError } = await import('./accounts/src/client')
+    const { ApiError } = await import('../src/lib/accounts/src/client')
     const real = fake.api.changes
     fake.api.changes = () => Promise.reject(new ApiError(401, 'unauthorized'))
     const me = fake.api.me
@@ -1597,7 +1597,7 @@ describe('a pass that fails partway through', () => {
     account.settled()
     await sync.pass()
 
-    const { ApiError } = await import('./accounts/src/client')
+    const { ApiError } = await import('../src/lib/accounts/src/client')
     const real = fake.api.changes
     let asked = 0
     const me = fake.api.me
@@ -1641,7 +1641,7 @@ describe('a pass that fails partway through', () => {
       expect(sync.status).toBe('error')
       expect(arriving.showing).toBe(false)
 
-      const { pollDelay } = await import('./platform/src/backoff')
+      const { pollDelay } = await import('../src/lib/platform/src/backoff')
       await vi.advanceTimersByTimeAsync(pollDelay(1, false) + 1)
       expect(asked).toBeGreaterThan(1)
     } finally {
@@ -1671,7 +1671,7 @@ describe('a v2 space whose role is not known yet', () => {
   }
 
   test('is never deleted from the account when it is let go of', async () => {
-    const { roleOf } = await import('./sharing/src/sharing.svelte')
+    const { roleOf } = await import('../src/lib/sharing/src/sharing.svelte')
     const { forgotten, done } = await unknown()
     try {
       const role = roleOf('/Plan')
@@ -1686,7 +1686,7 @@ describe('a v2 space whose role is not known yet', () => {
   })
 
   test('is deleted from the account once the listing is in and this device made it', async () => {
-    const { roleOf } = await import('./sharing/src/sharing.svelte')
+    const { roleOf } = await import('../src/lib/sharing/src/sharing.svelte')
     const { done } = await unknown('owner')
     try {
       account.listed = true
@@ -1701,7 +1701,7 @@ describe('a v2 space whose role is not known yet', () => {
   })
 
   test('is never deleted with the next session when the account changes while it is let go of', async () => {
-    const { roleOf } = await import('./sharing/src/sharing.svelte')
+    const { roleOf } = await import('../src/lib/sharing/src/sharing.svelte')
     const { done } = await unknown('owner')
     const v2 = (sync as unknown as { v2: { forget: (root: string) => Promise<void> } }).v2
     const gate: { free: (() => void) | null } = { free: null }
@@ -1726,7 +1726,7 @@ describe('a v2 space whose role is not known yet', () => {
   })
 
   test('is not deleted from the account when the listing leaves it out and it was not this device’s', async () => {
-    const { roleOf } = await import('./sharing/src/sharing.svelte')
+    const { roleOf } = await import('../src/lib/sharing/src/sharing.svelte')
     const { forgotten, done } = await unknown('write')
     try {
       account.listed = true
@@ -1753,8 +1753,8 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
         walked = resolve
       })
     })
-    vi.doMock('./sync-client/src/runner.svelte', () => ({ runner: { walkBack } }))
-    await import('./sync-client/src/runner.svelte')
+    vi.doMock('../src/lib/sync-client/src/runner.svelte', () => ({ runner: { walkBack } }))
+    await import('../src/lib/sync-client/src/runner.svelte')
     return { walkBack, started, walk: (back: boolean) => walked(back) }
   }
 
@@ -1776,7 +1776,7 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
 
   async function launched() {
     sync.start()
-    const { startup } = await import('./platform/src/api')
+    const { startup } = await import('../src/lib/platform/src/api')
     await startup.shown()
   }
 
@@ -1889,14 +1889,14 @@ describe('an account moved to v2 while this device runs v1', () => {
       expect(passes.mock.calls.length).toBeGreaterThan(1)
       await until(() => !sync.passing)
       const before = passes.mock.calls.length
-      vi.doMock('./sync-client/src/api', async (importOriginal) => ({
+      vi.doMock('../src/lib/sync-client/src/api', async (importOriginal) => ({
         ...(await importOriginal<object>()),
         runner,
       }))
 
       account.user = { ...account.user!, syncVersion: 2 }
       sync.start()
-      const { startup } = await import('./platform/src/api')
+      const { startup } = await import('../src/lib/platform/src/api')
       void startup.shown()
       await until(() => runner.start.mock.calls.length > 0)
       expect(runner.start).toHaveBeenCalledTimes(1)
@@ -1922,7 +1922,7 @@ describe('what the account holds of a file', () => {
     role: 'owner' | 'write' = 'owner',
   ) {
     fake.remote.spaces.push({ id: 's-Notes', name: 'Notes', role })
-    const { sha256 } = await import('./platform/src/bytes')
+    const { sha256 } = await import('../src/lib/platform/src/bytes')
     const tracked: Record<string, { hash: string; modified: number }> = {}
     for (const [path, words] of Object.entries(files)) {
       tracked[path] = { hash: await sha256(words), modified: pushedAt }

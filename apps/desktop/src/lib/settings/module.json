@@ -32,7 +32,8 @@
     "trash",
     "quitting",
     "workspace",
-    "highlight"
+    "highlight",
+    "sync-store"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -50,7 +51,6 @@
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/spell-languages.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/tab-cycle.svelte.ts",
     "apps/desktop/src/lib/tapped.ts",
     "apps/desktop/src/lib/toolbar.svelte.ts",

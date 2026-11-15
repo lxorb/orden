@@ -28,7 +28,7 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   if (canWriteAt(path) && (await writeIfAbsent(path, '# AGENTS\n\n## Memory\n'))) {
     if (samePath(root, workspace.activeSpace?.root)) await workspace.loadTree()
     await workspace.fileCame(path, 'file')
-    const { sync } = await import('../../../sync.svelte')
+    const { sync } = await import('../../../sync-store/src/api')
     sync.nudge()
   }
   await workspace.open(path)

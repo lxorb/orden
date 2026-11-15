@@ -1,10 +1,26 @@
-import './sync-ports'
-import { api, type SpaceRole, account, arriving } from './accounts/src/api'
-import { without, log, keep, keepJson, stored, storedText, nudgeDelay, pollDelay, RECONCILE_INTERVAL, invoke, isDesktop, joinPath, rootedAt, samePath, startup } from './platform/src/api'
-import type { Pairing } from './space-pairing'
+import '../../sync-ports'
+import { api, type SpaceRole, account, arriving } from '../../accounts/src/api'
+import {
+  without,
+  log,
+  keep,
+  keepJson,
+  stored,
+  storedText,
+  nudgeDelay,
+  pollDelay,
+  RECONCILE_INTERVAL,
+  invoke,
+  isDesktop,
+  joinPath,
+  rootedAt,
+  samePath,
+  startup,
+} from '../../platform/src/api'
+import type { Pairing } from '../../space-pairing'
 import { untrack } from 'svelte'
-import { rooms } from './collab/src/api'
-import { modes } from './modes.svelte'
+import { rooms } from '../../collab/src/api'
+import { modes } from '../../modes.svelte'
 import {
   type Folded,
   type Joined,
@@ -18,22 +34,25 @@ import {
   type Tracked,
   type Waiting,
   within,
-} from './sync-mirror/src/api'
+} from '../../sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
-import { providePort, whenPortProvided } from '@orden/contracts'
-import { workspace } from './workspace/src/api'
-import type { FileOp } from './file-ops/src/api'
-import { unixLines } from './documents/src/api'
-
-export const STORAGE_KEY = MIRRORS_KEY
+import { portOf, providePort, type SyncWorkspacePort, whenPortProvided } from '@orden/contracts'
+import type { FileOp } from '../../file-ops/src/api'
+import { unixLines } from '../../documents/src/api'
 
 export type Status = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
 const VERSION = 'orden:sync-version'
 
-type Runner = (typeof import('./sync-client/src/api'))['runner']
+type Runner = (typeof import('../../sync-client/src/api'))['runner']
 
 const V2 = !__EVEN_PLUGIN__
+
+function workspace(): SyncWorkspacePort {
+  const port = portOf('sync.workspace')
+  if (!port.ok) throw new Error(port.error.message)
+  return port.value
+}
 
 class Sync {
   status = $state<Status>('off')
@@ -83,7 +102,7 @@ class Sync {
   }
 
   private respell(): void {
-    for (const space of workspace.spaces) {
+    for (const space of workspace().spaces) {
       const key = this.keyAt(space.root)
       const mirror = key === undefined ? undefined : this.mirrors[key]
       if (key === undefined || !mirror || key === space.root) continue
@@ -148,7 +167,7 @@ class Sync {
     arriving.settled()
     void (async () => {
       await startup.turn('rooms')
-      const { runner } = await import('./sync-client/src/api')
+      const { runner } = await import('../../sync-client/src/api')
       await known()
       if (mine !== this.generation || !account.user) return
       if (account.user.syncVersion !== 2) {
@@ -181,7 +200,7 @@ class Sync {
     if (!V2 || !isDesktop) return
     void (async () => {
       await startup.turn('rooms')
-      const { runner } = await import('./sync-client/src/api')
+      const { runner } = await import('../../sync-client/src/api')
       await known()
       if (mine !== this.generation || account.user || account.token) return
       this.local = runner
@@ -194,7 +213,7 @@ class Sync {
     this.local = null
     void (async () => {
       await startup.turn('rooms')
-      const { runner } = await import('./sync-client/src/api')
+      const { runner } = await import('../../sync-client/src/api')
       await runner.dropLocal()
     })()
   }
@@ -251,7 +270,7 @@ class Sync {
     if (this.pulling.has(`${op.from}\n${op.to}`)) return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
 
-    const name = workspace.spaces.find((one) => samePath(one.root, op.to))?.name
+    const name = workspace().spaces.find((one) => samePath(one.root, op.to))?.name
     return name === undefined ? undefined : this.renamed(op.from, op.to, name)
   }
 
@@ -319,7 +338,7 @@ class Sync {
       this.save()
     }
 
-    const { endSpace, holder } = await import('./space-owed')
+    const { endSpace, holder } = await import('../../space-owed')
     const accountId = holder()
     if (!token || account.token !== token || !accountId || (!theirs && !mine)) return
 
@@ -329,7 +348,7 @@ class Sync {
   async pushIcon(root: string, icon: string | null, tint: string | null = null) {
     const token = account.token
     const spaceId = this.remoteIdFor(root)
-    const { holder, sendIcon } = await import('./space-owed')
+    const { holder, sendIcon } = await import('../../space-owed')
     const accountId = holder()
     if (!token || account.token !== token || !accountId || spaceId === null) return
 
@@ -342,12 +361,12 @@ class Sync {
     const spaceId = this.remoteIdFor(root)
     if (!token || spaceId === null || this.reads(spaceId)) return
 
-    const list = workspace.bookmarks.of(root)
+    const list = workspace().bookmarksOf(root)
     const landed = await api.saveBookmarks(token, spaceId, list).then(
       () => true,
       () => false,
     )
-    workspace.bookmarks.said(root, landed, list)
+    workspace().bookmarksSaid(root, landed, list)
   }
 
   wrote(path: string, content: string): void {
@@ -434,7 +453,7 @@ class Sync {
     if (!token) return
 
     this.respell()
-    const missing = workspace.spaces.some((space) => !this.mirrors[space.root])
+    const missing = workspace().spaces.some((space) => !this.mirrors[space.root])
     const due = Date.now() - this.reconciledAt >= RECONCILE_INTERVAL
 
     if (!missing && !due) return
@@ -446,7 +465,7 @@ class Sync {
       return
     }
 
-    const { pairSpaces } = await import('./space-pairing')
+    const { pairSpaces } = await import('../../space-pairing')
     await pairSpaces(token, this.pairing)
 
     this.save()
@@ -454,12 +473,12 @@ class Sync {
 
   async pushSpaceOrder() {
     const token = account.token
-    const { holder, sendOrder } = await import('./space-owed')
+    const { holder, sendOrder } = await import('../../space-owed')
     const accountId = holder()
     if (!token || account.token !== token || !accountId) return
 
-    const order = workspace.spaces
-      .map((space) => this.remoteIdFor(space.root))
+    const order = workspace()
+      .spaces.map((space) => this.remoteIdFor(space.root))
       .filter((id): id is string => !!id)
 
     if (!order.length) return
@@ -527,8 +546,8 @@ class Sync {
 
   private waiting(mirror: Mirror, joined: Joined): Waiting {
     const open = new Set(
-      workspace.openNotes
-        .map((one) => within(mirror.root, one.path))
+      workspace()
+        .openNotes.map((one) => within(mirror.root, one.path))
         .filter((one): one is string => one !== null),
     )
 
@@ -537,18 +556,18 @@ class Sync {
       notWritten: (path) => this.notWritten(joinPath(mirror.root, path)),
       wrote: (path) => {
         arriving.arrived()
-        void workspace.arrived(path)
+        void workspace().arrived(path)
         void this.refresh(path, joined)
         this.pulled += 1
       },
       save: () => this.save(),
-      holdingWrites: (from, run, stalled) => workspace.holdingWrites(from, run, stalled),
+      holdingWrites: (from, run, stalled) => workspace().holdingWrites(from, run, stalled),
       moved: async (from, to) => {
         const key = `${from}\n${to}`
         this.pulling.add(key)
         try {
-          await workspace.fileMoved(from, to, 'file')
-          await workspace.undone.moved(from, to)
+          await workspace().fileMoved(from, to, 'file')
+          await workspace().undoneMoved(from, to)
         } finally {
           this.pulling.delete(key)
         }
@@ -561,7 +580,7 @@ class Sync {
       },
       held: record.held,
       asked: new Set(record.clashes.map((one) => one.id)),
-      kept: (path) => workspace.archive.holdsIn(mirror.root, path),
+      kept: (path) => workspace().archivedIn(mirror.root, path),
     }
   }
 
@@ -569,13 +588,13 @@ class Sync {
     const id = this.tracked(path)?.id
     if (id !== undefined && joined.has(id)) return
 
-    const note = workspace.openNotes.find((one) => one.path === path)?.note
-    if (!note || note.dirty) return
+    const shown = workspace().shownText(path)
+    if (shown === null) return
 
     const content = await invoke<string>('read_note', { path }).catch(() => null)
-    if (content === null || unixLines(content) === note.text) return
+    if (content === null || unixLines(content) === shown) return
     if (id !== undefined) rooms.letGoUnreached(id)
-    workspace.reload(path, content)
+    workspace().reload(path, content)
   }
 
   private pulled = 0
@@ -585,7 +604,7 @@ class Sync {
   private notWritten(path: string) {
     if (this.toldUnwritten.has(path)) return
     this.toldUnwritten.add(path)
-    void import('./sync-client/src/api').then(({ unsynced }) =>
+    void import('../../sync-client/src/api').then(({ unsynced }) =>
       unsynced.show(path.split(/[\\/]/).pop() ?? path),
     )
   }
@@ -593,7 +612,7 @@ class Sync {
   private noted(mirror: Mirror, began: number, failed: string | null) {
     record.wrote({
       at: began,
-      space: rootedAt(workspace.spaces, mirror.root)?.name ?? mirror.root,
+      space: rootedAt(workspace().spaces, mirror.root)?.name ?? mirror.root,
       pulled: this.pulled,
       pushed: this.pushed,
       clashed: this.clashed,
@@ -616,7 +635,7 @@ class Sync {
 
     try {
       const { pull, push } = await notePass()
-      const { eachDue } = await import('./sync-client/src/api')
+      const { eachDue } = await import('../../sync-client/src/api')
       this.respell()
       const mirrors = new Map(Object.values(this.mirrors).map((one) => [one.root, one]))
 
@@ -626,7 +645,7 @@ class Sync {
         async (root) => {
           const mirror = mirrors.get(root)
           if (!mirror) return
-          if (rootedAt(workspace.spaces, mirror.root) === undefined) return
+          if (rootedAt(workspace().spaces, mirror.root) === undefined) return
 
           this.pulled = 0
           this.pushed = 0
@@ -636,7 +655,7 @@ class Sync {
           const waiting = this.waiting(mirror, joined)
           if (await pull(mirror, token, joined, waiting)) {
             moved = true
-            if (samePath(mirror.root, workspace.activeSpace?.root)) shown = true
+            if (samePath(mirror.root, workspace().activeSpace?.root)) shown = true
           }
 
           if (this.reads(mirror.spaceId)) {
@@ -653,8 +672,8 @@ class Sync {
             refused: (path: string) => this.notWritten(joinPath(mirror.root, path)),
             folded: ({ kept, gone }: Folded) => {
               void this.refresh(kept, joined)
-              void workspace.fileGone(gone, 'file')
-              if (samePath(mirror.root, workspace.activeSpace?.root)) shown = true
+              void workspace().fileGone(gone, 'file')
+              if (samePath(mirror.root, workspace().activeSpace?.root)) shown = true
             },
           }
           if (await push(mirror, token, joined, sending)) moved = true
@@ -664,12 +683,14 @@ class Sync {
         },
       )
 
-      void import('./sync-client/src/api')
+      void import('../../sync-client/src/api')
         .then((one) => one.papersCarrying())
         .then(({ carryNow, mirroredPages }) =>
           carryNow(
             () =>
-              mirroredPages(Object.values(this.mirrors), workspace.spaces, (id) => this.reads(id)),
+              mirroredPages(Object.values(this.mirrors), workspace().spaces, (id) =>
+                this.reads(id),
+              ),
             (note, failed) =>
               record.wrote({
                 at: Date.now(),
@@ -682,9 +703,9 @@ class Sync {
           ),
         )
 
-      if (shown) await workspace.loadTree()
+      if (shown) await workspace().loadTree()
 
-      if (moved) await workspace.leaveTheWelcomeNote()
+      if (moved) await workspace().leaveTheWelcomeNote()
 
       this.seen = true
       this.save()
@@ -722,7 +743,7 @@ class Sync {
   }
 
   private load(accountId: string | null): { mirrors: Record<string, Mirror>; seen: boolean } {
-    const saved = savedRecord(stored(STORAGE_KEY))
+    const saved = savedRecord(stored(MIRRORS_KEY))
     if (!saved) return { mirrors: {}, seen: false }
 
     if (saved.whose !== null && saved.whose !== accountId) return { mirrors: {}, seen: false }
@@ -781,7 +802,7 @@ class Sync {
   }
 
   private write(mirrors: Record<string, Mirror>): boolean {
-    return keepJson(STORAGE_KEY, {
+    return keepJson(MIRRORS_KEY, {
       account: this.owner,
       seen: this.seen,
       mirrors,
@@ -815,7 +836,18 @@ function known(): Promise<void> {
 
 export const sync = new Sync()
 
-providePort('sync.notes', {
+providePort('sync.store', {
+  get engineReady() {
+    return !(sync.version === 2 && !sync.engine)
+  },
+  get passing() {
+    return sync.passing
+  },
+  pass: () => sync.pass(),
+  nudge: () => sync.nudge(),
+  remoteIdFor: (root) => sync.remoteIdFor(root),
+  roleKept: (root) => sync.roleKept(root),
+  pushBookmarks: (root) => sync.pushBookmarks(root),
   pathOf: (id) => sync.pathOf(id),
   idOf: (path) => sync.tracked(path)?.id ?? null,
   moved: (from, to) => sync.moved(from, to),

@@ -325,7 +325,7 @@ export async function made(place: Place, relative: string, words: string, open: 
     heldIndex(place)?.noteSaved(path, words)
   }
 
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
 
   return { path: relative, created: true }

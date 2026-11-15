@@ -8,10 +8,8 @@
     "scan",
     "sharing",
     "sync-client",
-    "workspace"
+    "workspace",
+    "sync-store"
   ],
-  "pending": [
-    "apps/desktop/src/lib/composer.ts",
-    "apps/desktop/src/lib/sync.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/composer.ts"]
 }

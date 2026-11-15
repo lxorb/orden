@@ -1,6 +1,7 @@
 import { conflictPath } from '@orden/markdown/paths'
-import { providePort, type SyncNotesPort, workspaceView } from '@orden/contracts'
+import { providePort, workspaceView } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 import type { Clash } from './conflicts'
 
@@ -33,15 +34,6 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
 }))
 
 const { record } = await import('./record.svelte')
-
-function said(notes: Pick<SyncNotesPort, 'pathOf' | 'idOf'> & Partial<SyncNotesPort>) {
-  return providePort('sync.notes', {
-    moved: () => undefined,
-    entryIdAt: () => null,
-    entryPathOf: () => null,
-    ...notes,
-  })
-}
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -172,7 +164,7 @@ describe('a note waiting to be settled', () => {
 
   test('is settled where its note is now, found by its id', async () => {
     held([aClash('/Work/Plan.md')])
-    const stop = said({ pathOf: () => '/Work/Goals.md', idOf: () => 'another-id' })
+    const stop = serveSyncStore({ pathOf: () => '/Work/Goals.md', idOf: () => 'another-id' })
 
     await record.settle(record.clashes[0]!, 'theirs')
     stop()
@@ -184,7 +176,7 @@ describe('a note waiting to be settled', () => {
   test('is settled where it followed its file when the record is behind', async () => {
     held([aClash('/Work/Goals.md')])
     const told: string[] = []
-    const stop = said({
+    const stop = serveSyncStore({
       pathOf: () => '/Work/Plan.md',
       idOf: () => null,
       moved: (from, to) => void told.push(`${from} ${to}`),
@@ -200,7 +192,7 @@ describe('a note waiting to be settled', () => {
 
   test('never writes over another note that has its old name by now', async () => {
     held([aClash('/Work/Plan.md')])
-    const stop = said({ pathOf: () => null, idOf: () => 'another-id' })
+    const stop = serveSyncStore({ pathOf: () => null, idOf: () => 'another-id' })
 
     await record.settle(record.clashes[0]!, 'theirs')
     stop()

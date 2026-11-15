@@ -22,7 +22,8 @@
     "file-writes",
     "agent-verbs",
     "workspace",
-    "notify"
+    "notify",
+    "sync-store"
   ],
   "pending": [
     "apps/desktop/src/lib/Facts.svelte",
@@ -41,7 +42,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/space-pick.ts",
     "apps/desktop/src/lib/space-typing.svelte.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts"
+    "apps/desktop/src/lib/surfaces.svelte.ts"
   ]
 }

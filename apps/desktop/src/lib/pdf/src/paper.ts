@@ -290,7 +290,7 @@ async function fromAccount(at: PaperAt): Promise<Uint8Array | null> {
 }
 
 async function accountIdOf(note: string): Promise<string | null> {
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   return sync.tracked(note)?.id ?? null
 }
 

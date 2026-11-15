@@ -80,7 +80,7 @@
   } from './lib/surfaces.svelte'
   import { start } from './lib/start'
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
-  import { sync } from './lib/sync.svelte'
+  import { sync } from './lib/sync-store/src/api'
   import StatusBar from './lib/StatusBar.svelte'
   import { paneCorners } from './lib/pane-corners.svelte'
   import Titlebar from './lib/Titlebar.svelte'

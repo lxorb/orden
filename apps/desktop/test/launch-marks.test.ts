@@ -18,7 +18,9 @@ function walk(dir: string, keep: (name: string) => boolean): string[] {
 const marking = walk(SRC, (name) => /\.(ts|svelte)$/.test(name) && !name.includes('.test.'))
   .map((path) => readFileSync(path, 'utf8'))
   .filter((text) =>
-    /import \{[^}]*\bmark(?:Painted)?\b[^}]*\} from '[./]*(?:lib\/)?(?:platform\/src\/api|trace)'/.test(text),
+    /import \{[^}]*\bmark(?:Painted)?\b[^}]*\} from '[./]*(?:lib\/)?(?:platform\/src\/api|trace)'/.test(
+      text,
+    ),
   )
 
 const STEPS = new Set(

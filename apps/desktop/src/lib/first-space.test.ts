@@ -47,7 +47,7 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('./sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()

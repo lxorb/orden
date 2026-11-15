@@ -39,7 +39,7 @@ vi.mock('../../link-index/src/api', () => ({
   },
 }))
 
-vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged') } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => void told.push('nudged') } }))
 
 const readOnly = new Set<string>()
 
