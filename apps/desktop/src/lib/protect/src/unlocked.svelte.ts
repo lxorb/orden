@@ -124,28 +124,29 @@ class Unlocks {
     keep(RELOCK_KEY, String(minutes))
   }
 
+  private remapped(to: (one: string) => string): void {
+    this.agents = new Set([...this.agents].map(to))
+    this.open = new Set([...this.open].map(to))
+  }
+
   moved(from: string, to: string, root: string | null): void {
     if (root === null || !this.open.size) return
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
-    this.open = new Set(
-      [...this.open].map((one) => {
-        const [at = '', key = ''] = one.split('\u0000')
-        if (!key || !samePath(at, root)) return one
-        const moved = movedTo(key, was, now, root)
-        return moved === null ? one : keyOf({ root: at, key: moved })
-      }),
-    )
+    this.remapped((one) => {
+      const [at = '', key = ''] = one.split('\u0000')
+      if (!key || !samePath(at, root)) return one
+      const moved = movedTo(key, was, now, root)
+      return moved === null ? one : keyOf({ root: at, key: moved })
+    })
   }
 
   spaceMoved(from: string, to: string): void {
     if (!this.open.size) return
-    this.open = new Set(
-      [...this.open].map((one) => {
-        const [at = '', key = ''] = one.split('\u0000')
-        return samePath(at, from) ? keyOf({ root: to, key }) : one
-      }),
-    )
+    this.remapped((one) => {
+      const [at = '', key = ''] = one.split('\u0000')
+      return samePath(at, from) ? keyOf({ root: to, key }) : one
+    })
   }
 
   away(): void {
