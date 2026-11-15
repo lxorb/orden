@@ -1111,3 +1111,16 @@ The reviews found many bugs in the fixes, folded above, and older ones with thei
 No Critical, High or Medium is wholly open. Left in part or as a limit: a typed reply with no window on macOS (B683); plain `<a href=/delete-account>` and a listener on a link's ancestor stay free, and a button that says nothing goes (B713, B717); a secret field shown and gone inside 70 ms between two scans (B702); an app killed in a pull batch can double those notes, up to `PULL_BATCH` (B705); a kill after the crate's write and before the session's persist writes old words back (B737); a fold's first stall in WebKit, cause not found (hunt-known 8); wayland deb's "a click on another tab" until `f645b7fb6` reaches this branch (hunt4-integ).
 Needs a decision: H1-TAURI2-17, H1-TAURI2-18, H4-SYNC-L3 (B770, B780); `write_note`'s whole-text replace (B773).
 Not run on platform or at all: B607, B620 to B622, B665, B666, B683 to B685; the windows rows of rounds 3 and 4 ran on the web build only.
+
+## Settings and onboarding
+
+Burn-down from 2026-11-15 on `claude/project-thread-1r6eak`, from `unstable` at `fb58ff0a`.
+Area: settings screens and persistence, the first-launch setup (#2085), the "Show me around"
+guide, themes, keyboard shortcuts and the strings in them. Rows are numbered `SO` so they do not
+collide with the other areas' rows. Device-only request counts, "how did you hear" answers and
+cross-device resume need server work and are not bugs.
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| SO1 | Medium | In setup's "Connect your AI", every refused key for OpenRouter, Mistral, DeepSeek or Grok added another provider, and a refused Claude/ChatGPT/Gemini key left a new account with a bad key, all shown later under Assistants | Fixed `3d9dd473` | `connectCompatible` and `connectKey` add the account before `keyed` writes the key and lists models; on a failure only the keyless path removed it | `keyed` forgets the key and removes the account when this attempt made it; an account that was there before stays | `connect.test.ts` (3 tests, 2 failed before); onboarding 86 passed |
+| SO2 | Medium | After signing in during setup, Back on Appearance went to "Log in or sign up" again, with the email field, while signed in; a sign-in or browser import finishing after Back moved the setup on from the wrong step | Fixed `30adb44c` | The trail kept steps that no longer show (`account` once signed in), `setup.signedIn` was never set after a sign-in in setup, and the delayed and awaited `next()` calls moved on from whatever step was showing | Back skips steps that no longer show; the account step sets `signedIn`; `next(from)` moves on only from the step that asked | `setup.test.ts` "never goes back to the log in once signed in", "moves on late only from the step that asked for it" (failed before); onboarding 86 passed |
