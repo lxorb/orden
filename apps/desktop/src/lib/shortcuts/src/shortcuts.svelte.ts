@@ -77,6 +77,7 @@ class Shortcuts {
   readonly platform = currentPlatform()
 
   restore() {
+    this.unkept = false
     this.overrides = usable(stored(STORAGE_KEY))
     this.preset =
       knownPreset(storedText(PRESET_KEY)) ??
@@ -95,9 +96,11 @@ class Shortcuts {
     })
   }
 
+  private unkept = false
+
   private get written(): KeyOverrides {
     const held = stored(STORAGE_KEY)
-    return held === null ? this.overrides : usable(held)
+    return held === null || this.unkept ? this.overrides : usable(held)
   }
 
   choose(preset: Pick<Preset, 'id' | 'keys' | 'vim'>) {
@@ -222,7 +225,7 @@ class Shortcuts {
   }
 
   private settle() {
-    keepJson(STORAGE_KEY, this.overrides)
+    this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
@@ -264,7 +267,7 @@ class Shortcuts {
 
     this.overrides = usableOnes
     this.preset = named
-    keepJson(STORAGE_KEY, this.overrides)
+    this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }

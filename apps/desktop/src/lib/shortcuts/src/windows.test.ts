@@ -91,3 +91,21 @@ describe('the bar across two windows', () => {
     expect(kept).toContain('paragraph.task-list')
   })
 })
+
+describe('storage that takes no more', () => {
+  test('keeps each key set in this window rather than undoing the one before', async () => {
+    const a = await aWindow()
+    localStorage.setItem('orden:shortcuts', JSON.stringify({ 'format.code': 'Mod-Alt-F7' }))
+    const setItem = localStorage.setItem.bind(localStorage)
+    localStorage.setItem = (key, value) => {
+      if (key === 'orden:shortcuts') throw new Error('full')
+      setItem(key, value)
+    }
+
+    a.shortcuts.set('format.bold', 'Mod-Alt-F9')
+    a.shortcuts.set('format.italic', 'Mod-Alt-F8')
+
+    expect(a.shortcuts.keyFor('format.bold')).toBe('Mod-Alt-F9')
+    expect(a.shortcuts.keyFor('format.italic')).toBe('Mod-Alt-F8')
+  })
+})
