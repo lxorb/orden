@@ -32,7 +32,8 @@
   import { pastesMarkup } from './trust'
   import { viewport } from './ui-kit/src/api'
   import { carriedIntoNotes } from './drag-paths'
-  import { type Tab, workspace } from './workspace.svelte'
+  import type { Tab } from './documents/src/api'
+  import { workspace } from './workspace.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
   let {

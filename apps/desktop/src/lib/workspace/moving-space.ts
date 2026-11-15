@@ -1,7 +1,7 @@
 import { log, isAgentsName, nameOf, samePath } from '../platform/src/api'
 import { canWriteAt } from '../sharing/src/api'
 import { moveHistory, readSpec } from '../terminal/src/api'
-import type { Tab } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
 import { mayCarry } from './chat-carry'
 import type { Draft } from './session'

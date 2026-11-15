@@ -19,3 +19,4 @@ export {
 } from './drafts'
 export { type Across, fetchAcross, meetAcross, oweTo, writeEdited, wroteHere } from './in-turn'
 export { OpenDocuments, secondWebTabs } from './open'
+export { holdsRetiredTab, isRetiredChat, isRetiredTab } from './retired-tabs'

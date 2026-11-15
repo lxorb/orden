@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { protection } from './protect/src/api'
   import { webPages } from '@orden/contracts'
   import { keyElsewhere } from './layer-keys'
   import { tick, untrack } from 'svelte'
@@ -1043,7 +1044,7 @@
       {/if}
       {#if othersIn(opens)}<SharedMark label="Also open elsewhere" />
       {:else if isSharedItem(opens)}<SharedMark />{/if}
-      {#if workspace.protection.any && workspace.activeSpace && workspace.protection.marked(workspace.activeSpace.root, entry.path)}<SharedMark
+      {#if protection.any && workspace.activeSpace && protection.marked(workspace.activeSpace.root, entry.path)}<SharedMark
           label="Protected"
           icon={LOCK_MARK}
         />{/if}

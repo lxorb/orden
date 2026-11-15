@@ -1,7 +1,8 @@
 import { caretLine, documentOf, type EditorView, foldLines, topLine } from '@orden/editor'
 import { untrack } from 'svelte'
 import { onceAFrame } from './platform/src/api'
-import { type Tab, workspace } from './workspace.svelte'
+import type { Tab } from './documents/src/api'
+import { workspace } from './workspace.svelte'
 
 class Placement {
   private readonly pending = new Map<EditorView, () => void>()

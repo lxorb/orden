@@ -35,7 +35,7 @@ import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
 import { chatName, findPointers, makePointer, type Place, readPointer } from './pointers'
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
-import { isRetiredChat } from '../../workspace/retired-tabs'
+import { isRetiredChat } from '../../documents/src/api'
 import { type Host, View } from './view.svelte'
 
 const RECEIPTS = 'orden:chat-receipts'

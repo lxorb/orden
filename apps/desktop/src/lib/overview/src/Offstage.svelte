@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Tab } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { SvelteSet } from 'svelte/reactivity'
   import { without } from '../../graph/src/api'

@@ -1,7 +1,7 @@
 import type { AgentAnswer } from '../automation/src/api'
 import { message } from '../ui-kit/src/api'
 import { foldsIn, pathKeyAs, samePath, joinPath } from '../platform/src/api'
-import type { Tab } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
 import type { Category } from '../agents/src/api'
 import { asked } from './asks'

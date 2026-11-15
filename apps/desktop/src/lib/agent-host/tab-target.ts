@@ -1,4 +1,4 @@
-import type { Tab } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
 import { within } from '../platform/src/api'
 import type { TabKind } from '../documents/src/api'
 import { type Call, maybe, need } from './call'

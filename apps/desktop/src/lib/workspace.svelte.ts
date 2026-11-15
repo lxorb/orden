@@ -66,7 +66,25 @@ import { startup } from './startup.svelte'
 import { tabOverview } from './surfaces.svelte'
 import { mark, markPainted } from './trace'
 import { GIVE_UP } from './parting/src/api'
-import { holdsRetiredTab } from './workspace/retired-tabs'
+import {
+  holdsRetiredTab,
+  type DocumentStart,
+  holdsWords,
+  NoteDoc,
+  unixLines,
+  Tab,
+  UNTITLED,
+  OpenDocuments,
+  secondWebTabs,
+  draftFile,
+  hasWords,
+  isDraft,
+  isUnsaved,
+  worthAFile,
+  fetchAcross,
+  meetAcross,
+  oweTo,
+} from './documents/src/api'
 import { WELCOME_PATH } from './welcome'
 import {
   arrangementIn,
@@ -93,24 +111,6 @@ import { protection, unlocks } from './protect/src/api'
 import { SpaceGraphSettings } from './graph-view/src/api'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
-import {
-  type DocumentStart,
-  holdsWords,
-  NoteDoc,
-  unixLines,
-  Tab,
-  UNTITLED,
-  OpenDocuments,
-  secondWebTabs,
-  draftFile,
-  hasWords,
-  isDraft,
-  isUnsaved,
-  worthAFile,
-  fetchAcross,
-  meetAcross,
-  oweTo,
-} from './documents/src/api'
 import { writeFile } from './file-writes/src/api'
 import { Layouts } from './workspace/layouts.svelte'
 import {
@@ -4256,8 +4256,8 @@ oweTo((note) => workspace.owedWords(note))
 
 links.archivedIn = (root) => workspace.archive.keysOf(root)
 links.spaceOf = (path) => workspace.rootHolding(path)
-links.lockedAt = (path) => workspace.protection.locked(path)
-links.locksSeen = () => workspace.protection.seen
+links.lockedAt = (path) => protection.locked(path)
+links.locksSeen = () => protection.seen
 
 providePort('workspace.notes', {
   get activeRoot() {

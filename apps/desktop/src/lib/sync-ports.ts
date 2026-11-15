@@ -1,3 +1,4 @@
+import { protection } from './protect/src/api'
 import { providePort } from '@orden/contracts'
 import { account, api, ApiError, BASE, fromServer, request } from './accounts/src/api'
 import { howFor } from './new-tab'
@@ -106,8 +107,8 @@ providePort('sync.workspace', {
   },
   entryAt: (path) => workspace.entryAt(path),
   rootHolding: (path) => workspace.rootHolding(path),
-  locked: (path) => workspace.protection.locked(path),
-  copied: (from, to, root, into) => workspace.protection.copied(from, to, root, into),
+  locked: (path) => protection.locked(path),
+  copied: (from, to, root, into) => protection.copied(from, to, root, into),
   open: (path) => workspace.open(path),
   openBehind: (path) => workspace.openRow(path, howFor('behind')),
   dropSpace: (id) => workspace.dropSpace(id),

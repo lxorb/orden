@@ -1,5 +1,5 @@
 import { tabKindLoaded, type TabStream, type TabUsage } from '@orden/contracts'
-import type { Tab } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
 
 const EVERY = 1000
 

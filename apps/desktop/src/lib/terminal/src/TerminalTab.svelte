@@ -6,7 +6,7 @@
   import { dur, fly } from '../../platform/src/api'
   import { hostOf } from '@orden/online/urls'
   import OnlineStatus from './online/OnlineStatus.svelte'
-  import type { Tab } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { sessionOf } from './sessions.svelte'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()

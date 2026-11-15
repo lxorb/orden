@@ -9,11 +9,11 @@
   import { links } from '../../link-index/src/api'
   import { readingHtml, unreadableHtml } from '../../reading/src/api'
   import { trustsHtmlIn } from '../../sharing/src/api'
-  import { noteBehind } from '../../protect/src/api'
+  import { noteBehind, protection } from '../../protect/src/api'
   import TabMark from '../../TabMark.svelte'
   import { theme } from '../../theme/src/api'
   import { webPages } from '@orden/contracts'
-  import { type Tab, workspace } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { drawInto, type Face } from './faces'
   import { scrolledBack } from './mirror'
@@ -36,7 +36,7 @@
   } = $props()
 
   const how = $derived(TAB_KINDS[tab.kind].preview)
-  const locked = $derived(workspace.protection.locked(noteBehind(tab)))
+  const locked = $derived(protection.locked(noteBehind(tab)))
 
   const START = 6000
 

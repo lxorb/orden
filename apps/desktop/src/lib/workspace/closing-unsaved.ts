@@ -1,4 +1,4 @@
-import type { Tab } from '../workspace.svelte'
+import type { Tab } from '../documents/src/api'
 import { hasWords, isDraft } from '../documents/src/api'
 
 export function unsavedAmong(closing: readonly Tab[], every: readonly Tab[]): Tab[] {

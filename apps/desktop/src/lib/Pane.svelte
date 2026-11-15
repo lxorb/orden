@@ -21,7 +21,7 @@
   import Door from './Door.svelte'
   import { whileHere } from './while-here'
   import { alone } from './alone.svelte'
-  import type { Tab } from './workspace.svelte'
+  import type { Tab } from './documents/src/api'
   import {
     type Pane,
     panesIn,
@@ -72,7 +72,7 @@
     webSurface,
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing/src/api'
-  import { noteBehind } from './protect/src/api'
+  import { noteBehind, protection } from './protect/src/api'
   import { shortcuts } from './shortcuts/src/api'
   import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
@@ -93,7 +93,7 @@
   const tab = $derived(workspace.showing(pane.id))
   const scrollKept = $derived(scrollKeyOf(tab, workspace.windowSlot))
   const behind = $derived(tab ? noteBehind(tab) : null)
-  const locked = $derived(workspace.protection.locked(behind))
+  const locked = $derived(protection.locked(behind))
 
   const attachments = $derived(workspace.graphSettings.here.attachments)
 
@@ -119,9 +119,7 @@
     pane.stacked && !viewport.touch
       ? workspace
           .tabsIn(pane.id)
-          .filter(
-            (one) => one.kind === 'note' && !one.reading && !workspace.protection.locked(one.path),
-          )
+          .filter((one) => one.kind === 'note' && !one.reading && !protection.locked(one.path))
       : [],
   )
 

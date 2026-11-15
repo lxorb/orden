@@ -1,3 +1,4 @@
+import { protection } from '../../protect/src/api'
 import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
 import { links } from '../../link-index/src/api'
@@ -37,9 +38,7 @@ $effect.root(() => {
 export const rows = {
   of: (space?: string): readonly Row[] => store.of(space),
   shown: (space?: string): readonly Row[] =>
-    workspace.protection.any
-      ? store.openOf(space, (path) => workspace.protection.locked(path))
-      : store.of(space),
+    protection.any ? store.openOf(space, (path) => protection.locked(path)) : store.of(space),
   at: (path: string): readonly Row[] => store.at(path),
   watch: (listener: RowsListener): (() => void) => store.watch(listener),
   settled: (listener: () => void): (() => void) => store.settled(listener),

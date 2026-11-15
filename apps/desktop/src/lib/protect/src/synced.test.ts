@@ -18,7 +18,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => ({
   },
 }))
 
-const { workspace } = await import('../../workspace.svelte')
+const { protection } = await import('./protection.svelte')
 const { pulled } = await import('./synced')
 
 const ROOT = '/space'
@@ -28,28 +28,28 @@ const HASH = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'aGFzaA==', at: Date.n
 beforeEach(() => {
   server.answer = undefined
   server.sent = []
-  workspace.protection.forget(ROOT)
+  protection.forget(ROOT)
 })
 
 describe('protection on the account', () => {
   test('from a service older than it is left as this machine has it', async () => {
-    workspace.protection.set(ROOT, `${ROOT}/Diary`, 'password')
+    protection.set(ROOT, `${ROOT}/Diary`, 'password')
     await expect(pulled('token', 'u1', PAIRS)).resolves.toBeUndefined()
-    expect(workspace.protection.ways(ROOT)).toEqual({ Diary: 'password' })
+    expect(protection.ways(ROOT)).toEqual({ Diary: 'password' })
   })
 
   test('is taken in, the password with it, so another device locks the same notes', async () => {
     server.answer = { password: HASH, spaces: { s1: { Diary: 'device', '': 'password' } } }
     await pulled('token', 'u1', PAIRS)
-    expect(workspace.protection.ways(ROOT)).toEqual({ Diary: 'device', '': 'password' })
-    expect(workspace.protection.password?.hash).toBe('aGFzaA==')
-    expect(workspace.protection.locked(`${ROOT}/Plans.md`)).toBe(true)
+    expect(protection.ways(ROOT)).toEqual({ Diary: 'device', '': 'password' })
+    expect(protection.password?.hash).toBe('aGFzaA==')
+    expect(protection.locked(`${ROOT}/Plans.md`)).toBe(true)
   })
 
   test('never hands one account’s password to the next one signed in on the device', async () => {
     server.answer = { password: HASH, spaces: {} }
     await pulled('first', 'u1', PAIRS)
-    expect(workspace.protection.password?.hash).toBe('aGFzaA==')
+    expect(protection.password?.hash).toBe('aGFzaA==')
 
     server.answer = { password: null, spaces: {} }
     await pulled('second', 'u2', PAIRS)
@@ -58,7 +58,7 @@ describe('protection on the account', () => {
     const theirs = { ...HASH, salt: 'b3RoZXI=', hash: 'b3RoZXI=', at: 1 }
     server.answer = { password: theirs, spaces: {} }
     await pulled('second', 'u2', PAIRS)
-    expect(workspace.protection.password?.hash).toBe('b3RoZXI=')
+    expect(protection.password?.hash).toBe('b3RoZXI=')
     expect(server.sent).toEqual([])
   })
 })

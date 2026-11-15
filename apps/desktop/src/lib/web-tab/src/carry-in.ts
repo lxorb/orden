@@ -1,3 +1,4 @@
+import { protection } from '../../protect/src/api'
 import { isWebTarget } from '@orden/markdown/links'
 import { readWebFile } from '@orden/scan/shortcut'
 import { isExplorerDrag, isTreeDrag } from '../../drag-paths'
@@ -34,7 +35,7 @@ export async function carryingOf(paths: readonly string[], look: Looking): Promi
 
 const looking: Looking = {
   isFolder: (path) => workspace.entryAt(path)?.is_dir ?? false,
-  locked: (path) => workspace.protection.locked(path),
+  locked: (path) => protection.locked(path),
   read: (path) => invoke<string>('read_note', { path }).catch(() => null),
 }
 

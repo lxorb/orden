@@ -9,7 +9,9 @@
     "sharing",
     "ui-controls",
     "ui-kit",
-    "snapshots"
+    "snapshots",
+    "documents",
+    "protect"
   ],
   "pending": [
     "apps/desktop/src/lib/modes.svelte.ts",

@@ -1,3 +1,4 @@
+import { protection } from '../../protect/src/api'
 import { commandRows, commandRowsLoaded, runCommand } from '@orden/contracts'
 import { copyNoteLink } from './link'
 import {
@@ -623,7 +624,7 @@ export function tidies(path: string | null): boolean {
   return path === null || isMarkdownPath(path)
 }
 
-const shut = () => workspace.protection.locked(workspace.active?.path)
+const shut = () => protection.locked(workspace.active?.path)
 
 export function appCommands(view?: EditorView): Command[] {
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null

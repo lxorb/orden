@@ -32,7 +32,8 @@ import { Arrival, type Status } from './online/arrival.svelte'
 import { LocalEcho } from './online/echo-view'
 import { marks } from './online/marks.svelte'
 import { resumeCommand } from './online/resume'
-import { type Tab, workspace } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
+import { workspace } from '../../workspace.svelte'
 import {
   dropHistory,
   fitted,

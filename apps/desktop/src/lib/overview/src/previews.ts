@@ -1,5 +1,5 @@
 import { portOf, type ScreenPreview } from '@orden/contracts'
-import type { Tab } from '../../workspace.svelte'
+import type { Tab } from '../../documents/src/api'
 
 export function readingFrom(doc: string, anchor: number | undefined, most: number): string {
   const at = Math.max(0, Math.min(anchor ?? 0, doc.length))

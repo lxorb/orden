@@ -60,12 +60,12 @@ describe('a protected tab', () => {
       expect(chain.indexOf(`${door}()`), door).toBeGreaterThan(0)
     }
     expect(chain.indexOf('<Editor')).toBeGreaterThan(0)
-    expect(SOURCE).toContain('const locked = $derived(workspace.protection.locked(behind))')
+    expect(SOURCE).toContain('const locked = $derived(protection.locked(behind))')
   })
 
   test('is never a column beside an open one, and has no find bar', () => {
     expect(SOURCE).toMatch(
-      /one\.kind === 'note' && !one\.reading && !workspace\.protection\.locked\(one\.path\)/,
+      /one\.kind === 'note' && !one\.reading && !protection\.locked\(one\.path\)/,
     )
     expect(SOURCE).toMatch(/const writing = \$derived\([^)]*&& !locked\)/)
   })

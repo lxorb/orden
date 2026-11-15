@@ -20,7 +20,7 @@
   import { findBar, passFill, takeoverBar } from '../../surfaces.svelte'
   import { invoke, isDesktop, openExternal } from '../../platform/src/api'
   import { takesWords, writes } from '../../typing-pointer'
-  import type { Tab } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace.svelte'
   import { favicon, plainOrigin } from '@orden/scan/web-address'
   import { HISTORY_MARK, isOwnPage } from '@orden/scan/own-pages'

@@ -12,7 +12,8 @@
   import { prompt } from '../../ui-kit/src/api'
   import { webPages, whenLoaded } from '@orden/contracts'
   import { isDraft } from '../../documents/src/api'
-  import { type Tab, workspace } from '../../workspace.svelte'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace.svelte'
   import {
     aimed,
     boxToCanvas,

@@ -1,3 +1,4 @@
+import { protection } from '../../protect/src/api'
 import type { HtmlOptions } from './render'
 import { imagePath } from '../../images'
 import { links } from '../../link-index/src/api'
@@ -16,7 +17,7 @@ export interface Target {
   trusted: boolean
 }
 
-export const frontShut = (): boolean => workspace.protection.locked(workspace.active?.path)
+export const frontShut = (): boolean => protection.locked(workspace.active?.path)
 
 export function openTarget(): Target {
   if (frontShut()) throw new Error('Protected')
