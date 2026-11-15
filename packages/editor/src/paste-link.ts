@@ -7,6 +7,7 @@ import {
 } from '@codemirror/state'
 import type { Tree } from '@lezer/common'
 import { inCode } from './code'
+import { inside } from './commands'
 import { enclosingNamed } from './nodes'
 import { ADDRESS } from './paste'
 
@@ -32,12 +33,13 @@ function linkable(state: EditorState, range: SelectionRange): boolean {
   const words = state.sliceDoc(range.from, range.to)
   if (/\n[ \t]*\n/.test(words) || ADDRESS.test(words.trim())) return false
 
+  const { from, to } = inside(state, range.from, range.to)
   const tree = syntaxTree(state)
-  if (halfOfSomething(tree, range.from, range.to)) return false
+  if (halfOfSomething(tree, from, to)) return false
 
   for (const [pos, side] of [
-    [range.from, 1],
-    [range.to, -1],
+    [from, 1],
+    [to, -1],
   ] as const) {
     if (inCode(state, pos, side)) return false
     if (enclosingNamed(tree.resolveInner(pos, side), NOT_WORDS)) return false
@@ -88,10 +90,11 @@ export function linkedPaste(state: EditorState, text: string): TransactionSpec |
   const target = destination(address)
   return {
     ...state.changeByRange((range) => {
-      const insert = `[${label(state, range.from, range.to)}](${target})`
+      const { from, to } = inside(state, range.from, range.to)
+      const insert = `[${label(state, from, to)}](${target})`
       return {
-        changes: { from: range.from, to: range.to, insert },
-        range: EditorSelection.cursor(range.from + insert.length),
+        changes: { from, to, insert },
+        range: EditorSelection.cursor(from + insert.length),
       }
     }),
     scrollIntoView: true,

@@ -354,6 +354,26 @@ describe('a line with a rule under it', () => {
   )
 })
 
+describe('turning a block of several lines into a list', () => {
+  test('a paragraph of two lines becomes one item, its second line inside it', () => {
+    const { view, said } = viewOf('One line\nand another\n', 0)
+    turnBlocksInto(view, 0, 'bullet')
+    expect(said()).toBe('- One line\n  and another\n')
+  })
+
+  test('the second line of an item stays part of it, not a child item', () => {
+    const { view, said } = viewOf('- a\n  more words\n', 0)
+    turnBlocksInto(view, 0, 'task')
+    expect(said()).toBe('- [ ] a\n  more words\n')
+  })
+
+  test('the second paragraph of an item moves in with the wider number', () => {
+    const { view, said } = viewOf('- a\n\n  second paragraph\n', 0)
+    turnBlocksInto(view, 0, 'numbered')
+    expect(said()).toBe('1. a\n\n   second paragraph\n')
+  })
+})
+
 describe('turning a nested list into numbers', () => {
   test('each level counts for itself and stays nested', () => {
     const { view, said } = viewOf('- a\n  - b\n    - c\n  - d\n- e\n', 0, 28)

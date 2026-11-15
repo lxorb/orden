@@ -1,4 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
+import type { SyntaxNode } from '@lezer/common'
 import {
   type ChangeSpec,
   EditorSelection,
@@ -12,7 +13,8 @@ import { verbatimLines } from './block/verbatim'
 import { inCode } from './code'
 import { inside, OPENING } from './commands'
 
-const BLOCKS_APART = /\n[ \t]*\n|\n[ \t]*(?:[-*+]|\d+[.)])[ \t]/u
+const BLOCKS_APART =
+  /\n(?:[ \t]*>)*[ \t]*(?:\n|$|(?:[-*+]|\d+[.)])[ \t]|#{1,6}[ \t])|^(?:[ \t]*>)*[ \t]*#{1,6}[ \t].*\n/u
 
 interface Part {
   from: number
@@ -122,6 +124,13 @@ export function highlightAcross(colour: HighlightColour): StateCommand {
 
 const MARKS = new Set(['EmphasisMark', 'StrikethroughMark', 'HighlightMark'])
 
+function colourAfter(state: EditorState, mark: SyntaxNode): number {
+  const highlight = mark.parent
+  if (mark.name !== 'HighlightMark' || highlight?.name !== 'Highlight') return 0
+  if (mark.from !== highlight.from) return 0
+  return readHighlight(state.doc.sliceString(mark.to, highlight.to - mark.to + mark.from)).from
+}
+
 function markRanges(state: EditorState, from: number, to: number): { from: number; to: number }[] {
   const found: { from: number; to: number }[] = []
   const take = (start: number, end: number) => {
@@ -133,7 +142,7 @@ function markRanges(state: EditorState, from: number, to: number): { from: numbe
     from,
     to,
     enter: (node) => {
-      if (MARKS.has(node.name)) take(node.from, node.to)
+      if (MARKS.has(node.name)) take(node.from, node.to + colourAfter(state, node.node))
       if (node.name !== 'InlineCode') return true
 
       const said = state.doc.sliceString(node.from, node.to)

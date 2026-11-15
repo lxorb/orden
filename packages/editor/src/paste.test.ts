@@ -182,6 +182,15 @@ describe('an address pasted over a selection', () => {
     expect(pasted('«a\\] `b]` [[c]] d»', URL)).toBe(`[a\\] \`b]\` [[c]] d](${URL})`)
   })
 
+  test('over a whole line, keeps the item marker and the hashes outside the link', () => {
+    expect(pasted('«- item»\n', URL)).toBe(`- [item](${URL})\n`)
+    expect(pasted('«# Title»\n', URL)).toBe(`# [Title](${URL})\n`)
+  })
+
+  test('over a line picked with its line break, keeps the break and the next line', () => {
+    expect(pasted('«# Title\n»next\n', URL)).toBe(`# [Title](${URL})\nnext\n`)
+  })
+
   test('does not reach across paragraphs', () => {
     expect(pasted('«one\n\ntwo»', URL)).toBeNull()
   })

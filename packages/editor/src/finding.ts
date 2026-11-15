@@ -314,16 +314,19 @@ export function asked(state: EditorState): boolean {
   return getSearchQuery(state).valid
 }
 
-function unfolding(command: Command): Command {
-  return (view) => {
-    if (!command(view)) return false
+function unfolding<Target extends Parameters<StateCommand>[0]>(
+  command: (target: Target) => boolean,
+): (target: Target) => boolean {
+  return (target) => {
+    if (!command(target)) return false
+    const { state } = target
     const shut: StateEffect<{ from: number; to: number }>[] = []
-    for (const range of view.state.selection.ranges) {
-      foldedRanges(view.state).between(range.from, range.to, (from, to) => {
+    for (const range of state.selection.ranges) {
+      foldedRanges(state).between(range.from, range.to, (from, to) => {
         if (from < range.to && to > range.from) shut.push(unfoldEffect.of({ from, to }))
       })
     }
-    if (shut.length) view.dispatch({ effects: shut })
+    if (shut.length) target.dispatch(state.update({ effects: shut }))
     return true
   }
 }
@@ -333,6 +336,6 @@ export const previous: Command = unfolding(libraryPrevious)
 export const replaceOne: Command = unfolding(libraryReplaceNext)
 export const replaceEvery: Command = libraryReplaceAll
 export const gotoLine: Command = libraryGotoLine
-export const selectEvery: Command = librarySelectEvery
-export const selectNextOccurrence: StateCommand = librarySelectNext
-export const selectSelectionMatches: StateCommand = librarySelectMatches
+export const selectEvery: Command = unfolding(librarySelectEvery)
+export const selectNextOccurrence: StateCommand = unfolding(librarySelectNext)
+export const selectSelectionMatches: StateCommand = unfolding(librarySelectMatches)

@@ -1,4 +1,4 @@
-import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
+import type { ChangeSpec, EditorState, Line, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
 import { blockIdOf, freeBlockId, blockIds, ownLine, rowsOf } from '@orden/markdown/links'
@@ -171,6 +171,28 @@ function numberedLine(text: string, counting: Counting[]): string {
   return ' '.repeat(level.at) + mark + words
 }
 
+const LISTED = new Set<BlockShape>(['bullet', 'numbered', 'task'])
+
+const INDENT = /^[ \t]*/
+
+const ITEM_CONTENT = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)?/
+
+const contentColumn = (text: string) => ITEM_CONTENT.exec(text)?.[0].length ?? 0
+
+function itemsHolding(state: EditorState, line: Line): number[] {
+  const at = line.from + (INDENT.exec(line.text)?.[0].length ?? 0)
+  return [...enclosing(syntaxTree(state).resolveInner(at, 1))]
+    .filter((node) => node.name === 'ListItem')
+    .map((node) => state.doc.lineAt(node.from).number)
+}
+
+function shiftedIn(text: string, shift: number): string {
+  const indent = INDENT.exec(text)?.[0] ?? ''
+  if (shift > 0) return indent + ' '.repeat(shift) + text.slice(indent.length)
+  const spaces = / *$/.exec(indent)?.[0].length ?? 0
+  return indent.slice(0, indent.length - Math.min(spaces, -shift)) + text.slice(indent.length)
+}
+
 export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape): boolean {
   const spans = blocksFor(view, pos).filter((span) => PROSE.has(span.kind))
   if (!spans.length) return false
@@ -186,17 +208,30 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
     const first = doc.lineAt(span.from).number
     const last = span.kind !== 'heading' ? doc.lineAt(Math.min(span.to, doc.length)).number : first
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
+    const itemwise = LISTED.has(shape) && span.kind !== 'quote'
+    const shifts = new Map<number, number>()
 
     for (let number = first; number <= last; number++) {
-      if (verbatim.has(number) || seen.has(number)) continue
+      if (seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
-      if (!wordsOf(line.text).words.trim()) continue
+      if (!line.text.trim()) continue
+
+      const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
+      if (items[0] !== number) {
+        const owner = items.find((item) => shifts.has(item)) ?? first
+        const text = shiftedIn(line.text, shifts.get(owner) ?? 0)
+        if (text !== line.text) changes.push({ from: line.from, to: line.to, insert: text })
+        continue
+      }
+
+      if (verbatim.has(number) || !wordsOf(line.text).words.trim()) continue
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
       const text =
         into === 'numbered' ? numberedLine(line.text, counting) : shaped(line.text, into, nth)
       if (into === 'numbered') nth++
+      if (itemwise) shifts.set(number, contentColumn(text) - contentColumn(line.text))
       if (text === line.text) continue
 
       changes.push({ from: line.from, to: line.to, insert: text })

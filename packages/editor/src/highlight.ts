@@ -84,9 +84,13 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
       }
 
       const inner = writeHighlight(state.doc.sliceString(from, to), colour)
+      const end = from + MARK.length + inner.length
       return {
         changes: { from, to, insert: `${MARK}${inner}${MARK}` },
-        range: EditorSelection.range(from + MARK.length, from + MARK.length + inner.length),
+        range:
+          from === to
+            ? EditorSelection.cursor(end)
+            : EditorSelection.range(from + MARK.length, end),
       }
     })
 

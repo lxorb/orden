@@ -93,10 +93,26 @@ function compare(one: string, other: string): number {
 
 const ORDINAL = /^([ \t]*(?:>[ \t]?)*[ \t]*)(\d+)(?=[.)])/
 
+const UNDER = /^(?:[ \t]*>[ \t]?)*[ \t]*/
+
+function shiftedUnder(line: string, past: number, shift: number): string {
+  const prefix = UNDER.exec(line)?.[0] ?? ''
+  if (prefix.length <= past || prefix.length === line.length) return line
+  if (shift > 0) return prefix + ' '.repeat(shift) + line.slice(prefix.length)
+  const spaces = / *$/.exec(prefix)?.[0].length ?? 0
+  return prefix.slice(0, prefix.length - Math.min(spaces, -shift)) + line.slice(prefix.length)
+}
+
 function renumbered(items: readonly string[], start: number): string[] {
-  return items.map((item, i) =>
-    item.replace(ORDINAL, (_all, lead: string) => `${lead}${start + i}`),
-  )
+  return items.map((item, i) => {
+    const found = ORDINAL.exec(item)
+    if (!found) return item
+    const [written, lead = '', digits = ''] = found
+    const number = String(start + i)
+    const shift = number.length - digits.length
+    const [head = '', ...under] = (lead + number + item.slice(written.length)).split('\n')
+    return [head, ...under.map((line) => shiftedUnder(line, lead.length, shift))].join('\n')
+  })
 }
 
 function entriesOf(run: Run): readonly Lines[] {

@@ -1018,11 +1018,12 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
 function wrapped(bang: '' | '!'): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
-      const label = state.doc.sliceString(range.from, range.to)
+      const { from, to } = range.empty ? range : inside(state, range.from, range.to)
+      const label = state.doc.sliceString(from, to)
       const insert = `${bang}[${label}]()`
       return {
-        changes: { from: range.from, to: range.to, insert },
-        range: EditorSelection.cursor(range.from + insert.length - 1),
+        changes: { from, to, insert },
+        range: EditorSelection.cursor(from + insert.length - 1),
       }
     })
 

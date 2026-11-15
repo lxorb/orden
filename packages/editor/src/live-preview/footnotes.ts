@@ -1,9 +1,10 @@
-import { syntaxTree } from '@codemirror/language'
+import { foldedRanges, syntaxTree, unfoldEffect } from '@codemirror/language'
 import {
   EditorSelection,
   type EditorState,
   type Extension,
   RangeSetBuilder,
+  type StateEffect,
 } from '@codemirror/state'
 import {
   Decoration,
@@ -115,9 +116,13 @@ export function followFootnote(view: EditorView, part: FootnotePart): boolean {
   if (to === null) return false
 
   if (part.kind === 'ref') cameFrom.set(view, { label: part.label, at: part.from })
+  const opened: StateEffect<unknown>[] = []
+  foldedRanges(view.state).between(to, to, (from, end) => {
+    if (from < to && end >= to) opened.push(unfoldEffect.of({ from, to: end }))
+  })
   view.dispatch({
     selection: EditorSelection.cursor(to),
-    effects: EditorView.scrollIntoView(to, { y: 'center' }),
+    effects: [...opened, EditorView.scrollIntoView(to, { y: 'center' })],
     userEvent: 'select.footnote',
   })
   view.focus()

@@ -91,6 +91,21 @@ describe('sorting and reversing the list the caret is in', () => {
   test('a sorted numbered list still counts up from its first number', () => {
     expect(note(sortLines, '1. pear|\n2. apple\n3. fig')).toBe('«1. apple\n2. fig\n3. pear»')
   })
+
+  test('a loose list keeps one blank line between items', () => {
+    expect(note(sortLines, '- |b\n\n- a\n\nafter')).toBe('«- a\n\n- b»\n\nafter')
+  })
+
+  test('a tight list sorts by its words', () => {
+    expect(note(sortLines, '- |c\n- b\n- a')).toBe('«- a\n- b\n- c»')
+  })
+
+  test('a child moves in when its item’s number grows a digit', () => {
+    const items = Array.from({ length: 10 }, (_, i) => `${i + 1}. item${i}`)
+    items[0] = '1. |item0\n   - child'
+    const reversed = note(reverseLines, items.join('\n')).replace(/[«»]/g, '')
+    expect(reversed.slice(reversed.indexOf('10.'))).toBe('10. item0\n    - child')
+  })
 })
 
 describe('joining lines', () => {

@@ -1265,6 +1265,17 @@ first.
 | EC141 | Medium | A table made whole by typing words into its header stayed as source after the caret left (eleventh re-audit) | Fixed | Typing letters after letters was treated as plain prose, and a table not yet whole has no span to rebuild | An edit on or above a line with a `|` takes the local rebuild | `blocks.test.ts` "words typed into a header that make the table whole draw it once the caret leaves" (fails before) |
 | EC142 | Medium | The table of contents showed `> ## Inside`, `- # Item heading` and hidden block names (eleventh re-audit) | Fixed | The whole document line was handed over as the heading's words | The heading node's own text is used, without its block id | `toc.test.ts` "the words of a heading in the table of contents" (3 tests, fail before) |
 | EC143 | Low | `[toc]` with a long line of words right under it was not drawn (eleventh re-audit) | Fixed | The length cap measured the whole paragraph | The cap applies to the `[toc]` line | `blocks.test.ts` "a toc with a line of words right under it is drawn, however long the words" (fails before) |
+| EC144 | Medium | Bold, italic, strike, code or highlight over several paragraphs or items of a quote, or over two headings one under the other, wrote one run across them, so the marks showed as text (twelfth re-audit, from EC125/EC126) | Fixed | Blocks were told apart only by a bare blank line or an unquoted list marker | A quoted blank line, a quoted marker and a heading line also part blocks | `marks-quoted.test.ts` (3 tests), `highlight-colour.test.ts` "goes on each paragraph" (fail before) |
+| EC145 | Medium | Pasting an address over a whole picked line wrote `[- item](url)` or `[# Title](url)`, and a triple-clicked line pulled the next line up (twelfth re-audit) | Fixed | The paste wrapped the raw selection | It wraps the same trimmed selection the marks use, past the line's markers and break | `paste.test.ts` "over a whole line, keeps the item marker and the hashes outside the link", "over a line picked with its line break, keeps the break and the next line" (fail before) |
+| EC146 | Medium | Insert link (Mod-K) over a whole picked line put the item marker or hashes inside the link (twelfth re-audit) | Fixed | The raw selection became the label | The trimmed selection becomes the label | `insert-link-lines.test.ts` (2 tests, fail before) |
+| EC147 | Medium | Typing `*`, `_`, `~`, `=` or a backtick over a whole picked line or several blocks put the marks around the markers or across the blocks (twelfth re-audit) | Fixed | The typed mark went at the raw ends of the selection | One line uses the trimmed selection; several blocks get a run each, as with Mod-B | `typed-marks.test.ts` (3 tests, fail before) |
+| EC148 | Medium | Turn into list or task from the block menu made every line of a paragraph its own item, and turned an item's second line or paragraph into a child (twelfth re-audit, the EC85/EC100 bug in a sibling command) | Fixed | Every line of the block got the new marker | Only a block's first line, or a line that starts an item, gets a marker; other lines move with their item's content column | `bulk.test.ts` "turning a block of several lines into a list" (3 tests, fail before) |
+| EC149 | Medium | A coloured highlight started at a caret lost its colour on the first key (twelfth re-audit) | Fixed | The colour prefix was selected, so typing replaced it | At a caret the caret goes after the colour prefix | `highlight-colour.test.ts` "keeps its colour when the words are typed in" (fails before) |
+| EC150 | Medium | Home in a numbered task, Home on a heading or quote line with quiet marks on, a click on a bullet and ArrowUp or ArrowDown onto an item line put the caret before the hidden marker (twelfth re-audit, gaps in EC135) | Fixed | Only bullets, and only moves from the words of the same line, were corrected | Any caret that lands in the hidden marker run of a line (bullet, task box, numbered task, and heading or quote marks when quiet) moves to where the words start; ArrowLeft from the words goes to the line above | `item-start-lines.test.ts` (5 tests, fail before) |
+| EC151 | Medium | Ctrl+D, Select all occurrences and Select every match put carets inside a folded section and left it shut, so the next keys edited hidden text (twelfth re-audit, gap in EC134) | Fixed | Only Find next, previous and replace opened folds | Every command that selects matches opens the folds its ranges overlap | `find-fold-carets.test.ts` (3 tests, fail before) |
+| EC152 | Medium | Jumping back from a footnote to a mark that ends a folded section left the fold shut with the caret hidden (twelfth re-audit) | Fixed | The jump set the caret at the fold's end, where the editor does not open it | The jump opens the folds that hide its target | `footnote-fold.test.ts` "opens the fold when the mark ends the section" (fails before) |
+| EC153 | Low | Clear formatting over a coloured highlight left its emoji behind (twelfth re-audit) | Fixed | Only the `==` marks were taken | The colour prefix goes with the opening mark | `highlight-colour.test.ts` "takes the colour off along with the marks" (fails before) |
+| EC154 | Low | Sort or Reverse on a numbered list of ten or more items could push a child out of its item (twelfth re-audit, from EC129) | Fixed | Renumbering changed the marker's width without moving the item's later lines | The item's indented lines move by the change in width | `lines.test.ts` "a child moves in when its item's number grows a digit" (fails before) |
 ### Editor core: open Lows
 
 Seen, judged minor, left as they are:
@@ -1340,8 +1351,23 @@ Seen, judged minor, left as they are:
 - The last line of an unclosed fence is styled as its closing line.
 - A fence language written in capitals (```` ```Mermaid ````) is not drawn.
 - Focus mode with the caret at the start of a paragraph undims only its first line.
-- ArrowLeft from the words of a bullet item can still land before its hidden marker.
 - Changing case on a wikilink with no alias changes its target too (note names match without regard to case).
+- Plain text with no HTML pasted into a quote or item puts later paragraphs outside it (plain paste is kept as typed).
+- Orden-copied text pasted with several cursors goes in whole at each cursor.
+- In a table cell, a mark toggled over `1. x` or `- x` skips the would-be marker.
+- Insert code block or maths over picked quoted lines puts the fence at column 0.
+- Underline or comment over several blocks writes one run.
+- Remove link does nothing on an autolink or bare address.
+- A paragraph right under a note that starts with a `---` rule keeps straight quotes.
+- A command behind a lazy door, used before its code has loaded, runs later against the state it was given.
+- A quote turned into a list from the block menu gives one item per line.
+- Equation numbering counts `$$` blocks inside items and quotes, which are shown as source.
+- The table of contents shows inline marks in headings (`**bold**`, `[[Note|Alias]]`).
+- In a link reference definition only the `:` is hidden; `[toc]` on a paragraph's second line is not drawn.
+- The hover preview can open at an earlier line with the same text as the section's first line.
+- A note embed with trailing spaces and the caret after them shows as plain source.
+- A `[toc]` or iframe card as the last block gets no open line under it.
+- A fence written as ```` ```js:app.js ```` gets no highlighting; a footnote's hover shows only its first line.
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.
