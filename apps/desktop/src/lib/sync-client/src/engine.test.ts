@@ -7,6 +7,8 @@ import {
   unframe,
   seedUpdate,
   type DocRefusal,
+  type PullAnswer,
+  type PullRequest,
   type PushRequest,
 } from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
@@ -2151,5 +2153,43 @@ describe('a note made here that the account already has', () => {
     await here.engine.pass(SPACE)
 
     expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toContain('milk')
+  })
+})
+
+describe('a note the account has started again on a new epoch', () => {
+  async function restarted(after: 'refused' | 'answered') {
+    const one = await device()
+    const world = one.engine.core.world
+    const ask = world.account.ask.bind(world.account)
+    const asked: PullRequest['docs'][number][] = []
+    world.account.ask = async (route, body, space) => {
+      if (route !== 'pull') return await ask(route, body, space)
+      const docs = (body as PullRequest).docs
+      asked.push(...docs.filter((doc) => doc.id === PLAN))
+      if (asked.length === 1) return { docs: [{ id: PLAN, epoch: 2, epochBase: '' }] }
+      if (after === 'refused') {
+        return { docs: docs.map((doc): PullAnswer => ({ id: doc.id, refused: 'gone' })) }
+      }
+      return await ask(route, body, space)
+    }
+    one.engine.core.wanted(SPACE).set(PLAN, { docSeq: 5, epoch: 1 })
+    await one.engine.pass(SPACE)
+    return { one, asked }
+  }
+
+  test('keeps its words while the account will not yet give the new epoch', async () => {
+    const { one } = await restarted('refused')
+    const doc = await one.engine.core.doc(PLAN)
+    expect(doc?.text()).toBe(SEEDED[0]?.text)
+    expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+  })
+
+  test('takes the new epoch whole once the account gives it', async () => {
+    const { one, asked } = await restarted('answered')
+    expect(asked[1]).toMatchObject({ id: PLAN, epoch: 2 })
+    const doc = await one.engine.core.doc(PLAN)
+    expect(doc?.epoch).toBe(2)
+    expect(doc?.text()).toBe(await textOn(one.account, PLAN))
+    expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
   })
 })
