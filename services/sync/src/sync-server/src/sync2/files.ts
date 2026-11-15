@@ -131,6 +131,10 @@ export async function held(
   return { mine: row?.mine === 1, there: (row?.rows ?? 0) > 0 }
 }
 
+export async function stillThere(env: Env, hash: string): Promise<boolean> {
+  return (await env.NOTES.head(blobKey(hash))) !== null
+}
+
 export async function holdsItsName(env: Env, hash: string, size: number): Promise<boolean> {
   const object = await env.NOTES.get(blobKey(hash))
   if (!object) return false
@@ -192,12 +196,14 @@ v2Blobs.put('/:hash', async (context) => {
   }
 
   const type = typeOf(context.req.header('content-type'))
-  if (!there || !(await holdsItsName(context.env, hash, body.byteLength))) {
-    await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
-  }
+  const put = () =>
+    context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
+  const placed = !there || !(await holdsItsName(context.env, hash, body.byteLength))
+  if (placed) await put()
   if (!(await keepBlob(context.env, user.id, hash, body.byteLength, type))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
+  if (!placed && !(await stillThere(context.env, hash))) await put()
   return context.json({ hash, stored: true }, 201)
 })
 
@@ -387,16 +393,17 @@ v2Blobs.post('/parts/:upload', async (context) => {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  if (
+  const placed =
     !(await held(context.env, user.id, upload.hash)).there ||
     !(await holdsItsName(context.env, upload.hash, upload.size))
-  ) {
-    await moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
-  }
-  await context.env.NOTES.delete(upload.staging)
+  const move = () => moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
+  if (placed) await move()
   if (!(await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type))) {
+    await context.env.NOTES.delete(upload.staging)
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
+  if (!placed && !(await stillThere(context.env, upload.hash))) await move()
+  await context.env.NOTES.delete(upload.staging)
   return context.json({ hash: upload.hash, stored: true }, 201)
 })
 

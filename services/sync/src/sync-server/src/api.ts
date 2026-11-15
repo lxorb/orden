@@ -151,6 +151,7 @@ export {
   hashOfBytes,
   held,
   holdsItsName,
+  stillThere,
   NO_SUCH_FILE,
   spellsADiagramName,
   sweepMisnamed,

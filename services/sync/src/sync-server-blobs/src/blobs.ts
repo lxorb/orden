@@ -18,6 +18,7 @@ import {
   reachedSpace,
   readSite,
   readSpaceFiles,
+  stillThere,
   said,
   type Space,
   spaceForHost,
@@ -89,9 +90,10 @@ blobs.put('/:hash', async (context) => {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  if (!there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))) {
-    await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
-  }
+  const put = () =>
+    context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
+  const placed = !there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))
+  if (placed) await put()
   const written = await context.env.DB.prepare(
     `insert into blobs (hash, user_id, size, type, created_at)
      select ?1, ?2, ?3, ?4, ?5 where ${fitsSql('?2', '?3')}
@@ -106,6 +108,7 @@ blobs.put('/:hash', async (context) => {
       return context.json({ error: OUT_OF_SPACE }, 507)
     }
   }
+  if (!placed && !(await stillThere(context.env, hash))) await put()
 
   return context.json({ hash, stored: true }, 201)
 })
