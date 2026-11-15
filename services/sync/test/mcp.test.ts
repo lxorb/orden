@@ -437,3 +437,92 @@ describe('writing through it', () => {
     ).toContain('No space')
   })
 })
+
+describe('answers that stop short', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('a search that stops before the last note says it did not read them all', async () => {
+    for (let at = 0; at < 305; at++) {
+      await addNote(`n${String(at).padStart(3, '0')}.md`, `plain ${at}\n`)
+    }
+    await addNote('zz.md', 'the needleword lives here\n')
+
+    const text = await tool(await connector(), 'search_notes', { query: 'needleword' })
+    expect(text).not.toBe('Nothing found.')
+    expect(text).toMatch(/not searched|stopped/i)
+  })
+})
+
+describe('two spaces of one name', () => {
+  test('a write asks which when the account owns both', async () => {
+    const second = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    const ids = [space, second.json.space.id]
+
+    const said = await tool(await connector(false), 'write_note', {
+      space: 'Work',
+      path: 'x.md',
+      content: 'hello',
+    })
+    expect(said).not.toMatch(/^Saved/)
+    for (const id of ids) expect(said).toContain(id)
+  })
+
+  test('the list names each one by its id, so a shared one is reachable', async () => {
+    const stranger = await signIn(env, 'x@y.dev')
+    const theirs = await call(env, '/v1/spaces', { token: stranger, body: { name: 'Work' } })
+    await call(env, `/v1/spaces/${theirs.json.space.id}/share/invite`, {
+      token: stranger,
+      body: { email: 'a@b.dev', role: 'write' },
+    })
+
+    const listed = await tool(await connector(), 'list_spaces')
+    expect(listed).toContain(space)
+    expect(listed).toContain(theirs.json.space.id)
+    expect(listed.split('\n')).toContain('Notes')
+  })
+})
+
+describe('relative markdown links', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('are read from the folder of the note they are in', async () => {
+    await addNote('ideas/plan.md', '# Plan\n')
+    await addNote('other/b.md', 'see [plan](../ideas/plan.md)\n')
+    await addNote('ideas/c.md', 'see [plan](./plan.md)\n')
+    await addNote('ideas/d.md', 'see [plan](plan.md)\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'ideas/plan.md',
+    })
+    expect(text).toContain('other/b.md:1')
+    expect(text).toContain('ideas/c.md:1')
+    expect(text).toContain('ideas/d.md:1')
+  })
+
+  test('one pointing at a note of the same name beside it is not counted', async () => {
+    await addNote('ideas/plan.md', '# Plan\n')
+    await addNote('other/plan.md', '# Other plan\n')
+    await addNote('other/b.md', 'see [plan](plan.md)\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'ideas/plan.md',
+    })
+    expect(text).not.toContain('other/b.md')
+  })
+})
+
+describe('notifications', () => {
+  test('any of them is answered with no body', async () => {
+    const response = await call(env, '/mcp', {
+      token: await connector(),
+      body: { jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: 1 } },
+    })
+    expect(response.status).toBe(202)
+  })
+})

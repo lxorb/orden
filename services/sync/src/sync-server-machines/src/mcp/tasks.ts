@@ -21,7 +21,13 @@ import {
   withProperties,
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
-import { type InboxChange, inboxStamp } from '@orden/sync-core'
+import {
+  type InboxChange,
+  type InboxHeld,
+  inboxChangeOf,
+  inboxStamp,
+  mergedInbox,
+} from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { askedSpace, marked, noteBody, putNote, type Space, spaceSource } from './tools'
 import type { TokenRow } from './tokens'
@@ -135,7 +141,7 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
     `select id, path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
-    .bind(space.id, MOST_READ)
+    .bind(space.id, MOST_READ + 1)
     .all<Held>()
   return results
 }
@@ -149,10 +155,11 @@ async function rowsOf(
   let left = MOST_READ
   let partial = false
   for (const space of spaces) {
-    const held = (await notesOf(env, space)).filter(
-      (one) => MARKDOWN.test(one.path) && !shut(space.id, one.path),
-    )
-    if (held.length > left) partial = true
+    const listed = await notesOf(env, space)
+    const held = listed
+      .slice(0, MOST_READ)
+      .filter((one) => MARKDOWN.test(one.path) && !shut(space.id, one.path))
+    if (listed.length > MOST_READ || held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
     for (let at = 0; at < reading.length; at += AT_ONCE) {
@@ -370,10 +377,28 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   return patch
 }
 
+const TOO_LARGE = 'That todo is too large for Orden to keep. Shorten its description or labels.'
+
+async function fitsDevices(env: Env, userId: string, change: InboxChange): Promise<boolean> {
+  if (!inboxChangeOf(change)) return false
+  const held = await env.DB.prepare(
+    'select fields, stamps, seq, at from inbox_items where user_id = ? and id = ?',
+  )
+    .bind(userId, change.id)
+    .first<{ fields: string; stamps: string; seq: number; at: number }>()
+  const was = held
+    ? { fields: objectIn(held.fields) ?? {}, stamps: objectIn(held.stamps) ?? {} }
+    : null
+  const merged = mergedInbox(was as InboxHeld | null, change)
+  const item = { id: change.id, fields: merged.fields, stamps: merged.stamps }
+  return inboxChangeOf({ ...item, seq: Number.MAX_SAFE_INTEGER, at: Date.now() }) !== null
+}
+
 async function keep(env: Env, userId: string, id: string, fields: Fields): Promise<void> {
   const stamp = inboxStamp(Date.now(), 0, 'mcp')
   const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stamp]))
   const change = { id, fields: fields as InboxChange['fields'], stamps }
+  if (!(await fitsDevices(env, userId, change))) throw new Said(TOO_LARGE)
   const kept = await writeInbox(env, userId, [change], 'mcp')
   if (kept === 'full') throw new Said('That is more todos than an account keeps.')
 }

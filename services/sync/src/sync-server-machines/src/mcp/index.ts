@@ -61,6 +61,8 @@ mcp.post('/', async (context) => {
   const method = typeof request.method === 'string' ? request.method : ''
   if (!method) return context.json({ error: 'not a request' }, 400)
 
+  if (method.startsWith('notifications/')) return new Response(null, { status: 202 })
+
   const id = idOf(request.id)
   const reply = (result: unknown) => context.json({ jsonrpc: '2.0', id, result })
 
@@ -72,9 +74,6 @@ mcp.post('/', async (context) => {
         serverInfo: { name: 'orden', version: '1.0.0' },
         instructions: INSTRUCTIONS,
       })
-
-    case 'notifications/initialized':
-      return new Response(null, { status: 202 })
 
     case 'ping':
       return reply({})

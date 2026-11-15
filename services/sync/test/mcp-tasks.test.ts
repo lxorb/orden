@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
+import { type InboxPage, inboxPageOf } from '@orden/sync-core'
 
 let env: TestEnv
 let token: string
@@ -198,5 +199,65 @@ describe('bases, with Orden closed', () => {
     expect(await json(await connector(true), 'query_base', { space: 'Work', yaml })).toMatchObject({
       total: 1,
     })
+  })
+})
+
+describe('limits a device holds the todos to', () => {
+  async function devicesRead(): Promise<{ sent: number; read: number }> {
+    const page = await call<InboxPage>(env, '/v2/inbox', { token, method: 'GET' })
+    return { sent: page.json.items.length, read: inboxPageOf(page.json)?.items.length ?? -1 }
+  }
+
+  test('a todo too large for a device is refused rather than kept', async () => {
+    const key = await connector(false)
+    const long = await tool(key, 'add_task', { title: 'Plan', description: '漢'.repeat(6000) })
+    const labels = Array.from({ length: 2000 }, (_, at) => `label-${at}`)
+    const many = await tool(key, 'add_task', { title: 'Labels', labels })
+
+    expect(long).toMatch(/too large/i)
+    expect(many).toMatch(/too large/i)
+    const { sent, read } = await devicesRead()
+    expect(read).toBe(sent)
+  })
+
+  test('an update that would make a todo too large leaves it as it was', async () => {
+    const key = await connector(false)
+    const made = JSON.parse(await tool(key, 'add_task', { title: 'Plan' })) as { id: string }
+    const said = await tool(key, 'update_task', { id: made.id, description: '漢'.repeat(6000) })
+
+    expect(said).toMatch(/too large/i)
+    const { sent, read } = await devicesRead()
+    expect(read).toBe(sent)
+    expect(sent).toBe(1)
+  })
+})
+
+describe('a base over more notes than are read', () => {
+  test('says it is partial', async () => {
+    for (let at = 0; at < 2005; at++) {
+      const hash = String(at).padStart(4, '0').padEnd(64, 'c')
+      const text = '---\nkind: row\n---\n'
+      await env.NOTES.put(`spaces/${space}/r${at}`, text)
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, kind)
+           values (?, ?, ?, ?, 1, 1, 0, ?, ?, 'note')`,
+        )
+        .run(
+          `r${at}`,
+          space,
+          `rows/r${String(at).padStart(4, '0')}.md`,
+          1000 + at,
+          text.length,
+          hash,
+        )
+    }
+    await basesTurned(true)
+
+    const answer = await json(await connector(true), 'query_base', {
+      space: 'Work',
+      yaml: 'filters: \'kind == "row"\'\n',
+    })
+    expect(answer.partial).toBe(true)
   })
 })
