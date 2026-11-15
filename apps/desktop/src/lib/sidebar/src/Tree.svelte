@@ -5,9 +5,10 @@
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { door } from '@orden/markdown/door'
-  import { fileMark, type FileMark as Mark } from '../../file-mark'
+  import { fileMark } from '../../marks/src/api'
+  import type { FileMark as Mark } from '@orden/contracts'
   import { hiddenKinds } from '../../gates/src/api'
-  import FileMark from '../../FileMark.svelte'
+  import { FileMark } from '../../marks/src/api'
   import {
     landsIn,
     dropTarget,

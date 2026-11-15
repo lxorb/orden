@@ -1,6 +1,6 @@
-import type { Panel, PanelSide } from './session/src/api'
-import { workspace } from './workspace/src/api'
-import { TAB_KINDS } from './tab-kinds/src/api'
+import type { Panel, PanelSide } from '../../session/src/api'
+import { workspace } from './workspace.svelte'
+import { TAB_KINDS } from '../../tab-kinds/src/api'
 
 class Drawer {
   at = $state<number | null>(null)
@@ -77,3 +77,13 @@ class Drawer {
 
 export const drawer = new Drawer('left')
 export const rightDrawer = new Drawer('right')
+
+export const CLAIM = 12
+
+export function claimsGesture(dx: number, dy: number): boolean {
+  return Math.abs(dx) > CLAIM && Math.abs(dx) > Math.abs(dy)
+}
+
+export function isFinger(pointer: string): boolean {
+  return pointer !== 'pen'
+}

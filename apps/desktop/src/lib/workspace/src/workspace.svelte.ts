@@ -180,7 +180,7 @@ import {
 } from '../../tree/src/api'
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from './agent-marks.svelte'
 import { services } from './services'
 
 function isInstructions(root: string, path: string): boolean {

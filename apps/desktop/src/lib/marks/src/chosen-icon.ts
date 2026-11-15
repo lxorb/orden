@@ -1,13 +1,12 @@
 import { isChatTarget, isPagesTarget, isTermTarget } from '@orden/markdown/links'
 import type { ItemMeta } from '@orden/sync-core'
+import { webPages } from '@orden/contracts'
 import type { FileMark } from './file-mark'
-import { folderNote, isFolderNote } from './tree/src/api'
-import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from './ui-kit/src/api'
-import { links } from './link-index/src/api'
-import { elsewhere } from './link-index/src/api'
-import { folderOf, isMarkdownPath, samePath, withinSpace } from './platform/src/api'
-import { pages, siteMark } from './web-tab/src/api'
-import { workspace } from './workspace/src/api'
+import { folderNote, isFolderNote } from '../../tree/src/api'
+import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from '../../ui-kit/src/api'
+import { elsewhere, links } from '../../link-index/src/api'
+import { folderOf, isMarkdownPath, samePath, withinSpace } from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
 
 function mapKey(path: string): string {
   return isFolderNote(path) ? folderOf(path) : path
@@ -84,6 +83,14 @@ export function sourceMark(
   return { mark, icon: null }
 }
 
+export function siteMark(
+  live: string | null | undefined,
+  url: string | null | undefined,
+  written?: string | null,
+): string | null {
+  return live ?? webPages().faviconOf(url) ?? written ?? null
+}
+
 export function faviconFor(path: string | undefined, url?: string | null): string | null {
   if (path === undefined) return siteMark(null, url)
   if (wearsChosen(path)) return null
@@ -105,7 +112,7 @@ function writtenMarkOf(path: string): string | null {
 function liveMarkOf(path: string): string | null {
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web' || tab.path === null || !samePath(tab.path, path)) continue
-    const icon = pages.iconOf(tab.id)
+    const icon = webPages().iconOf(tab.id)
     if (icon) return icon
   }
   return null

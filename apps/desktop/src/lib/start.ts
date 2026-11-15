@@ -1,6 +1,6 @@
 import { hinting } from './hints/src/api'
 import { oneWindow } from './web-tab/src/api'
-import { agentMarks, listenForAgents } from './agent-marks.svelte'
+import { door } from '@orden/markdown/door'
 import { account } from './accounts/src/api'
 import { busy, outsideDrops, reloading, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai-chat/src/api'
@@ -48,6 +48,7 @@ import { startRunner } from './views/src/api'
 import {
   acrossStarting,
   type Across,
+  agentMarks,
   blankTabs,
   outsideHearing,
   workspace,
@@ -61,6 +62,19 @@ if (!__EVEN_PLUGIN__) {
 }
 
 const DAY = 24 * 60 * 60 * 1000
+
+async function listenForAgents(): Promise<() => void> {
+  if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
+
+  const { listen } = await import('@tauri-apps/api/event')
+  const heard = door(() =>
+    import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()),
+  )
+
+  return listen<unknown>('orden://agent', ({ payload }) => {
+    void heard().then((hear) => hear(payload))
+  })
+}
 
 export function start(): () => void {
   mark('start')

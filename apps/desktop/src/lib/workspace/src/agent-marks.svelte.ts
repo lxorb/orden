@@ -1,6 +1,3 @@
-import { door } from '@orden/markdown/door'
-import { isDesktop } from './platform/src/api'
-
 export interface Worn {
   agent: string
   colour: string
@@ -30,16 +27,3 @@ class AgentMarks {
 }
 
 export const agentMarks = new AgentMarks()
-
-export async function listenForAgents(): Promise<() => void> {
-  if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
-
-  const { listen } = await import('@tauri-apps/api/event')
-  const heard = door(() =>
-    import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()),
-  )
-
-  return listen<unknown>('orden://agent', ({ payload }) => {
-    void heard().then((hear) => hear(payload))
-  })
-}

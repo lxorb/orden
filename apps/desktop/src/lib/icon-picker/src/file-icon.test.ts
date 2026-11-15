@@ -30,8 +30,8 @@ const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'strin
 
 const sent: { command: string; path: string; content: string }[] = []
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = pathOf(args)
     const content = typeof args?.content === 'string' ? args.content : ''
@@ -67,7 +67,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { setFileIcon } = await import('./file-icon')
-const { workspace } = await import('./workspace/src/api')
+const { workspace } = await import('../../workspace/src/api')
 
 function written(path: string): string | null {
   const write = sent.filter((one) => one.command === 'write_note' && one.path === path).pop()

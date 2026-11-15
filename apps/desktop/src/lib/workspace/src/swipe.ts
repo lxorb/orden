@@ -1,5 +1,3 @@
-export const CLAIM = 12
-
 export function ownsEveryTouch(action: string): boolean {
   if (action === 'auto' || action === 'manipulation') return false
   return !action.includes('pan-')
@@ -19,10 +17,6 @@ export function ownsGesture(from: Element | null, stopAt: Element, atDrawerEdge 
   return false
 }
 
-export function isFinger(pointer: string): boolean {
-  return pointer !== 'pen'
-}
-
 export function fromEdge(x: number, sign: number): number {
   return sign === 1 ? x : window.innerWidth - x
 }
@@ -39,8 +33,4 @@ export const SETTLE_MAX = 380
 export function settleOpen(offset: number, width: number, velocity: number): boolean {
   if (Math.abs(velocity) >= FLICK) return velocity > 0
   return offset >= width / 2
-}
-
-export function claimsGesture(dx: number, dy: number): boolean {
-  return Math.abs(dx) > CLAIM && Math.abs(dx) > Math.abs(dy)
 }

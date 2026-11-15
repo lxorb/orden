@@ -20,10 +20,10 @@
     "link-index",
     "documents",
     "workspace",
-    "modes"
+    "modes",
+    "marks"
   ],
   "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/assets.ts",
     "apps/desktop/src/lib/composer.ts",
     "apps/desktop/src/lib/layer-keys.ts"

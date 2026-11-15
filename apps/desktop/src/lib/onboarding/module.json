@@ -20,7 +20,8 @@
     "file-writes",
     "seeded",
     "spaces",
-    "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/Icon.svelte", "apps/desktop/src/lib/icon-library.svelte.ts"]
+    "workspace",
+    "marks",
+    "glyphs"
+  ]
 }

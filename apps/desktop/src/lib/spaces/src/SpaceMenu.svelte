@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SharedItem } from '../../accounts/src/api'
-  import { fileMark } from '../../file-mark'
-  import FileMark from '../../FileMark.svelte'
+  import { fileMark } from '../../marks/src/api'
+  import { FileMark } from '../../marks/src/api'
   import {
     arrive,
     letGo,

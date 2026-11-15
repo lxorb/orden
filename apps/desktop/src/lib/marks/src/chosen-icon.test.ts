@@ -1,3 +1,4 @@
+import { providePort, webPages } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const FILES: Record<string, string> = {
@@ -37,8 +38,8 @@ const reads: string[] = []
 const relative = (path: string) =>
   path.startsWith(`${index.root}/`) ? path.slice(index.root.length + 1) : path
 
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: { path?: string; root?: string } = {}) => {
     if (command === 'file_stamp' || command === 'path_exists') {
       asked.push(String(args.path))
@@ -52,8 +53,8 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('./link-index/src/api', async (original) => ({
-  ...(await original<typeof import('./link-index/src/api')>()),
+vi.mock('../../link-index/src/api', async (original) => ({
+  ...(await original<typeof import('../../link-index/src/api')>()),
   links: {
     rootOf: () => index.root,
     iconOf: (path: string) => index.icons[relative(path)] ?? null,
@@ -66,11 +67,7 @@ vi.mock('./link-index/src/api', async (original) => ({
 
 const live: Record<string, string> = {}
 
-vi.mock('./web-tab/src/api', () => ({
-  pages: { iconOf: (tab: string) => live[tab] ?? null },
-  siteMark: (shown: string | null, _url: string | null, written?: string | null) =>
-    shown ?? written ?? null,
-}))
+providePort('web.pages', { ...webPages(), iconOf: (tab) => live[tab] ?? null })
 
 const file = (path: string) => ({
   name: path.split('/').pop() ?? path,
@@ -94,7 +91,7 @@ const FOLDERS: Record<string, ReturnType<typeof folder>> = {
 
 const tabs: { kind: string; path: string | null; id: string }[] = []
 
-vi.mock('./workspace/src/api', () => ({
+vi.mock('../../workspace/src/api', () => ({
   workspace: {
     spaces: [
       { id: 'w', name: 'Work', root: '/Work' },
@@ -116,8 +113,8 @@ vi.mock('./workspace/src/api', () => ({
 }))
 
 const { chosenIcon, chosenTint, faviconFor, holdsPaper, sourceMark } = await import('./chosen-icon')
-const { elsewhere } = await import('./link-index/src/api')
-const { NoteDoc, Tab } = await import('./documents/src/api')
+const { elsewhere } = await import('../../link-index/src/api')
+const { NoteDoc, Tab } = await import('../../documents/src/api')
 
 function tabAt(path: string) {
   const doc = new NoteDoc(

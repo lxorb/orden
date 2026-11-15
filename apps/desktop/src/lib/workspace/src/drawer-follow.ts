@@ -1,18 +1,8 @@
 import { flushSync } from 'svelte'
-import {
-  CLAIM,
-  claimsGesture,
-  fromEdge,
-  isFinger,
-  opensDrawer,
-  ownsGesture,
-  SETTLE_MAX,
-  SETTLE_MIN,
-  settleOpen,
-} from './swipe'
-import { dur } from './platform/src/api'
-import { isThumbCarrying, viewport, fullscreen } from './ui-kit/src/api'
-import { drawer, rightDrawer } from './drawer.svelte'
+import { fromEdge, opensDrawer, ownsGesture, SETTLE_MAX, SETTLE_MIN, settleOpen } from './swipe'
+import { dur } from '../../platform/src/api'
+import { isThumbCarrying, viewport, fullscreen } from '../../ui-kit/src/api'
+import { CLAIM, claimsGesture, drawer, isFinger, rightDrawer } from './drawer.svelte'
 
 type Drawer = typeof drawer
 

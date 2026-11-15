@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { agentMarks } from '../../agent-marks.svelte'
+  import { agentMarks } from '../../workspace/src/api'
   import { menu, scrollbar } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'

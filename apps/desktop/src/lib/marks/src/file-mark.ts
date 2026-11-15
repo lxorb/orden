@@ -1,4 +1,5 @@
-import type { FileMark } from '@orden/contracts'
+import type { Component } from 'svelte'
+import { type FileMark, surfaceLoad } from '@orden/contracts'
 import {
   isApplicationTarget,
   isBaseTarget,
@@ -23,8 +24,9 @@ import Server from 'lucide/dist/esm/icons/server.mjs'
 import Cog from 'lucide/dist/esm/icons/settings.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Table from 'lucide/dist/esm/icons/table-2.mjs'
-import { isMarkdownPath } from './platform/src/api'
-import { type TabKind, TAB_KINDS } from './tab-kinds/src/api'
+import type { Tab } from '../../documents/src/api'
+import { isMarkdownPath } from '../../platform/src/api'
+import { held } from '../../ui-kit/src/api'
 
 const PLAIN_TEXT = /\.(txt|text)$/i
 
@@ -83,10 +85,6 @@ export function fileMark(name: string): FileMark {
   return 'file'
 }
 
-export function markOf(kind: TabKind): FileMark | null {
-  return TAB_KINDS[kind].mark
-}
-
 export const MARKS: Record<FileMark, IconNode> = {
   note: FileText,
   folder: Folder,
@@ -122,3 +120,9 @@ export function initialOf(name: string): string {
 
   return first ?? ''
 }
+
+type TermTab = Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null }
+
+export const terminalMark = held(
+  () => surfaceLoad('terminal-mark') as Promise<{ default: Component<{ tab: TermTab }> }>,
+)

@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 let asked: string[] = []
 
-vi.mock('./icons/src/api', () => {
+vi.mock('../../icons/src/api', () => {
   const held = (id: string) => ({
     entries: [{ name: `${id}-one`, words: 'one' }],
     groups: [],
@@ -29,13 +29,13 @@ vi.mock('./icons/src/api', () => {
   }
 })
 
-vi.mock('./ui-kit/src/icons', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./ui-kit/src/icons')>()),
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   loadIcons: async () => ({ Rocket: [['path', { d: 'M4 20l6-6' }]] }),
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
-const { startup } = await import('./launch/src/api')
+const { startup } = await import('../../launch/src/api')
 
 void startup.shown()
 

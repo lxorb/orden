@@ -1,5 +1,5 @@
 {
   "name": "quitting",
   "layer": "shell",
-  "dependsOn": ["contracts", "platform", "ui-controls", "ui-kit", "parting", "surfaces"]
+  "dependsOn": ["contracts", "platform", "ui-controls", "ui-kit", "parting", "surfaces", "marks"]
 }

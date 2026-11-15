@@ -11,7 +11,7 @@
   import { chooseTarget, download, writeFile } from '../../files-out/src/api'
   import { siteIcon } from './site-icon'
   import { isDesktop, openExternal } from '../../platform/src/api'
-  import SpaceMark from '../../SpaceMark.svelte'
+  import { SpaceMark } from '../../marks/src/api'
   import { readableSize } from '../../accounts/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'

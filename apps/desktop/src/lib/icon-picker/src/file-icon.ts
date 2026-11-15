@@ -7,12 +7,12 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
-import { isFolderNote } from './tree/src/api'
-import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from './ui-kit/src/api'
+import { isFolderNote } from '../../tree/src/api'
+import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from '../../ui-kit/src/api'
 import { changeOf } from '@orden/scan/search/replace'
 import { settingsWindow } from '@orden/contracts'
-import { folderOf, isMarkdownPath } from './platform/src/api'
-import { workspace } from './workspace/src/api'
+import { folderOf, isMarkdownPath } from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
 
 export async function setFileIcon(
   path: string,
