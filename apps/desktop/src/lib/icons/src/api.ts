@@ -12,3 +12,4 @@ export {
   tonedEmoji,
 } from './icon-sets'
 export { refreshSites } from './site-set'
+export { iconRecent } from './icon-recent.svelte'
