@@ -1283,6 +1283,7 @@ fn files_of(
                 if inside && beyond_the_grant(root, &logical, &grant.spaces) {
                     return Err(absent());
                 }
+                kept_from_agents(app, inside.then_some(root.as_path()), &logical)?;
                 if twin.is_some() {
                     return Ok((path, inside));
                 }
@@ -1294,10 +1295,43 @@ fn files_of(
                 if inside && beyond_the_grant(&root, &real, &grant.spaces) {
                     return Err(absent());
                 }
+                if real != logical {
+                    kept_from_agents(app, inside.then_some(root.as_path()), &real)?;
+                }
             }
             Ok((path, inside))
         })
         .collect()
+}
+
+fn kept_from_agents(app: &AppHandle, root: Option<&Path>, path: &Path) -> Result<(), Answer> {
+    if root.is_some_and(|root| hidden_within(root, path)) || !may_hand(app, path) {
+        return Err(Answer::error(
+            Code::Denied,
+            format!("{} is locked away from agents", path.display()),
+        ));
+    }
+    Ok(())
+}
+
+fn hidden_within(root: &Path, path: &Path) -> bool {
+    path.strip_prefix(root).map_or(true, |rest| {
+        rest.components()
+            .any(|step| step.as_os_str().to_string_lossy().starts_with('.'))
+    })
+}
+
+fn may_hand(app: &AppHandle, path: &Path) -> bool {
+    let asked = super::verbs::window::HandAsk {
+        path: path.to_string_lossy().into_owned(),
+    };
+    crate::endpoint::ask(
+        app,
+        super::verbs::window::MAY_HAND,
+        serde_json::to_value(asked).unwrap_or_default(),
+        Duration::from_millis(800),
+    )
+    .is_ok_and(|value| value.as_bool() == Some(true))
 }
 
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
@@ -1315,7 +1349,9 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{beyond_the_grant, modifiers, policy, question_key, seen, Act, Facts, Grant};
+    use super::{
+        beyond_the_grant, hidden_within, modifiers, policy, question_key, seen, Act, Facts, Grant,
+    };
     use crate::agents::grants::{Every, SiteRule, Spaces};
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;
@@ -1412,6 +1448,19 @@ mod tests {
             Path::new("/data/Spaces/Beta/secret.md"),
             &Spaces::All(Every::All)
         ));
+    }
+
+    #[test]
+    fn a_hidden_step_inside_the_spaces_is_kept_from_an_upload() {
+        let root = Path::new("/data/Spaces");
+        assert!(hidden_within(
+            root,
+            Path::new("/data/Spaces/.orden/A/A/a.md")
+        ));
+        assert!(hidden_within(root, Path::new("/data/Spaces/A/.trash/a.md")));
+        assert!(hidden_within(root, Path::new("/data/Spaces/A/.env")));
+        assert!(hidden_within(root, Path::new("/elsewhere/a.md")));
+        assert!(!hidden_within(root, Path::new("/data/Spaces/A/deep/a.md")));
     }
 
     #[test]

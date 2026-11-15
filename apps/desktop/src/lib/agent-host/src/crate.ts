@@ -5,6 +5,7 @@ import { READER } from '../../automation/src/api'
 import type { StoreSaid } from '../../agent-protocol/src/api'
 import { workingPath } from '../../web-backend/src/api'
 import { placeFor } from '../../agent-verbs/src/api'
+import { protection } from '../../protect/src/api'
 import { lendTab, readerTabs } from './tabs'
 
 async function storeFor(args: Said): Promise<StoreSaid> {
@@ -35,6 +36,10 @@ export async function answerTheCrate(name: string, args: Said): Promise<unknown>
       return storeFor(args)
     case 'agent.markdown':
       return markdown(args)
+    case 'agent.may_hand': {
+      const path = said(args, 'path')
+      return path ? protection.agentsMay(path) : false
+    }
     case 'agent.working_folder': {
       if (__EVEN_PLUGIN__) return null
       const path = said(args, 'path')
