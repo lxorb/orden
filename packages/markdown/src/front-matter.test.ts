@@ -196,6 +196,13 @@ describe('reading a key as a list', () => {
     expect(frontMatterList(front('aliases:\n  - "One two"'), 'aliases')).toEqual(['One two'])
   })
 
+  test('leaves a comment after an item out of it', () => {
+    expect(frontMatterList(front('aliases:\n  - Foo # old name'), 'aliases')).toEqual(['Foo'])
+    expect(frontMatterList(front('aliases:\n  - "Foo # bar" # old'), 'aliases')).toEqual([
+      'Foo # bar',
+    ])
+  })
+
   test('stops at the next key of the note’s own', () => {
     const body = 'aliases:\n  - One\ntitle: Not an alias\n'
     expect(frontMatterList(front(body), 'aliases')).toEqual(['One'])
