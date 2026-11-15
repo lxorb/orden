@@ -17,10 +17,8 @@ const THEME = /^(?:[a-z0-9][a-z0-9-]{0,38}|file:[^/\\\p{Cc}]{1,64})$/u
 
 const NAME = /^[A-Za-z0-9*:._-]{1,64}$/
 
-const EVERY_THEME = '*'
-
 function isDrawer(name: string): boolean {
-  return name === EVERY_THEME || THEME.test(name)
+  return NAME.test(name) || THEME.test(name)
 }
 
 const SCHEMES: readonly string[] = ['dark', 'light', 'system']
