@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  agentRefusal,
+  agentTabKindLoaded,
+  agentTabKindParts,
+  agentVerbNames,
+  registerAgentTabKind,
+  registerAgentVerbs,
+  runAgentVerb,
   commandRows,
   commandRowsLoaded,
   attempt,
@@ -333,6 +340,58 @@ describe('ports', () => {
     expect(webPages().of('t')).toBe(page)
     unbind()
     expect(webPages().of('t').url).toBeNull()
+  })
+})
+
+describe('agent verbs', () => {
+  const reader = { agent: null }
+
+  it('runs a verb a registered table names, and refuses one no table names', async () => {
+    const heard: string[] = []
+    const unregister = registerAgentVerbs(() =>
+      Promise.resolve({
+        echo: (name, args) => {
+          heard.push(name)
+          return Promise.resolve({ ok: true, status: 'ok', result: args.word })
+        },
+      }),
+    )
+    expect(await agentVerbNames()).toContain('echo')
+    expect(await runAgentVerb('echo', { word: 'hi' }, reader)).toEqual({
+      ok: true,
+      status: 'ok',
+      result: 'hi',
+    })
+    expect(heard).toEqual(['echo'])
+    expect(await runAgentVerb('nothing', {}, reader)).toEqual(
+      agentRefusal('bad_arguments', 'there is no verb called nothing'),
+    )
+    unregister()
+    expect(await agentVerbNames()).not.toContain('echo')
+  })
+
+  it('answers a verb that throws with a refusal, and loads a table that failed again', async () => {
+    let fails = true
+    const unregister = registerAgentVerbs(() =>
+      fails
+        ? Promise.reject(new Error('gone'))
+        : Promise.resolve({ broken: () => Promise.reject(new Error('fell over')) }),
+    )
+    expect(await agentVerbNames()).not.toContain('broken')
+    fails = false
+    expect(await runAgentVerb('broken', {}, reader)).toEqual(agentRefusal('failed', 'fell over'))
+    unregister()
+  })
+
+  it('reads the agent parts of a tab kind once loaded, and none for a kind nobody registered', async () => {
+    const parts = { running: (tab: string) => tab === 't1' }
+    const unregister = registerAgentTabKind('terminal', () => Promise.resolve(parts))
+    expect(agentTabKindParts('terminal')).toEqual({})
+    expect(await agentTabKindLoaded('terminal')).toBe(parts)
+    expect(agentTabKindParts('terminal').running?.('t1')).toBe(true)
+    expect(await agentTabKindLoaded('online')).toEqual({})
+    unregister()
+    expect(agentTabKindParts('terminal')).toEqual({})
   })
 })
 

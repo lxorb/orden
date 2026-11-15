@@ -3,6 +3,7 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   appSessionIfAny,
+  applicationVerbs,
   frameOf,
   hostApps,
   loadApplicationTab,
@@ -51,6 +52,7 @@ describe('the module stands on its own', () => {
   test('the api loads and every call is there', () => {
     for (const one of [
       appSessionIfAny,
+      applicationVerbs,
       frameOf,
       hostApps,
       loadApplicationTab,

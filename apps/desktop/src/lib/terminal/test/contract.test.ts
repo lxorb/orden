@@ -22,6 +22,7 @@ import {
   said,
   scrollbackOf,
   sessions,
+  terminalAgent,
   usageOfTab,
   writeSpec,
 } from '../src/api'
@@ -79,6 +80,7 @@ describe('the module stands on its own', () => {
       renameTerminal,
       scrollbackOf,
       sessions,
+      terminalAgent,
       usageOfTab,
     ]) {
       expect(typeof one).toBe('function')

@@ -26,7 +26,9 @@
     "file-ops",
     "file-writes",
     "documents",
-    "protect"
+    "protect",
+    "agent-verbs",
+    "automation"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",

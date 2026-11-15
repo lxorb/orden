@@ -16,7 +16,6 @@
     "link-index"
   ],
   "pending": [
-    "apps/desktop/src/lib/agent-host/index.ts",
     "apps/desktop/src/lib/counts.ts",
     "apps/desktop/src/lib/outline.ts",
     "apps/desktop/src/lib/own-keys.ts",

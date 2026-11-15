@@ -1,17 +1,13 @@
-import type { AgentScope as Scope } from '@orden/contracts'
+import {
+  type AgentAnswer,
+  type AgentCaller as Caller,
+  agentRefusal,
+  type AgentScope as Scope,
+} from '@orden/contracts'
 
-interface Agent {
-  id: string
-  builtIn: boolean
-  name: string
-  scopes: readonly string[]
-  spaces: 'all' | readonly string[]
-  mode: 'unsupervised' | 'confirm' | 'autonomous'
-  programs: readonly string[]
-  sites: Readonly<Record<string, string>>
-}
+export type { AgentAnswer, Caller }
 
-export type Caller = { agent: null } | { agent: Agent; thread?: string }
+export const refusal = agentRefusal
 
 let threadSpaces: (thread: string) => string | null = () => null
 
@@ -64,13 +60,4 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
 
 export function holds(caller: Caller, scope: Scope): boolean {
   return caller.agent === null || caller.agent.scopes.includes(scope)
-}
-
-export type AgentAnswer =
-  | { ok: true; status: 'ok'; result: unknown; untrusted?: string }
-  | { ok: true; status: 'needs_approval'; approval: string; summary: string }
-  | { ok: false; status: 'error'; code: string; message: string; error: string }
-
-export function refusal(code: string, message: string): AgentAnswer {
-  return { ok: false, status: 'error', code, message, error: message }
 }

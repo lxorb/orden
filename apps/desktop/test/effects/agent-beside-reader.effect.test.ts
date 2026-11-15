@@ -3,7 +3,8 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { callerOf } = await import('../../src/lib/automation/src/api')
-const { runAgentVerb } = await import('../../src/lib/agent-host/index')
+await import('../agent-verbs-wired')
+const { runAgentVerb } = await import('@orden/contracts')
 const { agentMarks } = await import('../../src/lib/agent-marks.svelte')
 
 const agent = callerOf({

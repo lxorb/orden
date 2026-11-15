@@ -1,4 +1,6 @@
 import {
+  registerAgentTabKind,
+  registerAgentVerbs,
   registerCommand,
   registerHearing,
   registerCommandRows,
@@ -97,6 +99,21 @@ if (!__EVEN_PLUGIN__) {
   registerHearing(async () => (await (await import('./pdf/src/api')).handed()).hearPdfs)
   registerTabKind('application', async () => (await import('./apps/src/api')).applicationTabKind)
   registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
+  registerAgentVerbs(async () => (await import('./agent-host/src/api')).hostVerbs)
+  registerAgentVerbs(async () => (await import('./explorer/src/api')).explorerVerbs())
+  registerAgentVerbs(async () => (await import('./apps/src/api')).applicationVerbs())
+  registerAgentVerbs(async () => (await import('./chats-client/src/api')).chatVerbs())
+  registerAgentVerbs(
+    async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalVerbs,
+  )
+  registerAgentTabKind(
+    'terminal',
+    async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalTabs,
+  )
+  registerAgentTabKind(
+    'online',
+    async () => (await (await import('./terminal/src/api')).terminalAgent()).onlineTabs,
+  )
   registerSettingsPart({
     section: 'import',
     card: true,

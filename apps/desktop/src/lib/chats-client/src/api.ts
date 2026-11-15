@@ -1,4 +1,4 @@
-import type { TabKindParts } from '@orden/contracts'
+import type { AgentVerbs, TabKindParts } from '@orden/contracts'
 import './shell-parts'
 export { hush } from './hush.svelte'
 export { sendRows } from './send-rows'
@@ -51,3 +51,6 @@ export const chatTabKind: TabKindParts = {
     await (await chatOpening()).makeChat(folder, name)
   },
 }
+
+export const chatVerbs = () =>
+  __EVEN_PLUGIN__ ? away<AgentVerbs>() : import('./agent-verbs').then((one) => one.chatVerbs)

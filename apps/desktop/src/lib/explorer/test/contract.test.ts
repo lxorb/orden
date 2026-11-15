@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import {
   carry,
   changeable,
+  explorerVerbs,
   inASpace,
   listFolder,
   loadExplorerTab,
@@ -59,6 +60,7 @@ describe('the module stands on its own', () => {
     for (const one of [
       carry,
       changeable,
+      explorerVerbs,
       inASpace,
       listFolder,
       loadExplorerTab,

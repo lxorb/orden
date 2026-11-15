@@ -60,7 +60,15 @@ providePort('agents.reader', {
 providePort('agents.marks', {
   keepMarksOf: (agents) => {
     if (!__EVEN_PLUGIN__)
-      void import('./agent-host/editor').then(({ keepMarksOf }) => keepMarksOf(agents))
+      void import('./agent-host/src/api').then(({ keepMarksOf }) => keepMarksOf(agents))
+  },
+})
+
+providePort('agents.crate', {
+  answer: async (name, args) => {
+    if (__EVEN_PLUGIN__) return null
+    const { answerTheCrate } = await import('./agent-host/src/api')
+    return answerTheCrate(name, args)
   },
 })
 

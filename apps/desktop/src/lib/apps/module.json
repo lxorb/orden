@@ -14,7 +14,9 @@
     "ui-kit",
     "settings",
     "documents",
-    "file-writes"
+    "file-writes",
+    "agent-verbs",
+    "automation"
   ],
   "pending": [
     "apps/desktop/src/lib/Sweep.svelte",

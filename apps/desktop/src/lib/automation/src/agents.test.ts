@@ -1,3 +1,4 @@
+import { type AgentVerb, providePort, registerAgentVerbs } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 import { AGENT_WINDOW_VERBS } from '../../agent-protocol/src/api'
 import { callerOf, READER } from './caller'
@@ -22,13 +23,14 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const reached: { name: string; agent: string | null }[] = []
 
-vi.mock('../../agent-host/index', () => ({
-  runAgentVerb: (name: string, _args: unknown, caller: { agent: { id: string } | null }) => {
-    reached.push({ name, agent: caller.agent?.id ?? null })
-    return Promise.resolve({ ok: true, status: 'ok', result: { ran: name } })
-  },
-  answerTheCrate: (name: string) => Promise.resolve({ asked: name }),
-}))
+const reach: AgentVerb = (name, _args, caller) => {
+  reached.push({ name, agent: caller.agent?.id ?? null })
+  return Promise.resolve({ ok: true, status: 'ok', result: { ran: name } })
+}
+registerAgentVerbs(() =>
+  Promise.resolve(Object.fromEntries(Object.keys(AGENT_WINDOW_VERBS).map((verb) => [verb, reach]))),
+)
+providePort('agents.crate', { answer: (name) => Promise.resolve({ asked: name }) })
 
 const { dispatch } = await import('./verbs')
 
