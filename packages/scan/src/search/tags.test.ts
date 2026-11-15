@@ -156,6 +156,12 @@ describe('the tags in the front matter', () => {
     expect(tagsIn('---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n')).toEqual(['#a', '#b'])
   })
 
+  test('and in the body a cut before the next tag leaves one space', () => {
+    const note = 'Tags: #work, #home\n'
+    const [cut] = tagCuts(note, 'work')
+    expect(cut ? note.slice(0, cut.from) + note.slice(cut.to) : note).toBe('Tags: #home\n')
+  })
+
   test('and a tag cut from before a comment keeps the comment a comment', () => {
     const note = '---\ntags: [a, # c\n  b]\n---\n'
     const [cut] = tagCuts(note, 'a')

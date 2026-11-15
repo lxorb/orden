@@ -113,7 +113,9 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
   if (body.charAt(to + gap) === ',') {
     if (body.charAt(to + gap + 1) === '#') return { from, to: to + gap }
     const past = spaces(body, to + gap + 1, after)
-    if (past && body.charAt(to + gap + 1 + past) === '#') return { from, to: to + gap + 1 }
+    const matter = (frontMatterBlock(body)?.close ?? 0) > from
+    if (matter && past && body.charAt(to + gap + 1 + past) === '#')
+      return { from, to: to + gap + 1 }
     return { from, to: to + gap + 1 + past }
   }
 
