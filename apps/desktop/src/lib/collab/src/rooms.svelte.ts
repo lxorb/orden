@@ -75,6 +75,14 @@ class Rooms {
     return false
   }
 
+  wordsOf(noteId: string): string | null {
+    for (const one of this.held.values()) {
+      if (one.noteId === noteId && one.kind === 'words' && one.room.settled) return one.room.words
+    }
+
+    return null
+  }
+
   letGoUnreached(noteId: string): void {
     let left = false
     for (const [key, joined] of this.held) {

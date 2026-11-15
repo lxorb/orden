@@ -123,6 +123,13 @@ function underUnread(path: string, unread: readonly string[]): boolean {
 
 export interface Joined {
   has(id: string): boolean
+  words?(id: string): string | null
+}
+
+function carriedElsewhere(joined: Joined, id: string, content: string): boolean {
+  if (!joined.has(id)) return false
+  const held = joined.words?.(id) ?? null
+  return held !== null && unixLines(held) !== unixLines(content)
 }
 
 export interface Waiting {
@@ -240,6 +247,7 @@ export async function pull(
         }
 
         const { content } = await api.readNote(token, remote.id)
+        if (local !== null && carriedElsewhere(joined, remote.id, content)) continue
 
         const news =
           remote.hash !== tracked?.hash &&
@@ -861,6 +869,8 @@ async function renamedUpThere(
 export interface Sending {
   held?: ReadonlySet<string>
   asked?: ReadonlySet<string>
+  rule?: ConflictRule
+  clashed?: (clash: Clash) => void
   sent?: (path: string) => void
   refused?: (path: string) => void
   folded?: (one: Folded) => void
@@ -1078,7 +1088,7 @@ export async function push(
       if (joined.has(tracked.id) && caughtUpWith(mirror, path, error.body)) continue
 
       try {
-        await keepBoth(mirror, path, tracked, error.body, token, tracked.hash)
+        await keepBoth(mirror, path, tracked, error.body, token, tracked.hash, sending)
       } catch (again) {
         if (again instanceof NotWritten) continue
         if (refusesIt(again)) {
@@ -1311,7 +1321,7 @@ async function create(
     }
     mirror.notes[path] = tracked
     try {
-      await keepBoth(mirror, path, tracked, held, token, null)
+      await keepBoth(mirror, path, tracked, held, token, null, sending)
     } catch (again) {
       if (refusesIt(again)) {
         noteRefused(mirror, path, offered, again, earlier, sending)
@@ -1358,6 +1368,7 @@ async function keepBoth(
   conflict: unknown,
   token: string,
   base: string | null,
+  how: Sending,
 ) {
   const server = isRecord(conflict) ? conflict : {}
   const theirs = isRecord(server.note) ? server.note : null
@@ -1392,7 +1403,35 @@ async function keepBoth(
     return
   }
 
-  await writeDown(conflictPath(here), sent)
+  const hash = isString(theirs.hash) ? theirs.hash : ''
+  const theirsHeld = { id: tracked.id, version: theirs.version, hash }
+  if (await holdsSameWords(ours, hash)) {
+    mirror.notes[path] = theirsHeld
+    return
+  }
+
+  const rule = how.rule ?? DEFAULT_RULE
+  if (rule === 'ask') {
+    how.clashed?.({
+      path: here,
+      id: tracked.id,
+      version: theirs.version,
+      theirs: sent,
+      at: Date.now(),
+    })
+    mirror.notes[path] = { ...theirsHeld, hash: '' }
+    return
+  }
+
+  if (rule === 'newest') {
+    if (isNumber(theirs.updatedAt) && (await theirsIsNewer(here, theirs.updatedAt))) {
+      await writeDown(here, sent, ours)
+      mirror.notes[path] = theirsHeld
+      return
+    }
+  } else {
+    await writeDown(conflictPath(here), sent)
+  }
 
   const { note } = await api.writeNote(token, tracked.id, place, ours, theirs.version)
   mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }

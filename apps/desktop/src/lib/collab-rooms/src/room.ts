@@ -54,6 +54,10 @@ export class Room extends JoinedRoom {
     return this.awaiting
   }
 
+  get words(): string {
+    return this.text.toJSON()
+  }
+
   private get text() {
     return this.door.doc.getText(TEXT)
   }

@@ -624,7 +624,7 @@ class Sync {
 
     const token = account.token
     const mine = this.generation
-    const joined: Joined = { has: (id) => rooms.carries(id) }
+    const joined: Joined = { has: (id) => rooms.carries(id), words: (id) => rooms.wordsOf(id) }
     this.running = true
     this.status = 'syncing'
     this.lastError = null
@@ -650,7 +650,8 @@ class Sync {
           this.clashed = 0
           const began = Date.now()
 
-          if (await pull(mirror, token, joined, this.waiting(mirror, joined))) {
+          const waiting = this.waiting(mirror, joined)
+          if (await pull(mirror, token, joined, waiting)) {
             moved = true
             if (samePath(mirror.root, workspace.activeSpace?.root)) shown = true
           }
@@ -663,6 +664,8 @@ class Sync {
           const sending = {
             held: record.held,
             asked: new Set(record.clashes.map((one) => one.id)),
+            ...(waiting.rule ? { rule: waiting.rule } : {}),
+            ...(waiting.clashed ? { clashed: waiting.clashed } : {}),
             sent: () => (this.pushed += 1),
             refused: (path: string) => this.notWritten(joinPath(mirror.root, path)),
             folded: ({ kept, gone }: Folded) => {
