@@ -67,6 +67,10 @@ export async function unlockByDevice(path: string): Promise<boolean> {
   return true
 }
 
+export function openedWithin(path: string): boolean {
+  return unlocks.stillProven(workspace.protection.covering(path))
+}
+
 async function opened(path: string): Promise<boolean> {
   const locks = workspace.protection.covering(path)
   if (!unlocks.shut(locks)) return true
