@@ -1,13 +1,12 @@
 import { log, onDisk } from '../../platform/src/api'
-import { settingsWindow } from '@orden/contracts'
-import { undoToastNotice } from '../../surfaces.svelte'
+import { askSheet, settingsWindow } from '@orden/contracts'
 import { UNDO_LINGER, undoToast } from '../../undo-toast/src/api'
 
 class Lingering {
   private timer: ReturnType<typeof setTimeout> | undefined
 
   protected told() {
-    if (!__EVEN_PLUGIN__) void undoToastNotice.ask()
+    if (!__EVEN_PLUGIN__) void askSheet('undo-toast')
     this.linger()
   }
 

@@ -1,6 +1,5 @@
 {
   "name": "quitting",
   "layer": "shell",
-  "dependsOn": ["contracts", "platform", "ui-controls", "ui-kit", "parting"],
-  "pending": ["apps/desktop/src/lib/surfaces.svelte.ts"]
+  "dependsOn": ["contracts", "platform", "ui-controls", "ui-kit", "parting", "surfaces"]
 }

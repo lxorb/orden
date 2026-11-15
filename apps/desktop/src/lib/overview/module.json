@@ -18,7 +18,8 @@
     "tab-kinds",
     "documents",
     "workspace",
-    "held-database"
+    "held-database",
+    "surfaces"
   ],
-  "pending": ["apps/desktop/src/lib/TabMark.svelte", "apps/desktop/src/lib/surfaces.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/TabMark.svelte"]
 }

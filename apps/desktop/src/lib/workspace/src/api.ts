@@ -4,9 +4,12 @@ export {
   type Naming,
   type NewKind,
   type NoteDoc,
+  paletteWords,
   type Space,
   type Tab,
   type TabKind,
+  tabOverview,
+  toggleTabOverview,
   type TreeOptions,
   workspace,
 } from './workspace.svelte'

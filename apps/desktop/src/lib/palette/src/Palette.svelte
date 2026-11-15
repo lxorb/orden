@@ -35,7 +35,6 @@
   import { isDraft, scanHeadings } from '../../documents/src/api'
   import { lookOf } from './trying'
   import { search } from '../../search.svelte'
-  import { paletteWords } from '../../surfaces.svelte'
   import { chatsOn, hiddenKinds } from '../../gates/src/api'
   import { relativeTo, samePath } from '../../platform/src/api'
   import TabMark from '../../TabMark.svelte'
@@ -46,7 +45,7 @@
   import { isDesktop } from '../../platform/src/api'
   import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { notices, workspace } from '../../workspace/src/api'
+  import { notices, paletteWords, workspace } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { wholeRows } from './whole-rows'
 

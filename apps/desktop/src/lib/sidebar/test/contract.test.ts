@@ -4,7 +4,7 @@ import { registerSidebarPart } from '@orden/contracts'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../surfaces.svelte', () => ({ showFeedback: () => undefined }))
+vi.mock('../../surfaces/src/api', () => ({ showFeedback: () => undefined }))
 
 const { Sidebar, SidebarFoot } = await import('../src/api')
 

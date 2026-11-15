@@ -70,12 +70,12 @@ const NOT_YET = new Set([
 ])
 
 function doors(): Map<string, string> {
-  const text = readFileSync(join(LIB, 'surfaces.svelte.ts'), 'utf8')
+  const text = readFileSync(join(LIB, 'surfaces/src/api.ts'), 'utf8')
   const found = new Map<string, string>()
   const each = /export const (\w+) = (?:held|latched)\(([\s\S]*?)\n(?=export|\/\*\*|$)/g
   for (const [, name, body] of text.matchAll(each)) {
-    const file = /import\('(\.\/[^']+\.svelte)'\)/.exec(body ?? '')?.[1]
-    if (name && file) found.set(name, join(LIB, file))
+    const file = /import\('(\.\.\/\.\.\/[^']+\.svelte)'\)/.exec(body ?? '')?.[1]
+    if (name && file) found.set(name, resolve(LIB, 'surfaces/src', file))
   }
   return found
 }

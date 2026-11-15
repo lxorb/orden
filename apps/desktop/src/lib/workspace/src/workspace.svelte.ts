@@ -1,8 +1,10 @@
 import { noteId } from '../../modes/src/api'
 import {
+  askSheet,
   type Entry,
   type PickedFile,
   providePort,
+  surfaceLoad,
   tabKindLoaded,
   WELCOME_PATH,
   webPages,
@@ -68,7 +70,6 @@ import type { TreeRow } from '../../tree-keys'
 import { isPlugin } from '../../plugin'
 import { scanFootnotes } from './footnotes'
 import type { Change } from '@orden/scan/search/replace'
-import { tabOverview } from '../../surfaces.svelte'
 import { GIVE_UP } from '../../parting/src/api'
 import {
   holdsRetiredTab,
@@ -270,6 +271,19 @@ function unfetched(): void {
 
 function worthReopening(tab: Tab): boolean {
   return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
+}
+
+export const tabOverview = $state<{ open: boolean; out: string[]; lifted: string[] }>({
+  open: false,
+  out: [],
+  lifted: [],
+})
+
+export const paletteWords = $state<{ words: string | null }>({ words: null })
+
+export function toggleTabOverview(): void {
+  void askSheet('overview')
+  tabOverview.open = !tabOverview.open
 }
 
 const unsaved = (tab: Tab) => isDraft(tab.note) && hasWords(tab.note)
@@ -1593,7 +1607,7 @@ class Workspace {
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
     if (__EVEN_PLUGIN__) return
 
-    void import('../../surfaces.svelte').then(({ pagesSurface }) => pagesSurface())
+    void surfaceLoad('pages').catch(() => undefined)
 
     const path = this.spelled(asked)
     const held = isPagesTarget(path) ? path : await this.heldBy(path)

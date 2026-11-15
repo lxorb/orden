@@ -7,7 +7,7 @@
   import SpaceBadge from './SpaceBadge.svelte'
   import { SpacePlace } from './space-pick/src/api'
   import { isNumber } from './space-pick/src/api'
-  import { spaceSound } from './surfaces.svelte'
+  import { spaceSound } from './surfaces/src/api'
   import { sync } from './sync-store/src/api'
   import type { Space } from './workspace/src/api'
 

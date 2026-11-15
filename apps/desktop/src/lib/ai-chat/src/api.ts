@@ -12,9 +12,13 @@ export type { Source } from './store/citations'
 export type { Front } from './store/gather'
 export type { Mention, MentionKind, Row } from './store/mentions'
 export type { TaskTool } from './store/prefs'
-export { askQuickly } from './quick-door'
 export { installAiRunner } from './ask'
 export { chatsUnread, lookAtLaunch }
+
+export function askQuickly(): void {
+  if (__EVEN_PLUGIN__) return
+  void import('./quick.svelte').then(({ quick }) => quick.show())
+}
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
 

@@ -32,7 +32,7 @@ import {
 } from './native-menu'
 import { shortcuts } from '../../shortcuts/src/api'
 import { type AppContext, BY_ID, runEntry } from '../../shortcuts/src/api'
-import { appMenuRows } from '../../surfaces.svelte'
+import { appMenuRows } from '../../surfaces/src/api'
 import { takeKeyboard } from '../../platform/src/api'
 import { currentWindow, invoke, afterQuiet } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'

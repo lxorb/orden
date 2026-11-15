@@ -10,7 +10,7 @@
     "usage",
     "updates",
     "workspace",
-    "feedback"
-  ],
-  "pending": ["apps/desktop/src/lib/surfaces.svelte.ts"]
+    "feedback",
+    "surfaces"
+  ]
 }

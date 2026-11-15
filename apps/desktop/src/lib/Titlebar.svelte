@@ -14,11 +14,10 @@
   import { TopStrips } from './pane-tree/src/api'
   import { closeWindow, currentWindow, isDesktop, platform } from './platform/src/api'
   import { startup } from './launch/src/api'
-  import { tabOverview, toggleTabOverview } from './surfaces.svelte'
+  import { tabOverview, toggleTabOverview, workspace } from './workspace/src/api'
   import { shortcuts } from './shortcuts/src/api'
   import { WindowState } from './windows/src/api'
   import { topRow } from './panes/src/api'
-  import { workspace } from './workspace/src/api'
 
   const {
     onpalette,

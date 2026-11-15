@@ -198,22 +198,36 @@ describe('the paper a note is written on', () => {
 describe('what a side shows', () => {
   const FLOATING = ['orden-layer', 'orden-screen', 'orden-bubble']
   const sidebar = readFileSync(join(SOURCE, 'lib/sidebar/src/Sidebar.svelte'), 'utf8')
-  const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
+  const surfaces = readFileSync(join(SOURCE, 'lib/surfaces/src/api.ts'), 'utf8')
+  const features = readFileSync(join(SOURCE, 'lib/features.ts'), 'utf8')
+  const loaded = (path: string, loader: string) => {
+    const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
+    const file = new RegExp(`export const ${loader} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
+    return `lib/${path.replace(/[^/]+$/, '')}${file.exec(api)?.[1] ?? ''}`
+  }
+  const named = (path: string, name: string) => {
+    const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
+    const file = new RegExp(`default as ${name} \\} from '\\./([^']+)'`).exec(api)?.[1] ?? ''
+    return `lib/${path.replace(/[^/]+$/, '')}${file}`
+  }
   const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
     const door = one[1] ?? ''
-    const from = new RegExp(
-      `export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)(?:\\.then\\(\\(api\\) => \\(\\{ default: api\\.(\\w+) \\}\\)\\)|\\.then\\(\\(one\\) => one\\.(\\w+)\\(\\)\\))?`,
-    )
-    const [, path = door, named, loader] = from.exec(surfaces) ?? []
-    if (loader) {
-      const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
-      const loaded = new RegExp(`export const ${loader} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
-      return `lib/${path.replace(/[^/]+$/, '')}${loaded.exec(api)?.[1] ?? ''}`
-    }
-    if (!named) return `lib/${path}`
-    const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
-    const file = new RegExp(`default as ${named} \\} from '\\./([^']+)'`).exec(api)?.[1] ?? ''
-    return `lib/${path.replace(/[^/]+$/, '')}${file}`
+    const [, id, root] =
+      new RegExp(
+        `export const ${door} = held\\(\\s*(?:from\\('([\\w-]+)'\\)|\\(\\) => import\\('\\.\\./\\.\\./([^']+)'\\))`,
+      ).exec(surfaces) ?? []
+    if (root) return `lib/${root}`
+    const body =
+      new RegExp(`\\n\\s*'?${id ?? ''}'?: (?!waits)([^\\n]*),\\n`).exec(features)?.[1] ?? ''
+    const lazy =
+      /import\('\.\/([^']+)'\)\.then\(\((?:api|one)\) => (?:\(\{ default: (?:api|one)\.(\w+) \}\)|(?:api|one)\.(\w+)\(\))\)/.exec(
+        body,
+      )
+    if (lazy) return lazy[2] ? named(lazy[1] ?? '', lazy[2]) : loaded(lazy[1] ?? '', lazy[3] ?? '')
+    const from = new RegExp(`import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`).exec(
+      features,
+    )?.[1]
+    return loaded(from ?? '', body.trim())
   })
 
   interface Node {

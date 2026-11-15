@@ -32,6 +32,7 @@ vi.mock('./apps/src/make', () => ({
   },
 }))
 
+await import('./web-tab/src/api')
 const { kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('./workspace/src/api')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')

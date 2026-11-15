@@ -4,7 +4,7 @@
   import { AccountBadge } from '../../accounts/src/api'
   import { DOWNLOAD_URL } from '../../links'
   import { dur, fade } from '../../platform/src/api'
-  import { showFeedback } from '../../surfaces.svelte'
+  import { showFeedback } from '../../surfaces/src/api'
   import { isNative, openExternal } from '../../platform/src/api'
   import { SCRATCHPAD_MARK, viewport } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'

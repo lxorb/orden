@@ -10,6 +10,7 @@ import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
+import type { QuickAddPort, QuickAddPrefill, SheetId, SheetsPort, SurfacePorts } from './surfaces'
 import type { SyncStorePort, SyncPorts } from './sync-client'
 import type { TerminalPorts } from './terminal'
 import type { ThemePorts } from './theme'
@@ -34,6 +35,7 @@ export type PortMap = AccountPorts &
   QuittingPorts &
   SettingsPorts &
   SharingPorts &
+  SurfacePorts &
   SyncPorts &
   TerminalPorts &
   ThemePorts &
@@ -124,4 +126,13 @@ export function settingsWindow(): SettingsWindowPort {
       show: () => undefined,
     }
   )
+}
+
+export function askSheet(id: SheetId): Promise<void> {
+  const port = provided.get('shell.sheets') as SheetsPort | undefined
+  return port ? port.ask(id) : Promise.resolve()
+}
+
+export function showQuickAdd(prefill?: QuickAddPrefill): void {
+  ;(provided.get('quick-add.show') as QuickAddPort | undefined)?.show(prefill)
 }

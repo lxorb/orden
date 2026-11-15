@@ -19,7 +19,7 @@
   import { startPriorities } from '../prioritise'
   import { levelWord } from '../level-words'
   import type { Priority } from '@orden/markdown/task-line'
-  import { showQuickAdd } from '../../../surfaces.svelte'
+  import { showQuickAdd } from '@orden/contracts'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')

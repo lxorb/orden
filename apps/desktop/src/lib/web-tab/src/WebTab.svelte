@@ -14,7 +14,7 @@
   import { shareThisFile } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { swiping } from '../../back-swipe/src/api'
-  import { findBar, passFill, takeoverBar } from '../../surfaces.svelte'
+  import { findBar, passFill, takeoverBar } from '../../surfaces/src/api'
   import { invoke, isDesktop, openExternal } from '../../platform/src/api'
   import { takesWords, writes } from '../../ui-controls/src/api'
   import type { Tab } from '../../documents/src/api'

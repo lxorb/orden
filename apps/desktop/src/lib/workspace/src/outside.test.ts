@@ -28,7 +28,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 const { takeIn } = await import('./outside')
 const { movedRoot, ROOTS_MOVED, rootsMoved } = await import('./roots-moved')
-const { OUTSIDE } = await import('../../surfaces.svelte')
+const { OUTSIDE_FOLDER: OUTSIDE } = await import('@orden/contracts')
 
 const SESSION = JSON.stringify({
   spaces: [{ id: 'kept-id', name: 'Work', root: '/Vault/Work' }],

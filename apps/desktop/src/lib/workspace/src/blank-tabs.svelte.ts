@@ -1,5 +1,4 @@
-import { tabOverview } from '../../surfaces.svelte'
-import { workspace } from './workspace.svelte'
+import { tabOverview, workspace } from './workspace.svelte'
 
 $effect.root(() => {
   $effect(() => {

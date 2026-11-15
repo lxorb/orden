@@ -2,13 +2,12 @@ import { storeBeside } from '../../../assets'
 import { busy, message } from '../../../ui-kit/src/api'
 import { links } from '../../../link-index/src/api'
 import { reloading } from '../../../reloading.svelte'
-import { settingsWindow } from '@orden/contracts'
+import { askSheet, settingsWindow } from '@orden/contracts'
 import { nameOf, spaceRelative } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { canRecordHere, recordingName } from './container'
 import { MOST_BYTES, record, type Recording } from './microphone'
 import { appendTo, mayRecordInto, noteToRecordInto, viewFor, writeAtCaret } from './note'
-import { recordingPill } from '../../../surfaces.svelte'
 import { embedFor } from './transcript'
 
 const TICK = 500
@@ -39,7 +38,7 @@ class Recorder {
       return
     }
 
-    void recordingPill.ask()
+    void askSheet('recording-pill')
 
     void this.start()
   }

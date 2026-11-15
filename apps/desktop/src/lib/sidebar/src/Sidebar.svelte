@@ -54,7 +54,7 @@
     searchPanel,
     tasksPanel,
     timePanel,
-  } from '../../surfaces.svelte'
+  } from '../../surfaces/src/api'
   import { bookmarkEntry } from '../../menu-entries'
   import { roving } from '../../roving'
   import { pullable } from '../../pull.svelte'

@@ -330,7 +330,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/editor.ts', "the editor's own state"],
     ['/markdown/src/breaks.ts', 'the line-break switch the renderer reads'],
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],
-    ['/lib/surfaces.svelte.ts', 'the doors the sheets come through'],
+    ['/lib/surfaces/src/api.ts', 'the doors the sheets come through'],
     ['/lib/collab/src/rooms.svelte.ts', 'the store that joins a room'],
     ['/editor/src/languages.ts', "the fence languages' door"],
     ['/editor/src/paste.ts', 'the paste that asks for the converter'],

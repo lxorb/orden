@@ -1,5 +1,4 @@
-import { settingsWindow } from '@orden/contracts'
-import { hostPickerDialog } from '../../../surfaces.svelte'
+import { askSheet, settingsWindow } from '@orden/contracts'
 import { workspace } from '../../../workspace/src/api'
 import { type Destination, groupHosts, type Host } from './hosts'
 import { remote } from './hosts.svelte'
@@ -11,7 +10,7 @@ class HostPicker {
   private paneId: string | undefined
 
   show(paneId?: string): void {
-    void hostPickerDialog.ask()
+    void askSheet('host-picker')
     void remote.refresh()
     this.paneId = paneId
     this.open = true

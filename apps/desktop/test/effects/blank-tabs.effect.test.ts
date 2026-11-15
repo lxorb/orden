@@ -13,7 +13,7 @@ vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
 }))
 
 const { workspace } = await import('../../src/lib/workspace/src/api')
-const { tabOverview } = await import('../../src/lib/surfaces.svelte')
+const { tabOverview } = await import('../../src/lib/workspace/src/api')
 await import('../../src/lib/workspace/src/blank-tabs.svelte')
 
 const open = (id: string) => workspace.tabs.some((one) => one.id === id)

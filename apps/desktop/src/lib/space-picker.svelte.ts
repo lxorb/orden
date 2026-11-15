@@ -1,5 +1,5 @@
+import { askSheet } from '@orden/contracts'
 import { openSpaces } from './focus'
-import { spacePickerDialog } from './surfaces.svelte'
 import { viewport } from './ui-kit/src/api'
 import { type Space, workspace } from './workspace/src/api'
 
@@ -16,7 +16,7 @@ class SpacePicker {
       return
     }
 
-    void spacePickerDialog.ask()
+    void askSheet('space-picker')
     this.open = true
   }
 

@@ -19,7 +19,7 @@
   } from './lib/ui-kit/src/api'
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
-  import { whenLoaded } from '@orden/contracts'
+  import { OUTSIDE_FOLDER, whenLoaded } from '@orden/contracts'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { PaneTree } from './lib/pane-tree/src/api'
   import FirstScreen from './lib/FirstScreen.svelte'
@@ -46,6 +46,7 @@
   import { inRooms, rooms } from './lib/collab/src/api'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings/src/api'
+  import { paletteDoor } from './lib/palette/src/api'
   import { hiddenKinds } from './lib/gates/src/api'
   import {
     contextMenu,
@@ -60,11 +61,8 @@
     importSheet,
     exportSheet,
     spacePickerDialog,
-    tabOverview,
     tabOverviewLayer,
     hostPickerDialog,
-    paletteDoor,
-    paletteWords,
     promptSheet,
     publishSheet,
     quickAddSheet,
@@ -76,14 +74,12 @@
     shareSheet,
     signInSheet,
     firstSpaceDoor,
-    menuBarDoor,
     undoToastNotice,
     keysMovedNotice,
     outsideNotice,
     crashAsk,
     crashAskDue,
-    OUTSIDE,
-  } from './lib/surfaces.svelte'
+  } from './lib/surfaces/src/api'
   import { start } from './lib/start'
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
@@ -98,7 +94,7 @@
   import { windowDocuments } from './lib/windows/src/api'
   import { theme } from './lib/theme/src/api'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
-  import { workspace } from './lib/workspace/src/api'
+  import { paletteWords, tabOverview, workspace } from './lib/workspace/src/api'
   import { sidebarKey, used } from './lib/file-undo/src/api'
   import { saveFront } from './lib/save-place/src/api'
   import PadColumn from './lib/PadColumn.svelte'
@@ -123,7 +119,7 @@
     }, 3000)
   }
 
-  if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE) !== null) void outsideNotice.ask()
+  if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
 
   if (isDesktop && !__EVEN_PLUGIN__ && crashAskDue()) {
     void startup.turn('rooms').then(() => crashAsk.ask())
@@ -707,7 +703,8 @@
   if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
     void startup
       .turn('doors')
-      .then(menuBarDoor)
+      .then(() => import('./lib/native-menu/src/api'))
+      .then((one) => one.loadMenuBar())
       .then(({ followMenuBar }) =>
         followMenuBar(() => ({
           view,

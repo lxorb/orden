@@ -9,7 +9,7 @@ const WORKFLOWS = join(ROOT, '.github', 'workflows')
 
 const read = (...parts: string[]) => readFileSync(join(...parts), 'utf8')
 
-const SURFACES = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'surfaces.svelte.ts')
+const SURFACES = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'surfaces', 'src', 'api.ts')
 const ASK = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'crash-reports', 'src', 'CrashAsk.svelte')
 const TOLD = read(SCRIPTS, 'crash_told.py')
 

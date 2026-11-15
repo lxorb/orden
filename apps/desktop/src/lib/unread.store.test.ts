@@ -17,8 +17,6 @@ vi.mock('./platform/src/tauri', async (original) => ({
   },
 }))
 
-vi.mock('./surfaces.svelte', () => ({ undoToastNotice: { ask: () => Promise.resolve() } }))
-
 const { unread } = await import('./workspace/src/notices.svelte')
 
 beforeEach(() => {

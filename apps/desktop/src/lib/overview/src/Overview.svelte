@@ -6,21 +6,21 @@
   import { overlays } from '../../ui-kit/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import { tabOverview } from '../../surfaces.svelte'
-  import TabMark from '../../TabMark.svelte'
-  import { trap } from '../../ui-controls/src/api'
-  import { prompt } from '../../ui-kit/src/api'
-  import { webPages, whenLoaded } from '@orden/contracts'
-  import { isDraft } from '../../documents/src/api'
-  import type { Tab } from '../../documents/src/api'
   import {
     mayCarry,
     movingOf,
     spaceMoving,
     spaceSets,
     spacesFor,
+    tabOverview,
     workspace,
   } from '../../workspace/src/api'
+  import TabMark from '../../TabMark.svelte'
+  import { trap } from '../../ui-controls/src/api'
+  import { prompt } from '../../ui-kit/src/api'
+  import { webPages, whenLoaded } from '@orden/contracts'
+  import { isDraft } from '../../documents/src/api'
+  import type { Tab } from '../../documents/src/api'
   import {
     aimed,
     boxToCanvas,

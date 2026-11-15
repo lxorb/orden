@@ -1,4 +1,3 @@
-import { commandRows, commandRowsLoaded, runCommand, settingsWindow } from '@orden/contracts'
 import {
   type BindingSpec,
   type EditorView,
@@ -11,12 +10,18 @@ import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/ap
 import { revealPanel, stepRegionFocus } from '../../focus'
 import { modes } from '../../modes/src/api'
 import { searchFrom } from '../../search.svelte'
-import { showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
+import {
+  commandRows,
+  commandRowsLoaded,
+  runCommand,
+  settingsWindow,
+  showQuickAdd,
+} from '@orden/contracts'
+import { toggleTabOverview, workspace } from '../../workspace/src/api'
 import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
 import { stepSpace } from '../../space-actions'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
 import type { Platform } from '../../ui-kit/src/api'
-import { workspace } from '../../workspace/src/api'
 import { type Toward, type Around, closeAfterLabel } from '../../panes/src/api'
 import type { UsageVia } from '@orden/sync-core'
 import { ran } from '../../usage/src/api'

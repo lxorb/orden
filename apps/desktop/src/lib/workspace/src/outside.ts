@@ -1,6 +1,6 @@
 import { log, keepJson, invoke } from '../../platform/src/api'
 import { restate } from './moved'
-import { OUTSIDE } from '../../surfaces.svelte'
+import { OUTSIDE_FOLDER } from '@orden/contracts'
 import { noteRootsMoved, type RootMoved } from './roots-moved'
 
 interface TakenIn {
@@ -21,7 +21,7 @@ export async function takeIn(): Promise<boolean> {
     await invoke<number>('rehome_snapshots', { from, to }).catch(() => 0)
   }
   noteRootsMoved(taken.moved)
-  keepJson(OUTSIDE, { folder: taken.folder, left: taken.left })
+  keepJson(OUTSIDE_FOLDER, { folder: taken.folder, left: taken.left })
   if (taken.left.length) return restated > 0
   const settled = await invoke('settle_outside').then(
     () => true,

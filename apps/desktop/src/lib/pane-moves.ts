@@ -1,8 +1,7 @@
-import { tabOverview } from './surfaces.svelte'
+import { tabOverview, workspace } from './workspace/src/api'
 import { invoke, isDesktop } from './platform/src/api'
 import { IN_A_PAGE } from './ui-controls/src/api'
 import type { Toward } from './panes/src/api'
-import { workspace } from './workspace/src/api'
 
 export function movePane(toward: Toward): void {
   const next = workspace.panes.focusToward(toward)

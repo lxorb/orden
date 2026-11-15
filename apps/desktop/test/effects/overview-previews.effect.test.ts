@@ -1,11 +1,11 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/surfaces.svelte', async (original) => {
+vi.mock('../../src/lib/surfaces/src/api', async (original) => {
   const Drawn = (await import('./Drawn.svelte')).default
   const drawn = () => Promise.resolve(Drawn)
   return {
-    ...(await original<typeof import('../../src/lib/surfaces.svelte')>()),
+    ...(await original<typeof import('../../src/lib/surfaces/src/api')>()),
     askPanel: drawn,
     canvasSurface: drawn,
     chatSurface: drawn,

@@ -1,3 +1,4 @@
+import { askSheet } from '@orden/contracts'
 import {
   scanSpace,
   type SpaceChange,
@@ -9,7 +10,6 @@ import { isOwnFile as carriedOwn } from '@orden/sync-core'
 import { keptMounts } from '../../web-backend/src/api'
 import { inForeignCopy } from '@orden/sync-core'
 import { keptShaped, samePath } from '../../platform/src/api'
-import { syncMark } from '../../surfaces.svelte'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { kindOfName } from './create'
@@ -28,7 +28,7 @@ function hidden(path: string): boolean {
 
 function foreign(path: string): boolean {
   if (!inForeignCopy(path)) return false
-  void syncMark.ask()
+  void askSheet('sync-mark')
   return true
 }
 

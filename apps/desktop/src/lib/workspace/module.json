@@ -49,7 +49,6 @@
     "apps/desktop/src/lib/new-tab.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/plugin.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/tree-keys.ts"
   ]
 }

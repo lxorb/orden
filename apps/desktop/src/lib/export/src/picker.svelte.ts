@@ -1,5 +1,5 @@
+import { askSheet } from '@orden/contracts'
 import { isRecord, keepJson, stored } from '../../platform/src/api'
-import { exportSheet } from '../../surfaces.svelte'
 
 const KEPT = 'orden:export-choice'
 
@@ -29,7 +29,7 @@ class Picker {
   show() {
     this.last = kept()
     this.open = true
-    void exportSheet.ask()
+    void askSheet('export')
   }
 
   close() {

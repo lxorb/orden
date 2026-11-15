@@ -5,7 +5,7 @@
   import { menu, overlays, prompt, said } from '../../../ui-kit/src/api'
   import { reloading } from '../../../reloading.svelte'
   import { SidebarFoot } from '../../../sidebar/src/api'
-  import { contextMenu, feedbackSheet, promptSheet, signInSheet } from '../../../surfaces.svelte'
+  import { contextMenu, feedbackSheet, promptSheet, signInSheet } from '../../../surfaces/src/api'
   import Gate from '../Gate.svelte'
   import PassTab from '../PassTab.svelte'
   import type { PassUi } from '../../../pass-sync/src/api'

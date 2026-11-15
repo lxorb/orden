@@ -13,7 +13,7 @@ const flushSync = () => svelte.flushSync()
 async function launch() {
   vi.resetModules()
   svelte = await import('svelte')
-  const { crashAskDue } = await import('../../surfaces.svelte')
+  const { crashAskDue } = await import('../../surfaces/src/api')
   const { crashReports } = await import('./choice.svelte')
   const due = crashAskDue()
   if (due) {

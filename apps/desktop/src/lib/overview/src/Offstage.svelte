@@ -8,13 +8,13 @@
   import {
     askPanel,
     canvasSurface,
-    graphSurface,
     chatSurface,
     explorerSurface,
-    timeSurface,
+    graphSurface,
     pagesSurface,
+    timeSurface,
     viewSurface,
-  } from '../../surfaces.svelte'
+  } from '../../surfaces/src/api'
   import { faces } from './faces.svelte'
   import { snapshotFrom } from './mirror'
 

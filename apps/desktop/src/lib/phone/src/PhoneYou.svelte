@@ -2,7 +2,7 @@
   import { account, AccountBadge, arriving } from '../../accounts/src/api'
   import { showAccount } from '../../account-menu'
   import { dur, fade } from '../../platform/src/api'
-  import { showFeedback } from '../../surfaces.svelte'
+  import { showFeedback } from '../../surfaces/src/api'
 
   const { scratchpad }: { scratchpad: () => void } = $props()
 

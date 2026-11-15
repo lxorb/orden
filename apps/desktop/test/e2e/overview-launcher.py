@@ -30,7 +30,7 @@ LAUNCHERS = """() => [...document.querySelectorAll('[data-pane]')]
 
 def toggle(page: Page) -> None:
     page.evaluate(
-        "async () => { const { toggleTabOverview } = await import('/src/lib/surfaces.svelte.ts');"
+        "async () => { const { toggleTabOverview } = await import('/src/lib/workspace/src/api.ts');"
         " toggleTabOverview() }"
     )
 

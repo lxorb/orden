@@ -2,8 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import type { Engine } from './engine'
 import { scanned, kept, watchFolders, type Watching } from './watching'
 
-vi.mock('../../surfaces.svelte', () => ({ syncMark: { ask: () => undefined } }))
-
 const watch = vi.hoisted(() => ({ heard: (_news: unknown): void => undefined }))
 const listing = vi.hoisted(() => ({ answer: (): Promise<unknown[]> => Promise.resolve([]) }))
 vi.mock('../../crate/src/api', async (original) => ({

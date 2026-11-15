@@ -49,7 +49,7 @@
   import { roving } from '../../roving'
   import { LOCK_MARK, canWriteAt, isSharedItem, othersIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { syncMark } from '../../surfaces.svelte'
+  import { syncMark } from '../../surfaces/src/api'
   import { dropOnList, fileClipboard, listMotion } from '../../list-landing.svelte'
   import {
     autoScrollBy,

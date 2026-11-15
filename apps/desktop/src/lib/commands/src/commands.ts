@@ -1,5 +1,4 @@
 import { protection } from '../../protect/src/api'
-import { commandRows, commandRowsLoaded, runCommand, settingsWindow } from '@orden/contracts'
 import { copyNoteLink } from './link'
 import {
   CODE_PALETTES,
@@ -97,12 +96,19 @@ import {
 import { exportSpace } from '../../web-backend/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
 import { theme } from '../../theme/src/api'
-import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'
 import { askPlace } from '../../save-place/src/api'
 import { tabOps, tabToSpace } from '../../tab-strip/src/api'
 import { openRandomNote, randomChoices } from './random-note'
-import { showFeedback, showQuickAdd, toggleTabOverview } from '../../surfaces.svelte'
+import { showFeedback } from '../../surfaces/src/api'
+import {
+  commandRows,
+  commandRowsLoaded,
+  runCommand,
+  settingsWindow,
+  showQuickAdd,
+} from '@orden/contracts'
+import { toggleTabOverview, workspace } from '../../workspace/src/api'
 
 async function openCustomCss() {
   if (!isNative) return

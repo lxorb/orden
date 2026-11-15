@@ -1,7 +1,7 @@
 import type { FileRef, Member, Message, Poll, Preview, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../../ui-controls/src/api'
-import { paletteWords } from '../../../surfaces.svelte'
+import { paletteWords } from '../../../workspace/src/api'
 import type { ChatEntry, ChatView, Shown } from '../shapes'
 import { trimmed } from './compose'
 import { type Item, rowsOf } from './rows'

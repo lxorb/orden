@@ -28,7 +28,8 @@
     "modes",
     "files-out",
     "gates",
-    "tree"
+    "tree",
+    "surfaces"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -42,7 +43,6 @@
     "apps/desktop/src/lib/open-out.ts",
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

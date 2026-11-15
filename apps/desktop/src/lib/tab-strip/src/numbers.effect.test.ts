@@ -6,7 +6,6 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: false,
 }))
-vi.mock('../../surfaces.svelte', () => ({ tabOverview: { open: false } }))
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: { touch: false },
@@ -15,6 +14,7 @@ vi.mock('../../shortcuts/src/api', () => ({
   shortcuts: { keyFor: () => null, platform: 'win' },
 }))
 vi.mock('../../workspace/src/api', () => ({
+  tabOverview: { open: false },
   workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
 }))
 vi.mock('./letters.svelte', () => ({

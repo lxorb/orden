@@ -1,3 +1,4 @@
+import { askSheet } from '@orden/contracts'
 import {
   api,
   ApiError,
@@ -13,7 +14,6 @@ import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from '../..
 import { theme, carriedCss } from '../../theme/src/api'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from '../../ui-kit/src/api'
-import { publishSheet } from '../../surfaces.svelte'
 import { sync } from '../../sync-store/src/api'
 import type { Space } from '../../workspace/src/api'
 
@@ -133,7 +133,7 @@ class Publish {
     const id = sync.remoteIdFor(space.root)
     if (!id) return
 
-    void publishSheet.ask()
+    void askSheet('publish')
 
     this.space = space
     this.spaceId = id

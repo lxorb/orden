@@ -5,7 +5,7 @@
   import Icon from './Icon.svelte'
   import { readIcon, takesTint } from './ui-kit/src/api'
   import { samePath } from './platform/src/api'
-  import { terminalMark } from './surfaces.svelte'
+  import { terminalMark } from './surfaces/src/api'
   import { workspace } from './workspace/src/api'
 
   const {

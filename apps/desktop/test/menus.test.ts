@@ -201,7 +201,7 @@ describe('what a row of the file list offers', () => {
 
     expect(door).toContain("import('../../row-menu')")
     expect(door).toContain('menu.show(event, rowMenu(entry), { title })')
-    expect(read('lib/surfaces.svelte.ts')).toContain("import('./row-menu')")
+    expect(read('lib/features.ts')).toContain("import('./row-menu')")
   })
 })
 
@@ -212,7 +212,7 @@ describe("what the strip's empty stretch offers", () => {
   test('the menu is the strip menu, fetched by the press', () => {
     expect(door()).toContain('here(stripMenus())')
     expect(door()).toContain('menu.show(event, stripMenu(paneId))')
-    expect(read('lib/surfaces.svelte.ts')).toContain(
+    expect(read('lib/features.ts')).toContain(
       "import('./tab-strip/src/api').then((one) => one.stripMenus())",
     )
     expect(read('lib/tab-strip/src/api.ts')).toContain("stripMenus = () => import('./strip-menu')")
