@@ -411,3 +411,77 @@ describe('an Evernote note written in the evening, west of Greenwich', () => {
     expect(text).toContain('updated: 2026-03-04')
   })
 })
+
+describe('an Evernote task', () => {
+  function task(title: string, fields: string): string {
+    return `<task><title>${title}</title><created>20260102T120000Z</created><updated>20260102T120000Z</updated>${fields}</task>`
+  }
+
+  function noteWith(title: string, html: string, tasks: string[]): string {
+    return `  <note>
+    <title>${title}</title>
+    <content><![CDATA[<en-note>${html}</en-note>]]></content>
+    <created>20260102T120000Z</created>
+    ${tasks.join('\n    ')}
+  </note>`
+  }
+
+  test('is a task where its group stands in the note, in its order and with its day', async () => {
+    const week = noteWith(
+      'Week',
+      '<div>Plan</div><div style="--en-task-group:true; --en-id:g-1;"></div><div>After</div>',
+      [
+        task(
+          'Buy milk',
+          '<taskStatus>completed</taskStatus><sortWeight>B</sortWeight><taskGroupNoteLevelID>g-1</taskGroupNoteLevelID>',
+        ),
+        task(
+          'Call the plumber',
+          '<taskStatus>open</taskStatus><sortWeight>A</sortWeight><taskGroupNoteLevelID>g-1</taskGroupNoteLevelID><dueDate>20260105T120000Z</dueDate><dueDateUIOption>date_only</dueDateUIOption><timeZone>Europe/Zurich</timeZone>',
+        ),
+      ],
+    )
+
+    const text = noteAt(await readEvernote([file('Week.enex', enex(week))]), 'Week.md')
+    expect(text).toContain('Plan\n\n- [ ] Call the plumber 🛫 2026-01-05\n- [x] Buy milk\n\nAfter')
+  })
+
+  test('keeps the time it is due at, in the zone it was set in', async () => {
+    const day = noteWith('Day', '<div style="--en-task-group:true; --en-id:g-2;"></div>', [
+      task(
+        'Dentist',
+        '<taskStatus>open</taskStatus><taskGroupNoteLevelID>g-2</taskGroupNoteLevelID><dueDate>20260105T080000Z</dueDate><dueDateUIOption>date_time</dueDateUIOption><timeZone>Europe/Zurich</timeZone>',
+      ),
+    ])
+
+    const text = noteAt(await readEvernote([file('Day.enex', enex(day))]), 'Day.md')
+    expect(text).toContain('- [ ] Dentist [time:: 09:00 Europe/Zurich] 🛫 2026-01-05')
+  })
+
+  test('keeps its reminder and the day it was done', async () => {
+    const day = noteWith('Done', '<div style="--en-task-group:true; --en-id:g-3;"></div>', [
+      task(
+        'Pay rent',
+        '<taskStatus>completed</taskStatus><taskGroupNoteLevelID>g-3</taskGroupNoteLevelID><timeZone>Europe/Zurich</timeZone><statusUpdated>20260103T100000Z</statusUpdated><reminder><created>20260102T120000Z</created><reminderDate>20260103T070000Z</reminderDate><timeZone>Europe/Zurich</timeZone></reminder>',
+      ),
+    ])
+
+    const text = noteAt(await readEvernote([file('Done.enex', enex(day))]), 'Done.md')
+    expect(text).toContain('- [x] Pay rent [remind:: 2026-01-03 08:00] ✅ 2026-01-03')
+  })
+
+  test('whose group the note does not show is at the end of the note, its words kept as words', async () => {
+    const loose = noteWith('Loose', '<div>Words</div>', [
+      task(
+        'Water the plants 📅 2026-11-01 #home',
+        '<taskStatus>open</taskStatus><taskGroupNoteLevelID>g-9</taskGroupNoteLevelID>',
+      ),
+    ])
+
+    const text = noteAt(await readEvernote([file('Loose.enex', enex(loose))]), 'Loose.md')
+    const line = text.trimEnd().split('\n').at(-1) ?? ''
+    expect(text).toContain('Words\n\n- [ ] Water the plants')
+    expect(readTask(line)).toMatchObject({ tags: [] })
+    expect(readTask(line)?.due).toBeUndefined()
+  })
+})

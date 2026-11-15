@@ -3,7 +3,7 @@ import { taskLine } from '@orden/markdown/task-edits'
 import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 import { readCsv } from './csv'
-import { dayOf } from './meta'
+import { dayOf, wallClock } from './meta'
 import { safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
@@ -442,30 +442,6 @@ function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
     if (local) return { due: local.day, time: local.time, zone, ...repeats }
   }
   return { due: day, time: `${clock[1]}:${clock[2]}`, ...repeats }
-}
-
-function wallClock(moment: Date, zone?: string): { day: string; time: string } | null {
-  try {
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat('en-CA', {
-        ...(zone ? { timeZone: zone } : {}),
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hourCycle: 'h23',
-      })
-        .formatToParts(moment)
-        .map((part) => [part.type, part.value]),
-    )
-    return {
-      day: `${parts.year}-${parts.month}-${parts.day}`,
-      time: `${parts.hour}:${parts.minute}`,
-    }
-  } catch {
-    return null
-  }
 }
 
 function taskOf(
