@@ -9,6 +9,7 @@ import type { Env, Note } from '../types'
 import { hooks } from '../hooks'
 import { SIGNED_IN_AS } from './access'
 import { isChatPointer, noteKind } from './kind'
+import { WRITTEN_HEADER } from '../opened'
 import type { Ingested } from './room'
 
 const ALLOWED = `with ${SIGNED_IN_AS},
@@ -210,6 +211,17 @@ export async function ingestInto(
   if (answer === ROOM_LATE || !answer?.ok) return null
 
   return await answer.json<Ingested>()
+}
+
+export async function writtenPastRoom(env: Env, noteId: string): Promise<void> {
+  const namespace = env.ROOMS
+  if (!namespace) return
+
+  const open = await env.DB.prepare('select 1 from room_sockets where note_id = ? limit 1')
+    .bind(noteId)
+    .first()
+    .catch(() => null)
+  if (open) await tell(namespace, noteId, { [WRITTEN_HEADER]: 'yes' })
 }
 
 function protocolsIn(header: string | undefined): string[] {

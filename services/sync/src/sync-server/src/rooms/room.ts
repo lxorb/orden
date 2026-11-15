@@ -27,7 +27,7 @@ import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
 import { pokeSpace } from '../hub/poke'
 import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote, UNREADABLE } from '../notes'
-import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
+import { OPEN_HEADER, openAnswer, openIn, sweepOpened, WRITTEN_HEADER } from '../opened'
 import { fits } from '../storage'
 import { revive } from '../sync2/ops'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
@@ -322,6 +322,11 @@ export class NoteRoom implements DurableObject {
 
     const openOf = request.headers.get(OPEN_HEADER)
     if (openOf) return openAnswer(this.hasSocketOf(openOf))
+
+    if (request.headers.get(WRITTEN_HEADER)) {
+      await this.writtenPast()
+      return new Response(null, { status: 204 })
+    }
 
     const revoked = request.headers.get('x-orden-revoked')
     if (revoked) return await this.revoke(revoked, request.headers.get('x-orden-role') === 'read')
@@ -739,6 +744,14 @@ export class NoteRoom implements DurableObject {
     })
 
     return opening
+  }
+
+  private async writtenPast(): Promise<void> {
+    await this.woken()
+    const held = this.held
+    if (!held || (held.epoch ?? 0) >= 1) return
+
+    await this.ctx.blockConcurrencyWhile(() => this.caughtUp(held))
   }
 
   private async caughtUp(held: Held): Promise<void> {

@@ -157,6 +157,8 @@ const { call, signIn, testEnv } = (await import(
 const { newMirror } = await import('./mirror')
 const { pull, push } = await import('./pass')
 type Mirror = import('./mirror').Mirror
+type Clash = import('./conflicts').Clash
+type ConflictRule = import('./conflicts').ConflictRule
 type Device = InstanceType<typeof world.Device>
 
 const NOBODY = new Set<string>()
@@ -340,6 +342,122 @@ describe('a create that meets a note made since the pull', () => {
     await push(mirror, me.token, NOBODY)
     expect((await accountHolds(me.token, spaceId)).content).toBe('written on since\n')
     expect(copies(device)).toEqual([])
+  })
+})
+
+describe('two machines, one writing between the pull and the push of the other', () => {
+  const ONE = 'changed on one\n'
+  const TWO = 'changed on two\n'
+
+  async function apart(rule: ConflictRule) {
+    const me = await person('h@example.com')
+    const spaceId = await spaceOf(me.token)
+    const one = new world.Device()
+    const two = new world.Device()
+    const first = newMirror(spaceId, ROOT)
+    const second = newMirror(spaceId, ROOT)
+    one.disk.set(NOTE, 'base\n')
+    await pass(one, first, me.token)
+    await pass(two, second, me.token)
+
+    one.disk.set(NOTE, ONE)
+    world.use(one)
+    await pull(first, me.token, NOBODY)
+    two.disk.set(NOTE, TWO)
+    await pass(two, second, me.token)
+
+    const clashes: Clash[] = []
+    world.use(one)
+    await push(first, me.token, NOBODY, { rule, clashed: (clash) => clashes.push(clash) })
+    return { me, spaceId, one, two, first, second, clashes }
+  }
+
+  test('asked, the push puts the question and writes nothing over', async () => {
+    const { me, spaceId, one, first, clashes } = await apart('ask')
+
+    expect(clashes.map((clash) => [clash.path, clash.theirs])).toEqual([[NOTE, TWO]])
+    expect(copies(one)).toEqual([])
+    expect(one.disk.get(NOTE)).toBe(ONE)
+    expect(first.notes['plan.md']?.hash).toBe('')
+
+    world.use(one)
+    await pull(first, me.token, NOBODY, { rule: 'ask', held: new Set([NOTE]) })
+    await push(first, me.token, NOBODY, { rule: 'ask', held: new Set([NOTE]) })
+
+    const there = await accountHolds(me.token, spaceId)
+    expect(there.paths).toEqual(['plan.md'])
+    expect(there.content).toBe(TWO)
+    expect(one.disk.get(NOTE)).toBe(ONE)
+  })
+
+  test('newest, the newer words there are taken here, and ours kept as a version', async () => {
+    const { me, spaceId, one, two, first, second, clashes } = await apart('newest')
+
+    expect(clashes).toEqual([])
+    expect(copies(one)).toEqual([])
+    expect(one.disk.get(NOTE)).toBe(TWO)
+    expect(one.kept.get(NOTE)).toContain(ONE)
+
+    await pass(one, first, me.token)
+    await pass(two, second, me.token)
+    expect((await accountHolds(me.token, spaceId)).paths).toEqual(['plan.md'])
+    expect(two.disk.get(NOTE)).toBe(TWO)
+  })
+
+  test('both, the other words stay beside ours on every machine', async () => {
+    const { me, spaceId, one, two, first, second } = await apart('both')
+
+    expect(copies(one).map((path) => one.disk.get(path))).toEqual([TWO])
+    expect(one.disk.get(NOTE)).toBe(ONE)
+
+    await pass(one, first, me.token)
+    await pass(two, second, me.token)
+    expect(two.disk.get(NOTE)).toBe(ONE)
+    expect(copies(two).map((path) => two.disk.get(path))).toEqual([TWO])
+    expect((await accountHolds(me.token, spaceId)).content).toBe(ONE)
+  })
+})
+
+describe('a machine whose note is open in a room', () => {
+  const ROOM = 'base\ntyped in the room\n'
+  const PAST = 'base\nwritten past the room\n'
+
+  async function writtenPast() {
+    const me = await person('i@example.com')
+    const spaceId = await spaceOf(me.token)
+    const two = new world.Device()
+    const mirror = newMirror(spaceId, ROOT)
+    two.disk.set(NOTE, 'base\n')
+    await pass(two, mirror, me.token)
+    two.disk.set(NOTE, ROOM)
+
+    const held = await accountHolds(me.token, spaceId)
+    await call(env, `/v1/notes/${held.id}`, {
+      method: 'PUT',
+      token: me.token,
+      body: { path: 'plan.md', content: PAST, baseVersion: held.note?.version },
+    })
+    world.use(two)
+    return { me, two, mirror }
+  }
+
+  test('leaves to the room words the account took from outside it', async () => {
+    const { me, two, mirror } = await writtenPast()
+
+    await pull(mirror, me.token, { has: () => true, words: () => ROOM })
+
+    expect(two.disk.get(NOTE)).toBe(ROOM)
+    expect(mirror.notes['plan.md']?.version).toBe(1)
+    expect(copies(two)).toEqual([])
+  })
+
+  test('and takes them once the room holds them too', async () => {
+    const { me, two, mirror } = await writtenPast()
+
+    await pull(mirror, me.token, { has: () => true, words: () => PAST })
+
+    expect(two.disk.get(NOTE)).toBe(PAST)
+    expect(mirror.notes['plan.md']?.version).toBe(2)
   })
 })
 

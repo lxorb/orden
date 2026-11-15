@@ -22,7 +22,7 @@ import {
   type Reached,
 } from './spaces/space'
 import { laterOf, pokeSpace } from './hub/poke'
-import { ingestInto } from './rooms'
+import { ingestInto, writtenPastRoom } from './rooms'
 import { noteKind, readsAs } from './rooms/kind'
 import { deviceOf } from './sync2/device'
 import { createByPath, deleteById, moveByPath } from './sync2/ops'
@@ -849,7 +849,10 @@ export async function writeWords(
   const saved = await saveNote(env, note, text, path, writer.name, {
     ...(writer.device === undefined ? {} : { docBy: writer.device }),
   })
-  if (saved) return saved
+  if (saved) {
+    await writtenPastRoom(env, note.id)
+    return saved
+  }
 
   const now = await noteById(env, note.id)
   if (now && (now.epoch ?? 0) >= 1 && now.version === note.version) {
