@@ -86,13 +86,15 @@ function select(view: EditorView, image: ImageSpan, extend = false) {
 }
 
 function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
-  const insert = imageMarkup(next)
+  const insert = imageMarkup(next, image.tag !== undefined)
   const wasSelected = selectedImage(view.state)?.from === image.from
+  const written = image.tag ?? image
+  const changes = view.state.changes({ from: written.from, to: written.to, insert })
 
   view.dispatch({
-    changes: { from: image.from, to: image.to, insert },
+    changes,
     selection: wasSelected
-      ? EditorSelection.range(image.from, image.from + insert.length)
+      ? EditorSelection.range(image.from, changes.mapPos(image.to, 1))
       : undefined,
     userEvent,
   })

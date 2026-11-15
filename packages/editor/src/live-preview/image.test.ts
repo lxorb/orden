@@ -209,6 +209,21 @@ describe('finding images by position', () => {
   })
 })
 
+describe('an HTML block with a picture in it', () => {
+  test('is no picture when it holds more than one, or words besides', () => {
+    const two = 'x\n\n<div align="center"><img src="a.png" width="300"><img src="b.png"></div>\n\ny'
+    expect(imageAt(state(two), 3)).toBeNull()
+    expect(imageAt(state('x\n\n<p>See <img src="i.png"> here</p>\n\ny'), 3)).toBeNull()
+  })
+
+  test('is its one picture inside a wrapper, and an edit reaches only the img tag', () => {
+    const doc = 'x\n\n<p align="center"><img src="a.png" alt="A"></p>\n\ny'
+    const image = imageAt(state(doc), 3)
+    expect(image?.src).toBe('a.png')
+    expect(doc.slice(image?.tag?.from, image?.tag?.to)).toBe('<img src="a.png" alt="A">')
+  })
+})
+
 describe('what reveals the markup', () => {
   const doc = `x ${MD} y`
   const from = 2

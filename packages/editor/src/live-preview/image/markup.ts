@@ -16,6 +16,7 @@ export interface ImageSpec {
 export interface ImageSpan extends ImageSpec {
   from: number
   to: number
+  tag?: { from: number; to: number }
 }
 
 const IMAGE_NODES = new Set(['Image', 'HTMLTag', 'HTMLBlock'])
@@ -93,13 +94,32 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   }
 }
 
+const IMG_TAG = /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi
+const ANY_TAG = /<\/?[a-z][^>]*>/gi
+
+function htmlImageIn(state: EditorState, node: SyntaxNode): ImageSpan | null {
+  const written = state.doc.sliceString(node.from, node.to)
+  const tags = [...written.matchAll(IMG_TAG)]
+  const [tag] = tags
+  if (!tag || tags.length > 1 || written.replace(ANY_TAG, '').trim()) return null
+
+  const spec = parseHtmlImage(tag[0])
+  const from = node.from + tag.index
+  const whole = from === node.from && from + tag[0].length === node.to
+  return (
+    spec && {
+      ...spec,
+      from: node.from,
+      to: node.to,
+      ...(whole ? {} : { tag: { from, to: from + tag[0].length } }),
+    }
+  )
+}
+
 export function imageOfNode(state: EditorState, node: SyntaxNode): ImageSpan | null {
-  const spec =
-    node.name === 'Image'
-      ? parseMarkdownImage(state, node)
-      : IMAGE_NODES.has(node.name)
-        ? parseHtmlImage(state.doc.sliceString(node.from, node.to))
-        : null
+  if (node.name !== 'Image') return IMAGE_NODES.has(node.name) ? htmlImageIn(state, node) : null
+
+  const spec = parseMarkdownImage(state, node)
   return spec && { ...spec, from: node.from, to: node.to }
 }
 
@@ -120,16 +140,16 @@ export function imageEndingAt(state: EditorState, pos: number): ImageSpan | null
   return node && imageOfNode(state, node)
 }
 
-export function imageMarkup(spec: ImageSpec): string {
+export function imageMarkup(spec: ImageSpec, asTag = false): string {
   const zoomed = spec.zoom !== 100
-  if (!zoomed && !spec.width) {
+  if (!zoomed && !spec.width && !asTag) {
     return `![${writtenAlt(spec.alt)}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
   }
 
   const attrs = [`src="${attributeValue(spec.src)}"`, `alt="${attributeValue(spec.alt)}"`]
   if (spec.title) attrs.push(`title="${attributeValue(spec.title)}"`)
   if (zoomed) attrs.push(`style="zoom:${spec.zoom}%;"`)
-  else attrs.push(`width="${spec.width}"`)
+  else if (spec.width) attrs.push(`width="${spec.width}"`)
   return `<img ${attrs.join(' ')} />`
 }
 

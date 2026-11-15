@@ -27,12 +27,12 @@ afterEach(() => {
   errors.length = 0
 })
 
-function typedAlt(text: string): EditorView {
+function typedAlt(text: string, doc = DOC): EditorView {
   const view = new EditorView({
     state: parsed(
       EditorState.create({
-        doc: DOC,
-        selection: EditorSelection.cursor(DOC.length),
+        doc,
+        selection: EditorSelection.cursor(doc.length),
         extensions: [
           markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           livePreview(),
@@ -61,5 +61,16 @@ test('is let go of, and throws nothing, when its picture was taken away', async 
   await Promise.resolve()
   expect(errors).toEqual([])
   expect(view.state.doc.toString()).toBe('words\n\n\n\nend')
+  view.destroy()
+})
+
+test('in a picture wrapped in HTML, is written to its img tag and leaves the wrapper', async () => {
+  const doc = 'words\n\n<p align="center"><img src="cat.png" alt="A cat"></p>\n\nend'
+  const view = typedAlt('A dog', doc)
+  view.focus()
+  await Promise.resolve()
+  expect(view.state.doc.toString()).toBe(
+    'words\n\n<p align="center"><img src="cat.png" alt="A dog" /></p>\n\nend',
+  )
   view.destroy()
 })
