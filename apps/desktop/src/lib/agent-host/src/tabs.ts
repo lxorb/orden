@@ -9,6 +9,7 @@ import {
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
 import { seen } from './guarded'
+import { protection } from '../../protect/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../panes/src/api'
@@ -59,8 +60,10 @@ function front(tab: Tab): boolean {
   return workspace.showing(tab.paneId)?.id === tab.id
 }
 
+const shut = (tab: Tab) => tab.path !== null && !protection.agentsMay(tab.path)
+
 function addressOf(tab: Tab): string | null {
-  if (tab.kind !== 'web') return null
+  if (tab.kind !== 'web' || shut(tab)) return null
   return webPages().addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
@@ -442,7 +445,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
 export function readerTabs(): ReaderTab[] {
   return workspace.tabs
-    .filter((tab) => tab.kind === 'web')
+    .filter((tab) => tab.kind === 'web' && !shut(tab))
     .map((tab) => {
       const shown = workspace.panes.at(tab.paneId) !== null && front(tab)
       const home = workspace.spaceOf(tab.note)
@@ -462,7 +465,7 @@ const LENT_UNMARKED = ACTIVE_FOR + 5_000
 
 export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
-  if (!tab) return null
+  if (!tab || shut(tab)) return null
 
   const lending = portOf('web.lending')
   if (!lending.ok) return null

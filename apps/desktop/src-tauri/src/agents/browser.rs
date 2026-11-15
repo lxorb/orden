@@ -976,6 +976,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 if let Caller::Agent(grant) = caller {
                     let outside: Vec<&(PathBuf, bool)> =
                         files.iter().filter(|(_, inside)| !inside).collect();
+                    if let Some(no) = outside
+                        .iter()
+                        .find_map(|(path, _)| super::files::fenced_out(app, path))
+                    {
+                        return Err(no);
+                    }
                     let key = approvals::on_page(
                         &approvals::key(
                             "browser_upload",
