@@ -461,6 +461,58 @@ describe('a machine whose note is open in a room', () => {
   })
 })
 
+describe('a canvas open in a room', () => {
+  const BOARD = `${ROOT}/board.canvas`
+  const drawn = (text: string) =>
+    JSON.stringify({
+      nodes: [{ id: 'card', type: 'text', text, x: 0, y: 0, width: 90, height: 40 }],
+      edges: [],
+    })
+  const asTheRoomWrites = async (text: string) => {
+    const { readCanvas, writeCanvas } = await import('@orden/markdown/canvas')
+    return writeCanvas(readCanvas(text))
+  }
+
+  async function drawnPast() {
+    const me = await person('j@example.com')
+    const spaceId = await spaceOf(me.token)
+    const two = new world.Device()
+    const mirror = newMirror(spaceId, ROOT)
+    two.disk.set(BOARD, drawn('first'))
+    await pass(two, mirror, me.token)
+    const room = await asTheRoomWrites(drawn('drawn in the room'))
+    two.disk.set(BOARD, room)
+
+    const held = await accountHolds(me.token, spaceId, 'board.canvas')
+    await call(env, `/v1/notes/${held.id}`, {
+      method: 'PUT',
+      token: me.token,
+      body: { path: 'board.canvas', content: drawn('drawn past the room'), baseVersion: 1 },
+    })
+    world.use(two)
+    return { me, two, mirror, room }
+  }
+
+  test('leaves to the room a canvas the account took from outside it', async () => {
+    const { me, two, mirror, room } = await drawnPast()
+
+    await pull(mirror, me.token, { has: () => true, words: () => room })
+
+    expect(two.disk.get(BOARD)).toBe(room)
+    expect(mirror.notes['board.canvas']?.version).toBe(1)
+  })
+
+  test('and takes it once the room holds the same canvas, however each writes it', async () => {
+    const { me, two, mirror } = await drawnPast()
+    const same = await asTheRoomWrites(drawn('drawn past the room'))
+
+    await pull(mirror, me.token, { has: () => true, words: () => same })
+
+    expect(two.disk.get(BOARD)).toBe(drawn('drawn past the room'))
+    expect(mirror.notes['board.canvas']?.version).toBe(2)
+  })
+})
+
 describe('a write refused for a rename made elsewhere', () => {
   test('the note stays at the name the account moved it to', async () => {
     const me = await person('c@example.com')

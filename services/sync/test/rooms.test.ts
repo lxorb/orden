@@ -1281,6 +1281,33 @@ describe('a canvas in a room', () => {
     expect(writeCanvas(one.canvas)).toBe(writeCanvas(DRAWN))
   })
 
+  test('takes in a canvas written past it, and hands it to whoever is drawing', async () => {
+    const live = running(env)
+    env.ROOMS = live.ROOMS
+    const { room: made, state } = live.of(noteId)
+    const one = new Plane(await join(made, { id: noteId, spaceId, kind: 'plane', who: 'drawer' }))
+    await say(made, state, one.socket, syncStep1(one.doc))
+    await drain(made, state, [one])
+
+    const past: Canvas = {
+      ...DRAWN,
+      nodes: [
+        { id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'written past' },
+      ],
+      at: { ...DRAWN.at, card: 2000 },
+    }
+    const pushed = await call(env, `/v1/notes/${noteId}`, {
+      token,
+      method: 'PUT',
+      body: { path: 'Board.canvas', content: writeCanvas(past), baseVersion: 1 },
+    })
+    expect(pushed.status).toBe(200)
+    await state.idle()
+    await drain(made, state, [one])
+
+    expect(JSON.stringify(one.canvas.nodes)).toContain('written past')
+  })
+
   test('carries a stroke to the other device, whole', async () => {
     const { room: made, state } = room(env)
     const one = await onPlane(made, state, { id: noteId, spaceId })
