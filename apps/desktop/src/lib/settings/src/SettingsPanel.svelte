@@ -37,7 +37,7 @@
     shortcutPresets,
     shortcuts,
   } from '../../shortcuts/src/api'
-  import { glyphFor, lowMark, markFor, nameFor, toolbar } from '../../toolbar.svelte'
+  import { glyphFor, lowMark, markFor, nameFor, toolbar } from '../../shortcuts/src/api'
   import { showCombination } from '../../ui-kit/src/api'
   import { prompt } from '../../ui-kit/src/api'
   import { Rebind } from './rebind.svelte'

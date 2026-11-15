@@ -15,7 +15,7 @@
   import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/src/api'
   import { shortcuts } from './shortcuts/src/api'
-  import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
+  import { glyphFor, lowMark, markFor, nameFor, toolbar } from './shortcuts/src/api'
   import { viewport } from './ui-kit/src/api'
 
   const {

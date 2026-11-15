@@ -10,7 +10,7 @@
   import { prompt } from './ui-kit/src/api'
   import { selectAll } from './ui-kit/src/api'
   import SpaceMark from './SpaceMark.svelte'
-  import TickBox from './TickBox.svelte'
+  import { TickBox } from './ui-controls/src/api'
   import { fade, LAYER, scale } from './platform/src/api'
   import { trap } from './ui-controls/src/api'
   import { isDesktop, platform } from './platform/src/api'

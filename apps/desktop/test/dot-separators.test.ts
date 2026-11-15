@@ -14,7 +14,7 @@ const DOTS = /[\u00b7\u2022\u2219\u2027\u30fb\u22c5]|\\u00b7|\\u2022|&middot;|&b
 
 const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
   {
-    path: 'apps/desktop/src/lib/toolbar.svelte.ts',
+    path: 'apps/desktop/src/lib/shortcuts/src/toolbar.svelte.ts',
     holds: "'paragraph.bullet-list'",
     why: 'the bullet list button draws a bullet',
   },

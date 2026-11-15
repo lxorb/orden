@@ -1,7 +1,7 @@
-import { keep, storedText } from './platform/src/api'
-import { workspace } from './workspace/src/api'
-import type { Tab } from './documents/src/api'
-import { Walk } from './panes/src/api'
+import { keep, storedText } from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
+import type { Tab } from '../../documents/src/api'
+import { Walk } from '../../panes/src/api'
 
 const KEY = 'orden:tab-order'
 

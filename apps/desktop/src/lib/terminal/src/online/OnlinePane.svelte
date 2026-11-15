@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Facts from '../../../Facts.svelte'
+  import { Facts } from '../../../ui-kit/src/api'
   import { region } from '../../../platform/src/api'
   import { localDate, localNumber } from '../../../platform/src/api'
   import { diskNear, diskShare, shares } from '@orden/online'

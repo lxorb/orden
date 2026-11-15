@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { nextBatch, UNDO_LINGER, undoToast } from './undo-toast.svelte'
-import type { FileAction } from './file-undo/src/api'
+import type { FileAction } from '../../file-undo/src/api'
 
 const deleted = (path: string): FileAction => ({ kind: 'delete', path, content: '' })
 const moved = (from: string): FileAction => ({ kind: 'move', from, to: `Archive/${from}` })

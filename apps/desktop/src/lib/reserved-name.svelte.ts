@@ -1,6 +1,6 @@
 import { settings } from './settings.svelte'
 import { undoToastNotice } from './surfaces.svelte'
-import { UNDO_LINGER, undoToast } from './undo-toast.svelte'
+import { UNDO_LINGER, undoToast } from './undo-toast/src/api'
 
 export function openInstructions(root: string) {
   settings.show('space', root, true)

@@ -1,0 +1,5 @@
+{
+  "name": "space-pick",
+  "layer": "shell",
+  "dependsOn": ["matching", "ui-controls", "ui-kit", "workspace", "markdown"]
+}

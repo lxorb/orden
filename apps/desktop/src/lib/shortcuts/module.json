@@ -15,7 +15,8 @@
     "panes",
     "workspace",
     "modes",
-    "double-tap"
+    "double-tap",
+    "tab-cycle"
   ],
   "pending": [
     "apps/desktop/src/lib/focus.ts",
@@ -25,7 +26,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/space-actions.ts",
     "apps/desktop/src/lib/space-picker.svelte.ts",
-    "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/tab-cycle.svelte.ts"
+    "apps/desktop/src/lib/surfaces.svelte.ts"
   ]
 }

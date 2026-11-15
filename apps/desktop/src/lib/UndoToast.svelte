@@ -7,7 +7,7 @@
   import { reservedName } from './reserved-name.svelte'
   import { back, unsynced } from './sync-client/src/api'
   import { gateNote } from './gate-note.svelte'
-  import { undoToast } from './undo-toast.svelte'
+  import { undoToast } from './undo-toast/src/api'
   import { unread } from './unread.svelte'
   import { failed } from './failed.svelte'
   import { workspace } from './workspace/src/api'

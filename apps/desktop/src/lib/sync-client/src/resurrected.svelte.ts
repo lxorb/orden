@@ -1,4 +1,4 @@
-import { UNDO_LINGER } from '../../undo-toast.svelte'
+import { UNDO_LINGER } from '../../undo-toast/src/api'
 import type { Resurrected } from './asking.svelte'
 
 class Back {

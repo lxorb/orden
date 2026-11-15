@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { keytipIn, keytipOut } from './ui-controls/src/api'
+  import { keytipIn, keytipOut } from '../../ui-controls/src/api'
   import { isNumber } from './space-pick'
 
   const {

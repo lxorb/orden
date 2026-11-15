@@ -6,7 +6,7 @@
   import { roving } from './roving'
   import SpaceList from './SpaceList.svelte'
   import { spacePicker } from './space-picker.svelte'
-  import { SpaceTyping } from './space-typing.svelte'
+  import { SpaceTyping } from './space-pick/src/api'
   import { trap } from './ui-controls/src/api'
   import { type Space, workspace } from './workspace/src/api'
 

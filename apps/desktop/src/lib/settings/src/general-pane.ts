@@ -7,7 +7,7 @@ import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../../protect/sr
 import { recovery } from '../../history/src/api'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../../snapshots/src/api'
 import { hasTray, residency } from '../../quitting/src/api'
-import { tabCycle } from '../../tab-cycle.svelte'
+import { tabCycle } from '../../tab-cycle/src/api'
 import { fitTabs, iconTabs, PREVIEW_DELAY, previewDelay, unloadTabs } from '../../tab-strip/src/api'
 import { swipeChoice } from '../../back-swipe/src/api'
 import { asChannel, switchWebChannel, updates, webChannel } from '../../updates/src/api'

@@ -18,7 +18,6 @@
     "documents"
   ],
   "pending": [
-    "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/SidebarFoot.svelte",

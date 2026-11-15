@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Facts from './Facts.svelte'
+  import { Facts } from './ui-kit/src/api'
   import { busy } from './ui-kit/src/api'
   import Sweep from './Sweep.svelte'
 

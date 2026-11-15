@@ -1,5 +1,5 @@
 import { undoToastNotice } from './surfaces.svelte'
-import { UNDO_LINGER, undoToast } from './undo-toast.svelte'
+import { UNDO_LINGER, undoToast } from './undo-toast/src/api'
 
 class Failed {
   retry = $state.raw<(() => void) | null>(null)

@@ -1,4 +1,4 @@
-import { UNDO_LINGER } from '../../undo-toast.svelte'
+import { UNDO_LINGER } from '../../undo-toast/src/api'
 
 class Unsynced {
   said = $state<string | null>(null)

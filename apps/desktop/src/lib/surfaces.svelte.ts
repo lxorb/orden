@@ -383,7 +383,7 @@ export async function warmDoors(): Promise<void> {
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
     () => import('./row-menu'),
     () => import('./editor-menu'),
-    () => import('./tab-cycle.svelte'),
+    () => import('./tab-cycle/src/api'),
     __EVEN_PLUGIN__
       ? undefined
       : () => import('./tab-strip/src/api').then((one) => one.tabNumbers()),

@@ -15,11 +15,8 @@
     "usage",
     "sync-mirror",
     "modes",
-    "feedback"
+    "feedback",
+    "tab-cycle"
   ],
-  "pending": [
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/icon-library.svelte.ts",
-    "apps/desktop/src/lib/tab-cycle.svelte.ts"
-  ]
+  "pending": ["apps/desktop/src/lib/Icon.svelte", "apps/desktop/src/lib/icon-library.svelte.ts"]
 }

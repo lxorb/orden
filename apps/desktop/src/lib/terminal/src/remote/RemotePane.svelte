@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Facts from '../../../Facts.svelte'
+  import { Facts } from '../../../ui-kit/src/api'
   import { closeOnBack } from '../../../ui-kit/src/api'
   import { dropOver } from '../../../drag-paths'
   import { prompt } from '../../../ui-kit/src/api'

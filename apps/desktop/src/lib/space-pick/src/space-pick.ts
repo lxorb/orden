@@ -1,5 +1,5 @@
 import { foldName } from '@orden/markdown/links'
-import { fuzzyFolded } from './matching/src/api'
+import { fuzzyFolded } from '../../matching/src/api'
 
 export const WAIT = 600
 

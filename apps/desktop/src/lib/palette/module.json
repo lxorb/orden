@@ -19,7 +19,6 @@
     "workspace"
   ],
   "pending": [
-    "apps/desktop/src/lib/Facts.svelte",
     "apps/desktop/src/lib/FileMark.svelte",
     "apps/desktop/src/lib/Icon.svelte",
     "apps/desktop/src/lib/TabMark.svelte",

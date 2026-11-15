@@ -1,5 +1,5 @@
 import { undoToastNotice } from './surfaces.svelte'
-import { UNDO_LINGER } from './undo-toast.svelte'
+import { UNDO_LINGER } from './undo-toast/src/api'
 
 class GateNote {
   said = $state<string | null>(null)
