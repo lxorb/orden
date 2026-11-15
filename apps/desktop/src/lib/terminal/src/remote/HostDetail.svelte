@@ -57,7 +57,9 @@
     const wanted = destinationOf(typed)
     if (!wanted) {
       problem = 'Not an address'
-      field.value = host.detail ?? host.hostname ?? ''
+      field.value = host.hostname
+        ? said({ user: host.user, hostname: host.hostname, port: host.port })
+        : ''
       return
     }
     problem = ''
