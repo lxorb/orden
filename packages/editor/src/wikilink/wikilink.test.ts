@@ -364,6 +364,15 @@ describe('which note a name means', () => {
     expect(resolveFile(here, './pic.png', 'markdown')).toBeNull()
   })
 
+  test('a markdown target by name alone reaches the note at the top before a deeper one ending in the same folders', () => {
+    const here = index([note('Plan.md'), note('Archive/Projects/Plan.md')], 'Projects/n.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('Plan.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Archive/Projects/Plan.md')?.path).toBe(
+      'Archive/Projects/Plan.md',
+    )
+  })
+
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()

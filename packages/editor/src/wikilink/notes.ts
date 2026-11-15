@@ -207,9 +207,7 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   const parts = relativeParts(index, target)
   if (!parts.length) return null
   const whole = resolveNote(index, `/${parts.join('/')}`)
-  if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
-  const beside = resolveNote(index, parts.join('/'))
-  if (beside || !freelyWritten(target)) return beside
+  if (whole || !freelyWritten(target)) return whole
   return resolveNote(index, `/${target}`) ?? resolveNote(index, target)
 }
 
