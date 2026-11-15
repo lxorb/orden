@@ -708,6 +708,23 @@ describe('a vault landed in a folder of a space that holds notes of the same nam
     expect(textAt(out.files, 'Inbox/Daily/Day.md')).toBe('See [it](Plan.md).')
   })
 
+  test('has a link by name reach the note it came with, not a web shortcut of that name', () => {
+    const out = restamped(
+      planOf([note('GitHub.md', '# mine'), note('Daily/Day.md', 'See [[GitHub]].')]),
+      new Set(['GitHub.url']),
+      'Vault',
+    )
+    const text = textAt(out.files, 'Vault/Daily/Day.md')
+    const index = spaceIndex(
+      ['GitHub.url', 'Vault/GitHub.md', 'Vault/Daily/Day.md'],
+      [],
+      'Vault/Daily/Day.md',
+    )
+
+    expect(text).toBe('See [[Vault/GitHub|GitHub]].')
+    expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Vault/GitHub.md')
+  })
+
   test('names the note from the very top when even its path is held beside the link', () => {
     const stamped = restamped(
       planOf([

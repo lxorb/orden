@@ -1,6 +1,6 @@
 import { baseUnder } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { foldName } from '@orden/markdown/links'
+import { foldName, isWebTarget } from '@orden/markdown/links'
 
 import { linkTo } from '../../composer'
 import { folderOf, isMarkdownPath, relativePath } from '../../platform/src/api'
@@ -311,7 +311,7 @@ export function calledBy(paths: readonly string[]): Map<string, string[]> {
   const called = new Map<string, string[]>()
   for (const path of paths) {
     const name = path.split('/').pop() ?? path
-    const names = isMarkdownPath(path) ? [name, withoutExtension(name)] : [name]
+    const names = namesNote(path) ? [name, withoutExtension(name)] : [name]
     for (const one of names) {
       const key = foldName(one)
       const gathered = called.get(key)
@@ -326,7 +326,7 @@ function fitting(said: string, called: ReadonlyMap<string, string[]>): string[] 
   const wanted = foldName(said.replace(/^\/+/, ''))
   return (called.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
     const whole = foldName(path)
-    const bare = isMarkdownPath(path) ? foldName(withoutExtension(path)) : whole
+    const bare = namesNote(path) ? foldName(withoutExtension(path)) : whole
     return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
   })
 }
@@ -335,8 +335,7 @@ function holds(path: string, space: ReadonlyMap<string, string[]>): boolean {
   const wanted = foldName(path)
   return fitting(path, space).some(
     (one) =>
-      foldName(isMarkdownPath(one) ? withoutExtension(one) : one) === wanted ||
-      foldName(one) === wanted,
+      foldName(namesNote(one) ? withoutExtension(one) : one) === wanted || foldName(one) === wanted,
   )
 }
 
@@ -347,15 +346,19 @@ function captured(
   space: ReadonlyMap<string, string[]>,
 ): boolean {
   if (said.startsWith('/')) return false
-  const note = isMarkdownPath(meant)
+  const note = namesNote(meant)
   const here = foldName(folderOf(from))
   const depth = (path: string) => path.split('/').length
   const beside = (path: string) => (foldName(folderOf(path)) === here ? 0 : 1)
   return fitting(said, space).some(
     (path) =>
-      isMarkdownPath(path) === note &&
+      namesNote(path) === note &&
       (beside(path) - beside(meant) || depth(path) - depth(meant) || (path < meant ? -1 : 1)) < 0,
   )
+}
+
+function namesNote(path: string): boolean {
+  return isMarkdownPath(path) || isWebTarget(path)
 }
 
 function nearest(
