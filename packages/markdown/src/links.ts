@@ -513,7 +513,7 @@ export function headingsOf(text: string): string[] {
   const found: string[] = []
 
   for (const row of lines(text)) {
-    if (row.code) continue
+    if (row.code || row.matter) continue
     if (HEADING.test(row.text)) found.push(headingText(row.text))
   }
 
@@ -630,7 +630,7 @@ export function blocksOf(text: string): NoteBlock[] {
   let current: NoteBlock | null = null
 
   for (const row of lines(text)) {
-    if (!row.code && row.text.trim() === '') {
+    if (row.matter || (!row.code && row.text.trim() === '')) {
       current = null
       continue
     }

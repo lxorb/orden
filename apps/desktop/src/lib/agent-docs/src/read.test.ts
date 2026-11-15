@@ -129,6 +129,25 @@ describe('a note whose front matter holds a comment like a heading', () => {
     ])
   })
 
+  test('numbers its tasks and blocks among the words only', async () => {
+    const note = [
+      '---',
+      'todo:',
+      '  - [ ] Buy milk',
+      'note: Later ^idea',
+      '---',
+      '- [ ] Buy milk',
+      '',
+      'Later ^idea',
+      '',
+    ].join('\n')
+    const { desk } = deskWith({ 'list.md': note }, [])
+    const read = await readNote(desk, { path: 'list.md' }, ['tasks', 'blocks'])
+
+    expect(read.tasks?.map((row) => row.anchor)).toEqual([{ task: 'Buy milk' }])
+    expect(read.blocks?.map((row) => row.line)).toEqual([7])
+  })
+
   test('takes an addition under its one heading, and keeps the front matter whole', () => {
     const under = applied(
       BOOKS,

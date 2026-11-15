@@ -111,7 +111,7 @@ function tasksOf(text: string): TaskRow[] {
   const found: { words: string; done: boolean; line: number }[] = []
 
   for (const row of lines(text)) {
-    if (row.code) continue
+    if (row.code || row.matter) continue
     const words = taskWords(row.text)
     const task = taskAt(row.text)
     if (words !== null && task) found.push({ words, done: task.done, line: row.line })

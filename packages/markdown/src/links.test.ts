@@ -489,6 +489,10 @@ describe('the headings a note holds', () => {
     expect(headingsOf('# One\n\ntext\n\n## Two\n')).toEqual(['One', 'Two'])
   })
 
+  test('leaving out a comment line of the front matter', () => {
+    expect(headingsOf('---\n# Reading list\nstatus: draft\n---\n# Books\n')).toEqual(['Books'])
+  })
+
   test('with the hashes some styles close one with taken off', () => {
     expect(headingsOf('## Two ##\n')).toEqual(['Two'])
     expect(headingsOf('## ##\n')).toEqual([''])
