@@ -33,7 +33,7 @@
   import { Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
-  import { holdScroll } from '../../kept-scroll'
+  import { holdScroll } from '../../panes/src/api'
   import type { SettingsSectionId } from '@orden/contracts'
   import { settings } from './window.svelte'
   import { glassesOn } from '../../gates/src/api'

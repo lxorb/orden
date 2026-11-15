@@ -1,4 +1,5 @@
 export { type Around, closeAfterLabel, closedAround } from './closing-around'
+export { holdScroll, keepsScroll, scrollKeyOf } from './kept-scroll'
 export {
   type Along,
   clamped,

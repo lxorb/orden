@@ -7,14 +7,18 @@ const world = vi.hoisted(() => ({
   pages: [] as number[],
 }))
 
-vi.mock('../../link-index/src/api', () => ({
-  links: {
-    version: 1,
-    index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),
-    targetOf: () => null,
-    fileFor: () => null,
-  },
-}))
+vi.mock('../../link-index/src/api', async () => {
+  const { imageUrl } = await import('../../platform/src/api')
+  return {
+    links: {
+      version: 1,
+      index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),
+      targetOf: () => null,
+    },
+    notePicture: (src: string, notePath: string | null, source: string) =>
+      imageUrl(src, notePath, source),
+  }
+})
 vi.mock('../../files-out/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../files-out/src/api')>()),
   chooseTarget: () => Promise.resolve(null),

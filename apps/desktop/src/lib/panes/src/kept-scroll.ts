@@ -1,5 +1,5 @@
-import { keepJson, stored } from './platform/src/api'
-import type { TabKind } from './tab-kinds/src/api'
+import { keepJson, stored } from '../../platform/src/api'
+import type { TabKind } from '@orden/contracts'
 
 const STORE = 'orden:kept-scroll'
 

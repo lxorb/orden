@@ -32,9 +32,6 @@ vi.mock('../../link-index/src/api', () => ({
       )
     },
   },
-}))
-
-vi.mock('../../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 

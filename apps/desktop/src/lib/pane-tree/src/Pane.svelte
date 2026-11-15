@@ -40,6 +40,8 @@
     inside,
     type Zone,
     zoneAt,
+    keepsScroll,
+    scrollKeyOf,
   } from '../../panes/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
@@ -48,10 +50,9 @@
 
   import { chrome } from '../../theme/src/api'
   import { without } from '../../graph/src/api'
-  import { links } from '../../link-index/src/api'
+  import { links, notePicture } from '../../link-index/src/api'
   import { modes } from '../../modes/src/api'
   import { pull } from '../../pull.svelte'
-  import { notePicture } from '../../note-images'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
   import { settingsWindow } from '@orden/contracts'
@@ -88,7 +89,6 @@
   import { usage } from '../../usage.svelte'
   import { views } from '../../views.svelte'
   import { workspace } from '../../workspace/src/api'
-  import { keepsScroll, scrollKeyOf } from '../../kept-scroll'
 
   const { pane }: { pane: Pane } = $props()
 
