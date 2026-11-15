@@ -1748,6 +1748,54 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     expect(links.backlinks(at('Bob.md'))).toEqual([])
   })
 
+  test('a renamed note that answers to its old name keeps links a namesake would take', async () => {
+    await space({
+      'People/Bob.md': '---\naliases: [Bob]\n---\n# Bob',
+      'Old/Bob.md': '# other Bob',
+      'People/x.md': 'see [[Bob]] and [[Bob#H]]\n',
+    })
+    notes['People/Robert.md'] = notes['People/Bob.md'] ?? ''
+    delete notes['People/Bob.md']
+
+    await links.retarget(at('People/Bob.md'), at('People/Robert.md'), ROOT, () => null, {
+      moved: true,
+    })
+
+    expect(notes['People/x.md']).toBe('see [[Robert]] and [[Robert#H]]\n')
+  })
+
+  test('a renamed note that answers to its old name keeps links a nearer alias holder would take', async () => {
+    await space({
+      'Plan.md': '---\naliases: [Plan]\n---\n',
+      'a/Notes.md': '---\naliases: [Plan]\n---\n',
+      'a/x.md': 'see [[Plan]]\n',
+    })
+    notes['Roadmap.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+
+    await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+
+    expect(notes['a/x.md']).toBe('see [[Roadmap]]\n')
+  })
+
+  test('another note with the alias moving nearer leaves the alias link where it was', async () => {
+    await space({
+      'People/Robert.md': '---\naliases: [Bob]\n---\n',
+      'Zoo/Bobby.md': '---\naliases: [Bob]\n---\n',
+      'Team/x.md': 'see [[Bob]] and [[Bob|]]\nrow | [[Bob]] | end\n',
+    })
+    notes['Team/Bobby.md'] = notes['Zoo/Bobby.md'] ?? ''
+    delete notes['Zoo/Bobby.md']
+
+    await links.retarget(at('Zoo/Bobby.md'), at('Team/Bobby.md'), ROOT, () => null, {
+      moved: true,
+    })
+
+    expect(notes['Team/x.md']).toBe(
+      'see [[Robert|Bob]] and [[Robert|Bob]]\nrow | [[Robert\\|Bob]] | end\n',
+    )
+  })
+
   test('a note moved away from an alias link keeps it when another note shares the alias', async () => {
     await space({
       'A/X.md': '---\naliases: [Bob]\n---\n',

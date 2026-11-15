@@ -48,7 +48,8 @@ export function retargetLinks(
     const shown = typeof there === 'string' ? undefined : there.shown
     if (shown !== undefined && link.kind === 'wikilink' && !link.embed && link.alias === null) {
       const at = link.to - 2
-      const bar = inTableRow(text, link.from) ? '\\|' : '|'
+      const barred = text.slice(link.targetTo, at).includes('|')
+      const bar = barred ? '' : inTableRow(text, link.from, link.to) ? '\\|' : '|'
       edits.push({ from: at, to: at, insert: `${bar}${shown}` })
     }
   }
@@ -57,9 +58,13 @@ export function retargetLinks(
   return applied(text, quotedInMatter(text, edits))
 }
 
-function inTableRow(text: string, at: number): boolean {
-  const start = text.lastIndexOf('\n', at - 1) + 1
-  return /^\s*\|/.test(text.slice(start, at))
+const OTHER_WIKILINKS = /\[\[[^\]\n]*\]\]/g
+
+function inTableRow(text: string, from: number, to: number): boolean {
+  const start = text.lastIndexOf('\n', from - 1) + 1
+  const end = text.indexOf('\n', to)
+  const around = text.slice(start, from) + text.slice(to, end === -1 ? undefined : end)
+  return around.replace(OTHER_WIKILINKS, '').includes('|')
 }
 
 interface Edit {

@@ -1235,26 +1235,42 @@ class Links {
         movingAliases.has(comparable(link.target))
       )
     }
+    let namedAfter: Map<string, NoteRef[]> | null = null
+    const calledAfterMove = (written: string): NoteRef[] => {
+      if (!namedAfter) {
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
+        namedAfter = new Map<string, NoteRef[]>()
+        for (const ref of afterMove().notes) {
+          for (const key of namesOf(ref)) {
+            const held = namedAfter.get(key)
+            if (held) held.push(ref)
+            else namedAfter.set(key, [ref])
+          }
+        }
+      }
+      const whole = comparable(written)
+      const last = whole.split('/').at(-1) ?? ''
+      const byLast = namedAfter.get(last) ?? []
+      if (whole === last) return byLast
+      return [...new Set([...byLast, ...(namedAfter.get(whole) ?? [])])]
+    }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
-    const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
+    const filesAfter = new Map<string, string[]>()
     const reaching =
       (source: string, there: string, kind: LinkKind = 'wikilink') =>
       (written: string): boolean => {
         const key = comparable(nameOf(there))
-        let called = calledAfter.get(key)
+        let called = filesAfter.get(key)
         if (!called) {
-          called = {
-            notes: notes.flatMap((one) => {
-              const path = moving(one.path) ?? one.path
-              return comparable(nameOf(path)) === key ? [{ ...refOf(one), path }] : []
-            }),
-            files: files
-              .map((path) => moving(path) ?? path)
-              .filter((path) => comparable(nameOf(path)) === key),
-          }
-          calledAfter.set(key, called)
+          called = afterMove().files.filter((path) => comparable(nameOf(path)) === key)
+          filesAfter.set(key, called)
         }
-        const index: NoteIndex = { ...called, path: source, read: nothing }
+        const index: NoteIndex = {
+          notes: calledAfterMove(written),
+          files: called,
+          path: source,
+          read: nothing,
+        }
         const note = isTabFile(written)
           ? null
           : kind === 'markdown'
@@ -1289,10 +1305,12 @@ class Links {
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
         const there = moving(found) ?? found
         if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) {
-          if (there === found && !shifted && !arrivingNames.has(lastOf(link))) return null
-          if (resolveNote({ ...afterMove(), path: source }, link.target)?.path === there)
-            return null
-          return { path: there, reaches: reaching(source, there), shown: link.target }
+          const arriving =
+            arrivingNames.has(lastOf(link)) || movingAliases.has(comparable(link.target))
+          if (there === found && !shifted && !arriving) return null
+          const reaches = reaching(source, there)
+          if (reaches(link.target)) return null
+          return { path: there, reaches, shown: link.target }
         }
         if (there === found && !shifted) {
           if (!arrivingNames.has(lastOf(link))) return null
