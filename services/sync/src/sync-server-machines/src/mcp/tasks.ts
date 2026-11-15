@@ -195,13 +195,18 @@ async function templateAt(env: Env, space: Writable, link: string): Promise<stri
   const path = notePath(link)
   const named = await wordsAt(env, space, path)
   if (named !== null) return named
-  const wanted = path.toLowerCase()
-  const found = await env.DB.prepare(
-    `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
-       and (lower(path) = ? or substr(lower(path), -length(?)) = ?) order by lower(path)`,
+  const fold = (one: string) => one.normalize('NFC').toLowerCase()
+  const wanted = fold(path)
+  const { results } = await env.DB.prepare(
+    "select path from notes where space_id = ? and deleted = 0 and kind != 'file' order by path",
   )
-    .bind(space.id, wanted, `/${wanted}`, `/${wanted}`)
-    .first<{ path: string }>()
+    .bind(space.id)
+    .all<{ path: string }>()
+  const found = results.find(
+    (one) =>
+      (fold(one.path) === wanted || fold(one.path).endsWith(`/${wanted}`)) &&
+      !space.shut?.(space.id, one.path),
+  )
   return found ? wordsAt(env, space, found.path) : null
 }
 
@@ -368,9 +373,9 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   const patch: Fields = {}
   const title = words(args, 'title') ?? words(args, 'text')
   if (title !== undefined) patch.title = title.slice(0, 500)
-  else if (args.title !== undefined) throw new Said('A todo needs a title.')
+  else if (args.title !== undefined && args.title !== null) throw new Said('A todo needs a title.')
   if (typeof args.description === 'string') patch.description = args.description.slice(0, 8000)
-  if (args.labels !== undefined) {
+  if (Array.isArray(args.labels)) {
     patch.labels = [
       ...new Set(
         texts(args.labels)

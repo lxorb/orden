@@ -126,6 +126,26 @@ describe('the todos, with Orden closed', () => {
     expect(await tool(key, 'list_tasks', { limit: 0 })).toMatch(/whole number/)
   })
 
+  test('a change that leaves labels or the title as null keeps them as they were', async () => {
+    const key = await connector()
+    const added = await json(key, 'add_task', {
+      title: 'Call the bank',
+      space: 'Work',
+      labels: ['work'],
+    })
+    const changed = await json(key, 'update_task', {
+      id: added.id,
+      done: true,
+      labels: null,
+      title: null,
+    })
+
+    expect(changed).toMatchObject({ title: 'Call the bank', labels: ['work'], done: true })
+    expect(await json(key, 'update_task', { id: added.id, labels: 'money' })).toMatchObject({
+      labels: ['work'],
+    })
+  })
+
   test('are listed with the tools, and the base tools only once databases are turned on', async () => {
     const key = await connector()
     const names = async () => {
@@ -255,6 +275,29 @@ describe('bases, with Orden closed', () => {
     await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
 
     expect(await read(key, 'Books/Emma.md')).toBe('# Emma\n')
+  })
+
+  test('a template named by its name passes over a protected namesake, in any case of its letters', async () => {
+    for (const [path, content] of [
+      ['Diary/Ärzte.md', 'the secret words\n'],
+      ['Templates/Ärzte.md', '# {{title}} visit\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token,
+      body: { protected: { Diary: 'password' } },
+    })
+    await baseFile(
+      'Visits.base',
+      ['filters: file.inFolder("Visits")', 'orden:', '  template: "[[ärzte]]"', ''].join('\n'),
+    )
+    await basesTurned(true)
+    const key = await connector()
+    await tool(key, 'add_row', { space: 'Work', base: 'Visits.base', title: 'Anna' })
+
+    expect(await read(key, 'Visits/Anna.md')).toBe('# Anna visit\n')
   })
 
   test('a base said as yaml', async () => {
