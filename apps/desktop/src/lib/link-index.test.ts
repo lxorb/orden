@@ -1678,6 +1678,26 @@ describe('a rename while the space is still being read', () => {
     expect(await renamed).toBe(1)
     expect(notes['One.md']).toBe('see [[Roadmap]]\n')
   })
+
+  test('rewrites the links even when the rows were read after the rename', async () => {
+    const scan = await opening({ 'Roadmap.md': '# Plan', 'One.md': 'see [[Plan]]\n' })
+
+    const renamed = links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+    await scan.land()
+
+    expect(await renamed).toBe(1)
+    expect(notes['One.md']).toBe('see [[Roadmap]]\n')
+  })
+
+  test('and when a folder was renamed before its rows were read', async () => {
+    const scan = await opening({ 'later/Plan.md': '# Plan', 'One.md': 'see [[ideas/Plan]]\n' })
+
+    const renamed = links.retarget(at('ideas'), at('later'), ROOT)
+    await scan.land()
+
+    expect(await renamed).toBe(1)
+    expect(notes['One.md']).toBe('see [[later/Plan]]\n')
+  })
 })
 
 describe('a file renamed across the note extension', () => {

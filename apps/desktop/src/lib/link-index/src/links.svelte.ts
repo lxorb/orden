@@ -1115,7 +1115,7 @@ class Links {
 
     const here = () => this.root !== null && samePath(root, this.root)
     if (here() && this.scanning && startup.reached('index')) await this.scanned()
-    if (here() && !this.scanning) {
+    if (here() && !this.scanning && !this.readAfter(was, now)) {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's notes, thrown away after it
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(
@@ -1167,6 +1167,14 @@ class Links {
     )
     if (touched && this.others.delete(root)) this.changed()
     return touched
+  }
+
+  private readAfter(was: string, now: string): boolean {
+    const held = (top: string) => {
+      const under = (path: string) => path === top || path.startsWith(`${top}/`)
+      return this.notes.some((one) => under(one.path)) || this.files.some(under)
+    }
+    return held(now) && !held(was)
   }
 
   private async retargetIn(
