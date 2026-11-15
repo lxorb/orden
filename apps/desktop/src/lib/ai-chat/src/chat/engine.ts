@@ -128,6 +128,11 @@ function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
     : listing
 }
 
+function failRunning(turn: Turn): void {
+  for (const part of turn.parts)
+    if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
+}
+
 function keptOut(name: string): ToolOutput {
   return { text: `${name} is not available in this chat.`, images: [], error: true }
 }
@@ -323,6 +328,7 @@ export function createApiEngine(setup: Setup): Engine {
           if (signal.aborted) throw new DOMException('stopped', 'AbortError')
         } else if (ending !== 'end') {
           stop = ending
+          failRunning(turn)
           say({ kind: 'notice', code: ending, text: result.answer.refusal ?? '' })
           break
         }
@@ -359,8 +365,7 @@ export function createApiEngine(setup: Setup): Engine {
       on({ type: 'done', stop })
     } catch (error) {
       close(false)
-      for (const part of turn.parts)
-        if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
+      failRunning(turn)
       if (wasStopped(error) || signal.aborted || leaving) {
         say({ kind: 'notice', code: 'stopped', text: '' })
         on({ type: 'done', stop: 'stopped' })

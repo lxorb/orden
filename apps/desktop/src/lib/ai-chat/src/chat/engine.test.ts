@@ -11,7 +11,7 @@ vi.stubGlobal('addEventListener', page.addEventListener.bind(page))
 const { createApiEngine, engineFor, MOST_ROUNDS, registerLocalEngine } = await import('./engine')
 const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
-const { body } = await import('./recorded/read')
+const { body, events } = await import('./recorded/read')
 const { watching } = await import('./sends')
 const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
 
@@ -544,6 +544,27 @@ describe('a send that ends early', () => {
     const model = thread.turns[1]
     expect(model?.replay).toBeUndefined()
     expect(model?.parts.map((one) => one.kind)).toEqual(['thinking', 'text', 'tool', 'notice'])
+  })
+
+  test('a call cut off by the token limit is not left running', async () => {
+    const cut = events('anthropic-1').map((one) =>
+      (one as { type: string }).type === 'message_delta'
+        ? {
+            type: 'message_delta',
+            delta: { stop_reason: 'max_tokens' },
+            usage: { output_tokens: 9 },
+          }
+        : one,
+    )
+    answers = [lines(...cut)]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    const heard = await send(thread, 'What is in Birds.md?')
+
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'max_tokens' })
+    expect(calls).toEqual([])
+    const parts = thread.turns[1]?.parts ?? []
+    expect(parts.find((one) => one.kind === 'tool')).toMatchObject({ state: 'error' })
+    expect(parts.at(-1)).toMatchObject({ kind: 'notice', code: 'max_tokens' })
   })
 
   test('a refusal is the provider’s words, in the thread and on the event', async () => {
