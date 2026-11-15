@@ -154,10 +154,29 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
     Ok(target)
 }
 
+const LONGEST_EXTENSION: usize = 16;
+
+fn shortened(name: &str) -> String {
+    if name.chars().count() <= MAX_NAME {
+        return name.to_string();
+    }
+
+    match name.rfind('.') {
+        Some(dot) if dot > 0 && name[dot..].chars().count() <= LONGEST_EXTENSION => {
+            let extension = &name[dot..];
+            let stem: String = name[..dot]
+                .chars()
+                .take(MAX_NAME - extension.chars().count())
+                .collect();
+            format!("{stem}{extension}")
+        }
+        _ => name.chars().take(MAX_NAME).collect(),
+    }
+}
+
 pub(crate) fn safe_name(name: &str) -> Option<String> {
-    let safe: String = name
+    let cleaned: String = name
         .chars()
-        .take(MAX_NAME)
         .map(|letter| {
             if letter.is_alphanumeric() || letter == '.' || letter == '-' || letter == '_' {
                 letter
@@ -166,6 +185,7 @@ pub(crate) fn safe_name(name: &str) -> Option<String> {
             }
         })
         .collect();
+    let safe = shortened(&cleaned);
 
     if safe.is_empty() || safe.chars().all(|letter| letter == '.') {
         return None;
@@ -421,6 +441,14 @@ mod tests {
         assert_eq!(safe_name(""), None);
         assert_eq!(safe_name("."), None);
         assert_eq!(safe_name(".."), None);
+    }
+
+    #[test]
+    fn keeps_the_extension_of_a_name_it_shortens() {
+        let long = format!("{}.pdf", "Minutes of the meeting ".repeat(10));
+        let safe = safe_name(&long).unwrap_or_default();
+        assert!(safe.ends_with(".pdf"), "{safe}");
+        assert_eq!(safe.chars().count(), MAX_NAME);
     }
 
     #[test]
