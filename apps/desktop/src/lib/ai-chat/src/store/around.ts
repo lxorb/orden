@@ -25,7 +25,10 @@ export const SHUT_TO_AGENTS =
   'This note is protected: unlock it and choose Let agents read in its menu.'
 
 export function agentsMayRead(shows: SharedDoc | null): boolean {
-  return protection.agentsMay(workspace.tabs.find((tab) => tab.note.live === shows)?.path)
+  const path = shows ? workspace.tabs.find((tab) => tab.note.live === shows)?.path : undefined
+  if (path) return protection.agentsMay(path)
+  const open = workspace.activeSpace?.root
+  return open ? protection.agentsMayAll(open) : !protection.any
 }
 
 export const SELECTION_CHIP: Mention = { kind: 'selection', id: 'selection', label: 'selection' }

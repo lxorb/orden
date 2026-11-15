@@ -14,12 +14,21 @@ vi.mock('../../ai-providers/src/api', async (original) => ({
   ai: { providerFor: () => ({ id: 'p', model: 'm' }) },
 }))
 
-const diary = vi.hoisted(() => ({ live: {} }))
+const diary = vi.hoisted(() => ({ live: {}, locked: false }))
 vi.mock('../../workspace/src/api', () => ({
-  workspace: { tabs: [{ path: '/notes/Private/Diary.md', note: { live: diary.live } }] },
+  workspace: {
+    tabs: [{ path: '/notes/Private/Diary.md', note: { live: diary.live } }],
+    activeSpace: { root: '/notes' },
+  },
 }))
 vi.mock('../../protect/src/api', () => ({
-  protection: { agentsMay: (path?: string | null) => path !== '/notes/Private/Diary.md' },
+  protection: {
+    get any() {
+      return diary.locked
+    },
+    agentsMay: (path?: string | null) => path !== '/notes/Private/Diary.md',
+    agentsMayAll: () => !diary.locked,
+  },
 }))
 
 const { answer } = await import('./answering')
@@ -62,4 +71,25 @@ test('a note shut to agents asks nothing of the model, and says why', async () =
   expect(completed.count).toBe(0)
   expect(written).toBe('')
   expect(busy.trouble).toContain('Let agents read')
+})
+
+test('a document no open note shows asks nothing of the model while the space holds a note shut to agents', async () => {
+  completed.count = 0
+  diary.locked = true
+
+  await expect(
+    answer(
+      {
+        prompt: 'Summarise @note',
+        note: 'Dear diary.',
+        shows: {} as SharedDoc,
+        started: () => undefined,
+        wrote: () => undefined,
+      },
+      new AbortController().signal,
+    ),
+  ).rejects.toThrow()
+
+  diary.locked = false
+  expect(completed.count).toBe(0)
 })
