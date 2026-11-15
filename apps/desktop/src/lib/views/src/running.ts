@@ -91,6 +91,7 @@ const waiting = new Map<
 const SETTLE = 80
 
 const runs = new Set<Promise<void>>()
+const lastRun = new Map<string, Promise<void>>()
 
 export async function settledRuns(): Promise<void> {
   while (runs.size) await Promise.allSettled([...runs])
@@ -195,8 +196,16 @@ function settling(key: string, space: string, path: string, before: readonly Row
     removed: before,
     timer: setTimeout(() => {
       waiting.delete(key)
-      const one: Promise<void> = run(space, path, before).finally(() => runs.delete(one))
+      const prior = lastRun.get(space)
+      const one: Promise<void> = (prior ?? Promise.resolve())
+        .catch(() => undefined)
+        .then(() => run(space, path, before))
+        .finally(() => {
+          runs.delete(one)
+          if (lastRun.get(space) === one) lastRun.delete(space)
+        })
       runs.add(one)
+      lastRun.set(space, one)
     }, SETTLE),
   })
 }
