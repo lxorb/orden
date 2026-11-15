@@ -458,6 +458,23 @@ describe('where a link goes', () => {
     })
   })
 
+  test('to a file the space holds that opens in no tab, rather than to a note to make', () => {
+    expect(jumpFor(SPACE, wiki('shot.png'), 'wikilink')).toEqual({
+      path: 'shot.png',
+      target: 'shot.png',
+      heading: null,
+      block: null,
+      page: null,
+    })
+    const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['files/spec.docx'])
+    expect(jumpFor(here, wiki('../files/spec.docx'), 'markdown').path).toBe('files/spec.docx')
+  })
+
+  test('a note named with a dot is still the note before any file', () => {
+    const here = index([note('v1.2.md')], null, {}, ['v1.2'])
+    expect(jumpFor(here, wiki('v1.2'), 'wikilink').path).toBe('v1.2.md')
+  })
+
   test('a PDF the space does not hold is not a note to make', () => {
     const jump = jumpFor(SPACE, wiki('missing.pdf', 'page=1'), 'wikilink')
     expect(jump.path).toBeNull()

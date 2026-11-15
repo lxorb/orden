@@ -278,11 +278,16 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     }
   }
 
+  if (!link.target) {
+    return { path: index.path, target: '', heading: link.heading, block: link.block, page: null }
+  }
+  const note = resolveLink(index, link, kind)?.path ?? null
+  const file = note === null ? resolveFile(index, link.target, kind) : null
   return {
-    path: link.target ? (resolveLink(index, link, kind)?.path ?? null) : index.path,
+    path: note ?? file,
     target: link.target,
-    heading: link.heading,
-    block: link.block,
+    heading: file === null ? link.heading : null,
+    block: file === null ? link.block : null,
     page: null,
   }
 }

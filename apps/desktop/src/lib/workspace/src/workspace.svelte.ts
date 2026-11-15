@@ -3702,6 +3702,11 @@ class Workspace {
       return
     }
 
+    if (jump.path && this.opensInNoTab(jump.path)) {
+      await this.revealLinked(insideSpace(root, jump.path))
+      return
+    }
+
     const path = jump.path
       ? insideSpace(root, jump.path)
       : await this.linkedOrMade(jump, root, source)
@@ -3716,7 +3721,23 @@ class Workspace {
     this.landOn(path, jump)
   }
 
+  private opensInNoTab(path: string): boolean {
+    if (isMarkdownPath(path)) return false
+    const isUrlNote = (one: string) => links.urlOf(one) !== null
+    return (
+      openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() }) === 'note'
+    )
+  }
+
+  private async revealLinked(path: string) {
+    await (await import('../../files-out/src/api')).reveal(path)
+  }
+
   private async followAside(jump: NoteJump, root: string, source: string | null) {
+    if (jump.path && this.opensInNoTab(jump.path)) {
+      await this.revealLinked(insideSpace(root, jump.path))
+      return
+    }
     const path = jump.path
       ? insideSpace(root, jump.path)
       : isTabFile(jump.target)
