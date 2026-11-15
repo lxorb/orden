@@ -1343,7 +1343,8 @@ function cycleTab(direction: number, mayUseOrder = false) {
 
 function closeAroundActive(which: Around) {
   const id = workspace.activeTabId
-  if (id) void workspace.closeAround(id, which)
+  if (which === 'all') void workspace.closeAllIn(workspace.panes.focusedId)
+  else if (id) void workspace.closeAround(id, which)
 }
 
 function moveTab(direction: number) {

@@ -2604,6 +2604,14 @@ class Workspace {
     )
   }
 
+  async closeAllIn(paneId: string) {
+    await this.closeMany(this.tabsIn(paneId).map((one) => one.id))
+  }
+
+  closesAllIn(paneId: string): number {
+    return this.tabsIn(paneId).length
+  }
+
   closesAround(id: string, which: Around): number {
     const tab = this.tabs.find((one) => one.id === id)
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0

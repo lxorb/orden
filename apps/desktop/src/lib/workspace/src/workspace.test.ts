@@ -4394,6 +4394,17 @@ describe('what a tab s own menu does to the strip', () => {
     expect(strip()).toEqual([])
   })
 
+  test('closes every tab of a strip with none of them in front', async () => {
+    await opened('/space/a.md', '/space/b.md')
+    workspace.deselect()
+    const pane = workspace.panes.focusedId
+
+    expect(workspace.closesAllIn(pane)).toBe(2)
+    await workspace.closeAllIn(pane)
+
+    expect(strip()).toEqual([])
+  })
+
   test('says how many tabs each close would take', async () => {
     const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
 
