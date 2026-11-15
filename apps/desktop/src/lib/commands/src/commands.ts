@@ -151,7 +151,7 @@ async function openLog() {
   if (!isDesktop) return
 
   const path = await invoke<string>('log_dir')
-  const { reveal } = await import('../../reveal')
+  const { reveal } = await import('../../files-out/src/api')
   await reveal(path)
 }
 
@@ -159,7 +159,7 @@ async function openThemesFolder() {
   if (!isDesktop) return
 
   const dir = await invoke<string>('theme_dir')
-  const { reveal } = await import('../../reveal')
+  const { reveal } = await import('../../files-out/src/api')
   await reveal(dir)
   await theme.reload()
 }

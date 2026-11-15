@@ -6,7 +6,7 @@ import {
   shapeFor,
   type WrittenIcon,
 } from './ui-kit/src/api'
-import type { IconShape, LoadedSet } from './icon-sets'
+import type { IconShape, LoadedSet } from './icons/src/api'
 import { startup } from './launch/src/api'
 
 class IconLibrary {
@@ -23,7 +23,7 @@ class IconLibrary {
     this.asked.add(id)
 
     void startup.turn('icons').then(async () => {
-      const set = (await import('./icon-sets')).setNamed(id)
+      const set = (await import('./icons/src/api')).setNamed(id)
       if (!set) {
         this.asked.delete(id)
         return

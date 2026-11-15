@@ -87,10 +87,28 @@ export interface WebScriptsPort {
   readonly pages: unknown
 }
 
+export interface SiteIcon {
+  readonly site: string
+  readonly label: string
+  readonly picture: string | null
+}
+
+export interface SiteIconsHeld {
+  readonly lacking: boolean
+  readonly list: readonly SiteIcon[]
+  picture(site: string): string | null
+  refresh(): Promise<void>
+}
+
+export interface SiteIconsPort {
+  held(): Promise<SiteIconsHeld>
+}
+
 export interface WebPorts {
   readonly 'web.pages': WebPagesPort
   readonly 'web.lending': WebLendingPort
   readonly 'web.scripts': WebScriptsPort
+  readonly 'web.siteIcons': SiteIconsPort
 }
 
 const BLANK: WebPageSeen = {

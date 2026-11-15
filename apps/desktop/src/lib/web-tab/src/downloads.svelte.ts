@@ -81,7 +81,7 @@ class Downloads {
   async show(id: number): Promise<void> {
     const path = await invoke<string>('web_download_saved', { id }).catch(() => null)
     if (path === null) return
-    const { reveal } = await import('../../reveal')
+    const { reveal } = await import('../../files-out/src/api')
     await reveal(path)
   }
 

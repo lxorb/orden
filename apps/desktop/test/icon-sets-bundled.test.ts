@@ -63,7 +63,7 @@ describe('the icon sets that are data rather than drawing', () => {
       expect(
         files.filter((file) => file.text.includes(one)).map((file) => file.name),
         one,
-      ).toEqual(['/lib/icon-sets.ts'])
+      ).toEqual(['/lib/icons/src/icon-sets.ts'])
     }
   })
 

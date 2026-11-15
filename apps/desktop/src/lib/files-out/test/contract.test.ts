@@ -1,11 +1,13 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
+import { providePort } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import {
   claimName,
   fileNameFor,
   localSources,
   SHEET_POLICY,
+  showLabel,
   stemOf,
   swapSources,
   zipOf,
@@ -93,5 +95,19 @@ describe('the writers', () => {
     const text = new TextDecoder().decode(bytes)
     expect(text).toContain('note.md')
     expect(text).toContain('a.png')
+  })
+})
+
+describe('showing a file where it sits', () => {
+  test('names Finder on a Mac unless the explorer port offers to show it', () => {
+    expect(showLabel('macos')).toBe('Show in Finder')
+    const stop = providePort('explorer.show', {
+      offered: () => true,
+      show: () => Promise.resolve(true),
+    })
+    expect(showLabel('macos')).toBe('Show in folder')
+    expect(showLabel('linux')).toBe('Show in folder')
+    stop()
+    expect(showLabel('macos')).toBe('Show in Finder')
   })
 })

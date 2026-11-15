@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
-import { FILLS_ITS_BOX, outlineName } from './src/lib/outline-names'
+import { FILLS_ITS_BOX, outlineName } from './src/lib/icons/src/outline-names'
 
 const NOTO_OUTLINES = 'virtual:noto-outlines'
 

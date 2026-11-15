@@ -1,7 +1,7 @@
 import { copyText } from '../../ui-controls/src/api'
 import { fileClipboard } from '../../list-landing.svelte'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
-import { reveal, showLabel } from '../../reveal'
+import { reveal, showLabel } from '../../files-out/src/api'
 import { platform } from '../../platform/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { workspace } from '../../workspace/src/api'

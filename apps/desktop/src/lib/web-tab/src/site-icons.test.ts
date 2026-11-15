@@ -48,7 +48,7 @@ vi.mock('../../accounts/src/client', () => ({
   },
 }))
 
-const { bounded, labelOf, siteIcons, siteOf, siteSet } = await import('./site-icons.svelte')
+const { bounded, labelOf, siteIcons, siteOf } = await import('./site-icons.svelte')
 const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../../ui-kit/src/icons')
 const account = (await import('../../accounts/src/account.svelte'))
   .account as unknown as AccountDouble
@@ -108,15 +108,12 @@ describe('the list', () => {
       { site: 'a.dev', label: 'A', seen: 10, hash: 'y' },
     ]
     await siteIcons.refresh()
-    expect(siteIcons.list.map((one) => one.site)).toEqual(['b.dev', 'a.dev'])
-
-    const set = siteSet()
-    expect(set.entries.map((one) => [one.name, one.words])).toEqual([
-      ['b.dev', 'b.dev'],
-      ['a.dev', 'a'],
+    expect(siteIcons.list.map((one) => [one.site, one.label])).toEqual([
+      ['b.dev', ''],
+      ['a.dev', 'A'],
     ])
-    expect(set.shape('a.dev')).toEqual({ kind: 'picture', src: PNG })
-    expect(set.shape('nowhere.dev')).toBeNull()
+    expect(siteIcons.picture('a.dev')).toBe(PNG)
+    expect(siteIcons.picture('nowhere.dev')).toBeNull()
   })
 
   test('forgets what a range saw, here and on the account', async () => {
@@ -199,13 +196,11 @@ describe('a service from before the Web icons', () => {
       expect(server.calls).toBe(1)
       expect(siteIcons.list).toHaveLength(0)
       expect(siteIcons.lacking).toBe(true)
-      expect(siteSet().unoffered).toBe(true)
 
       server.refuse = null
       vi.setSystemTime(Date.now() + 11 * 60_000)
       await siteIcons.refresh()
       expect(siteIcons.lacking).toBe(false)
-      expect(siteSet().unoffered).toBe(false)
     } finally {
       server.refuse = null
       vi.useRealTimers()

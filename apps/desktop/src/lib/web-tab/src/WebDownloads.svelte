@@ -6,7 +6,7 @@
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { dur, fly } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { showLabel } from '../../reveal'
+  import { showLabel } from '../../files-out/src/api'
   import { downloads, type Download } from './downloads.svelte'
 
   const { onclose }: { onclose: () => void } = $props()

@@ -1,5 +1,4 @@
 import { account, api } from '../../accounts/src/api'
-import type { LoadedSet } from '../../icon-sets'
 import { isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:site-icons'
@@ -222,35 +221,3 @@ class SiteIcons {
 export const siteIcons = new SiteIcons()
 
 account.forgetWithSession(() => siteIcons.forgetAccount())
-
-export function siteLabel(one: HeldSite): string {
-  return one.label || one.site
-}
-
-class SiteSet implements LoadedSet {
-  groups = []
-
-  get unoffered() {
-    return siteIcons.lacking
-  }
-
-  get entries() {
-    return siteIcons.list
-      .filter((one) => one.picture !== null)
-      .map((one) => ({
-        name: one.site,
-        words: siteLabel(one).toLowerCase(),
-        terms: `${one.site} ${one.site.replace(/\./g, ' ')}`,
-      }))
-  }
-
-  shape(name: string) {
-    const src = siteIcons.picture(name)
-    return src ? { kind: 'picture' as const, src } : null
-  }
-}
-
-export function siteSet(): LoadedSet {
-  void siteIcons.refresh()
-  return new SiteSet()
-}

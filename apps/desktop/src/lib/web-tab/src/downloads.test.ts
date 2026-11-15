@@ -15,7 +15,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 
 const revealed: string[] = []
-vi.mock('../../reveal', () => ({
+vi.mock('../../files-out/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../files-out/src/api')>()),
   reveal: (path: string) => {
     revealed.push(path)
     return Promise.resolve()

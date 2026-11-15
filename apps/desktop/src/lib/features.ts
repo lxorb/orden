@@ -5,6 +5,7 @@ import {
   registerHearing,
   registerCommandRows,
   registerCommands,
+  providePort,
   registerFeature,
   registerSettingsPart,
   registerTabKind,
@@ -14,6 +15,7 @@ import { serveLinks } from './link-index/src/api'
 import { searchSpace } from './search/src/api'
 import { partView } from './ui-kit/src/api'
 import { samePath } from './platform/src/api'
+import { hiddenKinds } from './settings.svelte'
 
 serveLinks({
   html: async (text, path) => {
@@ -92,6 +94,13 @@ if (!__EVEN_PLUGIN__) {
     async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
   )
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  providePort('explorer.show', {
+    offered: () => hiddenKinds.offers('explorer'),
+    show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
+  })
+  providePort('web.siteIcons', {
+    held: async () => (await (await import('./web-tab/src/api')).siteIconSet()).siteIcons,
+  })
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
   registerCommand('ai.threads', async () => {

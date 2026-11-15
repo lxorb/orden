@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 let asked: string[] = []
 
-vi.mock('./icon-sets', () => {
+vi.mock('./icons/src/api', () => {
   const held = (id: string) => ({
     entries: [{ name: `${id}-one`, words: 'one' }],
     groups: [],
@@ -10,7 +10,6 @@ vi.mock('./icon-sets', () => {
   })
 
   return {
-    DEFAULT_SET: 'lucide',
     FLAT_COLOUR: 'flat-color-icons',
     ICON_SETS: [],
     setNamed: (id: string) => {

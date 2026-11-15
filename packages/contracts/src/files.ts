@@ -10,3 +10,12 @@ export interface PandocPicture {
   link: string
   data: string
 }
+
+export interface ExplorerShowPort {
+  offered(): boolean
+  show(path: string): Promise<boolean>
+}
+
+export interface FilePorts {
+  readonly 'explorer.show': ExplorerShowPort
+}

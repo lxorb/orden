@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { siteIconSet } from './web-tab/src/api'
   import { account } from './accounts/src/api'
   import { ACCENTS } from './theme/src/api'
   import { closeOnBack } from './ui-kit/src/api'
@@ -9,7 +8,14 @@
   import { tintOf, wear, wornBy } from './icon-target'
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
-  import { LATER_SETS, type LoadedSet, mergeSets, PICKER_SETS, pickerCredit } from './icon-sets'
+  import {
+    LATER_SETS,
+    type LoadedSet,
+    mergeSets,
+    PICKER_SETS,
+    pickerCredit,
+    refreshSites,
+  } from './icons/src/api'
   import {
     EMOJI_OUTLINE,
     type IconEntry,
@@ -190,7 +196,7 @@
     tint = untrack(() => tintOf(asked))
 
     if (untrack(() => iconLibrary.loaded[SITE_ICONS])) {
-      void siteIconSet().then((one) => one.siteIcons.refresh())
+      refreshSites()
     }
 
     clearTimeout(focusing)
