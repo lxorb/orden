@@ -52,6 +52,7 @@ export interface InternalWorld {
   key(): string
   foldsCase: boolean
   exclusive?<T>(name: string, then: () => Promise<T>): Promise<T>
+  newest?: { read(): number; write(gen: number): void }
   channel?(
     name: string,
     heard: (message: unknown) => void,
@@ -215,6 +216,7 @@ export class InternalFolder {
 
   private async change(change: () => InternalChange[] | null): Promise<void> {
     const run = async () => {
+      if ((this.world.newest?.read() ?? 0) > this.gen) this.stale = true
       await this.fresh()
       const paths = new Map(this.paths)
       const trashed = [...this.trashed]
@@ -246,6 +248,7 @@ export class InternalFolder {
     const into: 0 | 1 = this.holding === 0 ? 1 : 0
     await this.bytes.writeSlot(into, JSON.stringify(written))
     this.gen = written.gen
+    this.world.newest?.write(written.gen)
     this.holding = into
     this.stamps.clear()
   }

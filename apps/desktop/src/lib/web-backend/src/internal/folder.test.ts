@@ -190,6 +190,21 @@ describe('a folder Orden keeps', () => {
     expect(heard).toContain('created')
   })
 
+  test('a window that takes its turn before word of the last change reaches it reads that change first', async () => {
+    const bytes = new MemoryBytes()
+    const windows = sharedWindows(true)
+    const one = await opened(bytes, windows.world())
+    const two = await opened(bytes, windows.world())
+
+    await one.write('Plan.md', 'from one')
+    await two.write('Goals.md', 'from two')
+    await windows.settled()
+
+    const after = await opened(bytes)
+    expect(after.atNow('Plan.md')).not.toBeNull()
+    expect(after.atNow('Goals.md')).not.toBeNull()
+  })
+
   test('writes when a file was last written down a moment after, or with the next change', async () => {
     const bytes = new MemoryBytes()
     const folder = await opened(bytes)
