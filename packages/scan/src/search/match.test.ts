@@ -457,6 +457,49 @@ Words.
   })
 })
 
+describe('front matter read the way the properties read it', () => {
+  const held = (source: string, front: string) =>
+    answers(source, { body: `---\n${front}\n---\n\nWords.\n` })
+
+  test('looks at each item of a list, under the key or in brackets', () => {
+    expect(held('[authors:Herbert]', 'authors:\n  - Herbert\n  - Asimov')).toBe(true)
+    expect(held('[authors:=Asimov]', 'authors:\n  - Herbert\n  - Asimov')).toBe(true)
+    expect(held('[authors:Clarke]', 'authors:\n  - Herbert\n  - Asimov')).toBe(false)
+    expect(held('[tags:=a]', 'tags: [a, b]')).toBe(true)
+    expect(held('[tags:=b]', 'tags: [a, b]')).toBe(true)
+    expect(held('[tags:=c]', 'tags: [a, b]')).toBe(false)
+    expect(held('[authors]', 'authors:\n  - Herbert')).toBe(true)
+  })
+
+  test('takes the quotes off a value', () => {
+    expect(held('[status:=done]', 'status: "done"')).toBe(true)
+    expect(held('[status:=done]', "status: 'done'")).toBe(true)
+    expect(held('[rating:>3]', 'rating: "5"')).toBe(true)
+    expect(held('[rating:<3]', 'rating: "5"')).toBe(false)
+  })
+
+  test('leaves a comment after the value out of it', () => {
+    expect(held('[status:=done]', 'status: done # finished')).toBe(true)
+    expect(held('[status:finished]', 'status: done # finished')).toBe(false)
+    expect(held('[rating:>3]', 'rating: 5 # out of five')).toBe(true)
+  })
+
+  test('counts a list with nothing in it as nothing', () => {
+    expect(held('[tags:null]', 'tags: []')).toBe(true)
+    expect(held('[tags:null]', 'tags: [a]')).toBe(false)
+    expect(held('[status:null]', 'status: ""')).toBe(true)
+  })
+
+  test('in a note that opens with a byte order mark', () => {
+    const body = '\uFEFF---\nauthors:\n  - Herbert\n---\n\nWords.\n'
+    expect(answers('[authors:=Herbert]', { body })).toBe(true)
+  })
+
+  test('still answers a key in any case', () => {
+    expect(held('[status:=done]', 'Status: done')).toBe(true)
+  })
+})
+
 describe('line offsets', () => {
   test('start at the top of every line', () => {
     expect(lineStarts('a\nbb\n\nc')).toEqual([0, 2, 5, 6])
