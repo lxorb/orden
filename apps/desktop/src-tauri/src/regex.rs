@@ -60,9 +60,21 @@ enum Step {
     Boundary(bool),
     Save(usize),
     Advanced(usize),
-    Clear { from: usize, to: usize },
-    Split { first: usize, second: usize },
+    Clear {
+        from: usize,
+        to: usize,
+    },
+    Split {
+        first: usize,
+        second: usize,
+    },
     Jump(usize),
+    Look {
+        behind: Option<usize>,
+        negated: bool,
+        after: usize,
+    },
+    Backref(usize),
     Done,
 }
 
@@ -80,6 +92,7 @@ struct Run<'a> {
     choices: Vec<Resume>,
     pc: usize,
     pos: usize,
+    stop: Option<usize>,
 }
 
 #[derive(Clone)]
@@ -110,9 +123,18 @@ enum Node {
     End,
     Boundary(bool),
     Group(Option<usize>, Box<Node>),
+    Look(Look, Box<Node>),
+    Backref(usize),
+    Named(String),
     Seq(Vec<Node>),
     Alt(Vec<Node>),
     Repeat(Box<Node>, Limits),
+}
+
+#[derive(Clone, Copy)]
+struct Look {
+    behind: bool,
+    negated: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -141,15 +163,17 @@ impl Pattern {
             at: 0,
             groups: 0,
             depth: 0,
+            names: Vec::new(),
         };
 
-        let node = parser.alternation()?;
+        let mut node = parser.alternation()?;
 
         if parser.at != src.len() {
             return None;
         }
 
         let groups = parser.groups;
+        called_back(&mut node, &parser.names, groups)?;
         let mut program = Program {
             steps: Vec::new(),
             classes: Vec::new(),
@@ -206,13 +230,27 @@ impl Pattern {
     }
 
     fn attempt(&self, text: &str, start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
+        let cells = vec![UNSET; self.program.cells];
+        self.attempt_from(text, start, 0, cells, None, budget)
+    }
+
+    fn attempt_from(
+        &self,
+        text: &str,
+        start: usize,
+        pc: usize,
+        cells: Vec<usize>,
+        stop: Option<usize>,
+        budget: &Cell<usize>,
+    ) -> Option<Vec<usize>> {
         let mut run = Run {
             text,
-            cells: vec![UNSET; self.program.cells],
+            cells,
             trail: Vec::new(),
             choices: Vec::new(),
-            pc: 0,
+            pc,
             pos: start,
+            stop,
         };
 
         loop {
@@ -286,9 +324,81 @@ impl Pattern {
                     run.pc = first;
                 }
                 Step::Jump(target) => run.pc = target,
-                Step::Done => return Some(true),
+                Step::Look {
+                    behind,
+                    negated,
+                    after,
+                } => {
+                    match self.looks(run, behind, budget)? {
+                        Seen::Found(cells) if !negated => run.adopt(cells),
+                        Seen::Missed if negated => {}
+                        _ => return Some(false),
+                    }
+                    run.pc = after;
+                }
+                Step::Backref(group) => {
+                    let Some(to) = self.called(run, group) else {
+                        return Some(false);
+                    };
+                    run.pos = to;
+                    run.pc += 1;
+                }
+                Step::Done => return Some(run.stop.is_none_or(|stop| stop == run.pos)),
             }
         }
+    }
+
+    fn looks(&self, run: &Run, behind: Option<usize>, budget: &Cell<usize>) -> Option<Seen> {
+        let body = run.pc.checked_add(1)?;
+        let Some(longest) = behind else {
+            let seen = self.attempt_from(run.text, run.pos, body, run.cells.clone(), None, budget);
+            return unless_spent(seen, budget);
+        };
+
+        let head = run.text.get(..run.pos)?;
+        let starts = std::iter::once(run.pos).chain(head.char_indices().rev().map(|(at, _)| at));
+        let reach = longest.saturating_add(1);
+
+        for start in starts.take(reach) {
+            let seen = self.attempt_from(
+                run.text,
+                start,
+                body,
+                run.cells.clone(),
+                Some(run.pos),
+                budget,
+            );
+            if let Seen::Found(cells) = unless_spent(seen, budget)? {
+                return Some(Seen::Found(cells));
+            }
+        }
+
+        Some(Seen::Missed)
+    }
+
+    fn called(&self, run: &Run, group: usize) -> Option<usize> {
+        let Some((from, to)) = span(&run.cells, group) else {
+            return Some(run.pos);
+        };
+        let wanted = run.text.get(from..to)?;
+        let rest = run.text.get(run.pos..)?;
+
+        let mut taken = 0;
+        let mut letters = rest.chars();
+        for want in wanted.chars() {
+            let got = letters.next()?;
+            let same = if self.fold {
+                folded(got) == folded(want)
+            } else {
+                got == want
+            };
+            if !same {
+                return None;
+            }
+            taken += got.len_utf8();
+        }
+
+        run.pos.checked_add(taken)
     }
 
     fn accepts(&self, step: Step, c: char) -> bool {
@@ -325,7 +435,32 @@ impl Pattern {
     }
 }
 
+enum Seen {
+    Found(Vec<usize>),
+    Missed,
+}
+
+fn unless_spent(seen: Option<Vec<usize>>, budget: &Cell<usize>) -> Option<Seen> {
+    match seen {
+        Some(cells) => Some(Seen::Found(cells)),
+        None if budget.get() == 0 => None,
+        None => Some(Seen::Missed),
+    }
+}
+
 impl Run<'_> {
+    fn adopt(&mut self, cells: Vec<usize>) {
+        for (cell, now) in cells.into_iter().enumerate() {
+            let Some(slot) = self.cells.get_mut(cell) else {
+                continue;
+            };
+            if *slot != now {
+                self.trail.push((cell, *slot));
+                *slot = now;
+            }
+        }
+    }
+
     fn backtrack(&mut self) -> bool {
         let Some(resume) = self.choices.pop() else {
             return false;
@@ -476,6 +611,7 @@ struct Parser<'a> {
     at: usize,
     groups: usize,
     depth: usize,
+    names: Vec<(String, usize)>,
 }
 
 impl Parser<'_> {
@@ -535,12 +671,40 @@ impl Parser<'_> {
             Quantifier::Absent => Some(atom),
             Quantifier::Broken => None,
             Quantifier::Given(limits) => {
-                if matches!(self.peek(), Some('*' | '+' | '?' | '{')) {
+                if !repeatable(&atom) || self.quantifier_ahead() {
                     return None;
                 }
                 Some(Node::Repeat(Box::new(atom), limits))
             }
         }
+    }
+
+    fn quantifier_ahead(&self) -> bool {
+        match self.peek() {
+            Some('*' | '+' | '?') => true,
+            Some('{') => self.counted_ahead(),
+            _ => false,
+        }
+    }
+
+    fn counted_ahead(&self) -> bool {
+        let mut at = self.at.saturating_add(1);
+        let digits = |from: usize| {
+            self.src.get(from..).map_or(0, |rest| {
+                rest.iter().take_while(|c| c.is_ascii_digit()).count()
+            })
+        };
+
+        let first = digits(at);
+        if first == 0 {
+            return false;
+        }
+        at += first;
+        if self.src.get(at) == Some(&',') {
+            at += 1;
+            at += digits(at);
+        }
+        self.src.get(at) == Some(&'}')
     }
 
     fn atom(&mut self) -> Option<Node> {
@@ -552,22 +716,57 @@ impl Parser<'_> {
             '(' => self.group(),
             '[' => self.class().map(Node::Class),
             '\\' => self.escape(),
-            '*' | '+' | '?' | '{' => None,
+            '*' | '+' | '?' => None,
+            '{' => {
+                self.at -= 1;
+                let counted = self.counted_ahead();
+                self.at += 1;
+                (!counted).then_some(Node::Char('{'))
+            }
             _ => Some(Node::Char(c)),
         }
     }
 
     fn group(&mut self) -> Option<Node> {
-        let number = if self.peek() == Some('?') {
-            if self.ahead(1) != Some(':') {
-                return None;
+        let mut look = None;
+        let number = if self.eat_if('?') {
+            match (self.eat()?, self.peek()) {
+                (':', _) => None,
+                ('=', _) => {
+                    look = Some(Look {
+                        behind: false,
+                        negated: false,
+                    });
+                    None
+                }
+                ('!', _) => {
+                    look = Some(Look {
+                        behind: false,
+                        negated: true,
+                    });
+                    None
+                }
+                ('<', Some(mark @ ('=' | '!'))) => {
+                    self.at += 1;
+                    look = Some(Look {
+                        behind: true,
+                        negated: mark == '!',
+                    });
+                    None
+                }
+                ('<', _) => {
+                    let name = self.name()?;
+                    if self.names.iter().any(|(taken, _)| *taken == name) {
+                        return None;
+                    }
+                    let given = self.capture()?;
+                    self.names.push((name, given));
+                    Some(given)
+                }
+                _ => return None,
             }
-            self.at += 2;
-            None
         } else {
-            let given = self.groups;
-            self.groups = self.groups.checked_add(1)?;
-            Some(given)
+            Some(self.capture()?)
         };
 
         self.depth += 1;
@@ -581,7 +780,93 @@ impl Parser<'_> {
             return None;
         }
 
+        if let Some(look) = look {
+            return Some(Node::Look(look, Box::new(inner)));
+        }
         Some(Node::Group(number, Box::new(inner)))
+    }
+
+    fn capture(&mut self) -> Option<usize> {
+        let given = self.groups;
+        self.groups = self.groups.checked_add(1)?;
+        Some(given)
+    }
+
+    fn name(&mut self) -> Option<String> {
+        let mut name = String::new();
+        loop {
+            let c = self.eat()?;
+            if c == '>' {
+                break;
+            }
+            let fits = if name.is_empty() {
+                c.is_alphabetic() || c == '_' || c == '$'
+            } else {
+                c.is_alphanumeric() || c == '_' || c == '$'
+            };
+            if !fits {
+                return None;
+            }
+            name.push(c);
+        }
+        (!name.is_empty()).then_some(name)
+    }
+
+    fn coded(&mut self, c: char) -> Option<char> {
+        match c {
+            'x' => {
+                let value = self.hex(2)?;
+                char::from_u32(value)
+            }
+            'u' => {
+                if self.eat_if('{') {
+                    let mut value: u32 = 0;
+                    let mut seen = 0;
+                    while let Some(digit) = self.peek().and_then(|d| d.to_digit(16)) {
+                        value = value.checked_mul(16)?.checked_add(digit)?;
+                        if value > 0x10_ffff {
+                            return None;
+                        }
+                        seen += 1;
+                        self.at += 1;
+                    }
+                    if seen == 0 || !self.eat_if('}') {
+                        return None;
+                    }
+                    return char::from_u32(value);
+                }
+                let high = self.hex(4)?;
+                if !(0xd800..0xdc00).contains(&high) {
+                    return char::from_u32(high);
+                }
+                if self.peek() != Some('\\') || self.ahead(1) != Some('u') {
+                    return None;
+                }
+                self.at += 2;
+                let low = self.hex(4)?;
+                if !(0xdc00..0xe000).contains(&low) {
+                    return None;
+                }
+                let value = 0x1_0000 + ((high - 0xd800) << 10) + (low - 0xdc00);
+                char::from_u32(value)
+            }
+            'c' => {
+                let letter = self.peek().filter(char::is_ascii_alphabetic)?;
+                self.at += 1;
+                char::from_u32(u32::from(letter) % 32)
+            }
+            _ => None,
+        }
+    }
+
+    fn hex(&mut self, count: usize) -> Option<u32> {
+        let mut value: u32 = 0;
+        for _ in 0..count {
+            let digit = self.peek()?.to_digit(16)?;
+            value = value * 16 + digit;
+            self.at += 1;
+        }
+        Some(value)
     }
 
     fn escape(&mut self) -> Option<Node> {
@@ -594,6 +879,23 @@ impl Parser<'_> {
         match c {
             'b' => Some(Node::Boundary(true)),
             'B' => Some(Node::Boundary(false)),
+            '1'..='9' => {
+                let mut number = usize::try_from(c.to_digit(10)?).ok()?;
+                while let Some(digit) = self.peek().and_then(|d| d.to_digit(10)) {
+                    number = number
+                        .checked_mul(10)?
+                        .checked_add(usize::try_from(digit).ok()?)?;
+                    self.at += 1;
+                }
+                Some(Node::Backref(number))
+            }
+            'k' => {
+                if !self.eat_if('<') {
+                    return None;
+                }
+                self.name().map(Node::Named)
+            }
+            'x' | 'u' | 'c' => self.coded(c).map(Node::Char),
             _ => literal_escape(c, self.peek()).map(Node::Char),
         }
     }
@@ -661,6 +963,10 @@ impl Parser<'_> {
             return Some(Member::One('\u{8}'));
         }
 
+        if matches!(escaped, 'x' | 'u' | 'c') {
+            return self.coded(escaped).map(Member::One);
+        }
+
         literal_escape(escaped, self.peek()).map(Member::One)
     }
 
@@ -683,6 +989,9 @@ impl Parser<'_> {
                 (0, Some(1))
             }
             '{' => {
+                if !self.counted_ahead() {
+                    return Quantifier::Absent;
+                }
                 let Some(counts) = self.braces() else {
                     return Quantifier::Broken;
                 };
@@ -839,7 +1148,65 @@ fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
             }
             first_of(inner, fold)
         }
-        Node::Any | Node::Start | Node::End | Node::Boundary(_) => None,
+        Node::Any
+        | Node::Start
+        | Node::End
+        | Node::Boundary(_)
+        | Node::Look(..)
+        | Node::Backref(_)
+        | Node::Named(_) => None,
+    }
+}
+
+fn repeatable(atom: &Node) -> bool {
+    !matches!(
+        atom,
+        Node::Look(..) | Node::Start | Node::End | Node::Boundary(_)
+    )
+}
+
+fn called_back(node: &mut Node, names: &[(String, usize)], groups: usize) -> Option<()> {
+    match node {
+        Node::Named(name) => {
+            let index = names.iter().find(|(given, _)| given == name)?.1;
+            *node = Node::Backref(index.checked_add(1)?);
+        }
+        Node::Backref(group) => {
+            if *group > groups {
+                return None;
+            }
+        }
+        Node::Group(_, inner) | Node::Look(_, inner) | Node::Repeat(inner, _) => {
+            called_back(inner, names, groups)?;
+        }
+        Node::Seq(nodes) | Node::Alt(nodes) => {
+            for inner in nodes {
+                called_back(inner, names, groups)?;
+            }
+        }
+        Node::Char(_)
+        | Node::Any
+        | Node::Class(_)
+        | Node::Start
+        | Node::End
+        | Node::Boundary(_) => {}
+    }
+    Some(())
+}
+
+fn longest(node: &Node) -> Option<usize> {
+    match node {
+        Node::Char(_) | Node::Any | Node::Class(_) => Some(1),
+        Node::Start | Node::End | Node::Boundary(_) | Node::Look(..) => Some(0),
+        Node::Group(_, inner) => longest(inner),
+        Node::Seq(nodes) => nodes
+            .iter()
+            .try_fold(0usize, |sum, inner| sum.checked_add(longest(inner)?)),
+        Node::Alt(nodes) => nodes
+            .iter()
+            .try_fold(0usize, |most, inner| Some(most.max(longest(inner)?))),
+        Node::Repeat(inner, limits) => longest(inner)?.checked_mul(limits.max?),
+        Node::Backref(_) | Node::Named(_) => None,
     }
 }
 
@@ -950,6 +1317,25 @@ impl Program {
                     self.emit(inner)?;
                 }
             }
+            Node::Look(look, inner) => {
+                let behind = look.behind.then(|| longest(inner).unwrap_or(usize::MAX));
+                let at = self.push(Step::Jump(0))?;
+                self.emit(inner)?;
+                self.push(Step::Done)?;
+                let after = self.steps.len();
+                self.patch(
+                    at,
+                    Step::Look {
+                        behind,
+                        negated: look.negated,
+                        after,
+                    },
+                )?;
+            }
+            Node::Backref(group) => {
+                self.push(Step::Backref(*group))?;
+            }
+            Node::Named(_) => return None,
             Node::Seq(nodes) => {
                 for inner in nodes {
                     self.emit(inner)?;
@@ -1089,7 +1475,7 @@ fn groups_in(node: &Node) -> Option<(usize, usize)> {
             .iter()
             .filter_map(groups_in)
             .reduce(|a, b| (a.0.min(b.0), a.1.max(b.1))),
-        Node::Repeat(inner, _) => groups_in(inner),
+        Node::Repeat(inner, _) | Node::Look(_, inner) => groups_in(inner),
         _ => None,
     }
 }
@@ -1398,9 +1784,6 @@ mod tests {
             "[",
             "[a",
             "[a-",
-            "a{",
-            "a{,2}",
-            "a{x}",
             "a{2,1}",
             "a{1001}",
             "*a",
@@ -1411,17 +1794,23 @@ mod tests {
             "a+*",
             "a*??",
             "a{1}{2}",
-            "(?=a)",
-            "(?!a)",
-            "(?<=a)",
-            "(?<name>a)",
             "(?i)a",
             r"\1",
             r"\p{L}",
-            r"\u{0041}",
-            r"\x41",
             r"\a",
             r"\01",
+            r"(a)\2",
+            r"\k<x>",
+            "(?<x>a)(?<x>b)",
+            "(?<1x>a)",
+            "(?=a)*",
+            r"\u{110000}",
+            r"\uD83D",
+            r"[\1]",
+            "{2}",
+            "^*",
+            "$+",
+            r"\b{2}",
             "a\\",
             "[z-a]",
         ] {
@@ -1430,6 +1819,56 @@ mod tests {
                 "{source} should not compile"
             );
         }
+    }
+
+    #[test]
+    fn a_look_around_asks_without_taking() {
+        assert_eq!(spans("foo(?!bar)", "foobar foobaz", 0), Some((7, 10)));
+        assert_eq!(spans("foo(?=baz)", "foobar foobaz", 0), Some((7, 10)));
+        assert_eq!(spans(r"(?<=\$)\d+", "a 12 $34", 0), Some((6, 8)));
+        assert_eq!(spans(r"(?<!\$)\b\d+", "$12 34", 0), Some((4, 6)));
+        assert_eq!(spans(r"(?<=^|\s)#\w+", "a#b #c", 0), Some((4, 6)));
+        assert_eq!(spans(r"(?<=ä.)x", "äöx", 0), Some((4, 5)));
+        assert_eq!(caught("(?=(a+))a", "aaa"), Some(words(&["aaa"])));
+        assert_eq!(caught("(?!(b))a", "a"), Some(words(&[""])));
+        assert_eq!(folding("(?<=X)y", "xY").as_deref(), Some("Y"));
+    }
+
+    #[test]
+    fn a_group_is_called_back_by_number_or_by_name() {
+        assert_eq!(first(r"(\w)\1", "abccd").as_deref(), Some("cc"));
+        assert_eq!(folding(r"(a)\1", "aA").as_deref(), Some("aA"));
+        assert_eq!(
+            first(r"(?<y>\d{4})-\k<y>", "2024-2025 2024-2024").as_deref(),
+            Some("2024-2024")
+        );
+        assert_eq!(caught(r"(?<y>\d{4})", "in 2024"), Some(words(&["2024"])));
+        assert_eq!(first(r"(a)|b\1", "b").as_deref(), Some("b"));
+        assert_eq!(first(r"(ä)\1", "aää").as_deref(), Some("ää"));
+    }
+
+    #[test]
+    fn a_letter_can_be_written_by_its_code() {
+        assert_eq!(first(r"\x41", "zA").as_deref(), Some("A"));
+        assert_eq!(first(r"\u0041", "zA").as_deref(), Some("A"));
+        assert_eq!(first(r"\u{1F600}", "a😀").as_deref(), Some("😀"));
+        assert_eq!(first(r"\uD83D\uDE00", "a😀").as_deref(), Some("😀"));
+        assert_eq!(first(r"a\cJb", "a\nb").as_deref(), Some("a\nb"));
+        assert_eq!(first(r"[\x41-\x43]+", "ABCD").as_deref(), Some("ABC"));
+        assert_eq!(first(r"[\u{1F600}]", "😀").as_deref(), Some("😀"));
+    }
+
+    #[test]
+    fn a_brace_that_counts_nothing_is_a_brace() {
+        assert_eq!(
+            first(r"{{\w+}}", "say {{name}} here").as_deref(),
+            Some("{{name}}")
+        );
+        assert_eq!(first("a{,3}", "a{,3}").as_deref(), Some("a{,3}"));
+        assert_eq!(first("a{", "a{").as_deref(), Some("a{"));
+        assert_eq!(first("a{x}", "a{x}").as_deref(), Some("a{x}"));
+        assert_eq!(first("a{2}{", "aa{").as_deref(), Some("aa{"));
+        assert_eq!(first("}", "a}").as_deref(), Some("}"));
     }
 
     #[test]
