@@ -1108,7 +1108,9 @@ class Links {
     const now = within(root, to)
     if (!was || !now || was === now) return 0
 
-    if (this.root !== null && samePath(root, this.root)) {
+    const here = () => this.root !== null && samePath(root, this.root)
+    if (here()) await this.scanned()
+    if (here()) {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's notes, thrown away after it
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(

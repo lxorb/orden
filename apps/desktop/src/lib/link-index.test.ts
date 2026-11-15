@@ -1654,3 +1654,15 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     expect(notes['One.md']).toBe('see [[Plan]]\n')
   })
 })
+
+describe('a rename while the space is still being read', () => {
+  test('waits for the rows and rewrites the links to the note', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]\n' })
+
+    const renamed = links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+    await scan.land()
+
+    expect(await renamed).toBe(1)
+    expect(notes['One.md']).toBe('see [[Roadmap]]\n')
+  })
+})
