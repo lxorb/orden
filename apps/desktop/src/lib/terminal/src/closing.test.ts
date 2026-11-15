@@ -164,8 +164,8 @@ describe('an online terminal saved in the sidebar, closed', () => {
 test("the strip's, the overview's and the keys' closes all ask through the store", () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
   const store = read('../../workspace/src/workspace.svelte.ts')
-  expect(store).toMatch(/async closeAsking[\s\S]{0,200}this\.mayClose\(\[tab\]\)/)
-  expect(store).toMatch(/async closeMany[\s\S]{0,200}this\.mayClose\(going\)/)
+  expect(store).toMatch(/async closeAsking[\s\S]{0,200}this\.mayClose\(\[tab\], /)
+  expect(store).toMatch(/async closeMany[\s\S]{0,200}this\.mayClose\(going, /)
   expect(store).toMatch(/mayEnd\(closing, this\.tabs\)/)
   expect(read('../../tab-strip/src/Tabs.svelte')).toContain('workspace.closeAsking(tab.id)')
   expect(read('../../overview/src/Overview.svelte')).toContain('workspace.closeAsking(tab.id)')

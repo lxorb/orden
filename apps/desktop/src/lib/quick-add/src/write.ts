@@ -22,7 +22,8 @@ async function addOne(entry: Entry): Promise<Todo | null> {
     title: entry.text,
     description: entry.description ?? '',
     labels: entry.fields.tags,
-    deadline: entry.fields.deadline ?? entry.fields.due ?? null,
+    start: entry.fields.due ?? null,
+    deadline: entry.fields.deadline ?? null,
     priority: priorityOf(entry.fields.priority),
   })
   return made.ok ? made.value : null
