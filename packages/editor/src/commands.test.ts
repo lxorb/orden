@@ -1157,6 +1157,30 @@ describe('lines a list command leaves to their block', () => {
     expect(at(toggleQuote, '  > a', 4)).toBe('  a')
   })
 
+  test('quoting a whole list keeps every line in its item', () => {
+    expect(all(toggleQuote, '- a\n\n  b')).toBe('> - a\n> \n>   b')
+    expect(all(toggleQuote, '- a\n  ```\n  x\n  ```\n- b')).toBe(
+      '> - a\n>   ```\n>   x\n>   ```\n> - b',
+    )
+  })
+
+  test('quoting a nested item keeps it under its parent', () => {
+    expect(at(toggleQuote, '- a\n  - b', 9)).toBe('- a\n  > - b')
+    expect(at(toggleQuote, '1. a\n   1. b', 12)).toBe('1. a\n   > 1. b')
+    const nested = '- a\n  - b\n    c'
+    expect(apply(toggleQuote, nested, 6, nested.length).doc).toBe('- a\n  > - b\n  >   c')
+  })
+
+  test('a lazy line under a nested item goes with the list', () => {
+    expect(all(toggleBulletList, '- a\n  - b\n  c')).toBe('a\nb\nc')
+    expect(all(toggleOrderedList, '1. a\n   1. b\n   c')).toBe('a\nb\nc')
+  })
+
+  test('a blank line in code and a picture on its own line', () => {
+    expect(at(toggleBulletList, '```\n\n```', 4)).toBe('```\n\n```')
+    expect(all(toggleBulletList, '<img src="p.png">')).toBe('- <img src="p.png">')
+  })
+
   test('a list leaves code, tables and front matter outside items as they are', () => {
     expect(all(toggleBulletList, 'a\n```\n1. x\n```\nb')).toBe('- a\n```\n1. x\n```\n- b')
     expect(all(toggleBulletList, '- a\n```\n- x\n```\n- b')).toBe('a\n```\n- x\n```\nb')

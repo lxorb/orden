@@ -224,34 +224,56 @@ export function shiftHeading(delta: number): StateCommand {
 
 const QUOTE_MARK = /^([ \t]*)>[ \t]?/
 
-function quoteAt(state: EditorState, line: Line): number {
-  const space = INDENT.exec(line.text)?.[0] ?? ''
-  const content = itemContent(state, quotedLine(line))
-  if (content === null) return 0
-  let column = 0
+function quoteColumn(state: EditorState, first: Line, last: Line): number {
+  const tree = ensureSyntaxTree(state, last.to, 50) ?? syntaxTree(state)
+  const start = first.from + (INDENT.exec(first.text)?.[0].length ?? 0)
+  for (let node: SyntaxNode | null = tree.resolveInner(start, 1); node; node = node.parent) {
+    if (node.name !== 'ListItem' || node.from >= first.from || node.to < last.from) continue
+    return columnOf(MARKER.exec(state.doc.lineAt(node.from).text)?.[0] ?? '')
+  }
+  return 0
+}
+
+function offsetAt(text: string, column: number): number {
+  const space = INDENT.exec(text)?.[0] ?? ''
+  let reached = 0
   let at = 0
-  while (at < space.length && column < content) {
-    column = space[at] === '\t' ? column + 4 - (column % 4) : column + 1
+  while (at < space.length && reached < column) {
+    reached = space[at] === '\t' ? reached + 4 - (reached % 4) : reached + 1
     at++
   }
   return at
+}
+
+function runsOf(lines: Line[]): Line[][] {
+  const runs: Line[][] = []
+  for (const line of lines) {
+    const run = runs.at(-1)
+    if (run && run.at(-1)?.number === line.number - 1) run.push(line)
+    else runs.push([line])
+  }
+  return runs
 }
 
 export const toggleQuote: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
   const allQuoted = lines.every((line) => QUOTE_MARK.test(line.text))
 
-  const changes: ChangeSpec[] = lines.map((line) => {
-    const existing = QUOTE_MARK.exec(line.text)
-    if (existing) {
-      const lead = existing[1]?.length ?? 0
-      const end = existing[0].length
-      return allQuoted
-        ? { from: line.from + lead, to: line.from + end, insert: '' }
-        : { from: line.from + lead, to: line.from + end, insert: '> ' }
-    }
-    const at = line.from + quoteAt(state, line)
-    return { from: at, insert: '> ' }
+  const changes: ChangeSpec[] = runsOf(lines).flatMap((run) => {
+    const [first] = run
+    const last = run.at(-1)
+    const column = first && last ? quoteColumn(state, first, last) : 0
+    return run.map((line): ChangeSpec => {
+      const existing = QUOTE_MARK.exec(line.text)
+      if (existing) {
+        const lead = existing[1]?.length ?? 0
+        const end = existing[0].length
+        return allQuoted
+          ? { from: line.from + lead, to: line.from + end, insert: '' }
+          : { from: line.from + lead, to: line.from + end, insert: '> ' }
+      }
+      return { from: line.from + offsetAt(line.text, column), insert: '> ' }
+    })
   })
 
   dispatch(state.update({ changes, userEvent: 'input' }))
@@ -464,7 +486,7 @@ function itemContent(state: EditorState, line: Quoted): number | null {
     if (line.depth < item.depth) return null
     const content = columnOf(MARKER.exec(item.text)?.[0] ?? item.space)
     const column = line.depth === item.depth ? line.column : (line.levels[item.depth] ?? 0)
-    return column >= content ? content : null
+    if (column >= content) return content
   }
   return null
 }
@@ -483,9 +505,14 @@ const HELD = new Set([
   'FrontMatter',
 ])
 
+const SINGLE_LINE_FREE = new Set(['HTMLBlock', 'CommentBlock'])
+
 function inBlock(state: EditorState, line: Quoted): boolean {
   const tree = ensureSyntaxTree(state, line.start + line.text.length, 50) ?? syntaxTree(state)
-  return enclosingNamed(tree.resolveInner(line.from + line.space.length, 1), HELD) !== null
+  const block = enclosingNamed(tree.resolveInner(line.from + line.space.length, 1), HELD)
+  if (!block) return false
+  if (!SINGLE_LINE_FREE.has(block.name)) return true
+  return state.doc.lineAt(block.from).number !== state.doc.lineAt(block.to).number
 }
 
 interface Restart {
@@ -508,6 +535,7 @@ function toggleList(
     const listed = free.filter((line) => !carriedIn(state, line))
     const items = listed.length ? listed : free
     if (written.length && !items.length) return false
+    if (!written.length && quoted.every((line) => inBlock(state, line))) return false
     const skipsBlank = written.length > 0
     const lines = skipsBlank ? items : quoted
     const off = lines.every((line) => own.test(line.text))
