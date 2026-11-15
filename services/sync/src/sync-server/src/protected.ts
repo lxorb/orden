@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { nameKey } from '@orden/sync-core'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
@@ -80,7 +81,11 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
 
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
-  return Object.keys(ways).some((key) => key === '' || path === key || path.startsWith(`${key}/`))
+  const folded = nameKey(path)
+  return Object.keys(ways).some((key) => {
+    const held = nameKey(key)
+    return held === '' || folded === held || folded.startsWith(`${held}/`)
+  })
 }
 
 export type Shut = (spaceId: string, path: string) => boolean

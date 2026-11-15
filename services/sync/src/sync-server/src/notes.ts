@@ -403,12 +403,15 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
 
   if (!path) return context.json({ error: NOT_A_PATH }, 400)
   if (size > MAX_NOTE_BYTES) return context.json({ error: TOO_LARGE }, 413)
-  if ((await programShut(context.env, context.get('who')))?.(space.id, path)) {
-    return context.json({ error: PROTECTED(path) }, 403)
-  }
+  const shut = await programShut(context.env, context.get('who'))
+  if (shut?.(space.id, path)) return context.json({ error: PROTECTED(path) }, 403)
+  const there = async (note: Note) =>
+    shut?.(note.space_id, note.path)
+      ? context.json({ error: PROTECTED(path) }, 403)
+      : await alreadyThere(context, note)
 
   const taken = await noteAt(context.env, space.id, path)
-  if (taken) return await alreadyThere(context, taken)
+  if (taken) return await there(taken)
 
   if (!(await fits(context.env, space.user_id, size))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
@@ -432,7 +435,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
         : await noteAt(context.env, space.id, path)
     if (!won) throw error
 
-    return await alreadyThere(context, won)
+    return await there(won)
   }
 
   await pokeSpace(context.env, laterOf(context), space.id, note.seq, device)

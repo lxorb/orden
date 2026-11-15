@@ -134,6 +134,42 @@ describe('an agent’s token on the routes a token may use', () => {
     expect((await call(env, `/v1/notes/${id}`, { token })).text).toContain('secret words')
   })
 
+  test('reaches none of it by another case or spelling of its path', async () => {
+    await call(env, `/v2/spaces/${home}/prepare`, { token, method: 'POST' })
+    for (const path of ['diary/today.md', 'DIARY/Today.md']) {
+      const made = await call(env, `/v1/spaces/${home}/notes`, {
+        token: key,
+        body: { path, content: 'planted' },
+      })
+      expect(made.status, path).toBe(403)
+      expect(made.text).not.toContain('secret words')
+    }
+    const into = await call(env, `/v1/spaces/${home}/notes`, {
+      token: key,
+      body: { path: 'diary/New.md', content: 'planted' },
+    })
+    expect(into.status).toBe(403)
+
+    const plans = (
+      env.db.prepare("select id from notes where path = 'Plans.md'").get() as { id: string }
+    ).id
+    const moved = await call(env, `/v1/notes/${plans}`, {
+      method: 'PUT',
+      token: key,
+      body: { path: 'diary/Plans.md', content: 'moved' },
+    })
+    expect(moved.status).toBe(403)
+    expect(await tool('write_note', { path: 'diary/Other.md', content: 'planted' })).not.toMatch(
+      /^(Wrote|Made|Saved)/,
+    )
+    const paths = (
+      env.db.prepare('select path from notes where deleted = 0').all() as { path: string }[]
+    ).map((one) => one.path)
+    expect(paths.filter((one) => one.toLowerCase().startsWith('diary/'))).toEqual([
+      'Diary/Today.md',
+    ])
+  })
+
   test('turns none of it back', async () => {
     const id = diaryId()
     env.db.exec('update note_versions set at = at - 360000')
