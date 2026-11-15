@@ -288,7 +288,8 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
-  const folder = judgedForWriting(where.folder ?? folderOf(relative)).replace(/^\.$/, '')
+  const said = (where.folder ?? folderOf(relative)).replace(/^\/+|^\.$/, '')
+  const folder = said ? judgedForWriting(said) : ''
   const rows = await rowsStore()
   const template = await templateOf(place, where.template, rows.of(place.space.name))
   const name = judgedForWriting(noteName(maybe(call, 'title') ?? 'Untitled'))

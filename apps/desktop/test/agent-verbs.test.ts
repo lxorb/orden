@@ -2031,6 +2031,28 @@ describe('to-dos and bases', () => {
     }
   })
 
+  test('a row of a base at the top of the space with no folder filter is made at the top', async () => {
+    files.set(
+      '/s/Home/Reading.base',
+      'filters: file.hasTag("book")\nviews:\n  - type: table\n    name: All\n',
+    )
+    files.set(
+      '/s/Home/Top.base',
+      'filters: file.inFolder("/")\nviews:\n  - type: table\n    name: All\n',
+    )
+
+    expect(
+      await call('add_row', { space: 'Home', base: 'Reading.base', title: 'Emma' }),
+    ).toMatchObject({
+      result: { path: 'Emma.md', created: true },
+    })
+    expect(await call('add_row', { space: 'Home', base: 'Top.base', title: 'Dune' })).toMatchObject(
+      {
+        result: { path: 'Dune.md', created: true },
+      },
+    )
+  })
+
   test('a base is refused while databases are off, and left as it was', async () => {
     const yaml = 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n'
     files.set('/s/Home/Books.base', yaml)
