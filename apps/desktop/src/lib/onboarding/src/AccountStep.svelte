@@ -76,6 +76,11 @@
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
 
+  function changeEmail() {
+    account.step = 'email'
+    account.error = null
+  }
+
   function send() {
     if (typed && !account.busy) void account.requestCode()
   }
@@ -88,6 +93,7 @@
 <Screen
   title="Log in or sign up"
   {head}
+  onback={asking && !signed ? changeEmail : null}
   primary={asking || signed
     ? null
     : {
