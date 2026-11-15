@@ -52,11 +52,34 @@ export const LIMITS = {
 
 export const KIND = 'todo'
 
+const DESCRIPTION_BYTES = 12_000
+
+const encoder = new TextEncoder()
+
+const bytesOf = (text: string): number => encoder.encode(JSON.stringify(text)).length
+
+function wholeSlice(text: string, end: number): string {
+  const code = text.charCodeAt(end - 1)
+  return text.slice(0, code >= 0xd800 && code <= 0xdbff ? end - 1 : end)
+}
+
+function cutToBytes(text: string, most: number): string {
+  if (bytesOf(text) <= most) return text
+  let low = 0
+  let high = text.length
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2)
+    if (bytesOf(text.slice(0, middle)) <= most) low = middle
+    else high = middle - 1
+  }
+  return wholeSlice(text, low)
+}
+
 export function titledOf(text: string): { title: string; description?: string } {
   if (text.length <= LIMITS.title) return { title: text }
   return {
-    title: `${text.slice(0, LIMITS.title - 1).trimEnd()}…`,
-    description: text.slice(0, LIMITS.description),
+    title: `${wholeSlice(text, LIMITS.title - 1).trimEnd()}…`,
+    description: cutToBytes(text.slice(0, LIMITS.description), DESCRIPTION_BYTES),
   }
 }
 

@@ -30,3 +30,17 @@ describe('a task added from text longer than a title', () => {
     expect(made?.description).toBe(`${paragraph}\n\nnotes`)
   })
 })
+
+describe('a task added from long text in a script of several bytes a character', () => {
+  test.each(['あ', 'ü', '😀', '"'])(
+    'is kept, its description cut to what reaches the account (%s)',
+    async (letter) => {
+      const made = await addTask(letter.repeat(9000), { typed: false })
+      if (!made) throw new Error('not added')
+      const todo = todos.todo(made.id)
+      expect(todo?.description.startsWith(letter.repeat(100))).toBe(true)
+      expect(todo?.description).not.toMatch(/\uD83D$/)
+      expect(todo?.title).toMatch(/^[^\uD800-\uDBFF]*…$/u)
+    },
+  )
+})
