@@ -690,7 +690,10 @@ mod tests {
 
     #[test]
     fn a_frame_the_engine_does_not_place_says_nothing() {
-        assert_eq!(placed_by(None, |was| Some(was.clone()), || (), || None), None);
+        assert_eq!(
+            placed_by(None, |was| Some(was.clone()), || (), || None),
+            None
+        );
     }
 
     fn place() -> Place {
