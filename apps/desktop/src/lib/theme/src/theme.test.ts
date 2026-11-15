@@ -20,6 +20,13 @@ function memoryStorage(): Storage {
 
 let kept = memoryStorage()
 
+const storageHeard: ((event: { key: string | null }) => void)[] = []
+
+function anotherWindowWrote(key: string, value: string) {
+  kept.setItem(key, value)
+  for (const listener of storageHeard) listener({ key })
+}
+
 const media = {
   light: false,
   contrast: false,
@@ -48,6 +55,9 @@ function stubs() {
 
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
+    addEventListener: (name: string, listener: (event: { key: string | null }) => void) => {
+      if (name === 'storage') storageHeard.push(listener)
+    },
     matchMedia: (query: string) => ({
       get matches() {
         return query.includes('contrast') ? media.contrast : media.light
@@ -71,6 +81,7 @@ function stubs() {
         },
       },
     },
+    addEventListener: () => undefined,
     querySelector: () => null,
     getElementById: () => null,
     createElement: () => {
@@ -245,6 +256,32 @@ describe('what the dropdown offers', () => {
   test('the built-in carries both schemes, so it is one theme and not two', () => {
     expect(theme.active.variants).toEqual(['dark', 'light'])
     expect(theme.switchable).toBe(true)
+  })
+})
+
+describe('a second window', () => {
+  test('is heard when it changes the theme or the scheme', () => {
+    theme.init()
+    anotherWindowWrote('orden:theme', 'contrast')
+    expect(theme.id).toBe('contrast')
+    expect(theme.kept.id).toBe('contrast')
+
+    anotherWindowWrote('orden:theme-scheme', 'light')
+    expect(theme.scheme).toBe('light')
+  })
+
+  test('keeps a theme setting it chose when this one changes another', () => {
+    theme.init()
+    const accent = theme.accents.at(-1)?.id ?? ''
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent } }))
+    expect(theme.kept.accent).toBe(accent)
+
+    theme.setFor('somewhere', 'dial', 3)
+    const written = JSON.parse(kept.getItem('orden:theme-settings') ?? '{}') as Record<
+      string,
+      { accent?: string }
+    >
+    expect(written['*']?.accent).toBe(accent)
   })
 })
 

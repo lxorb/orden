@@ -240,6 +240,53 @@ class Themes {
     this.material = stoodOnNothing() || groundUnknown()
     this.apply()
     this.listed = this.reload({ atLaunch: true }).catch(() => undefined)
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing) return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY || event.key === SCHEME_KEY) this.heardChoice()
+      else if (event.key === SETTINGS_KEY) {
+        this.chosen = this.storedDrawers()
+        this.paintSettings()
+        this.apply()
+      }
+    })
+  }
+
+  private heardChoice() {
+    const saved = storedText(STORAGE_KEY)
+    const scheme = storedText(SCHEME_KEY)
+    if (saved && saved !== 'null' && !isSchemeChoice(saved)) {
+      this.id = saved
+      this.keptId = saved
+    }
+    if (isSchemeChoice(scheme)) {
+      this.scheme = scheme
+      this.keptScheme = scheme
+    }
+    this.apply()
+  }
+
+  private storedDrawers(): ChosenSettings {
+    const drawers: ChosenSettings = Object.fromEntries(
+      Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
+        owner,
+        recordOf(values, isValue),
+      ]),
+    )
+    const accent = storedText(ACCENT_KEY)
+    if (accent !== null && drawers[SHARED]?.accent === undefined) {
+      drawers[SHARED] = { ...drawers[SHARED], accent }
+    }
+    return drawers
+  }
+
+  private get writtenDrawers(): ChosenSettings {
+    return stored(SETTINGS_KEY) === null ? this.chosen : this.storedDrawers()
   }
 
   private withLoaded(theme: ThemeInfo): ThemeInfo {
@@ -263,12 +310,7 @@ class Themes {
   }
 
   private restoreSettings(first: boolean, unwritten: boolean) {
-    const drawers: ChosenSettings = Object.fromEntries(
-      Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
-        owner,
-        recordOf(values, isValue),
-      ]),
-    )
+    const drawers = this.storedDrawers()
 
     const app = drawers[SHARED]
     if (app) {
@@ -278,11 +320,6 @@ class Themes {
         drawers[SHARED] = kept
         keepJson(SETTINGS_KEY, drawers)
       }
-    }
-
-    const accent = storedText(ACCENT_KEY)
-    if (accent !== null && drawers[SHARED]?.accent === undefined) {
-      drawers[SHARED] = { ...drawers[SHARED], accent }
     }
 
     this.giveAccent(drawers, first, unwritten)
@@ -575,7 +612,8 @@ class Themes {
         return
       }
     }
-    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
+    const held = this.writtenDrawers
+    this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
     keepJson(SETTINGS_KEY, this.chosen)
     this.tellPicked()
   }
@@ -585,7 +623,8 @@ class Themes {
     if (!setting) return
 
     const drawer = this.drawerOf(setting)
-    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
+    const held = this.writtenDrawers
+    this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
     keepJson(SETTINGS_KEY, this.chosen)
     if (id === 'accent') keep(GIVEN_KEY, '')
