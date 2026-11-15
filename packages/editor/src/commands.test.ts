@@ -158,6 +158,20 @@ describe('inline wrapping', () => {
     expect(run(strong, 'a |b')).toBe('a ****b')
   })
 
+  test('takes the marks off the run a caret stands in', () => {
+    expect(at(strong, 'a **word** b', 5)).toBe('a word b')
+    expect(at(strong, 'a __word__ b', 5)).toBe('a word b')
+    expect(at(toggleWrap('*'), 'a *word* b', 5)).toBe('a word b')
+    expect(at(toggleWrap('*'), '***word***', 5)).toBe('**word**')
+    expect(at(strong, '***word***', 5)).toBe('*word*')
+    expect(at(toggleWrap('`'), 'a `code` b', 5)).toBe('a code b')
+    expect(at(toggleWrap('~~'), 'a ~~gone~~ b', 6)).toBe('a gone b')
+  })
+
+  test('and keeps the caret where it was in the words', () => {
+    expect(apply(strong, 'a **word** b', 6).selection).toEqual([4, 4])
+  })
+
   test('handles asymmetric markers', () => {
     expect(run(toggleWrap('<u>', '</u>'), '[x]')).toBe('<u>x</u>')
   })

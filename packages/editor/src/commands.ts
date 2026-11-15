@@ -50,6 +50,17 @@ export function toggleWrap(before: string, after = before): StateCommand {
         }
       }
 
+      const run = from === to ? runAround(state, from, before, after) : null
+      if (run) {
+        return {
+          changes: [
+            { from: run.from, to: run.from + before.length },
+            { from: run.to - after.length, to: run.to },
+          ],
+          range: EditorSelection.cursor(from - before.length),
+        }
+      }
+
       const text = doc.sliceString(from, to)
 
       const held = italic ? (/^\*+/u.exec(text)?.[0].length ?? 0) : 1
@@ -74,6 +85,38 @@ export function toggleWrap(before: string, after = before): StateCommand {
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
+}
+
+const RUNS: Readonly<Record<string, { node: string; marks: readonly string[] }>> = {
+  '**': { node: 'StrongEmphasis', marks: ['**', '__'] },
+  '*': { node: 'Emphasis', marks: ['*', '_'] },
+  '~~': { node: 'Strikethrough', marks: ['~~'] },
+  '`': { node: 'InlineCode', marks: ['`'] },
+}
+
+function runAround(
+  state: EditorState,
+  at: number,
+  before: string,
+  after: string,
+): { from: number; to: number } | null {
+  const kind = before === after ? RUNS[before] : undefined
+  if (!kind) return null
+
+  const size = before.length
+  for (const node of enclosing(syntaxTree(state).resolveInner(at, 0))) {
+    if (node.name !== kind.node) continue
+    if (at < node.from + size || at > node.to - size) continue
+
+    const opens = state.doc.sliceString(node.from, node.from + size)
+    const closes = state.doc.sliceString(node.to - size, node.to)
+    const inner = state.doc.sliceString(node.from + size, node.to - size)
+    if (opens !== closes || !kind.marks.includes(opens)) continue
+    if (kind.node === 'InlineCode' && (inner.startsWith('`') || inner.endsWith('`'))) continue
+    return { from: node.from, to: node.to }
+  }
+
+  return null
 }
 
 function spansLines(state: EditorState, range: SelectionRange): boolean {
