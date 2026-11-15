@@ -1208,12 +1208,28 @@ class Links {
         .filter((path) => path !== null)
         .map((path) => comparable(nameOf(path))),
     )
+    const movingAliases = new Set(
+      notes
+        .filter((one) => moving(one.path) !== null)
+        .flatMap((one) => one.aliases.map((alias) => comparable(alias.trim()))),
+    )
+    let after: NoteIndex | null = null
+    const afterMove = (): NoteIndex =>
+      (after ??= {
+        notes: notes.map((one) => ({ ...refOf(one), path: moving(one.path) ?? one.path })),
+        files: files.map((path) => moving(path) ?? path),
+        path: null,
+        read: nothing,
+      })
     const lastOf = (link: { target: string }) => comparable(link.target).split('/').at(-1) ?? ''
     const named = (link: { target: string }) => {
       if (!link.target) return false
       const parts = comparable(link.target).split('/')
       return (
-        parts.includes(name) || movingNames.has(lastOf(link)) || arrivingNames.has(lastOf(link))
+        parts.includes(name) ||
+        movingNames.has(lastOf(link)) ||
+        arrivingNames.has(lastOf(link)) ||
+        movingAliases.has(comparable(link.target))
       )
     }
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
@@ -1268,8 +1284,13 @@ class Links {
         const found = resolve(note.path, link)
         if (found === null) return null
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
-        if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) return null
         const there = moving(found) ?? found
+        if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) {
+          if (there === found && !shifted && !arrivingNames.has(lastOf(link))) return null
+          if (resolveNote({ ...afterMove(), path: source }, link.target)?.path === there)
+            return null
+          return { path: there, reaches: reaching(source, there), shown: link.target }
+        }
         if (there === found && !shifted) {
           if (!arrivingNames.has(lastOf(link))) return null
           const reaches = reaching(source, there, link.kind)

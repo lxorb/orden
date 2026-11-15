@@ -1709,6 +1709,44 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     expect(notes['Draft.md']).toBe('[x](x/y/Road.md)\n')
   })
 
+  test('a note renamed to an alias another note answers to leaves the alias link reaching that note', async () => {
+    await space({
+      'People/Robert.md': '---\naliases: [Bob]\n---\n# Robert',
+      'Draft.md': '# Draft',
+      'x.md': 'see [[Bob]] and [[Bob#Intro]] and ![[Bob]]\n| [[Bob]] |\n',
+    })
+    notes['Bob.md'] = notes['Draft.md'] ?? ''
+    delete notes['Draft.md']
+
+    await links.retarget(at('Draft.md'), at('Bob.md'), ROOT)
+    links.notesMoved(at('Draft.md'), at('Bob.md'))
+
+    expect(notes['x.md']).toBe(
+      'see [[Robert|Bob]] and [[Robert#Intro|Bob]] and ![[Robert]]\n| [[Robert\\|Bob]] |\n',
+    )
+    expect(links.backlinks(at('People/Robert.md')).map((one) => one.path)).toEqual([
+      'x.md',
+      'x.md',
+      'x.md',
+      'x.md',
+    ])
+    expect(links.backlinks(at('Bob.md'))).toEqual([])
+  })
+
+  test('a note moved away from an alias link keeps it when another note shares the alias', async () => {
+    await space({
+      'A/X.md': '---\naliases: [Bob]\n---\n',
+      'B/Y.md': '---\naliases: [Bob]\n---\n',
+      'A/n.md': 'see [[Bob]]\n',
+    })
+    notes['C/X.md'] = notes['A/X.md'] ?? ''
+    delete notes['A/X.md']
+
+    await links.retarget(at('A/X.md'), at('C/X.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['A/n.md']).toBe('see [[X|Bob]]\n')
+  })
+
   test('a link that still reaches its note after the move is left as written', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]\n', 'Two.md': '[[Other]]\n' })
     notes['Y/Plan.md'] = notes['Plan.md'] ?? ''

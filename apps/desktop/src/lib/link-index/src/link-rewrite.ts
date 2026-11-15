@@ -12,6 +12,7 @@ import { shownName, folderOf, nameOf, relativePath } from '../../platform/src/ap
 export interface Placed {
   path: string
   reaches: (written: string) => boolean
+  shown?: string
 }
 
 export interface Move {
@@ -44,10 +45,21 @@ export function retargetLinks(
       continue
     }
     edits.push({ from: link.targetFrom, to: link.targetTo, insert: written })
+    const shown = typeof there === 'string' ? undefined : there.shown
+    if (shown !== undefined && link.kind === 'wikilink' && !link.embed && link.alias === null) {
+      const at = link.to - 2
+      const bar = inTableRow(text, link.from) ? '\\|' : '|'
+      edits.push({ from: at, to: at, insert: `${bar}${shown}` })
+    }
   }
 
   if (!edits.length) return null
   return applied(text, quotedInMatter(text, edits))
+}
+
+function inTableRow(text: string, at: number): boolean {
+  const start = text.lastIndexOf('\n', at - 1) + 1
+  return /^\s*\|/.test(text.slice(start, at))
 }
 
 interface Edit {
