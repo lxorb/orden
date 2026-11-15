@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tauri::utils::config::Color;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 use crate::paths::{config_dir, made, write_atomically};
 
@@ -8,13 +8,34 @@ const FILE: &str = "ground.txt";
 
 const MOST: usize = 64;
 
+static WORN: std::sync::Mutex<Option<Color>> = std::sync::Mutex::new(None);
+
+pub fn worn() -> Option<Color> {
+    WORN.lock().ok().and_then(|held| *held)
+}
+
+fn wear(ground: Option<Color>) -> Option<Color> {
+    if let (Some(colour), Ok(mut held)) = (ground, WORN.lock()) {
+        *held = Some(colour);
+    }
+    ground
+}
+
 fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join(FILE))
 }
 
 #[tauri::command(async)]
-pub fn remember_ground(app: AppHandle, colour: String) -> Result<(), String> {
-    if colour.len() > MOST {
+pub fn remember_ground(
+    app: AppHandle,
+    colour: String,
+    paint: Option<String>,
+) -> Result<(), String> {
+    let paint = paint.unwrap_or_default();
+    if [&colour, &paint]
+        .iter()
+        .any(|one| one.len() > MOST || one.contains('\n'))
+    {
         return Err("that is not a colour".into());
     }
 
@@ -23,19 +44,30 @@ pub fn remember_ground(app: AppHandle, colour: String) -> Result<(), String> {
         made(parent)?;
     }
 
-    write_atomically(&path, colour.as_bytes())
+    write_atomically(&path, format!("{colour}\n{paint}").as_bytes())?;
+    if let Some(ground) = wear(painted(&format!("{colour}\n{paint}"))) {
+        for window in app.windows().into_values() {
+            let _ = window.set_background_color(Some(ground));
+        }
+    }
+    Ok(())
 }
 
 pub fn remembered(app: &AppHandle) -> Option<Color> {
-    let said = std::fs::read_to_string(file(app).ok()?).ok()?;
-    colour_of(said.trim())
+    wear(painted(&std::fs::read_to_string(file(app).ok()?).ok()?))
 }
 
 pub fn see_through(app: &AppHandle) -> bool {
     file(app)
         .ok()
         .and_then(|path| std::fs::read_to_string(path).ok())
-        .is_some_and(|said| clear(said.trim()))
+        .is_some_and(|said| clear(said.lines().next().unwrap_or_default().trim()))
+}
+
+fn painted(said: &str) -> Option<Color> {
+    let mut lines = said.lines().map(str::trim);
+    let ground = lines.next().unwrap_or_default();
+    colour_of(ground).or_else(|| colour_of(lines.next().unwrap_or_default()))
 }
 
 const MATERIAL: &str = "material.txt";
@@ -98,7 +130,7 @@ fn colour_of(said: &str) -> Option<Color> {
 
 #[cfg(test)]
 mod tests {
-    use super::{clear, colour_of, kind_of};
+    use super::{clear, colour_of, kind_of, painted};
     use tauri::utils::config::Color;
 
     #[test]
@@ -119,6 +151,53 @@ mod tests {
         assert_eq!(colour_of("rgba(0, 0, 0, 0)"), None);
         assert_eq!(colour_of("rgba(14, 16, 19, 0.5)"), None);
         assert_eq!(colour_of("transparent"), None);
+    }
+
+    #[test]
+    fn a_window_is_painted_its_ground_or_the_colour_beneath_a_ground_seen_through() {
+        assert_eq!(painted("rgb(14, 16, 19)"), Some(Color(14, 16, 19, 255)));
+        assert_eq!(
+            painted("rgb(14, 16, 19)\nrgb(1, 2, 3)"),
+            Some(Color(14, 16, 19, 255))
+        );
+        assert_eq!(
+            painted("rgba(0, 0, 0, 0)\nrgb(35, 41, 50)"),
+            Some(Color(35, 41, 50, 255))
+        );
+        assert_eq!(painted("rgba(0, 0, 0, 0)\n"), None);
+        assert_eq!(painted(""), None);
+    }
+
+    #[test]
+    fn no_window_is_built_to_show_the_desk_where_nothing_is_drawn() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut through = Vec::new();
+        for name in [
+            "tauri.conf.json",
+            "tauri.linux.conf.json",
+            "tauri.macos.conf.json",
+            "tauri.windows.conf.json",
+        ] {
+            let text = std::fs::read_to_string(root.join(name)).expect("the config");
+            if text.contains("\"transparent\": true") {
+                through.push(name.to_string());
+            }
+        }
+        let mut sources = vec![root.join("src")];
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at).expect("the source").flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                } else if std::fs::read_to_string(&path)
+                    .unwrap_or_default()
+                    .contains(concat!(".transparent", "(true)"))
+                {
+                    through.push(path.display().to_string());
+                }
+            }
+        }
+        assert!(through.is_empty(), "built to show through: {through:?}");
     }
 
     #[test]

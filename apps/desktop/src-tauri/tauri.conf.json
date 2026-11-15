@@ -18,7 +18,6 @@
         "minWidth": 520,
         "minHeight": 400,
         "decorations": false,
-        "transparent": true,
         "dragDropEnabled": false,
         "visible": false
       }
