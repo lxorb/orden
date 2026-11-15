@@ -70,6 +70,12 @@ const pathOf = (root: string, at: string) => (at ? insideSpace(root, at) : root)
 const rehome = (from: string, to: string) =>
   invoke<number>('rehome_snapshots', { from, to }).catch(() => 0)
 
+const aliases = new Map<string, string>()
+
+export function alsoCalled(back: string, id: string): void {
+  aliases.set(back, id)
+}
+
 export async function bury(
   root: string,
   at: string,
@@ -85,7 +91,9 @@ export async function bury(
   const id = crypto.randomUUID()
   const away = `${HISTORY_AWAY}/${id}`
   const sync = syncStore()
-  const account = at ? sync?.idOf(pathOf(root, at)) : sync?.remoteIdFor(root)
+  const account =
+    (back && aliases.get(back)) ?? (at ? sync?.idOf(pathOf(root, at)) : sync?.remoteIdFor(root))
+  if (back) aliases.delete(back)
   for (const name of [`${placeOf(root, at)}\n${id}`, back ?? null, account ?? null]) {
     if (name === null) continue
     keepBuried(name, ways)
@@ -155,6 +163,7 @@ export async function unburied(
   at: string,
   held: Record<string, Way>,
   was = at,
+  only = false,
 ): Promise<Record<string, Way> | null> {
   if (!inSpace(at) || !inSpace(was)) return null
   const buried = Object.keys(readBuried())
@@ -162,7 +171,7 @@ export async function unburied(
   const alone = (name: string) =>
     back === null || buried.every((one) => one === name || histories[one] !== histories[name])
   const place = buried.filter((name) => folderIn(name, root) === was && alone(name)).at(-1) ?? null
-  const named = back !== null && buried.includes(back) ? back : place
+  const named = back !== null && buried.includes(back) ? back : only ? null : place
   const came = {
     ...(await under(root, was, at, held)),
     ...(named === null ? {} : await exactly(named, root, at, held)),

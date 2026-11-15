@@ -377,8 +377,8 @@ export class Protection {
     return root === null ? undefined : this.unbury(back, root, relativeTo(root, path))
   }
 
-  async unbury(back: string | null, root: string, at: string, was = at): Promise<void> {
-    const came = await (await buried()).unburied(back, root, at, this.ways(root), was)
+  async unbury(back: string | null, root: string, at: string, was = at, only = false) {
+    const came = await (await buried()).unburied(back, root, at, this.ways(root), was, only)
     if (came) this.put(root, { ...this.ways(root), ...came })
   }
 
