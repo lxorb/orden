@@ -39,6 +39,13 @@ function afterRemoval(index: number, removed: number, left: number): number {
   return Math.min(index > removed ? index - 1 : index, left - 1)
 }
 
+function afterMove(index: number, from: number, to: number): number {
+  if (index === from) return to
+  if (from < to && index > from && index <= to) return index - 1
+  if (from > to && index >= to && index < from) return index + 1
+  return index
+}
+
 export function movedColumn(
   base: TableModel,
   column: number,
@@ -48,7 +55,7 @@ export function movedColumn(
   const next = moveColumn(base, column, column + step)
   if (next === base || !focused) return { next, focus: focused }
 
-  const landed = focused.at.column === column ? column + step : focused.at.column
+  const landed = afterMove(focused.at.column, column, column + step)
   return {
     next,
     focus: {
@@ -115,7 +122,7 @@ export function movedRow(
     next,
     focus: {
       at: {
-        row: focused.at.row === row ? row + step : focused.at.row,
+        row: focused.at.row < 0 ? focused.at.row : afterMove(focused.at.row, row, row + step),
         column: focused.at.column,
       },
       offset: focused.offset,
