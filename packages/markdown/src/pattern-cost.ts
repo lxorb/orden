@@ -9,9 +9,23 @@ interface Cost {
   literal: boolean
   unit: string | null
   zero: boolean
-  span: number
-  runOf: string | null
-  reach: number
+  shape: Shape
+}
+
+type Shape =
+  | { kind: 'letter'; letters: string | null; literal: boolean }
+  | { kind: 'none' }
+  | { kind: 'end' }
+  | { kind: 'look'; inner: Shape }
+  | { kind: 'row'; parts: Shape[] }
+  | { kind: 'either'; branches: Shape[] }
+  | { kind: 'again'; of: Shape; least: number; most: number; letters: string | null }
+
+interface Ahead {
+  rest: number
+  heads: (string | null)[]
+  literal: number
+  ended: boolean
 }
 
 export function patternJudge() {
@@ -26,27 +40,42 @@ export function patternJudge() {
     literal: false,
     unit: null,
     zero: false,
-    span: 0,
-    runOf: null,
-    reach: 0,
+    shape: { kind: 'none' },
   }
+
+  const NOTE = Math.log(200000)
 
   const LINE = Math.log(2000)
 
-  const NOTE = Math.log(400000)
+  const WORD = Math.log(30)
 
-  const WORD = Math.log(100)
+  const WORD_STARTS = Math.log(20)
 
-  const WORD_STARTS = Math.log(100)
+  const TAKING_NOTE = Math.log(10)
 
-  const LETTER_STARTS = Math.log(5000)
+  const MOST_COPIES = 10
+
+  const MOST_STEPS = 20000
+
+  const OPEN_END: Ahead = { rest: 0, heads: [], literal: 0, ended: true }
 
   const REFUSED: Cost = { ...PLAIN, open: Number.POSITIVE_INFINITY }
 
   const ZERO: Cost = { ...PLAIN, literal: true, zero: true }
 
+  const END: Cost = { ...ZERO, shape: { kind: 'end' } }
+
   function single(first: string | null = null, unit: string | null = null, lead = ''): Cost {
-    return { ...PLAIN, first, head: unit, tail: unit, unit, lead, literal: lead !== '' }
+    return {
+      ...PLAIN,
+      first,
+      head: unit,
+      tail: unit,
+      unit,
+      lead,
+      literal: lead !== '',
+      shape: { kind: 'letter', letters: unit, literal: lead !== '' },
+    }
   }
 
   const GROUP_OPENING = /^\?(?:[a-z-]*:|<[^=!>][^>]*>|=|!|<=|<!)/
@@ -96,14 +125,93 @@ export function patternJudge() {
     }
   }
 
-  function spanOf(letters: string | null, flags: string): number {
+  function reachOfLetters(letters: string | null, flags: string): number {
     if (letters === null) return NOTE
     try {
       const letter = new RegExp(`^(?:${letters})$`, flags.replace(/[^iuvs]/g, ''))
+      if (!letter.test('a')) return WORD
       return letter.test('\n') ? NOTE : letter.test(' ') ? LINE : WORD
     } catch {
       return NOTE
     }
+  }
+
+  function aheadOf(shape: Shape, flags: string): Ahead {
+    let steps = 0
+    const kept = new Map<string, boolean>()
+
+    function trades(letters: string | null, head: string | null): boolean {
+      if (letters === null || head === null) return true
+      const key = `${letters}\0${head}`
+      let held = kept.get(key)
+      if (held === undefined) {
+        held = !setsApart(letters, head, flags)
+        kept.set(key, held)
+      }
+      return held
+    }
+
+    function merged(all: readonly Ahead[]): Ahead {
+      const heads = [...new Set(all.flatMap((one) => one.heads))]
+      return {
+        rest: all.reduce((high, one) => Math.max(high, one.rest), 0),
+        heads: heads.length > 16 ? [null] : heads,
+        literal: all.reduce((low, one) => Math.min(low, one.literal), Number.POSITIVE_INFINITY),
+        ended: all.every((one) => one.ended),
+      }
+    }
+
+    function run(letters: string | null, least: number, ahead: Ahead): Ahead {
+      if (ahead.ended) {
+        return least === 0 ? ahead : { ...ahead, heads: [letters], literal: 0, ended: false }
+      }
+      const reach = reachOfLetters(letters, flags)
+      const overlaps = !ahead.heads.length || ahead.heads.some((head) => trades(letters, head))
+      const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
+      return {
+        rest: overlaps && ahead.literal < 2 ? own + ahead.rest : Math.max(own, ahead.rest),
+        heads: least > 0 ? [letters] : [...new Set([letters, ...ahead.heads])],
+        literal: 0,
+        ended: false,
+      }
+    }
+
+    function before(shape: Shape, ahead: Ahead): Ahead {
+      if (++steps > MOST_STEPS) throw new Error('too many steps')
+
+      switch (shape.kind) {
+        case 'letter':
+          return {
+            rest: ahead.rest,
+            heads: [shape.letters],
+            literal: shape.literal ? ahead.literal + 1 : 0,
+            ended: false,
+          }
+        case 'none':
+          return ahead
+        case 'end':
+          return { rest: ahead.rest, heads: ['\\n'], literal: 0, ended: false }
+        case 'look':
+          return { ...ahead, rest: ahead.rest + before(shape.inner, OPEN_END).rest, ended: false }
+        case 'row':
+          return shape.parts.reduceRight((after, part) => before(part, after), ahead)
+        case 'either':
+          return merged(shape.branches.map((branch) => before(branch, ahead)))
+        case 'again': {
+          const counted = shape.of.kind === 'letter' ? 8 : MOST_COPIES
+          if (shape.most - shape.least > counted || shape.least > MOST_COPIES)
+            return run(shape.letters, shape.least, ahead)
+          let after = ahead
+          for (let copy = shape.least; copy < shape.most; copy++) {
+            after = merged([after, before(shape.of, after)])
+          }
+          for (let copy = 0; copy < shape.least; copy++) after = before(shape.of, after)
+          return after
+        }
+      }
+    }
+
+    return before(shape, OPEN_END)
   }
 
   function commonLead(leads: readonly string[]): string {
@@ -125,7 +233,6 @@ export function patternJudge() {
     const unicode = flags.includes('u') || flags.includes('v')
     const fold = flags.includes('i')
     let at = 0
-    let depth = 0
 
     function alternatives(): Cost {
       const opening = sequence()
@@ -156,43 +263,8 @@ export function patternJudge() {
         tail: same(branches.map((one) => one.tail)),
         loop: open === 1 ? same(branches.map((one) => one.loop)) : null,
         lead: commonLead(branches.map((one) => one.lead)),
-        reach: branches.reduce((high, one) => Math.max(high, one.reach), 0),
+        shape: { kind: 'either', branches: branches.map((one) => one.shape) },
       }
-    }
-
-    function takesFrom(run: Cost, heads: readonly (string | null)[], lead: string): boolean {
-      if (lead.length >= 2) return false
-      const letters = run.runOf
-      if (letters === null || !heads.length) return true
-      return heads.some((head) => head === null || !setsApart(letters, head, flags))
-    }
-
-    function reachOf(parts: readonly Cost[]): number {
-      let reach = 0
-      let heads: (string | null)[] = []
-      let lead = ''
-      let ended = depth === 0
-
-      for (let index = parts.length - 1; index >= 0; index--) {
-        const part = parts[index]
-        if (!part) continue
-
-        if (part.span > 0) {
-          if (!ended)
-            reach = takesFrom(part, heads, lead) ? part.span + reach : Math.max(part.span, reach)
-        } else {
-          reach += part.reach
-          ended = false
-        }
-
-        if (part.zero) continue
-        lead = part.literal ? part.lead + lead : part.lead
-        if (part.head !== null) heads = [part.head]
-        else if (part.runOf !== null) heads = [part.runOf, ...heads]
-        else heads = [null]
-      }
-
-      return reach
     }
 
     function sequence(): Cost {
@@ -228,9 +300,7 @@ export function patternJudge() {
 
       all.loop = all.open === 1 && loops.length === 1 ? (loops[0] ?? null) : null
       all.unit = counted === 1 && alone ? alone.unit : null
-      all.span = counted === 1 && alone ? alone.span : 0
-      all.runOf = counted === 1 && alone ? alone.runOf : null
-      all.reach = reachOf(parts)
+      all.shape = { kind: 'row', parts: parts.map((one) => one.shape) }
       return all
     }
 
@@ -275,15 +345,20 @@ export function patternJudge() {
       if (one === '(') {
         const opening = GROUP_OPENING.exec(source.slice(at, at + 64))?.[0] ?? ''
         at += opening.length
-        depth++
         const inner = alternatives()
-        depth--
         at++
         return /^\?(?:=|!|<=|<!)/.test(opening)
-          ? { ...ZERO, open: inner.open, ways: inner.ways, loop: inner.loop, reach: inner.reach }
+          ? {
+              ...ZERO,
+              open: inner.open,
+              ways: inner.ways,
+              loop: inner.loop,
+              shape: { kind: 'look', inner: inner.shape },
+            }
           : inner
       }
-      if (one === '^' || one === '$') return { ...ZERO }
+      if (one === '^') return { ...ZERO }
+      if (one === '$') return { ...END }
       if (one === '.') return single(null, '.')
       return single(one, one.replace(SYNTAX, '\\$&'), one)
     }
@@ -328,6 +403,13 @@ export function patternJudge() {
       }
       if (source[at] === '?') at++
 
+      const shape: Shape = {
+        kind: 'again',
+        of: one.shape,
+        least,
+        most,
+        letters: one.unit ?? one.loop,
+      }
       const first = least === 0 ? null : one.first
       const kept = {
         ...PLAIN,
@@ -336,6 +418,7 @@ export function patternJudge() {
         tail: least === 0 ? null : one.tail,
         lead: least === 0 ? '' : one.lead,
         zero: one.zero,
+        shape,
       }
       if (least === most) {
         const open = one.open * most
@@ -346,9 +429,6 @@ export function patternJudge() {
           loop: open === 1 ? one.loop : null,
           literal: most === 1 && one.literal,
           unit: most === 1 ? one.unit : null,
-          span: most === 1 ? one.span : 0,
-          runOf: most === 1 ? one.runOf : null,
-          reach: one.reach * most,
         }
       }
       if (most === 1) {
@@ -357,20 +437,17 @@ export function patternJudge() {
           open: one.open,
           ways: one.ways * 2,
           loop: one.open === 1 ? one.loop : null,
-          span: one.span,
-          runOf: one.runOf,
-          reach: one.reach,
         }
       }
 
       if (one.open > 0 || one.ways > 1) {
         if (!delimited(one)) return REFUSED
-        return { ...kept, open: 1, span: spanOf(one.loop, flags), runOf: one.loop }
+        return { ...kept, open: 1 }
       }
 
       const range = most - least
       if (range <= 8) return { ...kept, ways: range + 1 }
-      return { ...kept, open: 1, loop: one.unit, span: spanOf(one.unit, flags), runOf: one.unit }
+      return { ...kept, open: 1, loop: one.unit }
     }
 
     return alternatives()
@@ -378,19 +455,19 @@ export function patternJudge() {
 
   const MOST_WAYS = 1e4
 
-  const MOST_REACH = 25
+  const MOST_REACH = 22
 
   function startsOf(source: string, flags: string, lead: string): number {
     if (source.startsWith('^')) return flags.includes('m') ? LINE : 0
     if (lead.length >= 2) return WORD_STARTS
-    return lead ? LETTER_STARTS : NOTE
+    return lead ? LINE : NOTE
   }
 
   function backtracksWildly(source: string, flags = ''): boolean {
     try {
-      const { open, ways, lead, reach } = patternCost(source, flags, false, true)
-      const starts = startsOf(source, flags, lead)
-      return open === Number.POSITIVE_INFINITY || ways > MOST_WAYS || starts + reach > MOST_REACH
+      const { open, ways, lead, shape } = patternCost(source, flags, false, true)
+      if (open === Number.POSITIVE_INFINITY || ways > MOST_WAYS) return true
+      return startsOf(source, flags, lead) + aheadOf(shape, flags).rest > MOST_REACH
     } catch {
       return true
     }
