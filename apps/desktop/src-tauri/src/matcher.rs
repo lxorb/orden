@@ -533,7 +533,7 @@ impl Matcher {
             tags: if self.needs.tags {
                 tags_in(body)
                     .iter()
-                    .map(|tag| tag.strip_prefix('#').unwrap_or(tag).to_lowercase())
+                    .map(|tag| tag_path(tag.strip_prefix('#').unwrap_or(tag)))
                     .collect()
             } else {
                 Vec::new()
@@ -671,6 +671,14 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             answered.then_some(out)
         }
     }
+}
+
+fn tag_path(tag: &str) -> String {
+    tag.to_lowercase()
+        .split('/')
+        .filter(|segment| !segment.is_empty())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 fn under(tag: &str, parent: &str) -> bool {
@@ -856,7 +864,7 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
 
         Query::Tag { tag } => {
             needs.tags = true;
-            Term::Tag(tag.to_lowercase())
+            Term::Tag(tag_path(&tag))
         }
 
         Query::Property {
@@ -1135,6 +1143,14 @@ mod tests {
         assert!(!answers(&tag("work/2025"), NOTE));
         assert!(!answers(&tag("notatag"), NOTE));
         assert!(!answers(&tag("meeting"), NOTE));
+    }
+
+    #[test]
+    fn a_tag_written_with_a_doubled_slash_is_the_tag_the_tree_shows() {
+        let tag = |one: &str| format!(r#"{{"kind":"tag","tag":"{one}"}}"#);
+        assert!(answers(&tag("a/b"), "see #a//b here\n"));
+        assert!(answers(&tag("a"), "see #a//b here\n"));
+        assert!(answers(&tag("a//b"), "see #a/b here\n"));
     }
 
     #[test]
