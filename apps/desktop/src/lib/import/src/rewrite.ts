@@ -218,7 +218,7 @@ export function linksFollowed(
     const held = (path: string) => path !== landing && holds(path, space)
     const taken =
       movedTo(meant) !== undefined ||
-      held(joined(folderOf(from), said)) ||
+      fitting(joined(folderOf(from), said), space).some((path) => path !== landing) ||
       held(said) ||
       captured(said, landing, from, space)
     return taken ? relativePath(folderOf(from), landing) : null
