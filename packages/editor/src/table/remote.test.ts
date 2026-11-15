@@ -7,6 +7,7 @@ import { SharedDoc } from '../shared'
 import { flushTableEdits } from './view'
 
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
+const TYPED = 'words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2   |\n\nend'
 const open: EditorView[] = []
 
 beforeAll(() => {
@@ -62,7 +63,14 @@ function replaced(view: EditorView, from: string, to: string) {
   view.dispatch({ changes: { from: at, to: at + from.length, insert: to } })
 }
 
-describe('a cell typed in and not yet written, while the note is edited elsewhere', () => {
+describe('a cell being typed in, while the note is edited elsewhere', () => {
+  test('writes each word into the note as it is typed', () => {
+    const shared = new SharedDoc(TABLE)
+    note(shared)
+    typeInCell(note(shared))
+    expect(shared.text.toString()).toBe(TYPED)
+  })
+
   test('keeps its words when another pane writes above the table', async () => {
     const shared = new SharedDoc(TABLE)
     const view = note(shared)
@@ -73,25 +81,21 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
 
     expect(firstCell(view)?.textContent).toBe('1x')
     flushTableEdits()
-    expect(shared.text.toString()).toBe(
-      'more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2   |\n\nend',
-    )
+    expect(shared.text.toString()).toBe(`more ${TYPED}`)
   })
 
   test('keeps its words and its caret when another cell is written', async () => {
     const view = note()
     typeInCell(view)
 
-    replaced(view, '| 2 |', '| 2y |')
+    replaced(view, '| 2   |', '| 2y  |')
     await settled()
 
     const cell = firstCell(view)
     expect(cell?.textContent).toBe('1x')
     expect(document.activeElement).toBe(cell)
     flushTableEdits()
-    expect(view.state.doc.toString()).toBe(
-      'words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
-    )
+    expect(view.state.doc.toString()).toBe(TYPED.replace('| 2   |', '| 2y  |'))
   })
 
   test('keeps its words when another pane writes above the table and in another cell', async () => {
@@ -99,7 +103,7 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     const view = note(shared)
     typeInCell(view)
 
-    const at = TABLE.indexOf('| 2 |') + 2
+    const at = TYPED.indexOf('| 2   |') + 2
     shared.edit([
       { from: 0, to: 0, insert: 'more ' },
       { from: at, to: at + 1, insert: '2y' },
@@ -118,7 +122,7 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     const view = note(shared)
     typeInCell(view)
 
-    shared.replace(TABLE.replace('| --- | --- |\n', '| --- | --- |\n| 0 | 0 |\n'))
+    shared.replace(TYPED.replace('| --- | --- |\n', '| --- | --- |\n| 0 | 0 |\n'))
     await settled()
 
     flushTableEdits()
@@ -136,8 +140,8 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     forceParsing(view, view.state.doc.length, 10_000)
     typeInCell(view)
 
-    const start = doc.indexOf('| a')
-    shared.edit([{ from: start, to: doc.lastIndexOf('| a'), insert: '' }])
+    const now = shared.text.toString()
+    shared.edit([{ from: now.indexOf('| a'), to: now.lastIndexOf('| a'), insert: '' }])
     await settled()
 
     flushTableEdits()
@@ -149,15 +153,15 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     const view = note(shared)
     typeInCell(view)
 
-    const from = TABLE.indexOf('| a')
-    const to = TABLE.indexOf('\n\nend')
-    shared.edit([{ from, to, insert: '| a   | b   |\n| --- | --- |\n| 1   | 2y  |' }])
+    const from = TYPED.indexOf('| a')
+    const to = TYPED.indexOf('\n\nend')
+    shared.edit([{ from, to, insert: '| a   | b    |\n| --- | ---- |\n| 1x  | 2yyy |' }])
     await settled()
 
     expect(firstCell(view)?.textContent).toBe('1x')
     flushTableEdits()
     expect(shared.text.toString()).toBe(
-      'words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
+      'words\n\n| a   | b    |\n| --- | ---- |\n| 1x  | 2yyy |\n\nend',
     )
   })
 
@@ -166,7 +170,7 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     const view = note(shared)
     typeInCell(view)
 
-    shared.replace(TABLE.replace('words', 'more words').replace('| 2 |', '| 2y |'))
+    shared.replace(TYPED.replace('words', 'more words').replace('| 2   |', '| 2y  |'))
     await settled()
 
     flushTableEdits()
@@ -183,7 +187,7 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     forceParsing(view, view.state.doc.length, 10_000)
     typeInCell(view)
 
-    const at = two.indexOf('| 1 |')
+    const at = shared.text.toString().indexOf('| 1x')
     shared.edit([{ from: at, to: at, insert: '| 1 | 9 |\n' }])
     await settled()
 
@@ -197,26 +201,43 @@ describe('a cell typed in and not yet written, while the note is edited elsewher
     const view = note()
     typeInCell(view)
 
-    replaced(view, '| 1 |', '| 1z |')
+    replaced(view, '| 1x  |', '| 1z  |')
     await settled()
 
     expect(firstCell(view)?.textContent).toBe('1z')
     flushTableEdits()
-    expect(view.state.doc.toString()).toBe(TABLE.replace('| 1 |', '| 1z |'))
+    expect(view.state.doc.toString()).toBe(TYPED.replace('| 1x  |', '| 1z  |'))
   })
-})
 
-describe('a cell typed in and not yet written, when one change covers the whole table', () => {
-  test('keeps its words when the note is changed above and below the table at once', async () => {
+  test('keeps its words and its caret when the note is changed above and below the table at once', async () => {
     const shared = new SharedDoc(TABLE)
     const view = note(shared)
     typeInCell(view)
 
-    shared.replace(TABLE.replace('words', 'w').replace('end', 'end!'))
+    shared.replace(TYPED.replace('words', 'w').replace('end', 'end!'))
     await settled()
     flushTableEdits()
+
+    expect(shared.text.toString()).toBe(TYPED.replace('words', 'w').replace('end', 'end!'))
+    expect(document.activeElement).toBe(firstCell(view))
+  })
+
+  test('follows its words when the rows are put in another order', async () => {
+    const two = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n| 0 | 0 |\n\nend'
+    const shared = new SharedDoc(two)
+    const view = note(shared)
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: two } })
+    forceParsing(view, view.state.doc.length, 10_000)
+    typeInCell(view)
+
+    const [head = '', rule = '', first = '', second = ''] = shared.text
+      .toString()
+      .split('\n')
+      .slice(2)
+    shared.replace(`words\n\n${[head, rule, second, first].join('\n')}\n\nend`)
     await settled()
 
-    expect(shared.text.toString()).toBe('w\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2   |\n\nend!')
+    expect(document.activeElement?.textContent).toBe('1x')
+    expect((document.activeElement as HTMLElement | null)?.dataset.row).toBe('1')
   })
 })

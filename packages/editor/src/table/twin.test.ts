@@ -3,6 +3,7 @@ import { forceParsing } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import { createEditor } from '../editor'
+import { SharedDoc } from '../shared'
 import { flushTableEdits } from './view'
 
 const TABLE = 'intro\n\n| Column 1 | Column 2 |\n| --- | --- |\n|     |     |\n|     |     |\n\nend'
@@ -82,4 +83,69 @@ test('a cell written after a pause is kept on the page, not drawn again', () => 
 
   expect(cellAt(view, 0, 0)).toBe(cell)
   expect(view.state.doc.toString()).toContain('| hello')
+})
+
+function sharedTable(shared: SharedDoc): EditorView {
+  const view = createEditor({ parent: document.body, shared, selection: { anchor: 0 } })
+  open.push(view)
+  forceParsing(view, shared.text.length, 10_000)
+  return view
+}
+
+function tableIn(shared: SharedDoc): string {
+  const text = shared.text.toString()
+  return text.slice(text.indexOf('|'), text.indexOf('\n\nend'))
+}
+
+test('typed words stay in their row when another pane writes the whole table with the next cell', async () => {
+  const shared = new SharedDoc(TABLE)
+  const view = sharedTable(shared)
+  typed(cellAt(view, 0, 0), 'Ann')
+
+  const text = shared.text.toString()
+  const from = text.indexOf('| C')
+  const table = tableIn(shared)
+  shared.edit([
+    {
+      from,
+      to: from + table.length,
+      insert: table.replace('| Ann      |          |', '| Ann      | x        |'),
+    },
+  ])
+
+  await Promise.resolve()
+  expect(cellAt(view, 0, 0).textContent).toBe('Ann')
+  expect(document.activeElement).toBe(cellAt(view, 0, 0))
+  expect(cellAt(view, 1, 0).textContent).toBe('')
+  expect(tableIn(shared).split('\n')[2]).toBe('| Ann      | x        |')
+})
+
+test('typed words stay when another pane renames a column', () => {
+  const shared = new SharedDoc(TABLE)
+  const view = sharedTable(shared)
+  typed(cellAt(view, 0, 0), 'Ann')
+
+  const text = shared.text.toString()
+  const from = text.indexOf('| C')
+  const table = tableIn(shared)
+  shared.edit([{ from, to: from + table.length, insert: table.replace('Column 1', 'Name    ') }])
+  flushTableEdits()
+
+  expect(tableIn(shared).split('\n')[0]).toContain('Name')
+  expect(tableIn(shared).split('\n')[2]).toContain('Ann')
+})
+
+test('typed words stay when a sync changes the note around the table and another cell at once', () => {
+  const shared = new SharedDoc(TABLE)
+  const view = sharedTable(shared)
+  typed(cellAt(view, 1, 1), 'Bob')
+
+  const now = shared.text.toString()
+  shared.replace(
+    now.replace('intro', 'i').replace('| Column 2 |', '| Column 9 |').replace('end', 'end!'),
+  )
+  flushTableEdits()
+
+  expect(shared.text.toString()).toContain('Bob')
+  expect(shared.text.toString()).toContain('Column 9')
 })

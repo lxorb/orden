@@ -67,7 +67,7 @@ export class TableWidget extends OrdenWidget {
     if (!model) return false
 
     const moved = previous.from !== this.from && previous.source !== this.source
-    if (moved && !(table.continues(this, model) && table.sameTable(model))) return false
+    if (moved && !(table.continues(this) && table.sameTable(model))) return false
 
     table.adopt(this, model)
     return true
@@ -76,6 +76,11 @@ export class TableWidget extends OrdenWidget {
   override destroy(dom: HTMLElement) {
     const table = views.get(dom)
     if (table) {
+      const focus = table.focusState()
+      const start = table.tracked
+      if (focus && start !== null) {
+        queueMicrotask(() => tableViewAt(table.editor, start)?.focusCell(focus.at, focus.offset))
+      }
       table.destroy()
       views.delete(dom)
       live.delete(table)
