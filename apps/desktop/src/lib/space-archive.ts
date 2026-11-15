@@ -45,7 +45,7 @@ export async function listed(): Promise<void> {
 
 export async function reconcile(): Promise<void> {
   if (heard === null || stored(OWED_KEY) === true) return
-  const { sync } = await import('./sync.svelte')
+  const { sync } = await import('./sync-store/src/api')
   const said = new Set(heard)
 
   for (const space of workspace.spaces) {
@@ -71,7 +71,7 @@ async function tell(): Promise<void> {
   if (!token) return
   keepJson(OWED_KEY, true)
 
-  const { sync } = await import('./sync.svelte')
+  const { sync } = await import('./sync-store/src/api')
   const idOf = (space: Space) => sync.remoteIdFor(space.root)
   const known = new Set(workspace.spaces.map(idOf))
   const theirs = (heard ?? []).filter((id) => !known.has(id))

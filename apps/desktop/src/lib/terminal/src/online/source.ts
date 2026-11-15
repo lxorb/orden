@@ -69,7 +69,7 @@ async function socketName(
   path: string,
   until: number,
 ): Promise<{ name: string } | { refused: string }> {
-  const { sync } = await import('../../../sync.svelte')
+  const { sync } = await import('../../../sync-store/src/api')
   if (sync.version === 1) {
     const { invoke } = await import('../../../platform/src/api')
     try {

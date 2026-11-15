@@ -59,7 +59,7 @@ vi.mock('../../link-index/src/api', () => ({
     cameBack: (path: string) => void heard.push(`came back ${path}`),
   },
 }))
-vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({

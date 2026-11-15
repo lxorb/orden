@@ -101,16 +101,6 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('../../sync.svelte', () => ({
-  sync: {
-    pass: () => {
-      world.passes += 1
-      return Promise.resolve()
-    },
-    remoteIdFor: (root: string) => (root === '/Plans' ? 'space-1' : null),
-  },
-}))
-
 const shown = vi.hoisted(() => ({
   spaces: [{ id: 'here', name: 'Plans', root: '/Plans' }],
   showSpace: (id: string) => {
@@ -190,6 +180,14 @@ beforeEach(async () => {
   vi.resetModules()
   const contracts = await import('@orden/contracts')
   contracts.providePort('workspace.view', { ...contracts.workspaceView(), ...shown })
+  const { serveSyncStore } = await import('../../../../test/sync-store')
+  serveSyncStore({
+    pass: () => {
+      world.passes += 1
+      return Promise.resolve()
+    },
+    remoteIdFor: (root) => (root === '/Plans' ? 'space-1' : null),
+  })
   await import('../../sharing-ports')
   ;({ joining } = await import('./joining.svelte'))
   ;({ account } = await import('../../accounts/src/account.svelte'))

@@ -31,7 +31,8 @@
     "automation",
     "quitting",
     "workspace",
-    "notify"
+    "notify",
+    "sync-store"
   ],
   "pending": [
     "apps/desktop/src/lib/FileMark.svelte",
@@ -50,7 +51,6 @@
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/sidebar-width.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

@@ -1,10 +1,9 @@
-import { workspaceView } from '@orden/contracts'
+import { syncStore, workspaceView } from '@orden/contracts'
 import { api, fromServer, type Invitation, type Joined, account } from '../../accounts/src/api'
 import { passing, pollDelay, forget, keep, storedText } from '../../platform/src/api'
 import { message } from '../../ui-kit/src/api'
 import { deviceName } from '../../collab/src/api'
 import { settling } from '../../sync-mirror/src/api'
-import { sync } from '../../sync.svelte'
 
 const PATH = /^\/join\/([a-f0-9]{16,128})$/
 
@@ -184,9 +183,11 @@ class Joining {
     this.arrived()
 
     await account.loadSpaces().catch(() => undefined)
-    await sync.pass()
+    await syncStore()?.pass()
 
-    const here = workspaceView().spaces.find((one) => sync.remoteIdFor(one.root) === space.id)
+    const here = workspaceView().spaces.find(
+      (one) => syncStore()?.remoteIdFor(one.root) === space.id,
+    )
     if (here) await workspaceView().showSpace(here.id)
   }
 

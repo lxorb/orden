@@ -1,6 +1,6 @@
 import { account, nameIn } from '../../accounts/src/api'
 import { busy, message, prompt } from '../../ui-kit/src/api'
-import { sync } from '../../sync.svelte'
+import { sync } from '../../sync-store/src/api'
 import type { Space } from '../../workspace/src/api'
 
 export async function nameHere(space: Space): Promise<void> {

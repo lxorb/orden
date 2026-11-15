@@ -13,7 +13,7 @@ import {
   windows,
 } from '../../platform/src/api'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../../space-watch'
-import { sync } from '../../sync.svelte'
+import { sync } from '../../sync-store/src/api'
 import { type Leadership, leadSync } from '../../sync-client/src/api'
 import { type FileOp, landing } from '../../file-ops/src/api'
 import { workspace } from './workspace.svelte'

@@ -30,12 +30,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return held.disk!.invoke(command, args)
   },
 }))
-vi.mock('../../platform/src/api', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../platform/src/api')>()
-  const turn = real.startup.turn.bind(real.startup)
-  real.startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
-  return real
-})
 vi.mock('../../SpaceSound.svelte', () => ({ default: () => undefined }))
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
@@ -130,6 +124,9 @@ function freshRound(session: object = SESSION) {
 
 async function newWindow() {
   vi.resetModules()
+  const { startup } = await import('../../platform/src/api')
+  const turn = startup.turn.bind(startup)
+  startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
   const { workspace } = await import('./workspace.svelte')
   return workspace
 }

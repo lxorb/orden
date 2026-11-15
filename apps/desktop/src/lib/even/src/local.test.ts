@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { forTheCookie } from './local'
 import { RECOVERY_KEY } from '../../history/src/api'
-import { STORAGE_KEY as MIRRORS_KEY } from '../../sync.svelte'
+import { MIRRORS_KEY } from '../../sync-mirror/src/api'
 import { STORAGE_KEY as FOLDER_ICONS_KEY } from '../../space-kept/src/folder-icons.svelte'
 import { STORAGE_KEY as ARCHIVED_KEY } from '../../space-kept/src/archive.svelte'
 import {

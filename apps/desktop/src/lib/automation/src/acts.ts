@@ -90,7 +90,7 @@ export async function newNote(args: Said): Promise<unknown> {
   const wasShowing = workspace.activeTabId
 
   if (append) {
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     sync.mergeable(path)
   }
 
@@ -299,7 +299,7 @@ export async function setProperty(args: Said): Promise<unknown> {
 }
 
 export async function syncNow(): Promise<unknown> {
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   const moved = await sync.pass()
 
   return { moved, status: sync.status, lastError: sync.lastError }

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 interface Fake {
   saved: unknown
@@ -33,14 +34,11 @@ vi.mock('../../accounts/src/api', () => ({
   },
   fromServer: () => false,
 }))
-vi.mock('../../sync.svelte', () => ({
-  STORAGE_KEY: 'orden:mirrors',
-  sync: {
-    nudge: () => {
-      fake.nudged++
-    },
+serveSyncStore({
+  nudge: () => {
+    fake.nudged++
   },
-}))
+})
 
 const { syncedCopies } = await import('./synced')
 

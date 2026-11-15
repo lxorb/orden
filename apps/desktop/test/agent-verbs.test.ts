@@ -493,7 +493,7 @@ vi.mock('../src/lib/history/src/api', async (importOriginal) => ({
   versionText: () => Promise.resolve('old words'),
 }))
 
-vi.mock('../src/lib/sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../src/lib/sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 
 const openDocument = vi.hoisted(() =>
   vi.fn((_path: string) => Promise.reject(new Error('no PDF here'))),

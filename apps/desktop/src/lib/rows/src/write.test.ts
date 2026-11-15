@@ -28,7 +28,7 @@ vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: (path: string) => void sent.push(`saved ${path}`) },
 }))
 
-vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 
 const share = vi.hoisted(() => ({ readOnly: false }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => !share.readOnly }))

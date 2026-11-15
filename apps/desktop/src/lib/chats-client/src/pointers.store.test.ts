@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
 
@@ -11,9 +12,13 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-vi.mock('../../sync.svelte', () => ({
-  sync: { remoteIdFor: () => 'remote-away', wrote: () => undefined, nudge: () => undefined },
+const store = vi.hoisted(() => ({
+  remoteIdFor: () => 'remote-away',
+  wrote: () => undefined,
+  nudge: () => undefined,
 }))
+vi.mock('../../sync-store/src/api', () => ({ sync: store }))
+serveSyncStore(store)
 vi.mock('./http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./http')>()),
   makeChat: async () => ({ chat: 'new-chat', space: 'remote-away' }),

@@ -46,7 +46,8 @@
     "rooms",
     "workspace",
     "files-out",
-    "notify"
+    "notify",
+    "sync-store"
   ],
   "pending": [
     "apps/desktop/src/lib/agent-marks.svelte.ts",
@@ -55,7 +56,6 @@
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/own-keys.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts",
     "apps/desktop/src/lib/views.svelte.ts"
   ]
 }

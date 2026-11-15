@@ -363,7 +363,7 @@ export async function editBase(call: Call): Promise<AgentAnswer> {
     return { written: written !== text, next }
   })
   if (!written) return done({ path: relative, changed: false })
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
   return done({ path: relative, changed: true, views: next.views.map((view) => view.name) })
 }

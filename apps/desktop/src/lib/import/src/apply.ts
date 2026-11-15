@@ -67,7 +67,7 @@ async function landed(paths: string[], wrote: Record<string, string>) {
   workspace.undone.record({ kind: 'import', paths, wrote })
   for (const path of paths) await workspace.fileCame(path, 'file')
   await workspace.loadTree()
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
 }
 

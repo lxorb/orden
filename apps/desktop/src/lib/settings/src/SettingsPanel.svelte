@@ -45,7 +45,7 @@
   import { places as paneRows } from './places'
   import { ICONS, sectionGroups } from './sections'
   import { type Place, search } from './settings-search'
-  import { sync } from '../../sync.svelte'
+  import { sync } from '../../sync-store/src/api'
   import { isDesktop, openExternal } from '../../platform/src/api'
   import { theme } from '../../theme/src/api'
   import ThemeStore from './ThemeStore.svelte'

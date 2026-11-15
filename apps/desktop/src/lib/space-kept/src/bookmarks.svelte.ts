@@ -2,8 +2,8 @@ import {
   BOOKMARK_KINDS,
   type Bookmark,
   type BookmarkKind,
-  type SyncNotesPort,
-  syncNotes,
+  type SyncStorePort,
+  syncStore,
 } from '@orden/contracts'
 import {
   movedTo,
@@ -82,7 +82,7 @@ export function bookmarkList(value: unknown): Bookmark[] {
 export function located(
   root: string,
   list: readonly Bookmark[],
-  ids: SyncNotesPort,
+  ids: Pick<SyncStorePort, 'entryIdAt' | 'entryPathOf'>,
   { moves = true }: { moves?: boolean } = {},
 ): Bookmark[] {
   const found = list.map((mark) => {
@@ -149,8 +149,8 @@ const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 export class Bookmarks {
   private spaces = $state<Record<string, Kept>>(read())
 
-  private get ids(): SyncNotesPort | null {
-    return syncNotes()
+  private get ids(): SyncStorePort | null {
+    return syncStore()
   }
 
   offered: Promise<unknown> = Promise.resolve()
@@ -408,7 +408,7 @@ export class Bookmarks {
     }
     this.write()
 
-    this.offered = import('../../sync.svelte').then(({ sync }) => sync.pushBookmarks(root))
+    this.offered = syncStore()?.pushBookmarks(root) ?? Promise.resolve()
   }
 
   private write() {

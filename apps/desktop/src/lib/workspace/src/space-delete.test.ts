@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 
 const sent: string[] = []
 let trees = new Map<string, unknown>()
@@ -20,12 +21,12 @@ vi.mock('../../accounts/src/account.svelte', () => ({ account }))
 
 const remote = new Map<string, string>()
 let unpushed = new Set<string>()
-vi.mock('../../sync.svelte', () => ({
-  sync: {
-    remoteIdFor: (root: string) => remote.get(root) ?? null,
-    holds: (path: string) => Promise.resolve(!unpushed.has(path)),
-  },
+const synced = vi.hoisted(() => ({
+  remoteIdFor: (root: string) => remote.get(root) ?? null,
+  holds: (path: string) => Promise.resolve(!unpushed.has(path)),
 }))
+vi.mock('../../sync-store/src/api', () => ({ sync: synced }))
+serveSyncStore(synced)
 
 const { deleteSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces

@@ -201,7 +201,7 @@ export async function replaceInNotes(
   await ws.loadTree()
   ws.persist()
 
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
   return done.length
 }

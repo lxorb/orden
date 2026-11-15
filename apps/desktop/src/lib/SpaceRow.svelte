@@ -8,7 +8,7 @@
   import SpacePlace from './SpacePlace.svelte'
   import { isNumber } from './space-pick'
   import { spaceSound } from './surfaces.svelte'
-  import { sync } from './sync.svelte'
+  import { sync } from './sync-store/src/api'
   import type { Space } from './workspace/src/api'
 
   const {

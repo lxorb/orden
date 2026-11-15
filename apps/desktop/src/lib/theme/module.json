@@ -1,10 +1,5 @@
 {
   "name": "theme",
   "layer": "foundation",
-  "dependsOn": [
-    "contracts",
-    "sync-core",
-    "themes",
-    "platform"
-  ]
+  "dependsOn": ["contracts", "sync-core", "themes", "platform"]
 }

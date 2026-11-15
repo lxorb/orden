@@ -8,7 +8,7 @@ import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SharingPorts } from './sharing'
-import type { SyncNotesPort, SyncPorts } from './sync-client'
+import type { SyncStorePort, SyncPorts } from './sync-client'
 import type { TerminalPorts } from './terminal'
 import type { ThemePorts } from './theme'
 import type { VoicePorts } from './voice'
@@ -88,8 +88,8 @@ export function mayStop(why: StopReason): Promise<boolean> {
   return port ? port.mayStop(why) : Promise.resolve(true)
 }
 
-export function syncNotes(): SyncNotesPort | null {
-  return (provided.get('sync.notes') as SyncNotesPort | undefined) ?? null
+export function syncStore(): SyncStorePort | null {
+  return (provided.get('sync.store') as SyncStorePort | undefined) ?? null
 }
 
 export function webPages(): WebPagesPort {

@@ -168,6 +168,7 @@ export const APP_FOLDERS = [
   'space-kept',
   'sync-client',
   'sync-mirror',
+  'sync-store',
   'tab-fill',
   'tab-kinds',
   'tab-strip',

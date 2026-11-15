@@ -18,7 +18,44 @@ import {
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from '../../link-index/src/api'
-import { onDisk, insideOnly, askCase, folderOf, insideSpace, isMarkdownPath, movedTo, nameOf, noteName, pathKey, pathKeys, relativeTo, samePath, sameSpelling, within, withinSpace, AGENTS_NAME, isAgentsName, nameFromContent, shownName, afterQuiet, waited, isRecord, keepJson, stored, log, invoke, isDesktop, isNative, joinPath, openExternal, nextTask, oneWriteAt, startup, mark, markPainted } from '../../platform/src/api'
+import {
+  onDisk,
+  insideOnly,
+  askCase,
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  movedTo,
+  nameOf,
+  noteName,
+  pathKey,
+  pathKeys,
+  relativeTo,
+  samePath,
+  sameSpelling,
+  within,
+  withinSpace,
+  AGENTS_NAME,
+  isAgentsName,
+  nameFromContent,
+  shownName,
+  afterQuiet,
+  waited,
+  isRecord,
+  keepJson,
+  stored,
+  log,
+  invoke,
+  isDesktop,
+  isNative,
+  joinPath,
+  openExternal,
+  nextTask,
+  oneWriteAt,
+  startup,
+  mark,
+  markPainted,
+} from '../../platform/src/api'
 import { noteId } from '../../note-id'
 import { busy, readTint, viewport } from '../../ui-kit/src/api'
 import type { TreeRow } from '../../tree-keys'
@@ -2735,7 +2772,9 @@ class Workspace {
     const colour = name === null ? null : readTint(tint)
     this.device.setIcon(space.root, name, colour)
 
-    void import('../../sync.svelte').then(({ sync }) => sync.pushIcon(space.root, name, colour))
+    void import('../../sync-store/src/api').then(({ sync }) =>
+      sync.pushIcon(space.root, name, colour),
+    )
   }
 
   get selection(): string[] {
@@ -2881,7 +2920,7 @@ class Workspace {
     this.picked.all(landed)
     this.persist()
 
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     sync.nudge()
   }
 
@@ -3523,7 +3562,7 @@ class Workspace {
     if (!isFolder && !isMarkdownPath(path)) return false
     const root = this.rootHolding(path)
     if (!root) return false
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     const id = sync.remoteIdFor(root)
     if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
     if (!isFolder) return sync.holds(path)

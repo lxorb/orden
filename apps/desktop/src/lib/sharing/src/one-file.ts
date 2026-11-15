@@ -1,17 +1,17 @@
-import { workspaceView } from '@orden/contracts'
+import { syncStore, workspaceView } from '@orden/contracts'
 import type { SharedItem } from '../../accounts/src/api'
 import { account } from '../../accounts/src/api'
 import { insideSpace, within, waited } from '../../platform/src/api'
-import { sync } from '../../sync.svelte'
 import { sharedWithYou } from './sharing.svelte'
 
 const LOOK = 150
 const PATIENCE = 20_000
 
 function keptAt(item: SharedItem): string | null {
-  const space = workspaceView().spaces.find((one) => sync.remoteIdFor(one.root) === item.space.id)
+  const store = syncStore()
+  const space = workspaceView().spaces.find((one) => store?.remoteIdFor(one.root) === item.space.id)
   const path = space ? insideSpace(space.root, item.path) : null
-  return path && sync.tracked(path)?.id === item.id ? path : null
+  return path && store?.idOf(path) === item.id ? path : null
 }
 
 async function openWhereKept(item: SharedItem): Promise<boolean> {
@@ -24,7 +24,8 @@ async function openWhereKept(item: SharedItem): Promise<boolean> {
   const until = Date.now() + PATIENCE
   let path = keptAt(item)
   while (!path && Date.now() < until) {
-    if (!(sync.version === 2 && !sync.engine) && !sync.passing) await sync.pass()
+    const store = syncStore()
+    if (store?.engineReady && !store.passing) await store.pass()
     await waited(LOOK)
     path = keptAt(item)
   }

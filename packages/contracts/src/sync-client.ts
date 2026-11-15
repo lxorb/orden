@@ -1,4 +1,5 @@
 import type { Entry, ItemMeta, MetaPatch } from './item'
+import type { Bookmark } from './bookmark'
 import type { SpaceRole } from './user'
 
 export interface SyncHostPort {
@@ -193,9 +194,22 @@ export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   hearWrites(hearing: SyncWriteHearing): () => void
   rootMoves(): readonly SyncRootMove[]
   forgetRootMoves(): void
+  bookmarksOf(root: string): Bookmark[]
+  bookmarksSaid(root: string, landed: boolean, list: readonly Bookmark[]): void
+  archivedIn(root: string, path: string): boolean
+  shownText(path: string): string | null
+  reload(path: string, text: string): void
+  leaveTheWelcomeNote(): Promise<unknown>
 }
 
-export interface SyncNotesPort {
+export interface SyncStorePort {
+  readonly engineReady: boolean
+  readonly passing: boolean
+  pass(): Promise<unknown>
+  nudge(): void
+  remoteIdFor(root: string): string | null
+  roleKept(root: string): string | null
+  pushBookmarks(root: string): Promise<void>
   pathOf(id: string): string | null
   idOf(path: string): string | null
   moved(from: string, to: string): unknown
@@ -210,5 +224,5 @@ export interface SyncPorts {
   readonly 'sync.account': SyncAccountPort
   readonly 'sync.api': SyncApiPort
   readonly 'sync.workspace': SyncWorkspacePort
-  readonly 'sync.notes': SyncNotesPort
+  readonly 'sync.store': SyncStorePort
 }

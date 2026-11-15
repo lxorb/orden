@@ -103,7 +103,7 @@ const ran: string[] = []
 
 vi.mock('../../commands/src/api', () => ({ appCommands: () => rows }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => undefined } }))
-vi.mock('../../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({ sync: { mergeable: () => undefined } }))
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({

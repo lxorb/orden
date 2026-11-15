@@ -33,7 +33,7 @@ export async function madeSpace(name: string): Promise<Space | undefined> {
   if (!space) return
   if (!__EVEN_PLUGIN__) await (await import('./agents-seed')).seedAgents(space.root)
 
-  const { sync } = await import('./sync.svelte')
+  const { sync } = await import('./sync-store/src/api')
   sync.nudge()
   return space
 }
@@ -50,7 +50,7 @@ export function stepSpace(direction: number) {
 async function moveSpace(id: string, beforeId: string | null) {
   if (!workspace.moveSpace(id, beforeId)) return
 
-  const { sync } = await import('./sync.svelte')
+  const { sync } = await import('./sync-store/src/api')
   void sync.pushSpaceOrder()
 }
 
@@ -162,6 +162,6 @@ export async function deleteSpace(space: Space) {
   const root = space.root
   await workspace.deleteSpace(space.id)
 
-  const { sync } = await import('./sync.svelte')
+  const { sync } = await import('./sync-store/src/api')
   await sync.forget(root, role)
 }

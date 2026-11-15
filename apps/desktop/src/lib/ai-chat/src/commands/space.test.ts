@@ -31,7 +31,7 @@ vi.mock('../../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path)),
 }))
 vi.mock('../../../sharing/src/api', () => ({ canWriteAt: () => disk.writable }))
-vi.mock('../../../sync.svelte', () => ({ sync: { nudge: vi.fn() } }))
+vi.mock('../../../sync-store/src/api', () => ({ sync: { nudge: vi.fn() } }))
 vi.mock('../commands/found', () => ({
   found: () => Promise.resolve([]),
   foundNamed: () => Promise.resolve(null),

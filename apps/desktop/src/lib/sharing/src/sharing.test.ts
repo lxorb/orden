@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../../../test/sync-store'
 import { providePort, workspaceView } from '@orden/contracts'
 import '../../sharing-ports'
 
@@ -153,17 +154,6 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
   }
 })
 
-vi.mock('../../sync.svelte', () => ({
-  sync: {
-    remoteIdFor: (root: string) => world.mirrors[root] ?? null,
-    roleKept: (root: string) => world.kept[root] ?? null,
-    tracked: (path: string) => {
-      const id = world.notes[path]
-      return id ? { id, hash: 'h' } : null
-    },
-  },
-}))
-
 const spacesOf = vi.hoisted(
   () => () =>
     [...Object.keys(world.mirrors), ...world.locals].map((root) => ({
@@ -185,6 +175,12 @@ vi.mock('../../workspace/src/api', () => ({
     bookmarks: { adopt: () => null },
   },
 }))
+
+serveSyncStore({
+  remoteIdFor: (root) => world.mirrors[root] ?? null,
+  roleKept: (root) => world.kept[root] ?? null,
+  idOf: (path) => world.notes[path] ?? null,
+})
 
 providePort('workspace.view', {
   ...workspaceView(),

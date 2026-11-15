@@ -20,7 +20,7 @@ import { owesLast, surfacesToWords, writeOwed } from '../../parting/src/api'
 import { holdsWords, type NoteDoc, type Tab, isDraft } from '../../documents/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import type { Across } from './across'
-import type { Status } from '../../sync.svelte'
+import type { Status } from '../../sync-store/src/api'
 
 const REFUSALS_TOLD = 3
 
@@ -206,7 +206,7 @@ export class Saving {
     const first = refused[0]
     if (!first) return
 
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     const error = unread.includes(first)
       ? `${first.shown} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.`
       : `${first.shown} could not be written.`
@@ -220,7 +220,7 @@ export class Saving {
     this.said = null
     if (!said) return
 
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     if (sync.status !== 'error' || sync.lastError !== said.error) return
     sync.status = said.was
     sync.lastError = null
@@ -486,7 +486,7 @@ export class Saving {
     }
     this.ws.persist()
 
-    const { sync } = await import('../../sync.svelte')
+    const { sync } = await import('../../sync-store/src/api')
     sync.wrote(path, content)
   }
 }

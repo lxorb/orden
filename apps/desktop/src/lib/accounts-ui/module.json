@@ -12,12 +12,12 @@
     "chat-kit",
     "emoji",
     "workspace",
-    "sync-mirror"
+    "sync-mirror",
+    "sync-store"
   ],
   "pending": [
     "apps/desktop/src/lib/drag-paths.ts",
     "apps/desktop/src/lib/menu.svelte.ts",
-    "apps/desktop/src/lib/settings.svelte.ts",
-    "apps/desktop/src/lib/sync.svelte.ts"
+    "apps/desktop/src/lib/settings.svelte.ts"
   ]
 }

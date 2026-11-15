@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { serveSyncStore } from '../../test/sync-store'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -59,11 +60,11 @@ vi.mock('./accounts/src/client', () => ({
     },
   },
 }))
-vi.mock('./sync.svelte', () => ({
-  sync: {
-    remoteIdFor: (root: string) => (root === '/spaces/Local' ? null : `id-${root.slice(8)}`),
-  },
+const store = vi.hoisted(() => ({
+  remoteIdFor: (root: string) => (root === '/spaces/Local' ? null : `id-${root.slice(8)}`),
 }))
+vi.mock('./sync-store/src/api', () => ({ sync: store }))
+serveSyncStore(store)
 
 const archive = await import('./space-archive')
 

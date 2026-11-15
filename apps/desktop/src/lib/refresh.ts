@@ -7,7 +7,7 @@ export async function refreshHere(): Promise<void> {
     await pages.step(tab.id, 'reload')
     return
   }
-  const { sync } = await import('./sync.svelte')
+  const { sync } = await import('./sync-store/src/api')
   await sync.pass()
   if (sync.status === 'error' || sync.status === 'offline') {
     throw new Error(sync.lastError ?? 'sync failed')

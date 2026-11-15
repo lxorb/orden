@@ -2,5 +2,5 @@
   "name": "foreign",
   "layer": "foundation",
   "dependsOn": ["contracts", "accounts", "platform", "sync-client", "sync-core", "sync-mirror"],
-  "pending": ["apps/desktop/src/lib/SharedMark.svelte", "apps/desktop/src/lib/sync.svelte.ts"]
+  "pending": ["apps/desktop/src/lib/SharedMark.svelte"]
 }

@@ -252,7 +252,7 @@ export class Across {
 export async function startAcross(): Promise<Across> {
   const { workspace } = await import('./workspace.svelte')
   const { links } = await import('../../link-index/src/api')
-  const { sync } = await import('../../sync.svelte')
+  const { sync } = await import('../../sync-store/src/api')
   const { account } = await import('../../accounts/src/api')
   let told = false
   account.forgetWithSession((kept) => {

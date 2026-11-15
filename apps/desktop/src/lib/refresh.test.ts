@@ -13,7 +13,7 @@ vi.mock('./web-tab/src/api', () => ({
     },
   },
 }))
-vi.mock('./sync.svelte', () => ({
+vi.mock('./sync-store/src/api', () => ({
   sync: {
     get status() {
       return syncing.status

@@ -1,5 +1,13 @@
 import './lib/backend-ports'
-import { isDesktop, isMobile, platform, serveAssets, mark, markPainted, watchFirstInput } from './lib/platform/src/api'
+import {
+  isDesktop,
+  isMobile,
+  platform,
+  serveAssets,
+  mark,
+  markPainted,
+  watchFirstInput,
+} from './lib/platform/src/api'
 import './lib/renamed.svelte'
 import './lib/sync-ports'
 import './lib/theme-ports'

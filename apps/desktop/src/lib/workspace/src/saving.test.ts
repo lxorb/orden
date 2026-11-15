@@ -36,7 +36,7 @@ vi.mock('../../link-index/src/api', () => ({
 }))
 
 const light = { status: 'off', lastError: null as string | null }
-vi.mock('../../sync.svelte', () => ({
+vi.mock('../../sync-store/src/api', () => ({
   sync: Object.assign(light, { nudge: () => undefined, wrote: () => undefined }),
 }))
 

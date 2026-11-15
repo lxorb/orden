@@ -9,7 +9,7 @@
   import { dur, fade } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { type Answer, type Clash, record } from '../../sync-mirror/src/api'
-  import { sync } from '../../sync.svelte'
+  import { sync } from '../../sync-store/src/api'
   import { nameOf, rootedAt } from '../../platform/src/api'
   import { syncedCopies } from '../../foreign/src/api'
   import { asking, scan, type Engine } from '../../sync-client/src/api'
