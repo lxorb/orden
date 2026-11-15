@@ -2,8 +2,12 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, beforeAll, expect, test } from 'vitest'
 import { toggleTask } from './commands'
+import { createEditor, editorState } from './editor'
+import { HeldState } from './held'
+import { SharedDoc } from './shared'
+import { tickLines } from './task-tick'
 import { noteIndex, type TaskHelp } from './wikilink/notes'
 
 const HELP: TaskHelp = {
@@ -18,6 +22,11 @@ const HELP: TaskHelp = {
 const NOTE = '- [ ] one\n- [ ] two\nplain'
 
 const open: EditorView[] = []
+
+beforeAll(() => {
+  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
+  Range.prototype.getBoundingClientRect = () => new DOMRect()
+})
 
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
@@ -87,4 +96,68 @@ test('two boxes pressed one after the other, before the first is written, are bo
   await new Promise((resolve) => setTimeout(resolve, 50))
 
   expect(view.state.doc.toString()).toBe('- [x] one\n- [x] two\nplain')
+})
+
+function switching(firstText: string, secondText: string) {
+  const first = new SharedDoc(firstText)
+  const second = new SharedDoc(secondText)
+  const view = createEditor({ parent: document.body, shared: first, selection: { anchor: 0 } })
+  open.push(view)
+  const firstHeld = HeldState.shownIn(first, view)
+  const secondHeld = HeldState.waiting(second, editorState({ shared: second }))
+  let answer: () => void = () => undefined
+  const answered = new Promise<void>((resolve) => {
+    answer = resolve
+  })
+  const slow: TaskHelp = {
+    ...HELP,
+    tick: (note, line) => answered.then(() => HELP.tick(note, line)),
+  }
+
+  return {
+    first,
+    second,
+    view,
+    ticking: tickLines(view, slow, view.state.doc, [1]),
+    away() {
+      firstHeld.take(view)
+      secondHeld.give(view)
+    },
+    answer: () => answer(),
+  }
+}
+
+test('a box whose pane moves to a note with the same task is ticked in its own note', async () => {
+  const pane = switching('- [ ] one\nplain', '- [ ] one\nplain')
+
+  pane.away()
+  pane.answer()
+  await pane.ticking
+
+  expect(pane.first.text.toString()).toBe('- [x] one\nplain')
+  expect(pane.second.text.toString()).toBe('- [ ] one\nplain')
+  expect(pane.view.state.doc.toString()).toBe('- [ ] one\nplain')
+})
+
+test('a box whose pane moves to another note is ticked in its own note', async () => {
+  const pane = switching('- [ ] one\nplain', 'else\n- [ ] one')
+
+  pane.away()
+  pane.answer()
+  await pane.ticking
+
+  expect(pane.first.text.toString()).toBe('- [x] one\nplain')
+  expect(pane.second.text.toString()).toBe('else\n- [ ] one')
+})
+
+test('a box whose note changed in the background is ticked where its line went', async () => {
+  const pane = switching('- [ ] one\nplain', '- [ ] one\nplain')
+
+  pane.away()
+  pane.first.edit([{ from: 0, to: 0, insert: 'new line\n' }])
+  pane.answer()
+  await pane.ticking
+
+  expect(pane.first.text.toString()).toBe('new line\n- [x] one\nplain')
+  expect(pane.second.text.toString()).toBe('- [ ] one\nplain')
 })

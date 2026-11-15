@@ -4,10 +4,13 @@ import {
   type Extension,
   StateEffect,
   StateField,
+  Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
+import { external } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
 import { enclosingNamed } from '../nodes'
+import { documentOf } from '../shared'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
 export interface AiAsk {
@@ -126,6 +129,58 @@ export function asksMoved(before: EditorState, after: EditorState): boolean {
 
 let counter = 0
 
+interface Owner {
+  readonly state: EditorState | null
+  dispatch: (spec: TransactionSpec) => void
+}
+
+function ownerOf(view: AiView): Owner {
+  const note = documentOf(view)
+  let kept = view.state
+  let keptText = note?.text ?? null
+
+  const away = () => note !== null && documentOf(view) !== note
+
+  const current = (): EditorState | null => {
+    if (!note || !away()) {
+      kept = view.state
+      keptText = note?.text ?? null
+      return kept
+    }
+    if (note.text === keptText) return kept
+
+    const since = note.since(kept.doc.toString())
+    if (!since) return null
+    kept = kept.update({ changes: since, annotations: external.of(true), filter: false }).state
+    keptText = note.text
+    return kept
+  }
+
+  return {
+    get state() {
+      return current()
+    },
+
+    dispatch(spec) {
+      if (!note || !away()) {
+        view.dispatch(spec)
+        current()
+        return
+      }
+
+      const base = current()
+      if (!base) return
+      const made = base.update(spec)
+      kept = made.state
+      if (!made.changes.empty) {
+        note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
+      }
+      keptText = note.text
+      note.announce(made.effects)
+    },
+  }
+}
+
 function today(): string {
   const now = new Date()
   const two = (value: number) => String(value).padStart(2, '0')
@@ -146,66 +201,70 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
   const controller = new AbortController()
   const ask = runner
   view.dispatch({ effects: openAsk.of({ id, from: fence.from, stop: () => controller.abort() }) })
+  const owner = ownerOf(view)
 
   void ask(
     {
       prompt,
       note: mentionsNote(prompt) ? view.state.doc.toString() : null,
-      started: (model) => beginAnswer(view, id, model),
-      wrote: (text) => writeAnswer(view, id, text),
+      started: (model) => beginAnswer(owner, id, model),
+      wrote: (text) => writeAnswer(owner, id, text),
     },
     controller.signal,
   )
     .catch(() => undefined)
     .finally(() => {
-      trimAnswer(view, id)
-      view.dispatch({ effects: closeAsk.of(id) })
+      trimAnswer(owner, id)
+      owner.dispatch({ effects: closeAsk.of(id) })
     })
 
   return true
 }
 
-function beginAnswer(view: AiView, id: number, model: string) {
-  const live = runOf(view.state, id)
+function beginAnswer(owner: Owner, id: number, model: string) {
+  const state = owner.state
+  const live = state && runOf(state, id)
   if (!live) return
   if (live.body !== null) return
 
-  const found = aiFenceAt(view.state, live.from)
+  const found = aiFenceAt(state, live.from)
   if (!found) return
 
   const { head, tail } = answerParts(`answered by ${model}, ${today()}`)
-  const existing = answerSpan(view.state.doc.toString().split('\n'), found.closeLine)
+  const existing = answerSpan(state.doc.toString().split('\n'), found.closeLine)
   const span = existing ?? { from: found.to, to: found.to }
   const lead = existing ? '' : '\n\n'
 
-  view.dispatch({
+  owner.dispatch({
     changes: { from: span.from, to: span.to, insert: `${lead}${head}${tail}` },
     effects: beganAnswer.of({ id, body: span.from + lead.length + head.length }),
     scrollIntoView: true,
   })
 }
 
-function writeAnswer(view: AiView, id: number, text: string) {
-  const live = runOf(view.state, id)
+function writeAnswer(owner: Owner, id: number, text: string) {
+  const state = owner.state
+  const live = state && runOf(state, id)
   if (!live) return
   if (live.at === null || !text) return
 
-  view.dispatch({
+  owner.dispatch({
     changes: { from: live.at, insert: text },
     effects: wroteAnswer.of({ id, at: live.at + text.length }),
   })
 }
 
-function trimAnswer(view: AiView, id: number) {
-  const live = runOf(view.state, id)
+function trimAnswer(owner: Owner, id: number) {
+  const state = owner.state
+  const live = state && runOf(state, id)
   if (!live) return
   if (live.body === null || live.at === null) return
 
-  const text = view.state.doc.sliceString(live.body, live.at)
+  const text = state.doc.sliceString(live.body, live.at)
   const kept = text.replace(/\s+$/, '')
   if (kept.length === text.length) return
 
-  view.dispatch({ changes: { from: live.body + kept.length, to: live.at, insert: '' } })
+  owner.dispatch({ changes: { from: live.body + kept.length, to: live.at, insert: '' } })
 }
 
 export const aiExtension: Extension = [asks]

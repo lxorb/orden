@@ -1,6 +1,7 @@
 import type { ChangeSpec, Text } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import type { TextEdit } from '@orden/markdown/edits'
+import { documentOf } from './shared'
 import type { TaskHelp } from './wikilink/notes'
 
 interface Written {
@@ -59,6 +60,10 @@ export async function tickLines(
   lines: readonly number[],
   also: readonly ChangeSpec[] = [],
 ): Promise<void> {
+  const owner = documentOf(view)
+  const away = () => owner !== null && documentOf(view) !== owner
+  const shown = (): Text => (owner && away() ? owner.text : view.state.doc)
+
   let doc = before
   let ticked: Written[] = lines.map((number) => ({ number, text: before.line(number).text }))
   let beside = besides(before, also)
@@ -81,21 +86,29 @@ export async function tickLines(
       }
     }
 
-    if (view.state.doc !== doc) {
-      doc = view.state.doc
+    const now = shown()
+    if (now !== doc && !now.eq(doc)) {
+      doc = now
       ticked = moved(doc, ticked)
       beside = moved(doc, beside)
       continue
     }
 
     if (!edits.length && !beside.length) return
-    const changes = view.state.changes([
+    const wanted = [
       ...beside.map((one) => {
         const from = doc.line(one.number).from
         return { from: from + one.from, to: from + one.to, insert: one.insert }
       }),
       ...edits.map((edit) => ({ from: edit.from, to: edit.to, insert: edit.insert })),
-    ])
+    ]
+
+    if (owner && away()) {
+      owner.edit(wanted, { userEvent: 'input' })
+      return
+    }
+
+    const changes = view.state.changes(wanted)
     view.dispatch({
       changes,
       selection: view.state.selection.map(changes, 1),
