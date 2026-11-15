@@ -202,3 +202,49 @@ describe('a link that changes spelling keeps what it could say', () => {
     expect(rewriteLinks('![[Old.png|300]]', 'N.md', png, points)).toBe('![\\|300](C%23.png)')
   })
 })
+
+describe('a link in quoted front matter', () => {
+  const quoted = (to: string) => ({ from: 'Plan.md', to })
+
+  test('a new name with an apostrophe moves a single-quoted value into double quotes', () => {
+    const text = "---\nup: '[[Plan]]'\n---\nbody"
+    expect(rewriteLinks(text, 'One.md', quoted("Bob's plan.md"), pointsAt('plan'))).toBe(
+      '---\nup: "[[Bob\'s plan]]"\n---\nbody',
+    )
+  })
+
+  test('a new name with quotes or backslashes moves a double-quoted value into single quotes', () => {
+    const text = '---\nrel: "[[Plan]]"\nlist:\n  - "[[Plan|p]]"\n---\nbody'
+    expect(rewriteLinks(text, 'One.md', quoted('Say "hi" \\ there.md'), pointsAt('plan'))).toBe(
+      '---\nrel: \'[[Say "hi" \\ there]]\'\nlist:\n  - \'[[Say "hi" \\ there|p]]\'\n---\nbody',
+    )
+  })
+
+  test('a value that cannot change its quotes escapes the new name as its quotes need', () => {
+    const text = '---\nup: \'[[Plan]] "x"\'\nrel: "[[Plan]] it\'s"\n---\n'
+    expect(rewriteLinks(text, 'One.md', quoted('Bob\'s "plan".md'), pointsAt('plan'))).toBe(
+      '---\nup: \'[[Bob\'\'s "plan"]] "x"\'\nrel: "[[Bob\'s \\"plan\\"]] it\'s"\n---\n',
+    )
+  })
+
+  test('the same name in the body and in a plain value is written as it is', () => {
+    const text = "---\nup: [[Plan]]\n---\n[[Plan]] 'x'"
+    expect(rewriteLinks(text, 'One.md', quoted("Bob's plan.md"), pointsAt('plan'))).toBe(
+      "---\nup: [[Bob's plan]]\n---\n[[Bob's plan]] 'x'",
+    )
+  })
+
+  test('each link of a flow list keeps to its own quotes', () => {
+    const text = "---\nrel: ['[[Plan]]', \"[[Plan]]\", '[[Other]]']\n---\n"
+    expect(rewriteLinks(text, 'One.md', quoted("It's.md"), pointsAt('plan'))).toBe(
+      '---\nrel: ["[[It\'s]]", "[[It\'s]]", \'[[Other]]\']\n---\n',
+    )
+  })
+
+  test('a name that needs no escaping leaves the quotes as they were', () => {
+    const text = "---\nup: '[[Plan]]'\n---\n"
+    expect(rewriteLinks(text, 'One.md', quoted('Roadmap.md'), pointsAt('plan'))).toBe(
+      "---\nup: '[[Roadmap]]'\n---\n",
+    )
+  })
+})
