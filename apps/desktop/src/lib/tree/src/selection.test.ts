@@ -107,6 +107,13 @@ describe('the outermost of a set of rows', () => {
     expect(outermost(['/f', '/f/g', '/f/g/h', '/f/g/h/i.md', '/a.md'])).toEqual(['/f', '/a.md'])
   })
 
+  test('leaves out what a Windows folder takes along', () => {
+    expect(outermost(['C:\\n\\A', 'C:\\n\\A\\b.md', 'C:\\n\\Ab.md'])).toEqual([
+      'C:\\n\\A',
+      'C:\\n\\Ab.md',
+    ])
+  })
+
   test('keeps the deeper row where the folder above it is not picked', () => {
     expect(outermost(['/f/g/h.md', '/a.md'])).toEqual(['/f/g/h.md', '/a.md'])
   })
