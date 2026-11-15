@@ -29,6 +29,13 @@ class Recovery {
     this.days = keepDays(saved.days)
   }
 
+  heard() {
+    this.restore()
+    if (this.sweeper === undefined) return
+    this.retime()
+    void this.sweep()
+  }
+
   start(): () => void {
     this.taken = {}
     this.retime()
@@ -124,3 +131,9 @@ class Recovery {
 }
 
 export const recovery = new Recovery()
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEY) recovery.heard()
+  })
+}
