@@ -482,6 +482,34 @@ describe('an effort the model refuses', () => {
   })
 })
 
+describe('an effort changed mid-thread that Claude takes only once per request', () => {
+  test('is asked again with no message of its own, and no effort is learnt as refused', async () => {
+    answers = [
+      stream('anthropic-2'),
+      json(400, {
+        type: 'error',
+        error: {
+          type: 'invalid_request_error',
+          message: 'per-message effort is not supported for this model',
+        },
+      }),
+      stream('anthropic-2'),
+    ]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    await send(thread, 'one')
+    thread.effort = 'low'
+    const heard = await send(thread, 'two')
+
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+    const again = sent[2]?.body as { messages: { role: string }[] }
+    expect(again.messages.map((one) => one.role)).toEqual(['user', 'assistant', 'user'])
+    expect(sent[2]?.headers['anthropic-beta'] ?? '').not.toContain('mid-conversation')
+    expect(learnt('anthropic', 'claude-opus-5-5')).toMatchObject({ perMessage: false })
+    expect(learnt('anthropic', 'claude-opus-5-5').refused ?? []).toEqual([])
+    expect(thread.effort).toBe('low')
+  })
+})
+
 describe('words steered into a running turn', () => {
   test('land after the call in flight as a message of their own', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
