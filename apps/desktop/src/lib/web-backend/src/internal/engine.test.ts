@@ -28,7 +28,7 @@ vi.mock('../../../space-watch', () => ({
     return Promise.resolve([])
   },
 }))
-vi.mock('../../../notify', () => ({ notify: () => undefined }))
+vi.mock('../../../notify/src/api', () => ({ notify: () => undefined }))
 
 const SPACE = 'sim'
 const undo: (() => void)[] = []

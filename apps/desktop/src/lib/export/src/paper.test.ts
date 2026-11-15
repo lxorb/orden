@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
-import { pageSetupFor, paperTwips } from '../../page-setup'
+import { pageSetupFor, paperTwips } from '../../files-out/src/api'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '../../paper'
 import { documentOf } from './document'
 import { toDocx } from './docx'

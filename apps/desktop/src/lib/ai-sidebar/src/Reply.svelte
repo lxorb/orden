@@ -19,7 +19,7 @@
   import { insideSpace, withinSpace } from '../../platform/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import { views } from '../../views.svelte'
-  import { when } from '../../when'
+  import { when } from '../../ui-controls/src/api'
   import { workspace } from '../../workspace/src/api'
   import { ai } from '../../ai-providers/src/api'
   import { chat } from './chat-parts'

@@ -23,18 +23,17 @@
     "web-backend",
     "kept-for-good",
     "link-index",
-    "tree"
+    "tree",
+    "notify"
   ],
   "pending": [
     "apps/desktop/src/lib/SharedMark.svelte",
     "apps/desktop/src/lib/left-spaces.ts",
-    "apps/desktop/src/lib/notify.ts",
     "apps/desktop/src/lib/space-owed.ts",
     "apps/desktop/src/lib/space-pairing.ts",
     "apps/desktop/src/lib/space-watch.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts",
     "apps/desktop/src/lib/undo-toast.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/when.ts"
+    "apps/desktop/src/lib/usage.svelte.ts"
   ]
 }

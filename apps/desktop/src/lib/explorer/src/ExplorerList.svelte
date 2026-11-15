@@ -6,7 +6,7 @@
   import { readableSize } from '../../usage.svelte'
   import { isPicturePath, nameOf, folderOf, samePath } from '../../platform/src/api'
   import { menu } from '../../menu.svelte'
-  import { when } from '../../when'
+  import { when } from '../../ui-controls/src/api'
   import { renamePath } from './changes'
   import { dropInto, endDrag, over, startDrag } from './drag'
   import EntryMark from './EntryMark.svelte'

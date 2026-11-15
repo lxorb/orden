@@ -15,10 +15,6 @@ export { zenProfiles } from './zen-profiles'
 
 export const macNotes = () => import('./apple')
 
-export async function convertSyntax(): Promise<void> {
-  await (await import('./convert-syntax')).convertSyntax()
-}
-
 export const bringing = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no import in the Even Realities plugin'))
@@ -51,6 +47,10 @@ async function showImport() {
   importing.show()
 }
 
+async function convertSyntax() {
+  await (await import('./convert-syntax')).convertSyntax()
+}
+
 async function migrate(from: 'obsidian' | 'files' | 'zen') {
   const { migrating } = await migratingStore()
   await migrating[from]()
@@ -61,5 +61,6 @@ export const importCommands = {
   'import.obsidian': () => void migrate('obsidian'),
   'import.notion': () => void migrate('files'),
   'import.zen': () => void migrate('zen'),
+  'import.convert-syntax': () => void convertSyntax(),
 }
 export { landShared, readShared } from './shared'

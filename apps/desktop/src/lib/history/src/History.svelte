@@ -7,7 +7,7 @@
   import { canWriteIn } from '../../sharing/src/api'
   import { readableSize } from '../../usage.svelte'
   import { fade, LAYER, localDate, scale } from '../../platform/src/api'
-  import { when } from '../../when'
+  import { when } from '../../ui-controls/src/api'
   import { cubicOut } from 'svelte/easing'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'

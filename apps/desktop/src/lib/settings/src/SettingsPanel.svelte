@@ -19,7 +19,6 @@
   import Icon from '../../Icon.svelte'
   import { localDate } from '../../platform/src/api'
   import { message } from '../../ui-kit/src/api'
-  import AiPane from '../../AiPane.svelte'
   import { SEARCH_MARK } from '../../panel-marks'
   import { Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
@@ -78,9 +77,14 @@
   const stacked = $derived(viewport.touch || viewport.narrow || (width > 0 && width < SIDE_BY_SIDE))
 
   let query = $state('')
-  let accessDetail = $state(false)
+  let detailed = $state.raw<SettingsPart | null>(null)
 
-  const partHost: SettingsPartHost = { detail: (open) => (accessDetail = open) }
+  const hostOf = (part: SettingsPart): SettingsPartHost => ({
+    detail: (open) => {
+      if (open) detailed = part
+      else if (detailed === part) detailed = null
+    },
+  })
 
   const panes = $derived(preferences())
   const current = $derived(panes.find((one) => one.id === settings.section))
@@ -693,7 +697,7 @@
 
 {#snippet parts(section: Section)}
   {#each settingsPartsIn(section) as part, index (index)}
-    {#if part.shown()}
+    {#if part.shown() && (detailed?.section !== part.section || detailed === part)}
       {#if part.title}<h3>{part.title}</h3>{/if}
       {#if part.card}
         <div class="card">{@render partView(part)}</div>
@@ -706,7 +710,7 @@
 
 {#snippet partView(part: SettingsPart)}
   {#await part.load() then view}
-    <div class="part" {@attach (target) => view.show(target, partHost)}></div>
+    <div class="part" {@attach (target) => view.show(target, hostOf(part))}></div>
   {/await}
 {/snippet}
 
@@ -855,7 +859,6 @@
   {:else if settings.section === 'sync'}
     <SyncPane />
   {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
-    {#if !accessDetail}<AiPane />{/if}
     {@render parts('ai')}
   {:else if settings.section === 'online' || settings.section === 'remote'}
     {@render parts(settings.section)}

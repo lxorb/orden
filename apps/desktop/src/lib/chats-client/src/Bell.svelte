@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Notify } from '@orden/chats'
   import { DIVIDER, type MenuEntry, menu } from '../../menu.svelte'
-  import { askToShow } from '../../notify'
+  import { askToShow } from '../../notify/src/api'
   import { MUTE_HOURS, mutedUntil as muteFor, ringOf } from './bell'
 
   const {

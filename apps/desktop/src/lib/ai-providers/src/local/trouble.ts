@@ -1,4 +1,4 @@
-import { when } from '../../../when'
+import { when } from '../../../ui-controls/src/api'
 import type { Heard, Limit } from './heard'
 
 export interface Ending {

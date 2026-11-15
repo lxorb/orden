@@ -1,0 +1,5 @@
+{
+  "name": "notify",
+  "layer": "foundation",
+  "dependsOn": ["platform", "windows"]
+}

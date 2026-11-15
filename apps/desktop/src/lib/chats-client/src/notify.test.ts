@@ -1,6 +1,6 @@
 import type { Message, Who } from '@orden/chats'
 import { describe, expect, it } from 'vitest'
-import type { Notice } from '../../notify'
+import type { Notice } from '../../notify/src/api'
 import { type Chosen, ChatNotices, lineOf, type NoticeWorld, type Told } from './notify'
 
 const ME: Who = 'user:me'

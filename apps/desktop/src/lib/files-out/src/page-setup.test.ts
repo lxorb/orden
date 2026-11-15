@@ -8,7 +8,7 @@ import {
   runningDate,
   withRunningText,
 } from './page-setup'
-import { DEFAULT_PAGE_SETUP } from './paper'
+import { DEFAULT_PAGE_SETUP } from '../../paper'
 
 const withMatter = (body: string) => `---\n${body}\n---\n\n# Note\n`
 

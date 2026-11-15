@@ -9,7 +9,16 @@ import {
   type PaperTwips,
   paperTwips,
   runningDate,
-} from '../../page-setup'
+  chooseTarget,
+  deliver,
+  fileNameFor,
+  pageWith,
+  type Payload,
+  printWithPictures,
+  wholeSheet,
+  writtenPdf,
+  zipOf,
+} from '../../files-out/src/api'
 import { DEFAULT_PAGE_SETUP } from '../../paper'
 import { nameOf, invoke, isDesktop, isNative } from '../../platform/src/api'
 import { documentOf, picturesIn } from './document'
@@ -21,17 +30,6 @@ import {
   TEXTPACK,
 } from '../../export-formats/src/api'
 import { toMarkdown } from './markdown'
-import {
-  chooseTarget,
-  deliver,
-  fileNameFor,
-  pageWith,
-  type Payload,
-  printWithPictures,
-  wholeSheet,
-  writtenPdf,
-  zipOf,
-} from '../../files-out/src/api'
 import { type Picture, readPictures, sourcesIn } from './pictures'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'

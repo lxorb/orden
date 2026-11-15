@@ -1,4 +1,4 @@
-import type { PaperTwips } from '../../page-setup'
+import type { PaperTwips } from '../../files-out/src/api'
 import type { Align, Block, Doc, Item, Span } from './document'
 import type { Picture } from './pictures'
 

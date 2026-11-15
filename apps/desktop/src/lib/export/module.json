@@ -29,7 +29,6 @@
     "apps/desktop/src/lib/math-fonts.ts",
     "apps/desktop/src/lib/modes.svelte.ts",
     "apps/desktop/src/lib/own-keys.ts",
-    "apps/desktop/src/lib/page-setup.ts",
     "apps/desktop/src/lib/paper.ts",
     "apps/desktop/src/lib/settings.svelte.ts",
     "apps/desktop/src/lib/surfaces.svelte.ts"

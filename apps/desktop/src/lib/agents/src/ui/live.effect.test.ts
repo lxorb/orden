@@ -7,7 +7,7 @@ const shown = vi.hoisted(() => ({
   opened: [] as string[],
 }))
 
-vi.mock('../../../notify', () => ({
+vi.mock('../../../notify/src/api', () => ({
   notify: (title: string, body: string, tag?: string, opened?: () => void) => {
     shown.notices.push({ title, body, ...(tag ? { tag } : {}), ...(opened ? { opened } : {}) })
   },

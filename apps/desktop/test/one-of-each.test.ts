@@ -610,10 +610,10 @@ describe('the sentence behind a setting', () => {
       .sort()
 
     expect(own).toEqual([
-      'lib/AiPane.svelte',
       'lib/accounts-ui/src/ProfileRows.svelte',
       'lib/agents/src/access/Access.svelte',
       'lib/agents/src/settings/Words.svelte',
+      'lib/ai-sidebar/src/AiPane.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
       'lib/settings/src/SettingsPanel.svelte',
       'lib/settings/src/SyncPane.svelte',

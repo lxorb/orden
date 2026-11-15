@@ -1,4 +1,4 @@
-import { pageSetupFor, paperInches } from '../../page-setup'
+import { pageSetupFor, paperInches } from '../../files-out/src/api'
 import { DEFAULT_PAGE_SETUP } from '../../paper'
 import { openTarget, renderOptions } from './context'
 

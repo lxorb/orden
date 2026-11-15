@@ -79,7 +79,7 @@ vi.mock('../../src/lib/ai-providers/src/vault/start.svelte', () => ({
   startVault: () => undefined,
 }))
 
-const { default: AiPane } = await import('../../src/lib/AiPane.svelte')
+const { default: AiPane } = await import('../../src/lib/ai-sidebar/src/AiPane.svelte')
 const { ai } = await import('../../src/lib/ai-providers/src/store.svelte')
 const { NONE, added } = await import('../../src/lib/ai-providers/src/accounts')
 const { usage } = await import('../../src/lib/ai-providers/src/usage.svelte')

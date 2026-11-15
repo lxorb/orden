@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { setHardBreaks } from '@orden/markdown'
 import { afterEach, describe, expect, test } from 'vitest'
-import { paperTwips } from '../../page-setup'
+import { paperTwips } from '../../files-out/src/api'
 import { DEFAULT_PAGE_SETUP } from '../../paper'
 import { documentOf } from './document'
 import { toDocx } from './docx'

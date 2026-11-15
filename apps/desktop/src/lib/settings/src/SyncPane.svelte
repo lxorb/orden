@@ -2,7 +2,7 @@
   import { account } from '../../accounts/src/api'
   import { api } from '../../accounts/src/api'
   import { localNumber } from '../../platform/src/api'
-  import { when } from '../../when'
+  import { when } from '../../ui-controls/src/api'
   import Facts from '../../Facts.svelte'
   import { log } from '../../platform/src/api'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from '../../modes.svelte'

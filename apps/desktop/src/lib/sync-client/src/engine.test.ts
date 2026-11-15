@@ -33,7 +33,7 @@ vi.mock('../../space-watch', () => ({
   scanSpace: () => Promise.resolve([]),
 }))
 const told = vi.hoisted(() => vi.fn())
-vi.mock('../../notify', () => ({ notify: told }))
+vi.mock('../../notify/src/api', () => ({ notify: told }))
 const { watchFolders } = await import('./watching')
 
 const ROOT = '/device/space'

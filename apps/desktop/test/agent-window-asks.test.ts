@@ -26,7 +26,7 @@ const shown: {
   opened?: () => void
   reply?: { replied: (text: string) => void }
 }[] = []
-vi.mock('../src/lib/notify', () => ({
+vi.mock('../src/lib/notify/src/api', () => ({
   show: (one: (typeof shown)[number]) => shown.push(one),
 }))
 

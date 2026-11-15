@@ -8,7 +8,7 @@
     slide,
     invoke,
     isDesktop,
-  } from './platform/src/api'
+  } from '../../platform/src/api'
   import { onMount } from 'svelte'
   import {
     accountName,
@@ -40,14 +40,14 @@
     isLocal,
     offeredKinds,
     type Provider,
-  } from './ai-providers/src/api'
-  import type { Adding } from './ai-providers/src/api'
-  import { message } from './ui-kit/src/api'
-  import { Select } from './ui-controls/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import { Hint } from './ui-controls/src/api'
-  import { Switch } from './ui-controls/src/api'
-  import { canDictate, type Engine, engines, local } from './dictation/src/api'
+  } from '../../ai-providers/src/api'
+  import type { Adding } from '../../ai-providers/src/api'
+  import { message } from '../../ui-kit/src/api'
+  import { Select } from '../../ui-controls/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import { Hint } from '../../ui-controls/src/api'
+  import { Switch } from '../../ui-controls/src/api'
+  import { canDictate, type Engine, engines, local } from '../../dictation/src/api'
 
   let keyed = $state<Record<string, boolean>>({})
   let adding = $state(false)
@@ -211,7 +211,7 @@
   }
 
   async function removeDevice(id: string, name: string) {
-    const { prompt } = await import('./ui-kit/src/api')
+    const { prompt } = await import('../../ui-kit/src/api')
     const sure = await prompt.confirm({
       title: `Remove ${name}?`,
       detail: 'The device can no longer read your AI accounts, and the others get a new key.',
@@ -549,7 +549,7 @@
 {/if}
 
 {#if !__EVEN_PLUGIN__}
-  {#await import('./ai-sidebar/src/api').then((one) => one.loadDoWithAiCard()) then card}
+  {#await import('./DoWithAiCard.svelte') then card}
     <card.default />
   {/await}
 {/if}

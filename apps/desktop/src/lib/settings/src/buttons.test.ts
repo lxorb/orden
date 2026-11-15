@@ -41,7 +41,7 @@ describe('a button in Settings', () => {
       expect.arrayContaining([
         'settings/src/SettingsPanel.svelte',
         'import/src/MigrateRows.svelte',
-        'AiPane.svelte',
+        'ai-sidebar/src/AiPane.svelte',
       ]),
     )
   })
@@ -74,7 +74,7 @@ describe('a row in Settings', () => {
 })
 
 const SETTINGS =
-  /^((SettingsPanel|AiPane|SyncPane|Security|RecentlyDeleted)\.svelte|(people\/ProfileRows|import\/src\/MigrateRows|web-tab\/src\/ExtensionRows)\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
+  /^((SettingsPanel|SyncPane|Security|RecentlyDeleted)\.svelte|(people\/ProfileRows|import\/src\/MigrateRows|web-tab\/src\/ExtensionRows|ai-sidebar\/src\/AiPane)\.svelte|(settings|access|agents\/settings|online|remote)\/.+)$/
 
 describe('an on/off control in Settings', () => {
   test('is the shared switch, never one drawn by hand', () => {

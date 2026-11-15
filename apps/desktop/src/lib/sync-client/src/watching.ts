@@ -42,15 +42,14 @@ export function kept(engine: Engine, path: string, dir: boolean): boolean {
 
 let toldOfLimit = false
 
-function limitReached(): void {
+async function limitReached(): Promise<void> {
   if (toldOfLimit) return
   toldOfLimit = true
-  void import('../../notify').then(({ notify }) =>
-    notify(
-      'Some changes may not be noticed',
-      'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
-      'watch-limit',
-    ),
+  const { notify } = await import('../../notify/src/api')
+  notify(
+    'Some changes may not be noticed',
+    'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
+    'watch-limit',
   )
 }
 
@@ -99,7 +98,7 @@ export async function watchFolders(how: Watching): Promise<Watched> {
   }
 
   const heard = (news: SpaceNews) => {
-    if (news.unwatched === 'limit') limitReached()
+    if (news.unwatched === 'limit') void limitReached()
     if (news.gone) return
     if (news.scan) {
       const again = started.has(news.root)

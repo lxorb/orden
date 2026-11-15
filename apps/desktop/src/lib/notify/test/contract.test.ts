@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('./platform/src/tauri', () => ({ isDesktop: false, invoke: () => Promise.resolve(null) }))
+vi.mock('../../platform/src/api', () => ({ isDesktop: false, invoke: () => Promise.resolve(null) }))
 
 const world = vi.hoisted(() => ({
   refuses: false,
@@ -48,7 +48,7 @@ vi.stubGlobal('navigator', {
   },
 })
 
-const { show } = await import('./notify')
+const { show } = await import('../src/api')
 
 const settled = () => new Promise((done) => setTimeout(done, 0))
 
