@@ -64,3 +64,43 @@ test('a tap on a note in a published page graph opens it, as a click does', asyn
 
   expect(window.location.hash).toBe('#opened')
 })
+
+function touch(type: string): MouseEvent {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true })
+  Object.defineProperty(event, 'pointerType', { value: 'touch' })
+  return event
+}
+
+test("a note's card, opened by a long press on its link, stays once the finger lifts, until a tap elsewhere", async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(hover: none)' }))
+  vi.stubGlobal('fetch', () =>
+    Promise.resolve(new Response('<main id="write"><h1>Page B</h1><p>Words of b.</p></main>')),
+  )
+  vi.useFakeTimers()
+  try {
+    await import('./site')
+    const link = document.createElement('a')
+    link.href = '/b'
+    link.textContent = 'to b'
+    document.body.append(link)
+    const card = document.querySelector<HTMLElement>('body > .card')
+    if (!card) throw new Error('no card was made')
+
+    link.dispatchEvent(touch('pointerover'))
+    link.dispatchEvent(touch('pointerdown'))
+    link.dispatchEvent(touch('contextmenu'))
+    await vi.advanceTimersByTimeAsync(400)
+    link.dispatchEvent(touch('pointerup'))
+    link.dispatchEvent(touch('pointerout'))
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(card.hidden).toBe(false)
+    expect(card.textContent).toContain('Words of b.')
+
+    document.body.dispatchEvent(touch('pointerdown'))
+    expect(card.hidden).toBe(true)
+  } finally {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  }
+})

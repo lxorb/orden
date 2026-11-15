@@ -148,7 +148,7 @@ function hoverCards() {
 
   document.addEventListener('pointerover', (event) => {
     const link = inside(event.target)
-    if (!link) return
+    if (!link || event.pointerType === 'touch') return
 
     clearTimeout(leaving)
     clearTimeout(going)
@@ -156,7 +156,13 @@ function hoverCards() {
   })
 
   document.addEventListener('pointerout', (event) => {
-    if (inside(event.target)) hide()
+    if (event.pointerType !== 'touch' && inside(event.target)) hide()
+  })
+
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch' && !card.contains(event.target as Node | null)) {
+      card.hidden = true
+    }
   })
 
   document.addEventListener(
