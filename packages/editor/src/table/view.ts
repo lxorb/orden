@@ -1,6 +1,11 @@
-import { EditorSelection, type StateCommand } from '@codemirror/state'
+import {
+  EditorSelection,
+  type EditorState,
+  type StateCommand,
+  type TransactionSpec,
+} from '@codemirror/state'
 import type { Command, EditorView } from '@codemirror/view'
-import { redoEdit, undoEdit } from '../shared'
+import { later, redoEdit, undoEdit } from '../shared'
 import {
   attached,
   button,
@@ -99,6 +104,7 @@ export class TableView {
 
   private pending: { at: CellAddress; value: string } | null = null
   private idle: number | undefined
+  private land: ReturnType<typeof later> | null = null
 
   private focusAfter: Focus | null = null
 
@@ -180,28 +186,45 @@ export class TableView {
     return tableAt(editor.state, editor.state.doc.lineAt(at).to)
   }
 
+  continues(model: TableModel): boolean {
+    const { pending } = this
+    if (!pending || this.editor.state.readOnly) return false
+
+    const { header, rows } = this.model
+    const sameShape = model.header.length === header.length && model.rows.length === rows.length
+    return sameShape && textIn(model, pending.at) === this.textOf(pending.at)
+  }
+
+  sameTable(model: TableModel): boolean {
+    return this.model.header.every((text, column) => model.header[column] === text)
+  }
+
   adopt(text: TableSource, model: TableModel) {
-    const shown = serializeTable(model) === serializeTable(this.current())
+    const kept = this.continues(model) ? this.pending : null
+    const incoming = kept ? setCell(model, kept.at.row, kept.at.column, kept.value) : model
+    const shown = serializeTable(incoming) === serializeTable(this.current())
     this.source = text.source
     this.from = text.from
     this.model = model
+    if (kept) this.land = later(this.editor)
 
     if (shown && this.editable === !this.editor.state.readOnly) {
       this.focusAfter = null
       return
     }
     this.editable = !this.editor.state.readOnly
-    this.clearPending()
+    if (!kept) this.clearPending()
     this.render()
   }
 
   destroy() {
     const left = this.pending ? serializeTable(this.current()) : null
-    const { editor, from, source } = this
+    const { from, source, land } = this
     this.clearPending()
     this.dragging?.()
     this.unfollow()
-    if (left !== null && left !== source) queueMicrotask(() => keepEdit(editor, from, source, left))
+    if (left === null || left === source || !land) return
+    queueMicrotask(() => land((state) => keptEdit(state, from, source, left)))
   }
 
   flush() {
@@ -304,7 +327,22 @@ export class TableView {
   private clearPending() {
     window.clearTimeout(this.idle)
     this.pending = null
+    this.land = null
     if (active === this) active = null
+  }
+
+  private holdPlace() {
+    const { editor } = this
+    const span = this.span()
+    if (span && editor.state.doc.sliceString(span.from, span.to) === this.source) {
+      this.from = span.from
+    }
+    this.land = later(editor)
+  }
+
+  private shownText(at: CellAddress, text: string): string {
+    const { pending } = this
+    return pending && sameCell(at, pending.at) ? pending.value : text
   }
 
   private render() {
@@ -320,7 +358,7 @@ export class TableView {
     if (this.fitted?.length !== model.header.length) this.fitted = null
     model.header.forEach((text, column) => {
       const at = { row: -1, column }
-      const th = this.cell(text, at, 'th', sameCell(at, focus?.at))
+      const th = this.cell(this.shownText(at, text), at, 'th', sameCell(at, focus?.at))
 
       const grip = element('span', 'orden-table-resize')
       grip.contentEditable = 'false'
@@ -398,7 +436,7 @@ export class TableView {
     tr.dataset.row = String(index)
     const cells = (this.model.rows[index] ?? []).map((text, column) => {
       const at = { row: index, column }
-      return this.cell(text, at, 'td', sameCell(at, editing))
+      return this.cell(this.shownText(at, text), at, 'td', sameCell(at, editing))
     })
     tr.append(...cells)
     this.drawn.set(index, tr)
@@ -586,6 +624,7 @@ export class TableView {
       return
     }
 
+    this.holdPlace()
     this.pending = { at, value: cell.textContent }
     holdsEdit(this)
 
@@ -1010,8 +1049,7 @@ export class TableView {
   }
 
   private textOf(at: CellAddress): string {
-    const { model } = this
-    return (at.row < 0 ? model.header[at.column] : model.rows[at.row]?.[at.column]) ?? ''
+    return textIn(this.model, at)
   }
 }
 
@@ -1022,8 +1060,16 @@ function around(row: number, rows: number): { from: number; to: number } {
   }
 }
 
-function keepEdit(editor: EditorView, from: number, source: string, text: string) {
-  const { state } = editor
-  if (state.readOnly || state.doc.sliceString(from, from + source.length) !== source) return
-  editor.dispatch({ changes: { from, to: from + source.length, insert: text } })
+function textIn(model: TableModel, at: CellAddress): string {
+  return (at.row < 0 ? model.header[at.column] : model.rows[at.row]?.[at.column]) ?? ''
+}
+
+function keptEdit(
+  state: EditorState,
+  from: number,
+  source: string,
+  text: string,
+): TransactionSpec | null {
+  if (state.readOnly || state.doc.sliceString(from, from + source.length) !== source) return null
+  return { changes: { from, to: from + source.length, insert: text } }
 }

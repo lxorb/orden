@@ -54,10 +54,12 @@ export class TableWidget extends OrdenWidget {
   override updateDOM(dom: HTMLElement, _view: EditorView, previous: TableWidget) {
     const table = views.get(dom)
     if (!table) return false
-    if (previous.from !== this.from && previous.source !== this.source) return false
 
     const model = parseTable(this.source)
     if (!model) return false
+
+    const moved = previous.from !== this.from && previous.source !== this.source
+    if (moved && !(table.continues(model) && table.sameTable(model))) return false
 
     table.adopt(this, model)
     return true
