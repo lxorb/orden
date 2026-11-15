@@ -88,6 +88,7 @@ export const EN: Grammar = {
   },
 
   dayWords: new Set(['on', 'by', 'due']),
+  deadlineWords: new Set(['by', 'due']),
   timeWords: new Set(['at', '@']),
   meridiem: { am: 'am', pm: 'pm', 'a.m': 'am', 'p.m': 'pm' },
   oclock: new Set(["o'clock", 'oclock']),

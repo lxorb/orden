@@ -105,6 +105,7 @@ export const DE: Grammar = {
   },
 
   dayWords: new Set(['am', 'bis']),
+  deadlineWords: new Set(['bis']),
   timeWords: new Set(['um', '@']),
   meridiem: {},
   oclock: new Set(['uhr']),

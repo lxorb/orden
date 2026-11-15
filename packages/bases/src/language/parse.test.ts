@@ -47,7 +47,6 @@ describe('days, a row of the table each', () => {
     ['Pay rent 2026-10-06', '2026-10-06'],
     ['Pay rent day after tomorrow', '2026-10-09'],
     ['Pay rent on fri', '2026-10-09'],
-    ['Pay rent by friday', '2026-10-09'],
   ])('%s', (text, due) => {
     expect(said(en(text))).toEqual({ text: 'Pay rent', due })
   })
@@ -73,7 +72,6 @@ describe('days, a row of the table each', () => {
     ['Miete zahlen am 9. Oktober 2027', '2027-10-09'],
     ['Miete zahlen 6.10.', '2027-10-06'],
     ['Miete zahlen 9.10.2026', '2026-10-09'],
-    ['Miete zahlen bis Freitag', '2026-10-09'],
   ])('%s', (text, due) => {
     expect(said(de(text))).toEqual({ text: 'Miete zahlen', due })
   })
@@ -222,6 +220,16 @@ describe('the marks', () => {
     ['{next friday}', '2026-10-09'],
   ])('deadline %s', (mark, deadline) => {
     expect(said(en(`Draft talk ${mark}`))).toEqual({ text: 'Draft talk', deadline })
+  })
+
+  test.each([
+    ['Draft talk by friday', 'en', '2026-10-09'],
+    ['Draft talk due tomorrow', 'en', '2026-10-08'],
+    ['Draft talk by the 5th', 'en', '2026-11-05'],
+    ['Draft talk bis Freitag', 'de', '2026-10-09'],
+    ['Draft talk bis zum 5.', 'de', '2026-11-05'],
+  ])('a day said with by, due or bis is the deadline: %s', (text, lang, deadline) => {
+    expect(said(lang === 'en' ? en(text) : de(text))).toEqual({ text: 'Draft talk', deadline })
   })
 
   test.each([
@@ -414,9 +422,7 @@ describe('what a person types in a hurry', () => {
     ['Clean Mittwoch nächste Woche', 'de', '2026-10-14'],
     ['Clean Freitag nächster Woche', 'de', '2026-10-16'],
     ['Clean on the 15th', 'en', '2026-10-15'],
-    ['Clean by the 5th', 'en', '2026-11-05'],
     ['Clean am 15.', 'de', '2026-10-15'],
-    ['Clean bis zum 5.', 'de', '2026-11-05'],
   ])('%s', (text, lang, due) => {
     expect(said(lang === 'en' ? en(text) : de(text))).toEqual({ text: 'Clean', due })
   })

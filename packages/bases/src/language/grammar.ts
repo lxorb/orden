@@ -27,6 +27,7 @@ export interface Grammar {
   numbers: Readonly<Record<string, number>>
 
   dayWords: ReadonlySet<string>
+  deadlineWords: ReadonlySet<string>
   timeWords: ReadonlySet<string>
   meridiem: Readonly<Record<string, 'am' | 'pm'>>
   oclock: ReadonlySet<string>
