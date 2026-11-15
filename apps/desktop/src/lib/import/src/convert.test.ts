@@ -55,6 +55,16 @@ describe('a Zettelkasten id link', () => {
     expect(convertIdLinks('[[202301011200]]', ids).changes).toBe(0)
   })
 
+  test('an id written in code is left as it was written', () => {
+    const text = 'Type `[[202201011200]]`, see [[202201011200]].\n\n```\n[[202201011200]]\n```\n'
+    const said = convertIdLinks(text, ids)
+
+    expect(said.text).toBe(
+      'Type `[[202201011200]]`, see [[202201011200 The first note]].\n\n```\n[[202201011200]]\n```\n',
+    )
+    expect(said.changes).toBe(1)
+  })
+
   test('an id no note carries is left exactly as it was', () => {
     expect(convertIdLinks('[[209901011200]]', ids).text).toBe('[[209901011200]]')
   })
