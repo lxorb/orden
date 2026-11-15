@@ -82,13 +82,13 @@ export const world: VaultWorld = {
     return { accounts: ai.state, keys, seen: await signIns() }
   },
   async apply(contents, before, moved) {
-    keepMoves(moved)
     for (const [id, key] of Object.entries(contents.keys)) {
       if (before.keys[id] !== key) await writeKey(id, key, true)
     }
     for (const id of Object.keys(before.keys)) {
       if (!(id in contents.keys)) await forgetKey(id, true)
     }
+    keepMoves(moved)
     ai.adopt(contents.accounts)
   },
   loadBase: (id) => (parsed(storedText(baseKey(id))) as Base | null) ?? null,
