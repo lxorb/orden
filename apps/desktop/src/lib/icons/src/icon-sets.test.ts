@@ -147,6 +147,16 @@ describe('a coloured set', () => {
     const held = await setNamed(FLAT_COLOUR)!.load()
     expect(held.shape('not-an-icon-anybody-drew')).toBeNull()
   })
+
+  test.each([FLAT_COLOUR, LUCIDE])(
+    'and %s holds no icon named after an object property',
+    async (id) => {
+      const held = await setNamed(id)!.load()
+      for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+        expect(held.shape(name)).toBeNull()
+      }
+    },
+  )
 })
 
 describe('the stroked set', () => {
