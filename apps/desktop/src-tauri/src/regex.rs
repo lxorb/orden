@@ -3,6 +3,16 @@ use std::sync::LazyLock;
 
 pub const BUDGET: usize = 250_000;
 
+const BUDGET_PER_BYTE: usize = 400;
+
+const MOST_BUDGET: usize = 10_000_000;
+
+#[must_use]
+pub fn budget_for(text: usize) -> usize {
+    text.saturating_mul(BUDGET_PER_BYTE)
+        .clamp(BUDGET, MOST_BUDGET)
+}
+
 const PROGRAM_LIMIT: usize = 10_000;
 
 const REPEAT_LIMIT: usize = 1_000;
