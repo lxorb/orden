@@ -93,14 +93,14 @@ describe('an agent putting back what was deleted', () => {
 
   test('cannot put back a note that went with a locked folder', async () => {
     items.push(account('n1', 'Private/Deep/Diary.md'))
-    bury({ '/s/Work\nPrivate': { '': 'device' } })
+    bury({ '/s/Work\nPrivate\nb1': { '': 'device' } })
     await expect(putBack('note:n1')).rejects.toMatchObject({ code: 'protected' })
     expect(restored).toEqual([])
   })
 
   test('puts back what no lock waits for', async () => {
     items.push(device('t2', 'Work/Plan.md'), account('n2', 'Open/Note.md'))
-    bury({ t9: { '': 'password' }, '/s/Work\nPrivate': { '': 'device' } })
+    bury({ t9: { '': 'password' }, '/s/Work\nPrivate\nb1': { '': 'device' } })
     await putBack('device:t2')
     await putBack('note:n2')
     expect(restored).toEqual(['device:t2', 'note:n2'])

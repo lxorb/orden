@@ -13,7 +13,23 @@ function remoteOf(value: unknown): Remote | null {
   return { password: value.password, spaces: value.spaces }
 }
 
-export async function pushWays(root: string): Promise<void> {
+const queued = new Map<string, Promise<void>>()
+const stirred = new Map<string, number>()
+
+const alike = (one: Record<string, Way>, other: Record<string, Way>) =>
+  Object.keys(one).length === Object.keys(other).length &&
+  Object.entries(one).every(([key, way]) => other[key] === way)
+
+const stir = (root: string) => stirred.set(root, (stirred.get(root) ?? 0) + 1)
+
+export function pushWays(root: string): Promise<void> {
+  stir(root)
+  const next = (queued.get(root) ?? Promise.resolve()).then(() => pushNow(root))
+  queued.set(root, next)
+  return next
+}
+
+async function pushNow(root: string): Promise<void> {
   const token = account.token
   const spaceId = syncStore()?.remoteIdFor(root) ?? null
   if (!token || !spaceId) return
@@ -26,7 +42,8 @@ export async function pushWays(root: string): Promise<void> {
     () => true,
     () => false,
   )
-  protection.said(root, landed)
+  stir(root)
+  protection.said(root, landed && alike(ways, protection.ways(root)))
 }
 
 export async function pushPassword(
@@ -46,9 +63,11 @@ export async function pulled(
   accountId: string,
   pairs: readonly { root: string; spaceId: string }[],
 ): Promise<void> {
+  const before = new Map(pairs.map(({ root }) => [root, stirred.get(root) ?? 0]))
   const remote = remoteOf(await request<unknown>('/v1/protected', { token }).catch(() => null))
   if (!remote) return
   for (const { root, spaceId } of pairs) {
+    if ((stirred.get(root) ?? 0) !== before.get(root)) continue
     const theirs = protectedMap(remote.spaces[spaceId])
     if (protection.adopt(root, theirs, accountId)) await pushWays(root)
   }

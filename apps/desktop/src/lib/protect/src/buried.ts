@@ -37,6 +37,13 @@ function placeOf(root: string, at: string): string {
   return `${root}\n${at}`
 }
 
+function folderIn(name: string, root: string): string | null {
+  if (!name.startsWith(`${root}\n`)) return null
+  const rest = name.slice(root.length + 1)
+  const end = rest.lastIndexOf('\n')
+  return end < 0 ? null : rest.slice(0, end)
+}
+
 function keepBuried(back: string, ways: Record<string, Way>): void {
   const buried = Object.entries({ ...without(readBuried(), back), [back]: ways })
   keepJson(BURIED_KEY, Object.fromEntries(buried.slice(-MOST_BURIED)))
@@ -72,8 +79,9 @@ export async function bury(
     if (rest !== null) ways[rest] = way
   }
   if (!Object.keys(ways).length) return
-  const away = `${HISTORY_AWAY}/${crypto.randomUUID()}`
-  for (const name of [placeOf(root, at), back ?? null]) {
+  const id = crypto.randomUUID()
+  const away = `${HISTORY_AWAY}/${id}`
+  for (const name of [`${placeOf(root, at)}\n${id}`, back ?? null]) {
     if (name === null) continue
     keepBuried(name, ways)
     keepHistory(name, away)
@@ -93,13 +101,15 @@ async function exactly(
 ): Promise<Record<string, Way> | null> {
   const histories = readHistories()
   const away = histories[named]
-  if (away !== undefined) {
-    keepJson(HISTORY_KEY, without(histories, named))
-    await rehome(away, pathOf(root, at))
-  }
+  const twins = (name: string) => name === named || (away !== undefined && histories[name] === away)
+  keepJson(
+    HISTORY_KEY,
+    Object.fromEntries(Object.entries(histories).filter(([name]) => !twins(name))),
+  )
+  if (away !== undefined) await rehome(away, pathOf(root, at))
   const buried = readBuried()
   const ways = buried[named]
-  keepJson(BURIED_KEY, without(buried, named))
+  keepJson(BURIED_KEY, Object.fromEntries(Object.entries(buried).filter(([name]) => !twins(name))))
   const came: Record<string, Way> = {}
   for (const [rest, way] of Object.entries(ways ?? {})) {
     const landed = landedAt(at, rest)
@@ -118,9 +128,8 @@ async function under(
   const histories = readHistories()
   const there = pathOf(root, was)
   for (const [name, ways] of Object.entries(readBuried())) {
-    if (!name.startsWith(`${root}\n`)) continue
-    const folder = name.slice(root.length + 1)
-    if (folder === was || within(folder, was, root) === null) continue
+    const folder = folderIn(name, root)
+    if (folder === null || folder === was || within(folder, was, root) === null) continue
     for (const [rest, way] of Object.entries(ways)) {
       const key = landedAt(folder, rest)
       const inside = within(was, key, root)
@@ -143,16 +152,12 @@ export async function unburied(
   was = at,
 ): Promise<Record<string, Way> | null> {
   if (!inSpace(at) || !inSpace(was)) return null
-  const buried = readBuried()
-  const place = placeOf(root, was)
-  const named = [back, place].find((one) => one !== null && one in buried) ?? null
+  const buried = Object.keys(readBuried())
+  const place = buried.filter((name) => folderIn(name, root) === was).at(-1) ?? null
+  const named = back !== null && buried.includes(back) ? back : place
   const came = {
     ...(await under(root, was, at, held)),
     ...(named === null ? {} : await exactly(named, root, at, held)),
-  }
-  if (named !== null && named !== place && place in buried) {
-    keepJson(BURIED_KEY, without(readBuried(), place))
-    keepJson(HISTORY_KEY, without(readHistories(), place))
   }
   return Object.keys(came).length ? came : null
 }
@@ -170,12 +175,9 @@ export function moveSpace(from: string, to: string): void {
 }
 
 export function waits(back: string | null, root: string | null, at: string): boolean {
-  return Object.keys(readBuried()).some(
-    (name) =>
-      back === null ||
-      name === back ||
-      (root !== null &&
-        name.startsWith(`${root}\n`) &&
-        within(name.slice(root.length + 1), at, root) !== null),
-  )
+  return Object.keys(readBuried()).some((name) => {
+    if (back === null || name === back) return true
+    const folder = root === null ? null : folderIn(name, root)
+    return folder !== null && within(folder, at, root ?? undefined) !== null
+  })
 }
