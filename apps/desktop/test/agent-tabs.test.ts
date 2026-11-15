@@ -855,6 +855,19 @@ describe('tabs moved and panes arranged (#1078)', () => {
       await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, agent(focusing)),
     ).toMatchObject({ code: 'bad_arguments' })
   })
+
+  test('a move or an arrange answers only the tabs of the spaces granted', async () => {
+    tabs.push(tab('h1', 'note', '/s/Home/Diary.md', { shown: 'Diary' }))
+    tabs[5]!.note.home = 'home'
+    const only = agent(focusing, { spaces: ['Work'] })
+    const idsOf = (said: unknown) =>
+      (said as { result: { id: string }[] }).result.map((one) => one.id)
+
+    const moved = await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' }, only)
+    expect(idsOf(moved)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
+    const arranged = await call('workspace_tabs', { op: 'arrange', layout: 'even' }, only)
+    expect(idsOf(arranged)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
+  })
 })
 
 describe('the reader terminals', () => {
