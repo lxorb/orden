@@ -237,6 +237,12 @@ describe('what taking a tag away has to cut', () => {
     expect(tagSpans('    #include <stdio.h>\n', 'include')).toEqual([])
   })
 
+  test('and the quotes a tag was written in', () => {
+    expect(without('---\ntags: ["a", "b"]\n---\n', 'a')).toBe('---\ntags: ["b"]\n---\n')
+    expect(without("---\ntags: ['a']\n---\n", 'a')).toBe('---\ntags: []\n---\n')
+    expect(without('---\ntags:\n  - "a"\n  - b\n---\n', 'a')).toBe('---\ntags:\n  - b\n---\n')
+  })
+
   test('while one of several on a line leaves the line', () => {
     expect(without('---\ntags: [work, other]\n---\n', 'work')).toBe('---\ntags: [other]\n---\n')
   })

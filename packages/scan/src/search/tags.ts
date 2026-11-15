@@ -58,15 +58,24 @@ export function tagCuts(body: string, path: string): { from: number; to: number 
   if (!wanted) return []
 
   const out: { from: number; to: number }[] = []
+  const frontEnds = frontMatterBlock(body)?.close ?? 0
 
   for (const use of tagUses(body)) {
     const folded = use.tag.toLowerCase()
     if (folded !== wanted && !folded.startsWith(`${wanted}/`)) continue
 
-    out.push(widened(body, use))
+    out.push(widened(body, use.from < frontEnds ? unquoted(body, use) : use))
   }
 
   return out
+}
+
+function unquoted(body: string, use: TagUse): TagUse {
+  const hash = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
+  const quote = body.charAt(hash - 1)
+  if ((quote !== '"' && quote !== "'") || body.charAt(use.to) !== quote) return use
+
+  return { tag: use.tag, from: hash - 1, to: use.to + 1 }
 }
 
 function widened(body: string, use: TagUse): { from: number; to: number } {
