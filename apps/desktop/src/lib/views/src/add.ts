@@ -37,6 +37,31 @@ export function groupProperties(group?: { property: string; key: Value }): Recor
   return kept ? { [bare(group.property)]: plainValue(key) } : {}
 }
 
+const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
+
+function listed(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value as unknown[]
+  return value === undefined || value === null ? [] : [value]
+}
+
+export function joinedProperties(
+  ...layers: readonly Record<string, unknown>[]
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const layer of layers) {
+    for (const [name, value] of Object.entries(layer)) {
+      const now = out[name]
+      if (!Array.isArray(now) && !Array.isArray(value)) {
+        out[name] = value
+        continue
+      }
+      const all = [...listed(now), ...listed(value)]
+      out[name] = all.filter((one, at) => all.findIndex((other) => sameValue(one, other)) === at)
+    }
+  }
+  return out
+}
+
 export async function addNote(
   base: Base,
   at: number,
@@ -57,9 +82,10 @@ export async function addNote(
     folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
   if (!canWriteAt(dir)) return null
 
-  const props: Record<string, unknown> = { ...place.properties }
-  Object.assign(props, groupProperties(group))
-  for (const [name, value] of Object.entries(made.properties ?? {})) props[name] = plainValue(value)
+  const asked = Object.fromEntries(
+    Object.entries(made.properties ?? {}).map(([name, value]) => [name, plainValue(value)]),
+  )
+  const props = joinedProperties(place.properties, groupProperties(group), asked)
   Object.assign(props, idFor(base, space))
 
   const title = noteName(made.title ?? 'Untitled')

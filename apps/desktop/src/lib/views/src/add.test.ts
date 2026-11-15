@@ -21,3 +21,24 @@ test('a group of no value, or of a field that is not the note’s, gives nothing
   expect(groupProperties({ property: 'file.folder', key: 'Books' })).toEqual({})
   expect(groupProperties(undefined)).toEqual({})
 })
+
+test('a note added in a tags group keeps the tag the base asks for beside the group’s', async () => {
+  const { joinedProperties } = await import('./add')
+  const place = { tags: ['project'], status: 'Open' }
+  expect(joinedProperties(place, { tags: 'urgent' })).toEqual({
+    tags: ['project', 'urgent'],
+    status: 'Open',
+  })
+  expect(joinedProperties(place, {}, { tags: ['urgent'] })).toEqual({
+    tags: ['project', 'urgent'],
+    status: 'Open',
+  })
+  expect(joinedProperties(place, { tags: 'project' })).toEqual({
+    tags: ['project'],
+    status: 'Open',
+  })
+  expect(joinedProperties(place, { status: 'Doing' })).toEqual({
+    tags: ['project'],
+    status: 'Doing',
+  })
+})
