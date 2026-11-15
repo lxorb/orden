@@ -141,7 +141,9 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   const to = String(args.to)
   const going = (await what(from)).sort((a, b) => a.rest.length - b.rest.length)
   if (!going.length) throw new Error(`nothing is at ${from}`)
-  if ((await what(to)).length) throw new Error('something already lives there')
+  if ((await what(to)).length || (await keptHolds(to))) {
+    throw new Error('something already lives there')
+  }
 
   const source = addressed(from)
   const target = addressed(to)
@@ -170,6 +172,15 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     await remove('delete_note', join(source.at, one.rest, source.kept)).catch(() => undefined)
   }
   return undefined as T
+}
+
+async function keptHolds(path: string): Promise<boolean> {
+  const found = mountOf(path)
+  if (!found) return false
+  for (const end of ['', PDF_SIDECAR, '.pdf', `.pdf${PDF_SIDECAR}`]) {
+    if (await found.mount.folder.holds(`${found.inside}${end}`)) return true
+  }
+  return false
 }
 
 async function keptBytes(path: string, rest: string): Promise<Uint8Array> {

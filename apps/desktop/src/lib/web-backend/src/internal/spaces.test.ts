@@ -322,6 +322,27 @@ describe('a new space', () => {
   })
 })
 
+describe('a note carried in from a folder', () => {
+  test('is refused where a note of the same name, spelled another way, already lives', async () => {
+    const nfc = 'Caf\u00e9.md'
+    const nfd = 'Cafe\u0301.md'
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set(`/spaces/Disk/${nfd}`, 'from the folder')
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+    await call('write_note', { path: `${made.path}/${nfc}`, content: 'kept here' })
+
+    await expect(
+      call('rename_note', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` }),
+    ).rejects.toThrow('something already lives there')
+    await expect(
+      call('copy_path', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` }),
+    ).rejects.toThrow('something already lives there')
+
+    expect(await call('read_note', { path: `${made.path}/${nfc}` })).toBe('kept here')
+    expect(disk.files.get(`/spaces/Disk/${nfd}`)).toBe('from the folder')
+  })
+})
+
 describe('a space that is a folder', () => {
   function workspace(roots: string[]) {
     const said: string[] = []
