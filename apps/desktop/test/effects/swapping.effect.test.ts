@@ -10,7 +10,7 @@ import {
   type StateView,
   type TransactionSpec,
 } from '@orden/editor'
-import { EditorStates, type NoteTab } from '../../src/lib/editor-states'
+import { EditorStates, type NoteTab } from '../../src/lib/pane-tree/src/editor-states'
 import { computed, reactive, root, watch } from './runes.svelte'
 
 const scrolledTo = StateEffect.define<number>({ map: (at, changes) => changes.mapPos(at) })

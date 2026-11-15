@@ -47,7 +47,7 @@ const { CanvasStore } = await import('../../src/lib/canvas/src/store.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { panesOf } = await import('../../src/lib/session/src/api')
 const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
-const Pane = (await import('../../src/lib/Pane.svelte')).default
+const Pane = (await import('../../src/lib/pane-tree/src/Pane.svelte')).default
 await import('../../src/lib/NewHere.svelte')
 
 let target: HTMLElement

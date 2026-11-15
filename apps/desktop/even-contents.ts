@@ -147,6 +147,7 @@ export const APP_FOLDERS = [
   'overview',
   'pages',
   'palette',
+  'pane-tree',
   'panes',
   'parting',
   'pdf',

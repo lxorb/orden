@@ -28,8 +28,8 @@ test('nothing offers another frame: no setting, no file of its choices', () => {
 
 test('every surface on the frame reads its tokens rather than a corner of its own', () => {
   const readers: Record<string, string[]> = {
-    'Pane.svelte': ['--card-radius', '--card-shadow', '--card-edge'],
-    'PaneTree.svelte': ['--chrome-seam'],
+    'pane-tree/src/Pane.svelte': ['--card-radius', '--card-shadow', '--card-edge'],
+    'pane-tree/src/PaneTree.svelte': ['--chrome-seam'],
     'panes/src/pane-tree.ts': ['--card-gap'],
     '../App.svelte': ['--card-inset', '--chrome-ground'],
     'Sidebar.svelte': ['--side-ground', '--chrome-seam'],
@@ -78,7 +78,7 @@ test('every sidebar over the note stands on the paper, under the chrome and its 
 })
 
 test('every pane is a card rounded at all four corners, with no setting that squares its foot', () => {
-  const pane = read('./Pane.svelte')
+  const pane = read('./pane-tree/src/Pane.svelte')
   expect(/\n {2}\.pane \{([^}]*)\}/.exec(pane)?.[1]).toContain('border-radius: var(--card-radius);')
   expect(pane).not.toMatch(/grounded|--card-foot|flushBottom/)
   const app = read('../App.svelte')

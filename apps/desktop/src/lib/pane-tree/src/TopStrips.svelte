@@ -1,8 +1,8 @@
 <script lang="ts">
   import TopStrips from './TopStrips.svelte'
-  import { type Frame, tracks } from './panes/src/api'
-  import { workspace } from './workspace/src/api'
-  import { Tabs } from './tab-strip/src/api'
+  import { type Frame, tracks } from '../../panes/src/api'
+  import { workspace } from '../../workspace/src/api'
+  import { Tabs } from '../../tab-strip/src/api'
 
   const {
     frame,

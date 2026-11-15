@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { EditorView } from '@orden/editor'
-import Editor from '../../src/lib/Editor.svelte'
+import Editor from '../../src/lib/pane-tree/src/Editor.svelte'
 import { type Tab, workspace } from '../../src/lib/workspace/src/api'
 import { reactive } from './runes.svelte'
 

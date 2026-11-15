@@ -7,7 +7,7 @@ const scriptOf = (name: string) => {
   return text.slice(0, text.indexOf('</script>'))
 }
 
-test.each(['tab-strip/src/Tabs.svelte', 'Pane.svelte'])(
+test.each(['tab-strip/src/Tabs.svelte', 'pane-tree/src/Pane.svelte'])(
   '%s hears every part it fetches only while it is there',
   (name) => {
     const script = scriptOf(name)
