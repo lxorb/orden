@@ -21,7 +21,14 @@
   const back = $derived(rollbackSteps(modes.keepVersions))
 
   const chosen = $derived(back.includes(days) ? days : (back.at(-1) ?? 1))
-  let asked = $state<{ notes: number; paths: string[]; more: boolean; at: number } | null>(null)
+  let asked = $state<{
+    notes: number
+    paths: string[]
+    more: boolean
+    at: number
+    days: number
+    space: string
+  } | null>(null)
   let rolling = $state(false)
   let rolled = $state<number | null>(null)
   let wrong = $state<string | null>(null)
@@ -93,6 +100,8 @@
     workspace.activeSpace ? sync.remoteIdFor(workspace.activeSpace.root) : null,
   )
 
+  const preview = $derived(asked?.days === chosen && asked.space === spaceId ? asked : null)
+
   function moment(): number {
     return Date.now() - chosen * 24 * 60 * 60 * 1000
   }
@@ -106,12 +115,16 @@
 
     try {
       const at = moment()
-      const said = await api.rollback(token, spaceId, at, '', true)
+      const days = chosen
+      const space = spaceId
+      const said = await api.rollback(token, space, at, '', true)
       asked = {
         notes: said.notes + (said.left ?? 0),
         paths: said.paths ?? [],
         more: said.more === true,
         at,
+        days,
+        space,
       }
     } catch (error) {
       wrong = error instanceof Error ? error.message : 'That did not work.'
@@ -122,18 +135,19 @@
 
   async function roll() {
     const token = account.accountToken
-    if (!token || !spaceId || rolling) return
+    const shown = preview
+    if (!token || !spaceId || !shown || rolling) return
 
     rolling = true
     wrong = null
     rolled = 0
 
     try {
-      const at = asked?.at ?? moment()
+      const { at, days, space } = shown
       let put = 0
       let left = 0
       for (let round = 0; round < ROUNDS; round++) {
-        const done = await api.rollback(token, spaceId, at)
+        const done = await api.rollback(token, space, at)
         put += done.notes
         rolled = put
         left = done.partial ? (done.left ?? 0) : 0
@@ -141,7 +155,7 @@
         if (!done.partial || done.notes === 0) break
       }
 
-      asked = left > 0 ? { notes: left, paths: [], more: false, at } : null
+      asked = left > 0 ? { notes: left, paths: [], more: false, at, days, space } : null
       if (left > 0) wrong = 'That did not work.'
       sync.nudge()
     } catch (error) {
@@ -334,12 +348,12 @@
   </div>
 </div>
 
-{#if asked}
+{#if preview}
   <p class="note" transition:fade={{ duration: dur(130) }}>
-    {asked.notes
-      ? asked.notes === 1
+    {preview.notes
+      ? preview.notes === 1
         ? '1 note would go back to what it said then.'
-        : `${asked.notes} notes would go back to what they said then.`
+        : `${preview.notes} notes would go back to what they said then.`
       : 'Nothing has changed since then.'}
   </p>
 {/if}
@@ -355,7 +369,7 @@
 {/if}
 
 <div class="card">
-  {#if asked?.notes}
+  {#if preview?.notes}
     <button class="orden-action is-danger" disabled={rolling} onclick={() => void roll()}>
       {rolling ? 'Going back' : 'Go back'}
     </button>
