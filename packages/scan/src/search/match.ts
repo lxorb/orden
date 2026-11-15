@@ -92,9 +92,10 @@ const A_TASK: Partial<Record<Unit, 'any' | 'todo' | 'done'>> = {
 }
 
 function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
-  const ends = starts.map((_start, index) => {
+  const ends = starts.map((start, index) => {
     const next = starts[index + 1]
-    return next === undefined ? body.length : next - 1
+    if (next === undefined) return body.length
+    return next - 2 >= start && body.charAt(next - 2) === '\r' ? next - 2 : next - 1
   })
 
   if (unit === 'line') {

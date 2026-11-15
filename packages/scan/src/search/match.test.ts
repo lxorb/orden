@@ -316,6 +316,10 @@ describe('nearness', () => {
     expect(answers('section:(alpha beta)', { body })).toBe(true)
   })
 
+  test('line: ends a line before its carriage return', () => {
+    expect(lines('line:/done$/', { body: 'a done\r\nb\r\n' })).toEqual(['a done'])
+  })
+
   test('excludes within the line it is given', () => {
     expect(answers('line:(alpha -beta)', { body: CLOSE })).toBe(true)
     expect(answers('line:(beta -alpha)', { body: 'alpha beta\n' })).toBe(false)
