@@ -62,7 +62,7 @@ describe('an agent reaching the account', () => {
   })
 
   test('cannot write into it by spelling it in other letters', async () => {
-    for (const path of ['diary/New.md', 'DIARY/Today.md', 'Diary/new.md'.toUpperCase()]) {
+    for (const path of ['diary/New.md', 'DIARY/Today.md', 'D\u0131ary/New.md']) {
       expect(await tool('write_note', { space: 'Home', path, content: 'planted' })).toContain(
         'is protected',
       )

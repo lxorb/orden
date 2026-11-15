@@ -78,7 +78,15 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
   return readProtected(await rawFor(env, userId))
 }
 
-const folded = (path: string): string => path.normalize('NFC').toLowerCase()
+function folded(path: string): string {
+  let out = ''
+  for (const one of path.normalize('NFC')) {
+    const upper = one.toUpperCase()
+    const lower = upper.toLowerCase()
+    out += [...upper].length !== 1 ? one : [...lower].length === 1 ? lower : upper
+  }
+  return out
+}
 
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
