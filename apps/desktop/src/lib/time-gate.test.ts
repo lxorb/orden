@@ -9,7 +9,7 @@ vi.stubGlobal('localStorage', {
 
 const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } =
   await import('./gates/src/api')
-const { setWord, receive } = await import('./kind-choice')
+const { setWord, receive } = await import('./gates/src/api')
 const { runnable } = await import('./shortcuts/src/registry')
 const { experimentalPane } = await import('./settings/src/experimental-pane')
 

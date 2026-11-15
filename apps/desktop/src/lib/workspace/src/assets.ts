@@ -1,9 +1,8 @@
-import { api, BASE, account } from './accounts/src/api'
-import { attachmentFolder } from './attachments'
-import { sha256, invoke, spaceRelative } from './platform/src/api'
-import { links } from './link-index/src/api'
-import { modes } from './modes/src/api'
-import { workspace } from './workspace/src/api'
+import { api, BASE, account } from '../../accounts/src/api'
+import { attachmentFolder, modes } from '../../modes/src/api'
+import { sha256, invoke, spaceRelative } from '../../platform/src/api'
+import { links } from '../../link-index/src/api'
+import { workspace } from './workspace.svelte'
 
 function extensionFor(type: string, name: string): string {
   const fromName = /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase()

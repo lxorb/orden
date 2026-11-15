@@ -15,8 +15,8 @@ vi.mock('./container', async (importOriginal) => ({
   canRecordHere: () => true,
 }))
 
-vi.mock('../../../assets', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../assets')>()),
+vi.mock('../../../workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../workspace/src/api')>()),
   storeBeside: (_bytes: ArrayBuffer, note: string, name: string) => {
     stored.push(`${note} ${name}`)
     return Promise.resolve(`${note.slice(0, note.lastIndexOf('/'))}/${name}`)

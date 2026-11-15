@@ -12,7 +12,7 @@
     "reading",
     "ui-kit",
     "link-index",
-    "modes"
-  ],
-  "pending": ["apps/desktop/src/lib/assets.ts"]
+    "modes",
+    "workspace"
+  ]
 }

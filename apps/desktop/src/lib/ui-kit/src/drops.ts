@@ -1,5 +1,5 @@
-import { isFileDrop, listenOver, outsideRows } from './ui-kit/src/api'
-import { droppedPaths } from './platform/src/api'
+import { isFileDrop, listenOver, outsideRows } from './drag-paths'
+import { droppedPaths } from '../../platform/src/api'
 
 const PDF = /\.pdf$/i
 
@@ -16,9 +16,7 @@ function mayHoldPdfs(transfer: DataTransfer | null): boolean {
   return !files.length || files.some((one) => one.type === 'application/pdf' || one.type === '')
 }
 
-export function guardDrops(
-  opened: (paths: readonly string[]) => void = (paths) => void openPdfs(paths),
-): () => void {
+export function guardDrops(opened: (paths: readonly string[]) => void): () => void {
   let ours = false
 
   const over = (event: DragEvent) => {
@@ -61,11 +59,6 @@ export function guardDrops(
     window.removeEventListener('drop', taken, true)
     window.removeEventListener('drop', drop)
   }
-}
-
-async function openPdfs(paths: readonly string[]) {
-  const { showPdfs } = await (await import('./pdf/src/api')).handed()
-  await showPdfs(paths)
 }
 
 async function pathsOf(files: readonly File[]): Promise<readonly string[]> {

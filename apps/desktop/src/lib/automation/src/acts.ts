@@ -14,7 +14,7 @@ import {
   relativeTo,
   waited,
 } from '../../platform/src/api'
-import { OWN_KEYS } from '../../own-keys'
+import { ownKeys } from '../../web-backend/src/api'
 import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
@@ -271,6 +271,7 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!key) throw new Error('say which key')
 
   const value = said(args, 'value')
+  const { OWN_KEYS } = await ownKeys()
   const own = OWN_KEYS.find((one) => one === key.toLowerCase())
   if (own) {
     workspace.itemMeta.set(note.path, { [own]: value ? value.slice(0, LONGEST_META_VALUE) : null })

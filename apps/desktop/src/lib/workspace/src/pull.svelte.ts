@@ -1,11 +1,10 @@
-import { viewport } from './ui-kit/src/api'
-import { forget } from './platform/src/api'
+import { viewport } from '../../ui-kit/src/api'
+import { forget } from '../../platform/src/api'
+import { CLAIM } from './drawer.svelte'
 
 const STORAGE_KEY = 'orden:pull'
 
 const WAITS = 15_000
-
-export const CLAIM = 12
 
 export const REACH = 84
 

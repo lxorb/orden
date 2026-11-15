@@ -33,7 +33,14 @@
     viewport,
     fullscreen,
   } from '../../ui-kit/src/api'
-  import { alone, swipeOpens, dropOnList, workspace, agentMarks } from '../../workspace/src/api'
+  import {
+    alone,
+    swipeOpens,
+    dropOnList,
+    workspace,
+    agentMarks,
+    pullable,
+  } from '../../workspace/src/api'
   import { movesSection, headingAt, lineOf } from '../../documents/src/api'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -57,11 +64,10 @@
     timePanel,
   } from '../../surfaces/src/api'
   import { bookmarkEntry, rowMenus } from '../../row-menu/src/api'
-  import { pullable } from '../../pull.svelte'
   import { links } from '../../link-index/src/api'
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
-  import { SidebarWidth } from '../../sidebar-width.svelte'
+  import { SidebarWidth } from './sidebar-width.svelte'
   import { dur, fade, fly } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'

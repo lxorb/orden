@@ -9,7 +9,7 @@ const server = vi.hoisted(() => ({
 
 const no = () => Promise.reject(new Error('the service said no'))
 
-vi.mock('./accounts/src/client', () => ({
+vi.mock('./client', () => ({
   api: {
     connector: () => {
       server.asked.push('connector')
@@ -45,11 +45,12 @@ vi.mock('./accounts/src/client', () => ({
   },
 }))
 
-vi.mock('./accounts/src/account.svelte', () => ({
+vi.mock('./account.svelte', () => ({
   account: { accountToken: 'session', forgetWithSession: () => undefined },
 }))
 
-vi.mock('./ui-kit/src/message', () => ({
+vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))

@@ -1,17 +1,16 @@
 import type { EditorView } from '@orden/editor'
-import type { Command } from './commands/src/api'
-import { type MenuEntry } from './ui-kit/src/api'
-import { shownName, isMarkdownPath } from './platform/src/api'
-import { canWriteAt, canWriteIn } from './sharing/src/api'
-import { carvable, mergeable } from './workspace/src/composing'
-import { workspace } from './workspace/src/api'
+import type { Command } from './commands'
+import { type MenuEntry } from '../../ui-kit/src/api'
+import { shownName, isMarkdownPath } from '../../platform/src/api'
+import { canWriteAt, canWriteIn } from '../../sharing/src/api'
+import { carvable, mergeable, workspace } from '../../workspace/src/api'
 
 function mergeTargets(exclude: string) {
   return workspace.notes.filter((note) => note.path !== exclude && isMarkdownPath(note.path))
 }
 
 async function askForNote(exclude: string): Promise<string | null> {
-  const { prompt } = await import('./ui-kit/src/api')
+  const { prompt } = await import('../../ui-kit/src/api')
   const options = mergeTargets(exclude).map((note) => ({
     id: note.path,
     label: shownName(note.name),

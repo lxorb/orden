@@ -8,14 +8,14 @@ const state = vi.hoisted(() => ({
   asked: [] as { command: string; args: unknown }[],
 }))
 
-vi.mock('./platform/src/tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isDesktop: true,
   invoke: (command: string, args: unknown) => {
     state.asked.push({ command, args })
     return Promise.resolve(true)
   },
 }))
-vi.mock('./workspace/src/api', () => ({
+vi.mock('./workspace.svelte', () => ({
   tabOverview: { open: false },
   workspace: {
     device: {

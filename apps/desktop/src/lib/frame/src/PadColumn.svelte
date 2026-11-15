@@ -1,9 +1,9 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { dur } from './platform/src/api'
-  import { startup } from './launch/src/api'
-  import { scratchpadCard } from './surfaces/src/api'
-  import { shown } from './scratchpad/src/api'
+  import { dur } from '../../platform/src/api'
+  import { startup } from '../../launch/src/api'
+  import { scratchpadCard } from '../../surfaces/src/api'
+  import { shown } from '../../scratchpad/src/api'
 
   let column = $state<HTMLElement>()
   let kept = $state(untrack(() => shown.on))

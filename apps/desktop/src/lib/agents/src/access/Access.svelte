@@ -1,25 +1,27 @@
 <script lang="ts">
-  import { localDate } from '../../../platform/src/api'
-  import { Facts } from '../../../ui-kit/src/api'
+  import {
+    localDate,
+    dur,
+    slide,
+    keep,
+    storedText,
+    invoke,
+    isDesktop,
+    platform,
+  } from '../../../platform/src/api'
+  import { Facts, closeOnBack, arrive, segmented } from '../../../ui-kit/src/api'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { account } from '../../../accounts/src/api'
+  import { account, connectors } from '../../../accounts/src/api'
   import AgentMark from '../settings/AgentMark.svelte'
   import { tauriCrate } from '../settings/crate'
   import { AgentsPane } from '../settings/pane.svelte'
   import { reach } from '../settings/reach.svelte'
-  import { closeOnBack } from '../../../ui-kit/src/api'
-  import { connectors } from '../../../connectors.svelte'
-  import { dur, slide } from '../../../platform/src/api'
   import { settingsWindow } from '@orden/contracts'
-  import { arrive, segmented } from '../../../ui-kit/src/api'
-  import { keep, storedText } from '../../../platform/src/api'
-  import { invoke, isDesktop, platform } from '../../../platform/src/api'
   import AccountSteps from './AccountSteps.svelte'
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
-  import { Hint } from '../../../ui-controls/src/api'
-  import { Switch } from '../../../ui-controls/src/api'
+  import { Hint, Switch } from '../../../ui-controls/src/api'
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
 

@@ -32,10 +32,5 @@
     "surfaces",
     "row-menu",
     "spaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/composer-commands.ts",
-    "apps/desktop/src/lib/kind-choice.ts"
   ]
 }

@@ -7,14 +7,14 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-vi.mock('./platform/src/tauri', async (actual) => ({
-  ...(await actual<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
 }))
 
 const saved = vi.hoisted(() => [] as unknown[])
-vi.mock('./accounts/src/client', async (actual) => ({
-  ...(await actual<typeof import('./accounts/src/client')>()),
+vi.mock('../../accounts/src/client', async (actual) => ({
+  ...(await actual<typeof import('../../accounts/src/client')>()),
   api: {
     saveSettings: (_token: string, patch: unknown) => {
       saved.push(patch)
@@ -24,7 +24,7 @@ vi.mock('./accounts/src/client', async (actual) => ({
 }))
 
 const opened = vi.hoisted(() => [] as unknown[])
-vi.mock('./explorer/src/api', () => ({
+vi.mock('../../explorer/src/api', () => ({
   openExplorer: () => {
     opened.push('explorer')
     return Promise.resolve()
@@ -32,16 +32,16 @@ vi.mock('./explorer/src/api', () => ({
 }))
 
 const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } =
-  await import('./gates/src/api')
+  await import('./api')
 const { receive, setKind, setWord } = await import('./kind-choice')
-const { offeredKinds } = await import('./new-here/src/api')
-const { kindOfLetter } = await import('./new-here/src/api')
-const { kindsPane } = await import('./settings/src/kinds-pane')
-const { experimentalPane } = await import('./settings/src/experimental-pane')
-const { BY_ID } = await import('./shortcuts/src/api')
-await import('./features')
-const { account } = await import('./accounts/src/account.svelte')
-const { viewport } = await import('./ui-kit/src/viewport.svelte')
+const { offeredKinds } = await import('../../new-here/src/api')
+const { kindOfLetter } = await import('../../new-here/src/api')
+const { kindsPane } = await import('../../settings/src/kinds-pane')
+const { experimentalPane } = await import('../../settings/src/experimental-pane')
+const { BY_ID } = await import('../../shortcuts/src/api')
+await import('../../features')
+const { account } = await import('../../accounts/src/account.svelte')
+const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 
 let token: string | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })

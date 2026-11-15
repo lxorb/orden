@@ -1,10 +1,9 @@
 import { hinting } from './hints/src/api'
 import { oneWindow } from './web-tab/src/api'
 import { door } from '@orden/markdown/door'
-import { account } from './accounts/src/api'
-import { busy, outsideDrops, reloading, viewport } from './ui-kit/src/api'
+import { account, connectors } from './accounts/src/api'
+import { busy, guardDrops, outsideDrops, reloading, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai-chat/src/api'
-import { guardDrops } from './drops'
 import { joining } from './sharing/src/api'
 import {
   collectErrors,
@@ -18,10 +17,10 @@ import {
   onTheActivity,
   factsOfLaunch,
   mark,
+  stallWatch,
 } from './platform/src/api'
 import { startup } from './launch/src/api'
 import { choices, modes } from './modes/src/api'
-import { connectors } from './connectors.svelte'
 import {
   anythingRuns,
   GIVE_UP,
@@ -37,11 +36,9 @@ import { record } from './sync-mirror/src/api'
 import { settings } from './settings/src/api'
 import { hiddenKinds } from './gates/src/api'
 import { gate } from './onboarding/src/api'
-import { shortcuts } from './shortcuts/src/api'
+import { shortcuts, toolbar } from './shortcuts/src/api'
 import { theme } from './theme/src/api'
-import { pull } from './pull.svelte'
 import { convertAll, keepWorking } from './web-backend/src/api'
-import { toolbar } from './shortcuts/src/api'
 import { trash } from './trash/src/api'
 import { installStaged, ready, settledForInstaller, updates } from './updates/src/api'
 import { startRunner } from './views/src/api'
@@ -50,7 +47,9 @@ import {
   type Across,
   agentMarks,
   blankTabs,
+  featureGates,
   outsideHearing,
+  pull,
   workspace,
 } from './workspace/src/api'
 import { mayStop, providePort } from '@orden/contracts'
@@ -62,6 +61,11 @@ if (!__EVEN_PLUGIN__) {
 }
 
 const DAY = 24 * 60 * 60 * 1000
+
+async function openPdfs(paths: readonly string[]) {
+  const { showPdfs } = await (await import('./pdf/src/api')).handed()
+  await showPdfs(paths)
+}
 
 async function listenForAgents(): Promise<() => void> {
   if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
@@ -79,7 +83,7 @@ async function listenForAgents(): Promise<() => void> {
 export function start(): () => void {
   mark('start')
   collectErrors()
-  void startup.turn('doors').then(async () => (await import('./stalls')).watchStalls())
+  void startup.turn('doors').then(async () => (await stallWatch()).watchStalls())
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('doors')
@@ -140,7 +144,7 @@ export function start(): () => void {
 
   const stopRecovery = recovery.start()
 
-  const stopStrayDrops = guardDrops()
+  const stopStrayDrops = guardDrops((paths) => void openPdfs(paths))
 
   void guardClose()
 
@@ -168,7 +172,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./feature-gate.svelte'))
+      .then(featureGates)
       .then(({ whenAppsOn, whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
         whenPassOn(
           () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),

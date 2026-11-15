@@ -13,6 +13,5 @@
     "workspace",
     "modes",
     "panes"
-  ],
-  "pending": ["apps/desktop/src/lib/attachments.ts"]
+  ]
 }

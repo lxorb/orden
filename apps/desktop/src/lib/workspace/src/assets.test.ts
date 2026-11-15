@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const api = vi.hoisted(() => ({ BASE: '' }))
-vi.mock('./accounts/src/client', () => ({
+vi.mock('../../accounts/src/client', () => ({
   api: {},
   get BASE() {
     return api.BASE

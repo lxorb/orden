@@ -1,7 +1,6 @@
 import { MARKS } from '../../marks/src/api'
-import { locked, setKind } from '../../kind-choice'
+import { locked, setKind, gated, hiddenKinds } from '../../gates/src/api'
 import { kindName, kindLines, newKinds } from '../../new-here/src/api'
-import { gated, hiddenKinds } from '../../gates/src/api'
 import type { Field, Group, Pane } from './fields'
 
 function kindGroups(): Group[] {
