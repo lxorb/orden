@@ -126,9 +126,7 @@ function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }):
 function stillReaches(
   source: string,
   link: { kind: LinkKind; target: string },
-  found: string,
   there: string,
-  loose: boolean,
   folded: boolean,
 ): boolean {
   const spelled = (path: string) => {
@@ -146,9 +144,7 @@ function stillReaches(
       if (part === '..' && !parts.pop()) return false
       if (part !== '..') parts.push(part)
     }
-    const written = parts.join('/')
-    const whole = !loose || target.startsWith('/') || comparable(found) === comparable(written)
-    return !whole && isMarkdownPath(at) ? ends(at, written) : at === written
+    return at === parts.join('/')
   }
 
   const written = spelled(link.target)
@@ -1285,7 +1281,10 @@ class Links {
           return reaches(link.target) ? null : { path: there, reaches }
         }
         const kept = nameOf(there) === nameOf(found)
-        if (stillReaches(source, link, found, there, !shifted, kept)) return null
+        const reaches = shifted
+          ? stillReaches(source, link, there, kept)
+          : kept && reaching(source, there, 'markdown')(link.target)
+        if (reaches) return null
         return there
       }
 

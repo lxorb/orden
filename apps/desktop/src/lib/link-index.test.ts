@@ -1685,6 +1685,30 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     expect(links.backlinks(at('a/Plan.md'))).toEqual([])
   })
 
+  test('a markdown link by name keeps reaching its note when a move makes another namesake nearer', async () => {
+    await space({
+      'a/Road.md': '# A',
+      'c/Road.md': '# C',
+      'Draft.md': '[x](Road.md) and [[Road]]\n',
+    })
+    notes['Archive/z/Road.md'] = notes['a/Road.md'] ?? ''
+    delete notes['a/Road.md']
+
+    await links.retarget(at('a'), at('Archive/z'), ROOT, () => null, { moved: true })
+
+    expect(notes['Draft.md']).toBe('[x](Archive/z/Road.md) and [[z/Road]]\n')
+  })
+
+  test('a markdown link by name follows its note past a namesake that is now nearer', async () => {
+    await space({ 'b/Road.md': '# B', 'c/Road.md': '# C', 'Draft.md': '[x](Road.md)\n' })
+    notes['x/y/Road.md'] = notes['b/Road.md'] ?? ''
+    delete notes['b/Road.md']
+
+    await links.retarget(at('b/Road.md'), at('x/y/Road.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['Draft.md']).toBe('[x](x/y/Road.md)\n')
+  })
+
   test('a link that still reaches its note after the move is left as written', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]\n', 'Two.md': '[[Other]]\n' })
     notes['Y/Plan.md'] = notes['Plan.md'] ?? ''
