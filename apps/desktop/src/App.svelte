@@ -12,7 +12,7 @@
   import { currentPlatform } from './lib/ui-kit/src/api'
   import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/ui-kit/src/api'
-  import PaneTree from './lib/PaneTree.svelte'
+  import { PaneTree } from './lib/pane-tree/src/api'
   import FirstScreen from './lib/FirstScreen.svelte'
   import Sidebar from './lib/Sidebar.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'

@@ -12,7 +12,7 @@
   import { askPlace } from './save-place/src/api'
   import { shown as pad } from './scratchpad/src/api'
   import { isDraft } from './documents/src/api'
-  import TopStrips from './TopStrips.svelte'
+  import { TopStrips } from './pane-tree/src/api'
   import { closeWindow, currentWindow, isDesktop, platform, startup } from './platform/src/api'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts/src/api'

@@ -18,10 +18,10 @@
     setReadOnlyMode,
   } from '@orden/editor'
   import { untrack } from 'svelte'
-  import Door from './Door.svelte'
-  import { whileHere } from './while-here'
-  import { alone } from './alone.svelte'
-  import type { Tab } from './documents/src/api'
+  import Door from '../../Door.svelte'
+  import { whileHere } from '../../while-here'
+  import { alone } from '../../alone.svelte'
+  import type { Tab } from '../../documents/src/api'
   import {
     type Pane,
     panesIn,
@@ -31,24 +31,24 @@
     inside,
     type Zone,
     zoneAt,
-  } from './panes/src/api'
-  import { TAB_KINDS } from './tab-kinds/src/api'
-  import { isDesktop } from './platform/src/api'
-  import { dragged, dropOver, isTreeDrag } from './drag-paths'
+  } from '../../panes/src/api'
+  import { TAB_KINDS } from '../../tab-kinds/src/api'
+  import { isDesktop } from '../../platform/src/api'
+  import { dragged, dropOver, isTreeDrag } from '../../drag-paths'
   import Editor from './Editor.svelte'
-  import { message } from './ui-kit/src/api'
-  import { keptAway } from './away/src/api'
-  import { busy } from './ui-kit/src/api'
+  import { message } from '../../ui-kit/src/api'
+  import { keptAway } from '../../away/src/api'
+  import { busy } from '../../ui-kit/src/api'
 
-  import { chrome } from './theme/src/api'
-  import { without } from './graph/src/api'
-  import { links } from './link-index/src/api'
-  import { modes } from './modes/src/api'
-  import { pull } from './pull.svelte'
-  import { notePicture } from './note-images'
+  import { chrome } from '../../theme/src/api'
+  import { without } from '../../graph/src/api'
+  import { links } from '../../link-index/src/api'
+  import { modes } from '../../modes/src/api'
+  import { pull } from '../../pull.svelte'
+  import { notePicture } from '../../note-images'
   import { placement } from './placement.svelte'
-  import { rooms } from './collab/src/api'
-  import { appsOn, explorerOn, settings } from './settings.svelte'
+  import { rooms } from '../../collab/src/api'
+  import { appsOn, explorerOn, settings } from '../../settings.svelte'
   import {
     applicationSurface,
     archivedStrip,
@@ -70,20 +70,20 @@
     viewSurface,
     todosBoard,
     webSurface,
-  } from './surfaces.svelte'
-  import { canWriteIn } from './sharing/src/api'
-  import { noteBehind, protection } from './protect/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { storeAttachment, storeImage } from './assets'
-  import { flushFirst, Tabs } from './tab-strip/src/api'
-  import { followHref, followNote } from './open-link'
-  import type { OpenHow } from './new-tab'
-  import { usage } from './usage.svelte'
-  import { viewport } from './ui-kit/src/api'
-  import { views } from './views.svelte'
-  import { workspace } from './workspace/src/api'
-  import { keepsScroll, scrollKeyOf } from './kept-scroll'
-  import { paneCorners } from './pane-corners.svelte'
+  } from '../../surfaces.svelte'
+  import { canWriteIn } from '../../sharing/src/api'
+  import { noteBehind, protection } from '../../protect/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { storeAttachment, storeImage } from '../../assets'
+  import { flushFirst, Tabs } from '../../tab-strip/src/api'
+  import { followHref, followNote } from '../../open-link'
+  import type { OpenHow } from '../../new-tab'
+  import { usage } from '../../usage.svelte'
+  import { viewport } from '../../ui-kit/src/api'
+  import { views } from '../../views.svelte'
+  import { workspace } from '../../workspace/src/api'
+  import { keepsScroll, scrollKeyOf } from '../../kept-scroll'
+  import { paneCorners } from '../../pane-corners.svelte'
 
   const { pane }: { pane: Pane } = $props()
 
@@ -268,7 +268,7 @@
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
-    void here(import('./editor-menu')).then(({ showEditorMenu }) => showEditorMenu(event, on, path))
+    void here(import('../../editor-menu')).then(({ showEditorMenu }) => showEditorMenu(event, on, path))
   }
 
   async function saveImage(file: File, into: Tab): Promise<string | null> {

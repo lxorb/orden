@@ -1,12 +1,12 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/Pane.svelte', () => ({ default: () => undefined }))
+vi.mock('../../src/lib/pane-tree/src/Pane.svelte', () => ({ default: () => undefined }))
 
 HTMLElement.prototype.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 800)
 
 const { workspace } = await import('../../src/lib/workspace/src/api')
-const PaneTree = (await import('../../src/lib/PaneTree.svelte')).default
+const PaneTree = (await import('../../src/lib/pane-tree/src/PaneTree.svelte')).default
 
 let shown: ReturnType<typeof mount> | null = null
 

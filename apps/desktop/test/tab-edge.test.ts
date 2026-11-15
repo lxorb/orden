@@ -206,7 +206,7 @@ describe('the open tab', () => {
     expect(TABS).toContain('style:--lead="{lead}px"')
     expect(rule('.tabs.flush .tab.first .fill')).toMatch(/inset-inline-start: 0;/)
     expect(TABS).toMatch(/\.tabs\.flush \.tab\.first\.active \.fill::before \{\s+display: none;/)
-    const pane = readFileSync(join(import.meta.dirname, '../src/lib/Pane.svelte'), 'utf8')
+    const pane = readFileSync(join(import.meta.dirname, '../src/lib/pane-tree/src/Pane.svelte'), 'utf8')
     expect(pane).toContain('class:straight={!stripped && flushFirst(pane.id)}')
     expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)
   })

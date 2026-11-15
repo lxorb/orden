@@ -324,8 +324,8 @@ describe('what the app evaluates before it draws anything', () => {
 
   test.each([
     ['/src/App.svelte', 'the app'],
-    ['/lib/Pane.svelte', 'a pane'],
-    ['/lib/Editor.svelte', 'the editor'],
+    ['/lib/pane-tree/src/Pane.svelte', 'a pane'],
+    ['/lib/pane-tree/src/Editor.svelte', 'the editor'],
     ['/lib/Tree.svelte', 'the file list'],
     ['/editor/src/editor.ts', "the editor's own state"],
     ['/markdown/src/breaks.ts', 'the line-break switch the renderer reads'],

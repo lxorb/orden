@@ -174,7 +174,7 @@ describe('the paper a note is written on', () => {
   }
 
   test('is what a pane lays under itself', () => {
-    expect(ruleOf('lib/Pane.svelte', 'pane')).toContain(PAPER)
+    expect(ruleOf('lib/pane-tree/src/Pane.svelte', 'pane')).toContain(PAPER)
   })
 
   test('is the page itself, whole, under the scratchpad', () => {
@@ -185,7 +185,7 @@ describe('the paper a note is written on', () => {
 
   test('is see-through under a pane alone', () => {
     const offenders = components
-      .filter((one) => one.name !== 'lib/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
+      .filter((one) => one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
       .map((one) => one.name)
 
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])

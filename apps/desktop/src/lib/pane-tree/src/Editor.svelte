@@ -20,20 +20,19 @@
     shortcutEffect,
     trustedMarkupEffect,
   } from '@orden/editor'
-  import { pickedLink } from './composer'
+  import { pickedLink } from '../../composer'
   import { EditorStates } from './editor-states'
-  import { firstScreen } from './first-screen/src/api'
-  import { keptCoverOf, setCoverPosition } from './kept-cover'
-  import { mark } from './platform/src/api'
-  import { modes } from './modes/src/api'
-  import { type OverlayScrollbar, overlayScrollbar } from './ui-kit/src/api'
-  import { shortcuts } from './shortcuts/src/api'
-  import { trustsHtmlIn } from './sharing/src/api'
-  import { pastesMarkup } from './sharing/src/api'
-  import { viewport } from './ui-kit/src/api'
-  import { carriedIntoNotes } from './drag-paths'
-  import type { Tab } from './documents/src/api'
-  import { workspace } from './workspace/src/api'
+  import { firstScreen } from '../../first-screen/src/api'
+  import { keptCoverOf, setCoverPosition } from '../../kept-cover'
+  import { mark } from '../../platform/src/api'
+  import { modes } from '../../modes/src/api'
+  import { type OverlayScrollbar, overlayScrollbar } from '../../ui-kit/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { pastesMarkup, trustsHtmlIn } from '../../sharing/src/api'
+  import { viewport } from '../../ui-kit/src/api'
+  import { carriedIntoNotes } from '../../drag-paths'
+  import type { Tab } from '../../documents/src/api'
+  import { workspace } from '../../workspace/src/api'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
   let {
@@ -73,7 +72,7 @@
     const from = tab.path
     let release: (() => void) | null = null
     let gone = false
-    void import('./preview-card').then(({ mountPreview }) => {
+    void import('../../preview-card').then(({ mountPreview }) => {
       if (!gone) release = mountPreview(host, note, from)
     })
 
@@ -100,7 +99,7 @@
       ...(opennote
         ? { openNote: (jump: NoteJump, press?: LinkPress) => opennote(jump, press, one.path) }
         : {}),
-      openTag: (tag: string) => void import('./tag-search').then(({ searchTag }) => searchTag(tag)),
+      openTag: (tag: string) => void import('../../tag-search').then(({ searchTag }) => searchTag(tag)),
       ...(nameblock
         ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) }
         : {}),

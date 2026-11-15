@@ -23,7 +23,7 @@ describe('the note’s corners', () => {
   })
 
   test('which the focused pane draws, inside its own box', () => {
-    const pane = read('lib/Pane.svelte')
+    const pane = read('lib/pane-tree/src/Pane.svelte')
     expect(pane).toMatch(
       /\{#if paneCorners\.draw && workspace\.panes\.focusedId === pane\.id\}\s*\{@render paneCorners\.draw\(\)\}/,
     )
@@ -48,7 +48,7 @@ describe('the note’s corners', () => {
   })
 
   test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
-    expect(read('lib/PaneTree.svelte')).toContain('tracks(split)')
+    expect(read('lib/pane-tree/src/PaneTree.svelte')).toContain('tracks(split)')
     const tree = read('lib/panes/src/pane-tree.ts')
     const share =
       /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
