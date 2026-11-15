@@ -1751,6 +1751,22 @@ describe('to-dos and bases', () => {
     await todos.remove(id)
   })
 
+  test('a description is kept as written, and taken off when sent empty', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const steps = await call('add_task', { text: 'Steps', description: '  - one\n  - two' })
+    const rent = await call('add_task', { text: 'Pay rent', description: 'Ask about the lease' })
+    const ids = [steps, rent].map((one) => (one as { result: { id: string } }).result.id)
+    const cleared = (await call('update_task', { id: ids[1], description: '' })) as {
+      result: Record<string, unknown>
+    }
+    const kept = ids.map((id) => todos.todo(id)?.description)
+    for (const id of ids) await todos.remove(id)
+    expect({ kept, cleared: cleared.result.description }).toEqual({
+      kept: ['  - one\n  - two', ''],
+      cleared: undefined,
+    })
+  })
+
   test('a limit sent as the words a terminal types is still a limit', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const made: unknown[] = []

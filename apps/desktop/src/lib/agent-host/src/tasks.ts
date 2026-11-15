@@ -146,8 +146,8 @@ function patchOf(call: Call): TodoPatch {
   const patch: Mutable<TodoPatch> = {}
   const title = maybe(call, 'title') ?? maybe(call, 'text')
   if (title !== null) patch.title = title
-  const description = maybe(call, 'description')
-  if (description !== null) patch.description = description
+  const description = call.args.description
+  if (typeof description === 'string') patch.description = description
   const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
   if (labels !== undefined) patch.labels = labels
   if ('space' in call.args) patch.space = maybe(call, 'space') === null ? null : spaceIdOf(call)
