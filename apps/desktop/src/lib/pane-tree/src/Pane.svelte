@@ -19,7 +19,7 @@
   } from '@orden/editor'
   import { untrack } from 'svelte'
   import Door from '../../Door.svelte'
-  import { whileHere } from '../../while-here'
+  import { whileHere } from '../../ui-kit/src/api'
   import { alone } from '../../alone.svelte'
   import type { Tab } from '../../documents/src/api'
   import {
@@ -83,7 +83,7 @@
   import { views } from '../../views.svelte'
   import { workspace } from '../../workspace/src/api'
   import { keepsScroll, scrollKeyOf } from '../../kept-scroll'
-  import { paneCorners } from '../../pane-corners.svelte'
+  import { paneCorners } from '../../ui-kit/src/api'
 
   const { pane }: { pane: Pane } = $props()
 

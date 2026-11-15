@@ -3,7 +3,7 @@
   import { droppedAddress } from '@orden/scan/web-address'
   import { dropOver } from '../../drag-paths'
   import { onDestroy, onMount, tick, untrack } from 'svelte'
-  import { whileHere } from '../../while-here'
+  import { whileHere } from '../../ui-kit/src/api'
   import { staysOn } from '../../caret'
   import Door from '../../Door.svelte'
   import { views } from '../../views.svelte'
@@ -29,7 +29,7 @@
   import SharedMark from '../../SharedMark.svelte'
   import { privateMark, syncMark, soundMark, tabOverview } from '../../surfaces.svelte'
   import TabMark from '../../TabMark.svelte'
-  import UnsavedDot from '../../UnsavedDot.svelte'
+  import { UnsavedDot } from '../../ui-kit/src/api'
   import { askPlace } from '../../save-place/src/api'
   import {
     arrival,

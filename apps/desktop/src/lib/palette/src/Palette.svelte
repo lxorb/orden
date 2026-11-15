@@ -26,7 +26,7 @@
   import { pieces } from '../../matching/src/api'
   import { MOST_PLACES, ranked } from '../../matching/src/api'
   import type { OpenTab, Row } from './rows'
-  import UnsavedDot from '../../UnsavedDot.svelte'
+  import { UnsavedDot } from '../../ui-kit/src/api'
   import { isDraft, scanHeadings } from '../../documents/src/api'
   import { lookOf } from './trying'
   import { search } from '../../search.svelte'
