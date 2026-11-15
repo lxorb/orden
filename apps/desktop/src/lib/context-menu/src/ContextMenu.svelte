@@ -11,13 +11,13 @@
     trim,
     type MenuEntry,
     type MenuItem,
-  } from './ui-kit/src/api'
+  } from '../../ui-kit/src/api'
   import { released, shortcutPassesBy } from './menu-release'
-  import { spendClick } from './ui-controls/src/api'
-  import { pullsAway } from './ui-controls/src/api'
-  import { trap } from './ui-controls/src/api'
-  import { ran } from './usage/src/api'
-  import { dur, fade, fly, scale } from './platform/src/api'
+  import { spendClick } from '../../ui-controls/src/api'
+  import { pullsAway } from '../../ui-controls/src/api'
+  import { trap } from '../../ui-controls/src/api'
+  import { ran } from '../../usage/src/api'
+  import { dur, fade, fly, scale } from '../../platform/src/api'
 
   let element = $state<HTMLDivElement>()
   let position = $state({ x: 0, y: 0 })

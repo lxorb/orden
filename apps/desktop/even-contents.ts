@@ -112,6 +112,7 @@ export const APP_FOLDERS = [
   'collab',
   'collab-rooms',
   'commands',
+  'context-menu',
   'crate',
   'dictation',
   'documents',

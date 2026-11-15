@@ -53,7 +53,7 @@ describe('a layer closed by a press past it', () => {
   })
 
   test('which is where every menu a button opens goes, with the button that opened it', () => {
-    const menu = readFileSync(join(SOURCE, 'lib/ContextMenu.svelte'), 'utf8')
+    const menu = readFileSync(join(SOURCE, 'lib/context-menu/src/ContextMenu.svelte'), 'utf8')
     expect(menu).toMatch(
       /overlays\.show\(\s*\(\) => menu\.hide\(\),\s*\(\) => \[element\],\s*menu\.from/,
     )

@@ -1,0 +1,21 @@
+{
+  "name": "native-menu",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "double-tap",
+    "editor",
+    "gates",
+    "modes",
+    "platform",
+    "shortcuts",
+    "ui-kit",
+    "usage",
+    "workspace"
+  ],
+  "pending": [
+    "apps/desktop/src/lib/fullscreen.svelte.ts",
+    "apps/desktop/src/lib/surfaces.svelte.ts"
+  ]
+}

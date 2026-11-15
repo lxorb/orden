@@ -1,3 +1,4 @@
+import { webPages } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import type {
   CheckMenuItem,
@@ -6,11 +7,11 @@ import type {
   PredefinedMenuItem,
   Submenu,
 } from '@tauri-apps/api/menu'
-import { account } from './accounts/src/api'
-import { fullscreen } from './fullscreen.svelte'
-import { hiddenKinds } from './gates/src/api'
-import type { MenuItem } from './ui-kit/src/api'
-import { modes } from './modes/src/api'
+import { account } from '../../accounts/src/api'
+import { fullscreen } from '../../fullscreen.svelte'
+import { hiddenKinds } from '../../gates/src/api'
+import type { MenuItem } from '../../ui-kit/src/api'
+import { modes } from '../../modes/src/api'
 import {
   type Change,
   changesBetween,
@@ -29,13 +30,13 @@ import {
   type SeenKey,
   type StandIn,
 } from './native-menu'
-import { shortcuts } from './shortcuts/src/api'
-import { type AppContext, BY_ID, runEntry } from './shortcuts/src/api'
-import { appMenuRows } from './surfaces.svelte'
-import { takeKeyboard } from './platform/src/api'
-import { currentWindow, invoke, afterQuiet } from './platform/src/api'
-import { viewport } from './ui-kit/src/api'
-import { workspace } from './workspace/src/api'
+import { shortcuts } from '../../shortcuts/src/api'
+import { type AppContext, BY_ID, runEntry } from '../../shortcuts/src/api'
+import { appMenuRows } from '../../surfaces.svelte'
+import { takeKeyboard } from '../../platform/src/api'
+import { currentWindow, invoke, afterQuiet } from '../../platform/src/api'
+import { viewport } from '../../ui-kit/src/api'
+import { workspace } from '../../workspace/src/api'
 
 export interface MenuBarContext {
   view?: EditorView | undefined
@@ -143,8 +144,7 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
   const web = workspace.active?.kind === 'web'
   const step = (how: 'reload' | 'fresh') => () => {
     const tab = workspace.active
-    if (tab?.kind === 'web')
-      void import('./web-tab/src/api').then(({ pages }) => pages.step(tab.id, how))
+    if (tab?.kind === 'web') void webPages().step(tab.id, how)
   }
   return [
     entryRow('web.reload', context, { disabled: !web, run: step('reload') }),

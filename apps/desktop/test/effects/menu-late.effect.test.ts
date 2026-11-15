@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import ContextMenu from '../../src/lib/ContextMenu.svelte'
+import ContextMenu from '../../src/lib/context-menu/src/ContextMenu.svelte'
 import { menu } from '../../src/lib/ui-kit/src/api'
 
 Element.prototype.animate = () =>

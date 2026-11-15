@@ -48,7 +48,7 @@ export interface WebPagesPort {
   named(tab: string, url: string | null, title: string): void
   privately(tab: string, inPrivate: boolean): void
   typedInto(tab: string): boolean
-  step(tab: string, way: 'back' | 'forward'): Promise<void>
+  step(tab: string, way: 'back' | 'forward' | 'reload' | 'fresh'): Promise<void>
   stepAddress(tab: string, by: -1 | 1): Promise<string | null>
   freeze(tab: string): void
   thaw(tab: string): Promise<void>
