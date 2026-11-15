@@ -22,10 +22,10 @@ providePort('chats', {
     if (__EVEN_PLUGIN__) return
     ;(await chatsStore()).offer(chat, text, parent ? { parent } : {})
   },
-  openLink: async (uri) => {
+  openLink: async (uri, how) => {
     if (__EVEN_PLUGIN__) return
     const { openChatLink } = await (await import('./chats-client/src/api')).chatOpening()
-    await openChatLink(uri)
+    await openChatLink(uri, how)
   },
   mayDelete: async (paths) => {
     if (__EVEN_PLUGIN__) return true

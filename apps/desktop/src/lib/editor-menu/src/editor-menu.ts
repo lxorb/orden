@@ -43,10 +43,9 @@ import { linkTo } from '../../composer'
 import { composerEntries } from '../../composer-commands'
 import { DIVIDER, type MenuEntry, menu, viewport } from '../../ui-kit/src/api'
 import { modes } from '../../modes/src/api'
-import { webHref } from '../../open-link'
+import { webHref, workspace } from '../../workspace/src/api'
 import { openExternal, isMarkdownPath, noteName, relativeTo } from '../../platform/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
-import { workspace } from '../../workspace/src/api'
 import { unlocks } from '../../protect/src/api'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {

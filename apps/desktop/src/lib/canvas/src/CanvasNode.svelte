@@ -27,7 +27,7 @@
   import { pickedLink } from '../../composer'
   import { links } from '../../link-index/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { followHref } from '../../open-link'
+  import { followHref } from '../../workspace/src/api'
 
   const {
     node,

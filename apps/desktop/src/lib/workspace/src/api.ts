@@ -46,3 +46,13 @@ export {
 } from './focus'
 
 export { hasStatusBar } from './regions'
+
+export {
+  followHref,
+  followNote,
+  followNoteFrom,
+  MIDDLE,
+  openHref,
+  opensLink,
+  webHref,
+} from './open-link'

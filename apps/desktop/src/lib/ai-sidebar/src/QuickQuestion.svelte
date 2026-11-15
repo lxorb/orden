@@ -14,14 +14,13 @@
   import { Cross } from '../../ui-kit/src/api'
   import { links } from '../../link-index/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
-  import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
+  import { followHref, followNote, MIDDLE, opensLink, workspace } from '../../workspace/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import { grow } from './grow'
   import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
-  import { workspace } from '../../workspace/src/api'
 
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
