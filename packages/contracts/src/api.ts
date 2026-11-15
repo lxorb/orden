@@ -235,6 +235,7 @@ export type {
   PressedKey,
   WebClip,
   WebLendingPort,
+  WebLent,
   WebPageSeen,
   WebPagesPort,
   WebPorts,

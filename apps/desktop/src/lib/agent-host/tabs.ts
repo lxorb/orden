@@ -1,3 +1,4 @@
+import { portOf, webPages } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
 import { seen } from './guarded'
 import type { AgentAnswer } from '../automation/src/api'
@@ -9,7 +10,6 @@ import { views } from '../views.svelte'
 import { isWebAddress } from '@orden/scan/web-address'
 import { hostOf } from '@orden/scan/visits'
 import { agentMarks } from '../agent-marks.svelte'
-import { pages, webLending } from '../web-tab/src/api'
 import { apartOf } from '@orden/scan/shortcut'
 import type { Tab } from '../documents/src/api'
 import { workspace } from '../workspace.svelte'
@@ -49,7 +49,7 @@ function front(tab: Tab): boolean {
 
 function addressOf(tab: Tab): string | null {
   if (tab.kind !== 'web') return null
-  return pages.addressOf(tab.id) ?? workspace.webAddressOf(tab)
+  return webPages().addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
 function tabOf(tab: Tab) {
@@ -459,15 +459,16 @@ export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
   if (!tab) return null
 
-  const page = pages.of(tab.id)
-  page.url ??= tab.address ?? workspace.webAddressOf(tab)
-  page.space ??= workspace.spaceOf(tab.note)
-  page.path = tab.path
-  if (!page.live) page.own = apartOf(tab)
-  const { lend, unlend } = await webLending()
-  await lend(tab.id)
+  const lending = portOf('web.lending')
+  if (!lending.ok) return null
+  await lending.value.lend(tab.id, {
+    url: tab.address ?? workspace.webAddressOf(tab),
+    space: workspace.spaceOf(tab.note),
+    path: tab.path,
+    own: apartOf(tab),
+  })
   setTimeout(() => {
-    if (!(tab.id in agentMarks.on)) unlend(tab.id)
+    if (!(tab.id in agentMarks.on)) lending.value.unlend(tab.id)
   }, LENT_UNMARKED)
   return null
 }

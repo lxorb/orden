@@ -1,4 +1,4 @@
-import { type AgentHeard, providePort } from '@orden/contracts'
+import { type AgentHeard, providePort, webPages } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller } from '../automation/src/api'
 
@@ -165,10 +165,7 @@ vi.mock('../sharing/src/api', () => ({
   canWriteAt: () => !readOnly,
 }))
 const othersWrite = new Set<string>()
-vi.mock('../web-tab/src/api', async (actual) => ({
-  ...(await actual<typeof import('../web-tab/src/api')>()),
-  pages: { addressOf: () => null },
-}))
+providePort('web.pages', { ...webPages(), addressOf: () => null })
 vi.mock('../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))

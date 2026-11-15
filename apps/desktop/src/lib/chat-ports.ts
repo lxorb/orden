@@ -83,8 +83,19 @@ providePort('web.lending', {
     __EVEN_PLUGIN__
       ? handing()
       : import('./web-tab/src/api').then(({ pages }) => pages.adopt(tab, handing)),
+  lend: async (tab, as) => {
+    if (__EVEN_PLUGIN__) return
+    const { webLending } = await import('./web-tab/src/api')
+    await (await webLending()).lend(tab, as)
+  },
   unlend: (tab) => {
     if (!__EVEN_PLUGIN__) void unlending(tab)
+  },
+  readerStore: async () => {
+    if (__EVEN_PLUGIN__) return null
+    const { webDataStores } = await import('./web-tab/src/api')
+    const { webData } = await webDataStores()
+    return webData.store(null)
   },
 })
 

@@ -1188,6 +1188,16 @@ providePort('web.pages', {
   replayKey: (key) => {
     if (!__EVEN_PLUGIN__) replay(key)
   },
+  articleOf: async (page) => {
+    if (__EVEN_PLUGIN__) return ''
+    const { articleOf } = await import('./note')
+    return (await articleOf(page)).html
+  },
+  clipNote: async (page, on) => {
+    if (__EVEN_PLUGIN__) return ''
+    const { clipNote } = await import('./note')
+    return clipNote(page, on)
+  },
 })
 
 export const MARKS = 'orden:favicons'
