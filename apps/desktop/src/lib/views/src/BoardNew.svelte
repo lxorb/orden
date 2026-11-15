@@ -3,6 +3,7 @@
   import { untrack } from 'svelte'
   import { ADD_MARK } from './marks'
   import { addNote } from './add'
+  import { keyWritten } from './columns'
   import type { Kit } from './kit'
 
   const {
@@ -64,7 +65,9 @@
         base,
         kit.live.at,
         kit.home,
-        property ? { property, key: group.key } : undefined,
+        property
+          ? { property, key: keyWritten(base, property, group.key, kit.live.rows) }
+          : undefined,
         { title, open: false, properties: valued() },
       )
       if (path) onmade?.(path)

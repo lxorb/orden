@@ -202,6 +202,12 @@ export function optionWritten(
   return readsAsNumber(words) && holdsNumbers(base, property, value, rows) ? Number(words) : words
 }
 
+export function keyWritten(base: Base, property: string, key: Value, rows: readonly Row[]): Value {
+  return typeof key === 'string' && isNoteProperty(property)
+    ? optionWritten(base, property, null, rows, key)
+    : key
+}
+
 export function editorOf(base: Base, property: string, rows: readonly Row[]): Editor {
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'
   if (isButton(property)) return 'button'

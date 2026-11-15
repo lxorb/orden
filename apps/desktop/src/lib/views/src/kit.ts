@@ -6,6 +6,7 @@ import { workspace } from '../../workspace/src/api'
 import { dropRow, writeRow } from './act'
 import { addNote } from './add'
 import { dropInto } from './drop'
+import { keyWritten } from './columns'
 import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
 import type { ViewSpec } from '../../tab-kinds/src/api'
@@ -105,13 +106,18 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     drop(row, key, property, from) {
       const by = property ?? live.view?.groupBy?.property
       if (by === undefined || !writes(row)) return
-      const drop = dropInto(by, key, row, from ?? null)
+      const written = live.base ? keyWritten(live.base, by, key, live.rows) : key
+      const drop = dropInto(by, written, row, from ?? null)
       if (drop) void dropRow(row, drop)
     },
     add(group, template) {
       const base = live.base
       if (!base || !reachable()) return
-      void addNote(base, live.at, kit.home, group, template === undefined ? {} : { template })
+      const placed = group && {
+        ...group,
+        key: keyWritten(base, group.property, group.key, live.rows),
+      }
+      void addNote(base, live.at, kit.home, placed, template === undefined ? {} : { template })
     },
     change(edit, unlocking = false) {
       const base = live.base
