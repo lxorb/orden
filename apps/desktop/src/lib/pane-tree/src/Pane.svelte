@@ -79,13 +79,12 @@
     viewSurface,
     webSurface,
   } from '../../surfaces/src/api'
-  import { tabOverview, workspace } from '../../workspace/src/api'
+  import { followHref, followNote, tabOverview, workspace } from '../../workspace/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { storeAttachment, storeImage } from '../../assets'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
-  import { followHref, followNote } from '../../open-link'
   import type { OpenHow } from '../../new-tab'
   import { usage } from '../../accounts/src/api'
 

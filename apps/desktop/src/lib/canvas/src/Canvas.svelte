@@ -92,7 +92,7 @@
     viewport,
     menu,
   } from '../../ui-kit/src/api'
-  import { followNote } from '../../open-link'
+  import { followNote, workspace } from '../../workspace/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { rooms } from '../../collab/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
@@ -100,7 +100,6 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { modes } from '../../modes/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { RightPan } from './right-pan'
   import { freeScroll, holdFreeScroll } from './free-scroll'
 
