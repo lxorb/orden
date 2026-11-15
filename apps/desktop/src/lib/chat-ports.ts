@@ -27,6 +27,11 @@ providePort('chats', {
     const { openChatLink } = await (await import('./chats-client/src/api')).chatOpening()
     await openChatLink(uri)
   },
+  mayDelete: async (paths) => {
+    if (__EVEN_PLUGIN__) return true
+    const { mayDelete } = await (await import('./chats-client/src/api')).chatDeleting()
+    return mayDelete(paths)
+  },
 })
 
 const agentsApi = () =>

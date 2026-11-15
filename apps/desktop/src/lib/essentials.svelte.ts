@@ -1,11 +1,10 @@
 import type { Bookmark, Entry } from '@orden/contracts'
 import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag, chorded } from './ui-kit/src/api'
 import type { OpenHow } from './new-tab'
-import { moving } from './list-landing.svelte'
+import { moving, workspace } from './workspace/src/api'
 import { canWriteAt } from './sharing/src/api'
 import { folderOf, insideSpace, samePath } from './platform/src/api'
 import { filedUnder, MOST_BOOKMARKS, sameBookmark } from './space-kept/src/api'
-import { workspace } from './workspace/src/api'
 
 class Landing {
   at = $state<number | null>(null)

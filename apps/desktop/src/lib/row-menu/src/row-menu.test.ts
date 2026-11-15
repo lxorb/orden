@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { providePort } from '@orden/contracts'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -20,19 +21,26 @@ const shareable = { yes: false }
 
 const writable = { yes: true }
 
-vi.mock('./sharing/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./sharing/src/api')>()),
+vi.mock('../../sharing/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sharing/src/api')>()),
   canShareItem: () => shareable.yes,
   canWriteAt: () => writable.yes,
   shareThisFile: () => undefined,
 }))
 
-const { bookmarkAll, rowMenu } = await import('./row-menu')
-const { workspace } = await import('./workspace/src/api')
-const { viewport } = await import('./ui-kit/src/viewport.svelte')
-const { hiddenKinds } = await import('./gates/src/api')
-const { PROTECTION_WORD } = await import('./sharing/src/protect/gate')
-type Entry = import('./workspace/src/api').Entry
+providePort('archive', {
+  archive: () => Promise.resolve(),
+  unarchive: () => Promise.resolve(),
+  show: () => Promise.resolve(),
+})
+
+const { bookmarkAll } = await import('./api')
+const { rowMenu } = await import('./row-menu')
+const { workspace } = await import('../../workspace/src/api')
+const { viewport } = await import('../../ui-kit/src/viewport.svelte')
+const { hiddenKinds } = await import('../../gates/src/api')
+const { PROTECTION_WORD } = await import('../../sharing/src/protect/gate')
+type Entry = import('../../workspace/src/api').Entry
 
 function note(path: string): Entry {
   return {
@@ -130,7 +138,7 @@ describe('a note', () => {
 
 describe('a note, with chats to send it to', () => {
   test('offers no Send to chat', async () => {
-    const { account } = await import('./accounts/src/account.svelte')
+    const { account } = await import('../../accounts/src/account.svelte')
     Object.defineProperty(account, 'accountToken', { value: 'signed in' })
     expect(labels(loose)).not.toContain('Send to chat')
   })
@@ -206,9 +214,9 @@ describe('a file with nowhere of its own to write an icon', () => {
   })
 
   test('wears the icon from the space, and puts it down again', async () => {
-    const { iconChoice } = await import('./icon-choice.svelte')
-    const { chosenIcon } = await import('./chosen-icon')
-    const { wear } = await import('./icon-picker/src/icon-target')
+    const { iconChoice } = await import('../../icon-choice.svelte')
+    const { chosenIcon } = await import('../../chosen-icon')
+    const { wear } = await import('../../icon-picker/src/icon-target')
     const press = (path: string, label: string) =>
       rowMenu(note(path))
         .find((one) => one?.label === label)

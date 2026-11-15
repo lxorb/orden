@@ -22,7 +22,7 @@ const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownO
   await import('./gates/src/api')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('./new-kinds')
-const { newFileRows } = await import('./row-menu')
+const { newFileRows } = await (await import('./row-menu/src/api')).rowMenus()
 const { account } = await import('./accounts/src/account.svelte')
 const { viewport } = await import('./ui-kit/src/viewport.svelte')
 
