@@ -1056,6 +1056,12 @@ describe('what asks the reader first', () => {
     expect(await call('read_setting', { key: 'sync_token' })).toMatchObject({
       code: 'no_such_setting',
     })
+    for (const key of ['constructor', 'toString', '__proto__']) {
+      expect(await call('read_setting', { key }), key).toMatchObject({ code: 'no_such_setting' })
+      expect(await call('write_setting', { key, value: 1 }), key).toMatchObject({
+        code: 'no_such_setting',
+      })
+    }
 
     answer = { status: 'needs_approval', approval: 'a2', summary: 'Change scheme' }
     expect(await call('write_setting', { key: 'scheme', value: 'dark' })).toMatchObject({
