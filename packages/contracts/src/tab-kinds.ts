@@ -46,7 +46,7 @@ interface TabIcon {
 
 export interface TabKindParts {
   readonly open?: (path: string, how: OpenHow) => Promise<void>
-  readonly make?: (folder: string, name: string) => Promise<void>
+  readonly make?: (folder?: string, name?: string) => Promise<void>
   readonly menu?: (tab: string) => TabMenuEntry[]
   readonly facts?: (tab: string) => Promise<TabFacts | null>
   readonly hold?: (tab: string) => (() => void) | null
