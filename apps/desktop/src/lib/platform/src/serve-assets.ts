@@ -43,5 +43,8 @@ function drawAgain(): void {
     const { src } = one
     one.src = ''
     one.src = src
+    if (one instanceof HTMLSourceElement && one.parentElement instanceof HTMLMediaElement) {
+      one.parentElement.load()
+    }
   }
 }
