@@ -8,7 +8,7 @@
   import { keepInNote } from '../ui/keep'
   import { aboutOf, sessionMarkdown } from '../ui/session'
   import { wordFor } from '../ui/words'
-  import type { Grant } from '../verbs'
+  import type { Grant } from '../../../agent-protocol/src/api'
   import type { AgentsPane } from './pane.svelte'
   import { type Session, sessionsOf } from './sessions'
 

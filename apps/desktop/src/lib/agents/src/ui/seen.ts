@@ -1,5 +1,11 @@
 import { without } from '../../../platform/src/api'
-import type { AgentEvent, AgentTab, Approval, Grant, Overview } from '../verbs'
+import type {
+  AgentEvent,
+  AgentTab,
+  Approval,
+  Grant,
+  Overview,
+} from '../../../agent-protocol/src/api'
 
 interface Held extends AgentTab {
   agent: string

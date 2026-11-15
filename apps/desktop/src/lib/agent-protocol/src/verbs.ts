@@ -1,6 +1,8 @@
 import type { AgentScope as Scope } from '@orden/contracts'
 export const AGENT_EVENT = 'orden://agent'
 
+export const ACTIVE_FOR = 15_000
+
 export const BROWSER_VERBS = [
   'browser_tabs',
   'browser_open',

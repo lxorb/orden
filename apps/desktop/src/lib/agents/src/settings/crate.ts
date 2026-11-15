@@ -7,7 +7,7 @@ import {
   type Minted,
   type Scope,
   type SiteRule,
-} from '../verbs'
+} from '../../../agent-protocol/src/api'
 
 export interface AgentsCrate {
   read(): Promise<Grant[]>

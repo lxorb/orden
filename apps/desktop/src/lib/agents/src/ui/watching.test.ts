@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import type { Picture } from '../verbs'
+import type { Picture } from '../../../agent-protocol/src/api'
 import { Watching } from './watching.svelte'
 
 const shot = (png: string): Picture => ({ png, width: 1, height: 1 })

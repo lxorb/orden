@@ -6,7 +6,7 @@
   import { dur, slide } from '../../../platform/src/api'
   import { afterQuiet } from '../../../platform/src/api'
   import { workspace } from '../../../workspace.svelte'
-  import { ACTIVE_FOR } from './marks'
+  import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
   import { asking } from './asking.svelte'
   import Question from './Question.svelte'
   import ReaderAsk from './ReaderAsk.svelte'

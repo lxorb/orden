@@ -1,0 +1,5 @@
+{
+  "name": "agent-protocol",
+  "layer": "foundation",
+  "dependsOn": ["contracts"]
+}

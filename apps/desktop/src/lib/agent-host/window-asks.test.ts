@@ -1,3 +1,4 @@
+import { type AgentHeard, providePort } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf } from '../automation/src/api'
 
@@ -29,16 +30,7 @@ vi.mock('../notify', () => ({
   show: (one: (typeof shown)[number]) => shown.push(one),
 }))
 
-const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
-vi.mock('../agents/src/api', async (original) => ({
-  ...(await original<typeof import('../agents/src/api')>()),
-  tauriCrate: {
-    hear: (on: (event: { kind: string; agent: string | null }) => void) => {
-      heard.push(on)
-      return Promise.resolve(() => undefined)
-    },
-  },
-}))
+const heard: ((event: AgentHeard) => void)[] = []
 
 const opened: string[] = []
 vi.mock('../focus', () => ({ openAgentSession: (agent: string) => opened.push(agent) }))
@@ -46,6 +38,18 @@ vi.mock('../focus', () => ({ openAgentSession: (agent: string) => opened.push(ag
 const { clipboard } = await import('./clipboard')
 const { askReader } = await import('./ask')
 const { asking } = await import('../agents/src/api')
+providePort('agents.reader', {
+  knows: (agent, id) => Promise.resolve(asking.knows(agent, id)),
+  waiting: (agent) => Promise.resolve(asking.of(agent).length),
+  ask: (question) =>
+    Promise.resolve(asking.ask({ ...question, choices: [...question.choices] }).id),
+  answer: (id, answer) => asking.answer(id, answer),
+  heard: (id, patience, signal) => asking.heard(id, patience, signal),
+  hear: (on) => {
+    heard.push(on)
+    return Promise.resolve(() => undefined)
+  },
+})
 
 function call(verb: string, args: Record<string, unknown>, mode = 'unsupervised') {
   return {

@@ -1,5 +1,5 @@
 import { invoke } from '../../../platform/src/api'
-import type { Approval, Overview, Picture, ShellWords } from '../verbs'
+import type { Approval, Overview, Picture, ShellWords } from '../../../agent-protocol/src/api'
 
 export interface LogRead {
   lines: unknown[]

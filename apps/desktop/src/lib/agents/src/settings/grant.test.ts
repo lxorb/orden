@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
 
-import type { Grant, Scope } from '../verbs'
+import type { Grant, Scope } from '../../../agent-protocol/src/api'
 import { readGrant } from './crate'
 import {
   asks,

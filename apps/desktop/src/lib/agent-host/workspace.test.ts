@@ -1,6 +1,7 @@
+import { type AgentHeard, providePort } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../automation/src/api'
-import { AGENT_WINDOW_VERBS } from '../agents/src/verbs'
+import { AGENT_WINDOW_VERBS } from '../agent-protocol/src/api'
 import { type FileOp, FileOps, type Kind } from '../file-ops/src/api'
 
 function memoryStorage(): Storage {
@@ -372,20 +373,22 @@ const docs = {
   ),
 }
 
-const heard: ((event: { kind: string; agent: string | null }) => void)[] = []
+const heard: ((event: AgentHeard) => void)[] = []
 vi.mock('../agent-docs/src/api', async (original) => ({
   ...(await original<typeof import('../agent-docs/src/api')>()),
   agentDocs: () => Promise.resolve({ notes: docs }),
 }))
-vi.mock('../agents/src/api', async (original) => ({
-  ...(await original<typeof import('../agents/src/api')>()),
-  tauriCrate: {
-    hear: (on: (event: { kind: string; agent: string | null }) => void) => {
-      heard.push(on)
-      return Promise.resolve(() => undefined)
-    },
+providePort('agents.reader', {
+  knows: () => Promise.resolve(false),
+  waiting: () => Promise.resolve(0),
+  ask: () => Promise.resolve(''),
+  answer: () => undefined,
+  heard: () => Promise.resolve(null),
+  hear: (on) => {
+    heard.push(on)
+    return Promise.resolve(() => undefined)
   },
-}))
+})
 
 vi.mock('../commands/src/api', () => ({
   appCommands: () => [

@@ -1,4 +1,4 @@
-import type { Category, Grant, Scope, SiteRule } from '../verbs'
+import type { Category, Grant, Scope, SiteRule } from '../../../agent-protocol/src/api'
 
 const NEEDS: Partial<Record<Scope, readonly Scope[]>> = {
   'notes.write': ['notes.read'],

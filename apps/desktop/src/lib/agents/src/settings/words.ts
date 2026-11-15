@@ -1,4 +1,4 @@
-import type { Category, Scope, SiteRule } from '../verbs'
+import type { Category, Scope, SiteRule } from '../../../agent-protocol/src/api'
 import type { Limit, ScopeGroup } from './grant'
 
 export const GROUP_WORDS: Record<ScopeGroup, () => string> = {

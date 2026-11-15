@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 
-import type { AgentEvent, Overview } from '../verbs'
-import { ACTIVE_FOR, nextLapse, sameMarks, wornAt } from './marks'
+import type { AgentEvent, Overview } from '../../../agent-protocol/src/api'
+import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
+import { nextLapse, sameMarks, wornAt } from './marks'
 import { heard, nothing, overviewed, type Seen, wrote } from './seen'
 
 const colour = (agent: string) => `colour-of-${agent}`

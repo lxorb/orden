@@ -1,10 +1,10 @@
+import type { AgentReaderPort } from '@orden/contracts'
 import type { AgentAnswer } from '../automation/src/api'
 import { show } from '../notify'
 import { openAgentSession } from '../focus'
-import { asking } from '../agents/src/api'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
-import { stopRefused, stopSignal } from './stopping'
+import { readerPort, stopRefused, stopSignal } from './stopping'
 
 const WAIT = 60_000
 const MOST_WAIT = 120_000
@@ -19,11 +19,12 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   if (agent === null) throw new Refused('by_hand', 'the command line asks the reader nothing')
   const patience = count(call, 'wait_ms', WAIT, MOST_WAIT)
 
+  const reader = readerPort()
   const id = maybe(call, 'id')
   if (id !== null) {
-    if (!asking.knows(agent.id, id))
+    if (!(await reader.knows(agent.id, id)))
       throw new Refused('bad_arguments', `there is no question ${id}`)
-    return heard(call, id, patience)
+    return heard(reader, call, id, patience)
   }
 
   const kind = need(call, 'kind')
@@ -54,14 +55,14 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
     )
   }
 
-  if (asking.of(agent.id).length >= MOST_OPEN) {
+  if ((await reader.waiting(agent.id)) >= MOST_OPEN) {
     throw new Refused(
       'bad_arguments',
       `the reader has ${MOST_OPEN} of your questions open: ask about one by its id first`,
     )
   }
 
-  const question = asking.ask({
+  const asked = await reader.ask({
     agent: agent.id,
     kind,
     message,
@@ -71,24 +72,29 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   show({
     title: agent.name,
     body: message,
-    tag: `ask-${question.id}`,
+    tag: `ask-${asked}`,
     opened: () => openAgentSession(agent.id),
     ...(kind === 'text'
       ? {
           reply: {
-            placeholder: question.placeholder ?? '',
+            placeholder: placeholder ?? '',
             send: 'Send',
-            replied: (words: string) => asking.answer(question.id, words),
+            replied: (words: string) => reader.answer(asked, words),
           },
         }
       : {}),
   })
-  return heard(call, question.id, patience)
+  return heard(reader, call, asked, patience)
 }
 
-async function heard(call: Call, id: string, patience: number): Promise<AgentAnswer> {
+async function heard(
+  reader: AgentReaderPort,
+  call: Call,
+  id: string,
+  patience: number,
+): Promise<AgentAnswer> {
   const halting = await stopSignal(call)
-  const said = await asking.heard(id, patience, halting.signal).finally(halting.end)
+  const said = await reader.heard(id, patience, halting.signal).finally(halting.end)
   if (halting.signal.aborted && said === null) throw stopRefused(`question ${id} is still open`)
   if (said === null) return done({ id, waiting: true })
 

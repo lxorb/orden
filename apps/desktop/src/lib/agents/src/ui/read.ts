@@ -1,4 +1,4 @@
-import type { AgentEvent, Approval } from '../verbs'
+import type { AgentEvent, Approval } from '../../../agent-protocol/src/api'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
