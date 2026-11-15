@@ -19,6 +19,7 @@ export interface Place {
   to: number
   shape: Shape
   keep?: string
+  under?: number
 }
 
 export function oneEnding(words: string): string {
@@ -303,10 +304,21 @@ export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: 
 
 function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
   const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
-  const found = [...lines(text)].filter(
-    (row) => !row.code && !row.matter && taskWords(row.text) === wanted,
-  )
+  const rows = [...lines(text)]
+  const found = rows.filter((row) => !row.code && !row.matter && taskWords(row.text) === wanted)
 
   const row = one(found, anchor, anchor.nth)
-  return { from: row.from, to: row.from + row.text.length, shape: 'line' }
+  const to = row.from + row.text.length
+  const depth = indentOf(row.text)
+  let under = to
+  for (const next of rows.slice(rows.indexOf(row) + 1)) {
+    if (!next.text.trim()) continue
+    if (indentOf(next.text) <= depth) break
+    under = next.from + next.text.length
+  }
+  return { from: row.from, to, shape: 'line', ...(under > to ? { under } : {}) }
+}
+
+function indentOf(line: string): number {
+  return (/^[ \t]*/.exec(line)?.[0] ?? '').replace(/\t/g, '    ').length
 }

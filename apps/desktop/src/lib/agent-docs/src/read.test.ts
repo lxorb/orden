@@ -189,3 +189,30 @@ describe('a hand-written heading anchor with a count', () => {
     expect(NOTE.slice(place.from).startsWith('## Notes')).toBe(true)
   })
 })
+
+describe('a task with subtasks under it', () => {
+  const NOTE = '- [ ] Plan trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pay rent\n'
+
+  test('takes a task inserted after it below its subtasks', () => {
+    const after = applied(
+      NOTE,
+      plan(readEdits([{ at: { task: 'Plan trip' }, insert_after: '- [ ] Pack' }]), NOTE).edits,
+    )
+    expect(after).toBe(
+      '- [ ] Plan trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pack\n- [ ] Pay rent\n',
+    )
+  })
+
+  test('is deleted with its subtasks, and replaced without them', () => {
+    expect(
+      applied(NOTE, plan(readEdits([{ at: { task: 'Plan trip' }, delete: true }]), NOTE).edits),
+    ).toBe('- [ ] Pay rent\n')
+    expect(
+      applied(
+        NOTE,
+        plan(readEdits([{ at: { task: 'Plan trip' }, replace: '- [ ] Plan the trip' }]), NOTE)
+          .edits,
+      ),
+    ).toBe('- [ ] Plan the trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pay rent\n')
+  })
+})
