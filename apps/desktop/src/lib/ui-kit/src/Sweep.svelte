@@ -1,6 +1,3 @@
-<script lang="ts">
-</script>
-
 <div class="track">
   <div class="run"></div>
 </div>

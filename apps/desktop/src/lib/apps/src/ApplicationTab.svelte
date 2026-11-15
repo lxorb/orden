@@ -17,7 +17,7 @@
   import { account } from '../../accounts/src/api'
   import { heldLine } from '../../online-link/src/api'
   import { settingsWindow } from '@orden/contracts'
-  import Sweep from '../../Sweep.svelte'
+  import { Sweep } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
   import { appSessionOf, type Unread } from './session.svelte'
 

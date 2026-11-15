@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Sweep from '../../../Sweep.svelte'
+  import { Sweep } from '../../../ui-kit/src/api'
   import { type Status, statusLine } from './arrival.svelte'
 
   const { status, onretry }: { status: Status; onretry: () => void } = $props()
