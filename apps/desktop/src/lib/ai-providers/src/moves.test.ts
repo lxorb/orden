@@ -46,17 +46,50 @@ test('the rights an account goes by stay the same after a launch', async () => {
   expect(after.rightsKey('anthropic')).toBe(fresh)
 })
 
-test('the same move said again much later is a move of its own, so the rights of each account stay apart', async () => {
-  const { keepMoves, movedSince, rightsKey } = await moves()
+test('the same move said again by a window that heard of it late is still one move', async () => {
+  const { keepMoves, rightsKey } = await moves()
   keepMoves({ openai: 'openai-2' }, 5)
   const first = rightsKey('openai')
+  keepMoves({ 'openai-2': 'openai-3' }, 6)
 
   keepMoves({ openai: 'openai-2' }, 5 + 3_600_000)
 
+  expect(rightsKey('openai-3')).toBe('openai')
+  expect(rightsKey('openai')).toBe(first)
+})
+
+test('the same move made again after the moved account was taken away is a move of its own', async () => {
+  const { keepGone, keepMoves, movedSince, rightsKey } = await moves()
+  keepMoves({ openai: 'openai-2' }, 5)
+  const first = rightsKey('openai')
+  keepGone(['openai-2'], 6)
+
+  keepMoves({ openai: 'openai-2' }, 7)
+
   expect(rightsKey('openai-2')).toBe(first)
   expect(rightsKey('openai')).not.toBe(first)
-  expect(rightsKey('openai')).not.toBe('openai')
-  expect(movedSince('openai', 5 + 1)).toBe('openai-2')
+  expect(movedSince('openai', 6)).toBe('openai-2')
+})
+
+test('an account made again on the id of one taken away starts on rights of its own', async () => {
+  const { keepGone, keepMoves, rightsKey } = await moves()
+  keepMoves({ openai: 'openai-2' }, 5)
+  keepGone(['openai-2'], 6)
+
+  expect(rightsKey('openai-2')).not.toBe('openai')
+  expect(rightsKey('openai-2')).toMatch(/^[A-Za-z0-9_-]{1,48}$/)
+})
+
+test('a move another window kept is told along with this window’s own, so nothing is missed', async () => {
+  const { keepMoves, movesAfter, onMoves } = await moves()
+  movesAfter(0)
+  const heard: string[] = []
+  onMoves((told) => heard.push(...told.map((one) => `${one.from}>${one.to}`)))
+  localStorage.setItem('orden:ai-moves', JSON.stringify([{ from: 'x', to: 'x-2', at: 5 }]))
+
+  keepMoves({ y: 'y-2' }, 7)
+
+  expect(heard).toEqual(['x>x-2', 'y>y-2'])
 })
 
 test('a move another window already kept is not kept again from a copy read before it', async () => {

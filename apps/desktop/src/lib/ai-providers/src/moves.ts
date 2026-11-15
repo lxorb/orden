@@ -45,24 +45,46 @@ if (typeof window !== 'undefined') {
   })
 }
 
-const SAID_AGAIN = 60_000
+const isGone = (one: Move) => one.from === one.to
 
-function saidAgain(from: string, to: string, at: number): boolean {
-  const last = [...kept()]
-    .reverse()
-    .find((one) => [one.from, one.to].some((id) => id === from || id === to))
-  return !!last && last.from === from && last.to === to && Math.abs(at - last.at) < SAID_AGAIN
+function saidAgain(from: string, to: string): boolean {
+  for (const one of [...kept()].reverse()) {
+    if (isGone(one) && (one.from === from || one.from === to)) return false
+    if (one.from === from && one.to === to) return true
+  }
+  return false
+}
+
+function keepAdded(added: Move[]): void {
+  if (!added.length) return
+  const before = known
+  ledger = [...kept(), ...added]
+  keepJson(KEY, ledger)
+  const news = [...movesAfter(before), ...added.filter((one) => one.at <= before)]
+  told(news)
 }
 
 export function keepMoves(moved: Record<string, string>, at = Date.now()): void {
   ledger = null
-  const added = Object.entries(moved)
-    .filter(([from, to]) => !saidAgain(from, to, at))
-    .map(([from, to]) => ({ from, to, at }))
-  if (!added.length) return
-  ledger = [...kept(), ...added]
-  keepJson(KEY, ledger)
-  told(added)
+  keepAdded(
+    Object.entries(moved)
+      .filter(([from, to]) => from !== to && !saidAgain(from, to))
+      .map(([from, to]) => ({ from, to, at })),
+  )
+}
+
+export function keepGone(ids: readonly string[], at = Date.now()): void {
+  ledger = null
+  const all = kept()
+  const touched = (id: string) => all.filter((one) => one.from === id || one.to === id)
+  keepAdded(
+    ids
+      .filter((id) => {
+        const last = touched(id).at(-1)
+        return last !== undefined && !isGone(last)
+      })
+      .map((id) => ({ from: id, to: id, at })),
+  )
 }
 
 export function onMoves(listener: Heard): () => void {
@@ -112,7 +134,7 @@ function rightsKeys(): Map<string, string> {
   for (const one of kept()) {
     const had = keys.get(one.from) ?? one.from
     keys.set(one.from, freshKey(one))
-    keys.set(one.to, had)
+    if (!isGone(one)) keys.set(one.to, had)
   }
   return keys
 }
