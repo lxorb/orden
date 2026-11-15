@@ -186,6 +186,12 @@ describe('where a tag sits', () => {
   test('folded, because the operator is', () => {
     expect(tagSpans('#Work/Orden', 'work/orden')).toEqual([{ from: 1, to: 11 }])
   })
+
+  test('as long as the name is written, even where folding makes it longer', () => {
+    const body = '#İstanbul trip and #İstanbul/old'
+    const spans = tagSpans(body, 'İstanbul')
+    expect(spans.map((span) => body.slice(span.from, span.to))).toEqual(['İstanbul', 'İstanbul'])
+  })
 })
 
 describe('what taking a tag away has to cut', () => {

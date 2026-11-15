@@ -45,7 +45,12 @@ export function tagSpans(body: string, path: string): { from: number; to: number
       const folded = use.tag.toLowerCase()
       return folded === wanted || folded.startsWith(`${wanted}/`)
     })
-    .map((use) => ({ from: use.from, to: use.from + wanted.length }))
+    .map((use) => ({ from: use.from, to: use.from + nodeLength(use.tag, wanted) }))
+}
+
+function nodeLength(tag: string, wanted: string): number {
+  const depth = wanted.split('/').length
+  return tag.split('/').slice(0, depth).join('/').length
 }
 
 export function tagCuts(body: string, path: string): { from: number; to: number }[] {
