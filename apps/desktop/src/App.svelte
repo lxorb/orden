@@ -26,7 +26,6 @@
   import { Sidebar } from './lib/sidebar/src/api'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
-  import { watchTextSize } from './lib/text-size'
   import { UpdateNotice, updates } from './lib/updates/src/api'
   import { renamed } from './lib/renamed.svelte'
   import { account, arriving } from './lib/accounts/src/api'
@@ -39,7 +38,7 @@
   import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
-  import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
+  import { linkScroll, type ScrollEnd, systemMenu } from './lib/ui-kit/src/api'
   import { recovery } from './lib/history/src/api'
   import { reloading } from './lib/reloading.svelte'
   import { hasStatusBar } from './lib/regions'
@@ -90,7 +89,7 @@
   import { sync } from './lib/sync-store/src/api'
   import StatusBar from './lib/StatusBar.svelte'
   import Titlebar from './lib/Titlebar.svelte'
-  import { choices, modes } from './lib/modes/src/api'
+  import { choices, modes, watchTextSize } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/platform/src/api'
@@ -151,10 +150,11 @@
 
   const fabLabel = $derived(hiddenKinds.offers('note') ? 'New note' : 'New tab')
 
-  let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
-  let macMenuKey: typeof import('./lib/system-menu').macMenuKey = () => false
+  type SystemMenu = Awaited<ReturnType<typeof systemMenu>>
+  let keepsSystemMenu: SystemMenu['keepsSystemMenu'] = () => false
+  let macMenuKey: SystemMenu['macMenuKey'] = () => false
   if (currentPlatform() === 'mac') {
-    void import('./lib/system-menu').then((one) => {
+    void systemMenu().then((one) => {
       keepsSystemMenu = one.keepsSystemMenu
       macMenuKey = one.macMenuKey
     })
