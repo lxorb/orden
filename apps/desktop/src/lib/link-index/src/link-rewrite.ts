@@ -3,6 +3,7 @@ import {
   encodeTarget,
   findLinks,
   type FoundLink,
+  isTabFile,
   wikilinkCannotName,
 } from '@orden/markdown/links'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
@@ -276,7 +277,7 @@ function targetFor(link: FoundLink, source: string, placed: string | Placed): st
   }
 
   const spelled = (path: string) =>
-    shownName(link.target) === link.target ? shownName(path) : path
+    shownName(link.target) === link.target && !isTabFile(shownName(path)) ? shownName(path) : path
   const fromTop = spelled(`/${to}`)
   const reaches = (written: string) => typeof placed === 'string' || placed.reaches(written)
 

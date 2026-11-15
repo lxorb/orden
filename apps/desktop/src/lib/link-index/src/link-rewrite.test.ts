@@ -307,3 +307,15 @@ describe('a link in plain front matter', () => {
     )
   })
 })
+
+describe('a new name that reads as a file a tab opens', () => {
+  test.each(['Ideas.canvas', 'Report.pdf', 'Book.pages', 'Site.url', 'Table.base'])(
+    'a wikilink to a note renamed %s.md keeps the .md that makes it a note',
+    (name) => {
+      const text = 'see [[Plan]], [[Plan|p]] and [p](Plan.md)'
+      expect(
+        rewriteLinks(text, 'One.md', { from: 'Plan.md', to: `${name}.md` }, pointsAt('plan')),
+      ).toBe(`see [[${name}.md]], [[${name}.md|p]] and [p](${name}.md)`)
+    },
+  )
+})

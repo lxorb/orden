@@ -317,6 +317,17 @@ describe('every row writes the link the app spells', () => {
     )
   })
 
+  test('a note whose name reads as a file a tab opens is named with its .md', async () => {
+    const asked = space([note('Report.pdf.md'), note('x/Ideas.canvas.md')], { path: 'One.md' })
+
+    expect((await picked('[[Rep', asked, 'Report.pdf', spelled)).doc).toBe(
+      '[Report.pdf.md](Report.pdf.md|One.md|)',
+    )
+    expect((await picked('[[Ide', asked, 'Ideas.canvas', spelled)).doc).toBe(
+      '[Ideas.canvas.md](x/Ideas.canvas.md|One.md|)',
+    )
+  })
+
   test('an alias row writes the alias over the note it belongs to', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })
 

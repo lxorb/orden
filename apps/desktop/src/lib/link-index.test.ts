@@ -217,6 +217,14 @@ describe('backlinks', () => {
     expect(links.backlinks(at('Plan.md'))).toEqual([])
   })
 
+  test.each(['Ideas.canvas', 'Report.pdf', 'Site.url'])(
+    'a wikilink that keeps the .md of a note named %s.md reaches it',
+    async (name) => {
+      await space({ [`${name}.md`]: '# It', 'One.md': `see [[${name}.md]]` })
+      expect(links.backlinks(at(`${name}.md`)).map((one) => one.path)).toEqual(['One.md'])
+    },
+  )
+
   test('a markdown link from the top of the space reaches the note there', async () => {
     await space({
       'Road.md': '# Road',

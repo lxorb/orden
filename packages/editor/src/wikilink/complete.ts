@@ -1,6 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorView } from '@codemirror/view'
-import { blocksOf, foldName } from '@orden/markdown/links'
+import { blocksOf, foldName, isTabFile } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -84,16 +84,19 @@ export function about(index: NoteIndex, note: NoteRef): LinkWrite {
 }
 
 function nameFor(index: NoteIndex, note: NoteRef): string {
+  const own = MARKDOWN.exec(note.path)?.[0] ?? ''
+  const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
   const reaches = (written: string) => resolveNote(index, written)?.path === note.path
-  if (reaches(note.name)) return note.name.normalize('NFC')
+  const name = spelled(note.name)
+  if (reaches(name)) return name.normalize('NFC')
 
   const parts = note.path.replace(MARKDOWN, '').split('/')
   for (let from = parts.length - 1; from >= 0; from--) {
-    const written = parts.slice(from).join('/')
+    const written = spelled(parts.slice(from).join('/'))
     if (reaches(written)) return written.normalize('NFC')
   }
-  const fromTop = `/${parts.join('/')}`
-  return (reaches(fromTop) ? fromTop : note.name).normalize('NFC')
+  const fromTop = spelled(`/${parts.join('/')}`)
+  return (reaches(fromTop) ? fromTop : name).normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {
