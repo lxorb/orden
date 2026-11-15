@@ -61,3 +61,11 @@ describe('a shortcut an agent writes', () => {
     expect(italic.check?.('')).toBeNull()
   })
 })
+
+describe('a switch of a theme not worn', () => {
+  test('reads as its default until something is kept for it', () => {
+    const follow = fields.find((one) => one.key === 'themes.glass.follow')
+    if (follow?.kind !== 'switch') throw new Error('no glass follow switch')
+    expect(follow.get()).toBe(true)
+  })
+})
