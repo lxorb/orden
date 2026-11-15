@@ -105,10 +105,13 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   const state = A_TASK[unit]
   if (state) {
     const found: Range[] = []
+    const code = new CodeBlocks()
 
     for (const [index, start] of starts.entries()) {
       const end = ends[index] ?? body.length
-      const task = taskAt(body.slice(start, end))
+      const text = body.slice(start, end)
+      if (code.line(text) !== WORDS) continue
+      const task = taskAt(text)
       if (!task) continue
       if (state === 'todo' && task.done) continue
       if (state === 'done' && !task.done) continue

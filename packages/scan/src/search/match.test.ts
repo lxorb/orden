@@ -404,6 +404,10 @@ describe('tasks', () => {
     expect(asked('task-done:nested')).toEqual(['- [X] a nested one that is done'])
   })
 
+  test('and a box inside a code fence is not one', () => {
+    expect(answers('task:', { body: '```md\n- [ ] an example\n```\n' })).toBe(false)
+  })
+
   test('and a line with no box is not one', () => {
     expect(answers('task:"not a task"', { body: TASKS })).toBe(false)
   })
