@@ -36,7 +36,14 @@ import {
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
 import { guardedAt } from './guard'
-import { isPriority, type Priority, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+import {
+  isPriority,
+  type Priority,
+  type Todo,
+  type TodoPatch,
+  type TodoSpace,
+  todoSpaceOf,
+} from '../../tasks-model/src/api'
 import { at, made, noteOf } from './notes'
 import { notes } from './docs'
 
@@ -110,10 +117,16 @@ function todoOut(todo: Todo) {
   }
 }
 
-function spaceIdOf(call: Call): string | null {
+function namedSpace(call: Call): TodoSpace | null {
   const named = maybe(call, 'space')
-  if (named !== null) return placeFor(call, named).space.id
-  return workspace.activeSpace?.id ?? null
+  if (named === null) return null
+  const kept = workspace.spaces.find((one) => todoSpaceOf(one).id === named)
+  return todoSpaceOf(placeFor(call, kept?.id ?? named).space)
+}
+
+function openSpace(): TodoSpace | null {
+  const open = workspace.activeSpace
+  return open ? todoSpaceOf(open) : null
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -147,7 +160,7 @@ function patchOf(call: Call): TodoPatch {
   if (description !== null) patch.description = description
   const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
   if (labels !== undefined) patch.labels = labels
-  if ('space' in call.args) patch.space = spaceIdOf(call)
+  if ('space' in call.args) patch.space = namedSpace(call)?.id ?? null
   const start = dayArg(call, 'start')
   if (start !== undefined) patch.start = start
   const deadline = dayArg(call, 'deadline') ?? dayArg(call, 'due')
@@ -160,11 +173,17 @@ function patchOf(call: Call): TodoPatch {
 
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const { todos, shownTodos, sortedTodos, dayOf } = await model()
-  const only = maybe(call, 'space') !== null
+  const space = namedSpace(call)
   const label = maybe(call, 'label')
   const limit = typeof call.args.limit === 'number' ? Math.max(1, call.args.limit) : 50
   const shown = sortedTodos(
-    shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
+    shownTodos(todos.todos, {
+      onlySpace: space !== null,
+      space: space?.id ?? null,
+      spaceAlso: space?.also ?? [],
+      label,
+      today: dayOf(),
+    }),
     'deadline',
   ).filter((one) => flag(call, 'done') || !one.done)
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
@@ -179,7 +198,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const made = await todos.add({
     ...patch,
     title,
-    space: 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null),
+    space: 'space' in call.args ? (patch.space ?? null) : (openSpace()?.id ?? null),
   })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))

@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     cleanLabel,
+    isTodoSpace,
     PRIORITIES,
     PRIORITY_NAMES,
     type Priority,
@@ -24,6 +25,8 @@
     onremove: () => void
     onclose: () => void
   } = $props()
+
+  const inSpace = $derived(spaces.find((one) => isTodoSpace(one, todo.space)) ?? null)
 
   let title = $state('')
   let description = $state('')
@@ -116,14 +119,14 @@
     <label>
       <span>Space</span>
       <select
-        value={todo.space ?? ''}
+        value={inSpace?.id ?? todo.space ?? ''}
         onchange={(event) => void change({ space: event.currentTarget.value || null })}
       >
         <option value="">No space</option>
         {#each spaces as space (space.id)}
           <option value={space.id}>{space.name}</option>
         {/each}
-        {#if todo.space !== null && !spaces.some((one) => one.id === todo.space)}
+        {#if todo.space !== null && inSpace === null}
           <option value={todo.space}>{todo.space}</option>
         {/if}
       </select>
