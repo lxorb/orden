@@ -17,29 +17,20 @@ export function serveAssets(): void {
 const BUILT = '/assets/'
 
 function codeLoaded(): string[] {
-  const loaded: string[] = []
-  for (const one of performance.getEntriesByType('resource')) {
-    const url = new URL(one.name)
-    if (url.origin === location.origin && url.pathname.startsWith(BUILT)) loaded.push(url.pathname)
-  }
-  return loaded
+  return performance
+    .getEntriesByType('resource')
+    .map((one) => new URL(one.name))
+    .filter((url) => url.origin === location.origin && url.pathname.startsWith(BUILT))
+    .map((url) => url.pathname)
 }
 
 function drawAgain(): void {
   const under = `[src^="${ASSET_ROUTE}"]`
-  const found = document.querySelectorAll(
+  const found = document.querySelectorAll<HTMLImageElement | HTMLMediaElement | HTMLSourceElement>(
     `img${under}, audio${under}, video${under}, source${under}`,
   )
 
   for (const one of found) {
-    if (
-      !(one instanceof HTMLImageElement) &&
-      !(one instanceof HTMLMediaElement) &&
-      !(one instanceof HTMLSourceElement)
-    ) {
-      continue
-    }
-
     const { src } = one
     one.src = ''
     one.src = src
