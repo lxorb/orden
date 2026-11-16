@@ -200,7 +200,7 @@ export function patternJudge() {
         case 'look':
           return { ...ahead, rest: ahead.rest + before(shape.inner, OPEN_END).rest, ended: false }
         case 'row': {
-          const parts = ahead.ended ? withoutGivenBack(shape.parts) : shape.parts
+          const parts = ahead.ended ? withoutGivenBack(flat(shape.parts)) : shape.parts
           return parts.reduceRight((after, part) => before(part, after), ahead)
         }
         case 'either':
@@ -231,16 +231,25 @@ export function patternJudge() {
     for (let at = parts.length - 2; at >= 0; at--) {
       const again = parts[at]
       if (again?.kind !== 'again' || again.least === again.most) continue
-      const copy = again.of.kind === 'row' ? again.of.parts : [again.of]
-      const tail = parts.slice(at + 1)
-      const given = tail.length <= copy.length && tail.every((part, i) => sameShape(part, copy[i]))
+      const copy = flat([again.of])
+      const tail = flat(parts.slice(at + 1))
+      const given =
+        tail.length <= copy.length &&
+        tail.every((part, i) => plain(part) && JSON.stringify(part) === JSON.stringify(copy[i]))
       return given ? parts.slice(0, at + 1) : parts
     }
     return parts
   }
 
-  function sameShape(one: Shape, other: Shape | undefined): boolean {
-    return JSON.stringify(one) === JSON.stringify(other)
+  function flat(parts: readonly Shape[]): Shape[] {
+    return parts.flatMap((part) => (part.kind === 'row' ? flat(part.parts) : [part]))
+  }
+
+  function plain(shape: Shape): boolean {
+    if (shape.kind === 'letter') return shape.letters !== null
+    if (shape.kind === 'again') return plain(shape.of)
+    if (shape.kind === 'row') return shape.parts.every(plain)
+    return false
   }
 
   function copiesApart(shape: Shape, flags: string): boolean {
