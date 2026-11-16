@@ -168,6 +168,12 @@ export function patternJudge() {
       }
     }
 
+    function nextLine(letters: string | null, ahead: Ahead): boolean {
+      const breaks = (head: string | null) =>
+        head !== null && (trades('\\n', head) || trades('\\r', head))
+      return !trades(letters, '\\n') && ahead.heads.some(breaks)
+    }
+
     function run(letters: string | null, least: number, ahead: Ahead): Ahead {
       if (ahead.ended) {
         return least === 0 ? ahead : { ...ahead, heads: [letters], literal: 0, ended: false }
@@ -177,7 +183,12 @@ export function patternJudge() {
       if (overlaps) traded?.()
       const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
       return {
-        rest: overlaps && ahead.literal < 2 ? own + ahead.rest : Math.max(own, ahead.rest),
+        rest:
+          overlaps && ahead.literal < 2
+            ? own + ahead.rest
+            : nextLine(letters, ahead)
+              ? added(own, ahead.rest)
+              : Math.max(own, ahead.rest),
         heads: least > 0 ? [letters] : [...new Set([letters, ...ahead.heads])],
         literal: 0,
         ended: false,
@@ -221,7 +232,9 @@ export function patternJudge() {
           if (shape.most - shape.least > counted) return run(shape.letters, shape.least, ahead)
           let after = ahead
           for (let copy = shape.least; copy < shape.most; copy++) {
-            after = merged([after, before(shape.of, after)])
+            const taken = before(shape.of, after)
+            const rest = taken.rest > after.rest ? added(taken.rest, ahead.rest) : after.rest
+            after = { ...merged([after, taken]), rest: Math.max(rest, after.rest) }
           }
           for (let copy = 0; copy < shape.least; copy++) after = before(shape.of, after)
           return after
@@ -230,6 +243,10 @@ export function patternJudge() {
     }
 
     return before(shape, start)
+  }
+
+  function added(one: number, other: number): number {
+    return Math.max(one, other) + Math.log1p(Math.exp(-Math.abs(one - other)))
   }
 
   function withoutGivenBack(parts: readonly Shape[]): readonly Shape[] {
