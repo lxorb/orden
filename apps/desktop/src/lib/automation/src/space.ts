@@ -1,6 +1,6 @@
 import { canWriteAt } from '../../sharing/src/api'
 import { protection } from '../../protect/src/api'
-import { insideSpace, withinSpace, insideOnly } from '../../platform/src/api'
+import { insideSpace, withinSpace, insideOnly, namesByShortName } from '../../platform/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
 import { said, type Said } from './args'
 
@@ -47,6 +47,7 @@ export function relativeIn(args: Said, name = 'path'): string {
 export function insidePath(asked: string): string {
   const safe = insideOnly(asked)
   if (safe === null) throw new Error(`${asked} is not a path inside the space`)
+  if (namesByShortName(safe)) throw new Error(`${asked} is a short name: give each name in full`)
 
   return safe
 }

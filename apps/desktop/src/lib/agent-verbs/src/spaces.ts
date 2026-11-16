@@ -1,5 +1,12 @@
 import { threadSpaceOf } from '../../automation/src/api'
-import { insideOnly, insideSpace, nameOf, relativeTo, within } from '../../platform/src/api'
+import {
+  insideOnly,
+  insideSpace,
+  namesByShortName,
+  nameOf,
+  relativeTo,
+  within,
+} from '../../platform/src/api'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
@@ -64,6 +71,9 @@ export function placeOf(call: Call): Place {
 export function judged(asked: string): string {
   const safe = insideOnly(asked)
   if (safe === null) throw new Refused('bad_arguments', `${asked} is not a path inside the space`)
+  if (namesByShortName(safe)) {
+    throw new Refused('bad_arguments', `${asked} is a short name: give each name in full`)
+  }
 
   return safe
 }

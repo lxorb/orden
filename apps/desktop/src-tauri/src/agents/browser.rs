@@ -1352,9 +1352,17 @@ pub(super) fn hidden_within(root: &Path, path: &Path) -> bool {
     })
 }
 
+fn plainly(path: &Path) -> String {
+    let spelled = path.to_string_lossy();
+    if let Some(share) = spelled.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{share}");
+    }
+    spelled.strip_prefix(r"\\?\").unwrap_or(&spelled).to_owned()
+}
+
 fn may_hand(app: &AppHandle, path: &Path) -> bool {
     let asked = super::verbs::window::HandAsk {
-        path: path.to_string_lossy().into_owned(),
+        path: plainly(path),
     };
     crate::endpoint::ask(
         app,
@@ -1381,12 +1389,25 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        beyond_the_grant, handing_granted, hidden_within, modifiers, policy, question_key, seen,
-        Act, Caller, Facts, Grant, Scope,
+        beyond_the_grant, handing_granted, hidden_within, modifiers, plainly, policy, question_key,
+        seen, Act, Caller, Facts, Grant, Scope,
     };
     use crate::agents::grants::{Every, SiteRule, Spaces};
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;
+
+    #[test]
+    fn a_file_is_asked_about_as_the_window_spells_it() {
+        assert_eq!(
+            plainly(Path::new(r"\\?\C:\Users\me\Private\Diary.md")),
+            r"C:\Users\me\Private\Diary.md"
+        );
+        assert_eq!(
+            plainly(Path::new(r"\\?\UNC\server\share\Diary.md")),
+            r"\\server\share\Diary.md"
+        );
+        assert_eq!(plainly(Path::new("/home/me/Diary.md")), "/home/me/Diary.md");
+    }
 
     fn key_of(name: &str, dialog: &str) -> String {
         let facts = Facts {
