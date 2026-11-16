@@ -47,6 +47,17 @@ export class CoverWidget extends OrdenWidget {
     return 230
   }
 
+  override updateDOM(host: HTMLElement, view: EditorView): boolean {
+    const picture = host.querySelector('img')
+    const handle = host.querySelector('.orden-cover-drag')
+    if (!picture || !handle) return false
+    if (picture.getAttribute('src') !== view.state.facet(imageResolver)(this.cover.src))
+      return false
+    picture.style.objectPosition = `50% ${this.cover.position}%`
+    handle.setAttribute('aria-valuenow', String(this.cover.position))
+    return true
+  }
+
   toDOM(view: EditorView) {
     const host = document.createElement('div')
     host.className = 'orden-cover-block'

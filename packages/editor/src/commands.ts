@@ -1069,6 +1069,8 @@ export function setCalloutSign(sign: '+' | '-'): StateCommand {
 
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
 
+const BARE_MARKER = /^[ \t>]*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|#{1,6}[ \t]+)$/
+
 export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   const text = state.doc.toString()
   const used = new Set([...text.matchAll(/\[\^([^\]\s]+)\]/g)].map((found) => found[1]))
@@ -1077,8 +1079,12 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   while (used.has(String(number))) number++
   const label = `[^${number}]`
 
-  const end = text.replace(/\s+$/, '').length
-  const at = Math.min(state.selection.main.to, end)
+  const trimmed = text.replace(/\s+$/, '').length
+  const caret = state.selection.main.to
+  const line = state.doc.lineAt(caret)
+  const bare = caret > trimmed && BARE_MARKER.test(state.sliceDoc(line.from, caret))
+  const end = bare ? caret : trimmed
+  const at = Math.min(caret, end)
   const definition = `\n\n${label}: `
 
   const changes: ChangeSpec[] =

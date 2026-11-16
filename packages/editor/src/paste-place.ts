@@ -50,6 +50,8 @@ function spaced(prefix: string): string {
 const OPENS_BLOCK =
   /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]|\$\$|(?:-{3,}|\*{3,}|_{3,})$)/
 
+const TAKES_LAZY = /^[ \t]*(?:>|(?:[-*+]|\d+[.)])[ \t])/
+
 const CLOSES_BLOCK = /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|\$\$)/
 
 function intoEmptyItem(state: EditorState, range: SelectionRange, text: string): Landing | null {
@@ -70,9 +72,14 @@ function intoEmptyItem(state: EditorState, range: SelectionRange, text: string):
   }
 }
 
+function keptBreak(state: EditorState, range: SelectionRange): SelectionRange {
+  if (range.empty || range.to === 0 || state.doc.lineAt(range.to).from !== range.to) return range
+  return EditorSelection.range(range.from, range.to - 1)
+}
+
 export function placed(state: EditorState, written: string): TransactionSpec {
   const text = withLineFeeds(written)
-  return everywhere(state, (range) => placedAt(state, range, text))
+  return everywhere(state, (range) => placedAt(state, keptBreak(state, range), text))
 }
 
 function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
@@ -105,8 +112,13 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const doc = state.doc
   const words = (number: number) =>
     number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
+  const lazyBelow = (number: number) =>
+    words(number) && !OPENS_BLOCK.test(doc.line(number).text.trimStart())
   const under =
-    after.trim() === '' && last.startsWith('|') && words(end.number + 1)
+    after.trim() === '' &&
+    (last.startsWith('|')
+      ? words(end.number + 1)
+      : TAKES_LAZY.test(last) && lazyBelow(end.number + 1))
       ? `\n${lead.trimEnd()}`
       : ''
   const over = inFront && !before && first.startsWith('|') && words(line.number - 1) ? '\n' : ''
@@ -125,5 +137,8 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
 
 export function plainly(state: EditorState, written: string): TransactionSpec {
   const text = withLineFeeds(written)
-  return everywhere(state, (range) => intoEmptyItem(state, range, text) ?? plainAt(range, text))
+  return everywhere(state, (picked) => {
+    const range = keptBreak(state, picked)
+    return intoEmptyItem(state, range, text) ?? plainAt(range, text)
+  })
 }

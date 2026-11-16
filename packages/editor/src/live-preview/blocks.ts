@@ -16,6 +16,7 @@ import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
 import { readChart } from '@orden/markdown/chart'
 import { htmlBlockCard } from '@orden/markdown/html-block'
+import { iframeCard } from '@orden/markdown/web-embed'
 import { type EmbedKind, embedKind } from '@orden/markdown/links'
 import { coverOf } from '@orden/markdown/cover'
 import { CoverWidget } from './cover'
@@ -235,9 +236,10 @@ function scan(
         }
 
         case 'HTMLBlock': {
-          if (!standsAlone(state, node.from) || !trustsMarkup(state)) return false
+          if (!standsAlone(state, node.from)) return false
 
-          const card = htmlBlockCard(doc.sliceString(node.from, node.to))
+          const text = doc.sliceString(node.from, node.to)
+          const card = (trustsMarkup(state) ? htmlBlockCard(text) : null) ?? frameOverLines(text)
           if (card === null) return false
 
           const span = found(node.from, node.to)
@@ -277,6 +279,16 @@ function scan(
       }
     },
   })
+}
+
+const FRAME_CLOSED = /<\/iframe\s*>/i
+
+function frameOverLines(text: string): string | null {
+  const closed = FRAME_CLOSED.exec(text)
+  const end = closed ? closed.index + closed[0].length : text.length
+  const frame = text.slice(0, end)
+  if (!frame.includes('\n') || text.slice(end).trim()) return null
+  return iframeCard(closed ? frame : text)
 }
 
 function chosenFor(state: EditorState, reveals: boolean, spans: readonly Span[]) {
