@@ -496,8 +496,14 @@ describe('a note the space has archived', () => {
   })
 })
 
-async function pickedAt(doc: string, caret: number, asked: Asked, label: string): Promise<string> {
-  let built = state(doc, asked.index, caret)
+async function pickedAt(
+  doc: string,
+  caret: number,
+  asked: Asked,
+  label: string,
+  write?: (target: LinkWrite) => string,
+): Promise<string> {
+  let built = state(doc, asked.index, caret, write)
   const found = await wikilinkCompletions(new CompletionContext(built, caret, false))
   const row = found?.options.find((one) => one.label === label)
   if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
@@ -512,6 +518,33 @@ async function pickedAt(doc: string, caret: number, asked: Asked, label: string)
   row.apply(view, row, found.from, caret)
   return built.doc.toString()
 }
+
+describe('a link picked into front matter', () => {
+  const asked = () => space([note('Plan.md', ['Goals'])])
+  const markdown = (target: LinkWrite) => `[${target.name}](${target.name}.md)`
+
+  test('is quoted when it is a markdown link, so the YAML still reads', async () => {
+    const doc = '---\nup: [[Pl\n---\n# Note\n'
+    expect(await pickedAt(doc, doc.indexOf('[[Pl') + 4, asked(), 'Plan', markdown)).toBe(
+      '---\nup: "[Plan](Plan.md)"\n---\n# Note\n',
+    )
+    const listed = '---\nrefs:\n  - [[Pl\n---\n'
+    expect(await pickedAt(listed, listed.indexOf('[[Pl') + 4, asked(), 'Plan', markdown)).toBe(
+      '---\nrefs:\n  - "[Plan](Plan.md)"\n---\n',
+    )
+  })
+
+  test('is left as it is when it is a wikilink, or in the body', async () => {
+    const doc = '---\nup: [[Pl\n---\n'
+    expect(await pickedAt(doc, doc.indexOf('[[Pl') + 4, asked(), 'Plan')).toBe(
+      '---\nup: [[Plan]]\n---\n',
+    )
+    const body = '---\na: 1\n---\nup: [[Pl\n'
+    expect(await pickedAt(body, body.length - 1, asked(), 'Plan', markdown)).toBe(
+      '---\na: 1\n---\nup: [Plan](Plan.md)\n',
+    )
+  })
+})
 
 describe('a name picked inside a link already written', () => {
   const asked = () => space([note('Plan.md', ['Goals'])])

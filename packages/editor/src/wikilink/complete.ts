@@ -1,5 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorView } from '@codemirror/view'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { blocksOf, foldName, isTabFile } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
@@ -45,14 +46,27 @@ function insert(target: LinkWrite) {
     const fragment = target.fragment ?? (kept.startsWith('#') ? headingOf(kept) : null)
     const written = view.state.facet(linkWriter)({ ...target, fragment })
     const wiki = written.startsWith('[[') && written.endsWith(']]')
-    const text = wiki && kept ? `${written.slice(0, -2)}${tailOf(kept, fragment)}]]` : written
+    const linked = wiki && kept ? `${written.slice(0, -2)}${tailOf(kept, fragment)}]]` : written
+    const end = rest === null ? to : to + rest.length + 2
+    const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : linked
 
     view.dispatch({
-      changes: { from: start, to: rest === null ? to : to + rest.length + 2, insert: text },
+      changes: { from: start, to: end, insert: text },
       selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
   }
+}
+
+const OPENS_VALUE = /^[ \t]*(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)$/
+
+function plainInMatter(view: EditorView, from: number, to: number): boolean {
+  const doc = view.state.doc
+  if (doc.sliceString(0, 3) !== '---') return false
+  const block = frontMatterBlock(doc.toString())
+  if (!block || from < block.body.from || to > block.body.to) return false
+  const line = doc.lineAt(from)
+  return OPENS_VALUE.test(doc.sliceString(line.from, from)) && !doc.sliceString(to, line.to).trim()
 }
 
 function keptOf(rest: string, fragmentChosen: boolean): string {
