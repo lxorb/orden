@@ -102,6 +102,23 @@ describe('the space a search holds', () => {
     expect(space.warmth().read).toBe(3)
   })
 
+  test('says which note it is in before it searches it, cold or warm', async () => {
+    for (const fill of [false, true]) {
+      if (fill) await space.fill(ROOT)
+      const passed: string[] = []
+      await searchRows(
+        ROOT,
+        parseQuery('wind'),
+        [],
+        50,
+        () => undefined,
+        [],
+        (relative) => passed.push(relative),
+      )
+      expect(passed.sort()).toEqual(['Ink.md', 'Kestrel.md', 'Plan.md'])
+    }
+  })
+
   test('a walk that stopped early leaves the space to the warm pass', async () => {
     const found: string[] = []
     await searchRows(ROOT, parseQuery('the'), [], 1, (batch) => {
