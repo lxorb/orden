@@ -419,6 +419,16 @@ describe('footnotes inside an embedded note', () => {
     expect(html).toContain('<li id="e0-fn-1"><a class="footnote-back" href="#e0-fnref-1">')
     expect(html).not.toContain('<section class="footnotes"><ol><section class="footnotes">')
   })
+
+  test('leave a link to a note named like a footnote as it was', () => {
+    const html = renderMarkdown('![[E]]\n', {
+      footnotes: true,
+      resolveEmbed: () => 'See [[fn-plan]] and [m](fnref-x.md).\n',
+      resolveLink: (link) => ({ href: `${link.target}.md` }),
+    })
+    expect(html).toContain('href="fn-plan.md"')
+    expect(html).toContain('href="fnref-x.md"')
+  })
 })
 
 describe('a cover', () => {

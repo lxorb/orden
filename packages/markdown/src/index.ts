@@ -540,7 +540,14 @@ function coverFound(source: string, options: RenderOptions): Cover | null {
 }
 
 function notesApart(html: string, at: number): string {
-  return html.replace(/\b(id|href)="(#?)(fn(?:ref)?-)/g, `$1="$2e${at}-$3`)
+  const own = `e${at}-`
+  return html
+    .replace(/<li id="fn-/g, `<li id="${own}fn-`)
+    .replace(/(<a class="footnote-back" href="#)fnref-/g, `$1${own}fnref-`)
+    .replace(
+      /(<sup class="footnote-ref" id=")fnref-([^"]*"><a href="#)fn-/g,
+      `$1${own}fnref-$2${own}fn-`,
+    )
 }
 
 export function tableOfContents(headings: Heading[]): string {
