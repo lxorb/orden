@@ -33,6 +33,7 @@ import {
   placeFor,
   placeOf,
   reachable,
+  sharedSource,
   writableAt,
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
@@ -81,7 +82,9 @@ async function baseAt(
   try {
     return { place, relative, text, base: readBase(text) }
   } catch (error) {
-    throw new Refused('bad_arguments', `${relative} does not read: ${String(error)}`)
+    const at = /line (\d+), column (\d+)/.exec(String(error))
+    const where = at ? ` at line ${at[1] ?? ''}, column ${at[2] ?? ''}` : ''
+    throw new Refused('bad_arguments', `${relative} does not read as a base${where}`)
   }
 }
 
@@ -375,5 +378,8 @@ export async function editBase(call: Call): Promise<AgentAnswer> {
   if (!written) return done({ path: relative, changed: false })
   const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
-  return done({ path: relative, changed: true, views: next.views.map((view) => view.name) })
+  return done(
+    { path: relative, changed: true, views: next.views.map((view) => view.name) },
+    sharedSource(place, relative),
+  )
 }

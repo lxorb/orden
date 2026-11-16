@@ -3,6 +3,7 @@ import { workspace } from '../../workspace/src/api'
 import { buried } from '../../protect/src/api'
 import { folderOf, insideSpace, within } from '../../platform/src/api'
 import type { TrashItem } from '../../trash/src/api'
+import { reachedByOthersIn } from '../../sharing/src/api'
 import { asked, type Call, done, need, Refused, reachable } from '../../agent-verbs/src/api'
 
 function whereOf(call: Call, item: TrashItem): string | null {
@@ -74,7 +75,13 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
   const rows = await listed(call)
 
-  if (op === 'list') return done(rows.map(({ item: _item, ...row }) => row))
+  if (op === 'list') {
+    const shared = reachable(call).some((space) => reachedByOthersIn(space.root))
+    return done(
+      rows.map(({ item: _item, ...row }) => row),
+      shared ? 'names in shared spaces' : null,
+    )
+  }
   if (op !== 'restore') throw new Refused('bad_arguments', 'op is list or restore')
 
   const id = need(call, 'id')
