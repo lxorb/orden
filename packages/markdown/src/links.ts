@@ -560,6 +560,11 @@ function headingSection(source: string, wanted: string): string | null {
   return start === -1 ? null : lines.slice(start).join('\n').trimEnd()
 }
 
+const OWN_BLOCK =
+  /^ {0,3}(?:#{1,6}(?:[ \t]|$)|`{3,}|~{3,}|\||(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
+
+const TABLE_ROW = /^ {0,3}\|/
+
 function blockSection(source: string, wanted: string): string | null {
   const found = blockIds(source).find((one) => one.id === wanted)
   if (!found) return null
@@ -574,8 +579,14 @@ function blockSection(source: string, wanted: string): string | null {
 
   let start = found.line
   let end = found.line
-  while (start > 0 && (lines[start - 1] ?? '').trim()) start--
-  while (end + 1 < lines.length && (lines[end + 1] ?? '').trim()) end++
+  const own = lines[found.line] ?? ''
+  const row = TABLE_ROW.test(own)
+  const joins = (line: string | undefined) =>
+    !!line?.trim() && (row ? TABLE_ROW.test(line) : !OWN_BLOCK.test(line))
+  if (row || !OWN_BLOCK.test(own)) {
+    while (start > 0 && joins(lines[start - 1])) start--
+    while (end + 1 < lines.length && joins(lines[end + 1])) end++
+  }
 
   const block = lines.slice(start, end + 1)
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
