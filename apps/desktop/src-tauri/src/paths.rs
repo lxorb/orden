@@ -415,6 +415,34 @@ fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
     !theirs.any(|(_, part)| unspoken(naming, part))
 }
 
+pub fn stays_in_its_space(app: &AppHandle, target: &Path) -> Result<(), String> {
+    stays_in_space(&spaces_dir(app)?, target)
+}
+
+pub fn stays_in_space(spaces: &Path, target: &Path) -> Result<(), String> {
+    let Some(space) = space_root(spaces, target) else {
+        return Ok(());
+    };
+    let target = folded(target);
+    let Some(there) = target
+        .ancestors()
+        .find(|one| one.symlink_metadata().is_ok())
+    else {
+        return Ok(());
+    };
+    if there == space || !there.starts_with(&space) {
+        return Ok(());
+    }
+    let out = || format!("{} goes through a link out of its space", target.display());
+    let real_space = fs::canonicalize(&space).map_err(|_| out())?;
+    let real = fs::canonicalize(there).map_err(|_| out())?;
+    if real.starts_with(&real_space) {
+        Ok(())
+    } else {
+        Err(out())
+    }
+}
+
 pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
     let spaces = folded(spaces);
     let path = folded(path);
@@ -972,7 +1000,8 @@ mod tests {
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
         judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, path_key_as,
-        same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked, ORIGIN,
+        same_path, space_root, stays_in_space, unspoken, upcased, write_atomically, Naming, Picked,
+        ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -2135,5 +2164,25 @@ mod tests {
         let name = folder_key(r"C:\notes\a b.md");
         assert_eq!(name.len(), 16);
         assert!(name.chars().all(|letter| letter.is_ascii_hexdigit()));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_write_never_goes_through_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let spaces = dir.path().join("spaces");
+        let outside = dir.path().join("outside");
+        let vault = dir.path().join("vault");
+        for folder in [spaces.join("Work/Notes"), outside.clone(), vault.clone()] {
+            std::fs::create_dir_all(folder).expect("a folder");
+        }
+        std::os::unix::fs::symlink(&outside, spaces.join("Work/Refs")).expect("a link out");
+        std::os::unix::fs::symlink(&vault, spaces.join("Vault")).expect("a linked space");
+
+        assert!(stays_in_space(&spaces, &spaces.join("Work/Refs/Planted.md")).is_err());
+        assert!(stays_in_space(&spaces, &spaces.join("Work/Refs/Deep/Planted.md")).is_err());
+        assert!(stays_in_space(&spaces, &spaces.join("Work/Notes/Plan.md")).is_ok());
+        assert!(stays_in_space(&spaces, &spaces.join("Work/New/Plan.md")).is_ok());
+        assert!(stays_in_space(&spaces, &spaces.join("Vault/Plan.md")).is_ok());
     }
 }
