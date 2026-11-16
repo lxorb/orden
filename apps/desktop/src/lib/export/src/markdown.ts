@@ -189,7 +189,9 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
 
       const target = options.link(found)
       if (target === null && found.embed && embedKind(found.target) !== null) continue
-      const written = target === null ? shownText(found) : asLink(found, target)
+      const within = found.target === '' && (found.heading !== null || found.block !== null)
+      const written =
+        target !== null ? asLink(found, target) : within ? asLink(found, '') : shownText(found)
       const text = matter && found.from < matter.close ? inMatter(source, found, written) : written
       if (text !== null) edits.push({ from: found.from, to: found.to, text })
     }

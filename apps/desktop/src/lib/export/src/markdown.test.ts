@@ -46,6 +46,13 @@ describe('wikilinks turned into real links', () => {
     expect(text).toBe('See [Note#^b1](sub/Note.md#^b1).\n')
   })
 
+  test('a link within the note stays a link to its heading or block', () => {
+    const text = toMarkdown('See [[#Goals]], [[#Goals|the goals]] and [[#^b1]].\n', {
+      link: () => null,
+    })
+    expect(text).toBe('See [#Goals](#Goals), [the goals](#Goals) and [#^b1](#^b1).\n')
+  })
+
   test('a picture or a clip nothing names as a note stays as it was written', () => {
     const source = 'See ![[shot.png|200]], ![[clip.mp4]] and ![[a cat.png|a cat]].\n'
     expect(toMarkdown(source, { link: () => null })).toBe(source)
