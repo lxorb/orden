@@ -206,7 +206,8 @@ export function patternJudge() {
         case 'again': {
           const counted = shape.of.kind === 'letter' ? 8 : MOST_COPIES
           if (shape.least > MOST_COPIES) {
-            let after = run(shape.letters, shape.least - MOST_COPIES, ahead)
+            const rest = run(shape.letters, shape.least - MOST_COPIES, ahead)
+            let after = { ...rest, heads: before(shape.of, ahead).heads }
             for (let copy = 0; copy < MOST_COPIES; copy++) after = before(shape.of, after)
             return after
           }

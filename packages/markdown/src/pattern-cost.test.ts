@@ -104,6 +104,11 @@ describe('a pattern that could backtrack without end', () => {
     '(\\w+\\s+)+',
     '[a-f0-9]{32}',
     '(\\S+ )+TODO',
+    '(?:,[^,]*){11}',
+    '(?:\\|[^|]*){11}',
+    '(?:;[^;]*){12,20}',
+    '(?:#[^#]*){11,}',
+    '(?:\\|[^|\\n]*){11}\\|',
     '\\d{12}',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
