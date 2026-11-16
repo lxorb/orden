@@ -20,8 +20,14 @@ export function pointer(note: Note): (link: Wikilink) => { href: string | null }
   }
 }
 
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
+
+function unescaped(value: string): string {
+  return value.replace(/&(amp|lt|gt|quot|#39);/g, (whole, name: string) => ENTITIES[name] ?? whole)
+}
+
 export function withPictures(html: string, note: Note): string {
-  return mapSources(html, (src) => notePicture(src, note.path, note.text))
+  return mapSources(html, (src) => escapeAll(notePicture(unescaped(src), note.path, note.text)))
 }
 
 const MEASURE = 'orden:reading'
