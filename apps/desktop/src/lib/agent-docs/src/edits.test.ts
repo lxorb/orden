@@ -121,6 +121,26 @@ describe('what goes in beside a line or a paragraph', () => {
     )
   })
 
+  test('a block named on a list item with code under it takes the code, not the next item', () => {
+    const note = '1. Install: ^x\n   ```bash\n   npm i\n\n   npm run build\n   ```\n2. Run it\n'
+    expect(edited(note, [{ at: { block: 'x' }, delete: true }])).toBe('2. Run it\n')
+  })
+
+  test('a paragraph named above a list is that paragraph alone', () => {
+    const note = 'Shopping: ^x\n- milk\n- eggs\n\nAfter.\n'
+    expect(edited(note, [{ at: { block: 'x' }, replace: 'Groceries:' }])).toBe(
+      'Groceries: ^x\n- milk\n- eggs\n\nAfter.\n',
+    )
+  })
+
+  test('a block named apart under it is the table above the name', () => {
+    const note = 'Intro\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n^tbl\n\nAfter.\n'
+    expect(edited(note, [{ at: { block: 'tbl' }, replace: '| c |\n|---|\n| 3 |' }])).toBe(
+      'Intro\n\n| c |\n|---|\n| 3 |\n\n^tbl\n\nAfter.\n',
+    )
+    expect(edited(note, [{ at: { block: 'tbl' }, delete: true }])).not.toContain('| 1 | 2 |')
+  })
+
   test('a deleted task takes its line with it', () => {
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'a' }, delete: true }])).toBe('- [ ] b\n')
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'b' }, delete: true }])).toBe('- [ ] a\n')

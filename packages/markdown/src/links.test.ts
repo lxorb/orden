@@ -856,9 +856,7 @@ describe('a block name on a line of its own', () => {
 
     const packing = namedBlock('Packing list:\n- passport\n- socks', 0, id)?.source ?? ''
     expect(packing).toBe('Packing list: ^new123\n- passport\n- socks')
-    expect(sectionOf(packing, { heading: null, block: 'new123' })).toBe(
-      'Packing list:\n- passport\n- socks',
-    )
+    expect(sectionOf(packing, { heading: null, block: 'new123' })).toBe('Packing list:')
   })
 
   test('a list item named on its last line is that item, nested or not', () => {
@@ -872,6 +870,30 @@ describe('a block name on a line of its own', () => {
       '- Pay rent\n  by Friday ^new123\n- Buy milk',
     )
     expect(namedBlock('- a\n  by ^old\n- b', 0, () => 'new123')?.id).toBe('old')
+  })
+
+  test('a list item with code nested under it is named on its own words, and holds that code', () => {
+    const note = '1. Install:\n   ```bash\n   npm i\n\n   npm run build\n   ```\n2. Run it\n'
+    const named = namedBlock(note, 0, () => 'new123')?.source ?? ''
+    expect(named).toBe(note.replace('1. Install:', '1. Install: ^new123'))
+    expect(sectionOf(named, { heading: null, block: 'new123' })).toBe(
+      '1. Install:\n   ```bash\n   npm i\n\n   npm run build\n   ```',
+    )
+  })
+
+  test('a paragraph named next to a list or under a heading is that paragraph alone', () => {
+    const block = (text: string) => sectionOf(text, { heading: null, block: 'x' })
+    expect(block('Shopping: ^x\n- milk\n- eggs\n\nAfter.\n')).toBe('Shopping:')
+    expect(block('- Pay rent\n\n  more about rent ^x\n- Buy milk\n')).toBe('  more about rent')
+    expect(block('## Tasks\nPay rent by Friday ^x')).toBe('Pay rent by Friday')
+    expect(block('- a\n- b\n^x')).toBe('- a\n- b')
+
+    const named = namedBlock('Pay rent\n## Later\nmore', 0, () => 'new123')?.source ?? ''
+    expect(named).toBe('Pay rent ^new123\n## Later\nmore')
+    expect(blocksOf('## Later\nAn idea ^idea').map((one) => [one.line, one.text, one.id])).toEqual([
+      [0, 'Later', null],
+      [1, 'An idea', 'idea'],
+    ])
   })
 
   test('a heading is not given a block name, it is linked as a heading', () => {

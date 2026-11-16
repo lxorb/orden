@@ -600,54 +600,87 @@ function blockSection(source: string, wanted: string): string | null {
   const found = blockIds(source).find((one) => one.id === wanted)
   if (!found) return null
 
-  const lines = source.split('\n')
-  if (ownLine(lines[found.line] ?? '') && !(lines[found.line - 1] ?? '').trim()) {
-    return blockAbove(source, lines, found.line)
+  const { first, last, indent } = blockSpan(rowsOf(source), found.line)
+  return source
+    .split('\n')
+    .slice(first, last + 1)
+    .map((line, at) => (first + at === found.line ? line.replace(BLOCK_ID, '') : line))
+    .map((line) => line.slice(Math.min(indent, depthOf(line))))
+    .join('\n')
+    .trimEnd()
+}
+
+type Lined = Pick<Row, 'text' | 'code'>
+
+export interface BlockSpan {
+  first: number
+  last: number
+  indent: number
+  apart: boolean
+}
+
+export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
+  const text = (line: number) => rows[line]?.text ?? ''
+  const filled = (line: number) => text(line).trim() !== ''
+
+  if (ownLine(text(at)) && !rows[at]?.code) {
+    if (at > 0 && !filled(at - 1)) {
+      let last = at - 1
+      while (last > 0 && !filled(last)) last--
+      let first = last
+      while (first > 0 && (filled(first - 1) || rows[first - 1]?.code)) first--
+      return { first, last, indent: 0, apart: true }
+    }
+    let first = at
+    while (first > 0 && filled(first - 1)) first--
+    return { first, last: at, indent: 0, apart: false }
   }
 
-  const item = itemLines(lines, found.line)
-  if (item) return listItem(lines, item, found.line)
+  const item = itemLines(rows, at)
+  if (item) return { ...item, apart: false }
 
-  let start = found.line
-  let end = found.line
-  while (start > 0 && (lines[start - 1] ?? '').trim()) start--
-  while (end + 1 < lines.length && (lines[end + 1] ?? '').trim()) end++
-
-  const block = lines.slice(start, end + 1)
-  block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
-
-  return block.join('\n').trimEnd()
+  const stops = (line: number) => {
+    const row = rows[line]
+    return !filled(line) || !row || row.code || LIST_ITEM.test(row.text) || HEADING.test(row.text)
+  }
+  let first = at
+  let last = at
+  while (first > 0 && !stops(first - 1)) first--
+  while (last + 1 < rows.length && !stops(last + 1)) last++
+  return { first, last, indent: 0, apart: false }
 }
 
 export const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
 
 export function itemLines(
-  lines: readonly string[],
+  rows: readonly Lined[],
   at: number,
 ): { first: number; last: number; indent: number } | null {
-  const first = itemStart(lines, at)
+  const first = itemStart(rows, at)
   if (first === null) return null
 
-  const indent = LIST_ITEM.exec(lines[first] ?? '')?.[1]?.length ?? 0
+  const indent = LIST_ITEM.exec(rows[first]?.text ?? '')?.[1]?.length ?? 0
   let last = first
-  while (last + 1 < lines.length) {
-    const next = lines[last + 1] ?? ''
-    if (!next.trim() || depthOf(next) <= indent) break
+  while (last + 1 < rows.length) {
+    const next = rows[last + 1]
+    if (!next) break
+    const inside = depthOf(next.text) > indent
+    if (next.code ? next.text.trim() !== '' && !inside : !next.text.trim() || !inside) break
     last++
   }
   return { first, last, indent }
 }
 
-function itemStart(lines: readonly string[], at: number): number | null {
-  const line = lines[at] ?? ''
-  if (LIST_ITEM.test(line)) return at
+function itemStart(rows: readonly Lined[], at: number): number | null {
+  const line = rows[at]?.text ?? ''
+  if (!rows[at]?.code && LIST_ITEM.test(line)) return at
 
   const depth = depthOf(line)
   if (depth === 0) return null
   for (let up = at - 1; up >= 0; up--) {
-    const above = lines[up] ?? ''
-    if (!above.trim()) return null
-    const marker = LIST_ITEM.exec(above)
+    const above = rows[up]
+    if (!above || (!above.code && !above.text.trim())) return null
+    const marker = above.code ? null : LIST_ITEM.exec(above.text)
     if (marker && (marker[1]?.length ?? 0) < depth) return up
   }
   return null
@@ -657,36 +690,9 @@ function depthOf(line: string): number {
   return line.length - line.trimStart().length
 }
 
-function listItem(
-  lines: readonly string[],
-  { first, last, indent }: { first: number; last: number; indent: number },
-  named: number,
-): string {
-  return lines
-    .slice(first, last + 1)
-    .map((line, at) => (first + at === named ? line.replace(BLOCK_ID, '') : line))
-    .map((line) => line.slice(Math.min(indent, depthOf(line))))
-    .join('\n')
-    .trimEnd()
-}
-
 export function ownLine(line: string): boolean {
   const trimmed = line.trim()
   return trimmed.startsWith('^') && blockIdOf(trimmed) === trimmed.slice(1)
-}
-
-function blockAbove(source: string, lines: readonly string[], under: number): string {
-  const rows = rowsOf(source)
-  let end = under - 1
-  while (end > 0 && !(lines[end] ?? '').trim()) end--
-
-  let start = end
-  while (start > 0 && ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)) start--
-
-  return lines
-    .slice(start, end + 1)
-    .join('\n')
-    .trimEnd()
 }
 
 export function freeBlockId(taken: ReadonlySet<string>): string {
@@ -719,11 +725,13 @@ export function blocksOf(text: string): NoteBlock[] {
   const found: NoteBlock[] = []
   let current: NoteBlock | null = null
   let run: NoteBlock | null = null
+  let after = false
 
   for (const row of lines(text)) {
     if (!row.code && row.text.trim() === '') {
       current = null
       run = null
+      after = false
       continue
     }
 
@@ -733,12 +741,14 @@ export function blocksOf(text: string): NoteBlock[] {
       continue
     }
 
-    if (!current || (!row.code && LIST_ITEM.test(row.text))) {
+    const heading = !row.code && HEADING.test(row.text)
+    if (!current || heading || (!row.code && LIST_ITEM.test(row.text)) || after) {
       current = { line: row.line, text: firstWords(row.text), id: null }
       found.push(current)
       run ??= current
     }
 
+    after = heading
     if (row.code) continue
     const id = blockIdOf(row.text)
     if (id) current.id = id

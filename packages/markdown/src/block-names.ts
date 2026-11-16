@@ -19,8 +19,8 @@ const CLOSERS: readonly (readonly [RegExp, string])[] = [
   [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
 ]
 
-function listed(row: Row): boolean {
-  return !row.code && LIST_ITEM.test(row.text)
+function listed(row: Row | undefined): boolean {
+  return !!row && !row.code && LIST_ITEM.test(row.text)
 }
 
 function endOf(rows: readonly Row[], line: number): number {
@@ -36,7 +36,9 @@ function endOf(rows: readonly Row[], line: number): number {
   for (;;) {
     const next = rows[end + 1]
     if (!next) return end
-    if (rows[end]?.code ? !next.code : !next.text.trim() || listed(next)) return end
+    if (rows[end]?.code ? !next.code : !next.text.trim() || listed(next) || isHeading(next.text)) {
+      return end
+    }
     end++
   }
 }
@@ -49,7 +51,7 @@ export function namedBlock(
   const rows = rowsOf(source)
   const row = rows[line]
   if (!row || row.matter || (!row.code && isHeading(row.text))) return null
-  if (listed(row)) return namedItem(source, line, id)
+  if (listed(row)) return namedItem(rows, source, line, id)
 
   const end = endOf(rows, line)
   const lines = source.split('\n')
@@ -72,11 +74,16 @@ export function namedBlock(
   return { id: name, source: lines.join('\n') }
 }
 
-function namedItem(source: string, line: number, id: () => string): { id: string; source: string } {
+function namedItem(
+  rows: readonly Row[],
+  source: string,
+  line: number,
+  id: () => string,
+): { id: string; source: string } {
   const lines = source.split('\n')
-  const item = itemLines(lines, line)
+  const item = itemLines(rows, line)
   let end = line
-  while (item && end < item.last && !LIST_ITEM.test(lines[end + 1] ?? '')) end++
+  while (item && end < item.last && !listed(rows[end + 1]) && !rows[end + 1]?.code) end++
 
   for (let at = line; at <= end; at++) {
     const had = blockIdOf(lines[at] ?? '')
