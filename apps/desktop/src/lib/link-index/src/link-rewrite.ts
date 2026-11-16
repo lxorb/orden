@@ -117,10 +117,33 @@ const VALUE_OPENS = /^(?:[ \t]*-[ \t]+|[ \t]*[^\s#-][^:]*?[ \t]*:[ \t]+)/
 
 const INDICATOR = /^(?:[-?:](?:\s|$)|[,[\]{}#&*!|>'"%@`])/
 
-const SIMPLE_LINE = /^[ \t]*(?:#.*|-(?:[ \t]+\S.*)?|[^\s#:-][^:]*:(?:[ \t]+(?![|>])\S.*)?)?$/
+const OPENS_VALUE = /^([ \t]*)(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)(\S.*)$/
 
-function simpleMatter(body: string): boolean {
-  return body.split('\n').every((line) => SIMPLE_LINE.test(line.replace(/\r$/, '')))
+function plainLines(text: string, from: number, to: number): Set<number> {
+  const lines: { start: number; indent: number; value: string | null }[] = []
+  let at = from
+  for (const raw of text.slice(from, to).split('\n')) {
+    const line = raw.replace(/\r$/, '')
+    if (line.trim() && !line.trimStart().startsWith('#')) {
+      const opens = OPENS_VALUE.exec(line)
+      const indent = line.length - line.trimStart().length
+      lines.push({ start: at, indent, value: opens ? (opens[2] ?? '') : null })
+    }
+    at += raw.length + 1
+  }
+
+  const out = new Set<number>()
+  let inside: number | null = null
+  for (const [index, line] of lines.entries()) {
+    if (inside !== null && line.indent > inside) continue
+    inside = null
+    if (line.value === null) continue
+    inside = line.indent
+    if (/^[|>]/.test(line.value)) continue
+    const next = lines[index + 1]
+    if (!next || next.indent <= line.indent) out.add(line.start)
+  }
+  return out
 }
 
 function plainHolds(value: string): boolean {
@@ -138,7 +161,8 @@ function quotedValue(value: string): string {
 
 function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
   const matter = frontMatterBlock(text)
-  if (!matter || !simpleMatter(text.slice(matter.body.from, matter.body.to))) return [...edits]
+  if (!matter) return [...edits]
+  const plain = plainLines(text, matter.body.from, matter.body.to)
 
   const out: Edit[] = []
   let at = 0
@@ -153,7 +177,7 @@ function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
     const line = edits.slice(at, last + 1)
     at = last + 1
 
-    const opens = edit.from < matter.close ? VALUE_OPENS.exec(text.slice(start, end)) : null
+    const opens = plain.has(start) ? VALUE_OPENS.exec(text.slice(start, end)) : null
     const from = start + (opens?.[0].length ?? 0)
     const to = start + text.slice(start, end).trimEnd().length
     const inValue = line.every((one) => one.from >= from && one.to <= to)

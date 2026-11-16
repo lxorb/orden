@@ -300,6 +300,22 @@ describe('a link in plain front matter', () => {
     )
   })
 
+  test.each([
+    '---\nup: [[Plan]]\nsummary: |\n  hello [[Plan]] there\n---\n',
+    '---\nup: [[Plan]]\ntitle: a long [[Plan]]\n  that goes on\n---\n',
+  ])(
+    'a plain value is quoted beside a value that runs over lines, which is left as it is',
+    (text) => {
+      const out = rewriteLinks(text, 'One.md', renamed('@Alice'), pointsAt('plan')) ?? ''
+      expect(out.split('\n').slice(0, 3)).toEqual([
+        '---',
+        'up: "[[@Alice]]"',
+        text.split('\n')[2]?.replace('[[Plan]]', '[[@Alice]]'),
+      ])
+      expect(out.split('\n')[3]).toBe(text.split('\n')[3]?.replace('[[Plan]]', '[[@Alice]]'))
+    },
+  )
+
   test('a value that was not plain YAML before is left as it was', () => {
     const text = '---\nrel: [[[Plan]], [[Other]]]\ntext: |\n  see [[Plan]]\n---\n'
     expect(rewriteLinks(text, 'One.md', renamed('@Alice'), pointsAt('plan'))).toBe(
