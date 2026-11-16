@@ -944,8 +944,8 @@ class Links {
   }
 
   reachedOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
-    const found = this.targetOf(from, link)
-    if (found !== null || (from !== null && this.otherHolding(from) !== null)) return found
+    const other = from === null ? null : this.otherHolding(from)
+    if (from !== null && other !== null) return this.otherReached(other, from, link)
     return this.reachedFrom(from === null ? null : this.relative(from), link)
   }
 
@@ -989,6 +989,16 @@ class Links {
     link: { kind: LinkKind; target: string },
   ): string | null {
     return resolvedIn(this.otherIndex(root, from), asWritten(from, link))
+  }
+
+  private otherReached(
+    root: string,
+    from: string,
+    link: { kind: LinkKind; target: string },
+  ): string | null {
+    const index = this.otherIndex(root, from)
+    const written = asWritten(from, link)
+    return resolvedIn(index, written) ?? resolveFile(index, written.target, written.kind)
   }
 
   examined = 0
@@ -1649,7 +1659,7 @@ class Links {
 
     const found =
       from !== null && other !== null
-        ? this.otherTarget(other, from, link)
+        ? this.otherReached(other, from, link)
         : this.reachedFrom(source, link)
     return found === null ? null : relativePath(folderOf(source), found)
   }

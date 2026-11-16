@@ -181,6 +181,13 @@ test('a link drawn in the reading view of another space resolves in that space',
   expect(link('Thing')).toBeNull()
 })
 
+test('a link in another space to a file that is not a note reaches it there', async () => {
+  const link = { kind: 'wikilink' as const, target: 'photo.png' }
+  links.index('/home/me/A/Note.md')
+  await vi.waitFor(() => expect(links.reachedOf('/home/me/A/Note.md', link)).toBe('pics/photo.png'))
+  expect(links.targetOf('/home/me/A/Note.md', link)).toBeNull()
+})
+
 test('a link followed before that space is read opens its note rather than making one', async () => {
   await workspace.open('/home/me/A/Note.md')
   sent.length = 0
