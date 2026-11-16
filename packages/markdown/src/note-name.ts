@@ -78,7 +78,7 @@ export function titleFrom(lines: Iterable<string>): string | null {
     const found = FENCE.exec(line)
     const mark = found ? (found[1] ?? found[2] ?? null) : null
     if (fence !== null) {
-      const closes = mark !== null && mark[0] === fence[0] && mark.length >= fence.length
+      const closes = mark?.startsWith(fence.slice(0, 3)) === true && mark.length >= fence.length
       if (closes && line.trim() === mark) fence = null
       continue
     }
