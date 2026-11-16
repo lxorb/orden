@@ -272,7 +272,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       const listed = startsAnItem(view.state, line)
       if (verbatim.has(number)) continue
       if (!wordsOf(line.text, listed, quoted).words.trim()) {
-        if (!quoted && BARE_QUOTE.test(line.text)) {
+        if (!quoted && shape !== 'quote' && BARE_QUOTE.test(line.text)) {
           changes.push({ from: line.from, to: line.to, insert: '' })
         }
         continue

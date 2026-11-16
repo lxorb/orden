@@ -25,6 +25,7 @@ import {
   caretAtEdge,
   caretOffset,
   caretRect,
+  offsetAtPoint,
   selectAtPoint,
   selectIn,
   selectionIn,
@@ -71,6 +72,7 @@ import {
   removedRow,
   sortedColumn,
 } from './edits'
+import { sourceOffset } from './inline'
 import { inlineShortcut, runInCell } from './shortcuts'
 
 export interface TableSource {
@@ -764,6 +766,9 @@ export class TableView {
     const align = this.model.align[at.column]
     if (align) cell.style.textAlign = align
 
+    cell.addEventListener('auxclick', (event) => {
+      if (event.target instanceof Element && event.target.closest('a[href]')) event.preventDefault()
+    })
     cell.addEventListener('click', (event) => {
       if (event.target instanceof Element && event.target.closest('a[href]')) event.preventDefault()
     })
@@ -772,9 +777,13 @@ export class TableView {
       if (this.followedLink(event)) return
       if (this.editor.state.readOnly) return
       if (event.button !== 0 || document.activeElement === cell) return
+      const source = cell.dataset.source ?? ''
+      const shown = offsetAtPoint(cell, event.clientX, event.clientY)
+      const drawn = cell.textContent !== source
       event.preventDefault()
       cell.focus()
-      selectAtPoint(cell, event.clientX, event.clientY)
+      if (shown === null) selectAtPoint(cell, event.clientX, event.clientY)
+      else selectIn(cell, drawn ? sourceOffset(source, shown) : shown)
     })
 
     cell.addEventListener('focus', () => showSource(cell))

@@ -13,6 +13,7 @@ import {
 } from '@orden/markdown/links'
 import { iconElement } from '../icon'
 import { imageResolver } from '../images'
+import { followAnchors } from '../links'
 import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { BaseWidget } from '../live-preview/render'
@@ -99,6 +100,7 @@ export class EmbedWidget extends OrdenWidget {
 
     const body = document.createElement('div')
     body.className = 'orden-embed-body'
+    followAnchors(body, () => view)
     frame.append(body)
 
     const caption = document.createElement('button')

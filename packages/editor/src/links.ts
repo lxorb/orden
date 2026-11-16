@@ -120,3 +120,29 @@ export const linkClicks = EditorView.domEventHandlers({
     return true
   },
 })
+
+const WEB_ADDRESS = /^[a-z][a-z\d+.-]*:|^\/\//i
+
+function anchorHref(event: Event): string | null {
+  const target = event.target instanceof Element ? event.target.closest('a[href]') : null
+  return target?.getAttribute('href') ?? null
+}
+
+export function followAnchors(element: HTMLElement, editor: () => EditorView) {
+  element.addEventListener('mousedown', (event) => {
+    const view = editor()
+    const asked =
+      event.button === MIDDLE || (event.button === MAIN && (modifier(event) || view.state.readOnly))
+    const href = asked ? anchorHref(event) : null
+    if (!href || !WEB_ADDRESS.test(href)) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    view.state.facet(linkOpener)(href, event)
+  })
+  for (const type of ['click', 'auxclick']) {
+    element.addEventListener(type, (event) => {
+      if (anchorHref(event)) event.preventDefault()
+    })
+  }
+}
