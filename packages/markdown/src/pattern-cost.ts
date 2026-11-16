@@ -26,6 +26,7 @@ interface Ahead {
   heads: (string | null)[]
   literal: number
   ended: boolean
+  last?: boolean
 }
 
 export function patternJudge() {
@@ -142,11 +143,31 @@ export function patternJudge() {
     }
   }
 
+  const ELSEWHERE = [
+    { writes: ['я', '中'], common: ['я', '中', ' ', '\n'] },
+    { writes: ['5'], common: ['5'] },
+  ]
+
+  function reachIn(letters: string | null, flags: string, writes: readonly string[]): number {
+    if (letters === null) return NOTE
+    try {
+      const letter = new RegExp(`^(?:${letters})$`, flags.replace(/[^iuvs]/g, ''))
+      if (!writes.some((one) => letter.test(one))) return WORD
+      if (letter.test('\n')) return NOTE
+      return letter.test(' ') || letter.test('\t') ? LINE : WORD
+    } catch {
+      return NOTE
+    }
+  }
+
+  type Reach = (letters: string | null, overlaps: boolean) => number
+
   function aheadOf(
     shape: Shape,
     flags: string,
     start: Ahead = OPEN_END,
     traded?: () => void,
+    reachOf: Reach = (letters, overlaps) => reachOfLetters(letters, flags, overlaps),
   ): Ahead {
     let steps = 0
     const kept = new Map<string, boolean>()
@@ -183,7 +204,10 @@ export function patternJudge() {
         return least === 0 ? ahead : { ...ahead, heads: [letters], literal: 0, ended: false }
       }
       const overlaps = !ahead.heads.length || ahead.heads.some((head) => trades(letters, head))
-      const reach = reachOfLetters(letters, flags, overlaps)
+      const [head] = ahead.heads
+      const given =
+        ahead.last && overlaps && letters !== null && head ? `(?!${head})(?:${letters})` : letters
+      const reach = reachOf(given, overlaps)
       if (overlaps) traded?.()
       const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
       return {
@@ -209,6 +233,7 @@ export function patternJudge() {
             heads: [shape.letters],
             literal: shape.literal ? ahead.literal + 1 : 0,
             ended: false,
+            last: ahead.ended,
           }
         case 'none':
           return ahead
@@ -217,7 +242,7 @@ export function patternJudge() {
         case 'look': {
           const { rest } = before(shape.inner, shape.behind ? BACKWARDS : OPEN_END)
           const back = shape.behind && rest >= NOTE ? NOTE : 0
-          return { ...ahead, rest: ahead.rest + rest + back, ended: false }
+          return { ...ahead, rest: ahead.rest + rest + back, ended: false, last: false }
         }
         case 'row': {
           const parts = ahead.ended ? withoutGivenBack(flat(shape.parts)) : shape.parts
@@ -574,6 +599,49 @@ export function patternJudge() {
     return lead ? LINE : NOTE
   }
 
+  function opensWith(shape: Shape): { letters: (string | null)[]; empty: boolean } {
+    switch (shape.kind) {
+      case 'letter':
+        return { letters: [shape.letters], empty: false }
+      case 'none':
+      case 'end':
+      case 'look':
+        return { letters: [], empty: true }
+      case 'again': {
+        const inner = opensWith(shape.of)
+        return { letters: inner.letters, empty: inner.empty || shape.least === 0 }
+      }
+      case 'either': {
+        const all = shape.branches.map(opensWith)
+        return { letters: all.flatMap((one) => one.letters), empty: all.some((one) => one.empty) }
+      }
+      case 'row': {
+        const letters: (string | null)[] = []
+        for (const part of shape.parts) {
+          const inner = opensWith(part)
+          letters.push(...inner.letters)
+          if (!inner.empty) return { letters, empty: false }
+        }
+        return { letters, empty: true }
+      }
+    }
+  }
+
+  function startsElsewhere(flags: string, shape: Shape, common: readonly string[]): number {
+    const { letters, empty } = opensWith(shape)
+    if (empty) return NOTE
+    const takes = (letter: string | null) => {
+      if (letter === null) return true
+      try {
+        const one = new RegExp(`^(?:${letter})$`, flags.replace(/[^iuvs]/g, ''))
+        return common.some((sample) => one.test(sample))
+      } catch {
+        return true
+      }
+    }
+    return letters.some(takes) ? NOTE : LINE
+  }
+
   function leadingRun(shape: Shape): string | null {
     if (shape.kind === 'again') return shape.most > 1 ? shape.letters : null
     if (shape.kind !== 'row') return null
@@ -587,7 +655,21 @@ export function patternJudge() {
       if (open === Number.POSITIVE_INFINITY || ways > MOST_WAYS) return true
       const first = leadingRun(shape)
       const wider = first ? reachOfLetters(first, flags, true) - reachOfLetters(first, flags) : 0
-      return startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest + wider > MOST_REACH
+      const tried = Math.log(ways)
+      if (
+        startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest + wider + tried >
+        MOST_REACH
+      ) {
+        return true
+      }
+      return ELSEWHERE.some(
+        ({ writes, common }) =>
+          Math.min(startsOf(source, flags, lead, shape), startsElsewhere(flags, shape, common)) +
+            aheadOf(shape, flags, OPEN_END, undefined, (letters) => reachIn(letters, flags, writes))
+              .rest +
+            tried >
+          MOST_REACH,
+      )
     } catch {
       return true
     }
