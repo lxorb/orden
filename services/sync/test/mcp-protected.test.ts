@@ -61,6 +61,15 @@ describe('an agent reaching the account', () => {
     ).toContain('is protected')
   })
 
+  test('cannot write into it by another spelling of its folder', async () => {
+    expect(
+      await tool('write_note', { space: 'Home', path: 'diary/Planted.md', content: 'planted' }),
+    ).toContain('is protected')
+    expect(
+      await tool('write_note', { space: 'Home', path: 'DIARY/Planted.md', content: 'planted' }),
+    ).toContain('is protected')
+  })
+
   test('cannot reach into it through the to-do tools', async () => {
     const before = await tool('read_note', { space: 'Home', path: 'Plans.md' })
     expect(await tool('update_task', { space: 'Home', id: 'abc', done: true })).toContain(

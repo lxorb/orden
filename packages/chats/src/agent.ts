@@ -75,7 +75,7 @@ function attribute(source: string): string {
       if (one === '"') return '&quot;'
       if (one === '<') return '&lt;'
       if (one === '>') return '&gt;'
-      return /\p{Cc}/u.test(one) ? ' ' : one
+      return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one) ? ' ' : one
     })
     .join('')
 }

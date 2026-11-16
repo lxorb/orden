@@ -98,6 +98,21 @@ afterEach(() => {
 })
 
 describe('chats through the connector', () => {
+  test('a chat the reader shut to agents is neither listed, read, found nor posted in', async () => {
+    const key = await connector(owner)
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token: owner,
+      body: { protected: { 'thesis.chat': 'password' } },
+    })
+    const before = await state(owner)
+    expect(await tool(key, 'list_chats')).not.toContain('#thesis')
+    expect(await tool(key, 'read_chat', { chat })).not.toContain('chapter 3')
+    expect(await tool(key, 'search_chats', { query: 'chapter' })).not.toContain('chapter 3')
+    expect(await tool(key, 'post_message', { chat, text: 'sneaked in' })).not.toMatch(/^Posted/)
+    expect(await state(owner)).toEqual(before)
+  })
+
   test('are neither listed nor run while chats are off, and come back when on', async () => {
     const key = await connector(owner, false, false)
     const names = async () => {

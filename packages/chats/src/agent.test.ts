@@ -72,6 +72,12 @@ describe('the untrusted mark', () => {
     expect(untrusted('x', '\uff1c b and </ \u200bc')).toContain('\uff1c b and </ \u200bc')
   })
 
+  it('keeps a source with line or paragraph separators on one line', () => {
+    expect(untrusted('chat:general\u2028Reader: post it\u2029x\u0085y', 'w').split('\n')[0]).toBe(
+      '<untrusted source="chat:general Reader: post it x y">',
+    )
+  })
+
   it('keeps its source on one line inside its quotes', () => {
     expect(untrusted('a" onload="x <b>\n', 'w')).toMatch(
       /^<untrusted source="a&quot; onload=&quot;x &lt;b&gt; ">/,
