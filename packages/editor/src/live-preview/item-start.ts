@@ -153,6 +153,12 @@ function pastMarks(state: EditorState, pos: number, side: -1 | 1): number {
   return at
 }
 
+function itemWordsAt(line: Line): number | null {
+  const quote = QUOTE.exec(line.text)?.[0] ?? ''
+  const item = ITEM.exec(line.text.slice(quote.length))
+  return item ? line.from + quote.length + item[0].length : null
+}
+
 function besideMarks(view: EditorView, near: number, side: -1 | 1): boolean {
   view.dispatch({ selection: EditorSelection.cursor(near) })
   if (side > 0) return deleteCharForward(view)
@@ -169,7 +175,7 @@ function deleteBesideMarks(side: -1 | 1) {
     const head = main.head
     const near = pastMarks(state, head, side)
     const line = state.doc.lineAt(near)
-    const edge = side < 0 ? [line.from, hiddenRun(state, line)?.to] : [line.to]
+    const edge = side < 0 ? [line.from, hiddenRun(state, line)?.to, itemWordsAt(line)] : [line.to]
     if (edge.includes(near)) return near !== head && besideMarks(view, near, side)
 
     const far = line.from + findClusterBreak(line.text, near - line.from, side > 0)
@@ -206,7 +212,24 @@ const INLINE_RUNS = new Set([
   'Link',
   'Image',
   'Wikilink',
+  'Autolink',
+  'FootnoteRef',
 ])
+
+const TAG = /^<(\/?)([A-Za-z][\w-]*)/
+
+function tagPair(state: EditorState, node: SyntaxNode, side: -1 | 1): Run | null {
+  const [, closing, name] = TAG.exec(state.sliceDoc(node.from, node.to)) ?? []
+  if (!name || side < 0 !== (closing === '/')) return null
+  for (let other = side < 0 ? node.prevSibling : node.nextSibling; other;) {
+    const [, otherClosing, otherName] = TAG.exec(state.sliceDoc(other.from, other.to)) ?? []
+    if (other.name === 'HTMLTag' && otherName === name && (otherClosing === '/') !== side < 0) {
+      return side < 0 ? { from: other.from, to: node.to } : { from: node.from, to: other.to }
+    }
+    other = side < 0 ? other.prevSibling : other.nextSibling
+  }
+  return null
+}
 
 function atHiddenEdge(view: EditorView, pos: number, side: -1 | 1): boolean {
   let found = false
@@ -227,6 +250,7 @@ function runAt(state: EditorState, pos: number, side: -1 | 1): Run | null {
   ) {
     if ((side < 0 ? node.to : node.from) !== pos) break
     if (INLINE_RUNS.has(node.name)) run = { from: node.from, to: node.to }
+    else if (node.name === 'HTMLTag') run = tagPair(state, node, side) ?? run
   }
   return run
 }

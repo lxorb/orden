@@ -1222,12 +1222,25 @@ function pastFold(made: Transaction, fold: { from: number; to: number }): Transa
   made.changes.iterChanges((from, to, _fromB, _toB, text) => {
     changes.push({ from, to, insert: text.toString() })
   })
-  const opened = changes.find((one) => one.from === fold.from && one.to === fold.from)
+  const lineStart = made.startState.doc.lineAt(fold.from).from
+  const opened = changes.find(
+    (one) =>
+      one.to === fold.from &&
+      one.from >= lineStart &&
+      !made.startState.sliceDoc(one.from, one.to).trim(),
+  )
   if (!opened || changes.some((one) => one !== opened && one.from < fold.to)) return made
 
-  const offset = made.newSelection.main.head - made.changes.mapPos(fold.from, -1)
+  const offset = made.newSelection.main.head - made.changes.mapPos(opened.from, -1)
   const moved = ChangeSet.of(
-    changes.map((one) => (one === opened ? { ...one, from: fold.to, to: fold.to } : one)),
+    changes.flatMap((one) =>
+      one === opened
+        ? [
+            { from: one.from, to: one.to, insert: '' },
+            { from: fold.to, to: fold.to, insert: one.insert },
+          ]
+        : [one],
+    ),
     made.startState.doc.length,
   )
   return made.startState.update({

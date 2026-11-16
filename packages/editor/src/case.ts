@@ -17,6 +17,13 @@ interface Span {
 
 const ADDRESSES = new Set(['URL', 'WikilinkMark'])
 
+const BLOCK_TARGET = /#\^[^|\]]*/
+
+function blockTarget(state: EditorState, from: number, to: number): Span[] {
+  const found = BLOCK_TARGET.exec(state.sliceDoc(from, to))
+  return found ? [{ from: from + found.index, to: from + found.index + found[0].length }] : []
+}
+
 function keptSpans(state: EditorState, from: number, to: number): Span[] {
   const kept: Span[] = []
   syntaxTree(state).iterate({
@@ -24,6 +31,7 @@ function keptSpans(state: EditorState, from: number, to: number): Span[] {
     to,
     enter: (node) => {
       if (ADDRESSES.has(node.name)) kept.push({ from: node.from, to: node.to })
+      if (node.name === 'Wikilink') kept.push(...blockTarget(state, node.from, node.to))
     },
   })
 

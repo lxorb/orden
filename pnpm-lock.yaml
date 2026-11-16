@@ -25,7 +25,7 @@ patchedDependencies:
     hash: 0e3c553a46d717658063ea854b5e2d085d60fc12bf9d024832c207917d320be9
     path: patches/@lezer__common@1.5.2.patch
   '@lezer/markdown@1.7.2':
-    hash: 7e748a144df7ac131c426ddf271e0e46b10eb364b6530ec7355308a3742be65e
+    hash: a62934153df8f24fb786ced8a4fbf92bf6e0206ba4f730b51eb9d0ed1f5ae496
     path: patches/@lezer__markdown@1.7.2.patch
   '@replit/codemirror-vim-core@0.1.0':
     hash: 154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4
@@ -357,7 +357,7 @@ importers:
         version: 1.5.4
       '@lezer/markdown':
         specifier: ^1.7.2
-        version: 1.7.2(patch_hash=7e748a144df7ac131c426ddf271e0e46b10eb364b6530ec7355308a3742be65e)
+        version: 1.7.2(patch_hash=a62934153df8f24fb786ced8a4fbf92bf6e0206ba4f730b51eb9d0ed1f5ae496)
       '@orden/markdown':
         specifier: workspace:*
         version: link:../markdown
@@ -4228,7 +4228,7 @@ snapshots:
       '@codemirror/state': 6.7.2(patch_hash=a0c195a61e0c5a1e27be99dc35d989b6263e01c2a85da41aa51fa3bf9f271de1)
       '@codemirror/view': 6.43.11(patch_hash=5d182afb8eb2707824e289fde7e302e542eb6c3d2ec82098c3c02f5837c32802)
       '@lezer/common': 1.5.2(patch_hash=0e3c553a46d717658063ea854b5e2d085d60fc12bf9d024832c207917d320be9)
-      '@lezer/markdown': 1.7.2(patch_hash=7e748a144df7ac131c426ddf271e0e46b10eb364b6530ec7355308a3742be65e)
+      '@lezer/markdown': 1.7.2(patch_hash=a62934153df8f24fb786ced8a4fbf92bf6e0206ba4f730b51eb9d0ed1f5ae496)
 
   '@codemirror/lang-php@6.0.2':
     dependencies:
@@ -4907,7 +4907,7 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.2(patch_hash=0e3c553a46d717658063ea854b5e2d085d60fc12bf9d024832c207917d320be9)
 
-  '@lezer/markdown@1.7.2(patch_hash=7e748a144df7ac131c426ddf271e0e46b10eb364b6530ec7355308a3742be65e)':
+  '@lezer/markdown@1.7.2(patch_hash=a62934153df8f24fb786ced8a4fbf92bf6e0206ba4f730b51eb9d0ed1f5ae496)':
     dependencies:
       '@lezer/common': 1.5.2(patch_hash=0e3c553a46d717658063ea854b5e2d085d60fc12bf9d024832c207917d320be9)
       '@lezer/highlight': 1.2.3
