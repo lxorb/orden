@@ -8,9 +8,14 @@ const found: Record<string, string> = {
   'Pasted image 1.png': 'attachments/Pasted image 1.png',
   'attachments/Pasted image 1.png': 'attachments/Pasted image 1.png',
   'Screenshot%202024.png': 'attachments/Screenshot%202024.png',
+  'image.png': 'a/image.png',
 }
 
-const held = new Set(['/Work/assets/shot.png', '/Work/notes/pictures/deep.png'])
+const held = new Set([
+  '/Work/assets/shot.png',
+  '/Work/notes/pictures/deep.png',
+  '/Work/b/image.png',
+])
 
 vi.mock('./links.svelte', () => ({
   links: {
@@ -20,7 +25,7 @@ vi.mock('./links.svelte', () => ({
   },
 }))
 
-const { notePicture } = await import('./note-images')
+const { notePicture, picturePath } = await import('./note-images')
 
 describe('a picture a note names', () => {
   test('a bare name is looked for anywhere in the space, the way Obsidian looks', () => {
@@ -56,6 +61,17 @@ describe('a picture a note names', () => {
     expect(notePicture('Screenshot%202024.png', '/Work/notes/n.md', '')).toBe(
       '/asset/Work/attachments/Screenshot%25202024.png',
     )
+  })
+
+  test('a bare name is the picture beside the note when one is there', () => {
+    expect(notePicture('image.png', '/Work/b/n.md', '')).toBe('/asset/Work/b/image.png')
+    expect(notePicture('image.png', '/Work/c/n.md', '')).toBe('/asset/Work/a/image.png')
+  })
+
+  test('is the same file an export reads', () => {
+    expect(picturePath('shot.png', '/Work/notes/Q1.md', '')).toBe('/Work/assets/shot.png')
+    expect(picturePath('image.png', '/Work/b/n.md', '')).toBe('/Work/b/image.png')
+    expect(picturePath('https://example.com/pic.png', '/Work/Q1.md', '')).toBeNull()
   })
 
   test('a name nothing in the space answers to is still tried beside the note', () => {

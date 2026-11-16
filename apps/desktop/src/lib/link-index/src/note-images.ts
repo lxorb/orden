@@ -7,14 +7,13 @@ function fileNamed(src: string, notePath: string | null): string | null {
   return links.fileFor(src, notePath) ?? (read === src ? null : links.fileFor(read, notePath))
 }
 
+export function picturePath(src: string, notePath: string | null, source: string): string | null {
+  const beside = imagePath(src, notePath, source)
+  if (beside === null || links.holdsFile(beside)) return beside
+  return fileNamed(src, notePath)
+}
+
 export function notePicture(src: string, notePath: string | null, source: string): string {
-  const bare = !src.includes('/')
-  const found = bare ? fileNamed(src, notePath) : null
-  if (found) return assetUrl(found)
-
-  const beside = bare ? null : imagePath(src, notePath, source)
-  const anywhere = beside && !links.holdsFile(beside) ? fileNamed(src, notePath) : null
-  if (anywhere) return assetUrl(anywhere)
-
-  return imageUrl(src, notePath, source)
+  const found = picturePath(src, notePath, source)
+  return found ? assetUrl(found) : imageUrl(src, notePath, source)
 }
