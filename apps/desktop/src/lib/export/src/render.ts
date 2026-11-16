@@ -1,6 +1,12 @@
 import { escapeAll } from '@orden/markdown/html'
 import { CODE_PALETTES } from '@orden/editor'
-import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@orden/markdown'
+import {
+  type EmbeddedNote,
+  frontMatterValue,
+  type PictureResolver,
+  renderMarkdown,
+  type Wikilink,
+} from '@orden/markdown'
 import { exportCss, themeCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../../theme/src/api'
 import { busy } from '../../ui-kit/src/api'
@@ -27,6 +33,7 @@ import { diskPathOf } from '../../web-backend/src/api'
 export interface HtmlOptions {
   bare?: boolean
   resolveImage?: (src: string) => string
+  pictures?: PictureResolver
   scheme?: Scheme
   accent?: string
   codeTheme?: string
@@ -59,6 +66,7 @@ export function buildBody(source: string, options: HtmlOptions = {}): string {
     cover: true,
     ...(options.fence ? { code: options.fence } : {}),
     ...(options.embed ? { resolveEmbed: options.embed } : {}),
+    ...(options.pictures ? { resolvePicture: options.pictures } : {}),
     ...(options.escapeHtml ? { escapeHtml: true } : {}),
   })
 }

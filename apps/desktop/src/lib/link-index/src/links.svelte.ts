@@ -1561,7 +1561,7 @@ class Links {
       this.embedded(target, from, inSpaceOf),
       import('../../sharing/src/api'),
     ])
-    return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path) }
+    return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path), path: found.path }
   }
 
   private async embedded(
@@ -1607,6 +1607,10 @@ class Links {
 
   fileNamed(name: string): string | null {
     return resolveFile(this.spaceFiles(null), name, 'wikilink')
+  }
+
+  topOf(path: string | null): string | null {
+    return (path === null ? null : this.spaceOf(path)) ?? this.root
   }
 
   holdsFile(path: string): boolean {

@@ -50,7 +50,7 @@ export function mountPreview(
     shortcuts: shortcuts.forEditor,
     trustedMarkup: trustsHtmlAt(path),
     openLink: followHref,
-    resolveImage: (src: string) => notePicture(src, path, said),
+    resolveImage: (src: string, wikilink?: boolean) => notePicture(src, path, said, wikilink),
   })
 
   const settings = modes.settings

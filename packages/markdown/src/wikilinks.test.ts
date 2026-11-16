@@ -330,3 +330,37 @@ describe('a file embedded in a note', () => {
     expect(html).not.toContain('onerror="alert(1)"')
   })
 })
+
+describe('a picture a page shows', () => {
+  const asked: [string, boolean, string | null][] = []
+  const resolvePicture = (src: string, wikilink: boolean, from: { path?: string } | null) => {
+    asked.push([src, wikilink, from?.path ?? null])
+    return `found/${src}`
+  }
+
+  test('is looked up knowing whether a wikilink or a markdown link named it', () => {
+    asked.length = 0
+    const html = renderMarkdown('![[shot.png]]\n\n![](pic.png)\n', { resolvePicture })
+
+    expect(asked).toEqual([
+      ['shot.png', true, null],
+      ['pic.png', false, null],
+    ])
+    expect(html).toContain('<img src="found/shot.png"')
+    expect(html).toContain('<img src="found/pic.png"')
+  })
+
+  test('inside an embedded note is looked up from that note', () => {
+    asked.length = 0
+    renderMarkdown('![[Plan]]\n', {
+      resolvePicture,
+      resolveEmbed: () => ({
+        text: '![](../../assets/abc.png)\n',
+        escapeHtml: false,
+        path: '/Work/Projects/Q1/Plan.md',
+      }),
+    })
+
+    expect(asked).toEqual([['../../assets/abc.png', false, '/Work/Projects/Q1/Plan.md']])
+  })
+})

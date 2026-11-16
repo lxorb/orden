@@ -32,6 +32,7 @@ import {
   type Embeds,
   embedSink,
   type LinkResolver,
+  type PictureResolver,
   wikilinks,
 } from './wikilinks'
 import {
@@ -59,6 +60,7 @@ export interface RenderOptions {
   resolveNoteHref?: (target: string) => string | null
   tagHref?: TagHref
   resolveEmbed?: EmbedResolver
+  resolvePicture?: PictureResolver
   breaks?: boolean
   locale?: string
   headings?: Heading[]
@@ -214,6 +216,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
       embeds,
       ...(options.resolveLink ? { resolveLink: options.resolveLink } : {}),
       ...(options.resolveEmbed ? { resolveEmbed: options.resolveEmbed } : {}),
+      ...(options.resolvePicture ? { resolvePicture: options.resolvePicture } : {}),
     }),
   )
   marked.use(hashtags(options.tagHref))
@@ -259,7 +262,8 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const { alt, size } = sizedAlt(
           this.parser.parseInline(token.tokens, this.parser.textRenderer),
         )
-        const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
+        const found = options.resolvePicture?.(token.href, false, null) ?? token.href
+        const src = safeSrc(token.href) ? attributeUrl(found) : ''
         if (!src) return escape(alt)
 
         const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
@@ -361,6 +365,7 @@ function needsOwn(options: RenderOptions): boolean {
     options.resolveNoteHref !== undefined ||
     options.tagHref !== undefined ||
     options.resolveEmbed !== undefined ||
+    options.resolvePicture !== undefined ||
     options.headings !== undefined ||
     options.locale !== undefined
   )
@@ -468,10 +473,16 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = html.replace(TOC_MARK, () => contents)
   }
 
+  const outer = options.resolvePicture
   embeds.sections.forEach((section, at) => {
     const embedded = renderMarkdown(section.text, {
       ...inside(options),
       ...(section.escapeHtml ? { escapeHtml: true } : {}),
+      ...(outer
+        ? {
+            resolvePicture: (src: string, wikilink: boolean) => outer(src, wikilink, section.from),
+          }
+        : {}),
     })
     html = html.replace(embeds.marker(at), () => embedded)
   })
@@ -568,4 +579,4 @@ export { noteWithoutComments, withoutComments } from './comments'
 export { MOST_EMS } from './engines'
 
 export { findLinks, type FoundLink, type Wikilink } from './links'
-export type { EmbeddedNote } from './wikilinks'
+export type { EmbeddedNote, PictureResolver } from './wikilinks'

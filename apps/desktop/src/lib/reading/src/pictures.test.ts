@@ -5,6 +5,7 @@ const asked: string[] = []
 vi.mock('../../link-index/src/api', () => ({
   links: {},
   queryRowsHtml: () => '',
+  picturesOf: () => () => null,
   notePicture: (src: string) => {
     asked.push(src)
     return `/asset/Work/attachments/${encodeURIComponent(src)}?a=1&b=2`

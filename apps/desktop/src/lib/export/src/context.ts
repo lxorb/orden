@@ -1,6 +1,6 @@
 import { protection } from '../../protect/src/api'
 import type { HtmlOptions } from './render'
-import { links, picturePath } from '../../link-index/src/api'
+import { links, picturePath, picturesOf } from '../../link-index/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { trustsHtmlIn } from '../../sharing/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
@@ -68,6 +68,7 @@ export async function renderOptions(target: Target): Promise<RunOptions> {
   return {
     page: choices.page,
     resolveImage: (src: string) => picturePath(src, target.path, target.source) ?? src,
+    pictures: picturesOf(target.path, target.source),
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),
     escapeHtml: !target.trusted,

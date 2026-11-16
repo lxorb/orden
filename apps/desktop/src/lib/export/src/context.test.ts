@@ -31,6 +31,7 @@ vi.mock('../../link-index/src/api', () => ({
     relativeTarget: () => null,
     spaceRead: () => Promise.resolve(),
   },
+  picturesOf: () => () => null,
 }))
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),

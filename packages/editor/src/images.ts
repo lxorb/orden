@@ -10,7 +10,9 @@ export interface CarriedFiles {
   read: (transfer: DataTransfer | null) => Promise<File[]> | null
 }
 
-export const imageResolver = Facet.define<(src: string) => string, (src: string) => string>({
+export type ImageResolver = (src: string, wikilink?: boolean) => string
+
+export const imageResolver = Facet.define<ImageResolver, ImageResolver>({
   combine: (values) => values[0] ?? ((src) => src),
 })
 

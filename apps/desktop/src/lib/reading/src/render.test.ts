@@ -33,6 +33,7 @@ vi.mock('../../link-index/src/api', () => ({
     },
   },
   notePicture: (src: string) => `asset://${src}`,
+  picturesOf: () => () => null,
 }))
 
 const { readingHtml, unreadableHtml } = await import('./render')

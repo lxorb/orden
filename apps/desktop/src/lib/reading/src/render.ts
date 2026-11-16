@@ -3,7 +3,7 @@ import { escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
 import { keptCoverOf } from '../../workspace/src/api'
-import { links, notePicture, queryRowsHtml } from '../../link-index/src/api'
+import { links, notePicture, picturesOf, queryRowsHtml } from '../../link-index/src/api'
 import type { Scheme } from '../../theme/src/api'
 
 export interface Note {
@@ -62,6 +62,7 @@ export async function readingHtml(
       code: fence,
       resolveLink: pointer(note),
       resolveEmbed: embed,
+      resolvePicture: picturesOf(note.path, note.text),
       ...(tagHref ? { tagHref } : {}),
     }),
     note,

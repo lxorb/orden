@@ -76,6 +76,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.mock('../../link-index/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../link-index/src/api')>()),
   notePicture: (src: string) => `asset://${src}`,
+  picturesOf: () => () => null,
 }))
 
 const { links } = await import('../../link-index/src/api')

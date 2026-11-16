@@ -1,5 +1,21 @@
-import { decodeTarget } from '@orden/markdown/links'
-import { assetUrl, imagePath, imageUrl } from '../../platform/src/api'
+import type { PictureResolver } from '@orden/markdown'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import {
+  decodeTarget,
+  embedKind,
+  embedSize,
+  encodeTarget,
+  type FoundLink,
+  findLinks,
+} from '@orden/markdown/links'
+import {
+  assetUrl,
+  folderOf,
+  imagePath,
+  imageUrl,
+  isRemote,
+  relativePath,
+} from '../../platform/src/api'
 import { links } from './links.svelte'
 
 function fileNamed(src: string, notePath: string | null): string | null {
@@ -7,13 +23,61 @@ function fileNamed(src: string, notePath: string | null): string | null {
   return links.fileFor(src, notePath) ?? (read === src ? null : links.fileFor(read, notePath))
 }
 
-export function picturePath(src: string, notePath: string | null, source: string): string | null {
-  const beside = imagePath(src, notePath, source)
-  if (beside === null || links.holdsFile(beside)) return beside
+export function picturePath(
+  src: string,
+  notePath: string | null,
+  source: string,
+  wikilink = false,
+): string | null {
+  if (isRemote(src)) return null
+  if (wikilink) return fileNamed(src, notePath)
+
+  const beside = imagePath(src, notePath, source, links.topOf(notePath))
+  if (beside !== null && links.holdsFile(beside)) return beside
   return fileNamed(src, notePath)
 }
 
-export function notePicture(src: string, notePath: string | null, source: string): string {
-  const found = picturePath(src, notePath, source)
-  return found ? assetUrl(found) : imageUrl(src, notePath, source)
+export function notePicture(
+  src: string,
+  notePath: string | null,
+  source: string,
+  wikilink = false,
+): string {
+  const found = picturePath(src, notePath, source, wikilink)
+  return found ? assetUrl(found) : imageUrl(src, notePath, source, links.topOf(notePath))
+}
+
+export function picturesOf(notePath: string | null, source: string): PictureResolver {
+  return (src, wikilink, from) => {
+    if (notePath === null || (!wikilink && from?.path === undefined)) return null
+    const found = from?.path
+      ? picturePath(src, from.path, from.text, wikilink)
+      : picturePath(src, notePath, source, wikilink)
+    return found === null ? null : relativePath(folderOf(notePath), found)
+  }
+}
+
+function pictureWritten(link: FoundLink, to: string): string {
+  if (link.kind !== 'wikilink') return to
+  const alt = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+  return `![${alt.replace(/[\\[\]]/g, '\\$&')}](${to})`
+}
+
+export function picturesWrittenOut(source: string, notePath: string | null): string {
+  if (notePath === null) return source
+  const body = frontMatterBlock(source)?.to ?? 0
+  const pictures = findLinks(source).filter(
+    (link) => link.embed && link.from >= body && embedKind(link.target) === 'image',
+  )
+
+  let out = source
+  for (const link of pictures.reverse()) {
+    const found = picturePath(link.target, notePath, source, link.kind === 'wikilink')
+    if (found === null) continue
+    const to = encodeTarget(relativePath(folderOf(notePath), found))
+    const [from, end] =
+      link.kind === 'wikilink' ? [link.from, link.to] : [link.targetFrom, link.targetTo]
+    out = out.slice(0, from) + pictureWritten(link, to) + out.slice(end)
+  }
+  return out
 }

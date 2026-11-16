@@ -305,8 +305,8 @@
     }
   }
 
-  function resolveImage(src: string, from: Tab): string {
-    return notePicture(src, from.path, from.doc)
+  function resolveImage(src: string, from: Tab, wikilink = false): string {
+    return notePicture(src, from.path, from.doc, wikilink)
   }
 
   function nameBlock(path: string, line: number, from: Tab): Promise<string | null> {

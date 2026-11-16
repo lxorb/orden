@@ -33,6 +33,12 @@ describe('where a picture a note points at lives', () => {
     expect(imagePath('assets/pic.png', null)).toBeNull()
   })
 
+  test('is from the top of the space when the path starts with a slash', () => {
+    expect(imagePath('/assets/pic.png', NOTE, '', '/Notes')).toBe('/Notes/assets/pic.png')
+    const source = '---\ntypora-root-url: /Notes/Work\n---\n'
+    expect(imagePath('/assets/pic.png', NOTE, source, '/Notes')).toBe('/Notes/Work/assets/pic.png')
+  })
+
   test('is re-based by typora-root-url, which is what makes a vault path work', () => {
     const source = '---\ntypora-root-url: /Notes\n---\n'
     expect(imagePath('/assets/pic.png', NOTE, source)).toBe('/Notes/assets/pic.png')
