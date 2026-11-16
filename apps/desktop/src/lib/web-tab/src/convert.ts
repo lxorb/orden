@@ -28,9 +28,9 @@ export interface Converts {
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
-  fileGone(path: string, kind: 'file'): Promise<void>
+  fileGone(path: string, kind: 'file', back?: string): Promise<void>
   loadTree(): Promise<void>
-  bin(path: string, isFolder: boolean): Promise<unknown>
+  bin(path: string, isFolder: boolean): Promise<{ trashId?: string; back?: string } | null>
 }
 
 export async function asShortcut(ws: Converts, path: string): Promise<string | null> {
@@ -61,20 +61,16 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
 
   const kept = keptBody(text)
   if (kept === null) {
-    await oldNoteGone(ws, path)
-    await ws.fileGone(path, 'file')
+    await ws.fileGone(path, 'file', await oldNoteGone(ws, path))
   } else await writeFile(path, kept).catch(() => undefined)
 
   await ws.loadTree()
   return target
 }
 
-async function oldNoteGone(ws: Converts, path: string) {
-  try {
-    await ws.bin(path, false)
-  } catch {
-    // Said above: a note that stays is a note beside a shortcut, and harmless.
-  }
+async function oldNoteGone(ws: Converts, path: string): Promise<string | undefined> {
+  const kept = await ws.bin(path, false).catch(() => null)
+  return kept?.trashId ?? kept?.back
 }
 
 export async function convertWebsites(ws: Converts): Promise<number> {

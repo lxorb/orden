@@ -78,15 +78,15 @@ function store(notes: Record<string, string>) {
     },
     showEntry: (entry: Entry) => void shown.push(entry.path),
     freshEntry: (path: string, isFolder: boolean) => ({ path, is_dir: isFolder }) as Entry,
-    fileGone: (path: string) => {
-      told.push(`gone ${path}`)
+    fileGone: (path: string, _kind: string, back?: string) => {
+      told.push(`gone ${path} from ${back ?? 'nowhere'}`)
       return Promise.resolve()
     },
     loadTree: () => Promise.resolve(),
     bin: (path: string) => {
       binned.push(path)
       disk.delete(path)
-      return Promise.resolve(null)
+      return Promise.resolve({ trashId: `bin-${path}` })
     },
   }
 
@@ -114,7 +114,7 @@ describe('a note that is a website', () => {
     expect(disk.get(target ?? '')).toContain('URL=https://svelte.dev')
     expect(disk.has(NOTE)).toBe(false)
     expect(shown).toEqual([`${SPACE}/Svelte docs.url`])
-    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
+    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE} from bin-${NOTE}`])
   })
 
   test('locked, leaves a shortcut as locked', async () => {
