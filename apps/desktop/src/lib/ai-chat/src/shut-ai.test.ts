@@ -41,6 +41,7 @@ test('an AI block or a rewrite in a note shut to agents sends nothing to the mod
         prompt: 'Summarise this note',
         note: 'secret words',
         doc: diary as never,
+        place: null,
         started: () => undefined,
         wrote: () => undefined,
       },
@@ -57,5 +58,24 @@ test('an AI block or a rewrite in a note shut to agents sends nothing to the mod
   } as never)
   rewriting.run('shorter')
   expect(rewriting.trouble).toMatch(/shut to agents/)
+  expect(sent).toEqual([])
+})
+
+test('an AI block in a hover card over a note shut to agents is refused, though the note in front is open', async () => {
+  const { workspace } = await import('../../workspace/src/api')
+  Object.assign(workspace, { active: { kind: 'note', path: '/notes/Work/Open.md' } })
+  await expect(
+    answer(
+      {
+        prompt: 'Summarise this note',
+        note: 'secret words',
+        doc: null,
+        place: DIARY,
+        started: () => undefined,
+        wrote: () => undefined,
+      },
+      new AbortController().signal,
+    ),
+  ).rejects.toThrow()
   expect(sent).toEqual([])
 })

@@ -2,6 +2,7 @@ import { syntaxTree } from '@codemirror/language'
 import {
   type EditorState,
   type Extension,
+  Facet,
   StateEffect,
   StateField,
   type TransactionSpec,
@@ -15,9 +16,14 @@ export interface AiAsk {
   prompt: string
   note: string | null
   doc: SharedDoc | null
+  place: string | null
   started: (model: string) => void
   wrote: (text: string) => void
 }
+
+export const aiPlace = Facet.define<string, string | null>({
+  combine: (values) => values[0] ?? null,
+})
 
 export type AiRunner = (ask: AiAsk, signal: AbortSignal) => Promise<void>
 
@@ -154,6 +160,7 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
       prompt,
       note: mentionsNote(prompt) ? view.state.doc.toString() : null,
       doc: documentOf(view),
+      place: view.state.facet(aiPlace),
       started: (model) => beginAnswer(view, id, model),
       wrote: (text) => writeAnswer(view, id, text),
     },

@@ -21,7 +21,7 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
     busy.failed('Add an AI provider in Settings first.')
     throw new Error('no provider')
   }
-  if (shutToAgents(ask.doc)) {
+  if (shutToAgents(ask.doc, ask.place)) {
     busy.failed(SHUT_HERE)
     throw new Error('shut to agents')
   }
