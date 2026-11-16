@@ -235,17 +235,20 @@ describe('backlinks', () => {
   })
 
   test('words moved to a note in another folder are relinked to reach what they reached', async () => {
-    await space({
-      'a/x/From.md': 'see [o](../Other.md) and [[Plan]]',
-      'a/Other.md': '# Other',
-      'a/x/Plan.md': '# Near plan',
-      'Plan.md': '# Top plan',
-      'Into.md': '# Into',
-    })
-    const text = 'see [o](../Other.md), [[Plan]] and [[Into]]'
+    await space(
+      {
+        'a/x/From.md': 'see [o](../Other.md) and [[Plan]]',
+        'a/Other.md': '# Other',
+        'a/x/Plan.md': '# Near plan',
+        'Plan.md': '# Top plan',
+        'Into.md': '# Into',
+      },
+      ['a/x/img/pic.png', 'pic.png'],
+    )
+    const text = 'see [o](../Other.md), [[Plan]] and [[Into]] ![](img/pic.png)'
 
     expect(links.rebased(text, at('a/x/From.md'), at('Into.md'))).toBe(
-      'see [o](a/Other.md), [[x/Plan]] and [[Into]]',
+      'see [o](a/Other.md), [[x/Plan]] and [[Into]] ![](a/x/img/pic.png)',
     )
     expect(links.rebased(text, at('a/x/From.md'), at('a/x/Into.md'))).toBeNull()
   })

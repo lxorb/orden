@@ -937,9 +937,9 @@ class Links {
     return retargetLinks(text, now, (link) => {
       const there = read(was, link)
       if (there === null) return null
+      if (link.kind === 'markdown') return stillReaches(now, link, there, false) ? null : there
       const reaches = (written: string) => read(now, { kind: link.kind, target: written }) === there
-      if (reaches(link.target)) return null
-      return link.kind === 'wikilink' ? { path: there, reaches } : there
+      return reaches(link.target) ? null : { path: there, reaches }
     })
   }
 
@@ -1607,6 +1607,15 @@ class Links {
 
   fileNamed(name: string): string | null {
     return resolveFile(this.spaceFiles(null), name, 'wikilink')
+  }
+
+  holdsFile(path: string): boolean {
+    const other = this.otherHolding(path)
+    const root = other ?? this.root
+    const at = root === null ? null : within(root, path)
+    if (root === null || at === null) return false
+    const files = other === null ? this.files : this.otherIndex(other, path).files
+    return files.some((one) => samePath(one, at))
   }
 
   fileFor(name: string, notePath: string | null): string | null {

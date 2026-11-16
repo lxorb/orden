@@ -3,12 +3,17 @@ import { describe, expect, test, vi } from 'vitest'
 const found: Record<string, string> = {
   'shot.png': 'assets/shot.png',
   'deep.png': 'notes/pictures/deep.png',
+  'pictures/deep.png': 'notes/pictures/deep.png',
+  'assets/shot.png': 'assets/shot.png',
 }
+
+const held = new Set(['/Work/assets/shot.png', '/Work/notes/pictures/deep.png'])
 
 vi.mock('./links.svelte', () => ({
   links: {
     fileFor: (name: string, notePath: string | null) =>
       notePath !== null && found[name] ? `/Work/${found[name]}` : null,
+    holdsFile: (path: string) => held.has(path),
   },
 }))
 
@@ -26,6 +31,13 @@ describe('a picture a note names', () => {
     expect(notePicture('../assets/shot.png', '/Work/notes/Q1.md', '')).toBe(
       '/asset/Work/assets/shot.png',
     )
+  })
+
+  test('a path nothing beside the note holds is looked for the way a link to it is', () => {
+    expect(notePicture('pictures/deep.png', '/Work/journal/Today.md', '')).toBe(
+      '/asset/Work/notes/pictures/deep.png',
+    )
+    expect(notePicture('assets/shot.png', '/Work/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
   })
 
   test('a name nothing in the space answers to is still tried beside the note', () => {
