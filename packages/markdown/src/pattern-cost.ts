@@ -135,7 +135,8 @@ export function patternJudge() {
       const letter = new RegExp(`^(?:${letters})$`, flags.replace(/[^iuvs]/g, ''))
       const writes = crowded ? WRITING : WRITING.slice(0, 1)
       if (!writes.some((one) => letter.test(one))) return WORD
-      return letter.test('\n') ? NOTE : letter.test(' ') ? LINE : WORD
+      if (letter.test('\n')) return NOTE
+      return letter.test(' ') ? LINE : WORD
     } catch {
       return NOTE
     }
@@ -336,6 +337,7 @@ export function patternJudge() {
     const unicode = flags.includes('u') || flags.includes('v')
     const fold = flags.includes('i')
     let at = 0
+    let dotAll = false
 
     function alternatives(): Cost {
       const opening = sequence()
@@ -448,7 +450,10 @@ export function patternJudge() {
       if (one === '(') {
         const opening = GROUP_OPENING.exec(source.slice(at, at + 64))?.[0] ?? ''
         at += opening.length
+        const outside = dotAll
+        if (/^\?[a-z]*s[a-z]*(?:-[a-z]*)?:/.test(opening)) dotAll = true
         const inner = alternatives()
+        dotAll = outside
         at++
         return /^\?(?:=|!|<=|<!)/.test(opening)
           ? {
@@ -462,7 +467,7 @@ export function patternJudge() {
       }
       if (one === '^') return { ...ZERO }
       if (one === '$') return { ...END }
-      if (one === '.') return single(null, '.')
+      if (one === '.') return single(null, dotAll ? '[\\s\\S]' : '.')
       return single(one, one.replace(SYNTAX, '\\$&'), one)
     }
 
@@ -569,11 +574,20 @@ export function patternJudge() {
     return lead ? LINE : NOTE
   }
 
+  function leadingRun(shape: Shape): string | null {
+    if (shape.kind === 'again') return shape.most > 1 ? shape.letters : null
+    if (shape.kind !== 'row') return null
+    const first = shape.parts.find((part) => part.kind !== 'none')
+    return first ? leadingRun(first) : null
+  }
+
   function backtracksWildly(source: string, flags = ''): boolean {
     try {
       const { open, ways, lead, shape } = patternCost(source, flags, false, true)
       if (open === Number.POSITIVE_INFINITY || ways > MOST_WAYS) return true
-      return startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest > MOST_REACH
+      const first = leadingRun(shape)
+      const wider = first ? reachOfLetters(first, flags, true) - reachOfLetters(first, flags) : 0
+      return startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest + wider > MOST_REACH
     } catch {
       return true
     }
