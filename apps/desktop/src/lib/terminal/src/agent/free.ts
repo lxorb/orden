@@ -3,10 +3,18 @@ import { protection } from '../../../protect/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { type Os, programOf, runsOnTheList } from './shell-text'
 
+const REPOSITORY = ['HEAD', 'objects', 'refs']
+
+async function wholeRepository(git: string): Promise<boolean> {
+  const held = await Promise.all(REPOSITORY.map((one) => onDisk(joinPath(git, one))))
+  return held.every(Boolean)
+}
+
 async function repositoryTop(folder: string, root: string): Promise<string | null> {
   let at = folder
   while (within(root, at, root) !== null) {
-    if (await onDisk(joinPath(at, '.git'))) return at
+    const git = joinPath(at, '.git')
+    if (await onDisk(git)) return (await wholeRepository(git)) ? at : null
     if (at === root) return null
     at = folderOf(at)
   }

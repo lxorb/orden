@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-const repository = vi.hoisted(() => ({ at: '/s/Work/site' }))
+const repository = vi.hoisted(() => ({ at: '/s/Work/site', whole: true }))
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
-  onDisk: (path: string) => Promise.resolve(path === `${repository.at}/.git`),
+  onDisk: (path: string) => {
+    const git = `${repository.at}/.git`
+    const inside = ['HEAD', 'objects', 'refs'].map((one) => `${git}/${one}`)
+    return Promise.resolve(path === git || (repository.whole && inside.includes(path)))
+  },
 }))
 
 await import('../../terminal-ports')
@@ -13,6 +17,7 @@ workspace.spaces = [{ id: 's', name: 's', root: '/s' }]
 
 afterEach(() => {
   repository.at = '/s/Work/site'
+  repository.whole = true
 })
 
 const free = (program: string, args: string[], programs = ['git', 'npm', 'pnpm']) =>
@@ -91,6 +96,22 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     repository.at = '/elsewhere'
     expect(await free('git', ['log', '-p'])).toBe(false)
     protection.set('/s', '/s/Private', null)
+  })
+
+  test('git is never free where its .git is not a whole repository of its own', async () => {
+    repository.whole = false
+    expect(await free('git', ['status'])).toBe(false)
+    expect(await free('pnpm', ['test'])).toBe(true)
+  })
+
+  test('a listed program outside the known ones still never names a path leaving the folder', async () => {
+    const listed = ['cat', 'rg']
+    expect(await free('cat', ['../Private/Diary.md'], listed)).toBe(false)
+    expect(await free('cat', ['/s/Work/Private/Diary.md'], listed)).toBe(false)
+    expect(await free('rg', ['--file=../Private/words', 'x'], listed)).toBe(false)
+    expect(await free('rg', ['-f/etc/words', 'x'], listed)).toBe(false)
+    expect(await free('cat', ['README.md'], listed)).toBe(true)
+    expect(await free('rg', ['-n', 'needle', 'src'], listed)).toBe(true)
   })
 
   test('a program run in a folder shut to agents is never free', async () => {

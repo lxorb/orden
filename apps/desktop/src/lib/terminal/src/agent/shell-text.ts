@@ -520,13 +520,17 @@ function positional(plain: readonly string[], from: number): boolean {
   return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
 }
 
+function optionReachesOut(word: string): boolean {
+  return word.startsWith('-') && (/[\\/~:]/.test(word) || word.includes('..'))
+}
+
 function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
 
   if (program === 'git') return gitStays(plain)
 
   const reach = REACH[program]
-  if (!reach) return true
+  if (!reach) return !anyReachesOut(plain) && !plain.some(optionReachesOut)
 
   let at = 0
   for (; at < plain.length; at++) {
@@ -576,6 +580,7 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
   if (/(?! )\p{Zs}/u.test(command)) return false
+  if (os === 'windows' && /[\\^,]|%[^%\s]+%/.test(command)) return false
 
   const words = wordsOf(command.trim())
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))

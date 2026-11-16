@@ -27,7 +27,10 @@ vi.mock('../../../platform/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   identifier: () => 'probe',
   platform: () => 'linux',
-  onDisk: (path: string) => Promise.resolve(path === '/s/Work/.git'),
+  onDisk: (path: string) =>
+    Promise.resolve(
+      ['', '/HEAD', '/objects', '/refs'].some((one) => path === `/s/Work/.git${one}`),
+    ),
   invoke: async (name: string, args: Record<string, unknown>) => {
     calls.push({ name, args })
     if (name === 'agents_ask') return { status: 'ok' }

@@ -1,6 +1,7 @@
 import headless from '@xterm/headless'
 import { describe, expect, test } from 'vitest'
-import { keyBytes, linesFrom, linesOf, type Row, shellOs, typesFreely } from './keys'
+import { keyBytes, linesFrom, linesOf, type Row, typesFreely } from './keys'
+import { onTheList, type Os, startsOnlyOne } from './shell-text'
 
 const { Terminal } = headless
 
@@ -13,65 +14,75 @@ describe('keys', () => {
   })
 })
 
-describe('what goes without asking', () => {
+describe('what a command line may be to run without asking', () => {
   const programs = ['git', 'NPM']
+  const listed = (text: string, os: Os) => startsOnlyOne(text) && onTheList(text, programs, os)
 
   test('one command line of a program on the list, with Enter', () => {
-    expect(typesFreely('git status', true, [], programs, 'unix')).toBe(true)
-    expect(typesFreely('npm test', true, [], programs, 'windows')).toBe(true)
-    expect(typesFreely('NPM test', true, [], programs, 'unix')).toBe(true)
-    expect(typesFreely('npm test', true, [], programs, 'unix')).toBe(false)
+    expect(listed('git status', 'unix')).toBe(true)
+    expect(listed('npm test', 'windows')).toBe(true)
+    expect(listed('NPM test', 'unix')).toBe(true)
+    expect(listed('npm test', 'unix')).toBe(false)
   })
 
   test('a listed name given as a path is any file called that, and asks (#1078)', () => {
     for (const os of ['windows', 'unix'] as const) {
-      expect(
-        typesFreely('"C:\\Program Files\\Git\\bin\\git.exe" log', true, [], programs, os),
-      ).toBe(false)
+      expect(listed('"C:\\Program Files\\Git\\bin\\git.exe" log', os)).toBe(false)
     }
-    expect(typesFreely('/tmp/x/git log', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('./npm test', true, [], programs, 'unix')).toBe(false)
+    expect(listed('/tmp/x/git log', 'unix')).toBe(false)
+    expect(listed('./npm test', 'unix')).toBe(false)
   })
 
   test('a name with an ending is the bare name only where Windows runs it so', () => {
-    expect(typesFreely('git.exe status', true, [], programs, 'windows')).toBe(true)
-    expect(typesFreely('GIT status', true, [], programs, 'windows')).toBe(true)
-    expect(typesFreely('git.ps1 status', true, [], programs, 'windows')).toBe(false)
-    expect(typesFreely('git.sh status', true, [], programs, 'windows')).toBe(false)
-    expect(typesFreely('git.exe status', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('GIT status', true, [], programs, 'unix')).toBe(false)
+    expect(listed('git.exe status', 'windows')).toBe(true)
+    expect(listed('GIT status', 'windows')).toBe(true)
+    expect(listed('git.ps1 status', 'windows')).toBe(false)
+    expect(listed('git.sh status', 'windows')).toBe(false)
+    expect(listed('git.exe status', 'unix')).toBe(false)
+    expect(listed('GIT status', 'unix')).toBe(false)
   })
 
-  test("an online terminal keeps its Linux machine's rule, from a Windows computer too", () => {
-    expect(shellOs(true, 'windows')).toBe('unix')
-    expect(shellOs(false, 'windows')).toBe('windows')
-    expect(shellOs(false, 'linux')).toBe('unix')
-    const online = shellOs(true, 'windows')
-    expect(typesFreely('git.exe status', true, [], programs, online)).toBe(false)
-    expect(typesFreely('GIT status', true, [], programs, online)).toBe(false)
-    expect(typesFreely('git status', true, [], programs, online)).toBe(true)
+  test('nothing else: another program, a second command, nothing at all', () => {
+    expect(listed('rm -rf build', 'unix')).toBe(false)
+    expect(listed('git \u0015touch pwned', 'unix')).toBe(false)
+    expect(listed('git status \u000ftouch pwned', 'unix')).toBe(false)
+    expect(listed('git\u007f\u007f\u007ftouch pwned', 'unix')).toBe(false)
+    expect(listed('/tmp/x/git.sh', 'unix')).toBe(false)
+    expect(listed('./git status', 'unix')).toBe(false)
+    expect(listed('git status; rm -rf ~', 'unix')).toBe(false)
+    expect(listed('git log | sh', 'unix')).toBe(false)
+    expect(listed('', 'unix')).toBe(false)
   })
 
-  test('nothing else: another program, a second command, no Enter, keys after it', () => {
-    expect(typesFreely('rm -rf build', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git \u0015touch pwned', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git status \u000ftouch pwned', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git\u007f\u007f\u007ftouch pwned', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('/tmp/x/git.sh', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('./git status', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git status; rm -rf ~', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git log | sh', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git status', false, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('git status', true, ['Enter'], programs, 'unix')).toBe(false)
-    expect(typesFreely('', true, [], programs, 'unix')).toBe(false)
-    expect(typesFreely('', false, ['Enter'], programs, 'unix')).toBe(false)
-    expect(typesFreely('', false, ['Up'], programs, 'unix')).toBe(false)
+  test('on Windows, a backslash, % or ^ the shell reads its own way asks', () => {
+    expect(listed('npm --prefix sub\\..\\..\\Other run deploy', 'windows')).toBe(false)
+    expect(listed('git clone sub\\..\\..\\Other copy', 'windows')).toBe(false)
+    expect(listed('git clone %USERPROFILE%/Other copy', 'windows')).toBe(false)
+    expect(listed('git log ^HEAD', 'windows')).toBe(false)
+    expect(listed('git status', 'windows')).toBe(true)
   })
 
+  test('a listed program outside the known ones names no path leaving the folder', () => {
+    const cat = (text: string) => startsOnlyOne(text) && onTheList(text, ['cat'], 'unix')
+    expect(cat('cat ../Private/Diary.md')).toBe(false)
+    expect(cat('cat /s/Work/Private/Diary.md')).toBe(false)
+    expect(cat('cat README.md')).toBe(true)
+  })
+})
+
+describe('what is typed into a terminal tab without asking', () => {
   test('an interrupt alone', () => {
-    expect(typesFreely('', false, ['Ctrl+C'], [], 'unix')).toBe(true)
-    expect(typesFreely('', false, ['Ctrl+C', 'Ctrl+C'], [], 'unix')).toBe(true)
-    expect(typesFreely('', false, [], [], 'unix')).toBe(false)
+    expect(typesFreely('', false, ['Ctrl+C'])).toBe(true)
+    expect(typesFreely('', false, ['Ctrl+C', 'Ctrl+C'])).toBe(true)
+    expect(typesFreely('', false, [])).toBe(false)
+    expect(typesFreely('', false, ['Up'])).toBe(false)
+    expect(typesFreely('', false, ['Enter'])).toBe(false)
+  })
+
+  test('never a command line, listed or not, since the folder its shell is in is not known', () => {
+    expect(typesFreely('git status', true, [])).toBe(false)
+    expect(typesFreely('git status', false, [])).toBe(false)
+    expect(typesFreely('', true, [])).toBe(false)
   })
 })
 

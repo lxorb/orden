@@ -5,7 +5,6 @@ import { shellRunning } from '../running'
 import { readSpec } from '../spec'
 import { isOnlineTab } from '../../../online-terms/src/api'
 import type { Session } from '../sessions.svelte'
-import { platform } from '../../../platform/src/api'
 import { protection } from '../../../protect/src/api'
 import type { Tab } from '../../../documents/src/api'
 import {
@@ -21,7 +20,7 @@ import {
   stopRefused,
   stopSignal,
 } from '../../../agent-verbs/src/api'
-import { KEY_NAMES, keyBytes, linesFrom, linesOf, shellOs, typesFreely } from './keys'
+import { KEY_NAMES, keyBytes, linesFrom, linesOf, typesFreely } from './keys'
 
 const MOST_KEYS = 100
 
@@ -245,7 +244,7 @@ async function typed(
     throw new Refused('bad_arguments', `${judged.unknown} is not a key: ${KEY_NAMES.join(', ')}`)
   }
 
-  const free = typesFreely(text, enter, keys, agent.programs, shellOs(isOnlineTab(tab), platform()))
+  const free = typesFreely(text, enter, keys)
   const shown = [text, enter ? 'Enter' : '', ...keys].filter(Boolean).join(' + ')
   const question = await asked(call, free ? null : 'terminal', `${tab.shown}: ${shown}`)
   if (question) return question
