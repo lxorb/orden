@@ -797,7 +797,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     const said = keptAway.scanOf(away.id)
     const scan = said ? rehomed(said, at) : unread(at, stamp)
     if (scan) notes.push(scan)
-    if (!scan || isWebTarget(path)) beside.push(path)
+    if (!scan || isWebTarget(path) || isCanvas(path) || isPages(path)) beside.push(path)
   }
 
   const pictures = (await assets.paths()).filter(

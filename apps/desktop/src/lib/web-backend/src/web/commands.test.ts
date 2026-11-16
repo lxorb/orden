@@ -1389,6 +1389,15 @@ describe('a note kept away', () => {
     return asked
   }
 
+  test('keeps a canvas and a page note among the files, so links to them reach them', async () => {
+    away({ yes: true }, ['/Notes/Board.canvas', '/Notes/Book.pages', '/Notes/Plan.md'])
+    await write('/Notes/a.md', 'see [[Board.canvas]] and [[Book.pages]]')
+
+    const found = await webInvoke<{ files: string[] }>('scan_links', { root: '/Notes' })
+
+    expect(found.files).toEqual(['Board.canvas', 'Book.pages'])
+  })
+
   test('of a folder are fetched together, in one ask, before the folder goes to Recently deleted', async () => {
     const asked = away({ yes: false }, ['/Notes/Plan.md', '/Notes/Deep/Idea.md', '/Other/x.md'])
     const entry = await webInvoke<{ id: string }>('trash_item', { path: '/Notes', kind: 'folder' })
