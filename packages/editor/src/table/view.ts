@@ -748,6 +748,7 @@ export class TableView {
     if (!asked || !href) return false
 
     event.preventDefault()
+    event.stopPropagation()
     this.editor.state.facet(linkOpener)(href, event)
     return true
   }

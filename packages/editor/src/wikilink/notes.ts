@@ -4,6 +4,8 @@ import type { TaskChange } from '@orden/markdown/task-edits'
 import type { TaskFields } from '@orden/markdown/task-line'
 import type { EditorView } from '@codemirror/view'
 import {
+  decodeFragment,
+  decodeTarget,
   foldName,
   isTabFile,
   type LinkKind,
@@ -327,4 +329,26 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     block: link.block,
     page: null,
   }
+}
+
+export function jumpForHref(index: NoteIndex, href: string, wiki: boolean): NoteJump | null {
+  const hash = href.indexOf('#')
+  const target = decodeTarget(hash === -1 ? href : href.slice(0, hash))
+  const said = hash === -1 ? null : decodeFragment(href.slice(hash + 1)) || null
+  if (!target) return null
+
+  if (isTabFile(target)) {
+    const path = wiki ? target : resolveFile(index, target, 'markdown')
+    return path === null
+      ? null
+      : { path, target, heading: null, block: null, page: pageFragment(said) }
+  }
+
+  const found = wiki
+    ? { path: target }
+    : (resolveRelative(index, target) ?? resolveNote(index, target))
+  if (!found) return null
+
+  const block = said?.startsWith('^') ? said.slice(1) : null
+  return { path: found.path, target, heading: block === null ? said : null, block, page: null }
 }

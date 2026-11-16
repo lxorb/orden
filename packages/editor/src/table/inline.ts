@@ -60,6 +60,9 @@ export function parseInline(source: string): Inline[] {
 export function sourceOffset(source: string, shown: number): number {
   const texts: Written[] = []
   walked(source, texts)
+  const drawn = texts.reduce((sum, one) => sum + one.text.length, 0)
+  if (shown <= 0) return 0
+  if (shown >= drawn) return source.length
   let passed = 0
   for (const one of texts) {
     if (shown <= passed + one.text.length) return one.at + (shown - passed)

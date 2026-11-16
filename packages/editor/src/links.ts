@@ -1,5 +1,6 @@
 import { Facet } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
+import { jumpForHref, noteIndex, noteOpener } from './wikilink/notes'
 
 export interface LinkPress extends Modified {
   button: number
@@ -123,9 +124,24 @@ export const linkClicks = EditorView.domEventHandlers({
 
 const WEB_ADDRESS = /^[a-z][a-z\d+.-]*:|^\/\//i
 
+function anchorOf(event: Event): Element | null {
+  return event.target instanceof Element ? event.target.closest('a[href]') : null
+}
+
 function anchorHref(event: Event): string | null {
-  const target = event.target instanceof Element ? event.target.closest('a[href]') : null
-  return target?.getAttribute('href') ?? null
+  return anchorOf(event)?.getAttribute('href') ?? null
+}
+
+function followed(view: EditorView, anchor: Element, href: string, event: MouseEvent): boolean {
+  if (WEB_ADDRESS.test(href)) {
+    view.state.facet(linkOpener)(href, event)
+    return true
+  }
+  const wiki = anchor.classList.contains('wikilink')
+  const jump = jumpForHref(view.state.facet(noteIndex), href, wiki)
+  if (!jump) return false
+  view.state.facet(noteOpener)(jump, event)
+  return true
 }
 
 export function followAnchors(element: HTMLElement, editor: () => EditorView, plain = false) {
@@ -134,12 +150,12 @@ export function followAnchors(element: HTMLElement, editor: () => EditorView, pl
     const asked =
       event.button === MIDDLE ||
       (event.button === MAIN && (plain || modifier(event) || view.state.readOnly))
-    const href = asked ? anchorHref(event) : null
-    if (!href || !WEB_ADDRESS.test(href)) return
+    const anchor = asked && !event.defaultPrevented ? anchorOf(event) : null
+    const href = anchor?.getAttribute('href')
+    if (!anchor || !href || !followed(view, anchor, href, event)) return
 
     event.preventDefault()
     event.stopPropagation()
-    view.state.facet(linkOpener)(href, event)
   })
   for (const type of ['click', 'auxclick']) {
     element.addEventListener(type, (event) => {
