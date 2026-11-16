@@ -61,3 +61,24 @@ describe('a paste into code', () => {
     await expect(pasted('|', 'a,b,c\n1,2,3')).resolves.toContain('| a | b | c |')
   })
 })
+
+describe('a paste with the caret right beside inline code, not in it', () => {
+  test('bold words pasted right after a code span are still bold', async () => {
+    await expect(
+      pasted('Use `x`|', ' carefully', '<span> </span><b>carefully</b>'),
+    ).resolves.toContain('**carefully**')
+  })
+
+  test('a web link pasted just before a code span is still a link', async () => {
+    await expect(
+      pasted('|`npm i` installs it', 'the docs', '<a href="https://docs.dev">the docs</a>'),
+    ).resolves.toBe('[the docs](https://docs.dev)`npm i` installs it')
+  })
+
+  test('paragraphs copied in Orden pasted right after a code span in an item stay in the item', async () => {
+    const copied = '<div data-orden="markdown"><p>one</p><p>two</p></div>'
+    await expect(pasted('- run `x`|', ' one\n\ntwo', copied)).resolves.toBe(
+      '- run `x` one\n\n  two',
+    )
+  })
+})

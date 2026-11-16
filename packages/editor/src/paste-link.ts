@@ -6,7 +6,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import type { Tree } from '@lezer/common'
-import { inCode } from './code'
+import { inCode, insideCode } from './code'
 import { inside } from './commands'
 import { enclosingNamed } from './nodes'
 import { ADDRESS } from './paste'
@@ -41,7 +41,7 @@ function linkable(state: EditorState, range: SelectionRange): boolean {
     [from, 1],
     [to, -1],
   ] as const) {
-    if (inCode(state, pos, side)) return false
+    if (insideCode(state, pos, side)) return false
     if (enclosingNamed(tree.resolveInner(pos, side), NOT_WORDS)) return false
   }
 

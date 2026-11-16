@@ -34,6 +34,7 @@ import { archivedLink, noteIndex, resolves } from '../wikilink/notes'
 import { iframeCard, webCard } from '@orden/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import { WebEmbedWidget } from './web'
+import { referenceOf } from './definitions'
 import { door } from '@orden/markdown/door'
 import {
   BulletWidget,
@@ -57,9 +58,7 @@ for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `o
 
 const LINKED = new Set(['Link', 'Image', 'Wikilink'])
 
-const CONTAINERS = new Set(['Document', 'Blockquote', 'BulletList', 'OrderedList', 'ListItem'])
-
-const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
+const EMAIL = /^[^\s@<>()[\]:]+@[^\s@<>()[\]]+\.[^\s@<>()[\]]+$/
 
 class Decorator {
   private readonly marks: Range<Decoration>[] = []
@@ -68,13 +67,25 @@ class Decorator {
   private readonly lineAttrs = new Map<number, Record<string, string>>()
   private readonly claimed: { from: number; to: number }[] = []
   private readonly unlinked = new Set<number>()
-  private definitions: Map<string, string> | null = null
 
   constructor(private readonly state: EditorState) {}
 
   build(ranges: readonly { from: number; to: number }[]) {
+    const visited = new Map<string, boolean>()
     for (const { from, to } of ranges) {
-      syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) })
+      syntaxTree(this.state).iterate({
+        from,
+        to,
+        enter: (node) => {
+          if (ranges.length < 2) return this.visit(node.node)
+          const key = `${node.name}:${node.from}:${node.to}`
+          const seen = visited.get(key)
+          if (seen !== undefined) return seen
+          const deeper = this.visit(node.node)
+          visited.set(key, deeper)
+          return deeper
+        },
+      })
     }
 
     for (const { from, to } of ranges) this.blockNames(from, to)
@@ -183,11 +194,12 @@ class Decorator {
         return false
       case 'URL':
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
-        else if (node.parent?.name !== 'Link' && node.parent?.name !== 'Image') {
+        else if (!this.inLinkWords(node)) {
           const written = this.state.doc.sliceString(node.from, node.to)
           const bare = node.parent?.name !== 'Autolink'
           const after = this.state.doc.sliceString(node.to, node.to + 1)
-          this.linkText(node.from, node.to, bare ? bareTarget(written, after) : written)
+          const target = bare ? bareTarget(written, after) : written
+          this.linkText(node.from, node.to, EMAIL.test(target) ? `mailto:${target}` : target)
         }
         return true
       case 'Highlight':
@@ -208,6 +220,12 @@ class Decorator {
     }
   }
 
+  private inLinkWords(url: SyntaxNode): boolean {
+    const link = url.parent
+    if (link?.name !== 'Link' && link?.name !== 'Image') return false
+    return !this.unlinked.has(link.from)
+  }
+
   private link(node: SyntaxNode) {
     const brackets = linkBrackets(node)
     if (!brackets) return
@@ -226,40 +244,15 @@ class Decorator {
       return
     }
 
-    const label = node.getChild('LinkLabel')
-    const named = label && label.to - label.from > 2
-    const key = named
-      ? this.state.doc.sliceString(label.from + 1, label.to - 1)
-      : this.state.doc.sliceString(open.to, close.from)
-    const target = this.definitionOf(key)
-    if (target === undefined) {
+    const reference = referenceOf(this.state, node)
+    if (!reference) return
+    if (reference.target === undefined) {
       this.unlinked.add(node.from)
       return
     }
+    const { label, target } = reference
     if (label) this.conceal(label.from, label.to, overlaps(this.state, node.from, node.to))
     this.linkText(open.to, close.from, target)
-  }
-
-  private definitionOf(label: string): string | undefined {
-    if (!this.definitions) {
-      const found = new Map<string, string>()
-      const { doc } = this.state
-      syntaxTree(this.state).iterate({
-        enter: (ref) => {
-          if (ref.name !== 'LinkReference') return CONTAINERS.has(ref.name)
-          const written = ref.node.getChild('LinkLabel')
-          const url = ref.node.getChild('URL')
-          if (!written) return false
-          const key = labelKey(doc.sliceString(written.from + 1, written.to - 1))
-          if (!found.has(key)) {
-            found.set(key, url ? linkDestination(doc.sliceString(url.from, url.to)) : '')
-          }
-          return false
-        },
-      })
-      this.definitions = found
-    }
-    return this.definitions.get(labelKey(label))
   }
 
   private wikilink(node: SyntaxNode): boolean {

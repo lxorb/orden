@@ -12,7 +12,7 @@ import {
   readHighlight,
   writeHighlight,
 } from '@orden/markdown/highlights'
-import { BETWEEN_WORDS, inside, spansLines } from './commands'
+import { inside, spansLines, splitPoints } from './commands'
 import { highlightAcross } from './line-door'
 import { enclosingNamed } from './nodes'
 
@@ -86,24 +86,14 @@ function splitOut(
   const end = run.to - MARK.length
   if (from < start || to > end) return null
 
-  const doc = state.doc
-  const opening = doc.sliceString(run.from, start)
+  const opening = state.doc.sliceString(run.from, start)
   const recolour = had.emoji === colour.emoji ? null : MARK + writeHighlight('', colour)
   const changes: ChangeSpec[] = []
 
-  if (from === start) changes.push({ from: run.from, to: start })
-  else {
-    let close = from
-    while (close > start && BETWEEN_WORDS.test(doc.sliceString(close - 1, close))) close--
-    changes.push({ from: close, insert: MARK })
-  }
+  const { close, open } = splitPoints(state, run, { from: start, to: end }, { from, to })
+  changes.push(close === null ? { from: run.from, to: start } : { from: close, insert: MARK })
   if (recolour) changes.push({ from, insert: recolour }, { from: to, insert: MARK })
-  if (to === end) changes.push({ from: end, to: run.to })
-  else {
-    let open = to
-    while (open < end && BETWEEN_WORDS.test(doc.sliceString(open, open + 1))) open++
-    changes.push({ from: open, insert: opening })
-  }
+  changes.push(open === null ? { from: end, to: run.to } : { from: open, insert: opening })
 
   const set = state.changes(changes)
   return { changes: set, range: EditorSelection.range(set.mapPos(from, 1), set.mapPos(to, -1)) }

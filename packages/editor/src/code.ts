@@ -9,8 +9,17 @@ export function inCode(state: EditorState, pos: number, side: -1 | 1 = 1): boole
   return enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE) !== null
 }
 
+export function insideCode(state: EditorState, pos: number, side: -1 | 1 = 1): boolean {
+  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE)
+  const span = node && enclosingNamed(node, 'InlineCode')
+  if (!span) return node !== null
+
+  const [open, close] = span.getChildren('CodeMark')
+  return open !== undefined && close !== undefined && pos >= open.to && pos <= close.from
+}
+
 export function rangeInCode(state: EditorState, range: SelectionRange): boolean {
-  return inCode(state, range.from) || inCode(state, range.to, -1)
+  return insideCode(state, range.from) || insideCode(state, range.to, -1)
 }
 
 const VERBATIM_BLOCKS = new Set([

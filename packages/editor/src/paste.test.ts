@@ -160,6 +160,11 @@ describe('an address pasted over a selection', () => {
     expect(pasted('    «indented code»\n', URL)).toBeNull()
   })
 
+  test('links words that start with a code span, or a whole code span', () => {
+    expect(pasted('See «`fetch` docs» here', URL)).toBe(`See [\`fetch\` docs](${URL}) here`)
+    expect(pasted('Call «`fetch`» now', URL)).toBe(`Call [\`fetch\`](${URL}) now`)
+  })
+
   test('stays plain inside a link, a note link or a formula', () => {
     expect(pasted('[«te»xt](https://a.ch)', URL)).toBeNull()
     expect(pasted('[[«No»te]]', URL)).toBeNull()

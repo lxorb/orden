@@ -1,6 +1,9 @@
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { parsed } from '../test/parsed'
 import { copiedFlavours, MOST_DRAWN, readyToCopy } from './copy'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 
 beforeAll(() => readyToCopy())
 
@@ -69,5 +72,37 @@ describe('when CodeMirror’s own copy is the better one', () => {
   test('a cut out of a note nothing may be written into', () => {
     expect(copiedFlavours(state('one two', 0, 3, true), true)).toBeNull()
     expect(copiedFlavours(state('one two', 0, 3, true))?.text).toBe('one')
+  })
+})
+
+describe('copying words picked inside code', () => {
+  function picked(doc: string, words: string): EditorState {
+    const from = doc.indexOf(words)
+    return parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.range(from, from + words.length),
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
+      }),
+    )
+  }
+
+  const doc = 'Setup:\n\n```sh\n# install the tools\npip install *requests*\n```\n'
+  const code = '# install the tools\npip install *requests*'
+
+  test('the HTML flavour keeps a shell comment in a code block as code, not a heading', () => {
+    const html = copiedFlavours(picked(doc, code))?.html ?? ''
+    expect(html).not.toContain('<h1')
+    expect(html).toContain('<pre><code class="language-sh"># install the tools')
+  })
+
+  test('the HTML flavour keeps the stars of a code block, not italics', () => {
+    const html = copiedFlavours(picked(doc, code))?.html ?? ''
+    expect(html).toContain('*requests*')
+  })
+
+  test('the HTML flavour keeps words inside inline code as code', () => {
+    const html = copiedFlavours(picked('Run `pip *x* <y>` now', 'pip *x* <y>'))?.html ?? ''
+    expect(html).toContain('<code>pip *x* &lt;y&gt;</code>')
   })
 })

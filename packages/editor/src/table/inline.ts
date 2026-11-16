@@ -29,7 +29,9 @@ const SAFE_URL = /^(https?:\/\/|mailto:|#|\/|\.)/i
 export type Inline = { text: string } | { tag: string; href?: string; children: Inline[] }
 
 function address(written: string, holder: SyntaxNode): Inline {
-  if (holder.name === 'Link' || holder.name === 'Image') return { text: written }
+  if ((holder.name === 'Link' || holder.name === 'Image') && linkAddress(holder)) {
+    return { text: written }
+  }
   const href = written.includes(':')
     ? written
     : written.includes('@')
@@ -54,7 +56,13 @@ export function renderInline(source: string): DocumentFragment {
   return fragment
 }
 
-function walk(node: SyntaxNode, source: string, from: number, to: number): Inline[] {
+function walk(
+  node: SyntaxNode,
+  source: string,
+  from: number,
+  to: number,
+  bracketed = false,
+): Inline[] {
   const out: Inline[] = []
   let at = from
 
@@ -71,6 +79,10 @@ function walk(node: SyntaxNode, source: string, from: number, to: number): Inlin
     } else if (child.name === 'URL') {
       if (linkAddress(node)?.from !== child.from)
         out.push(address(source.slice(child.from, child.to), node))
+    } else if (bracketed && child.name === 'LinkMark') {
+      out.push({ text: source.slice(child.from, child.to) })
+    } else if (child.name === 'Link' && !linkAddress(child)) {
+      out.push(...walk(child, source, child.from, child.to, true))
     } else if (!HIDDEN.has(child.name)) {
       const children = walk(child, source, child.from, child.to)
       const tag = TAGS[child.name]

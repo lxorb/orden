@@ -21,7 +21,52 @@ import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { enclosing, enclosingNamed } from './nodes'
 
-export const BETWEEN_WORDS = /^(?![*_~=`])[\s\p{P}\p{S}]$/u
+const SPACE = /^\s?$/u
+
+const PUNCTUATION = /^[\p{P}\p{S}]$/u
+
+export interface Span {
+  from: number
+  to: number
+}
+
+function plainIn(state: EditorState, run: Span, at: number): boolean {
+  const node = syntaxTree(state).resolveInner(at, 1)
+  return node.from === run.from && node.to === run.to
+}
+
+function flanks(state: EditorState, at: number, closing: boolean): boolean {
+  const inside = state.doc.sliceString(closing ? at - 1 : at, closing ? at : at + 1)
+  const outside = state.doc.sliceString(closing ? at : at - 1, closing ? at + 1 : at)
+  if (SPACE.test(inside)) return false
+  return !PUNCTUATION.test(inside) || SPACE.test(outside) || PUNCTUATION.test(outside)
+}
+
+export function splitPoints(
+  state: EditorState,
+  run: Span,
+  words: Span,
+  picked: Span,
+): { close: number | null; open: number | null } {
+  const doc = state.doc
+  let close = picked.from
+  while (close > words.from) {
+    while (close > words.from && /\s/u.test(doc.sliceString(close - 1, close))) close--
+    if (close > words.from && flanks(state, close, true)) break
+    if (close > words.from && plainIn(state, run, close - 1)) close--
+    else break
+  }
+
+  let open = picked.to
+  while (open < words.to) {
+    while (open < words.to && /\s/u.test(doc.sliceString(open, open + 1))) open++
+    if (open < words.to && flanks(state, open, false)) break
+    if (open < words.to && plainIn(state, run, open)) open++
+    else break
+  }
+
+  return { close: close === words.from ? null : close, open: open === words.to ? null : open }
+}
 
 export function toggleWrap(before: string, after = before): StateCommand {
   const italic = before === '*' && after === '*'
@@ -56,6 +101,7 @@ export function toggleWrap(before: string, after = before): StateCommand {
       }
 
       const run = from === to ? runAround(state, from, before, after) : null
+      if (run && from === run.to - after.length) return { range: EditorSelection.cursor(run.to) }
       if (run) {
         return {
           changes: [
@@ -70,20 +116,11 @@ export function toggleWrap(before: string, after = before): StateCommand {
       if (holding && to <= holding.to - after.length) {
         const words = { from: holding.from + before.length, to: holding.to - after.length }
         const mark = doc.sliceString(holding.from, words.from)
-        const changes: ChangeSpec[] = []
-        if (from === words.from) changes.push({ from: holding.from, to: words.from })
-        else {
-          let close = from
-          while (close > words.from && BETWEEN_WORDS.test(doc.sliceString(close - 1, close)))
-            close--
-          changes.push({ from: close, insert: mark })
-        }
-        if (to === words.to) changes.push({ from: words.to, to: holding.to })
-        else {
-          let open = to
-          while (open < words.to && BETWEEN_WORDS.test(doc.sliceString(open, open + 1))) open++
-          changes.push({ from: open, insert: mark })
-        }
+        const { close, open } = splitPoints(state, holding, words, { from, to })
+        const changes: ChangeSpec[] = [
+          close === null ? { from: holding.from, to: words.from } : { from: close, insert: mark },
+          open === null ? { from: words.to, to: holding.to } : { from: open, insert: mark },
+        ]
         const set = state.changes(changes)
         return {
           changes: set,
