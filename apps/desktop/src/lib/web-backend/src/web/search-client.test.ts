@@ -124,7 +124,7 @@ describe('a search that sticks on one note', () => {
         onmessage = null
         onerror = null
         terminate = terminate
-        postMessage() {}
+        postMessage = vi.fn()
       },
     )
     const { searchInWorker } = await import('./search-client')
@@ -148,7 +148,7 @@ describe('a search that sticks on one note', () => {
         constructor() {
           tell = (data) => this.onmessage?.({ data } as MessageEvent<unknown>)
         }
-        postMessage() {}
+        postMessage = vi.fn()
       },
     )
     const { searchInWorker } = await import('./search-client')
