@@ -7,10 +7,13 @@ const BUDGET_PER_BYTE: usize = 400;
 
 const MOST_BUDGET: usize = 10_000_000;
 
+const LEAST_PER_BYTE: usize = 200;
+
 #[must_use]
 pub fn budget_for(text: usize) -> usize {
     text.saturating_mul(BUDGET_PER_BYTE)
         .clamp(BUDGET, MOST_BUDGET)
+        .max(text.saturating_mul(LEAST_PER_BYTE))
 }
 
 const PROGRAM_LIMIT: usize = 10_000;
@@ -2146,6 +2149,29 @@ mod tests {
         assert_eq!(caught("(^|a)?(a+)", "aaa"), Some(words(&["a", "aa"])));
         assert_eq!(caught("(a?){1,2}", "a"), Some(words(&["a"])));
         assert_eq!(caught("([ab]??){1,2}", "ab"), Some(words(&["a"])));
+    }
+
+    #[test]
+    fn words_counted_before_a_word_find_it_at_the_end_of_a_long_journal() {
+        let day = "Day 1: we talked about the release and the schedule then wrote notes.\n\n";
+        let note = format!(
+            "{}Last entry: we agreed on the new plan.\n",
+            day.repeat(3_000)
+        );
+        assert!(note.len() > 200_000);
+        for source in [
+            r"(?:\w+\s){0,5}plan",
+            r"(\w+\s){3}plan",
+            r"(?:\S+\s){1,4}plan",
+        ] {
+            let pattern = Pattern::compile(source, true);
+            assert!(pattern.is_some(), "{source}");
+            let Some(pattern) = pattern else {
+                return;
+            };
+            let found = every_hit(&pattern, &note, super::budget_for(note.len()));
+            assert_eq!(found.len(), 1, "{source}");
+        }
     }
 
     #[test]
