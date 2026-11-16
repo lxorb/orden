@@ -56,6 +56,8 @@ export function patternJudge(longest = 2000, widest = 30) {
 
   const MOST_COPIES = 10
 
+  const MOST_BOUNDED = 300
+
   const MOST_STEPS = 20000
 
   const OPEN_END: Ahead = { rest: 0, heads: [], literal: 0, ended: true }
@@ -260,7 +262,10 @@ export function patternJudge(longest = 2000, widest = 30) {
             return after
           }
           if (shape.most - shape.least > counted) {
-            const most = shape.of.kind === 'letter' ? shape.most : Infinity
+            const most =
+              shape.of.kind === 'letter' && shape.most - shape.least <= MOST_BOUNDED
+                ? shape.most
+                : Infinity
             return run(shape.letters, shape.least, ahead, most)
           }
           let after = ahead
@@ -631,6 +636,34 @@ export function patternJudge(longest = 2000, widest = 30) {
     }
   }
 
+  function leadRuns(lead: string, shape: Shape, flags: string, common: readonly string[]): boolean {
+    const first = String.fromCodePoint(lead.codePointAt(0) ?? 0)
+    if (!common.includes(first)) return false
+    const letter = first.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&')
+    return letterRuns(shape).some((run) => !setsApart(letter, run, flags))
+  }
+
+  function letterRuns(shape: Shape): string[] {
+    switch (shape.kind) {
+      case 'again':
+        return shape.of.kind === 'letter'
+          ? shape.letters !== null && shape.most > 1
+            ? [shape.letters]
+            : []
+          : letterRuns(shape.of)
+      case 'row':
+        return shape.parts.flatMap(letterRuns)
+      case 'either':
+        return shape.branches.flatMap(letterRuns)
+      case 'look':
+        return letterRuns(shape.inner)
+      case 'letter':
+      case 'none':
+      case 'end':
+        return []
+    }
+  }
+
   function runsOf(shape: Shape): string[] {
     switch (shape.kind) {
       case 'again':
@@ -699,12 +732,11 @@ export function patternJudge(longest = 2000, widest = 30) {
         return true
       }
       const latin = startsOf(source, flags, lead, shape)
-      const kept =
-        (lead.length >= 2 && !/^[\s,.，。、；：！？:/-]+$/u.test(lead)) ||
-        (source.startsWith('^') && shape.kind !== 'either')
+      const rare = lead.length >= 2 && !/^[\s,.，。、；：！？:/-]+$/u.test(lead)
+      const anchored = source.startsWith('^') && shape.kind !== 'either'
       return ELSEWHERE.some(
         ({ writes, marks }) =>
-          (kept
+          (anchored || (rare && !leadRuns(lead, shape, flags, [...writes, ...marks]))
             ? Math.min(latin, startsElsewhere(flags, shape, writes, marks))
             : startsElsewhere(flags, shape, writes, marks)) +
             aheadOf(shape, flags, OPEN_END, undefined, (letters) => reachIn(letters, flags, writes))

@@ -114,6 +114,11 @@ describe('a pattern that could backtrack without end', () => {
     '：\\W+X',
     '- \\W+X',
     ': [\\d\\s:]+X',
+    '[\\s\\S]{0,1000}TODO',
+    '[^#]{0,5000}TODO',
+    '[\\s\\S]{1,2000}TODO',
+    '[^\\]]{0,2000}\\]',
+    '[^,]{0,3000}QZX',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
@@ -203,16 +208,33 @@ describe('a pattern that could backtrack without end', () => {
     '[\\s\\S]{0,200}TODO[\\s\\S]{0,200}',
     '[^,]{0,40},',
     '[^\\]]{0,100}\\]',
+    '[\\s\\S]{0,300}TODO',
+    '\\| [^|]+ \\|',
+    '\\| (\\w+) \\|',
+    '\\| \\d+ \\|',
+    'the .*TODO',
+    'TODO: .*',
+    '## .*',
+    '- \\[ \\] .*',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
   })
 })
 
 describe('a search pattern over notes of emoji', () => {
-  test.each(['[^\\p{L}\\p{N}]+X', '\\s\\P{L}+X', '\\|[^\\p{L}]+X', '-[^\\p{L}]+X'])(
-    '/%s/ is told apart before it runs',
-    (source) => {
-      expect(searchBacktracksWildly(source, true)).toBe(true)
-    },
-  )
+  test.each([
+    '[^\\p{L}\\p{N}]+X',
+    '\\s\\P{L}+X',
+    '\\|[^\\p{L}]+X',
+    '-[^\\p{L}]+X',
+    '\\| [^\\p{L}]+X',
+    '\\| \\P{L}+X',
+    '\\| \\W+X',
+    '\\| \\W*\\|\\s*X',
+    '✅ \\P{L}+X',
+    '✅ \\W+X',
+    '[^\\p{L}]{0,1000}QZX',
+  ])('/%s/ is told apart before it runs', (source) => {
+    expect(searchBacktracksWildly(source, true)).toBe(true)
+  })
 })
