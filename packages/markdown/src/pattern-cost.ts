@@ -16,7 +16,7 @@ type Shape =
   | { kind: 'letter'; letters: string | null; literal: boolean }
   | { kind: 'none' }
   | { kind: 'end' }
-  | { kind: 'look'; inner: Shape }
+  | { kind: 'look'; inner: Shape; behind: boolean }
   | { kind: 'row'; parts: Shape[] }
   | { kind: 'either'; branches: Shape[] }
   | { kind: 'again'; of: Shape; least: number; most: number; letters: string | null }
@@ -58,6 +58,8 @@ export function patternJudge() {
   const MOST_STEPS = 20000
 
   const OPEN_END: Ahead = { rest: 0, heads: [], literal: 0, ended: true }
+
+  const BACKWARDS: Ahead = { rest: 0, heads: [], literal: 0, ended: false }
 
   const REFUSED: Cost = { ...PLAIN, open: Number.POSITIVE_INFINITY }
 
@@ -197,8 +199,11 @@ export function patternJudge() {
           return ahead
         case 'end':
           return { rest: ahead.rest, heads: ['\\n'], literal: 0, ended: false }
-        case 'look':
-          return { ...ahead, rest: ahead.rest + before(shape.inner, OPEN_END).rest, ended: false }
+        case 'look': {
+          const { rest } = before(shape.inner, shape.behind ? BACKWARDS : OPEN_END)
+          const back = shape.behind && rest >= NOTE ? NOTE : 0
+          return { ...ahead, rest: ahead.rest + rest + back, ended: false }
+        }
         case 'row': {
           const parts = ahead.ended ? withoutGivenBack(flat(shape.parts)) : shape.parts
           return parts.reduceRight((after, part) => before(part, after), ahead)
@@ -431,7 +436,7 @@ export function patternJudge() {
               open: inner.open,
               ways: inner.ways,
               loop: inner.loop,
-              shape: { kind: 'look', inner: inner.shape },
+              shape: { kind: 'look', inner: inner.shape, behind: opening.startsWith('?<') },
             }
           : inner
       }
