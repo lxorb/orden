@@ -144,9 +144,9 @@ export function patternJudge(longest = 2000, widest = 30) {
   }
 
   const ELSEWHERE = [
-    { writes: ['я', '中'], marks: [' ', '\n', ',', '.', '，', '。'] },
-    { writes: ['5'], marks: [' ', '\t', '\n', ',', '.', '|'] },
-    { writes: ['✅', '🔥'], marks: [' ', '\n', '|'] },
+    { writes: ['я', '中'], marks: [' ', '\n', ',', '.', '，', '。', '、', '；', '：', '！', '？'] },
+    { writes: ['5'], marks: [' ', '\t', '\n', ',', '.', '|', ':', '/', '-'] },
+    { writes: ['✅', '🔥'], marks: [' ', '\n', '|', '-'] },
   ]
 
   function reachIn(letters: string | null, flags: string, writes: readonly string[]): number {
@@ -697,7 +697,7 @@ export function patternJudge(longest = 2000, widest = 30) {
       }
       const latin = startsOf(source, flags, lead, shape)
       const kept =
-        (lead.length >= 2 && !/^[\s,.，。]+$/u.test(lead)) ||
+        (lead.length >= 2 && !/^[\s,.，。、；：！？:/-]+$/u.test(lead)) ||
         (source.startsWith('^') && shape.kind !== 'either')
       return ELSEWHERE.some(
         ({ writes, marks }) =>

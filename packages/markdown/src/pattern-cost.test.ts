@@ -107,6 +107,13 @@ describe('a pattern that could backtrack without end', () => {
     '[,.]\\W+\\d',
     ', \\W*\\d',
     '，\\W+X',
+    ':[\\d\\s:]+X',
+    '\\/[\\d\\s\\/]+X',
+    '-\\W+X',
+    '、\\W+X',
+    '：\\W+X',
+    '- \\W+X',
+    ': [\\d\\s:]+X',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
@@ -196,7 +203,7 @@ describe('a pattern that could backtrack without end', () => {
 })
 
 describe('a search pattern over notes of emoji', () => {
-  test.each(['[^\\p{L}\\p{N}]+X', '\\s\\P{L}+X', '\\|[^\\p{L}]+X'])(
+  test.each(['[^\\p{L}\\p{N}]+X', '\\s\\P{L}+X', '\\|[^\\p{L}]+X', '-[^\\p{L}]+X'])(
     '/%s/ is told apart before it runs',
     (source) => {
       expect(searchBacktracksWildly(source, true)).toBe(true)
