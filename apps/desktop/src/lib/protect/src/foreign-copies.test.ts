@@ -55,3 +55,13 @@ describe('a foreign sync tool copy beside a locked note', () => {
     expect(protection.agentsMay(SYNCTHING)).toBe(false)
   })
 })
+
+test('a sync tool’s copy of a copy of a locked note is locked too', () => {
+  const protection = new Protection()
+  protection.set(ROOT, NOTE, 'password')
+  const twice = `${ROOT}/Diary.sync-conflict-20261101-120000-ABCDEFG.sync-conflict-20261102-130000-HIJKLMN.md`
+  const mixed = `${ROOT}/Diary (Laptop's conflicted copy 2026-11-02).sync-conflict-20261101-120000-ABCDEFG.md`
+  expect(protection.agentsMay(twice)).toBe(false)
+  expect(protection.agentsMay(mixed)).toBe(false)
+  expect(protection.locked(twice)).toBe(true)
+})

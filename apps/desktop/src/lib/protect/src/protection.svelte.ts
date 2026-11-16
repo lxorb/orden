@@ -122,11 +122,23 @@ interface Shut {
   keys: { key: string; under: string }[]
 }
 
+function originalName(part: string): string {
+  let name = part
+  for (
+    let copy = foreignCopy(name);
+    copy !== null && copy.original !== name;
+    copy = foreignCopy(name)
+  ) {
+    name = copy.original
+  }
+  return name
+}
+
 function copiedFrom(path: string): string | null {
   if (!inForeignCopy(path)) return null
   return path
     .split(/([\\/])/)
-    .map((part) => foreignCopy(part)?.original ?? part)
+    .map(originalName)
     .join('')
 }
 
