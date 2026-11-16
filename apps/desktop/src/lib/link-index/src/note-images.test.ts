@@ -166,4 +166,10 @@ describe('a picture an export writes into its page', () => {
     expect(pictureBeside('C:\\Notes\\n.md')('D:\\Pics\\x.png')).toBe('D:\\Pics\\x.png')
     expect(pictureBeside(null)('/Work/att/x.png')).toBe('/Work/att/x.png')
   })
+
+  test('is every picture the page names, for an export with no second look', () => {
+    const pictures = picturesOf('/Work/b/n.md', '', pictureBeside('/Work/b/n.md'), true)
+    expect(pictures('shot.png', false, null)).toBe('../assets/shot.png')
+    expect(pictures('/image.png', false, null)).toBe('../image.png')
+  })
 })

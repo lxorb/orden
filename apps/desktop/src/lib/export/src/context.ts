@@ -76,7 +76,7 @@ export async function renderOptions(target: Target): Promise<RunOptions> {
     page: choices.page,
     resolveImage: (src: string) =>
       picturePath(attributeText(src), target.path, target.source) ?? src,
-    pictures: picturesOf(target.path, target.source, pictureBeside(target.path)),
+    pictures: picturesOf(target.path, target.source, pictureBeside(target.path), true),
     picturesWritten: (source: string) => picturesWrittenOut(source, target.path),
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),

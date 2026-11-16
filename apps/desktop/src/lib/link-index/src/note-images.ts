@@ -60,9 +60,10 @@ export function picturesOf(
   notePath: string | null,
   source: string,
   finish: (path: string) => string,
+  every = false,
 ): PictureResolver {
   return (src, wikilink, from) => {
-    if (!wikilink && from?.path === undefined) return null
+    if (!every && !wikilink && from?.path === undefined) return null
     const found = from?.path
       ? picturePath(src, from.path, from.text, wikilink)
       : picturePath(src, notePath, source, wikilink)
