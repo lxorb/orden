@@ -246,6 +246,17 @@ describe('every block of the space, behind `[[^^`', () => {
     expect((await picked('[[^^tasks', asked, '## Tasks')).doc).toBe('[[Plan#Tasks]]')
   })
 
+  test('names a found line that only looks like a heading, inside code, as a block', async () => {
+    const asked = space(SPACE, {
+      found: [{ path: 'Plan.md', line: 2, text: '# install deps', id: null }],
+      bodies: { 'Plan.md': 'Setup\n```bash\n# install deps\nnpm i\n```\n' },
+    })
+
+    expect((await picked('[[^^install', asked, '# install deps')).doc).toBe(
+      '[[Plan#^from-Planmd-2]]',
+    )
+  })
+
   test('names one that has no name yet, through the app, and links that', async () => {
     const asked = space(SPACE, {
       found: [{ path: 'ideas/Spark.md', line: 4, text: 'the second half', id: null }],

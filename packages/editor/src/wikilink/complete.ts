@@ -1,7 +1,15 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorView } from '@codemirror/view'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blocksOf, foldName, headingText, isHeading, isTabFile } from '@orden/markdown/links'
+import {
+  blocksOf,
+  foldName,
+  headingText,
+  isHeading,
+  isTabFile,
+  type Row,
+  rowsOf,
+} from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -198,7 +206,7 @@ async function blockOptions(
   if (source === null) return []
 
   const needle = foldName(typed.trim())
-  const lines = source.split('\n')
+  const rows = rowsOf(source)
 
   return blocksOf(source)
     .filter((block) => block.text !== '')
@@ -206,14 +214,24 @@ async function blockOptions(
     .slice(0, MOST_SHOWN)
     .map((block) => ({
       label: block.text,
-      apply: linked(note.path, block.line, lines[block.line] ?? '', block.id, target),
+      apply: linked(note.path, block.line, headingRow(rows[block.line]), block.id, target),
       type: 'property',
     }))
 }
 
-function linked(path: string, line: number, text: string, id: string | null, target: LinkWrite) {
+function headingRow(row: Pick<Row, 'text' | 'code' | 'matter'> | undefined): string | null {
+  return row && !row.code && !row.matter && isHeading(row.text) ? headingText(row.text) : null
+}
+
+function linked(
+  path: string,
+  line: number,
+  heading: string | null,
+  id: string | null,
+  target: LinkWrite,
+) {
   if (id) return insert({ ...target, fragment: `^${id}` })
-  if (isHeading(text)) return insert({ ...target, fragment: headingText(text) })
+  if (heading !== null) return insert({ ...target, fragment: heading })
   return name(path, line, target)
 }
 
@@ -281,7 +299,15 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
   return rows
 }
 
-function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
+async function foundHeading(index: NoteIndex, block: SpaceBlock): Promise<string | null> {
+  if (!isHeading(block.text)) return null
+  const source = await index.read(block.path).catch(() => null)
+  return source === null
+    ? headingText(block.text)
+    : headingRow(rowsOf(source)[block.line] ?? { text: block.text, code: false, matter: false })
+}
+
+function foundBlock(index: NoteIndex, block: SpaceBlock, heading: string | null): Completion {
   const note = index.notes.find((one) => one.path === block.path)
   const target: LinkWrite = note
     ? about(index, note)
@@ -290,7 +316,7 @@ function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
   return {
     label: block.text,
     ...(note ? { detail: note.name } : {}),
-    apply: linked(block.path, block.line, block.text, block.id, target),
+    apply: linked(block.path, block.line, heading, block.id, target),
     type: 'property',
   }
 }
@@ -309,7 +335,7 @@ async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[
     if (block.path === index.path) continue
     if (block.id && named.has(`^${block.id}`)) continue
 
-    rows.push(foundBlock(index, block))
+    rows.push(foundBlock(index, block, await foundHeading(index, block)))
     if (rows.length >= MOST_SHOWN) break
   }
 
