@@ -3447,16 +3447,9 @@ class Workspace {
     }
 
     const rewrote = await this.retargetMoved(path, target)
-    if (undoable) {
-      this.undone.record({
-        kind: 'rename',
-        from: path,
-        to: target,
-        ...(rewrote ? { rewrote } : {}),
-      })
-    }
 
     const note = this.opened.at(path)
+    let retitled = false
     if (note) {
       note.flush()
       const was = `# ${shownName(nameOf(path))}`
@@ -3464,7 +3457,18 @@ class Workspace {
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
         note.dirty = true
         this.saving.owed(note)
+        retitled = true
       }
+    }
+
+    if (undoable) {
+      this.undone.record({
+        kind: 'rename',
+        from: path,
+        to: target,
+        ...(rewrote ? { rewrote } : {}),
+        ...(retitled ? { retitled } : {}),
+      })
     }
 
     await this.fileMoved(path, target, kind)

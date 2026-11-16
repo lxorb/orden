@@ -5,7 +5,9 @@ import {
   onDisk,
   folderOf,
   isMarkdownPath,
+  nameOf,
   samePath,
+  shownName,
   within,
   invoke,
   oneWriteAt,
@@ -383,6 +385,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       if (action.rewrote)
         await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
       await ws.fileMoved(action.to, action.from, kind)
+      if (action.retitled) await titledBack(ws, action.from, action.to)
     }),
   )
   if (action.nests) {
@@ -391,6 +394,17 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   if (action.kind === 'move' && action.carries) {
     await (await import('./moving-space')).tabsFollow(action.from)
   }
+}
+
+async function titledBack(ws: PutsBack, path: string, renamed: string) {
+  const open = ws.documentAt(path)
+  const text = open?.text ?? (await invoke<string>('read_note', { path }).catch(() => null))
+  const title = `# ${shownName(nameOf(renamed))}`
+  if (text === null || (text !== title && !text.startsWith(`${title}\n`))) return
+
+  const back = `# ${shownName(nameOf(path))}${text.slice(title.length)}`
+  await writeFile(path, back)
+  ws.reload(path, back)
 }
 
 async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge' }>) {

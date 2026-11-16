@@ -7,6 +7,7 @@ export type FileAction =
       from: string
       to: string
       rewrote?: boolean
+      retitled?: boolean
       follows?: boolean
       nests?: boolean
       carries?: boolean

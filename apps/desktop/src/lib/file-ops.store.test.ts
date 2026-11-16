@@ -229,6 +229,25 @@ describe('a note renamed while its heading is still its name', () => {
     expect(shown.startsWith('# Groceries\n')).toBe(true)
     expect(disk.current?.files.get(`${ROOT}/Groceries.md`)).toBe(shown)
   })
+
+  test('has its old heading back when the rename is undone', async () => {
+    workspace.panel = null
+    await workspace.createNote(ROOT)
+    await workspace.writesSettled()
+    const made = workspace.active?.path
+    if (!made) throw new Error('no note')
+    workspace.panel = 'tree'
+    await workspace.loadTree()
+    const before = workspace.documentAt(made)?.text ?? ''
+
+    await workspace.rename(made, 'Groceries.md')
+    await workspace.writesSettled()
+    await workspace.undoFileAction()
+    await workspace.writesSettled()
+
+    expect(workspace.documentAt(made)?.text).toBe(before)
+    expect(disk.current?.files.get(made)).toBe(before)
+  })
 })
 
 describe('a link rewritten in a note with typing not yet written', () => {
