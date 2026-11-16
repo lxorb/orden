@@ -68,4 +68,11 @@ describe('a path that names a folder or file by its Windows short name', () => {
     expect(namesByShortName('Plan ~2.md')).toBe(false)
     expect(namesByShortName('Notes~ideas.md')).toBe(false)
   })
+
+  test('also with the dots and spaces Windows drops after it, and in a full path', () => {
+    expect(namesByShortName('PRIVAT~1./Diary.md')).toBe(true)
+    expect(namesByShortName('Notes/DIARY~1.MD. .')).toBe(true)
+    expect(namesByShortName('C:\\Users\\me\\Orden\\Work\\PRIVAT~1')).toBe(true)
+    expect(namesByShortName('C:\\Users\\me\\Orden\\Work\\Private')).toBe(false)
+  })
 })

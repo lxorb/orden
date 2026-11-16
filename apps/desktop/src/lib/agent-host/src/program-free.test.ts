@@ -86,7 +86,7 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     protection.set('/s', '/s/Work/site/Private', null)
   })
 
-  test('git is free only where nothing in its whole repository is shut to agents', async () => {
+  test('git is free only where nothing in its whole space is shut to agents, as its history may hold what moved away', async () => {
     const { protection } = await import('../../protect/src/api')
     protection.set('/s', '/s/Private', 'password')
     repository.at = '/s'
@@ -94,7 +94,7 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     expect(await free('git', ['log', '-p'])).toBe(false)
     expect(await free('pnpm', ['test'])).toBe(true)
     repository.at = '/s/Work'
-    expect(await free('git', ['log', '-p'])).toBe(true)
+    expect(await free('git', ['log', '-p'])).toBe(false)
     repository.at = '/elsewhere'
     expect(await free('git', ['log', '-p'])).toBe(false)
     protection.set('/s', '/s/Private', null)
@@ -122,6 +122,19 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     expect(await free('git', ['status'])).toBe(false)
     protection.set('/s', '/s/Work', null)
     expect(await free('git', ['status'])).toBe(true)
+  })
+
+  test('a program is never free in a folder named by its Windows short name', async () => {
+    const asked = (cwd: string) =>
+      answerTheCrate('agent.program_free', {
+        program: 'cat',
+        args: ['Diary.md'],
+        programs: ['cat'],
+        cwd,
+      })
+    expect(await asked('/s/Work/PRIVAT~1')).toBe(false)
+    expect(await asked('/s/Work/PRIVAT~1.')).toBe(false)
+    expect(await asked('/s/Work/site')).toBe(true)
   })
 
   test('git is never free where a locked note of its repository waits in Recently deleted', async () => {

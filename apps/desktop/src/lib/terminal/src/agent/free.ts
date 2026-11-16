@@ -1,4 +1,4 @@
-import { folderOf, joinPath, onDisk, relativeTo, within } from '../../../platform/src/api'
+import { folderOf, joinPath, namesByShortName, onDisk, within } from '../../../platform/src/api'
 import { buried, protection } from '../../../protect/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { type Os, programOf, runsOnTheList } from './shell-text'
@@ -22,13 +22,12 @@ async function repositoryTop(folder: string, root: string): Promise<string | nul
 }
 
 export async function shutNothingFor(program: string, folder: string, os: Os): Promise<boolean> {
-  if (!protection.agentsMayWithin(folder)) return false
+  if (namesByShortName(folder) || !protection.agentsMayWithin(folder)) return false
   if (programOf(program, os).toLowerCase() !== 'git') return true
   const root = workspace.spaces.find((one) => within(one.root, folder, one.root) !== null)?.root
   const top = root ? await repositoryTop(folder, root) : null
-  if (root === undefined || top === null || !protection.agentsMayWithin(top)) return false
-  const at = top === root ? '' : relativeTo(root, top)
-  return !(await buried()).buriedWithin(root, at)
+  if (root === undefined || top === null || !protection.agentsMayWithin(root)) return false
+  return !(await buried()).buriedWithin(root, '')
 }
 
 export async function runsFree(
