@@ -33,8 +33,10 @@ async function programFree(args: Said): Promise<boolean> {
   const program = said(args, 'program')
   const given = words(args.args)
   const programs = words(args.programs)
+  const cwd = said(args, 'cwd')
   const judge = portOf('terminal.judge')
-  if (!program || !given || !programs || !judge.ok) return false
+  if (!program || !given || !programs || !cwd || !judge.ok) return false
+  if (!protection.agentsMay(cwd)) return false
   return judge.value.runsFree(program, given, programs).catch(() => false)
 }
 

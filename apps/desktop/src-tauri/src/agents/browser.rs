@@ -1345,7 +1345,7 @@ fn kept_from_agents(app: &AppHandle, root: Option<&Path>, path: &Path) -> Result
     Ok(())
 }
 
-fn hidden_within(root: &Path, path: &Path) -> bool {
+pub(super) fn hidden_within(root: &Path, path: &Path) -> bool {
     path.strip_prefix(root).map_or(true, |rest| {
         rest.components()
             .any(|step| step.as_os_str().to_string_lossy().starts_with('.'))

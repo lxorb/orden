@@ -1172,6 +1172,7 @@ pub mod window {
         pub program: String,
         pub args: Vec<String>,
         pub programs: Vec<String>,
+        pub cwd: String,
     }
 
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

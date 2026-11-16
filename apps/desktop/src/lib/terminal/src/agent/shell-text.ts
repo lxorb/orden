@@ -443,6 +443,10 @@ function gitOptionFree(word: string, free: Free): boolean {
   return word.length > 1
 }
 
+function reachesOut(word: string): boolean {
+  return /^([\\/~]|[A-Za-z]:)/.test(word) || word.split(/[\\/]/).includes('..')
+}
+
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
   const leading = at === -1 ? plain : plain.slice(0, at)
@@ -452,6 +456,11 @@ function gitStays(plain: readonly string[]): boolean {
   if (command === undefined) return true
   const free = Object.hasOwn(GIT, command) ? GIT[command] : undefined
   if (!free) return false
+  if (
+    command === 'diff' &&
+    plain.slice(at + 1).some((word) => !word.startsWith('-') && reachesOut(word))
+  )
+    return false
 
   for (const word of plain.slice(at + 1)) {
     if (word === '--') return true

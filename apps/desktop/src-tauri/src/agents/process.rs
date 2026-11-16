@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager as _};
 
 use super::approvals::{self, Asking};
-use super::grants::{Grant, Scope};
+use super::grants::{Grant, Scope, Spaces};
 use super::stop;
 use super::verbs::{Answer, Category, Code, Ended, Process, ProcessDone, ProcessEntry, ProcessOp};
 use super::Caller;
@@ -308,7 +308,7 @@ fn begin(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answe
         },
     };
     if let Caller::Agent(grant) = caller {
-        if let Some(question) = question(app, grant, asked, program) {
+        if let Some(question) = question(app, grant, asked, program, &cwd) {
             return question;
         }
     }
@@ -414,10 +414,17 @@ fn untrusted(done: ProcessDone, program: &str) -> Answer {
     }
 }
 
-fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> Option<Answer> {
+fn question(
+    app: &AppHandle,
+    grant: &Grant,
+    asked: &Process,
+    program: &str,
+    cwd: &Path,
+) -> Option<Answer> {
     if !grant.asks(Category::Terminal)
         || (listed(&grant.programs, program, asked, cfg!(windows))
-            && free_on_the_list(app, grant, program, asked))
+            && runs_in_reach(app, grant, cwd)
+            && free_on_the_list(app, grant, program, asked, cwd))
     {
         return None;
     }
@@ -449,11 +456,37 @@ fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> O
     ))
 }
 
-fn free_on_the_list(app: &AppHandle, grant: &Grant, program: &str, asked: &Process) -> bool {
+fn runs_in_reach(app: &AppHandle, grant: &Grant, cwd: &Path) -> bool {
+    let Ok(root) = crate::paths::spaces_dir(app) else {
+        return false;
+    };
+    match (std::fs::canonicalize(root), std::fs::canonicalize(cwd)) {
+        (Ok(root), Ok(real)) => in_reach(&root, &real, &grant.spaces),
+        _ => false,
+    }
+}
+
+fn in_reach(root: &Path, cwd: &Path, spaces: &Spaces) -> bool {
+    let space = cwd
+        .strip_prefix(root)
+        .ok()
+        .and_then(|rest| rest.components().next())
+        .and_then(|one| one.as_os_str().to_str());
+    !super::browser::hidden_within(root, cwd) && space.is_some_and(|one| spaces.reach(one))
+}
+
+fn free_on_the_list(
+    app: &AppHandle,
+    grant: &Grant,
+    program: &str,
+    asked: &Process,
+    cwd: &Path,
+) -> bool {
     let ask = super::verbs::window::ProgramAsk {
         program: program.to_owned(),
         args: asked.args.clone(),
         programs: grant.programs.clone(),
+        cwd: cwd.to_string_lossy().into_owned(),
     };
     crate::endpoint::ask(
         app,
@@ -755,6 +788,22 @@ pub(super) fn keep_only(connected: &[String]) {
 mod tests {
     use super::*;
     use std::collections::BTreeMap;
+
+    #[test]
+    fn a_listed_program_runs_unasked_only_inside_a_space_the_grant_reaches() {
+        let root = Path::new("/data/Spaces");
+        let work = Spaces::Named(vec!["Work".into()]);
+        assert!(in_reach(root, Path::new("/data/Spaces/Work/site"), &work));
+        assert!(in_reach(root, Path::new("/data/Spaces/Work"), &work));
+        assert!(!in_reach(
+            root,
+            Path::new("/data/Spaces/Private/site"),
+            &work
+        ));
+        assert!(!in_reach(root, Path::new("/data/Spaces/Work/.git"), &work));
+        assert!(!in_reach(root, Path::new("/data/Spaces"), &work));
+        assert!(!in_reach(root, Path::new("/home/me"), &work));
+    }
 
     fn process(op: ProcessOp, program: &str) -> Process {
         Process {
