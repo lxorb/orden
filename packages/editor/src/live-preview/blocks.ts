@@ -557,6 +557,15 @@ function settingsChanged(transaction: Transaction): boolean {
 
 export const openBlocksHere = StateEffect.define()
 
+function swappedIn(transaction: Transaction): boolean {
+  if (!transaction.docChanged) return false
+  let kept = false
+  transaction.changes.iterGaps((_from, _to, length) => {
+    if (length > 0) kept = true
+  })
+  return !kept
+}
+
 export const blockDecorations = StateField.define<Blocks>({
   create: (state) => buildBlocks(state, false),
 
@@ -564,7 +573,8 @@ export const blockDecorations = StateField.define<Blocks>({
     const moved =
       transaction.selection !== undefined &&
       !transaction.startState.selection.eq(transaction.state.selection)
-    const typed = transaction.docChanged && !transaction.annotation(tableWrite)
+    const outside = isExternal(transaction)
+    const typed = transaction.docChanged && !outside && !transaction.annotation(tableWrite)
     const chosen = value.chosen || typed || moved
 
     if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
@@ -573,7 +583,7 @@ export const blockDecorations = StateField.define<Blocks>({
       return buildBlocks(transaction.state, true)
     }
 
-    if (isExternal(transaction)) return buildBlocks(transaction.state, false)
+    if (outside && swappedIn(transaction)) return buildBlocks(transaction.state, false)
 
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
 

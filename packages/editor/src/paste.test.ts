@@ -298,6 +298,12 @@ describe('commas that are not a table', () => {
     expect(delimitedToTable('Hello, world, again\nGoodbye, moon, soon')).toBeNull()
   })
 
+  test('two sentences with a year between commas in each stay prose', () => {
+    const text =
+      'We met on May 5, 2024, at noon, and left.\nThen on June 1, 2024, it rained, again.'
+    expect(delimitedToTable(text)).toBeNull()
+  })
+
   test('data written with a space after its commas is still data', () => {
     expect(delimitedToTable('Name, Age, City\nBob, 3, Paris')).toContain('| Bob | 3 | Paris |')
     expect(delimitedToTable('a,b,c\nd,e,f')).toContain('| d | e | f |')

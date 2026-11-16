@@ -1,4 +1,6 @@
-import type { EditorState } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import type { SyntaxNode } from '@lezer/common'
+import type { EditorState, Line } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { DOCUMENT, PLANE } from '@orden/markdown/icons'
 import {
@@ -31,6 +33,20 @@ const MOST_EMBEDDED = 40_000
 
 const EMBED_MAX = 512
 
+const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter)$/
+
+function standsApart(state: EditorState, line: Line): boolean {
+  if (line.text.trim() === '') return true
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolve(line.from, 1);
+    node;
+    node = node.parent
+  ) {
+    if (OWN_BLOCK.test(node.name)) return node.from <= line.from && node.to >= line.to
+  }
+  return false
+}
+
 export function embedOfBlock(state: EditorState, from: number, to: number): LinkSpan | null {
   if (to - from > EMBED_MAX || state.sliceDoc(from, from + 3) !== '![[') return null
 
@@ -41,9 +57,8 @@ export function embedOfBlock(state: EditorState, from: number, to: number): Link
   if (from !== line.from + (line.text.length - line.text.trimStart().length)) return null
   if (to !== line.from + line.text.trimEnd().length) return null
 
-  const above = line.number > 1 ? doc.line(line.number - 1).text : ''
-  const below = line.number < doc.lines ? doc.line(line.number + 1).text : ''
-  if (above.trim() !== '' || below.trim() !== '') return null
+  if (line.number > 1 && !standsApart(state, doc.line(line.number - 1))) return null
+  if (line.number < doc.lines && !standsApart(state, doc.line(line.number + 1))) return null
 
   if (!text.startsWith('![[') || !text.endsWith(']]')) return null
 
@@ -98,32 +113,55 @@ export class EmbedWidget extends OrdenWidget {
     pressedByKey(caption, () => open())
     frame.append(caption)
 
-    const missing = () => {
+    this.fill(view, frame, body, true)
+    return frame
+  }
+
+  override updateDOM(dom: HTMLElement, view: EditorView, previous: EmbedWidget) {
+    const same =
+      previous.path === this.path &&
+      previous.link.target === this.link.target &&
+      previous.link.heading === this.link.heading &&
+      previous.link.block === this.link.block &&
+      previous.link.alias === this.link.alias
+    const body = dom.querySelector<HTMLElement>('.orden-embed-body')
+    if (!same || !body) return false
+    this.fill(view, dom, body, false)
+    return true
+  }
+
+  private fill(view: EditorView, frame: HTMLElement, body: HTMLElement, first: boolean) {
+    const turn = (filling.get(frame) ?? 0) + 1
+    filling.set(frame, turn)
+    const current = () => body.isConnected && filling.get(frame) === turn
+    const shown = (html: string) => {
+      frame.classList.remove('orden-embed-loading', 'orden-embed-missing')
+      if (body.innerHTML !== html) body.innerHTML = html
+    }
+    const missing = (words = 'Note not found') => {
       frame.classList.remove('orden-embed-loading')
       frame.classList.add('orden-embed-missing')
-      body.textContent = 'Note not found'
+      body.textContent = words
     }
 
     if (this.path === null) {
       missing()
-      return frame
+      return
     }
 
-    if (view.state.facet(noteIndex).locked?.(this.path)) {
-      frame.classList.add('orden-embed-missing')
-      body.textContent = 'Protected'
-      return frame
+    const path = this.path
+    const index = view.state.facet(noteIndex)
+    if (index.locked?.(path)) {
+      missing('Protected')
+      return
     }
 
-    frame.classList.add('orden-embed-loading')
+    if (first) frame.classList.add('orden-embed-loading')
 
-    const showing = () => body.isConnected
-
-    void view.state
-      .facet(noteIndex)
-      .read(this.path)
+    void index
+      .read(path)
       .then(async (source) => {
-        if (!showing()) return
+        if (first ? !body.isConnected : !current()) return
 
         const section = source === null ? null : sectionOf(source, this.link)
         if (section === null) {
@@ -131,23 +169,20 @@ export class EmbedWidget extends OrdenWidget {
           return
         }
 
-        const html = await renderNote(section.slice(0, MOST_EMBEDDED), this.path, view.state)
-        if (!showing()) return
-
-        frame.classList.remove('orden-embed-loading')
-        body.innerHTML = html
+        const html = await renderNote(section.slice(0, MOST_EMBEDDED), path, view.state)
+        if (current()) shown(html)
       })
       .catch(() => {
-        if (showing()) missing()
+        if (current()) missing()
       })
-
-    return frame
   }
 
   override ignoreEvent() {
     return true
   }
 }
+
+const filling = new WeakMap<HTMLElement, number>()
 
 export function embedWidget(
   state: EditorState,

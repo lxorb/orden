@@ -168,6 +168,19 @@ describe('joining lines', () => {
     expect(note(joinLines, '> one|\n> two')).toBe('> one| two')
   })
 
+  test('keeps a number that only looks like a list marker, in a paragraph or an item', () => {
+    expect(note(joinLines, 'The answer is on page|\n42. It says so there.')).toBe(
+      'The answer is on page| 42. It says so there.',
+    )
+    expect(note(joinLines, '- I moved here in|\n  1999. Then I left.')).toBe(
+      '- I moved here in| 1999. Then I left.',
+    )
+  })
+
+  test('keeps a dash that starts a line of code', () => {
+    expect(note(joinLines, '```py\nx = 1 \\|\n- 2\n```')).toBe('```py\nx = 1 \\| - 2\n```')
+  })
+
   test('joins every selected line onto the first', () => {
     expect(note(joinLines, '«a\nb\nc»')).toBe('«a b c»')
   })

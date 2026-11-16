@@ -26,6 +26,11 @@ export function fenceCode(state: EditorState, node: SyntaxNode): string {
 
 const CONTAINER_LEAD = /^(?:[ \t]*>)*[ \t]*/
 const CONTENT_START = /^(?:[ \t]*(?:>|(?:[-*+]|\d+[.)])(?=[ \t])))*[ \t]*/
+const FENCE_LINE = /^(?:[ \t]*(?:>|(?:[-*+]|\d+[.)])(?=[ \t])))*[ \t]*(?:`{3,}|~{3,})/
+
+export function opensFence(text: string): boolean {
+  return FENCE_LINE.test(text)
+}
 
 export function fenceNear(state: EditorState, pos: number): SyntaxNode | null {
   const tree = syntaxTree(state)

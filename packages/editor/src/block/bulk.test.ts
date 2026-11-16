@@ -312,6 +312,20 @@ describe('a link to a block', () => {
     )
   })
 
+  test('a fence written on the item line itself takes it inside the item too', () => {
+    const doc = '- ```js\n  x()\n  ```\n- b\n'
+    const pos = doc.indexOf('js')
+    const { view, said } = viewOf(doc, pos)
+    const [target] = blockTargets(view, pos)
+
+    const top: string[] = []
+    for (let node = syntaxTree(view.state).topNode.firstChild; node; node = node.nextSibling) {
+      top.push(node.name)
+    }
+    expect(top).toEqual(['BulletList'])
+    expect(said()).toBe(`- \`\`\`js\n  x()\n  \`\`\`\n\n  ${target?.slice(1) ?? ''}\n\n- b\n`)
+  })
+
   test('asked twice gives the name it already has', () => {
     const doc = 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n'
     expect(named(doc, 'code')).toEqual({ target: '#^abc123', said: doc })

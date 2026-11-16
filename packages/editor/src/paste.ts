@@ -40,7 +40,8 @@ export function delimitedToTable(text: string): string | null {
   if (
     separator === ',' &&
     lines.some((line) => /,\s/.test(line)) &&
-    !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell))
+    (lines.some((line) => /[.!?]$/.test(line.trimEnd())) ||
+      !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell)))
   ) {
     return null
   }

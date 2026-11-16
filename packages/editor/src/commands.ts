@@ -64,6 +64,29 @@ export function toggleWrap(before: string, after = before): StateCommand {
         }
       }
 
+      const holding = from < to ? runAround(state, from, before, after) : null
+      if (holding && to <= holding.to - after.length) {
+        const words = { from: holding.from + before.length, to: holding.to - after.length }
+        const changes: ChangeSpec[] = []
+        if (from === words.from) changes.push({ from: holding.from, to: words.from })
+        else {
+          let close = from
+          while (close > words.from && /\s/u.test(doc.sliceString(close - 1, close))) close--
+          changes.push({ from: close, insert: after })
+        }
+        if (to === words.to) changes.push({ from: words.to, to: holding.to })
+        else {
+          let open = to
+          while (open < words.to && /\s/u.test(doc.sliceString(open, open + 1))) open++
+          changes.push({ from: open, insert: before })
+        }
+        const set = state.changes(changes)
+        return {
+          changes: set,
+          range: EditorSelection.range(set.mapPos(from, 1), set.mapPos(to, -1)),
+        }
+      }
+
       const text = doc.sliceString(from, to)
 
       const held = italic ? (/^\*+/u.exec(text)?.[0].length ?? 0) : 1
@@ -189,6 +212,8 @@ interface Words {
   text: string
 }
 
+const CALLOUT_MARK = /^\[![^\]\s]+\][+-]?[ \t]*/
+
 const ITEM_HEADING = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(?=#{1,6}(?:[ \t]|$))/
 
 function inItemBody(state: EditorState, line: Line): boolean {
@@ -204,7 +229,9 @@ function inItemBody(state: EditorState, line: Line): boolean {
 }
 
 function wordsOfLine(state: EditorState, line: Line): Words {
-  const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
+  const quoted = (QUOTED.exec(line.text)?.[0] ?? '').length
+  const callout = quoted ? (CALLOUT_MARK.exec(line.text.slice(quoted))?.[0].length ?? 0) : 0
+  const quote = quoted + callout
   const rest = line.text.slice(quote)
   const item = ITEM_HEADING.exec(rest)?.[0].length ?? 0
   const indent = !item && inItemBody(state, line) ? rest.length - rest.trimStart().length : 0
@@ -890,9 +917,8 @@ export const continueInCode: StateCommand = ({ state, dispatch }) => {
     const line = state.doc.lineAt(range.head)
     const own = fenceLine(line.text)
     const first = line.number === opener.number
-    const pad = first
-      ? heldIn(opener.text.slice(0, (code?.from ?? opener.from) - opener.from))
-      : own.pad
+    const held = heldIn(opener.text.slice(0, (code?.from ?? opener.from) - opener.from))
+    const pad = first || line.text.trim() === '' ? held : own.pad
     const indent = first ? '' : (/^[ \t]*/.exec(line.text.slice(own.pad.length))?.[0] ?? '')
     const insert = `\n${pad}${indent}`
 

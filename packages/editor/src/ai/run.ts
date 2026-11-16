@@ -7,7 +7,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { external } from '../external'
-import { fenceCode, fenceLanguage, fenceLead, fenceNear } from '../fence'
+import { fenceCode, fenceLanguage, fenceLead, fenceNear, opensFence } from '../fence'
 import { documentOf } from '../shared'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
@@ -61,8 +61,6 @@ const beganAnswer = StateEffect.define<{ id: number; body: number }>()
 const wroteAnswer = StateEffect.define<{ id: number; at: number }>()
 const closeAsk = StateEffect.define<number>()
 
-const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
-
 const asks = StateField.define<readonly AiRun[]>({
   create: () => [],
 
@@ -79,7 +77,7 @@ const asks = StateField.define<readonly AiRun[]>({
           at: run.at === null ? null : transaction.changes.mapPos(run.at, 1),
         }))
         .filter((run) => {
-          const alive = run.from <= doc.length && FENCE.test(doc.lineAt(run.from).text)
+          const alive = run.from <= doc.length && opensFence(doc.lineAt(run.from).text)
           if (!alive) run.stop()
           return alive
         })

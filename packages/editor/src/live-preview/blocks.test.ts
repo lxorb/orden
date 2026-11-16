@@ -120,7 +120,7 @@ describe('block decorations', () => {
   test('nor by the caret that arrives with a note being opened', () => {
     const opened = parsed(
       state('x\n').update({
-        changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+        changes: { from: 0, to: 2, insert: `${TABLE}\n\ntail` },
         annotations: external.of(true),
       }).state,
     )
@@ -476,7 +476,7 @@ describe('a selection dragged over a rendered block', () => {
     const held = state('x\n', 0).update({ effects: setDragging.of(true) }).state
     const opened = parsed(
       held.update({
-        changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+        changes: { from: 0, to: 2, insert: `${TABLE}\n\ntail` },
         annotations: external.of(true),
       }).state,
     )

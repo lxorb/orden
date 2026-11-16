@@ -236,6 +236,19 @@ export const deleteLine: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
+const MARKERS = new Set(['QuoteMark', 'ListMark', 'TaskMarker', 'HeaderMark'])
+
+function leadOf(state: EditorState, line: Line): number {
+  const tree = syntaxTree(state)
+  let at = line.from
+  for (;;) {
+    at += /^[ \t]*/.exec(state.sliceDoc(at, line.to))?.[0].length ?? 0
+    const mark = tree.resolveInner(at, 1)
+    if (at >= line.to || mark.from !== at || !MARKERS.has(mark.name)) return at - line.from
+    at = mark.to
+  }
+}
+
 export const joinLines: StateCommand = ({ state, dispatch }) => {
   const doc = state.doc
   const changes: ChangeSpec[] = []
@@ -246,7 +259,7 @@ export const joinLines: StateCommand = ({ state, dispatch }) => {
     for (let number = first; number < end; number++) {
       const line = doc.line(number)
       const next = doc.line(number + 1)
-      const lead = LEAD.exec(next.text)?.[0].length ?? 0
+      const lead = leadOf(state, next)
       const spaced = /\s$/.test(line.text) || next.text.length === lead || !line.text ? '' : ' '
       changes.push({ from: line.to, to: next.from + lead, insert: spaced })
       carets.push(line.to)

@@ -130,6 +130,8 @@ export function highlightAcross(colour: HighlightColour): StateCommand {
 
 const MARKS = new Set(['EmphasisMark', 'StrikethroughMark', 'HighlightMark'])
 
+const RUNS = new Set(['Emphasis', 'StrongEmphasis', 'Strikethrough', 'Highlight'])
+
 function colourAfter(state: EditorState, mark: SyntaxNode): number {
   const highlight = mark.parent
   if (mark.name !== 'HighlightMark' || highlight?.name !== 'Highlight') return 0
@@ -137,51 +139,77 @@ function colourAfter(state: EditorState, mark: SyntaxNode): number {
   return readHighlight(state.doc.sliceString(mark.to, highlight.to - mark.to + mark.from)).from
 }
 
-function markRanges(state: EditorState, from: number, to: number): { from: number; to: number }[] {
-  const found: { from: number; to: number }[] = []
-  const take = (start: number, end: number) => {
-    const clipped = { from: Math.max(from, start), to: Math.min(to, end) }
-    if (clipped.to > clipped.from) found.push(clipped)
-  }
+interface Run {
+  open: Part
+  close: Part
+}
 
+function codeRun(state: EditorState, code: SyntaxNode): Run {
+  const said = state.doc.sliceString(code.from, code.to)
+  const opening = /^`+ ?/u.exec(said)?.[0].length ?? 0
+  const closing = / ?`+$/u.exec(said.slice(opening))?.[0].length ?? 0
+  return {
+    open: { from: code.from, to: code.from + opening },
+    close: { from: code.to - closing, to: code.to },
+  }
+}
+
+function runsOver(state: EditorState, from: number, to: number): Run[] {
+  const runs: Run[] = []
   syntaxTree(state).iterate({
     from,
     to,
     enter: (node) => {
-      if (MARKS.has(node.name)) take(node.from, node.to + colourAfter(state, node.node))
-      if (node.name !== 'InlineCode') return true
+      if (node.to <= from || node.from >= to) return false
+      if (node.name === 'InlineCode') {
+        runs.push(codeRun(state, node.node))
+        return false
+      }
 
-      const said = state.doc.sliceString(node.from, node.to)
-      const opening = /^`+ ?/u.exec(said)?.[0].length ?? 0
-      const closing = / ?`+$/u.exec(said.slice(opening))?.[0].length ?? 0
-      take(node.from, node.from + opening)
-      take(node.to - closing, node.to)
-      return false
+      const open = node.node.firstChild
+      const close = node.node.lastChild
+      if (RUNS.has(node.name) && open && close && open !== close && MARKS.has(open.name)) {
+        runs.push({
+          open: { from: open.from, to: open.to + colourAfter(state, open) },
+          close: { from: close.from, to: close.to },
+        })
+      }
+      return true
     },
   })
 
-  return found
+  return runs
 }
 
-function clearedOf(state: EditorState, from: number, to: number): string {
-  let out = ''
-  let at = from
-  for (const mark of markRanges(state, from, to)) {
-    if (mark.from < at) continue
-    out += state.doc.sliceString(at, mark.from)
-    at = mark.to
+function clearing(state: EditorState, from: number, to: number): ChangeSpec[] {
+  const closings: ChangeSpec[] = []
+  const openings: ChangeSpec[] = []
+  const taken: ChangeSpec[] = []
+
+  for (const { open, close } of runsOver(state, from, to)) {
+    const before = open.to + state.sliceDoc(open.to, Math.max(open.to, from)).trimEnd().length
+    const after =
+      close.from - state.sliceDoc(Math.min(to, close.from), close.from).trimStart().length
+
+    if (before > open.to)
+      closings.unshift({ from: before, insert: state.sliceDoc(close.from, close.to) })
+    else taken.push(open)
+    if (after < close.from)
+      openings.push({ from: after, insert: state.sliceDoc(open.from, open.to) })
+    else taken.push(close)
   }
-  return out + state.doc.sliceString(at, to)
+
+  return [...closings, ...taken, ...openings]
 }
 
 export const clearFormatting: StateCommand = ({ state, dispatch }) => {
   const update = state.changeByRange((range) => {
     if (range.empty) return { range }
 
-    const text = clearedOf(state, range.from, range.to)
+    const changes = state.changes(clearing(state, range.from, range.to))
     return {
-      changes: { from: range.from, to: range.to, insert: text },
-      range: EditorSelection.range(range.from, range.from + text.length),
+      changes,
+      range: EditorSelection.range(changes.mapPos(range.from, 1), changes.mapPos(range.to, -1)),
     }
   })
 

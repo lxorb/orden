@@ -150,9 +150,11 @@ class Decorator {
         return this.htmlImage(node)
       case 'Comment':
       case 'CommentBlock':
-      case 'PercentComment':
-        this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
+      case 'PercentComment': {
+        const to = this.commentEnd(node)
+        this.conceal(node.from, to, overlaps(this.state, node.from, to))
         return false
+      }
       case 'Emoji':
         return this.emoji(node)
       case 'InlineMath':
@@ -382,7 +384,22 @@ class Decorator {
     this.conceal(open.to, open.to + from, overlaps(this.state, node.from, node.to))
   }
 
-  private inlineWidget(node: SyntaxNode, widget: WidgetType, show: boolean) {
+  private commentEnd(node: SyntaxNode): number {
+    if (node.name !== 'CommentBlock') return node.to
+    const text = this.state.doc.sliceString(node.from, node.to)
+    const closed = text.indexOf('-->')
+    return closed < 0 ? node.to : node.from + closed + 3
+  }
+
+  private iframeEnd(node: SyntaxNode): number {
+    const text = this.state.doc.sliceString(node.from, node.to)
+    const closed = /<\/iframe\s*>/i.exec(text)
+    if (closed) return node.from + closed.index + closed[0].length
+    const tag = /^<iframe\b[^>]*>/i.exec(text)
+    return tag ? node.from + tag[0].length : node.to
+  }
+
+  private inlineWidget(node: { from: number; to: number }, widget: WidgetType, show: boolean) {
     if (show || node.from >= node.to || this.isClaimed(node.from, node.to)) return
     this.hidden.push(Decoration.replace({ widget }).range(node.from, node.to))
   }
@@ -584,7 +601,8 @@ class Decorator {
       const closer = node.name === 'HTMLTag' ? this.closingIframe(node) : null
       if (overlaps(this.state, node.from, closer?.to ?? node.to)) return true
 
-      this.inlineWidget(node, new WebEmbedWidget(framed), false)
+      const end = node.name === 'HTMLBlock' ? this.iframeEnd(node) : node.to
+      this.inlineWidget({ from: node.from, to: end }, new WebEmbedWidget(framed), false)
       if (closer) {
         this.conceal(closer.from, closer.to, false)
         this.claimed.push({ from: closer.from, to: closer.to })

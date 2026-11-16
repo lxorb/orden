@@ -134,7 +134,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
 function itemIndent(state: EditorState, span: BlockSpan, last: Line): string {
   const item = [...enclosing(syntaxTree(state).resolveInner(last.to, -1))].find(
-    (node) => node.name === 'ListItem' && node.from < span.from,
+    (node) => node.name === 'ListItem' && state.doc.lineAt(node.from).from <= span.from,
   )
   if (!item) return ''
 

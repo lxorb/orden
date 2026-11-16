@@ -1,4 +1,5 @@
-import { EditorSelection, type StateCommand } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import {
   HIGHLIGHT_COLOURS,
   type HighlightColour,
@@ -8,6 +9,7 @@ import {
 } from '@orden/markdown/highlights'
 import { inside, spansLines } from './commands'
 import { highlightAcross } from './line-door'
+import { enclosingNamed } from './nodes'
 
 const MARK = '=='
 
@@ -47,6 +49,19 @@ function highlighted(
   return null
 }
 
+function runAt(
+  state: EditorState,
+  pos: number,
+): { from: number; to: number; inner: string } | null {
+  const run = enclosingNamed(syntaxTree(state).resolveInner(pos, 0), 'Highlight')
+  if (!run || pos < run.from + MARK.length || pos > run.to - MARK.length) return null
+  return {
+    from: run.from,
+    to: run.to,
+    inner: state.doc.sliceString(run.from + MARK.length, run.to - MARK.length),
+  }
+}
+
 function colourOf(inner: string): { colour: HighlightColour; from: number } {
   const bare = HIGHLIGHT_COLOURS.find(
     (colour) => colour.emoji !== null && inner.trimEnd() === colour.emoji,
@@ -63,16 +78,20 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
 
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
-      const already = highlighted(state.doc, from, to)
+      const already = highlighted(state.doc, from, to) ?? (from === to ? runAt(state, from) : null)
 
       if (already) {
         const { colour: had, from: at } = colourOf(already.inner)
         const words = already.inner.slice(at)
 
         if (had.emoji === colour.emoji) {
+          const start = already.from + MARK.length + at
           return {
             changes: { from: already.from, to: already.to, insert: words },
-            range: EditorSelection.range(already.from, already.from + words.length),
+            range:
+              from === to && from >= start
+                ? EditorSelection.cursor(already.from + from - start)
+                : EditorSelection.range(already.from, already.from + words.length),
           }
         }
 
