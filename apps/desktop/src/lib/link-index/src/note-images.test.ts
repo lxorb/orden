@@ -5,6 +5,8 @@ const found: Record<string, string> = {
   'deep.png': 'notes/pictures/deep.png',
   'pictures/deep.png': 'notes/pictures/deep.png',
   'assets/shot.png': 'assets/shot.png',
+  'Pasted image 1.png': 'attachments/Pasted image 1.png',
+  'attachments/Pasted image 1.png': 'attachments/Pasted image 1.png',
 }
 
 const held = new Set(['/Work/assets/shot.png', '/Work/notes/pictures/deep.png'])
@@ -38,6 +40,15 @@ describe('a picture a note names', () => {
       '/asset/Work/notes/pictures/deep.png',
     )
     expect(notePicture('assets/shot.png', '/Work/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
+  })
+
+  test('a name written with escapes, as a markdown link writes it, is looked for as it reads', () => {
+    expect(notePicture('Pasted%20image%201.png', '/Work/notes/n.md', '')).toBe(
+      '/asset/Work/attachments/Pasted%20image%201.png',
+    )
+    expect(notePicture('attachments/Pasted%20image%201.png', '/Work/notes/n.md', '')).toBe(
+      '/asset/Work/attachments/Pasted%20image%201.png',
+    )
   })
 
   test('a name nothing in the space answers to is still tried beside the note', () => {
