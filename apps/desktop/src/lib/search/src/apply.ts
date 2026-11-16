@@ -42,6 +42,24 @@ function linesNow(body: string, hits: readonly Hit[]): Set<number> {
   return out
 }
 
+function phrased(query: Query): Query {
+  if (query.kind === 'scope') return { ...query, of: phrased(query.of) }
+  if (query.kind !== 'all') return query
+
+  const words = query.of.filter((one) => one.kind === 'text')
+  const first = words[0]
+  if (!first || words.length < 2 || words.some((one) => one.fold !== first.fold)) {
+    return { ...query, of: query.of.map(phrased) }
+  }
+  const phrase: Query = { ...first, text: words.map((one) => one.text).join(' ') }
+  return {
+    ...query,
+    of: query.of.flatMap((one) =>
+      one === first ? [phrase] : one.kind === 'text' ? [] : [phrased(one)],
+    ),
+  }
+}
+
 export async function changesFor(
   query: Query,
   hits: readonly Hit[],
@@ -49,7 +67,7 @@ export async function changesFor(
   root: string,
   textOf: (path: string) => Promise<string | null>,
 ): Promise<Change[]> {
-  const matcher = new Matcher(query)
+  const matcher = new Matcher(phrased(query))
   const out: Change[] = []
 
   for (const [path, held] of hitsPerNote(hits)) {

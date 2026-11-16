@@ -11,6 +11,7 @@ const NOTES: Record<string, string> = {
   '/space/Three.md': 'Doe, John\nRoe, Jane\n',
   '/space/Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev\r\nOrden-Icon=star\r\n',
   '/space/Moved.md': 'alpha new\nalpha one\nalpha two\n',
+  '/space/Plan.md': 'The quarterly plan is due.\nA plan, quarterly or not.\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
@@ -27,6 +28,22 @@ const changes = (query: string, hits: Hit[], replacement: string) =>
   changesFor(parseQuery(query), hits, replacement, ROOT, textOf)
 
 describe('what a replacement would do', () => {
+  test('replaces several words typed together as the words they make, not one by one', async () => {
+    const made = await changes(
+      'quarterly plan',
+      [hit('/space/Plan.md', 0), hit('/space/Plan.md', 1)],
+      'annual plan',
+    )
+
+    expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
+  })
+
+  test('and keeps the rest of the query as it was', async () => {
+    const made = await changes('plan -draft', [hit('/space/Plan.md', 0)], 'road')
+
+    expect(made[0]?.after).toBe('The quarterly road is due.\nA plan, quarterly or not.\n')
+  })
+
   test('never touches a file that is not a note', async () => {
     const made = await changes('star', [hit('/space/Docs.url', 2)], 'moon')
 
