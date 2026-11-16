@@ -90,6 +90,7 @@ function diskOf(telling: Telling): Disk {
       await telling.gone(path, kind, back)
     },
     mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
+    holds,
     exists: thereOrUnsure,
     evicted: async (path) => (await iCloud()).evictedHere(path),
   }
@@ -104,6 +105,22 @@ interface Listed {
   is_dir: boolean
   unlisted?: boolean
   children?: Listed[]
+}
+
+async function holds(folder: string): Promise<readonly string[] | null> {
+  const tree = await invoke<Listed>('read_tree', {
+    root: folder,
+    options: { showHidden: true, papers: true, every: true },
+    ...raw(),
+  }).catch(() => null)
+  if (!tree || tree.unlisted) return null
+  const out: string[] = []
+  const walk = (node: Listed): boolean =>
+    (node.children ?? []).every((child) => {
+      out.push(child.path)
+      return !child.unlisted && (!child.is_dir || walk(child))
+    })
+  return walk(tree) ? out : null
 }
 
 async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {

@@ -15,6 +15,7 @@ export interface Disk {
   mkdir(path: string): Promise<void>
   exists(path: string): Promise<boolean>
   evicted(path: string): Promise<boolean>
+  holds?(folder: string): Promise<readonly string[] | null>
 }
 
 export interface Account {

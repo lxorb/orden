@@ -604,6 +604,26 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     }
   }
 
+  const slashed = (path: string) => space.key(path.replace(/\\/g, '/'))
+  const strays = async (folder: string): Promise<boolean> => {
+    if (!how.disk.holds) return false
+    const there = await how.disk.holds(full(folder))
+    if (there === null) return true
+    const tracked = new Set(space.inside(folder).map((one) => slashed(full(one.local_path))))
+    return there.some((one) => !tracked.has(slashed(one)))
+  }
+  const clears = async (folder: string) => {
+    const tracked = space
+      .inside(folder)
+      .filter((one) => one.local_path !== folder && !hiddenPath(one.local_path))
+      .sort((a, b) => depth(b.local_path) - depth(a.local_path))
+    for (const one of tracked) {
+      if (!(await how.disk.exists(full(one.local_path)))) continue
+      if (one.kind !== 'folder') await removes(one.local_path, 'file')
+      else if (!(await strays(one.local_path))) await removes(one.local_path, 'folder')
+    }
+  }
+
   const busy = how.busy ?? (() => false)
   const loose = space.looseIds()
   const looked = (): EntryRow[] => {
@@ -623,7 +643,8 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     const mine = inForeignCopy(entry.local_path) || hiddenPath(entry.local_path)
     if (!mine && (await how.disk.exists(full(entry.local_path)))) {
       const kind = entry.kind === 'folder' ? 'folder' : 'file'
-      if (!(await removes(entry.local_path, kind))) continue
+      if (kind === 'folder' && (await strays(entry.local_path))) await clears(entry.local_path)
+      else if (!(await removes(entry.local_path, kind))) continue
     }
     if (entry.kind === 'folder') forgetUnder(space, entry.local_path, moved, how)
     entry.local_path = ''

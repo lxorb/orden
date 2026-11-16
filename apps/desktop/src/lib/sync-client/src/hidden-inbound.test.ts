@@ -106,3 +106,37 @@ test('a hidden name from another device is never made here, and never takes or r
   await engine.pass(SPACE)
   expect(disk.files.has(`${ROOT}/.localonly/private.md`)).toBe(true)
 })
+
+test('a folder another device deletes keeps what this one holds in it that never synced', async () => {
+  const account = new ReferenceAccount(new Clock(), SEEDED)
+  const { disk, engine } = await here(account)
+  await account.handle(
+    'dX',
+    'ops',
+    frame({
+      ops: [
+        { op: 'o1', t: 'mkdir', id: 'code1', parent: null, name: 'Code', seen: 0 },
+        { op: 'o2', t: 'mkdir', id: 'sub1', parent: 'code1', name: 'Sub', seen: 0 },
+        { op: 'o3', t: 'mkdir', id: 'gone1', parent: null, name: 'Gone', seen: 0 },
+      ],
+    }),
+  )
+  await engine.pass(SPACE)
+  expect(disk.folders.has(`${ROOT}/Code/Sub`)).toBe(true)
+  disk.files.set(`${ROOT}/Code/.git/HEAD`, 'ref: refs/heads/main')
+
+  await account.handle(
+    'dX',
+    'ops',
+    frame({
+      ops: [
+        { op: 'o4', t: 'delete', id: 'code1', seen: Number.MAX_SAFE_INTEGER },
+        { op: 'o5', t: 'delete', id: 'gone1', seen: Number.MAX_SAFE_INTEGER },
+      ],
+    }),
+  )
+  await engine.pass(SPACE)
+  expect(disk.files.get(`${ROOT}/Code/.git/HEAD`)).toBe('ref: refs/heads/main')
+  expect(disk.folders.has(`${ROOT}/Code/Sub`)).toBe(false)
+  expect(disk.folders.has(`${ROOT}/Gone`)).toBe(false)
+})
