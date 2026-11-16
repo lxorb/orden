@@ -444,8 +444,11 @@ function gitOptionFree(word: string, free: Free): boolean {
 }
 
 function reachesOut(word: string): boolean {
-  return /^([\\/~]|[A-Za-z]:)/.test(word) || word.split(/[\\/]/).includes('..')
+  return /^([\\/~]|[A-Za-z]:|file:)/i.test(word) || word.split(/[\\/=]/).includes('..')
 }
+
+const anyReachesOut = (words: readonly string[]) =>
+  words.some((word) => !word.startsWith('-') && reachesOut(word))
 
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
@@ -456,11 +459,7 @@ function gitStays(plain: readonly string[]): boolean {
   if (command === undefined) return true
   const free = Object.hasOwn(GIT, command) ? GIT[command] : undefined
   if (!free) return false
-  if (
-    command === 'diff' &&
-    plain.slice(at + 1).some((word) => !word.startsWith('-') && reachesOut(word))
-  )
-    return false
+  if (anyReachesOut(plain.slice(at + 1))) return false
 
   for (const word of plain.slice(at + 1)) {
     if (word === '--') return true
@@ -540,6 +539,8 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
         if (at === plain.length) return false
       }
       if (/\s/.test(word) || /\s/.test(plain[at] ?? '')) return false
+      const value = word.includes('=') ? word.slice(word.indexOf('=') + 1) : (plain[at] ?? '')
+      if (reachesOut(value)) return false
       continue
     }
     return false
@@ -553,6 +554,8 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (command !== undefined) {
     if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
   }
+
+  if (anyReachesOut(plain.slice(at + 1))) return false
 
   const end = plain.indexOf('--', at)
   for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {

@@ -45,6 +45,28 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     ).toBe(false)
   })
 
+  test('a folder or package outside the working folder is never free', async () => {
+    expect(await free('pnpm', ['-C', '/s/Other', 'run', 'build'])).toBe(false)
+    expect(await free('pnpm', ['--dir', '/home/me/proj', 'test'])).toBe(false)
+    expect(await free('npm', ['--prefix', '/home/me/app', 'run', 'deploy'])).toBe(false)
+    expect(await free('npm', ['--prefix=/home/me/app', 'run', 'deploy'])).toBe(false)
+    expect(await free('pnpm', ['add', '../../Other/package'])).toBe(false)
+    expect(await free('git', ['clone', '/s/Other', 'copy'])).toBe(false)
+    expect(await free('git', ['fetch', '/s/Other', 'main'])).toBe(false)
+    expect(await free('git', ['fetch', 'file:///s/Other', 'main'])).toBe(false)
+    expect(await free('git', ['worktree', 'add', '/home/me/elsewhere'])).toBe(false)
+    expect(await free('git', ['push', '/home/me/repo', 'HEAD'])).toBe(false)
+    expect(await free('git', ['push', 'origin', 'main'])).toBe(true)
+    expect(await free('pnpm', ['--filter', 'web', 'test'])).toBe(true)
+  })
+
+  test('a program run in a folder holding a note shut to agents is never free', async () => {
+    const { protection } = await import('../../protect/src/api')
+    protection.set('/s', '/s/Work/site/Private', 'password')
+    expect(await free('git', ['status'])).toBe(false)
+    protection.set('/s', '/s/Work/site/Private', null)
+  })
+
   test('a program run in a folder shut to agents is never free', async () => {
     const { protection } = await import('../../protect/src/api')
     protection.set('/s', '/s/Work', 'password')

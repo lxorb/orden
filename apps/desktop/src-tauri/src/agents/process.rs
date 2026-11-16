@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager as _};
 
 use super::approvals::{self, Asking};
-use super::grants::{Grant, Scope, Spaces};
+use super::grants::{Grant, Mode, Scope, Spaces};
 use super::stop;
 use super::verbs::{Answer, Category, Code, Ended, Process, ProcessDone, ProcessEntry, ProcessOp};
 use super::Caller;
@@ -414,6 +414,16 @@ fn untrusted(done: ProcessDone, program: &str) -> Answer {
     }
 }
 
+fn asked_as(grant: &Grant, free: bool) -> Option<Category> {
+    if !free && grant.asks(Category::Terminal) {
+        Some(Category::Terminal)
+    } else if grant.mode == Mode::Confirm && grant.asks(Category::Writing) {
+        Some(Category::Writing)
+    } else {
+        None
+    }
+}
+
 fn question(
     app: &AppHandle,
     grant: &Grant,
@@ -421,13 +431,11 @@ fn question(
     program: &str,
     cwd: &Path,
 ) -> Option<Answer> {
-    if !grant.asks(Category::Terminal)
-        || (listed(&grant.programs, program, asked, cfg!(windows))
-            && runs_in_reach(app, grant, cwd)
-            && free_on_the_list(app, grant, program, asked, cwd))
-    {
-        return None;
-    }
+    asked_as(grant, false)?;
+    let free = listed(&grant.programs, program, asked, cfg!(windows))
+        && runs_in_reach(app, grant, cwd)
+        && free_on_the_list(app, grant, program, asked, cwd);
+    let category = asked_as(grant, free)?;
     let key = approvals::key(
         "process",
         None,
@@ -447,7 +455,7 @@ fn question(
         Asking {
             agent: &grant.id,
             name: &grant.name,
-            category: Category::Terminal,
+            category,
             summary: summary(program, asked),
             site: None,
             tab: None,
@@ -788,6 +796,22 @@ pub(super) fn keep_only(connected: &[String]) {
 mod tests {
     use super::*;
     use std::collections::BTreeMap;
+
+    #[test]
+    fn a_free_run_still_asks_as_writing_when_every_change_is_confirmed() {
+        let mut grant = Grant::own("a".into(), "A");
+        assert_eq!(asked_as(&grant, false), Some(Category::Terminal));
+        assert_eq!(asked_as(&grant, true), None);
+        grant.mode = Mode::Confirm;
+        assert_eq!(asked_as(&grant, true), Some(Category::Writing));
+        grant.asks.insert(Category::Terminal, false);
+        assert_eq!(asked_as(&grant, false), Some(Category::Writing));
+        grant.asks.insert(Category::Writing, false);
+        assert_eq!(asked_as(&grant, false), None);
+        grant.mode = Mode::Autonomous;
+        grant.asks.clear();
+        assert_eq!(asked_as(&grant, false), None);
+    }
 
     #[test]
     fn a_listed_program_runs_unasked_only_inside_a_space_the_grant_reaches() {

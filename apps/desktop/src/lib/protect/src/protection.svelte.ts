@@ -378,6 +378,15 @@ export class Protection {
     return held
   }
 
+  agentsMayWithin(path: string): boolean {
+    if (!this.agentsMay(path)) return false
+    return Object.keys(this.spaces).every(
+      (root) =>
+        within(root, path, root) === null ||
+        this.heldWithin(root, path).every((key) => this.agentsMay(insideSpace(root, key))),
+    )
+  }
+
   private insideCopiesKept(path: string, root: string): void {
     if (!this.any || copiedFrom(path) === null) return
     const own = this.ways(root)

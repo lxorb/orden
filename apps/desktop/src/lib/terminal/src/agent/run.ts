@@ -17,6 +17,7 @@ import {
   stopSignal,
 } from '../../../agent-verbs/src/api'
 import { MOST_LINE, onTheList, osOf, plainOf, startsOnlyOne, Tail } from './shell-text'
+import { protection } from '../../../protect/src/api'
 
 const WAIT = 60_000
 const MOST_WAIT = 600_000
@@ -47,7 +48,10 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const shell = shells.chosen
   if (!shell) throw new Refused('unsupported_on_this_engine', 'there is no shell on this machine')
 
-  const allowed = startsOnlyOne(command) && onTheList(command, agent.programs, osOf(platform()))
+  const allowed =
+    startsOnlyOne(command) &&
+    onTheList(command, agent.programs, osOf(platform())) &&
+    protection.agentsMayWithin(folder)
   const question = await asked(call, allowed ? null : 'terminal', command)
   if (question) return question
 
