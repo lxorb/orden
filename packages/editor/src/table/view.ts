@@ -9,6 +9,7 @@ import {
   Transaction,
 } from '@codemirror/state'
 import type { Command, EditorView } from '@codemirror/view'
+import { linkOpener, modifier } from '../links'
 import { redoEdit, undoEdit } from '../shared'
 import {
   attached,
@@ -737,6 +738,18 @@ export class TableView {
     return rows - 1
   }
 
+  private followedLink(event: MouseEvent): boolean {
+    const asked =
+      event.button === 1 || (event.button === 0 && (modifier(event) || this.editor.state.readOnly))
+    const target = event.target instanceof Element ? event.target.closest('a[href]') : null
+    const href = target?.getAttribute('href')
+    if (!asked || !href) return false
+
+    event.preventDefault()
+    this.editor.state.facet(linkOpener)(href, event)
+    return true
+  }
+
   private cell(text: string, at: CellAddress, tag: 'th' | 'td', editing: boolean) {
     const cell = element(tag)
     cell.contentEditable = this.editable ? 'true' : 'false'
@@ -751,7 +764,12 @@ export class TableView {
     const align = this.model.align[at.column]
     if (align) cell.style.textAlign = align
 
+    cell.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('a[href]')) event.preventDefault()
+    })
+
     cell.addEventListener('mousedown', (event) => {
+      if (this.followedLink(event)) return
       if (this.editor.state.readOnly) return
       if (event.button !== 0 || document.activeElement === cell) return
       event.preventDefault()

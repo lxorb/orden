@@ -210,6 +210,8 @@ const LISTED = new Set<BlockShape>(['bullet', 'numbered', 'task'])
 
 const INDENT = /^[ \t]*/
 
+const BARE_QUOTE = /^[ \t]*(?:>[ \t]*)+$/
+
 const QUOTE_MARKS = /^(?:[ \t]*>)*/
 
 const LINE_LEAD = /^(?:[ \t]*>)*[ \t]*/
@@ -268,7 +270,13 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       }
 
       const listed = startsAnItem(view.state, line)
-      if (verbatim.has(number) || !wordsOf(line.text, listed, quoted).words.trim()) continue
+      if (verbatim.has(number)) continue
+      if (!wordsOf(line.text, listed, quoted).words.trim()) {
+        if (!quoted && BARE_QUOTE.test(line.text)) {
+          changes.push({ from: line.from, to: line.to, insert: '' })
+        }
+        continue
+      }
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
       const text =
