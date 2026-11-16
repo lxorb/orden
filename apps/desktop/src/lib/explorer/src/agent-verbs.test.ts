@@ -200,3 +200,17 @@ describe("an agent's file explorer", () => {
     ])
   })
 })
+
+describe('a path that steps aside with . or ..', () => {
+  test('is never carried, so nothing leaves the spaces by way of a folder outside them', async () => {
+    for (const paths of [
+      ['../Orden/Work/Private/Diary.md'],
+      ['/home/me/Downloads/../Orden/Work/Private/Diary.md'],
+      ['/home/me/Downloads/./a.zip'],
+    ]) {
+      const answer = await call({ op: 'copy', tab: 'e1', paths, to: '~/Downloads' }, 'autonomous')
+      expect(answer).toMatchObject({ code: 'bad_arguments' })
+    }
+    expect(carried).toEqual([])
+  })
+})

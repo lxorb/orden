@@ -174,8 +174,17 @@ async function looked(call: Call, folder: string): Promise<string | AgentAnswer>
   return listing.path
 }
 
+function stepsAside(path: string): boolean {
+  return (
+    /^\\\\[?.]\\/.test(path) || path.split(/[\\/]/).some((step) => step === '.' || step === '..')
+  )
+}
+
 async function absolute(asked: string): Promise<string> {
   const said = asked.trim()
+  if (stepsAside(said)) {
+    throw new Refused('bad_arguments', `${asked} steps aside with . or ..: say the path itself`)
+  }
   if (said === '~' || /^~[\\/]/.test(said)) {
     const { places } = await import('./places.svelte')
     const home = await places.home()
@@ -216,9 +225,11 @@ async function pathsOf(call: Call, view: View): Promise<string[]> {
   }
   const out: string[] = []
   for (const one of raw) {
-    out.push(
-      /^(~|\/|[A-Za-z]:[\\/]|\\\\)/.test(one.trim()) ? await absolute(one) : view.pathOf(one),
-    )
+    const named = one.trim()
+    if (/^(~|\/|[A-Za-z]:[\\/]|\\\\)/.test(named)) out.push(await absolute(one))
+    else if (/[\\/]/.test(named) || named === '.' || named === '..') {
+      throw new Refused('bad_arguments', `${one} is not a name in the tab’s folder`)
+    } else out.push(view.pathOf(one))
   }
   return out
 }
