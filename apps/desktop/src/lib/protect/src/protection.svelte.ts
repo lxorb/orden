@@ -130,6 +130,20 @@ function copiedFrom(path: string): string | null {
     .join('')
 }
 
+function holderOf(path: string): string | null {
+  return /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
+}
+
+function originalsOf(path: string): string[] {
+  const copy = copiedFrom(path)
+  const found = [copy, holderOf(path), copy === null ? null : holderOf(copy)]
+  return [...new Set(found.filter((one) => one !== null))]
+}
+
+function paperMoving(from: string, to: string): [string, string] | null {
+  return /\.pages$/i.test(from) && /\.pages$/i.test(to) ? [`${from}.pdf`, `${to}.pdf`] : null
+}
+
 function covers(key: string, at: string, root: string): boolean {
   return key === SPACE || within(key, at, root) !== null
 }
@@ -139,6 +153,25 @@ export class Protection {
   private revision = $state(0)
   private hashed = $state<Hashed | null>(hashedOf(stored(PASSWORD_KEY)))
   private owner: string | null = storedText(OWNER_KEY)
+  private heard = storedText(STORAGE_KEY)
+
+  constructor() {
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
+    window.addEventListener('storage', (event) => {
+      const key = event.key
+      if (key === STORAGE_KEY || key === null) this.reread()
+      if (key === PASSWORD_KEY || key === null) this.hashed = hashedOf(stored(PASSWORD_KEY))
+      if (key === OWNER_KEY || key === null) this.owner = storedText(OWNER_KEY)
+    })
+  }
+
+  private reread(): void {
+    const text = storedText(STORAGE_KEY)
+    if (text === this.heard) return
+    this.heard = text
+    this.spaces = read()
+    this.revision++
+  }
 
   get any(): boolean {
     return Object.values(this.spaces).some((one) => Object.keys(one.ways).length > 0)
@@ -179,8 +212,7 @@ export class Protection {
     if (!path) return false
     const shut = this.shutNow()
     if (!shut.length) return false
-    const original = copiedFrom(path)
-    return this.shutAt(shut, path) || (original !== null && this.shutAt(shut, original))
+    return this.shutAt(shut, path) || originalsOf(path).some((one) => this.shutAt(shut, one))
   }
 
   private shutAt(shut: Shut[], path: string): boolean {
@@ -241,6 +273,7 @@ export class Protection {
   }
 
   adopt(root: string, theirs: Record<string, Way>, accountId: string): boolean {
+    this.reread()
     const held = this.spaces[root]
     const met = meet(held, accountId, held?.ways ?? {}, protectedMap(theirs), WAYS)
     if (!met) return false
@@ -253,20 +286,21 @@ export class Protection {
   }
 
   said(root: string, landed: boolean): void {
+    this.reread()
     const held = this.spaces[root]
     if (!held || held.sent === landed) return
     this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keepSpaces()
   }
 
   covering(path: string): Lock[] {
-    const original = copiedFrom(path)
-    const own = this.coveringAt(path)
-    if (original === null) return own
-    const more = this.coveringAt(original).filter(
-      (one) => !own.some((mine) => mine.key === one.key && samePath(mine.root, one.root)),
-    )
-    return [...own, ...more]
+    const out = this.coveringAt(path)
+    for (const original of originalsOf(path)) {
+      for (const one of this.coveringAt(original)) {
+        if (!out.some((mine) => mine.key === one.key && samePath(mine.root, one.root))) out.push(one)
+      }
+    }
+    return out
   }
 
   private coveringAt(path: string): Lock[] {
@@ -298,6 +332,7 @@ export class Protection {
   }
 
   set(root: string, path: string, way: Way | null): void {
+    this.reread()
     const key = path === root ? SPACE : relativeTo(root, path)
     if (key !== SPACE && !lockable(fitted(key))) return
     const held = this.ways(root)
@@ -329,6 +364,7 @@ export class Protection {
   }
 
   moved(from: string, to: string, root: string | null, into: string | null = root): void {
+    this.reread()
     if (root === null || from === to) return
     this.copiesKept(from, root)
     const move = moving(from, to, root, into)
@@ -338,6 +374,8 @@ export class Protection {
     if (above && move.now && !this.covering(to).length) {
       this.put(move.there, { ...this.ways(move.there), [move.now]: above.way })
     }
+    const paper = paperMoving(from, to)
+    if (paper) this.moved(paper[0], paper[1], root, into)
   }
 
   private carry(move: Moving, root: string): void {
@@ -367,6 +405,7 @@ export class Protection {
   }
 
   copied(from: string, to: string, root: string | null, into: string | null): void {
+    this.reread()
     if (root === null || into === null) return
     const was = relativeTo(root, from)
     const now = relativeTo(into, to)
@@ -379,9 +418,12 @@ export class Protection {
     const above = this.covering(from).find((one) => one.key !== was)
     if (!(now in came) && above && !this.covering(to).length) came[now] = above.way
     if (Object.keys(came).length) this.put(into, { ...this.ways(into), ...came })
+    const paper = paperMoving(from, to)
+    if (paper) this.copied(paper[0], paper[1], root, into)
   }
 
   async gone(path: string, root: string | null, back?: string): Promise<void> {
+    this.reread()
     if (root === null) return
     this.copiesKept(path, root)
     const at = relativeTo(root, path)
@@ -401,11 +443,13 @@ export class Protection {
   }
 
   async unbury(back: string | null, root: string, at: string, was = at, only = false) {
+    this.reread()
     const came = await (await buried()).unburied(back, root, at, this.ways(root), was, only)
     if (came) this.put(root, { ...this.ways(root), ...came })
   }
 
   spaceMoved(from: string, to: string): void {
+    this.reread()
     const kept = this.spaces[from]
     if (!kept || from === to) return
     this.spaces = { ...without(this.spaces, from), [to]: kept }
@@ -414,6 +458,7 @@ export class Protection {
   }
 
   async forget(root: string, back?: string): Promise<void> {
+    this.reread()
     if (!(root in this.spaces)) return
     await (await buried()).bury(root, SPACE, back, this.ways(root))
     this.spaces = without(this.spaces, root)
@@ -431,7 +476,12 @@ export class Protection {
 
   private write(): void {
     this.revision++
+    this.keepSpaces()
+  }
+
+  private keepSpaces(): void {
     keepJson(STORAGE_KEY, this.spaces)
+    this.heard = storedText(STORAGE_KEY)
   }
 }
 
