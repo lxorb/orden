@@ -103,6 +103,7 @@ export const CRATE_ASKS = {
   storeFor: 'agent.store_for',
   markdown: 'agent.markdown',
   mayHand: 'agent.may_hand',
+  programFree: 'agent.program_free',
 } as const
 
 export type { Scope }

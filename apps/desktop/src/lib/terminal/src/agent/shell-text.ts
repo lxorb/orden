@@ -569,6 +569,18 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
 }
 
+export function runsOnTheList(
+  program: string,
+  args: readonly string[],
+  programs: readonly string[],
+  os: Os,
+): boolean {
+  const name = programOf(program, os)
+  if (name === '' || !programs.some((one) => programOf(one, os) === name)) return false
+  if (args.some((one) => /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one))) return false
+  return argumentsStay(name.toLowerCase(), args)
+}
+
 export function startsOnlyOne(command: string): boolean {
   return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|(?! )\p{Zs}/u.test(command)
 }

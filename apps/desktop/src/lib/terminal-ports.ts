@@ -1,5 +1,5 @@
 import { providePort } from '@orden/contracts'
-import { invoke, waited } from './platform/src/api'
+import { invoke, platform, waited } from './platform/src/api'
 
 const STARTING = 20_000
 
@@ -23,6 +23,13 @@ providePort('terminal.making', {
   },
   online: async () => {
     await (await terminal()).openOnline()
+  },
+})
+
+providePort('terminal.judge', {
+  runsFree: async (program, args, programs) => {
+    const judge = await (await terminal()).programJudge()
+    return judge.runsOnTheList(program, args, programs, judge.osOf(platform()))
   },
 })
 

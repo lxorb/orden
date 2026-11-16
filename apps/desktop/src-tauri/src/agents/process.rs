@@ -415,7 +415,10 @@ fn untrusted(done: ProcessDone, program: &str) -> Answer {
 }
 
 fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> Option<Answer> {
-    if !grant.asks(Category::Terminal) || listed(&grant.programs, program, asked, cfg!(windows)) {
+    if !grant.asks(Category::Terminal)
+        || (listed(&grant.programs, program, asked, cfg!(windows))
+            && free_on_the_list(app, grant, program, asked))
+    {
         return None;
     }
     let key = approvals::key(
@@ -444,6 +447,21 @@ fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> O
             key,
         },
     ))
+}
+
+fn free_on_the_list(app: &AppHandle, grant: &Grant, program: &str, asked: &Process) -> bool {
+    let ask = super::verbs::window::ProgramAsk {
+        program: program.to_owned(),
+        args: asked.args.clone(),
+        programs: grant.programs.clone(),
+    };
+    crate::endpoint::ask(
+        app,
+        super::verbs::window::PROGRAM_FREE,
+        serde_json::to_value(ask).unwrap_or_default(),
+        Duration::from_millis(800),
+    )
+    .is_ok_and(|value| value.as_bool() == Some(true))
 }
 
 fn listed(programs: &[String], program: &str, asked: &Process, windows: bool) -> bool {

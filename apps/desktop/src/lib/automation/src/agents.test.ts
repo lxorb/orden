@@ -85,6 +85,7 @@ describe('an agent at the dispatcher', () => {
       'agent.markdown',
       'agent.working_folder',
       'agent.may_hand',
+      'agent.program_free',
     ]) {
       expect(await dispatch(verb, { yes: true }, [], 'here', every), verb).toMatchObject({
         ok: false,

@@ -26,6 +26,18 @@ async function markdown(args: Said): Promise<string> {
   return read.trim() ? htmlToMarkdown(read).trim() : ''
 }
 
+const words = (value: unknown): string[] | null =>
+  Array.isArray(value) && value.every((one) => typeof one === 'string') ? value : null
+
+async function programFree(args: Said): Promise<boolean> {
+  const program = said(args, 'program')
+  const given = words(args.args)
+  const programs = words(args.programs)
+  const judge = portOf('terminal.judge')
+  if (!program || !given || !programs || !judge.ok) return false
+  return judge.value.runsFree(program, given, programs).catch(() => false)
+}
+
 export async function answerTheCrate(name: string, args: Said): Promise<unknown> {
   switch (name) {
     case 'agent.reader_tabs':
@@ -40,6 +52,8 @@ export async function answerTheCrate(name: string, args: Said): Promise<unknown>
       const path = said(args, 'path')
       return path ? protection.agentsMay(path) : false
     }
+    case 'agent.program_free':
+      return programFree(args)
     case 'agent.working_folder': {
       if (__EVEN_PLUGIN__) return null
       const path = said(args, 'path')
