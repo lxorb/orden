@@ -420,18 +420,24 @@ pub fn stays_in_space(spaces: &Path, target: &Path) -> Result<(), String> {
         return Ok(());
     };
     let target = folded(target);
-    let Some(there) = target
+    match target.parent() {
+        Some(folder) => really_under(&space, folder),
+        None => Ok(()),
+    }
+}
+
+pub fn really_under(space: &Path, folder: &Path) -> Result<(), String> {
+    let Some(there) = folder
         .ancestors()
-        .skip(1)
         .find(|one| one.symlink_metadata().is_ok())
     else {
         return Ok(());
     };
-    if there == space || !there.starts_with(&space) {
+    if there == space || !inside(space, there) {
         return Ok(());
     }
-    let out = || format!("{} goes through a link out of its space", target.display());
-    let real_space = fs::canonicalize(&space).map_err(|_| out())?;
+    let out = || format!("{} goes through a link out of its space", folder.display());
+    let real_space = fs::canonicalize(space).map_err(|_| out())?;
     let real = fs::canonicalize(there).map_err(|_| out())?;
     if real.starts_with(&real_space) {
         Ok(())
@@ -712,7 +718,15 @@ impl Seen {
 pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
     let mut notes = Vec::new();
     let mut others = Vec::new();
-    gather(dir, 0, &mut Seen::default(), &mut notes, &mut others);
+    let limit = fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    gather(
+        dir,
+        &limit,
+        0,
+        &mut Seen::default(),
+        &mut notes,
+        &mut others,
+    );
     notes.sort();
     others.sort();
     (notes, others)
@@ -720,6 +734,7 @@ pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
 
 fn gather(
     dir: &Path,
+    limit: &Path,
     depth: usize,
     seen: &mut Seen,
     notes: &mut Vec<PathBuf>,
@@ -740,7 +755,9 @@ fn gather(
         }
 
         if path.is_dir() {
-            gather(&path, depth + 1, seen, notes, others);
+            if fs::canonicalize(&path).is_ok_and(|real| inside(limit, &real)) {
+                gather(&path, limit, depth + 1, seen, notes, others);
+            }
         } else if is_markdown(&path) {
             notes.push(path);
         } else if !entry.file_name().to_string_lossy().ends_with(HIGHLIGHTS) {
@@ -2064,6 +2081,22 @@ mod tests {
         let (notes, others) = files_in(here);
         assert_eq!(names(&notes), ["One.md", "Two.markdown"]);
         assert_eq!(names(&others), ["notes.txt", "pic.png"]);
+    }
+
+    #[test]
+    fn the_files_of_a_space_leave_out_a_folder_linked_in_from_outside() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path().join("Work");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(here.join("Notes")).expect("a space");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        std::fs::write(here.join("Notes/Plan.md"), "").expect("a note");
+        std::fs::write(elsewhere.join("Diary.md"), "").expect("a note outside");
+        assert!(link_to(&elsewhere, &here.join("Refs")));
+        assert!(link_to(&here.join("Notes"), &here.join("Same")));
+
+        let (notes, _others) = files_in(&here);
+        assert_eq!(names(&notes), ["Plan.md"]);
     }
 
     #[test]
