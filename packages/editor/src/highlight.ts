@@ -108,7 +108,12 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
 
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
-      const already = highlighted(state.doc, from, to) ?? (from === to ? runAt(state, from) : null)
+      const typed = highlighted(state.doc, from, to)
+      const around = !typed && from === to ? runAt(state, from) : null
+      if (around && from === around.to - MARK.length) {
+        return { range: EditorSelection.cursor(around.to) }
+      }
+      const already = typed ?? around
 
       const holding = !already && from < to ? runAt(state, from) : null
       const split = holding && splitOut(state, holding, from, to, colour)

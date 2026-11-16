@@ -18,7 +18,7 @@ import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
 import { HEADING_LEVEL, headingNumbersOf, numberHeadings } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
-import { bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
+import { bareHref, bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
 import { enclosingNamed, linkAddress, linkBrackets } from '../nodes'
 import { tagTitle } from '../tag-press'
 import { calloutOf } from '@orden/markdown/callouts'
@@ -57,8 +57,6 @@ const LINE_CLASS: Record<string, string> = {
 for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `orden-h${level}`
 
 const LINKED = new Set(['Link', 'Image', 'Wikilink'])
-
-const EMAIL = /^[^\s@<>()[\]:]+@[^\s@<>()[\]]+\.[^\s@<>()[\]]+$/
 
 class Decorator {
   private readonly marks: Range<Decoration>[] = []
@@ -199,7 +197,7 @@ class Decorator {
           const bare = node.parent?.name !== 'Autolink'
           const after = this.state.doc.sliceString(node.to, node.to + 1)
           const target = bare ? bareTarget(written, after) : written
-          this.linkText(node.from, node.to, EMAIL.test(target) ? `mailto:${target}` : target)
+          this.linkText(node.from, node.to, bareHref(target))
         }
         return true
       case 'Highlight':

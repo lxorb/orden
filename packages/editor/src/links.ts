@@ -23,6 +23,13 @@ export function hrefOf(target: string): string | null {
   return null
 }
 
+const EMAIL = /^[^\s@<>()[\]:/]+@[^\s@<>()[\]/]+\.[^\s@<>()[\]/]+$/
+
+export function bareHref(written: string): string {
+  if (/^www\./i.test(written) || /^[a-z][a-z\d+.-]*:/i.test(written)) return written
+  return EMAIL.test(written) ? `mailto:${written}` : written
+}
+
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
 export function linkDestination(written: string): string {

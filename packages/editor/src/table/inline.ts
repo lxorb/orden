@@ -1,5 +1,6 @@
 import type { SyntaxNode } from '@lezer/common'
 import { ordenMarkdownParser } from '../markdown/extensions'
+import { bareHref, linkDestination } from '../links'
 import { linkAddress } from '../nodes'
 
 const TAGS: Record<string, string> = {
@@ -32,11 +33,8 @@ function address(written: string, holder: SyntaxNode): Inline {
   if ((holder.name === 'Link' || holder.name === 'Image') && linkAddress(holder)) {
     return { text: written }
   }
-  const href = written.includes(':')
-    ? written
-    : written.includes('@')
-      ? `mailto:${written}`
-      : `https://${written}`
+  const linked = bareHref(written)
+  const href = /^www\./i.test(linked) ? `https://${linked}` : linked
   const children = [{ text: written }]
   return SAFE_URL.test(href) ? { tag: 'a', href, children } : { text: written }
 }
@@ -89,7 +87,7 @@ function walk(
 
       if (child.name === 'Link') {
         const url = linkAddress(child)
-        const href = url ? source.slice(url.from, url.to) : ''
+        const href = url ? linkDestination(source.slice(url.from, url.to)) : ''
         out.push(SAFE_URL.test(href) ? { tag: 'a', href, children } : { tag: 'a', children })
       } else if (tag) {
         out.push({ tag, children })

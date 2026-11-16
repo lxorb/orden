@@ -97,11 +97,22 @@ function runAround(state: EditorState, number: number): Run {
   return { first, last }
 }
 
+function itemsIn(state: EditorState, lines: Lines): Run {
+  const line = state.doc.line(lines.first)
+  const list = verbatimRows(state, line) || blank(line) ? null : listAround(state, line)
+  if (!list?.items || lines.last > list.last) return lines
+  const items = list.items.filter((item) => item.last >= lines.first && item.first <= lines.last)
+  const [top, bottom] = [items[0], items.at(-1)]
+  if (!top || !bottom || items.length < 2) return lines
+  return { first: top.first, last: bottom.last, items, ordered: list.ordered ?? false }
+}
+
 function blocksOf(state: EditorState, around: boolean): Run[] {
   const found: Run[] = state.selection.ranges
     .map((range) => {
       const lines = linesOf(state, range.from, range.to)
-      return around && lines.first === lines.last ? runAround(state, lines.first) : lines
+      if (!around) return lines
+      return lines.first === lines.last ? runAround(state, lines.first) : itemsIn(state, lines)
     })
     .sort((one, other) => one.first - other.first)
 
