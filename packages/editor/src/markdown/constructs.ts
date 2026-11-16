@@ -291,6 +291,9 @@ const Footnote: MarkdownConfig = {
     {
       name: 'FootnoteDef',
       before: 'LinkReference',
+      endLeaf(_cx: BlockContext, line: Line) {
+        return /^\[\^[^\]\s]+\]:/.test(line.text.slice(line.pos))
+      },
       parse(cx: BlockContext, line: Line) {
         const match = /^\[\^([^\]\s]+)\]:/.exec(line.text.slice(line.pos))
         if (!match) return false

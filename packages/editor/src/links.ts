@@ -133,11 +133,11 @@ function anchorHref(event: Event): string | null {
 }
 
 function followed(view: EditorView, anchor: Element, href: string, event: MouseEvent): boolean {
-  if (WEB_ADDRESS.test(href)) {
+  const wiki = anchor.classList.contains('wikilink')
+  if (!wiki && WEB_ADDRESS.test(href)) {
     view.state.facet(linkOpener)(href, event)
     return true
   }
-  const wiki = anchor.classList.contains('wikilink')
   const jump = jumpForHref(view.state.facet(noteIndex), href, wiki)
   if (!jump) return false
   view.state.facet(noteOpener)(jump, event)

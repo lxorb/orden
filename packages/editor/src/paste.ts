@@ -116,9 +116,37 @@ function endsAtLineStart(state: EditorState, range: SelectionRange, text: string
 
 export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
 
+const STYLED_BLOCK = /<div\b[^>]*\bstyle\s*=\s*(["'])(.*?)\1/gis
+
+const KEPT_SPACES = /(?:^|;)\s*white-space\s*:\s*pre\s*(?:;|$)/i
+
+const MONOSPACED = /(?:^|;)\s*font-family\s*:[^;]*(?:monospace|consolas|menlo|monaco|courier)/i
+
+function fromCodeEditor(html: string): boolean {
+  for (const [, , style = ''] of html.matchAll(STYLED_BLOCK)) {
+    if (KEPT_SPACES.test(style) && MONOSPACED.test(style)) return true
+  }
+  return false
+}
+
+function fenced(code: string): string {
+  const longest = [...code.matchAll(/`+/g)].reduce((most, [run]) => Math.max(most, run.length), 2)
+  const fence = '`'.repeat(longest + 1)
+  return `${fence}\n${code}\n${fence}`
+}
+
+function codeEditorPaste(html: string, text: string): string | null {
+  if (!text || !fromCodeEditor(html)) return null
+  const code = withLineFeeds(text).replace(/\n+$/, '')
+  return code.includes('\n') ? fenced(code) : code
+}
+
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
   const ours = copiedHere(html, text)
   if (ours) return ours
+
+  const code = codeEditorPaste(html, text)
+  if (code) return code
 
   const table = delimitedToTable(text)
   if (table) return table

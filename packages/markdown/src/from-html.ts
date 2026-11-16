@@ -349,22 +349,6 @@ function preformattedText(node: Node): string {
   return [...node.childNodes].map(preformattedText).join('')
 }
 
-const KEPT_SPACES = /(?:^|;)\s*white-space\s*:\s*pre\s*(?:;|$)/iu
-
-const MONOSPACED = /(?:^|;)\s*font-family\s*:[^;]*(?:monospace|consolas|menlo|monaco|courier)/iu
-
-function copiedFromCodeEditor(node: Node): boolean {
-  if (node.nodeName !== 'DIV') return false
-  const style = (node as Element).getAttribute('style') ?? ''
-  return KEPT_SPACES.test(style) && MONOSPACED.test(style)
-}
-
-function codeEditorText(node: Node): string {
-  const lines = [...node.childNodes].filter((one) => one.nodeName === 'DIV')
-  if (!lines.length) return preformattedText(node)
-  return lines.map((one) => preformattedText(one).replace(/\n$/, '')).join('\n')
-}
-
 const BLOCKS =
   'address,article,aside,blockquote,div,dl,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,ul'
 
@@ -630,8 +614,9 @@ function converter(options: FromHtmlOptions): TurndownService {
             box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
         )
 
-      const ends = node.nextSibling && !body.endsWith('\n') ? '\n' : ''
-      return `${marker} ${body}${ends}`
+      const ended = body.replace(/\n[ \t]*$/, '\n')
+      const ends = node.nextSibling && !ended.endsWith('\n') ? '\n' : ''
+      return `${marker} ${ended}${ends}`
     },
   })
 
@@ -886,22 +871,7 @@ function tidy(markdown: string): string {
   return kept.join('\n').trim()
 }
 
-function withCodeEditorLines(html: string): string | HTMLElement {
-  if (typeof DOMParser === 'undefined' || !/white-space/i.test(html)) return html
-
-  const page = new DOMParser().parseFromString(html, 'text/html')
-  const found = [...page.querySelectorAll('div[style]')].filter(copiedFromCodeEditor)
-  if (!found.length) return html
-
-  for (const one of found) {
-    const pre = page.createElement('pre')
-    pre.textContent = codeEditorText(one)
-    one.replaceWith(pre)
-  }
-  return page.body
-}
-
 export function htmlToMarkdown(html: string, options: FromHtmlOptions = {}): string {
   if (!html.trim()) return ''
-  return tidy(converter(options).turndown(withCodeEditorLines(html)))
+  return tidy(converter(options).turndown(html))
 }
