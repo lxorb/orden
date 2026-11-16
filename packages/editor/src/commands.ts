@@ -287,9 +287,9 @@ function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
 }
 
 function headingLines(state: EditorState): Words[] {
-  const lines = selectedLines(state)
+  const lines = selectedLines(state).filter((line) => !inVerbatimBlock(state, line))
   if (lines.length < 2) return lines.map((line) => wordsOfLine(state, line))
-  const written = lines.filter((line) => line.text.trim() !== '' && !inVerbatimBlock(state, line))
+  const written = lines.filter((line) => line.text.trim() !== '')
   return (written.length ? written : lines).map((line) => wordsOfLine(state, line))
 }
 

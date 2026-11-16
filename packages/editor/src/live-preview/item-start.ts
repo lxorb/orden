@@ -218,13 +218,15 @@ const INLINE_RUNS = new Set([
 
 const TAG = /^<(\/?)([A-Za-z][\w-]*)/
 
-function tagPair(state: EditorState, node: SyntaxNode, side: -1 | 1): Run | null {
+function tagPair(state: EditorState, node: SyntaxNode, side: -1 | 1): MarkedRun | null {
   const [, closing, name] = TAG.exec(state.sliceDoc(node.from, node.to)) ?? []
   if (!name || side < 0 !== (closing === '/')) return null
   for (let other = side < 0 ? node.prevSibling : node.nextSibling; other;) {
     const [, otherClosing, otherName] = TAG.exec(state.sliceDoc(other.from, other.to)) ?? []
     if (other.name === 'HTMLTag' && otherName === name && (otherClosing === '/') !== side < 0) {
-      return side < 0 ? { from: other.from, to: node.to } : { from: node.from, to: other.to }
+      return side < 0
+        ? { from: other.from, to: node.to, inner: { from: other.to, to: node.from } }
+        : { from: node.from, to: other.to, inner: { from: node.to, to: other.from } }
     }
     other = side < 0 ? other.prevSibling : other.nextSibling
   }
@@ -241,18 +243,59 @@ function atHiddenEdge(view: EditorView, pos: number, side: -1 | 1): boolean {
   return found
 }
 
-function runAt(state: EditorState, pos: number, side: -1 | 1): Run | null {
-  let run: Run | null = null
+interface MarkedRun extends Run {
+  inner: Run | null
+}
+
+const WORDY_RUNS = new Set([
+  'Emphasis',
+  'StrongEmphasis',
+  'Strikethrough',
+  'Highlight',
+  'Subscript',
+  'Superscript',
+])
+
+function innerOf(node: SyntaxNode): Run | null {
+  const open = node.firstChild
+  const close = node.lastChild
+  if (!open || !close || open === close || !open.name.endsWith('Mark')) return null
+  return { from: open.to, to: close.from }
+}
+
+function runAt(state: EditorState, pos: number, side: -1 | 1): MarkedRun | null {
+  let run: MarkedRun | null = null
   for (
     let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side);
     node;
     node = node.parent
   ) {
     if ((side < 0 ? node.to : node.from) !== pos) break
-    if (INLINE_RUNS.has(node.name)) run = { from: node.from, to: node.to }
-    else if (node.name === 'HTMLTag') run = tagPair(state, node, side) ?? run
+    if (INLINE_RUNS.has(node.name)) {
+      run = {
+        from: node.from,
+        to: node.to,
+        inner: WORDY_RUNS.has(node.name) ? innerOf(node) : null,
+      }
+    } else if (node.name === 'HTMLTag') {
+      run = tagPair(state, node, side) ?? run
+    }
   }
   return run
+}
+
+const LAST_WORD = /\s+\S+\s*$/
+const FIRST_WORD = /^\s*\S+\s+/
+
+function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): Run | null {
+  const inner = run.inner
+  if (!inner) return null
+  const text = state.sliceDoc(inner.from, inner.to)
+  const found = (side < 0 ? LAST_WORD : FIRST_WORD).exec(text)
+  if (!found) return null
+  return side < 0
+    ? { from: inner.from + found.index, to: inner.to }
+    : { from: inner.from, to: inner.from + found[0].length }
 }
 
 function deleteWordOverMarks(side: -1 | 1) {
@@ -272,8 +315,11 @@ function deleteWordOverMarks(side: -1 | 1) {
 
     const run = runAt(state, at, side)
     if (!run) return false
+    const word = wordIn(state, run, side)
+    const changes =
+      word ?? (side < 0 ? { from: run.from, to: main.head } : { from: main.head, to: run.to })
     view.dispatch({
-      changes: side < 0 ? { from: run.from, to: main.head } : { from: main.head, to: run.to },
+      changes,
       scrollIntoView: true,
       userEvent: side < 0 ? 'delete.group.backward' : 'delete.group.forward',
     })
