@@ -601,6 +601,9 @@ function blockSection(source: string, wanted: string): string | null {
     return blockAbove(source, lines, found.line)
   }
 
+  const item = LIST_ITEM.exec(lines[found.line] ?? '')
+  if (item) return listItem(lines, found.line, item[1]?.length ?? 0)
+
   let start = found.line
   let end = found.line
   while (start > 0 && (lines[start - 1] ?? '').trim()) start--
@@ -610,6 +613,23 @@ function blockSection(source: string, wanted: string): string | null {
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
   return block.join('\n').trimEnd()
+}
+
+const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
+
+function listItem(lines: readonly string[], at: number, indent: number): string {
+  let end = at
+  while (end + 1 < lines.length) {
+    const next = lines[end + 1] ?? ''
+    if (!next.trim() || next.length - next.trimStart().length <= indent) break
+    end++
+  }
+  const item = lines.slice(at, end + 1)
+  item[0] = (item[0] ?? '').replace(BLOCK_ID, '')
+  return item
+    .map((line) => line.slice(Math.min(indent, line.length - line.trimStart().length)))
+    .join('\n')
+    .trimEnd()
 }
 
 export function ownLine(line: string): boolean {

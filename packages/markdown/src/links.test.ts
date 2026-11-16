@@ -554,6 +554,15 @@ describe('the headings a note holds', () => {
 })
 
 describe('the part of a note a link points into', () => {
+  test('a block named on a list item is that item, with what is nested under it', () => {
+    const note = '# Plan\n\n- one\n- two ^b1\n  - two a\n- three\n\nafter\n'
+    expect(sectionOf(note, { heading: null, block: 'b1' })).toBe('- two\n  - two a')
+    const tasks = '- [ ] buy milk ^t1\n- [ ] call mom\n- [x] pay rent\n'
+    expect(sectionOf(tasks, { heading: null, block: 't1' })).toBe('- [ ] buy milk')
+    const nested = '- a\n  - a1 ^n1\n  - a2\n- b\n'
+    expect(sectionOf(nested, { heading: null, block: 'n1' })).toBe('- a1')
+  })
+
   test('a heading names the section under it', () => {
     const note = '# One\n\nfirst\n\n# Two\n\nsecond\n'
     expect(sectionOf(note, { heading: 'Two', block: null })).toBe('# Two\n\nsecond')
