@@ -9,7 +9,10 @@ import {
   type SelectionRange,
   Transaction,
 } from '@codemirror/state'
-import { Direction, type EditorView, keymap } from '@codemirror/view'
+import { deleteCharBackward, deleteCharForward } from '@codemirror/commands'
+import { deleteMarkupBackward } from '@codemirror/lang-markdown'
+import type { SyntaxNode } from '@lezer/common'
+import { Direction, EditorView, keymap } from '@codemirror/view'
 import { isExternal } from '../external'
 import { quietMarks } from './reveal'
 
@@ -150,6 +153,12 @@ function pastMarks(state: EditorState, pos: number, side: -1 | 1): number {
   return at
 }
 
+function besideMarks(view: EditorView, near: number, side: -1 | 1): boolean {
+  view.dispatch({ selection: EditorSelection.cursor(near) })
+  if (side > 0) return deleteCharForward(view)
+  return deleteMarkupBackward(view) || deleteCharBackward(view)
+}
+
 function deleteBesideMarks(side: -1 | 1) {
   return (view: EditorView): boolean => {
     const { state } = view
@@ -157,24 +166,92 @@ function deleteBesideMarks(side: -1 | 1) {
     if (!state.facet(quietMarks) || state.readOnly) return false
     if (state.selection.ranges.length > 1 || !main.empty) return false
 
-    const near = pastMarks(state, main.head, side)
+    const head = main.head
+    const near = pastMarks(state, head, side)
     const line = state.doc.lineAt(near)
-    if (near === main.head || near === (side < 0 ? line.from : line.to)) return false
+    const edge = side < 0 ? [line.from, hiddenRun(state, line)?.to] : [line.to]
+    if (edge.includes(near)) return near !== head && besideMarks(view, near, side)
 
     const far = line.from + findClusterBreak(line.text, near - line.from, side > 0)
     const beyond = pastMarks(state, far, side)
-    const [from, to] =
-      beyond === far
-        ? side < 0
-          ? [far, near]
-          : [near, far]
-        : side < 0
-          ? [beyond, main.head]
-          : [main.head, beyond]
+    const whole = near === head ? pastMarks(state, head, side < 0 ? 1 : -1) : head
+    const alone = beyond !== far && whole !== near
+    if (!alone && near === head) return false
+
+    const [from, to] = alone
+      ? side < 0
+        ? [beyond, whole]
+        : [whole, beyond]
+      : side < 0
+        ? [far, near]
+        : [near, far]
     view.dispatch({
       changes: { from, to },
       scrollIntoView: true,
       userEvent: side < 0 ? 'delete.backward' : 'delete.forward',
+    })
+    return true
+  }
+}
+
+const INLINE_RUNS = new Set([
+  'Emphasis',
+  'StrongEmphasis',
+  'Strikethrough',
+  'Highlight',
+  'Subscript',
+  'Superscript',
+  'InlineCode',
+  'InlineMath',
+  'Link',
+  'Image',
+  'Wikilink',
+])
+
+function atHiddenEdge(view: EditorView, pos: number, side: -1 | 1): boolean {
+  let found = false
+  for (const ranges of view.state.facet(EditorView.atomicRanges)) {
+    ranges(view).between(pos, pos, (from, to) => {
+      if (from < to && (side < 0 ? to : from) === pos) found = true
+    })
+  }
+  return found
+}
+
+function runAt(state: EditorState, pos: number, side: -1 | 1): Run | null {
+  let run: Run | null = null
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side);
+    node;
+    node = node.parent
+  ) {
+    if ((side < 0 ? node.to : node.from) !== pos) break
+    if (INLINE_RUNS.has(node.name)) run = { from: node.from, to: node.to }
+  }
+  return run
+}
+
+function deleteWordOverMarks(side: -1 | 1) {
+  return (view: EditorView): boolean => {
+    const { state } = view
+    const main = state.selection.main
+    if (state.readOnly || state.selection.ranges.length > 1 || !main.empty) return false
+
+    const line = state.doc.lineAt(main.head)
+    let at = main.head
+    while (at !== (side < 0 ? line.from : line.to)) {
+      const next = side < 0 ? state.sliceDoc(at - 1, at) : state.sliceDoc(at, at + 1)
+      if (!/[ \t]/.test(next)) break
+      at += side
+    }
+    if (!atHiddenEdge(view, at, side)) return false
+
+    const run = runAt(state, at, side)
+    if (!run) return false
+    view.dispatch({
+      changes: side < 0 ? { from: run.from, to: main.head } : { from: main.head, to: run.to },
+      scrollIntoView: true,
+      userEvent: side < 0 ? 'delete.group.backward' : 'delete.group.forward',
     })
     return true
   }
@@ -187,6 +264,8 @@ export const itemStart = [
       { key: 'Enter', run: pushHeadingDown },
       { key: 'Backspace', run: deleteBesideMarks(-1) },
       { key: 'Delete', run: deleteBesideMarks(1) },
+      { key: 'Mod-Backspace', mac: 'Alt-Backspace', run: deleteWordOverMarks(-1) },
+      { key: 'Mod-Delete', mac: 'Alt-Delete', run: deleteWordOverMarks(1) },
       { key: 'ArrowLeft', run: (view) => backOutOfWords(view, Direction.LTR) },
       { key: 'ArrowRight', run: (view) => backOutOfWords(view, Direction.RTL) },
     ]),

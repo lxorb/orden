@@ -232,7 +232,7 @@ function movedWithFolds(
   const { doc } = state
   const last = withHidden(state, bottom)
   const near = delta < 0 ? first.number - 1 : last.number + 1
-  if (near < 1 || near > doc.lines) return false
+  if (near < 1 || near > doc.lines) return last.number !== bottom.number
 
   const nearLine = doc.line(near)
   const other =

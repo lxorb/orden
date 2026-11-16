@@ -31,12 +31,16 @@ function sameKind(prefix: string): { outer: string; marks: RegExp } | null {
 
 const FENCE = /^[ \t]*(?:`{3,}|~{3,})/
 
-function firstSibling(lines: readonly string[], marks: RegExp): number {
+function siblingIndent(lines: readonly string[], marks: RegExp, most: number): string | null {
   let fenced = false
-  return lines.findIndex((one) => {
+  let found: string | null = null
+  for (const one of lines) {
     if (FENCE.test(one)) fenced = !fenced
-    return !fenced && marks.test(one.trimStart())
-  })
+    if (fenced || !marks.test(one.trimStart())) continue
+    const indent = /^[ \t]*/.exec(one)?.[0] ?? ''
+    if (indent.length <= most && (found === null || indent.length < found.length)) found = indent
+  }
+  return found
 }
 
 function spaced(prefix: string): string {
@@ -88,14 +92,11 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const kind = inFront && !OPENS_BLOCK.test(first) ? sameKind(prefix) : null
   const held = (pasted: string) => {
     const [head = '', ...rest] = pasted.split('\n')
-    const sibling = kind ? firstSibling(rest, kind.marks) : -1
-    const base = sibling < 0 ? '' : (/^[ \t]*/.exec(rest[sibling] ?? '')?.[0] ?? '')
     const outer = kind ? spaced(kind.outer) : lead
-    const leadOf = (one: string, at: number) =>
-      sibling >= 0 && at >= sibling && one.startsWith(base)
-        ? outer + one.slice(base.length)
-        : lead + one
-    return [head, ...rest.map((one, at) => (one ? leadOf(one, at) : lead.trimEnd()))].join('\n')
+    const base = kind ? siblingIndent(rest, kind.marks, outer.length) : null
+    const leadOf = (one: string) =>
+      base !== null && one.startsWith(base) ? outer + one.slice(base.length) : lead + one
+    return [head, ...rest.map((one) => (one ? leadOf(one) : lead.trimEnd()))].join('\n')
   }
   const last = text.slice(text.lastIndexOf('\n') + 1)
   const opens = !inFront && OPENS_BLOCK.test(first)

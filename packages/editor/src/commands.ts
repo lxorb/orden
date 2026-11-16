@@ -1218,17 +1218,21 @@ function foldAfterCaret(state: EditorState): { from: number; to: number } | null
 }
 
 function pastFold(made: Transaction, fold: { from: number; to: number }): Transaction {
-  const inserts: { from: number; to: number; text: string }[] = []
+  const changes: { from: number; to: number; insert: string }[] = []
   made.changes.iterChanges((from, to, _fromB, _toB, text) => {
-    inserts.push({ from, to, text: text.toString() })
+    changes.push({ from, to, insert: text.toString() })
   })
-  const [only] = inserts
-  if (inserts.length !== 1 || only?.from !== fold.from || only.to !== fold.from) return made
+  const opened = changes.find((one) => one.from === fold.from && one.to === fold.from)
+  if (!opened || changes.some((one) => one !== opened && one.from < fold.to)) return made
 
-  const head = made.newSelection.main.head
+  const offset = made.newSelection.main.head - made.changes.mapPos(fold.from, -1)
+  const moved = ChangeSet.of(
+    changes.map((one) => (one === opened ? { ...one, from: fold.to, to: fold.to } : one)),
+    made.startState.doc.length,
+  )
   return made.startState.update({
-    changes: { from: fold.to, insert: only.text },
-    selection: EditorSelection.cursor(fold.to + head - fold.from),
+    changes: moved,
+    selection: EditorSelection.cursor(moved.mapPos(fold.to, -1) + offset),
     scrollIntoView: true,
     userEvent: 'input',
   })

@@ -589,11 +589,23 @@ function indentOf(line: string): number {
   return /^[ \t]*/.exec(line)?.[0].length ?? 0
 }
 
-function itemSection(lines: readonly string[], at: number): string | null {
-  const own = LIST_ITEM.exec(lines[at] ?? '')
-  if (!own) return null
+function itemHolding(lines: readonly string[], at: number): number | null {
+  if (LIST_ITEM.test(lines[at] ?? '')) return at
+  const indent = indentOf(lines[at] ?? '')
+  for (let above = at - 1; above >= 0; above--) {
+    const line = lines[above] ?? ''
+    if (!line.trim()) return null
+    const item = LIST_ITEM.exec(line)
+    if (item) return (item[1]?.length ?? 0) < indent ? above : null
+  }
+  return null
+}
 
-  const depth = own[1]?.length ?? 0
+function itemSection(lines: readonly string[], at: number): string | null {
+  const owner = itemHolding(lines, at)
+  if (owner === null) return null
+
+  const depth = indentOf(lines[owner] ?? '')
   let end = at
   for (let next = at + 1; next < lines.length; next++) {
     const line = lines[next] ?? ''
@@ -603,8 +615,8 @@ function itemSection(lines: readonly string[], at: number): string | null {
   }
 
   return lines
-    .slice(at, end + 1)
-    .map((line, index) => (index === 0 ? line.replace(BLOCK_ID, '') : line))
+    .slice(owner, end + 1)
+    .map((line, index) => (owner + index === at ? line.replace(BLOCK_ID, '') : line))
     .map((line) => line.slice(Math.min(depth, indentOf(line))))
     .join('\n')
     .trimEnd()
