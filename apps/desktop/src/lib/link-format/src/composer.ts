@@ -99,13 +99,16 @@ export function extracted(
   fallback: string,
   named?: string,
 ): Split | null {
-  const taken = text.slice(from, to).trim()
+  const chosen = text.slice(from, to)
+  const taken = chosen.trim()
   if (!taken) return null
 
+  const start = from + chosen.length - chosen.trimStart().length
+  const end = to - (chosen.length - chosen.trimEnd().length)
   const name = named ?? nameFromContent(taken) ?? fallback
   const shown = oneLine(taken)
   const alias = shown.replace(SENTENCE_END, '') === name ? '' : shown
-  const kept = text.slice(0, from) + linkTo(noteNamed(name), alias) + text.slice(to)
+  const kept = text.slice(0, start) + linkTo(noteNamed(name), alias) + text.slice(end)
 
   return { kept, taken: `${taken}\n`, name }
 }

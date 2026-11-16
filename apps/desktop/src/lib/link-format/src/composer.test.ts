@@ -127,6 +127,18 @@ describe('extracting a selection', () => {
     expect(carved?.kept).toBe('before [[The whole idea, written out]] after')
   })
 
+  test('a whole line taken with its line break leaves the next line as it was', () => {
+    const doc = '# Note\n\nIdea one is here.\n## Next\n\nmore\n'
+    const from = doc.indexOf('Idea')
+    const carved = extracted(doc, from, doc.indexOf('## Next'), 'Untitled')
+    expect(carved?.kept).toBe('# Note\n\n[[Idea one is here]]\n## Next\n\nmore\n')
+
+    const paragraphs = 'para one\n\npara two\n\npara three'
+    const two = paragraphs.indexOf('para two')
+    const cut = extracted(paragraphs, two, paragraphs.indexOf('para three'), 'Untitled')
+    expect(cut?.kept).toBe('para one\n\n[[para two]]\n\npara three')
+  })
+
   test('words the name could not keep are shown by the link', () => {
     const doc = 'see Why it works: the whole of it here'
     const from = doc.indexOf('Why')
