@@ -184,8 +184,13 @@ function startsAnItem(state: EditorState, line: Line): boolean {
   return found
 }
 
-function numberedLine(text: string, counting: Counting[], listed: boolean): string {
-  const { indent, words } = wordsOf(text, listed)
+function numberedLine(
+  text: string,
+  counting: Counting[],
+  listed: boolean,
+  quoted: boolean,
+): string {
+  const { lead, indent, words } = wordsOf(text, listed, quoted)
   const written = indent.length
 
   while (counting.length > 1 && (counting.at(-1)?.written ?? 0) > written) counting.pop()
@@ -198,26 +203,28 @@ function numberedLine(text: string, counting: Counting[], listed: boolean): stri
   const mark = `${level.nth}. `
   level.nth++
   level.column = level.at + mark.length
-  return ' '.repeat(level.at) + mark + words
+  return lead + ' '.repeat(level.at) + mark + words
 }
 
 const LISTED = new Set<BlockShape>(['bullet', 'numbered', 'task'])
 
 const INDENT = /^[ \t]*/
 
-const ITEM_CONTENT = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)?/
+const LINE_LEAD = /^(?:[ \t]*>)*[ \t]*/
+
+const ITEM_CONTENT = /^(?:[ \t]*>)*[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)?/
 
 const contentColumn = (text: string) => ITEM_CONTENT.exec(text)?.[0].length ?? 0
 
 function itemsHolding(state: EditorState, line: Line): number[] {
-  const at = line.from + (INDENT.exec(line.text)?.[0].length ?? 0)
+  const at = line.from + (LINE_LEAD.exec(line.text)?.[0].length ?? 0)
   return [...enclosing(syntaxTree(state).resolveInner(at, 1))]
     .filter((node) => node.name === 'ListItem')
     .map((node) => state.doc.lineAt(node.from).number)
 }
 
 function shiftedIn(text: string, shift: number): string {
-  const indent = INDENT.exec(text)?.[0] ?? ''
+  const indent = LINE_LEAD.exec(text)?.[0] ?? ''
   if (shift > 0) return indent + ' '.repeat(shift) + text.slice(indent.length)
   const spaces = / *$/.exec(indent)?.[0].length ?? 0
   return indent.slice(0, indent.length - Math.min(spaces, -shift)) + text.slice(indent.length)
@@ -239,6 +246,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
     const last = span.kind !== 'heading' ? doc.lineAt(Math.min(span.to, doc.length)).number : first
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
     const itemwise = span.kind === 'list' || (LISTED.has(shape) && span.kind !== 'quote')
+    const quoted = span.kind !== 'quote'
     const shifts = new Map<number, number>()
 
     for (let number = first; number <= last; number++) {
@@ -256,13 +264,13 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       }
 
       const listed = startsAnItem(view.state, line)
-      if (verbatim.has(number) || !wordsOf(line.text, listed).words.trim()) continue
+      if (verbatim.has(number) || !wordsOf(line.text, listed, quoted).words.trim()) continue
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
       const text =
         into === 'numbered'
-          ? numberedLine(line.text, counting, listed)
-          : shaped(line.text, into, nth, listed)
+          ? numberedLine(line.text, counting, listed, quoted)
+          : shaped(line.text, into, nth, listed, quoted)
       if (into === 'numbered') nth++
       if (itemwise) shifts.set(number, contentColumn(text) - contentColumn(line.text))
       if (text === line.text) continue
@@ -312,7 +320,10 @@ function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | 
 
 function beside(state: EditorState, run: BlockSpan, delta: -1 | 1): BlockSpan | null {
   const at = nextWritten(state, delta < 0 ? run.from : run.to, delta)
-  return at === null ? null : blockAt(state, at)
+  if (at === null) return null
+  const text = state.doc.lineAt(at).text
+  const lead = /^(?:[ \t]*>)+[ \t]*/.exec(text)?.[0].length ?? 0
+  return blockAt(state, lead ? at + lead + 1 : at)
 }
 
 function levelAt(state: EditorState, pos: number): number | null {

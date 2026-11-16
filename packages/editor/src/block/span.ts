@@ -98,12 +98,14 @@ export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   return null
 }
 
+const UNWRITTEN = /^(?:[ \t]*>)*[ \t]*$/
+
 export function writtenLine(state: EditorState, number: number, delta: -1 | 1): Line | null {
   const doc = state.doc
 
   for (let at = number; at >= 1 && at <= doc.lines; at += delta) {
     const line = doc.line(at)
-    if (line.text.trim()) return line
+    if (line.text.replace(UNWRITTEN, '')) return line
   }
 
   return null

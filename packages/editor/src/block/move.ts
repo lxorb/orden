@@ -3,7 +3,7 @@ import type { ChangeSpec, EditorState, Line } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { frontMatterSpan } from '../live-preview/front-matter'
 import { enclosing } from '../nodes'
-import { above, below, gap, indentOf, itemsAround, type Side } from './separation'
+import { above, below, gap, indentOf, itemsAround, quoteOf, type Side } from './separation'
 import type { BlockSpan } from './span'
 import { writtenLine } from './span'
 
@@ -163,6 +163,7 @@ export function moveBlock(
     item: below(state, block.first).item,
     indent: indentOf(text),
     moving: true,
+    quote: quoteOf(text),
   }
 
   const lower = staying ? doc.lineAt(to) : null

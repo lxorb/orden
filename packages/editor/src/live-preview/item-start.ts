@@ -437,6 +437,12 @@ function hiddenNear(view: EditorView, from: number, to: number, side: -1 | 1): n
   return edge
 }
 
+const MARKED_LEAD = /^(?:[ \t]*>)*[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
+
+function markedLead(text: string): number {
+  return MARKED_LEAD.exec(text)?.[0].length ?? 0
+}
+
 function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
   const { state } = view
   const head = state.selection.main.head
@@ -464,7 +470,7 @@ function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
   const target = view.moveByGroup(EditorSelection.cursor(head), side > 0).head
   const [from, to] = side < 0 ? [target, head] : [head, target]
   const stop = from < to ? hiddenNear(view, from, to, side) : null
-  if (stop === null || stop === head) return false
+  if (stop === null || stop === head || stop <= line.from + markedLead(line.text)) return false
   view.dispatch({
     changes: side < 0 ? { from: stop, to: head } : { from: head, to: stop },
     scrollIntoView: true,
