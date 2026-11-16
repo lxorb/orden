@@ -136,7 +136,12 @@ export function patternJudge() {
     }
   }
 
-  function aheadOf(shape: Shape, flags: string): Ahead {
+  function aheadOf(
+    shape: Shape,
+    flags: string,
+    start: Ahead = OPEN_END,
+    traded?: () => void,
+  ): Ahead {
     let steps = 0
     const kept = new Map<string, boolean>()
 
@@ -167,6 +172,7 @@ export function patternJudge() {
       }
       const reach = reachOfLetters(letters, flags)
       const overlaps = !ahead.heads.length || ahead.heads.some((head) => trades(letters, head))
+      if (overlaps) traded?.()
       const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
       return {
         rest: overlaps && ahead.literal < 2 ? own + ahead.rest : Math.max(own, ahead.rest),
@@ -199,8 +205,12 @@ export function patternJudge() {
           return merged(shape.branches.map((branch) => before(branch, ahead)))
         case 'again': {
           const counted = shape.of.kind === 'letter' ? 8 : MOST_COPIES
-          if (shape.most - shape.least > counted || shape.least > MOST_COPIES)
-            return run(shape.letters, shape.least, ahead)
+          if (shape.least > MOST_COPIES) {
+            let after = run(shape.letters, shape.least - MOST_COPIES, ahead)
+            for (let copy = 0; copy < MOST_COPIES; copy++) after = before(shape.of, after)
+            return after
+          }
+          if (shape.most - shape.least > counted) return run(shape.letters, shape.least, ahead)
           let after = ahead
           for (let copy = shape.least; copy < shape.most; copy++) {
             after = merged([after, before(shape.of, after)])
@@ -211,7 +221,46 @@ export function patternJudge() {
       }
     }
 
-    return before(shape, OPEN_END)
+    return before(shape, start)
+  }
+
+  function copiesApart(shape: Shape, flags: string): boolean {
+    try {
+      const { heads } = aheadOf(shape, flags)
+      if (!heads.length || heads.includes(null)) return false
+      let traded = false
+      const next: Ahead = { rest: 0, heads, literal: 0, ended: false }
+      aheadOf(shape, flags, next, () => {
+        traded = true
+      })
+      return !traded
+    } catch {
+      return false
+    }
+  }
+
+  function lettersOf(shape: Shape): string | null {
+    const all: string[] = []
+    const walk = (one: Shape): boolean => {
+      switch (one.kind) {
+        case 'letter':
+          if (one.letters === null) return false
+          all.push(one.letters)
+          return true
+        case 'none':
+        case 'end':
+        case 'look':
+          return true
+        case 'row':
+          return one.parts.every(walk)
+        case 'either':
+          return one.branches.every(walk)
+        case 'again':
+          return walk(one.of)
+      }
+    }
+    if (!walk(shape) || !all.length) return null
+    return `(?:${[...new Set(all)].join('|')})`
   }
 
   function commonLead(leads: readonly string[]): string {
@@ -375,7 +424,9 @@ export function patternJudge() {
     }
 
     function delimited(one: Cost): boolean {
-      if (!lenient || one.open !== 1 || one.ways !== 1 || one.loop === null) return false
+      if (!lenient || one.ways !== 1) return false
+      if (one.open > 1) return copiesApart(one.shape, flags)
+      if (one.open !== 1 || one.loop === null) return false
       const loop = one.loop
       return [one.head, one.tail].some((edge) => edge !== null && setsApart(edge, loop, flags))
     }
@@ -408,7 +459,7 @@ export function patternJudge() {
         of: one.shape,
         least,
         most,
-        letters: one.unit ?? one.loop,
+        letters: one.unit ?? one.loop ?? (one.open > 1 ? lettersOf(one.shape) : null),
       }
       const first = least === 0 ? null : one.first
       const kept = {

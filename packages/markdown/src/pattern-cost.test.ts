@@ -38,6 +38,16 @@ describe('a pattern that could backtrack without end', () => {
     '[^"]*"',
     'e[\\s\\S]*X',
     '(.*)\\s+(.*)\\d+',
+    '(\\w+ ?){12}\\.',
+    '(\\w+\\s?){11}$',
+    '(.* ){11}Q',
+    '(?:.*\\s){11}Q',
+    '(\\s?\\w+){12}\\.',
+    '(\\w+ ?){12,}\\.',
+    '(#\\w*\\w*)+X',
+    '(\\w+\\s?)+$',
+    '(\\w+\\s+)+X',
+    '(\\w+,\\s*)+X',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
@@ -82,6 +92,13 @@ describe('a pattern that could backtrack without end', () => {
     '[A-Z][a-z]+\\s+[A-Z][a-z]+',
     '\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}',
     '^- \\[ \\] .*#\\w+.*$',
+    '(#\\w+\\s*)+',
+    '\\w+(,\\s*\\w+)*',
+    '(?:\\[\\[[^\\]]+\\]\\]\\s*)+',
+    '(\\d+[,.]\\s*)+',
+    '(\\w+\\s+)+',
+    '[a-f0-9]{32}',
+    '\\d{12}',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
   })
