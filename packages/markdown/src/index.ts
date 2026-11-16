@@ -512,7 +512,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
           }
         : {}),
     })
-    html = html.replace(embeds.marker(at), () => embedded)
+    html = html.replace(embeds.marker(at), () => notesApart(embedded, at))
   })
 
   if (options.footnotes) {
@@ -530,7 +530,17 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   }
 
   if (!options.cover) return html
-  return coverFigure(options.cover === true ? coverOf(source) : options.cover) + html
+  return coverFigure(options.cover === true ? coverFound(source, options) : options.cover) + html
+}
+
+function coverFound(source: string, options: RenderOptions): Cover | null {
+  const cover = coverOf(source)
+  const found = cover && options.resolvePicture?.(cover.src, false, null)
+  return cover && found ? { ...cover, src: found } : cover
+}
+
+function notesApart(html: string, at: number): string {
+  return html.replace(/\b(id|href)="(#?)(fn(?:ref)?-)/g, `$1="$2e${at}-$3`)
 }
 
 export function tableOfContents(headings: Heading[]): string {

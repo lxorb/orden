@@ -406,3 +406,27 @@ describe('a link inside an embedded note', () => {
     expect(html).toContain('<a href="Budget.md">b</a>')
   })
 })
+
+describe('footnotes inside an embedded note', () => {
+  test('have ids of their own, and are gathered once', () => {
+    const html = renderMarkdown('Host says[^1].\n\n![[E]]\n\n[^1]: Host note.\n', {
+      footnotes: true,
+      resolveEmbed: () => 'Embed says[^1].\n\n[^1]: Embed note.\n',
+    })
+
+    expect(html.match(/id="fn-1"/g)).toHaveLength(1)
+    expect(html.match(/id="fnref-1"/g)).toHaveLength(1)
+    expect(html).toContain('<li id="e0-fn-1"><a class="footnote-back" href="#e0-fnref-1">')
+    expect(html).not.toContain('<section class="footnotes"><ol><section class="footnotes">')
+  })
+})
+
+describe('a cover', () => {
+  test('is looked up as the note names it', () => {
+    const html = renderMarkdown('---\ncover: photo.png\n---\n\nWords\n', {
+      cover: true,
+      resolvePicture: (src) => `../attachments/${src}`,
+    })
+    expect(html).toContain('<img src="../attachments/photo.png"')
+  })
+})
