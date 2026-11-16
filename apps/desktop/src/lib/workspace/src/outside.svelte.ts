@@ -12,7 +12,13 @@ import {
   afterQuiet,
   windows,
 } from '../../platform/src/api'
-import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../../crate/src/api'
+import {
+  onUnwatched,
+  landedElsewhere,
+  type SpaceChange,
+  type SpaceNews,
+  watchSpaces,
+} from '../../crate/src/api'
 import { sync } from '../../sync-store/src/api'
 import { type Leadership, leadSync } from '../../sync-client/src/api'
 import { type FileOp, landing } from '../../file-ops/src/api'
@@ -104,10 +110,9 @@ async function came(path: string, dir: boolean) {
 
 export async function heardChange(change: SpaceChange): Promise<void> {
   if (dotted(change.path)) {
-    if (change.kind === 'renamed' && !dotted(change.from) && !landing(change.path)) {
-      lockedAlike(change.from, change.path)
-    }
-    return
+    if (change.kind !== 'renamed' || dotted(change.from)) return
+    if (!landing(change.path)) lockedAlike(change.from, change.path)
+    return gone(change.from, change.dir)
   }
   if (!change.dir) {
     const { paperRewritten, sheetArrived } = await services().sheets()
@@ -142,6 +147,7 @@ export function heardNews(news: SpaceNews): Promise<void> {
   hearing = hearing.then(async () => {
     if (news.unwatched) log('warn', `not all of ${news.root} can be watched: ${news.unwatched}`)
     if (news.gone) return
+    for (const [from, to] of landedElsewhere(news.changes)) lockedAlike(from, to)
     for (const change of news.changes) {
       await heardChange(change).catch((error: unknown) => {
         log('error', `outside: ${change.path} - ${String(error)}`)

@@ -1,5 +1,6 @@
 import { askSheet } from '@orden/contracts'
 import {
+  landedElsewhere,
   scanSpace,
   type SpaceChange,
   type SpaceNews,
@@ -109,6 +110,7 @@ export async function watchFolders(how: Watching): Promise<Watched> {
         return scanned(how, news.root)
       })
     }
+    for (const [from, to] of landedElsewhere(news.changes)) lockedAlike(from, to)
     for (const change of news.changes) {
       queue.push(() => {
         behind(how.engine.placed(change.path)?.space.id)
@@ -177,8 +179,14 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
   const disk = engine.core.world.disk
   if (change.kind === 'renamed') {
     if (!kept(engine, change.path, change.dir)) {
-      if (kept(engine, change.from, change.dir)) lockedAlike(change.from, change.path)
-      return
+      if (!kept(engine, change.from, change.dir)) return
+      lockedAlike(change.from, change.path)
+      return gone(engine, change.from)
+    }
+    if (engine.placed(change.from)?.space !== placed?.space) {
+      lockedAlike(change.from, change.path)
+      await gone(engine, change.from)
+      return came(engine, change.path, change.dir)
     }
     const entry = engine.entryAt(change.from)
     const respelled = entry !== null && entry === engine.entryAt(change.path)

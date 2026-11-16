@@ -117,3 +117,49 @@ test('a locked note moved outside into a dot folder keeps its lock', async () =>
   console.log('ways after move into dot folder', JSON.stringify(protection.ways('/s')))
   expect(protection.agentsMay('/s/.trash/Diary.md')).toBe(false)
 })
+
+test('a locked note another program renames over a second note locks the note it became', async () => {
+  await setUp()
+  d.files.set('/s/Todo.md', 'todo\n')
+  await workspace.loadTree()
+  d.files.delete('/s/Diary.md')
+  d.files.set('/s/Todo.md', 'secret diary\n')
+  await heardNews({
+    root: '/s',
+    scan: false,
+    gone: false,
+    changes: [
+      { kind: 'removed', path: '/s/Diary.md', dir: false, id: 'a' },
+      { kind: 'modified', path: '/s/Todo.md', size: 13, mtime: 2, id: 'a', dir: false },
+    ],
+  })
+  expect(protection.agentsMay('/s/Todo.md')).toBe(false)
+})
+
+test('a locked note another program moves into another space keeps its lock there', async () => {
+  await setUp()
+  d.folders.add('/t')
+  workspace.spaces = [
+    { id: 'S', name: 's', root: '/s' },
+    { id: 'T', name: 't', root: '/t' },
+  ]
+  d.files.delete('/s/Diary.md')
+  d.files.set('/t/Diary.md', 'secret diary\n')
+  await heardNews({
+    root: '/t',
+    scan: false,
+    gone: false,
+    changes: [
+      {
+        kind: 'renamed',
+        from: '/s/Diary.md',
+        path: '/t/Diary.md',
+        size: 13,
+        mtime: 2,
+        id: 'a',
+        dir: false,
+      },
+    ],
+  })
+  expect(protection.agentsMay('/t/Diary.md')).toBe(false)
+})
