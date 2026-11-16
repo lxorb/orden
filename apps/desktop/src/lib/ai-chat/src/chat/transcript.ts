@@ -34,7 +34,7 @@ function attribute(label: string): string {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/[\r\n\t]/g, ' ')
+    .replace(/[\p{Cc}\p{Zl}\p{Zp}]/gu, ' ')
 }
 
 export { untrusted }
