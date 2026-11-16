@@ -1,6 +1,7 @@
 import { freePath } from '@orden/markdown/paths'
 import {
   inForeignCopy,
+  isOwnFile,
   hash32,
   patched,
   sameMeta,
@@ -17,6 +18,10 @@ import {
 } from '@orden/sync-core'
 import { isReserved } from '../../platform/src/api'
 import { holdsDocument } from './kinds'
+
+const hiddenName = (name: string) => name.startsWith('.') && !isOwnFile(name)
+
+const hiddenPath = (path: string) => path.split(/[\\/]/).some(hiddenName)
 import { emptyKeeping } from './keeping'
 import { emptyOrdering, type Gone, type Keeping, type Ordering, type Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
@@ -269,6 +274,7 @@ export class SpaceState {
       names.set(parent, { taken, own })
       for (const entry of siblings) {
         const wanted = localName(entry.name, this.world.platform)
+        if (hiddenName(wanted)) continue
         const name = freePath(
           wanted,
           (one) => taken.has(this.key(one)) || (one !== wanted && own.has(this.key(one))),
@@ -293,6 +299,7 @@ export class SpaceState {
     const place = names.get(entry.parent)
     if (folder === undefined || (!place && entry.parent !== null)) return false
     const name = localName(entry.name, this.world.platform)
+    if (hiddenName(name)) return false
     const key = this.key(name)
     if (place && (place.taken.has(key) || place.own.has(key))) return false
     const siblings = place ?? { taken: new Set<string>(), own: new Set<string>() }
@@ -613,7 +620,8 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     if (entry.kind !== 'folder' && how.keeps(entry.id)) continue
     if (entry.kind === 'folder' && holdsKept(space, entry, how)) continue
 
-    if (!inForeignCopy(entry.local_path) && (await how.disk.exists(full(entry.local_path)))) {
+    const mine = inForeignCopy(entry.local_path) || hiddenPath(entry.local_path)
+    if (!mine && (await how.disk.exists(full(entry.local_path)))) {
       const kind = entry.kind === 'folder' ? 'folder' : 'file'
       if (!(await removes(entry.local_path, kind))) continue
     }
