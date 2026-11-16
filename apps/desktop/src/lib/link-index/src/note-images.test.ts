@@ -13,6 +13,7 @@ const found: Record<string, string> = {
 }
 
 const held = new Set([
+  'C:\\Notes\\att\\y.png',
   '/Work/assets/shot.png',
   '/Work/notes/pictures/deep.png',
   '/Work/b/image.png',
@@ -108,14 +109,28 @@ describe('a picture a note names', () => {
     )
   })
 
-  test('inside an embedded note is the one that note names, written from the page', () => {
-    const pictures = picturesOf('/Work/Index.md', '')
+  test('inside an embedded note is the one that note names, ready to draw', () => {
+    const pictures = picturesOf('/Work/Index.md', '', (path) => `/asset${path}`)
     const plan = { text: '', escapeHtml: false, path: '/Work/notes/Plan.md' }
 
-    expect(pictures('../assets/shot.png', false, plan)).toBe('assets/shot.png')
-    expect(pictures('pictures/deep.png', false, plan)).toBe('notes/pictures/deep.png')
+    expect(pictures('../assets/shot.png', false, plan)).toBe('/asset/Work/assets/shot.png')
+    expect(pictures('pictures/deep.png', false, plan)).toBe('/asset/Work/notes/pictures/deep.png')
     expect(pictures('assets/shot.png', false, null)).toBeNull()
-    expect(pictures('image.png', true, null)).toBe('a/image.png')
+    expect(pictures('image.png', true, null)).toBe('/asset/Work/a/image.png')
+  })
+
+  test('inside an embedded note is found even when the page has no home yet', () => {
+    const pictures = picturesOf(null, '', (path) => path)
+    const plan = { text: '', escapeHtml: false, path: '/Work/notes/Plan.md' }
+
+    expect(pictures('../assets/shot.png', false, plan)).toBe('/Work/assets/shot.png')
+  })
+
+  test('a path already found is found again as itself', () => {
+    expect(picturePath('/Work/assets/shot.png', '/Work/b/n.md', '')).toBe('/Work/assets/shot.png')
+    expect(picturePath('/Work/notes/pictures/deep.png', null, '')).toBe(
+      '/Work/notes/pictures/deep.png',
+    )
   })
 })
 
@@ -133,5 +148,9 @@ describe('a note sent to pandoc', () => {
     expect(picturesWrittenOut('![[shot.png|300]] ![[gone.png]]', '/Work/Q1.md')).toBe(
       '![](assets/shot.png) ![[gone.png]]',
     )
+  })
+
+  test('names a picture on Windows by a path beside the note', () => {
+    expect(picturesWrittenOut('![](../att/y.png)', 'C:\\Notes\\b\\n.md')).toBe('![](../att/y.png)')
   })
 })

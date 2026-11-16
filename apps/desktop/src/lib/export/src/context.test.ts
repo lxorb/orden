@@ -32,6 +32,8 @@ vi.mock('../../link-index/src/api', () => ({
     spaceRead: () => Promise.resolve(),
   },
   picturesOf: () => () => null,
+  picturesWrittenOut: (source: string) => source,
+  picturePath: (src: string) => (src === 'R&D.png' ? '/space/Notes/R&D.png' : null),
 }))
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
@@ -67,5 +69,14 @@ describe('the render options for the open note', () => {
     world.trusts = true
 
     expect((await renderOptions(openTarget())).escapeHtml).toBe(false)
+  })
+
+  test('look a picture up by the name it has, not as the page writes it', async () => {
+    world.active = open('Notes/plan.md')
+    world.trusts = true
+
+    expect((await renderOptions(openTarget())).resolveImage?.('R&amp;D.png')).toBe(
+      '/space/Notes/R&D.png',
+    )
   })
 })

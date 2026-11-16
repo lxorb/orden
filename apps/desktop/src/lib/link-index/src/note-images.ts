@@ -30,6 +30,8 @@ export function picturePath(
   wikilink = false,
 ): string | null {
   if (isRemote(src)) return null
+  const held = heldAlready(src)
+  if (held !== null) return held
   if (wikilink) return fileNamed(src, notePath)
 
   const beside = imagePath(src, notePath, source, links.topOf(notePath))
@@ -47,14 +49,29 @@ export function notePicture(
   return found ? assetUrl(found) : imageUrl(src, notePath, source, links.topOf(notePath))
 }
 
-export function picturesOf(notePath: string | null, source: string): PictureResolver {
+function heldAlready(src: string): string | null {
+  const read = decodeTarget(src)
+  return [read, src].find((one) => ABSOLUTE.test(one) && links.holdsFile(one)) ?? null
+}
+
+const ABSOLUTE = /^(?:[a-z]:[\\/]|[\\/])/i
+
+export function picturesOf(
+  notePath: string | null,
+  source: string,
+  finish: (path: string) => string,
+): PictureResolver {
   return (src, wikilink, from) => {
-    if (notePath === null || (!wikilink && from?.path === undefined)) return null
+    if (!wikilink && from?.path === undefined) return null
     const found = from?.path
       ? picturePath(src, from.path, from.text, wikilink)
       : picturePath(src, notePath, source, wikilink)
-    return found === null ? null : relativePath(folderOf(notePath), found)
+    return found === null ? null : finish(found)
   }
+}
+
+function besideNote(notePath: string, path: string): string {
+  return relativePath(folderOf(notePath).replace(/\\/g, '/'), path.replace(/\\/g, '/'))
 }
 
 function pictureWritten(link: FoundLink, to: string): string {
@@ -74,7 +91,7 @@ export function picturesWrittenOut(source: string, notePath: string | null): str
   for (const link of pictures.reverse()) {
     const found = picturePath(link.target, notePath, source, link.kind === 'wikilink')
     if (found === null) continue
-    const to = encodeTarget(relativePath(folderOf(notePath), found))
+    const to = encodeTarget(besideNote(notePath, found))
     const [from, end] =
       link.kind === 'wikilink' ? [link.from, link.to] : [link.targetFrom, link.targetTo]
     out = out.slice(0, from) + pictureWritten(link, to) + out.slice(end)
