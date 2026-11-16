@@ -9,11 +9,15 @@ const MOST_BUDGET: usize = 10_000_000;
 
 const LEAST_PER_BYTE: usize = 200;
 
+const MOST_FLOOR: usize = 100_000_000;
+
+const LETTERS_PER_STEP: usize = 4;
+
 #[must_use]
 pub fn budget_for(text: usize) -> usize {
     text.saturating_mul(BUDGET_PER_BYTE)
         .clamp(BUDGET, MOST_BUDGET)
-        .max(text.saturating_mul(LEAST_PER_BYTE))
+        .max(text.saturating_mul(LEAST_PER_BYTE).min(MOST_FLOOR))
 }
 
 const PROGRAM_LIMIT: usize = 10_000;
@@ -51,6 +55,13 @@ struct Lead {
 enum Start {
     Run(Lead),
     Letters(First),
+    Bounded(Bounded),
+}
+
+struct Bounded {
+    run: Letter,
+    most: usize,
+    rest: usize,
 }
 
 enum Letter {
@@ -96,6 +107,8 @@ enum Step {
         after: usize,
     },
     Backref(usize),
+    Count(usize),
+    GiveBack,
     Done,
 }
 
@@ -104,6 +117,7 @@ struct Resume {
     pc: usize,
     pos: usize,
     undo: usize,
+    floor: usize,
 }
 
 struct Run<'a> {
@@ -113,6 +127,7 @@ struct Run<'a> {
     choices: Vec<Resume>,
     pc: usize,
     pos: usize,
+    floor: usize,
     back: bool,
 }
 
@@ -207,12 +222,13 @@ impl Pattern {
         program.push(Step::Save(1))?;
         program.push(Step::Done)?;
 
+        let lead = lead_of(&node, fold).or_else(|| bounded_lead(&node, &program));
         Some(Pattern {
             program,
             groups,
             fold,
             first: first_of(&node, fold).and_then(|chars| First::new(&chars)),
-            lead: lead_of(&node, fold),
+            lead,
         })
     }
 
@@ -231,13 +247,13 @@ impl Pattern {
                 return None;
             }
 
-            start = self.past_lead(text, start)?;
+            start = self.past_lead(text, start, budget)?;
         }
 
         None
     }
 
-    fn past_lead(&self, text: &str, start: usize) -> Option<usize> {
+    fn past_lead(&self, text: &str, start: usize, budget: &Cell<usize>) -> Option<usize> {
         let next = letter_at(text, start).map_or(Some(start + 1), |letter| {
             start.checked_add(letter.len_utf8())
         });
@@ -250,8 +266,54 @@ impl Pattern {
             .filter_map(|one| match one {
                 Start::Run(lead) => self.past_run(text, start, lead, next),
                 Start::Letters(first) => next.and_then(|from| self.letter_from(text, from, first)),
+                Start::Bounded(bounded) => self.past_bounded(text, start, bounded, budget),
             })
             .min()
+    }
+
+    fn past_bounded(
+        &self,
+        text: &str,
+        start: usize,
+        bounded: &Bounded,
+        budget: &Cell<usize>,
+    ) -> Option<usize> {
+        let mut ends = text
+            .get(start..)?
+            .char_indices()
+            .map(|(at, c)| (start + at, c));
+        for _ in 0..bounded.most {
+            match ends.next() {
+                Some((_, c)) if self.holds(&bounded.run, c) => {}
+                Some((at, c)) => return Some(at + c.len_utf8()),
+                None => return Some(text.len() + 1),
+            }
+        }
+
+        let mut from = start;
+        let mut scanned = 0;
+        for (at, c) in ends {
+            if !self.holds(&bounded.run, c) {
+                return Some(at + c.len_utf8());
+            }
+            let head = at + c.len_utf8();
+            from += letter_at(text, from).map_or(1, char::len_utf8);
+            scanned += 1;
+            if scanned % LETTERS_PER_STEP == 0 {
+                budget.set(budget.get().checked_sub(1)?);
+            }
+            let cells = vec![UNSET; self.program.cells];
+            if self
+                .attempt_from(text, head, bounded.rest, cells, false, budget)
+                .is_some()
+            {
+                return Some(from);
+            }
+            if budget.get() == 0 {
+                return None;
+            }
+        }
+        Some(text.len() + 1)
     }
 
     fn past_run(
@@ -327,6 +389,7 @@ impl Pattern {
             choices: Vec::new(),
             pc,
             pos: start,
+            floor: start,
             back,
         };
 
@@ -402,8 +465,18 @@ impl Pattern {
                         pc: second,
                         pos: run.pos,
                         undo: run.trail.len(),
+                        floor: run.floor,
                     });
                     run.pc = first;
+                }
+                Step::Count(most) => {
+                    if !self.count(run, most, budget)? {
+                        return Some(false);
+                    }
+                }
+                Step::GiveBack => {
+                    self.give_back(run, budget)?;
+                    run.pc += 1;
                 }
                 Step::Jump(target) => run.pc = target,
                 Step::Look {
@@ -476,6 +549,88 @@ impl Pattern {
         } else {
             run.pos.checked_add(taken)
         }
+    }
+
+    fn count(&self, run: &mut Run, most: usize, budget: &Cell<usize>) -> Option<bool> {
+        let Some(letter) = self.program.steps.get(run.pc + 1).copied() else {
+            return Some(false);
+        };
+        let from = run.pos;
+        let read = if run.back { letter_before } else { letter_at };
+        let mut taken = 0;
+        while taken < most {
+            let Some(c) = read(run.text, run.pos) else {
+                break;
+            };
+            if !self.accepts(letter, c) {
+                break;
+            }
+            run.pos = if run.back {
+                run.pos - c.len_utf8()
+            } else {
+                run.pos + c.len_utf8()
+            };
+            taken += 1;
+            if taken % LETTERS_PER_STEP == 0 {
+                budget.set(budget.get().checked_sub(1)?);
+            }
+        }
+        if run.pos != from {
+            run.choices.push(Resume {
+                pc: run.pc + 2,
+                pos: run.pos,
+                undo: run.trail.len(),
+                floor: from,
+            });
+        }
+        run.pc += 3;
+        Some(true)
+    }
+
+    fn give_back(&self, run: &mut Run, budget: &Cell<usize>) -> Option<()> {
+        let floor = run.floor;
+        let next = match self.program.steps.get(run.pc + 1).copied() {
+            Some(step @ (Step::Char(_) | Step::Any | Step::Class(_))) => Some(step),
+            _ => None,
+        };
+        let (back, ahead) = if run.back {
+            (
+                letter_at as fn(&str, usize) -> Option<char>,
+                letter_before as fn(&str, usize) -> Option<char>,
+            )
+        } else {
+            (
+                letter_before as fn(&str, usize) -> Option<char>,
+                letter_at as fn(&str, usize) -> Option<char>,
+            )
+        };
+        let mut scanned = 0;
+        loop {
+            let c = back(run.text, run.pos)?;
+            run.pos = if run.back {
+                run.pos + c.len_utf8()
+            } else {
+                run.pos - c.len_utf8()
+            };
+            scanned += 1;
+            if scanned % LETTERS_PER_STEP == 0 {
+                budget.set(budget.get().checked_sub(1)?);
+            }
+            let fits = next
+                .is_none_or(|step| ahead(run.text, run.pos).is_some_and(|c| self.accepts(step, c)));
+            if fits || run.pos == floor {
+                break;
+            }
+        }
+        if run.pos != floor {
+            run.choices.push(Resume {
+                pc: run.pc,
+                pos: run.pos,
+                undo: run.trail.len(),
+                floor,
+            });
+        }
+        Some(())
     }
 
     fn accepts(&self, step: Step, c: char) -> bool {
@@ -554,6 +709,7 @@ impl Run<'_> {
 
         self.pc = resume.pc;
         self.pos = resume.pos;
+        self.floor = resume.floor;
         true
     }
 }
@@ -1263,6 +1419,38 @@ fn lead_of(node: &Node, fold: bool) -> Option<Vec<Start>> {
         .then_some(starts)
 }
 
+fn bounded_lead(node: &Node, program: &Program) -> Option<Vec<Start>> {
+    if calls_back(node) {
+        return None;
+    }
+    let mut atoms = Vec::new();
+    flattened(node, false, &mut atoms);
+    let Some(Node::Repeat(
+        inner,
+        Limits {
+            min,
+            max: Some(max),
+            lazy: false,
+        },
+    )) = atoms.first()
+    else {
+        return None;
+    };
+    if !plain_letter(inner) {
+        return None;
+    }
+    let most = max.checked_sub(*min)?;
+    let count = min.checked_add(1)?;
+    if !matches!(program.steps.get(count), Some(Step::Count(spare)) if *spare == most) {
+        return None;
+    }
+    Some(vec![Start::Bounded(Bounded {
+        run: one_letter(inner, false)?,
+        most: *max,
+        rest: count.checked_add(3)?,
+    })])
+}
+
 fn unwrapped(node: &Node, free: bool) -> &Node {
     match node {
         Node::Group(None, inner) => unwrapped(inner, free),
@@ -1569,6 +1757,12 @@ impl Program {
 
         if let Some(max) = limits.max {
             let spare = max.saturating_sub(limits.min);
+            if spare > 1 && !limits.lazy && plain_letter(node) {
+                self.push(Step::Count(spare))?;
+                self.emit(node)?;
+                self.push(Step::GiveBack)?;
+                return Some(());
+            }
             self.emit_optional(node, clear, spare, limits.lazy)
         } else {
             self.emit_star(node, clear, limits.lazy)
@@ -1620,6 +1814,14 @@ impl Program {
         }
 
         Some(())
+    }
+}
+
+fn plain_letter(node: &Node) -> bool {
+    match node {
+        Node::Char(_) | Node::Any | Node::Class(_) => true,
+        Node::Group(None, inner) => plain_letter(inner),
+        _ => false,
     }
 }
 
@@ -2149,6 +2351,81 @@ mod tests {
         assert_eq!(caught("(^|a)?(a+)", "aaa"), Some(words(&["a", "aa"])));
         assert_eq!(caught("(a?){1,2}", "a"), Some(words(&["a"])));
         assert_eq!(caught("([ab]??){1,2}", "ab"), Some(words(&["a"])));
+    }
+
+    #[test]
+    fn a_counted_run_of_one_letter_finds_what_its_copies_written_out_find() {
+        let texts = [
+            "aaab aab ab b aaaab",
+            "x TODO y\n\nzz TODO\nTODO",
+            "\u{e9}\u{e9}\u{1d49c}b \u{e9}b\nAAb",
+            "| a | b |\n| c |",
+            "aaaaaaab aaaaaaaa b aaaaaaaaaaaab",
+            "zzzzzzzzzzTODOzz\nyyyyyyyyyyyyyyyyTODO",
+            "\u{e9}\u{e9}\u{e9}\u{e9}\u{e9}\u{e9}\u{1d49c}\u{1d49c}\u{1d49c}\u{1d49c}\u{1d49c}b",
+        ];
+        for (counted, written) in [
+            ("a{0,3}b", "(?:a(?:a(?:a)?)?)?b"),
+            ("a{1,3}b", "a(?:a(?:a)?)?b"),
+            (
+                "[\\s\\S]{0,4}TODO",
+                "(?:[\\s\\S](?:[\\s\\S](?:[\\s\\S](?:[\\s\\S])?)?)?)?TODO",
+            ),
+            (".{2,4}b", "..(?:.(?:.)?)?b"),
+            ("(?<=a{1,3})b", "(?<=a(?:a(?:a)?)?)b"),
+            ("[^|]{0,3}\\|", "(?:[^|](?:[^|](?:[^|])?)?)?\\|"),
+            ("(a{0,3})\\1b", "((?:a(?:a(?:a)?)?)?)\\1b"),
+            ("\\w{0,3}\\b", "(?:\\w(?:\\w(?:\\w)?)?)?\\b"),
+            ("[^b]{0,3}b", "(?:[^b](?:[^b](?:[^b])?)?)?b"),
+            ("[^ ]{2,4}b", "[^ ][^ ](?:[^ ](?:[^ ])?)?b"),
+            ("[^\\n]{0,3}(?=b)", "(?:[^\\n](?:[^\\n](?:[^\\n])?)?)?(?=b)"),
+            (".{0,3}$", "(?:.(?:.(?:.)?)?)?$"),
+        ] {
+            for fold in [false, true] {
+                let (Some(one), Some(other)) = (
+                    Pattern::compile(counted, fold),
+                    Pattern::compile(written, fold),
+                ) else {
+                    panic!("{counted}");
+                };
+                for text in texts {
+                    assert_eq!(
+                        every_hit(&one, text, 1_000_000),
+                        every_hit(&other, text, 1_000_000),
+                        "{counted} in {text:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a_bounded_run_before_a_word_finds_it_in_a_long_note() {
+        let day = "we talked about the release and the schedule then wrote notes.\n";
+        let note = format!("{}- TODO send the plan to [[Alice]]\n", day.repeat(300));
+        for source in [
+            r"[\s\S]{0,100}TODO",
+            r"[\s\S]{0,200}TODO[\s\S]{0,200}",
+            r"[\s\S]{0,100}plan",
+            r"[^.]{0,30}plan",
+            r".{0,100}TODO",
+        ] {
+            let pattern = Pattern::compile(source, true);
+            assert!(pattern.is_some(), "{source}");
+            let Some(pattern) = pattern else {
+                return;
+            };
+            let found = every_hit(&pattern, &note, super::budget_for(note.len()));
+            assert_eq!(found.len(), 1, "{source}");
+        }
+        let pattern = Pattern::compile(r"[^\]]{0,100}\]", false);
+        let Some(pattern) = pattern else {
+            panic!("refused");
+        };
+        assert_eq!(
+            every_hit(&pattern, &note, super::budget_for(note.len())).len(),
+            2
+        );
     }
 
     #[test]
