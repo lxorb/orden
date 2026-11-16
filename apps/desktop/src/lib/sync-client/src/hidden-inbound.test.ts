@@ -64,7 +64,11 @@ async function here(account: ReferenceAccount) {
     disk,
     account: {
       ask: async (route, body) =>
-        (await import('@orden/sync-core')).unframe(await account.handle('d0', route, frame(body))),
+        route === 'prepare'
+          ? null
+          : (await import('@orden/sync-core')).unframe(
+              await account.handle('d0', route, frame(body)),
+            ),
     },
     name: 'd0',
     now: () => 1000,
