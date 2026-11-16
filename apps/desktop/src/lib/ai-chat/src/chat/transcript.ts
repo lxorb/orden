@@ -41,6 +41,8 @@ export { untrusted }
 
 const OPENED = `<${MARK} source="`
 
+export const SUMMED_OUTSIDE = 'outside'
+
 export function readOutside(turns: readonly Turn[]): boolean {
   return (
     turns.some((turn) =>
@@ -51,10 +53,13 @@ export function readOutside(turns: readonly Turn[]): boolean {
           )
         : turn.parts.some(
             (part) =>
-              part.kind === 'tool' &&
-              (part.verb.startsWith('browser_') ||
-                !!part.result?.images.length ||
-                (part.result?.text.includes(OPENED) ?? false)),
+              (part.kind === 'notice' &&
+                part.code === 'compacted' &&
+                part.text === SUMMED_OUTSIDE) ||
+              (part.kind === 'tool' &&
+                (part.verb.startsWith('browser_') ||
+                  !!part.result?.images.length ||
+                  (part.result?.text.includes(OPENED) ?? false))),
           ),
     ) || turns.some((turn) => turn.context?.includes(OPENED) ?? false)
   )

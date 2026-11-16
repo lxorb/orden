@@ -21,6 +21,7 @@ import { workspace } from '../../../workspace/src/api'
 import { type NoteDoc } from '../../../documents/src/api'
 import { writeFile } from '../../../file-writes/src/api'
 import { answeringAt, onSend, onSent } from '../chat/sends'
+import { readOutside, SUMMED_OUTSIDE } from '../chat/transcript'
 import type { Thread, Turn } from '../../../ai-providers/src/api'
 import { cutForEdit } from './branches'
 import {
@@ -352,13 +353,14 @@ class Review {
       this.cut(thread, panel, plan.turn)
       if (compaction && !thread.compaction) redo.compaction = compaction
     } else if (choice === 'summarize-from') {
-      const summary = await summarized(thread, thread.turns.slice(index))
+      const gone = thread.turns.slice(index)
+      const summary = await summarized(thread, gone)
       thread.turns.splice(index, thread.turns.length - index, {
         id: crypto.randomUUID(),
         role: 'model',
         at: Date.now(),
         parts: [
-          { kind: 'notice', code: 'compacted', text: '' },
+          { kind: 'notice', code: 'compacted', text: readOutside(gone) ? SUMMED_OUTSIDE : '' },
           { kind: 'text', text: summary },
         ],
       })
