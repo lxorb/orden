@@ -1256,10 +1256,12 @@ describe('the note an embed names', () => {
       expect(await links.embedNote('Plan', `${ROOT}/Today.md`)).toEqual({
         text: '<b>mine</b>',
         escapeHtml: false,
+        path: `${ROOT}/Plan.md`,
       })
       expect(await links.embedNote('Theirs', `${ROOT}/Today.md`)).toEqual({
         text: '<form>x</form>',
         escapeHtml: true,
+        path: `${ROOT}/Shared/Theirs.md`,
       })
       expect(await links.embedNote('Missing', `${ROOT}/Today.md`)).toBeNull()
     } finally {
