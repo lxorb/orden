@@ -82,7 +82,26 @@ function placed(transaction: Transaction): boolean {
   if (transaction.annotation(Transaction.userEvent) !== undefined || isExternal(transaction)) {
     return false
   }
+  if (!transaction.effects.length) return false
   return transaction.newSelection.ranges.every((range) => range.empty)
+}
+
+function pushHeadingDown(view: EditorView): boolean {
+  const { state } = view
+  const main = state.selection.main
+  if (state.selection.ranges.length > 1 || !main.empty) return false
+  const line = state.doc.lineAt(main.head)
+  if (!HEADING.test(line.text.replace(QUOTE, ''))) return false
+  const run = hiddenRun(state, line)
+  if (run?.to !== main.head || !state.sliceDoc(main.head, line.to).trim()) return false
+  const quote = QUOTE.exec(line.text)?.[0] ?? ''
+  view.dispatch({
+    changes: { from: line.from, insert: `${quote.trimEnd()}\n` },
+    selection: EditorSelection.cursor(main.head + quote.trimEnd().length + 1),
+    scrollIntoView: true,
+    userEvent: 'input',
+  })
+  return true
 }
 
 const snapped = EditorState.transactionFilter.of((transaction) => {
@@ -106,6 +125,7 @@ export const itemStart = [
   snapped,
   Prec.high(
     keymap.of([
+      { key: 'Enter', run: pushHeadingDown },
       { key: 'ArrowLeft', run: (view) => backOutOfWords(view, Direction.LTR) },
       { key: 'ArrowRight', run: (view) => backOutOfWords(view, Direction.RTL) },
     ]),

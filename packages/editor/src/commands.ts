@@ -1187,6 +1187,24 @@ function endEmptyTask(state: EditorState): TransactionSpec | null {
   }
 }
 
+const QUOTED_LEAD = /^(?:[ \t]*>[ \t]?)*/u
+
+const ITEM_LEAD = /^(?:[ \t]*>[ \t]?)*[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[.\][ \t]+)?$/u
+
+function opensListUnderWords(state: EditorState, line: Line, at: number): boolean {
+  if (!ITEM_LEAD.test(state.doc.sliceString(line.from, at))) return false
+  if (!state.doc.sliceString(at, line.to).trim() || line.number < 2) return false
+  if (
+    !state.doc
+      .line(line.number - 1)
+      .text.replace(QUOTED_LEAD, '')
+      .trim()
+  )
+    return false
+  const item = enclosingNamed(syntaxTree(state).resolveInner(at, -1), 'ListItem')
+  return item !== null && item.from >= line.from && item.prevSibling === null
+}
+
 export const continueLists: StateCommand = ({ state, dispatch }) => {
   const ended = endEmptyTask(state)
   if (ended) {
@@ -1206,13 +1224,19 @@ export const continueLists: StateCommand = ({ state, dispatch }) => {
         if (FRESH_NUMBER.test(made.newDoc.sliceString(line.from, range.head)))
           boxes.push(range.head)
       })
-      if (!boxes.length) {
+      const apart = state.selection.ranges.flatMap((before) => {
+        const line = state.doc.lineAt(before.head)
+        if (!opensListUnderWords(state, line, before.head)) return []
+        const quote = QUOTED_LEAD.exec(line.text)?.[0] ?? ''
+        return [{ from: made.changes.mapPos(line.from, -1), insert: `${quote.trimEnd()}\n` }]
+      })
+      if (!boxes.length && !apart.length) {
         dispatch(made)
         return
       }
 
       const boxed = ChangeSet.of(
-        boxes.map((at) => ({ from: at, insert: '[ ] ' })),
+        [...boxes.map((at) => ({ from: at, insert: '[ ] ' })), ...apart],
         made.newDoc.length,
       )
       dispatch(

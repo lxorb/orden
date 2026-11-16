@@ -50,4 +50,11 @@ describe('Go to line', () => {
     view.dispatch(view.state.replaceSelection('x'))
     expect(view.state.doc.line(4).text).toBe('- [ ] xsecond step')
   })
+
+  test('a caret set by a plain selection, as vim motions set it, stays where it was put', () => {
+    const view = viewOf('# Plan\n\n- first step\n')
+    const start = view.state.doc.line(3).from
+    view.dispatch({ selection: { anchor: start } })
+    expect(view.state.selection.main.head).toBe(start)
+  })
 })

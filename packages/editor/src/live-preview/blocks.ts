@@ -503,15 +503,16 @@ function mayMoveMaths(doc: Text, at: number): boolean {
   return doc.lineAt(at).text.includes('$$')
 }
 
-function underAnEmbed(doc: Text, at: number): boolean {
+const LINE_BLOCK = /^\s*(?:!\[\[|\[toc\])/i
+
+function byALineBlock(doc: Text, at: number): boolean {
   const line = doc.lineAt(at)
-  return (
-    line.number > 1 &&
-    doc
-      .line(line.number - 1)
-      .text.trimStart()
-      .startsWith('![[')
-  )
+  const first = Math.max(1, line.number - 1)
+  const last = Math.min(doc.lines, line.number + 1)
+  for (let number = first; number <= last; number++) {
+    if (LINE_BLOCK.test(doc.line(number).text)) return true
+  }
+  return false
 }
 
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
@@ -545,7 +546,7 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       !mayMakeATable(after, fromB) &&
       !mayMakeAnHtmlBlock(after, fromB) &&
       !mayMoveMaths(after, fromB) &&
-      !underAnEmbed(after, fromB)
+      !byALineBlock(after, fromB)
   })
 
   return ordinary

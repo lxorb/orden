@@ -1,4 +1,11 @@
-import { codeFolding, foldable, foldedRanges, foldEffect } from '@codemirror/language'
+import {
+  codeFolding,
+  ensureSyntaxTree,
+  foldable,
+  foldedRanges,
+  foldEffect,
+  syntaxTree,
+} from '@codemirror/language'
 import type { EditorState, Extension, Line, StateCommand, TransactionSpec } from '@codemirror/state'
 import {
   Decoration,
@@ -220,19 +227,33 @@ function foldsFor(state: EditorState, lines: readonly FoldLines[]): FoldRange[] 
   return out.sort((one, other) => one.from - other.from || one.to - other.to)
 }
 
-function markerFolds(state: EditorState): FoldRange[] {
-  const out: FoldRange[] = []
-
+function shutMarkers(state: EditorState): number[] {
+  const out: number[] = []
   let at = 0
-  let past = 0
   for (const text of state.doc.iterLines()) {
     const from = at
     at += text.length + 1
-    if (from < past) continue
-
     const opened = text.indexOf('[!')
     if (opened < 0 || !/^[ \t>]*$/.test(text.slice(0, opened))) continue
-    if (!calloutOf(text.slice(opened))?.folded) continue
+    if (calloutOf(text.slice(opened))?.folded) out.push(from)
+  }
+  return out
+}
+
+const PARSE_FOR_FOLDS_MS = 200
+
+function parsedThrough(state: EditorState, upTo: number): EditorState {
+  if (syntaxTree(state).length >= upTo) return state
+  ensureSyntaxTree(state, upTo, PARSE_FOR_FOLDS_MS)
+  return state.update({}).state
+}
+
+function markerFolds(state: EditorState, markers: readonly number[]): FoldRange[] {
+  const out: FoldRange[] = []
+
+  let past = 0
+  for (const from of markers) {
+    if (from < past) continue
 
     const range = foldAtLine(state, state.doc.lineAt(from))
     if (!range) continue
@@ -244,8 +265,11 @@ function markerFolds(state: EditorState): FoldRange[] {
   return out
 }
 
-export function withFolds(state: EditorState, lines: readonly FoldLines[]): EditorState {
-  const ranges = [...foldsFor(state, lines), ...markerFolds(state)].sort(
+export function withFolds(given: EditorState, lines: readonly FoldLines[]): EditorState {
+  const markers = shutMarkers(given)
+  const last = markers.at(-1)
+  const state = last === undefined ? given : parsedThrough(given, given.doc.length)
+  const ranges = [...foldsFor(state, lines), ...markerFolds(state, markers)].sort(
     (one, other) => one.from - other.from || one.to - other.to,
   )
   if (!ranges.length) return state
