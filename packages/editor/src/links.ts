@@ -128,11 +128,12 @@ function anchorHref(event: Event): string | null {
   return target?.getAttribute('href') ?? null
 }
 
-export function followAnchors(element: HTMLElement, editor: () => EditorView) {
+export function followAnchors(element: HTMLElement, editor: () => EditorView, plain = false) {
   element.addEventListener('mousedown', (event) => {
     const view = editor()
     const asked =
-      event.button === MIDDLE || (event.button === MAIN && (modifier(event) || view.state.readOnly))
+      event.button === MIDDLE ||
+      (event.button === MAIN && (plain || modifier(event) || view.state.readOnly))
     const href = asked ? anchorHref(event) : null
     if (!href || !WEB_ADDRESS.test(href)) return
 

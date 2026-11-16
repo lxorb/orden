@@ -16,6 +16,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
+import { followAnchors } from '../links'
 import { noteIndex } from '../wikilink/notes'
 import { overlaps } from './reveal'
 import { renderNote } from '../wikilink/preview'
@@ -213,6 +214,7 @@ const footnotePreviews = hoverTooltip(
         const body = document.createElement('div')
         body.className = 'orden-note-preview-body orden-write'
         body.textContent = words
+        followAnchors(body, () => view, true)
         dom.append(body)
 
         void renderNote(words, view.state.facet(noteIndex).path, view.state)

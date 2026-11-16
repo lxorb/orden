@@ -8,7 +8,7 @@ import {
   type TooltipView,
 } from '@codemirror/view'
 import { isTabFile, linkTarget, sectionOf } from '@orden/markdown/links'
-import { modifierHeld } from '../links'
+import { followAnchors, modifierHeld } from '../links'
 import { type LinkSpan, linkAt } from './at'
 import { noteIndex, resolveLink } from './notes'
 import { renderNote } from './preview'
@@ -82,6 +82,7 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
     const body = document.createElement('div')
     body.className = 'orden-note-preview-body orden-write'
     body.textContent = 'Loading…'
+    followAnchors(body, () => view, true)
     dom.append(body)
 
     let release: (() => void) | null = null
