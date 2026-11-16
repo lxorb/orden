@@ -66,20 +66,28 @@ function intoEmptyItem(state: EditorState, range: SelectionRange, text: string):
 
   const body = text.replace(/\n/g, `\n${kept}`)
   const from = line.from + kept.length
+  const under = lazyLineBelow(state, line.number + 1) ? `\n${kept.trimEnd()}` : ''
   return {
-    changes: { from, to: line.to, insert: body },
+    changes: { from, to: line.to, insert: body + under },
     range: EditorSelection.cursor(from + body.length),
   }
 }
 
-function keptBreak(state: EditorState, range: SelectionRange): SelectionRange {
-  if (range.empty || range.to === 0 || state.doc.lineAt(range.to).from !== range.to) return range
+function lazyLineBelow(state: EditorState, number: number): boolean {
+  if (number > state.doc.lines) return false
+  const text = state.doc.line(number).text.trimStart()
+  return text !== '' && !OPENS_BLOCK.test(text)
+}
+
+function keptBreak(state: EditorState, range: SelectionRange, text: string): SelectionRange {
+  if (range.empty || range.to === 0 || text.endsWith('\n')) return range
+  if (state.doc.lineAt(range.to).from !== range.to) return range
   return EditorSelection.range(range.from, range.to - 1)
 }
 
 export function placed(state: EditorState, written: string): TransactionSpec {
   const text = withLineFeeds(written)
-  return everywhere(state, (range) => placedAt(state, keptBreak(state, range), text))
+  return everywhere(state, (range) => placedAt(state, keptBreak(state, range, text), text))
 }
 
 function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
@@ -112,13 +120,11 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const doc = state.doc
   const words = (number: number) =>
     number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
-  const lazyBelow = (number: number) =>
-    words(number) && !OPENS_BLOCK.test(doc.line(number).text.trimStart())
   const under =
     after.trim() === '' &&
     (last.startsWith('|')
       ? words(end.number + 1)
-      : TAKES_LAZY.test(last) && lazyBelow(end.number + 1))
+      : TAKES_LAZY.test(last) && lazyLineBelow(state, end.number + 1))
       ? `\n${lead.trimEnd()}`
       : ''
   const over = inFront && !before && first.startsWith('|') && words(line.number - 1) ? '\n' : ''
@@ -138,7 +144,7 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
 export function plainly(state: EditorState, written: string): TransactionSpec {
   const text = withLineFeeds(written)
   return everywhere(state, (picked) => {
-    const range = keptBreak(state, picked)
+    const range = keptBreak(state, picked, text)
     return intoEmptyItem(state, range, text) ?? plainAt(range, text)
   })
 }
