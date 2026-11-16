@@ -199,8 +199,10 @@ export function patternJudge() {
           return { rest: ahead.rest, heads: ['\\n'], literal: 0, ended: false }
         case 'look':
           return { ...ahead, rest: ahead.rest + before(shape.inner, OPEN_END).rest, ended: false }
-        case 'row':
-          return shape.parts.reduceRight((after, part) => before(part, after), ahead)
+        case 'row': {
+          const parts = ahead.ended ? withoutGivenBack(shape.parts) : shape.parts
+          return parts.reduceRight((after, part) => before(part, after), ahead)
+        }
         case 'either':
           return merged(shape.branches.map((branch) => before(branch, ahead)))
         case 'again': {
@@ -223,6 +225,22 @@ export function patternJudge() {
     }
 
     return before(shape, start)
+  }
+
+  function withoutGivenBack(parts: readonly Shape[]): readonly Shape[] {
+    for (let at = parts.length - 2; at >= 0; at--) {
+      const again = parts[at]
+      if (again?.kind !== 'again' || again.least === again.most) continue
+      const copy = again.of.kind === 'row' ? again.of.parts : [again.of]
+      const tail = parts.slice(at + 1)
+      const given = tail.length <= copy.length && tail.every((part, i) => sameShape(part, copy[i]))
+      return given ? parts.slice(0, at + 1) : parts
+    }
+    return parts
+  }
+
+  function sameShape(one: Shape, other: Shape | undefined): boolean {
+    return JSON.stringify(one) === JSON.stringify(other)
   }
 
   function copiesApart(shape: Shape, flags: string): boolean {
