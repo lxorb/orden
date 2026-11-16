@@ -27,9 +27,12 @@ providePort('terminal.making', {
 })
 
 providePort('terminal.judge', {
-  runsFree: async (program, args, programs) => {
-    const judge = await (await terminal()).programJudge()
-    return judge.runsOnTheList(program, args, programs, judge.osOf(platform()))
+  runsFree: async (program, args, programs, folder) => {
+    const [free, { osOf }] = await Promise.all([
+      (await terminal()).programJudge(),
+      import('./terminal/src/agent/shell-text'),
+    ])
+    return free.runsFree(program, args, programs, folder, osOf(platform()))
   },
 })
 

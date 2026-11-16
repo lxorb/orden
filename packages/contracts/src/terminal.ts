@@ -27,6 +27,7 @@ interface TerminalJudgePort {
     program: string,
     args: readonly string[],
     programs: readonly string[],
+    folder: string,
   ) => Promise<boolean>
 }
 

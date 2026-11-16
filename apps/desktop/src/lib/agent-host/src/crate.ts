@@ -36,8 +36,7 @@ async function programFree(args: Said): Promise<boolean> {
   const cwd = said(args, 'cwd')
   const judge = portOf('terminal.judge')
   if (!program || !given || !programs || !cwd || !judge.ok) return false
-  if (!protection.agentsMayWithin(cwd)) return false
-  return judge.value.runsFree(program, given, programs).catch(() => false)
+  return judge.value.runsFree(program, given, programs, cwd).catch(() => false)
 }
 
 export async function answerTheCrate(name: string, args: Said): Promise<unknown> {

@@ -1,7 +1,19 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+
+const repository = vi.hoisted(() => ({ at: '/s/Work/site' }))
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../platform/src/api')>()),
+  onDisk: (path: string) => Promise.resolve(path === `${repository.at}/.git`),
+}))
 
 await import('../../terminal-ports')
 const { answerTheCrate } = await import('./crate')
+const { workspace } = await import('../../workspace/src/api')
+workspace.spaces = [{ id: 's', name: 's', root: '/s' }]
+
+afterEach(() => {
+  repository.at = '/s/Work/site'
+})
 
 const free = (program: string, args: string[], programs = ['git', 'npm', 'pnpm']) =>
   answerTheCrate('agent.program_free', { program, args, programs, cwd: '/s/Work/site' })
@@ -65,6 +77,20 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     protection.set('/s', '/s/Work/site/Private', 'password')
     expect(await free('git', ['status'])).toBe(false)
     protection.set('/s', '/s/Work/site/Private', null)
+  })
+
+  test('git is free only where nothing in its whole repository is shut to agents', async () => {
+    const { protection } = await import('../../protect/src/api')
+    protection.set('/s', '/s/Private', 'password')
+    repository.at = '/s'
+    expect(await free('git', ['show', 'HEAD:Private/Diary.md'])).toBe(false)
+    expect(await free('git', ['log', '-p'])).toBe(false)
+    expect(await free('pnpm', ['test'])).toBe(true)
+    repository.at = '/s/Work'
+    expect(await free('git', ['log', '-p'])).toBe(true)
+    repository.at = '/elsewhere'
+    expect(await free('git', ['log', '-p'])).toBe(false)
+    protection.set('/s', '/s/Private', null)
   })
 
   test('a program run in a folder shut to agents is never free', async () => {
