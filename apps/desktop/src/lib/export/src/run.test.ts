@@ -66,6 +66,20 @@ test('a page with its pictures goes out in pieces, each picture written in, neve
   expect(page).not.toContain('src="b.png"')
 })
 
+test('a markdown export takes its pictures from the note as Orden finds them', async () => {
+  handed.length = 0
+
+  await runExport(
+    'md',
+    { source: 'see ![[a.png]] here\n', name: 'Trip.md', path: '/space/Trip.md' },
+    { picturesWritten: (source) => source.replace('![[a.png]]', '![](att/a.png)') },
+  )
+
+  const payload = handed[0]
+  if (!payload || !('text' in payload)) throw new Error('no text was handed over')
+  expect(payload.text).toBe('see ![](att/a.png) here\n')
+})
+
 test('a document export takes its pictures from the note as Orden finds them', async () => {
   handed.length = 0
   const asked: string[] = []

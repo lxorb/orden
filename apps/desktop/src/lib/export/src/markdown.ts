@@ -6,7 +6,7 @@ import {
   lines,
   shownText,
 } from '@orden/markdown/links'
-import { stripFrontMatter } from '@orden/markdown/front-matter'
+import { frontMatterBlock, stripFrontMatter } from '@orden/markdown/front-matter'
 import { codeSpans, inCode } from '@orden/markdown/tags'
 import { encodeTarget } from '@orden/markdown/links'
 
@@ -34,10 +34,38 @@ const DEFINITION = new RegExp(
 const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 function asLink(link: FoundLink, target: string): string {
-  const anchor = link.heading ? `#${link.heading}` : ''
-  const fragment = anchor ? encodeTarget(anchor) : ''
+  const fragment =
+    link.block !== null
+      ? `#^${encodeTarget(link.block)}`
+      : link.heading
+        ? `#${encodeTarget(link.heading)}`
+        : ''
 
-  return `[${shownText(link)}](${encodeTarget(target)}${fragment})`
+  return `[${shownText(link)}](${encodeTarget(target).replace(/'/g, '%27')}${fragment})`
+}
+
+const VALUE_OPENS = /^[ \t]*(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)/
+
+function inMatter(source: string, link: FoundLink, text: string): string | null {
+  const start = source.lastIndexOf('\n', link.from - 1) + 1
+  const lineEnd = source.indexOf('\n', link.to)
+  const line = source.slice(start, lineEnd === -1 ? undefined : lineEnd).replace(/\r$/, '')
+  const before = line.slice(0, link.from - start)
+  const after = line.slice(link.to - start)
+
+  const opens = VALUE_OPENS.exec(before)?.[0]
+  if (opens === undefined) return null
+  if (opens === before) return /^[ \t]*(?:#.*)?$/.test(after) ? quotedValue(text) : null
+
+  const quote = before.slice(opens.length, opens.length + 1)
+  if (quote === "'" && after.includes(quote)) return text.replace(/'/g, "''")
+  if (quote === '"' && after.includes(quote)) return text.replace(/["\\]/g, (mark) => `\\${mark}`)
+  return null
+}
+
+function quotedValue(value: string): string {
+  if (!/["\\]/.test(value)) return `"${value}"`
+  return `'${value.replace(/'/g, "''")}'`
 }
 
 function asSource(path: string, written: string): string {
@@ -147,6 +175,7 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
 
   if (options.link || options.picture) {
     const body = bodyStart(source)
+    const matter = frontMatterBlock(source)
     for (const found of findLinks(source)) {
       if (found.kind !== 'wikilink') continue
 
@@ -159,11 +188,10 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
       if (!options.link) continue
 
       const target = options.link(found)
-      edits.push({
-        from: found.from,
-        to: found.to,
-        text: target === null ? shownText(found) : asLink(found, target),
-      })
+      if (target === null && found.embed && embedKind(found.target) !== null) continue
+      const written = target === null ? shownText(found) : asLink(found, target)
+      const text = matter && found.from < matter.close ? inMatter(source, found, written) : written
+      if (text !== null) edits.push({ from: found.from, to: found.to, text })
     }
   }
 

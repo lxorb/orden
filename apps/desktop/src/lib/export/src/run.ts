@@ -259,7 +259,7 @@ async function withKept(note: Note): Promise<Note> {
   return source === note.source ? note : { ...note, source }
 }
 
-const WRITES_PICTURES = new Set<Exportable>(['textbundle', 'md-assets', 'docx', 'rtf'])
+const WRITES_PICTURES = new Set<Exportable>(['md', 'textbundle', 'md-assets', 'docx', 'rtf'])
 
 function picturesWrittenIn(note: Note, options: RunOptions): Note {
   const source = options.picturesWritten?.(note.source) ?? note.source
