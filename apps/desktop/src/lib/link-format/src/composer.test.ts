@@ -31,6 +31,24 @@ describe('merging one note into another', () => {
   })
 })
 
+describe('a merge into a note that has front matter', () => {
+  test('carries over a key that was the only one the moved note had', () => {
+    expect(merged('---\nstatus: done\n---\n# Into\n', '---\naliases: [F]\n---\n# From\n')).toBe(
+      '---\nstatus: done\naliases: [F]\n---\n# Into\n\n---\n\n# From\n',
+    )
+  })
+
+  test('carries over a key written in quotes', () => {
+    expect(
+      merged('---\nstatus: done\n---\n# Into\n', '---\n"my key": 1\nb: 2\n---\n# From\n'),
+    ).toBe('---\nstatus: done\n"my key": 1\nb: 2\n---\n# Into\n\n---\n\n# From\n')
+  })
+
+  test('closes front matter the moved note left without an ending line', () => {
+    expect(merged('# Into\n', '---\na: 1\n---')).toBe('---\na: 1\n---\n# Into')
+  })
+})
+
 describe('a link left behind', () => {
   test('is a wikilink to the note by name', () => {
     expect(linkTo('The Plan')).toBe('[[The Plan]]')

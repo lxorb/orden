@@ -199,6 +199,15 @@ export function frontMatterEdits(
   return oneEdit(source, after)
 }
 
+export function frontMatterEntry(source: string, key: string): string | null {
+  const block = frontMatterBlock(source)
+  const found = block && keyLine(source, block, key)
+  if (!block || !found) return null
+
+  const line = withUnder(source, block, found)
+  return source.slice(line.from, cutTo(source, line))
+}
+
 export function frontMatterEdit(
   source: string,
   key: string,

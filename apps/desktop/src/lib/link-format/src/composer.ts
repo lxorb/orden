@@ -3,6 +3,7 @@ import { formatLink, type LinkFormat, type LinkTarget, linkWriting } from './lin
 import {
   frontMatterBlock,
   frontMatterEdit,
+  frontMatterEntry,
   frontMatterKeys,
   frontMatterList,
   stripFrontMatter,
@@ -19,21 +20,22 @@ function edited(text: string, edit: { from: number; to: number; insert: string }
   return edit ? text.slice(0, edit.from) + edit.insert + text.slice(edit.to) : text
 }
 
+function lineEnded(text: string): string {
+  return text.endsWith('\n') ? text : `${text}\n`
+}
+
 function withMatterOf(into: string, from: string): string {
   const block = frontMatterBlock(from)
   if (!block) return into
-  if (!frontMatterBlock(into)) return `${from.slice(block.from, block.to)}${into}`
+  if (!frontMatterBlock(into)) return `${lineEnded(from.slice(block.from, block.to))}${into}`
 
   let out = into
   for (const key of frontMatterKeys(from)) {
     const held = frontMatterKeys(out).find((one) => one.toLowerCase() === key.toLowerCase())
     if (held === undefined) {
-      const cut = frontMatterEdit(from, key, null)
-      const whole = cut?.insert === '' && from.slice(cut.from, cut.to).startsWith(key)
-      const said = cut && whole ? from.slice(cut.from, cut.to) : null
+      const said = frontMatterEntry(from, key)
       const close = frontMatterBlock(out)?.close ?? 0
-      if (said)
-        out = `${out.slice(0, close)}${said.endsWith('\n') ? said : `${said}\n`}${out.slice(close)}`
+      if (said) out = `${out.slice(0, close)}${lineEnded(said)}${out.slice(close)}`
       continue
     }
     if (!LISTED.has(key.toLowerCase())) continue
