@@ -563,6 +563,18 @@ pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     judged(&spaces_dir(app)?, path)
 }
 
+pub fn walked_in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    walked(&spaces_dir(app)?, path)
+}
+
+fn walked(root: &Path, path: &str) -> Result<PathBuf, String> {
+    let target = judged(root, path)?;
+    match space_root(root, &target) {
+        Some(space) => really_under(&space, &target).map(|()| target),
+        None => Ok(target),
+    }
+}
+
 fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = judged_as(NAMING, root, path)?;
     stays_in_space(root, &target)?;
@@ -1016,8 +1028,8 @@ mod tests {
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
         judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, path_key_as,
-        same_path, space_root, stays_in_space, unspoken, upcased, write_atomically, Naming, Picked,
-        ORIGIN,
+        same_path, space_root, stays_in_space, unspoken, upcased, walked, write_atomically, Naming,
+        Picked, ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -2081,6 +2093,28 @@ mod tests {
         let (notes, others) = files_in(here);
         assert_eq!(names(&notes), ["One.md", "Two.markdown"]);
         assert_eq!(names(&others), ["notes.txt", "pic.png"]);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_walk_never_starts_at_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let spaces = dir.path().join("Orden");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(spaces.join("Work/Notes")).expect("a space");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        assert!(link_to(&elsewhere, &spaces.join("Work/Refs")));
+        assert!(link_to(
+            &spaces.join("Work/Notes"),
+            &spaces.join("Work/Same")
+        ));
+
+        let at = |one: &str| spaces.join(one).to_string_lossy().into_owned();
+        assert!(judged(&spaces, &at("Work/Refs")).is_ok());
+        assert!(walked(&spaces, &at("Work/Refs")).is_err());
+        assert!(walked(&spaces, &at("Work/Same")).is_ok());
+        assert!(walked(&spaces, &at("Work/Notes")).is_ok());
+        assert!(walked(&spaces, &at("Work")).is_ok());
     }
 
     #[test]

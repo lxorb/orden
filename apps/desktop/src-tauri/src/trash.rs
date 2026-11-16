@@ -9,7 +9,8 @@ use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
     folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper,
-    rejoins_highlights, restore_held, spaces_dir, write_atomically, HIGHLIGHTS, TRASH,
+    rejoins_highlights, restore_held, spaces_dir, stays_in_space, write_atomically, HIGHLIGHTS,
+    TRASH,
 };
 
 const MANIFEST: &str = "manifest.json";
@@ -235,6 +236,7 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     let slot = dir.join(&entry.id);
     let held = slot.join(&entry.name);
     let target = restore_target(base, &entry)?;
+    stays_in_space(base, &target)?;
     if !held.exists() {
         entries.remove(position);
         write_manifest(dir, &entries)?;
@@ -718,6 +720,33 @@ mod tests {
 
         assert!(read_manifest(dir.path()).is_empty());
         assert!(dir.path().join("manifest.json.unreadable").exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_restore_never_lands_through_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path().join("Orden");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(base.join("Work/Drop")).expect("a space");
+        std::fs::create_dir_all(base.join(".trash")).expect("the trash");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        std::fs::write(base.join("Work/Drop/x.md"), "planted").expect("a note");
+        let id = super::trashed(
+            &base.join(".trash"),
+            &base.join("Work/Drop/x.md"),
+            "Work/Drop/x.md".into(),
+            "x.md".into(),
+            "note".into(),
+            true,
+        )
+        .expect("deleted")
+        .id;
+        std::fs::remove_dir(base.join("Work/Drop")).expect("its folder gone");
+        std::os::unix::fs::symlink(&elsewhere, base.join("Work/Drop")).expect("a link out");
+
+        assert!(super::restored(&base, &base.join(".trash"), &id).is_err());
+        assert!(!elsewhere.join("x.md").exists());
     }
 
     fn a_space() -> tempfile::TempDir {
