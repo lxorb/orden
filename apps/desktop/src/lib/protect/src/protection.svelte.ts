@@ -425,7 +425,7 @@ export class Protection {
       this.put(move.there, { ...this.ways(move.there), [move.now]: above.way })
     }
     const paper = paperMoving(from, to)
-    if (paper) this.moved(paper[0], paper[1], root, into)
+    if (paper) this.copied(paper[0], paper[1], root, into)
   }
 
   private carry(move: Moving, root: string): void {

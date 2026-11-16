@@ -76,8 +76,16 @@ async function gone(path: string, dir: boolean) {
   listAgain()
 }
 
+function lockedAlike(from: string, to: string) {
+  workspace.protection.copied(from, to, workspace.rootHolding(from), workspace.rootHolding(to))
+}
+
 async function moved(from: string, to: string, dir: boolean) {
-  if (landing(to) || (await onDisk(from))) return
+  if (landing(to)) return
+  if (await onDisk(from)) {
+    lockedAlike(from, to)
+    return
+  }
   await told({
     op: 'moved',
     from,
@@ -95,7 +103,12 @@ async function came(path: string, dir: boolean) {
 }
 
 export async function heardChange(change: SpaceChange): Promise<void> {
-  if (dotted(change.path)) return
+  if (dotted(change.path)) {
+    if (change.kind === 'renamed' && !dotted(change.from) && !landing(change.path)) {
+      lockedAlike(change.from, change.path)
+    }
+    return
+  }
   if (!change.dir) {
     const { paperRewritten, sheetArrived } = await services().sheets()
     sheetArrived(change.path)

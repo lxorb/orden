@@ -197,3 +197,58 @@ describe('what is heard while a first pass runs', () => {
     watched.stop()
   })
 })
+
+describe('a rename another program makes', () => {
+  const heardRename = async (from: string, to: string) => {
+    const { providePort } = await import('@orden/contracts')
+    const copied = vi.fn()
+    providePort('sync.workspace', { copied, rootHolding: () => ROOT } as never)
+    const space = {
+      id: 's',
+      row: { root: ROOT },
+      entries: new Map(),
+      key: (path: string) => path,
+      at: () => null,
+      paths: () => new Map(),
+      wantedAt: () => [],
+    }
+    const watched = await watchFolders({
+      engine: {
+        created: () => Promise.resolve(),
+        placed: (path: string) => ({ space, path: path.slice(ROOT.length + 1) }),
+        entryAt: () => null,
+        ownWork: () => false,
+        core: {
+          spaces: new Map([['s', space]]),
+          world: {
+            foldsCase: false,
+            blobs: {},
+            join: (root: string, path: string) => `${root}/${path}`,
+            disk: { exists: () => Promise.resolve(true), read: () => Promise.resolve('words') },
+          },
+        },
+      },
+      ready: () => true,
+      changed: () => undefined,
+    } as unknown as Watching)
+    watch.heard({
+      root: ROOT,
+      scan: false,
+      gone: false,
+      changes: [{ kind: 'renamed', from, path: to, dir: false, size: 1, mtime: 1, id: null }],
+    })
+    await vi.waitFor(() => expect(copied).toHaveBeenCalled())
+    watched.stop()
+    return copied
+  }
+
+  test('with something new already at the old name gives the moved note the old name’s lock', async () => {
+    const copied = await heardRename(`${ROOT}/Diary.md`, `${ROOT}/Old/Diary.md`)
+    expect(copied).toHaveBeenCalledWith(`${ROOT}/Diary.md`, `${ROOT}/Old/Diary.md`, ROOT, ROOT)
+  })
+
+  test('into a dotted folder gives the hidden note the lock it had', async () => {
+    const copied = await heardRename(`${ROOT}/Diary.md`, `${ROOT}/.stash/Diary.md`)
+    expect(copied).toHaveBeenCalledWith(`${ROOT}/Diary.md`, `${ROOT}/.stash/Diary.md`, ROOT, ROOT)
+  })
+})

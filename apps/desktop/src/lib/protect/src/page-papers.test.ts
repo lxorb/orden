@@ -31,7 +31,11 @@ describe('the paper of a page note', () => {
     expect(protection.agentsMay(`${ROOT}/paper.pages.pdf`)).toBe(false)
     protection.moved(`${ROOT}/paper.pages`, `${ROOT}/Renamed.pages`, ROOT)
     expect(protection.agentsMay(`${ROOT}/Renamed.pages.pdf`)).toBe(false)
-    expect(protection.ways(ROOT)).toEqual({ 'Renamed.pages': 'password', 'Renamed.pages.pdf': 'password' })
+    expect(protection.ways(ROOT)).toEqual({
+      'Renamed.pages': 'password',
+      'Renamed.pages.pdf': 'password',
+      'paper.pages.pdf': 'password',
+    })
   })
 
   test('is locked with its page note', () => {
@@ -54,5 +58,14 @@ describe('the paper of a page note', () => {
     protection.set(ROOT, `${ROOT}/Lecture.pages.pdf`, 'password')
     protection.copied(`${ROOT}/Lecture.pages`, `${ROOT}/Copy.pages`, ROOT, ROOT)
     expect(protection.ways(ROOT)['Copy.pages.pdf']).toBe('password')
+  })
+
+  test('left behind by a page note renamed outside Orden stays locked', () => {
+    const protection = new Protection()
+    protection.set(ROOT, `${ROOT}/Lecture.pages`, 'password')
+    protection.set(ROOT, `${ROOT}/Lecture.pages.pdf`, 'password')
+    protection.moved(`${ROOT}/Lecture.pages`, `${ROOT}/Talk.pages`, ROOT)
+    expect(protection.agentsMay(`${ROOT}/Lecture.pages.pdf`)).toBe(false)
+    expect(protection.agentsMay(`${ROOT}/Talk.pages.pdf`)).toBe(false)
   })
 })
