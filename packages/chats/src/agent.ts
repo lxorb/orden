@@ -73,7 +73,7 @@ function attribute(source: string): string {
     .join('')
 }
 
-const line = (text: string) => text.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
+export const oneLine = (text: string): string => text.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
 
 export function momentOf(at: number): string {
   return `${new Date(at).toISOString().slice(0, 16)}Z`
@@ -99,9 +99,9 @@ export function chatsText(chats: readonly Listed[]): string {
   return chats
     .map((one) =>
       [
-        `#${line(one.name)}`,
+        `#${oneLine(one.name)}`,
         one.id,
-        line(one.space),
+        oneLine(one.space),
         `${String(one.members)} people`,
         ...(one.unread === 'some'
           ? ['unread']
@@ -124,8 +124,8 @@ function messageText(chat: string, message: Message, reading: Reading): string {
   const head = [
     message.id,
     momentOf(message.at),
-    mine ? `${line(name)} (you)` : line(name),
-    ...(message.via ? [`via ${line(message.via.agent)}`] : []),
+    mine ? `${oneLine(name)} (you)` : oneLine(name),
+    ...(message.via ? [`via ${oneLine(message.via.agent)}`] : []),
     ...(message.parent ? [`reply to ${message.parent}`] : []),
     ...(message.quote ? [`quoting ${message.quote}`] : []),
     ...(message.replies ? [`${String(message.replies)} replies`] : []),
@@ -153,8 +153,8 @@ function messageText(chat: string, message: Message, reading: Reading): string {
 }
 
 export function messagesText(chat: string, messages: readonly Message[], reading: Reading): string {
-  if (!messages.length) return `#${line(chat)} has no messages here.`
-  return [`#${line(chat)}`, ...messages.map((one) => messageText(chat, one, reading))].join('\n')
+  if (!messages.length) return `#${oneLine(chat)} has no messages here.`
+  return [`#${oneLine(chat)}`, ...messages.map((one) => messageText(chat, one, reading))].join('\n')
 }
 
 export function hitsText(
@@ -163,6 +163,8 @@ export function hitsText(
 ): string {
   if (!hits.length) return 'Nothing found.'
   return hits
-    .map((one) => `- #${line(one.chat)} · ${messageText(one.chat, one.message, reading).slice(2)}`)
+    .map(
+      (one) => `- #${oneLine(one.chat)} · ${messageText(one.chat, one.message, reading).slice(2)}`,
+    )
     .join('\n')
 }
