@@ -349,6 +349,10 @@ function preformattedText(node: Node): string {
   return [...node.childNodes].map(preformattedText).join('')
 }
 
+const WORD_LIST = /mso-list\s*:\s*l\d+\s+level(\d+)/i
+
+const WORD_LIST_MARK = /mso-list\s*:\s*ignore/i
+
 const BLOCKS =
   'address,article,aside,blockquote,div,dl,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,ul'
 
@@ -847,6 +851,27 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
+  service.addRule('wordListMark', {
+    filter: (node) =>
+      node.nodeType === 1 && WORD_LIST_MARK.test((node as Element).getAttribute('style') ?? ''),
+    replacement: () => '',
+  })
+
+  service.addRule('wordListItem', {
+    filter: (node) =>
+      node.nodeName === 'P' && WORD_LIST.test((node as Element).getAttribute('style') ?? ''),
+    replacement: (content, node) => {
+      const words = content.trim()
+      if (!words) return ''
+
+      const style = (node as Element).getAttribute('style') ?? ''
+      const level = Number(WORD_LIST.exec(style)?.[1] ?? 1)
+      const shown = (node as Element).querySelector('[style*="mso-list"]')?.textContent ?? ''
+      const number = /^\s*(\d+)[.)]/.exec(shown)?.[1]
+      const marker = number ? `${number}.` : '-'
+      return `\n${'    '.repeat(Math.max(0, level - 1))}${marker} ${words}\n`
+    },
+  })
   return service
 }
 

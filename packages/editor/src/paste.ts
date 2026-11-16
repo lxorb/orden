@@ -129,16 +129,26 @@ function fromCodeEditor(html: string): boolean {
   return false
 }
 
+function longestTicks(code: string): number {
+  return [...code.matchAll(/`+/g)].reduce((most, [run]) => Math.max(most, run.length), 0)
+}
+
 function fenced(code: string): string {
-  const longest = [...code.matchAll(/`+/g)].reduce((most, [run]) => Math.max(most, run.length), 2)
-  const fence = '`'.repeat(longest + 1)
+  const fence = '`'.repeat(Math.max(2, longestTicks(code)) + 1)
   return `${fence}\n${code}\n${fence}`
+}
+
+function inlineCode(code: string): string {
+  const ticks = '`'.repeat(longestTicks(code) + 1)
+  const padded = code.startsWith('`') || code.endsWith('`') ? ` ${code} ` : code
+  return `${ticks}${padded}${ticks}`
 }
 
 function codeEditorPaste(html: string, text: string): string | null {
   if (!text || !fromCodeEditor(html)) return null
   const code = withLineFeeds(text).replace(/\n+$/, '')
-  return code.includes('\n') ? fenced(code) : code
+  if (!code.trim()) return null
+  return code.includes('\n') ? fenced(code) : inlineCode(code.trim())
 }
 
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
@@ -198,7 +208,7 @@ export function richPaste(): Extension {
         return true
       }
 
-      const ready = copiedHere(html, text) ?? delimitedToTable(text)
+      const ready = copiedHere(html, text) ?? codeEditorPaste(html, text) ?? delimitedToTable(text)
       if (ready) {
         event.preventDefault()
         const land = later(view)

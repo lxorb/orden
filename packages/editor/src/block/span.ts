@@ -35,6 +35,7 @@ const KINDS: Readonly<Record<string, BlockKind>> = {
   HTMLBlock: 'block',
   LinkReference: 'block',
   CommentBlock: 'block',
+  FootnoteDef: 'block',
 }
 
 function kindOf(name: string): BlockKind | null {
