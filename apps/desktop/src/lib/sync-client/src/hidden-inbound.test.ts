@@ -140,3 +140,16 @@ test('a folder another device deletes keeps what this one holds in it that never
   expect(disk.folders.has(`${ROOT}/Code/Sub`)).toBe(false)
   expect(disk.folders.has(`${ROOT}/Gone`)).toBe(false)
 })
+
+test('a note made, copied or put back under a hidden name here is never sent, as one placed there by hand is not', async () => {
+  const account = new ReferenceAccount(new Clock(), SEEDED)
+  const { disk, engine } = await here(account)
+  disk.files.set(`${ROOT}/.private/Diary.md`, 'only mine')
+  await engine.created(`${ROOT}/.private`, true)
+  await engine.created(`${ROOT}/.private/Diary.md`, false, 'only mine')
+  await engine.pass(SPACE)
+  const view = await account.view()
+  expect(view.entries.map((one) => one.name)).not.toContain('.private')
+  expect(view.entries.map((one) => one.name)).not.toContain('Diary.md')
+  expect(Object.values(view.texts)).not.toContain('only mine')
+})

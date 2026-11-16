@@ -21,7 +21,7 @@ import { holdsDocument } from './kinds'
 
 const hiddenName = (name: string) => name.startsWith('.') && !isOwnFile(name)
 
-const hiddenPath = (path: string) => path.split(/[\\/]/).some(hiddenName)
+export const hiddenPath = (path: string) => path.split(/[\\/]/).some(hiddenName)
 import { emptyKeeping } from './keeping'
 import { emptyOrdering, type Gone, type Keeping, type Ordering, type Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
