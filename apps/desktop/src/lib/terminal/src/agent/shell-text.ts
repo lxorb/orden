@@ -443,8 +443,10 @@ function gitOptionFree(word: string, free: Free): boolean {
   return word.length > 1
 }
 
+const OUTSIDE = /(^|[=@])([\\/~]|[A-Za-z]:)|(file|link|portal):/i
+
 function reachesOut(word: string): boolean {
-  return /^([\\/~]|[A-Za-z]:|file:)/i.test(word) || word.split(/[\\/=]/).includes('..')
+  return OUTSIDE.test(word) || word.split(/[\\/=@:]/).includes('..')
 }
 
 const anyReachesOut = (words: readonly string[]) =>
@@ -580,7 +582,7 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
   if (/(?! )\p{Zs}/u.test(command)) return false
-  if (os === 'windows' && /[\\^,]|%[^%\s]+%/.test(command)) return false
+  if (os === 'windows' && /[\\^,']|%[^%\s]+%/.test(command)) return false
 
   const words = wordsOf(command.trim())
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))

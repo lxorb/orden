@@ -1,5 +1,5 @@
-import { folderOf, joinPath, onDisk, within } from '../../../platform/src/api'
-import { protection } from '../../../protect/src/api'
+import { folderOf, joinPath, onDisk, relativeTo, within } from '../../../platform/src/api'
+import { buried, protection } from '../../../protect/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { type Os, programOf, runsOnTheList } from './shell-text'
 
@@ -26,7 +26,9 @@ export async function shutNothingFor(program: string, folder: string, os: Os): P
   if (programOf(program, os).toLowerCase() !== 'git') return true
   const root = workspace.spaces.find((one) => within(one.root, folder, one.root) !== null)?.root
   const top = root ? await repositoryTop(folder, root) : null
-  return top !== null && protection.agentsMayWithin(top)
+  if (root === undefined || top === null || !protection.agentsMayWithin(top)) return false
+  const at = top === root ? '' : relativeTo(root, top)
+  return !(await buried()).buriedWithin(root, at)
 }
 
 export async function runsFree(

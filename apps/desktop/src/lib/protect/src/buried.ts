@@ -199,3 +199,10 @@ export function waits(back: string | null, root: string | null, at: string): boo
     return folder !== null && within(folder, at, root ?? undefined) !== null
   })
 }
+
+export function buriedWithin(root: string, at: string): boolean {
+  return Object.keys(readBuried()).some((name) => {
+    const gone = folderIn(name, root)
+    return gone !== null && (at === '' || within(at, gone, root) !== null)
+  })
+}

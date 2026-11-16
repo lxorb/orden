@@ -436,6 +436,11 @@ describe('a package manager, by what is known to be free', () => {
   ])('goes: %s', (line) => {
     expect(onBoth(line, listed)).toBe(true)
   })
+
+  test('single quotes go where the shell reads them as quotes, and ask on Windows where Command Prompt does not', () => {
+    expect(onTheList("git commit -m 'fix two words'", ['git'], 'unix')).toBe(true)
+    expect(onTheList("git commit -m 'fix two words'", ['git'], 'windows')).toBe(false)
+  })
 })
 
 describe('a line as the shell hands it over', () => {
@@ -467,7 +472,6 @@ describe('a line as the shell hands it over', () => {
 
   test.each([
     'git commit -m "fix two words"',
-    "git commit -m 'fix two words'",
     'git log --format="%h %s"',
     'git log --grep "a -c word"',
     'git diff -- "a file.md"',

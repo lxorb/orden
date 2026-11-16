@@ -10,6 +10,8 @@ vi.mock('../../platform/src/api', async (original) => ({
   },
 }))
 
+const { memoryStorage } = await import('../../../../test/disk')
+vi.stubGlobal('localStorage', memoryStorage())
 await import('../../terminal-ports')
 const { answerTheCrate } = await import('./crate')
 const { workspace } = await import('../../workspace/src/api')
@@ -120,5 +122,14 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
     expect(await free('git', ['status'])).toBe(false)
     protection.set('/s', '/s/Work', null)
     expect(await free('git', ['status'])).toBe(true)
+  })
+
+  test('git is never free where a locked note of its repository waits in Recently deleted', async () => {
+    const { protection } = await import('../../protect/src/api')
+    protection.set('/s', '/s/Work/site/Diary.md', 'password')
+    await protection.gone('/s/Work/site/Diary.md', '/s', 'trash-1')
+    expect(protection.agentsMayWithin('/s/Work/site')).toBe(true)
+    expect(await free('git', ['log', '-p'])).toBe(false)
+    expect(await free('pnpm', ['test'])).toBe(true)
   })
 })
