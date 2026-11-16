@@ -20,6 +20,7 @@ test('an answer written into a note spells its formulas the note’s way', async
     {
       prompt: 'Explain',
       note: null,
+      doc: null,
       started: (named) => (model = named),
       wrote: (piece) => (written += piece),
     },

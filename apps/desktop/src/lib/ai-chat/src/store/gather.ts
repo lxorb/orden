@@ -143,7 +143,8 @@ async function attachmentOf(
     case 'tab':
       return await pageAttachment(chip.id, chip.label)
     case 'selection': {
-      if (!selection.trim() || !agentsMay(workspace.active?.path ?? '')) return null
+      if (!selection.trim() || !agentsMay(picked?.path ?? '')) return null
+      if (!agentsMay(workspace.active?.path ?? '')) return null
       const one = { label: 'selection', text: fitted(selection, SELECTION) }
       return (await pickedFromOthers(picked)) ? { ...one, untrusted: true } : one
     }

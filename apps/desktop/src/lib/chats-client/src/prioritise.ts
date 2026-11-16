@@ -2,6 +2,7 @@ import { todayOf } from '@orden/bases'
 import type { Message, Who } from '@orden/chats'
 import { complete, ai } from '../../ai-providers/src/api'
 import { chatsOn } from '../../gates/src/api'
+import { protection } from '../../protect/src/api'
 import { type Asker, type Heard, priorities } from './priorities.svelte'
 import { store } from './view/source.svelte'
 
@@ -21,6 +22,8 @@ export function startPriorities(): void {
     if (!chatsOn() || (!priorities.on && !priorities.drafting)) return
     const me = store().me
     if (messages.every((one) => one.author === me)) return
+    const entry = store().entry(chat)
+    if (!entry || !protection.agentsMay(entry.path ?? entry.root)) return
     void consider(chat).catch(() => undefined)
   })
 }
