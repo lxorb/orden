@@ -123,7 +123,9 @@ function messageText(chat: string, message: Message, reading: Reading): string {
     message.id,
     momentOf(message.at),
     mine ? `${name} (you)` : name,
-    ...(message.via ? [`via ${message.via.agent}`] : []),
+    ...(message.via
+      ? [`via ${message.via.agent.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')}`]
+      : []),
     ...(message.parent ? [`reply to ${message.parent}`] : []),
     ...(message.quote ? [`quoting ${message.quote}`] : []),
     ...(message.replies ? [`${String(message.replies)} replies`] : []),
