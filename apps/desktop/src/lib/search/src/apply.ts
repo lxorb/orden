@@ -49,32 +49,27 @@ function phrased(query: Query): Query {
   if (query.kind === 'any') return { ...query, of: query.of.map(phrased) }
   if (query.kind !== 'all') return query
 
-  const scoped = query.of.find((one) => one.kind === 'scope' && one.of.kind === 'text')
-  if (scoped?.kind === 'scope' && query.of.some((one) => one.kind === 'text')) {
-    const inner: Query = {
-      kind: 'all',
-      of: query.of.flatMap((one) =>
-        one === scoped ? [scoped.of] : one.kind === 'text' ? [one] : [],
-      ),
+  const out: Query[] = []
+  for (let at = 0; at < query.of.length; at++) {
+    const one = query.of[at]
+    if (!one) continue
+    const words = one.kind === 'scope' ? one.of : one
+    if (words.kind !== 'text' && words.kind !== 'content') {
+      out.push(phrased(one))
+      continue
     }
-    return phrased({
-      ...query,
-      of: query.of.flatMap((one) =>
-        one === scoped ? [{ ...scoped, of: inner }] : one.kind === 'text' ? [] : [one],
-      ),
-    })
+    let text = words.text
+    for (let next = query.of[at + 1]; followsAs(next, words); next = query.of[++at + 1]) {
+      text += ` ${next.text}`
+    }
+    const phrase: Query = { ...words, text }
+    out.push(one.kind === 'scope' ? { ...one, of: phrase } : phrase)
   }
-
-  const of = joined(joined(query.of, 'text'), 'content')
-  return { ...query, of: of.map(phrased) }
+  return { ...query, of: out }
 }
 
-function joined(of: Query[], kind: Words['kind']): Query[] {
-  const words = of.filter((one): one is Words => one.kind === kind)
-  const first = words[0]
-  if (!first || words.length < 2 || words.some((one) => one.fold !== first.fold)) return of
-  const phrase: Query = { ...first, text: words.map((one) => one.text).join(' ') }
-  return of.flatMap((one) => (one === first ? [phrase] : one.kind === kind ? [] : [one]))
+function followsAs(next: Query | undefined, words: Words): next is Words {
+  return next?.kind === words.kind && next.fold === words.fold
 }
 
 export async function changesFor(

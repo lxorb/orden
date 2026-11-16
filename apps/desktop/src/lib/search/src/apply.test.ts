@@ -13,6 +13,7 @@ const NOTES: Record<string, string> = {
   '/space/Moved.md': 'alpha new\nalpha one\nalpha two\n',
   '/space/Plan.md': 'The quarterly plan is due.\nA plan, quarterly or not.\n',
   '/space/Tasks.md': '- [ ] The quarterly plan is due\n- [ ] A plan, quarterly or not\n',
+  '/space/Review.md': '- [ ] plan the quarterly review\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
@@ -59,6 +60,15 @@ describe('what a replacement would do', () => {
       )
 
       expect(made[0]?.after).toBe('- [ ] The annual plan is due\n- [ ] A plan, quarterly or not\n')
+    },
+  )
+
+  test.each(['plan task:quarterly', 'plan -draft quarterly'])(
+    'but not words typed apart, as in %s',
+    async (query) => {
+      const made = await changes(query, [hit('/space/Review.md', 0)], 'X')
+
+      expect(made[0]?.after).toBe('- [ ] X the X review\n')
     },
   )
 
