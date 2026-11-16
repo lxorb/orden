@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
 import {
+  Annotation,
   EditorSelection,
   EditorState,
   type Line,
@@ -10,6 +11,8 @@ import {
 import { Direction, type EditorView, keymap } from '@codemirror/view'
 import { isExternal } from '../external'
 import { quietMarks } from './reveal'
+
+export const landInWords = Annotation.define<boolean>()
 
 const QUOTE = /^(?:[ \t]*>[ \t]?)*/
 const ITEM = /^[ \t]*(?:([-*+])|\d+[.)])[ \t]+(\[[ xX]\][ \t]+)?/
@@ -105,8 +108,9 @@ function pushHeadingDown(view: EditorView): boolean {
 }
 
 const snapped = EditorState.transactionFilter.of((transaction) => {
-  if (transaction.docChanged || !transaction.selection) return transaction
-  if (!transaction.isUserEvent('select') && !placed(transaction)) return transaction
+  const asked = transaction.annotation(landInWords) === true
+  if (!asked && (transaction.docChanged || !transaction.selection)) return transaction
+  if (!asked && !transaction.isUserEvent('select') && !placed(transaction)) return transaction
   const { startState, newSelection } = transaction
   const ranges = newSelection.ranges.map((range, at) =>
     kept(startState, transaction.state, range, at),

@@ -4,6 +4,7 @@ import type { Command, EditorView } from '@codemirror/view'
 import { blockIdOf, freeBlockId, blockIds, ownLine, rowsOf } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
+import { landInWords } from '../live-preview/item-start'
 import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
 import { verbatimLines } from './verbatim'
@@ -55,6 +56,7 @@ export function duplicateBlocks(view: EditorView, pos: number): boolean {
   view.dispatch({
     changes,
     ...(landing === null ? {} : { selection: { anchor: landing } }),
+    annotations: landInWords.of(true),
     scrollIntoView: true,
   })
   view.focus()
@@ -70,6 +72,7 @@ export function deleteBlocks(view: EditorView, pos: number): boolean {
   view.dispatch({
     changes: cut.changes,
     selection: { anchor: cut.caret ?? run.from },
+    annotations: landInWords.of(true),
     scrollIntoView: true,
   })
   view.focus()
@@ -270,7 +273,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
 
   if (!changes.length) return false
 
-  view.dispatch({ changes, userEvent: 'input' })
+  view.dispatch({ changes, userEvent: 'input', annotations: landInWords.of(true) })
   view.focus()
   return true
 }

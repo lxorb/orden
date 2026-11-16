@@ -1,6 +1,6 @@
 import { EditorSelection, type Extension, Prec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { rangeInCode } from './code'
+import { rangeWrittenAsIs } from './code'
 import { inside, spansLines } from './commands'
 import { marksAcross } from './line-door'
 
@@ -19,7 +19,7 @@ export function wrapSelection(): Extension {
 
       if (state.selection.ranges.some((range) => range.empty)) return false
 
-      if (state.selection.ranges.some((range) => rangeInCode(state, range))) return false
+      if (state.selection.ranges.some((range) => rangeWrittenAsIs(state, range))) return false
 
       if (state.selection.ranges.some((range) => spansLines(state, range))) {
         return marksAcross(typed, true)(view)

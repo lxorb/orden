@@ -14,6 +14,25 @@ const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
+const INNERMOST =
+  /(?:>[ \t]?|([-*+])[ \t]+(?:\[[ xX]\][ \t]+)?|\d+([.)])[ \t]+(?:\[[ xX]\][ \t]+)?)[ \t]*$/
+
+function sameKind(prefix: string): { outer: string; marks: RegExp } | null {
+  const found = INNERMOST.exec(prefix)
+  if (!found) return null
+  const [, bullet, delimiter] = found
+  const marks = bullet
+    ? new RegExp(`^\\${bullet}[ \t]`)
+    : delimiter
+      ? new RegExp(`^\\d+\\${delimiter}[ \t]`)
+      : /^>/
+  return { outer: prefix.slice(0, found.index), marks }
+}
+
+function spaced(prefix: string): string {
+  return prefix.replace(ITEM_MARKS, (_all, mark: string) => ' '.repeat(mark.length))
+}
+
 const OPENS_BLOCK =
   /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]|\$\$|(?:-{3,}|\*{3,}|_{3,})$)/
 
@@ -51,9 +70,14 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const after = end.text.slice(range.to - end.from)
 
   const prefix = CONTAINERS.exec(before)?.[0] ?? ''
-  const lead = prefix.replace(ITEM_MARKS, (_all, mark: string) => ' '.repeat(mark.length))
+  const lead = spaced(prefix)
+  const kind = sameKind(prefix)
+  const leadOf = (one: string) => (kind?.marks.test(one) ? spaced(kind.outer) : lead)
   const held = (lines: string) =>
-    lines.replace(/\n([^\n]*)/g, (_all, one: string) => `\n${one ? lead + one : lead.trimEnd()}`)
+    lines.replace(
+      /\n([^\n]*)/g,
+      (_all, one: string) => `\n${one ? leadOf(one) + one : lead.trimEnd()}`,
+    )
   const gap = `\n${lead.trimEnd()}\n${lead}`
 
   const inFront = before.length === prefix.length

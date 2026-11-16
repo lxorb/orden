@@ -7,11 +7,13 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { rangeInCode } from './code'
+import { syntaxTree } from '@codemirror/language'
+import { rangeWrittenAsIs } from './code'
 import { ourOwn } from './copy'
 import { fenceLead, fenceNear } from './fence'
 import { wordsBesidePicture } from './images'
 import { loadLineCommands } from './line-door'
+import { enclosingNamed } from './nodes'
 import { later } from './shared'
 
 function converter(): Promise<(html: string) => string> {
@@ -84,8 +86,10 @@ function inserted(state: EditorState, text: string): TransactionSpec {
 }
 
 function codeLead(state: EditorState, range: SelectionRange): string {
-  const fence = fenceNear(state, range.from)
-  return fence ? fenceLead(state, fence) : ''
+  const block =
+    fenceNear(state, range.from) ??
+    enclosingNamed(syntaxTree(state).resolveInner(range.from, 1), 'BlockMath')
+  return block ? fenceLead(state, block) : ''
 }
 
 function heldInCode(state: EditorState, text: string): TransactionSpec | null {
@@ -136,7 +140,7 @@ export function richPaste(): Extension {
         return true
       }
 
-      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) {
+      if (view.state.selection.ranges.some((range) => rangeWrittenAsIs(view.state, range))) {
         const held = heldInCode(view.state, text)
         if (!held) return false
         event.preventDefault()
@@ -193,7 +197,7 @@ export const pasteHere: Command = (view) => {
       if (land((state) => linkedPaste(state, clipboard.text))) return
 
       const inCodeNow = land((state) =>
-        state.selection.ranges.some((range) => rangeInCode(state, range))
+        state.selection.ranges.some((range) => rangeWrittenAsIs(state, range))
           ? (heldInCode(state, clipboard.text) ?? inserted(state, clipboard.text))
           : null,
       )

@@ -184,23 +184,49 @@ function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef |
   )
 }
 
+interface Lookup {
+  whole: Map<string, NoteRef[]>
+  ending: Map<string, NoteRef[]>
+  aliased: Map<string, NoteRef[]>
+}
+
+const lookups = new WeakMap<readonly NoteRef[], Lookup>()
+
+function filed(into: Map<string, NoteRef[]>, key: string, note: NoteRef) {
+  const known = into.get(key)
+  if (known) known.push(note)
+  else into.set(key, [note])
+}
+
+function lookupOf(notes: readonly NoteRef[]): Lookup {
+  const known = lookups.get(notes)
+  if (known) return known
+
+  const lookup: Lookup = { whole: new Map(), ending: new Map(), aliased: new Map() }
+  for (const note of notes) {
+    const path = comparable(note.path)
+    filed(lookup.whole, path, note)
+    filed(lookup.ending, path, note)
+    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
+      filed(lookup.ending, path.slice(at + 1), note)
+    }
+    for (const alias of new Set(note.aliases.map(comparable))) filed(lookup.aliased, alias, note)
+  }
+  lookups.set(notes, lookup)
+  return lookup
+}
+
 export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
   const { wanted, anchored } = targetOf(comparable(target.trim()))
   if (!wanted) return null
 
-  const found = index.notes.filter((note) => {
-    const path = comparable(note.path)
-    return path === wanted || (!anchored && path.endsWith(`/${wanted}`))
-  })
-
-  if (found.length) return nearest(found, index.path)
+  const lookup = lookupOf(index.notes)
+  const found = (anchored ? lookup.whole : lookup.ending).get(wanted)
+  if (found?.length) return nearest(found, index.path)
   if (anchored) return null
 
-  const named = index.notes.filter((note) =>
-    note.aliases.some((alias) => comparable(alias) === wanted),
-  )
-
-  return named.length ? nearest(named, index.path) : null
+  const named = lookup.aliased.get(wanted)
+  return named?.length ? nearest(named, index.path) : null
 }
 
 export function resolveRelative(index: NoteIndex, target: string): NoteRef | null {
