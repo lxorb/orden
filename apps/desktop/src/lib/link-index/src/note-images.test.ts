@@ -7,6 +7,7 @@ const found: Record<string, string> = {
   'assets/shot.png': 'assets/shot.png',
   'Pasted image 1.png': 'attachments/Pasted image 1.png',
   'attachments/Pasted image 1.png': 'attachments/Pasted image 1.png',
+  'Screenshot%202024.png': 'attachments/Screenshot%202024.png',
 }
 
 const held = new Set(['/Work/assets/shot.png', '/Work/notes/pictures/deep.png'])
@@ -48,6 +49,12 @@ describe('a picture a note names', () => {
     )
     expect(notePicture('attachments/Pasted%20image%201.png', '/Work/notes/n.md', '')).toBe(
       '/asset/Work/attachments/Pasted%20image%201.png',
+    )
+  })
+
+  test('a name that really holds a percent sign is still found as written', () => {
+    expect(notePicture('Screenshot%202024.png', '/Work/notes/n.md', '')).toBe(
+      '/asset/Work/attachments/Screenshot%25202024.png',
     )
   })
 
