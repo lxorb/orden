@@ -543,7 +543,7 @@ export function patternJudge() {
       }
 
       if (one.open > 0 || one.ways > 1) {
-        if (!delimited(one)) return REFUSED
+        if (one.open === Number.POSITIVE_INFINITY || !delimited(one)) return REFUSED
         return { ...kept, open: 1 }
       }
 
