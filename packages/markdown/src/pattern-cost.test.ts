@@ -197,6 +197,12 @@ describe('a pattern that could backtrack without end', () => {
     ',[^,]*,',
     '"[^"]*"',
     '```[\\s\\S]*?```',
+    '[^.]{0,30}plan',
+    '[^.]{0,100}plan',
+    '[\\s\\S]{0,100}plan',
+    '[\\s\\S]{0,200}TODO[\\s\\S]{0,200}',
+    '[^,]{0,40},',
+    '[^\\]]{0,100}\\]',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
   })

@@ -200,7 +200,7 @@ export function patternJudge(longest = 2000, widest = 30) {
       return !trades(letters, '\\n') && ahead.heads.some(breaks)
     }
 
-    function run(letters: string | null, least: number, ahead: Ahead): Ahead {
+    function run(letters: string | null, least: number, ahead: Ahead, most = Infinity): Ahead {
       if (ahead.ended) {
         return least === 0 ? ahead : { ...ahead, heads: [letters], literal: 0, ended: false }
       }
@@ -208,7 +208,7 @@ export function patternJudge(longest = 2000, widest = 30) {
       const [head] = ahead.heads
       const given =
         ahead.last && overlaps && letters !== null && head ? `(?!${head})(?:${letters})` : letters
-      const reach = reachOf(given, overlaps)
+      const reach = Math.min(reachOf(given, overlaps), Math.log(Math.max(2, most - least)))
       if (overlaps) traded?.()
       const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
       return {
@@ -259,7 +259,10 @@ export function patternJudge(longest = 2000, widest = 30) {
             for (let copy = 0; copy < MOST_COPIES; copy++) after = before(shape.of, after)
             return after
           }
-          if (shape.most - shape.least > counted) return run(shape.letters, shape.least, ahead)
+          if (shape.most - shape.least > counted) {
+            const most = shape.of.kind === 'letter' ? shape.most : Infinity
+            return run(shape.letters, shape.least, ahead, most)
+          }
           let after = ahead
           for (let copy = shape.least; copy < shape.most; copy++) {
             const taken = before(shape.of, after)
