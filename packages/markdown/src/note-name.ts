@@ -56,7 +56,7 @@ const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/
 
 const MARKUP = /^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)/
 
-const FENCE = /^ {0,3}(`{3,}|~{3,})/
+const FENCE = /^ {0,3}(?:(`{3,})[^`]*|(~{3,}).*)$/
 
 const RULE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
 
@@ -75,9 +75,11 @@ export function titleFrom(lines: Iterable<string>): string | null {
 
   for (const raw of taken.slice(after)) {
     const line = raw.replace(/\r$/, '')
-    const mark = FENCE.exec(line)?.[1] ?? null
+    const found = FENCE.exec(line)
+    const mark = found ? (found[1] ?? found[2] ?? null) : null
     if (fence !== null) {
-      if (mark !== null && mark[0] === fence[0] && mark.length >= fence.length) fence = null
+      const closes = mark !== null && mark[0] === fence[0] && mark.length >= fence.length
+      if (closes && line.trim() === mark) fence = null
       continue
     }
     if (mark !== null) {

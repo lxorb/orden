@@ -58,6 +58,11 @@ describe('naming a note after its own words', () => {
     expect(nameFromContent('intro\r\n# Heading\r\n')).toBe('Heading')
   })
 
+  test('takes a code span at the start of a line for words, and a fence closes only on a bare mark', () => {
+    expect(nameFromContent('```npm install``` to set up\n')).toBe('```npm install``` to set up')
+    expect(nameFromContent('Setup\n\n```\n# one\n```js\n# two\n```\n\n# Real\n')).toBe('Real')
+  })
+
   test('has nothing to offer for an empty note', () => {
     expect(nameFromContent('')).toBeNull()
     expect(nameFromContent('\n\n   \n')).toBeNull()
