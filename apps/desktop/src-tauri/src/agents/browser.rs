@@ -972,6 +972,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Upload(upload) => {
                 let target = element(page, &upload.element)?;
                 let files = files_of(app, caller, &upload.files)?;
+                for (_, inside) in &files {
+                    handing_granted(caller, *inside)?;
+                }
                 if let Caller::Agent(grant) = caller {
                     let outside: Vec<&(PathBuf, bool)> =
                         files.iter().filter(|(_, inside)| !inside).collect();
@@ -1250,6 +1253,25 @@ fn modifiers(held: &[super::verbs::Modifier]) -> u8 {
     })
 }
 
+fn handing_granted(caller: &Caller, inside: bool) -> Result<(), Answer> {
+    let (scope, why) = if inside {
+        (
+            Scope::NotesRead,
+            "handing a note to a page needs notes.read, which the reader grants in Settings > Agents",
+        )
+    } else {
+        (
+            Scope::Files,
+            "handing a file from outside the spaces to a page needs the files scope, which the reader grants in Settings > Agents",
+        )
+    };
+    if caller.holds(scope) {
+        Ok(())
+    } else {
+        Err(Answer::error(Code::NotGranted, why))
+    }
+}
+
 fn files_of(
     app: &AppHandle,
     caller: &Caller,
@@ -1359,7 +1381,8 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        beyond_the_grant, hidden_within, modifiers, policy, question_key, seen, Act, Facts, Grant,
+        beyond_the_grant, handing_granted, hidden_within, modifiers, policy, question_key, seen,
+        Act, Caller, Facts, Grant, Scope,
     };
     use crate::agents::grants::{Every, SiteRule, Spaces};
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
@@ -1470,6 +1493,24 @@ mod tests {
         assert!(hidden_within(root, Path::new("/data/Spaces/A/.env")));
         assert!(hidden_within(root, Path::new("/elsewhere/a.md")));
         assert!(!hidden_within(root, Path::new("/data/Spaces/A/deep/a.md")));
+    }
+
+    #[test]
+    fn an_upload_hands_notes_only_with_notes_read_and_outside_files_only_with_files() {
+        let mut grant = Grant::own("a".into(), "A");
+        grant
+            .scopes
+            .retain(|one| !matches!(one, Scope::NotesRead | Scope::Files));
+        let narrow = Caller::Agent(Box::new(grant.clone()));
+        assert!(handing_granted(&narrow, true).is_err());
+        assert!(handing_granted(&narrow, false).is_err());
+        grant.scopes.push(Scope::NotesRead);
+        let notes = Caller::Agent(Box::new(grant.clone()));
+        assert!(handing_granted(&notes, true).is_ok());
+        assert!(handing_granted(&notes, false).is_err());
+        grant.scopes.push(Scope::Files);
+        assert!(handing_granted(&Caller::Agent(Box::new(grant)), false).is_ok());
+        assert!(handing_granted(&Caller::Reader, false).is_ok());
     }
 
     #[test]
