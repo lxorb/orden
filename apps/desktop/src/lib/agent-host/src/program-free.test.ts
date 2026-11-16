@@ -134,6 +134,7 @@ describe('the crate judges the arguments of a program on an agent’s list', () 
       })
     expect(await asked('/s/Work/PRIVAT~1')).toBe(false)
     expect(await asked('/s/Work/PRIVAT~1.')).toBe(false)
+    expect(await asked('/s/Work/Private::$INDEX_ALLOCATION')).toBe(false)
     expect(await asked('/s/Work/site')).toBe(true)
   })
 

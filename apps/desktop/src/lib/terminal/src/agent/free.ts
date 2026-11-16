@@ -22,7 +22,8 @@ async function repositoryTop(folder: string, root: string): Promise<string | nul
 }
 
 export async function shutNothingFor(program: string, folder: string, os: Os): Promise<boolean> {
-  if (namesByShortName(folder) || !protection.agentsMayWithin(folder)) return false
+  const streamed = folder.replace(/^[A-Za-z]:/, '').includes(':')
+  if (streamed || namesByShortName(folder) || !protection.agentsMayWithin(folder)) return false
   if (programOf(program, os).toLowerCase() !== 'git') return true
   const root = workspace.spaces.find((one) => within(one.root, folder, one.root) !== null)?.root
   const top = root ? await repositoryTop(folder, root) : null
