@@ -364,3 +364,36 @@ describe('a picture a page shows', () => {
     expect(asked).toEqual([['../../assets/abc.png', false, '/Work/Projects/Q1/Plan.md']])
   })
 })
+
+describe('a link inside an embedded note', () => {
+  const plan = {
+    text: 'see [[Budget]] and [b](Budget.md)\n',
+    escapeHtml: false,
+    path: '/W/Q1/Plan.md',
+  }
+
+  test('is resolved from the note it was written in', () => {
+    const asked: (string | null)[] = []
+    const html = renderMarkdown('[[Budget]]\n\n![[Plan]]\n', {
+      resolveEmbed: () => plan,
+      resolveLink: (link, from) => {
+        asked.push(from?.path ?? null)
+        return { href: from ? `Q1/${link.target}.md` : `${link.target}.md` }
+      },
+      resolveNoteFrom: (target, from) => (from.path === plan.path ? `Q1/${target}` : null),
+    })
+
+    expect(asked).toEqual([null, '/W/Q1/Plan.md'])
+    expect(html).toContain('<a class="wikilink" href="Budget.md">Budget</a>')
+    expect(html).toContain('<a class="wikilink" href="Q1/Budget.md">Budget</a>')
+    expect(html).toContain('<a class="wikilink" href="Q1/Budget.md">b</a>')
+  })
+
+  test('to nothing that note can reach stays the link it was', () => {
+    const html = renderMarkdown('![[Plan]]\n', {
+      resolveEmbed: () => plan,
+      resolveNoteFrom: () => null,
+    })
+    expect(html).toContain('<a href="Budget.md">b</a>')
+  })
+})

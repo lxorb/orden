@@ -28,6 +28,7 @@ import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref, WORTH_REMEMBERING } from './tags'
 import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
+  type EmbeddedNote,
   type EmbedResolver,
   type Embeds,
   embedSink,
@@ -58,6 +59,8 @@ export interface RenderOptions {
   blockAnchors?: boolean
   resolveLink?: LinkResolver
   resolveNoteHref?: (target: string) => string | null
+  resolveNoteFrom?: (target: string, from: EmbeddedNote) => string | null
+  from?: EmbeddedNote
   tagHref?: TagHref
   resolveEmbed?: EmbedResolver
   resolvePicture?: PictureResolver
@@ -198,6 +201,10 @@ function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Lin
   }
 }
 
+function linksFrom(resolve: LinkResolver, from: EmbeddedNote | undefined): LinkResolver {
+  return from ? (link) => resolve(link, from) : resolve
+}
+
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
@@ -214,7 +221,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   marked.use(
     wikilinks({
       embeds,
-      ...(options.resolveLink ? { resolveLink: options.resolveLink } : {}),
+      ...(options.resolveLink ? { resolveLink: linksFrom(options.resolveLink, options.from) } : {}),
       ...(options.resolveEmbed ? { resolveEmbed: options.resolveEmbed } : {}),
       ...(options.resolvePicture ? { resolvePicture: options.resolvePicture } : {}),
     }),
@@ -236,6 +243,14 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
       link(token: Tokens.Link) {
         const body = this.parser.parseInline(token.tokens)
+
+        const from = options.from
+        const nested = from && options.resolveNoteFrom ? noteLink(token.href) : null
+        const there =
+          nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
+        if (nested && there !== null && safeHref(there)) {
+          return `<a class="wikilink" href="${attributeUrl(there)}${nested.fragment}">${body}</a>`
+        }
 
         const resolve = options.resolveNoteHref
         const written = resolve ? noteLink(token.href) : null
@@ -363,6 +378,7 @@ function needsOwn(options: RenderOptions): boolean {
     options.code !== undefined ||
     options.resolveLink !== undefined ||
     options.resolveNoteHref !== undefined ||
+    options.resolveNoteFrom !== undefined ||
     options.tagHref !== undefined ||
     options.resolveEmbed !== undefined ||
     options.resolvePicture !== undefined ||
@@ -478,6 +494,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     const embedded = renderMarkdown(section.text, {
       ...inside(options),
       ...(section.escapeHtml ? { escapeHtml: true } : {}),
+      from: section.from,
       ...(outer
         ? {
             resolvePicture: (src: string, wikilink: boolean) => outer(src, wikilink, section.from),

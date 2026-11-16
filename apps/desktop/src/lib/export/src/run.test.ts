@@ -65,3 +65,24 @@ test('a page with its pictures goes out in pieces, each picture written in, neve
   expect(page).not.toContain('src="a.png"')
   expect(page).not.toContain('src="b.png"')
 })
+
+test('a document export takes its pictures from the note as Orden finds them', async () => {
+  handed.length = 0
+  const asked: string[] = []
+
+  await runExport(
+    'md-assets',
+    { source: 'see ![[a.png]] here\n', name: 'Trip.md', path: '/space/Trip.md' },
+    {
+      picturesWritten: (source) => {
+        asked.push(source)
+        return source.replace('![[a.png]]', '![](att/a.png)')
+      },
+    },
+  )
+
+  const payload = handed[0]
+  if (!payload || !('files' in payload)) throw new Error('no files were handed over')
+  expect(asked).toEqual(['see ![[a.png]] here\n'])
+  expect(payload.files[0]?.body).toContain('see ![](assets/image.png) here')
+})

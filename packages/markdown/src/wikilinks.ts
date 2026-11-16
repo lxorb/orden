@@ -15,7 +15,10 @@ import {
 import { firstStart, lineStart, matchesAt } from './starts'
 import { remembering } from './tags'
 
-export type LinkResolver = (link: Wikilink) => { href: string | null; text?: string } | null
+export type LinkResolver = (
+  link: Wikilink,
+  from?: EmbeddedNote,
+) => { href: string | null; text?: string } | null
 
 export type EmbedResolver = (link: Wikilink) => string | EmbeddedNote | null
 
