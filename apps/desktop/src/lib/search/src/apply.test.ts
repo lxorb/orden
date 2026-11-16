@@ -12,6 +12,7 @@ const NOTES: Record<string, string> = {
   '/space/Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev\r\nOrden-Icon=star\r\n',
   '/space/Moved.md': 'alpha new\nalpha one\nalpha two\n',
   '/space/Plan.md': 'The quarterly plan is due.\nA plan, quarterly or not.\n',
+  '/space/Tasks.md': '- [ ] The quarterly plan is due\n- [ ] A plan, quarterly or not\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
@@ -47,6 +48,19 @@ describe('what a replacement would do', () => {
 
     expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
   })
+
+  test.each(['task:quarterly plan', 'line:quarterly plan', 'content:quarterly content:plan'])(
+    'and with %s, whose words are read one by one',
+    async (query) => {
+      const made = await changes(
+        query,
+        [hit('/space/Tasks.md', 0), hit('/space/Tasks.md', 1)],
+        'annual plan',
+      )
+
+      expect(made[0]?.after).toBe('- [ ] The annual plan is due\n- [ ] A plan, quarterly or not\n')
+    },
+  )
 
   test('and keeps the rest of the query as it was', async () => {
     const made = await changes('plan -draft', [hit('/space/Plan.md', 0)], 'road')

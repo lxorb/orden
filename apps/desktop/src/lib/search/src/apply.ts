@@ -42,23 +42,39 @@ function linesNow(body: string, hits: readonly Hit[]): Set<number> {
   return out
 }
 
+type Words = Extract<Query, { kind: 'text' | 'content' }>
+
 function phrased(query: Query): Query {
   if (query.kind === 'scope') return { ...query, of: phrased(query.of) }
   if (query.kind === 'any') return { ...query, of: query.of.map(phrased) }
   if (query.kind !== 'all') return query
 
-  const words = query.of.filter((one) => one.kind === 'text')
+  const scoped = query.of.find((one) => one.kind === 'scope' && one.of.kind === 'text')
+  if (scoped?.kind === 'scope' && query.of.some((one) => one.kind === 'text')) {
+    const inner: Query = {
+      kind: 'all',
+      of: query.of.flatMap((one) =>
+        one === scoped ? [scoped.of] : one.kind === 'text' ? [one] : [],
+      ),
+    }
+    return phrased({
+      ...query,
+      of: query.of.flatMap((one) =>
+        one === scoped ? [{ ...scoped, of: inner }] : one.kind === 'text' ? [] : [one],
+      ),
+    })
+  }
+
+  const of = joined(joined(query.of, 'text'), 'content')
+  return { ...query, of: of.map(phrased) }
+}
+
+function joined(of: Query[], kind: Words['kind']): Query[] {
+  const words = of.filter((one): one is Words => one.kind === kind)
   const first = words[0]
-  if (!first || words.length < 2 || words.some((one) => one.fold !== first.fold)) {
-    return { ...query, of: query.of.map(phrased) }
-  }
+  if (!first || words.length < 2 || words.some((one) => one.fold !== first.fold)) return of
   const phrase: Query = { ...first, text: words.map((one) => one.text).join(' ') }
-  return {
-    ...query,
-    of: query.of.flatMap((one) =>
-      one === first ? [phrase] : one.kind === 'text' ? [] : [phrased(one)],
-    ),
-  }
+  return of.flatMap((one) => (one === first ? [phrase] : one.kind === kind ? [] : [one]))
 }
 
 export async function changesFor(
