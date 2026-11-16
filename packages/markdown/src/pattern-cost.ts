@@ -127,11 +127,14 @@ export function patternJudge() {
     }
   }
 
-  function reachOfLetters(letters: string | null, flags: string): number {
+  const WRITING = ['a', 'я', '中', 'α', 'ا']
+
+  function reachOfLetters(letters: string | null, flags: string, crowded = false): number {
     if (letters === null) return NOTE
     try {
       const letter = new RegExp(`^(?:${letters})$`, flags.replace(/[^iuvs]/g, ''))
-      if (!letter.test('a')) return WORD
+      const writes = crowded ? WRITING : WRITING.slice(0, 1)
+      if (!writes.some((one) => letter.test(one))) return WORD
       return letter.test('\n') ? NOTE : letter.test(' ') ? LINE : WORD
     } catch {
       return NOTE
@@ -178,8 +181,8 @@ export function patternJudge() {
       if (ahead.ended) {
         return least === 0 ? ahead : { ...ahead, heads: [letters], literal: 0, ended: false }
       }
-      const reach = reachOfLetters(letters, flags)
       const overlaps = !ahead.heads.length || ahead.heads.some((head) => trades(letters, head))
+      const reach = reachOfLetters(letters, flags, overlaps)
       if (overlaps) traded?.()
       const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
       return {
@@ -504,6 +507,7 @@ export function patternJudge() {
         at++
       }
       if (source[at] === '?') at++
+      if (one.open === Number.POSITIVE_INFINITY) return REFUSED
 
       const shape: Shape = {
         kind: 'again',
@@ -543,7 +547,7 @@ export function patternJudge() {
       }
 
       if (one.open > 0 || one.ways > 1) {
-        if (one.open === Number.POSITIVE_INFINITY || !delimited(one)) return REFUSED
+        if (!delimited(one)) return REFUSED
         return { ...kept, open: 1 }
       }
 
@@ -559,8 +563,8 @@ export function patternJudge() {
 
   const MOST_REACH = 22
 
-  function startsOf(source: string, flags: string, lead: string): number {
-    if (source.startsWith('^')) return flags.includes('m') ? LINE : 0
+  function startsOf(source: string, flags: string, lead: string, shape: Shape): number {
+    if (source.startsWith('^') && shape.kind !== 'either') return flags.includes('m') ? LINE : 0
     if (lead.length >= 2) return WORD_STARTS
     return lead ? LINE : NOTE
   }
@@ -569,7 +573,7 @@ export function patternJudge() {
     try {
       const { open, ways, lead, shape } = patternCost(source, flags, false, true)
       if (open === Number.POSITIVE_INFINITY || ways > MOST_WAYS) return true
-      return startsOf(source, flags, lead) + aheadOf(shape, flags).rest > MOST_REACH
+      return startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest > MOST_REACH
     } catch {
       return true
     }
