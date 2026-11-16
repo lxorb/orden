@@ -43,3 +43,26 @@ describe('a locked note moved to a path too long to keep', () => {
     expect(protection.locked(`${ROOT}/${deep}/Diary.md`)).toBe(true)
   })
 })
+
+describe('a locked note or folder copied to a path too long to keep', () => {
+  test('lands locked, by its own lock or the folder above it, and stays so after a start', () => {
+    const protection = new Protection()
+    protection.set(ROOT, `${ROOT}/Diary.md`, 'password')
+    protection.set(ROOT, `${ROOT}/Private`, 'password')
+    protection.copied(`${ROOT}/Diary.md`, `${ROOT}/${deep}/Diary.md`, ROOT, ROOT)
+    protection.copied(`${ROOT}/Private/Plan.md`, `${ROOT}/${deep}/Plan.md`, ROOT, ROOT)
+    protection.copied(`${ROOT}/Private`, `${ROOT}/${deep}/Private copy`, ROOT, ROOT)
+    for (const one of [new Protection(), protection]) {
+      expect(one.agentsMay(`${ROOT}/${deep}/Diary.md`)).toBe(false)
+      expect(one.agentsMay(`${ROOT}/${deep}/Plan.md`)).toBe(false)
+      expect(one.agentsMay(`${ROOT}/${deep}/Private copy/Plan.md`)).toBe(false)
+    }
+  })
+
+  test('locked by the reader there, stays locked', () => {
+    const protection = new Protection()
+    protection.set(ROOT, `${ROOT}/${deep}/Diary.md`, 'password')
+    expect(new Protection().agentsMay(`${ROOT}/${deep}/Diary.md`)).toBe(false)
+  })
+})
+

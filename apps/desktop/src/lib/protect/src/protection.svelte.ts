@@ -299,7 +299,7 @@ export class Protection {
 
   set(root: string, path: string, way: Way | null): void {
     const key = path === root ? SPACE : relativeTo(root, path)
-    if (key !== SPACE && !lockable(key)) return
+    if (key !== SPACE && !lockable(fitted(key))) return
     const held = this.ways(root)
     if (way === null) {
       if (key in held) this.put(root, without(held, key))
@@ -309,8 +309,28 @@ export class Protection {
     this.put(root, { ...held, [key]: way })
   }
 
+  private filesNear: (path: string) => readonly string[] = () => []
+
+  seesFiles(near: (path: string) => readonly string[]): void {
+    this.filesNear = near
+  }
+
+  private copiesKept(path: string, root: string): void {
+    if (!this.any) return
+    const came: Record<string, Way> = {}
+    for (const one of this.filesNear(path)) {
+      const original = copiedFrom(one)
+      if (original === null || within(path, original, root) === null) continue
+      const way = this.covering(one)[0]?.way
+      const key = relativeTo(root, one)
+      if (way && !this.coveringAt(one).length && lockable(fitted(key))) came[key] = way
+    }
+    if (Object.keys(came).length) this.put(root, { ...this.ways(root), ...came })
+  }
+
   moved(from: string, to: string, root: string | null, into: string | null = root): void {
     if (root === null || from === to) return
+    this.copiesKept(from, root)
     const move = moving(from, to, root, into)
     if (!move.was) return
     const above = this.covering(from).find((one) => one.key !== move.was)
@@ -350,7 +370,7 @@ export class Protection {
     if (root === null || into === null) return
     const was = relativeTo(root, from)
     const now = relativeTo(into, to)
-    if (!lockable(now)) return
+    if (!lockable(fitted(now))) return
     const came: Record<string, Way> = {}
     for (const [key, way] of Object.entries(this.ways(root))) {
       const at = key === SPACE ? null : movedTo(key, was, now, root)
@@ -363,6 +383,7 @@ export class Protection {
 
   async gone(path: string, root: string | null, back?: string): Promise<void> {
     if (root === null) return
+    this.copiesKept(path, root)
     const at = relativeTo(root, path)
     const went = (key: string) => key !== SPACE && within(at, key, root) !== null
     const above = this.covering(path).find((one) => one.key !== at)

@@ -13,6 +13,7 @@ import {
 import { type NoteDoc } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import type { Space } from '../../workspace/src/api'
+import type { Protection } from '../../protect/src/api'
 import { keptBody, webTitleOf, webUrlOf } from './note'
 import { sameSite } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
@@ -20,6 +21,8 @@ import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 export interface Converts {
   readonly notes: readonly Entry[]
   readonly activeSpace: Space | null
+  readonly protection: Pick<Protection, 'copied'>
+  rootHolding(path: string | null): string | null
   entryAt(path: string): Entry | null
   documentAt(path: string): NoteDoc | null
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
@@ -54,6 +57,7 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
     ws.showEntry(ws.freshEntry(target, false))
     await writeFile(target, written)
   }
+  ws.protection.copied(path, target, ws.rootHolding(path), ws.rootHolding(target))
 
   const kept = keptBody(text)
   if (kept === null) {

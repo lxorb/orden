@@ -63,6 +63,8 @@ function store(notes: Record<string, string>) {
   const ws = {
     notes: Object.keys(notes).map((path) => ({ path, name: path.split('/').pop() ?? path })),
     activeSpace: { id: 's', name: 'Space', root: SPACE },
+    protection: { copied: () => undefined },
+    rootHolding: () => SPACE,
     entryAt: (path: string) => (disk.has(path) ? ({ path } as Entry) : null),
     documentAt: (path: string) => (open.has(path) ? ({ path } as unknown as NoteDoc) : null),
     freeNameOnDisk: async (dir: string, wanted: string) => {
@@ -113,6 +115,19 @@ describe('a note that is a website', () => {
     expect(disk.has(NOTE)).toBe(false)
     expect(shown).toEqual([`${SPACE}/Svelte docs.url`])
     expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
+  })
+
+  test('locked, leaves a shortcut as locked', async () => {
+    const { Protection } = await import('../../protect/src/protection.svelte')
+    const protection = new Protection()
+    protection.set(SPACE, NOTE, 'password')
+    const { ws } = store({ [NOTE]: urlNote('https://bank.example/?session=s3cret', 'Bank') })
+
+    const target = await asShortcut({ ...ws, protection }, NOTE)
+
+    expect(protection.agentsMay(target)).toBe(false)
+    protection.set(SPACE, NOTE, null)
+    protection.set(SPACE, target ?? '', null)
   })
 
   test('and its file goes the way a deleted note goes', async () => {

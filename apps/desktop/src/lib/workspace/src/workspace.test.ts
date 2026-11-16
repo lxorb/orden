@@ -3736,6 +3736,26 @@ describe('what a document is called on screen', () => {
     }
   })
 
+  test('of a locked paper is as locked as the paper', async () => {
+    notes['/space/paper.pages'] = BESIDE_PAPER
+    const spaces = workspace.spaces
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.protection.set('/space', '/space/paper.pdf', 'password')
+
+    try {
+      await workspace.openPdf('/space/paper.pdf')
+      expect(workspace.active?.path).toBe('/space/paper.pages')
+      expect(workspace.protection.locked('/space/paper.pages')).toBe(true)
+      expect(workspace.protection.agentsMay('/space/paper.pages')).toBe(false)
+    } finally {
+      delete notes['/space/paper.pages']
+      workspace.spaces = spaces
+      for (const one of ['/space/paper.pdf', '/space/paper.pages', '/space/paper.pages.pdf']) {
+        workspace.protection.set('/space', one, null)
+      }
+    }
+  })
+
   test('is a draft first heading, so two drafts are two names', () => {
     workspace.openBlank()
     const first = workspace.active

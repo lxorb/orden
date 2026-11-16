@@ -1632,6 +1632,7 @@ class Workspace {
     const path = this.spelled(asked)
     const held = isPagesTarget(path) ? path : await this.heldBy(path)
     if (held) {
+      if (held !== path) this.lockedLikeItsPaper(held, path)
       await this.openPages(held, page, how)
       return
     }
@@ -1690,6 +1691,7 @@ class Workspace {
 
     const making = this.turning(path)
       .then(({ pdf, root, move }) => pdf.asPageNote(path, root, move))
+      .then((note) => this.lockedLikeItsPaper(note, path))
       .catch((error: unknown) => {
         log('error', `open PDF as page note: ${path} - ${String(error)}`)
         return null
@@ -1697,6 +1699,12 @@ class Workspace {
     this.pdfPageNotes.set(path, making)
     void making.finally(() => this.pdfPageNotes.delete(path))
     return making
+  }
+
+  private lockedLikeItsPaper(note: string, pdf: string): string {
+    const root = this.rootHolding(note)
+    for (const paper of [pdf, `${note}.pdf`]) this.protection.copied(paper, note, root, root)
+    return note
   }
 
   private async turning(path: string) {
@@ -2031,6 +2039,7 @@ class Workspace {
 
     await this.turning(path)
       .then(({ pdf, root, move }) => pdf.adoptBeside(path, root, move))
+      .then((adopted) => adopted && this.lockedLikeItsPaper(path, `${path}.pdf`))
       .catch((error: unknown) => {
         log('warn', `page note beside its PDF: ${path} - ${String(error)}`)
       })
