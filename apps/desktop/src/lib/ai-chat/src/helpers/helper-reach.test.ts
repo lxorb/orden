@@ -40,6 +40,45 @@ describe('a helper of an agent whose grant is narrowed', () => {
     expect(offeredWithin([CLAUDE, CODEX], narrow, 'claude-code', null)).toEqual([CLAUDE])
   })
 
+  test('runs on another provider only if its sites, scripts, asks and supervision are as strict', () => {
+    const scopes = ['notes.read', 'browser', 'agents']
+    const grant = (id: string, more: object) => ({
+      id,
+      scopes,
+      spaces: 'all' as const,
+      sites: {},
+      programs: [],
+      ...more,
+    })
+    const offered = (asker: object, helper: object) =>
+      offeredWithin([CLAUDE, CODEX], { id: 'orden-claude-code', ...narrow }, 'claude-code', [
+        grant('orden-claude-code', asker),
+        grant('orden-codex', helper),
+      ]).map((one) => one.provider.id)
+    const both = ['claude-code', 'codex']
+    expect(offered({ sites: { 'bank.example': 'deny' } }, {})).toEqual(['claude-code'])
+    expect(
+      offered({ sites: { 'bank.example': 'deny' } }, { sites: { 'bank.example': 'deny' } }),
+    ).toEqual(both)
+    expect(offered({ sites: { 'mail.example': 'agent-store' } }, {})).toEqual(['claude-code'])
+    expect(
+      offered(
+        { sites: { 'bank.example': 'deny' } },
+        { sites: { 'bank.example': 'deny', 'my.bank.example': 'allow' } },
+      ),
+    ).toEqual(['claude-code'])
+    expect(offered({}, { sites: { 'bank.example': 'deny' } })).toEqual(both)
+    expect(offered({ scripts: ['docs.example'] }, { scripts: ['bank.example'] })).toEqual([
+      'claude-code',
+    ])
+    expect(offered({ scripts: ['docs.example'] }, { scripts: ['a.docs.example'] })).toEqual(both)
+    expect(offered({ mode: 'confirm' }, { mode: 'unsupervised' })).toEqual(['claude-code'])
+    expect(offered({}, { mode: 'autonomous' })).toEqual(['claude-code'])
+    expect(offered({}, { asks: { terminal: false } })).toEqual(['claude-code'])
+    expect(offered({ asks: { terminal: false } }, {})).toEqual(both)
+    expect(offered({}, { always: { 'shop.example': ['paying'] } })).toEqual(['claude-code'])
+  })
+
   test('carries the reach of the built-in agent that asked for it', async () => {
     const caller = callerOf({
       id: 'orden-claude-code',

@@ -12,10 +12,15 @@ export const WAIT = 20_000
 const LISTING = 10_000
 
 export interface Reach {
+  id?: string
   scopes: readonly string[]
   spaces: 'all' | readonly string[]
   sites: Readonly<Record<string, string>>
   programs: readonly string[]
+  scripts?: readonly string[]
+  mode?: string
+  asks?: Readonly<Record<string, boolean>>
+  always?: Readonly<Record<string, readonly string[]>>
 }
 
 export interface Asker {
@@ -39,6 +44,55 @@ const grantOf = (all: readonly Held[], provider: string) =>
   all.find((one) => one.id === `nib-${provider}`) ??
   null
 
+const SUPERVISION: Readonly<Record<string, number>> = { autonomous: 0, unsupervised: 1, confirm: 2 }
+
+const UNRULED = 1
+
+const ALLOWED = 0
+
+const DENIED = 3
+
+const STRICTNESS: Readonly<Record<string, number>> = {
+  allow: ALLOWED,
+  'agent-store': 2,
+  deny: DENIED,
+}
+
+const siteNamed = (site: string) =>
+  site.trim().replace(/^\*\./, '').replace(/\.+$/, '').toLowerCase()
+
+function covering(site: string, host: string): boolean {
+  const named = siteNamed(site)
+  return named !== '' && (host === named || host.endsWith(`.${named}`))
+}
+
+function strictnessAt(sites: Reach['sites'], host: string): number {
+  const ruled = Object.entries(sites).filter(([site]) => covering(site, host))
+  if (!ruled.length) return UNRULED
+  const longest = ruled.reduce((most, [site]) => Math.max(most, site.length), 0)
+  return ruled
+    .filter(([site]) => site.length === longest)
+    .reduce((most, [, rule]) => Math.max(most, STRICTNESS[rule] ?? DENIED), ALLOWED)
+}
+
+const supervision = (grant: Reach) => SUPERVISION[grant.mode ?? 'unsupervised'] ?? 0
+
+const asksAbout = (grant: Reach, category: string) =>
+  grant.mode !== 'autonomous' && grant.asks?.[category] !== false
+
+function sitesWithin(helper: Reach, parent: Reach): boolean {
+  const hosts = [...Object.keys(helper.sites), ...Object.keys(parent.sites)].map(siteNamed)
+  return hosts.every((host) => strictnessAt(helper.sites, host) >= strictnessAt(parent.sites, host))
+}
+
+function asksWithin(helper: Reach, parent: Reach): boolean {
+  const categories = [...Object.keys(helper.asks ?? {}), ...Object.keys(parent.asks ?? {})]
+  const always = Object.entries(helper.always ?? {}).every(([site, categories]) =>
+    categories.every((one) => parent.always?.[site]?.includes(one) === true),
+  )
+  return always && categories.every((one) => !asksAbout(parent, one) || asksAbout(helper, one))
+}
+
 function inside(helper: Reach, parent: Reach): boolean {
   const spaces =
     parent.spaces === 'all' ||
@@ -47,9 +101,12 @@ function inside(helper: Reach, parent: Reach): boolean {
     spaces &&
     helper.scopes.every((one) => parent.scopes.includes(one)) &&
     helper.programs.every((one) => parent.programs.includes(one)) &&
-    Object.entries(helper.sites).every(
-      ([site, rule]) => rule !== 'allow' || parent.sites[site] === 'allow',
-    )
+    (helper.scripts ?? []).every((script) =>
+      (parent.scripts ?? []).some((one) => covering(one, siteNamed(script))),
+    ) &&
+    supervision(helper) >= supervision(parent) &&
+    sitesWithin(helper, parent) &&
+    asksWithin(helper, parent)
   )
 }
 
@@ -60,10 +117,11 @@ export function offeredWithin(
   all: readonly Held[] | null,
 ): Offered[] {
   if (!reach) return [...listed]
+  const asker = all?.find((one) => one.id === reach.id) ?? reach
   return listed.filter(({ provider }) => {
     if (provider.id === parent) return true
     const theirs = all === null ? null : grantOf(all, provider.id)
-    return theirs !== null && inside(theirs, reach)
+    return theirs !== null && inside(theirs, asker)
   })
 }
 
