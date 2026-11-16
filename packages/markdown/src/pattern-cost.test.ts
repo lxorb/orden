@@ -233,8 +233,25 @@ describe('a search pattern over notes of emoji', () => {
     '\\| \\W*\\|\\s*X',
     '✅ \\P{L}+X',
     '✅ \\W+X',
+    '\\| [^\\]]+\\]\\]',
     '[^\\p{L}]{0,1000}QZX',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(searchBacktracksWildly(source, true)).toBe(true)
+  })
+})
+
+describe('a list, link or quote pattern led by a sign tables and emoji are full of', () => {
+  test.each([
+    '- \\[\\[[^\\]]+\\]\\]',
+    '- \\*\\*[^*]+\\*\\*',
+    '- \\[[^\\]]+\\]\\([^)]+\\)',
+    ': "[^"]*"',
+    '- "[^"]+"',
+    '- `[^`]+`',
+    ', \\[\\[[^\\]]+\\]\\]',
+    '- \\[ \\] [^\\]]+\\]\\]',
+  ])('/%s/ may run', (source) => {
+    expect(searchBacktracksWildly(source, true)).toBe(false)
+    expect(searchBacktracksWildly(source, false)).toBe(false)
   })
 })

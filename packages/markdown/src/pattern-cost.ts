@@ -637,8 +637,8 @@ export function patternJudge(longest = 2000, widest = 30) {
   }
 
   function leadRuns(lead: string, shape: Shape, flags: string, common: readonly string[]): boolean {
+    if (!Array.from(lead).every((one) => common.includes(one))) return false
     const first = String.fromCodePoint(lead.codePointAt(0) ?? 0)
-    if (!common.includes(first)) return false
     const letter = first.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&')
     return letterRuns(shape).some((run) => !setsApart(letter, run, flags))
   }
