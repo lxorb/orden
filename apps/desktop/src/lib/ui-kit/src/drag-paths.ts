@@ -1,7 +1,7 @@
 import type { Bookmark } from '@orden/contracts'
 import type { CarriedFiles } from '@orden/editor'
 import type { Action } from 'svelte/action'
-import type { Platform } from './api'
+import type { Platform } from './keys'
 
 const ONE = 'text/orden-path'
 const MANY = 'text/orden-paths'

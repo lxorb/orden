@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Content } from '@orden/pass/types'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { readIcon } from '../../ui-kit/src/api'
   import { webPages } from '@orden/contracts'
   import Glyph from './Glyph.svelte'

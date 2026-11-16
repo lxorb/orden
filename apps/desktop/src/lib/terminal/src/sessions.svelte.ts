@@ -24,7 +24,6 @@ import { untrack } from 'svelte'
 import { copyText } from '../../ui-controls/src/api'
 import { droppedPaths, identifier, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
-import { tabAsk } from '../../new-tab'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'
 import { hostReached } from './remote/hosts'
@@ -36,7 +35,7 @@ import { LocalEcho } from './online/echo-view'
 import { marks } from './online/marks.svelte'
 import { resumeCommand } from './online/resume'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace/src/api'
+import { workspace, tabAsk } from '../../workspace/src/api'
 import {
   dropHistory,
   fitted,

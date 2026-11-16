@@ -33,7 +33,7 @@ describe('the note’s corners', () => {
 
   test('none of them is placed against the window', () => {
     for (const path of [
-      'lib/StatusBar.svelte',
+      'lib/frame/src/StatusBar.svelte',
       'lib/pages/src/PagesZoom.svelte',
       'lib/canvas/src/CanvasBar.svelte',
     ]) {

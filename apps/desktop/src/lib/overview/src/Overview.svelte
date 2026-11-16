@@ -15,7 +15,7 @@
     tabOverview,
     workspace,
   } from '../../workspace/src/api'
-  import TabMark from '../../TabMark.svelte'
+  import { TabMark } from '../../marks/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { prompt } from '../../ui-kit/src/api'
   import { webPages, whenLoaded } from '@orden/contracts'

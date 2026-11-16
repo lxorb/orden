@@ -3,7 +3,7 @@ export { canDictate, engines, type Engine } from './engines.svelte'
 export { dictating } from './keys'
 export { local } from './local.svelte'
 export { voice, type Dictates } from './voice.svelte'
-export { recordingAt, recordRows, transcribeEmbed } from './recorder/commands'
+export { recordRows, transcribeRows } from './recorder/commands'
 export { record as recordVoice } from './recorder/microphone'
 export { appendTo } from './recorder/note'
 

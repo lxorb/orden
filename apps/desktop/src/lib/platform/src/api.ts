@@ -89,7 +89,6 @@ export {
   stringList,
 } from './stored'
 export {
-  asking,
   assetPath,
   assetUrl,
   closeWindow,
@@ -135,3 +134,6 @@ export const droppedPaths = async (files: readonly File[]): Promise<string[]> =>
   (await import('./dropped-paths')).droppedPaths(files)
 export { imagePath, imageUrl } from './images'
 export { takeKeyboard } from './take-keyboard'
+export { isPlugin, markPlugin } from './plugin'
+
+export const stallWatch = () => import('./stalls')

@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 
-const SyncMark = (await import('../../src/lib/SyncMark.svelte')).default
+const SyncMark = (await import('../../src/lib/surfaces/src/SyncMark.svelte')).default
 
 const marks = document.createElement('div')
 document.body.append(marks)

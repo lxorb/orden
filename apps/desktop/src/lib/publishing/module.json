@@ -13,7 +13,7 @@
     "markdown",
     "workspace",
     "fences",
-    "sync-store"
-  ],
-  "pending": ["apps/desktop/src/lib/SpaceMark.svelte", "apps/desktop/src/lib/usage.svelte.ts"]
+    "sync-store",
+    "marks"
+  ]
 }

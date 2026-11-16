@@ -33,7 +33,7 @@ async () => {
 DELETE = r"""
 async (path) => {
   const ws = window.ordenApp.workspace
-  const { rowMenu } = await import('/src/lib/row-menu.ts')
+  const { rowMenu } = await (await import('/src/lib/row-menu/src/api.ts')).rowMenus()
   const entry = ws.notes.find((one) => one.path === path) ?? { path, name: path.split('/').pop(), is_dir: false }
   const item = rowMenu(entry).find((one) => one && one.label === 'Delete')
   if (!item) return false

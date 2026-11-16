@@ -1,6 +1,6 @@
 import { mount, untrack } from 'svelte'
 import { shortcuts } from '../../shortcuts/src/api'
-import { tabOverview, workspace } from '../../workspace/src/api'
+import { essentials, tabOverview, workspace } from '../../workspace/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { takenOf, type Taken, viewport } from '../../ui-kit/src/api'
 import { letterOf } from './letters'
@@ -90,8 +90,7 @@ class Numbers {
     if (essential !== null) {
       event.preventDefault()
       event.stopPropagation()
-      if (!event.repeat)
-        void import('../../essentials.svelte').then((one) => one.openEssential(essential))
+      if (!event.repeat) void essentials().then((one) => one.openEssential(essential))
     }
 
     if (place) this.place()

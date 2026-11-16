@@ -18,8 +18,8 @@
     setReadOnlyMode,
   } from '@orden/editor'
   import { untrack } from 'svelte'
-  import Door from '../../Door.svelte'
   import {
+    Door,
     dragged,
     dropOver,
     isTreeDrag,
@@ -29,7 +29,16 @@
     viewport,
     paneCorners,
   } from '../../ui-kit/src/api'
-  import { alone } from '../../alone.svelte'
+  import {
+    alone,
+    followHref,
+    followNote,
+    tabOverview,
+    workspace,
+    pull,
+    storeAttachment,
+    storeImage,
+  } from '../../workspace/src/api'
   import type { Tab } from '../../documents/src/api'
   import {
     type Pane,
@@ -42,6 +51,7 @@
     zoneAt,
     keepsScroll,
     scrollKeyOf,
+    views,
   } from '../../panes/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
@@ -52,10 +62,9 @@
   import { without } from '../../graph/src/api'
   import { links, notePicture } from '../../link-index/src/api'
   import { modes } from '../../modes/src/api'
-  import { pull } from '../../pull.svelte'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { settingsWindow } from '@orden/contracts'
+  import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -78,16 +87,11 @@
     viewSurface,
     webSurface,
   } from '../../surfaces/src/api'
-  import { tabOverview, workspace } from '../../workspace/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { storeAttachment, storeImage } from '../../assets'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
-  import { followHref, followNote } from '../../open-link'
-  import type { OpenHow } from '../../new-tab'
-  import { usage } from '../../usage.svelte'
-  import { views } from '../../views.svelte'
+  import { usage } from '../../accounts/src/api'
 
   const { pane }: { pane: Pane } = $props()
 
@@ -272,9 +276,10 @@
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
-    void here(import('../../editor-menu')).then(({ showEditorMenu }) =>
-      showEditorMenu(event, on, path),
-    )
+    void here(import('../../editor-menu/src/api')).then(async ({ showEditorMenu }) => {
+      await commandRowsLoaded()
+      showEditorMenu(event, on, path)
+    })
   }
 
   async function saveImage(file: File, into: Tab): Promise<string | null> {

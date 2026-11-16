@@ -59,7 +59,7 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { views } = await import('../../views.svelte')
+const { views } = await import('../../panes/src/api')
 const Composer = (await import('./Composer.svelte')).default
 
 let target: HTMLElement

@@ -37,6 +37,7 @@ export { agoShort, relativeStep, when } from './when'
 export { keytipIn, keytipOut } from './keytip'
 export { spendClick } from './spent-click'
 export { chooseFiles, PICTURES } from './choose-files'
+export { droppedFiles, filesUnder, pickFiles, pickFolder, tidyPath } from './picking'
 export { hidePointerWhileTyping, takesWords, writes } from './typing-pointer'
 
 export const watchKeyboard = () => import('./keyboard-home')

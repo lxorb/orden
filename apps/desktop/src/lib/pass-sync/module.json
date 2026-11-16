@@ -18,7 +18,7 @@
     "windows",
     "documents",
     "workspace",
-    "gates"
-  ],
-  "pending": ["apps/desktop/src/lib/icon-choice.svelte.ts"]
+    "gates",
+    "icon-picker"
+  ]
 }

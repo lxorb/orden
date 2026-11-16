@@ -35,7 +35,7 @@ await Promise.all([
   import('./shortcuts.svelte'),
   import('../../modes/src/api'),
   import('../../commands/src/api'),
-  import('../../app-menu'),
+  import('../../native-menu/src/api').then((one) => one.appMenuRows()),
 ])
 
 const { PRESETS, presetById } = await import('./presets')
@@ -886,8 +886,8 @@ describe('what a reader is shown', () => {
     shortcuts.set('app.focus', 'Mod-Alt-9')
 
     const { appCommands } = await import('../../commands/src/api')
-    const { appMenu } = await import('../../app-menu')
-    const { isSubmenu } = await import('../../ui-kit/src/menu-item')
+    const appMenu = await (await import('../../native-menu/src/api')).appMenuRows()
+    const { isSubmenu } = await import('../../ui-kit/src/api')
 
     const command = appCommands().find((one) => one.id === 'focus')
     expect(command?.hint).toBe('Ctrl+Alt+9')

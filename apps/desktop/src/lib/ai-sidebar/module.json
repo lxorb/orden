@@ -22,14 +22,8 @@
     "chat-kit",
     "tasks-model",
     "feedback",
-    "surfaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/open-link.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
+    "surfaces",
+    "panes",
+    "glyphs"
   ]
 }

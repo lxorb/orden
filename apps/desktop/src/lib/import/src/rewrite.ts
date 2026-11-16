@@ -2,7 +2,7 @@ import { baseUnder } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { foldName, isWebTarget } from '@orden/markdown/links'
 
-import { linkTo } from '../../composer'
+import { linkTo } from '../../link-format/src/api'
 import { folderOf, isMarkdownPath, relativePath } from '../../platform/src/api'
 
 export interface Found {

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
+  import { searching } from '@orden/contracts'
   import FindBar from './FindBar.svelte'
-  import { keyElsewhere } from '../../layer-keys'
-  import { menu, scrollbar } from '../../ui-kit/src/api'
+  import { keyElsewhere, menu, scrollbar } from '../../ui-kit/src/api'
   import { modes } from '../../modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
   import { inlineFiles } from './drawn'
@@ -11,11 +11,9 @@
   import { readingHtml, tagAnchor, unreadableHtml } from './render'
   import { trustsHtmlIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { followHref, MIDDLE, opensLink } from '../../open-link'
-  import { tabAsk } from '../../new-tab'
+  import { followHref, MIDDLE, opensLink, workspace, tabAsk } from '../../workspace/src/api'
   import { theme } from '../../theme/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
   import {
     blockIds,
@@ -24,8 +22,7 @@
     isTabFile,
     pageFragment,
   } from '@orden/markdown/links'
-  import { links } from '../../link-index/src/api'
-  import { pressQueryRow } from '../../link-index/src/api'
+  import { links, pressQueryRow } from '../../link-index/src/api'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -259,7 +256,7 @@
     if (tag) {
       event.preventDefault()
       const name = tag.getAttribute('data-tag')
-      if (name && !middle) void import('../../tag-search').then(({ searchTag }) => searchTag(name))
+      if (name && !middle) searching()?.show(`tag:${name}`)
       return
     }
 

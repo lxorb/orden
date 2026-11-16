@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
-  import Icon from '../../../Icon.svelte'
+  import { Icon } from '../../../glyphs/src/api'
   import { nameOf } from '../../../platform/src/api'
   import { deviceCan, deviceName, protection } from '../../../protect/src/api'
   import { openedWithin, unlockAt, unlockByDevice } from './unlocking'

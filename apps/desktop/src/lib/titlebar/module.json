@@ -1,0 +1,23 @@
+{
+  "name": "titlebar",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "documents",
+    "hints",
+    "launch",
+    "modes",
+    "pane-tree",
+    "panes",
+    "phone",
+    "platform",
+    "save-place",
+    "session",
+    "shortcuts",
+    "theme",
+    "ui-kit",
+    "windows",
+    "workspace",
+    "marks"
+  ]
+}

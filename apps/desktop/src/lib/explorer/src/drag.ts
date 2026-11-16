@@ -58,7 +58,7 @@ export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
   const how = dropHow(event)
   if (isFileDrop(transfer)) {
     const caught = caughtFiles(transfer)
-    void import('../../picking')
+    void import('../../ui-controls/src/api')
       .then(({ filesUnder }) => filesUnder(caught))
       .then((files) => writeInto(view, files, folder))
     return

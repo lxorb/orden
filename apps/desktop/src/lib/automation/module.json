@@ -17,11 +17,7 @@
     "workspace",
     "sync-store",
     "documents",
-    "file-writes"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/own-keys.ts",
-    "apps/desktop/src/lib/search.svelte.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
+    "file-writes",
+    "panes"
   ]
 }

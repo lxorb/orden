@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { hinting } from '../../hints/src/api'
   import {
     OUTLINE_MARK,
     GRAPH_MARK,
@@ -18,11 +19,10 @@
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
   import { paletteCommands } from '../../commands/src/api'
-  import { fileMark } from '../../file-mark'
-  import FileMark from '../../FileMark.svelte'
-  import Icon from '../../Icon.svelte'
+  import { fileMark } from '../../marks/src/api'
+  import { FileMark } from '../../marks/src/api'
+  import { Icon } from '../../glyphs/src/api'
   import { links } from '../../link-index/src/api'
-  import { middleOpens } from '../../new-tab'
   import { AGENTS_NAME, shownName } from '../../platform/src/api'
   import { browse, RECENT } from './browse'
   import { candidates, headingCandidates, resting, rowKey, type World } from './kinds'
@@ -34,18 +34,17 @@
   import type { OpenTab, Row } from './rows'
   import { isDraft, scanHeadings } from '../../documents/src/api'
   import { lookOf } from './trying'
-  import { search } from '../../search.svelte'
   import { chatsOn, hiddenKinds } from '../../gates/src/api'
   import { relativeTo, samePath } from '../../platform/src/api'
-  import TabMark from '../../TabMark.svelte'
+  import { TabMark } from '../../marks/src/api'
   import { theme } from '../../theme/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import { joinPath } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { isDesktop } from '../../platform/src/api'
-  import { type PaletteHost, paletteKind, webPages, whenLoaded } from '@orden/contracts'
+  import { type PaletteHost, paletteKind, searching, webPages, whenLoaded } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
-  import { notices, paletteWords, workspace } from '../../workspace/src/api'
+  import { notices, paletteWords, workspace, middleOpens } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { wholeRows } from './whole-rows'
 
@@ -62,11 +61,7 @@
   /* eslint-enable prefer-const */
 
   $effect(() => {
-    if (!__EVEN_PLUGIN__ && open)
-      whenLoaded(
-        () => import('../../hints.svelte'),
-        ({ hints }) => hints.dismiss('palette'),
-      )
+    if (!__EVEN_PLUGIN__ && open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
   })
 
   let query = $state('')
@@ -389,10 +384,7 @@
     openAtHeading: (path, heading, how) => void workspace.openAtHeading(path, heading, how),
     openAtBlock: (target, how) => void workspace.openAtBlock(target, how),
     revealFolder: (path) => workspace.revealFolder(path),
-    searchFor: (words) => {
-      workspace.showPanel('search')
-      search.ask(words)
-    },
+    searchFor: (words) => searching()?.show(words),
     openGraph: (view) => {
       workspace.graphSettings.take(view)
       workspace.openGraph()

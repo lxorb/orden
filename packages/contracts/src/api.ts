@@ -197,6 +197,7 @@ export {
   portOf,
   portProvided,
   providePort,
+  searching,
   settingsWindow,
   showQuickAdd,
   syncStore,
@@ -212,6 +213,12 @@ export {
   OUTSIDE_FOLDER,
   type QuickAddPort,
   type QuickAddPrefill,
+  type SearchHit,
+  type SearchOrdering,
+  type SearchPanel,
+  type SearchPort,
+  type SearchSort,
+  type AppCommandsPort,
   type ShellFocusPort,
   registerSurfaces,
   type SheetId,
@@ -246,7 +253,14 @@ export {
 } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
-export type { ExplorerShowPort, FilePorts, PandocPicture, PickedFile } from './files'
+export type {
+  ArchivePort,
+  ExplorerCarryPort,
+  ExplorerShowPort,
+  FilePorts,
+  PandocPicture,
+  PickedFile,
+} from './files'
 export type {
   Arrived,
   BrowserId,
@@ -281,6 +295,7 @@ export type {
   WebPagesPort,
   WebPorts,
   WebScriptsPort,
+  WebSitesPort,
 } from './web'
 export { type Hearing, registerHearing, startHearings } from './hearing'
 export {

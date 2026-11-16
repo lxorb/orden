@@ -6,8 +6,9 @@ import {
   LINK_FORMATS,
   linkWriting,
   setLinkWriting,
+  linkTo,
+  pickedLink,
 } from './link-format/src/api'
-import { linkTo, pickedLink } from './composer'
 import { citation } from './pdf/src/api'
 import { rewriteLinks } from './import/src/rewrite'
 

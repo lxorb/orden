@@ -1,4 +1,4 @@
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from '../../workspace/src/api'
 import { invoke } from '../../platform/src/api'
 import type { Page } from './pages.svelte'
 import { grants, siteOf } from './permissions.svelte'

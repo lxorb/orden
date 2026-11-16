@@ -7,19 +7,25 @@ import {
   tableBindings,
 } from '@orden/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../../export-formats/src/api'
-import { revealPanel, stepRegionFocus } from '../../focus'
+import {
+  paneMoves,
+  refreshing,
+  revealPanel,
+  stepRegionFocus,
+  toggleTabOverview,
+  workspace,
+} from '../../workspace/src/api'
 import { modes } from '../../modes/src/api'
-import { searchFrom } from '../../search.svelte'
 import {
   commandRows,
   commandRowsLoaded,
+  searching,
   runCommand,
   settingsWindow,
   showQuickAdd,
 } from '@orden/contracts'
-import { toggleTabOverview, workspace } from '../../workspace/src/api'
 import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
-import { stepSpace } from '../../space-actions'
+import { stepSpace, toggleSpacePicker } from '../../spaces/src/api'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
 import type { Platform } from '../../ui-kit/src/api'
 import { type Toward, type Around, closeAfterLabel } from '../../panes/src/api'
@@ -537,7 +543,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: `Alt-${letter}`,
     mac: null,
-    run: () => void import('../../pane-moves').then((one) => one.movePane(toward)),
+    run: () => void paneMoves().then((one) => one.movePane(toward)),
   })),
   {
     id: 'app.tab-overview',
@@ -661,7 +667,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-f',
-    run: (context) => searchFrom(context.view),
+    run: (context) => searching()?.fromView(context.view),
   },
   {
     id: 'app.refresh',
@@ -670,7 +676,9 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: null,
     run: () =>
-      void import('../../refresh').then(({ refreshHere }) => refreshHere()).catch(() => undefined),
+      void refreshing()
+        .then(({ refreshHere }) => refreshHere())
+        .catch(() => undefined),
   },
   {
     id: 'app.links',
@@ -1327,10 +1335,6 @@ CANVAS_ENTRIES.push({
   contextual: true,
   alias: true,
 })
-
-function toggleSpacePicker() {
-  void import('../../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
-}
 
 let cycling: typeof import('../../tab-cycle/src/api') | null = null
 

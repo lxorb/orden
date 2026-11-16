@@ -48,7 +48,7 @@ const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { panesOf } = await import('../../src/lib/session/src/api')
 const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 const Pane = (await import('../../src/lib/pane-tree/src/Pane.svelte')).default
-await import('../../src/lib/NewHere.svelte')
+await import('../../src/lib/new-here/src/api')
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

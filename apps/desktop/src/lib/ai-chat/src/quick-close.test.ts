@@ -2,7 +2,10 @@ import { expect, test, vi } from 'vitest'
 
 const started = vi.hoisted(() => [] as string[])
 
-vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
+vi.mock('../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../panes/src/api')>()),
+  views: { of: () => null },
+}))
 vi.mock('../../workspace/src/api', () => ({
   workspace: { panelTab: null, panes: { focusedId: '' }, activeSpace: null, offers: () => true },
 }))

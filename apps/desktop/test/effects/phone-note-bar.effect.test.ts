@@ -1,10 +1,18 @@
+import { providePort } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
+
+providePort('commands.app', {
+  rows: async (view) => {
+    const { appCommands } = await import('../../src/lib/commands/src/api')
+    return appCommands(view as Parameters<typeof appCommands>[0])
+  },
+})
 
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { menu } = await import('../../src/lib/ui-kit/src/api')
-const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
+const { Titlebar } = await import('../../src/lib/titlebar/src/api')
 const { showNoteMore } = await (await import('../../src/lib/phone/src/api')).noteMore()
 
 afterEach(() => {

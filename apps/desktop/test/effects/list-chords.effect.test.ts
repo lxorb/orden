@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { roving } from '../../src/lib/ui-kit/src/api'
 import { shortcuts } from '../../src/lib/shortcuts/src/api'
-import { spacePicker } from '../../src/lib/space-picker.svelte'
+import { spacePicker } from '../../src/lib/spaces/src/space-picker.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
 
 function nothing() {

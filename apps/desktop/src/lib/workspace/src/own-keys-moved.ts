@@ -2,7 +2,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import type { MetaPatch } from '@orden/sync-core'
 import { links } from '../../link-index/src/api'
 import { log, isMarkdownPath, samePath, joinPath } from '../../platform/src/api'
-import { ownKeysTaken } from '../../own-keys'
+import { ownKeys } from '../../web-backend/src/api'
 import { type Change, changeOf } from '@orden/scan/search/replace'
 import type { ItemMetaStore } from '../../space-kept/src/api'
 import type { Keeping } from './note-text'
@@ -36,6 +36,7 @@ async function moveOwnKeys(root: string, workspace: Notes, signedIn: boolean): P
 
   const patches: Record<string, MetaPatch> = {}
   const changes: Change[] = []
+  const { ownKeysTaken } = await ownKeys()
   for (const note of held) {
     if (!isMarkdownPath(note.path) || !(note.icon || note.iconColor || note.cover)) continue
     const path = joinPath(root, note.path)

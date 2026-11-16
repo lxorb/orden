@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entry } from '@orden/contracts'
+  import type { Entry, OpenHow } from '@orden/contracts'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { standing } from './archive-plan'
@@ -17,14 +17,14 @@
     Twist,
     UNARCHIVE_MARK,
   } from '../../ui-kit/src/api'
-  import { fileMark, type FileMark as Mark } from '../../file-mark'
-  import FileMark from '../../FileMark.svelte'
+  import { fileMark } from '../../marks/src/api'
+  import type { FileMark as Mark } from '@orden/contracts'
+  import { FileMark } from '../../marks/src/api'
   import { folderNote, nestedIn } from '../../tree/src/api'
   import { dur, slide } from '../../platform/src/api'
-  import { howFor, middleOpens, type OpenHow, tabAsk } from '../../new-tab'
   import { rowName } from '../../platform/src/api'
   import { folderOf, insideSpace } from '../../platform/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { workspace, howFor, middleOpens, tabAsk } from '../../workspace/src/api'
 
   interface Row {
     entry: Entry

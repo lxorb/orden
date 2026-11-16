@@ -1,4 +1,4 @@
-import type { Carried } from './api'
+import type { Carried } from './carry'
 import { modes } from '../../modes/src/api'
 import { shortcutPresets, shortcuts } from '../../shortcuts/src/api'
 

@@ -74,7 +74,7 @@ async function bytesOut(file: { path: string; read: () => Promise<Uint8Array> },
   if (!/\.(md|markdown)$/i.test(file.path)) return bytes
   const meta = metaOf(file.path)
   if (!meta) return bytes
-  const { withOwnKeys } = await import('../../../own-keys')
+  const { withOwnKeys } = await import('../own-keys')
   const text = new TextDecoder().decode(bytes)
   const written = withOwnKeys(text, meta)
   return written === text ? bytes : new TextEncoder().encode(written)

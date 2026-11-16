@@ -11,7 +11,7 @@ import {
   unfoldLine,
 } from '@orden/editor/agent-hands'
 import type { AgentAnswer } from '../../automation/src/api'
-import { views } from '../../views.svelte'
+import { views } from '../../panes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import {

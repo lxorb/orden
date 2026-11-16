@@ -1,5 +1,6 @@
 import type { PickedFile } from '@orden/contracts'
 import { isJunk } from './names'
+import { tidyPath } from '../../ui-controls/src/api'
 
 export interface Source {
   path: string
@@ -156,10 +157,6 @@ function isZip(path: string, bytes: Uint8Array): boolean {
     bytes[1] === 0x4b &&
     ((bytes[2] === 0x03 && bytes[3] === 0x04) || (bytes[2] === 0x05 && bytes[3] === 0x06))
   )
-}
-
-export function tidyPath(path: string): string {
-  return path.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')
 }
 
 export function decoded(bytes: Uint8Array): string {

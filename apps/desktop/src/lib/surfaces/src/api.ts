@@ -1,6 +1,5 @@
 import type { Component } from 'svelte'
 import {
-  commandRowsLoaded,
   type FindBarProps,
   type OpenHow,
   type SheetId,
@@ -14,6 +13,7 @@ import { loadHistory } from '../../history/src/api'
 import { loadIconPicker } from '../../icon-picker/src/api'
 import { storedText } from '../../platform/src/api'
 import { held, type Latched, latched } from '../../ui-kit/src/api'
+import { loadSpaceMenu, loadSpacePicker, spaceSound } from '../../spaces/src/api'
 
 type Loaded<T> = () => Promise<{ default: T }>
 type Shown = Loaded<Component>
@@ -51,7 +51,9 @@ export const applicationSurface = held(from('application') as TabOnly)
 export const explorerSurface = held(from('explorer') as TabShown)
 export const passSurface = held(from('pass') as TabShown)
 export const passFill = held(from('pass-fill') as Loaded<Component<{ bubble: unknown }>>)
-export const emptySurface = held(() => import('../../NewHere.svelte'))
+export const emptySurface = held(() =>
+  import('../../new-here/src/api').then((one) => ({ default: one.NewHere })),
+)
 export const readingSurface = held(from('reading') as TabShown)
 
 export const lockScreen = held(() =>
@@ -72,14 +74,25 @@ export const agentSession = held(from('agent-session') as Loaded<Component<{ age
 export const sparkMark = held(
   from('spark') as Loaded<Component<{ colour: string; turning?: boolean; paused?: boolean }>>,
 )
-export const searchPanel = held(() => import('../../SearchPanel.svelte'))
+export const searchPanel = held(
+  from('search-panel') as Loaded<Component<{ ongoto?: ((line: number) => void) | undefined }>>,
+)
 export const phoneTabsBar = held(from('phone-tabs') as Loaded<Component<{ unread?: boolean }>>)
 export const phoneYou = held(from('phone-you') as Loaded<Component<{ scratchpad: () => void }>>)
 
 export const settingsSurface = held(from('settings') as Shown)
 
 export const pagesNavigator = held(from('pages-navigator') as Shown)
-export const linksPanel = held(() => import('../../Links.svelte'))
+export const linksPanel = held(
+  from('links') as Loaded<
+    Component<{
+      ongoto?: ((line: number) => void) | undefined
+      graph?: boolean
+      depth?: number
+      onlist?: (() => void) | undefined
+    }>
+  >,
+)
 export const askPanel = held(
   from('ask') as Loaded<
     Component<{ ongoto?: ((line: number) => void) | undefined; wide?: boolean }>
@@ -108,12 +121,12 @@ export const joinPending = latched(() =>
   import('../../sharing/src/api').then((one) => one.loadJoinPending()),
 )
 
-export const renameNotice = latched(() => import('../../RenameNotice.svelte'))
+export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 export const keysMovedNotice = latched(from('keys-moved') as Shown)
 
 export const outsideNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no spaces folder in the Even Realities plugin')
-  return import('../../OutsideFolder.svelte')
+  return import('./OutsideFolder.svelte')
 })
 
 export const CRASH_REPORTS = 'orden:crash-reports'
@@ -125,39 +138,24 @@ export const crashAskDue = (): boolean =>
 
 export const crashAsk = latched(from('crash-ask') as Shown)
 
-export const appMenuRows = held(async () => {
-  const [{ appMenu }] = await Promise.all([import('../../app-menu'), commandRowsLoaded()])
-  return { default: appMenu }
-})
-
 export const undoToastNotice = latched(from('undo-toast') as Shown)
-export const spaceSound = latched(() => import('../../SpaceSound.svelte'))
-export const soundMark = held(() => import('../../SoundMark.svelte'))
 export const privateMark = held(from('private-mark') as Loaded<Component<{ large?: boolean }>>)
 
-export const terminalMark = held(
-  from('terminal-mark') as Loaded<
-    Component<{
-      tab: Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null }
-    }>
-  >,
-)
-
 export const syncMark = latched(() =>
-  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('../../SyncMark.svelte'),
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
 )
 
-export const spacePickerDialog = latched(() => import('../../SpacePicker.svelte'))
+export const spacePickerDialog = latched(loadSpacePicker)
 export const tabOverviewLayer = latched(from('overview') as Shown)
 export const hostPickerDialog = latched(from('host-picker') as Shown)
-export const spacesMenu = held(() => import('../../SpaceMenu.svelte'))
-export const promptSheet = latched(() => import('../../PromptSheet.svelte'))
+export const spacesMenu = held(loadSpaceMenu)
+export const promptSheet = latched(() => import('./PromptSheet.svelte'))
 
 export const contextMenu = latched(() =>
   import('../../context-menu/src/api').then((one) => one.loadContextMenu()),
 )
 
-export const formatBar = latched(() => import('../../FormatBar.svelte'))
+export const formatBar = latched(() => import('./FormatBar.svelte'))
 
 export const signInSheet = latched(() =>
   import('../../accounts-ui/src/api').then((one) => ({ default: one.SignIn })),
@@ -167,7 +165,7 @@ export const joinSheet = latched(() =>
   import('../../sharing/src/api').then((one) => one.loadJoinSheet()),
 )
 
-export const feedbackSheet = latched(() => import('../../FeedbackSheet.svelte'))
+export const feedbackSheet = latched(() => import('./FeedbackSheet.svelte'))
 
 export function showFeedback(): void {
   void import('../../feedback/src/api').then(({ feedback }) => {
@@ -179,16 +177,11 @@ export function showFeedback(): void {
 export const quickAddSheet = latched(from('quick-add') as Shown)
 
 export const fillBar = held(() => import('../../tab-fill/src/api').then((one) => one.loadFillBar()))
-export const fullscreenWayOut = held(() => import('../../FullscreenLeave.svelte'))
+export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 
 export const guestCorner = held(() =>
   import('../../collab/src/api').then((one) => one.loadGuestCorner()),
 )
-
-export const firstSpaceDoor = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no fresh start in the Even Realities plugin'))
-    : import('../../first-space.svelte')
 
 const SHEETS: Readonly<Record<SheetId, Latched<unknown>>> = {
   export: exportSheet,

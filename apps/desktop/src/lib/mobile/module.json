@@ -11,7 +11,7 @@
     "ui-kit",
     "space-kept",
     "workspace",
-    "modes"
-  ],
-  "pending": ["apps/desktop/src/lib/attachments.ts", "apps/desktop/src/lib/views.svelte.ts"]
+    "modes",
+    "panes"
+  ]
 }

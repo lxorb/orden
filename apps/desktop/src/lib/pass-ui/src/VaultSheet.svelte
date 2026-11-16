@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { VaultColor, VaultIcon } from '@orden/pass/types'
   import { VAULT_COLORS } from '@orden/pass/types'
-  import { iconChoice } from '../../icon-choice.svelte'
+  import { iconChoice } from '../../icon-picker/src/api'
   import { message } from '../../ui-kit/src/api'
   import { Sheet } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'

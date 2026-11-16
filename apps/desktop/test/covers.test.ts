@@ -21,8 +21,8 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .panels.right': 'the right drawer: see .panels',
   'App.svelte .scrim': 'the drawers’ scrim, shown only where there are drawers: see .panels',
   'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
-  'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
-  'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
+  'lib/surfaces/src/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
+  'lib/frame/src/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
   'lib/overview/src/Offstage.svelte .offstage': 'drawn off the window, where no page is',
   'lib/overview/src/Overview.svelte .under':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',

@@ -1,4 +1,4 @@
-import type { Worn } from '../../../agent-marks.svelte'
+import type { Worn } from '../../../workspace/src/api'
 import { ACTIVE_FOR } from '../../../agent-protocol/src/api'
 import type { Seen } from './seen'
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Server from 'lucide/dist/esm/icons/server.mjs'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { brandIcon, readIcon } from '../../ui-kit/src/api'
   import { accountBrand } from './provider-brand'
   import type { Provider } from './providers'

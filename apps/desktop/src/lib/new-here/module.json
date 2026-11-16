@@ -1,0 +1,15 @@
+{
+  "name": "new-here",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "gates",
+    "platform",
+    "sharing",
+    "ui-controls",
+    "ui-kit",
+    "workspace",
+    "marks",
+    "glyphs"
+  ]
+}

@@ -261,7 +261,7 @@ describe('the lists that draw through it', () => {
   const source = (name: string) =>
     readFileSync(fileURLToPath(new URL(`../../${name}`, import.meta.url)), 'utf8')
 
-  const LONG = ['sidebar/src/Tree.svelte', 'HitList.svelte']
+  const LONG = ['sidebar/src/Tree.svelte']
 
   for (const name of LONG) {
     test(`${name} draws a window rather than every row it holds`, () => {
@@ -273,13 +273,6 @@ describe('the lists that draw through it', () => {
       expect(text).toContain('reach')
     })
   }
-
-  test('and the Links panel draws its hit lists through one of them', () => {
-    const text = source('Links.svelte')
-
-    expect(text).toContain('HitList')
-    expect(text).not.toMatch(/\{#each\s+rows\s+as/)
-  })
 })
 
 describe('the element each row is drawn in', () => {

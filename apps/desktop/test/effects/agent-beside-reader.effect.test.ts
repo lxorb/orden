@@ -5,7 +5,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { callerOf } = await import('../../src/lib/automation/src/api')
 await import('../agent-verbs-wired')
 const { runAgentVerb } = await import('@orden/contracts')
-const { agentMarks } = await import('../../src/lib/agent-marks.svelte')
+const { agentMarks } = await import('../../src/lib/workspace/src/api')
 
 const agent = callerOf({
   id: 'claude',

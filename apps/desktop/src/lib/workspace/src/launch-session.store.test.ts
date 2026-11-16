@@ -30,7 +30,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return held.disk!.invoke(command, args)
   },
 }))
-vi.mock('../../SpaceSound.svelte', () => ({ default: () => undefined }))
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 held.disk = d
