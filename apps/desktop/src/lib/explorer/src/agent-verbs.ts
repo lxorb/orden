@@ -120,7 +120,7 @@ async function changed(
     } else if (to) {
       const { listFolder } = await import('./commands')
       await listFolder(to)
-      await carry(view, paths, to, op === 'move' ? 'move' : 'copy')
+      await carry(view, paths, to, op === 'move' ? 'move' : 'copy', true)
     }
   } catch (error) {
     if (error instanceof Refused) throw error

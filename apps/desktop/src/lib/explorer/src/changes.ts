@@ -163,6 +163,7 @@ export async function carry(
   sources: readonly string[],
   folder: string,
   how: 'copy' | 'move',
+  fenced = false,
 ) {
   const { inside, outside } = split(sources)
   const tell = (said: string) => view?.tell(said)
@@ -178,19 +179,29 @@ export async function carry(
     const clash = await clashFor([...inside, ...outside], folder)
     if (clash === null) return
     const staying = how === 'move' ? inside : []
-    const stayed = await across([...outside, ...inside], folder, how, clash, tell, staying)
+    const stayed = await across(
+      [...outside, ...inside],
+      folder,
+      { how, clash, staying, fenced },
+      tell,
+    )
     if (stayed.length) await workspace.removeMany(stayed)
   })
   await view?.reload()
 }
 
+interface Carrying {
+  how: 'copy' | 'move'
+  clash: Clash
+  staying: readonly string[]
+  fenced: boolean
+}
+
 async function across(
   sources: readonly string[],
   folder: string,
-  how: 'copy' | 'move',
-  clash: Clash,
+  { how, clash, staying, fenced }: Carrying,
   tell: (said: string) => void,
-  staying: readonly string[],
 ): Promise<string[]> {
   const label =
     how === 'move'
@@ -202,7 +213,7 @@ async function across(
         : `Copying ${sources.length} items`
   let done: Transferred
   try {
-    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying))
+    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying, fenced))
   } catch (error) {
     tell(message(error, 'could not copy this'))
     return []

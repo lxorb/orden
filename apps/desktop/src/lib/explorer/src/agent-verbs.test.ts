@@ -67,14 +67,16 @@ vi.mock('./view.svelte', () => ({ viewOf: () => view }))
 
 const trashed: string[][] = []
 const carried: { paths: string[]; to: string; how: string }[] = []
+const fences: boolean[] = []
 vi.mock('./changes', () => ({
   changeable: () => true,
   trash: (_view: unknown, paths: string[]) => {
     trashed.push(paths)
     return Promise.resolve()
   },
-  carry: (_view: unknown, paths: string[], to: string, how: string) => {
+  carry: (_view: unknown, paths: string[], to: string, how: string, fenced?: boolean) => {
     carried.push({ paths, to, how })
+    fences.push(fenced === true)
     return Promise.resolve()
   },
   renamePath: () => Promise.resolve(),
@@ -213,4 +215,10 @@ describe('a path that steps aside with . or ..', () => {
     }
     expect(carried).toEqual([])
   })
+})
+
+test('an agent’s copy is carried fenced, so a source that is a space by another spelling is refused where it is read', async () => {
+  fences.length = 0
+  await call({ op: 'copy', tab: 'e1', paths: ['a.zip'], to: '~/Desktop' }, 'autonomous')
+  expect(fences).toEqual([true])
 })

@@ -188,6 +188,7 @@ describe("a file explorer's changes", () => {
       'move',
       'keep',
       ['/home/me/Orden/Work/plan.md'],
+      false,
     )
     expect(workspace.removeMany).toHaveBeenCalledWith(['/home/me/Orden/Work/plan.md'])
     expect(recorded).toEqual([
@@ -220,6 +221,7 @@ describe("a file explorer's changes", () => {
       'move',
       'replace',
       ['/home/me/Orden/Work/plan.md'],
+      false,
     )
     expect(workspace.removeMany).toHaveBeenCalledWith(['/home/me/Orden/Work/plan.md'])
     expect(recorded).toEqual([
