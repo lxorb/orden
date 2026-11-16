@@ -403,10 +403,19 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   await writeFile(from, action.fromContent)
   ws.reload(action.into, action.intoContent)
 
-  const only = action.relinked?.filter(
-    (path) => !samePath(path, action.into) && !samePath(path, action.from),
-  )
-  if (!only || only.length) await ws.retarget(action.into, from, only ? { only } : {})
+  const others = (path: string) => !samePath(path, action.into) && !samePath(path, action.from)
+  const back = samePath(from, action.from) ? (action.relinks ?? []) : []
+  const restored: string[] = []
+  for (const one of back.filter((each) => others(each.path))) {
+    if (!(await stillSays(ws, one.path, one.after))) continue
+    await writeFile(one.path, one.before)
+    ws.reload(one.path, one.before)
+    restored.push(one.path)
+  }
+  const rest = action.relinked
+    ?.filter(others)
+    .filter((path) => !restored.some((one) => samePath(one, path)))
+  if (!rest || rest.length) await ws.retarget(action.into, from, rest ? { only: rest } : {})
 }
 
 async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split' | 'extract' }>) {

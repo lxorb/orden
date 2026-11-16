@@ -130,6 +130,7 @@ describe('a note merged into another', () => {
         intoContent: '# b\n',
         intoAfter: disk.get(B),
         relinked: [],
+        relinks: [],
       },
     ])
   })

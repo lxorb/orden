@@ -33,6 +33,7 @@ export type FileAction =
       intoContent: string
       intoAfter: string
       relinked?: string[]
+      relinks?: { path: string; before: string; after: string }[]
     }
   | {
       kind: 'split' | 'extract'

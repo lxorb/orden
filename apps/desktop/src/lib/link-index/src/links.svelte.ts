@@ -108,6 +108,7 @@ export interface Retargeting {
   moved?: boolean
   only?: readonly string[]
   touched?: string[]
+  wrote?: { path: string; before: string; after: string }[]
 }
 
 interface OtherSpace {
@@ -1381,12 +1382,13 @@ class Links {
       const doc = open(absolute)
       const drawn = doc && rewrite && !isPagesTarget(note.path) ? await services().plane(doc) : null
       let read = listed?.(note.path) ?? note
-      const drawing = { relinked: false }
+      const drawing = { relinked: false, before: '' }
 
       const file = card ?? moving
       const fresh = async () => {
         const before = await this.wordsOf(absolute, target, open)
         if (before === null) return null
+        drawing.before = before
         read = listed?.(note.path) ?? note
         const words = rewrite
           ? rewrite.retargetCanvas(before, source, file, to)
@@ -1433,6 +1435,7 @@ class Links {
       if (drawing.relinked) doc?.wroteAs(after)
       for (const hear of hearing) hear(target, after, false)
       told?.push(target)
+      how.wrote?.push({ path: target, before: drawing.before, after })
 
       rewritten(read, after)
       touched++

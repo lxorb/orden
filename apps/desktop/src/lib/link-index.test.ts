@@ -225,6 +225,15 @@ describe('backlinks', () => {
     },
   )
 
+  test('a rename tells what each note it rewrote said before and after', async () => {
+    await space({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]' })
+    const wrote: { path: string; before: string; after: string }[] = []
+
+    await links.retarget(at('Plan.md'), at('Road.md'), ROOT, () => null, { wrote })
+
+    expect(wrote).toEqual([{ path: at('One.md'), before: 'see [[Plan]]', after: 'see [[Road]]' }])
+  })
+
   test('a markdown link from the top of the space reaches the note there', async () => {
     await space({
       'Road.md': '# Road',

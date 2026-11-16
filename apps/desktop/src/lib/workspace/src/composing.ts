@@ -67,7 +67,8 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   ws.reload(into, joined)
 
   const relinked: string[] = []
-  await ws.retarget(from, into, { touched: relinked })
+  const relinks: { path: string; before: string; after: string }[] = []
+  await ws.retarget(from, into, { touched: relinked, wrote: relinks })
   const intoAfter = await invoke<string>('read_note', { path: into }).catch(() => joined)
 
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
@@ -82,6 +83,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
     intoContent,
     intoAfter,
     relinked,
+    relinks,
   })
   await ws.loadTree()
   await ws.open(into)
