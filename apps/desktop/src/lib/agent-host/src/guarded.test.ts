@@ -1,12 +1,18 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const shut = new Set(['/s/Private', '/s/Work/Diary.md'])
+const ways = { Private: 'password', 'Work/Diary.md': 'device', Open: 'device' }
 vi.mock('../../protect/src/api', async (original) => ({
   ...(await original<typeof import('../../protect/src/api')>()),
   protection: {
     agentsMay: (path: string) =>
       ![...shut].some((one) => path === one || path.startsWith(`${one}/`)),
-    ways: () => ({ Private: 'password', 'Work/Diary.md': 'device', Open: 'device' }),
+    ways: () => ways,
+    heldWithin: (root: string, path: string) =>
+      Object.keys(ways).filter(
+        (key) =>
+          path === root || `${root}/${key}` === path || `${root}/${key}`.startsWith(`${path}/`),
+      ),
   },
 }))
 

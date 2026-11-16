@@ -78,6 +78,11 @@ export function keeping(store: KeptByPath): Follower {
   }
 }
 
+export function keepingShared(store: KeptByPath): Follower {
+  const kept = keeping(store)
+  return (op) => (op.heard ? undefined : kept(op))
+}
+
 export interface Moving {
   root: string
   was: string

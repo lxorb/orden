@@ -143,7 +143,7 @@ import {
   madeFirst,
   type Side,
 } from '../../panes/src/api'
-import { FileOps, inFlight, keeping, type Kind } from '../../file-ops/src/api'
+import { FileOps, inFlight, keeping, keepingShared, type Kind } from '../../file-ops/src/api'
 import * as composing from './composing'
 import { type Filling, fills } from './panel-fills'
 import * as spaces from './spaces'
@@ -432,7 +432,7 @@ class Workspace {
       this.protection,
       unlocks,
     ]) {
-      this.fileOps.follow(keeping(store))
+      this.fileOps.follow(store === this.protection ? keepingShared(store) : keeping(store))
     }
     this.fileOps.follow((op) => links.follow(op))
     this.fileOps.follow((op) => {

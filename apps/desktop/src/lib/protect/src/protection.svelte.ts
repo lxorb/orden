@@ -297,7 +297,8 @@ export class Protection {
     const out = this.coveringAt(path)
     for (const original of originalsOf(path)) {
       for (const one of this.coveringAt(original)) {
-        if (!out.some((mine) => mine.key === one.key && samePath(mine.root, one.root))) out.push(one)
+        if (!out.some((mine) => mine.key === one.key && samePath(mine.root, one.root)))
+          out.push(one)
       }
     }
     return out
@@ -350,7 +351,34 @@ export class Protection {
     this.filesNear = near
   }
 
+  heldWithin(root: string, path: string): string[] {
+    const at = relativeTo(root, path)
+    const original = copiedFrom(path)
+    const was = original === null ? null : relativeTo(root, original)
+    const held: string[] = []
+    for (const key of Object.keys(this.ways(root))) {
+      if (key === SPACE) continue
+      if (within(at, key, root) !== null) held.push(key)
+      const mapped = was === null ? null : movedTo(key, was, at, root)
+      if (mapped !== null && mapped !== key) held.push(mapped)
+    }
+    return held
+  }
+
+  private insideCopiesKept(path: string, root: string): void {
+    if (!this.any || copiedFrom(path) === null) return
+    const own = this.ways(root)
+    const came: Record<string, Way> = {}
+    for (const key of this.heldWithin(root, path)) {
+      if (key in own || !lockable(fitted(key))) continue
+      const way = this.covering(insideSpace(root, key))[0]?.way
+      if (way) came[key] = way
+    }
+    if (Object.keys(came).length) this.put(root, { ...own, ...came })
+  }
+
   private copiesKept(path: string, root: string): void {
+    this.insideCopiesKept(path, root)
     if (!this.any) return
     const came: Record<string, Way> = {}
     for (const one of this.filesNear(path)) {
@@ -407,6 +435,7 @@ export class Protection {
   copied(from: string, to: string, root: string | null, into: string | null): void {
     this.reread()
     if (root === null || into === null) return
+    this.insideCopiesKept(from, root)
     const was = relativeTo(root, from)
     const now = relativeTo(into, to)
     if (!lockable(fitted(now))) return
@@ -423,19 +452,21 @@ export class Protection {
   }
 
   async gone(path: string, root: string | null, back?: string): Promise<void> {
-    this.reread()
     if (root === null) return
+    const burying = await buried()
+    this.reread()
     this.copiesKept(path, root)
     const at = relativeTo(root, path)
     const went = (key: string) => key !== SPACE && within(at, key, root) !== null
     const above = this.covering(path).find((one) => one.key !== at)
     if (!Object.keys(this.ways(root)).some(went) && !above) return
     const held = { ...(above && { [at]: above.way }), ...this.ways(root) }
-    await (await buried()).bury(root, at, back, held)
+    const rehomed = burying.bury(root, at, back, held)
     this.put(
       root,
       Object.fromEntries(Object.entries(this.ways(root)).filter(([key]) => !went(key))),
     )
+    await rehomed
   }
 
   cameBack(path: string, root: string | null, back: string): Promise<void> | undefined {
@@ -458,11 +489,13 @@ export class Protection {
   }
 
   async forget(root: string, back?: string): Promise<void> {
+    const burying = await buried()
     this.reread()
     if (!(root in this.spaces)) return
-    await (await buried()).bury(root, SPACE, back, this.ways(root))
+    const rehomed = burying.bury(root, SPACE, back, this.ways(root))
     this.spaces = without(this.spaces, root)
     this.write()
+    await rehomed
   }
 
   private put(root: string, ways: Record<string, Way>): void {

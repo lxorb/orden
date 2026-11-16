@@ -1,6 +1,6 @@
 import { protection } from '../../protect/src/api'
 import { Refused } from '../../agent-verbs/src/api'
-import { insideSpace, relativeTo, within } from '../../platform/src/api'
+import { insideSpace, relativeTo } from '../../platform/src/api'
 
 export function readable(path: string, shown: string): void {
   if (protection.agentsMay(path)) return
@@ -20,9 +20,7 @@ export function spaceReadable(root: string): void {
 export function treeReadable(root: string, path: string): void {
   const at = relativeTo(root, path)
   readable(path, at || 'This space')
-  for (const key of Object.keys(protection.ways(root))) {
-    if (key && within(at, key, root) !== null) readable(insideSpace(root, key), key)
-  }
+  for (const key of protection.heldWithin(root, path)) readable(insideSpace(root, key), key)
 }
 
 export const seen = (path: string): boolean => protection.agentsMay(path)
