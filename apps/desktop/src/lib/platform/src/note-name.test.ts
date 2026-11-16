@@ -37,6 +37,12 @@ describe('naming a note after its own words', () => {
     expect(nameFromContent('a<b>c|d*e"f\n')).toBe('a b c d e f')
   })
 
+  test('keeps hyphens, which every filesystem takes, and drops control characters', () => {
+    expect(nameFromTitle('2026-11-16 Standup')).toBe('2026-11-16 Standup')
+    expect(nameFromTitle('my-project')).toBe('my-project')
+    expect(nameFromTitle('a\u0001b')).toBe('a b')
+  })
+
   test('has nothing to offer for an empty note', () => {
     expect(nameFromContent('')).toBeNull()
     expect(nameFromContent('\n\n   \n')).toBeNull()

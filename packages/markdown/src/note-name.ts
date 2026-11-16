@@ -91,7 +91,7 @@ export function nameFromContent(doc: string): string | null {
 
 export function nameFromTitle(title: string): string | null {
   const text = title
-    .replace(/[<>:"/\\|?* -]/g, ' ')
+    .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
   const cut = Array.from(text)
