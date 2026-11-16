@@ -1,5 +1,5 @@
 import { webPages } from '@orden/contracts'
-import { protection } from '../../../protect/src/api'
+import { noteBehind, protection } from '../../../protect/src/api'
 import { searchSpace } from '../../../search/src/api'
 import { parseQuery } from '@orden/scan/search/query'
 import { pad } from '../../../scratchpad/src/api'
@@ -77,6 +77,9 @@ async function tagged(root: string, tag: string): Promise<string[]> {
 }
 
 async function pageAttachment(tabId: string, label: string): Promise<Attachment | null> {
+  const tab = workspace.tabs.find((one) => one.id === tabId)
+  const behind = tab ? noteBehind(tab) : null
+  if (behind !== null && !agentsMay(behind)) return null
   const read = await webPages()
     .clip(tabId, true)
     .catch(() => null)
@@ -158,7 +161,7 @@ async function attachmentOf(
     case 'picture':
       return chip.image ? { label: chip.label, image: chip.image } : null
     case 'words':
-      if (!chip.text) return null
+      if (!chip.text || (chip.from && !agentsMay(chip.from))) return null
       if (chip.theirs) return { label: chip.label, text: fitted(chip.text, NOTE), untrusted: true }
       return await markedFrom(
         { label: chip.label, text: fitted(chip.text, NOTE) },
