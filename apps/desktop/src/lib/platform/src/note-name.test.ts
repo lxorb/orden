@@ -43,6 +43,13 @@ describe('naming a note after its own words', () => {
     expect(nameFromTitle('a\u0001b')).toBe('a b')
   })
 
+  test('skips the front matter and a rule above the words', () => {
+    expect(nameFromContent('---\ntags: [a]\n---\nBuy milk\n')).toBe('Buy milk')
+    expect(nameFromContent('---\n\nB text\n')).toBe('B text')
+    expect(nameFromContent('- - -\n***\nWords\n')).toBe('Words')
+    expect(draftName('---\ntitle: x\n---\n# Plan\n'.split('\n'))).toBe('Plan')
+  })
+
   test('has nothing to offer for an empty note', () => {
     expect(nameFromContent('')).toBeNull()
     expect(nameFromContent('\n\n   \n')).toBeNull()

@@ -1,3 +1,5 @@
+import { frontMatterLines } from './front-matter-lines'
+
 const RESERVED = [
   'CON',
   'PRN',
@@ -54,23 +56,30 @@ const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/
 
 const MARKUP = /^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)/
 
-export function titleFrom(lines: Iterable<string>): string | null {
-  let first: string | null = null
-  let read = 0
+const RULE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
 
+export function titleFrom(lines: Iterable<string>): string | null {
+  const taken: string[] = []
   for (const line of lines) {
+    taken.push(line)
+    if (taken.length >= LINES) break
+  }
+
+  const matter = frontMatterLines(taken.join('\n'))
+  const after = matter ? taken.join('\n').slice(0, matter.close).split('\n').length : 0
+  let first: string | null = null
+
+  for (const line of taken.slice(after)) {
     const heading = HEADING.exec(line)
     if (heading) {
       const words = (heading[2] ?? '').trim()
       if (words) return words
     }
 
-    if (first === null) {
+    if (first === null && !RULE.test(line)) {
       const words = line.replace(MARKUP, '').trim()
       if (words) first = words
     }
-
-    if (++read >= LINES) break
   }
 
   return first
