@@ -130,6 +130,13 @@ describe('a note that is a website', () => {
     protection.set(SPACE, target ?? '', null)
   })
 
+  test('that cannot be put in Recently deleted keeps its lock where it stays', async () => {
+    const made = store({ [NOTE]: urlNote('https://bank.example/?session=s3cret', 'Bank') })
+    await asShortcut({ ...made.ws, bin: () => Promise.reject(new Error('no trash')) }, NOTE)
+
+    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`])
+  })
+
   test('and its file goes the way a deleted note goes', async () => {
     binned.length = 0
     const made = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })

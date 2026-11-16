@@ -61,16 +61,20 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
 
   const kept = keptBody(text)
   if (kept === null) {
-    await ws.fileGone(path, 'file', await oldNoteGone(ws, path))
+    const binned = await oldNoteGone(ws, path)
+    if (binned) await ws.fileGone(path, 'file', binned.back)
   } else await writeFile(path, kept).catch(() => undefined)
 
   await ws.loadTree()
   return target
 }
 
-async function oldNoteGone(ws: Converts, path: string): Promise<string | undefined> {
-  const kept = await ws.bin(path, false).catch(() => null)
-  return kept?.trashId ?? kept?.back
+async function oldNoteGone(ws: Converts, path: string): Promise<{ back?: string } | null> {
+  const kept = await ws.bin(path, false).then(
+    (one) => one ?? {},
+    () => null,
+  )
+  return kept && { back: kept.trashId ?? kept.back }
 }
 
 export async function convertWebsites(ws: Converts): Promise<number> {
