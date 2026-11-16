@@ -844,6 +844,42 @@ describe('a block name on a line of its own', () => {
     ])
   })
 
+  test('naming a list item names that item, and a paragraph above a list names the paragraph', () => {
+    const id = () => 'new123'
+    const LIST = 'Steps:\n\n- Buy milk\n- Pay rent\n- Call mum\n\nAfter.\n'
+
+    const rent = namedBlock(LIST, 3, id)?.source ?? ''
+    expect(rent).toBe('Steps:\n\n- Buy milk\n- Pay rent ^new123\n- Call mum\n\nAfter.\n')
+    expect(sectionOf(rent, { heading: null, block: 'new123' })).toBe('- Pay rent')
+    expect(namedBlock('- a\r\n  - b\r\n- c', 0, id)?.source).toBe('- a ^new123\r\n  - b\r\n- c')
+    expect(namedBlock('- a ^old\n- b', 0, id)).toEqual({ id: 'old', source: '- a ^old\n- b' })
+
+    const packing = namedBlock('Packing list:\n- passport\n- socks', 0, id)?.source ?? ''
+    expect(packing).toBe('Packing list: ^new123\n- passport\n- socks')
+    expect(sectionOf(packing, { heading: null, block: 'new123' })).toBe(
+      'Packing list:\n- passport\n- socks',
+    )
+  })
+
+  test('each list item is a block of its own in the list of blocks', () => {
+    expect(
+      blocksOf('Steps:\n\n- Buy milk\n- Pay rent ^p\n- Call mum').map((one) => [
+        one.line,
+        one.text,
+        one.id,
+      ]),
+    ).toEqual([
+      [0, 'Steps:', null],
+      [2, 'Buy milk', null],
+      [3, 'Pay rent', 'p'],
+      [4, 'Call mum', null],
+    ])
+    expect(blocksOf('- a\n- b\n^all').map((one) => [one.line, one.id])).toEqual([
+      [0, 'all'],
+      [1, null],
+    ])
+  })
+
   test('naming one writes it where it can be read', () => {
     const id = () => 'new123'
 

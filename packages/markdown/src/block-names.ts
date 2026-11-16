@@ -1,4 +1,4 @@
-import { blockIdOf, ownLine, type Row, rowsOf } from './links'
+import { blockIdOf, LIST_ITEM, ownLine, type Row, rowsOf } from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
 
@@ -19,6 +19,10 @@ const CLOSERS: readonly (readonly [RegExp, string])[] = [
   [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
 ]
 
+function listed(row: Row): boolean {
+  return !row.code && LIST_ITEM.test(row.text)
+}
+
 function endOf(rows: readonly Row[], line: number): number {
   const first = rows[line]?.text ?? ''
   const closer = CLOSERS.find(([opens]) => opens.test(first))?.[1]
@@ -32,7 +36,7 @@ function endOf(rows: readonly Row[], line: number): number {
   for (;;) {
     const next = rows[end + 1]
     if (!next) return end
-    if (rows[end]?.code ? !next.code : !next.text.trim()) return end
+    if (rows[end]?.code ? !next.code : !next.text.trim() || listed(next)) return end
     end++
   }
 }
@@ -45,6 +49,7 @@ export function namedBlock(
   const rows = rowsOf(source)
   const row = rows[line]
   if (!row || row.matter) return null
+  if (listed(row)) return namedItem(source, line, id)
 
   const end = endOf(rows, line)
   const lines = source.split('\n')
@@ -64,5 +69,16 @@ export function namedBlock(
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`
   }
+  return { id: name, source: lines.join('\n') }
+}
+
+function namedItem(source: string, line: number, id: () => string): { id: string; source: string } {
+  const lines = source.split('\n')
+  const text = lines[line] ?? ''
+  const had = blockIdOf(text)
+  if (had) return { id: had, source }
+
+  const name = id()
+  lines[line] = `${text.trimEnd()} ^${name}${text.endsWith('\r') ? '\r' : ''}`
   return { id: name, source: lines.join('\n') }
 }

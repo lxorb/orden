@@ -615,7 +615,7 @@ function blockSection(source: string, wanted: string): string | null {
   return block.join('\n').trimEnd()
 }
 
-const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
+export const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
 
 function listItem(lines: readonly string[], at: number, indent: number): string {
   let end = at
@@ -680,22 +680,25 @@ const BLOCK_LABEL = 80
 export function blocksOf(text: string): NoteBlock[] {
   const found: NoteBlock[] = []
   let current: NoteBlock | null = null
+  let run: NoteBlock | null = null
 
   for (const row of lines(text)) {
     if (!row.code && row.text.trim() === '') {
       current = null
+      run = null
       continue
     }
 
-    const above = current ? null : found.at(-1)
+    const above = run ?? found.at(-1)
     if (above && !row.code && ownLine(row.text)) {
       above.id = blockIdOf(row.text)
       continue
     }
 
-    if (!current) {
+    if (!current || (!row.code && LIST_ITEM.test(row.text))) {
       current = { line: row.line, text: firstWords(row.text), id: null }
       found.push(current)
+      run ??= current
     }
 
     if (row.code) continue
