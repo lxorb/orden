@@ -81,7 +81,7 @@ export function draftName(lines: Iterable<string>): string | null {
   if (title === null) return null
 
   const text = title.replace(/\s+/g, ' ').trim()
-  return text ? text.slice(0, MOST) : null
+  return text ? Array.from(text).slice(0, MOST).join('') : null
 }
 
 export function nameFromContent(doc: string): string | null {
@@ -94,8 +94,11 @@ export function nameFromTitle(title: string): string | null {
     .replace(/[<>:"/\\|?* -]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
+  const cut = Array.from(text)
     .slice(0, MOST)
+    .join('')
+    .replace(/[.\s]+$/, '')
 
-  if (!text) return null
-  return isReserved(text) ? `_${text}` : text
+  if (!cut) return null
+  return isReserved(cut) ? `_${cut}` : cut
 }

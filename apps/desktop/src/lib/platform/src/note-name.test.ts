@@ -51,6 +51,16 @@ describe('naming a note after its own words', () => {
     expect(nameFromContent(`# ${'word '.repeat(40)}\n`)!.length).toBeLessThanOrEqual(60)
   })
 
+  test('ends on a letter where the cut falls on a space, a dot or inside an emoji', () => {
+    const sentence =
+      'We should move the weekly planning meeting to Thursday at 9 so everyone can attend.'
+    expect(nameFromTitle(sentence)).toBe(
+      'We should move the weekly planning meeting to Thursday at 9',
+    )
+    expect(nameFromTitle(`${'a'.repeat(58)}. then more`)).toBe('a'.repeat(58))
+    expect(nameFromTitle(`${'a'.repeat(59)}\u{1f600} more`)).toBe(`${'a'.repeat(59)}\u{1f600}`)
+  })
+
   test('keeps letters other languages use', () => {
     expect(nameFromContent('# Notizen über Bücher\n')).toBe('Notizen über Bücher')
   })
