@@ -165,7 +165,7 @@ export class Protection {
   private revision = $state(0)
   private hashed = $state<Hashed | null>(hashedOf(stored(PASSWORD_KEY)))
   private owner: string | null = storedText(OWNER_KEY)
-  private heard = storedText(STORAGE_KEY)
+  private heard = JSON.stringify(this.spaces)
 
   constructor() {
     if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
@@ -178,10 +178,11 @@ export class Protection {
   }
 
   private reread(): void {
-    const text = storedText(STORAGE_KEY)
+    const spaces = read()
+    const text = JSON.stringify(spaces)
     if (text === this.heard) return
     this.heard = text
-    this.spaces = read()
+    this.spaces = spaces
     this.revision++
   }
 
@@ -536,7 +537,7 @@ export class Protection {
 
   private keepSpaces(): void {
     keepJson(STORAGE_KEY, this.spaces)
-    this.heard = storedText(STORAGE_KEY)
+    this.heard = JSON.stringify(read())
   }
 }
 
