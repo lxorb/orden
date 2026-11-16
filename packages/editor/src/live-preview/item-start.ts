@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import {
   Annotation,
+  type ChangeSpec,
   EditorSelection,
   findClusterBreak,
   EditorState,
@@ -14,6 +15,7 @@ import { deleteMarkupBackward } from '@codemirror/lang-markdown'
 import type { SyntaxNode } from '@lezer/common'
 import { Direction, EditorView, keymap } from '@codemirror/view'
 import { isExternal } from '../external'
+import { readHighlight } from '@orden/markdown/highlights'
 import { quietMarks } from './reveal'
 
 export const landInWords = Annotation.define<boolean>()
@@ -284,18 +286,55 @@ function runAt(state: EditorState, pos: number, side: -1 | 1): MarkedRun | null 
   return run
 }
 
-const LAST_WORD = /\s+\S+\s*$/
-const FIRST_WORD = /^\s*\S+\s+/
+const SPACE = /\s/
 
-function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): Run | null {
+function wordsStart(state: EditorState, run: MarkedRun, inner: Run): number {
+  if (state.sliceDoc(run.from, run.from + 2) !== '==') return inner.from
+  return inner.from + readHighlight(state.sliceDoc(inner.from, inner.to)).from
+}
+
+function childrenIn(state: EditorState, run: MarkedRun, inner: Run): Run[] {
+  const found: Run[] = []
+  syntaxTree(state).iterate({
+    from: inner.from,
+    to: inner.to,
+    enter: (node) => {
+      if (node.from <= run.from && node.to >= run.to) return true
+      if (node.to > inner.from && node.from < inner.to) found.push({ from: node.from, to: node.to })
+      return false
+    },
+  })
+  return found
+}
+
+function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): ChangeSpec[] | null {
   const inner = run.inner
   if (!inner) return null
-  const text = state.sliceDoc(inner.from, inner.to)
-  const found = (side < 0 ? LAST_WORD : FIRST_WORD).exec(text)
-  if (!found) return null
-  return side < 0
-    ? { from: inner.from + found.index, to: inner.to }
-    : { from: inner.from, to: inner.from + found[0].length }
+  const start = wordsStart(state, run, inner)
+  const children = childrenIn(state, run, inner)
+  const spaceAt = (pos: number) => SPACE.test(state.sliceDoc(pos, pos + 1))
+
+  if (side < 0) {
+    let unit = inner.to
+    while (unit > start && !spaceAt(unit - 1)) {
+      unit = children.find((child) => child.to === unit)?.from ?? unit - 1
+    }
+    let gap = unit
+    while (gap > start && spaceAt(gap - 1) && !children.some((child) => child.to === gap)) gap--
+    if (gap <= start || unit === inner.to) return null
+    const broken = state.sliceDoc(gap, unit).includes('\n')
+    return [{ from: gap, to: inner.to }, ...(broken ? [{ from: run.to, insert: '\n' }] : [])]
+  }
+
+  let unit = start
+  while (unit < inner.to && !spaceAt(unit)) {
+    unit = children.find((child) => child.from === unit)?.to ?? unit + 1
+  }
+  let gap = unit
+  while (gap < inner.to && spaceAt(gap) && !children.some((child) => child.from === gap)) gap++
+  if (gap >= inner.to || unit === start) return null
+  const broken = state.sliceDoc(unit, gap).includes('\n')
+  return [...(broken ? [{ from: run.from, insert: '\n' }] : []), { from: start, to: gap }]
 }
 
 function deleteWordOverMarks(side: -1 | 1) {

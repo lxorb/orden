@@ -4,7 +4,7 @@ import {
   type SelectionRange,
   type TransactionSpec,
 } from '@codemirror/state'
-import { everywhere, type Landing, plainAt } from './paste'
+import { everywhere, type Landing, plainAt, withLineFeeds } from './paste'
 
 const CONTAINERS = /^(?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?))*[ \t]*/
 
@@ -70,7 +70,8 @@ function intoEmptyItem(state: EditorState, range: SelectionRange, text: string):
   }
 }
 
-export function placed(state: EditorState, text: string): TransactionSpec {
+export function placed(state: EditorState, written: string): TransactionSpec {
+  const text = withLineFeeds(written)
   return everywhere(state, (range) => placedAt(state, range, text))
 }
 
@@ -122,6 +123,7 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   }
 }
 
-export function plainly(state: EditorState, text: string): TransactionSpec {
+export function plainly(state: EditorState, written: string): TransactionSpec {
+  const text = withLineFeeds(written)
   return everywhere(state, (range) => intoEmptyItem(state, range, text) ?? plainAt(range, text))
 }

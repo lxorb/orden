@@ -17,6 +17,7 @@ import {
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import { noteIndex } from '../wikilink/notes'
+import { overlaps } from './reveal'
 import { renderNote } from '../wikilink/preview'
 
 export interface FootnotePart {
@@ -130,7 +131,7 @@ export function followFootnote(view: EditorView, part: FootnotePart): boolean {
 }
 
 function revealed(state: EditorState, part: FootnotePart): boolean {
-  return state.selection.ranges.some((range) => range.from <= part.to && range.to >= part.from)
+  return overlaps(state, part.from, part.to)
 }
 
 const numberMark = Decoration.mark({ class: 'orden-footnote-number' })

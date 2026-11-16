@@ -67,7 +67,12 @@ export interface Landing {
   range: SelectionRange
 }
 
-export function plainAt(range: SelectionRange, text: string): Landing {
+export function withLineFeeds(text: string): string {
+  return text.replace(/\r\n?/g, '\n')
+}
+
+export function plainAt(range: SelectionRange, written: string): Landing {
+  const text = withLineFeeds(written)
   return {
     changes: { from: range.from, to: range.to, insert: text },
     range: EditorSelection.cursor(range.from + text.length),
