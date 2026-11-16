@@ -569,3 +569,55 @@ describe('naming a block in the note being written, as the note is written', () 
     )
   })
 })
+
+describe('picking a row while mending a link already written', () => {
+  const mended = async (doc: string, at: number, label: string) => {
+    const index: NoteIndex = {
+      notes: [note('Plan.md', ['Head']), note('Planet.md')],
+      files: [],
+      path: 'Notes.md',
+      read: () => Promise.resolve(null),
+    }
+    let built = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(at),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          noteIndex.of(index),
+        ],
+      }),
+    )
+    const view = {
+      get state() {
+        return built
+      },
+      dispatch: (spec: TransactionSpec) => {
+        built = built.update(spec).state
+      },
+    } as unknown as EditorView
+    const found = await wikilinkCompletions(new CompletionContext(built, at, false))
+    const row = found?.options.find((one) => one.label === label)
+    if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
+    row.apply(view, row, found.from, at)
+    return built.doc.toString()
+  }
+
+  test('keeps the words the link shows', async () => {
+    expect(await mended('see [[Plan|the plan]] now', 10, 'Plan')).toBe('see [[Plan|the plan]] now')
+  })
+
+  test('keeps the heading it reaches', async () => {
+    expect(await mended('see [[Plan#Head]] now', 10, 'Plan')).toBe('see [[Plan#Head]] now')
+  })
+
+  test('a heading row keeps the words the link shows', async () => {
+    expect(await mended('see [[Plan#Hea|the plan]] now', 14, 'Head')).toBe(
+      'see [[Plan#Head|the plan]] now',
+    )
+  })
+
+  test('leaves the next link on the line alone', async () => {
+    expect(await mended('see [[Pla and [[Planet]]', 9, 'Plan')).toBe('see [[Plan]] and [[Planet]]')
+  })
+})

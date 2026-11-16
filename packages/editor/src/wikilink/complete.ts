@@ -33,14 +33,49 @@ function typing(context: CompletionContext) {
   return context.matchBefore(/\[\[[^[\]\n]*/)
 }
 
+const WRITTEN_REST = /^([^[\]\n]*?)\]\]/
+
+interface Rest {
+  end: number
+  fragment: string | null
+  shown: string | null
+}
+
+function restOf(view: EditorView, to: number): Rest | null {
+  const line = view.state.doc.lineAt(to)
+  const written = WRITTEN_REST.exec(view.state.doc.sliceString(to, line.to))
+  if (!written) return null
+
+  const words = written[1] ?? ''
+  const bar = /\\?\|/.exec(words)
+  const before = bar ? words.slice(0, bar.index) : words
+  const hash = before.indexOf('#')
+  return {
+    end: to + written[0].length,
+    fragment: hash === -1 ? null : before.slice(hash + 1),
+    shown: bar ? words.slice(bar.index + bar[0].length) : null,
+  }
+}
+
+function kept(target: LinkWrite, rest: Rest | null): LinkWrite {
+  if (!rest) return target
+  const fragment = target.fragment ?? rest.fragment
+  const shown = target.shown ?? rest.shown
+  return {
+    ...target,
+    ...(fragment ? { fragment } : {}),
+    ...(shown ? { shown } : {}),
+  }
+}
+
 function insert(target: LinkWrite) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
-    const closed = view.state.doc.sliceString(to, to + 2) === ']]'
-    const text = view.state.facet(linkWriter)(target)
+    const rest = restOf(view, to)
+    const text = view.state.facet(linkWriter)(kept(target, rest))
 
     view.dispatch({
-      changes: { from: start, to: closed ? to + 2 : to, insert: text },
+      changes: { from: start, to: rest?.end ?? to, insert: text },
       selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
