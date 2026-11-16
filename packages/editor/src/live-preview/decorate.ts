@@ -19,7 +19,7 @@ import { emojiFor } from '../emoji'
 import { HEADING_LEVEL, headingNumbersOf, numberHeadings } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
-import { enclosingNamed, linkBrackets } from '../nodes'
+import { enclosingNamed, linkAddress, linkBrackets } from '../nodes'
 import { tagTitle } from '../tag-press'
 import { calloutOf } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
@@ -183,7 +183,7 @@ class Decorator {
         return false
       case 'URL':
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
-        else {
+        else if (node.parent?.name !== 'Link' && node.parent?.name !== 'Image') {
           const written = this.state.doc.sliceString(node.from, node.to)
           const bare = node.parent?.name !== 'Autolink'
           const after = this.state.doc.sliceString(node.to, node.to + 1)
@@ -219,7 +219,7 @@ class Decorator {
       return
     }
 
-    const url = node.getChild('URL')
+    const url = linkAddress(node)
     if (url || node.getChildren('LinkMark').length > 2) {
       const target = url ? linkDestination(this.state.doc.sliceString(url.from, url.to)) : ''
       this.linkText(open.to, close.from, target)
@@ -546,7 +546,7 @@ class Decorator {
     if (imageRevealed(this.state, node.from, node.to)) return true
 
     const image = imageOfNode(this.state, node)
-    if (!image) return true
+    if (!image) return !!linkAddress(node)
 
     const card = webCard(image.src)
     if (card) {

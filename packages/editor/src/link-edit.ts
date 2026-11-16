@@ -2,7 +2,7 @@ import { isolateHistory } from '@codemirror/commands'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import type { SyntaxNode, Tree } from '@lezer/common'
-import { enclosingNamed } from './nodes'
+import { enclosingNamed, linkAddress } from './nodes'
 
 export interface LinkParts {
   from: number
@@ -104,7 +104,8 @@ function labelParts(
 
 function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   const marks = node.getChildren('LinkMark')
-  const pointer = node.name === 'URL' ? node : node.getChild('URL')
+  const pointer =
+    node.name === 'URL' ? node : node.name === 'Autolink' ? node.getChild('URL') : linkAddress(node)
   const empty = marks[3] ? { from: marks[2]?.to ?? node.to, to: marks[3].from } : null
   const target = pointer
     ? { from: pointer.from, to: pointer.to }

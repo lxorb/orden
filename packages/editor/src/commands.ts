@@ -1,5 +1,5 @@
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
-import type { SyntaxNode } from '@lezer/common'
+import type { SyntaxNode, Tree } from '@lezer/common'
 import { insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import {
   ChangeSet,
@@ -20,6 +20,8 @@ import { marksAcross } from './line-door'
 import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { enclosing, enclosingNamed } from './nodes'
+
+export const BETWEEN_WORDS = /^(?![*_~=`])[\s\p{P}\p{S}]$/u
 
 export function toggleWrap(before: string, after = before): StateCommand {
   const italic = before === '*' && after === '*'
@@ -72,13 +74,14 @@ export function toggleWrap(before: string, after = before): StateCommand {
         if (from === words.from) changes.push({ from: holding.from, to: words.from })
         else {
           let close = from
-          while (close > words.from && /\s/u.test(doc.sliceString(close - 1, close))) close--
+          while (close > words.from && BETWEEN_WORDS.test(doc.sliceString(close - 1, close)))
+            close--
           changes.push({ from: close, insert: mark })
         }
         if (to === words.to) changes.push({ from: words.to, to: holding.to })
         else {
           let open = to
-          while (open < words.to && /\s/u.test(doc.sliceString(open, open + 1))) open++
+          while (open < words.to && BETWEEN_WORDS.test(doc.sliceString(open, open + 1))) open++
           changes.push({ from: open, insert: mark })
         }
         const set = state.changes(changes)
@@ -876,7 +879,21 @@ function opensUnclosedFence(state: EditorState, line: Line): boolean {
   if (!code) return enclosingNamed(here, NOT_PROSE) === null
   if (state.doc.lineAt(code.from).number !== line.number) return false
   if (code.getChildren('CodeMark').length < 2) return true
-  return takesALaterOpener(state, line, state.doc.lineAt(code.to).number)
+  return (
+    takesALaterOpener(state, line, state.doc.lineAt(code.to).number) ||
+    leavesALaterFenceOpen(state, tree, state.doc.lineAt(code.to).number)
+  )
+}
+
+function leavesALaterFenceOpen(state: EditorState, tree: Tree, closer: number): boolean {
+  for (let number = closer + 1; number <= state.doc.lines; number++) {
+    const line = state.doc.line(number)
+    if (!fenceOf(fenceLine(line.text).rest.trimStart())) continue
+    const code = enclosingNamed(tree.resolveInner(line.to, -1), 'FencedCode')
+    if (!code || code.getChildren('CodeMark').length < 2) return true
+    number = state.doc.lineAt(code.to).number
+  }
+  return false
 }
 
 function takesALaterOpener(state: EditorState, line: Line, closer: number): boolean {

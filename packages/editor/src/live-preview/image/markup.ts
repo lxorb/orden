@@ -3,7 +3,7 @@ import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { sizedAlt } from '@orden/markdown/links'
 import { attributeValue } from '../../attributes'
-import { enclosing } from '../../nodes'
+import { enclosing, linkAddress } from '../../nodes'
 
 export interface ImageSpec {
   src: string
@@ -114,7 +114,7 @@ function readTitle(written: string): string {
 }
 
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {
-  const url = node.getChild('URL')
+  const url = linkAddress(node)
   if (!url) return null
 
   const [open, close] = node.getChildren('LinkMark')

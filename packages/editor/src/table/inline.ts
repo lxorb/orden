@@ -1,5 +1,6 @@
 import type { SyntaxNode } from '@lezer/common'
 import { ordenMarkdownParser } from '../markdown/extensions'
+import { linkAddress } from '../nodes'
 
 const TAGS: Record<string, string> = {
   StrongEmphasis: 'strong',
@@ -19,7 +20,6 @@ const HIDDEN = new Set([
   'SubscriptMark',
   'SuperscriptMark',
   'LinkMark',
-  'URL',
   'LinkTitle',
   'WikilinkMark',
 ])
@@ -27,6 +27,17 @@ const HIDDEN = new Set([
 const SAFE_URL = /^(https?:\/\/|mailto:|#|\/|\.)/i
 
 export type Inline = { text: string } | { tag: string; href?: string; children: Inline[] }
+
+function address(written: string, holder: SyntaxNode): Inline {
+  if (holder.name === 'Link' || holder.name === 'Image') return { text: written }
+  const href = written.includes(':')
+    ? written
+    : written.includes('@')
+      ? `mailto:${written}`
+      : `https://${written}`
+  const children = [{ text: written }]
+  return SAFE_URL.test(href) ? { tag: 'a', href, children } : { text: written }
+}
 
 export function parseInline(source: string): Inline[] {
   if (!source) return []
@@ -57,12 +68,15 @@ function walk(node: SyntaxNode, source: string, from: number, to: number): Inlin
       out.push({ text: source.slice(child.from + 1, child.to) })
     } else if (child.name === 'InlineCode') {
       out.push({ tag: 'code', children: [{ text: codeText(child, source) }] })
+    } else if (child.name === 'URL') {
+      if (linkAddress(node)?.from !== child.from)
+        out.push(address(source.slice(child.from, child.to), node))
     } else if (!HIDDEN.has(child.name)) {
       const children = walk(child, source, child.from, child.to)
       const tag = TAGS[child.name]
 
       if (child.name === 'Link') {
-        const url = child.getChild('URL')
+        const url = linkAddress(child)
         const href = url ? source.slice(url.from, url.to) : ''
         out.push(SAFE_URL.test(href) ? { tag: 'a', href, children } : { tag: 'a', children })
       } else if (tag) {

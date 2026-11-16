@@ -252,6 +252,17 @@ const Footnote: MarkdownConfig = {
   ],
   parseInline: [
     {
+      name: 'FootnoteBang',
+      triggers: '!',
+      before: 'Image',
+      parse(cx, next, pos) {
+        if (next !== BANG || cx.char(pos + 1) !== BRACKET_OPEN || cx.char(pos + 2) !== CARET) {
+          return -1
+        }
+        return pos + 1
+      },
+    },
+    {
       name: 'FootnoteRef',
       triggers: '[',
       before: 'Link',

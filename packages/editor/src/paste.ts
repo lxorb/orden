@@ -97,10 +97,6 @@ function heldInCode(state: EditorState, text: string): TransactionSpec | null {
   )
 }
 
-function insert(view: EditorView, text: string) {
-  view.dispatch(inserted(view.state, text))
-}
-
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
@@ -241,7 +237,7 @@ export const pastePlain: Command = (view) => {
   navigator.clipboard
     .readText()
     .then((text) => {
-      if (text) insert(view, text)
+      if (text) view.dispatch(heldInCode(view.state, text) ?? inserted(view.state, text))
     })
     .catch(() => undefined)
   return true

@@ -16,6 +16,12 @@ export function enclosingNamed(
   return null
 }
 
+export function linkAddress(node: SyntaxNode): SyntaxNode | null {
+  const opening = node.getChildren('LinkMark')[2]
+  if (!opening) return null
+  return node.getChildren('URL').find((url) => url.from >= opening.to) ?? null
+}
+
 export function linkBrackets(node: SyntaxNode): { open: SyntaxNode; close: SyntaxNode } | null {
   const [open, close] = node.getChildren('LinkMark')
   if (!open || !close || open.from !== node.from) return null

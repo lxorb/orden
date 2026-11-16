@@ -167,8 +167,22 @@ interface Counting {
   nth: number
 }
 
-function numberedLine(text: string, counting: Counting[]): string {
-  const { indent, words } = wordsOf(text)
+function startsAnItem(state: EditorState, line: Line): boolean {
+  let found = false
+  syntaxTree(state).iterate({
+    from: line.from,
+    to: line.to,
+    enter: (node) => {
+      if (found) return false
+      if (node.name === 'ListMark' && node.from >= line.from && node.from <= line.to) found = true
+      return !found
+    },
+  })
+  return found
+}
+
+function numberedLine(text: string, counting: Counting[], listed: boolean): string {
+  const { indent, words } = wordsOf(text, listed)
   const written = indent.length
 
   while (counting.length > 1 && (counting.at(-1)?.written ?? 0) > written) counting.pop()
@@ -238,11 +252,14 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
         continue
       }
 
-      if (verbatim.has(number) || !wordsOf(line.text).words.trim()) continue
+      const listed = startsAnItem(view.state, line)
+      if (verbatim.has(number) || !wordsOf(line.text, listed).words.trim()) continue
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
       const text =
-        into === 'numbered' ? numberedLine(line.text, counting) : shaped(line.text, into, nth)
+        into === 'numbered'
+          ? numberedLine(line.text, counting, listed)
+          : shaped(line.text, into, nth, listed)
       if (into === 'numbered') nth++
       if (itemwise) shifts.set(number, contentColumn(text) - contentColumn(line.text))
       if (text === line.text) continue

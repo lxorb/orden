@@ -12,7 +12,7 @@ import {
   readHighlight,
   writeHighlight,
 } from '@orden/markdown/highlights'
-import { inside, spansLines } from './commands'
+import { BETWEEN_WORDS, inside, spansLines } from './commands'
 import { highlightAcross } from './line-door'
 import { enclosingNamed } from './nodes'
 
@@ -94,14 +94,14 @@ function splitOut(
   if (from === start) changes.push({ from: run.from, to: start })
   else {
     let close = from
-    while (close > start && /\s/u.test(doc.sliceString(close - 1, close))) close--
+    while (close > start && BETWEEN_WORDS.test(doc.sliceString(close - 1, close))) close--
     changes.push({ from: close, insert: MARK })
   }
   if (recolour) changes.push({ from, insert: recolour }, { from: to, insert: MARK })
   if (to === end) changes.push({ from: end, to: run.to })
   else {
     let open = to
-    while (open < end && /\s/u.test(doc.sliceString(open, open + 1))) open++
+    while (open < end && BETWEEN_WORDS.test(doc.sliceString(open, open + 1))) open++
     changes.push({ from: open, insert: opening })
   }
 
