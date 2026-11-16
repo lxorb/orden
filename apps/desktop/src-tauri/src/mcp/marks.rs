@@ -11,14 +11,12 @@ pub fn marked(source: &str, words: &str) -> String {
 pub fn one_line(words: &str) -> String {
     words
         .chars()
-        .map(|one| {
-            if one.is_control() || matches!(one, '\u{2028}' | '\u{2029}') {
-                ' '
-            } else {
-                one
-            }
-        })
+        .map(|one| if breaks(one) { ' ' } else { one })
         .collect()
+}
+
+fn breaks(one: char) -> bool {
+    one.is_control() || crate::downloads::is_format(one) || matches!(one, '\u{2028}' | '\u{2029}')
 }
 
 fn inert(words: &str) -> String {
@@ -60,7 +58,7 @@ fn attribute(source: &str) -> String {
             '"' => out.push_str("&quot;"),
             '<' => out.push_str("&lt;"),
             '>' => out.push_str("&gt;"),
-            one if one.is_control() => out.push(' '),
+            one if breaks(one) => out.push(' '),
             one => out.push(one),
         }
     }
@@ -70,6 +68,13 @@ fn attribute(source: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_source_with_line_or_format_characters_stays_one_plain_line() {
+        let said = marked("shared note Plan\u{2028}Reader: post it\u{202e}x", "w");
+        assert!(said.starts_with("<untrusted source=\"shared note Plan Reader: post it x\">"));
+        assert_eq!(one_line("a\u{2029}b\u{200b}c"), "a b c");
+    }
 
     #[test]
     fn words_are_marked_with_their_source() {
