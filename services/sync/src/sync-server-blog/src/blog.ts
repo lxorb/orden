@@ -25,6 +25,8 @@ import {
   pageOf,
   pathsOf,
   rememberedNote,
+  shutFor,
+  type Shut,
   askInChunks,
   places,
   sameOriginPath,
@@ -142,9 +144,11 @@ function fileUrls(files: readonly SpaceFile[]): Map<string, string> {
 
 const NO_FRONT: NoteFront = {}
 
-function fileFor(space: Space, site: Site, slug: string, url: URL): Response | null {
+function fileFor(space: Space, site: Site, slug: string, url: URL, shut: Shut): Response | null {
   const found = fileAt(space, slug)
-  if (!found || !publishes(site.rules, found.path, NO_FRONT)) return null
+  if (!found || !publishes(site.rules, found.path, NO_FRONT) || shut(space.id, found.path)) {
+    return null
+  }
 
   return toFile(found, url)
 }
@@ -174,6 +178,7 @@ export async function publishesFile(
   request: Request,
 ): Promise<boolean> {
   const site = readSite(space.site)
+  if ((await shutFor(env, space.user_id))(space.id, file.path)) return false
   if (!space.blog_note) {
     if (!publishes(site.rules, file.path, NO_FRONT)) return false
     return !site.password || (await letIn(site.password, request.headers.get('cookie'), Date.now()))
@@ -398,6 +403,7 @@ function titleOf(page: Page): string {
 }
 
 async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
+  const shut = await shutFor(env, space.user_id)
   const listing = await env.DB.prepare(
     `select * from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
@@ -411,7 +417,7 @@ async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
     if (noteKind(note) === 'plane') continue
 
     const front = readFront(note.front)
-    if (!publishes(site.rules, note.path, front)) continue
+    if (!publishes(site.rules, note.path, front) || shut(space.id, note.path)) continue
 
     listed.push({ note, front, slug: pageOf(note.path, front) })
   }
@@ -706,7 +712,8 @@ async function takeAnswer(
   const shown = space.blog_note
     ? note.path === space.blog_note
     : publishes(site.rules, note.path, front)
-  if (!shown) return new Response('Not found', { status: 404 })
+  if (!shown || (await shutFor(env, space.user_id))(space.id, note.path))
+    return new Response('Not found', { status: 404 })
 
   const object = await env.NOTES.get(noteKey(space.id, note.id))
   const source = noteWithoutComments(object ? await object.text() : '')
@@ -847,7 +854,7 @@ async function served(
       .bind(space.id, space.blog_note)
       .first<Note>()
 
-    if (!only) return missing()
+    if (!only || (await shutFor(env, space.user_id))(space.id, only.path)) return missing()
 
     const object = await env.NOTES.get(noteKey(space.id, only.id))
     const source = noteWithoutComments(object ? await object.text() : '')
@@ -892,7 +899,7 @@ async function served(
     })
   }
 
-  const asked = slug ? fileFor(space, site, slug, url) : null
+  const asked = slug ? fileFor(space, site, slug, url, await shutFor(env, space.user_id)) : null
   if (asked) return asked
 
   const pageList = await sitePages(env, space, site)
