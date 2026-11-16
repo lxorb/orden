@@ -10,7 +10,12 @@ import {
   type SelectionRange,
   Transaction,
 } from '@codemirror/state'
-import { deleteCharBackward, deleteCharForward } from '@codemirror/commands'
+import {
+  deleteCharBackward,
+  deleteCharForward,
+  deleteGroupBackward,
+  deleteGroupForward,
+} from '@codemirror/commands'
 import { deleteMarkupBackward } from '@codemirror/lang-markdown'
 import type { SyntaxNode } from '@lezer/common'
 import { Direction, EditorView, keymap } from '@codemirror/view'
@@ -161,6 +166,18 @@ function itemWordsAt(line: Line): number | null {
   return item ? line.from + quote.length + item[0].length : null
 }
 
+function soleLetterOfRun(state: EditorState, from: number, to: number): boolean {
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(from, 1);
+    node;
+    node = node.parent
+  ) {
+    const inner = innerOf(node)
+    if (inner?.from === from && inner.to === to) return true
+  }
+  return false
+}
+
 function besideMarks(view: EditorView, near: number, side: -1 | 1): boolean {
   view.dispatch({ selection: EditorSelection.cursor(near) })
   if (side > 0) return deleteCharForward(view)
@@ -183,7 +200,10 @@ function deleteBesideMarks(side: -1 | 1) {
     const far = line.from + findClusterBreak(line.text, near - line.from, side > 0)
     const beyond = pastMarks(state, far, side)
     const whole = near === head ? pastMarks(state, head, side < 0 ? 1 : -1) : head
-    const alone = beyond !== far && whole !== near
+    const alone =
+      beyond !== far &&
+      whole !== near &&
+      soleLetterOfRun(state, Math.min(far, near), Math.max(far, near))
     if (!alone && near === head) return false
 
     const [from, to] = alone
@@ -337,11 +357,78 @@ function wordIn(state: EditorState, run: MarkedRun, side: -1 | 1): ChangeSpec[] 
   return [...(broken ? [{ from: run.from, insert: '\n' }] : []), { from: start, to: gap }]
 }
 
+const HELD_RUNS = new Set([...WORDY_RUNS, 'InlineCode'])
+
+function runHolding(state: EditorState, pos: number): MarkedRun | null {
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos);
+    node;
+    node = node.parent
+  ) {
+    if (!HELD_RUNS.has(node.name)) continue
+    const inner = innerOf(node)
+    if (inner && inner.from <= pos && pos <= inner.to)
+      return { from: node.from, to: node.to, inner }
+  }
+  return null
+}
+
+function spacesFrom(state: EditorState, pos: number, side: -1 | 1, edge: number): number {
+  let at = pos
+  while (
+    at !== edge &&
+    SPACE.test(side < 0 ? state.sliceDoc(at - 1, at) : state.sliceDoc(at, at + 1))
+  ) {
+    at += side
+  }
+  return at
+}
+
+function deleteWordInsideRun(view: EditorView, side: -1 | 1): boolean {
+  const { state } = view
+  const head = state.selection.main.head
+  const run = runHolding(state, head)
+  const inner = run?.inner
+  if (!run || !inner) return false
+
+  const edge = side < 0 ? inner.from : inner.to
+  if (head === edge) {
+    view.dispatch({ selection: EditorSelection.cursor(side < 0 ? run.from : run.to) })
+    return side < 0 ? deleteGroupBackward(view) : deleteGroupForward(view)
+  }
+
+  const moved = view.moveByGroup(EditorSelection.cursor(head), side > 0).head
+  const reach = side < 0 ? Math.max(moved, inner.from) : Math.min(moved, inner.to)
+  const before = state.sliceDoc(inner.from, side < 0 ? reach : head)
+  const after = state.sliceDoc(side < 0 ? head : reach, inner.to)
+  let from = side < 0 ? reach : head
+  let to = side < 0 ? head : reach
+  if (!before.trim() && !after.trim()) {
+    from = run.from
+    to = run.to
+  } else if (!before.trim()) {
+    from = inner.from
+    to = spacesFrom(state, to, 1, inner.to)
+  } else if (!after.trim()) {
+    from = spacesFrom(state, from, -1, inner.from)
+    to = inner.to
+  }
+
+  view.dispatch({
+    changes: { from, to },
+    scrollIntoView: true,
+    userEvent: side < 0 ? 'delete.group.backward' : 'delete.group.forward',
+  })
+  return true
+}
+
 function deleteWordOverMarks(side: -1 | 1) {
   return (view: EditorView): boolean => {
     const { state } = view
     const main = state.selection.main
     if (state.readOnly || state.selection.ranges.length > 1 || !main.empty) return false
+
+    if (state.facet(quietMarks) && deleteWordInsideRun(view, side)) return true
 
     const line = state.doc.lineAt(main.head)
     let at = main.head

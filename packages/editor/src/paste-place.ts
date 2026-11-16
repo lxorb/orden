@@ -4,6 +4,8 @@ import {
   type SelectionRange,
   type TransactionSpec,
 } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import { enclosingNamed } from './nodes'
 import { everywhere, type Landing, plainAt, withLineFeeds } from './paste'
 
 const CONTAINERS = /^(?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?))*[ \t]*/
@@ -73,6 +75,10 @@ function intoEmptyItem(state: EditorState, range: SelectionRange, text: string):
   }
 }
 
+function inTable(state: EditorState, at: number): boolean {
+  return enclosingNamed(syntaxTree(state).resolveInner(at, 1), 'Table') !== null
+}
+
 function lazyLineBelow(state: EditorState, number: number): boolean {
   if (number > state.doc.lines) return false
   const text = state.doc.line(number).text.trimStart()
@@ -120,14 +126,15 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const doc = state.doc
   const words = (number: number) =>
     number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
+  const apart = (number: number) => words(number) && !inTable(state, doc.line(number).from)
   const under =
     after.trim() === '' &&
     (last.startsWith('|')
-      ? words(end.number + 1)
+      ? apart(end.number + 1)
       : TAKES_LAZY.test(last) && lazyLineBelow(state, end.number + 1))
       ? `\n${lead.trimEnd()}`
       : ''
-  const over = inFront && !before && first.startsWith('|') && words(line.number - 1) ? '\n' : ''
+  const over = inFront && !before && first.startsWith('|') && apart(line.number - 1) ? '\n' : ''
   const plain = !opens && !closes && !under && !over
   if (!inFront && plain && (!lead || !text.includes('\n'))) return plainAt(range, text)
 

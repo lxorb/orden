@@ -16,6 +16,15 @@ import { inside, OPENING } from './commands'
 const BLOCKS_APART =
   /\n(?:[ \t]*>)*[ \t]*(?:\n|$|(?:[-*+]|\d+[.)])[ \t]|#{1,6}[ \t])|^(?:[ \t]*>)*[ \t]*#{1,6}[ \t].*\n/u
 
+const QUOTE_DEPTH = /^(?:[ \t]*>)*/
+
+function quoteChanges(text: string): boolean {
+  const depths = text
+    .split('\n')
+    .map((line) => (QUOTE_DEPTH.exec(line)?.[0] ?? '').replace(/[ \t]/g, ''))
+  return depths.some((depth, at) => at > 0 && depth !== depths[at - 1])
+}
+
 interface Part {
   from: number
   to: number
@@ -23,7 +32,8 @@ interface Part {
 
 function partsOf(state: EditorState, from: number, to: number): Part[] {
   const verbatim = verbatimLines(state, from, to)
-  if (!verbatim.size && !BLOCKS_APART.test(state.doc.sliceString(from, to))) return [{ from, to }]
+  const written = state.doc.sliceString(state.doc.lineAt(from).from, to)
+  if (!verbatim.size && !BLOCKS_APART.test(written) && !quoteChanges(written)) return [{ from, to }]
 
   const parts: Part[] = []
   const last = state.doc.lineAt(to).number

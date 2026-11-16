@@ -109,6 +109,11 @@ function heldInCode(state: EditorState, text: string): TransactionSpec | null {
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
+function endsAtLineStart(state: EditorState, range: SelectionRange, text: string): boolean {
+  if (range.empty || range.to === 0 || /\r?\n$/.test(text)) return false
+  return state.doc.lineAt(range.to).from === range.to
+}
+
 export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
 
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
@@ -173,7 +178,17 @@ export function richPaste(): Extension {
         return true
       }
 
-      if (!html.trim()) return false
+      if (!html.trim()) {
+        if (
+          !view.state.selection.ranges.some((range) => endsAtLineStart(view.state, range, text))
+        ) {
+          return false
+        }
+        event.preventDefault()
+        const land = later(view)
+        void loadLineCommands().then(({ plainly }) => land((state) => plainly(state, text)))
+        return true
+      }
 
       event.preventDefault()
       const land = later(view)
@@ -243,10 +258,10 @@ async function readClipboard(): Promise<{ html: string; text: string } | null> {
 export const pastePlain: Command = (view) => {
   if (view.state.readOnly) return false
 
-  navigator.clipboard
-    .readText()
-    .then((text) => {
-      if (text) view.dispatch(heldInCode(view.state, text) ?? inserted(view.state, text))
+  const land = later(view)
+  void Promise.all([navigator.clipboard.readText(), loadLineCommands()])
+    .then(([text, { plainly }]) => {
+      if (text) land((state) => heldInCode(state, text) ?? plainly(state, text))
     })
     .catch(() => undefined)
   return true
