@@ -2,6 +2,7 @@ import { syntaxTree } from '@codemirror/language'
 import {
   Annotation,
   EditorSelection,
+  findClusterBreak,
   EditorState,
   type Line,
   Prec,
@@ -125,11 +126,67 @@ const snapped = EditorState.transactionFilter.of((transaction) => {
   ]
 })
 
+const INLINE_MARKS = new Set([
+  'EmphasisMark',
+  'StrikethroughMark',
+  'SubscriptMark',
+  'SuperscriptMark',
+  'HighlightMark',
+])
+
+function hiddenMarkAt(state: EditorState, pos: number, side: -1 | 1): Run | null {
+  const node = syntaxTree(state).resolveInner(pos, side)
+  const inline =
+    INLINE_MARKS.has(node.name) || (node.name === 'CodeMark' && node.parent?.name === 'InlineCode')
+  if (!inline || (side < 0 ? node.to : node.from) !== pos) return null
+  return { from: node.from, to: node.to }
+}
+
+function pastMarks(state: EditorState, pos: number, side: -1 | 1): number {
+  let at = pos
+  for (let mark = hiddenMarkAt(state, at, side); mark; mark = hiddenMarkAt(state, at, side)) {
+    at = side < 0 ? mark.from : mark.to
+  }
+  return at
+}
+
+function deleteBesideMarks(side: -1 | 1) {
+  return (view: EditorView): boolean => {
+    const { state } = view
+    const main = state.selection.main
+    if (!state.facet(quietMarks) || state.readOnly) return false
+    if (state.selection.ranges.length > 1 || !main.empty) return false
+
+    const near = pastMarks(state, main.head, side)
+    const line = state.doc.lineAt(near)
+    if (near === main.head || near === (side < 0 ? line.from : line.to)) return false
+
+    const far = line.from + findClusterBreak(line.text, near - line.from, side > 0)
+    const beyond = pastMarks(state, far, side)
+    const [from, to] =
+      beyond === far
+        ? side < 0
+          ? [far, near]
+          : [near, far]
+        : side < 0
+          ? [beyond, main.head]
+          : [main.head, beyond]
+    view.dispatch({
+      changes: { from, to },
+      scrollIntoView: true,
+      userEvent: side < 0 ? 'delete.backward' : 'delete.forward',
+    })
+    return true
+  }
+}
+
 export const itemStart = [
   snapped,
   Prec.high(
     keymap.of([
       { key: 'Enter', run: pushHeadingDown },
+      { key: 'Backspace', run: deleteBesideMarks(-1) },
+      { key: 'Delete', run: deleteBesideMarks(1) },
       { key: 'ArrowLeft', run: (view) => backOutOfWords(view, Direction.LTR) },
       { key: 'ArrowRight', run: (view) => backOutOfWords(view, Direction.RTL) },
     ]),

@@ -1,4 +1,4 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, foldedRanges, syntaxTree } from '@codemirror/language'
 import type { SyntaxNode, Tree } from '@lezer/common'
 import { insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import {
@@ -9,6 +9,7 @@ import {
   type Line,
   type SelectionRange,
   type StateCommand,
+  type Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
@@ -1205,7 +1206,44 @@ function opensListUnderWords(state: EditorState, line: Line, at: number): boolea
   return item !== null && item.from >= line.from && item.prevSibling === null
 }
 
-export const continueLists: StateCommand = ({ state, dispatch }) => {
+function foldAfterCaret(state: EditorState): { from: number; to: number } | null {
+  const main = state.selection.main
+  if (state.selection.ranges.length > 1 || !main.empty) return null
+  if (main.head !== state.doc.lineAt(main.head).to) return null
+  let found: { from: number; to: number } | null = null
+  foldedRanges(state).between(main.head, main.head, (from, to) => {
+    if (from === main.head && !found) found = { from, to }
+  })
+  return found
+}
+
+function pastFold(made: Transaction, fold: { from: number; to: number }): Transaction {
+  const inserts: { from: number; to: number; text: string }[] = []
+  made.changes.iterChanges((from, to, _fromB, _toB, text) => {
+    inserts.push({ from, to, text: text.toString() })
+  })
+  const [only] = inserts
+  if (inserts.length !== 1 || only?.from !== fold.from || only.to !== fold.from) return made
+
+  const head = made.newSelection.main.head
+  return made.startState.update({
+    changes: { from: fold.to, insert: only.text },
+    selection: EditorSelection.cursor(fold.to + head - fold.from),
+    scrollIntoView: true,
+    userEvent: 'input',
+  })
+}
+
+export const continueLists: StateCommand = (target) => {
+  const fold = foldAfterCaret(target.state)
+  if (!fold) return continueListsAt(target)
+  return continueListsAt({
+    state: target.state,
+    dispatch: (made) => target.dispatch(pastFold(made, fold)),
+  })
+}
+
+const continueListsAt: StateCommand = ({ state, dispatch }) => {
   const ended = endEmptyTask(state)
   if (ended) {
     dispatch(state.update(ended))

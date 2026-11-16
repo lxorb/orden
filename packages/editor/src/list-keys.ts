@@ -1,11 +1,12 @@
 import { indentLess, indentMore, moveLineDown, moveLineUp } from '@codemirror/commands'
-import { indentUnit, syntaxTree } from '@codemirror/language'
+import { foldEffect, foldedRanges, indentUnit, syntaxTree } from '@codemirror/language'
 import {
   type ChangeSpec,
   EditorSelection,
   type EditorState,
   type Line,
   type StateCommand,
+  type Transaction,
 } from '@codemirror/state'
 import { inCode } from './code'
 import { selectedLines } from './commands'
@@ -192,6 +193,84 @@ function tableAt(state: EditorState, at: number): { from: number; to: number } |
   return enclosingNamed(syntaxTree(state).resolveInner(at, 1), 'Table')
 }
 
+interface Span {
+  from: number
+  to: number
+}
+
+function foldsBetween(state: EditorState, from: number, to: number): Span[] {
+  const found: Span[] = []
+  foldedRanges(state).between(from, to, (start, end) => {
+    if (start >= from && end <= to) found.push({ from: start, to: end })
+  })
+  return found
+}
+
+function withHidden(state: EditorState, line: Line): Line {
+  let last = line
+  for (const fold of foldsBetween(state, last.from, state.doc.length)) {
+    if (fold.from <= last.to) last = state.doc.lineAt(fold.to)
+  }
+  return last
+}
+
+function heldAbove(state: EditorState, line: Line): Line {
+  let first = line
+  foldedRanges(state).between(line.from, line.from, (start, end) => {
+    if (start < line.from && end >= line.from) first = state.doc.lineAt(start)
+  })
+  return first
+}
+
+function movedWithFolds(
+  target: { state: EditorState; dispatch: (transaction: Transaction) => void },
+  first: Line,
+  bottom: Line,
+  delta: -1 | 1,
+): boolean {
+  const { state } = target
+  const { doc } = state
+  const last = withHidden(state, bottom)
+  const near = delta < 0 ? first.number - 1 : last.number + 1
+  if (near < 1 || near > doc.lines) return false
+
+  const nearLine = doc.line(near)
+  const other =
+    delta < 0
+      ? { from: heldAbove(state, nearLine).from, to: nearLine.to }
+      : { from: nearLine.from, to: withHidden(state, nearLine).to }
+  const moving = { from: first.from, to: last.to }
+  if (
+    !foldsBetween(state, Math.min(moving.from, other.from), Math.max(moving.to, other.to)).length
+  ) {
+    return false
+  }
+
+  const [top, under] = delta < 0 ? [other, moving] : [moving, other]
+  const upper = doc.sliceString(top.from, top.to)
+  const lower = doc.sliceString(under.from, under.to)
+  const rises = under.from - top.from
+  const sinks = lower.length + 1
+  const shifted = (span: Span, by: number) =>
+    foldEffect.of({ from: span.from + by, to: span.to + by })
+  const range = state.selection.main
+  const shift = delta < 0 ? -rises : sinks
+
+  target.dispatch(
+    state.update({
+      changes: { from: top.from, to: under.to, insert: `${lower}\n${upper}` },
+      selection: EditorSelection.range(range.anchor + shift, range.head + shift),
+      effects: [
+        ...foldsBetween(state, top.from, top.to).map((span) => shifted(span, sinks)),
+        ...foldsBetween(state, under.from, under.to).map((span) => shifted(span, -rises)),
+      ],
+      scrollIntoView: true,
+      userEvent: 'move.line',
+    }),
+  )
+  return true
+}
+
 export function moveLineOver(delta: -1 | 1): StateCommand {
   return (target) => {
     const { state, dispatch } = target
@@ -205,7 +284,9 @@ export function moveLineOver(delta: -1 | 1): StateCommand {
     const table = tableBeside(state, delta < 0 ? first : last, delta)
     const inside = tableAt(state, first.from)
     if (inside?.from !== tableAt(state, last.from)?.from) return true
-    if (!table || inside || state.readOnly) return library(target)
+    if (state.readOnly) return library(target)
+    if (!table && !inside) return movedWithFolds(target, first, last, delta) || library(target)
+    if (!table || inside) return library(target)
 
     const before = first.number > 1 && doc.line(first.number - 1).text.trim() !== ''
     const after = last.number < doc.lines && doc.line(last.number + 1).text.trim() !== ''

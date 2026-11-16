@@ -29,6 +29,16 @@ function sameKind(prefix: string): { outer: string; marks: RegExp } | null {
   return { outer: prefix.slice(0, found.index), marks }
 }
 
+const FENCE = /^[ \t]*(?:`{3,}|~{3,})/
+
+function firstSibling(lines: readonly string[], marks: RegExp): number {
+  let fenced = false
+  return lines.findIndex((one) => {
+    if (FENCE.test(one)) fenced = !fenced
+    return !fenced && marks.test(one.trimStart())
+  })
+}
+
 function spaced(prefix: string): string {
   return prefix.replace(ITEM_MARKS, (_all, mark: string) => ' '.repeat(mark.length))
 }
@@ -71,17 +81,22 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
 
   const prefix = CONTAINERS.exec(before)?.[0] ?? ''
   const lead = spaced(prefix)
-  const kind = sameKind(prefix)
-  const leadOf = (one: string) => (kind?.marks.test(one) ? spaced(kind.outer) : lead)
-  const held = (lines: string) =>
-    lines.replace(
-      /\n([^\n]*)/g,
-      (_all, one: string) => `\n${one ? leadOf(one) + one : lead.trimEnd()}`,
-    )
   const gap = `\n${lead.trimEnd()}\n${lead}`
 
   const inFront = before.length === prefix.length
   const first = text.slice(0, text.indexOf('\n') + 1 || text.length).trimEnd()
+  const kind = inFront && !OPENS_BLOCK.test(first) ? sameKind(prefix) : null
+  const held = (pasted: string) => {
+    const [head = '', ...rest] = pasted.split('\n')
+    const sibling = kind ? firstSibling(rest, kind.marks) : -1
+    const base = sibling < 0 ? '' : (/^[ \t]*/.exec(rest[sibling] ?? '')?.[0] ?? '')
+    const outer = kind ? spaced(kind.outer) : lead
+    const leadOf = (one: string, at: number) =>
+      sibling >= 0 && at >= sibling && one.startsWith(base)
+        ? outer + one.slice(base.length)
+        : lead + one
+    return [head, ...rest.map((one, at) => (one ? leadOf(one, at) : lead.trimEnd()))].join('\n')
+  }
   const last = text.slice(text.lastIndexOf('\n') + 1)
   const opens = !inFront && OPENS_BLOCK.test(first)
   const closes = after.trim() !== '' && CLOSES_BLOCK.test(last)
