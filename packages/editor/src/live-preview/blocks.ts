@@ -213,21 +213,24 @@ function scan(
             return false
           }
 
-          const line = doc.lineAt(node.from)
-          if (line.length > TOC_MAX || !/\[toc\]/i.test(line.text)) return false
+          const last = doc.lineAt(node.to).number
+          for (let number = doc.lineAt(node.from).number; number <= last; number++) {
+            const line = doc.line(number)
+            if (line.length > TOC_MAX || !/\[toc\]/i.test(line.text)) continue
 
-          const span = found(line.from, line.to)
-          if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
+            const span = found(line.from, line.to)
+            if (!/^\s*\[toc\]\s*$/i.test(line.text)) continue
 
-          out.toc = true
-          if (span.revealed) return false
+            out.toc = true
+            if (span.revealed) continue
 
-          ranges.push(
-            Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
-              span.from,
-              span.to,
-            ),
-          )
+            ranges.push(
+              Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
+                span.from,
+                span.to,
+              ),
+            )
+          }
           return false
         }
 

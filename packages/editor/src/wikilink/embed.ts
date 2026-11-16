@@ -33,16 +33,20 @@ const MOST_EMBEDDED = 40_000
 
 const EMBED_MAX = 512
 
-const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode)$/
+const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode|BlockMath)$/
 
-function standsApart(state: EditorState, line: Line): boolean {
+const OPENS_BELOW = /^(?:BulletList|OrderedList|Blockquote)$/
+
+function standsApart(state: EditorState, line: Line, below: boolean): boolean {
   if (line.text.trim() === '') return true
   for (
     let node: SyntaxNode | null = syntaxTree(state).resolve(line.from, 1);
     node;
     node = node.parent
   ) {
-    if (OWN_BLOCK.test(node.name)) return node.from <= line.from && node.to >= line.to
+    if (OWN_BLOCK.test(node.name) || (below && OPENS_BELOW.test(node.name))) {
+      return node.from <= line.from && node.to >= line.to
+    }
   }
   return false
 }
@@ -57,8 +61,8 @@ export function embedOfBlock(state: EditorState, from: number, to: number): Link
   if (from !== line.from + (line.text.length - line.text.trimStart().length)) return null
   if (to !== line.from + line.text.trimEnd().length) return null
 
-  if (line.number > 1 && !standsApart(state, doc.line(line.number - 1))) return null
-  if (line.number < doc.lines && !standsApart(state, doc.line(line.number + 1))) return null
+  if (line.number > 1 && !standsApart(state, doc.line(line.number - 1), false)) return null
+  if (line.number < doc.lines && !standsApart(state, doc.line(line.number + 1), true)) return null
 
   if (!text.startsWith('![[') || !text.endsWith(']]')) return null
 

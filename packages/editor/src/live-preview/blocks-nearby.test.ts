@@ -302,8 +302,8 @@ describe('a note embed whose neighbour line changes', () => {
   })
 
   test('is no longer drawn once the blank line under it is taken out from below', () => {
-    const doc = '![[Other]]\n\n- item\n\nend'
-    const start = doc.indexOf('- item')
+    const doc = '![[Other]]\n\nitem\n\nend'
+    const start = doc.indexOf('item')
     const { shown, reopened } = shownAndReopened(
       doc,
       start,

@@ -149,9 +149,13 @@ export function moveBlock(
 
   const doc = state.doc
   const staying = to < doc.length
-  const leaving = block.nests.filter(
-    (item) => !(staying && doc.lineAt(item.from).from < to && item.to >= to),
-  )
+  const downward = to > block.last.to
+  const lastAbove = writtenLine(state, (staying ? doc.lineAt(to).number : doc.lines + 1) - 1, -1)
+  const leaving = block.nests.filter((item) => {
+    if (doc.lineAt(item.from).from >= to) return true
+    if (staying && item.to >= to) return false
+    return !(downward && lastAbove !== null && item.to >= lastAbove.to)
+  })
   const { text, taken } = bodyAt(state, block, leaving[0])
 
   const own: Side = {
