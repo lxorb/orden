@@ -231,12 +231,13 @@ export function patternJudge() {
     for (let at = parts.length - 2; at >= 0; at--) {
       const again = parts[at]
       if (again?.kind !== 'again' || again.least === again.most) continue
+      if (again.least === 0) return parts
       const copy = flat([again.of])
       const tail = flat(parts.slice(at + 1))
       const given =
         tail.length <= copy.length &&
         tail.every((part, i) => plain(part) && JSON.stringify(part) === JSON.stringify(copy[i]))
-      return given ? parts.slice(0, at + 1) : parts
+      return given ? [...parts.slice(0, at), { ...again, most: again.least }, ...tail] : parts
     }
     return parts
   }
