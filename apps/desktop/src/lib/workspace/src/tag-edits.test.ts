@@ -21,6 +21,15 @@ describe('renaming a tag in one note', () => {
     expect(made?.after).toContain('about #work/core and one about #work/core/canvas')
   })
 
+  test('keeps the case of the parents it did not rename', () => {
+    const body =
+      '---\ntags: [ProjectX/Notes, Reading]\n---\n\n#ProjectX/Notes and #ProjectX/Plans\n'
+    expect(change('projectx/notes', 'projectx/docs', body)?.after).toBe(
+      '---\ntags: [ProjectX/docs, Reading]\n---\n\n#ProjectX/docs and #ProjectX/Plans\n',
+    )
+    expect(change('projectx/notes', 'projectx', body)?.after).toContain('#ProjectX and')
+  })
+
   test('and leaves a tag that only starts the same way', () => {
     expect(change('work/orden', 'work/core')?.after).toContain('#working')
   })
