@@ -459,7 +459,7 @@ export function patternJudge() {
         of: one.shape,
         least,
         most,
-        letters: one.unit ?? one.loop ?? (one.open > 1 ? lettersOf(one.shape) : null),
+        letters: one.unit ?? (one.open > 0 ? lettersOf(one.shape) : null) ?? one.loop,
       }
       const first = least === 0 ? null : one.first
       const kept = {

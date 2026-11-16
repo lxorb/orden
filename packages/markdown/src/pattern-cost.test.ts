@@ -48,6 +48,11 @@ describe('a pattern that could backtrack without end', () => {
     '(\\w+\\s?)+$',
     '(\\w+\\s+)+X',
     '(\\w+,\\s*)+X',
+    '(\\S+\\s)+TODO',
+    '(\\S+\\s)*X',
+    '(\\S+\\s)+:',
+    '(?:\\s\\S+)+X',
+    '(?:\\s\\S+){2,}\\w+X',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
@@ -98,6 +103,7 @@ describe('a pattern that could backtrack without end', () => {
     '(\\d+[,.]\\s*)+',
     '(\\w+\\s+)+',
     '[a-f0-9]{32}',
+    '(\\S+ )+TODO',
     '\\d{12}',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
