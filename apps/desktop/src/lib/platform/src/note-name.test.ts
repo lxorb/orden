@@ -50,6 +50,14 @@ describe('naming a note after its own words', () => {
     expect(draftName('---\ntitle: x\n---\n# Plan\n'.split('\n'))).toBe('Plan')
   })
 
+  test('reads no heading inside a code fence', () => {
+    const reply =
+      "Here's how to set up the project:\n\n```bash\n# Install dependencies\nnpm install\n```\n\nThen run it."
+    expect(nameFromContent(reply)).toBe("Here's how to set up the project")
+    expect(nameFromContent('Totals\n\n~~~python\n# compute\n~~~\n\n# Real\n')).toBe('Real')
+    expect(nameFromContent('intro\r\n# Heading\r\n')).toBe('Heading')
+  })
+
   test('has nothing to offer for an empty note', () => {
     expect(nameFromContent('')).toBeNull()
     expect(nameFromContent('\n\n   \n')).toBeNull()

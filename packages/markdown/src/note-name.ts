@@ -56,6 +56,8 @@ const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/
 
 const MARKUP = /^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)/
 
+const FENCE = /^ {0,3}(`{3,}|~{3,})/
+
 const RULE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
 
 export function titleFrom(lines: Iterable<string>): string | null {
@@ -69,7 +71,20 @@ export function titleFrom(lines: Iterable<string>): string | null {
   const after = matter ? taken.join('\n').slice(0, matter.close).split('\n').length : 0
   let first: string | null = null
 
-  for (const line of taken.slice(after)) {
+  let fence: string | null = null
+
+  for (const raw of taken.slice(after)) {
+    const line = raw.replace(/\r$/, '')
+    const mark = FENCE.exec(line)?.[1] ?? null
+    if (fence !== null) {
+      if (mark !== null && mark[0] === fence[0] && mark.length >= fence.length) fence = null
+      continue
+    }
+    if (mark !== null) {
+      fence = mark
+      continue
+    }
+
     const heading = HEADING.exec(line)
     if (heading) {
       const words = (heading[2] ?? '').trim()
