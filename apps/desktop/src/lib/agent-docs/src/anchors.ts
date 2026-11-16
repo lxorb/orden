@@ -1,5 +1,5 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blockIdOf, headingText, lines, slugify } from '@orden/markdown/links'
+import { blockIdOf, headingText, itemLines, lines, slugify } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
 
@@ -241,10 +241,14 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   const marked = rows.filter((row) => !row.code && blockIdOf(row.text) === anchor.block)
   const row = one(marked, anchor, undefined)
 
-  let first = row.line
-  let last = row.line
-  while (first > 0 && rows[first - 1]?.text.trim()) first--
-  while (last + 1 < rows.length && rows[last + 1]?.text.trim()) last++
+  const item = itemLines(
+    rows.map((one) => one.text),
+    row.line,
+  )
+  let first = item?.first ?? row.line
+  let last = item?.last ?? row.line
+  while (!item && first > 0 && rows[first - 1]?.text.trim()) first--
+  while (!item && last + 1 < rows.length && rows[last + 1]?.text.trim()) last++
 
   const start = rows[first] ?? row
   const end = rows[last] ?? row

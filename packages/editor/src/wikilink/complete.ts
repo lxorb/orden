@@ -1,7 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorView } from '@codemirror/view'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blocksOf, foldName, isTabFile } from '@orden/markdown/links'
+import { blocksOf, foldName, headingText, isHeading, isTabFile } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -198,6 +198,7 @@ async function blockOptions(
   if (source === null) return []
 
   const needle = foldName(typed.trim())
+  const lines = source.split('\n')
 
   return blocksOf(source)
     .filter((block) => block.text !== '')
@@ -205,12 +206,15 @@ async function blockOptions(
     .slice(0, MOST_SHOWN)
     .map((block) => ({
       label: block.text,
-      apply:
-        block.id === null
-          ? name(note.path, block.line, target)
-          : insert({ ...target, fragment: `^${block.id}` }),
+      apply: linked(note.path, block.line, lines[block.line] ?? '', block.id, target),
       type: 'property',
     }))
+}
+
+function linked(path: string, line: number, text: string, id: string | null, target: LinkWrite) {
+  if (id) return insert({ ...target, fragment: `^${id}` })
+  if (isHeading(text)) return insert({ ...target, fragment: headingText(text) })
+  return name(path, line, target)
 }
 
 function name(path: string, line: number, target: LinkWrite) {
@@ -286,9 +290,7 @@ function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
   return {
     label: block.text,
     ...(note ? { detail: note.name } : {}),
-    apply: block.id
-      ? insert({ ...target, fragment: `^${block.id}` })
-      : name(block.path, block.line, target),
+    apply: linked(block.path, block.line, block.text, block.id, target),
     type: 'property',
   }
 }

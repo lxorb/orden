@@ -1,4 +1,4 @@
-import { blockIdOf, LIST_ITEM, ownLine, type Row, rowsOf } from './links'
+import { blockIdOf, isHeading, itemLines, LIST_ITEM, ownLine, type Row, rowsOf } from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
 
@@ -48,7 +48,7 @@ export function namedBlock(
 ): { id: string; source: string } | null {
   const rows = rowsOf(source)
   const row = rows[line]
-  if (!row || row.matter) return null
+  if (!row || row.matter || (!row.code && isHeading(row.text))) return null
   if (listed(row)) return namedItem(source, line, id)
 
   const end = endOf(rows, line)
@@ -74,11 +74,17 @@ export function namedBlock(
 
 function namedItem(source: string, line: number, id: () => string): { id: string; source: string } {
   const lines = source.split('\n')
-  const text = lines[line] ?? ''
-  const had = blockIdOf(text)
-  if (had) return { id: had, source }
+  const item = itemLines(lines, line)
+  let end = line
+  while (item && end < item.last && !LIST_ITEM.test(lines[end + 1] ?? '')) end++
+
+  for (let at = line; at <= end; at++) {
+    const had = blockIdOf(lines[at] ?? '')
+    if (had) return { id: had, source }
+  }
 
   const name = id()
-  lines[line] = `${text.trimEnd()} ^${name}${text.endsWith('\r') ? '\r' : ''}`
+  const last = lines[end] ?? ''
+  lines[end] = `${last.trimEnd()} ^${name}${last.endsWith('\r') ? '\r' : ''}`
   return { id: name, source: lines.join('\n') }
 }

@@ -238,6 +238,14 @@ describe('every block of the space, behind `[[^^`', () => {
     expect((await picked('[[^^plan', asked, 'a plan already named')).doc).toBe('[[Plan#^zz9999]]')
   })
 
+  test('links a found heading as a heading, and names nothing', async () => {
+    const asked = space(SPACE, {
+      found: [{ path: 'Plan.md', line: 2, text: '## Tasks', id: null }],
+    })
+
+    expect((await picked('[[^^tasks', asked, '## Tasks')).doc).toBe('[[Plan#Tasks]]')
+  })
+
   test('names one that has no name yet, through the app, and links that', async () => {
     const asked = space(SPACE, {
       found: [{ path: 'ideas/Spark.md', line: 4, text: 'the second half', id: null }],
@@ -369,6 +377,17 @@ describe('every row writes the link the app spells', () => {
 
     expect((await picked('[[Spark#^', asked, 'a line of it', spelled)).doc).toBe(
       '[Spark](ideas/Spark.md|journal/Monday.md|^b2c3d4)',
+    )
+  })
+
+  test('a heading in the blocks of one note is linked as that heading', async () => {
+    const asked = space(ALIASED, {
+      path: 'journal/Monday.md',
+      bodies: { 'ideas/Spark.md': '## Tasks ##\n- Buy milk\n' },
+    })
+
+    expect((await picked('[[Spark#^', asked, 'Tasks ##', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|Tasks)',
     )
   })
 

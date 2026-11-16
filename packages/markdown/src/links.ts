@@ -534,6 +534,10 @@ const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 
 const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
 
+export function isHeading(line: string): boolean {
+  return HEADING.test(line)
+}
+
 export function headingText(line: string): string {
   const found = HEADING_LINE.exec(line)
   if (found === null) return line.trim()
@@ -601,8 +605,8 @@ function blockSection(source: string, wanted: string): string | null {
     return blockAbove(source, lines, found.line)
   }
 
-  const item = LIST_ITEM.exec(lines[found.line] ?? '')
-  if (item) return listItem(lines, found.line, item[1]?.length ?? 0)
+  const item = itemLines(lines, found.line)
+  if (item) return listItem(lines, item, found.line)
 
   let start = found.line
   let end = found.line
@@ -617,17 +621,51 @@ function blockSection(source: string, wanted: string): string | null {
 
 export const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
 
-function listItem(lines: readonly string[], at: number, indent: number): string {
-  let end = at
-  while (end + 1 < lines.length) {
-    const next = lines[end + 1] ?? ''
-    if (!next.trim() || next.length - next.trimStart().length <= indent) break
-    end++
+export function itemLines(
+  lines: readonly string[],
+  at: number,
+): { first: number; last: number; indent: number } | null {
+  const first = itemStart(lines, at)
+  if (first === null) return null
+
+  const indent = LIST_ITEM.exec(lines[first] ?? '')?.[1]?.length ?? 0
+  let last = first
+  while (last + 1 < lines.length) {
+    const next = lines[last + 1] ?? ''
+    if (!next.trim() || depthOf(next) <= indent) break
+    last++
   }
-  const item = lines.slice(at, end + 1)
-  item[0] = (item[0] ?? '').replace(BLOCK_ID, '')
-  return item
-    .map((line) => line.slice(Math.min(indent, line.length - line.trimStart().length)))
+  return { first, last, indent }
+}
+
+function itemStart(lines: readonly string[], at: number): number | null {
+  const line = lines[at] ?? ''
+  if (LIST_ITEM.test(line)) return at
+
+  const depth = depthOf(line)
+  if (depth === 0) return null
+  for (let up = at - 1; up >= 0; up--) {
+    const above = lines[up] ?? ''
+    if (!above.trim()) return null
+    const marker = LIST_ITEM.exec(above)
+    if (marker && (marker[1]?.length ?? 0) < depth) return up
+  }
+  return null
+}
+
+function depthOf(line: string): number {
+  return line.length - line.trimStart().length
+}
+
+function listItem(
+  lines: readonly string[],
+  { first, last, indent }: { first: number; last: number; indent: number },
+  named: number,
+): string {
+  return lines
+    .slice(first, last + 1)
+    .map((line, at) => (first + at === named ? line.replace(BLOCK_ID, '') : line))
+    .map((line) => line.slice(Math.min(indent, depthOf(line))))
     .join('\n')
     .trimEnd()
 }

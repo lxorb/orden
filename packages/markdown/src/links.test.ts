@@ -861,6 +861,27 @@ describe('a block name on a line of its own', () => {
     )
   })
 
+  test('a list item named on its last line is that item, nested or not', () => {
+    expect(sectionOf('- Pay rent\n  by Friday ^x\n- Buy milk', { heading: null, block: 'x' })).toBe(
+      '- Pay rent\n  by Friday',
+    )
+    expect(sectionOf('- a\n  - b\n    more ^y\n- c', { heading: null, block: 'y' })).toBe(
+      '- b\n  more',
+    )
+    expect(namedBlock('- Pay rent\n  by Friday\n- Buy milk', 0, () => 'new123')?.source).toBe(
+      '- Pay rent\n  by Friday ^new123\n- Buy milk',
+    )
+    expect(namedBlock('- a\n  by ^old\n- b', 0, () => 'new123')?.id).toBe('old')
+  })
+
+  test('a heading is not given a block name, it is linked as a heading', () => {
+    expect(namedBlock('# Plan\n\n## Tasks\n- Buy milk', 2, () => 'new123')).toBeNull()
+    expect(blocksOf('## Tasks\n- Buy milk').map((one) => [one.line, one.text])).toEqual([
+      [0, 'Tasks'],
+      [1, 'Buy milk'],
+    ])
+  })
+
   test('each list item is a block of its own in the list of blocks', () => {
     expect(
       blocksOf('Steps:\n\n- Buy milk\n- Pay rent ^p\n- Call mum').map((one) => [

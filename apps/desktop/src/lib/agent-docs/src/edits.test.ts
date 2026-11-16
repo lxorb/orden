@@ -111,6 +111,16 @@ describe('what goes in beside a line or a paragraph', () => {
     ).toBe('x\n\na better idea ^idea\n\ny')
   })
 
+  test('a block named on a list item is that item alone', () => {
+    const list = 'Steps:\n\n- Buy milk\n- Pay rent ^p\n  by Friday\n- Call mum\n\nAfter.\n'
+    expect(edited(list, [{ at: { block: 'p' }, delete: true }])).toBe(
+      'Steps:\n\n- Buy milk\n- Call mum\n\nAfter.\n',
+    )
+    expect(edited(list, [{ at: { block: 'p' }, replace: '- Pay rent and water' }])).toBe(
+      'Steps:\n\n- Buy milk\n- Pay rent and water ^p\n- Call mum\n\nAfter.\n',
+    )
+  })
+
   test('a deleted task takes its line with it', () => {
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'a' }, delete: true }])).toBe('- [ ] b\n')
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'b' }, delete: true }])).toBe('- [ ] a\n')
