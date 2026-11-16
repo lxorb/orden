@@ -69,7 +69,10 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   return target
 }
 
-async function oldNoteGone(ws: Converts, path: string): Promise<{ back?: string } | null> {
+async function oldNoteGone(
+  ws: Converts,
+  path: string,
+): Promise<{ back: string | undefined } | null> {
   const kept = await ws.bin(path, false).then(
     (one) => one ?? {},
     () => null,
