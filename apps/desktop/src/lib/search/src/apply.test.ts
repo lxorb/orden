@@ -14,6 +14,7 @@ const NOTES: Record<string, string> = {
   '/space/Plan.md': 'The quarterly plan is due.\nA plan, quarterly or not.\n',
   '/space/Tasks.md': '- [ ] The quarterly plan is due\n- [ ] A plan, quarterly or not\n',
   '/space/Review.md': '- [ ] plan the quarterly review\n',
+  '/space/Budget.md': '# Budget\n\nThe quarterly plan is due.\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
@@ -50,18 +51,30 @@ describe('what a replacement would do', () => {
     expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
   })
 
-  test.each(['task:quarterly plan', 'line:quarterly plan', 'content:quarterly content:plan'])(
-    'and with %s, whose words are read one by one',
-    async (query) => {
-      const made = await changes(
-        query,
-        [hit('/space/Tasks.md', 0), hit('/space/Tasks.md', 1)],
-        'annual plan',
-      )
+  test.each([
+    'task:quarterly plan',
+    'line:quarterly plan',
+    'content:quarterly content:plan',
+    'content:quarterly plan',
+  ])('and with %s, whose words are read one by one', async (query) => {
+    const made = await changes(
+      query,
+      [hit('/space/Tasks.md', 0), hit('/space/Tasks.md', 1)],
+      'annual plan',
+    )
 
-      expect(made[0]?.after).toBe('- [ ] The annual plan is due\n- [ ] A plan, quarterly or not\n')
-    },
-  )
+    expect(made[0]?.after).toBe('- [ ] The annual plan is due\n- [ ] A plan, quarterly or not\n')
+  })
+
+  test('and after a section, whose words are not on the line', async () => {
+    const made = await changes(
+      'section:Budget quarterly plan',
+      [hit('/space/Budget.md', 2)],
+      'annual plan',
+    )
+
+    expect(made[0]?.after).toBe('# Budget\n\nThe annual plan is due.\n')
+  })
 
   test.each(['plan task:quarterly', 'plan -draft quarterly'])(
     'but not words typed apart, as in %s',

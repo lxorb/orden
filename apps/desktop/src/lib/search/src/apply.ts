@@ -1,7 +1,7 @@
 import { isMarkdownPath, relativeTo } from '../../platform/src/api'
 import { lineStarts } from '@orden/scan/search/lines'
 import { type Hit, Matcher, shownLine } from '@orden/scan/search/match'
-import type { Query } from '@orden/scan/search/query'
+import { aKindOfLine, type Query, type Unit } from '@orden/scan/search/query'
 import { type Change, changeOf, replaceIn } from '@orden/scan/search/replace'
 
 function hitsPerNote(hits: readonly Hit[]): Map<string, Hit[]> {
@@ -53,7 +53,7 @@ function phrased(query: Query): Query {
   for (let at = 0; at < query.of.length; at++) {
     const one = query.of[at]
     if (!one) continue
-    const words = one.kind === 'scope' ? one.of : one
+    const words = one.kind === 'scope' && oneLine(one.unit) ? one.of : one
     if (words.kind !== 'text' && words.kind !== 'content') {
       out.push(phrased(one))
       continue
@@ -69,7 +69,11 @@ function phrased(query: Query): Query {
 }
 
 function followsAs(next: Query | undefined, words: Words): next is Words {
-  return next?.kind === words.kind && next.fold === words.fold
+  return (next?.kind === 'text' || next?.kind === 'content') && next.fold === words.fold
+}
+
+function oneLine(unit: Unit): boolean {
+  return unit === 'line' || aKindOfLine(unit)
 }
 
 export async function changesFor(
