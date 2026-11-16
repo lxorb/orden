@@ -426,6 +426,7 @@ pub fn stays_in_space(spaces: &Path, target: &Path) -> Result<(), String> {
     let target = folded(target);
     let Some(there) = target
         .ancestors()
+        .skip(1)
         .find(|one| one.symlink_metadata().is_ok())
     else {
         return Ok(());
@@ -2184,5 +2185,8 @@ mod tests {
         assert!(stays_in_space(&spaces, &spaces.join("Work/Notes/Plan.md")).is_ok());
         assert!(stays_in_space(&spaces, &spaces.join("Work/New/Plan.md")).is_ok());
         assert!(stays_in_space(&spaces, &spaces.join("Vault/Plan.md")).is_ok());
+        std::os::unix::fs::symlink(outside.join("todo.md"), spaces.join("Work/todo.md"))
+            .expect("a note that is a link");
+        assert!(stays_in_space(&spaces, &spaces.join("Work/todo.md")).is_ok());
     }
 }
