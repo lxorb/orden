@@ -14,6 +14,21 @@ describe('merging one note into another', () => {
     expect(merged('', '# B')).toBe('# B')
     expect(merged('# A', '   \n')).toBe('# A')
   })
+
+  test('takes the front matter of the note that goes into the one it joins', () => {
+    const from = '---\naliases: [F]\ntags: [work]\nstatus: draft\n---\n# From\n\nbody\n'
+    expect(merged('# Into\n\ntext', from)).toBe(
+      '---\naliases: [F]\ntags: [work]\nstatus: draft\n---\n# Into\n\ntext\n\n---\n\n# From\n\nbody\n',
+    )
+  })
+
+  test('joins the aliases and tags of both, and keeps the values the note joined already had', () => {
+    const into = '---\naliases:\n  - I\nstatus: done\n---\n# Into\n'
+    const from = '---\naliases: [F, I]\ntags: [work]\nstatus: draft\n---\n# From\n'
+    expect(merged(into, from)).toBe(
+      '---\nstatus: done\naliases: [I, F]\ntags: [work]\n---\n# Into\n\n---\n\n# From\n',
+    )
+  })
 })
 
 describe('a link left behind', () => {
