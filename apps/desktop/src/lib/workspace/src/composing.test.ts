@@ -59,6 +59,7 @@ function space(notes: Record<string, string>, openAt?: string) {
     tabs: tab ? [tab] : [],
     undone: new FileActions(),
     flush: () => undefined,
+    documentAt: (path: string) => (tab?.path === path ? { text: tab.doc } : null),
     fileGone: (path: string) => {
       told.push(`gone ${path}`)
       return Promise.resolve()
@@ -120,6 +121,14 @@ describe('a note merged into another', () => {
       `gone ${A}`,
       `opened ${B}`,
     ])
+  })
+
+  test('takes the words of an open note as they stand, typing not yet written included', async () => {
+    const ws = space({ [A]: '# a\n\nfirst\n', [B]: '# b\n\nsecond\n' }, A)
+    const typed = { text: '# a\n\nfirst\ntyped not saved\n' }
+    await mergeInto({ ...ws, documentAt: (path) => (path === A ? typed : null) }, A, B)
+
+    expect(disk.get(B)).toContain('typed not saved')
   })
 
   test('pastes the words relinked for the folder they arrive in', async () => {
