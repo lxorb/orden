@@ -503,6 +503,17 @@ function mayMoveMaths(doc: Text, at: number): boolean {
   return doc.lineAt(at).text.includes('$$')
 }
 
+function underAnEmbed(doc: Text, at: number): boolean {
+  const line = doc.lineAt(at)
+  return (
+    line.number > 1 &&
+    doc
+      .line(line.number - 1)
+      .text.trimStart()
+      .startsWith('![[')
+  )
+}
+
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
   if (value.toc) return false
 
@@ -533,7 +544,8 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       ordinary &&
       !mayMakeATable(after, fromB) &&
       !mayMakeAnHtmlBlock(after, fromB) &&
-      !mayMoveMaths(after, fromB)
+      !mayMoveMaths(after, fromB) &&
+      !underAnEmbed(after, fromB)
   })
 
   return ordinary

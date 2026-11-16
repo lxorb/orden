@@ -87,13 +87,15 @@ export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   )
   if (starting) return starting
 
-  let found: BlockSpan | null = null
   for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) {
     const kind = kindOf(node.name)
-    if (kind) found = spanOf(state, node.node, kind)
+    if (!kind) continue
+    const first = state.doc.lineAt(node.from)
+    if (first.from === line.from) return spanOf(state, node.node, kind)
+    return blockAt(state, first.from)
   }
 
-  return found
+  return null
 }
 
 export function writtenLine(state: EditorState, number: number, delta: -1 | 1): Line | null {

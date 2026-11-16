@@ -77,19 +77,26 @@ function verbatimRows(state: EditorState, line: Line): Lines | null {
     : { first: line.number, last: line.number }
 }
 
+const HEADING_LINE = /^ {0,3}#{1,6}(?:[ \t]|$)/
+
 function runAround(state: EditorState, number: number): Run {
   const doc = state.doc
   const line = doc.line(number)
   const verbatim = verbatimRows(state, line)
   const list = verbatim || blank(line) ? null : listAround(state, line)
   if (list) return list
+  if (!verbatim && HEADING_LINE.test(line.text)) return { first: number, last: number }
 
   const { first: top, last: bottom } = verbatim ?? {
     first: firstOfBody(state, number),
     last: doc.lines,
   }
   const joins = (other: Line) =>
-    !blank(other) && (verbatim !== null || verbatimBlockAt(state, other) === null)
+    !blank(other) &&
+    (verbatim !== null ||
+      (verbatimBlockAt(state, other) === null &&
+        !HEADING_LINE.test(other.text) &&
+        listAround(state, other) === null))
   let first = number
   let last = number
   while (first > top && joins(doc.line(first - 1))) first--

@@ -35,7 +35,7 @@ const EMBED_MAX = 512
 
 const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode|BlockMath)$/
 
-const OPENS_BELOW = /^(?:BulletList|OrderedList|Blockquote)$/
+const OPENS_BELOW = /^(?:BulletList|OrderedList|Blockquote|Table|HTMLBlock)$/
 
 function standsApart(state: EditorState, line: Line, below: boolean): boolean {
   if (line.text.trim() === '') return true

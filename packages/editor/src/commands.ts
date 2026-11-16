@@ -19,7 +19,7 @@ import { inCode, inVerbatimBlock } from './code'
 import { marksAcross } from './line-door'
 import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
-import { enclosing, enclosingNamed } from './nodes'
+import { enclosing, enclosingNamed, linkAddress } from './nodes'
 
 const SPACE = /^\s?$/u
 
@@ -1125,9 +1125,29 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
   }
 }
 
+function linkHolding(state: EditorState, at: number): SelectionRange | null {
+  const node = enclosingNamed(syntaxTree(state).resolveInner(at, 0), LINK_HOLDERS)
+  if (!node || at <= node.from || at >= node.to) return null
+  if (node.name === 'Wikilink') {
+    const marks = node.getChildren('WikilinkMark')
+    const open = marks[0]
+    const close = marks.at(-1)
+    return open && close && open !== close ? EditorSelection.range(open.to, close.from) : null
+  }
+  const address = linkAddress(node)
+  if (address) return EditorSelection.range(address.from, address.to)
+  const opening = node.getChildren('LinkMark')[2]
+  return opening ? EditorSelection.cursor(opening.to) : null
+}
+
+const LINK_HOLDERS = new Set(['Link', 'Wikilink'])
+
 function wrapped(bang: '' | '!'): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
+      const held = range.empty ? linkHolding(state, range.head) : null
+      if (held) return { range: held }
+
       const { from, to } = range.empty ? range : inside(state, range.from, range.to)
       const label = state.doc.sliceString(from, to)
       const insert = `${bang}[${label}]()`

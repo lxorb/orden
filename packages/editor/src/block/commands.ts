@@ -235,7 +235,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
     const first = doc.lineAt(span.from).number
     const last = span.kind !== 'heading' ? doc.lineAt(Math.min(span.to, doc.length)).number : first
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
-    const itemwise = LISTED.has(shape) && span.kind !== 'quote'
+    const itemwise = span.kind === 'list' || (LISTED.has(shape) && span.kind !== 'quote')
     const shifts = new Map<number, number>()
 
     for (let number = first; number <= last; number++) {
@@ -245,7 +245,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       if (!line.text.trim()) continue
 
       const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
-      if (items[0] !== number) {
+      if (items[0] !== number || (itemwise && number > first && !LISTED.has(shape))) {
         const owner = items.find((item) => shifts.has(item)) ?? first
         const text = shiftedIn(line.text, shifts.get(owner) ?? 0)
         if (text !== line.text) changes.push({ from: line.from, to: line.to, insert: text })

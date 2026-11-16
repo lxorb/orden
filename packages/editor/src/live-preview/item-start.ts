@@ -5,8 +5,10 @@ import {
   type Line,
   Prec,
   type SelectionRange,
+  Transaction,
 } from '@codemirror/state'
 import { Direction, type EditorView, keymap } from '@codemirror/view'
+import { isExternal } from '../external'
 import { quietMarks } from './reveal'
 
 const QUOTE = /^(?:[ \t]*>[ \t]?)*/
@@ -76,10 +78,16 @@ function backOutOfWords(view: EditorView, toward: Direction): boolean {
   return true
 }
 
-const snapped = EditorState.transactionFilter.of((transaction) => {
-  if (transaction.docChanged || !transaction.selection || !transaction.isUserEvent('select')) {
-    return transaction
+function placed(transaction: Transaction): boolean {
+  if (transaction.annotation(Transaction.userEvent) !== undefined || isExternal(transaction)) {
+    return false
   }
+  return transaction.newSelection.ranges.every((range) => range.empty)
+}
+
+const snapped = EditorState.transactionFilter.of((transaction) => {
+  if (transaction.docChanged || !transaction.selection) return transaction
+  if (!transaction.isUserEvent('select') && !placed(transaction)) return transaction
   const { startState, newSelection } = transaction
   const ranges = newSelection.ranges.map((range, at) =>
     kept(startState, transaction.state, range, at),
