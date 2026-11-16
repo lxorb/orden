@@ -266,9 +266,7 @@ function papers() {
   return paperIndex
 }
 
-function unfetched(): void {
-  // Answered by reloading.svelte.ts.
-}
+const unfetched = () => undefined
 
 function worthReopening(tab: Tab): boolean {
   return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
