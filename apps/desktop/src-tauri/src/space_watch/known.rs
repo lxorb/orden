@@ -129,17 +129,20 @@ impl Space {
         let mut taken: Vec<(&PathBuf, &PathBuf)> = Vec::new();
         let mut seen = Vec::new();
         for (from, to) in moves {
-            let carried = taken.iter().any(|(above, there)| {
-                from.strip_prefix(above)
-                    .is_ok_and(|rest| there.join(rest) == *to)
-            });
-            if carried {
+            let mut now_at = from.clone();
+            for (above, there) in taken.iter().rev() {
+                if let Ok(rest) = now_at.strip_prefix(above) {
+                    now_at = there.join(rest);
+                    break;
+                }
+            }
+            if now_at == *to {
                 continue;
             }
             if let Some(found) = found(root, to) {
                 taken.push((from, to));
                 seen.push(Seen::Renamed {
-                    from: from.clone(),
+                    from: now_at,
                     to: found,
                 });
             }
@@ -497,6 +500,11 @@ mod tests {
             root.join("Two.md"),
         )
         .expect("moved out");
+        fs::rename(
+            root.join("Archive").join("One.md"),
+            root.join("Archive").join("Uno.md"),
+        )
+        .expect("renamed inside");
         fs::rename(root.join("Plan.md"), root.join("Roadmap.md")).expect("renamed");
         fs::remove_file(root.join("Old.md")).expect("removed");
 
@@ -506,7 +514,8 @@ mod tests {
             [
                 "renamed Plan.md Roadmap.md",
                 "renamed Private Archive",
-                "renamed Private/Deep/Two.md Two.md"
+                "renamed Archive/One.md Archive/Uno.md",
+                "renamed Archive/Deep/Two.md Two.md"
             ]
         );
     }

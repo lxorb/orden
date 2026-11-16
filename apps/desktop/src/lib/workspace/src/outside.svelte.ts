@@ -147,8 +147,10 @@ export function heardNews(news: SpaceNews): Promise<void> {
   hearing = hearing.then(async () => {
     if (news.unwatched) log('warn', `not all of ${news.root} can be watched: ${news.unwatched}`)
     if (news.gone) return
-    for (const [from, to] of landedElsewhere(news.changes)) lockedAlike(from, to)
+    const landed = landedElsewhere(news.changes)
     for (const change of news.changes) {
+      const to = change.kind === 'removed' ? landed.get(change.path) : undefined
+      if (to !== undefined) lockedAlike(change.path, to)
       await heardChange(change).catch((error: unknown) => {
         log('error', `outside: ${change.path} - ${String(error)}`)
       })

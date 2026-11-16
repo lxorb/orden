@@ -163,3 +163,36 @@ test('a locked note another program moves into another space keeps its lock ther
   })
   expect(protection.agentsMay('/t/Diary.md')).toBe(false)
 })
+
+test('a locked note renamed over a second one inside a folder renamed in the same batch keeps its lock', async () => {
+  await setUp()
+  d.folders.add('/s/Private')
+  d.files.set('/s/Private/Diary.md', 'secret diary\n')
+  d.files.set('/s/Private/Todo.md', 'todo\n')
+  await workspace.loadTree()
+  protection.set('/s', '/s/Private/Diary.md', 'password')
+  d.folders.delete('/s/Private')
+  d.files.delete('/s/Private/Diary.md')
+  d.files.delete('/s/Private/Todo.md')
+  d.folders.add('/s/Archive')
+  d.files.set('/s/Archive/Todo.md', 'secret diary\n')
+  await heardNews({
+    root: '/s',
+    scan: false,
+    gone: false,
+    changes: [
+      {
+        kind: 'renamed',
+        from: '/s/Private',
+        path: '/s/Archive',
+        size: 0,
+        mtime: 1,
+        id: 'f',
+        dir: true,
+      },
+      { kind: 'removed', path: '/s/Archive/Diary.md', dir: false, id: 'a' },
+      { kind: 'modified', path: '/s/Archive/Todo.md', size: 13, mtime: 2, id: 'a', dir: false },
+    ],
+  })
+  expect(protection.agentsMay('/s/Archive/Todo.md')).toBe(false)
+})

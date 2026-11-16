@@ -110,9 +110,11 @@ export async function watchFolders(how: Watching): Promise<Watched> {
         return scanned(how, news.root)
       })
     }
-    for (const [from, to] of landedElsewhere(news.changes)) lockedAlike(from, to)
+    const landed = landedElsewhere(news.changes)
     for (const change of news.changes) {
+      const to = change.kind === 'removed' ? landed.get(change.path) : undefined
       queue.push(() => {
+        if (to !== undefined) lockedAlike(change.path, to)
         behind(how.engine.placed(change.path)?.space.id)
         return changed(how, change)
       })
