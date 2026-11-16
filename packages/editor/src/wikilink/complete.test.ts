@@ -5,7 +5,7 @@ import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer } from './block-namer'
-import { wikilinkCompletions } from './complete'
+import { about, wikilinkCompletions } from './complete'
 import {
   type LinkWrite,
   linkWriter,
@@ -327,6 +327,23 @@ describe('every row writes the link the app spells', () => {
       '[Ideas.canvas.md](x/Ideas.canvas.md|One.md|)',
     )
   })
+
+  test.each(['Board.canvas', 'Docs.url'])(
+    'a %s in a folder beside one at the top is named so a tab opens the one picked',
+    (name) => {
+      const deep = { ...note(`x/${name}`), name }
+      const notes = [{ ...note(name), name }, deep]
+      const index: NoteIndex = {
+        notes,
+        files: [name, `x/${name}`],
+        path: 'x/One.md',
+        read: () => Promise.resolve(null),
+      }
+
+      expect(about(index, deep).name).toBe(`x/${name}`)
+      expect(about({ ...index, path: 'One.md' }, notes[0] ?? deep).name).toBe(name)
+    },
+  )
 
   test('an alias row writes the alias over the note it belongs to', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })

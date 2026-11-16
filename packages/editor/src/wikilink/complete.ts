@@ -9,6 +9,7 @@ import {
   type NoteIndex,
   noteIndex,
   type NoteRef,
+  resolveFile,
   resolveNote,
   resolveRelative,
   shortestReaching,
@@ -86,7 +87,11 @@ export function about(index: NoteIndex, note: NoteRef): LinkWrite {
 function nameFor(index: NoteIndex, note: NoteRef): string {
   const own = MARKDOWN.exec(note.path)?.[0] ?? ''
   const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
-  const reaches = (written: string) => resolveNote(index, written)?.path === note.path
+  const opened = index.files.includes(note.path)
+  const reaches = (written: string) =>
+    (opened && isTabFile(written)
+      ? resolveFile(index, written, 'wikilink')
+      : resolveNote(index, written)?.path) === note.path
   const name = spelled(note.name)
   if (reaches(name)) return name.normalize('NFC')
 
