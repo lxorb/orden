@@ -389,6 +389,15 @@ describe('a link inside an embedded note', () => {
     expect(html).toContain('<a class="wikilink" href="Q1/Budget.md">b</a>')
   })
 
+  test('without an ending, or with a title, is resolved from that note too', () => {
+    const html = renderMarkdown('![[Plan]]\n', {
+      resolveEmbed: () => ({ ...plan, text: '[b](Budget "tip") and [v](<Version 2.0>)\n' }),
+      resolveNoteFrom: (target) => `Q1/${decodeURI(target)}.md`,
+    })
+    expect(html).toContain('<a class="wikilink" href="Q1/Budget.md" title="tip">b</a>')
+    expect(html).toContain('<a class="wikilink" href="Q1/Version%202.0.md">v</a>')
+  })
+
   test('to nothing that note can reach stays the link it was', () => {
     const html = renderMarkdown('![[Plan]]\n', {
       resolveEmbed: () => plan,

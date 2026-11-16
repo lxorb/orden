@@ -133,6 +133,16 @@ function noteLink(href: string): { target: string; fragment: string } | null {
   return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
 }
 
+function localLink(href: string): { target: string; fragment: string } | null {
+  const written = href.trim()
+  if (!written || written.startsWith('#') || written.startsWith('//')) return null
+  if (/^[a-z][a-z\d+.-]*:/i.test(written)) return null
+
+  const hash = written.indexOf('#')
+  const target = hash === -1 ? written : written.slice(0, hash)
+  return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
+}
+
 const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
 
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
@@ -245,11 +255,12 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const body = this.parser.parseInline(token.tokens)
 
         const from = options.from
-        const nested = from && options.resolveNoteFrom ? noteLink(token.href) : null
+        const nested = from && options.resolveNoteFrom ? localLink(token.href) : null
         const there =
           nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
         if (nested && there !== null && safeHref(there)) {
-          return `<a class="wikilink" href="${attributeUrl(there)}${nested.fragment}">${body}</a>`
+          const title = token.title ? ` title="${escape(token.title)}"` : ''
+          return `<a class="wikilink" href="${attributeUrl(there)}${nested.fragment}"${title}>${body}</a>`
         }
 
         const resolve = options.resolveNoteHref
