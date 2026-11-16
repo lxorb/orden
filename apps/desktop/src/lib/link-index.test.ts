@@ -234,6 +234,22 @@ describe('backlinks', () => {
     expect(wrote).toEqual([{ path: at('One.md'), before: 'see [[Plan]]', after: 'see [[Road]]' }])
   })
 
+  test('words moved to a note in another folder are relinked to reach what they reached', async () => {
+    await space({
+      'a/x/From.md': 'see [o](../Other.md) and [[Plan]]',
+      'a/Other.md': '# Other',
+      'a/x/Plan.md': '# Near plan',
+      'Plan.md': '# Top plan',
+      'Into.md': '# Into',
+    })
+    const text = 'see [o](../Other.md), [[Plan]] and [[Into]]'
+
+    expect(links.rebased(text, at('a/x/From.md'), at('Into.md'))).toBe(
+      'see [o](a/Other.md), [[x/Plan]] and [[Into]]',
+    )
+    expect(links.rebased(text, at('a/x/From.md'), at('a/x/Into.md'))).toBeNull()
+  })
+
   test('a markdown link from the top of the space reaches the note there', async () => {
     await space({
       'Road.md': '# Road',

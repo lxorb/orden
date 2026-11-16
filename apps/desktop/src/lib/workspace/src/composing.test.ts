@@ -26,6 +26,8 @@ vi.mock('../../platform/src/tauri', () => ({
 vi.mock('../../link-index/src/api', () => ({
   links: {
     noteSaved: (path: string) => void told.push(`saved ${path}`),
+    rebased: (text: string) =>
+      text.includes('[[x/Plan]]') ? text.replace('[[x/Plan]]', '[[a/x/Plan]]') : null,
   },
 }))
 
@@ -115,6 +117,13 @@ describe('a note merged into another', () => {
       `gone ${A}`,
       `opened ${B}`,
     ])
+  })
+
+  test('pastes the words relinked for the folder they arrive in', async () => {
+    const ws = space({ [A]: 'see [[x/Plan]]\n', [B]: '# b\n' })
+    await mergeInto(ws, A, B)
+
+    expect(disk.get(B)).toContain('see [[a/x/Plan]]')
   })
 
   test('is one thing to undo, holding both notes as they were', async () => {

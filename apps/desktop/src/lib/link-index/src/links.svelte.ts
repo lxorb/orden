@@ -927,6 +927,22 @@ class Links {
 
   private readonly filesNamed = $derived.by(() => filesByName(this.files))
 
+  rebased(text: string, from: string, to: string): string | null {
+    const was = this.otherHolding(from) === null ? this.relative(from) : null
+    const now = this.otherHolding(to) === null ? this.relative(to) : null
+    if (!was || !now || folderOf(was) === folderOf(now)) return null
+
+    const read = (source: string, link: { kind: LinkKind; target: string }) =>
+      this.resolveFrom(source, link, false) ?? fileNamed(this.filesNamed, source, link)
+    return retargetLinks(text, now, (link) => {
+      const there = read(was, link)
+      if (there === null) return null
+      const reaches = (written: string) => read(now, { kind: link.kind, target: written }) === there
+      if (reaches(link.target)) return null
+      return link.kind === 'wikilink' ? { path: there, reaches } : there
+    })
+  }
+
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
     const other = from === null ? null : this.otherHolding(from)
     if (from !== null && other !== null) return this.otherTarget(other, from, link)

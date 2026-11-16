@@ -1,5 +1,5 @@
 import { extracted, merged, type Split, splitAt } from '../../link-format/src/api'
-import type { Retargeting } from '../../link-index/src/api'
+import { links, type Retargeting } from '../../link-index/src/api'
 import {
   folderOf,
   isMarkdownPath,
@@ -59,7 +59,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   ])
   if (fromContent === null || intoContent === null) return
 
-  const joined = merged(intoContent, fromContent)
+  const joined = merged(intoContent, links.rebased(fromContent, from, into) ?? fromContent)
 
   await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
   await writeFile(into, joined)
