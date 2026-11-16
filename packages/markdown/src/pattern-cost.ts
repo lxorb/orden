@@ -144,8 +144,9 @@ export function patternJudge(longest = 2000, widest = 30) {
   }
 
   const ELSEWHERE = [
-    { writes: ['я', '中'], common: ['я', '中', ' ', '\n'] },
-    { writes: ['5'], common: ['5'] },
+    { writes: ['я', '中'], marks: [' ', '\n', ',', '.', '，', '。'] },
+    { writes: ['5'], marks: [' ', '\t', '\n', ',', '.', '|'] },
+    { writes: ['✅', '🔥'], marks: [' ', '\n', '|'] },
   ]
 
   function reachIn(letters: string | null, flags: string, writes: readonly string[]): number {
@@ -627,19 +628,51 @@ export function patternJudge(longest = 2000, widest = 30) {
     }
   }
 
-  function startsElsewhere(flags: string, shape: Shape, common: readonly string[]): number {
+  function runsOf(shape: Shape): string[] {
+    switch (shape.kind) {
+      case 'again':
+        return [
+          ...(shape.letters !== null &&
+          (shape.of.kind === 'letter' ? shape.most > 1 : shape.most === Number.POSITIVE_INFINITY)
+            ? [shape.letters]
+            : []),
+          ...runsOf(shape.of),
+        ]
+      case 'row':
+        return shape.parts.flatMap(runsOf)
+      case 'either':
+        return shape.branches.flatMap(runsOf)
+      case 'look':
+        return runsOf(shape.inner)
+      case 'letter':
+      case 'none':
+      case 'end':
+        return []
+    }
+  }
+
+  function startsElsewhere(
+    flags: string,
+    shape: Shape,
+    writes: readonly string[],
+    marks: readonly string[],
+  ): number {
     const { letters, empty } = opensWith(shape)
     if (empty) return NOTE
-    const takes = (letter: string | null) => {
+    const takes = (letter: string | null, samples: readonly string[]) => {
       if (letter === null) return true
       try {
         const one = new RegExp(`^(?:${letter})$`, flags.replace(/[^iuvs]/g, ''))
-        return common.some((sample) => one.test(sample))
+        return samples.some((sample) => one.test(sample))
       } catch {
         return true
       }
     }
-    return letters.some(takes) ? NOTE : LINE
+    if (letters.some((letter) => takes(letter, writes))) return NOTE
+    const runs = runsOf(shape)
+    const opensRun = (letter: string | null) =>
+      letter === null || runs.some((run) => !setsApart(letter, run, flags))
+    return letters.some((letter) => takes(letter, marks) && opensRun(letter)) ? NOTE : LINE
   }
 
   function leadingRun(shape: Shape): string | null {
@@ -662,9 +695,15 @@ export function patternJudge(longest = 2000, widest = 30) {
       ) {
         return true
       }
+      const latin = startsOf(source, flags, lead, shape)
+      const kept =
+        (lead.length >= 2 && !/^[\s,.，。]+$/u.test(lead)) ||
+        (source.startsWith('^') && shape.kind !== 'either')
       return ELSEWHERE.some(
-        ({ writes, common }) =>
-          Math.min(startsOf(source, flags, lead, shape), startsElsewhere(flags, shape, common)) +
+        ({ writes, marks }) =>
+          (kept
+            ? Math.min(latin, startsElsewhere(flags, shape, writes, marks))
+            : startsElsewhere(flags, shape, writes, marks)) +
             aheadOf(shape, flags, OPEN_END, undefined, (letters) => reachIn(letters, flags, writes))
               .rest +
             tried >

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { backtracksWildly } from './pattern-cost'
+import { backtracksWildly, searchBacktracksWildly } from './pattern-cost'
 
 describe('a pattern that could backtrack without end', () => {
   test.each([
@@ -101,6 +101,12 @@ describe('a pattern that could backtrack without end', () => {
     '(\\W+)?\\d',
     '(?=\\W+TODO)',
     '\\s\\W+\\w',
+    '\\s[\\d\\s]+kg',
+    ',[\\d\\s.,]+X',
+    '\\|[\\d\\s\\|.]+total',
+    '[,.]\\W+\\d',
+    ', \\W*\\d',
+    '，\\W+X',
   ])('/%s/ is told apart before it runs', (source) => {
     expect(backtracksWildly(source)).toBe(true)
   })
@@ -180,7 +186,20 @@ describe('a pattern that could backtrack without end', () => {
     '\\+?\\d[\\d\\s-]{7,}\\d',
     '\\d+(?:\\.\\d+)?\\s*(?:kg|lb)',
     '[\\d\\s]+',
+    '\\|[^|]*\\|',
+    ',[^,]*,',
+    '"[^"]*"',
+    '```[\\s\\S]*?```',
   ])('/%s/ may run', (source) => {
     expect(backtracksWildly(source)).toBe(false)
   })
+})
+
+describe('a search pattern over notes of emoji', () => {
+  test.each(['[^\\p{L}\\p{N}]+X', '\\s\\P{L}+X', '\\|[^\\p{L}]+X'])(
+    '/%s/ is told apart before it runs',
+    (source) => {
+      expect(searchBacktracksWildly(source, true)).toBe(true)
+    },
+  )
 })
