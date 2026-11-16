@@ -3,7 +3,14 @@ import type { Message, Who } from './types'
 const TAG = 'untrusted'
 
 export function untrusted(source: string, words: string): string {
-  return `<${TAG} source="${attribute(source)}">\n${inert(words)}\n</${TAG}>`
+  return `<${TAG} source="${attribute(source)}">\n${inert(words, EVERY_TAG)}\n</${TAG}>`
+}
+
+const PROMPT_TAGS = /^\s*[/\u2215\u2044]?\s*(attached|summary|reader-context)/
+const EVERY_TAG = /^\s*[/\u2215\u2044]?\s*(untrusted|attached|summary|reader-context)/
+
+export function defused(words: string): string {
+  return inert(words, PROMPT_TAGS)
 }
 
 const HIDDEN = /^[\p{Cf}\u034F\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u
@@ -54,9 +61,9 @@ function seenAfter(words: string, from: number): string {
   return Array.from(out.normalize('NFKC').toLowerCase(), (one) => LATIN[one] ?? one).join('')
 }
 
-function inert(words: string): string {
+function inert(words: string, tags: RegExp): string {
   return words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
-    /^\s*[/\u2215\u2044]?\s*untrusted/.test(seenAfter(words, at + 1)) ? '&lt;' : one,
+    tags.test(seenAfter(words, at + 1)) ? '&lt;' : one,
   )
 }
 
@@ -144,11 +151,19 @@ function messageText(chat: string, message: Message, reading: Reading): string {
     ...(message.poll
       ? [`[poll: ${message.poll.question} | ${message.poll.answers.join(' | ')}]`]
       : []),
-    ...(message.preview ? [`[link: ${message.preview.title} ${message.preview.url}]`] : []),
+    ...(message.preview && !mine
+      ? [`[link: ${message.preview.title} ${message.preview.url}]`]
+      : []),
   ]
     .filter(Boolean)
     .join('\n')
-  if (mine) return `- ${head}\n${words}`
+  if (mine) {
+    const preview = message.preview
+    const link = preview
+      ? [untrusted(`link preview ${preview.url}`, `[link: ${preview.title} ${preview.url}]`)]
+      : []
+    return [`- ${head}`, words, ...link].filter(Boolean).join('\n')
+  }
   return `- ${head}\n${untrusted(`chat:${chat} from:${name}`, words)}`
 }
 
