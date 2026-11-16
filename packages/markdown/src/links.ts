@@ -565,29 +565,49 @@ const OWN_BLOCK =
 
 const TABLE_ROW = /^ {0,3}\|/
 
+const QUOTED = /^ {0,3}>/
+
+function blockAround(rows: readonly Row[], at: number): { start: number; end: number } {
+  const row = rows[at]
+  const text = row?.text ?? ''
+  let start = at
+  let end = at
+
+  const spread = (joins: (one: Row) => boolean) => {
+    while (start > 0 && rows[start - 1] && joins(rows[start - 1] as Row)) start--
+    while (rows[end + 1] && joins(rows[end + 1] as Row)) end++
+  }
+
+  if (row?.code) {
+    spread((one) => one.code)
+  } else if (TABLE_ROW.test(text)) {
+    spread((one) => !one.code && TABLE_ROW.test(one.text))
+  } else if (!OWN_BLOCK.test(text)) {
+    const quoted = QUOTED.test(text)
+    spread(
+      (one) =>
+        !one.code &&
+        !!one.text.trim() &&
+        !OWN_BLOCK.test(one.text) &&
+        QUOTED.test(one.text) === quoted &&
+        (quoted || !LIST_ITEM.test(one.text)),
+    )
+  }
+
+  return { start, end }
+}
+
 function blockSection(source: string, wanted: string): string | null {
   const found = blockIds(source).find((one) => one.id === wanted)
   if (!found) return null
 
   const lines = source.split('\n')
-  if (ownLine(lines[found.line] ?? '') && !(lines[found.line - 1] ?? '').trim()) {
-    return blockAbove(source, lines, found.line)
-  }
+  if (ownLine(lines[found.line] ?? '')) return blockAbove(source, lines, found.line)
 
   const item = itemSection(lines, found.line)
   if (item) return item
 
-  let start = found.line
-  let end = found.line
-  const own = lines[found.line] ?? ''
-  const row = TABLE_ROW.test(own)
-  const joins = (line: string | undefined) =>
-    !!line?.trim() && (row ? TABLE_ROW.test(line) : !OWN_BLOCK.test(line))
-  if (row || !OWN_BLOCK.test(own)) {
-    while (start > 0 && joins(lines[start - 1])) start--
-    while (end + 1 < lines.length && joins(lines[end + 1])) end++
-  }
-
+  const { start, end } = blockAround(rowsOf(source), found.line)
   const block = lines.slice(start, end + 1)
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
@@ -640,11 +660,11 @@ export function ownLine(line: string): boolean {
 
 function blockAbove(source: string, lines: readonly string[], under: number): string {
   const rows = rowsOf(source)
-  let end = under - 1
-  while (end > 0 && !(lines[end] ?? '').trim()) end--
+  let last = under - 1
+  while (last > 0 && !(lines[last] ?? '').trim() && !rows[last]?.code) last--
+  if (last < 0) return ''
 
-  let start = end
-  while (start > 0 && ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)) start--
+  const { start, end } = blockAround(rows, last)
 
   return lines
     .slice(start, end + 1)
