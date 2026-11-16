@@ -40,7 +40,7 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
   }
 
   const named = target.name.replace(/^\/+/, '')
-  const label = (shown || named || bareFragment(fragment)).replace(/[\\[\]|]/g, '\\$&')
+  const label = (shown || named || bareFragment(fragment)).replace(/[\\[\]|`]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
   const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
 

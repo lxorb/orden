@@ -658,10 +658,22 @@ fn without_code(line: &str) -> Cow<'_, str> {
     let letters: Vec<char> = line.chars().collect();
     let mut out = String::with_capacity(line.len());
     let mut at = 0;
+    let mut plain_from = 0;
 
     while at < letters.len() {
         if letters[at] != '`' {
             out.push(letters[at]);
+            at += 1;
+            continue;
+        }
+
+        let slashes = letters[plain_from..at]
+            .iter()
+            .rev()
+            .take_while(|one| **one == '\\')
+            .count();
+        if slashes % 2 == 1 {
+            out.push('`');
             at += 1;
             continue;
         }
@@ -702,6 +714,7 @@ fn without_code(line: &str) -> Cow<'_, str> {
                     out.push(' ');
                 }
                 at = end + marks;
+                plain_from = at;
             }
         }
     }
@@ -1338,6 +1351,13 @@ mod tests {
         .tasks;
         let texts: Vec<&str> = tasks.iter().map(|task| task.text.as_str()).collect();
         assert_eq!(texts, ["one", "two", "three", "four", "five"]);
+    }
+
+    #[test]
+    fn an_escaped_backtick_opens_no_code_span() {
+        assert_eq!(targets("\\` [[Note]] `b`"), vec!["Note"]);
+        assert!(targets("\\\\` [[Note]] `b`").is_empty());
+        assert_eq!(targets("`a\\` [[Note]] `b`"), vec!["Note"]);
     }
 
     #[test]

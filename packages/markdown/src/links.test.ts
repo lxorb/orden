@@ -427,6 +427,12 @@ describe('finding the links in a note', () => {
     expect(findLinks('`a` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
   })
 
+  test('an escaped backtick opens no code span', () => {
+    expect(findLinks('\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+    expect(findLinks('\\\\` [[Note]] `b`').map((one) => one.target)).toEqual([])
+    expect(findLinks('`a\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+  })
+
   test('a code span that never closes is text', () => {
     expect(findLinks('` [[Note]]').map((one) => one.target)).toEqual(['Note'])
   })

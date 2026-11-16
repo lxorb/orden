@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { decodeTarget, findLinks } from '@orden/markdown/links'
 import { extracted, linkTo, merged, splitAt } from './composer'
 
 describe('merging one note into another', () => {
@@ -87,6 +88,18 @@ describe('splitting a note at the caret', () => {
       expect(split?.kept).toBe(`# Title\n\n[[${name}.md]]\n`)
       const cut = extracted(`See ${name}.`, 4, 4 + name.length, 'Untitled')
       expect(cut?.kept).toBe(`See [[${name}.md]].`)
+    },
+  )
+
+  test.each(['Using `git` well', 'it`s odd'])(
+    'a link to a note named %s still reaches it past the backticks',
+    (name) => {
+      const reached = (text: string | undefined) =>
+        findLinks(text ?? '').map((link) => decodeTarget(link.target))
+      const split = splitAt(`# Title\n\n## ${name}\n\nmore \`x\`\n`, 9, 'Untitled')
+      expect(reached(split?.kept)).toEqual([`${name}.md`])
+      const cut = extracted(`See ${name} and \`y\`.`, 4, 4 + name.length, 'Untitled')
+      expect(reached(cut?.kept)).toEqual([`${name}.md`])
     },
   )
 

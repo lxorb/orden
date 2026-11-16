@@ -271,7 +271,7 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
   return { target, heading, block, alias: alias === '' ? null : alias, embed }
 }
 
-const NOT_IN_WIKILINK = /[#^[\]|]/
+const NOT_IN_WIKILINK = /[#^[\]|`]/
 
 export function wikilinkCannotName(name: string): boolean {
   return NOT_IN_WIKILINK.test(name)
@@ -309,6 +309,12 @@ function isBlank(character: string | undefined): boolean {
   return character === ' ' || character === '\t'
 }
 
+function escaped(line: string, from: number, at: number): boolean {
+  let slashes = 0
+  while (at - slashes > from && line[at - slashes - 1] === '\\') slashes++
+  return slashes % 2 === 1
+}
+
 export function withoutCode(line: string): string {
   let out = ''
   let at = 0
@@ -318,6 +324,12 @@ export function withoutCode(line: string): string {
     if (tick === -1) {
       out += line.slice(at)
       break
+    }
+
+    if (escaped(line, at, tick)) {
+      out += line.slice(at, tick + 1)
+      at = tick + 1
+      continue
     }
 
     let openEnd = tick
