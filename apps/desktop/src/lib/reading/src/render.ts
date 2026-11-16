@@ -1,5 +1,5 @@
 import { type EmbeddedNote, renderMarkdown, type Wikilink } from '@orden/markdown'
-import { attributeText, escapeAll } from '@orden/markdown/html'
+import { attributeText, attributeUrl, escapeAll } from '@orden/markdown/html'
 import { decodeTarget } from '@orden/markdown/links'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
@@ -31,8 +31,14 @@ function noteFrom(target: string, from: EmbeddedNote): string | null {
     : links.targetOf(from.path, { kind: 'markdown', target: decodeTarget(target) })
 }
 
-export function withPictures(html: string, note: Note): string {
-  return mapSources(html, (src) => escapeAll(notePicture(attributeText(src), note.path, note.text)))
+export function withPictures(
+  html: string,
+  note: Note,
+  drawn: ReadonlySet<string> = new Set(),
+): string {
+  return mapSources(html, (src) =>
+    drawn.has(src) ? null : escapeAll(notePicture(attributeText(src), note.path, note.text)),
+  )
 }
 
 const MEASURE = 'orden:reading'
@@ -56,6 +62,13 @@ export async function readingHtml(
     prepareEmbeds(note.text, (target) => links.embedNote(target, note.path)),
   ])
 
+  const drawn = new Set<string>()
+  const drawing = (path: string) => {
+    const url = assetUrl(path)
+    drawn.add(attributeUrl(url))
+    return url
+  }
+
   const at = performance.now()
   const html = withPictures(
     renderMarkdown(note.text, {
@@ -68,10 +81,11 @@ export async function readingHtml(
       resolveLink: pointer(note),
       resolveNoteFrom: noteFrom,
       resolveEmbed: embed,
-      resolvePicture: picturesOf(note.path, note.text, assetUrl),
+      resolvePicture: picturesOf(note.path, note.text, drawing),
       ...(tagHref ? { tagHref } : {}),
     }),
     note,
+    drawn,
   )
   performance.measure(MEASURE, { start: at, detail: { bytes: note.text.length } })
 

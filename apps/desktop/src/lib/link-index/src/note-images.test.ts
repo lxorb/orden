@@ -28,7 +28,8 @@ vi.mock('./links.svelte', () => ({
   },
 }))
 
-const { notePicture, picturePath, picturesOf, picturesWrittenOut } = await import('./note-images')
+const { notePicture, pictureBeside, picturePath, picturesOf, picturesWrittenOut } =
+  await import('./note-images')
 
 describe('a picture a note names', () => {
   test('a bare name is looked for anywhere in the space, the way Obsidian looks', () => {
@@ -152,5 +153,17 @@ describe('a note sent to pandoc', () => {
 
   test('names a picture on Windows by a path beside the note', () => {
     expect(picturesWrittenOut('![](../att/y.png)', 'C:\\Notes\\b\\n.md')).toBe('![](../att/y.png)')
+  })
+})
+
+describe('a picture an export writes into its page', () => {
+  test('is a path beside the note, on every system', () => {
+    expect(pictureBeside('/Work/b/n.md')('/Work/att/x.png')).toBe('../att/x.png')
+    expect(pictureBeside('C:\\Notes\\b\\n.md')('C:\\Notes\\att\\50%.png')).toBe('../att/50%25.png')
+  })
+
+  test('is the file itself when nothing leads there from the note', () => {
+    expect(pictureBeside('C:\\Notes\\n.md')('D:\\Pics\\x.png')).toBe('D:\\Pics\\x.png')
+    expect(pictureBeside(null)('/Work/att/x.png')).toBe('/Work/att/x.png')
   })
 })

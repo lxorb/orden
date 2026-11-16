@@ -1,7 +1,13 @@
 import { attributeText } from '@orden/markdown/html'
 import { protection } from '../../protect/src/api'
 import type { HtmlOptions } from './render'
-import { links, picturePath, picturesOf, picturesWrittenOut } from '../../link-index/src/api'
+import {
+  links,
+  pictureBeside,
+  picturePath,
+  picturesOf,
+  picturesWrittenOut,
+} from '../../link-index/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { trustsHtmlIn } from '../../sharing/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
@@ -70,7 +76,7 @@ export async function renderOptions(target: Target): Promise<RunOptions> {
     page: choices.page,
     resolveImage: (src: string) =>
       picturePath(attributeText(src), target.path, target.source) ?? src,
-    pictures: picturesOf(target.path, target.source, (path) => path),
+    pictures: picturesOf(target.path, target.source, pictureBeside(target.path)),
     picturesWritten: (source: string) => picturesWrittenOut(source, target.path),
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),

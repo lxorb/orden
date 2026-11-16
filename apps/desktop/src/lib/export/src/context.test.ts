@@ -32,6 +32,7 @@ vi.mock('../../link-index/src/api', () => ({
     spaceRead: () => Promise.resolve(),
   },
   picturesOf: () => () => null,
+  pictureBeside: () => (path: string) => path,
   picturesWrittenOut: (source: string) => source,
   picturePath: (src: string) => (src === 'R&D.png' ? '/space/Notes/R&D.png' : null),
 }))

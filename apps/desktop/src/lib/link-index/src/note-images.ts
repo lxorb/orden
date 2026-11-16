@@ -70,8 +70,18 @@ export function picturesOf(
   }
 }
 
-function besideNote(notePath: string, path: string): string {
-  return relativePath(folderOf(notePath).replace(/\\/g, '/'), path.replace(/\\/g, '/'))
+function besideNote(notePath: string, path: string): string | null {
+  const folder = folderOf(notePath).replace(/\\/g, '/')
+  const there = path.replace(/\\/g, '/')
+  if (folder.split('/')[0] !== there.split('/')[0]) return null
+  return relativePath(folder, there)
+}
+
+export function pictureBeside(notePath: string | null): (path: string) => string {
+  return (path) => {
+    const beside = notePath === null ? null : besideNote(notePath, path)
+    return beside === null ? path : encodeTarget(beside)
+  }
 }
 
 function pictureWritten(link: FoundLink, to: string): string {
@@ -91,7 +101,7 @@ export function picturesWrittenOut(source: string, notePath: string | null): str
   for (const link of pictures.reverse()) {
     const found = picturePath(link.target, notePath, source, link.kind === 'wikilink')
     if (found === null) continue
-    const to = encodeTarget(besideNote(notePath, found))
+    const to = pictureBeside(notePath)(found)
     const [from, end] =
       link.kind === 'wikilink' ? [link.from, link.to] : [link.targetFrom, link.targetTo]
     out = out.slice(0, from) + pictureWritten(link, to) + out.slice(end)
