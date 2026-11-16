@@ -333,6 +333,21 @@ describe('links out', () => {
     ])
   })
 
+  test('reach a file that is not a note, the way the editor does', async () => {
+    await space(
+      { 'n.md': 'see [[spec.docx]] and [s](docs/spec.docx) and [[shot]]', 'shot.md': '# Shot' },
+      ['docs/spec.docx', 'shot.png'],
+    )
+
+    expect(links.outgoing(at('n.md')).map((one) => one.to)).toEqual([
+      'docs/spec.docx',
+      'docs/spec.docx',
+      'shot.md',
+    ])
+    expect(links.targetOf(at('n.md'), { kind: 'wikilink', target: 'shot.png' })).toBe('shot.png')
+    expect(links.targetOf(at('n.md'), { kind: 'wikilink', target: 'gone.png' })).toBeNull()
+  })
+
   test('a link into the note itself is not a link out', async () => {
     await space({ 'One.md': '# Today\n\nsee [[#Today]]' })
     expect(links.outgoing(at('One.md'))).toEqual([])

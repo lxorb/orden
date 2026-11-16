@@ -130,7 +130,7 @@ function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }):
   if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
   const found =
     link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
-  return found?.path ?? null
+  return found?.path ?? resolveFile(index, link.target, link.kind)
 }
 
 function stillReaches(
@@ -997,7 +997,8 @@ class Links {
 
     const found = isTabFile(link.target)
       ? resolveFile(this.spaceFiles(source), link.target, link.kind)
-      : this.noteFrom(source, link)
+      : (this.noteFrom(source, link) ??
+        resolveFile(this.spaceFiles(source), link.target, link.kind))
 
     this.resolved.set(key, found)
     return found
