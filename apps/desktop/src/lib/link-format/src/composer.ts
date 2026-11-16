@@ -1,5 +1,6 @@
 import type { LinkWrite } from '@orden/editor'
 import { formatLink, type LinkFormat, type LinkTarget, linkWriting } from './link-format'
+import { isTabFile } from '@orden/markdown/links'
 import { nameFromContent } from '../../platform/src/api'
 
 const SEAM = '\n\n---\n\n'
@@ -43,7 +44,7 @@ export function splitAt(text: string, at: number, fallback: string, named?: stri
   if (!taken) return null
 
   const name = named ?? nameFromContent(taken) ?? fallback
-  const kept = `${text.slice(0, start).replace(/\s+$/, '')}\n\n${linkTo(name)}\n`
+  const kept = `${text.slice(0, start).replace(/\s+$/, '')}\n\n${linkTo(noteNamed(name))}\n`
 
   return { kept, taken: `${taken}\n`, name }
 }
@@ -61,9 +62,15 @@ export function extracted(
   const name = named ?? nameFromContent(taken) ?? fallback
   const shown = oneLine(taken)
   const alias = shown.replace(SENTENCE_END, '') === name ? '' : shown
-  const kept = text.slice(0, from) + linkTo(name, alias) + text.slice(to)
+  const kept = text.slice(0, from) + linkTo(noteNamed(name), alias) + text.slice(to)
 
   return { kept, taken: `${taken}\n`, name }
+}
+
+const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+
+function noteNamed(name: string): string {
+  return isTabFile(name) || MARKDOWN.test(name) ? `${name}.md` : name
 }
 
 const SENTENCE_END = /[.!?。！？]+$/u

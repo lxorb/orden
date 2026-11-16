@@ -47,6 +47,16 @@ describe('splitting a note at the caret', () => {
     expect(split?.taken.startsWith('## Later')).toBe(true)
   })
 
+  test.each(['Report.pdf', 'Ideas.canvas', 'CHANGELOG.md'])(
+    'a link to a note named %s keeps the .md that makes it a note',
+    (name) => {
+      const split = splitAt(`# Title\n\n## ${name}\n\nmore\n`, 9, 'Untitled')
+      expect(split?.kept).toBe(`# Title\n\n[[${name}.md]]\n`)
+      const cut = extracted(`See ${name}.`, 4, 4 + name.length, 'Untitled')
+      expect(cut?.kept).toBe(`See [[${name}.md]].`)
+    },
+  )
+
   test('nothing after the caret is nothing to split', () => {
     expect(splitAt(doc, doc.length, 'Untitled')).toBeNull()
     expect(splitAt('# Title\n\n   \n', 8, 'Untitled')).toBeNull()
