@@ -8,6 +8,19 @@ pub fn marked(source: &str, words: &str) -> String {
     )
 }
 
+pub fn one_line(words: &str) -> String {
+    words
+        .chars()
+        .map(|one| {
+            if one.is_control() || matches!(one, '\u{2028}' | '\u{2029}') {
+                ' '
+            } else {
+                one
+            }
+        })
+        .collect()
+}
+
 fn inert(words: &str) -> String {
     let mut out = String::with_capacity(words.len());
     for (at, one) in words.char_indices() {
