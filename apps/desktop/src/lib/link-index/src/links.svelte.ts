@@ -130,7 +130,7 @@ function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }):
   if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
   const found =
     link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
-  return found?.path ?? resolveFile(index, link.target, link.kind)
+  return found?.path ?? null
 }
 
 function stillReaches(
@@ -943,6 +943,19 @@ class Links {
     })
   }
 
+  reachedOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
+    const found = this.targetOf(from, link)
+    if (found !== null || (from !== null && this.otherHolding(from) !== null)) return found
+    return this.reachedFrom(from === null ? null : this.relative(from), link)
+  }
+
+  private reachedFrom(
+    source: string | null,
+    link: { kind: LinkKind; target: string },
+  ): string | null {
+    return this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source ?? '', link)
+  }
+
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
     const other = from === null ? null : this.otherHolding(from)
     if (from !== null && other !== null) return this.otherTarget(other, from, link)
@@ -997,7 +1010,7 @@ class Links {
 
     const found = isTabFile(link.target)
       ? resolveFile(this.spaceFiles(source), link.target, link.kind)
-      : (this.noteFrom(source, link) ?? fileNamed(this.filesNamed, source ?? '', link))
+      : this.noteFrom(source, link)
 
     this.resolved.set(key, found)
     return found
@@ -1121,7 +1134,7 @@ class Links {
     return note.links
       .filter((link) => link.target)
       .map((link) => {
-        const to = this.resolveFrom(relative, link)
+        const to = this.reachedFrom(relative, link)
         return {
           path: relative,
           name: nameOf(to ?? link.target),
@@ -1637,7 +1650,7 @@ class Links {
     const found =
       from !== null && other !== null
         ? this.otherTarget(other, from, link)
-        : this.resolveFrom(source, link)
+        : this.reachedFrom(source, link)
     return found === null ? null : relativePath(folderOf(source), found)
   }
 

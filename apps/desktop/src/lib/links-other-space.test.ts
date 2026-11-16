@@ -152,11 +152,13 @@ test("a file kept beside a note of another space goes in that space's assets fol
 })
 
 test("a block named for a link in a note of another space is named in that space's note", async () => {
-  const id = await links.nameBlock('Plan.md', 0, '/home/me/A/Note.md')
+  disk.set('/home/me/A/Plan.md', '# Plan of A\n\nthe plan here\n')
+  const id = await links.nameBlock('Plan.md', 2, '/home/me/A/Note.md')
 
   expect(id).not.toBeNull()
-  expect(disk.get('/home/me/A/Plan.md')).toBe(`# Plan of A ^${id ?? ''}\n`)
+  expect(disk.get('/home/me/A/Plan.md')).toBe(`# Plan of A\n\nthe plan here ^${id ?? ''}\n`)
   expect(disk.get('/home/me/B/Plan.md')).toBe('# Plan of B\n')
+  disk.set('/home/me/A/Plan.md', '# Plan of A\n')
 })
 
 test("the blocks a note of another space is offered are that space's", async () => {

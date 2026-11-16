@@ -14,7 +14,7 @@ const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from:
 vi.mock('../../link-index/src/api', () => ({
   links: {
     spaceOf: () => null,
-    targetOf: (from: string | null, link: { target: string }) => {
+    reachedOf: (from: string | null, link: { target: string }) => {
       asked.from.push(from)
       const wanted = link.target.toLowerCase().replace(/\.md$/, '')
       const found = NOTES.find((note) => {

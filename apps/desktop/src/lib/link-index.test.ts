@@ -344,8 +344,16 @@ describe('links out', () => {
       'docs/spec.docx',
       'shot.md',
     ])
-    expect(links.targetOf(at('n.md'), { kind: 'wikilink', target: 'shot.png' })).toBe('shot.png')
-    expect(links.targetOf(at('n.md'), { kind: 'wikilink', target: 'gone.png' })).toBeNull()
+    expect(links.reachedOf(at('n.md'), { kind: 'wikilink', target: 'shot.png' })).toBe('shot.png')
+    expect(links.reachedOf(at('n.md'), { kind: 'wikilink', target: 'gone.png' })).toBeNull()
+  })
+
+  test('a file that is not a note is linked to but never read as a note', async () => {
+    await space({ 'n.md': '![[notes.txt]]' }, ['notes.txt'])
+    notes['notes.txt'] = '# Not a heading\nraw words'
+
+    expect(links.targetOf(at('n.md'), { kind: 'wikilink', target: 'notes.txt' })).toBeNull()
+    expect(await links.embedNote('notes.txt', at('n.md'))).toBeNull()
   })
 
   test('a link into the note itself is not a link out', async () => {

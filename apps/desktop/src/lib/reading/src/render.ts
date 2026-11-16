@@ -20,7 +20,7 @@ export function pointer(
     if (!link.target) return link.heading === null && link.block === null ? null : { href: '' }
 
     const at = from?.path ?? note.path
-    const found = links.targetOf(at, { kind: 'wikilink', target: link.target })
+    const found = links.reachedOf(at, { kind: 'wikilink', target: link.target })
     return found === null ? null : { href: found }
   }
 }
