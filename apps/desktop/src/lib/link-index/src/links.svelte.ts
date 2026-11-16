@@ -997,8 +997,7 @@ class Links {
 
     const found = isTabFile(link.target)
       ? resolveFile(this.spaceFiles(source), link.target, link.kind)
-      : (this.noteFrom(source, link) ??
-        resolveFile(this.spaceFiles(source), link.target, link.kind))
+      : (this.noteFrom(source, link) ?? fileNamed(this.filesNamed, source ?? '', link))
 
     this.resolved.set(key, found)
     return found
