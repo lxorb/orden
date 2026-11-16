@@ -36,6 +36,14 @@ describe('a link to a note', () => {
     expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'wikilink')).toBe('[[Plan#^a1b2c3]]')
   })
 
+  test('is a markdown link when a heading or its words hold a backtick a code span would take', () => {
+    const toHeading = formatLink({ ...PLAN, fragment: 'Using `git` well' }, 'wikilink')
+    expect(toHeading.startsWith('[[')).toBe(false)
+    expect(findLinks(`${toHeading} and \`x\``).map((one) => one.target)).toHaveLength(1)
+    const shown = formatLink({ ...PLAN, shown: 'it`s' }, 'wikilink')
+    expect(findLinks(`${shown} then \`x\``).map((one) => one.target)).toHaveLength(1)
+  })
+
   test('is an embed where it was asked for as one', () => {
     expect(formatLink({ ...PLAN, embed: true }, 'wikilink')).toBe('![[Plan]]')
     expect(formatLink({ ...PLAN, embed: true }, 'shortest')).toBe('![Plan](Plan.md)')

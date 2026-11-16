@@ -48,7 +48,7 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
 }
 
 function beyondWikilink(name: string, fragment: string, shown: string): boolean {
-  return wikilinkCannotName(name) || /[[\]|]/.test(fragment) || /[[\]]/.test(shown)
+  return wikilinkCannotName(name) || /[[\]|`]/.test(fragment) || /[[\]`]/.test(shown)
 }
 
 function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): string {
