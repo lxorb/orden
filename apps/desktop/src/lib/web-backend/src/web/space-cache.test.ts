@@ -119,6 +119,33 @@ describe('the space a search holds', () => {
     }
   })
 
+  test('a search while the warm pass runs leaves the whole space to it', async () => {
+    for (let at = 0; at < 600; at++) write(`n${String(at).padStart(3, '0')}.md`, 'wind')
+    const filling = space.fill(ROOT)
+    for (let tick = 0; tick < 20 && space.warmth().of === 0; tick++) await Promise.resolve()
+
+    const first: string[] = []
+    await searchRows(ROOT, parseQuery('wind'), [], 5, (batch) => {
+      for (const hit of batch.hits) first.push(hit.path)
+    })
+    await filling
+
+    expect(first).toHaveLength(5)
+    expect(space.warmth()).toMatchObject({ of: 603, warm: true })
+    let all = 0
+    await searchRows(ROOT, parseQuery('wind'), [], 1000, (batch) => (all += batch.hits.length))
+    expect(all).toBe(602)
+  })
+
+  test('a whole search beside the warm pass counts each note once', async () => {
+    for (let at = 0; at < 600; at++) write(`n${String(at).padStart(3, '0')}.md`, 'wind')
+    const filling = space.fill(ROOT)
+    await searchRows(ROOT, parseQuery('wind'), [], 1000, () => undefined)
+    await filling
+
+    expect(space.warmth()).toMatchObject({ of: 603, warm: true })
+  })
+
   test('a walk that stopped early leaves the space to the warm pass', async () => {
     const found: string[] = []
     await searchRows(ROOT, parseQuery('the'), [], 1, (batch) => {
