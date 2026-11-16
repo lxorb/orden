@@ -394,7 +394,10 @@ function deleteWordInsideRun(view: EditorView, side: -1 | 1): boolean {
   const edge = side < 0 ? inner.from : inner.to
   if (head === edge) {
     view.dispatch({ selection: EditorSelection.cursor(side < 0 ? run.from : run.to) })
-    return side < 0 ? deleteGroupBackward(view) : deleteGroupForward(view)
+    return (
+      deleteWordOutside(view, side) ||
+      (side < 0 ? deleteGroupBackward(view) : deleteGroupForward(view))
+    )
   }
 
   const moved = view.moveByGroup(EditorSelection.cursor(head), side > 0).head
@@ -422,34 +425,61 @@ function deleteWordInsideRun(view: EditorView, side: -1 | 1): boolean {
   return true
 }
 
-function deleteWordOverMarks(side: -1 | 1) {
-  return (view: EditorView): boolean => {
-    const { state } = view
-    const main = state.selection.main
-    if (state.readOnly || state.selection.ranges.length > 1 || !main.empty) return false
+function hiddenNear(view: EditorView, from: number, to: number, side: -1 | 1): number | null {
+  let edge: number | null = null
+  for (const ranges of view.state.facet(EditorView.atomicRanges)) {
+    ranges(view).between(from, to, (start, end) => {
+      if (start >= end || end <= from || start >= to) return
+      const near = side < 0 ? end : start
+      if (edge === null || (side < 0 ? near > edge : near < edge)) edge = near
+    })
+  }
+  return edge
+}
 
-    if (state.facet(quietMarks) && deleteWordInsideRun(view, side)) return true
+function deleteWordOutside(view: EditorView, side: -1 | 1): boolean {
+  const { state } = view
+  const head = state.selection.main.head
+  const line = state.doc.lineAt(head)
+  let at = head
+  while (at !== (side < 0 ? line.from : line.to)) {
+    const next = side < 0 ? state.sliceDoc(at - 1, at) : state.sliceDoc(at, at + 1)
+    if (!/[ \t]/.test(next)) break
+    at += side
+  }
 
-    const line = state.doc.lineAt(main.head)
-    let at = main.head
-    while (at !== (side < 0 ? line.from : line.to)) {
-      const next = side < 0 ? state.sliceDoc(at - 1, at) : state.sliceDoc(at, at + 1)
-      if (!/[ \t]/.test(next)) break
-      at += side
-    }
-    if (!atHiddenEdge(view, at, side)) return false
-
-    const run = runAt(state, at, side)
-    if (!run) return false
-    const word = wordIn(state, run, side)
-    const changes =
-      word ?? (side < 0 ? { from: run.from, to: main.head } : { from: main.head, to: run.to })
+  const run = atHiddenEdge(view, at, side) ? runAt(state, at, side) : null
+  if (run) {
+    const changes = wordIn(state, run, side) ?? [
+      side < 0 ? { from: run.from, to: head } : { from: head, to: run.to },
+    ]
     view.dispatch({
       changes,
       scrollIntoView: true,
       userEvent: side < 0 ? 'delete.group.backward' : 'delete.group.forward',
     })
     return true
+  }
+
+  const target = view.moveByGroup(EditorSelection.cursor(head), side > 0).head
+  const [from, to] = side < 0 ? [target, head] : [head, target]
+  const stop = from < to ? hiddenNear(view, from, to, side) : null
+  if (stop === null || stop === head) return false
+  view.dispatch({
+    changes: side < 0 ? { from: stop, to: head } : { from: head, to: stop },
+    scrollIntoView: true,
+    userEvent: side < 0 ? 'delete.group.backward' : 'delete.group.forward',
+  })
+  return true
+}
+
+function deleteWordOverMarks(side: -1 | 1) {
+  return (view: EditorView): boolean => {
+    const { state } = view
+    const main = state.selection.main
+    if (state.readOnly || state.selection.ranges.length > 1 || !main.empty) return false
+    if (state.facet(quietMarks) && deleteWordInsideRun(view, side)) return true
+    return deleteWordOutside(view, side)
   }
 }
 

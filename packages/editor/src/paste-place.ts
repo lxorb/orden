@@ -126,7 +126,9 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const doc = state.doc
   const words = (number: number) =>
     number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
-  const apart = (number: number) => words(number) && !inTable(state, doc.line(number).from)
+  const inOwnTable = inTable(state, line.from)
+  const apart = (number: number) =>
+    words(number) && !(inOwnTable && inTable(state, doc.line(number).from))
   const under =
     after.trim() === '' &&
     (last.startsWith('|')
