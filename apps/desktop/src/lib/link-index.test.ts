@@ -1837,6 +1837,22 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     expect(links.backlinks(at('a/Plan.md'))).toEqual([])
   })
 
+  test('a note made beside a link to its namesake is told it would take that link over', async () => {
+    await space({
+      'Plan.md': '# top plan',
+      'Roadmap.md': '# road',
+      'sub/Other.md': 'see [[Plan]] and [p](Plan.md) and [q](/Plan.md)\n',
+      'sub/Note.md': '## Plan\n',
+      'far/Note.md': 'see [[Roadmap]]\n',
+    })
+
+    expect(links.takesOver(at('sub/Plan.md'))).toBe(true)
+    expect(links.takesOver(at('sub/Roadmap.md'))).toBe(false)
+    expect(links.takesOver(at('far/Roadmap.md'))).toBe(true)
+    expect(links.takesOver(at('sub/Budget.md'))).toBe(false)
+    expect(links.takesOver(at('Plan.md'))).toBe(false)
+  })
+
   test('a note moved beside a link to its namesake leaves that link reaching the old one', async () => {
     await space({
       'Plan.md': '# Plan',

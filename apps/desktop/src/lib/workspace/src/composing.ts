@@ -121,7 +121,10 @@ async function carve(
   if (!wanted) return
 
   const folder = folderOf(path)
-  const file = await ws.freeNameOnDisk(folder, `${wanted.name}.md`)
+  let file = await ws.freeNameOnDisk(folder, `${wanted.name}.md`)
+  for (let other = 2; links.takesOver(joinPath(folder, file)) && other < 100; other++) {
+    file = await ws.freeNameOnDisk(folder, `${wanted.name} ${other}.md`)
+  }
   const created = joinPath(folder, file)
   const carved = cut(file.replace(/\.md$/, '')) ?? wanted
 

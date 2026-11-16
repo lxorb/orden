@@ -23,8 +23,11 @@ vi.mock('../../platform/src/tauri', () => ({
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
 
+const taking = new Set<string>()
+
 vi.mock('../../link-index/src/api', () => ({
   links: {
+    takesOver: (path: string) => taking.has(path),
     noteSaved: (path: string) => void told.push(`saved ${path}`),
     rebased: (text: string) =>
       text.includes('[[x/Plan]]') ? text.replace('[[x/Plan]]', '[[a/x/Plan]]') : null,
@@ -249,6 +252,17 @@ describe('a note split at the caret', () => {
 
     expect(ws.undone.stack).toHaveLength(1)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'split', from: NOTE, fromContent: DOC })
+  })
+
+  test('and steps the new name aside from one that would take over links to a namesake', async () => {
+    const ws = space({ [NOTE]: DOC }, NOTE)
+    taking.add(`${SPACE}/Later.md`)
+    await splitAtCaret(ws, DOC.indexOf('## Later'))
+    taking.clear()
+
+    expect(disk.has(`${SPACE}/Later.md`)).toBe(false)
+    expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
+    expect(disk.get(NOTE)).toContain('[[Later 2]]')
   })
 
   test('and steps the new name aside from one the folder already has', async () => {

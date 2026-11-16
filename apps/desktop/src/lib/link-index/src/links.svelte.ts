@@ -1076,6 +1076,42 @@ class Links {
     return out
   }
 
+  takesOver(path: string): boolean {
+    const relative = this.relative(path)
+    if (!relative || this.notes.some((one) => one.path === relative)) return false
+
+    const name = comparable(nameOf(relative))
+    const arriving: NoteRef = {
+      path: relative,
+      name: noteName(relative),
+      headings: [],
+      blocks: [],
+      aliases: [],
+    }
+    for (const note of this.notes) {
+      for (const link of note.links) {
+        if (!link.target || isTabFile(link.target)) continue
+        const whole = comparable(link.target)
+        const last = whole.split('/').pop() ?? ''
+        if (last !== name) continue
+        const before = this.resolveFrom(note.path, link)
+        if (before === null || before === relative) continue
+        const index: NoteIndex = {
+          notes: [...this.calledBy(whole, last), arriving],
+          files: [],
+          path: note.path,
+          read: nothing,
+        }
+        const after =
+          link.kind === 'markdown'
+            ? resolveRelative(index, link.target)
+            : resolveNote(index, link.target)
+        if (after?.path === relative) return true
+      }
+    }
+    return false
+  }
+
   outgoing(path: string): Outgoing[] {
     const relative = this.relative(path)
     const note = this.notes.find((one) => one.path === relative)
