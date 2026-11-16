@@ -415,10 +415,6 @@ fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
     !theirs.any(|(_, part)| unspoken(naming, part))
 }
 
-pub fn stays_in_its_space(app: &AppHandle, target: &Path) -> Result<(), String> {
-    stays_in_space(&spaces_dir(app)?, target)
-}
-
 pub fn stays_in_space(spaces: &Path, target: &Path) -> Result<(), String> {
     let Some(space) = space_root(spaces, target) else {
         return Ok(());
@@ -562,7 +558,9 @@ pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 }
 
 fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
-    judged_as(NAMING, root, path)
+    let target = judged_as(NAMING, root, path)?;
+    stays_in_space(root, &target)?;
+    Ok(target)
 }
 
 fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String> {
@@ -2188,5 +2186,14 @@ mod tests {
         std::os::unix::fs::symlink(outside.join("todo.md"), spaces.join("Work/todo.md"))
             .expect("a note that is a link");
         assert!(stays_in_space(&spaces, &spaces.join("Work/todo.md")).is_ok());
+        std::fs::write(outside.join("README.md"), "theirs too").expect("a file behind the link");
+        let through = spaces.join("Work/Refs/README.md");
+        assert!(judged(&spaces, &through.to_string_lossy()).is_err());
+        assert!(judged(&spaces, &spaces.join("Work/Refs").to_string_lossy()).is_ok());
+        assert!(judged(
+            &spaces,
+            &spaces.join("Work/Notes/Plan.md").to_string_lossy()
+        )
+        .is_ok());
     }
 }

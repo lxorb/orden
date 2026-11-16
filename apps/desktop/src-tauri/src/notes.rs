@@ -15,7 +15,7 @@ use crate::clock;
 use crate::paths::{
     at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, is_pdf, made,
     move_held, move_paper, named_for_every_machine, openable, paper_in_the_way, spaces_dir,
-    stays_in_its_space, write_in_place,
+    write_in_place,
 };
 
 pub const MOST_NOTE_BYTES: u64 = 64 * 1024 * 1024;
@@ -64,7 +64,6 @@ pub fn write_note(
     arrived: Option<bool>,
 ) -> Result<(), String> {
     let target = chosen(&app, &path)?;
-    stays_in_its_space(&app, &target)?;
     if !may_arrive(arrived) && !target.exists() && target.starts_with(spaces_dir(&app)?) {
         named_for_every_machine(&target)?;
     }
@@ -135,13 +134,10 @@ pub fn write_bytes(app: AppHandle, request: Request<'_>) -> Result<(), String> {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| format!("{path} was handed nothing to write"))?;
         let target = chosen(&app, path)?;
-        stays_in_its_space(&app, &target)?;
         return bytes_written(&target, path, base64);
     }
     let (Written { path }, bytes) = raw_sent(request.headers(), request.body())?;
-    let target = chosen(&app, &path)?;
-    stays_in_its_space(&app, &target)?;
-    write_file(&target, &path, &bytes)
+    write_file(&chosen(&app, &path)?, &path, &bytes)
 }
 
 pub fn raw_sent<'a, T: serde::de::DeserializeOwned>(
@@ -210,7 +206,6 @@ pub fn rename_note(
 ) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    stays_in_its_space(&app, &target)?;
     renamed_as(
         &source,
         &target,
@@ -347,7 +342,6 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
 #[tauri::command(async)]
 pub fn create_folder(app: AppHandle, path: String, arrived: Option<bool>) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
-    stays_in_its_space(&app, &target)?;
     if may_arrive(arrived) {
         return made(&target);
     }
