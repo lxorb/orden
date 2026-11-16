@@ -704,10 +704,10 @@ fn without_code(line: &str) -> Cow<'_, str> {
 
         match close {
             None => {
-                for one in &letters[at..] {
+                for one in &letters[at..open_end] {
                     out.push(*one);
                 }
-                break;
+                at = open_end;
             }
             Some(end) => {
                 for _ in at..end + marks {
@@ -1358,6 +1358,12 @@ mod tests {
         assert_eq!(targets("\\` [[Note]] `b`"), vec!["Note"]);
         assert!(targets("\\\\` [[Note]] `b`").is_empty());
         assert_eq!(targets("`a\\` [[Note]] `b`"), vec!["Note"]);
+    }
+
+    #[test]
+    fn a_run_that_never_closes_still_lets_a_later_span_hide_a_link() {
+        assert!(targets("`` `[[Plan]]`").is_empty());
+        assert_eq!(targets("`` [[Plan]]"), vec!["Plan"]);
     }
 
     #[test]

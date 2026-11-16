@@ -433,6 +433,11 @@ describe('finding the links in a note', () => {
     expect(findLinks('`a\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
   })
 
+  test('a run that never closes still lets a later span hide a link', () => {
+    expect(findLinks('`` `[[Plan]]`').map((one) => one.target)).toEqual([])
+    expect(findLinks('`` [[Plan]]').map((one) => one.target)).toEqual(['Plan'])
+  })
+
   test('a code span that never closes is text', () => {
     expect(findLinks('` [[Note]]').map((one) => one.target)).toEqual(['Note'])
   })

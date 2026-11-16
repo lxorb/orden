@@ -339,8 +339,9 @@ export function withoutCode(line: string): string {
 
     out += line.slice(at, tick)
     if (close === -1) {
-      out += line.slice(tick)
-      break
+      out += marks
+      at = openEnd
+      continue
     }
 
     out += ' '.repeat(close + marks.length - tick)
