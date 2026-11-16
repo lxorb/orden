@@ -175,9 +175,10 @@ describe('an outline of headings that share a title at other depths or cases', (
     expect(read.outline?.length).toBe(7)
     for (const row of read.outline ?? []) {
       const place = resolve(row.anchor, NOTE)
-      expect(NOTE.slice(place.from).startsWith(rows[row.line] ?? '\0'), row.anchor.heading).toBe(
-        true,
-      )
+      expect(
+        NOTE.slice(place.from).startsWith(rows[row.line] ?? '\0'),
+        JSON.stringify(row.anchor),
+      ).toBe(true)
     }
   })
 })
