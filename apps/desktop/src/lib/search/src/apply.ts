@@ -44,6 +44,7 @@ function linesNow(body: string, hits: readonly Hit[]): Set<number> {
 
 function phrased(query: Query): Query {
   if (query.kind === 'scope') return { ...query, of: phrased(query.of) }
+  if (query.kind === 'any') return { ...query, of: query.of.map(phrased) }
   if (query.kind !== 'all') return query
 
   const words = query.of.filter((one) => one.kind === 'text')

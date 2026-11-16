@@ -38,6 +38,16 @@ describe('what a replacement would do', () => {
     expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
   })
 
+  test('and within one side of an either-or', async () => {
+    const made = await changes(
+      '(quarterly plan) OR budget',
+      [hit('/space/Plan.md', 0), hit('/space/Plan.md', 1)],
+      'annual plan',
+    )
+
+    expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
+  })
+
   test('and keeps the rest of the query as it was', async () => {
     const made = await changes('plan -draft', [hit('/space/Plan.md', 0)], 'road')
 
