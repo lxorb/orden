@@ -80,6 +80,16 @@ export function blocksIn(state: EditorState, from: number, to: number): BlockSpa
   return found.sort((one, other) => one.from - other.from)
 }
 
+function withinQuote(state: EditorState, node: SyntaxNode): BlockSpan | null {
+  const line = state.doc.lineAt(node.from).from
+  let top = node
+  for (let up = node.parent; up && up.name !== 'Blockquote'; up = up.parent) {
+    if (kindOf(up.name) && state.doc.lineAt(up.from).from === line) top = up
+  }
+  const kind = kindOf(top.name)
+  return kind ? spanOf(state, top, kind) : null
+}
+
 export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   const line = state.doc.lineAt(pos)
   const starting = blocksIn(state, line.from, line.to).find(
@@ -92,7 +102,9 @@ export function blockAt(state: EditorState, pos: number): BlockSpan | null {
     if (!kind) continue
     const first = state.doc.lineAt(node.from)
     if (first.from === line.from) return spanOf(state, node.node, kind)
-    return blockAt(state, first.from)
+    const outer = blockAt(state, first.from)
+    const nested = outer?.kind === 'quote' && kind !== 'quote' && outer.from !== first.from
+    return nested ? withinQuote(state, node.node) : outer
   }
 
   return null

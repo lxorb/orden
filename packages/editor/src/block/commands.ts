@@ -210,6 +210,8 @@ const LISTED = new Set<BlockShape>(['bullet', 'numbered', 'task'])
 
 const INDENT = /^[ \t]*/
 
+const QUOTE_MARKS = /^(?:[ \t]*>)*/
+
 const LINE_LEAD = /^(?:[ \t]*>)*[ \t]*/
 
 const ITEM_CONTENT = /^(?:[ \t]*>)*[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)?/
@@ -223,8 +225,9 @@ function itemsHolding(state: EditorState, line: Line): number[] {
     .map((node) => state.doc.lineAt(node.from).number)
 }
 
-function shiftedIn(text: string, shift: number): string {
-  const indent = LINE_LEAD.exec(text)?.[0] ?? ''
+function shiftedIn(text: string, shift: number, holder: string): string {
+  const quote = holder.length && text.startsWith(holder) ? holder.length : 0
+  const indent = text.slice(0, quote + (INDENT.exec(text.slice(quote))?.[0].length ?? 0))
   if (shift > 0) return indent + ' '.repeat(shift) + text.slice(indent.length)
   const spaces = / *$/.exec(indent)?.[0].length ?? 0
   return indent.slice(0, indent.length - Math.min(spaces, -shift)) + text.slice(indent.length)
@@ -258,7 +261,8 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
       if (items[0] !== number || (itemwise && number > first && !LISTED.has(shape))) {
         const owner = items.find((item) => shifts.has(item)) ?? first
-        const text = shiftedIn(line.text, shifts.get(owner) ?? 0)
+        const holder = QUOTE_MARKS.exec(doc.line(owner).text)?.[0] ?? ''
+        const text = shiftedIn(line.text, shifts.get(owner) ?? 0, holder)
         if (text !== line.text) changes.push({ from: line.from, to: line.to, insert: text })
         continue
       }

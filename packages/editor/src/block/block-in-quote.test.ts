@@ -71,4 +71,16 @@ describe('the block menu on a block inside a callout or quote', () => {
     turnBlocksInto(view, at, 'numbered')
     expect(quotedThroughout(view.state.doc.toString())).toBe(true)
   })
+
+  test('Delete on a paragraph between two quotes keeps the quotes apart', () => {
+    const { view, at } = clickedIn('> a\n\npara\n\n> b', 'para')
+    deleteBlocks(view, at)
+    expect(view.state.doc.toString()).toBe('> a\n\n> b')
+  })
+
+  test('Move up on a quote below another quote keeps the two quotes apart', () => {
+    const { view, at } = clickedIn('> a\n\n> b', 'b')
+    moveBlocks(view, at, -1)
+    expect(view.state.doc.toString()).toBe('> b\n\n> a')
+  })
 })

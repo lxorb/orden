@@ -111,11 +111,24 @@ function listAt(state: EditorState, items: SyntaxNode[], indent: number): Syntax
 }
 
 function blank(existing: string | null, quote: string): string {
-  return existing !== null && existing.split('\n').length > 2 ? existing : `\n${quote}\n`
+  const between = existing?.split('\n').slice(1, -1) ?? []
+  const kept = between.length > 0 && between.every((line) => quoteOf(line).startsWith(quote))
+  return existing !== null && kept ? existing : `\n${quote}\n`
 }
 
-export function gap(state: EditorState, upper: Side, lower: Side, existing: string | null): string {
-  const quote = sharedQuote(upper.quote, lower.quote)
+export function holderQuote(text: string, quoted: boolean): string {
+  const marks = quoteOf(text)
+  return quoted ? marks.slice(0, marks.slice(0, -1).lastIndexOf('>') + 1) : marks
+}
+
+export function gap(
+  state: EditorState,
+  upper: Side,
+  lower: Side,
+  existing: string | null,
+  holder: string,
+): string {
+  const quote = sharedQuote(sharedQuote(upper.quote, lower.quote), holder)
   if (!joins(state, upper, lower)) return blank(existing, quote)
 
   const lists = [
