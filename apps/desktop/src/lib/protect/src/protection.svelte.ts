@@ -285,11 +285,12 @@ export class Protection {
     return met.tell
   }
 
-  said(root: string, landed: boolean): void {
+  said(root: string, landed: boolean, sent?: Record<string, Way>): void {
     this.reread()
     const held = this.spaces[root]
-    if (!held || held.sent === landed) return
-    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    const sure = landed && (sent === undefined || same(sent, held?.ways ?? {}))
+    if (!held || held.sent === sure) return
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: sure } }
     this.keepSpaces()
   }
 

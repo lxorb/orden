@@ -41,13 +41,23 @@ const keepBase = (root: string, space: string, ways: Record<string, Way>) =>
   keepJson(BASE_KEY, { ...bases(), [root]: { space, ways } })
 
 const queued = new Map<string, Promise<void>>()
-const stirred = new Map<string, number>()
+
+const STIRRED_KEY = 'orden:protected-stirred'
+
+function stirredOf(root: string): number {
+  const all = stored(STIRRED_KEY)
+  const one = isRecord(all) ? all[root] : undefined
+  return typeof one === 'number' ? one : 0
+}
 
 const alike = (one: Record<string, Way>, other: Record<string, Way>) =>
   Object.keys(one).length === Object.keys(other).length &&
   Object.entries(one).every(([key, way]) => other[key] === way)
 
-const stir = (root: string) => stirred.set(root, (stirred.get(root) ?? 0) + 1)
+function stir(root: string): void {
+  const all = stored(STIRRED_KEY)
+  keepJson(STIRRED_KEY, { ...(isRecord(all) ? all : {}), [root]: stirredOf(root) + 1 })
+}
 
 export function pushWays(root: string): Promise<void> {
   stir(root)
@@ -86,7 +96,7 @@ async function pushNow(root: string): Promise<void> {
   )
   stir(root)
   const now = alike(ways, protection.ways(root))
-  protection.said(root, answer !== null && now)
+  protection.said(root, answer !== null && now, ways)
   if (!answer) return
   const held = protectedMap(answer.spaces[spaceId])
   if (now) keepBase(root, spaceId, held)
@@ -111,11 +121,11 @@ export async function pulled(
   accountId: string,
   pairs: readonly { root: string; spaceId: string }[],
 ): Promise<void> {
-  const before = new Map(pairs.map(({ root }) => [root, stirred.get(root) ?? 0]))
+  const before = new Map(pairs.map(({ root }) => [root, stirredOf(root)]))
   const remote = remoteOf(await request<unknown>('/v1/protected', { token }).catch(() => null))
   if (!remote) return
   for (const { root, spaceId } of pairs) {
-    if ((stirred.get(root) ?? 0) !== before.get(root)) continue
+    if (stirredOf(root) !== before.get(root)) continue
     const theirs = protectedMap(remote.spaces[spaceId])
     if (!baseOf(root, spaceId)) protection.said(root, false)
     keepBase(root, spaceId, theirs)
