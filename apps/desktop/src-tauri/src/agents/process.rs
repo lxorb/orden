@@ -438,7 +438,7 @@ fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> O
             agent: &grant.id,
             name: &grant.name,
             category: Category::Terminal,
-            summary: summary(program, &asked.args),
+            summary: summary(program, asked),
             site: None,
             tab: None,
             key,
@@ -468,23 +468,35 @@ fn bare(program: &str, windows: bool) -> String {
     name
 }
 
-fn summary(program: &str, args: &[String]) -> String {
+fn summary(program: &str, asked: &Process) -> String {
     let mut line = format!("Run {program}");
-    for arg in args {
+    for arg in &asked.args {
         line.push(' ');
-        if arg.is_empty() || arg.contains(char::is_whitespace) {
-            line.push('"');
-            line.push_str(arg);
-            line.push('"');
-        } else {
-            line.push_str(arg);
-        }
+        word(&mut line, arg);
     }
-    if line.chars().count() > 300 {
-        line = line.chars().take(299).collect();
-        line.push('…');
+    if let Some(cwd) = &asked.cwd {
+        line.push_str(" in ");
+        word(&mut line, cwd);
+    }
+    for (name, value) in &asked.env {
+        line.push_str(" with ");
+        line.push_str(name);
+        line.push('=');
+        word(&mut line, value);
+    }
+    if let Some(input) = &asked.stdin {
+        line.push_str(", typing ");
+        word(&mut line, input);
     }
     line
+}
+
+fn word(line: &mut String, said: &str) {
+    if said.is_empty() || said.contains(char::is_whitespace) || said.contains('"') {
+        line.push_str(&format!("{said:?}"));
+    } else {
+        line.push_str(said);
+    }
 }
 
 fn absolute(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
@@ -851,10 +863,23 @@ mod tests {
 
     #[test]
     fn a_question_names_the_program_and_its_arguments() {
-        assert_eq!(
-            summary("git", &["commit".into(), "-m".into(), "a fix".into()]),
-            "Run git commit -m \"a fix\""
-        );
+        let mut asked = process(ProcessOp::Run, "git");
+        asked.args = vec!["commit".into(), "-m".into(), "a fix".into()];
+        assert_eq!(summary("git", &asked), "Run git commit -m \"a fix\"");
+    }
+
+    #[test]
+    fn a_question_names_the_folder_variables_and_input_it_runs_with_and_cuts_nothing() {
+        let mut asked = process(ProcessOp::Run, "git");
+        asked.args = vec!["x".repeat(400)];
+        asked.cwd = Some("/tmp/a b".into());
+        asked
+            .env
+            .insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
+        asked.stdin = Some("yes".into());
+        let said = summary("git", &asked);
+        assert!(said.contains(&"x".repeat(400)));
+        assert!(said.ends_with(" in \"/tmp/a b\" with GIT_SSH_COMMAND=\"sh -c evil\", typing yes"));
     }
 
     #[cfg(unix)]

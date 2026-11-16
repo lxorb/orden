@@ -101,3 +101,29 @@ test('a copy of a locked web note made by a split stays behind its lock, for the
   await answerTheCrate('agent.lend', { tab: copy?.id })
   expect(lent).toEqual([])
 })
+
+test('the copy is not saved by an agent, and saved by the reader it is as locked as its note', async () => {
+  const caller = callerOf({
+    id: 'x',
+    name: 'X',
+    scopes: ['workspace', 'workspace.focus', 'browser.reader'],
+    spaces: ['One'],
+    mode: 'unsupervised',
+  })
+  const copy = workspace.tabs.find((one) => one.path === null && one.kind === 'web')
+  expect(copy?.behind).toBe(LOCKED)
+  await expect(
+    workspaceTabs({
+      verb: 'workspace_tabs',
+      caller,
+      args: { op: 'save', tab: copy?.id, path: 'Open/Bank copy.url' },
+    }),
+  ).rejects.toMatchObject({ code: 'protected' })
+
+  protection.set('/space', '/space/Finance', 'password')
+  const saved = copy ? await workspace.save(copy, '/space/Open', 'Bank copy.url') : null
+  expect(saved).toBe('/space/Open/Bank copy.url')
+  expect(protection.covering('/space/Open/Bank copy.url')).toEqual([
+    { root: '/space', key: 'Open/Bank copy.url', way: 'password' },
+  ])
+})

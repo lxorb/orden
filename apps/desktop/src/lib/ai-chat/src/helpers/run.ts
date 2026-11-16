@@ -1,4 +1,5 @@
 import { workspace } from '../../../workspace/src/api'
+import { invoke, isDesktop } from '../../../platform/src/api'
 import type { Effort, Mode, Thread } from '../../../ai-providers/src/api'
 import { usable, ai } from '../../../ai-providers/src/api'
 import { answerFor, type Helper, helpers } from './helpers.svelte'
@@ -10,9 +11,60 @@ export const WAIT = 20_000
 
 const LISTING = 10_000
 
+export interface Reach {
+  scopes: readonly string[]
+  spaces: 'all' | readonly string[]
+  sites: Readonly<Record<string, string>>
+  programs: readonly string[]
+}
+
 export interface Asker {
   thread: string | null
   mode: Mode
+  reach?: Reach
+}
+
+export interface Held extends Reach {
+  id: string
+}
+
+async function grants(): Promise<Held[] | null> {
+  if (!isDesktop) return []
+  const state = await invoke<{ agents?: unknown }>('agents_state').catch(() => null)
+  return Array.isArray(state?.agents) ? (state.agents as Held[]) : null
+}
+
+const grantOf = (all: readonly Held[], provider: string) =>
+  all.find((one) => one.id === `orden-${provider}`) ??
+  all.find((one) => one.id === `nib-${provider}`) ??
+  null
+
+function inside(helper: Reach, parent: Reach): boolean {
+  const spaces =
+    parent.spaces === 'all' ||
+    (helper.spaces !== 'all' && helper.spaces.every((one) => parent.spaces.includes(one)))
+  return (
+    spaces &&
+    helper.scopes.every((one) => parent.scopes.includes(one)) &&
+    helper.programs.every((one) => parent.programs.includes(one)) &&
+    Object.entries(helper.sites).every(
+      ([site, rule]) => rule !== 'allow' || parent.sites[site] === 'allow',
+    )
+  )
+}
+
+export function offeredWithin(
+  listed: readonly Offered[],
+  reach: Reach | null,
+  parent: string | null,
+  all: readonly Held[] | null,
+): Offered[] {
+  if (!reach) return [...listed]
+  return listed.filter(({ provider }) => {
+    if (provider.id === parent) return true
+    const theirs = all === null ? null : grantOf(all, provider.id)
+    return theirs !== null && inside(theirs, reach)
+  })
 }
 
 export type Answered =
@@ -83,6 +135,11 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker): Pro
   const profile = type && root ? await notes.foundNamed('agent', type, root) : null
   if (type && !profile) return { refused: `there is no agent profile called "${type}"` }
   const instructions = await notes.wordsOf(profile)
+  const all = await grants()
+  const reach = asker.reach ?? (parent && all ? grantOf(all, parent.provider) : null)
+  if (parent && !asker.reach && isDesktop && !reach?.scopes.includes('agents')) {
+    return { refused: 'this agent may not run helpers: its grant does not hold agents' }
+  }
   const effort = first(word(args, 'effort'), profile?.effort)
   const started = await helpers.start(
     {
@@ -96,7 +153,7 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker): Pro
       ...(instructions ? { instructions } : {}),
     },
     {
-      offered,
+      offered: async () => offeredWithin(await offered(), reach, parent?.provider ?? null, all),
       run: (thread: Thread, text: string, signal: AbortSignal) => {
         chat.adopt(thread)
         return chat.turn(thread, text, { signal })

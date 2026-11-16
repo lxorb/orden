@@ -994,9 +994,13 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         && grant.asks(Category::Files)
                         && !approvals::is_allowed(&grant.id, &key)
                     {
+                        let named: Vec<String> = outside
+                            .iter()
+                            .map(|(path, _)| path.display().to_string())
+                            .collect();
                         let summary = format!(
                             "Hand {} to {}",
-                            outside[0].0.display(),
+                            named.join(", "),
                             policy::host_of(&page.url()).unwrap_or_default()
                         );
                         return Err(ask(

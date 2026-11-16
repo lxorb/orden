@@ -1994,6 +1994,14 @@ class Workspace {
           : tab.kind === 'terminal'
             ? await import('./placing').then((one) => one.keepTerm(this, claim, tab, dir, file))
             : await this.saving.place(tab.note, dir, file ?? draftFile(tab.note))
+      if (saved !== null && tab.behind !== null) {
+        this.protection.copied(
+          tab.behind,
+          saved,
+          this.rootHolding(tab.behind),
+          this.rootHolding(saved),
+        )
+      }
       this.persist()
       return saved
     } catch (error) {

@@ -40,7 +40,7 @@ function askerOf(call: Call) {
   const agent = call.caller.agent
   const mode: Mode = agent ? modeOfGrant(agent.mode) : 'auto'
   const thread = 'thread' in call.caller ? (call.caller.thread ?? null) : null
-  return { thread, mode }
+  return { thread, mode, ...(agent ? { reach: agent } : {}) }
 }
 
 async function answered(

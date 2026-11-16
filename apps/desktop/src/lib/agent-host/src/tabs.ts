@@ -8,7 +8,7 @@ import {
   type SettingsSectionId,
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
-import { seen } from './guarded'
+import { readable, seen } from './guarded'
 import { noteBehind, protection } from '../../protect/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
@@ -354,6 +354,8 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
 async function saveTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   if (!isUnsaved(tab.note)) throw new Refused('exists', `tab ${tab.id} has a file already`)
+  const behind = noteBehind(tab)
+  if (behind !== null) readable(behind, tab.shown)
 
   const place = placeFor(call, null)
   const relative = judgedForWriting(need(call, 'path'))
