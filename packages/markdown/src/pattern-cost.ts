@@ -29,7 +29,7 @@ interface Ahead {
   last?: boolean
 }
 
-export function patternJudge() {
+export function patternJudge(longest = 2000, widest = 30) {
   const PLAIN: Cost = {
     open: 0,
     ways: 1,
@@ -44,11 +44,11 @@ export function patternJudge() {
     shape: { kind: 'none' },
   }
 
-  const NOTE = Math.log(200000)
+  const NOTE = Math.log(Math.max(200000, longest))
 
-  const LINE = Math.log(2000)
+  const LINE = Math.log(Math.max(2000, longest))
 
-  const WORD = Math.log(30)
+  const WORD = Math.log(Math.max(30, widest))
 
   const WORD_STARTS = Math.log(20)
 
@@ -680,12 +680,33 @@ export function patternJudge() {
 
 export const { patternCost, backtracksWildly } = patternJudge()
 
-export function searchBacktracksWildly(source: string, fold: boolean): boolean {
+const judges = new Map<string, (source: string, flags: string) => boolean>()
+
+function judgeFor(longest: number, widest: number): (source: string, flags: string) => boolean {
+  if (longest <= 2000 && widest <= 30) return backtracksWildly
+  const line = 2 ** Math.ceil(Math.log2(Math.max(2000, longest)))
+  const word = 2 ** Math.ceil(Math.log2(Math.max(30, widest)))
+  const key = `${line} ${word}`
+  let held = judges.get(key)
+  if (!held) {
+    held = patternJudge(line, word).backtracksWildly
+    judges.set(key, held)
+  }
+  return held
+}
+
+export function searchBacktracksWildly(
+  source: string,
+  fold: boolean,
+  longest = 0,
+  widest = 0,
+): boolean {
   const flags = fold ? 'i' : ''
+  const wild = judgeFor(longest, widest)
   try {
     RegExp(source, 'u')
-    return backtracksWildly(source, `${flags}u`)
+    return wild(source, `${flags}u`)
   } catch {
-    return backtracksWildly(source, flags)
+    return wild(source, flags)
   }
 }

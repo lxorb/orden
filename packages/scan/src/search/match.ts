@@ -346,6 +346,9 @@ function compiled(source: string, flags: string): RegExp | null {
 
 export class Matcher {
   private readonly patterns = new Map<string, RegExp | null>()
+
+  private readonly wildLines = new Map<string, boolean>()
+
   private readonly needles = new Map<string, string>()
 
   constructor(private readonly query: Query) {}
@@ -537,31 +540,97 @@ export class Matcher {
 
     const whole = region.from === 0 && region.to === body.length
     const text = whole ? body : body.slice(region.from, region.to)
+    const pieces = stretches(text)
     const out: Span[] = []
-    pattern.lastIndex = 0
 
-    for (;;) {
-      const found = pattern.exec(text)
-      if (!found) break
-
-      const from = found.index
-      const to = from + found[0].length
-
-      if (to === from) {
-        pattern.lastIndex =
-          from + (pattern.unicode && (text.codePointAt(from) ?? 0) > 0xffff ? 2 : 1)
-        continue
-      }
-
-      out.push({
-        from: region.from + from,
-        to: region.from + to,
-        groups: Array.from({ length: found.length - 1 }, (_, index) => found[index + 1] ?? ''),
-      })
-
-      pattern.lastIndex = to
+    for (const piece of pieces) {
+      if (piece.longest && this.wildOver(source, folded, piece)) continue
+      const part = pieces.length === 1 ? text : text.slice(piece.from, piece.to)
+      found(pattern, part, region.from + piece.from, out)
     }
 
     return out.length ? out : null
+  }
+
+  private wildOver(source: string, folded: boolean, piece: Stretch): boolean {
+    const key = `${folded ? 'i' : ''}\0${bucket(piece.longest)}\0${bucket(piece.widest)}\0${source}`
+    let held = this.wildLines.get(key)
+    if (held === undefined) {
+      held = searchBacktracksWildly(source, folded, piece.longest, piece.widest)
+      this.wildLines.set(key, held)
+    }
+    return held
+  }
+}
+
+interface Stretch extends Range {
+  longest: number
+  widest: number
+}
+
+const LONG_LINE = 2000
+
+function bucket(length: number): number {
+  return length > 0 ? Math.ceil(Math.log2(length)) : 0
+}
+
+function stretches(text: string): Stretch[] {
+  const out: Stretch[] = []
+  let start = 0
+  let at = 0
+  for (;;) {
+    const end = text.indexOf('\n', at)
+    const stop = end === -1 ? text.length : end
+    if (stop - at > LONG_LINE) {
+      if (at > start) out.push({ from: start, to: at, longest: 0, widest: 0 })
+      out.push({ from: at, to: stop, longest: stop - at, widest: widestRun(text, at, stop) })
+      start = stop
+    }
+    if (end === -1) break
+    at = end + 1
+  }
+  if (start < text.length || !out.length) {
+    out.push({ from: start, to: text.length, longest: 0, widest: 0 })
+  }
+  return out
+}
+
+function widestRun(text: string, from: number, to: number): number {
+  let widest = 0
+  let run = 0
+  for (let at = from; at < to; at++) {
+    const code = text.charCodeAt(at)
+    if (code === 32 || code === 9 || code === 13 || code === 0xa0 || code === 0x3000) {
+      run = 0
+      continue
+    }
+    run += 1
+    if (run > widest) widest = run
+  }
+  return widest
+}
+
+function found(pattern: RegExp, text: string, offset: number, out: Span[]) {
+  pattern.lastIndex = 0
+
+  for (;;) {
+    const match = pattern.exec(text)
+    if (!match) break
+
+    const from = match.index
+    const to = from + match[0].length
+
+    if (to === from) {
+      pattern.lastIndex = from + (pattern.unicode && (text.codePointAt(from) ?? 0) > 0xffff ? 2 : 1)
+      continue
+    }
+
+    out.push({
+      from: offset + from,
+      to: offset + to,
+      groups: Array.from({ length: match.length - 1 }, (_, index) => match[index + 1] ?? ''),
+    })
+
+    pattern.lastIndex = to
   }
 }

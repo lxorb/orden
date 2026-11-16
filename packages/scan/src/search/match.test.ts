@@ -286,6 +286,28 @@ describe('a regular expression that backtracks without end', () => {
   })
 })
 
+describe('a regular expression over a note with one very long line', () => {
+  const blob = `![shot](data:image/png;base64,${'iVBORw0KGgo'.repeat(16_000)})`
+  const body = `# Shots\n\nfix the TODO here\n\n${blob}\n\nmail me at me@example.com\n`
+
+  test('still finds what the other lines hold, and in time', () => {
+    const started = Date.now()
+    expect(lines('/.*TODO/', { body })).toEqual(['fix the TODO here'])
+    expect(lines('/\\S+@\\S+\\.\\S+/', { body })).toEqual(['mail me at me@example.com'])
+    expect(Date.now() - started).toBeLessThan(1500)
+  })
+
+  test('still looks inside that line when the pattern runs in time there', () => {
+    expect(answers('/BORw0K/', { body })).toBe(true)
+  })
+
+  test('still looks inside a long paragraph of words', () => {
+    const paragraph = `${'the quarter plan and the wind above the field, '.repeat(120)}thinking`
+    expect(answers('/\\w+ing\\b/', { body: paragraph })).toBe(true)
+    expect(answers('/\\w+ingz/', { body: paragraph })).toBe(false)
+  })
+})
+
 describe('regular expressions', () => {
   test('match what they describe', () => {
     expect(answers('/G[a-z]+a/')).toBe(true)
