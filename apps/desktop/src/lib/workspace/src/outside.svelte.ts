@@ -50,7 +50,7 @@ async function lookAt(path: string): Promise<void> {
 
 async function told(op: FileOp) {
   windows.say('file-op', { op })
-  await workspace.fileOps.tell({ ...op, heard: true })
+  await workspace.fileOps.tell({ ...op, heard: true, watched: true })
 }
 
 const kindOf = (dir: boolean) => (dir ? 'folder' : 'file')
