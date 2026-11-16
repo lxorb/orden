@@ -67,18 +67,19 @@ export function toggleWrap(before: string, after = before): StateCommand {
       const holding = from < to ? runAround(state, from, before, after) : null
       if (holding && to <= holding.to - after.length) {
         const words = { from: holding.from + before.length, to: holding.to - after.length }
+        const mark = doc.sliceString(holding.from, words.from)
         const changes: ChangeSpec[] = []
         if (from === words.from) changes.push({ from: holding.from, to: words.from })
         else {
           let close = from
           while (close > words.from && /\s/u.test(doc.sliceString(close - 1, close))) close--
-          changes.push({ from: close, insert: after })
+          changes.push({ from: close, insert: mark })
         }
         if (to === words.to) changes.push({ from: words.to, to: holding.to })
         else {
           let open = to
           while (open < words.to && /\s/u.test(doc.sliceString(open, open + 1))) open++
-          changes.push({ from: open, insert: before })
+          changes.push({ from: open, insert: mark })
         }
         const set = state.changes(changes)
         return {
@@ -874,7 +875,18 @@ function opensUnclosedFence(state: EditorState, line: Line): boolean {
   const code = enclosingNamed(here, 'FencedCode')
   if (!code) return enclosingNamed(here, NOT_PROSE) === null
   if (state.doc.lineAt(code.from).number !== line.number) return false
-  return code.getChildren('CodeMark').length < 2
+  if (code.getChildren('CodeMark').length < 2) return true
+  return takesALaterOpener(state, line, state.doc.lineAt(code.to).number)
+}
+
+function takesALaterOpener(state: EditorState, line: Line, closer: number): boolean {
+  const own = fenceOf(fenceLine(line.text).rest)
+  if (!own) return false
+  for (let number = line.number + 1; number < closer; number++) {
+    const later = fenceOf(fenceLine(state.doc.line(number).text).rest.trimStart())
+    if (later?.info && later.mark.startsWith(own.mark)) return true
+  }
+  return false
 }
 
 export const closeFence: StateCommand = ({ state, dispatch }) => {

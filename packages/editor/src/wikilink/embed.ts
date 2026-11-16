@@ -33,7 +33,7 @@ const MOST_EMBEDDED = 40_000
 
 const EMBED_MAX = 512
 
-const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter)$/
+const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode)$/
 
 function standsApart(state: EditorState, line: Line): boolean {
   if (line.text.trim() === '') return true

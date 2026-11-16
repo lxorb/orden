@@ -1,5 +1,10 @@
 import { syntaxTree } from '@codemirror/language'
-import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
+import {
+  type ChangeSpec,
+  EditorSelection,
+  type EditorState,
+  type StateCommand,
+} from '@codemirror/state'
 import {
   HIGHLIGHT_COLOURS,
   type HighlightColour,
@@ -69,6 +74,41 @@ function colourOf(inner: string): { colour: HighlightColour; from: number } {
   return bare ? { colour: bare, from: inner.length } : readHighlight(inner)
 }
 
+function splitOut(
+  state: EditorState,
+  run: { from: number; to: number; inner: string },
+  from: number,
+  to: number,
+  colour: HighlightColour,
+) {
+  const { colour: had, from: at } = colourOf(run.inner)
+  const start = run.from + MARK.length + at
+  const end = run.to - MARK.length
+  if (from < start || to > end) return null
+
+  const doc = state.doc
+  const opening = doc.sliceString(run.from, start)
+  const recolour = had.emoji === colour.emoji ? null : MARK + writeHighlight('', colour)
+  const changes: ChangeSpec[] = []
+
+  if (from === start) changes.push({ from: run.from, to: start })
+  else {
+    let close = from
+    while (close > start && /\s/u.test(doc.sliceString(close - 1, close))) close--
+    changes.push({ from: close, insert: MARK })
+  }
+  if (recolour) changes.push({ from, insert: recolour }, { from: to, insert: MARK })
+  if (to === end) changes.push({ from: end, to: run.to })
+  else {
+    let open = to
+    while (open < end && /\s/u.test(doc.sliceString(open, open + 1))) open++
+    changes.push({ from: open, insert: opening })
+  }
+
+  const set = state.changes(changes)
+  return { changes: set, range: EditorSelection.range(set.mapPos(from, 1), set.mapPos(to, -1)) }
+}
+
 export function toggleHighlight(colour: HighlightColour): StateCommand {
   return (target) => {
     const { state, dispatch } = target
@@ -79,6 +119,10 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
       const already = highlighted(state.doc, from, to) ?? (from === to ? runAt(state, from) : null)
+
+      const holding = !already && from < to ? runAt(state, from) : null
+      const split = holding && splitOut(state, holding, from, to, colour)
+      if (split) return split
 
       if (already) {
         const { colour: had, from: at } = colourOf(already.inner)

@@ -292,6 +292,7 @@ const Footnote: MarkdownConfig = {
             cx.elt('FootnoteMark', from, from + 2),
             cx.elt('FootnoteLabel', from + 2, from + 2 + label.length),
             cx.elt('FootnoteMark', from + 2 + label.length, from + whole.length),
+            ...cx.parser.parseInline(line.text.slice(line.pos + whole.length), from + whole.length),
           ]),
         )
         cx.nextLine()
@@ -356,7 +357,10 @@ const DefinitionList: MarkdownConfig = {
         const to = cx.lineStart + line.text.length
 
         cx.addElement(
-          cx.elt('DefinitionDetail', from, to, [cx.elt('DefinitionMark', from, from + 1)]),
+          cx.elt('DefinitionDetail', from, to, [
+            cx.elt('DefinitionMark', from, from + 1),
+            ...cx.parser.parseInline(line.text.slice(line.pos + 1), from + 1),
+          ]),
         )
         cx.nextLine()
         return true

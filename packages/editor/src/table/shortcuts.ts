@@ -1,6 +1,20 @@
-import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { ensureSyntaxTree } from '@codemirror/language'
+import { EditorSelection, EditorState, type Extension, type StateCommand } from '@codemirror/state'
 import { insertLink, toggleWrap } from '../commands'
 import { highlightSelection } from '../highlight'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
+
+let cellLanguage: Extension | null = null
+
+function inCellLanguage(): Extension {
+  cellLanguage ??= markdown({
+    base: markdownLanguage,
+    extensions: ordenMarkdownExtensions,
+    addKeymap: false,
+  })
+  return cellLanguage
+}
 
 export function runInCell(
   command: StateCommand,
@@ -8,7 +22,12 @@ export function runInCell(
   from: number,
   to: number,
 ): { text: string; from: number; to: number } | null {
-  const state = EditorState.create({ doc: text, selection: EditorSelection.range(from, to) })
+  const state = EditorState.create({
+    doc: text,
+    selection: EditorSelection.range(from, to),
+    extensions: inCellLanguage(),
+  })
+  ensureSyntaxTree(state, text.length, 1000)
 
   let result: { text: string; from: number; to: number } | null = null
   command({
