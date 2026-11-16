@@ -466,7 +466,7 @@ const LENT_UNMARKED = ACTIVE_FOR + 5_000
 
 export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
-  if (!tab) return null
+  if (!tab || (tab.path !== null && !seen(tab.path))) return null
 
   const lending = portOf('web.lending')
   if (!lending.ok) return null

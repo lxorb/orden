@@ -1596,6 +1596,9 @@ describe('a page into a note', () => {
       )
       expect(JSON.stringify(await call('get_context', {}))).not.toContain('docs.example')
       expect(readerTabs().map((one) => one.id)).not.toContain('w1')
+      lending.lend.mockClear()
+      await answerTheCrate('agent.lend', { tab: 'w1' })
+      expect(lending.lend).not.toHaveBeenCalled()
     } finally {
       protection.set('/s/Work', '/s/Work/Docs.url', null)
     }
