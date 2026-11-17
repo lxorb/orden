@@ -524,7 +524,7 @@ export function sectionOf(
   source: string,
   link: Pick<Wikilink, 'heading' | 'block'>,
 ): string | null {
-  if (link.block !== null) return blockSection(source, link.block)
+  if (link.block !== null) return blockSection(source, link.block)?.text ?? null
   if (link.heading !== null) return headingSection(source, link.heading)
   return source
 }
@@ -588,6 +588,7 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
     spread((one) => !one.code && TABLE_ROW.test(one.text))
   } else if (!OWN_BLOCK.test(text)) {
     const quoted = QUOTED.test(text)
+    const item = !quoted && LIST_ITEM.test(text)
     spread(
       (one) =>
         !one.code &&
@@ -596,12 +597,25 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
         QUOTED.test(one.text) === quoted &&
         (quoted || !LIST_ITEM.test(one.text)),
     )
+    if (item) start = at
   }
 
   return { start, end }
 }
 
-function blockSection(source: string, wanted: string): string | null {
+export function sectionLine(
+  source: string,
+  link: Pick<Wikilink, 'heading' | 'block'>,
+): number | null {
+  return link.block === null ? null : (blockSection(source, link.block)?.from ?? null)
+}
+
+interface Section {
+  from: number
+  text: string
+}
+
+function blockSection(source: string, wanted: string): Section | null {
   const found = blockIds(source).find((one) => one.id === wanted)
   if (!found) return null
 
@@ -615,7 +629,7 @@ function blockSection(source: string, wanted: string): string | null {
   const block = lines.slice(start, end + 1)
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
-  return block.join('\n').trimEnd()
+  return { from: start, text: block.join('\n').trimEnd() }
 }
 
 const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
@@ -636,7 +650,7 @@ export function itemHolding(lines: readonly string[], at: number): number | null
   return null
 }
 
-function itemSection(lines: readonly string[], at: number): string | null {
+function itemSection(lines: readonly string[], at: number): Section | null {
   const owner = itemHolding(lines, at)
   if (owner === null) return null
 
@@ -649,12 +663,14 @@ function itemSection(lines: readonly string[], at: number): string | null {
     end = next
   }
 
-  return lines
+  const text = lines
     .slice(owner, end + 1)
     .map((line, index) => (owner + index === at ? line.replace(BLOCK_ID, '') : line))
     .map((line) => line.slice(Math.min(depth, indentOf(line))))
     .join('\n')
     .trimEnd()
+
+  return { from: owner, text }
 }
 
 export function ownLine(line: string): boolean {
@@ -668,24 +684,34 @@ function inList(line: string): boolean {
 
 function listStart(lines: readonly string[], last: number): number | null {
   let start: number | null = null
-  for (let above = last; above >= 0 && inList(lines[above] ?? ''); above--) {
-    if (LIST_ITEM.test(lines[above] ?? '')) start = above
+  for (let above = last; above >= 0; above--) {
+    const line = lines[above] ?? ''
+    if (!line.trim()) continue
+    if (!inList(line)) break
+    if (LIST_ITEM.test(line)) start = above
   }
   return start
 }
 
-function blockAbove(source: string, lines: readonly string[], under: number): string {
+function blockAbove(source: string, lines: readonly string[], under: number): Section {
   const rows = rowsOf(source)
   let last = under - 1
   while (last > 0 && !(lines[last] ?? '').trim() && !rows[last]?.code) last--
-  if (last < 0) return ''
+  if (last < 0) return { from: 0, text: '' }
 
-  const start = listStart(lines, last) ?? blockAround(rows, last).start
+  const touching = last === under - 1
+  const item = touching ? itemSection(lines, last) : null
+  if (item) return item
 
-  return lines
-    .slice(start, last + 1)
-    .join('\n')
-    .trimEnd()
+  const start = (touching ? null : listStart(lines, last)) ?? blockAround(rows, last).start
+
+  return {
+    from: start,
+    text: lines
+      .slice(start, last + 1)
+      .join('\n')
+      .trimEnd(),
+  }
 }
 
 export function freeBlockId(taken: ReadonlySet<string>): string {

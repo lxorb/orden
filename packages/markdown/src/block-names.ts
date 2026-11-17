@@ -4,6 +4,10 @@ const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]
 
 const AN_ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/u
 
+const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/u
+
+const QUOTE = /^ {0,3}>/u
+
 const TABLE_RULE = /^[\s|:-]*-[\s|:-]*$/u
 
 function nameStandsApart(run: readonly Row[]): boolean {
@@ -54,12 +58,18 @@ function endOf(rows: readonly Row[], line: number): number {
     }
   }
 
+  if (!rows[line]?.code && HEADING.test(first)) return line
+
   let end = line
   for (;;) {
+    const here = rows[end]
     const next = rows[end + 1]
     if (!next) return end
-    if (rows[end]?.code ? !next.code : !next.text.trim()) return end
-    if (!next.code && AN_ITEM.test(next.text)) return end
+    if (here?.code ? !next.code : !next.text.trim()) return end
+    if (!next.code && (AN_ITEM.test(next.text) || HEADING.test(next.text))) return end
+    if (!here?.code && !next.code && QUOTE.test(next.text) !== QUOTE.test(here?.text ?? '')) {
+      return end
+    }
     end++
   }
 }

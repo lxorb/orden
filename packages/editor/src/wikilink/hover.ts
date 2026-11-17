@@ -7,7 +7,7 @@ import {
   type Tooltip,
   type TooltipView,
 } from '@codemirror/view'
-import { isTabFile, linkTarget, sectionOf } from '@orden/markdown/links'
+import { isTabFile, linkTarget, sectionLine, sectionOf } from '@orden/markdown/links'
 import { followAnchors, modifierHeld } from '../links'
 import { type LinkSpan, linkAt } from './at'
 import { noteIndex, resolveLink } from './notes'
@@ -31,7 +31,21 @@ export const previewNoteOf = (
   path: string,
   text: string,
   section: string,
-): PreviewNote => ({ path, text, at: anchorOf(text, section), readOnly: state.readOnly })
+  link: Pick<LinkSpan, 'heading' | 'block'> = { heading: null, block: null },
+): PreviewNote => ({
+  path,
+  text,
+  at: lineStart(text, sectionLine(text, link)) ?? anchorOf(text, section),
+  readOnly: state.readOnly,
+})
+
+function lineStart(text: string, line: number | null): number | null {
+  if (line === null) return null
+  return text
+    .split('\n')
+    .slice(0, line)
+    .reduce((at, one) => at + one.length + 1, 0)
+}
 
 export type PreviewMount = (host: HTMLElement, note: PreviewNote) => (() => void) | null
 
@@ -145,7 +159,7 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
           const host = document.createElement('div')
           release = view.state.facet(previewEditor)(
             host,
-            previewNoteOf(view.state, path, source, section),
+            previewNoteOf(view.state, path, source, section, link),
           )
 
           if (release) {
