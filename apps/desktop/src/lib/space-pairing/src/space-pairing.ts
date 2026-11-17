@@ -10,6 +10,7 @@ import {
 import { forgetSeedSpace, seedSpaceRoot } from '../../seeded/src/api'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
+import { mendSharedCopies } from './shared-copies'
 import { samePath, invoke, isNative } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import {
@@ -193,6 +194,8 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
       () => undefined,
     )
   }
+
+  if (who) await mendSharedCopies(token, who, pairing, mirrors).catch(() => undefined)
 
   if (owes !== null && (await orderSent(token, owes))) return
   const order = paired()
