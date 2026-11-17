@@ -54,7 +54,7 @@
     sending = true
     try {
       const name = title.trim() || 'Untitled'
-      const path = await addNote(base, live.at, kit.file, undefined, {
+      const path = await addNote(base, live.at, kit.home, undefined, {
         title: name,
         properties,
         open: false,

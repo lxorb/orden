@@ -114,6 +114,12 @@ export const EN: Grammar = {
     yearly: 'every year',
     annually: 'every year',
   },
+  ofTheMonth: [
+    ['of', 'the', 'month'],
+    ['of', 'month'],
+    ['of', 'every', 'month'],
+    ['of', 'each', 'month'],
+  ],
   starting: new Set(['starting', 'from']),
   until: new Set(['until']),
   workdays: new Set(['weekday', 'weekdays', 'workday', 'workdays']),

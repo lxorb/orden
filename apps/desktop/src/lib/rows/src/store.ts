@@ -25,6 +25,7 @@ export interface RowsChange {
   removed: readonly Row[]
   added: readonly Row[]
   from?: { space: string; path: string; rows: readonly Row[] }
+  firstRead?: true
 }
 
 export type RowsListener = (change: RowsChange) => void
@@ -42,12 +43,16 @@ export interface Host {
 
 const CHUNK = 250
 
+const encoder = new TextEncoder()
+const bytesOf = (text: string): number => encoder.encode(text).length
+
 interface Held {
   root: string
   name: string
   files: Map<string, Row[]>
   flat: Row[] | null
   reading: boolean
+  known: boolean
   since: ((files: Map<string, Row[]>) => void)[]
   vault: boolean
 }
@@ -139,7 +144,7 @@ export class RowsStore {
     this.edit(held, key, (before) => {
       const known = before?.[0]?.file.ctime ?? 0
       const ctime = known > 0 ? known : now
-      const stamp = { size: content.length, mtime: now, ctime }
+      const stamp = { size: bytesOf(content), mtime: now, ctime }
       return this.rowsIn(
         held,
         readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
@@ -225,6 +230,7 @@ export class RowsStore {
       path,
       removed: before,
       added: after,
+      ...(held.known ? {} : { firstRead: true as const }),
     }
     this.tell(from ? { ...told, from } : told)
   }
@@ -236,6 +242,7 @@ export class RowsStore {
       files: new Map(),
       flat: null,
       reading: true,
+      known: false,
       since: [],
       vault: false,
     }
@@ -390,7 +397,7 @@ export class RowsStore {
       if (note.tasks === undefined) {
         const content = await this.host.read(insideSpace(held.root, note.path))
         if (content !== null) {
-          const stamp = { size: content.length, mtime: this.host.now(), ctime: this.host.now() }
+          const stamp = { size: bytesOf(content), mtime: this.host.now(), ctime: this.host.now() }
           files.set(
             pathKey(note.path, held.root),
             this.rowsIn(held, readOf({ ...note, ...scanRows(content), stamp })),
@@ -410,6 +417,7 @@ export class RowsStore {
     held.files = files
     held.flat = null
     held.reading = false
+    held.known = true
     this.tell({ root: held.root, space: held.name, path: null, removed, added: this.flat(held) })
   }
 
@@ -425,7 +433,7 @@ export class RowsStore {
 }
 
 export function noteRowsOf(space: string, relative: string, content: string): Row[] {
-  const stamp = { size: content.length, mtime: 0, ctime: 0 }
+  const stamp = { size: bytesOf(content), mtime: 0, ctime: 0 }
   return rowsOf(space, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
 }
 

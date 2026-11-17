@@ -20,13 +20,28 @@ interface Getter {
   clock: boolean
 }
 
+const PLAIN_NAME = /^[A-Za-z_$][\w$]*$/
+
+function keyNamed(property: string): string | null {
+  const name = property.startsWith('note.')
+    ? property.slice(5)
+    : /^(file|formula|task|this)\./.test(property)
+      ? null
+      : property
+  return name === null || PLAIN_NAME.test(name) ? null : name
+}
+
 function getter(property: string): Getter {
   try {
     const compiled = compile(property)
+    const key = keyNamed(property)
     return {
       local: compiled.local,
       clock: compiled.clock,
       run: (scope) => {
+        if (key !== null && scope.row && Object.hasOwn(scope.row.note, key)) {
+          return fieldOf(scope.row.note, key)
+        }
         try {
           return compiled.run(scope)
         } catch {
@@ -57,6 +72,17 @@ function getter(property: string): Getter {
       run: (scope) => (scope.row ? fieldOf(scope.row.note, name) : null),
     }
   }
+}
+
+const thisIds = new WeakMap<Row, number>()
+let thisCount = 0
+
+function thisId(row: Row): number {
+  const known = thisIds.get(row)
+  if (known !== undefined) return known
+  thisCount += 1
+  thisIds.set(row, thisCount)
+  return thisCount
 }
 
 const NONE: Getter = { local: true, clock: false, run: () => null }
@@ -139,8 +165,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     const key = [
       context.today,
       clock ? context.now : '',
-      context.this?.path ?? '',
-      context.this?.space ?? '',
+      context.this ? thisId(context.this) : '',
       context.me ?? '',
     ].join('\n')
     if (!local || key !== factsFor) {
