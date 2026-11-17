@@ -118,7 +118,7 @@ export interface Head {
   kept: boolean
 }
 
-export type ChatHost = 'side' | 'tab'
+export type ChatHost = string
 
 export interface Around {
   front: Front | null

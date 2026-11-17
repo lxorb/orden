@@ -493,11 +493,13 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'chat'}
-    {#await askPanel() then ChatPanel}
-      <ChatPanel wide />
-    {:catch}
-      {@render unreachable()}
-    {/await}
+    {#key tab.id}
+      {#await askPanel() then ChatPanel}
+        <ChatPanel wide {tab} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
   {:else if tab?.kind === 'terminal'}
     {#key tab.id}
       {#await terminalSurface() then TerminalTab}

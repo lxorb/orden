@@ -259,6 +259,10 @@ if (!__EVEN_PLUGIN__) {
   })
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+  registerCommand(
+    'ai.tab',
+    async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab,
+  )
   registerCommand('ai.threads', async () => {
     const { chat } = await (await import('./ai-chat/src/api')).chatStore()
     return () => chat.showThreads()

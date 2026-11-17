@@ -6,7 +6,7 @@
   import { hearAgain } from '../../shortcuts/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { ai } from '../../ai-providers/src/api'
-  import { agentMarks } from '../../workspace/src/api'
+  import { agentMarks, type Tab, workspace } from '../../workspace/src/api'
   import { agentSession } from '../../surfaces/src/api'
   import { following, toggleFollow } from './chat-parts'
   import { chat } from './chat-parts'
@@ -21,10 +21,37 @@
   const {
     ongoto,
     wide = false,
-  }: { ongoto?: ((line: number) => void) | undefined; wide?: boolean } = $props()
+    tab,
+  }: { ongoto?: ((line: number) => void) | undefined; wide?: boolean; tab?: Tab } = $props()
 
-  const host = untrack(() => (wide ? 'tab' : 'side'))
+  const host = untrack(() => tab?.id ?? (wide ? 'tab' : 'side'))
   setHost(host)
+
+  let turning = $state(false)
+  const bound = $derived(!tab || (tab.address ?? null) === (chat.head?.kept ? chat.head.id : null))
+  const shown = $derived(bound || turning || chat.host === host)
+  const front = $derived(
+    !!tab &&
+      workspace.panes.focusedId === tab.paneId &&
+      workspace.panes.at(tab.paneId)?.activeTabId === tab.id,
+  )
+
+  $effect(() => {
+    if (front) untrack(claim)
+  })
+
+  $effect(() => {
+    const head = chat.head
+    if (!tab || turning || chat.host !== host) return
+    const id = head?.kept ? head.id : undefined
+    const name = head?.kept ? head.title || 'Untitled' : 'New chat'
+    if (tab.address === id && tab.name === name) return
+    untrack(() => {
+      tab.address = id
+      tab.name = name
+      workspace.persist()
+    })
+  })
 
   let root = $state<HTMLElement>()
   let railed = $state(railOpen())
@@ -63,14 +90,30 @@
       chat.popover = null
       chat.host = host
     }
+    if (!tab || turning) return
+    const want = tab.address
+    if (!bound && !want) chat.newThread()
+    if (bound || !want) {
+      chat.listing = true
+      return
+    }
+    turning = true
+    void chat.openThread(want, false).finally(() => {
+      turning = false
+      if (chat.head?.id !== want) {
+        tab.address = undefined
+        chat.newThread()
+      }
+      chat.listing = true
+    })
   }
 
   onMount(() => {
-    chat.host = host
+    if (!tab) chat.host = host
     hearAgain(() => {
       const at = document.activeElement
       const box = root
-      if (!box?.contains(at) || chat.listing || at?.tagName !== 'TEXTAREA') return false
+      if (!box?.contains(at) || listing || at?.tagName !== 'TEXTAREA') return false
       if (!wide) chat.showThreads()
       else {
         railed = true
@@ -84,7 +127,7 @@
     }
     return () => {
       hearAgain(null)
-      if (chat.host === host) chat.host = host === 'tab' ? 'side' : 'tab'
+      if (chat.host === host && !front) chat.host = 'side'
     }
   })
 </script>
@@ -110,7 +153,7 @@
   {/if}
 
   <div class="main">
-    {#if wide || (head?.kept && !listing && session === null)}
+    {#if shown && (wide || (head?.kept && !listing && session === null))}
       <header class="top">
         {#if wide}
           <button
@@ -161,8 +204,13 @@
       </header>
     {/if}
 
-    {#if listing}
-      <Threads />
+    {#if !shown}
+      <button class="elsewhere" onclick={claim}>
+        <span>{tab?.name ?? 'Untitled'}</span>
+        <span class="hint">Click to continue this chat here</span>
+      </button>
+    {:else if listing}
+      <Threads quiet={chat.host !== host} />
     {:else if session !== null}
       {#if !wide}
         <header class="top">
@@ -214,6 +262,20 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+  }
+
+  .elsewhere {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--text);
+  }
+
+  .elsewhere .hint {
+    color: var(--muted);
+    font-size: var(--text-sm);
   }
 
   .shelf {

@@ -193,6 +193,7 @@ def heading_key(page) -> None:
 
 LINES = [
     ["New note", "New canvas", "New page note"],
+    ["New AI chat"],
     ["Online terminal"],
     ["New web note"],
     ["New application", "Pass"],
@@ -219,7 +220,7 @@ def chooser(page) -> None:
         wrong(f"the kinds are not in Emil's lines: {new['lines']}")
     else:
         say(f"the lines              -> {new['lines']}")
-    if new["letters"] != ["N", "C", "P", "O", "W", "A", "K"]:
+    if new["letters"] != ["N", "C", "P", "Q", "O", "W", "A", "K"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
     settles(page, f"() => ({CALLED})().title === 'New tab'")
     called = page.evaluate(CALLED)
@@ -410,7 +411,7 @@ def nothing_open(page) -> None:
     if any(one is None for one in marks):
         wrong(f"a button wears no mark at all: {marks}")
     else:
-        files = [one for one, name in zip(marks, here["buttons"]) if name != "Online terminal"]
+        files = [one for one, name in zip(marks, here["buttons"]) if name not in ("Online terminal", "New AI chat")]
         sizes = {(one["top"], one["tall"]) for one in files}
         if len(sizes) != 1:
             wrong(f"the marks do not fill the same height of their grid: {sorted(sizes)}")

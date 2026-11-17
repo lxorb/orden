@@ -56,6 +56,15 @@ export function offeredKinds(): NewKindRow[] {
   return newKinds().filter((one) => shown.includes(one.kind) && (chats || one.kind !== 'chat'))
 }
 
+const SPARK: IconNode = [
+  [
+    'path',
+    {
+      d: 'M12 3.7c.74 4.8 3.5 7.56 8.3 8.3-4.8.74-7.56 3.5-8.3 8.3-.74-4.8-3.5-7.56-8.3-8.3 4.8-.74 7.56-3.5 8.3-8.3z',
+    },
+  ],
+]
+
 const ROWS: Record<KindName, () => NewKindRow> = {
   note: () => ({
     kind: 'note',
@@ -89,6 +98,17 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'm',
     make: (paneId) => {
       if (!__EVEN_PLUGIN__) inPane(paneId, () => tabKindLoaded('chat').then((one) => one.make?.()))
+    },
+  }),
+  ai: () => ({
+    kind: 'ai',
+    line: 'chats',
+    label: () => kindLabel('ai'),
+    mark: 'chat',
+    icon: SPARK,
+    letter: 'q',
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => runCommand('ai.tab'))
     },
   }),
   explorer: () => ({

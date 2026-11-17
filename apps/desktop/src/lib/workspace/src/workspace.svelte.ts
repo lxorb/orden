@@ -1565,14 +1565,23 @@ class Workspace {
     return tab !== null && this.panes.at(tab.paneId)?.activeTabId === tab.id
   }
 
-  openChat() {
-    const was = this.singleHere('chat')
+  openChat(thread?: string, name = 'New chat'): string {
+    const was = thread
+      ? this.tabs.find((one) => this.isHere(one, 'chat') && one.address === thread)
+      : null
+    const tab =
+      was ??
+      new Tab(
+        this.document({ kind: 'chat', path: null, name, text: '', dirty: false }),
+        this.panes.focusedId,
+      )
     if (was) this.panes.activate(was.paneId, was.id)
     else {
-      const doc = { kind: 'chat', path: null, name: 'Ask', text: '', dirty: false } as const
-      this.add(new Tab(this.document(doc), this.panes.focusedId))
+      tab.address = thread
+      this.add(tab)
     }
     this.persist()
+    return tab.id
   }
 
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
@@ -3991,7 +4000,9 @@ class Workspace {
   }
 
   canDuplicateTab(tab: Tab): boolean {
-    return !viewport.touch && tab.kind !== 'graph' && !TAB_KINDS[tab.kind].single
+    return (
+      !viewport.touch && tab.kind !== 'graph' && tab.kind !== 'chat' && !TAB_KINDS[tab.kind].single
+    )
   }
 
   canSplit(along: Along, tabId?: string): boolean {

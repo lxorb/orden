@@ -115,7 +115,7 @@
       {:else if current.kind === 'channel'}
         {#await chatSurface() then ChatTab}<ChatTab tab={current} />{/await}
       {:else if current.kind === 'chat'}
-        {#await askPanel() then ChatPanel}<ChatPanel wide />{/await}
+        {#await askPanel() then ChatPanel}<ChatPanel wide tab={current} />{/await}
       {:else if current.kind === 'explorer'}
         {#await explorerSurface() then ExplorerTab}<ExplorerTab
             tab={current}

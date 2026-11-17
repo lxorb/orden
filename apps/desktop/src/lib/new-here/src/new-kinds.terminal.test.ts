@@ -51,6 +51,7 @@ describe('a terminal, as a kind a new tab can be', () => {
   test('starts the terminals, with Remote and Online after it', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
+      ['ai'],
       ['terminal', 'remote', 'online'],
       ['web', 'private'],
       ['application', 'explorer', 'pass'],
@@ -63,6 +64,7 @@ describe('a terminal, as a kind a new tab can be', () => {
     try {
       expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
         ['note', 'canvas', 'pages'],
+        ['ai'],
         ['web', 'private'],
         ['application', 'explorer', 'pass'],
       ])

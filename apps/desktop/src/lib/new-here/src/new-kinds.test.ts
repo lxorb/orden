@@ -1,4 +1,4 @@
-import { providePort, registerTabKind } from '@orden/contracts'
+import { providePort, registerCommand, registerTabKind } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -31,6 +31,7 @@ providePort('terminal.making', {
   online: noting('online'),
 })
 registerTabKind('application', () => Promise.resolve({ make: noting('application') }))
+registerCommand('ai.tab', () => Promise.resolve(() => void noting('ai')()))
 
 await import('../../web-tab/src/api')
 const { fitsWhole, groupOf, kindLines, newKinds } = await import('./new-kinds')
@@ -68,11 +69,12 @@ function makers(): string[] {
 }
 
 describe('the kinds a new tab can be', () => {
-  test('are the four, an online terminal, an application and Pass, in the order a reader is offered them', () => {
+  test('are the four, an AI chat, an online terminal, an application and Pass, in the order a reader is offered them', () => {
     expect(newKinds().map((one) => one.kind)).toEqual([
       'note',
       'canvas',
       'pages',
+      'ai',
       'online',
       'application',
       'pass',
@@ -80,9 +82,10 @@ describe('the kinds a new tab can be', () => {
     ])
   })
 
-  test('stand in groups: notes, terminals, the browser, then the apps', () => {
+  test('stand in groups: notes, chats, terminals, the browser, then the apps', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
+      ['ai'],
       ['online'],
       ['web'],
       ['application', 'pass'],
@@ -90,7 +93,7 @@ describe('the kinds a new tab can be', () => {
   })
 
   test('fold into one card a group of several, which offers them all, and leave one alone', async () => {
-    const [notes, terminals] = kindLines(newKinds())
+    const [notes, , terminals] = kindLines(newKinds())
     expect(groupOf(terminals ?? [])?.kind).toBe('online')
     expect(groupOf(terminals ?? [])?.grouped).toBeUndefined()
 
@@ -121,6 +124,7 @@ describe('the kinds a new tab can be', () => {
       'New note',
       'New canvas',
       'New page note',
+      'New AI chat',
       'Online terminal',
       'New application',
       'Pass',
@@ -133,6 +137,7 @@ describe('the kinds a new tab can be', () => {
       'note',
       'canvas',
       'pages',
+      'chat',
       'terminal',
       'application',
       'key',
@@ -170,6 +175,7 @@ describe('the kinds a new tab can be', () => {
 
     await vi.waitFor(() =>
       expect([...made].sort()).toEqual([
+        'ai',
         'application',
         'canvas',
         'note',
@@ -212,7 +218,7 @@ describe('the kinds a new tab can be', () => {
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 
-    expect(letters).toEqual(['n', 'c', 'p', 'o', 'a', 'k', 'w'])
+    expect(letters).toEqual(['n', 'c', 'p', 'q', 'o', 'a', 'k', 'w'])
     expect(new Set(letters).size).toBe(letters.length)
   })
 })

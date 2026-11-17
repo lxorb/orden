@@ -82,16 +82,12 @@ describe('a tab that is one of its kind', () => {
     await workspace.selectSpace('food')
     workspace.openSettings()
     workspace.openSettings()
-    workspace.openChat()
-    workspace.openChat()
     await workspace.selectSpace('work')
     workspace.openSettings()
-    workspace.openChat()
 
     expect(workspace.activeSpaceId).toBe('work')
-    expect(workspace.active?.kind).toBe('chat')
+    expect(workspace.active?.kind).toBe('settings')
     expect(workspace.tabs.filter((one) => one.kind === 'settings')).toHaveLength(2)
-    expect(workspace.tabs.filter((one) => one.kind === 'chat')).toHaveLength(2)
   })
   test('moved into a space that has its own is let go there, not kept as a second', async () => {
     const workspace = await window()
