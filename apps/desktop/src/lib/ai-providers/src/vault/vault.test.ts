@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { added, type Accounts, NONE } from '../accounts'
+import { added, type Accounts, NONE, resolve, updated } from '../accounts'
 import type { Base, Contents } from './merge'
 import { newNonce } from '../pairing'
 import { deviceKeyIn, newDeviceKey, open, unwrap } from './crypto'
@@ -226,9 +226,9 @@ describe('the AI accounts on two devices', () => {
 
     const said: string[] = []
     const apply = phone.world.apply.bind(phone.world)
-    phone.world.apply = async (contents, before) => {
+    phone.world.apply = async (contents, before, moved) => {
       said.push(phone.vault.standing)
-      await apply(contents, before)
+      await apply(contents, before, moved)
     }
     await phone.vault.join()
 
@@ -299,6 +299,35 @@ describe('the AI accounts on two devices', () => {
     await laptop.vault.refresh()
     expect(laptop.here.keys.anthropic).toBe('sk-typed-on-the-phone')
     expect(laptop.here.accounts.accounts.map((one) => one.id)).toEqual(['anthropic', 'openai'])
+  })
+
+  test('an account here under the id of a different one there moves to a fresh id, and what was on it here goes with it', async () => {
+    const account = new Account()
+    const router = updated(added(NONE, 'compatible').state, 'compatible-1', {
+      name: 'OpenRouter',
+      baseUrl: 'https://openrouter.ai/api/v1',
+    })
+    const ollama = updated(added(NONE, 'compatible').state, 'compatible-1', {
+      name: 'Ollama',
+      baseUrl: 'http://localhost:11434/v1',
+    })
+    const laptop = device(account, 'Laptop', router)
+    await laptop.vault.refresh()
+    const phone = device(account, 'Phone', ollama)
+    await letIn(laptop, phone)
+    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+    await phone.vault.refresh()
+
+    const thread = { provider: 'compatible-1' }
+    const apply = phone.world.apply.bind(phone.world)
+    phone.world.apply = async (contents, before, moved) => {
+      thread.provider = moved[thread.provider] ?? thread.provider
+      await apply(contents, before, moved)
+    }
+    await phone.vault.join()
+
+    expect(resolve(phone.here.accounts, 'compatible-1')?.name).toBe('OpenRouter')
+    expect(resolve(phone.here.accounts, thread.provider)?.name).toBe('Ollama')
   })
 
   test('a device offered the vault opens nothing, takes nothing and gives nothing until it joins', async () => {

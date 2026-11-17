@@ -185,9 +185,10 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
 
   const named = maybe(call, 'note')
   const target = named === null ? null : judgedForWriting(named)
+  const folder = maybe(call, 'folder')
   const relative =
     target === null
-      ? await freshPath(place, maybe(call, 'folder'), page.title || page.url)
+      ? await freshPath(place, folder && judgedForWriting(folder), page.title || page.url)
       : notePath(target)
   if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
 

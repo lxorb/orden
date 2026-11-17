@@ -166,6 +166,21 @@ describe('a thread kept', () => {
     expect(await readThread('space-2', 'there')).not.toBeNull()
   })
 
+  test('on an account the vault moved to a fresh id is on that id, unless written since', async () => {
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    await writeThread({ ...had(), id: 'before', provider: 'compatible-1', updated: 1_000 })
+    await writeThread({ ...had(), id: 'after', provider: 'compatible-1', updated: 3_000 })
+    keepMoves({ 'compatible-1': 'compatible-2' }, 2_000)
+
+    expect((await readThread('space-1', 'before'))?.provider).toBe('compatible-2')
+    expect((await readThread('space-1', 'after'))?.provider).toBe('compatible-1')
+    const heads = await listThreads('space-1')
+    expect(Object.fromEntries(heads.map((one) => [one.id, one.provider]))).toEqual({
+      before: 'compatible-2',
+      after: 'compatible-1',
+    })
+  })
+
   test('is gone once deleted', async () => {
     const thread = had()
     await writeThread(thread)

@@ -223,4 +223,15 @@ describe('the agent an edit was made by', () => {
     expect(providerOf('nib-anthropic')).toBe('anthropic')
     expect(providerOf('claude-code')).toBeNull()
   })
+
+  test('follows an account the vault moved to a fresh id to the agent rights it had', async () => {
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ gemini: 'gemini-2' })
+
+    expect(agentOf('gemini-2')).toBe('orden-gemini')
+    expect(agentsOf('gemini-2')).toEqual(['orden-gemini', 'nib-gemini'])
+    expect(providerOf('orden-gemini')).toBe('gemini-2')
+    expect(providerOf(agentOf('gemini'))).toBe('gemini')
+    expect(agentOf('gemini')).not.toBe('orden-gemini')
+  })
 })

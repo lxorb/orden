@@ -3,6 +3,7 @@ import { plan, readEdits, type Replacement } from '../../../agent-docs/src/api'
 import { type Row, lineDiff, trimmed } from '@orden/markdown/line-diff'
 import { applied } from '@orden/scan/search/replace'
 import { insideSpace, notePath } from '../../../platform/src/api'
+import { protection } from '../../../protect/src/api'
 import { spaceNamed, verbOf } from '../chat-parts'
 
 export type Words = (path: string) => Promise<string | null>
@@ -70,6 +71,7 @@ export async function previewOf(
 
   const relative = notePath(path) ?? path
   const at = insideSpace(space.root, relative)
+  if (!protection.agentsMay(at)) return null
   const before = verb === 'create_note' ? '' : ((await words(at)) ?? '').replace(/\r\n?/g, '\n')
   const edits = editsOf(verb, given, before)
   if (!edits) return null

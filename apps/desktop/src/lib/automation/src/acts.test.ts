@@ -426,3 +426,30 @@ describe('the space’s instructions, which a move does not make', () => {
     )
   })
 })
+
+describe('a note the reader protected', () => {
+  test('is not written over, moved out of its lock or deleted from the command line', async () => {
+    const { protection } = await import('../../protect/src/protection.svelte')
+    held.clear()
+    held.set('/Work/Locked/Diary.md', '# Diary')
+    written.length = 0
+    moves.rename.mockClear()
+    moves.moveMany.mockClear()
+    protection.set('/Work', '/Work/Locked', 'password')
+    try {
+      const asked = [
+        () => writeFile({ path: 'Locked/Diary.md', content: 'Gone.' }),
+        () => appendNote({ path: 'Locked/Diary.md', content: 'A line.' }),
+        () => moveFile({ path: 'Locked/Diary.md', to: 'Diary.md' }),
+        () => deleteFile({ path: 'Locked/Diary.md' }),
+      ]
+      for (const one of asked) await expect(one()).rejects.toThrow(/is protected/)
+      expect(written).toEqual([])
+      expect(moves.rename).not.toHaveBeenCalled()
+      expect(moves.moveMany).not.toHaveBeenCalled()
+      expect(held.get('/Work/Locked/Diary.md')).toBe('# Diary')
+    } finally {
+      protection.set('/Work', '/Work/Locked', null)
+    }
+  })
+})

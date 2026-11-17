@@ -51,6 +51,10 @@ export function insidePath(asked: string): string {
   return safe
 }
 
+export function agentsMayAll(path: string, relative: string): void {
+  if (!protection.agentsMayAll(path)) throw new Error(`${relative} is protected`)
+}
+
 export async function noteFor(args: Said, name = 'path', writing = false): Promise<Note> {
   const space = await (writing ? spaceToWrite : spaceFor)(args)
 

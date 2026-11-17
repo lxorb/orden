@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type { Part } from '../../../ai-providers/src/api'
+  import type { Part, Thread } from '../../../ai-providers/src/api'
   import { workspace } from '../../../workspace/src/api'
   import { diffCount } from '@orden/markdown/line-diff'
   import { type Preview, previewOf } from './preview'
   import Tally from './Tally.svelte'
 
-  const { part }: { part: Extract<Part, { kind: 'tool' }> } = $props()
+  const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } =
+    $props()
 
   let shown = $state.raw<Preview | null>(null)
 
@@ -15,7 +16,7 @@
       part.verb,
       part.args,
       workspace.spaces,
-      workspace.activeSpaceId ?? undefined,
+      thread?.space ?? workspace.activeSpaceId ?? undefined,
       (path) => workspace.noteText(path).catch(() => null),
     ).then((made) => {
       if (current) shown = made
