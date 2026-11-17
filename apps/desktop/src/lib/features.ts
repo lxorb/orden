@@ -228,6 +228,10 @@ if (!__EVEN_PLUGIN__) {
     async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
   )
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  registerCommand('app.handwriting', async () => {
+    const { handwrite } = await (await import('./canvas/src/api')).handwriting()
+    return () => void handwrite()
+  })
   providePort('explorer.show', {
     offered: () => hiddenKinds.offers('explorer'),
     show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),

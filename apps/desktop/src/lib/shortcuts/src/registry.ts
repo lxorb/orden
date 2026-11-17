@@ -692,6 +692,14 @@ const APP_ENTRIES: Shortcut[] = [
     ? []
     : [
         {
+          id: 'app.handwriting',
+          label: () => 'Handwriting',
+          category: 'paragraph',
+          scope: 'app',
+          key: null,
+          run: () => void runCommand('app.handwriting'),
+        } satisfies Shortcut,
+        {
           id: 'app.tasks',
           label: () => 'Todos',
           category: 'view',
