@@ -810,6 +810,7 @@ mod tests {
             "x.md".into(),
             "note".into(),
             true,
+            false,
         )
         .expect("deleted")
         .id;
