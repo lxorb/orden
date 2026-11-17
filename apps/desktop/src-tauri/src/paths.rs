@@ -778,6 +778,22 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
         .replace('\\', "/")
 }
 
+pub(crate) fn opened_file(path: &Path) -> std::io::Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = options.open(path)?;
+    if file.metadata()?.is_file() {
+        Ok(file)
+    } else {
+        Err(std::io::Error::other("not a file that can be read"))
+    }
+}
+
 pub fn at_most(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
     Ok(at_most_stamped(target, limit)?.map(|(bytes, _)| bytes))
 }
@@ -786,8 +802,7 @@ pub fn at_most_stamped(
     target: &Path,
     limit: u64,
 ) -> Result<Option<(Vec<u8>, fs::Metadata)>, String> {
-    let file =
-        crate::explorer::opened_file(target).map_err(|error| cannot("read", target, &error))?;
+    let file = opened_file(target).map_err(|error| cannot("read", target, &error))?;
     let meta = file
         .metadata()
         .map_err(|error| cannot("read", target, &error))?;
