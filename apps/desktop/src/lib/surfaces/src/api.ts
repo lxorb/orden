@@ -95,7 +95,7 @@ export const linksPanel = held(
 )
 export const askPanel = held(
   from('ask') as Loaded<
-    Component<{ ongoto?: ((line: number) => void) | undefined; wide?: boolean }>
+    Component<{ ongoto?: ((line: number) => void) | undefined; wide?: boolean; tab?: Tab }>
   >,
 )
 export const archiveSection = held(from('archive') as Shown)

@@ -81,11 +81,17 @@ describe('the Markdown pane', () => {
 describe('the Note types pane', () => {
   test('switches each kind, in its line', () => {
     const kinds = preferences().find((one) => one.id === 'kinds')
-    expect(kinds?.groups.map((group) => group.title)).toEqual(['Notes', 'Terminals', 'Browser'])
+    expect(kinds?.groups.map((group) => group.title)).toEqual([
+      'Notes',
+      'Chats',
+      'Terminals',
+      'Browser',
+    ])
     expect(kinds?.groups.flatMap((group) => group.fields.map((one) => one.label))).toEqual([
       'Note',
       'Canvas',
       'Page note',
+      'AI chat',
       'Online terminal',
       'Web note',
     ])

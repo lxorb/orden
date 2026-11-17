@@ -95,6 +95,7 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
     'New note',
     'New canvas',
     'New page note',
+    'New AI chat',
     'Online terminal',
     'New web note',
     'New application',
@@ -102,6 +103,7 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
   ])
   expect([...target.querySelectorAll('.line')].map(names)).toEqual([
     ['New note', 'New canvas', 'New page note'],
+    ['New AI chat'],
     ['Online terminal'],
     ['New web note'],
     ['New application', 'Pass'],
@@ -117,7 +119,7 @@ test('folds each group into one card where the lines do not fit, a lone kind sta
   here()
   flushSync()
 
-  expect(names(target)).toEqual(['Notes', 'Online terminal', 'New web note', 'Apps'])
+  expect(names(target)).toEqual(['Notes', 'New AI chat', 'Online terminal', 'New web note', 'Apps'])
   const notes = target.querySelector<HTMLElement>('[data-group="notes"]')
   expect(notes?.getAttribute('aria-haspopup')).toBe('menu')
   expect(notes?.querySelector('kbd')).toBeNull()
@@ -143,6 +145,7 @@ test('each wearing its letter, which a screen reader is told as its key', () => 
     'N',
     'C',
     'P',
+    'Q',
     'O',
     'W',
     'A',
@@ -152,6 +155,7 @@ test('each wearing its letter, which a screen reader is told as its key', () => 
     'N',
     'C',
     'P',
+    'Q',
     'O',
     'W',
     'A',
@@ -255,7 +259,7 @@ test('is one stop for Tab, whichever button the keyboard is on', () => {
   makers()
   here()
 
-  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1])
+  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1])
 })
 
 test('takes the keyboard once what held it in the tab just closed is gone', async () => {
