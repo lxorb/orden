@@ -1,7 +1,5 @@
-import { findLinks } from '@orden/markdown/links'
-import { tagsIn } from '@orden/markdown/task-line'
 import { noteValues } from './note-values'
-import { type ScannedTask, scanRows, type Stamp } from './scan'
+import type { ScannedTask, Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'
 import type { FileInfo, Row, Value } from './types'
 
@@ -24,18 +22,6 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
   const tasks = taskRowsOf(space, read.path, read.tasks, file, note)
   const own: Row = { kind: 'note', space, path: read.path, file, note }
   return [own, ...tasks]
-}
-
-export function rowsOfText(
-  space: string,
-  path: string,
-  text: string,
-  stamp: Stamp | null = null,
-): Row[] {
-  const scanned = scanRows(text)
-  const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
-  const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
-  return rowsOf(space, { path, front: scanned.front, tasks: scanned.tasks, stamp, tags, links })
 }
 
 export function movedRows(rows: readonly Row[], path: string, space: string): Row[] {

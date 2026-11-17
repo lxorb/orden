@@ -1,4 +1,10 @@
-import type { DateValue, DurationValue, LinkValue, Value } from '@orden/bases'
+import {
+  type DateValue,
+  type DurationValue,
+  type LinkValue,
+  onClock,
+  type Value,
+} from '@orden/bases'
 
 function kindOf(value: Value | undefined): string | null {
   if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value))
@@ -27,5 +33,5 @@ export function isLinkValue(value: Value | undefined): value is LinkValue {
 
 export function dayIn(value: Value | undefined): string | null {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
-  return isDateValue(value) ? value.iso : null
+  return isDateValue(value) ? onClock(value).iso : null
 }

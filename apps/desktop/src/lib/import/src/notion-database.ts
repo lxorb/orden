@@ -1,7 +1,7 @@
 import { type Base, type PropertyConfig, writeBase } from '@orden/bases'
 import { recordsOf } from './csv'
 import type { Property } from './meta'
-import { safeName, withoutNotionId } from './names'
+import { pageLink, safeName, withoutNotionId } from './names'
 
 export type Kind = 'text' | 'number' | 'checkbox' | 'date' | 'list' | 'pages'
 
@@ -35,7 +35,7 @@ const MONTHS = [
   'december',
 ]
 
-const PAGE = / \(([^()\s]+\.md)\)(?:, |$)/g
+const PAGE = / \(((?:[^()\s]|\([^()\s]*\))+\.md)\)(?:, |$)/g
 
 const LABEL = /^[^.!?\n]{1,40}$/
 
@@ -82,7 +82,7 @@ export function valueAs(kind: Kind, value: string): Property {
     case 'date':
       return notionDate(value) ?? value
     case 'pages':
-      return pagesIn(value)?.map((name) => `[[${name}]]`) ?? value
+      return pagesIn(value)?.map((name) => pageLink(name)) ?? value
     case 'list':
       return value
         .split(',')

@@ -11,6 +11,7 @@ import { Hono } from 'hono'
 import {
   deviceIn,
   type Env,
+  KEPT_FROM_TOKENS,
   laterOf,
   mayChangeTree,
   mayKeepVersions,
@@ -18,6 +19,7 @@ import {
   NO_SUCH_NOTE,
   OUT_OF_SPACE,
   pokeSpace,
+  programKeptFrom,
   ROOM_AWAY,
   said,
   TOO_MANY_CHANGES,
@@ -81,6 +83,9 @@ function heldNamed(result: OpResult): OpResult {
 
 v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
+  if (await programKeptFrom(context.env, context.get('who'), space.id)) {
+    return context.json({ error: KEPT_FROM_TOKENS }, 403)
+  }
   await preparedSpace(context.env, space)
   if (space.role === 'owner') await mendedSpace(context.env, space, laterOf(context))
   const page = await feedPage(context.env, space.id, cursorIn(context.req.query('since')))

@@ -1,5 +1,6 @@
 import { untrusted } from '@orden/chats/agent'
 import { findLinks } from '@orden/markdown'
+import { foldName } from '@orden/markdown/links'
 import type { ItemMeta } from '@orden/sync-core'
 import {
   byteLength,
@@ -146,11 +147,24 @@ async function findSpace(env: Env, userId: string, wanted: string): Promise<Spac
 
   const needle = wanted.trim().toLowerCase()
   const named = all.filter((space) => space.name.toLowerCase() === needle)
-  const own = named.find((space) => space.role === 'owner')
-  if (own || named.length < 2) return own ?? named[0] ?? null
+  const own = named.filter((space) => space.role === 'owner')
+  if (own.length === 1 || named.length < 2) return own[0] ?? named[0] ?? null
 
-  const ids = named.map((space) => space.id).join(', ')
-  return `${named.length} spaces shared with you are called ${wanted}: ${ids}. Name one by its id.`
+  const asked = own.length ? own : named
+  const ids = asked.map((space) => space.id).join(', ')
+  const whose = own.length ? 'of yours' : 'shared with you'
+  return `${asked.length} spaces ${whose} are called ${wanted}: ${ids}. Name one by its id.`
+}
+
+function spaceLines(all: readonly Space[]): string[] {
+  const count = new Map<string, number>()
+  for (const space of all) {
+    const name = space.name.toLowerCase()
+    count.set(name, (count.get(name) ?? 0) + 1)
+  }
+  return all.map((space) =>
+    (count.get(space.name.toLowerCase()) ?? 0) > 1 ? `${space.name} (id ${space.id})` : space.name,
+  )
 }
 
 export async function noteBody(env: Env, spaceId: string, noteId: string): Promise<string> {
@@ -175,11 +189,22 @@ async function listNotes(env: Env, space: Space): Promise<string> {
     `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
-    .bind(space.id, MOST_NOTES)
+    .bind(space.id, MOST_NOTES + 1)
     .all<{ path: string }>()
 
   if (!results.length) return 'No notes yet.'
-  return marked(spaceSource(space), results.map((row) => row.path).join('\n'))
+  const listed = marked(
+    spaceSource(space),
+    results
+      .slice(0, MOST_NOTES)
+      .map((row) => row.path)
+      .join('\n'),
+  )
+  return results.length > MOST_NOTES ? `${listed}\n${stoppedAt(MOST_NOTES)}` : listed
+}
+
+function stoppedAt(count: number): string {
+  return `I stopped after ${count} notes, so the others are not listed.`
 }
 
 async function readNote(
@@ -220,21 +245,27 @@ async function searchNotes(
   const theirs = new Map<string, string[]>()
   let count = 0
   let read = 0
+  let unread = false
 
   for (const one of scope) {
-    if (count >= MOST_MATCHES || read >= MOST_SEARCHED) break
+    if (count >= MOST_MATCHES) break
 
     const items = await sharedItems(env, one)
     const { results } = await env.DB.prepare(
       `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
         order by path limit ?`,
     )
-      .bind(one.id, MOST_NOTES)
+      .bind(one.id, MOST_NOTES + 1)
       .all<{ id: string; path: string }>()
+    if (results.length > MOST_NOTES) unread = true
 
-    for (const row of results) {
-      if (count >= MOST_MATCHES || read >= MOST_SEARCHED) break
+    for (const row of results.slice(0, MOST_NOTES)) {
+      if (count >= MOST_MATCHES) break
       if (shut(one.id, row.path)) continue
+      if (read >= MOST_SEARCHED) {
+        unread = true
+        break
+      }
       read++
 
       const body = await noteBody(env, one.id, row.id)
@@ -252,9 +283,62 @@ async function searchNotes(
     }
   }
 
-  if (!count) return 'Nothing found.'
+  const stopped = unread
+    ? [`I stopped after reading ${read} notes, so the others were not searched.`]
+    : []
+  const most = count >= MOST_MATCHES ? [`These are the first ${MOST_MATCHES} matches.`] : []
+  if (!count) return ['Nothing found.', ...stopped].join(' ')
   const blocks = [...theirs].map(([source, lines]) => untrusted(source, lines.join('\n')))
-  return [...own, ...blocks].join('\n')
+  return [...own, ...blocks, ...most, ...stopped].join('\n')
+}
+
+function comparable(path: string): string {
+  return foldName(path.replace(/\\/g, '/').replace(MARKDOWN, ''))
+}
+
+function climbed(start: string[], written: string): string[] {
+  const parts = [...start]
+  for (const part of written.split('/')) {
+    if (part === '' || part === '.') continue
+    if (part === '..') parts.pop()
+    else parts.push(part)
+  }
+  return parts
+}
+
+function nearestNamed(held: readonly string[], name: string, from: string): string | null {
+  if (!name) return null
+  const here = comparable(from).split('/').slice(0, -1).join('/')
+  const folder = (path: string) => path.split('/').slice(0, -1).join('/')
+  const found = held.filter((path) => path === name || path.endsWith(`/${name}`))
+  found.sort(
+    (one, other) =>
+      Number(folder(one) !== here) - Number(folder(other) !== here) ||
+      one.split('/').length - other.split('/').length ||
+      (one < other ? -1 : 1),
+  )
+  return found[0] ?? null
+}
+
+function wikilinkTarget(from: string, target: string, held: readonly string[]): string | null {
+  const said = comparable(target.trim())
+  if (!said.startsWith('/')) return nearestNamed(held, said, from)
+  const path = said.slice(1)
+  return held.includes(path) ? path : null
+}
+
+function markdownTarget(from: string, target: string, held: readonly string[]): string | null {
+  const written = target.replace(/\\/g, '/')
+  const anchored = written.startsWith('/')
+  const folder = foldName(from).split('/').slice(0, -1)
+  const parts = comparable(climbed(anchored ? [] : folder, foldName(written)).join('/'))
+  if (!parts) return null
+  if (held.includes(parts)) return parts
+  if (anchored) return null
+  if (/^\.\.?\//.test(written)) return nearestNamed(held, parts, from)
+  const top = comparable(climbed([], foldName(written)).join('/'))
+  if (held.includes(top)) return top
+  return nearestNamed(held, parts, from) ?? nearestNamed(held, top, from)
 }
 
 async function listBacklinks(
@@ -266,17 +350,17 @@ async function listBacklinks(
   const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
-  const names = new Set<string>()
-  const parts = path.replace(MARKDOWN, '').toLowerCase().split('/')
-  for (let at = 0; at < parts.length; at++) names.add(parts.slice(at).join('/'))
-
   const { results } = await env.DB.prepare(
     `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
         order by path limit ?`,
   )
-    .bind(space.id, MOST_NOTES)
+    .bind(space.id, MOST_NOTES + 1)
     .all<{ id: string; path: string }>()
+  const stopped = results.length > MOST_NOTES ? [stoppedAt(MOST_NOTES)] : []
+  results.splice(MOST_NOTES)
 
+  const wanted = comparable(path)
+  const held = results.map((row) => comparable(row.path))
   const found: string[] = []
 
   for (const row of results) {
@@ -284,16 +368,25 @@ async function listBacklinks(
 
     const body = await noteBody(env, space.id, row.id)
     for (const link of findLinks(body)) {
-      const said = link.target.replace(MARKDOWN, '').toLowerCase()
-      if (said.startsWith('/') ? said.slice(1) !== parts.join('/') : !names.has(said)) continue
+      const reached =
+        link.kind === 'markdown'
+          ? markdownTarget(row.path, link.target, held)
+          : wikilinkTarget(row.path, link.target, held)
+      if (reached !== wanted) continue
       found.push(`${row.path}:${lineAt(body, link.from) + 1}`)
       break
     }
   }
 
-  if (!found.length) return `Nothing links to ${path}.`
-  return marked(spaceSource(space), found.join('\n'))
+  if (!found.length) return [`Nothing links to ${path}.`, ...stopped].join(' ')
+  return [marked(spaceSource(space), found.join('\n')), ...stopped].join('\n')
 }
+
+export const hiddenPath = (path: string): boolean =>
+  path.split('/').some((part) => part.startsWith('.'))
+
+export const HIDDEN = (path: string): string =>
+  `${path} is hidden: Orden does not write notes whose names or folders start with a dot.`
 
 async function writeNote(
   env: Env,
@@ -303,6 +396,7 @@ async function writeNote(
 ): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
+  if (hiddenPath(path)) return HIDDEN(path)
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
@@ -390,8 +484,9 @@ export async function callTool(
     case 'list_spaces': {
       const all = await spacesFor(env, userId)
       if (!all.length) return 'No spaces yet.'
-      const own = all.filter((space) => space.role === 'owner').map((space) => space.name)
-      const theirs = all.filter((space) => space.role !== 'owner').map((space) => space.name)
+      const lines = spaceLines(all)
+      const own = lines.filter((_, at) => all[at]?.role === 'owner')
+      const theirs = lines.filter((_, at) => all[at]?.role !== 'owner')
       const block = theirs.length ? [untrusted('spaces shared with you', theirs.join('\n'))] : []
       return [...own, ...block].join('\n')
     }

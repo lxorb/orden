@@ -19,6 +19,7 @@ export interface Place {
   to: number
   shape: Shape
   keep?: string
+  under?: number
 }
 
 export function oneEnding(words: string): string {
@@ -177,7 +178,7 @@ export function headingsIn(text: string): HeadingAt[] {
   }
 
   for (const row of lines(text)) {
-    const hashes = row.code ? undefined : HEADING.exec(row.text)?.[1]
+    const hashes = row.code || row.matter ? undefined : HEADING.exec(row.text)?.[1]
     if (hashes) {
       close(hashes.length)
       const heading: HeadingAt = {
@@ -232,29 +233,54 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
     (heading) => under(heading, wanted) || (wanted.length > 1 && names(whole, heading.title)),
   )
 
-  const heading = one(found, anchor, anchor.nth)
+  const exact = found.filter((heading) => {
+    const said = [...heading.path, heading.title].map((step) => step.trim())
+    return said.length === wanted.length && said.every((step, at) => step === wanted[at])
+  })
+  const fits = exact.length > 0 && (anchor.nth ?? 1) <= exact.length
+  const heading = one(fits ? exact : found, anchor, anchor.nth)
   return { from: heading.from, to: heading.to, shape: 'paragraph' }
 }
 
 function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): Place {
   const rows = [...lines(text)]
-  const marked = rows.filter((row) => !row.code && blockIdOf(row.text) === anchor.block)
+  const marked = rows.filter(
+    (row) => !row.code && !row.matter && blockIdOf(row.text) === anchor.block,
+  )
   const row = one(marked, anchor, undefined)
 
+  const filled = (at: number, code: boolean) => {
+    const near = rows[at]
+    return (
+      near !== undefined && !near.matter && near.code === code && (code || near.text.trim() !== '')
+    )
+  }
+  const alone = row.text.trim() === `^${anchor.block}`
+  let keep = alone ? `\n^${anchor.block}` : ` ^${anchor.block}`
   let first = row.line
   let last = row.line
-  while (first > 0 && rows[first - 1]?.text.trim()) first--
-  while (last + 1 < rows.length && rows[last + 1]?.text.trim()) last++
+  let code = false
+  if (alone) {
+    let above = first - 1
+    while (above > 0 && !filled(above, false) && !filled(above, true) && !rows[above]?.matter)
+      above--
+    code = filled(above, true)
+    if (code || filled(above, false)) {
+      if (above < first - 1) keep = `\n\n^${anchor.block}`
+      first = above
+    }
+  }
+  while (filled(first - 1, code)) first--
+  while (filled(last + 1, false)) last++
 
   const start = rows[first] ?? row
   const end = rows[last] ?? row
 
-  const alone = row.text.trim() === `^${anchor.block}`
   return {
     from: start.from,
     to: end.from + end.text.length,
     shape: 'paragraph',
-    keep: alone ? `\n^${anchor.block}` : ` ^${anchor.block}`,
+    keep,
   }
 }
 
@@ -267,10 +293,32 @@ export function taskWords(line: string): string | null {
   return (id ? words.slice(0, words.lastIndexOf(`^${id}`)) : words).trim()
 }
 
+export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: unknown): T {
+  const anchor = readAnchor(value)
+  if (!('task' in anchor)) throw new DocError('bad_anchor', value, 'at is {task, nth?}')
+
+  const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
+  const found = rows.filter((row) => 'task' in row.anchor && row.anchor.task === wanted)
+  return one(found, anchor, anchor.nth)
+}
+
 function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
   const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
-  const found = [...lines(text)].filter((row) => !row.code && taskWords(row.text) === wanted)
+  const rows = [...lines(text)]
+  const found = rows.filter((row) => !row.code && !row.matter && taskWords(row.text) === wanted)
 
   const row = one(found, anchor, anchor.nth)
-  return { from: row.from, to: row.from + row.text.length, shape: 'line' }
+  const to = row.from + row.text.length
+  const depth = indentOf(row.text)
+  let under = to
+  for (const next of rows.slice(rows.indexOf(row) + 1)) {
+    if (!next.text.trim()) continue
+    if (indentOf(next.text) <= depth) break
+    under = next.from + next.text.length
+  }
+  return { from: row.from, to, shape: 'line', ...(under > to ? { under } : {}) }
+}
+
+function indentOf(line: string): number {
+  return (/^[ \t]*/.exec(line)?.[0] ?? '').replace(/\t/g, '    ').length
 }

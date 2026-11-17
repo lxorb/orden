@@ -86,7 +86,7 @@ function members(inside: string): string[] {
   return out
 }
 
-const ITEM = /^[ \t]*-(?=[ \t]|$)[ \t]*(.*)$/
+const ITEM = /^[ \t]*-(?=[ \t]|\r?$)[ \t]*(.*?)\r?$/
 
 export function listItem(line: string): string | null {
   const written = writtenListItem(line)

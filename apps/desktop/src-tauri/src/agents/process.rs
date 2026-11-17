@@ -40,6 +40,7 @@ fn started() -> MutexGuard<'static, Vec<Arc<Started>>> {
 struct Started {
     id: String,
     agent: String,
+    session: String,
     program: String,
     args: Vec<String>,
     at: u64,
@@ -209,7 +210,13 @@ impl Started {
     }
 }
 
-pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answer {
+pub(super) fn answer(
+    app: &AppHandle,
+    caller: &Caller,
+    session: &str,
+    asked: &Process,
+    since: u64,
+) -> Answer {
     if !caller.holds(Scope::Processes) {
         return Answer::error(
             Code::NotGranted,
@@ -217,7 +224,7 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Process, since: u
         );
     }
     match asked.op {
-        ProcessOp::Run | ProcessOp::Start => begin(app, caller, asked, since),
+        ProcessOp::Run | ProcessOp::Start => begin(app, caller, session, asked, since),
         ProcessOp::List => Answer::ok(ProcessDone {
             processes: started()
                 .iter()
@@ -271,7 +278,7 @@ fn state(one: &Started) -> ProcessDone {
     }
 }
 
-fn begin(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answer {
+fn begin(app: &AppHandle, caller: &Caller, session: &str, asked: &Process, since: u64) -> Answer {
     let Some(program) = asked
         .program
         .as_deref()
@@ -323,7 +330,7 @@ fn begin(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answe
         );
     }
     let kept = asked.op == ProcessOp::Start;
-    let one = match spawned(caller.id(), &found, asked, &cwd, kept) {
+    let one = match spawned(caller.id(), session, &found, asked, &cwd, kept) {
         Ok(one) => one,
         Err(why) => return Answer::error(Code::Failed, why),
     };
@@ -547,6 +554,7 @@ fn runnable(file: &Path) -> bool {
 
 fn spawned(
     agent: &str,
+    session: &str,
     program: &Path,
     asked: &Process,
     cwd: &Path,
@@ -573,6 +581,7 @@ fn spawned(
     let one = Arc::new(Started {
         id: format!("p{}", NEXT.fetch_add(1, Ordering::Relaxed)),
         agent: agent.to_owned(),
+        session: session.to_owned(),
         program: program.display().to_string(),
         args: asked.args.clone(),
         at: crate::clock::now(),
@@ -686,11 +695,17 @@ fn reap(one: &Started) {
 }
 
 pub(super) fn end_all(agent: Option<&str>) {
+    end_where(|one| agent.is_none_or(|agent| one.agent == agent));
+}
+
+pub(super) fn end_session(agent: &str, session: &str) {
+    end_where(|one| one.agent == agent && one.session == session);
+}
+
+fn end_where(ending: impl Fn(&Started) -> bool) {
     let ending: Vec<Arc<Started>> = {
         let mut all = started();
-        let (gone, kept): (Vec<_>, Vec<_>) = all
-            .drain(..)
-            .partition(|one| agent.is_none_or(|agent| one.agent == agent));
+        let (gone, kept): (Vec<_>, Vec<_>) = all.drain(..).partition(|one| ending(one));
         *all = kept;
         gone
     };
@@ -869,7 +884,7 @@ mod tests {
             "read x; echo out $x; echo err >&2; exit 3".into(),
         ];
         run.stdin = Some("hi\n".into());
-        let one = spawned("tester", &found, &run, &cwd, false).expect("ran");
+        let one = spawned("tester", "s1", &found, &run, &cwd, false).expect("ran");
         assert!(!one.wait(Duration::from_secs(10), None, |said| said.ended));
         let said = one.said();
         assert!(said.ended);
@@ -880,8 +895,8 @@ mod tests {
 
         let mut start = process(ProcessOp::Start, "sh");
         start.args = vec!["-c".into(), "while read x; do echo got $x; done".into()];
-        let kept = spawned("tester", &found, &start, &cwd, true).expect("started");
-        let other = spawned("someone-else", &found, &start, &cwd, true).expect("started");
+        let kept = spawned("tester", "s1", &found, &start, &cwd, true).expect("started");
+        let other = spawned("someone-else", "s1", &found, &start, &cwd, true).expect("started");
         let mut write = process(ProcessOp::Write, "sh");
         write.stdin = Some("one\n".into());
         assert_eq!(written(&kept, &write).status(), "ok");
@@ -896,6 +911,29 @@ mod tests {
         assert!(started().iter().all(|one| one.agent != "tester"));
         assert!(!other.said().ended);
         end_all(Some("someone-else"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_session_that_leaves_ends_only_the_programs_it_started() {
+        let cwd = std::env::temp_dir();
+        let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
+        let mut start = process(ProcessOp::Start, "sh");
+        start.args = vec!["-c".into(), "sleep 30".into()];
+        let first = spawned("leaving", "s1", &found, &start, &cwd, true).expect("started");
+        let second = spawned("leaving", "s2", &found, &start, &cwd, true).expect("started");
+
+        end_session("leaving", "s2");
+        assert!(!second.wait(Duration::from_secs(10), None, |said| said.ended));
+        assert!(second.killed.load(Ordering::SeqCst));
+        assert!(!first.said().ended);
+        assert!(!first.killed.load(Ordering::SeqCst));
+        assert!(started().iter().any(|one| Arc::ptr_eq(one, &first)));
+
+        end_session("leaving", "s3");
+        assert!(!first.said().ended);
+        end_all(Some("leaving"));
+        assert!(!first.wait(Duration::from_secs(10), None, |said| said.ended));
     }
 
     #[cfg(unix)]
@@ -921,11 +959,11 @@ mod tests {
         let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
         let mut start = process(ProcessOp::Start, "sh");
         start.args = vec!["-c".into(), "sleep 30".into()];
-        let kept = spawned("quitting", &found, &start, &cwd, true).expect("started");
+        let kept = spawned("quitting", "s1", &found, &start, &cwd, true).expect("started");
         end_for_good();
         assert!(!kept.wait(Duration::from_secs(10), None, |said| said.ended));
         assert!(kept.killed.load(Ordering::SeqCst));
-        assert!(spawned("quitting", &found, &start, &cwd, true).is_err());
+        assert!(spawned("quitting", "s1", &found, &start, &cwd, true).is_err());
         assert!(started().is_empty());
     }
 
@@ -936,7 +974,7 @@ mod tests {
         let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
         let mut start = process(ProcessOp::Start, "sh");
         start.args = vec!["-c".into(), "sleep 3; wc -c".into()];
-        let kept = spawned("not-reading", &found, &start, &cwd, true).expect("started");
+        let kept = spawned("not-reading", "s1", &found, &start, &cwd, true).expect("started");
 
         let mut write = process(ProcessOp::Write, "sh");
         write.stdin = Some("x".repeat(512 << 10));

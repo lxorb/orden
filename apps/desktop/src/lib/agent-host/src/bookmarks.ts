@@ -14,6 +14,7 @@ import {
   judged,
   type Place,
   placeOf,
+  sharedSource,
 } from '../../agent-verbs/src/api'
 import { entryIn } from './tree'
 
@@ -51,7 +52,7 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
 
   switch (need(call, 'op')) {
     case 'list':
-      return done(held.map(shown))
+      return done(held.map(shown), sharedSource(place))
 
     case 'add': {
       const mark = await bookmarkOf(call, place)
@@ -89,7 +90,7 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
       if (question) return question
 
       workspace.bookmarks.remove(found, root)
-      return done({ ...shown(found), removed: true })
+      return done({ ...shown(found), removed: true }, sharedSource(place))
     }
 
     default:

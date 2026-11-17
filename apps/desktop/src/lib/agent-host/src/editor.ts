@@ -14,7 +14,15 @@ import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../panes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import { type Call, done, need, needScope, Refused, namedTab } from '../../agent-verbs/src/api'
+import {
+  type Call,
+  docSource,
+  done,
+  need,
+  needScope,
+  Refused,
+  namedTab,
+} from '../../agent-verbs/src/api'
 import { readable } from './guarded'
 
 const MOST_MARKS = 500
@@ -128,7 +136,7 @@ export function noteEditor(call: Call): AgentAnswer {
 
   switch (op) {
     case 'selection':
-      return done({ tab: tab.id, ...selectionsShown(view) })
+      return done({ tab: tab.id, ...selectionsShown(view) }, sourceOfNote(tab))
     case 'select': {
       needScope(call, 'workspace.focus', 'moving the reader’s caret')
       const stretches: Stretch[] = listOf(call, 'selections', MOST_SELECTIONS).map((one, at) => {
@@ -140,7 +148,7 @@ export function noteEditor(call: Call): AgentAnswer {
       })
       if (!stretches.length) throw new Refused('bad_arguments', 'say at least one selection')
       selectStretches(view, stretches)
-      return done({ tab: tab.id, ...selectionsShown(view) })
+      return done({ tab: tab.id, ...selectionsShown(view) }, sourceOfNote(tab))
     }
     case 'fold':
     case 'unfold': {
@@ -168,6 +176,10 @@ function selectionsShown(view: EditorView) {
     selections: selectionsOf(view, MOST_SELECTIONS, LONGEST_SELECTED),
     ...(more > 0 ? { more } : {}),
   }
+}
+
+function sourceOfNote(tab: Tab): string | null {
+  return docSource({ path: tab.note.path, shared: tab.note.shared })
 }
 
 function lineOf(call: Call): number {

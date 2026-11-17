@@ -1,8 +1,9 @@
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands, type Command } from '../../commands/src/api'
 import { invoke, answerNextDialog, relativeTo } from '../../platform/src/api'
-import { readable, readableAll } from './guarded'
-import type { AgentAnswer } from '../../automation/src/api'
+import { type AgentAnswer, keptFromAgents, NOTE_TREE, NOTE_WRITES } from '../../automation/src/api'
+import { readable, readableAll, seen } from './guarded'
+import { protection } from '../../protect/src/api'
 import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
@@ -106,28 +107,6 @@ const MAKES_NOTE = new Set([
 
 const MAKES_SPACE = new Set(['new-space', 'space'])
 
-const WRITES = new Set([
-  'ai-block',
-  'convert-syntax',
-  'extract-selection',
-  'merge-into',
-  'page-break',
-  'picture',
-  'reformat',
-  'save',
-  'split-at-caret',
-])
-
-const TREE = new Set([
-  'archive',
-  'convert-website-notes',
-  'move-note',
-  'move-to-space',
-  'redo-file',
-  'rename',
-  'undo-file',
-])
-
 const PANELS = new Set([
   'ask-panel',
   'files',
@@ -153,8 +132,8 @@ function scopesOf(id: string): readonly Scope[] | null {
   if (SCREEN.has(id) || id.startsWith('space:') || id.startsWith('layout:')) {
     return ['workspace.focus']
   }
-  if (TREE.has(id)) return ['tree']
-  if (WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
+  if (NOTE_TREE.has(id)) return ['tree']
+  if (NOTE_WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
   return null
 }
 
@@ -186,6 +165,12 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   )
   if (!found) throw new Refused('no_such_command', `there is no command called ${id}`)
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
+  const kept = keptFromAgents(id, {
+    front: seen(workspace.active?.path ?? ''),
+    space: protection.agentsMayAllOf(workspace.activeSpace?.root ?? ''),
+    everywhere: protection.agentsMayAllOf(),
+  })
+  if (kept) throw new Refused('protected', kept)
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }

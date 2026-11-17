@@ -152,6 +152,17 @@ describe('writing a change', () => {
     expect(readBase(written).views.at(-1)?.orden.date).toBe('note.last')
   })
 
+  test('a formula is taken out whatever it is called', () => {
+    for (const name of ['other', 'toString', 'constructor', 'valueOf', 'hasOwnProperty']) {
+      const source = `formulas:\n  ${name}: 1 + 1\n  kept: file.name\nviews:\n  - type: table\n    name: A\n`
+      const base = readBase(source)
+      base.formulas = { kept: 'file.name' }
+      expect(writeBase(base, source)).toBe(
+        'formulas:\n  kept: file.name\nviews:\n  - type: table\n    name: A\n',
+      )
+    }
+  })
+
   test('a quoted filter keeps its quotes when another one changes', () => {
     const source = fixture('kepano/Books.base')
     const base = readBase(source)

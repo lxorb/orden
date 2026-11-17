@@ -30,16 +30,19 @@ export async function readFile(args: Said): Promise<unknown> {
 
 export async function listLinks(args: Said): Promise<unknown> {
   const note = await noteFor(args)
+  await links.scanned()
   return { path: note.relative, links: links.outgoing(note.path) }
 }
 
 export async function listBacklinks(args: Said): Promise<unknown> {
   const note = await noteFor(args)
+  await links.scanned()
   return { path: note.relative, backlinks: links.backlinks(note.path) }
 }
 
 export async function listOrphans(args: Said): Promise<unknown> {
   await spaceFor(args)
+  await links.scanned()
 
   return {
     orphans: links.graph.nodes

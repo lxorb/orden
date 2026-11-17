@@ -28,6 +28,7 @@ vi.mock('../../modes/src/api', () => ({
 vi.mock('../../link-index/src/api', () => ({
   links: {
     embedSource: () => null,
+    fileFor: (src: string) => (src === 'attachments/cat.png' ? '/space/attachments/cat.png' : null),
     relativeTarget: () => null,
     spaceRead: () => Promise.resolve(),
   },
@@ -59,6 +60,14 @@ describe('the render options for the open note', () => {
     world.trusts = false
 
     expect((await renderOptions(openTarget())).escapeHtml).toBe(true)
+  })
+
+  test('find a picture where the note shows it, and leave one nowhere as written', async () => {
+    world.active = open('/space/Notes/Day/plan.md')
+    const { resolveImage } = await renderOptions(openTarget())
+
+    expect(resolveImage?.('attachments/cat.png')).toBe('/space/attachments/cat.png')
+    expect(resolveImage?.('gone.png')).toBe('gone.png')
   })
 
   test('leave it markup when it is the reader’s own', async () => {

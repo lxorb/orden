@@ -92,7 +92,12 @@ export function agentRefusal(code: string, message: string): AgentAnswer {
   return { ok: false, status: 'error', code, message, error: message }
 }
 
-export type AgentVerb = (name: string, args: AgentSaid, caller: AgentCaller) => Promise<AgentAnswer>
+export type AgentVerb = (
+  name: string,
+  args: AgentSaid,
+  caller: AgentCaller,
+  deadline?: AbortSignal,
+) => Promise<AgentAnswer>
 
 export type AgentVerbs = Readonly<Record<string, AgentVerb>>
 
@@ -124,10 +129,11 @@ export async function runAgentVerb(
   name: string,
   args: AgentSaid,
   caller: AgentCaller,
+  deadline?: AbortSignal,
 ): Promise<AgentAnswer> {
   const verb = (await verbsLoaded()).get(name)
   if (!verb) return agentRefusal('bad_arguments', `there is no verb called ${name}`)
-  return verb(name, args, caller).catch((error: unknown) =>
+  return verb(name, args, caller, deadline).catch((error: unknown) =>
     agentRefusal('failed', error instanceof Error ? error.message : String(error)),
   )
 }

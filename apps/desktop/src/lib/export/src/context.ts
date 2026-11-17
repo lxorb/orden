@@ -68,7 +68,8 @@ export async function renderOptions(target: Target): Promise<RunOptions> {
   await links.spaceRead(target.path)
   return {
     page: choices.page,
-    resolveImage: (src: string) => imagePath(src, target.path, target.source) ?? src,
+    resolveImage: (src: string) =>
+      links.fileFor(src, target.path) ?? imagePath(src, target.path, target.source) ?? src,
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),
     escapeHtml: !target.trusted,

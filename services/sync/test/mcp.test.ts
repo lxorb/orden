@@ -437,3 +437,196 @@ describe('writing through it', () => {
     ).toContain('No space')
   })
 })
+
+describe('answers that stop short', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('a search that stops before the last note says it did not read them all', async () => {
+    for (let at = 0; at < 305; at++) {
+      await addNote(`n${String(at).padStart(3, '0')}.md`, `plain ${at}\n`)
+    }
+    await addNote('zz.md', 'the needleword lives here\n')
+
+    const text = await tool(await connector(), 'search_notes', { query: 'needleword' })
+    expect(text).not.toBe('Nothing found.')
+    expect(text).toMatch(/not searched|stopped/i)
+  })
+})
+
+describe('two spaces of one name', () => {
+  test('a write asks which when the account owns both', async () => {
+    const second = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    const ids = [space, second.json.space.id]
+
+    const said = await tool(await connector(false), 'write_note', {
+      space: 'Work',
+      path: 'x.md',
+      content: 'hello',
+    })
+    expect(said).not.toMatch(/^Saved/)
+    for (const id of ids) expect(said).toContain(id)
+  })
+
+  test('the list names each one by its id, so a shared one is reachable', async () => {
+    const stranger = await signIn(env, 'x@y.dev')
+    const theirs = await call(env, '/v1/spaces', { token: stranger, body: { name: 'Work' } })
+    await call(env, `/v1/spaces/${theirs.json.space.id}/share/invite`, {
+      token: stranger,
+      body: { email: 'a@b.dev', role: 'write' },
+    })
+
+    const listed = await tool(await connector(), 'list_spaces')
+    expect(listed).toContain(space)
+    expect(listed).toContain(theirs.json.space.id)
+    expect(listed.split('\n')).toContain('Notes')
+  })
+})
+
+describe('relative markdown links', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('are read from the folder of the note they are in', async () => {
+    await addNote('ideas/plan.md', '# Plan\n')
+    await addNote('other/b.md', 'see [plan](../ideas/plan.md)\n')
+    await addNote('ideas/c.md', 'see [plan](./plan.md)\n')
+    await addNote('ideas/d.md', 'see [plan](plan.md)\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'ideas/plan.md',
+    })
+    expect(text).toContain('other/b.md:1')
+    expect(text).toContain('ideas/c.md:1')
+    expect(text).toContain('ideas/d.md:1')
+  })
+
+  test('one pointing at a note of the same name beside it is not counted', async () => {
+    await addNote('ideas/plan.md', '# Plan\n')
+    await addNote('other/plan.md', '# Other plan\n')
+    await addNote('other/b.md', 'see [plan](plan.md)\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'ideas/plan.md',
+    })
+    expect(text).not.toContain('other/b.md')
+  })
+})
+
+describe('markdown links the app reads from the top and by name', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('are found as the app finds them', async () => {
+    await addNote('projects/roadmap.md', '# Plan\n')
+    await addNote('daily/today.md', 'see [roadmap](projects/roadmap.md)\n')
+    await addNote('daily/later.md', 'see [roadmap](roadmap.md)\n')
+    await addNote('daily/gone.md', 'see [roadmap](../roadmap.md)\n')
+    await addNote('daily/deep/typo.md', 'see [roadmap](./roadmap.md)\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'projects/roadmap.md',
+    })
+    expect(text).toContain('daily/today.md:1')
+    expect(text).toContain('daily/later.md:1')
+    expect(text).not.toContain('typo.md')
+  })
+})
+
+describe('a link by name with namesakes in folders of capitals', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('counts for the namesake beside it', async () => {
+    await addNote('A/Sub/Plan.md', '# a\n')
+    await addNote('Z/Sub/Plan.md', '# z\n')
+    await addNote('Z/Sub/Index.md', 'see [plan](Sub/Plan.md)\n')
+    const key = await connector()
+    const near = await tool(key, 'list_backlinks', { space: 'Work', path: 'Z/Sub/Plan.md' })
+    const far = await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Sub/Plan.md' })
+    expect(near).toContain('Z/Sub/Index.md:1')
+    expect(far).not.toContain('Z/Sub/Index.md')
+  })
+})
+
+describe('a wikilink by name with namesakes', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('counts only for the note the app opens', async () => {
+    await addNote('A/Plan.md', '# a\n')
+    await addNote('B/Plan.md', '# b\n')
+    await addNote('A/Index.md', 'see [[Plan]]\n')
+    await addNote('C/Index.md', 'see [[Plan#Goals|the plan]]\n')
+    const key = await connector()
+    const beside = await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Plan.md' })
+    const other = await tool(key, 'list_backlinks', { space: 'Work', path: 'B/Plan.md' })
+    const top = await tool(key, 'list_backlinks', { space: 'Work', path: 'plan.md' })
+    expect(beside).toContain('A/Index.md:1')
+    expect(other).not.toContain('A/Index.md')
+    expect(top).toContain('C/Index.md:1')
+    expect(beside).not.toContain('C/Index.md')
+  })
+
+  test('a path in it, from the top or not, names the note there', async () => {
+    await addNote('A/Plan.md', '# a\n')
+    await addNote('B/Plan.md', '# b\n')
+    await addNote('A/Index.md', 'see [[B/Plan]]\n')
+    await addNote('Z/Index.md', 'see [[/b/plan.md]]\n')
+    const key = await connector()
+    const other = await tool(key, 'list_backlinks', { space: 'Work', path: 'B/Plan.md' })
+    expect(other).toContain('A/Index.md:1')
+    expect(other).toContain('Z/Index.md:1')
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Plan.md' })).toContain(
+      'Nothing links to',
+    )
+  })
+
+  test('names in either form of an accent are one name', async () => {
+    await addNote('Cafe\u0301.md', '# cafe\n')
+    await addNote('Index.md', 'see [[Caf\u00e9]]\n')
+    const key = await connector()
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'Cafe\u0301.md' })).toContain(
+      'Index.md:1',
+    )
+  })
+})
+
+describe('lists past the most read', () => {
+  function filler(count: number) {
+    const insert = env.db.prepare(
+      `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, kind)
+       values (?, ?, ?, ?, 1, 1, 0, 0, '', 'note')`,
+    )
+    for (let at = 0; at < count; at++) {
+      insert.run(`f${at}`, space, `filler/f${String(at).padStart(4, '0')}.md`, 5000 + at)
+    }
+  }
+
+  test('say when they stopped', async () => {
+    filler(1000)
+    const key = await connector()
+    expect(await tool(key, 'list_notes', { space: 'Work' })).toMatch(/stopped/i)
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'plan.md' })).toMatch(
+      /stopped/i,
+    )
+  })
+})
+
+describe('notifications', () => {
+  test('any of them is answered with no body', async () => {
+    const response = await call(env, '/mcp', {
+      token: await connector(),
+      body: { jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: 1 } },
+    })
+    expect(response.status).toBe(202)
+  })
+})

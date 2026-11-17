@@ -1,4 +1,4 @@
-import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { frontMatterBlock, frontMatterKeys, frontMatterList } from '@orden/markdown/front-matter'
 import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import { taskAt } from '@orden/markdown/tasks'
 import { lineAt, lineStarts } from './lines'
@@ -137,21 +137,8 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   return out
 }
 
-function frontMatter(body: string): Map<string, string> {
-  const out = new Map<string, string>()
-  const block = frontMatterBlock(body)
-  if (!block) return out
-
-  for (const line of body.slice(block.body.from, block.body.to).split('\n')) {
-    if (/^\s/.test(line)) continue
-
-    const colon = line.indexOf(':')
-    if (colon <= 0) continue
-
-    out.set(line.slice(0, colon).trim().toLowerCase(), line.slice(colon + 1).trim())
-  }
-
-  return out
+function keysIn(body: string): Set<string> {
+  return new Set(frontMatterKeys(body).map((key) => key.toLowerCase()))
 }
 
 interface Facts {
@@ -159,7 +146,8 @@ interface Facts {
   folded: string | null
   starts: readonly number[] | null
   tags: string[] | null
-  front: Map<string, string> | null
+  keys: Set<string> | null
+  front: Map<string, string[]> | null
   words: number | null
   units: Partial<Record<Unit, Range[]>>
   places: Map<string, number[]>
@@ -177,8 +165,16 @@ function tagsOf(facts: Facts): string[] {
   return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tag.slice(1).toLowerCase()))
 }
 
-function frontOf(facts: Facts): Map<string, string> {
-  return (facts.front ??= frontMatter(facts.note.body))
+function propertyOf(facts: Facts, name: string): string[] | undefined {
+  if (!(facts.keys ??= keysIn(facts.note.body)).has(name)) return undefined
+
+  const front = (facts.front ??= new Map<string, string[]>())
+  const held = front.get(name)
+  if (held) return held
+
+  const values = frontMatterList(facts.note.body, name)
+  front.set(name, values)
+  return values
 }
 
 function wordsIn(body: string): number {
@@ -309,6 +305,7 @@ export class Matcher {
       folded: null,
       starts: null,
       tags: null,
+      keys: null,
       front: null,
       words: null,
       units: {},
@@ -429,12 +426,13 @@ export class Matcher {
       }
 
       case 'property': {
-        const value = frontOf(facts).get(query.name)
+        const values = propertyOf(facts, query.name)
 
-        if (query.compare === 'null') return value?.trim() ? null : []
-        if (value === undefined) return null
+        if (query.compare === 'null') return values?.some((one) => one.trim()) ? null : []
+        if (values === undefined) return null
+        if (query.value === null) return []
 
-        return heldAgainst(value, query) ? [] : null
+        return values.some((one) => heldAgainst(one, query)) ? [] : null
       }
 
       case 'scope': {

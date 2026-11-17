@@ -6,10 +6,13 @@ import {
   dateAt,
   formatDate,
   msOf,
+  onClock,
   readDate,
   relative,
+  rewritten,
   weekday,
 } from './dates'
+import type { DateValue } from './types'
 
 describe('dates on the floating clock', () => {
   test('a real date and not', () => {
@@ -45,6 +48,85 @@ describe('dates on the floating clock', () => {
       time: '09:05:00',
     })
     expect(readDate('tomorrow')).toBeNull()
+  })
+
+  test('an edit across a change of the clock here keeps the time that was typed', () => {
+    const was = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    try {
+      const winter: DateValue = {
+        kind: 'date',
+        iso: '2026-03-06',
+        time: '19:00:00',
+        zone: '-08:00',
+      }
+      expect(onClock(winter)).toMatchObject({ iso: '2026-03-06', time: '19:00:00' })
+      const saved = rewritten(winter, { kind: 'date', iso: '2026-03-09', time: '19:00' })
+      expect(onClock(saved)).toMatchObject({ iso: '2026-03-09', time: '19:00:00' })
+      const night: DateValue = { kind: 'date', iso: '2026-03-08', time: '01:00:00', zone: '-08:00' }
+      const later = rewritten(night, { kind: 'date', iso: '2026-03-08', time: '03:00' })
+      expect(onClock(later)).toMatchObject({ iso: '2026-03-08', time: '03:00:00' })
+    } finally {
+      if (was === undefined) delete process.env.TZ
+      else process.env.TZ = was
+    }
+  })
+
+  test('a moment written in UTC is read on the clock here', () => {
+    const was = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    try {
+      const read = (text: string, zone?: string) => {
+        const date = readDate(text)
+        return date && onClock(date, zone)
+      }
+      expect(readDate('2026-11-15T17:00:00Z')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+        zone: 'Z',
+      })
+      expect(read('2026-11-15T17:00:00Z')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '09:00:00',
+      })
+      expect(read('2026-11-15T17:00:00.250Z')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '09:00:00.250',
+      })
+      expect(read('2026-11-15 17:00:00+09:00', 'Asia/Tokyo')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+      })
+      expect(read('2026-11-15T23:30-0500', 'Europe/Berlin')).toEqual({
+        kind: 'date',
+        iso: '2026-11-16',
+        time: '05:30:00',
+      })
+      expect(msOf(readDate('2026-11-15T17:00:00Z')!, 'UTC')).toBe(Date.UTC(2026, 10, 15, 17))
+      const tokyo = readDate('2026-03-10T23:00:00+09:00')!
+      expect(rewritten(tokyo, { kind: 'date', iso: '2026-03-10', time: '08:30' })).toEqual({
+        kind: 'date',
+        iso: '2026-03-11',
+        time: '00:30:00',
+        zone: '+09:00',
+      })
+      expect(rewritten(tokyo, { kind: 'date', iso: '2026-03-12' })).toEqual({
+        kind: 'date',
+        iso: '2026-03-12',
+      })
+      expect(readDate('2026-11-15T17:00:00')).toEqual({
+        kind: 'date',
+        iso: '2026-11-15',
+        time: '17:00:00',
+      })
+    } finally {
+      if (was === undefined) delete process.env.TZ
+      else process.env.TZ = was
+    }
   })
 
   test.each([

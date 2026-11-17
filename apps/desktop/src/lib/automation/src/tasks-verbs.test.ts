@@ -41,19 +41,46 @@ const { dispatch, verbForAction } = await import('./verbs')
 describe('the to-dos from a terminal and a link', () => {
   test('the command line asks the agent verbs as the reader, with every argument', async () => {
     asked.length = 0
-    expect(await dispatch('tasks', { note: 'Shop' }, ['add', 'Milk'])).toEqual({
+    expect(await dispatch('tasks', { space: 'Shop' }, ['add', 'Milk'])).toEqual({
       ok: true,
       value: { at: 'Inbox.md#0:abc' },
     })
-    await dispatch('tasks', {}, ['list', 'today & p1'])
+    await dispatch('tasks', { label: 'p1', limit: '5' }, ['list'])
     await dispatch('tasks', {}, ['done', 'Inbox.md#0:abc'])
     await dispatch('base', { view: 'Shelf' }, ['query', 'Books.base'])
     expect(asked).toEqual([
-      { name: 'add_task', args: { note: 'Shop', text: 'Milk' }, agent: null },
-      { name: 'list_tasks', args: { filter: 'today & p1' }, agent: null },
+      { name: 'add_task', args: { space: 'Shop', text: 'Milk' }, agent: null },
+      { name: 'list_tasks', args: { label: 'p1', limit: '5' }, agent: null },
       { name: 'update_task', args: { at: 'Inbox.md#0:abc', done: true }, agent: null },
       { name: 'query_base', args: { view: 'Shelf', path: 'Books.base' }, agent: null },
     ])
+  })
+
+  test('the words after a verb are all its last argument, not only the first', async () => {
+    asked.length = 0
+    await dispatch('tasks', {}, ['add', 'Call', 'the', 'dentist'])
+    await dispatch('base', {}, ['query', 'Reading', 'list.base'])
+    expect(asked).toEqual([
+      { name: 'add_task', args: { text: 'Call the dentist' }, agent: null },
+      { name: 'query_base', args: { path: 'Reading list.base' }, agent: null },
+    ])
+  })
+
+  test('says it has no filter, view, note or heading rather than leaving one out', async () => {
+    asked.length = 0
+    const refused = [
+      await dispatch('tasks', {}, ['list', 'today & p1']),
+      await dispatch('tasks', { view: 'Board' }, ['list']),
+      await dispatch('tasks', { note: 'Shop' }, ['add', 'Milk']),
+      await dispatch('tasks', { under: 'Later' }, ['add', 'Milk']),
+    ]
+    expect(refused).toEqual([
+      { ok: false, error: 'tasks.list takes no filter' },
+      { ok: false, error: 'tasks.list takes no view' },
+      { ok: false, error: 'tasks.add takes no note' },
+      { ok: false, error: 'tasks.add takes no under' },
+    ])
+    expect(asked).toEqual([])
   })
 
   test('says why in a sentence where the verb refused', async () => {

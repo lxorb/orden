@@ -14,6 +14,8 @@ const DATES = /^(created|created time|created at|date|last edited time|last modi
 
 const TITLES = /^(name|title|task|subject)$/i
 
+const LABELS = /^(tags?|labels?)$/i
+
 export async function readTable(
   sources: readonly Source[],
   rows: Rows = 'table',
@@ -93,6 +95,7 @@ export function rowNote(
   const meta: Meta = {}
   const extra: [string, string][] = []
   const words: string[] = []
+  const tags: string[] = []
 
   for (const column of columns) {
     const value = (row[column] ?? '').trim()
@@ -107,6 +110,11 @@ export function rowNote(
       }
     }
 
+    if (LABELS.test(column) && column !== titleColumn) {
+      tags.push(...value.split(/[,\n]/).map((one) => one.trim()))
+      continue
+    }
+
     if (value.includes('\n')) {
       words.push(`## ${plainWords(column)}\n\n${plainWords(value)}`)
       continue
@@ -115,6 +123,7 @@ export function rowNote(
     extra.push([key, value])
   }
 
+  if (tags.some(Boolean)) meta.tags = tags.filter(Boolean)
   if (extra.length) meta.extra = extra
 
   return { name, text: noteText(null, [titleHeading(name), ...words].join('\n\n'), meta) }
@@ -133,6 +142,11 @@ function keysOf(columns: readonly string[]): Map<string, string> {
   const taken = new Set<string>()
   const take = (column: string, wanted: string) => keys.set(column, freeKey(wanted, taken))
 
+  const title = titleOf(columns)
+  for (const column of columns) {
+    if (LABELS.test(column) && column !== title) keys.set(column, 'tags')
+  }
+  if (keys.size) taken.add('tags')
   for (const column of columns) {
     if (DATES.test(column)) take(column, /created|^date$/i.test(column) ? 'date' : 'updated')
   }

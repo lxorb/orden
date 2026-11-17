@@ -34,6 +34,23 @@ async function verbs(): Promise<string[]> {
 }
 
 describe('the table', () => {
+  test('hands an agent verb the deadline the window was given', async () => {
+    const { registerAgentVerbs } = await import('@orden/contracts')
+    const given: (AbortSignal | undefined)[] = []
+    const stop = registerAgentVerbs(() =>
+      Promise.resolve({
+        read_note: (_name, _args, _caller, deadline) => {
+          given.push(deadline)
+          return Promise.resolve({ ok: true as const, status: 'ok' as const, result: {} })
+        },
+      }),
+    )
+    const deadline = new AbortController().signal
+    await dispatch('read_note', {}, [], 'here', { agent: null }, deadline)
+    stop()
+    expect(given).toEqual([deadline])
+  })
+
   test('answers its own list of verbs', async () => {
     expect(await verbs()).toContain('files.read')
   })
@@ -66,6 +83,13 @@ describe('the table', () => {
         error: `${verb} changes something: say yes to go ahead`,
       })
     }
+  })
+
+  test('refuses words past a move’s two paths rather than guessing where one ends', async () => {
+    expect(await dispatch('files', { yes: true }, ['move', 'My', 'plan.md', 'Later.md'])).toEqual({
+      ok: false,
+      error: 'files.move takes path and to, one word each: quote a path with spaces in it',
+    })
   })
 
   test('answers rather than throwing when a verb says no', async () => {

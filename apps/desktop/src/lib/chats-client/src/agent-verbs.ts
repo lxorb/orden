@@ -6,6 +6,7 @@ import { threadSpaceOf } from '../../automation/src/api'
 import type { ChatEntry, Chats } from './shapes'
 import { chatsOn } from '../../gates/src/api'
 import { rootedAt } from '../../platform/src/api'
+import { protection } from '../../protect/src/api'
 import { workspace } from '../../workspace/src/api'
 import {
   asked,
@@ -52,7 +53,8 @@ function seenBy(call: Call, store: Chats): Seen[] {
   const spaces = reachable(call)
   return store.list.flatMap((entry) => {
     const space = rootedAt(spaces, entry.root)
-    return space && entry.name ? [{ entry, name: entry.name, space: space.name }] : []
+    const kept = entry.path !== null && !protection.agentsMay(entry.path)
+    return space && entry.name && !kept ? [{ entry, name: entry.name, space: space.name }] : []
   })
 }
 

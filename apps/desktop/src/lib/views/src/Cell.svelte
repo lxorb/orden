@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Row, Value } from '@orden/bases'
-  import { cellValue } from '@orden/bases'
+  import { cellValue, onClock, rewritten } from '@orden/bases'
   import { tick } from 'svelte'
   import type { Property } from '@orden/markdown/properties'
   import type { ListItem } from '@orden/markdown/property-edits'
@@ -70,6 +70,8 @@
       (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
   )
 
+  const here = $derived(isDateValue(value) ? onClock(value) : null)
+
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
     const kind = listed
@@ -84,8 +86,8 @@
     const said =
       value === null
         ? ''
-        : isDateValue(value)
-          ? value.iso + (value.time ? ` ${value.time.slice(0, 5)}` : '')
+        : here
+          ? here.iso + (here.time ? ` ${here.time.slice(0, 5)}` : '')
           : isDurationValue(value)
             ? writeDuration(Math.round(value.ms / 60_000))
             : typeof value === 'boolean' || typeof value === 'number'
@@ -115,7 +117,11 @@
     if (editor === 'checkbox') return words === 'true'
     if (editor === 'date') {
       const [day, time] = words.split(' ')
-      return time ? { kind: 'date', iso: day ?? words, time } : { kind: 'date', iso: day ?? words }
+      const iso = day ?? words
+      if (!time) return { kind: 'date', iso }
+      return isDateValue(value)
+        ? rewritten(value, { kind: 'date', iso, time })
+        : { kind: 'date', iso, time }
     }
     const base = kit.live.base
     if (editor === 'select' && base)

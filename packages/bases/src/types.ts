@@ -20,6 +20,7 @@ export interface LinkValue {
   kind: 'link'
   target: string
   display?: string
+  exact?: true
 }
 
 export type RenderedValue =
@@ -163,6 +164,7 @@ export interface Base {
 export interface Context {
   today: string
   now: string
+  zone?: string
   this?: Row
   resolve?: (target: string, from: Row) => string | null
   row?: (path: string, space: string) => Row | undefined

@@ -97,19 +97,47 @@ fn connected(mut grant: Grant) -> Grant {
     grant
 }
 
-pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, args: Value) -> Answer {
+pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args: Value) -> Answer {
     shell::start(app);
     let started = Instant::now();
     let name = verb.name();
     let tab = args.get("tab").and_then(Value::as_str).map(str::to_string);
-    let answered = run(app, caller, verb);
-    logged(app, caller, name, tab.as_deref(), args, &answered, started);
+    let answered = run(app, caller, session, verb);
+    logged(
+        app,
+        caller,
+        session,
+        name,
+        tab.as_deref(),
+        args,
+        &answered,
+        started,
+    );
     answered
 }
 
+pub fn session_of(asked: &Value) -> String {
+    asked
+        .get("session")
+        .and_then(Value::as_str)
+        .filter(|one| {
+            one.len() <= 64
+                && one
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        })
+        .unwrap_or_default()
+        .to_owned()
+}
+
+#[allow(
+    clippy::too_many_arguments,
+    reason = "a log line names the caller, its session, the call and its answer"
+)]
 pub fn logged(
     app: &AppHandle,
     caller: &Caller,
+    session: &str,
     verb: &str,
     tab: Option<&str>,
     args: Value,
@@ -118,7 +146,7 @@ pub fn logged(
 ) {
     if let Caller::Agent(grant) = caller {
         if verb != "agent_bye" {
-            shell::heard(app, &grant.id);
+            shell::heard(app, &grant.id, session);
         }
     }
     let code = match answered {
@@ -140,7 +168,7 @@ pub fn logged(
     );
 }
 
-fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
+fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
     tabs::back(caller.id());
     match verb {
         Verb::Status(_) => status(app, caller),
@@ -156,9 +184,13 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
         }
         Verb::Pair(pair) => pair_client(app, caller, &pair),
         Verb::Bye(_) => {
-            tabs::bye(caller.id());
-            shell::bye(app, caller.id());
-            process::end_all(Some(caller.id()));
+            let agent = caller.id();
+            if shell::bye(app, agent, session) {
+                tabs::bye(agent);
+                process::end_all(Some(agent));
+            } else {
+                process::end_session(agent, session);
+            }
             Answer::ok(verbs::Nothing {})
         }
         browsing => {
@@ -176,14 +208,14 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
                 || stop::cancelled(since),
             ) {
                 Err(()) => return Answer::error(Code::Stopped, "the reader pressed the stop"),
-                Ok(true) => said_waiting(app, caller, "calls"),
+                Ok(true) => said_waiting(app, caller, session, "calls"),
                 Ok(false) => {}
             }
             if let Verb::Files(asked) = &browsing {
                 return files::answer(app, caller, asked);
             }
             if let Verb::Process(asked) = &browsing {
-                return process::answer(app, caller, asked, since);
+                return process::answer(app, caller, session, asked, since);
             }
             if let Verb::Http(asked) = &browsing {
                 return http::answer(app, caller, asked, since);
@@ -212,10 +244,11 @@ fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     }
 }
 
-fn said_waiting(app: &AppHandle, caller: &Caller, what: &str) {
+fn said_waiting(app: &AppHandle, caller: &Caller, session: &str, what: &str) {
     logged(
         app,
         caller,
+        session,
         "limit",
         None,
         serde_json::json!({ "waiting": what }),

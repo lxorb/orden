@@ -9,6 +9,7 @@ import {
   isWhen,
 } from '@orden/bases'
 import { bare, isNoteProperty } from './columns'
+import { dayIn, isDateValue } from './values'
 
 const DEFAULT_SIZE: CardSize = 'medium'
 
@@ -282,13 +283,6 @@ export function cardLine(
   }
   const text = words(value)
   if (!text) return null
-  const late =
-    !done &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    'kind' in value &&
-    value.kind === 'date' &&
-    typeof value.iso === 'string' &&
-    value.iso.slice(0, 10) < today
+  const late = !done && isDateValue(value) && (dayIn(value) ?? '') < today
   return { kind: 'words', text, late }
 }
