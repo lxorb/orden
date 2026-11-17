@@ -6,6 +6,7 @@ pub mod remote;
 mod session;
 pub mod shells;
 mod ssh_config;
+mod tmux;
 mod wire;
 
 use std::collections::HashMap;
@@ -205,6 +206,7 @@ pub async fn pty_spawn(
     rows: u16,
     key: Option<String>,
     plain: Option<bool>,
+    name: Option<String>,
     output: Channel<InvokeResponseBody>,
 ) -> Result<Spawned, String> {
     let stamp = webview.state::<Terminals>().stamp();
@@ -222,13 +224,22 @@ pub async fn pty_spawn(
         let host = remote::host_id(&shell);
         let remote = host.is_some();
         let place = place(&webview)?;
+        let label = hold::Label {
+            shell: shell.clone(),
+            name: name.filter(|one| !one.trim().is_empty()),
+            folder: folder.clone(),
+        };
         let (session, started) = Session::open(&place, &key, cols, rows, || match host {
-            Some(host) => remote::connect(&webview, host, &key, plain.unwrap_or(false)),
+            Some(host) => remote::connect(&webview, host, &key, plain.unwrap_or(false), label),
             None => Ok(Fresh {
-                launch: shells::find(&shell)
-                    .ok_or_else(|| format!("no shell {shell} here"))?
-                    .launch(folder.as_deref(), &shells::ThisMachine),
+                launch: match tmux::name_of(&shell) {
+                    Some(name) => tmux::launch(name, dirs::home_dir())?,
+                    None => shells::find(&shell)
+                        .ok_or_else(|| format!("no shell {shell} here"))?
+                        .launch(folder.as_deref(), &shells::ThisMachine),
+                },
                 farewell: Vec::new(),
+                label,
             }),
         })?;
         let pid = session.pid();
@@ -283,6 +294,75 @@ pub async fn pty_spawn(
         );
 
         Ok(Spawned { pid, fresh })
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub struct Shown {
+    #[serde(flatten)]
+    listed: session::Listed,
+    program: Option<String>,
+    open: bool,
+}
+
+#[tauri::command]
+pub async fn terminal_sessions(webview: Webview) -> Result<Vec<Shown>, String> {
+    crate::lane::off_the_runtime(move || -> Result<Vec<Shown>, String> {
+        let owner = owner(&webview)?;
+        let place = place(&webview)?;
+        let here: Vec<String> = webview
+            .state::<Terminals>()
+            .lock()
+            .values()
+            .filter(|held| held.owner == owner)
+            .map(|held| held.session.key().to_owned())
+            .collect();
+        Ok(session::listed(&place)
+            .into_iter()
+            .map(|listed| {
+                let program = if remote::host_id(&listed.label.shell).is_some() {
+                    None
+                } else {
+                    process::program(listed.shell)
+                };
+                let open = here.contains(&listed.key);
+                Shown {
+                    listed,
+                    program,
+                    open,
+                }
+            })
+            .collect())
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn terminal_tmux(webview: Webview) -> Result<Vec<tmux::Found>, String> {
+    crate::lane::off_the_runtime(move || -> Result<Vec<tmux::Found>, String> {
+        owner(&webview)?;
+        Ok(tmux::listed())
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn pty_name(webview: Webview, key: String, name: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        owner(&webview)?;
+        usable(&key)?;
+        session::told(&place(&webview)?, &key, wire::NAME, name.as_bytes())
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn pty_end(webview: Webview, key: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        owner(&webview)?;
+        usable(&key)?;
+        session::told(&place(&webview)?, &key, wire::END, &[])
     })
     .await
 }
@@ -469,6 +549,7 @@ mod tests {
             Ok(Fresh {
                 launch,
                 farewell: Vec::new(),
+                label: hold::Label::default(),
             })
         })
         .expect("a shell");

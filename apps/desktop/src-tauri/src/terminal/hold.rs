@@ -57,6 +57,17 @@ pub struct Spec {
     pub token: String,
     #[serde(default)]
     pub farewell: Vec<u8>,
+    #[serde(default)]
+    pub label: Label,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Label {
+    pub shell: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub folder: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -65,6 +76,12 @@ pub struct Record {
     pub port: u16,
     pub token: String,
     pub holder: u32,
+    #[serde(default)]
+    pub shell: Option<u32>,
+    #[serde(default)]
+    pub started: u64,
+    #[serde(default)]
+    pub label: Label,
 }
 
 #[derive(Clone, Debug)]
@@ -197,6 +214,7 @@ struct State {
     size: (u16, u16),
     exit: Option<i64>,
     exited: Option<Instant>,
+    last: u64,
     drained: bool,
     told: bool,
     ending: Option<Instant>,
@@ -242,6 +260,8 @@ struct Holder {
     shell: Option<u32>,
     token: String,
     farewell: Vec<u8>,
+    file: PathBuf,
+    record: Mutex<Record>,
 }
 
 impl Holder {
@@ -335,7 +355,11 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
         port,
         token: spec.token.clone(),
         holder: std::process::id(),
+        shell: holder.shell,
+        started: crate::clock::now(),
+        label: spec.label.clone(),
     };
+    *holder.record.lock().unwrap_or_else(PoisonError::into_inner) = record.clone();
     if let Err(error) = write_record(&spec.file, &record) {
         say(format!("{REFUSED}{error}"));
         end_tree(holder.shell);
@@ -426,6 +450,16 @@ fn open(spec: &Spec) -> Result<Opened, String> {
         input: Mutex::new(input),
         token: spec.token.clone(),
         farewell: spec.farewell.clone(),
+        file: spec.file.clone(),
+        record: Mutex::new(Record {
+            v: wire::VERSION,
+            port: 0,
+            token: spec.token.clone(),
+            holder: std::process::id(),
+            shell: None,
+            started: 0,
+            label: spec.label.clone(),
+        }),
     });
     Ok((holder, reader, child, listener))
 }
@@ -442,7 +476,10 @@ fn read(holder: &Holder, mut reader: Box<dyn Read + Send>) {
         match reader.read(&mut buffer) {
             Ok(0) => break,
             Ok(count) => {
-                holder.lock().ring.push(&buffer[..count]);
+                let mut state = holder.lock();
+                state.ring.push(&buffer[..count]);
+                state.last = crate::clock::now();
+                drop(state);
                 holder.changed.notify_all();
             }
             Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
@@ -534,6 +571,10 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
     }
     let _ = stream.set_read_timeout(None);
     let _ = stream.set_nodelay(true);
+    if flags & wire::ASKING != 0 {
+        asked(holder, stream);
+        return;
+    }
     let Ok(out) = stream.try_clone() else {
         return;
     };
@@ -542,7 +583,7 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
         let mut state = holder.lock();
         let id = state.next;
         state.next += 1;
-        let writer = flags & 1 == 1 || !state.clients.iter().any(|one| one.writer);
+        let writer = flags & wire::TAKING != 0 || !state.clients.iter().any(|one| one.writer);
         if writer {
             for one in &mut state.clients {
                 one.writer = false;
@@ -562,6 +603,9 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
             cols: state.size.0,
             rows: state.size.1,
             writer,
+            last: state.last,
+            clients: u32::try_from(state.clients.len()).unwrap_or(u32::MAX),
+            exit: state.exit,
         };
         let nudge = writer && state.ring.start > 0 && state.exit.is_none();
         (id, hi, state.ring.whole(), nudge.then_some(state.size))
@@ -603,12 +647,50 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
                 holder.changed.notify_all();
             }
             Ok((wire::END, _)) => end(holder),
+            Ok((wire::NAME, body)) => renamed(holder, &body),
             Ok(_) => {}
             Err(_) => break,
         }
     }
     holder.lock().gone(id);
     holder.changed.notify_all();
+}
+
+fn asked(holder: &Arc<Holder>, mut stream: TcpStream) {
+    let hi = {
+        let state = holder.lock();
+        wire::Hi {
+            v: wire::VERSION,
+            holder: std::process::id(),
+            shell: holder.shell,
+            cols: state.size.0,
+            rows: state.size.1,
+            writer: false,
+            last: state.last,
+            clients: u32::try_from(state.clients.len()).unwrap_or(u32::MAX),
+            exit: state.exit,
+        }
+    };
+    let told = serde_json::to_vec(&hi)
+        .map_err(std::io::Error::other)
+        .and_then(|hi| wire::send(&mut stream, wire::HI, &hi));
+    if told.is_err() {
+        return;
+    }
+    while let Ok((kind, body)) = wire::heard(&mut stream) {
+        match kind {
+            wire::NAME => renamed(holder, &body),
+            wire::END => end(holder),
+            _ => {}
+        }
+    }
+}
+
+fn renamed(holder: &Holder, body: &[u8]) {
+    let name = String::from_utf8_lossy(body).trim().to_owned();
+    let mut record = holder.record.lock().unwrap_or_else(PoisonError::into_inner);
+    record.label.name = (!name.is_empty()).then(|| name.chars().take(200).collect());
+    let _ = write_record(&holder.file, &record);
 }
 
 enum Next {

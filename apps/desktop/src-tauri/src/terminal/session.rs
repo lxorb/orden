@@ -41,6 +41,7 @@ impl Place {
 }
 
 pub struct Session {
+    key: String,
     input: Sender<Vec<u8>>,
     socket: TcpStream,
     shell: Option<u32>,
@@ -92,7 +93,7 @@ struct Greeted {
     screen: Vec<u8>,
 }
 
-fn greet(port: u16, token: &str) -> Result<Greeted, String> {
+fn hello(port: u16, token: &str, flags: u8) -> Result<(TcpStream, wire::Hi), String> {
     let mut socket = TcpStream::connect_timeout(
         &SocketAddr::from((Ipv4Addr::LOCALHOST, port)),
         REACHED_WITHIN,
@@ -102,15 +103,18 @@ fn greet(port: u16, token: &str) -> Result<Greeted, String> {
     socket
         .set_read_timeout(Some(GREETED_WITHIN))
         .map_err(|error| error.to_string())?;
-    let mut hello = vec![1u8];
+    let mut hello = vec![flags];
     hello.extend_from_slice(token.as_bytes());
     wire::send(&mut socket, wire::HELLO, &hello).map_err(|error| error.to_string())?;
-    let hi = match wire::heard(&mut socket) {
-        Ok((wire::HI, body)) => {
-            serde_json::from_slice::<wire::Hi>(&body).map_err(|error| error.to_string())?
-        }
-        _ => return Err("the session did not answer".to_owned()),
+    let Ok((wire::HI, body)) = wire::heard(&mut socket) else {
+        return Err("the session did not answer".to_owned());
     };
+    let hi = serde_json::from_slice::<wire::Hi>(&body).map_err(|error| error.to_string())?;
+    Ok((socket, hi))
+}
+
+fn greet(port: u16, token: &str) -> Result<Greeted, String> {
+    let (mut socket, hi) = hello(port, token, wire::TAKING)?;
     let Ok((wire::SCREEN, screen)) = wire::heard(&mut socket) else {
         return Err("the session did not answer".to_owned());
     };
@@ -139,9 +143,61 @@ pub fn held(place: &Place, key: &str) -> bool {
     })
 }
 
+#[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
+pub struct Listed {
+    pub key: String,
+    pub label: hold::Label,
+    pub shell: Option<u32>,
+    pub started: u64,
+    pub last: u64,
+    pub clients: u32,
+    pub exit: Option<i64>,
+}
+
+fn asking(place: &Place, key: &str) -> Option<(TcpStream, wire::Hi, hold::Record)> {
+    let record = hold::read_record(&place.file(key))?;
+    let (socket, hi) = hello(record.port, &record.token, wire::ASKING).ok()?;
+    Some((socket, hi, record))
+}
+
+pub fn listed(place: &Place) -> Vec<Listed> {
+    let Ok(found) = std::fs::read_dir(&place.folder) else {
+        return Vec::new();
+    };
+    let mut keys: Vec<String> = found
+        .flatten()
+        .filter_map(|one| {
+            let name = one.file_name().into_string().ok()?;
+            let key = name.strip_suffix(".json")?;
+            (!key.contains('.')).then(|| key.to_owned())
+        })
+        .collect();
+    keys.sort();
+    keys.into_iter()
+        .filter_map(|key| {
+            let (_, hi, record) = asking(place, &key)?;
+            Some(Listed {
+                key,
+                label: record.label,
+                shell: hi.shell,
+                started: record.started,
+                last: hi.last.max(record.started),
+                clients: hi.clients,
+                exit: hi.exit,
+            })
+        })
+        .collect()
+}
+
+pub fn told(place: &Place, key: &str, kind: u8, body: &[u8]) -> Result<(), String> {
+    let (mut socket, _, _) = asking(place, key).ok_or_else(|| format!("no session {key}"))?;
+    wire::send(&mut socket, kind, body).map_err(|error| error.to_string())
+}
+
 pub struct Fresh {
     pub launch: Launch,
     pub farewell: Vec<u8>,
+    pub label: hold::Label,
 }
 
 impl Session {
@@ -156,7 +212,11 @@ impl Session {
         let (greeted, fresh) = if let Some(greeted) = found(&file) {
             (greeted, false)
         } else {
-            let Fresh { launch, farewell } = fresh()?;
+            let Fresh {
+                launch,
+                farewell,
+                label,
+            } = fresh()?;
             let token = hold::token()?;
             let spec = hold::Spec {
                 program: launch.program,
@@ -168,6 +228,7 @@ impl Session {
                 file,
                 token: token.clone(),
                 farewell,
+                label,
             };
             let port = hold::start(&place.starter, &spec)?;
             (greet(port, &token)?, true)
@@ -182,6 +243,7 @@ impl Session {
             stream.lock().screen = Some((screen, hi.cols, hi.rows));
         }
         let session = Self {
+            key: key.to_owned(),
             input,
             socket,
             shell: hi.shell,
@@ -203,6 +265,10 @@ impl Session {
 
     pub fn fresh(&self) -> bool {
         self.fresh
+    }
+
+    pub fn key(&self) -> &str {
+        &self.key
     }
 
     fn same_stream(&self, stream: &Arc<Stream>) -> bool {
@@ -429,6 +495,14 @@ mod tests {
         r#"echo orden-""ok"#
     };
 
+    fn says(word: &str) -> String {
+        if cfg!(windows) {
+            format!("echo orden-%COMSPEC:~0,0%{word}")
+        } else {
+            format!("echo orden-\"\"{word}")
+        }
+    }
+
     const ENTER: &str = if cfg!(windows) { "\r" } else { "\n" };
 
     fn place() -> (tempfile::TempDir, Place) {
@@ -445,6 +519,7 @@ mod tests {
             Ok(Fresh {
                 launch: shell(),
                 farewell: Vec::new(),
+                label: hold::Label::default(),
             })
         })
         .expect("a shell");
@@ -583,6 +658,84 @@ mod tests {
             !super::held(&place, "kept"),
             "the ended session is still listed"
         );
+    }
+
+    fn writer_said(heard: &Receiver<Out>) -> Option<bool> {
+        let until = Instant::now() + Duration::from_secs(10);
+        while let Ok(out) = heard.recv_timeout(until.saturating_duration_since(Instant::now())) {
+            if let Out::Writer(writer) = out {
+                return Some(writer);
+            }
+        }
+        None
+    }
+
+    #[test]
+    fn a_session_let_go_of_is_listed_named_and_ended_from_the_list() {
+        let (_folder, place) = place();
+        let (held, heard) = opened(&place, "listed", 80, 24);
+        line(&held, SAYS_OK);
+        let _ = printed_until(&held, &heard, "orden-ok");
+        let session = taken(&held);
+        let pid = session.pid().expect("a pid");
+        session.detach();
+        thread::sleep(Duration::from_millis(300));
+
+        let found = listed(&place);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].key, "listed");
+        assert_eq!(found[0].shell, Some(pid));
+        assert_eq!(found[0].clients, 0);
+        assert!(found[0].last >= found[0].started && found[0].started > 0);
+
+        told(&place, "listed", wire::NAME, b"Build").expect("named");
+        thread::sleep(Duration::from_millis(200));
+        assert_eq!(listed(&place)[0].label.name.as_deref(), Some("Build"));
+
+        told(&place, "listed", wire::END, &[]).expect("ended");
+        let until = Instant::now() + Duration::from_secs(10);
+        while (alive(pid) || !listed(&place).is_empty()) && Instant::now() < until {
+            thread::sleep(Duration::from_millis(50));
+        }
+        assert!(!alive(pid), "the shell outlived its end");
+        assert!(listed(&place).is_empty());
+    }
+
+    #[test]
+    fn two_tabs_on_one_session_have_one_writer_and_take_over_switches_it() {
+        let (_folder, place) = place();
+        let (first, first_heard) = opened(&place, "shared", 80, 24);
+        line(&first, SAYS_OK);
+        let _ = printed_until(&first, &first_heard, "orden-ok");
+
+        let (second, second_heard) = opened(&place, "shared", 80, 24);
+        assert_eq!(
+            writer_said(&first_heard),
+            Some(false),
+            "the first still typed"
+        );
+        assert_eq!(listed(&place)[0].clients, 2);
+
+        line(&first, &says("lost"));
+        line(&second, &says("second"));
+        let (said, _) = printed_until(&first, &first_heard, "orden-second");
+        assert!(
+            said.contains("orden-second"),
+            "the writer's line did not reach both"
+        );
+        assert!(!said.contains("orden-lost"), "one that only watches typed");
+
+        first
+            .lock()
+            .expect("the session")
+            .as_ref()
+            .expect("running")
+            .take();
+        assert_eq!(writer_said(&first_heard), Some(true));
+        assert_eq!(writer_said(&second_heard), Some(false));
+
+        taken(&first).end();
+        drop(taken(&second));
     }
 
     #[cfg(unix)]

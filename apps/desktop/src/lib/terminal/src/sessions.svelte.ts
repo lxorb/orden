@@ -182,6 +182,7 @@ class Session {
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
   offline = $state(false)
+  writer = $state(true)
 
   get status(): Status | null {
     return this.online && !this.live && !this.offline ? this.arrival.status : null
@@ -676,6 +677,11 @@ class Session {
     return hostIdOf(this.spec().shell) === null || this.heldHost !== null
   }
 
+  takeOver() {
+    if (this.writer || this.online) return
+    this.source?.take?.()
+  }
+
   detachSession() {
     if (!this.detachable) return
     this.detached = true
@@ -774,6 +780,7 @@ class Session {
     const id = `${this.tab.id}-${this.started}`
     clearTimeout(this.retrying)
     this.pty = id
+    this.writer = true
     this.startedAt = Date.now()
     this.exited = null
     setEnded(this.tab.id, false)
@@ -818,7 +825,7 @@ class Session {
     const host = hostIdOf(spec.shell)
     const plain = host !== null && isPlain(host)
     this.heldHost = host !== null && !plain ? host : null
-    return new PtySource(id, spec.shell, spec.folder, this.remote, spec.key || id, plain)
+    return new PtySource(id, spec.shell, spec.folder, this.remote, spec.key || id, plain, spec.name)
   }
 
   private async failed(spec: Spec) {
@@ -881,6 +888,7 @@ class Session {
       if (what.connected && this.screened) this.landed()
       else this.live = false
     } else if ('typing' in what) this.mayType = what.typing
+    else if ('writer' in what) this.writer = what.writer
     else if ('held' in what) {
       if (what.held) {
         this.live = false
@@ -1081,6 +1089,7 @@ class Session {
       this.typedOnline(data, binary)
       return
     }
+    if (!this.writer) return
     if (this.pty === null) {
       if (this.offline && data === '\r') this.reconnect()
       else if (this.exited !== null && data === '\r') {
