@@ -94,7 +94,7 @@ describe('a picture let go of by an account with more versions than a sweep read
 
     expect(unread()).toBe(0)
     expect(holds()).toBe(1)
-    expect(listed()).toBe(0)
+    expect(listed()).toBe(1)
   })
 
   test('stays, and the bytes are served, where a version says it in raw HTML', async () => {
@@ -134,7 +134,7 @@ describe('a version kept now', () => {
     await sweepUnused(env)
 
     expect(holds()).toBe(1)
-    expect(listed()).toBe(0)
+    expect(listed()).toBe(1)
   })
 
   test('that folds into the one before says what the words it took say', async () => {

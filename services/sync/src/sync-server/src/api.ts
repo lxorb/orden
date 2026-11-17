@@ -95,7 +95,14 @@ export { type Holder, SocketLock } from './locks/sockets'
 export { OPEN_HEADER, openAnswer, openIn, sweepOpened, WRITTEN_HEADER } from './opened'
 export { bytesOf, digest, hexOf, opens } from './pairing'
 export { LONGEST_PATH, staysInside } from './paths'
-export { forgetPictures, htmlIsLive, keepPictures, picturesOf, picturesOfMeta } from './pictures'
+export {
+  forgetPictures,
+  htmlIsLive,
+  keepPictures,
+  picturesOf,
+  picturesOfMeta,
+  RESTAMP,
+} from './pictures'
 export { programMayReach } from './programs'
 export { PROTECTED, protectedRoutes, protectLikewise, type Shut, shutFor } from './protected'
 export { forgetEndedTargets } from './push/live'

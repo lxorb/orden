@@ -105,6 +105,7 @@ async function ownOtherwise(
   if (!picture) return null
 
   const shown = await versionShows(env, userId, hash, done)
+  if (shown === 'used') done.versioned.add(`${userId} ${hash}`)
   if (shown !== null) return shown
 
   const unread = await env.DB.prepare(
@@ -146,6 +147,7 @@ export interface Reading {
   asks: number
   held: Map<string, Set<string> | null>
   versions: Map<string, boolean>
+  versioned: Set<string>
 }
 
 export function reading(): Reading {
@@ -155,6 +157,7 @@ export function reading(): Reading {
     asks: MOST_ASKED,
     held: new Map(),
     versions: new Map(),
+    versioned: new Set(),
   }
 }
 

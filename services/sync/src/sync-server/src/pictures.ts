@@ -3,7 +3,10 @@ import { coverOf } from '@orden/markdown/cover'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { withoutBlockIds } from '@orden/markdown/links'
 import { metaFromText } from '@orden/sync-core'
+import { now } from './crypto'
 import type { Env } from './types'
+
+export const RESTAMP = 'on conflict(user_id, hash) do update set since = max(since, excluded.since)'
 
 const FRONT_PICTURES = ['image'] as const
 
@@ -122,7 +125,21 @@ export async function keepPictures(
       .first<{ meta: string | null }>()
     const pictures = picturesOf(content, live)
     for (const hash of picturesOfMeta(metaFromText(row?.meta))) pictures.add(hash)
+    const shown = live ? pictures : new Set([...pictures, ...picturesOf(content, true)])
     await env.DB.batch([
+      env.DB.prepare(
+        `insert into unused_blobs (user_id, hash, since)
+           select distinct b.user_id, b.hash, ?3
+             from note_pictures p
+             join notes n on n.id = p.note_id
+             join spaces sp on sp.id = n.space_id
+             join blobs b on b.hash = p.hash
+            where p.note_id = ?1 and p.hash not in (select value from json_each(?2))
+              and (b.user_id = sp.user_id
+                   or exists (select 1 from space_members m join users u on u.email = m.email
+                               where m.space_id = sp.id and u.id = b.user_id))
+         ${RESTAMP}`,
+      ).bind(note.id, JSON.stringify([...shown]), now()),
       env.DB.prepare('delete from note_pictures where note_id = ?').bind(note.id),
       env.DB.prepare(
         `insert or ignore into note_pictures (note_id, hash)
