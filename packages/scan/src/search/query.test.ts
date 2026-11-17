@@ -311,6 +311,20 @@ describe('a group after a regression of round 31', () => {
   })
 })
 
+describe('a word with brackets in a group', () => {
+  test('keeps its brackets and leaves the group whole', () => {
+    expect(parseQuery('(f(x) notes)')).toEqual({ kind: 'all', of: [word('f(x)'), word('notes')] })
+    expect(parseQuery('(print() OR log())')).toEqual({
+      kind: 'any',
+      of: [word('print()'), word('log()')],
+    })
+  })
+
+  test('a field that gives nothing leaves no bracket behind', () => {
+    expect(parseQuery('case:)')).toEqual({ kind: 'all', of: [] })
+  })
+})
+
 describe('a closing parenthesis outside any group', () => {
   test('is part of the word it is written in', () => {
     expect(parseQuery('print()')).toEqual(word('print()'))

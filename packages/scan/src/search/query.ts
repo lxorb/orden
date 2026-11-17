@@ -135,7 +135,10 @@ class Parser {
       if (found) return found
     }
 
-    return this.field() ?? this.text(this.bare())
+    const before = this.at
+    const field = this.field()
+    if (field || this.at !== before) return field
+    return this.text(this.bare())
   }
 
   private group(): Query | null {
@@ -266,6 +269,7 @@ class Parser {
 
   private bare(): string {
     let out = ''
+    let open = 0
 
     while (this.at < this.source.length) {
       const here = this.source.charAt(this.at)
@@ -276,7 +280,9 @@ class Parser {
         continue
       }
 
-      if ((here === ')' && this.depth > 0) || /\s/.test(here)) break
+      if ((here === ')' && this.depth > 0 && open === 0) || /\s/.test(here)) break
+      if (here === '(') open++
+      else if (here === ')' && open > 0) open--
 
       out += here
       this.at++
