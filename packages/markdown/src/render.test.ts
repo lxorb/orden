@@ -321,6 +321,17 @@ describe('Typora extensions', () => {
     expect(html).toContain('<sup>2</sup>')
   })
 
+  test('subscript and superscript stop at whitespace, like the editor', () => {
+    expect(renderMarkdown('costs ~5 and ~10 each')).not.toContain('<sub>')
+    expect(renderMarkdown('cd ~/foo and ~/bar')).not.toContain('<sub>')
+    expect(renderMarkdown('x^2 and y^3')).not.toContain('<sup>')
+    expect(renderMarkdown('a ~b\\ c~ d')).toContain('<sub>')
+    expect(renderMarkdown('a ^b\\ c^ d')).toContain('<sup>')
+    expect(renderMarkdown('a ~b\\~c~ d')).toContain('<sub>b~c</sub>')
+    expect(renderMarkdown('~a b~ c')).not.toContain('<del>')
+    expect(renderMarkdown('~~a b~~ c')).toContain('<del>a b</del>')
+  })
+
   test('inline math', () => {
     const html = renderMarkdown('mass $E=mc^2$ here')
     expect(html).toContain('math-inline')
