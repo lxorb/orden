@@ -25,8 +25,8 @@ const MOST: Record<Kind, number> = {
   scheme: 19,
   key: 56,
   variable: 2,
-  dashed: 187,
-  word: 1103,
+  dashed: 186,
+  word: 970,
 }
 
 describe('the old name inside the repo', () => {
