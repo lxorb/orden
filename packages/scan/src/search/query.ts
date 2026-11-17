@@ -59,6 +59,7 @@ export const OPERATORS: readonly string[] = [
 class Parser {
   private at = 0
   private folding = true
+  private depth = 0
 
   constructor(private readonly source: string) {}
 
@@ -94,7 +95,7 @@ class Parser {
     for (;;) {
       this.skipSpace()
       if (this.at >= this.source.length) break
-      if (this.source.charAt(this.at) === ')') break
+      if (this.depth > 0 && this.source.charAt(this.at) === ')') break
       if (this.atOr()) break
 
       const before = this.at
@@ -117,6 +118,11 @@ class Parser {
     }
 
     if (here === '(') return this.group()
+    const stray = /^\)+(?=\s|$)/u.exec(this.source.slice(this.at))
+    if (stray) {
+      this.at += stray[0].length
+      return null
+    }
     if (here === '"') return this.text(this.phrase())
 
     if (here === '/') {
@@ -134,7 +140,9 @@ class Parser {
 
   private group(): Query | null {
     this.at++
+    this.depth++
     const inner = this.expression()
+    this.depth--
     this.skipSpace()
     if (this.source.charAt(this.at) === ')') this.at++
 
@@ -193,6 +201,7 @@ class Parser {
     let at = this.at + 1
     let source = ''
     let inClass = false
+    let passed = false
 
     while (at < this.source.length) {
       const here = this.source.charAt(at)
@@ -204,8 +213,10 @@ class Parser {
       }
 
       if (here === '\n') break
+      if (passed && /\s/.test(here)) return null
 
       if (here === '/' && !inClass) {
+        if (/\s/.test(this.source.charAt(at - 1))) return null
         let after = at + 1
         let flags = ''
         while (after < this.source.length && /[A-Za-z]/.test(this.source.charAt(after))) {
@@ -219,6 +230,7 @@ class Parser {
           this.at = after
           return { kind: 'regex', source, fold: flags.includes('i') }
         }
+        passed = true
       }
 
       if (here === '[') inClass = true
@@ -264,7 +276,7 @@ class Parser {
         continue
       }
 
-      if (here === ')' || /\s/.test(here)) break
+      if ((here === ')' && this.depth > 0) || /\s/.test(here)) break
 
       out += here
       this.at++

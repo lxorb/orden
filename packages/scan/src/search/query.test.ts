@@ -144,7 +144,8 @@ describe('nesting', () => {
   })
 
   test('drops a bracket nobody opened', () => {
-    expect(parseQuery('a) b')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
+    expect(parseQuery('a ) b')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
+    expect(parseQuery('a )) b )')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
   })
 
   test('leaves an empty group out', () => {
@@ -265,12 +266,43 @@ describe('regular expressions', () => {
     })
   })
 
+  test('a path whose last part is not letters keeps the terms after it', () => {
+    expect(parseQuery('/notes/2026 line:/TODO/')).toEqual({
+      kind: 'all',
+      of: [
+        word('/notes/2026'),
+        { kind: 'scope', unit: 'line', of: { kind: 'regex', source: 'TODO', fold: false } },
+      ],
+    })
+    expect(parseQuery('/tmp/a.txt OR /plan/i')).toEqual({
+      kind: 'any',
+      of: [word('/tmp/a.txt'), { kind: 'regex', source: 'plan', fold: true }],
+    })
+    expect(parseQuery('/help /x/')).toEqual({
+      kind: 'all',
+      of: [word('/help'), { kind: 'regex', source: 'x', fold: false }],
+    })
+    expect(parseQuery('/a b/')).toEqual({ kind: 'regex', source: 'a b', fold: false })
+    expect(parseQuery('/[/] x/')).toEqual({ kind: 'regex', source: '[/] x', fold: false })
+  })
+
   test('close at the slash that ends the word', () => {
     expect(parseQuery('/a/b/')).toEqual({ kind: 'regex', source: 'a/b', fold: false })
   })
 
   test('are an ordinary word when the query is only a slash', () => {
     expect(parseQuery('/')).toEqual(word('/'))
+  })
+})
+
+describe('a closing parenthesis outside any group', () => {
+  test('is part of the word it is written in', () => {
+    expect(parseQuery('print()')).toEqual(word('print()'))
+    expect(parseQuery('a) OR b')).toEqual({ kind: 'any', of: [word('a)'), word('b')] })
+    expect(parseQuery('(a OR b) c')).toEqual({
+      kind: 'all',
+      of: [{ kind: 'any', of: [word('a'), word('b')] }, word('c')],
+    })
   })
 })
 

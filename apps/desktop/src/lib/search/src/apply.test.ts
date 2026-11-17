@@ -15,6 +15,7 @@ const NOTES: Record<string, string> = {
   '/space/Tasks.md': '- [ ] The quarterly plan is due\n- [ ] A plan, quarterly or not\n',
   '/space/Review.md': '- [ ] plan the quarterly review\n',
   '/space/Budget.md': '# Budget\n\nThe quarterly plan is due.\n',
+  '/space/Code.md': 'call print() now\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
@@ -39,6 +40,12 @@ describe('what a replacement would do', () => {
     )
 
     expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
+  })
+
+  test('replaces a word with brackets in it as typed', async () => {
+    const made = await changes('print()', [hit('/space/Code.md', 0)], 'log()')
+
+    expect(made[0]?.after).toBe('call log() now\n')
   })
 
   test('and within one side of an either-or', async () => {
