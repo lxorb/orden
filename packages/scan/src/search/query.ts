@@ -118,7 +118,7 @@ class Parser {
     }
 
     if (here === '(') return this.group()
-    const stray = /^\)+(?=\s|$)/u.exec(this.source.slice(this.at))
+    const stray = this.depth === 0 ? /^\)+(?=\s|$)/u.exec(this.source.slice(this.at)) : null
     if (stray) {
       this.at += stray[0].length
       return null
@@ -216,7 +216,6 @@ class Parser {
       if (passed && /\s/.test(here)) return null
 
       if (here === '/' && !inClass) {
-        if (/\s/.test(this.source.charAt(at - 1))) return null
         let after = at + 1
         let flags = ''
         while (after < this.source.length && /[A-Za-z]/.test(this.source.charAt(after))) {
@@ -225,6 +224,7 @@ class Parser {
         }
 
         const ends = after >= this.source.length || /[\s)]/.test(this.source.charAt(after))
+        if (!ends && /\s/.test(this.source.charAt(at - 1))) return null
         if (ends && !FLAGS.test(flags)) return null
         if (ends) {
           this.at = after

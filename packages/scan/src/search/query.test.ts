@@ -295,6 +295,22 @@ describe('regular expressions', () => {
   })
 })
 
+describe('a group after a regression of round 31', () => {
+  test('closes after an empty scope or a lone minus', () => {
+    expect(parseQuery('(task-todo: OR task-done:) plan').kind).toBe('all')
+    expect(parseQuery('(a OR line:) b').kind).toBe('all')
+    expect(parseQuery('-(task:) plan').kind).toBe('all')
+  })
+
+  test('a pattern may end in a space', () => {
+    expect(parseQuery('/^- /')).toEqual({ kind: 'regex', source: '^- ', fold: false })
+    expect(parseQuery('/TODO: / plan')).toEqual({
+      kind: 'all',
+      of: [{ kind: 'regex', source: 'TODO: ', fold: false }, word('plan')],
+    })
+  })
+})
+
 describe('a closing parenthesis outside any group', () => {
   test('is part of the word it is written in', () => {
     expect(parseQuery('print()')).toEqual(word('print()'))
