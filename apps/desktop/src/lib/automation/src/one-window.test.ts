@@ -150,6 +150,7 @@ describe('with two windows open', () => {
 
 const here = join(import.meta.dirname, '..')
 const crate = join(here, '../../../src-tauri/src')
+const crates = join(here, '../../../src-tauri/crates')
 
 function filesUnder(dir: string, ending: RegExp): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -161,7 +162,7 @@ function filesUnder(dir: string, ending: RegExp): string[] {
 
 function sentToOneWindow(): Set<string> {
   const events = new Set<string>()
-  for (const file of filesUnder(crate, /\.rs$/)) {
+  for (const file of [crate, crates].flatMap((dir) => filesUnder(dir, /\.rs$/))) {
     const source = readFileSync(file, 'utf8')
     for (const [, name] of source.matchAll(/emit_to\(\s*[^,]+,\s*([A-Z_]+|"orden:[^"]+")\s*,/g)) {
       if (name?.startsWith('"')) {
@@ -192,7 +193,12 @@ describe('the audit of every event a window hears', () => {
   })
 
   test('what a window acts on is never sent to every window', () => {
-    const bare = (file: string) => readFileSync(join(crate, file), 'utf8')
+    const all = [crate, crates].flatMap((dir) => filesUnder(dir, /\.rs$/))
+    const bare = (file: string) =>
+      readFileSync(
+        all.find((path) => path.split(/[\\/]/).at(-1) === file) ?? join(crate, file),
+        'utf8',
+      )
     expect(bare('uris.rs')).not.toMatch(/\.emit\(OPENED/)
     expect(bare('reminders.rs')).not.toMatch(/\.emit\(PRESSED/)
     expect(bare('search.rs')).not.toMatch(/\.emit\(\s*HITS/)

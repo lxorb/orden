@@ -6,7 +6,7 @@ use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Manager, Url};
 
-use crate::paths::{
+use orden_base::paths::{
     a_space, cannot, files_in, folded, inside, is_markdown, is_pdf, write_atomically,
 };
 
@@ -123,7 +123,7 @@ pub fn admit_handed(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
             let handed = loaded_set(&app);
             let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
             if let Err(error) = write_handed_list(&at, &handed.listed()) {
-                crate::logs::say(&app, "warn", &format!("handed PDFs: {error}"));
+                orden_base::logs::say(&app, "warn", &format!("handed PDFs: {error}"));
             }
         });
     }

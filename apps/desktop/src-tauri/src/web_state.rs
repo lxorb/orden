@@ -16,7 +16,7 @@ const REFUSED: &str = "not a window of this app";
 
 fn ours(webview: &Webview) -> Result<(), String> {
     let label = webview.label();
-    if label == webview.window().label() && crate::launch::is_document_window(label) {
+    if label == webview.window().label() && orden_base::labels::is_document_window(label) {
         Ok(())
     } else {
         Err(REFUSED.to_owned())

@@ -5,6 +5,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, ExitRequestApi, Manager, RunEvent, WindowEvent};
 
 use crate::launch;
+use orden_base::labels::document_windows;
 
 const QUIT: &str = "orden://quit";
 
@@ -91,7 +92,7 @@ impl Installer {
     }
 }
 
-pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
+pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     builder
         .manage(Quitting::default())
         .manage(Installer::default())
@@ -135,9 +136,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         }
 
         RunEvent::Exit => {
-            crate::crashes::ended_well();
-            crate::terminal::end_all(app);
-            crate::apps_host::end_all(app);
+            orden_crashes::crashes::ended_well();
+            orden_pty::terminal::end_all(app);
+            orden_apps::apps_host::end_all(app);
             crate::ai_cli::end_all(app);
             crate::agents::stop::quitting();
             crate::notices::clear_all(app);
@@ -169,12 +170,16 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             }
             app.state::<crate::endpoint::Waiting>().forget(&label);
             app.state::<Installer>().gone(&label);
-            crate::crashes::window_gone(&label);
-            crate::terminal::window_gone(app, &label);
+            orden_crashes::crashes::window_gone(&label);
+            orden_pty::terminal::window_gone(
+                app,
+                &label,
+                !leaving(app) && !document_windows(app).is_empty(),
+            );
             crate::explorer::watch::window_gone(app, &label);
             crate::ai_cli::window_gone(app, &label);
             let now = state(app).now();
-            if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {
+            if (now == ASKING || now == CONFIRMING) && document_windows(app).is_empty() {
                 leave(app);
             }
         }
@@ -233,7 +238,7 @@ pub fn before_installer(app: &AppHandle, from: &str) {
     }
     let left = installer.wait(SETTLE_WAIT);
     if !left.is_empty() {
-        crate::trace::mark("update: installer starting with a window not settled");
+        orden_base::trace::mark("update: installer starting with a window not settled");
     }
 }
 
@@ -264,7 +269,7 @@ pub fn quit(app: &AppHandle) {
 
 fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window> {
     let pending = app.try_state::<launch::Pending>();
-    launch::document_windows(app)
+    document_windows(app)
         .into_iter()
         .filter(|window| Some(window.label()) != except)
         .filter(|window| {
@@ -278,7 +283,7 @@ fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window
 #[tauri::command(async)]
 pub fn quit_confirmed(webview: tauri::Webview) {
     let app = webview.app_handle();
-    if launch::is_document_window(webview.label()) && state(app).now() == CONFIRMING {
+    if orden_base::labels::is_document_window(webview.label()) && state(app).now() == CONFIRMING {
         quit_now(app);
     }
 }
@@ -294,7 +299,7 @@ pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
 #[tauri::command(async)]
 pub fn quit_show(webview: tauri::Webview) {
     let window = webview.window();
-    if !launch::is_document_window(window.label()) {
+    if !orden_base::labels::is_document_window(window.label()) {
         return;
     }
     #[cfg(any(windows, target_os = "macos"))]
@@ -311,7 +316,7 @@ pub fn quit_now(app: &AppHandle) {
 
     crate::placement::note_every_window(app);
 
-    let windows = launch::document_windows(app);
+    let windows = document_windows(app);
     if windows.is_empty() {
         leave(app);
         return;
@@ -482,7 +487,7 @@ mod asked_to_quit {
     }
 
     fn hold_to_quit(app: &AppHandle) {
-        if let Some(window) = crate::launch::document_windows(app)
+        if let Some(window) = orden_base::labels::document_windows(app)
             .into_iter()
             .find(|window| window.is_focused().unwrap_or(false))
         {

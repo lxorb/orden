@@ -1,0 +1,6 @@
+{
+  "name": "dictation",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

@@ -166,7 +166,7 @@ fn launch(
 
     let err = stderr.map(|stderr| {
         let ending = Arc::clone(&shared);
-        thread::spawn(move || tail(crate::printed::lapsing(stderr, move || ending.gone())))
+        thread::spawn(move || tail(orden_base::printed::lapsing(stderr, move || ending.gone())))
     });
 
     let (done, waiting) = mpsc::channel::<()>();
@@ -177,7 +177,7 @@ fn launch(
     thread::spawn(move || {
         if let Some(stdout) = stdout {
             let ending = Arc::clone(&reading);
-            let stdout = crate::printed::lapsing(stdout, move || ending.gone());
+            let stdout = orden_base::printed::lapsing(stdout, move || ending.gone());
             lines(stdout, &|one| {
                 reading.touch();
                 heard(one);

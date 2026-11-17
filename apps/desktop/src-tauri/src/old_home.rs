@@ -35,7 +35,7 @@ pub fn carry_home() {
         return;
     };
     for (old, new) in &moved {
-        repoint(&config.join(crate::paths::SPACES_KEPT), old, new);
+        repoint(&config.join(orden_base::paths::SPACES_KEPT), old, new);
         rebase_kept(&config.join(crate::kept::FOLDER), old, new);
     }
     let pairs = places();
@@ -48,11 +48,13 @@ pub fn carry_home() {
 
 fn spaces_folders(config: &Path) -> Vec<PathBuf> {
     let mut out: Vec<PathBuf> = [
-        crate::paths::folder_named(std::env::var_os(crate::paths::SPACES_DIR).as_deref()),
-        fs::read_to_string(config.join(crate::paths::SPACES_KEPT))
+        orden_base::paths::folder_named(std::env::var_os(orden_base::paths::SPACES_DIR).as_deref()),
+        fs::read_to_string(config.join(orden_base::paths::SPACES_KEPT))
             .ok()
-            .and_then(|said| crate::paths::folder_named(Some(std::ffi::OsStr::new(said.trim())))),
-        dirs::data_local_dir().map(|dir| dir.join(NEW).join(crate::paths::SPACES)),
+            .and_then(|said| {
+                orden_base::paths::folder_named(Some(std::ffi::OsStr::new(said.trim())))
+            }),
+        dirs::data_local_dir().map(|dir| dir.join(NEW).join(orden_base::paths::SPACES)),
     ]
     .into_iter()
     .flatten()
@@ -87,7 +89,7 @@ fn rebase_lines(file: &Path, pairs: &[(PathBuf, PathBuf)]) {
         out.push('\n');
     }
     if out != text {
-        let _ = crate::paths::write_atomically(file, out.as_bytes());
+        let _ = orden_base::paths::write_atomically(file, out.as_bytes());
     }
 }
 
@@ -158,9 +160,9 @@ pub(crate) fn former_homes() -> Former {
 pub(crate) fn keep_after_move(text: String) -> Result<(), String> {
     let file = after_move().ok_or("no settings folder")?;
     if let Some(dir) = file.parent() {
-        crate::paths::made(dir)?;
+        orden_base::paths::made(dir)?;
     }
-    crate::paths::write_atomically(&file, text.as_bytes())
+    orden_base::paths::write_atomically(&file, text.as_bytes())
 }
 
 #[tauri::command(async)]
@@ -220,7 +222,7 @@ fn merged(old: &Path, new: &Path) -> bool {
     if fs::symlink_metadata(old).is_err() {
         return false;
     }
-    if crate::carry::rename_new(old, new).is_ok() {
+    if orden_base::carry::rename_new(old, new).is_ok() {
         return true;
     }
     if !old.is_dir() || !new.is_dir() {
@@ -288,7 +290,7 @@ fn rebase_kept(folder: &Path, old: &Path, new: &Path) {
         };
         let moved = rebased(&text, old, new);
         if moved != text {
-            let _ = crate::paths::write_atomically(&path, moved.as_bytes());
+            let _ = orden_base::paths::write_atomically(&path, moved.as_bytes());
         }
     }
 }

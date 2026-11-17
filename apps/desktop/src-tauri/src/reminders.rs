@@ -122,7 +122,9 @@ fn in_state<T>(alter: impl FnOnce(&mut State) -> T) -> T {
 }
 
 fn file(app: &AppHandle) -> Option<PathBuf> {
-    crate::paths::config_dir(app).ok().map(|dir| dir.join(FILE))
+    orden_base::paths::config_dir(app)
+        .ok()
+        .map(|dir| dir.join(FILE))
 }
 
 fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Kept> {
@@ -200,7 +202,7 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
-        let _ = crate::paths::write_atomically(&path, &bytes);
+        let _ = orden_base::paths::write_atomically(&path, &bytes);
     }
 }
 
@@ -218,7 +220,7 @@ pub async fn reminders_set(
     reminders: Vec<Planned>,
     words: Words,
 ) -> Result<bool, String> {
-    crate::lane::off_the_runtime(move || -> Result<bool, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<bool, String> {
         crate::agents::from_the_app(&webview)?;
         if !may_schedule() {
             return Ok(true);

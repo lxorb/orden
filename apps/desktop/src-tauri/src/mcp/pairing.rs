@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::paths::{made, write_privately};
+use orden_base::paths::{made, write_privately};
 
 const LONGEST_NAME: usize = 60;
 

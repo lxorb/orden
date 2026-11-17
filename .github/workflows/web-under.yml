@@ -14,7 +14,7 @@ on:
       - scripts/alt-alone-drive.py
       - scripts/web-corner-drive.py
       - apps/desktop/src-tauri/src/keyboard.rs
-      - apps/desktop/src-tauri/src/terminal/**
+      - apps/desktop/src-tauri/crates/pty/**
       - apps/desktop/src-tauri/src/explorer/**
       - .github/workflows/web-under.yml
   workflow_dispatch:

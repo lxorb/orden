@@ -142,14 +142,16 @@ describe('writing an export', () => {
 
   test('writes bytes through a command the crate registers and the frontend calls', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
-    expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
+    expect(read('../src-tauri/crates/notes/src/notes.rs')).toContain('pub fn write_bytes')
     expect(read('../src/lib/files-out/src/save.ts')).toContain('writeBytes(')
     expect(read('../src/lib/file-writes/src/api.ts')).toContain("invoke('write_bytes'")
   })
 
   test('and the write is whole, which is what the plugin could not give it', () => {
-    expect(read('../src-tauri/src/notes.rs')).toContain('write_in_place(target, bytes)')
-    const paths = read('../src-tauri/src/paths.rs')
+    expect(read('../src-tauri/crates/notes/src/notes.rs')).toContain(
+      'write_in_place(target, bytes)',
+    )
+    const paths = read('../src-tauri/crates/base/src/paths.rs')
     expect(paths).toContain('let copy = staged(target, bytes, false)?;')
     expect(paths).toContain('fs::rename(&copy, target)')
   })

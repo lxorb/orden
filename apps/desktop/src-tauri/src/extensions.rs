@@ -41,7 +41,7 @@ const PREINSTALLED: &str = "ublock-origin-lite";
 const DECIDED: &str = ".preinstalled";
 
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = crate::paths::config_dir(app)?.join("extensions");
+    let dir = orden_base::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
     Ok(dir)
 }

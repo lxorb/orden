@@ -13,7 +13,7 @@ use super::bin::{self, Ticket};
 use super::changes::gone;
 use super::listing::{asked, listed, Entry};
 use super::reach::{Explored, Use};
-use crate::paths::{first_spot, inside, path_key, taken};
+use orden_base::paths::{first_spot, inside, path_key, taken};
 
 const PROGRESS: &str = "explorer://progress";
 
@@ -137,7 +137,7 @@ pub async fn explorer_clashes(
     sources: Vec<String>,
     folder: String,
 ) -> Result<Vec<String>, String> {
-    crate::lane::off_the_runtime(move || -> Result<Vec<String>, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Vec<String>, String> {
         let folder = asked(&app, &folder, Use::Into)?;
         let mut out = Vec::new();
         for one in &sources {
@@ -157,7 +157,7 @@ pub async fn explorer_clashes(
 
 fn same(one: &Path, other: &Path) -> bool {
     (inside(one, other) && inside(other, one))
-        || crate::notes::same_entry(one, other)
+        || orden_base::paths::same_entry(one, other)
         || (!fs::symlink_metadata(other).is_ok_and(|meta| meta.file_type().is_symlink())
             && matches!(
                 (fs::canonicalize(one), fs::canonicalize(other)),
@@ -180,7 +180,7 @@ pub async fn explorer_transfer(
     staying: Option<Vec<String>>,
     fenced: Option<bool>,
 ) -> Result<Transferred, String> {
-    crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Transferred, String> {
         let folder = asked(&app, &folder, Use::Into)?;
         let staying: HashSet<&str> = staying.iter().flatten().map(String::as_str).collect();
         let how_of = |one: &str| {
@@ -289,7 +289,7 @@ fn planned_by(
             })
         };
         let mut to = folder.join(name);
-        if crate::carry::goes_into_itself(from, folder) {
+        if orden_base::carry::goes_into_itself(from, folder) {
             out.failed
                 .push(failed(from, "a folder cannot go inside itself".to_owned()));
             continue;
@@ -412,7 +412,7 @@ fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -
     }
     if how == How::Move {
         let bytes = weight(from, running);
-        if crate::carry::rename_new(from, to).is_ok() {
+        if orden_base::carry::rename_new(from, to).is_ok() {
             meter.add(bytes, "");
             return Ok(());
         }
@@ -468,7 +468,7 @@ fn copied(
         .file_name()
         .map(|one| one.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let mut source = super::opened_file(from).map_err(fail)?;
+    let mut source = orden_base::paths::opened_file(from).map_err(fail)?;
     let mut target = fs::File::create_new(to).map_err(fail)?;
     *made = true;
     let mut buffer = vec![0; CHUNK];
@@ -503,7 +503,7 @@ pub async fn explorer_put(
     pairs: Vec<Pair>,
     how: How,
 ) -> Result<Transferred, String> {
-    crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Transferred, String> {
         let using = if how == How::Move {
             Use::Change
         } else {
@@ -555,7 +555,7 @@ fn put_all(
         }
         if to
             .parent()
-            .is_some_and(|folder| crate::carry::goes_into_itself(&from, folder))
+            .is_some_and(|folder| orden_base::carry::goes_into_itself(&from, folder))
         {
             out.failed
                 .push(failed(&from, "a folder cannot go inside itself".to_owned()));
@@ -587,7 +587,7 @@ pub struct Count {
 
 #[tauri::command]
 pub async fn explorer_count(app: AppHandle, job: String, path: String) -> Result<Count, String> {
-    crate::lane::off_the_runtime(move || -> Result<Count, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Count, String> {
         let root = asked(&app, &path, Use::Look)?;
         let running = Job::begin(&job);
         let mut out = Count::default();
@@ -644,7 +644,7 @@ pub async fn explorer_search(
     query: String,
     hidden: bool,
 ) -> Result<Searched, String> {
-    crate::lane::off_the_runtime(move || -> Result<Searched, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Searched, String> {
         let root = asked(&app, &folder, Use::Look)?;
         let running = Job::begin(&job);
         let explored = app.state::<Explored>();
@@ -831,7 +831,7 @@ mod tests {
         assert_eq!(out.failed.len(), 1);
 
         let seen = dir.path().join("seen");
-        if crate::paths::link_to(&folder, &seen) {
+        if orden_base::paths::link_to(&folder, &seen) {
             let mut out = Transferred::default();
             let plan = planned(
                 std::slice::from_ref(&folder),
@@ -928,7 +928,7 @@ mod tests {
         let from = dir.path().join("from");
         fs::create_dir_all(&from).expect("a folder");
         fs::write(from.join("a.txt"), "a").expect("a file");
-        crate::explorer::tests::pipe_in(&from);
+        orden_base::paths::pipe_in(&from);
         let to = dir.path().join("to");
         let (said, heard) = std::sync::mpsc::channel();
         let (source, target) = (from.clone(), to.clone());

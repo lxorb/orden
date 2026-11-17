@@ -7,8 +7,8 @@ use std::time::Duration;
 use tauri::webview::PageLoadEvent;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
 
-use crate::clock;
-use crate::paths::{cannot, chosen};
+use orden_base::clock;
+use orden_base::paths::{cannot, chosen};
 
 const SETTLE: Duration = Duration::from_millis(300);
 
@@ -24,7 +24,7 @@ pub struct PdfPage {
     pub landscape: bool,
 }
 
-type Printable = tauri::WebviewWindow<crate::Engine>;
+type Printable = tauri::WebviewWindow<orden_base::Engine>;
 
 #[tauri::command]
 pub fn pdf_supported() -> bool {
@@ -83,7 +83,7 @@ pub async fn print_pdf(app: AppHandle, request: tauri::ipc::Request<'_>) -> Resu
         return Err("printing to a file is not available here".into());
     }
     let (Writing { output, page }, bytes) =
-        crate::notes::raw_sent::<Writing>(request.headers(), request.body())?;
+        orden_base::sent::raw_sent::<Writing>(request.headers(), request.body())?;
     let html = String::from_utf8(bytes.into_owned())
         .map_err(|_| "the page to write is not text".to_owned())?;
     let output = chosen(&app, &output)?.to_string_lossy().into_owned();
@@ -127,7 +127,7 @@ struct Printing {
 
 fn printed(request: &tauri::ipc::Request<'_>) -> Result<(String, Option<PdfPage>), String> {
     let (Printing { page }, bytes) =
-        crate::notes::raw_sent::<Printing>(request.headers(), request.body())?;
+        orden_base::sent::raw_sent::<Printing>(request.headers(), request.body())?;
     let html = String::from_utf8(bytes.into_owned())
         .map_err(|_| "the page to print is not text".to_owned())?;
     Ok((html, page))
@@ -324,7 +324,7 @@ mod printer {
         if bytes.is_empty() {
             return Err("the engine printed nothing".into());
         }
-        crate::paths::write_atomically(Path::new(output), &bytes)?;
+        orden_base::paths::write_atomically(Path::new(output), &bytes)?;
         let _ = done.send(Ok(()));
         Ok(())
     }

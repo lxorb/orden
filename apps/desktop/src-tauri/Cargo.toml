@@ -1,129 +1,39 @@
-[package]
-name = "orden"
-version = "0.16.0"
+[workspace]
+members = ["crates/*"]
+default-members = [".", "crates/*"]
+
+[workspace.package]
 edition = "2021"
 license = "AGPL-3.0-only"
 rust-version = "1.89"
 
-[lib]
-name = "orden_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
-[lints.rust]
+[workspace.lints.rust]
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
-[lints.clippy]
+[workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 needless_pass_by_value = "allow"
 assert_is_empty = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
 
-[features]
-cef = []
-
-[package.metadata.cef]
-tauri = "3.0.0-alpha.5"
-tauri-runtime-cef = "3.0.0-alpha.6"
-tauri-runtime = "3.0.0-alpha.4"
-tauri-build = "3.0.0-alpha.4"
-tauri-utils = "3.0.0-alpha.4"
-cef = "154.5.0"
-tauri-plugin-opener = "3.0.0-alpha.3"
-tauri-plugin-os = "3.0.0-alpha.3"
-tauri-plugin-deep-link = "3.0.0-alpha.3"
-tauri-plugin-dialog = "3.0.0-alpha.4"
-tauri-plugin-process = "3.0.0-alpha.3"
-tauri-plugin-single-instance = "3.0.0-alpha.3"
-tauri-plugin-updater = "3.0.0-alpha.3"
-tauri-plugin-global-shortcut = "3.0.0-alpha.3"
-tauri-plugin-notification = "3.0.0-alpha.3"
-
-[build-dependencies]
-tauri-build = { version = "2", features = [] }
-tauri-utils = "2"
-serde_json = "1"
-
-[dependencies]
-orden-web-engine = { path = "crates/web-engine" }
-tauri = { version = "2", features = ["protocol-asset", "unstable"] }
-tauri-plugin-opener = "2"
-tauri-plugin-os = "2"
-tauri-plugin-deep-link = "2"
+[workspace.dependencies]
+tauri = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
-base64 = "0.22"
-argon2 = { version = "0.5", default-features = false, features = ["alloc", "zeroize"] }
-zeroize = "1"
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
-rusqlite = { version = "0.32", features = ["bundled"] }
-notify = "8"
-getrandom = "0.3"
-icu_properties = "2"
 percent-encoding = "2"
-
-[target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
-fontdb = "0.24"
-png = "0.18"
-tauri = { version = "2", features = ["protocol-asset", "devtools"] }
-tauri-plugin-dialog = "2"
-tauri-plugin-process = "2"
-tempfile = "3"
-plist = "1"
-tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
-tauri-plugin-updater = "2"
-tauri-plugin-global-shortcut = "~2.3"
-tauri-plugin-notification = "~2.4"
-sha2 = "0.10"
-window-vibrancy = "0.6"
-portable-pty = "0.9"
-dirs = "6"
-reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
-rustls = { version = "0.23", default-features = false, features = ["ring"] }
-zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
-ring = "0.17"
-tokio = { version = "1", default-features = false, features = ["time", "sync"] }
-libloading = "0.8"
-raw-window-handle = "0.6"
-
-[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
-keyring = { version = "3", default-features = false, features = [
-  "windows-native",
-  "sync-secret-service",
-  "crypto-rust",
-] }
-
-[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
-
-[target.'cfg(target_os = "ios")'.dependencies]
-keyring = { version = "3", default-features = false, features = ["apple-native"] }
-objc2 = "0.6"
-block2 = "0.6"
-objc2-foundation = { version = "0.3", default-features = false, features = [
-  "std",
-  "NSError",
-  "NSString",
-] }
-objc2-ui-kit = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "UIApplication",
-  "UIResponder",
-  "UIScene",
-  "UISceneOptions",
-  "UISceneSession",
-] }
-
-[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-objc2-local-authentication = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "LAContext",
-] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-security-framework = "3"
 libc = "0.2"
+windows = "0.58"
+tempfile = "3"
+dirs = "6"
+getrandom = "0.3"
+tauri-plugin-dialog = { version = "2", default-features = false, features = ["xdg-portal"] }
+base64 = "0.22"
+png = "0.18"
+plist = "1"
 objc2 = "0.6"
 block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = [
@@ -181,21 +91,6 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSWindow",
   "NSWorkspace",
 ] }
-objc2-user-notifications = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "bitflags",
-  "UNNotification",
-  "UNNotificationAction",
-  "UNNotificationCategory",
-  "UNNotificationContent",
-  "UNNotificationRequest",
-  "UNNotificationResponse",
-  "UNNotificationSettings",
-  "UNNotificationSound",
-  "UNNotificationTrigger",
-  "UNUserNotificationCenter",
-] }
 objc2-screen-capture-kit = { version = "0.3", default-features = false, features = [
   "std",
   "block2",
@@ -243,22 +138,193 @@ objc2-core-graphics = { version = "0.3", default-features = false, features = [
   "CGWindowLevel",
 ] }
 dispatch2 = { version = "0.3", default-features = false, features = ["std", "objc2"] }
+x11rb = { version = "0.13", default-features = false, features = ["cursor", "damage", "randr", "resource_manager", "screensaver", "shape", "shm", "xfixes", "xinput", "xtest"] }
+str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
+windows-registry = "0.6"
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+tauri-plugin-os = "2"
+
+notify = "8"
+file-id = "0.2"
+sha2 = "0.10"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+libloading = "0.8"
+zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
+fontdb = "0.24"
+tokio = { version = "1", default-features = false, features = ["time", "sync"] }
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
+
+[package]
+name = "orden"
+version = "0.16.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "orden_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[features]
+cef = []
+
+[package.metadata.cef]
+tauri = "3.0.0-alpha.5"
+tauri-runtime-cef = "3.0.0-alpha.6"
+tauri-runtime = "3.0.0-alpha.4"
+tauri-build = "3.0.0-alpha.4"
+tauri-utils = "3.0.0-alpha.4"
+cef = "154.5.0"
+tauri-plugin-opener = "3.0.0-alpha.3"
+tauri-plugin-os = "3.0.0-alpha.3"
+tauri-plugin-deep-link = "3.0.0-alpha.3"
+tauri-plugin-dialog = "3.0.0-alpha.4"
+tauri-plugin-process = "3.0.0-alpha.3"
+tauri-plugin-single-instance = "3.0.0-alpha.3"
+tauri-plugin-updater = "3.0.0-alpha.3"
+tauri-plugin-global-shortcut = "3.0.0-alpha.3"
+tauri-plugin-notification = "3.0.0-alpha.3"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+tauri-utils = "2"
+serde_json = "1"
+
+[dependencies]
+orden-base = { path = "crates/base" }
+orden-notes = { path = "crates/notes" }
+orden-search = { path = "crates/search" }
+orden-store = { path = "crates/store" }
+orden-web-engine = { path = "crates/web-engine" }
+tauri = { version = "2", features = ["protocol-asset", "unstable"] }
+tauri-plugin-opener = "2"
+tauri-plugin-os.workspace = true
+tauri-plugin-deep-link = "2"
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+argon2 = { version = "0.5", default-features = false, features = ["alloc", "zeroize"] }
+zeroize = "1"
+flate2.workspace = true
+rusqlite.workspace = true
+notify.workspace = true
+getrandom.workspace = true
+percent-encoding.workspace = true
+
+[target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+orden-apps = { path = "crates/apps" }
+orden-crashes = { path = "crates/crashes" }
+orden-dictation = { path = "crates/dictation" }
+orden-import = { path = "crates/import" }
+orden-pty = { path = "crates/pty" }
+orden-system = { path = "crates/system" }
+fontdb.workspace = true
+png.workspace = true
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
+tauri-plugin-dialog.workspace = true
+tauri-plugin-process = "2"
+tempfile.workspace = true
+plist.workspace = true
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-updater = "2"
+tauri-plugin-global-shortcut = "~2.3"
+tauri-plugin-notification = "~2.4"
+sha2.workspace = true
+window-vibrancy = "0.6"
+dirs.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+zip.workspace = true
+ring = "0.17"
+tokio.workspace = true
+libloading.workspace = true
+raw-window-handle = "0.6"
+
+[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
+keyring = { version = "3", default-features = false, features = [
+  "windows-native",
+  "sync-secret-service",
+  "crypto-rust",
+] }
+
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+keyring = { version = "3", default-features = false, features = ["apple-native"] }
+objc2.workspace = true
+block2.workspace = true
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSError",
+  "NSString",
+] }
+objc2-ui-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "UIApplication",
+  "UIResponder",
+  "UIScene",
+  "UISceneOptions",
+  "UISceneSession",
+] }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+objc2-local-authentication = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "LAContext",
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = "3"
+libc.workspace = true
+objc2.workspace = true
+block2.workspace = true
+objc2-foundation.workspace = true
+objc2-app-kit.workspace = true
+objc2-user-notifications = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "bitflags",
+  "UNNotification",
+  "UNNotificationAction",
+  "UNNotificationCategory",
+  "UNNotificationContent",
+  "UNNotificationRequest",
+  "UNNotificationResponse",
+  "UNNotificationSettings",
+  "UNNotificationSound",
+  "UNNotificationTrigger",
+  "UNUserNotificationCenter",
+] }
+objc2-screen-capture-kit.workspace = true
+objc2-core-media.workspace = true
+objc2-core-foundation.workspace = true
+objc2-core-video.workspace = true
+objc2-core-graphics.workspace = true
+dispatch2.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
-zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
-x11rb = { version = "0.13", default-features = false, features = ["cursor", "damage", "randr", "resource_manager", "screensaver", "shape", "shm", "xfixes", "xinput", "xtest"] }
-libc = "0.2"
+zbus.workspace = true
+x11rb.workspace = true
+libc.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))'.dependencies]
-str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
+str0m.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-file-id = "0.2"
-windows-registry = "0.6"
-windows = { version = "0.58", features = [
+file-id.workspace = true
+windows-registry.workspace = true
+windows = { workspace = true, features = [
   "Wdk_System_Threading",
   "Win32_UI_Shell",
   "Win32_Foundation",
@@ -295,19 +361,17 @@ windows = { version = "0.58", features = [
   "Security_Credentials_UI",
   "Win32_System_WinRT",
 ] }
-windows-core = "0.61"
 
 [dev-dependencies]
+orden-base = { path = "crates/base", features = ["testing"] }
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["full", "visit", "visit-mut"] }
-tempfile = "3"
+tempfile.workspace = true
 
-[target.'cfg(target_os = "linux")'.dev-dependencies]
-zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api", "p2p"] }
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
-windows = { version = "0.58", features = [
+windows = { workspace = true, features = [
   "Win32_Graphics_Gdi",
   "Win32_UI_Shell_Common",
   "Win32_System_StationsAndDesktops",

@@ -10,7 +10,7 @@ use std::sync::{Condvar, Mutex};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::paths::{config_dir, made, write_privately};
+use orden_base::paths::{config_dir, made, write_privately};
 
 const TAKES: Duration = Duration::from_millis(1500);
 
@@ -440,10 +440,10 @@ pub(crate) fn ask(
 }
 
 fn answering_order(app: &AppHandle) -> Vec<String> {
-    let mut labels: Vec<String> = crate::launch::document_windows(app)
+    let mut labels: Vec<String> = orden_base::labels::document_windows(app)
         .iter()
         .map(|one| one.label().to_owned())
-        .filter(|one| !crate::stall::page_gone(one))
+        .filter(|one| !orden_crashes::stall::page_gone(one))
         .collect();
     labels.sort_by_key(|one| (one != "main", one.clone()));
     labels
@@ -501,7 +501,7 @@ fn ask_the_window_within(
     asked: &mut serde_json::Value,
     patience: Duration,
 ) -> Result<String, String> {
-    if crate::launch::document_windows(app).is_empty() {
+    if orden_base::labels::document_windows(app).is_empty() {
         return Err("the app has no window open to ask".to_owned());
     }
 

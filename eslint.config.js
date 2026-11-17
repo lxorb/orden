@@ -403,7 +403,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/web_pass.js',
       'apps/desktop/src-tauri/src/window_drag.js',
       'apps/desktop/src-tauri/src/page_drag.js',
-      'apps/desktop/src-tauri/src/gpu.js',
+      'apps/desktop/src-tauri/crates/system/src/gpu.js',
       'apps/desktop/src-tauri/src/page_scale.js',
       'apps/desktop/src-tauri/src/keyboard_press.js',
       'apps/desktop/src-tauri/src/page_scheme.js',

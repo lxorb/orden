@@ -2,38 +2,21 @@
 mod agents;
 #[cfg(desktop)]
 mod ahead;
-mod ai_accounts;
 #[cfg(desktop)]
 mod ai_agent;
 #[cfg(desktop)]
 mod ai_cli;
-mod ai_threads;
 #[cfg(desktop)]
 mod app_place;
 #[cfg(desktop)]
 mod appearance;
-#[cfg(desktop)]
-mod apple_notes;
-#[cfg_attr(
-    not(target_os = "macos"),
-    allow(
-        dead_code,
-        reason = "only the Mac's own store reader asks for any of this; it is built elsewhere to be checked, not to be called"
-    )
-)]
-mod apple_text;
-#[cfg(desktop)]
-mod apps_host;
 mod assets;
 #[cfg(desktop)]
 mod browser_data;
 #[cfg(desktop)]
 mod browser_profiles;
-#[cfg(desktop)]
-mod bundle_name;
 #[cfg(test)]
 mod calls;
-mod carry;
 #[cfg(desktop)]
 #[cfg(desktop)]
 mod chatgpt;
@@ -41,14 +24,8 @@ mod chatgpt;
 mod chromium_profiles;
 #[cfg(target_os = "linux")]
 mod chromium_pump;
-mod clock;
-mod code_blocks;
-#[cfg(desktop)]
-mod crashes;
 #[cfg(desktop)]
 mod default_browser;
-#[cfg(desktop)]
-mod dictation;
 #[cfg(desktop)]
 mod document_window;
 #[cfg(desktop)]
@@ -66,25 +43,15 @@ mod extensions;
 #[cfg(desktop)]
 mod firefox_profiles;
 #[cfg(desktop)]
-mod fonts;
-#[cfg(desktop)]
 mod foreground;
-mod front_matter;
-#[cfg(all(desktop, target_os = "linux"))]
-mod front_x;
 #[cfg(desktop)]
 mod full_screen;
-mod fuzzy;
-#[cfg(desktop)]
-mod gpu;
 #[cfg(desktop)]
 mod ground;
 #[cfg(desktop)]
 mod handed_pdfs;
 #[cfg(desktop)]
 mod handover;
-mod highlights;
-mod history;
 #[cfg(desktop)]
 mod host;
 #[cfg(desktop)]
@@ -93,44 +60,26 @@ mod hotkeys;
 mod kept;
 #[cfg(desktop)]
 mod keyboard;
-mod lane;
 #[cfg(desktop)]
 mod launch;
 #[cfg(desktop)]
 mod letters;
 #[cfg(desktop)]
 mod lifecycle;
-#[cfg(target_os = "macos")]
-mod lights;
-#[cfg(desktop)]
-mod link_preview;
-mod links;
 #[cfg(target_os = "linux")]
 mod linux;
-mod logs;
-mod matcher;
 #[cfg(desktop)]
 pub mod mcp;
 #[cfg(desktop)]
 mod menu_bar;
-mod notes;
 #[cfg(desktop)]
 mod notices;
-#[cfg(desktop)]
-#[cfg(desktop)]
-mod obsidian_vaults;
 #[cfg(desktop)]
 pub mod old_engine;
 #[cfg(desktop)]
 pub mod old_home;
-#[cfg(desktop)]
-mod outside;
 #[cfg(any(desktop, target_os = "ios"))]
 mod owner;
-#[cfg(desktop)]
-mod package_manager;
-#[cfg(target_os = "linux")]
-mod packagekit;
 #[cfg(desktop)]
 mod page_carry;
 #[cfg(desktop)]
@@ -145,10 +94,8 @@ mod page_scheme;
 mod page_style;
 #[cfg(desktop)]
 mod pandoc;
-mod papers;
 #[cfg(any(desktop, target_os = "ios"))]
 mod pass_stretch;
-mod paths;
 #[cfg(desktop)]
 mod pdf;
 #[cfg(desktop)]
@@ -156,57 +103,29 @@ mod pinch;
 #[cfg(desktop)]
 mod placement;
 #[cfg(desktop)]
-mod presence;
-#[cfg(desktop)]
-mod printed;
-mod query;
-#[cfg(desktop)]
 mod quick_add;
-mod regex;
 #[cfg(desktop)]
 mod reminders;
 #[cfg(desktop)]
 mod retired_chats;
 #[cfg(desktop)]
 mod safari;
-mod search;
 #[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
-#[cfg(target_os = "windows")]
-mod shell_menu;
 #[cfg(desktop)]
 mod shortcuts;
 #[cfg(desktop)]
 #[cfg(target_os = "macos")]
 mod siri;
-mod space_watch;
-mod spaces;
 #[cfg(desktop)]
 mod spelling;
 #[cfg(desktop)]
-mod stall;
-mod sync_store;
-#[cfg(desktop)]
 mod system_update;
-mod tags;
-mod tasks;
-#[cfg(desktop)]
-mod terminal;
-mod themes;
-#[cfg(desktop)]
-mod time_sense;
 #[cfg(desktop)]
 mod top_edge;
 #[cfg(desktop)]
-mod touchpad;
-mod trace;
-mod trash;
-mod tree;
-#[cfg(desktop)]
 mod updates;
 mod uris;
-#[cfg(desktop)]
-mod usage;
 #[cfg(desktop)]
 mod web_answers;
 #[cfg(desktop)]
@@ -261,93 +180,94 @@ mod window_drag;
 #[cfg(desktop)]
 mod zen_profiles;
 
-use paths::Picked;
+use orden_base::paths::{self, Picked};
+use orden_base::{logs, trace, Engine};
 use tauri::Manager;
 
 macro_rules! commands {
     ($($desktop:tt)*) => {
         tauri::generate_handler![
-            notes::read_note,
-            notes::write_note,
-            notes::write_bytes,
-            notes::delete_note,
-            notes::rename_note,
-            notes::copy_path,
-            notes::create_folder,
-            notes::delete_folder,
-            notes::remove_empty_folder,
-            notes::file_stamp,
-            notes::file_there,
-            notes::note_evicted,
-            notes::path_taken,
-            tree::read_tree,
+            orden_notes::notes::read_note,
+            orden_notes::notes::write_note,
+            orden_notes::notes::write_bytes,
+            orden_notes::notes::delete_note,
+            orden_notes::notes::rename_note,
+            orden_notes::notes::copy_path,
+            orden_notes::notes::create_folder,
+            orden_notes::notes::delete_folder,
+            orden_notes::notes::remove_empty_folder,
+            orden_notes::notes::file_stamp,
+            orden_notes::notes::file_there,
+            orden_notes::notes::note_evicted,
+            orden_notes::notes::path_taken,
+            orden_notes::tree::read_tree,
             assets::read_asset,
             assets::read_file,
             assets::save_asset,
-            highlights::read_highlights,
-            highlights::write_highlights,
-            papers::read_paper_text,
-            papers::write_paper_text,
-            papers::list_paper_texts,
-            search::search_space,
-            search::space_tags,
-            search::warm_search,
-            links::scan_links,
-            themes::theme_dir,
-            themes::list_themes,
-            themes::read_theme,
-            themes::write_theme,
-            themes::remove_theme,
-            themes::custom_css_path,
-            themes::read_custom_css,
-            themes::snippets_path,
-            themes::read_snippets,
-            themes::scratchpad_path,
-            history::snapshot_note,
-            history::list_snapshots,
-            history::read_snapshot,
-            history::purge_snapshots,
-            history::rehome_snapshots,
+            orden_notes::highlights::read_highlights,
+            orden_notes::highlights::write_highlights,
+            orden_notes::papers::read_paper_text,
+            orden_notes::papers::write_paper_text,
+            orden_notes::papers::list_paper_texts,
+            orden_search::search::search_space,
+            orden_search::search::space_tags,
+            orden_search::search::warm_search,
+            orden_search::links::scan_links,
+            orden_notes::themes::theme_dir,
+            orden_notes::themes::list_themes,
+            orden_notes::themes::read_theme,
+            orden_notes::themes::write_theme,
+            orden_notes::themes::remove_theme,
+            orden_notes::themes::custom_css_path,
+            orden_notes::themes::read_custom_css,
+            orden_notes::themes::snippets_path,
+            orden_notes::themes::read_snippets,
+            orden_notes::themes::scratchpad_path,
+            orden_notes::history::snapshot_note,
+            orden_notes::history::list_snapshots,
+            orden_notes::history::read_snapshot,
+            orden_notes::history::purge_snapshots,
+            orden_notes::history::rehome_snapshots,
             logs::log_dir,
             logs::write_log,
             logs::read_log,
-            spaces::spaces_root,
-            spaces::list_spaces,
-            spaces::create_space,
-            spaces::rename_space,
-            spaces::delete_space,
-            trash::trash_item,
-            trash::trash_words,
-            trash::list_trash,
-            trash::restore_trash,
-            trash::purge_trash,
-            trash::purge_trash_older_than,
+            orden_notes::spaces::spaces_root,
+            orden_notes::spaces::list_spaces,
+            orden_notes::spaces::create_space,
+            orden_notes::spaces::rename_space,
+            orden_notes::spaces::delete_space,
+            orden_notes::trash::trash_item,
+            orden_notes::trash::trash_words,
+            orden_notes::trash::list_trash,
+            orden_notes::trash::restore_trash,
+            orden_notes::trash::purge_trash,
+            orden_notes::trash::purge_trash_older_than,
             uris::take_startup_uris,
             trace::trace_startup,
-            sync_store::sync_store_open,
-            sync_store::sync_store_close,
-            sync_store::sync_store_read,
-            sync_store::sync_store_write,
-            sync_store::sync_store_clean_exit,
-            sync_store::sync_store_forget,
-            sync_store::sync_store_device,
-            sync_store::chats::chat_store_read,
-            sync_store::chats::chat_store_write,
-            sync_store::chats::chat_store_forget,
-            space_watch::space_watch,
-            space_watch::space_unwatch,
-            space_watch::space_scan,
-            space_watch::working_watch,
-            space_watch::working_unwatch,
-            space_watch::working_scan,
-            space_watch::file_identity,
-            ai_accounts::ai_accounts_read,
-            ai_accounts::ai_accounts_write,
-            ai_threads::ai_threads_list,
-            ai_threads::ai_thread_read,
-            ai_threads::ai_thread_write,
-            ai_threads::ai_thread_delete,
-            ai_threads::ai_threads_forget,
+            orden_store::sync_store::sync_store_open,
+            orden_store::sync_store::sync_store_close,
+            orden_store::sync_store::sync_store_read,
+            orden_store::sync_store::sync_store_write,
+            orden_store::sync_store::sync_store_clean_exit,
+            orden_store::sync_store::sync_store_forget,
+            orden_store::sync_store::sync_store_device,
+            orden_store::sync_store::chats::chat_store_read,
+            orden_store::sync_store::chats::chat_store_write,
+            orden_store::sync_store::chats::chat_store_forget,
+            orden_notes::space_watch::space_watch,
+            orden_notes::space_watch::space_unwatch,
+            orden_notes::space_watch::space_scan,
+            orden_notes::space_watch::working_watch,
+            orden_notes::space_watch::working_unwatch,
+            orden_notes::space_watch::working_scan,
+            orden_notes::space_watch::file_identity,
+            orden_store::ai_accounts::ai_accounts_read,
+            orden_store::ai_accounts::ai_accounts_write,
+            orden_store::ai_threads::ai_threads_list,
+            orden_store::ai_threads::ai_thread_read,
+            orden_store::ai_threads::ai_thread_write,
+            orden_store::ai_threads::ai_thread_delete,
+            orden_store::ai_threads::ai_threads_forget,
             $($desktop)*
         ]
     };
@@ -408,38 +328,38 @@ macro_rules! desktop_commands {
             chatgpt::chatgpt_account,
             chatgpt::chatgpt_token,
             chatgpt::chatgpt_sign_out,
-            link_preview::link_preview,
+            orden_system::link_preview::link_preview,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_material,
             ground::remember_ground,
-            apple_notes::read_apple_notes,
-            apple_notes::open_full_disk_access,
-            obsidian_vaults::obsidian_vaults,
-            obsidian_vaults::obsidian_vault_files,
-            obsidian_vaults::read_obsidian_file,
+            orden_import::apple_notes::read_apple_notes,
+            orden_import::apple_notes::open_full_disk_access,
+            orden_import::obsidian_vaults::obsidian_vaults,
+            orden_import::obsidian_vaults::obsidian_vault_files,
+            orden_import::obsidian_vaults::read_obsidian_file,
             full_screen::window_fullscreen,
             window_drag::window_move_resize,
-            gpu::gpu_seen,
-            gpu::gpu_chosen,
-            gpu::gpu_choose,
-            crashes::crash_reports_waiting,
-            crashes::crash_report_sent,
-            crashes::crash_report_unsent,
-            crashes::crash_report_js,
-            crashes::crash_alive,
-            crashes::crash_context,
-            crashes::crash_leaving,
-            crashes::crash_drill,
+            orden_system::gpu::gpu_seen,
+            orden_system::gpu::gpu_chosen,
+            orden_system::gpu::gpu_choose,
+            orden_crashes::crashes::crash_reports_waiting,
+            orden_crashes::crashes::crash_report_sent,
+            orden_crashes::crashes::crash_report_unsent,
+            orden_crashes::crashes::crash_report_js,
+            orden_crashes::crashes::crash_alive,
+            orden_crashes::crashes::crash_context,
+            orden_crashes::crashes::crash_leaving,
+            orden_crashes::crashes::crash_drill,
             kept::kept_write,
             kept::kept_forget,
-            gpu::gpu_line,
+            orden_system::gpu::gpu_line,
             page_scale::page_scale_seen,
             page_scale::interface_zoom_chosen,
             page_scale::interface_zoom_choose,
             page_scheme::page_scheme_seen,
             spelling::spell_languages,
-            fonts::font_families,
+            orden_system::fonts::font_families,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
@@ -461,9 +381,9 @@ macro_rules! desktop_commands {
             launch::show_window,
             ahead::launch_ahead,
             ahead::remember_launch,
-            outside::outside_spaces,
-            outside::take_in_outside,
-            outside::settle_outside,
+            orden_notes::outside::outside_spaces,
+            orden_notes::outside::take_in_outside,
+            orden_notes::outside::settle_outside,
             old_home::former_homes,
             old_home::keep_after_move,
             old_home::drop_after_move,
@@ -493,43 +413,43 @@ macro_rules! desktop_commands {
             secrets::secret_read,
             secrets::secret_write,
             secrets::secrets_in_file,
-            terminal::terminal_shells,
-            terminal::pty_spawn,
-            terminal::pty_write,
-            terminal::pty_resize,
-            terminal::pty_seen,
-            terminal::pty_busy,
-            apps_host::apps_installed,
-            apps_host::apps_start,
-            apps_host::apps_watch,
-            apps_host::apps_stop,
-            apps_host::apps_signal,
-            apps_host::apps_view,
-            terminal::pty_folder,
-            terminal::pty_usage,
-            terminal::pty_program,
-            terminal::pty_ssh,
-            terminal::pty_kill,
-            terminal::pty_detach,
-            terminal::pty_held,
-            terminal::pty_take,
-            terminal::pty_name,
-            terminal::pty_end,
-            terminal::terminal_sessions,
-            terminal::terminal_tmux,
-            terminal::remote::remote_end,
-            terminal::history::terminal_history_read,
-            terminal::history::terminal_history_write,
-            terminal::history::terminal_history_forget,
-            terminal::remote::remote_hosts,
-            terminal::remote::remote_keep,
-            terminal::remote::remote_config_open,
-            terminal::picture::local_image,
-            terminal::picture::remote_image,
-            terminal::picture::remote_shell,
+            orden_pty::terminal::terminal_shells,
+            orden_pty::terminal::pty_spawn,
+            orden_pty::terminal::pty_write,
+            orden_pty::terminal::pty_resize,
+            orden_pty::terminal::pty_seen,
+            orden_pty::terminal::pty_busy,
+            orden_apps::apps_host::apps_installed,
+            orden_apps::apps_host::apps_start,
+            orden_apps::apps_host::apps_watch,
+            orden_apps::apps_host::apps_stop,
+            orden_apps::apps_host::apps_signal,
+            orden_apps::apps_host::apps_view,
+            orden_pty::terminal::pty_folder,
+            orden_pty::terminal::pty_usage,
+            orden_pty::terminal::pty_program,
+            orden_pty::terminal::pty_ssh,
+            orden_pty::terminal::pty_kill,
+            orden_pty::terminal::pty_detach,
+            orden_pty::terminal::pty_held,
+            orden_pty::terminal::pty_take,
+            orden_pty::terminal::pty_name,
+            orden_pty::terminal::pty_end,
+            orden_pty::terminal::terminal_sessions,
+            orden_pty::terminal::terminal_tmux,
+            orden_pty::terminal::remote::remote_end,
+            orden_pty::terminal::history::terminal_history_read,
+            orden_pty::terminal::history::terminal_history_write,
+            orden_pty::terminal::history::terminal_history_forget,
+            orden_pty::terminal::remote::remote_hosts,
+            orden_pty::terminal::remote::remote_keep,
+            orden_pty::terminal::remote::remote_config_open,
+            orden_pty::terminal::picture::local_image,
+            orden_pty::terminal::picture::remote_image,
+            orden_pty::terminal::picture::remote_shell,
             updates::check_update,
             system_update::system_update,
-            package_manager::install_manager,
+            orden_system::package_manager::install_manager,
             app_place::app_stuck,
             app_place::move_to_applications,
             shortcuts::shortcuts_offered,
@@ -580,11 +500,11 @@ macro_rules! desktop_commands {
             web_clear::web_clear,
             web_tabs::web_answer,
             web_dialogs::web_dialog_answer,
-            dictation::dictation_local,
-            dictation::dictation_local_fetch,
-            dictation::dictation_local_remove,
-            dictation::dictation_local_open,
-            dictation::dictation_local_hear,
+            orden_dictation::dictation::dictation_local,
+            orden_dictation::dictation::dictation_local_fetch,
+            orden_dictation::dictation::dictation_local_remove,
+            orden_dictation::dictation::dictation_local_open,
+            orden_dictation::dictation::dictation_local_hear,
             explorer::listing::explorer_list,
             explorer::listing::explorer_places,
             explorer::listing::explorer_facts,
@@ -611,10 +531,10 @@ macro_rules! desktop_commands {
             downloads::web_download_cancel,
             web_state::web_merge,
             web_state::web_copy,
-            presence::input_idle,
-            presence::device_name,
-            time_sense::time_sense,
-            touchpad::touchpad_pan,
+            orden_system::presence::input_idle,
+            orden_system::presence::device_name,
+            orden_system::time_sense::time_sense,
+            orden_system::touchpad::touchpad_pan,
         ]
     };
 }
@@ -636,12 +556,6 @@ compile_error!(
     "desktop builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
 );
 
-#[cfg(mobile)]
-pub type Engine = tauri::Wry;
-
-#[cfg(desktop)]
-pub type Engine = tauri::DynRuntime;
-
 pub fn run() {
     #[cfg(target_os = "linux")]
     linux::prepare();
@@ -656,8 +570,8 @@ pub fn run() {
 pub fn terminal_hold() -> Option<i32> {
     std::env::args_os()
         .nth(1)
-        .is_some_and(|first| first == terminal::hold::MODE)
-        .then(terminal::hold::serve)
+        .is_some_and(|first| first == orden_pty::terminal::hold::MODE)
+        .then(orden_pty::terminal::hold::serve)
 }
 
 #[cfg(desktop)]
@@ -672,7 +586,7 @@ pub fn cef_helper() -> bool {
 
 pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(target_os = "macos")]
-    bundle_name::carry_over();
+    orden_system::bundle_name::carry_over(env!("ORDEN_IDENTIFIER"));
 
     trace::begin();
 
@@ -718,9 +632,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     trace::mark("plugins: opener, os, deep link");
 
     let builder = builder
-        .manage(sync_store::Stores::default())
-        .manage(space_watch::Watching::default())
-        .manage(space_watch::Working::default());
+        .manage(orden_store::sync_store::Stores::default())
+        .manage(orden_notes::space_watch::Watching::default())
+        .manage(orden_notes::space_watch::Working::default());
 
     #[cfg(desktop)]
     let builder = builder.manage(endpoint::Waiting::default());
@@ -729,10 +643,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = placement::managed(web_tabs::managed(builder));
 
     #[cfg(desktop)]
-    let builder = terminal::managed(builder);
+    let builder = orden_pty::terminal::managed(builder);
 
     #[cfg(desktop)]
-    let builder = builder.manage(apps_host::Hosted::default());
+    let builder = builder.manage(orden_apps::apps_host::Hosted::default());
 
     #[cfg(desktop)]
     let builder = builder
@@ -740,7 +654,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .manage(explorer::watch::Watching::default());
 
     #[cfg(desktop)]
-    let builder = builder.manage(std::sync::Arc::new(dictation::Loaded::default()));
+    let builder = builder.manage(std::sync::Arc::new(
+        orden_dictation::dictation::Loaded::default(),
+    ));
 
     #[cfg(desktop)]
     let builder = builder
@@ -788,7 +704,7 @@ fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     let builder = builder.on_web_content_process_terminate(|view, ended| {
         use tauri::webview::WebContentProcessTerminationReason as Reason;
         if !matches!(ended.reason, Reason::Normal) {
-            crashes::page_ended(view.label());
+            orden_crashes::crashes::page_ended(view.label());
             web_page::ended(view);
         }
     });
@@ -805,7 +721,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     #[cfg(desktop)]
     let builder = builder.on_page_load(|webview, payload| {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
-            terminal::page_started(webview);
+            orden_pty::terminal::page_started(webview);
             explorer::watch::window_gone(webview.app_handle(), webview.label());
             if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
                 waiting.forget(webview.label());
@@ -831,8 +747,8 @@ fn named(
 ) -> impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static {
     move |invoke| {
         let command = invoke.message.command();
-        crashes::crumb(command);
-        let _doing = stall::doing(command);
+        orden_crashes::crashes::crumb(command);
+        let _doing = orden_crashes::stall::doing(command);
         answer(invoke)
     }
 }
@@ -849,9 +765,9 @@ fn hearing(handle: &tauri::AppHandle) {
     web_tabs::hearing(handle);
     page_carry::forget_carried(handle);
     #[cfg(windows)]
-    touchpad::start(handle);
+    orden_system::touchpad::start(handle);
     #[cfg(windows)]
-    std::thread::spawn(shell_menu::forget);
+    std::thread::spawn(orden_system::shell_menu::forget);
 }
 
 #[cfg(desktop)]
@@ -865,7 +781,7 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
 
 #[cfg(desktop)]
 fn first_of_all(handle: &tauri::AppHandle) {
-    crashes::start(handle);
+    orden_crashes::crashes::start(handle);
     trace::mark("crash reports");
     paths::decide_spaces(handle);
     if let Ok(config) = paths::config_dir(handle) {
@@ -937,11 +853,11 @@ fn ready(
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
-            stall::watch_page(handle, window.as_ref(), "the window's");
+            orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
             let window = building.visible(false).build()?;
             top_edge::mind(&window.as_ref().window());
-            stall::watch_page(handle, window.as_ref(), "the window's");
+            orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
             let colour = ground::remembered(handle);
             let at_once = colour.is_some() && !cfg!(target_os = "macos");
@@ -954,10 +870,10 @@ fn ready(
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
-            stall::watch_page(handle, window.as_ref(), "the window's");
+            orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
             if !at_once {
                 #[cfg(target_os = "macos")]
-                lights::hold(&window);
+                orden_system::lights::hold(&window);
                 window.show()?;
                 placement::raised(&window.as_ref().window());
             }
@@ -1012,12 +928,45 @@ fn watched(handle: &tauri::AppHandle) {
         ),
     );
     handover::said(handle);
-    stall::start(handle);
+    orden_crashes::stall::start(handle);
 }
 
 #[cfg(test)]
 pub(crate) fn app_dir() -> std::path::PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
+}
+
+#[cfg(test)]
+pub(crate) fn sources() -> Vec<(String, std::path::PathBuf)> {
+    let app = app_dir();
+    let mut roots = vec![(String::new(), app.join("src"))];
+    for one in std::fs::read_dir(app.join("crates"))
+        .expect("the crates")
+        .flatten()
+    {
+        let name = one.file_name().to_string_lossy().into_owned();
+        roots.push((format!("crates/{name}/src/"), one.path().join("src")));
+    }
+    let mut found = Vec::new();
+    for (prefix, root) in roots {
+        let mut pending = vec![root.clone()];
+        while let Some(dir) = pending.pop() {
+            for entry in std::fs::read_dir(&dir).expect("the sources").flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    pending.push(path);
+                    continue;
+                }
+                let name = path
+                    .strip_prefix(&root)
+                    .expect("under the source")
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                found.push((format!("{prefix}{name}"), path));
+            }
+        }
+    }
+    found
 }
 
 #[cfg(test)]
@@ -1050,17 +999,11 @@ mod tests {
     #[test]
     fn the_app_has_one_page_load_hook_as_a_second_would_replace_it() {
         let mut hooks = Vec::new();
-        let mut pending = vec![crate::app_dir().join("src")];
-        while let Some(dir) = pending.pop() {
-            for entry in std::fs::read_dir(&dir).expect("sources").flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    pending.push(path);
-                } else if path.extension().is_some_and(|ext| ext == "rs") {
-                    let text = std::fs::read_to_string(&path).expect("a source");
-                    for _ in 0..app_page_load_hooks(&text) {
-                        hooks.push(path.display().to_string());
-                    }
+        for (name, path) in crate::sources() {
+            if path.extension().is_some_and(|ext| ext == "rs") {
+                let text = std::fs::read_to_string(&path).expect("a source");
+                for _ in 0..app_page_load_hooks(&text) {
+                    hooks.push(name.clone());
                 }
             }
         }
@@ -1070,7 +1013,7 @@ mod tests {
     }
 
     const EXCEPTED: [&str; 3] = [
-        "crate::logs::write_log",
+        "orden_base::logs::write_log",
         "crate::kept::kept_write",
         "crate::kept::kept_forget",
     ];
@@ -1123,7 +1066,7 @@ mod tests {
     ];
 
     const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 6] = [
-        "crate::crashes::exit::ended_well",
+        "orden_crashes::crashes::exit::ended_well",
         "crate::placement::keep",
         "crate::placement::read",
         "crate::extensions::webview2::reconcile",

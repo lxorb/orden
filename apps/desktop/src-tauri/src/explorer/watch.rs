@@ -133,7 +133,7 @@ impl Watching {
     }
 
     fn remove(&self, owner: &str, folder: &Path) {
-        let folder = crate::paths::folded(folder);
+        let folder = orden_base::paths::folded(folder);
         let Ok(mut held) = self.0.lock() else {
             return;
         };
@@ -200,7 +200,7 @@ fn let_go(watcher: &mut RecommendedWatcher, counts: &mut HashMap<PathBuf, usize>
 
 #[tauri::command]
 pub async fn explorer_watch(webview: Webview, folder: String) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         let app = webview.app_handle().clone();
         let folder = asked(&app, &folder, Use::Look)?;
         let hearing = app.clone();
@@ -214,7 +214,7 @@ pub async fn explorer_watch(webview: Webview, folder: String) -> Result<(), Stri
 
 #[tauri::command]
 pub async fn explorer_unwatch(webview: Webview, folder: String) {
-    crate::lane::off_the_runtime(move || {
+    orden_base::lane::off_the_runtime(move || {
         webview
             .state::<Watching>()
             .remove(webview.label(), Path::new(&folder));
@@ -248,7 +248,7 @@ mod tests {
                 let folder = root.path().join(name);
                 std::fs::create_dir(&folder).expect("a folder");
                 std::fs::write(folder.join(format!("{name}.txt")), name).expect("a file");
-                crate::paths::folded(&folder)
+                orden_base::paths::folded(&folder)
             })
             .collect();
         let busy = folders[0].clone();
@@ -336,7 +336,7 @@ mod tests {
     #[test]
     fn a_folder_gone_while_watched_leaves_the_watcher_serving_the_next() {
         let root = tempfile::tempdir().expect("a folder");
-        let base = crate::paths::folded(root.path());
+        let base = orden_base::paths::folded(root.path());
         let gone = base.join("gone");
         let next = base.join("next");
         std::fs::create_dir(&gone).expect("a folder");
@@ -378,7 +378,7 @@ mod tests {
     #[test]
     fn a_window_reloaded_or_closed_lets_go_of_every_folder_it_watched() {
         let root = tempfile::tempdir().expect("a folder");
-        let one = crate::paths::folded(root.path());
+        let one = orden_base::paths::folded(root.path());
         let two = one.join("two");
         std::fs::create_dir(&two).expect("a folder");
         let watching = Watching::default();

@@ -51,8 +51,8 @@ fn carry(config: &Path, homes: &[Home]) {
     for (key, value) in values {
         whole &= crate::kept::keep_unless_said(&folder, &key, value).is_ok();
     }
-    if whole && crate::paths::made(config).is_ok() {
-        let _ = crate::paths::write_atomically(&done, b"");
+    if whole && orden_base::paths::made(config).is_ok() {
+        let _ = orden_base::paths::write_atomically(&done, b"");
     }
 }
 

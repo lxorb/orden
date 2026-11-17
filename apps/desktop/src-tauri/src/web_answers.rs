@@ -10,7 +10,7 @@ pub fn said(app: &tauri::AppHandle) {
         return;
     }
     *last = Some(Instant::now());
-    crate::logs::say(
+    orden_base::logs::say(
         app,
         "warn",
         "stall: a web page's browser is not answering; the page waits rather than the window",

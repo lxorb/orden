@@ -7,7 +7,7 @@ use sha2::{Digest as _, Sha256};
 use tauri::AppHandle;
 
 use super::verbs::Category;
-use crate::paths::{config_dir, made, write_privately};
+use orden_base::paths::{config_dir, made, write_privately};
 
 const TOKEN_BYTES: usize = 32;
 
@@ -198,7 +198,7 @@ impl Grant {
             always: BTreeMap::new(),
             programs: Vec::new(),
             limits: Limits::default(),
-            created: crate::clock::now(),
+            created: orden_base::clock::now(),
             built_in: false,
         }
     }

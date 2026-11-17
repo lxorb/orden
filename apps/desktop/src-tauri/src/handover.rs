@@ -87,7 +87,7 @@ pub fn handed_over(_identifier: &str) -> bool {
 
 pub fn said(app: &tauri::AppHandle) {
     if let Some(pid) = ENDED.get() {
-        crate::logs::say(
+        orden_base::logs::say(
             app,
             "warn",
             &format!(

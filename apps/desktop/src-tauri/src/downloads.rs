@@ -7,7 +7,7 @@ use serde::Serialize;
 use tauri::webview::DownloadEvent;
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
-use crate::paths::is_reserved;
+use orden_base::paths::is_reserved;
 
 const MOVED: &str = "orden://web-download";
 
@@ -347,7 +347,8 @@ pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool
 }
 
 pub(crate) fn folder(app: &AppHandle) -> Result<PathBuf, String> {
-    if let Some(named) = crate::paths::folder_named(std::env::var_os(DOWNLOADS_DIR).as_deref()) {
+    if let Some(named) = orden_base::paths::folder_named(std::env::var_os(DOWNLOADS_DIR).as_deref())
+    {
         return Ok(named);
     }
 

@@ -88,7 +88,7 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
         site: asking.site,
         tab: asking.tab,
         verb: verb_of(&asking.key).to_owned(),
-        asked: crate::clock::now(),
+        asked: orden_base::clock::now(),
         answer,
     };
     held().push(Held {
@@ -138,7 +138,7 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
         site: asking.site,
         tab: asking.tab,
         verb: verb_of(&asking.key).to_owned(),
-        asked: crate::clock::now(),
+        asked: orden_base::clock::now(),
         answer: ApprovalAnswer::Pending,
     };
     all.push(Held {

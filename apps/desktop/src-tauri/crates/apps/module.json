@@ -1,0 +1,6 @@
+{
+  "name": "apps",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

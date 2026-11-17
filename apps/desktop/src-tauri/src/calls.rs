@@ -648,6 +648,22 @@ pub(crate) fn read(lib: &Path, target: Target) -> Crate {
         ..Gathered::default()
     };
     gathered.file("crate", lib, true);
+    let crates = lib
+        .parent()
+        .and_then(Path::parent)
+        .map(|app| app.join("crates"));
+    for one in crates
+        .and_then(|dir| fs::read_dir(dir).ok())
+        .into_iter()
+        .flatten()
+        .flatten()
+    {
+        let source = one.path().join("src").join("lib.rs");
+        if source.exists() {
+            let name = one.file_name().to_string_lossy().replace('-', "_");
+            gathered.file(&format!("orden_{name}"), &source, true);
+        }
+    }
     gathered.resolved()
 }
 
@@ -2382,7 +2398,10 @@ impl Gathered {
         }
 
         match first.as_str() {
-            "crate" => vec![joined("crate", &segments[1..])],
+            "crate" => vec![joined(
+                module.split("::").next().unwrap_or(module),
+                &segments[1..],
+            )],
             "self" => vec![joined(module, &segments[1..])],
             "Self" => owner
                 .map(|owner| joined(owner, &segments[1..]))
@@ -2397,6 +2416,7 @@ impl Gathered {
                 }
                 vec![joined(base, rest)]
             }
+            root if self.owners.contains(root) => vec![joined(root, &segments[1..])],
             _ => self.named(module, local, segments, depth),
         }
     }

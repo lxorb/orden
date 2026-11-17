@@ -39,7 +39,7 @@ mod linux {
     use tauri_plugin_updater::UpdaterExt;
 
     use super::NotUpdated;
-    use crate::packagekit::{Failure, Format, PackageKit};
+    use orden_system::packagekit::{Failure, Format, PackageKit};
 
     const PACKAGE: &str = "orden";
 
@@ -212,7 +212,7 @@ mod linux {
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use super::linux::{command, names_ours, release_url, target};
-    use crate::packagekit::Format;
+    use orden_system::packagekit::Format;
 
     #[test]
     fn the_manifest_entry_is_the_systems_package() {

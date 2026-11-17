@@ -10,7 +10,7 @@ on:
       - .github/workflows/mac-update.yml
       - apps/desktop/src/lib/updater.ts
       - apps/desktop/src-tauri/src/updates.rs
-      - apps/desktop/src-tauri/src/bundle_name.rs
+      - apps/desktop/src-tauri/crates/system/src/bundle_name.rs
       - apps/desktop/src-tauri/src/app_place.rs
       - scripts/mac-move-check.sh
       - scripts/mac-window-check.sh

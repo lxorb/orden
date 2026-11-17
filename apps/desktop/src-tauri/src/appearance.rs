@@ -17,7 +17,7 @@ pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
 
 #[tauri::command]
 pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
-    for window in crate::launch::document_windows(&app) {
+    for window in orden_base::labels::document_windows(&app) {
         #[cfg(target_os = "macos")]
         let changed = window.set_title_bar_style(if system {
             tauri::TitleBarStyle::Visible
@@ -35,7 +35,7 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
 
         #[cfg(target_os = "macos")]
         {
-            crate::lights::refresh(&window);
+            orden_system::lights::refresh(&window);
 
             if let Some(page) = app.get_webview(window.label()) {
                 crate::placement::keyboard_to(&page);

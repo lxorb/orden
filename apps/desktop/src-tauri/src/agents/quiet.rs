@@ -133,7 +133,7 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
         .ok()?
         .join("Orden agents")
         .join(agent);
-    crate::paths::made(&folder).ok()?;
+    orden_base::paths::made(&folder).ok()?;
     let name = crate::downloads::clean_name(&name);
     let taken: Vec<String> = DOWNLOADS
         .lock()

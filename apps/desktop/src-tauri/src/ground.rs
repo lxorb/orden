@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use tauri::utils::config::Color;
 use tauri::{AppHandle, Manager};
 
-use crate::paths::{config_dir, made, write_atomically};
+use orden_base::paths::{config_dir, made, write_atomically};
 
 const FILE: &str = "ground.txt";
 
@@ -183,18 +183,12 @@ mod tests {
                 through.push(name.to_string());
             }
         }
-        let mut sources = vec![root.join("src")];
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at).expect("the source").flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                } else if std::fs::read_to_string(&path)
-                    .unwrap_or_default()
-                    .contains(concat!(".transparent", "(true)"))
-                {
-                    through.push(path.display().to_string());
-                }
+        for (name, path) in crate::sources() {
+            if std::fs::read_to_string(&path)
+                .unwrap_or_default()
+                .contains(concat!(".transparent", "(true)"))
+            {
+                through.push(name);
             }
         }
         assert!(through.is_empty(), "built to show through: {through:?}");

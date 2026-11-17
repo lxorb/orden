@@ -178,7 +178,7 @@ pub fn end_all(app: &AppHandle) {
 
 fn owner(webview: &Webview) -> Result<String, String> {
     let label = webview.label();
-    if label == webview.window().label() && crate::launch::is_document_window(label) {
+    if label == webview.window().label() && orden_base::labels::is_document_window(label) {
         Ok(label.to_owned())
     } else {
         Err("not a window of this app".to_owned())
@@ -266,7 +266,7 @@ pub async fn ai_cli_status(
     tool: Tool,
     account: Option<String>,
 ) -> Result<Option<Status>, String> {
-    crate::lane::off_the_runtime(move || -> Result<Option<Status>, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Option<Status>, String> {
         owner(&webview)?;
         offered(tool)?;
         let Some(program) = program::find(tool) else {
@@ -309,7 +309,7 @@ pub fn ai_cli_enroll_write(webview: Webview, on: bool) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         owner(&webview)?;
         offered(tool)?;
         let Some(home) = home_for(webview.app_handle(), tool, Some(&account))? else {
@@ -343,7 +343,7 @@ pub async fn ai_cli_ask(
     prompt: String,
     output: Channel<Value>,
 ) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         let owner = owner(&webview)?;
         let load = webview.state::<Asks>().load_of(&owner);
         usable(&id)?;
@@ -495,7 +495,7 @@ pub async fn ai_cli_open(
     opening: Opening,
     output: Channel<Value>,
 ) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         let owner = owner(&webview)?;
         let load = webview.state::<Asks>().load_of(&owner);
         usable(&id)?;
@@ -761,7 +761,7 @@ async fn ask_program(
     account: Option<String>,
     asking: Asking,
 ) -> Result<Value, String> {
-    crate::lane::off_the_runtime(move || -> Result<Value, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
         let owner = owner(&webview)?;
         offered(tool)?;
         if tool == Tool::Gemini {
@@ -884,7 +884,7 @@ mod tests {
             return;
         }
         let dir = tempfile::tempdir().expect("a folder");
-        crate::ai_accounts::write(
+        orden_store::ai_accounts::write(
             dir.path(),
             r#"{"accounts":[{"id":"claude-code-2","kind":"claude-code","name":"","model":"","own":true}]}"#,
             "",

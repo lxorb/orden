@@ -57,7 +57,7 @@ impl Gemini {
         output: Output,
     ) -> Result<Self, String> {
         let files = launch.folder.join("gemini").join(id);
-        crate::paths::made(&files)?;
+        orden_base::paths::made(&files)?;
         let mode = launch.mode.filter(|_| orden.is_some());
         let settings = args::gemini_settings(
             mode,

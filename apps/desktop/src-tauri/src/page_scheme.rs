@@ -20,7 +20,7 @@ fn said() -> Option<Scheme> {
 }
 
 #[tauri::command]
-pub fn page_scheme_seen(webview: Webview<crate::Engine>, scheme: Scheme) {
+pub fn page_scheme_seen(webview: Webview<orden_base::Engine>, scheme: Scheme) {
     let before = SAID
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -35,7 +35,7 @@ pub fn page_scheme_seen(webview: Webview<crate::Engine>, scheme: Scheme) {
     }
 }
 
-pub fn wear(page: &Webview<crate::Engine>) {
+pub fn wear(page: &Webview<orden_base::Engine>) {
     let Some(scheme) = said() else {
         return;
     };

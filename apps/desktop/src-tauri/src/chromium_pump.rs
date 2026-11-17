@@ -121,7 +121,7 @@ fn quiet() -> usize {
 }
 
 pub fn start(app: &tauri::AppHandle) {
-    crate::logs::say(
+    orden_base::logs::say(
         app,
         "info",
         &format!("pump: {} of Chromium's sources quieted", quiet()),

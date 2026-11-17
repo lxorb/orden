@@ -24,7 +24,7 @@ struct Kept {
 }
 
 fn kept_file(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(crate::paths::config_dir(app)?.join("enroll.json"))
+    Ok(orden_base::paths::config_dir(app)?.join("enroll.json"))
 }
 
 fn is_on(app: &AppHandle) -> bool {
@@ -215,9 +215,9 @@ pub fn turned(app: &AppHandle, on: bool) -> Result<(), String> {
     let text = serde_json::to_string(&Kept { off: !on }).map_err(|error| error.to_string())?;
     let file = kept_file(app)?;
     if let Some(dir) = file.parent() {
-        crate::paths::made(dir)?;
+        orden_base::paths::made(dir)?;
     }
-    crate::paths::write_privately(&file, text.as_bytes())?;
+    orden_base::paths::write_privately(&file, text.as_bytes())?;
     if offered(app) {
         each(app, if on { enroll } else { unenroll });
     }

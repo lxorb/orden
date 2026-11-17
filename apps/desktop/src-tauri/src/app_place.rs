@@ -91,7 +91,7 @@ const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1
 #[cfg(target_os = "macos")]
 #[tauri::command]
 pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         use std::os::unix::process::CommandExt as _;
         use std::process::{Command, Stdio};
 
@@ -136,7 +136,7 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
 #[cfg(not(target_os = "macos"))]
 #[tauri::command]
 pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         let _ = app;
         Err("only a Mac moves the app".into())
     })

@@ -74,7 +74,7 @@ fn with<T>(run: impl FnOnce(&mut Shell) -> T) -> T {
 
 pub fn host(app: &AppHandle) -> Option<tauri::Window> {
     app.get_window("main")
-        .or_else(|| crate::launch::document_windows(app).into_iter().next())
+        .or_else(|| orden_base::labels::document_windows(app).into_iter().next())
 }
 
 pub fn hosts(app: &AppHandle, window: &tauri::Window) -> bool {
@@ -282,7 +282,7 @@ fn news(app: &AppHandle, event: Event) {
     };
     let app = app.clone();
     std::thread::spawn(move || {
-        let windows = crate::launch::document_windows(&app);
+        let windows = orden_base::labels::document_windows(&app);
         let in_front = windows
             .iter()
             .any(|window| window.is_focused().unwrap_or(false));

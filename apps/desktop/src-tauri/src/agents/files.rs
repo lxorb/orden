@@ -134,7 +134,7 @@ pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> 
 
 pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
     behind_but_spaces(
-        crate::paths::spaces_dir(app).ok().as_deref(),
+        orden_base::paths::spaces_dir(app).ok().as_deref(),
         &own_folders(app),
         path,
     )
@@ -146,7 +146,8 @@ pub(super) fn behind_but_spaces(
     path: &Path,
 ) -> Option<Answer> {
     let in_spaces = spaces.is_some_and(|spaces| {
-        crate::paths::inside(spaces, path) && crate::paths::inside(&real(spaces), &real(path))
+        orden_base::paths::inside(spaces, path)
+            && orden_base::paths::inside(&real(spaces), &real(path))
     });
     if in_spaces {
         return None;
@@ -160,7 +161,7 @@ pub(super) fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
         .iter()
         .any(|fence| {
             let real_fence = real(fence);
-            crate::paths::inside(fence, path) || crate::paths::inside(&real_fence, &real_path)
+            orden_base::paths::inside(fence, path) || orden_base::paths::inside(&real_fence, &real_path)
         })
         .then(|| {
             Answer::error(
@@ -214,11 +215,11 @@ fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
             "{asked} is not an absolute path: say where it is, or start it with ~/"
         ));
     }
-    Ok(crate::paths::folded(&given))
+    Ok(orden_base::paths::folded(&given))
 }
 
 fn fences(app: &AppHandle) -> Vec<PathBuf> {
-    crate::paths::spaces_dir(app)
+    orden_base::paths::spaces_dir(app)
         .ok()
         .into_iter()
         .chain(own_folders(app))
@@ -227,7 +228,7 @@ fn fences(app: &AppHandle) -> Vec<PathBuf> {
 
 pub(crate) fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
     [
-        crate::paths::config_dir(app).ok(),
+        orden_base::paths::config_dir(app).ok(),
         app.path().app_config_dir().ok(),
         app.path().app_data_dir().ok(),
         app.path().app_local_data_dir().ok(),
@@ -240,7 +241,7 @@ pub(crate) fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
 fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> Option<Answer> {
     let whole = matches!(op, FilesOp::Move | FilesOp::Copy | FilesOp::Delete);
     let meets = |fence: &Path, one: &Path| {
-        crate::paths::inside(fence, one) || (whole && crate::paths::inside(one, fence))
+        orden_base::paths::inside(fence, one) || (whole && orden_base::paths::inside(one, fence))
     };
     let hit = std::iter::once(path).chain(to).find_map(|one| {
         let real_one = real(one);
@@ -280,12 +281,15 @@ pub(crate) fn real(path: &Path) -> PathBuf {
 }
 
 fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool {
-    fenced.iter().any(|fence| crate::paths::inside(fence, path)) || {
-        let real_path = real(path);
-        real_fenced
-            .iter()
-            .any(|fence| crate::paths::inside(fence, &real_path))
-    }
+    fenced
+        .iter()
+        .any(|fence| orden_base::paths::inside(fence, path))
+        || {
+            let real_path = real(path);
+            real_fenced
+                .iter()
+                .any(|fence| orden_base::paths::inside(fence, &real_path))
+        }
 }
 
 fn question(
@@ -446,7 +450,7 @@ fn done(
             if let Some(folder) = path.parent() {
                 fs::create_dir_all(folder).map_err(|why| why.to_string())?;
             }
-            crate::paths::write_atomically(path, &bytes)?;
+            orden_base::paths::write_atomically(path, &bytes)?;
         }
         FilesOp::Append => {
             let bytes = content(asked)?;
@@ -485,7 +489,7 @@ fn needed(to: Option<&Path>) -> Result<&Path, String> {
 }
 
 fn outside_of<'a>(from: &Path, to: &'a Path) -> Result<&'a Path, String> {
-    if crate::carry::goes_into_itself(from, to) {
+    if orden_base::carry::goes_into_itself(from, to) {
         return Err(format!("{} cannot go inside itself", from.display()));
     }
     Ok(to)
@@ -550,7 +554,7 @@ fn moved(from: &Path, to: &Path) -> Result<(), String> {
     if let Some(folder) = to.parent() {
         fs::create_dir_all(folder).map_err(|why| why.to_string())?;
     }
-    if crate::carry::rename_new(from, to).is_ok() {
+    if orden_base::carry::rename_new(from, to).is_ok() {
         return Ok(());
     }
     copied(from, to)?;

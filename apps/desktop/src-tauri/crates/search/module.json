@@ -1,0 +1,6 @@
+{
+  "name": "search",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base", "notes", "web-engine"]
+}

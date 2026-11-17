@@ -174,7 +174,7 @@ pub async fn ai_agent_tools(
     agent: Builtin,
     mode: Mode,
 ) -> Result<Value, String> {
-    crate::lane::off_the_runtime(move || -> Result<Value, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
         crate::agents::from_the_app(&webview)?;
         let grant = grant_for(&app, &agent)?;
         let window = window_verbs(&app);
@@ -204,7 +204,7 @@ pub async fn ai_agent_call(
     args: Value,
     thread: Option<String>,
 ) -> Result<Value, String> {
-    crate::lane::off_the_runtime(move || -> Result<Value, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
         crate::agents::from_the_app(&webview)?;
         let grant = grant_for(&app, &agent)?;
         let window = window_verbs(&app);
@@ -232,7 +232,7 @@ pub async fn ai_agent_context(
     agent: Builtin,
     thread: Option<String>,
 ) -> Result<Vec<Value>, String> {
-    crate::lane::off_the_runtime(move || -> Result<Vec<Value>, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Vec<Value>, String> {
         crate::agents::from_the_app(&webview)?;
         let grant = grant_for(&app, &agent)?;
         let window = window_verbs(&app);

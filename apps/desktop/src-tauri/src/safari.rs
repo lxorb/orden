@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::browser_profiles::{copied, Profile};
 use crate::firefox_profiles::BROWSERS_DIR;
-use crate::paths::folder_named;
+use orden_base::paths::folder_named;
 
 const BOOKMARKS: &str = "Library/Safari/Bookmarks.plist";
 const SESSION: &str = "Library/Safari/LastSession.plist";

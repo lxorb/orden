@@ -1,11 +1,10 @@
+use orden_base::labels::{document_windows, MAIN};
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 
 static WINDOWS: AtomicU32 = AtomicU32::new(0);
-
-const MAIN: &str = "main";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Handed {
@@ -167,7 +166,7 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
 pub fn page_up(app: &AppHandle, label: &str) -> bool {
     app.try_state::<Pending>()
         .is_some_and(|pending| pending.is_listening(label))
-        && !crate::stall::page_gone(label)
+        && !orden_crashes::stall::page_gone(label)
 }
 
 fn token_in(argv: &[String]) -> Option<String> {
@@ -311,7 +310,7 @@ fn open_again(app: &AppHandle) -> Result<(), String> {
 fn window_builder<'a>(
     app: &'a AppHandle,
     label: &str,
-) -> WebviewWindowBuilder<'a, crate::Engine, AppHandle> {
+) -> WebviewWindowBuilder<'a, orden_base::Engine, AppHandle> {
     let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::default())
         .initialization_script(crate::old_home::script())
         .title("Orden")
@@ -332,7 +331,7 @@ fn window_builder<'a>(
     builder
 }
 
-fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result<(), String> {
+fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> Result<(), String> {
     let building = crate::appearance::own_frame(builder);
     let window = crate::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
@@ -341,7 +340,7 @@ fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result
 
     #[cfg(target_os = "macos")]
     {
-        crate::lights::hold(&window);
+        orden_system::lights::hold(&window);
         if crate::placement::away().is_none() {
             window
                 .show()
@@ -360,20 +359,6 @@ fn reopened_label(app: &AppHandle) -> String {
     } else {
         free_label(app)
     }
-}
-
-pub fn document_windows(app: &AppHandle) -> Vec<tauri::Window> {
-    app.windows()
-        .into_values()
-        .filter(|window| is_document_window(window.label()))
-        .collect()
-}
-
-pub(crate) fn is_document_window(label: &str) -> bool {
-    label == MAIN
-        || label
-            .strip_prefix("orden-")
-            .is_some_and(|number| !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()))
 }
 
 fn bring_forward(window: &tauri::Window) {
@@ -435,8 +420,8 @@ fn free_label(app: &AppHandle) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        handed_by, in_background, is_document_window, receiver, restarted_with, token_in,
-        unread_link, without_ours, Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
+        handed_by, in_background, receiver, restarted_with, token_in, unread_link, without_ours,
+        Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
     };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
@@ -475,17 +460,6 @@ mod tests {
     fn with_no_window_at_all_one_is_opened_once_the_launch_is_through() {
         assert_eq!(receiver(&[], false), Handover::Hold);
         assert_eq!(receiver(&[], true), Handover::HoldAndOpen);
-    }
-
-    #[test]
-    fn a_document_window_is_main_or_a_numbered_one() {
-        assert!(is_document_window("main"));
-        assert!(is_document_window("orden-2"));
-        assert!(is_document_window("orden-12"));
-        assert!(!is_document_window("orden-quick-add"));
-        assert!(!is_document_window("orden-"));
-        assert!(!is_document_window("orden-2a"));
-        assert!(!is_document_window("web-1"));
     }
 
     #[test]
@@ -608,31 +582,14 @@ mod tests {
 
     #[test]
     fn every_webview_takes_its_own_drops() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut sources = vec![root.clone()];
         let mut taken = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let name = path
-                    .strip_prefix(&root)
-                    .expect("under the source")
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
-                let built = text.matches("WebviewWindowBuilder::new(").count()
-                    + text.matches("WebviewBuilder::new(").count();
-                if text.matches(".disable_drag_drop_handler()").count() < built {
-                    taken.push(name);
-                }
+        for (name, path) in crate::sources() {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+            let built = text.matches("WebviewWindowBuilder::new(").count()
+                + text.matches("WebviewBuilder::new(").count();
+            if text.matches(".disable_drag_drop_handler()").count() < built {
+                taken.push(name);
             }
         }
         taken.sort();

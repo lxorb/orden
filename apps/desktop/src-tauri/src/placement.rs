@@ -9,7 +9,7 @@ use tauri::{
     WebviewWindowBuilder, Window, WindowEvent,
 };
 
-use crate::paths::{config_dir, made, write_atomically};
+use orden_base::paths::{config_dir, made, write_atomically};
 
 const FILE: &str = "window.json";
 
@@ -125,7 +125,7 @@ impl Followed {
     }
 }
 
-pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
+pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     builder.manage(Placements::default()).on_window_event(noted)
 }
 
@@ -862,32 +862,15 @@ mod tests {
     fn every_window_is_built_where_the_run_sends_them() {
         let excused = ["pdf.rs", "engine.rs", "engine/gate.rs"];
 
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut sources = vec![root.clone()];
         let mut unplaced = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let name = path
-                    .strip_prefix(&root)
-                    .expect("under the source")
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let builds = text.contains("WebviewWindowBuilder::new(")
-                    || text.contains("WebviewWindowBuilder::from_config(");
-                let placed =
-                    text.contains("placement::built(") || text.contains("placement::built_away(");
-                if builds && !placed && name != "placement.rs" && !excused.contains(&&*name) {
-                    unplaced.push(name);
-                }
+        for (name, path) in crate::sources() {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let builds = text.contains("WebviewWindowBuilder::new(")
+                || text.contains("WebviewWindowBuilder::from_config(");
+            let placed =
+                text.contains("placement::built(") || text.contains("placement::built_away(");
+            if builds && !placed && name != "placement.rs" && !excused.contains(&&*name) {
+                unplaced.push(name);
             }
         }
         assert!(
@@ -910,49 +893,32 @@ mod tests {
             "MoveFocus",
             "focus_parent",
         ];
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut sources = vec![root.clone()];
         let mut found = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
+        for (name, path) in crate::sources() {
+            if name == "placement.rs" || name == "foreground.rs" {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            if name == "keyboard.rs" {
+                assert_eq!(
+                    text.matches("crate::placement::away().is_some()").count(),
+                    2,
+                    "keyboard.rs hands the keyboard over past the guard"
+                );
+                continue;
+            }
+            for (at, line) in text.lines().enumerate() {
+                let code = line.trim_start();
+                if code.starts_with("//") {
                     continue;
                 }
-                let name = path
-                    .strip_prefix(&root)
-                    .expect("under the source")
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                if name == "placement.rs" || name == "foreground.rs" {
-                    continue;
-                }
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                if name == "keyboard.rs" {
-                    assert_eq!(
-                        text.matches("crate::placement::away().is_some()").count(),
-                        2,
-                        "keyboard.rs hands the keyboard over past the guard"
-                    );
-                    continue;
-                }
-                for (at, line) in text.lines().enumerate() {
-                    let code = line.trim_start();
-                    if code.starts_with("//") {
-                        continue;
-                    }
-                    let named = asks_the_system.iter().any(|call| {
-                        code.match_indices(call).any(|(from, _)| {
-                            !code[..from].ends_with(|c: char| c.is_alphanumeric() || c == '_')
-                        })
-                    });
-                    if code.contains(".set_focus(") || named {
-                        found.push(format!("{name}:{}", at + 1));
-                    }
+                let named = asks_the_system.iter().any(|call| {
+                    code.match_indices(call).any(|(from, _)| {
+                        !code[..from].ends_with(|c: char| c.is_alphanumeric() || c == '_')
+                    })
+                });
+                if code.contains(".set_focus(") || named {
+                    found.push(format!("{name}:{}", at + 1));
                 }
             }
         }
@@ -1102,34 +1068,17 @@ mod tests {
     fn nothing_moves_a_window_but_moved_as_it_is() {
         let excused = ["quick_add.rs", "extensions/popup.rs"];
         let calls = [".set_position(", ".set_size(", ".set_outer_position("];
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut sources = vec![root.clone()];
         let mut found = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let name = path
-                    .strip_prefix(&root)
-                    .expect("under the source")
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                if excused.contains(&&*name) {
-                    continue;
-                }
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let code = text.split("mod tests {").next().unwrap_or("");
-                for (at, line) in code.lines().enumerate() {
-                    let line = line.trim_start();
-                    if !line.starts_with("//") && calls.iter().any(|call| line.contains(call)) {
-                        found.push(format!("{name}:{}", at + 1));
-                    }
+        for (name, path) in crate::sources() {
+            if excused.contains(&&*name) {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let code = text.split("mod tests {").next().unwrap_or("");
+            for (at, line) in code.lines().enumerate() {
+                let line = line.trim_start();
+                if !line.starts_with("//") && calls.iter().any(|call| line.contains(call)) {
+                    found.push(format!("{name}:{}", at + 1));
                 }
             }
         }

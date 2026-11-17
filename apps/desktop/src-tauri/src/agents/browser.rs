@@ -1280,7 +1280,7 @@ fn files_of(
     if asked.is_empty() {
         return Err(Answer::error(Code::BadArguments, "say which files"));
     }
-    let root = crate::paths::spaces_dir(app).ok();
+    let root = orden_base::paths::spaces_dir(app).ok();
     asked
         .iter()
         .map(|one| {
@@ -1291,7 +1291,7 @@ fn files_of(
                 root.as_ref()
                     .map_or(given.clone(), |root| root.join(&given))
             };
-            let logical = crate::paths::folded(&path);
+            let logical = orden_base::paths::folded(&path);
             let twin = root
                 .as_deref()
                 .and_then(|root| super::working::kept_twin(root, &logical));
@@ -1312,7 +1312,7 @@ fn files_of(
             if matches!(caller, Caller::Agent(_)) && twin.is_none() {
                 handed_from_own(root.as_deref(), &super::files::own_folders(app), &path)?;
             }
-            let mut inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
+            let mut inside = orden_base::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
                 if inside && beyond_the_grant(root, &logical, &grant.spaces) {
                     return Err(absent());

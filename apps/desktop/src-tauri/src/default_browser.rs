@@ -22,7 +22,7 @@ const DESCRIPTION: &str = "Notes and the web in one window.";
 
 #[tauri::command]
 pub async fn default_browser(app: AppHandle) -> bool {
-    crate::lane::off_the_runtime(move || -> bool { platform::is_default(&app) }).await
+    orden_base::lane::off_the_runtime(move || -> bool { platform::is_default(&app) }).await
 }
 
 #[tauri::command(async)]
@@ -416,7 +416,7 @@ mod platform {
     }
 
     fn handler_of(scheme: &str) -> Option<String> {
-        let out = crate::printed::output(
+        let out = orden_base::printed::output(
             Command::new("xdg-mime").args([
                 "query",
                 "default",

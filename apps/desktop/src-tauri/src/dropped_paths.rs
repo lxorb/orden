@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
 
-use crate::paths::{folded, inside, is_pdf};
+use orden_base::paths::{folded, inside, is_pdf};
 
 const FRESH: Duration = Duration::from_secs(30);
 

@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{
+use orden_base::paths::{
     at_most, cannot, first_spot, folded, held_paper, in_spaces, inside, is_reserved, made,
     really_under, space_root, spaces_dir, taken,
 };
@@ -22,10 +22,10 @@ pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 
 #[tauri::command]
 pub async fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
-    crate::lane::off_the_runtime(move || -> Result<tauri::ipc::Response, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<tauri::ipc::Response, String> {
         let target = readable(&app, &path)?;
         #[cfg(target_os = "macos")]
-        crate::notes::icloud::fetched(&app, &target)?;
+        orden_notes::notes::icloud::fetched(&app, &target)?;
         let Some(bytes) = at_most(&target, FILE_LIMIT)? else {
             return Err(format!("{path} is too large to open"));
         };
@@ -88,7 +88,7 @@ pub fn save_asset(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<St
             name,
         },
         bytes,
-    ) = crate::notes::raw_sent(request.headers(), request.body())?;
+    ) = orden_base::sent::raw_sent(request.headers(), request.body())?;
     let note = in_spaces(&app, &note_path)?;
     let note_folder = note
         .parent()

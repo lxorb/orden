@@ -9,7 +9,7 @@ use tauri::AppHandle;
 use std::os::windows::process::CommandExt;
 
 use crate::assets::safe_name;
-use crate::paths::{chosen, in_spaces, inside, space_root, spaces_dir};
+use orden_base::paths::{chosen, in_spaces, inside, space_root, spaces_dir};
 
 const READ_AS: &str =
     "markdown_strict+pipe_tables+backtick_code_blocks+strikeout+task_lists+tex_math_dollars";
@@ -66,13 +66,14 @@ fn ask_login_shell() -> Option<PathBuf> {
 
 #[cfg(any(target_os = "macos", all(test, unix)))]
 fn in_login_shell(mut shell: Command, patience: Duration) -> Option<PathBuf> {
-    let said = crate::printed::output(shell.args(["-ilc", "command -v pandoc"]), patience).ok()?;
+    let said =
+        orden_base::printed::output(shell.args(["-ilc", "command -v pandoc"]), patience).ok()?;
     finding::shell_answer(&String::from_utf8_lossy(&said.stdout)).filter(|program| runs(program))
 }
 
 #[tauri::command]
 pub async fn has_pandoc() -> bool {
-    crate::lane::off_the_runtime(pandoc_runs).await
+    orden_base::lane::off_the_runtime(pandoc_runs).await
 }
 
 fn pandoc_runs() -> bool {
@@ -187,7 +188,7 @@ fn reading(source: &str, media: bool) -> Vec<&str> {
 
 #[tauri::command]
 pub async fn import_document(app: AppHandle, path: String) -> Result<Imported, String> {
-    crate::lane::off_the_runtime(move || -> Result<Imported, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Imported, String> {
         import_from(&chosen(&app, &path)?)
     })
     .await
@@ -199,7 +200,7 @@ fn import_from(source: &Path) -> Result<Imported, String> {
         .map_err(|error| format!("there was no folder to read the pictures into: {error}"))?;
     let source = source.to_string_lossy().to_string();
 
-    let result = crate::printed::output(
+    let result = orden_base::printed::output(
         pandoc()
             .current_dir(media.path())
             .args(reading(&source, copying == Copying::Safe)),
@@ -345,7 +346,7 @@ pub async fn run_pandoc(
     format: String,
     note: Option<String>,
 ) -> Result<Vec<String>, String> {
-    crate::lane::off_the_runtime(move || -> Result<Vec<String>, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Vec<String>, String> {
         if !is_format(&format) {
             return Err(format!("{format} is not a format pandoc writes"));
         }
@@ -455,7 +456,8 @@ fn piped(mut command: Command, input: String) -> Result<std::process::Output, St
     let mut sink = child.stdin.take().ok_or("could not write to pandoc")?;
     let writer = std::thread::spawn(move || sink.write_all(input.as_bytes()));
 
-    let result = crate::printed::wait_output(child, CONVERTING).map_err(|error| not_run(&error))?;
+    let result =
+        orden_base::printed::wait_output(child, CONVERTING).map_err(|error| not_run(&error))?;
     let written = writer
         .join()
         .map_err(|_| "the thread feeding pandoc stopped".to_string())?;

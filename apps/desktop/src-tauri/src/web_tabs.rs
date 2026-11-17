@@ -208,7 +208,7 @@ impl Trail {
     }
 }
 
-pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
+pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
         .on_window_event(crate::web_follow::heard)
@@ -462,12 +462,12 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
 
 fn page_built(
     window: &tauri::Window,
-    builder: WebviewBuilder<crate::Engine>,
+    builder: WebviewBuilder<orden_base::Engine>,
     pane: &Pane,
     app: &AppHandle,
     store: Option<&str>,
 ) -> Result<(), String> {
-    let _doing = crate::stall::doing("web_open: building the page");
+    let _doing = orden_crashes::stall::doing("web_open: building the page");
     let _ = (app, store);
 
     let bounds = crate::web_follow::Bounds::from(pane);
@@ -601,12 +601,12 @@ pub async fn web_open(
 }
 
 fn windows_asked(
-    builder: WebviewBuilder<crate::Engine>,
+    builder: WebviewBuilder<orden_base::Engine>,
     app: &AppHandle,
     tab: &str,
     holder: &str,
     private: bool,
-) -> WebviewBuilder<crate::Engine> {
+) -> WebviewBuilder<orden_base::Engine> {
     let _ = private;
     let opening = app.clone();
     let asking = tab.to_string();
@@ -646,11 +646,11 @@ fn windows_asked(
 }
 
 fn reporting(
-    builder: WebviewBuilder<crate::Engine>,
+    builder: WebviewBuilder<orden_base::Engine>,
     app: &AppHandle,
     tab: &str,
     private: bool,
-) -> WebviewBuilder<crate::Engine> {
+) -> WebviewBuilder<orden_base::Engine> {
     let moved = tab.to_string();
     let sending = app.clone();
     let seen = std::sync::Arc::new(Mutex::new(String::new()));
@@ -727,7 +727,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
             crate::downloads::follow(&clearing, &hearing, &holder);
             let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
-            crate::trace::mark(&format!("web tab: {}", cleared.said()));
+            orden_base::trace::mark(&format!("web tab: {}", cleared.said()));
         });
     }
 
@@ -754,7 +754,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
 
 pub fn hearing(app: &AppHandle) {
     let Some(view) = app.get_webview(MAIN) else {
-        crate::trace::mark("microphone: no webview to listen on");
+        orden_base::trace::mark("microphone: no webview to listen on");
         return;
     };
 
@@ -768,7 +768,7 @@ pub fn hearing(app: &AppHandle) {
 
     let _ = view.with_webview(move |platform| {
         ask::own(&platform, ours);
-        crate::trace::mark("microphone: listening on the window's own page");
+        orden_base::trace::mark("microphone: listening on the window's own page");
     });
 }
 
@@ -854,7 +854,7 @@ pub fn web_place(
     let view = found(&app, &tab)?;
 
     let answering = {
-        let _doing = crate::stall::doing("web_place: asked");
+        let _doing = orden_crashes::stall::doing("web_place: asked");
         crate::web_answers::answers(&view)
     };
     if !answering {
@@ -862,7 +862,7 @@ pub fn web_place(
         if visible {
             return Err(crate::web_answers::NOT_ANSWERING.to_owned());
         }
-        let _doing = crate::stall::doing("web_place: put away");
+        let _doing = orden_crashes::stall::doing("web_place: put away");
         crate::web_answers::put_away(&view);
         return Ok(crate::web_cut::layering(view.label()));
     }
@@ -879,20 +879,20 @@ pub fn web_place(
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     if !visible {
-        let _doing = crate::stall::doing("web_place: hidden");
+        let _doing = orden_crashes::stall::doing("web_place: hidden");
         crate::page_hide::out_of_sight(&view);
         view.hide()
             .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
     {
-        let _doing = crate::stall::doing("web_place: bounds");
+        let _doing = orden_crashes::stall::doing("web_place: bounds");
         crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
     let _ = opacity;
     if visible {
-        let _doing = crate::stall::doing("web_place: cut");
+        let _doing = orden_crashes::stall::doing("web_place: cut");
         crate::web_cut::apply(
             &view,
             cut.clone(),
@@ -904,13 +904,13 @@ pub fn web_place(
     }
 
     if visible {
-        let _doing = crate::stall::doing("web_place: shown");
+        let _doing = orden_crashes::stall::doing("web_place: shown");
         crate::page_hide::no_ground(&view);
         view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
 
-    let _doing = crate::stall::doing("web_place: keyboard");
+    let _doing = orden_crashes::stall::doing("web_place: keyboard");
     if visible && cut.is_some() {
         crate::keyboard::hold_for_layer(&app, window.label());
     }
@@ -1090,7 +1090,7 @@ pub async fn web_close(
     let named = tab.clone();
 
     let posted = app.run_on_main_thread(move || {
-        let _doing = crate::stall::doing("web_close");
+        let _doing = orden_crashes::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
