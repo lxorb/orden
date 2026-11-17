@@ -17,6 +17,7 @@
     "workspace",
     "sync-store",
     "documents",
+    "file-writes",
     "panes"
   ]
 }

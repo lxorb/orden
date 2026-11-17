@@ -348,7 +348,7 @@ function merged(document: Document, node: unknown, value: unknown): unknown {
       if (pair) pair.value = merged(document, pair.value, one)
       else node.items.push(document.createPair(key, one))
     }
-    node.items = node.items.filter((pair) => keyText(pair.key) in value)
+    node.items = node.items.filter((pair) => Object.hasOwn(value, keyText(pair.key)))
     return node
   }
   if (Array.isArray(value) && isSeq(node)) {

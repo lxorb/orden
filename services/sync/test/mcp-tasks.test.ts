@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
+import { type InboxPage, inboxPageOf } from '@orden/sync-core'
 
 let env: TestEnv
 let token: string
@@ -160,6 +161,26 @@ describe('the todos, with Orden closed', () => {
     expect(await tool(key, 'list_tasks', { limit: 0 })).toMatch(/whole number/)
   })
 
+  test('a change that leaves labels or the title as null keeps them as they were', async () => {
+    const key = await connector()
+    const added = await json(key, 'add_task', {
+      title: 'Call the bank',
+      space: 'Work',
+      labels: ['work'],
+    })
+    const changed = await json(key, 'update_task', {
+      id: added.id,
+      done: true,
+      labels: null,
+      title: null,
+    })
+
+    expect(changed).toMatchObject({ title: 'Call the bank', labels: ['work'], done: true })
+    expect(await json(key, 'update_task', { id: added.id, labels: 'money' })).toMatchObject({
+      labels: ['work'],
+    })
+  })
+
   test('are listed with the tools, and the base tools only once databases are turned on', async () => {
     const key = await connector()
     const names = async () => {
@@ -227,11 +248,245 @@ describe('bases, with Orden closed', () => {
     expect(await read(key, 'Books/Emma.md')).toBe('---\nstatus: next\n---\n')
   })
 
+  test('a row added from a template is filled on the asker’s clock, the view’s template first', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.UTC(2026, 9, 7, 20))
+    try {
+      env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+      for (const [path, content] of [
+        [
+          'Templates/Book.md',
+          '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\n\nAdded {{date}} at {{time}}\n',
+        ],
+        ['Templates/Shelf.md', '# {{title}} on the shelf\n'],
+      ]) {
+        await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+      }
+      await baseFile(
+        'Books.base',
+        [
+          'filters: file.inFolder("Books")',
+          'orden:',
+          '  template: "[[Templates/Book]]"',
+          'views:',
+          '  - type: table',
+          '    name: All',
+          '  - type: cards',
+          '    name: Shelf',
+          '    orden:',
+          '      template: "[[Templates/Shelf|shelf]]"',
+          '',
+        ].join('\n'),
+      )
+      await basesTurned(true)
+      const key = await connector()
+      await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+      expect(await read(key, 'Books/Emma.md')).toBe(
+        '---\nstatus: new\n---\n# Emma\n\nAdded 2026-10-08 at 05:00\n',
+      )
+      await tool(key, 'add_row', {
+        space: 'Work',
+        base: 'Books.base',
+        view: 'Shelf',
+        title: 'Emma',
+      })
+      expect(await read(key, 'Books/Emma 2.md')).toBe('# Emma 2 on the shelf\n')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a row added from a template named by its name alone, as the app finds it', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Templates/Book.md', content: '# {{title}}\n' },
+    })
+    await baseFile(
+      'Books.base',
+      ['filters: file.inFolder("Books")', 'orden:', '  template: "[[book]]"', ''].join('\n'),
+    )
+    await basesTurned(true)
+    const key = await connector()
+    await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+
+    expect(await read(key, 'Books/Emma.md')).toBe('# Emma\n')
+  })
+
+  test('a template named by its name passes over a protected namesake, in any case of its letters', async () => {
+    for (const [path, content] of [
+      ['Diary/Ärzte.md', 'the secret words\n'],
+      ['Templates/Ärzte.md', '# {{title}} visit\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token,
+      body: { protected: { Diary: 'password' } },
+    })
+    await baseFile(
+      'Visits.base',
+      ['filters: file.inFolder("Visits")', 'orden:', '  template: "[[ärzte]]"', ''].join('\n'),
+    )
+    await basesTurned(true)
+    const key = await connector()
+    await tool(key, 'add_row', { space: 'Work', base: 'Visits.base', title: 'Anna' })
+
+    expect(await read(key, 'Visits/Anna.md')).toBe('# Anna visit\n')
+  })
+
+  test('a row title or a note path is never a hidden note', async () => {
+    await baseFile('Books.base', BOOKS)
+    await basesTurned(true)
+    const key = await connector()
+
+    expect(
+      await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: '.Secret' }),
+    ).toMatch(/is hidden/)
+    expect(
+      await tool(key, 'write_note', { space: 'Work', path: '.hidden/x.md', content: 'hi' }),
+    ).not.toMatch(/^Saved/)
+    expect(
+      await tool(key, 'write_note', { space: 'Work', path: 'a/.b.md', content: 'hi' }),
+    ).not.toMatch(/^Saved/)
+    expect(await tool(key, 'list_notes', { space: 'Work' })).not.toMatch(
+      /\.Secret|\.hidden|\.b\.md/,
+    )
+  })
+
+  test('a base filtered by tag finds the notes tagged in their front matter', async () => {
+    for (const [path, content] of [
+      ['Inline.md', 'Body #book\n'],
+      ['Front.md', '---\ntags: [book]\n---\nBody\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    await baseFile(
+      'Books.base',
+      ['filters: file.hasTag("book")', 'views:', '  - type: table', '    name: All', ''].join('\n'),
+    )
+    await basesTurned(true)
+    const key = await connector()
+    await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
+
+    const answer = await json(key, 'query_base', { space: 'Work', path: 'Books.base' })
+    expect(answer).toMatchObject({ total: 3 })
+  })
+
+  test('a base reads a note’s links, its time and its cover as the app does', async () => {
+    for (const [path, content] of [
+      ['People/Ada.md', '---\nborn: 1815\n---\n'],
+      ['Day1.md', '---\nwho: "[[Ada]]"\n---\nSee [[Ada]]\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    env.db
+      .prepare(`update notes set meta = ? where path = 'People/Ada.md'`)
+      .run('{"cover":"ada.png"}')
+    await basesTurned(true)
+    const key = await connector(true)
+    const answer = await json(key, 'query_base', {
+      space: 'Work',
+      yaml: [
+        'filters: file.mtime > now() - "7 days"',
+        'formulas:',
+        '  back: file.backlinks.length',
+        '  born: who.asFile().properties.born',
+        'views:',
+        '  - type: table',
+        '    name: All',
+        '    order: [file.name, cover, formula.back, formula.born]',
+        '',
+      ].join('\n'),
+    })
+    const rows = (answer.groups as { rows: Record<string, unknown>[] }[])[0]?.rows
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'Day1.md', 'formula.back': 0, 'formula.born': 1815 }),
+        expect.objectContaining({ path: 'People/Ada.md', cover: 'ada.png', 'formula.back': 1 }),
+      ]),
+    )
+  })
+
   test('a base said as yaml', async () => {
     const yaml = BOOKS.replace('file.inFolder("Books")', 'status == "reading"')
     await basesTurned(true)
     expect(await json(await connector(true), 'query_base', { space: 'Work', yaml })).toMatchObject({
       total: 1,
     })
+  })
+
+  test('a date written with its offset is read on the clock of the person asking', async () => {
+    env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Trip.md', content: '---\nleaves: 2026-03-11T02:00:00+09:00\n---\n' },
+    })
+    await basesTurned(true)
+    const answer = await json(await connector(true), 'query_base', {
+      space: 'Work',
+      yaml: 'filters: \'leaves.date() == date("2026-03-11") && leaves.hour == 2\'\n',
+    })
+    expect(answer).toMatchObject({ total: 1, groups: [{ rows: [{ path: 'Trip.md' }] }] })
+  })
+})
+
+describe('limits a device holds the todos to', () => {
+  async function devicesRead(): Promise<{ sent: number; read: number }> {
+    const page = await call<InboxPage>(env, '/v2/inbox', { token, method: 'GET' })
+    return { sent: page.json.items.length, read: inboxPageOf(page.json)?.items.length ?? -1 }
+  }
+
+  test('a todo too large for a device is refused rather than kept', async () => {
+    const key = await connector(false)
+    const long = await tool(key, 'add_task', { title: 'Plan', description: '漢'.repeat(6000) })
+    const labels = Array.from({ length: 2000 }, (_, at) => `label-${at}`)
+    const many = await tool(key, 'add_task', { title: 'Labels', labels })
+
+    expect(long).toMatch(/too large/i)
+    expect(many).toMatch(/too large/i)
+    const { sent, read } = await devicesRead()
+    expect(read).toBe(sent)
+  })
+
+  test('an update that would make a todo too large leaves it as it was', async () => {
+    const key = await connector(false)
+    const made = JSON.parse(await tool(key, 'add_task', { title: 'Plan' })) as { id: string }
+    const said = await tool(key, 'update_task', { id: made.id, description: '漢'.repeat(6000) })
+
+    expect(said).toMatch(/too large/i)
+    const { sent, read } = await devicesRead()
+    expect(read).toBe(sent)
+    expect(sent).toBe(1)
+  })
+})
+
+describe('a base over more notes than are read', () => {
+  test('says it is partial', async () => {
+    for (let at = 0; at < 2005; at++) {
+      const hash = String(at).padStart(4, '0').padEnd(64, 'c')
+      const text = '---\nkind: row\n---\n'
+      await env.NOTES.put(`spaces/${space}/r${at}`, text)
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, kind)
+           values (?, ?, ?, ?, 1, 1, 0, ?, ?, 'note')`,
+        )
+        .run(
+          `r${at}`,
+          space,
+          `rows/r${String(at).padStart(4, '0')}.md`,
+          1000 + at,
+          text.length,
+          hash,
+        )
+    }
+    await basesTurned(true)
+
+    const answer = await json(await connector(true), 'query_base', {
+      space: 'Work',
+      yaml: 'filters: \'kind == "row"\'\n',
+    })
+    expect(answer.partial).toBe(true)
   })
 })

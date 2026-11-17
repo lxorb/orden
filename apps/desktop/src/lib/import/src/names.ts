@@ -1,3 +1,4 @@
+import { encodeTarget, wikilinkCannotName } from '@orden/markdown/links'
 import { freePath, withoutForbidden } from '@orden/markdown/paths'
 import { isReserved } from '../../platform/src/api'
 
@@ -122,4 +123,12 @@ export class Names {
   has(path: string): boolean {
     return this.taken.has(nameKey(path))
   }
+}
+
+export function pageLink(name: string, shown: string | null = null, embed = false): string {
+  if (!wikilinkCannotName(name)) {
+    return `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
+  }
+  const words = (shown ?? name).replace(/[[\]\\]/g, (one) => `\\${one}`)
+  return `[${words}](${encodeTarget(`${name}.md`)})`
 }

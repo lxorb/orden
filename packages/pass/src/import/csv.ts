@@ -52,7 +52,7 @@ export function csvRecords(text: string): CsvRecord[] {
   return body.map((cells) => {
     const record: CsvRecord = {}
     names.forEach((name, i) => {
-      if (!(name in record) || record[name] === '') record[name] = cells[i] ?? ''
+      if (!Object.hasOwn(record, name) || record[name] === '') record[name] = cells[i] ?? ''
     })
     return record
   })

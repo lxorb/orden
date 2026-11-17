@@ -15,3 +15,5 @@ export const automationStart = () => import('./start')
 export const automationActs = () => import('./acts')
 
 export const automationMoving = () => import('./moving')
+
+export { keptFromAgents, NOTE_TREE, NOTE_WRITES } from './front'

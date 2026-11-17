@@ -3,6 +3,7 @@ import { busy } from '../../ui-kit/src/api'
 import { log, invoke, isDesktop, isNative, openExternal } from '../../platform/src/api'
 import { hearHere } from '../../windows/src/api'
 import { callerOf } from './caller'
+import { dueWithin } from './due'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
 
@@ -64,17 +65,27 @@ interface Request {
   rest?: unknown
   agent?: unknown
   thread?: unknown
+  within_ms?: unknown
 }
 
 async function answer(id: number, asked: Request) {
-  if ((await invoke('automation_claim', { id }).catch(() => false)) !== true) return
+  const due = dueWithin(asked.within_ms)
+  try {
+    if ((await invoke('automation_claim', { id }).catch(() => false)) !== true) return
 
-  const verb = typeof asked.verb === 'string' ? asked.verb : ''
-  const args = isRecord(asked.args) ? asked.args : {}
-  const rest = Array.isArray(asked.rest) ? asked.rest.filter(isText) : []
+    const verb = typeof asked.verb === 'string' ? asked.verb : ''
+    const args = isRecord(asked.args) ? asked.args : {}
+    const rest = Array.isArray(asked.rest) ? asked.rest.filter(isText) : []
+    const caller = callerOf(asked.agent, asked.thread)
 
-  const result = await dispatch(verb, args, rest, 'here', callerOf(asked.agent, asked.thread))
-  await invoke('automation_result', { id, result }).catch(() => undefined)
+    const result = await Promise.race([
+      dispatch(verb, args, rest, 'here', caller, due.deadline),
+      due.late,
+    ])
+    await invoke('automation_result', { id, result }).catch(() => undefined)
+  } finally {
+    due.end()
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

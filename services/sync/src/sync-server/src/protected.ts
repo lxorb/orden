@@ -1,4 +1,3 @@
-import { nameKey } from '@orden/sync-core'
 import { Hono } from 'hono'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
@@ -83,12 +82,22 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
   return readProtected(await rawFor(env, userId))
 }
 
+function folded(path: string): string {
+  let out = ''
+  for (const one of path.normalize('NFC')) {
+    const upper = one.toUpperCase()
+    const lower = upper.toLowerCase()
+    out += Array.from(upper).length !== 1 ? one : Array.from(lower).length === 1 ? lower : upper
+  }
+  return out
+}
+
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
-  const folded = nameKey(path)
+  const asked = folded(path)
   return Object.keys(ways).some((key) => {
-    const held = nameKey(key)
-    return held === '' || folded === held || folded.startsWith(`${held}/`)
+    const held = folded(key)
+    return held === '' || asked === held || asked.startsWith(`${held}/`)
   })
 }
 
@@ -100,6 +109,18 @@ export const PROTECTED = (path: string) =>
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
   return (spaceId, path) => covers(held.spaces[spaceId], path)
+}
+
+export const KEPT_FROM_TOKENS = 'This space keeps notes from agents, so a token cannot reach it.'
+
+export async function programKeptFrom(
+  env: Env,
+  who: Whoever & { program?: true },
+  spaceId: string,
+): Promise<boolean> {
+  if (who.kind !== 'user' || !who.program) return false
+  const { spaces } = await protectedFor(env, who.user.id)
+  return Object.keys(spaces[spaceId] ?? {}).length > 0
 }
 
 export async function programShut(

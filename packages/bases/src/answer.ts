@@ -167,6 +167,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       clock ? context.now : '',
       context.this ? thisId(context.this) : '',
       context.me ?? '',
+      context.zone ?? '',
     ].join('\n')
     if (!local || key !== factsFor) {
       facts = new WeakMap()
@@ -228,7 +229,11 @@ export function compileView(base: Base, which?: string | number): CompiledView {
 
     kept.sort((a, b) => {
       for (let index = 0; index < sorts.length; index++) {
-        const order = sortCompare(a.facts.sort[index] ?? null, b.facts.sort[index] ?? null)
+        const order = sortCompare(
+          a.facts.sort[index] ?? null,
+          b.facts.sort[index] ?? null,
+          context.zone,
+        )
         if (order !== 0) {
           const nullLast = a.facts.sort[index] === null || b.facts.sort[index] === null
           return sorts[index]?.descending && !nullLast ? -order : order
@@ -275,7 +280,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
           const order =
             by.property === 'file.path' && typeof a.key === 'string' && typeof b.key === 'string'
               ? byNoteName(a.key, b.key)
-              : sortCompare(a.key, b.key)
+              : sortCompare(a.key, b.key, context.zone)
           return by.direction === 'DESC' ? -order : order
         })
       return keys

@@ -111,6 +111,11 @@ describe('a property written from a view', () => {
     expect(changed(text, note, { note: { status: null } })).toBe('# Plan\n')
     expect(
       changed(text, note, {
+        note: { due: { kind: 'date', iso: '2026-03-11', time: '00:30:00', zone: '+09:00' } },
+      }),
+    ).toBe('---\nstatus: open\ndue: 2026-03-11T00:30:00+09:00\n---\n# Plan\n')
+    expect(
+      changed(text, note, {
         note: { tags: ['a', 'b'], project: { kind: 'link', target: 'Thesis' } },
       }),
     ).toBe("---\nstatus: open\ntags: [a, b]\nproject: '[[Thesis]]'\n---\n# Plan\n")

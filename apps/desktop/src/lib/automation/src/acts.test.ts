@@ -24,11 +24,19 @@ let named: string | null = null
 let beside: string | null = null
 
 let scanning: Promise<void> = Promise.resolve()
+
+const indexed: {
+  outgoing: unknown[]
+  backlinks: unknown[]
+  nodes: { path: string | null; name: string; degree: number }[]
+} = { outgoing: [], backlinks: [], nodes: [] }
 let scans = 0
 
 const opened: string[] = []
 
 const held = new Map<string, string>()
+
+const refusing = new Set<string>()
 
 const written: { path: string; before: string; after: string }[] = []
 const made: { folder: string; name: string }[] = []
@@ -42,8 +50,11 @@ vi.mock('../../link-index/src/api', () => ({
       scans += 1
       return scanning
     },
-    outgoing: () => [],
-    backlinks: () => [],
+    outgoing: () => indexed.outgoing,
+    backlinks: () => indexed.backlinks,
+    get graph() {
+      return { nodes: indexed.nodes }
+    },
   },
 }))
 
@@ -72,11 +83,12 @@ vi.mock('../../workspace/src/api', () => ({
     activeTabId: null,
     noteText: (path: string) => Promise.resolve(held.get(path) ?? null),
     replaceInNotes: (changes: { path: string; before: string; after: string }[]) => {
-      for (const change of changes) {
+      const taken = changes.filter((change) => !refusing.has(change.path))
+      for (const change of taken) {
         written.push({ path: change.path, before: change.before, after: change.after })
         held.set(change.path, change.after)
       }
-      return Promise.resolve()
+      return Promise.resolve(taken.length)
     },
     createNote: (folder: string, name: string) => {
       made.push({ folder, name })
@@ -90,6 +102,7 @@ vi.mock('../../workspace/src/api', () => ({
     },
     close: () => undefined,
     activate: () => undefined,
+    loadTree: () => Promise.resolve(),
   },
 }))
 
@@ -98,6 +111,8 @@ const rows = [
   { id: 'record', label: 'Record', byHand: true, run: () => ran.push('record') },
   { id: 'shut', label: 'Shut', disabled: true, run: () => ran.push('shut') },
   { id: 'new-terminal', label: 'New terminal', ownWindow: true, run: () => ran.push('shell') },
+  { id: 'reformat', label: 'Tidy up', run: () => ran.push('reformat') },
+  { id: 'undo-file', label: 'Undo', run: () => ran.push('undo-file') },
 ]
 const ran: string[] = []
 
@@ -106,7 +121,19 @@ vi.mock('../../panes/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../panes/src/api')>()),
   views: { of: () => undefined },
 }))
-vi.mock('../../sync-store/src/api', () => ({ sync: { mergeable: () => undefined } }))
+vi.mock('../../sync-store/src/api', () => ({
+  sync: { mergeable: () => undefined, nudge: () => undefined },
+}))
+
+const laid: { path: string; content: string }[] = []
+vi.mock('../../file-writes/src/api', () => ({
+  writeIfAbsent: (path: string, content: string) => {
+    if (held.has(path)) return Promise.resolve(false)
+    laid.push({ path, content })
+    held.set(path, content)
+    return Promise.resolve(true)
+  },
+}))
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
@@ -117,6 +144,7 @@ vi.mock('../../sharing/src/api', () => ({
 const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
   await import('./acts')
 const { movedIn } = await import('./moving')
+const { listBacklinks, listLinks, listOrphans } = await import('./answers')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -402,6 +430,39 @@ describe('a space shared to be read', () => {
   })
 })
 
+describe('a note or folder kept from agents', () => {
+  test('is never written, moved, moved into or deleted by a verb, as it is never read', async () => {
+    const { protection } = await import('../../protect/src/api')
+    held.clear()
+    held.set('/Work/Secret/Diary.md', '# Diary\nthe merger')
+    held.set('/Work/Plan.md', '# Plan')
+    written.length = 0
+    made.length = 0
+    moves.moveMany.mockClear()
+    moves.rename.mockClear()
+    protection.set('/Work', '/Work/Secret', 'password')
+
+    const asked = [
+      () => moveFile({ path: 'Secret/Diary.md', to: 'Diary.md' }),
+      () => moveFile({ path: 'Plan.md', to: 'Secret/Plan.md' }),
+      () => deleteFile({ path: 'Secret/Diary.md' }),
+      () => writeFile({ path: 'Secret/Diary.md', content: 'Gone.' }),
+      () => writeFile({ path: 'Secret/Planted.md', content: 'planted' }),
+      () => writeFile({ path: 'Secret/drawing.canvas', content: '{}' }),
+      () => newNote({ path: 'Secret/Fresh.md' }),
+      () => appendNote({ path: 'Secret/Diary.md', content: 'More.' }),
+    ]
+    for (const one of asked) await expect(one()).rejects.toThrow(/is protected/)
+
+    expect(written).toEqual([])
+    expect(made).toEqual([])
+    expect(moves.moveMany).not.toHaveBeenCalled()
+    expect(moves.rename).not.toHaveBeenCalled()
+    expect(held.get('/Work/Secret/Diary.md')).toBe('# Diary\nthe merger')
+    protection.set('/Work', '/Work/Secret', null)
+  })
+})
+
 describe('the space’s instructions, which a move does not make', () => {
   test('refused with what to do instead, whatever note it was', async () => {
     held.clear()
@@ -424,6 +485,162 @@ describe('the space’s instructions, which a move does not make', () => {
     await expect(movedIn('/Work', 'Notes/AGENTS.md', 'Other/AGENTS.md')).resolves.toBe(
       'Other/AGENTS.md',
     )
+  })
+})
+
+describe('files.write to a path with nothing there', () => {
+  test('makes the file under the name it was given, and says that name', async () => {
+    held.clear()
+    written.length = 0
+    made.length = 0
+    laid.length = 0
+
+    expect(await writeFile({ path: 'Books.base', content: 'views: []\n' })).toEqual({
+      path: 'Books.base',
+      written: 10,
+    })
+    expect(laid).toEqual([{ path: '/Work/Books.base', content: 'views: []\n' }])
+    expect(made).toEqual([])
+  })
+
+  test('and a path with no ending is a note, reported with the ending it got', async () => {
+    held.clear()
+    made.length = 0
+    laid.length = 0
+
+    expect(await writeFile({ path: 'notes/Plan', content: '# Plan\n' })).toEqual({
+      path: 'notes/Plan.md',
+      written: 7,
+    })
+    expect(made).toEqual([{ folder: '/Work/notes', name: 'Plan.md' }])
+    expect(laid).toEqual([])
+  })
+})
+
+describe('a write the note refuses, being locked', () => {
+  test('is said to have failed by append, files.write and properties.set alike', async () => {
+    held.clear()
+    held.set('/Work/Locked.md', '# Locked\n')
+    refusing.add('/Work/Locked.md')
+    written.length = 0
+
+    await expect(appendNote({ path: 'Locked.md', content: 'More.' })).rejects.toThrow(
+      /nothing was written to Locked.md/,
+    )
+    await expect(writeFile({ path: 'Locked.md', content: 'Gone.' })).rejects.toThrow(
+      /nothing was written to Locked.md/,
+    )
+    await expect(setProperty({ path: 'Locked.md', key: 'status', value: 'done' })).rejects.toThrow(
+      /nothing was written to Locked.md/,
+    )
+    expect(written).toEqual([])
+    expect(held.get('/Work/Locked.md')).toBe('# Locked\n')
+
+    refusing.clear()
+  })
+})
+
+describe('words prepended to a note', () => {
+  test('go above the body, under the front matter, which stays the front matter', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '---\nstatus: draft\n---\n# Plan\n')
+    written.length = 0
+
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    const after = written[0]?.after ?? ''
+    expect(after).toBe('---\nstatus: draft\n---\nTop line.\n\n# Plan\n')
+    expect(frontMatterValue(after, 'status')).toBe('draft')
+  })
+
+  test('and under front matter that ends the note, on a line of their own', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '---\nstatus: draft\n---')
+    written.length = 0
+
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    expect(written[0]?.after).toBe('---\nstatus: draft\n---\nTop line.')
+  })
+
+  test('and at the very top of a note with none', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan\n')
+    written.length = 0
+
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    expect(written[0]?.after).toBe('Top line.\n\n# Plan\n')
+  })
+})
+
+describe('links, backlinks and orphans asked while the index is still being built', () => {
+  const landing = (change: () => void) => {
+    indexed.outgoing = []
+    indexed.backlinks = []
+    indexed.nodes = []
+    scanning = new Promise((landed) => {
+      setTimeout(() => {
+        change()
+        landed()
+      }, 20)
+    })
+  }
+
+  test('wait for the scan and answer from the whole index', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan\n')
+
+    landing(() => (indexed.outgoing = [{ target: 'Soup' }]))
+    expect(await listLinks({ path: 'Plan.md' })).toEqual({
+      path: 'Plan.md',
+      links: [{ target: 'Soup' }],
+    })
+
+    landing(() => (indexed.backlinks = [{ path: 'Recipes.md' }]))
+    expect(await listBacklinks({ path: 'Plan.md' })).toEqual({
+      path: 'Plan.md',
+      backlinks: [{ path: 'Recipes.md' }],
+    })
+
+    landing(() => (indexed.nodes = [{ path: 'Lonely.md', name: 'Lonely', degree: 0 }]))
+    expect(await listOrphans({})).toEqual({ orphans: [{ path: 'Lonely.md', name: 'Lonely' }] })
+
+    scanning = Promise.resolve()
+  })
+})
+
+describe('a command on the note in front', () => {
+  test('is refused while that note is kept from agents', async () => {
+    const { protection } = await import('../../protect/src/api')
+    const { workspace } = await import('../../workspace/src/api')
+    const front = workspace as { active: { path: string } | null }
+    ran.length = 0
+    front.active = { path: '/Work/Secret/Diary.md' }
+    protection.set('/Work', '/Work/Secret', 'password')
+    try {
+      await expect(runCommand({ id: 'reformat' }, 'here')).rejects.toThrow(/is protected/)
+      expect(await runCommand({ id: 'files' }, 'here')).toEqual({ id: 'files', label: 'File list' })
+      expect(ran).toEqual(['files'])
+      front.active = { path: '/Work/Plan.md' }
+      await expect(runCommand({ id: 'undo-file' }, 'here')).rejects.toThrow(/protected from agents/)
+      expect(await runCommand({ id: 'reformat' }, 'here')).toEqual({
+        id: 'reformat',
+        label: 'Tidy up',
+      })
+    } finally {
+      protection.set('/Work', '/Work/Secret', null)
+      front.active = null
+    }
+  })
+})
+
+describe('undoing the last file action from the command line', () => {
+  test('is refused while another space keeps notes from agents', async () => {
+    const { protection } = await import('../../protect/src/api')
+    protection.set('/Home', '/Home/Private', 'password')
+    try {
+      await expect(runCommand({ id: 'undo-file' }, 'here')).rejects.toThrow(/protected from agents/)
+    } finally {
+      protection.set('/Home', '/Home/Private', null)
+    }
   })
 })
 

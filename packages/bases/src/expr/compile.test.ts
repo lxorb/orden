@@ -197,7 +197,7 @@ describe('properties', () => {
     ['file.hasLink("Other")', false],
     ['file.hasProperty("price")', true],
     ['file.hasProperty("nope")', false],
-    ['file.asLink()', { kind: 'link', target: 'Books/Dune.md' }],
+    ['file.asLink()', { kind: 'link', target: 'Books/Dune.md', exact: true }],
     ['file.properties.status', 'reading'],
     ['file.links[0]', { kind: 'link', target: 'Textbook' }],
     ['categories.contains(link("Books"))', true],

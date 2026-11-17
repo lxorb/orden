@@ -56,11 +56,10 @@ export async function obsidianCarries(sources: readonly Source[]): Promise<Carri
   let said: unknown = {}
 
   if (app) {
-    try {
-      said = JSON.parse(await app.text())
-    } catch {
-      // A settings file Obsidian could not read either is a vault on its defaults.
-    }
+    said = await app
+      .text()
+      .then((words) => JSON.parse(words) as unknown)
+      .catch(() => ({}))
   }
 
   return fromAppJson(said)

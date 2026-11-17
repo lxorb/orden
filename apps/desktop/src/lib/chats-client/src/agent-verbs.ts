@@ -13,8 +13,8 @@ import { threadSpaceOf } from '../../automation/src/api'
 import type { ChatEntry, Chats } from './shapes'
 import { chatsOn } from '../../gates/src/api'
 import { rootedAt } from '../../platform/src/api'
-import { workspace } from '../../workspace/src/api'
 import { protection } from '../../protect/src/api'
+import { workspace } from '../../workspace/src/api'
 import {
   asked,
   type Call,

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { insideOnly, namesByShortName } from './inside'
 
 describe('a path a link may be joined to a space by', () => {
@@ -32,6 +32,19 @@ describe('a path a link may be joined to a space by', () => {
     ]) {
       expect(insideOnly(said), said).toBeNull()
     }
+  })
+
+  test('on Windows, holds no name Windows would open as another, without its last dots or spaces', () => {
+    vi.stubGlobal('window', { __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'windows' } })
+    try {
+      for (const said of ['Diary./secret.md', 'Plans.md.', 'Diary /secret.md', 'Plans.md ..']) {
+        expect(insideOnly(said), said).toBeNull()
+      }
+      expect(insideOnly('Mr. Smith/Plan.md')).toBe('Mr. Smith/Plan.md')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(insideOnly('Diary./secret.md')).toBe('Diary./secret.md')
   })
 
   test('holds nothing a file name cannot hold', () => {

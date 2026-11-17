@@ -105,6 +105,8 @@ export {
 export { programMayReach } from './programs'
 export {
   PROTECTED,
+  KEPT_FROM_TOKENS,
+  programKeptFrom,
   programShut,
   protectedRoutes,
   protectLikewise,

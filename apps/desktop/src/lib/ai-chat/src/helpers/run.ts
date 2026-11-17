@@ -24,6 +24,8 @@ export interface Reach {
   always?: Readonly<Record<string, readonly string[]>>
 }
 
+const RAN_OUT = 'the time to answer ran out before the helper was started; nothing was started'
+
 export interface Asker {
   thread: string | null
   mode: Mode
@@ -135,7 +137,7 @@ export type Answered =
       answer?: string
       error?: string
     }
-  | { refused: string }
+  | { refused: string; late?: true }
 
 function said(helper: Helper): Answered {
   return {
@@ -166,21 +168,37 @@ const EFFORTS: readonly Effort[] = [
   'max',
 ]
 
-async function offered(): Promise<Offered[]> {
+class RanOut extends Error {}
+
+function inTime(deadline: AbortSignal | undefined): void {
+  if (deadline?.aborted) throw new RanOut(RAN_OUT)
+}
+
+async function offered(deadline: AbortSignal | undefined): Promise<Offered[]> {
+  inTime(deadline)
   const { chat } = await import('../store/chat.svelte')
   const usableOnes = ai.providers.filter(usable)
-  return await Promise.all(
+  const listed = await Promise.all(
     usableOnes.map(async (provider) => {
       let timer: ReturnType<typeof setTimeout> | undefined
-      const late = new Promise<[]>((done) => (timer = setTimeout(() => done([]), LISTING)))
+      const late = new Promise<[]>((done) => {
+        timer = setTimeout(() => done([]), LISTING)
+        deadline?.addEventListener('abort', () => done([]), { once: true })
+      })
       const models = await Promise.race([chat.loadModels(provider), late])
       clearTimeout(timer)
       return { provider, models }
     }),
   )
+  inTime(deadline)
+  return listed
 }
 
-export async function runAgent(args: Record<string, unknown>, asker: Asker): Promise<Answered> {
+export async function runAgent(
+  args: Record<string, unknown>,
+  asker: Asker,
+  deadline?: AbortSignal,
+): Promise<Answered> {
   const prompt = word(args, 'prompt')
   if (!prompt) return { refused: 'say prompt: the whole task, as the helper should read it' }
   const { chat } = await import('../store/chat.svelte')
@@ -200,33 +218,42 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker): Pro
     return { refused: 'this agent may not run helpers: its grant does not hold agents' }
   }
   const effort = first(word(args, 'effort'), profile?.effort)
-  const started = await helpers.start(
-    {
-      parent,
-      space,
-      prompt,
-      description: word(args, 'description'),
-      model: first(word(args, 'model'), profile?.model),
-      ...(EFFORTS.includes(effort as Effort) ? { effort: effort as Effort } : {}),
-      mode: parent?.mode ?? asker.mode,
-      ...(instructions ? { instructions } : {}),
-    },
-    {
-      offered: async () => offeredWithin(await offered(), reach, parent?.provider ?? null, all),
-      run: (thread: Thread, text: string, signal: AbortSignal) => {
-        chat.adopt(thread)
-        return chat.turn(thread, text, { signal })
+  const started = await helpers
+    .start(
+      {
+        parent,
+        space,
+        prompt,
+        description: word(args, 'description'),
+        model: first(word(args, 'model'), profile?.model),
+        ...(EFFORTS.includes(effort as Effort) ? { effort: effort as Effort } : {}),
+        mode: parent?.mode ?? asker.mode,
+        ...(instructions ? { instructions } : {}),
       },
-    },
-  )
+      {
+        offered: async () =>
+          offeredWithin(await offered(deadline), reach, parent?.provider ?? null, all),
+        run: (thread: Thread, text: string, signal: AbortSignal) => {
+          chat.adopt(thread)
+          return chat.turn(thread, text, { signal })
+        },
+      },
+    )
+    .catch((error: unknown) => {
+      if (error instanceof RanOut) return { refused: error.message, late: true as const }
+      throw error
+    })
   if ('refused' in started) return started
-  const now = await helpers.wait(started.id, WAIT)
+  const now = await helpers.wait(started.id, WAIT, deadline)
   return said(now ?? started)
 }
 
-export async function agentResult(args: Record<string, unknown>): Promise<Answered> {
+export async function agentResult(
+  args: Record<string, unknown>,
+  deadline?: AbortSignal,
+): Promise<Answered> {
   const id = word(args, 'agent')
-  const now = id ? await helpers.wait(id, WAIT) : null
+  const now = id ? await helpers.wait(id, WAIT, deadline) : null
   return now ? said(now) : { refused: `there is no helper called "${id}"` }
 }
 

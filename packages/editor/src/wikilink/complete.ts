@@ -1,5 +1,5 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
-import type { EditorState } from '@codemirror/state'
+import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
@@ -8,6 +8,7 @@ import {
   type LinkWrite,
   linkWriter,
   type NoteIndex,
+  nameFor,
   noteIndex,
   type NoteRef,
   resolveNote,
@@ -32,14 +33,49 @@ function typing(context: CompletionContext) {
   return context.matchBefore(/\[\[[^[\]\n]*/)
 }
 
+const WRITTEN_REST = /^([^[\]\n]*?)\]\]/
+
+interface Rest {
+  end: number
+  fragment: string | null
+  shown: string | null
+}
+
+function restOf(view: EditorView, to: number): Rest | null {
+  const line = view.state.doc.lineAt(to)
+  const written = WRITTEN_REST.exec(view.state.doc.sliceString(to, line.to))
+  if (!written) return null
+
+  const words = written[1] ?? ''
+  const bar = /\\?\|/.exec(words)
+  const before = bar ? words.slice(0, bar.index) : words
+  const hash = before.indexOf('#')
+  return {
+    end: to + written[0].length,
+    fragment: hash === -1 ? null : before.slice(hash + 1),
+    shown: bar ? words.slice(bar.index + bar[0].length) : null,
+  }
+}
+
+function kept(target: LinkWrite, rest: Rest | null): LinkWrite {
+  if (!rest) return target
+  const fragment = target.fragment ?? rest.fragment
+  const shown = target.shown ?? rest.shown
+  return {
+    ...target,
+    ...(fragment ? { fragment } : {}),
+    ...(shown ? { shown } : {}),
+  }
+}
+
 function insert(target: LinkWrite) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
-    const closed = view.state.doc.sliceString(to, to + 2) === ']]'
-    const text = view.state.facet(linkWriter)(target)
+    const rest = restOf(view, to)
+    const text = view.state.facet(linkWriter)(kept(target, rest))
 
     view.dispatch({
-      changes: { from: start, to: closed ? to + 2 : to, insert: text },
+      changes: { from: start, to: rest?.end ?? to, insert: text },
       selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
@@ -48,11 +84,6 @@ function insert(target: LinkWrite) {
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
   return { name: nameFor(index, note), path: note.path, from: index.path }
-}
-
-function nameFor(index: NoteIndex, note: NoteRef): string {
-  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
-  return (same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {
@@ -84,7 +115,11 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
     rows.push({
       label: alias,
       detail: note.name,
-      apply: insert({ ...about(index, note), name: alias }),
+      apply: insert(
+        resolveNote(index, alias)?.path === note.path
+          ? { ...about(index, note), name: alias, file: nameFor(index, note) }
+          : { ...about(index, note), shown: alias },
+      ),
       type: 'text',
     })
   }
@@ -150,33 +185,65 @@ async function blockOptions(
     }))
 }
 
+interface Held {
+  key: object
+  from: number
+  to: number
+}
+
+const holdTyped = StateEffect.define<Held>()
+
+const dropTyped = StateEffect.define<object>()
+
+const heldTyped = StateField.define<readonly Held[]>({
+  create: () => [],
+  update(held, transaction) {
+    let kept: readonly Held[] = held
+    if (transaction.docChanged) {
+      kept = held.flatMap((one) => {
+        const from = transaction.changes.mapPos(one.from, 1, MapMode.TrackDel)
+        const to = transaction.changes.mapPos(one.to, -1, MapMode.TrackDel)
+        return from === null || to === null ? [] : [{ ...one, from, to }]
+      })
+    }
+    for (const effect of transaction.effects) {
+      if (effect.is(holdTyped)) kept = [...kept, effect.value]
+      else if (effect.is(dropTyped)) kept = kept.filter((one) => one.key !== effect.value)
+    }
+    return kept
+  },
+})
+
+function held(view: EditorView, from: number, to: number): object {
+  if (view.state.field(heldTyped, false) === undefined) {
+    view.dispatch({ effects: StateEffect.appendConfig.of(heldTyped) })
+  }
+  const key = {}
+  view.dispatch({ effects: holdTyped.of({ key, from, to }) })
+  return key
+}
+
+function released(view: EditorView, key: object): Held | null {
+  const found = view.state.field(heldTyped, false)?.find((one) => one.key === key) ?? null
+  view.dispatch({ effects: dropTyped.of(key) })
+  return found
+}
+
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
-    const asked = view.state
-    const typed = asked.sliceDoc(from, to)
-    void asked
+    const start = opened(view, from)
+    const typed = view.state.doc.sliceString(start, to)
+    const key = held(view, start, to)
+    void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        const shift = shiftSince(asked, view.state, from, to, typed)
-        if (id && shift !== null)
-          insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
+        const now = released(view, key)
+        if (!id || !now || view.state.doc.sliceString(now.from, now.to) !== typed) return
+        const shift = now.from - start
+        insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
       })
       .catch(() => undefined)
   }
-}
-
-function shiftSince(
-  asked: EditorState,
-  now: EditorState,
-  from: number,
-  to: number,
-  typed: string,
-): number | null {
-  const shifts = [0, now.doc.length - asked.doc.length]
-  return (
-    shifts.find((shift) => from + shift >= 0 && now.sliceDoc(from + shift, to + shift) === typed) ??
-    null
-  )
 }
 
 function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
@@ -298,7 +365,12 @@ export function wikilinkCompletions(
 
   const after = inner.slice(hash + 1)
   const from = typed.from + 2 + hash + 1
-  const target: LinkWrite = { name: named, path: note.path, from: index.path }
+  const target: LinkWrite = {
+    name: named,
+    path: note.path,
+    from: index.path,
+    file: nameFor(index, note),
+  }
 
   if (!after.startsWith('^')) {
     const options = headingOptions(target, note, after)

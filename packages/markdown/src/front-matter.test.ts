@@ -187,6 +187,11 @@ describe('reading a key as a list', () => {
     expect(frontMatterList(front('aliases:\n- One\n- Two'), 'aliases')).toEqual(['One', 'Two'])
   })
 
+  test('reads the lines under the key of a note written with carriage returns', () => {
+    const note = '---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n'
+    expect(frontMatterList(note, 'aliases')).toEqual(['Foo', 'Bar'])
+  })
+
   test('reads a single value as a list of one', () => {
     expect(frontMatterList(front('aliases: One'), 'aliases')).toEqual(['One'])
   })
@@ -194,6 +199,13 @@ describe('reading a key as a list', () => {
   test('takes the quotes off, whichever they are', () => {
     expect(frontMatterList(front('aliases: ["One", \'Two\']'), 'aliases')).toEqual(['One', 'Two'])
     expect(frontMatterList(front('aliases:\n  - "One two"'), 'aliases')).toEqual(['One two'])
+  })
+
+  test('leaves a comment after an item out of it', () => {
+    expect(frontMatterList(front('aliases:\n  - Foo # old name'), 'aliases')).toEqual(['Foo'])
+    expect(frontMatterList(front('aliases:\n  - "Foo # bar" # old'), 'aliases')).toEqual([
+      'Foo # bar',
+    ])
   })
 
   test('stops at the next key of the note’s own', () => {

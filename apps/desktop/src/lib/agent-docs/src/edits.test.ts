@@ -41,6 +41,46 @@ describe('an edit', () => {
   })
 })
 
+describe('a block right below the front matter or a fence', () => {
+  test('is only its own paragraph', () => {
+    const text = '---\ntags: [keep]\nstatus: open\n---\nThe idea here ^idea\n\nAfter\n'
+    expect(edited(text, [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
+      '---\ntags: [keep]\nstatus: open\n---\nNew words ^idea\n\nAfter\n',
+    )
+    expect(edited(text, [{ at: { block: 'idea' }, delete: true }])).toContain(
+      '---\ntags: [keep]\nstatus: open\n---\n',
+    )
+  })
+
+  test('named by an id in its words leaves a fence right above or below it', () => {
+    expect(
+      edited('```\ncode\n```\nThe idea here ^idea\n', [
+        { at: { block: 'idea' }, replace: 'New words' },
+      ]),
+    ).toBe('```\ncode\n```\nNew words ^idea\n')
+    expect(
+      edited('The idea here ^idea\n```\ncode\n```\n', [{ at: { block: 'idea' }, delete: true }]),
+    ).toBe('```\ncode\n```\n')
+  })
+
+  test('named by an id on its own line under a fence is the fence, not the words above it', () => {
+    expect(
+      edited('Intro:\n```\ncode\n```\n\n^snip\n', [{ at: { block: 'snip' }, delete: true }]),
+    ).toBe('Intro:\n')
+  })
+
+  test('named by an id on its own line is the block above it, a table or a fence', () => {
+    const table = '| a | b |\n| - | - |\n| 1 | 2 |\n\n^table\n\nAfter\n'
+    expect(edited(table, [{ at: { block: 'table' }, delete: true }])).toBe('After\n')
+    expect(edited(table, [{ at: { block: 'table' }, replace: '| c |\n| - |\n| 3 |' }])).toBe(
+      '| c |\n| - |\n| 3 |\n\n^table\n\nAfter\n',
+    )
+    expect(edited('```\ncode\n```\n^snip\n', [{ at: { block: 'snip' }, replace: 'new' }])).toBe(
+      'new\n^snip\n',
+    )
+  })
+})
+
 describe('several edits in one call', () => {
   const TEXT = '# Plan\n\n- [ ] one\n- [ ] two\n\n# Log\nnothing yet\n'
 

@@ -177,6 +177,10 @@ function namedOutside(call: Call): boolean {
   return tabsInReach(call).some((one) => TAB_KINDS[one.kind].outsideTitle)
 }
 
+function tabsAnswer(call: Call): AgentAnswer {
+  return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
+}
+
 function tabNamed(call: Call): Tab {
   return tabWithId(call, need(call, 'tab'))
 }
@@ -385,7 +389,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
         if (!list) throw new Refused('unsupported_on_this_engine', `there are no ${kind} tabs here`)
         return list(call.args, call.caller)
       }
-      return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
+      return tabsAnswer(call)
 
     case 'open':
       return openSomething(call)
@@ -409,7 +413,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
     case 'split': {
       view.splitBeside(call, tabNamed(call))
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     case 'focus': {
@@ -429,13 +433,13 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       }
       const at = 'at' in call.args ? Number(call.args.at) : null
       view.moveTabTo(call, tab, pane, at !== null && Number.isInteger(at) && at >= 0 ? at : null)
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     case 'arrange': {
       const named = maybe(call, 'tab') === null ? null : tabNamed(call)
       view.arrangePanes(call, need(call, 'layout'), named)
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     default:

@@ -1,6 +1,14 @@
 import { oneEdit, type TextEdit } from './edits'
 import { frontMatterLines, isKeyLine, valueClosesAt } from './front-matter-lines'
-import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
+import {
+  flowItem,
+  flowItems,
+  listItem,
+  scalar,
+  uncommented,
+  unquoted,
+  writtenListItem,
+} from './yaml'
 
 export { oneLine } from './yaml'
 export { valueClosesAt }
@@ -109,9 +117,9 @@ export function frontMatterList(source: string, key: string): string[] {
     const text = source.slice(at, stop)
 
     if (text.trim()) {
-      const item = listItem(text)
+      const item = writtenListItem(text)
       if (item === null) break
-      out.push(item)
+      out.push(unquoted(uncommented(item)))
     }
 
     if (end === -1) break

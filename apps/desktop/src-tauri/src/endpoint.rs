@@ -20,6 +20,10 @@ const MOST_BYTES: usize = 8 * 1024 * 1024;
 
 const PATIENCE: Duration = Duration::from_secs(30);
 
+const DELIVERY: Duration = Duration::from_secs(5);
+
+const TERMINAL_STARTING: Duration = Duration::from_secs(90);
+
 const SLOWEST: Duration = Duration::from_secs(10);
 
 const SECRET_BYTES: usize = 32;
@@ -359,9 +363,10 @@ pub(crate) fn dispatch(
     };
 
     let args = asked.get("args").cloned().unwrap_or_default();
+    let session = crate::agents::session_of(&asked);
     if let Some(read) = crate::agents::verbs::Verb::read(&verb, args.clone()) {
         let answered = match read {
-            Ok(one) => crate::agents::answer(app, caller, one, args),
+            Ok(one) => crate::agents::answer(app, caller, &session, one, args),
             Err(why) => {
                 crate::agents::verbs::Answer::error(crate::agents::verbs::Code::BadArguments, why)
             }
@@ -396,7 +401,16 @@ pub(crate) fn dispatch(
             ),
         };
         let tab = args.get("tab").and_then(serde_json::Value::as_str);
-        crate::agents::logged(app, caller, &verb, tab, args.clone(), &answered, started);
+        crate::agents::logged(
+            app,
+            caller,
+            &session,
+            &verb,
+            tab,
+            args.clone(),
+            &answered,
+            started,
+        );
     }
     match outcome {
         Ok(answered) => (200, answered),
@@ -436,7 +450,50 @@ fn answering_order(app: &AppHandle) -> Vec<String> {
 }
 
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
-    ask_the_window_within(app, asked, PATIENCE)
+    let verb = asked.get("verb").and_then(serde_json::Value::as_str);
+    let args = asked.get("args").cloned().unwrap_or_default();
+    let patience = window_patience(verb.unwrap_or_default(), &args);
+    ask_the_window_within(app, asked, patience)
+}
+
+pub(crate) fn window_patience(verb: &str, args: &serde_json::Value) -> Duration {
+    PATIENCE + declared_wait(verb, args)
+}
+
+pub(crate) fn declared_wait(verb: &str, args: &serde_json::Value) -> Duration {
+    let waited = |name: &str, fallback: u64, most: u64| {
+        let millis = match args.get(name) {
+            None | Some(serde_json::Value::Null) => fallback,
+            Some(serde_json::Value::Number(one)) => {
+                one.as_u64().map_or(most, |one| one.clamp(1, most))
+            }
+            Some(_) => most,
+        };
+        Duration::from_millis(millis)
+    };
+    match verb {
+        "ask_reader" => waited("wait_ms", 60_000, 120_000),
+        "read_terminal" => TERMINAL_STARTING,
+        "run_terminal" => TERMINAL_STARTING + waited("timeout_ms", 60_000, 600_000),
+        "type_terminal" => TERMINAL_STARTING + waited("wait_ms", 2_000, 30_000),
+        _ => Duration::ZERO,
+    }
+}
+
+fn listening_patience(left: Duration) -> Duration {
+    left.min(PATIENCE)
+}
+
+fn answer_within(left: Duration) -> Duration {
+    left.saturating_sub(DELIVERY.min(left / 4))
+}
+
+fn stamped(asked: &mut serde_json::Value, deadline: Instant) {
+    let left = deadline.saturating_duration_since(Instant::now());
+    let within = u64::try_from(answer_within(left).as_millis()).unwrap_or(u64::MAX);
+    if let Some(body) = asked.as_object_mut() {
+        body.insert("within_ms".to_owned(), serde_json::Value::from(within));
+    }
 }
 
 fn ask_the_window_within(
@@ -458,7 +515,9 @@ fn ask_the_window_within(
     let (send, answered) = sync_channel::<String>(1);
     let waiting = app.state::<Waiting>();
     let deadline = Instant::now() + patience;
-    let Some(window) = waiting.listener_within(patience, || answering_order(app)) else {
+    let Some(window) =
+        waiting.listener_within(listening_patience(patience), || answering_order(app))
+    else {
         return Err("the window is not listening yet".to_owned());
     };
 
@@ -488,13 +547,14 @@ fn asked_of_one(
     waiting: &Waiting,
     id: u64,
     first: String,
-    asked: &serde_json::Value,
+    asked: &mut serde_json::Value,
     deadline: Instant,
 ) -> Result<String, String> {
     let mut window = first;
     loop {
         waiting.ask_of(id, &window);
-        app.emit_to(window.as_str(), ASKED, asked)
+        stamped(asked, deadline);
+        app.emit_to(window.as_str(), ASKED, &*asked)
             .map_err(|error| format!("the window could not be asked: {error}"))?;
         let left = deadline.saturating_duration_since(Instant::now());
         if waiting.taken_within(id, left.min(TAKES)) {
@@ -503,7 +563,7 @@ fn asked_of_one(
         waiting.forget(&window);
         let left = deadline.saturating_duration_since(Instant::now());
         window = waiting
-            .listener_within(left, || answering_order(app))
+            .listener_within(listening_patience(left), || answering_order(app))
             .ok_or_else(|| "the window did not answer".to_owned())?;
     }
 }
@@ -701,9 +761,9 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        as_hex, awaited, find, is_json, is_local, parse_head, read_request, reason, refused,
-        same_secret, Admitted, Kept, Request, Waiting, MOST_AT_ONCE, MOST_BYTES, SECRET_BYTES,
-        SLOWEST,
+        as_hex, awaited, find, is_json, is_local, listening_patience, parse_head, read_request,
+        reason, refused, same_secret, stamped, window_patience, Admitted, Kept, Request, Waiting,
+        DELIVERY, MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST, TERMINAL_STARTING,
     };
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
@@ -970,6 +1030,100 @@ mod tests {
         assert_eq!(waiting.page_of("main"), page, "a claim is no new page");
         waiting.page_started("main");
         assert_ne!(waiting.page_of("main"), page);
+    }
+
+    #[test]
+    fn a_verb_that_waits_is_waited_for_past_the_longest_wait_it_takes() {
+        let patience = |verb: &str, args: serde_json::Value| window_patience(verb, &args);
+        assert_eq!(patience("read_note", serde_json::json!({})), PATIENCE);
+        assert!(patience("ask_reader", serde_json::json!({})) > Duration::from_secs(60));
+        for asked in [120_000, 999_999] {
+            let args = serde_json::json!({ "wait_ms": asked });
+            assert!(patience("ask_reader", args) > Duration::from_secs(120));
+        }
+        let args = serde_json::json!({ "timeout_ms": 600_000, "tab": "t1" });
+        assert!(patience("run_terminal", args) > Duration::from_secs(600 + 90));
+        let args = serde_json::json!({ "timeout_ms": "600000" });
+        assert!(patience("run_terminal", args) > Duration::from_secs(600));
+        let args = serde_json::json!({ "wait_ms": 30_000 });
+        assert!(patience("type_terminal", args) > Duration::from_secs(30 + 90));
+        let started_and_connected = Duration::from_secs(5 + 60);
+        assert!(
+            patience("read_terminal", serde_json::json!({})) > PATIENCE + started_and_connected
+        );
+    }
+
+    #[test]
+    fn a_window_that_is_not_listening_is_not_waited_for_as_long_as_its_answer() {
+        let args = serde_json::json!({ "timeout_ms": 600_000 });
+        let answer = window_patience("run_terminal", &args);
+        assert!(answer > PATIENCE + TERMINAL_STARTING);
+        assert_eq!(listening_patience(answer), PATIENCE);
+        let left = Duration::from_secs(3);
+        assert_eq!(listening_patience(left), left);
+    }
+
+    #[test]
+    fn an_edit_waiting_on_a_typing_reader_answers_before_the_window_is_given_up_on() {
+        let edit = include_str!("../../src/lib/agent-docs/src/edit.ts");
+        assert!(edit.contains("export const PATIENCE = 20_000\n"));
+        let desk = include_str!("../../src/lib/agent-docs/src/desk.ts");
+        assert!(desk.contains("export const TYPING = 2000\n"));
+        let tried = include_str!("../../src/lib/agent-docs/src/edit.test.ts");
+        assert!(tried.contains("const ENDPOINT_PATIENCE = 30_000\nconst DELIVERY = 5000\n"));
+        assert_eq!(PATIENCE, Duration::from_secs(30));
+        assert_eq!(DELIVERY, Duration::from_secs(5));
+        let waits_out_the_reader = Duration::from_secs(20 + 2);
+        assert!(waits_out_the_reader + DELIVERY < PATIENCE);
+    }
+
+    #[test]
+    fn the_window_is_told_how_long_it_has_to_answer_with_time_left_to_carry_it_back() {
+        let millis = |one: Duration| u64::try_from(one.as_millis()).expect("short");
+        let mut asked = serde_json::json!({ "verb": "append_note", "within_ms": 999_999_999 });
+        stamped(&mut asked, Instant::now() + PATIENCE);
+        let within = asked["within_ms"].as_u64().expect("told");
+        let answered_by = millis(PATIENCE) - millis(DELIVERY);
+        assert!(within <= answered_by);
+        assert!(within > answered_by - 1000);
+
+        let mut quick = serde_json::json!({ "verb": "verbs" });
+        stamped(&mut quick, Instant::now() + Duration::from_secs(2));
+        let within = quick["within_ms"].as_u64().expect("told");
+        assert!(within > 1000 && within <= 1500, "{within}");
+
+        let mut late = serde_json::json!({ "verb": "verbs" });
+        stamped(&mut late, Instant::now());
+        assert_eq!(late["within_ms"].as_u64(), Some(0));
+    }
+
+    #[test]
+    fn the_window_stops_its_work_before_the_answer_is_too_late_to_carry_back() {
+        let start = include_str!("../../src/lib/automation/src/start.ts");
+        assert!(start.contains("dueWithin(asked.within_ms)"));
+        let due = include_str!("../../src/lib/automation/src/due.ts");
+        assert!(due.contains("export const LAST_WORD = 1000\n"));
+        let last_word = Duration::from_secs(1);
+        assert!(last_word < DELIVERY / 2);
+        assert_eq!(DELIVERY, Duration::from_secs(5));
+    }
+
+    #[test]
+    fn the_waits_are_the_ones_the_window_verbs_take() {
+        let ask = include_str!("../../src/lib/agent-host/src/ask.ts");
+        assert!(ask.contains("const WAIT = 60_000\nconst MOST_WAIT = 120_000\n"));
+        let run = include_str!("../../src/lib/terminal/src/agent/run.ts");
+        assert!(run.contains("const WAIT = 60_000\nconst MOST_WAIT = 600_000\n"));
+        let tab = include_str!("../../src/lib/terminal/src/agent/tab.ts");
+        assert!(tab.contains("const WAIT = 2000\nconst MOST_WAIT = 30_000\n"));
+        assert!(tab.contains("const RUN_WAIT = 60_000\nconst MOST_RUN_WAIT = 120_000\n"));
+        for starting in [
+            "const STARTING = 5000",
+            "const PROMPT_WAIT = 20_000",
+            "const CONNECTING = 60_000",
+        ] {
+            assert!(tab.contains(starting), "{starting}");
+        }
     }
 
     #[test]

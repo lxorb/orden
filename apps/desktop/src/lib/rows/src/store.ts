@@ -12,6 +12,9 @@ import {
 import { scanRows } from '@orden/bases/scan'
 import { type FileOp } from '../../file-ops/src/api'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
+import { noteRowsOf, readOf } from '@orden/scan/rows'
+
+export { noteRowsOf }
 
 export interface SpaceName {
   root: string
@@ -429,22 +432,6 @@ export class RowsStore {
       if (samePath(now.root, held.root)) return now.notes()
     }
     return (await this.host.scan(held.root))?.notes ?? []
-  }
-}
-
-export function noteRowsOf(space: string, relative: string, content: string): Row[] {
-  const stamp = { size: bytesOf(content), mtime: 0, ctime: 0 }
-  return rowsOf(space, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
-}
-
-function readOf(note: ScannedNote): NoteRead {
-  return {
-    path: note.path,
-    front: note.front ?? null,
-    tasks: note.tasks ?? [],
-    stamp: note.stamp ?? null,
-    tags: note.tags,
-    links: note.links,
   }
 }
 

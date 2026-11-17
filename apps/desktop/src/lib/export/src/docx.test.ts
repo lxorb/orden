@@ -439,6 +439,15 @@ describe('pictures', () => {
 
     expect(xml).toContain('[Gone]')
   })
+
+  test('a linked picture is a link', async () => {
+    const linked = documentOf('[![CI](badge.png)](https://ci.org)\n', 'N.md')
+    const xml = await JSZip.loadAsync(await toDocx(linked, [], PAPER)).then((one) =>
+      one.file('word/document.xml')!.async('string'),
+    )
+
+    expect(xml).toMatch(/<w:hyperlink[^>]*>(?:(?!<\/w:hyperlink>).)*\[CI\]/s)
+  })
 })
 
 describe('a note with nothing much in it', () => {

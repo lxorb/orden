@@ -108,6 +108,7 @@ export { hrefOf, type LinkPress, linkOpener, modifier as linkModifier } from './
 export { type TagOpener } from './tag-press'
 export {
   type FileDrawing,
+  linkNameAt,
   type LinkWrite,
   type NoteIndex,
   noteIndexExtension,

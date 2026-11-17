@@ -2,7 +2,7 @@ import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { folderPlan, isJunk } from './folder'
 import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
-import { hasNotionId, Names, safeName, safeParts, withoutNotionId } from './names'
+import { hasNotionId, Names, pageLink, safeName, safeParts, withoutNotionId } from './names'
 import {
   baseBlock,
   type Database,
@@ -45,6 +45,18 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
     if (kept.has(source.path)) databases.set(folderOf(source.path), databaseOf(await source.text()))
   }
   const placed = new Map<string, string>()
+  const owners = new Map<string, string>()
+  for (const csv of kept) owners.set(folderOf(csv), csv)
+  for (const one of sources) {
+    if (MARKDOWN.test(one.path) && !isJunk(one.path))
+      owners.set(one.path.replace(MARKDOWN, ''), one.path)
+  }
+  const placeOf = notionPaths(names, owners, (path, folder) => {
+    if (!isTable(path))
+      return inside(folder(parentOf(path)), safeParts(nameOf(path), withoutNotionId))
+    const own = folderOf(path)
+    return `${inside(folder(parentOf(own)), safeName(withoutNotionId(nameOf(own))))}.md`
+  })
 
   const plan = await folderPlan(sources, {
     format: 'notion',
@@ -57,9 +69,7 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
           return { to: null }
         }
 
-        const path = names.free(
-          `${safeParts(`${folderOf(source.path)}/-`, withoutNotionId).slice(0, -2)}.md`,
-        )
+        const path = placeOf(source.path)
         const database = databases.get(folderOf(source.path))
         if (database) placed.set(folderOf(source.path), path)
         return {
@@ -73,12 +83,11 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
         }
       }
 
-      if (!MARKDOWN.test(source.path))
-        return { to: names.free(safeParts(source.path, withoutNotionId)) }
+      if (!MARKDOWN.test(source.path)) return { to: placeOf(source.path) }
 
       const database = databases.get(parentOf(source.path))
       return {
-        to: names.free(safeParts(source.path, withoutNotionId)),
+        to: placeOf(source.path),
         read: (text) => {
           const said = notionPage(text, database?.kinds, database && keysOf(database))
           return {
@@ -150,6 +159,39 @@ function parentOf(path: string): string {
   return at === -1 ? '' : path.slice(0, at)
 }
 
+function nameOf(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1)
+}
+
+function inside(folder: string, name: string): string {
+  return folder ? `${folder}/${name}` : name
+}
+
+function notionPaths(
+  names: Names,
+  owners: ReadonlyMap<string, string>,
+  wanted: (path: string, folder: (path: string) => string) => string,
+): (path: string) => string {
+  const placed = new Map<string, string>()
+
+  const folder = (path: string): string => {
+    if (!path) return ''
+    const owner = owners.get(path)
+    if (owner !== undefined) return place(owner).replace(MARKDOWN, '')
+    return inside(folder(parentOf(path)), safeName(withoutNotionId(nameOf(path))))
+  }
+
+  const place = (path: string): string => {
+    const known = placed.get(path)
+    if (known !== undefined) return known
+    const free = names.free(wanted(path, folder))
+    placed.set(path, free)
+    return free
+  }
+
+  return place
+}
+
 const WRAPPER = /^Export-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}(?:-Part-\d+)?\//i
 
 function unwrapped(sources: readonly Source[]): readonly Source[] {
@@ -169,7 +211,7 @@ function isIndex(path: string): boolean {
 
 function viewsFollowed(text: string, from: string, paths: ReadonlySet<string>): string {
   const folder = parentOf(from)
-  return text.replace(/\]\(([^()\s]+)\.csv\)/gi, (whole, target: string) => {
+  return text.replace(/\]\(((?:[^()\s]|\([^()\s]*\))+)\.csv\)/gi, (whole, target: string) => {
     let said: string
     try {
       said = decodeURIComponent(target)
@@ -395,18 +437,24 @@ function metaOf(
 async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
   const names = new Names()
   let pages = 0
+  const owners = new Map<string, string>()
+  for (const one of sources) {
+    if (HTML.test(one.path) && !isJunk(one.path) && !isIndex(one.path))
+      owners.set(one.path.replace(HTML, ''), one.path)
+  }
+  const placeOf = notionPaths(names, owners, (path, folder) =>
+    inside(folder(parentOf(path)), safeParts(nameOf(path), withoutNotionId).replace(HTML, '.md')),
+  )
 
   const plan = await folderPlan(sources, {
     format: 'notion',
     place: (source) => {
       if (isJunk(source.path) || isIndex(source.path)) return { to: null }
-
-      const path = safeParts(source.path, withoutNotionId)
-      if (!HTML.test(path)) return { to: names.free(path) }
+      if (!HTML.test(source.path)) return { to: placeOf(source.path) }
 
       pages += 1
       return {
-        to: names.free(path.replace(HTML, '.md')),
+        to: placeOf(source.path),
         read: (text) => {
           const said = notionHtml(text)
           return {
@@ -519,7 +567,7 @@ function relationIn(cell: string): string[] | null {
     } catch {
       // A stray percent sign is a character of the name.
     }
-    links.push(`[[${safeName(withoutNotionId(name.replace(HTML, '')))}]]`)
+    links.push(pageLink(safeName(withoutNotionId(name.replace(HTML, '')))))
   }
   return links.length ? links : null
 }

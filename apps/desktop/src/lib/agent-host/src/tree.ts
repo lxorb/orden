@@ -25,6 +25,7 @@ import {
   writableAt,
 } from '../../agent-verbs/src/api'
 import { indexOf } from './links'
+import { readable } from './guarded'
 import { inFlight as moving } from '../../file-ops/src/api'
 import { readableAll } from './guarded'
 
@@ -129,6 +130,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   }
 
   const source = onDisk(place, from)
+  readable(source, from)
   writableAt(place, source)
   readableAll(source, from)
 
@@ -156,6 +158,10 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
   )
 }
 
+function everyPathIn(entry: Entry): string[] {
+  return [entry.path, ...entry.children.flatMap(everyPathIn)]
+}
+
 export async function trashFile(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const { relative, entry } = await named(place, need(call, 'path'))
@@ -164,6 +170,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   if (workspace.keepsArchived(path)) {
     throw new Refused('archived', `${relative} is archived, and archived files are kept`)
   }
+  for (const held of everyPathIn(entry)) readable(held, relativeTo(place.space.root, held))
   writableAt(place, path)
   readableAll(path, relative)
 

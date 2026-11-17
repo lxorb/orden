@@ -50,6 +50,10 @@ describe('csvRecords', () => {
     ])
   })
 
+  it('fills a column named like a property every object has', () => {
+    expect(csvRecords('toString,constructor\na,b')).toEqual([{ toString: 'a', constructor: 'b' }])
+  })
+
   it('is empty for an empty file', () => {
     expect(csvRecords('')).toEqual([])
     expect(csvHeader('')).toEqual([])

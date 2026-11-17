@@ -1,11 +1,12 @@
 import { foldName } from '@orden/markdown/links'
 
 import { encodeTarget } from '@orden/markdown/links'
+import { codeAndWords } from '@orden/markdown/tags'
 import { folderOf, relativePath } from '../../platform/src/api'
 
 import { folderPlan, isHidden, isJunk } from './folder'
 import { dayOf, type Meta } from './meta'
-import { Names, safeName } from './names'
+import { Names, pageLink, safeName } from './names'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 
@@ -27,6 +28,8 @@ const PAGE_EMBED = /\{\{embed\s+\[\[([^\]\n]+)\]\]\s*\}\}/gi
 const LABELLED_PAGE = /\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g
 
 const PAGE = /\[\[([^\][\n]+)\]\]/g
+
+const HIGHLIGHT = /\^\^([^^\n]+)\^\^/g
 
 const PICTURE_SIZE = /(!\[[^\]\n]*\]\([^)\n]*\))\{:[^}\n]*\}/g
 
@@ -65,9 +68,10 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
   const names = new Names()
   const root = graphRoot(sources)
   const inside = (path: string) => (path.startsWith(root) ? path.slice(root.length) : path)
+  const graphs = (path: string) => !isJunk(path) && !isHidden(path) && !APP.test(path)
 
   const config = await configOf(sources, root)
-  const blocks = await blocksById(sources)
+  const blocks = await blocksById(sources.filter((source) => graphs(inside(source.path))))
   const days = new Map<string, string>()
   for (const source of sources) {
     const day = journalOf(inside(source.path), config.file)
@@ -81,7 +85,7 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
     format: 'logseq',
     place: (source) => {
       const path = inside(source.path)
-      if (isJunk(path) || isHidden(path) || APP.test(path)) return { to: null }
+      if (!graphs(path)) return { to: null }
 
       const to = placed(path, config.file)
       const free = names.free(to)
@@ -317,7 +321,7 @@ async function blocksById(sources: readonly Source[]): Promise<Map<string, strin
 
 function namesIn(value: string): string[] {
   return value
-    .split(',')
+    .split(/,(?![^[]*\]\])/)
     .map((one) =>
       one
         .trim()
@@ -490,14 +494,20 @@ function logseqText(text: string, graph: Graph, count: () => void): string {
   }
   const page = (name: string) => graph.days.get(name.trim().toLowerCase()) ?? name
 
-  return text
-    .replace(LABELLED_REFERENCE, (whole, words: string, id: string) =>
-      block(whole, id, () => words),
-    )
-    .replace(BLOCK_EMBED, (whole, id: string) => block(whole, id))
-    .replace(REFERENCE, (whole, id: string) => block(whole, id))
-    .replace(PAGE_EMBED, (_whole, name: string) => `![[${page(name)}]]`)
-    .replace(LABELLED_PAGE, (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`)
-    .replace(PAGE, (_whole, name: string) => `[[${page(name)}]]`)
-    .replace(PICTURE_SIZE, '$1')
+  const outsideCode = (plain: string) =>
+    plain
+      .replace(HIGHLIGHT, '==$1==')
+      .replace(LABELLED_REFERENCE, (whole, words: string, id: string) =>
+        block(whole, id, () => words),
+      )
+      .replace(BLOCK_EMBED, (whole, id: string) => block(whole, id))
+      .replace(REFERENCE, (whole, id: string) => block(whole, id))
+      .replace(PAGE_EMBED, (_whole, name: string) => pageLink(page(name), null, true))
+      .replace(LABELLED_PAGE, (_whole, words: string, name: string) => pageLink(page(name), words))
+      .replace(PAGE, (whole, name: string) => (name.includes('|') ? whole : pageLink(page(name))))
+      .replace(PICTURE_SIZE, '$1')
+
+  return codeAndWords(text)
+    .map((one) => (one.code ? one.text : outsideCode(one.text)))
+    .join('')
 }

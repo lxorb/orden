@@ -232,7 +232,7 @@ export class Protection {
     const exact = pathKeyAs(path, false)
     let folded: string | null = null
     return shut.some(({ folds, keys }) => {
-      const at = folds ? (folded ??= exact.toLowerCase()) : exact
+      const at = folds ? (folded ??= pathKeyAs(path, true)) : exact
       return keys.some(({ key, under }) => at === key || at.startsWith(under))
     })
   }
@@ -242,6 +242,14 @@ export class Protection {
       .filter(([key, way]) => unlocks.shut([{ root, key, way }]))
       .map(([key]) => key)
     return shut.includes(SPACE) ? null : shut
+  }
+
+  agentsMayAllOf(root?: string | null): boolean {
+    return (root ? [root] : Object.keys(this.spaces)).every((one) =>
+      Object.entries(this.ways(one)).every(([key, way]) =>
+        unlocks.agentsMay([{ root: one, key, way }]),
+      ),
+    )
   }
 
   agentsMay(path: string | null | undefined): boolean {

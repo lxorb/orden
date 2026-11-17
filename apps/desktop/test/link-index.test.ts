@@ -112,7 +112,7 @@ vi.mock('../src/lib/search/src/api', async (importOriginal) => ({
   },
 }))
 
-const { links, serveLinks } = await import('../src/lib/link-index/src/api')
+const { links, notePicture, serveLinks } = await import('../src/lib/link-index/src/api')
 serveLinks({ search: (await import('../src/lib/search/src/api')).searchSpace })
 const { startup } = await import('../src/lib/launch/src/api')
 
@@ -1367,6 +1367,65 @@ describe('a note moved to another folder', () => {
     ).toBe(0)
     expect(notes['Goal.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
   })
+
+  test('a bare link to it is respelled when a namesake now ranks nearer', async () => {
+    await space({
+      'Plan.md': '# the plan',
+      'Archive/Plan.md': '# old plan',
+      'Home.md': 'see [[Plan]]',
+    })
+    expect(links.outgoing(at('Home.md'))[0]?.to).toBe('Plan.md')
+    notes['Projects/2026/Plan.md'] = notes['Plan.md'] ?? ''
+    delete notes['Plan.md']
+
+    await links.retarget(at('Plan.md'), at('Projects/2026/Plan.md'), ROOT, () => null, {
+      moved: true,
+    })
+    links.notesMoved(at('Plan.md'), at('Projects/2026/Plan.md'))
+
+    expect(notes['Home.md']).toBe('see [[2026/Plan]]')
+    expect(links.outgoing(at('Home.md'))[0]?.to).toBe('Projects/2026/Plan.md')
+  })
+
+  test('a bare link into a moved folder is respelled when a namesake now ranks nearer', async () => {
+    await space({
+      'Proj/Plan.md': '# the plan',
+      'Deep/X/Plan.md': '# other plan',
+      'Home.md': 'see [[Plan]]',
+    })
+    expect(links.outgoing(at('Home.md'))[0]?.to).toBe('Proj/Plan.md')
+    notes['Archive/Old/Proj/Plan.md'] = notes['Proj/Plan.md'] ?? ''
+    delete notes['Proj/Plan.md']
+
+    await links.retarget(at('Proj'), at('Archive/Old/Proj'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('Proj'), at('Archive/Old/Proj'))
+
+    expect(notes['Home.md']).not.toBe('see [[Plan]]')
+    expect(links.outgoing(at('Home.md'))[0]?.to).toBe('Archive/Old/Proj/Plan.md')
+  })
+
+  test('its own bare links are respelled when the folder it lands in holds a namesake', async () => {
+    await space({
+      'Notes/Draft.md': 'see [[Ideas]] and [[Other]]',
+      'Notes/Ideas.md': '# mine',
+      'Archive/Ideas.md': '# old',
+      'Other.md': '# other',
+    })
+    expect(links.outgoing(at('Notes/Draft.md'))[0]?.to).toBe('Notes/Ideas.md')
+    notes['Archive/Draft.md'] = notes['Notes/Draft.md'] ?? ''
+    delete notes['Notes/Draft.md']
+
+    await links.retarget(at('Notes/Draft.md'), at('Archive/Draft.md'), ROOT, () => null, {
+      moved: true,
+    })
+    links.notesMoved(at('Notes/Draft.md'), at('Archive/Draft.md'))
+
+    expect(notes['Archive/Draft.md']).toBe('see [[Notes/Ideas]] and [[Other]]')
+    expect(links.outgoing(at('Archive/Draft.md')).map((one) => one.to)).toEqual([
+      'Notes/Ideas.md',
+      'Other.md',
+    ])
+  })
 })
 
 describe('a folder renamed, in a note that also links into it by other names', () => {
@@ -1607,5 +1666,100 @@ describe('a note that is protected and shut', () => {
     } finally {
       links.locksSeen = () => ''
     }
+  })
+})
+
+describe('a relative link to a note that is not there', () => {
+  test('is no backlink of a namesake elsewhere and is left as written when it is renamed', async () => {
+    await space({
+      'Archive/Plan.md': '# old plan',
+      'Notes/Day/x.md': 'see [p](./Plan.md) and [q](../Plan.md)',
+    })
+    expect(links.backlinks(at('Archive/Plan.md'))).toEqual([])
+    await links.retarget(at('Archive/Plan.md'), at('Archive/Strategy.md'), ROOT)
+    expect(notes['Notes/Day/x.md']).toBe('see [p](./Plan.md) and [q](../Plan.md)')
+  })
+})
+
+describe('a markdown link to a file written from the top of the space or by its name', () => {
+  test('names the file, follows it when it is renamed and shows it as a picture', async () => {
+    await space({ 'Notes/Day/x.md': '[r](attachments/report.pdf) and [s](report.pdf)' }, [
+      'attachments/report.pdf',
+      'attachments/cat.png',
+      'attachments/my cat.png',
+    ])
+    const from = at('Notes/Day/x.md')
+
+    expect(links.targetOf(from, { kind: 'markdown', target: 'attachments/report.pdf' })).toBe(
+      'attachments/report.pdf',
+    )
+    expect(links.targetOf(from, { kind: 'markdown', target: 'report.pdf' })).toBe(
+      'attachments/report.pdf',
+    )
+    expect(links.targetOf(from, { kind: 'markdown', target: '/report.pdf' })).toBeNull()
+    expect(links.targetOf(from, { kind: 'markdown', target: './report.pdf' })).toBeNull()
+    expect(
+      links.targetOf(from, { kind: 'markdown', target: '../attachments/report.pdf' }),
+    ).toBeNull()
+    expect(notePicture('attachments/cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+    expect(notePicture('cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+    expect(notePicture('attachments/my%20cat.png', from, '')).toBe(
+      '/asset/space/attachments/my%20cat.png',
+    )
+
+    await links.retarget(at('attachments/report.pdf'), at('attachments/summary.pdf'), ROOT)
+    expect(notes['Notes/Day/x.md']).toBe(
+      '[r](../../attachments/summary.pdf) and [s](../../attachments/summary.pdf)',
+    )
+  })
+
+  test('a picture named from the top or by name follows its rename', async () => {
+    await space({ 'Notes/Day/x.md': '![](attachments/cat.png) and ![](cat.png)' }, [
+      'attachments/cat.png',
+    ])
+    const from = at('Notes/Day/x.md')
+    expect(notePicture('attachments/cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+    expect(notePicture('cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
+
+    await links.retarget(at('attachments/cat.png'), at('attachments/dog.png'), ROOT)
+    expect(notes['Notes/Day/x.md']).toBe(
+      '![](../../attachments/dog.png) and ![](../../attachments/dog.png)',
+    )
+  })
+})
+
+describe('a file named by a name that more than one folder holds', () => {
+  test('is the one beside the note', async () => {
+    await space({ 'Trips/Paris.md': '![](cover.jpg) [[guide.pdf]]' }, [
+      'Home/cover.jpg',
+      'Home/guide.pdf',
+      'Trips/cover.jpg',
+      'Trips/guide.pdf',
+    ])
+
+    expect(notePicture('cover.jpg', at('Trips/Paris.md'), '')).toBe('/asset/space/Trips/cover.jpg')
+    expect(links.fileFor('cover.jpg', at('Trips/Paris.md'))).toBe(at('Trips/cover.jpg'))
+    expect(links.targetOf(at('Trips/Paris.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe(
+      'Trips/guide.pdf',
+    )
+    expect(links.targetOf(at('Notes/x.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe(
+      'Home/guide.pdf',
+    )
+  })
+})
+
+describe('an alias with a slash in it', () => {
+  test('is reached by a wikilink, so the note it names lists the link as a backlink', async () => {
+    await space({
+      'Continuous integration.md': '---\naliases: [CI/CD]\n---\n# CI\n',
+      'Build.md': 'See [[CI/CD]].\n',
+    })
+
+    expect(links.targetOf(at('Build.md'), { kind: 'wikilink', target: 'CI/CD' })).toBe(
+      'Continuous integration.md',
+    )
+    expect(links.backlinks(at('Continuous integration.md')).map((one) => one.path)).toEqual([
+      'Build.md',
+    ])
   })
 })

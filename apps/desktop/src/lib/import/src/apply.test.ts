@@ -1,3 +1,4 @@
+import { type NoteIndex, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { ImportPlan, Planned } from './plan'
@@ -12,6 +13,8 @@ const said = new Map<string, string>()
 
 const onDisk = new Set<string>()
 
+const listed = new Map<string, string[]>()
+
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'file_stamp') {
@@ -24,7 +27,13 @@ vi.mock('../../platform/src/tauri', () => ({
     if (command === 'read_note' || command === 'read_asset') {
       return Promise.reject(new Error('nothing there'))
     }
-    if (command === 'read_tree') return Promise.resolve({ children: [] })
+    if (command === 'read_tree') {
+      const root = String(args.root)
+      const paths = listed.get(root) ?? []
+      return Promise.resolve({
+        children: paths.map((path) => ({ path: `${root}/${path}`, is_dir: false, children: [] })),
+      })
+    }
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })
@@ -40,6 +49,7 @@ const described: [string, unknown][] = []
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
+    activeSpace: { root: '/Space' },
     files: [],
     undone: { record: (action: unknown) => void recorded.push(action) },
     itemMeta: { set: (path: string, patch: unknown) => void described.push([path, patch]) },
@@ -77,6 +87,7 @@ beforeEach(() => {
   refusing = null
   readOnly.clear()
   onDisk.clear()
+  listed.clear()
   said.clear()
   described.length = 0
 })
@@ -111,6 +122,36 @@ describe('where an import lands', () => {
     const stamped = restamped(planOf([note('A.md', '# A')]), new Set(), '')
 
     expect(stamped.files[0]?.path).toBe('A.md')
+  })
+
+  test('has a wikilink written from the top of the vault name its note from the top of the space', () => {
+    const plan = planOf([
+      note('Projects/Plan.md', '# P'),
+      file('Trips/Map.png'),
+      note(
+        'Home.md',
+        'See [[/Projects/Plan]], [[/Projects/Plan#Goals|goals]] and ![[/Trips/Map.png]].',
+      ),
+    ])
+
+    expect(textAt(restamped(plan, new Set(), 'Inbox').files, 'Inbox/Home.md')).toBe(
+      'See [[/Inbox/Projects/Plan]], [[/Inbox/Projects/Plan#Goals|goals]] and ![[/Inbox/Trips/Map.png]].',
+    )
+    expect(
+      textAt(restamped(plan, new Set(['inbox/projects/plan.md']), 'Inbox').files, 'Inbox/Home.md'),
+    ).toBe(
+      'See [[/Inbox/Projects/Plan 2]], [[/Inbox/Projects/Plan 2#Goals|goals]] and ![[/Inbox/Trips/Map.png]].',
+    )
+  })
+
+  test('keeps a wikilink from the top that names nothing in the vault as it was written', () => {
+    const stamped = restamped(
+      planOf([note('Home.md', 'See [[/Elsewhere/Plan]].')]),
+      new Set(),
+      'Inbox',
+    )
+
+    expect(textAt(stamped.files, 'Inbox/Home.md')).toBe('See [[/Elsewhere/Plan]].')
   })
 })
 
@@ -228,6 +269,86 @@ describe('a name that is already taken', () => {
     )
   })
 
+  test('a canvas landed in a folder still shows the notes and pictures it showed', () => {
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Plan.md' },
+        { id: 'b', type: 'file', file: 'Trips/Map.png' },
+        { id: 'c', type: 'group', label: 'G', background: 'Trips/Map.png' },
+        { id: 'd', type: 'file', file: 'https://example.com/a.png' },
+      ],
+      edges: [],
+    })
+    const stamped = restamped(
+      planOf([
+        note('Plan.md', '# Plan'),
+        file('Trips/Map.png'),
+        { kind: 'file', path: 'Boards/Board.canvas', bytes: new TextEncoder().encode(board) },
+      ]),
+      new Set(['vault/plan.md']),
+      'Vault',
+    )
+    const canvas = stamped.files.find((one) => one.path === 'Vault/Boards/Board.canvas')
+
+    expect(
+      JSON.parse(canvas?.kind === 'file' ? new TextDecoder().decode(canvas.bytes) : '{}'),
+    ).toEqual({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Vault/Plan 2.md' },
+        { id: 'b', type: 'file', file: 'Vault/Trips/Map.png' },
+        { id: 'c', type: 'group', label: 'G', background: 'Vault/Trips/Map.png' },
+        { id: 'd', type: 'file', file: 'https://example.com/a.png' },
+      ],
+      edges: [],
+    })
+  })
+
+  test('a base landed in a folder still filters the folders it filtered', () => {
+    const base = [
+      'filters:',
+      '  and:',
+      '    - file.inFolder("Projects")',
+      '    - file.folder != "Projects/Old"',
+      'views:',
+      '  - type: table',
+      '    name: Mine',
+      '    filters: file.path.startsWith("Projects/Mine") && status == "Projects"',
+      '',
+    ].join('\n')
+    const stamped = restamped(
+      planOf([
+        note('Projects/Plan.md', '# Plan'),
+        { kind: 'file', path: 'Projects.base', bytes: new TextEncoder().encode(base) },
+      ]),
+      new Set(),
+      'Vault',
+    )
+    const landed = stamped.files.find((one) => one.path === 'Vault/Projects.base')
+
+    expect(landed?.kind === 'file' && new TextDecoder().decode(landed.bytes)).toBe(
+      base
+        .replace('"Projects")', '"Vault/Projects")')
+        .replace('"Projects/Old"', '"Vault/Projects/Old"')
+        .replace('"Projects/Mine"', '"Vault/Projects/Mine"'),
+    )
+  })
+
+  test('a base drawn in a note landed in a folder still filters the folders it filtered', () => {
+    const said = (folder: string) =>
+      `# Home\n\n\`\`\`base\nfilters: file.inFolder("${folder}")\n\`\`\`\n\n    file.inFolder("Projects")\n`
+    const stamped = restamped(planOf([note('Home.md', said('Projects'))]), new Set(), 'Vault')
+
+    expect(textAt(stamped.files, 'Vault/Home.md')).toBe(said('Vault/Projects'))
+  })
+
+  test('a base drawn in a note written with Windows line ends still filters the folders it filtered', async () => {
+    const said = (folder: string) =>
+      `# Home\r\n\r\n\`\`\`base\r\nfilters: file.inFolder("${folder}")\r\n\`\`\`\r\n`
+    const files = await vaultLanded([], ['Home.md', said('Projects')])
+
+    expect(textAt(files, 'Inbox/Home.md')).toBe(said('Inbox/Projects'))
+  })
+
   test('a folder note and its folder step aside together', () => {
     const base = '```base\nfilters:\n  and:\n    - file.folder + ".md" == this.file.path\n```\n'
     const stamped = restamped(
@@ -250,6 +371,68 @@ describe('a name that is already taken', () => {
       'Tasks 2/Sub/Deep.md',
     ])
     expect(textAt(stamped.files, 'Home.md')).toBe('See [[Tasks 2]] and [[Buy milk]].')
+  })
+
+  test('a base that filters a folder follows the folder when it steps aside', () => {
+    const base = (folder: string) =>
+      `filters:\n  or:\n    - file.inFolder("${folder}")\n    - file.path.startsWith("${folder}/Sub/")\n    - file.inFolder("Other")\n`
+    const drawn = (folder: string) => `# Home\n\n\`\`\`base\n${base(folder)}\`\`\`\n`
+    for (const [folder, taken] of [
+      ['', 'tasks.md'],
+      ['In', 'in/tasks.md'],
+    ] as const) {
+      const stamped = restamped(
+        planOf([
+          note('Tasks.md', '# T'),
+          note('Tasks/Buy milk.md', '# B'),
+          note('Home.md', drawn('Tasks')),
+          { kind: 'file', path: 'Tasks.base', bytes: new TextEncoder().encode(base('Tasks')) },
+        ]),
+        new Set([taken]),
+        folder,
+      )
+      const inside = (path: string) => (folder ? `${folder}/${path}` : path)
+      const landed = stamped.files.find((one) => one.path === inside('Tasks.base'))
+      const other = (text: string) => (folder ? text.replace('"Other"', `"${folder}/Other"`) : text)
+
+      expect(stamped.files.map((one) => one.path)).toContain(inside('Tasks 2/Buy milk.md'))
+      expect(landed?.kind === 'file' && new TextDecoder().decode(landed.bytes)).toBe(
+        other(base(inside('Tasks 2'))),
+      )
+      expect(textAt(stamped.files, inside('Home.md'))).toBe(other(drawn(inside('Tasks 2'))))
+    }
+  })
+
+  test('a link that names the folder follows the folder when it steps aside', () => {
+    const stamped = restamped(
+      planOf([
+        note('Home.md', 'See [[Tasks/Buy milk]], [[tasks/Sub/Deep|deep]] and [[Sub/Deep]].'),
+        note('Tasks.md', '# T'),
+        note('Tasks/Buy milk.md', '# B'),
+        note('Tasks/Sub/Deep.md', '# D'),
+      ]),
+      new Set(['tasks.md']),
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Home.md')).toBe(
+      'See [[Tasks 2/Buy milk]], [[Tasks 2/Sub/Deep|deep]] and [[Sub/Deep]].',
+    )
+  })
+
+  test('a markdown link written from the top follows its note when it steps aside', () => {
+    const stamped = restamped(
+      planOf([
+        note('Notes/Day.md', 'See [p](Projects/Plan.md) and [q](/Projects/Plan.md).'),
+        note('Projects/Plan.md', '# P'),
+      ]),
+      new Set(['projects/plan.md']),
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Notes/Day.md')).toBe(
+      'See [p](Projects/Plan%202.md) and [q](../Projects/Plan%202.md).',
+    )
   })
 
   test('a folder the space already fills moves its folder note aside with it', () => {
@@ -323,6 +506,33 @@ describe('a vault landed beside notes of the same name', () => {
     expect(textAt(files, 'Inbox/Home.md')).toBe('See [[Projects/Plan 2]].\n')
   })
 
+  test('has a link written from the top of the vault still name its note from the top of the space', async () => {
+    const { setLinkWriting } = await import('../../link-format/src/api')
+    for (const format of ['absolute', 'shortest'] as const) {
+      setLinkWriting(format)
+      try {
+        const files = await vaultLanded(
+          ['inbox/projects/plan.md'],
+          ['Projects/Plan.md', '# The project plan'],
+          ['Areas/Plan.md', '# The area plan'],
+          ['Notes/Near.md', '# Near'],
+          [
+            'Notes/Sub/Day.md',
+            'See [[Projects/Plan]], [[Near]] and [x](../Near.md).\n\n[r]: /Notes/Near.md\n',
+          ],
+        )
+
+        expect(textAt(files, 'Inbox/Notes/Sub/Day.md')).toBe(
+          format === 'absolute'
+            ? 'See [Projects/Plan](Inbox/Projects/Plan%202.md), [Near](Inbox/Notes/Near.md) and [x](Inbox/Notes/Near.md).\n\n[r]: ../Near.md\n'
+            : 'See [Projects/Plan](Inbox/Projects/Plan%202.md), [Near](Near.md) and [x](Near.md).\n\n[r]: ../Near.md\n',
+        )
+      } finally {
+        setLinkWriting('wikilink')
+      }
+    }
+  })
+
   test('has a link written in another case follow its note, in the case it was written', async () => {
     const files = await vaultLanded(
       ['inbox/kit.md'],
@@ -376,6 +586,303 @@ describe('a vault landed beside notes of the same name', () => {
 
     expect(files.map((one) => one.path)).toContain('Inbox/Screenshot (1) 2.png')
     expect(textAt(files, 'Inbox/Trip.md')).toBe('![](Screenshot%20%281%29%202.png)\n')
+  })
+})
+
+function spaceIndex(notes: readonly string[], files: readonly string[], from: string): NoteIndex {
+  const ref = (path: string) => ({
+    path,
+    name: (path.split('/').pop() ?? path).replace(/\.md$/, ''),
+    headings: [],
+    blocks: [],
+    aliases: [],
+  })
+  return { notes: notes.map(ref), files, path: from, read: () => Promise.resolve(null) }
+}
+
+function targetsIn(text: string): string[] {
+  return [...text.matchAll(/\[\[([^\]|#]+)/g)].map((one) => one[1] ?? '')
+}
+
+describe('a vault landed in a folder of a space that holds notes of the same name', () => {
+  test('has a link by name reach the note it came with, not the namesake already there', async () => {
+    const files = await vaultLanded(
+      ['Ideas.md', 'cover.png'],
+      ['Ideas.md', '# v'],
+      ['cover.png'],
+      ['Daily/Day.md', 'See [[Ideas]], [[Ideas#Later]] and ![[cover.png]].'],
+    )
+    const landed = files.map((one) => one.path)
+    const index = spaceIndex(
+      ['Ideas.md', ...landed.filter((path) => path.endsWith('.md'))],
+      ['cover.png', ...landed.filter((path) => !path.endsWith('.md'))],
+      'Inbox/Daily/Day.md',
+    )
+    const [ideas, later, cover] = targetsIn(textAt(files, 'Inbox/Daily/Day.md'))
+
+    expect(resolveNote(index, ideas ?? '')?.path).toBe('Inbox/Ideas.md')
+    expect(resolveNote(index, later ?? '')?.path).toBe('Inbox/Ideas.md')
+    expect(resolveFile(index, cover ?? '', 'wikilink')).toBe('Inbox/cover.png')
+    expect(textAt(files, 'Inbox/Daily/Day.md')).toBe(
+      'See [[Inbox/Ideas|Ideas]], [[Inbox/Ideas#Later]] and ![[Inbox/cover.png]].\n',
+    )
+  })
+
+  test('has a picture by name reach the one it came with when the space holds one beside the link', async () => {
+    const files = await vaultLanded(
+      ['Inbox/Daily/cover.png'],
+      ['A/cover.png'],
+      ['Daily/Day.md', '![[cover.png]]'],
+    )
+    const landed = files.map((one) => one.path)
+    const index = spaceIndex(
+      landed.filter((path) => path.endsWith('.md')),
+      ['Inbox/Daily/cover.png', ...landed.filter((path) => !path.endsWith('.md'))],
+      'Inbox/Daily/Day.md',
+    )
+    const [cover] = targetsIn(textAt(files, 'Inbox/Daily/Day.md'))
+
+    expect(resolveFile(index, cover ?? '', 'wikilink')).toBe('Inbox/A/cover.png')
+  })
+
+  test('keeps a link by name that already reaches the note it came with', async () => {
+    const files = await vaultLanded(
+      ['Ideas.md', 'Archive/Old/Plan.md'],
+      ['Ideas.md', '# v'],
+      ['Plan.md', '# p'],
+      ['Day.md', 'See [[Ideas]] and [[Plan]].'],
+    )
+
+    expect(textAt(files, 'Inbox/Day.md')).toBe('See [[Ideas]] and [[Plan]].\n')
+  })
+
+  test('has a link in a table keep its cell when it names the note from the top', async () => {
+    const files = await vaultLanded(
+      ['Ideas.md'],
+      ['Ideas.md', '# v'],
+      ['Daily/Day.md', '| What |\n| --- |\n| [[Ideas]] |\n'],
+    )
+
+    expect(textAt(files, 'Inbox/Daily/Day.md')).toBe(
+      '| What |\n| --- |\n| [[Inbox/Ideas\\|Ideas]] |\n',
+    )
+  })
+
+  test('has a markdown link by name reach the note it came with, not a space note under the folder of the link', () => {
+    const out = restamped(
+      planOf([
+        note('Daily/Note.md', 'See [the plan](Plan.md)'),
+        note('Projects/Plan.md', '# Plan'),
+      ]),
+      new Set(['Archive/Daily/Plan.md']),
+      '',
+    )
+    const text = textAt(out.files, 'Daily/Note.md')
+    const index = spaceIndex(
+      ['Archive/Daily/Plan.md', 'Daily/Note.md', 'Projects/Plan.md'],
+      [],
+      'Daily/Note.md',
+    )
+    const target = decodeURIComponent(/\]\(<?([^)>]+)>?\)/.exec(text)?.[1] ?? '')
+
+    expect(resolveRelative(index, target)?.path).toBe('Projects/Plan.md')
+  })
+
+  test('has a markdown link to a file at the top of the vault reach it, not the namesake beside the link', () => {
+    const out = restamped(
+      planOf([
+        note('Plan.md', '# mine'),
+        file('cat.png'),
+        note('Daily/Day.md', 'See [the plan](Plan.md) and ![](cat.png).'),
+      ]),
+      new Set(['Daily/Plan.md', 'Daily/cat.png']),
+      '',
+    )
+    const text = textAt(out.files, 'Daily/Day.md')
+    const index = spaceIndex(
+      ['Plan.md', 'Daily/Plan.md', 'Daily/Day.md'],
+      ['cat.png', 'Daily/cat.png'],
+      'Daily/Day.md',
+    )
+    const targets = [...text.matchAll(/\]\(<?([^)>]+)>?\)/g)].map((one) =>
+      decodeURIComponent(one[1] ?? ''),
+    )
+
+    expect(resolveRelative(index, targets[0] ?? '')?.path).toBe('Plan.md')
+    expect(resolveFile(index, targets[1] ?? '', 'markdown')).toBe('cat.png')
+  })
+
+  test('has a markdown link by name reach the note it came with, not the namesake at the top', () => {
+    const out = restamped(
+      planOf([
+        note('Projects/Plan.md', '# mine'),
+        file('Trips/cat 1.png'),
+        note(
+          'Daily/Day.md',
+          'See [the plan](Plan.md), ![](<cat 1.png>) and [Plan](Plan).\n\n[p]: Plan.md\n',
+        ),
+      ]),
+      new Set(['Plan.md', 'cat 1.png']),
+      'Inbox',
+    )
+    const text = textAt(out.files, 'Inbox/Daily/Day.md')
+    const index = spaceIndex(
+      ['Plan.md', 'Inbox/Projects/Plan.md', 'Inbox/Daily/Day.md'],
+      ['cat 1.png', 'Inbox/Trips/cat 1.png'],
+      'Inbox/Daily/Day.md',
+    )
+    const targets = [...text.matchAll(/\]\(<?([^)>]+)>?\)|\]: (\S+)/g)].map((one) =>
+      decodeURIComponent(one[1] ?? one[2] ?? ''),
+    )
+
+    expect(text).toBe(
+      'See [the plan](../Projects/Plan.md), ![](../Trips/cat%201.png) and [Plan](../Projects/Plan.md).\n\n[p]: ../Projects/Plan.md\n',
+    )
+    expect(resolveRelative(index, targets[0] ?? '')?.path).toBe('Inbox/Projects/Plan.md')
+    expect(resolveFile(index, targets[1] ?? '', 'markdown')).toBe('Inbox/Trips/cat 1.png')
+  })
+
+  test('keeps a markdown link by name that already reaches the note it came with', () => {
+    const out = restamped(
+      planOf([note('Projects/Plan.md', '# mine'), note('Daily/Day.md', 'See [it](Plan.md).')]),
+      new Set(['Archive/Old/Deep/Plan.md']),
+      'Inbox',
+    )
+
+    expect(textAt(out.files, 'Inbox/Daily/Day.md')).toBe('See [it](Plan.md).')
+  })
+
+  test('has a link by name reach the note it came with, not a web shortcut of that name', () => {
+    const out = restamped(
+      planOf([note('GitHub.md', '# mine'), note('Daily/Day.md', 'See [[GitHub]].')]),
+      new Set(['GitHub.url']),
+      'Vault',
+    )
+    const text = textAt(out.files, 'Vault/Daily/Day.md')
+    const index = spaceIndex(
+      ['GitHub.url', 'Vault/GitHub.md', 'Vault/Daily/Day.md'],
+      [],
+      'Vault/Daily/Day.md',
+    )
+
+    expect(text).toBe('See [[Vault/GitHub|GitHub]].')
+    expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Vault/GitHub.md')
+  })
+
+  test('names the note from the very top when even its path is held beside the link', () => {
+    const stamped = restamped(
+      planOf([
+        note('Projects/Ideas.md', '# v'),
+        note('Daily/Projects/Day.md', 'See [[Projects/Ideas]].'),
+      ]),
+      new Set(['Daily/Projects/Ideas.md']),
+      '',
+    )
+    const index = spaceIndex(
+      ['Daily/Projects/Ideas.md', 'Projects/Ideas.md', 'Daily/Projects/Day.md'],
+      [],
+      'Daily/Projects/Day.md',
+    )
+    const text = textAt(stamped.files, 'Daily/Projects/Day.md')
+
+    expect(text).toBe('See [[/Projects/Ideas|Projects/Ideas]].')
+    expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Projects/Ideas.md')
+  })
+})
+
+describe('a vault landed in a folder named like one of its own folders', () => {
+  const landedIn = (files: Planned[], folder: string, from: string, taken: string[] = []) => {
+    const out = restamped(planOf(files), new Set(taken), folder).files
+    const paths = [...taken, ...out.map((one) => one.path)]
+    const index = spaceIndex(
+      paths.filter((path) => path.endsWith('.md')),
+      paths.filter((path) => !path.endsWith('.md')),
+      from,
+    )
+    return { text: textAt(out, from), index }
+  }
+
+  test('has a wikilink with a folder reach its note, not another note of the import', () => {
+    const { text, index } = landedIn(
+      [
+        note('Plan.md', '# top plan'),
+        note('Projects/Plan.md', '# project plan'),
+        note('Home.md', 'See [[Projects/Plan]]'),
+      ],
+      'Projects',
+      'Projects/Home.md',
+    )
+
+    expect(resolveNote(index, targetsIn(text)[0] ?? '')?.path).toBe('Projects/Projects/Plan.md')
+  })
+
+  test('has a markdown link with a folder reach its note, not another note of the import', () => {
+    const { text, index } = landedIn(
+      [
+        note('Plan.md', '# top plan'),
+        note('Work/Projects/Plan.md', '# project plan'),
+        note('Home.md', 'See [x](Projects/Plan.md)'),
+      ],
+      'Projects',
+      'Projects/Home.md',
+    )
+    const target = decodeURIComponent(/\]\(<?([^)>]+)>?\)/.exec(text)?.[1] ?? '')
+
+    expect(resolveRelative(index, target)?.path).toBe('Projects/Work/Projects/Plan.md')
+  })
+
+  test('has a picture with a folder show its file, not another file of the import', () => {
+    const { text, index } = landedIn(
+      [file('cover.png'), file('A/cover.png'), note('Home.md', '![[A/cover.png]]')],
+      'A',
+      'A/Home.md',
+    )
+
+    expect(resolveFile(index, targetsIn(text)[0] ?? '', 'wikilink')).toBe('A/A/cover.png')
+  })
+
+  test('has a markdown link by name reach its note, not one of the import ending in the folder and name', () => {
+    const { text, index } = landedIn(
+      [note('B.md', 'See [x](A.md)'), note('B/A.md', '# a'), note('In/A/A.md', '# deep')],
+      'A',
+      'A/B.md',
+    )
+    const target = decodeURIComponent(/\]\(<?([^)>]+)>?\)/.exec(text)?.[1] ?? '')
+
+    expect(resolveRelative(index, target)?.path).toBe('A/B/A.md')
+  })
+
+  test('keeps a markdown link by name that reaches its note by the path from its folder', () => {
+    const { text } = landedIn(
+      [
+        note('A/B/Plan.md', '# far'),
+        note('In/Plan.md', '# near'),
+        note('B/A.md', 'See [x](Plan.md)'),
+      ],
+      '',
+      'B/A.md',
+      ['A/B/A.md'],
+    )
+
+    expect(text).toBe('See [x](Plan.md)')
+  })
+})
+
+describe('an import into a space that is not the one open', () => {
+  test('has a link by name reach the note it came with, not that space’s namesake', async () => {
+    listed.set('/Other', ['Ideas.md', 'cover.png'])
+    await applyImport(
+      planOf([
+        note('Ideas.md', '# mine'),
+        file('cover.png'),
+        note('Daily/Day.md', 'See [[Ideas]] and ![[cover.png]].'),
+      ]),
+      { root: '/Other', folder: 'Vault' },
+    )
+
+    expect(said.get('/Other/Vault/Daily/Day.md')).toBe(
+      'See [[Vault/Ideas|Ideas]] and ![[Vault/cover.png]].',
+    )
   })
 })
 

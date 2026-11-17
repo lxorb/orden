@@ -97,3 +97,23 @@ describe('a large folder renamed or moved', () => {
     expect(links.namesBuilt - before).toBeLessThanOrEqual(2)
   })
 })
+
+describe('a picture shown in a large space', () => {
+  test('is looked for among the files of its name, not the whole space', async () => {
+    notes['Notes/Day/x.md'] = 'x'
+    for (let folder = 0; folder < 100; folder++) {
+      for (let one = 0; one < 50; one++) files.push(`Folder ${folder}/img ${one}.png`)
+    }
+    files.push('Notes/Day/beside.png', 'attachments/cat.png')
+    await links.build(ROOT)
+    const from = `${ROOT}/Notes/Day/x.md`
+
+    compared = 0
+    expect(links.fileFor('beside.png', from)).toBe(`${ROOT}/Notes/Day/beside.png`)
+    expect(links.fileFor('attachments/cat.png', from)).toBe(`${ROOT}/attachments/cat.png`)
+    expect(links.fileFor('../../attachments/cat.png', from)).toBe(`${ROOT}/attachments/cat.png`)
+    expect(links.fileFor('img 7.png', from)).toBe(`${ROOT}/Folder 0/img 7.png`)
+    expect(links.fileFor('nothing.png', from)).toBeNull()
+    expect(compared).toBeLessThanOrEqual(200)
+  })
+})

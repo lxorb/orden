@@ -1,3 +1,4 @@
+import { onClock } from './dates'
 import { isDate, isLink, text } from './expr/runtime'
 import type { Value } from './types'
 
@@ -8,7 +9,8 @@ export function csvValue(value: Value): string {
     return value.display ?? (value.target.split('/').pop() ?? value.target).replace(/\.md$/i, '')
   }
   if (isDate(value)) {
-    return value.time ? `${value.iso} ${value.time.slice(0, 5)}` : value.iso
+    const here = onClock(value)
+    return here.time ? `${here.iso} ${here.time.slice(0, 5)}` : here.iso
   }
   return text(value)
 }

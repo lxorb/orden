@@ -237,7 +237,12 @@ class Importing {
     try {
       const landed = await applyImport(
         plan,
-        { root, folder: [this.under, safeName(this.folder)].filter(Boolean).join('/') },
+        {
+          root,
+          folder: [this.under, this.folder.trim() && safeName(this.folder)]
+            .filter(Boolean)
+            .join('/'),
+        },
         { onWritten: (done) => (this.written = done) },
       )
 

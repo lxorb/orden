@@ -2,8 +2,9 @@
 
 import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
+import { request } from 'node:http'
 import { homedir, platform, tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 function endpointFile() {
@@ -21,11 +22,19 @@ function endpointFile() {
     return join(home, 'Library', 'Application Support', identifier, 'automation.json')
   }
 
-  const config = process.env.XDG_CONFIG_HOME ?? join(home, '.config')
+  const xdg = process.env.XDG_CONFIG_HOME
+  const config = xdg && isAbsolute(xdg) ? xdg : join(home, '.config')
   return join(config, identifier, 'automation.json')
 }
 
 const FLAG = /^--[a-z]/i
+
+const SWITCHES = new Set(['silent', 'append', 'prepend', 'undo', 'done'])
+
+function valueAfter(argv, at) {
+  const next = argv[at + 1]
+  return next !== undefined && !FLAG.test(next) ? next : null
+}
 
 function parseArgv(argv) {
   const mine = { json: false, out: null, yes: false, help: false }
@@ -56,13 +65,15 @@ function parseArgv(argv) {
         continue
       }
       if (word === '--out') {
-        mine.out = argv[++at] ?? null
+        mine.out = valueAfter(argv, at)
+        if (mine.out !== null) at++
         continue
       }
       if (word.startsWith('--')) {
         const [name, ...value] = word.slice(2).split('=')
+        const next = SWITCHES.has(name) ? null : valueAfter(argv, at)
         if (value.length) args[name] = value.join('=')
-        else if (argv[at + 1] !== undefined && !FLAG.test(argv[at + 1])) args[name] = argv[++at]
+        else if (next !== null) args[name] = argv[++at]
         else args[name] = ''
         continue
       }
@@ -109,8 +120,8 @@ const USAGE = `orden - drive the running Orden
   publish now
   window
   screenshot [--out FILE]
-  tasks list [filter] [--view V]
-  tasks add <text> [--note N] [--under H]
+  tasks list [--label L] [--limit N] [--done]
+  tasks add <text>
   tasks done <at> [--undo]
   base query <path> [--view V]
   react --chat C --message M --emoji E [--on false]
@@ -166,22 +177,47 @@ function readStdin() {
 async function ask(verb, args, rest) {
   const { port, secret } = await endpoint()
 
-  const response = await fetch(`http://127.0.0.1:${port}/`, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${secret}`,
-      'content-type': 'application/json',
+  const response = await posted(port, secret, JSON.stringify({ verb, args, rest })).catch(
+    (error) => {
+      throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
     },
-    body: JSON.stringify({ verb, args, rest }),
-  }).catch((error) => {
-    throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
-  })
+  )
 
-  const said = await response.text()
+  const said = response.said
   const body = said ? JSON.parse(said) : {}
 
   if (!response.ok) throw new Error(body.error ?? `the app answered ${response.status}`)
   return body
+}
+
+function posted(port, secret, body) {
+  return new Promise((settle, fail) => {
+    const asked = request(
+      {
+        host: '127.0.0.1',
+        port,
+        path: '/',
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${secret}`,
+          'content-type': 'application/json',
+          'content-length': Buffer.byteLength(body),
+        },
+      },
+      (answer) => {
+        let said = ''
+        answer.setEncoding('utf8')
+        answer.on('data', (chunk) => (said += chunk))
+        answer.on('error', fail)
+        answer.on('end', () => {
+          const status = answer.statusCode ?? 0
+          settle({ ok: status >= 200 && status < 300, status, said })
+        })
+      },
+    )
+    asked.on('error', fail)
+    asked.end(body)
+  })
 }
 
 async function endpoint() {
@@ -265,18 +301,26 @@ function macWindow(pid, { x, y, width, height, scale }) {
   return found.id
 }
 
+function plain(answered) {
+  if ('ok' in answered) return answered
+  if (answered.status === 'ok') return { ok: true, value: answered.result }
+
+  return { ok: false, error: answered.message ?? answered.summary ?? JSON.stringify(answered) }
+}
+
 function show(answered, asked) {
+  const said = plain(answered)
   if (asked.json) {
     console.log(JSON.stringify(answered, null, 2))
-    return answered.ok ? 0 : 1
+    return said.ok ? 0 : 1
   }
 
-  if (!answered.ok) {
-    console.error(answered.error)
+  if (!said.ok) {
+    console.error(said.error)
     return 1
   }
 
-  const value = answered.value
+  const value = said.value
   if (value === null || typeof value !== 'object') {
     console.log(String(value))
     return 0
@@ -284,7 +328,18 @@ function show(answered, asked) {
 
   for (const [name, held] of Object.entries(value)) {
     if (Array.isArray(held)) {
-      for (const one of held) console.log(asLine(one))
+      for (const one of held) {
+        const line = asLine(one)
+        if (line) console.log(line)
+        if (one === null || typeof one !== 'object') continue
+        for (const inner of Object.values(one)) {
+          if (!Array.isArray(inner)) continue
+          for (const row of inner) {
+            if (row !== null && typeof row === 'object')
+              console.log(`${line ? '  ' : ''}${asLine(row)}`)
+          }
+        }
+      }
       continue
     }
     if (held !== null && typeof held === 'object') {

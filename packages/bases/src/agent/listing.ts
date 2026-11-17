@@ -120,7 +120,8 @@ export function plainValue(value: Value): unknown {
   if (Array.isArray(value)) return value.map(plainValue)
   if ('kind' in value) {
     if (value.kind === 'date' && typeof value.iso === 'string') {
-      return typeof value.time === 'string' ? `${value.iso} ${value.time}` : value.iso
+      if (typeof value.time !== 'string') return value.iso
+      return `${value.iso} ${value.time}${typeof value.zone === 'string' ? value.zone : ''}`
     }
     if (value.kind === 'link' && typeof value.target === 'string') return value.target
     if (value.kind === 'duration' && typeof value.ms === 'number')
@@ -167,7 +168,7 @@ export function queryBase(
     } else {
       for (const [key, value] of Object.entries(row.note)) values[key] = plainValue(value)
     }
-    return { path: row.path, space: row.space, ...values }
+    return { ...values, path: row.path, space: row.space }
   }
   const summed = (summaries: Record<string, Value>) =>
     Object.keys(summaries).length
