@@ -151,6 +151,14 @@ function codeEditorPaste(html: string, text: string): string | null {
   return code.includes('\n') ? fenced(code) : inlineCode(code.trim())
 }
 
+const LIST_HTML = /mso-list|<(?:ul|ol)\b/i
+
+const TABLE_HTML = /<table\b/i
+
+function tablePaste(html: string, text: string): string | null {
+  return LIST_HTML.test(html) && !TABLE_HTML.test(html) ? null : delimitedToTable(text)
+}
+
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
   const ours = copiedHere(html, text)
   if (ours) return ours
@@ -158,7 +166,7 @@ export async function pastedMarkdown(html: string, text: string): Promise<string
   const code = codeEditorPaste(html, text)
   if (code) return code
 
-  const table = delimitedToTable(text)
+  const table = tablePaste(html, text)
   if (table) return table
 
   if (!html.trim()) return null
@@ -208,7 +216,7 @@ export function richPaste(): Extension {
         return true
       }
 
-      const ready = copiedHere(html, text) ?? codeEditorPaste(html, text) ?? delimitedToTable(text)
+      const ready = copiedHere(html, text) ?? codeEditorPaste(html, text) ?? tablePaste(html, text)
       if (ready) {
         event.preventDefault()
         const land = later(view)

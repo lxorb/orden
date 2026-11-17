@@ -11,6 +11,8 @@ const HASHES = /^#{1,6}[ \t]+/
 
 const MARKER = /^(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?/
 
+const TICKED = /^(?:[-*+]|\d+[.)])[ \t]+\[[xX]\][ \t]/
+
 export interface Words {
   lead: string
   indent: string
@@ -59,5 +61,8 @@ export function shaped(
   const { lead, indent, words } = wordsOf(text, listed, quoted)
   if (!words.trim()) return text
 
-  return lead + indent + markFor(shape, nth) + words
+  const unmarked = text.slice(lead.length + indent.length).replace(QUOTED, '')
+  const ticked = shape === 'task' && listed && TICKED.test(unmarked)
+
+  return lead + indent + (ticked ? '- [x] ' : markFor(shape, nth)) + words
 }

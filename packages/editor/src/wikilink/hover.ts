@@ -26,6 +26,8 @@ export interface PreviewNote {
   readOnly: boolean
 }
 
+const CRLF = /\r?\n/g
+
 export const previewNoteOf = (
   state: EditorState,
   path: string,
@@ -35,14 +37,14 @@ export const previewNoteOf = (
 ): PreviewNote => ({
   path,
   text,
-  at: lineStart(text, sectionLine(text, link)) ?? anchorOf(text, section),
+  at: lineStart(text, sectionLine(text, link)) ?? anchorOf(text.replace(CRLF, '\n'), section),
   readOnly: state.readOnly,
 })
 
 function lineStart(text: string, line: number | null): number | null {
   if (line === null) return null
   return text
-    .split('\n')
+    .split(CRLF)
     .slice(0, line)
     .reduce((at, one) => at + one.length + 1, 0)
 }

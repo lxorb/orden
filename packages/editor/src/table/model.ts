@@ -4,7 +4,10 @@ export interface TableModel {
   header: string[]
   align: Align[]
   rows: string[][]
+  names?: (string | null)[] | undefined
 }
+
+const ROW_NAME = /\|[ \t]*\^([A-Za-z0-9-]+)[ \t]*$/
 
 export function displayWidth(text: string): number {
   let width = 0
@@ -72,7 +75,12 @@ export function parseTable(source: string): TableModel | null {
 
   const header = splitRow(headerLine)
   const align = splitRow(delimiterLine).map(readAlign)
-  const rows = bodyLines.map((line) => splitRow(line))
+  const named = bodyLines.map((line) => ROW_NAME.exec(line))
+  const rows = bodyLines.map((line, at) => {
+    const name = named[at]
+    return splitRow(name ? line.slice(0, name.index + 1) : line)
+  })
+  const names = named.map((name) => name?.[1] ?? null)
 
   const columns = rows.reduce(
     (most, row) => Math.max(most, row.length),
@@ -84,7 +92,13 @@ export function parseTable(source: string): TableModel | null {
     header: fit(header),
     align: Array.from({ length: columns }, (_, i) => align[i] ?? null),
     rows: rows.map(fit),
+    ...(names.some(Boolean) ? { names } : {}),
   }
+}
+
+export function nameAfter(model: TableModel, row: number): string {
+  const name = model.names?.[row]
+  return name ? ` ^${name}` : ''
 }
 
 const MIN_CELL = 3
@@ -126,7 +140,7 @@ export function serializeTable(model: TableModel, widths = columnWidths(model)):
   return [
     serializeRow(model.header, widths),
     `| ${widths.map((width, i) => delimiterCell(model.align[i] ?? null, width)).join(' | ')} |`,
-    ...model.rows.map((cells) => serializeRow(cells, widths)),
+    ...model.rows.map((cells, row) => serializeRow(cells, widths) + nameAfter(model, row)),
   ].join('\n')
 }
 
@@ -146,6 +160,7 @@ export function insertColumn(model: TableModel, at: number): TableModel {
     header: withInserted(model.header, at, ''),
     align: withInserted(model.align, at, null),
     rows: model.rows.map((row) => withInserted(row, at, '')),
+    names: model.names,
   }
 }
 
@@ -156,17 +171,20 @@ export function removeColumn(model: TableModel, at: number): TableModel {
     header: withRemoved(model.header, at),
     align: withRemoved(model.align, at),
     rows: model.rows.map((row) => withRemoved(row, at)),
+    names: model.names,
   }
 }
 
 export function insertRow(model: TableModel, at: number): TableModel {
   const blank = model.header.map(() => '')
-  return { ...model, rows: withInserted(model.rows, at, blank) }
+  const names = model.names && withInserted(model.names, at, null)
+  return { ...model, rows: withInserted(model.rows, at, blank), names }
 }
 
 export function removeRow(model: TableModel, at: number): TableModel {
   if (at < 0 || at >= model.rows.length) return model
-  return { ...model, rows: withRemoved(model.rows, at) }
+  const names = model.names && withRemoved(model.names, at)
+  return { ...model, rows: withRemoved(model.rows, at), names }
 }
 
 export function moveRow(model: TableModel, from: number, to: number): TableModel {
@@ -176,7 +194,10 @@ export function moveRow(model: TableModel, from: number, to: number): TableModel
   const [moved] = rows.splice(from, 1)
   if (moved === undefined) return model
   rows.splice(to, 0, moved)
-  return { ...model, rows }
+  const names = model.names?.slice()
+  const [name] = names?.splice(from, 1) ?? []
+  names?.splice(to, 0, name ?? null)
+  return { ...model, rows, names }
 }
 
 export function moveColumn(model: TableModel, from: number, to: number): TableModel {
@@ -193,6 +214,7 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
     header: swap(model.header),
     align: swap(model.align),
     rows: model.rows.map(swap),
+    names: model.names,
   }
 }
 
@@ -250,7 +272,8 @@ export function sortRows(model: TableModel, column: number, order: Order): Table
   })
 
   const rows = kept.map((one) => one.row)
-  return rows.every((row, at) => row === model.rows[at]) ? model : { ...model, rows }
+  const names = model.names && kept.map((one) => model.names?.[one.at] ?? null)
+  return rows.every((row, at) => row === model.rows[at]) ? model : { ...model, rows, names }
 }
 
 export function setAlign(model: TableModel, column: number, align: Align): TableModel {

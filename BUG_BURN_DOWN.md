@@ -1429,6 +1429,11 @@ first.
 | EC305 | Medium | Naming a heading with words right under it named the words, and naming words right above a heading or a quote named the heading or quote (forty-second re-audit) | Fixed | `block-names.ts` `endOf` walked on across headings and quote edges | A heading is named alone, and the walk stops at a heading or where a quote starts or ends | `block-naming-neighbours.test.ts` (fails before) |
 | EC306 | Medium | An id on the line right under a list item embedded the whole list, and an id under a list with blank lines between items showed only its tail (forty-second re-audit, gaps in EC303) | Fixed | `links.ts` `blockAbove` widened to the list even with no blank line, and `listStart` stopped at blank lines | An id touching an item names that item; an id after a blank line names the whole list, loose or tight | `own-line-id-reach.test.ts` (fails before) |
 | EC307 | Medium | The hover card opened at an earlier block with the same words (a repeated task or paragraph), not at the linked block (forty-second re-audit, case EC299 left open) | Fixed | `wikilink/hover.ts` found the section again by its text, and a tie went to the first match | A block link opens at the line its section starts on (`sectionLine`), with the text match kept for headings | `wikilink/hover-anchor-repeated.test.ts` (fails before) |
+| EC308 | Medium | Naming words right above a code fence or a rule, or a setext heading, linked to the code, the rule, the underline or the words below instead (forty-third re-audit) | Fixed | `block-names.ts` `endOf` walked on into fences, rules and setext underlines, and `links.ts` `blockAround` read a dash underline as a block of its own | Naming stops before a fence or rule, a setext heading is named with its underline and nothing after it, and a block read from its underline takes the heading | `block-naming-touching.test.ts` (fails before) |
+| EC309 | Medium | A numbered or bulleted list pasted from Word, whose plain text puts a tab after each marker, became a table (forty-third re-audit) | Fixed | `paste.ts` tried tab-separated text as a table before reading the HTML | Tab-separated text is not made a table when the HTML is a list and holds no table | `paste-word-list-tabs.test.ts` (fails before) |
+| EC310 | Medium | Turn into Task un-ticked done tasks (forty-third re-audit) | Fixed | `block/shape.ts` stripped `[x]` with the marker and wrote a fresh `- [ ] ` | A ticked task keeps its tick | `block/turn-into-ticked.test.ts` (fails before) |
+| EC311 | Medium | In a note with Windows line endings the hover card opened one character further per line above the target, or blank near the end of the note (forty-third re-audit) | Fixed | `wikilink/hover.ts` counted offsets over the raw text with `\r` kept, while the card's editor counts a line break as one | Landing offsets count each line break once | `wikilink/hover-anchor-crlf.test.ts` (fails before) |
+| EC312 | Medium | A table row ending in a block id (`\| 1 \| 2 \| ^t1`) drew an extra column, and the first cell edit moved the id inside the pipes, breaking links to it (forty-third re-audit) | Fixed | `table/model.ts` `parseTable` read the id as a cell | The table model keeps each row's id beside it through edits, row moves, sorts and column changes, and writes it back after the row | `table/row-block-id.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1571,7 +1576,6 @@ Seen, judged minor, left as they are:
 - Round 39 drawing Lows, not chased: `[^1]: def` right under a table's last row now ends the table in Live Preview, while the reading view keeps it as a row; Enter at the end of a folded fence's opening line adds a code line on top and moves the hinge; `js{1,3}` info strings get no highlighting.
 - Round 40 Lows, not chased: TeX written on the opening `$$` line over several lines is not maths in Live Preview; inline footnotes `^[...]` are not drawn. The round 40 editing audit was stopped by the pause before it reported.
 - A list inside a quote is read as one block when naming or searching blocks (forty-first re-audit).
-- A table row ending in ` ^id` reads as an extra column in the table view (forty-first re-audit).
 - A heading with closing hashes and an id (`## Sub ## ^id`) keeps the closing hashes in its heading text (forty-first re-audit).
 - An id on its own line under a list shows as belonging to the last item in the block search list, though links to it show the whole list (forty-first re-audit).
 - A link with a title, `[link](https://x.com "t")`, shows two spaces after the word, because the space before the title is in no syntax node (forty-first re-audit).
@@ -1584,6 +1588,15 @@ Seen, judged minor, left as they are:
 - A lazy continuation line (`- milk\nlazy`) is named or embedded alone, not with its item (forty-second re-audit).
 - A fence inside a list item shows as its own "```" row in the block completion; picking it names the item (forty-second re-audit).
 - An own-line id after blank lines below indented code is listed as an empty, unnamed block; linking still works (forty-second re-audit).
+- A line typed right under a table is a table row, but naming the table writes the id after that line (forty-third re-audit).
+- A lazy line in a callout (`> body\nlazy`) is listed and named on its own (forty-third re-audit).
+- Naming `<details>` puts an own-line id inside the details block (forty-third re-audit).
+- `words\n$$...$$` and `words\n<div>...</div>` are named as one block with the words (forty-third re-audit).
+- An empty `<li>` makes a pasted list loose, and Wikipedia citations paste as `^[\[1\]](#cite_note-1)^` (forty-third re-audit).
+- Tab or Shift-Tab on a numbered item leaves the siblings' numbers unrenumbered in the source; they still draw right (forty-third re-audit).
+- Typing in the hover card of a CRLF note writes the note back with LF endings (forty-third re-audit).
+- An own-line id after a bullet list followed by a numbered list embeds both lists (forty-third re-audit).
+- An unclosed `$$` at the end of a note draws without its last line, and `![[Note]] ^x` is not drawn as an embed block (forty-third re-audit).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

@@ -827,13 +827,13 @@ describe('naming a block by where it ends', () => {
   const id = () => 'new123'
 
   test.each([
-    ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para\n```\nx\n```\n\n^new123\n\nafter'],
+    ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para ^new123\n```\nx\n```\n\nafter'],
     [
       'a table under words',
       'para\n\n| a |\n| - |\n| 1 |',
       'para\n\n| a |\n| - |\n| 1 |\n\n^new123',
     ],
-    ['a rule under words', 'para\n***\n\nb', 'para\n***\n\n^new123\n\nb'],
+    ['a rule under words', 'para\n***\n\nb', 'para ^new123\n***\n\nb'],
     ['words with a rule under them', 'Title\n---\n\nb', 'Title\n---\n\n^new123\n\nb'],
     ['words with equals signs under them', 'Title\n===\n\nb', 'Title\n===\n\n^new123\n\nb'],
   ])('%s', (_what, source, wanted) => {

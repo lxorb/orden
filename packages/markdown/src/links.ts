@@ -567,7 +567,26 @@ const TABLE_ROW = /^ {0,3}\|/
 
 const QUOTED = /^ {0,3}>/
 
+const UNDERLINE = /^ {0,3}(?:=+|-+)[ \t]*$/
+
+function underlines(rows: readonly Row[], at: number): boolean {
+  const row = rows[at]
+  const above = rows[at - 1]
+  if (!row || !above || row.code || above.code || !UNDERLINE.test(row.text)) return false
+  const words = above.text
+  return (
+    !!words.trim() &&
+    indentOf(words) < 4 &&
+    !OWN_BLOCK.test(words) &&
+    !QUOTED.test(words) &&
+    !LIST_ITEM.test(words) &&
+    !UNDERLINE.test(words)
+  )
+}
+
 export function blockAround(rows: readonly Row[], at: number): { start: number; end: number } {
+  if (underlines(rows, at)) return { start: blockAround(rows, at - 1).start, end: at }
+
   const row = rows[at]
   const text = row?.text ?? ''
   let start = at
@@ -598,6 +617,17 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
         (quoted || !LIST_ITEM.test(one.text)),
     )
     if (item) start = at
+    if (!quoted && !item) {
+      if (underlines(rows, end + 1)) end++
+      for (let under = start + 1; under <= end; under++) {
+        if (!underlines(rows, under)) continue
+        if (under < at) start = under + 1
+        else {
+          end = under
+          break
+        }
+      }
+    }
   }
 
   return { start, end }

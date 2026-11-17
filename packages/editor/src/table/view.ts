@@ -36,6 +36,7 @@ import {
   columnWidth,
   columnWidths,
   displayWidth,
+  nameAfter,
   type Order,
   parseTable,
   sameModel,
@@ -488,7 +489,8 @@ export class TableView {
     }
 
     const lines = this.source.split('\n')
-    lines[row < 0 ? 0 : row + 2] = serializeRow(cells, sized)
+    lines[row < 0 ? 0 : row + 2] =
+      serializeRow(cells, sized) + (row < 0 ? '' : nameAfter(next, row))
     this.write(lines.join('\n'), 'input.type', next, sized)
   }
 
