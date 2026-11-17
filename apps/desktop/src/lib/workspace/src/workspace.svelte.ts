@@ -84,6 +84,7 @@ import {
   OpenDocuments,
   secondWebTabs,
   draftFile,
+  fileNamed,
   hasWords,
   isDraft,
   isUnsaved,
@@ -2882,6 +2883,11 @@ class Workspace {
       return false
     }
     if (!(await this.writableAt(intoFolder, ...paths))) {
+      const copying =
+        !undoing &&
+        (await this.writableAt(intoFolder)) &&
+        (await this.asksOwnCopy(outermost(paths).map((one) => nameOf(one))))
+      if (copying) await this.copyMany(paths, intoFolder)
       this.clearSelection()
       return false
     }
@@ -2918,6 +2924,32 @@ class Workspace {
     const { copyRows } = await import('./copying')
     const rows = outermost(paths).map((from) => ({ from, into: intoFolder }))
     await this.copied(await copyRows(this, rows), intoFolder)
+  }
+
+  async copyOwn(note: NoteDoc, intoFolder: string): Promise<void> {
+    if (!(await this.writableAt(intoFolder))) return
+    const name = note.path === null ? fileNamed(note.name, note.kind) : nameOf(note.path)
+    if (!(await this.asksOwnCopy([name]))) return
+
+    const bytes =
+      note.path === null
+        ? new TextEncoder().encode(note.latest)
+        : await invoke<ArrayBuffer>('read_file', { path: note.path }).catch(() => null)
+    if (bytes !== null) await this.bringIn([new File([bytes], name)], intoFolder)
+  }
+
+  private async asksOwnCopy(names: readonly string[]): Promise<boolean> {
+    const [only] = names
+    if (only === undefined) return false
+    const { prompt } = await import('../../ui-kit/src/api')
+    return prompt.confirm({
+      title:
+        names.length === 1
+          ? `Make your own copy of ${shownName(only)}?`
+          : `Make your own copies of ${names.length} items?`,
+      detail: 'What is shared with you stays as it is.',
+      confirmLabel: 'Make a copy',
+    })
   }
 
   async duplicateMany(paths: string[]) {

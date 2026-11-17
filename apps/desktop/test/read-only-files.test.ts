@@ -45,6 +45,16 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
         files.set(text(args?.to), held)
         return undefined
       }
+      case 'read_file': {
+        const held = files.get(path)
+        if (held === undefined) throw new Error(`no such file: ${path}`)
+        return new TextEncoder().encode(held).buffer
+      }
+      case 'copy_path': {
+        const held = files.get(text(args?.from))
+        if (held !== undefined) files.set(text(args?.to), held)
+        return undefined
+      }
       case 'delete_note':
         files.delete(path)
         return undefined
@@ -86,6 +96,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../src/lib/workspace/src/api')
+const { prompt } = await import('../src/lib/ui-kit/src/api')
 
 const WRITES = /write|rename|delete|trash|copy|create|move|snapshot|bring|remove/
 const writes = () => asked.filter((command) => WRITES.test(command))
@@ -167,7 +178,11 @@ describe('in a space shared to be read', () => {
   test('nothing moves out of it, nor into it', async () => {
     const was = before()
 
-    await workspace.moveMany(['/theirs/Plan.md'], '/mine')
+    const out = workspace.moveMany(['/theirs/Plan.md'], '/mine')
+    await vi.waitFor(() => expect(prompt.open).toBe(true))
+    expect(prompt.title).toBe('Make your own copy of Plan?')
+    prompt.dismiss()
+    await out
     await workspace.move('/theirs/Plan.md', '/mine')
     await workspace.moveMany(['/mine/Mine.md'], '/theirs')
     await workspace.move('/mine/Mine.md', '/theirs')
@@ -175,6 +190,32 @@ describe('in a space shared to be read', () => {
 
     expect(before()).toEqual(was)
     expect(writes()).toEqual([])
+  })
+
+  test('carried into the reader’s own space, it asks to make their own copy, and the copy is theirs', async () => {
+    const out = workspace.moveMany(['/theirs/Plan.md'], '/mine')
+    await vi.waitFor(() => expect(prompt.open).toBe(true))
+    prompt.submit()
+    await out
+
+    expect(files.get('/theirs/Plan.md')).toBe('# Plan')
+    expect(files.get('/mine/Plan.md')).toBe('# Plan')
+  })
+
+  test('its tab dropped in the reader’s own list asks the same, and copies what it holds', async () => {
+    await workspace.open('/theirs/Plan.md')
+    const note = workspace.tabs.find((one) => one.path === '/theirs/Plan.md')?.note
+    expect(note).toBeDefined()
+    if (!note) return
+
+    const out = workspace.copyOwn(note, '/mine')
+    await vi.waitFor(() => expect(prompt.open).toBe(true))
+    expect(prompt.title).toBe('Make your own copy of Plan?')
+    prompt.submit()
+    await out
+
+    expect(files.get('/theirs/Plan.md')).toBe('# Plan')
+    expect(files.get('/mine/Plan.md')).toBe('# Plan')
   })
 })
 
