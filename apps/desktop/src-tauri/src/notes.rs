@@ -90,7 +90,7 @@ fn as_written(target: &Path, content: &str) -> String {
 }
 
 fn marked(target: &Path) -> bool {
-    let Ok(mut file) = crate::explorer::opened_file(target) else {
+    let Ok(mut file) = crate::paths::opened_file(target) else {
         return false;
     };
     let mut head = [0_u8; 3];
@@ -98,7 +98,7 @@ fn marked(target: &Path) -> bool {
 }
 
 fn crlf(target: &Path) -> bool {
-    let Ok(file) = crate::explorer::opened_file(target) else {
+    let Ok(file) = crate::paths::opened_file(target) else {
         return false;
     };
 

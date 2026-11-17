@@ -5,21 +5,7 @@ pub mod listing;
 pub mod reach;
 pub mod watch;
 
-pub(crate) fn opened_file(path: &std::path::Path) -> std::io::Result<std::fs::File> {
-    let mut options = std::fs::OpenOptions::new();
-    options.read(true);
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    {
-        use std::os::unix::fs::OpenOptionsExt as _;
-        options.custom_flags(libc::O_NONBLOCK);
-    }
-    let file = options.open(path)?;
-    if file.metadata()?.is_file() {
-        Ok(file)
-    } else {
-        Err(std::io::Error::other("not a file that can be read"))
-    }
-}
+pub(crate) use crate::paths::opened_file;
 
 pub fn shown(app: &tauri::AppHandle, path: &str) -> Result<std::path::PathBuf, String> {
     listing::asked(app, path, reach::Use::Look)
