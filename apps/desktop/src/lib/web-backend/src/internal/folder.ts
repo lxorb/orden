@@ -13,6 +13,7 @@ export interface InternalTrashed {
   from: string
   trashedAt: number
   apart?: boolean
+  arrived?: boolean
   held: [string, InternalEntry][]
 }
 
@@ -119,6 +120,7 @@ function readIndex(text: string | null): Written | null {
         from: item.from,
         trashedAt: item.trashedAt,
         ...(item.apart === true ? { apart: true } : {}),
+        ...(item.arrived === true ? { arrived: true } : {}),
         held,
       })
     }

@@ -231,7 +231,7 @@ describe('a highlighted PDF another device turned into its page note', () => {
     await disk.remove('/s/T.pdf', 'file')
     await disk.move('/s/T.pdf.highlights.json', '/s/T.pages.pdf.highlights.json', 'file')
 
-    expect(trashed.at(-1)).toEqual({ path: '/s/T.pdf', kind: 'note', alone: true })
+    expect(trashed.at(-1)).toEqual({ path: '/s/T.pdf', kind: 'note', alone: true, arrived: true })
     expect(notes.get('/s/T.pages.pdf.highlights.json')).toBe('{"version":1}')
   })
 })

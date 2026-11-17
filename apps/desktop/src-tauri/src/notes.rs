@@ -90,7 +90,7 @@ fn as_written(target: &Path, content: &str) -> String {
 }
 
 fn marked(target: &Path) -> bool {
-    let Ok(mut file) = fs::File::open(target) else {
+    let Ok(mut file) = crate::explorer::opened_file(target) else {
         return false;
     };
     let mut head = [0_u8; 3];
@@ -98,7 +98,7 @@ fn marked(target: &Path) -> bool {
 }
 
 fn crlf(target: &Path) -> bool {
-    let Ok(file) = fs::File::open(target) else {
+    let Ok(file) = crate::explorer::opened_file(target) else {
         return false;
     };
 
@@ -356,13 +356,13 @@ fn folder_made(target: &Path) -> Result<(), String> {
 
 #[tauri::command(async)]
 pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
-    let target = in_spaces(&app, &path)?;
+    let target = crate::paths::below_spaces(&app, &path)?;
     fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
 }
 
 #[tauri::command(async)]
 pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
-    let target = in_spaces(&app, &path)?;
+    let target = crate::paths::below_spaces(&app, &path)?;
     fs::remove_dir(&target).map_err(|error| cannot("delete", &target, &error))
 }
 

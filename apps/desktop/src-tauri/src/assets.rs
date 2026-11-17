@@ -16,6 +16,8 @@ const LIMIT_MB: u64 = 12;
 
 const MAX_NAME: usize = 120;
 
+const MOST_EXTENSION: usize = 16;
+
 pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 
 #[tauri::command]
@@ -154,10 +156,24 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
     Ok(target)
 }
 
+fn within_name(whole: &str) -> String {
+    if whole.len() <= MAX_NAME {
+        return whole.to_owned();
+    }
+    let ext = whole
+        .rfind('.')
+        .filter(|&at| at > 0 && whole.len() - at <= MOST_EXTENSION)
+        .map_or("", |at| &whole[at..]);
+    let mut end = MAX_NAME - ext.len();
+    while !whole.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}{ext}", &whole[..end])
+}
+
 pub(crate) fn safe_name(name: &str) -> Option<String> {
-    let safe: String = name
+    let whole: String = name
         .chars()
-        .take(MAX_NAME)
         .map(|letter| {
             if letter.is_alphanumeric() || letter == '.' || letter == '-' || letter == '_' {
                 letter
@@ -166,6 +182,7 @@ pub(crate) fn safe_name(name: &str) -> Option<String> {
             }
         })
         .collect();
+    let safe = within_name(&whole);
 
     if safe.is_empty() || safe.chars().all(|letter| letter == '.') {
         return None;
@@ -430,5 +447,12 @@ mod tests {
             safe_name(&long).map(|name| name.chars().count()),
             Some(MAX_NAME)
         );
+        let wide = safe_name(&format!("{}.png", "日".repeat(120))).expect("a name");
+        assert!(wide.len() <= MAX_NAME, "{}", wide.len());
+        assert!(Path::new(&wide)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("png")));
+        assert!(safe_name(&long)
+            .is_some_and(|name| Path::new(&name).extension().is_some_and(|ext| ext == "png")));
     }
 }

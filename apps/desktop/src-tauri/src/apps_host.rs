@@ -936,7 +936,10 @@ fn allowed_here(
         if let Some(folder) = file.parent() {
             let _ = std::fs::create_dir_all(folder);
         }
-        let _ = std::fs::write(file, serde_json::to_string(&list).unwrap_or_default());
+        let _ = crate::paths::write_atomically(
+            &file,
+            serde_json::to_string(&list).unwrap_or_default().as_bytes(),
+        );
     }
     true
 }

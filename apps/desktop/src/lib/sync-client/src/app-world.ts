@@ -83,6 +83,7 @@ function diskOf(telling: Telling): Disk {
           path,
           kind: kind === 'folder' ? 'folder' : 'note',
           alone: true,
+          arrived: true,
         })
       await telling.gone(path, kind)
     },
