@@ -6,8 +6,8 @@ import { askMachine } from '../src/sync-server-machines/src/machines/ask'
 import { HOLD_GRACE, HOLD_QUIET, MOST_SOCKETS, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
 import { Machine, resumeOf } from '../src/sync-server-machines/src/machines/machine'
 import { reachAgain } from '../src/sync-server-machines/src/machines/reach'
-import { eraseAccount } from '../src/sync-server/src/erase'
-import { purgeExpired } from '../src/sync-server/src/trash'
+import { eraseAccount } from '../src/sync-server-engine/src/erase'
+import { purgeExpired } from '../src/sync-server-engine/src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import {
   doorway,

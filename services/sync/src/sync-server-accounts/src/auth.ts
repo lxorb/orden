@@ -5,7 +5,6 @@ import {
   claimGuestsAt,
   codeMessage,
   deviceIn,
-  devicesEnded,
   type Env,
   equals,
   forgetEndedTargets,
@@ -16,7 +15,6 @@ import {
   mailCeilings,
   mailer,
   mailNotSent,
-  makeFirstSpace,
   mayTryCode,
   newId,
   NOT_AN_EMAIL,
@@ -26,11 +24,9 @@ import {
   randomToken,
   readBody,
   refusedMail,
-  roomsSignedOut,
   said,
   type Session,
   sha256,
-  startingVersion,
   tokenIn,
   TOOK_TOO_LONG,
   TRY_IN_AN_HOUR,
@@ -39,6 +35,12 @@ import {
   type Whoever,
   WRONG_CODE,
 } from '../../sync-server/src/api'
+import {
+  devicesEnded,
+  makeFirstSpace,
+  roomsSignedOut,
+  startingVersion,
+} from '../../sync-server-engine/src/api'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 
 const CODE_TTL = 10 * 60 * 1000

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { purgeExpired } from '../src/sync-server/src/trash'
+import { purgeExpired } from '../src/sync-server-engine/src/trash'
 import { MOST_BOUND } from '../src/sync-server/src/bound'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 

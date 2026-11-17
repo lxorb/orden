@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { sweepUnused } from '../src/sync-server/src/unused'
+import { sweepUnused } from '../src/sync-server-engine/src/unused'
 import { keepVersion, keepVersionNow, versionKey } from '../src/sync-server/src/versions'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 

@@ -4,11 +4,10 @@ import {
   askHub,
   newId,
   now,
-  reachedItem,
-  reachedSpace,
   type Env,
   type Variables,
 } from '../../../sync-server/src/api'
+import { reachedItem, reachedSpace } from '../../../sync-server-engine/src/api'
 import { askMachine } from './ask'
 import { audit } from './audit'
 import { NOT_FOUND } from './door'
