@@ -48,11 +48,12 @@ afterEach(() => {
 })
 
 describe('a terminal, as a kind a new tab can be', () => {
-  test('starts the second line, with Remote and Online after it', () => {
+  test('starts the terminals, with Remote and Online after it', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
-      ['terminal', 'remote', 'online', 'application', 'explorer', 'pass'],
+      ['terminal', 'remote', 'online'],
       ['web', 'private'],
+      ['application', 'explorer', 'pass'],
     ])
   })
 
@@ -62,8 +63,8 @@ describe('a terminal, as a kind a new tab can be', () => {
     try {
       expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
         ['note', 'canvas', 'pages'],
-        ['application', 'explorer', 'pass'],
         ['web', 'private'],
+        ['application', 'explorer', 'pass'],
       ])
     } finally {
       modes.developer = null
