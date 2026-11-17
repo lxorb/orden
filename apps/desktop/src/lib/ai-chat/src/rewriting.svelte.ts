@@ -3,7 +3,7 @@ import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
 import { systemLocale } from '../../platform/src/api'
 import { message } from '../../ui-kit/src/api'
 import { complete, wasStopped, ai } from '../../ai-providers/src/api'
-import { SHUT_HERE, shutToAgents } from './shut'
+import { agentsMayRead, SHUT_TO_AGENTS } from './store/around'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
 
 class Rewriting {
@@ -48,8 +48,8 @@ class Rewriting {
       this.trouble = 'Add an AI provider in Settings first.'
       return
     }
-    if (shutToAgents(this.shows)) {
-      this.trouble = SHUT_HERE
+    if (!agentsMayRead(this.shows)) {
+      this.trouble = SHUT_TO_AGENTS
       return
     }
 

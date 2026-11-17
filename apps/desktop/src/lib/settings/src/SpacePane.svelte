@@ -14,6 +14,7 @@
   import { AGENTS_NAME } from '../../platform/src/api'
   import { onDisk } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'
+  import { protection } from '../../protect/src/api'
   import { settings } from './window.svelte'
   import { folderOf, rootedAt, samePath } from '../../platform/src/api'
   import { joinPath } from '../../platform/src/api'
@@ -23,6 +24,7 @@
 
   const root = $derived(settings.space ?? workspace.activeSpace?.root ?? null)
   const name = $derived(rootedAt(workspace.spaces, root)?.name ?? '')
+  const shut = $derived(root !== null && protection.locked(joinPath(root, AGENTS_NAME)))
 
   async function nudged() {
     const { sync } = await import('../../sync-store/src/api')
@@ -31,16 +33,23 @@
 
   const listed = (at: string) => workspace.spaces.some((one) => samePath(one.root, at))
 
+  const shown = (path: string) =>
+    protection.locked(path) ? Promise.resolve(null) : noteText(workspace, path)
+
   const hands: FieldHands = {
     space: async (path) => {
       const at = folderOf(path)
       return listed(at) && (await onDisk(at))
     },
-    read: (path) => noteText(workspace, path),
+    read: shown,
     there: onDisk,
     write: async (path, before, after, first) => {
-      await writeNoteText(workspace, path, before, after, { undoable: false, snapshot: first })
-      await nudged()
+      const took = await writeNoteText(workspace, path, before, after, {
+        undoable: false,
+        snapshot: first,
+      })
+      if (took) await nudged()
+      return took
     },
     make: async (path, text) => {
       await writeFile(path, text)
@@ -57,13 +66,14 @@
     if (root === null) return
     const at = root
     const path = joinPath(at, AGENTS_NAME)
-    const one = new Field(path, hands, () => !listed(at) || !canWriteAt(path))
+    const closed = shut
+    const one = new Field(path, hands, () => closed || !listed(at) || !canWriteAt(path))
     field = one
     current = one
     untrack(() => void one.load())
 
     const stop = links.hearSaves((saved, words) => {
-      if (samePath(saved, path)) one.heard(words)
+      if (samePath(saved, path) && !closed) one.heard(words)
     })
     const back = () => void one.look()
     window.addEventListener('focus', back)

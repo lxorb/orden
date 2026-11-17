@@ -64,9 +64,9 @@ vi.spyOn(busy, 'failed').mockImplementation((words: string) => {
   world.said.push(words)
 })
 
-async function arrives(uri: string, query = 'orden'): Promise<void> {
+async function arrives(uri: string): Promise<void> {
   const at = new URL('https://orden.example/')
-  at.searchParams.set(query, uri)
+  at.searchParams.set('orden', uri)
   world.here = at.href
 
   await startAutomation()
@@ -79,15 +79,6 @@ beforeEach(() => {
   world.went = []
   world.said = []
   world.answer = { ok: true, value: {} }
-})
-
-describe('a link a browser hands over', () => {
-  test('is followed under the name it registered before the rename too', async () => {
-    world.answer = { ok: true, value: { path: 'reading/Divorce.md', heading: null } }
-    await arrives('web+nib://open?path=Divorce', 'nib')
-
-    expect(world.asked).toEqual(['open'])
-  })
 })
 
 describe('a link that changed nothing', () => {

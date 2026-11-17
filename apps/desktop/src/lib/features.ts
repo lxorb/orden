@@ -76,6 +76,21 @@ serveLinks({
 })
 providePort('search', { panel: search, show: showSearch, fromView: searchFrom })
 providePort('settings.window', settings)
+providePort('settings.ask', {
+  ask: async (system, said) => {
+    const { ai, complete } = await import('./ai-providers/src/api')
+    const provider = ai.providerFor('ask')
+    if (!provider) return null
+    return await complete({
+      provider,
+      model: provider.model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: said },
+      ],
+    })
+  },
+})
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
 providePort('quick-add.show', {
@@ -228,6 +243,10 @@ if (!__EVEN_PLUGIN__) {
     async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
   )
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  registerCommand('app.handwriting', async () => {
+    const { handwrite } = await (await import('./canvas/src/api')).handwriting()
+    return () => void handwrite()
+  })
   providePort('explorer.show', {
     offered: () => hiddenKinds.offers('explorer'),
     show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
@@ -255,6 +274,10 @@ if (!__EVEN_PLUGIN__) {
   })
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+  registerCommand(
+    'ai.tab',
+    async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab,
+  )
   registerCommand('ai.threads', async () => {
     const { chat } = await (await import('./ai-chat/src/api')).chatStore()
     return () => chat.showThreads()

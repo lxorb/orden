@@ -581,11 +581,16 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   const program = programOf(command, os)
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
-  if (/(?! )\p{Zs}/u.test(command)) return false
-  if (os === 'windows' && /[\\^,']|%[^%\s]+%/.test(command)) return false
+  if (!readAlikeEverywhere(command, os)) return false
 
   const words = wordsOf(command.trim())
-  return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
+  if (words === null || !argumentsStay(program.toLowerCase(), words.slice(1))) return false
+  return os !== 'windows' || argumentsStay(program.toLowerCase(), asCommandPromptReads(command))
+}
+
+function asCommandPromptReads(command: string): string[] {
+  const words = command.trim().match(/"[^"]*"|[^ ]+/g) ?? []
+  return words.slice(1).map((one) => one.replace(/"/g, ''))
 }
 
 export function runsOnTheList(
@@ -598,6 +603,16 @@ export function runsOnTheList(
   if (name === '' || !programs.some((one) => programOf(one, os) === name)) return false
   if (args.some((one) => /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one))) return false
   return argumentsStay(name.toLowerCase(), args)
+}
+
+const READ_ALIKE = /^[\p{L}\p{M}0-9 _\-./:=+@%~,^'"]*$/u
+
+function readAlikeEverywhere(command: string, os: Os): boolean {
+  if (!READ_ALIKE.test(command) || /,['"]*-/.test(command)) return false
+  if (os !== 'windows') return true
+  if (/[\^]|%[^%\s]*%/.test(command)) return false
+  if (/""|''/.test(command) || (command.includes("'") && command.includes('"'))) return false
+  return !/'[^']*\s-[^']*'/.test(command)
 }
 
 export function startsOnlyOne(command: string): boolean {

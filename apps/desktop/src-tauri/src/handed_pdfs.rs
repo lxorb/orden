@@ -6,7 +6,9 @@ use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Manager, Url};
 
-use crate::paths::{a_space, cannot, files_in, folded, inside, is_pdf, write_atomically};
+use crate::paths::{
+    a_space, cannot, files_in, folded, inside, is_markdown, is_pdf, write_atomically,
+};
 
 const LONGEST: usize = 32 * 1024;
 
@@ -159,8 +161,16 @@ pub fn pdfs_among(urls: &[Url]) -> Vec<PathBuf> {
         .filter(|url| url.scheme() == "file")
         .filter_map(|url| url.to_file_path().ok())
         .map(|path| folded(&path))
-        .filter(|path| is_pdf(path) && path.is_file())
+        .filter(|path| handed_kind(path) && path.is_file())
         .collect()
+}
+
+fn handed_kind(path: &Path) -> bool {
+    is_pdf(path)
+        || is_markdown(path)
+        || path
+            .extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("txt"))
 }
 
 fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
@@ -178,7 +188,7 @@ fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
         cwd.join(path)
     });
 
-    (is_pdf(&path) && path.is_file()).then_some(path)
+    (handed_kind(&path) && path.is_file()).then_some(path)
 }
 
 #[tauri::command(async)]
@@ -250,6 +260,8 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp folder");
         let paper = file(&dir.path().join("Paper.PDF"), b"%PDF-1.7");
         let note = file(&dir.path().join("Idea.md"), b"# Idea");
+        let list = file(&dir.path().join("List.TXT"), b"milk");
+        let picture = file(&dir.path().join("Cat.png"), b"PNG");
 
         let found = pdfs_in(
             &line(&[
@@ -257,11 +269,20 @@ mod tests {
                 &note,
                 "--verbose",
                 &paper,
+                &list,
+                &picture,
                 "https://example.com/a.pdf",
             ]),
             dir.path(),
         );
-        assert_eq!(found, vec![dir.path().join("Paper.PDF")]);
+        assert_eq!(
+            found,
+            vec![
+                dir.path().join("Paper.PDF"),
+                dir.path().join("Idea.md"),
+                dir.path().join("List.TXT"),
+            ]
+        );
     }
 
     #[test]
@@ -288,6 +309,23 @@ mod tests {
             ]),
             vec![paper]
         );
+    }
+
+    #[test]
+    fn a_mac_hands_over_text_and_markdown_files_too_but_no_picture() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let list = dir.path().join("list.txt");
+        let idea = dir.path().join("Idea.markdown");
+        let picture = dir.path().join("cat.png");
+        for one in [&list, &idea, &picture] {
+            file(one, b"words");
+        }
+        let addresses: Vec<Url> = [&list, &idea, &picture]
+            .iter()
+            .map(|one| Url::from_file_path(one).expect("an address"))
+            .collect();
+
+        assert_eq!(pdfs_among(&addresses), vec![list, idea]);
     }
 
     #[test]

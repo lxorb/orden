@@ -12,6 +12,7 @@ vi.mock('../../../protect/src/api', async (original) => ({
   protection: {
     any: true,
     agentsMay: (path: string) => !path.startsWith('/notes/Work/Private'),
+    agentsMayAll: (path: string) => !'/notes/Work/Private'.startsWith(path),
   },
 }))
 

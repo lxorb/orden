@@ -4,8 +4,23 @@ class Filling {
   by = $state<string | null>(null)
   private holder: string | null = null
   private before = false
+  private turns: Promise<void> = Promise.resolve()
 
-  async take(tabId: string): Promise<void> {
+  take(tabId: string): Promise<void> {
+    return this.inTurn(() => this.taken(tabId))
+  }
+
+  give(tabId: string): Promise<void> {
+    return this.inTurn(() => this.given(tabId))
+  }
+
+  private inTurn(change: () => Promise<void>): Promise<void> {
+    const turn = this.turns.then(change)
+    this.turns = turn.catch(() => undefined)
+    return turn
+  }
+
+  private async taken(tabId: string): Promise<void> {
     if (this.holder === tabId) return
 
     const window = await currentWindow()
@@ -15,7 +30,7 @@ class Filling {
     await window.setFullscreen(true).catch(() => undefined)
   }
 
-  async give(tabId: string): Promise<void> {
+  private async given(tabId: string): Promise<void> {
     if (this.holder !== tabId) return
 
     this.holder = null

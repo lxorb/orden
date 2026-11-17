@@ -148,6 +148,11 @@ class Joining {
   }
 
   private async landed(joined: Joined) {
+    if (joined.code && joined.email) {
+      account.askForCode(joined.email, joined.resendIn ?? 0)
+      return
+    }
+
     if (joined.second && joined.holding) {
       account.askForSecond(joined.holding)
       return

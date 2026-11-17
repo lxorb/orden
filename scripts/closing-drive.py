@@ -68,7 +68,7 @@ def run(code, timeout=10.0):
     except (TimeoutError, OSError):
         return None
 
-WEB_TABS = "nib.workspace.tabs.filter((tab) => tab.kind === 'web').length"
+WEB_TABS = "orden.workspace.tabs.filter((tab) => tab.kind === 'web').length"
 
 threading.Thread(target=Serving(("127.0.0.1", PORT_PAGES), Pages).serve_forever, daemon=True).start()
 

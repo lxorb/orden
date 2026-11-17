@@ -6,11 +6,16 @@ const sent: unknown[] = []
 
 vi.mock('../../protect/src/api', async (original) => ({
   ...(await original<typeof import('../../protect/src/api')>()),
-  protection: { agentsMay: (path: string) => !path.startsWith('/notes/Work/Private') },
+  protection: {
+    any: true,
+    agentsMay: (path: string) => !path.startsWith('/notes/Work/Private'),
+    agentsMayAll: (path: string) => !'/notes/Work/Private'.startsWith(path),
+  },
 }))
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
+    activeSpace: { root: '/notes/Work' },
     active: { kind: 'note', path: DIARY },
     tabs: [{ kind: 'note', path: DIARY, note: { live: diary } }],
   },
@@ -40,7 +45,7 @@ test('an AI block or a rewrite in a note shut to agents sends nothing to the mod
       {
         prompt: 'Summarise this note',
         note: 'secret words',
-        doc: diary as never,
+        shows: diary as never,
         place: null,
         started: () => undefined,
         wrote: () => undefined,
@@ -57,7 +62,7 @@ test('an AI block or a rewrite in a note shut to agents sends nothing to the mod
     },
   } as never)
   rewriting.run('shorter')
-  expect(rewriting.trouble).toMatch(/shut to agents/)
+  expect(rewriting.trouble).toMatch(/protected/)
   expect(sent).toEqual([])
 })
 
@@ -69,7 +74,7 @@ test('an AI block in a hover card over a note shut to agents is refused, though 
       {
         prompt: 'Summarise this note',
         note: 'secret words',
-        doc: null,
+        shows: null,
         place: DIARY,
         started: () => undefined,
         wrote: () => undefined,

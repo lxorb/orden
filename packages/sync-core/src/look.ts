@@ -17,6 +17,10 @@ const THEME = /^(?:[a-z0-9][a-z0-9-]{0,38}|file:[^/\\\p{Cc}]{1,64})$/u
 
 const NAME = /^[A-Za-z0-9*:._-]{1,64}$/
 
+function isDrawer(name: string): boolean {
+  return NAME.test(name) || THEME.test(name)
+}
+
 const SCHEMES: readonly string[] = ['dark', 'light', 'system']
 
 const FIELDS: readonly string[] = ['theme', 'scheme', 'values', 'css']
@@ -49,7 +53,7 @@ function valuesWrong(value: unknown): string | null {
   if (drawers.length > MOST_DRAWERS) return `look.values holds at most ${MOST_DRAWERS} themes`
 
   for (const [drawer, held] of drawers) {
-    if (!NAME.test(drawer)) return `${drawer.slice(0, NAMED)} is not a theme`
+    if (!isDrawer(drawer)) return `${drawer.slice(0, NAMED)} is not a theme`
     if (!isFields(held)) return `look.values.${drawer} must be an object`
 
     const entries = Object.entries(held)
@@ -92,7 +96,7 @@ function valuesIn(value: unknown): LookValues {
   if (!isFields(value)) return {}
 
   const drawers = Object.entries(value)
-    .filter((entry): entry is [string, Fields] => NAME.test(entry[0]) && isFields(entry[1]))
+    .filter((entry): entry is [string, Fields] => isDrawer(entry[0]) && isFields(entry[1]))
     .slice(0, MOST_DRAWERS)
 
   return Object.fromEntries(

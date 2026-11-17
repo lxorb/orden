@@ -86,3 +86,7 @@ export const engines = new Engines()
 export function canDictate(): boolean {
   return engines.offered().length > 0
 }
+
+export function showsDictateButton(): boolean {
+  return !(isNative && platform() === 'macos') && canDictate()
+}

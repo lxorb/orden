@@ -37,6 +37,10 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
   cssColour: (colour: string) => colour,
   sharpness: (_width: number, _height: number, wanted: number) => wanted,
   paperIsLocked: () => Promise.resolve(held.locked),
+  paperBytesOf: (at: unknown) => {
+    held.at.push(at)
+    return Promise.resolve(held.bytes)
+  },
   paperPicture: (at: unknown, number: number) => {
     held.asked.push(number)
     held.at.push(at)
@@ -193,6 +197,14 @@ describe('a note shared on its own', () => {
   test('asks for its paper by the note’s id on the account', async () => {
     await exportPagesSvg({ ...out(paperNote()), shared: 'note-1' })
     expect(held.at[0]).toMatchObject({ shared: 'note-1' })
+  })
+
+  test('as a PDF, reads its paper by the note’s id on the account', async () => {
+    held.bytes = await (await paper()).save()
+    const bytes = await pagesPdf({ ...out(paperNote()), path: null, root: null, shared: 'note-1' })
+
+    expect(held.at[0]).toMatchObject({ file: 'Paper.pdf', shared: 'note-1' })
+    expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
   })
 })
 

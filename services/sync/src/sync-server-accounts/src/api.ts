@@ -1,3 +1,4 @@
+export { addressUndo } from './addresses'
 export { account, left } from './account'
 export {
   accountById,
@@ -5,9 +6,7 @@ export {
   presentUser,
   requireWhoever,
   sendCode,
-  sessionFor,
   sessions,
-  signingIn,
   verifyCode,
 } from './auth'
 export {

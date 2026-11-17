@@ -1209,6 +1209,34 @@ mod tests {
     }
 
     #[test]
+    fn the_preinstalled_blocker_runs_with_no_gaps_and_its_rules_on() {
+        let firefox = json!({
+            "manifest_version": 3,
+            "name": "uBO Lite",
+            "version": "2026.1116.1650",
+            "action": { "default_area": "navbar", "default_popup": "popup.html" },
+            "background": { "scripts": ["/js/background.js"], "type": "module" },
+            "browser_specific_settings": { "gecko": { "id": "uBOLiteRedux@raymondhill.net" } },
+            "declarative_net_request": {
+                "rule_resources": [{ "id": "easylist", "enabled": true, "path": "/rulesets/main/easylist.json" }]
+            },
+            "host_permissions": ["<all_urls>"],
+            "optional_permissions": ["userScripts"],
+            "options_ui": { "open_in_tab": true, "page": "dashboard.html" },
+            "permissions": ["activeTab", "alarms", "declarativeNetRequest", "scripting", "storage", "unlimitedStorage"],
+        });
+        let made = translate(&firefox, "KEY");
+        assert!(made.gaps.is_empty(), "{:?}", made.gaps);
+        assert_eq!(
+            made.manifest["declarative_net_request"],
+            firefox["declarative_net_request"]
+        );
+        assert!(made.manifest["permissions"]
+            .as_array()
+            .is_some_and(|all| all.iter().any(|one| one == "declarativeNetRequest")));
+    }
+
+    #[test]
     fn a_firefox_manifest_v3_background_is_a_page_orden_writes() {
         let firefox = json!({
             "manifest_version": 3,

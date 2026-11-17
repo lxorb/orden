@@ -32,6 +32,12 @@ test("a link's own words name it", () => {
   )
 })
 
+test('a character reference no character has is left as written', () => {
+  expect(linkWords('<a href="x">a &#x110000; b &#99999999; c</a>')).toBe(
+    'a &#x110000; b &#99999999; c',
+  )
+})
+
 test('a link dropped on the list is a web note there, named by its words or its site', async () => {
   const path = await siteDropped(
     sites,

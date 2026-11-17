@@ -120,6 +120,60 @@ describe("a file explorer's changes", () => {
     ])
   })
 
+  test('trash every picked file past ones that will not go, one undo for those that went, naming each that stayed', async () => {
+    crate.trashPaths.mockRejectedValueOnce({
+      went: [{ path: '/home/me/Downloads/b.zip', back: '/home/me/Downloads/b.zip', at: 1 }],
+      failed: [
+        { path: '/home/me/Downloads/a.zip', why: '/home/me/Downloads/a.zip: in use' },
+        { path: '/home/me/Downloads/c.zip', why: '/home/me/Downloads/c.zip: denied' },
+      ],
+    })
+    const here = view()
+    await trash(here as never, [
+      '/home/me/Downloads/a.zip',
+      '/home/me/Downloads/b.zip',
+      '/home/me/Downloads/c.zip',
+    ])
+    expect(recorded).toEqual([
+      {
+        kind: 'outside',
+        steps: [
+          {
+            op: 'trashed',
+            tickets: [
+              { path: '/home/me/Downloads/b.zip', back: '/home/me/Downloads/b.zip', at: 1 },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(here.tell).toHaveBeenCalledWith(
+      '/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied',
+    )
+  })
+
+  test('delete for good every picked file past ones that will not go, naming each that stayed', async () => {
+    crate.deleteForGood.mockRejectedValueOnce([
+      { path: '/home/me/Downloads/a.zip', why: '/home/me/Downloads/a.zip: in use' },
+      { path: '/home/me/Downloads/c.zip', why: '/home/me/Downloads/c.zip: denied' },
+    ])
+    const here = view()
+    await removeForGood(here as never, [
+      '/home/me/Downloads/a.zip',
+      '/home/me/Downloads/b.zip',
+      '/home/me/Downloads/c.zip',
+    ])
+    expect(crate.deleteForGood).toHaveBeenCalledWith([
+      '/home/me/Downloads/a.zip',
+      '/home/me/Downloads/b.zip',
+      '/home/me/Downloads/c.zip',
+    ])
+    expect(here.tell).toHaveBeenCalledWith(
+      '/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied',
+    )
+    expect(here.reload).toHaveBeenCalled()
+  })
+
   test("hand what is in a space to the file list's own delete", async () => {
     const inside = view('/home/me/Orden/Work')
     inside.listing.spaces = true

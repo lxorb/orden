@@ -20,6 +20,8 @@ interface Row {
 interface OpenWindow {
   focused: number
   said: unknown[]
+  url?: string
+  holds?: string[]
 }
 
 interface Worker {
@@ -34,11 +36,16 @@ function load(
   const { store = true, broken = false, windows = [], under } = options
   const opened: string[] = []
   const client = (one: OpenWindow) => ({
+    url: one.url ?? `${ORIGIN}/`,
     focus: () => {
       one.focused++
       return Promise.resolve(one)
     },
-    postMessage: (said: unknown) => one.said.push(said),
+    postMessage: (said: unknown, ports: MessagePort[] = []) => {
+      const asked = (said as { ordenHolds?: unknown } | null)?.ordenHolds
+      if (typeof asked !== 'string') return void one.said.push(said)
+      if (one.holds) ports[0]?.postMessage(one.holds.includes(asked))
+    },
   })
   const listeners = new Map<string, (event: unknown) => void>()
 
@@ -143,10 +150,9 @@ describe('the asset worker', () => {
     ])
   })
 
-  test('answers for the asset route and for nothing else', async () => {
+  test("answers for the asset route, and leaves what is neither a space's file nor the app to the network", async () => {
     expect(await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`)).not.toBeNull()
-    expect(await worker.fetch(`${ORIGIN}/assets/index-a1b2.js`)).toBeNull()
-    expect(await worker.fetch(`${ORIGIN}/`)).toBeNull()
+    expect(await worker.fetch(`${ORIGIN}/icon-256.png`)).toBeNull()
     expect(await worker.fetch('https://example.com/asset/Work/pic.png')).toBeNull()
   })
 
@@ -278,11 +284,11 @@ describe('the asset worker', () => {
     expect((await odd.fetch(`${ORIGIN}/asset/Work/a.png`))?.status).toBe(404)
   })
 
-  test('a row an older version kept under its own name is still found', async () => {
-    const old = load([pixel('/Work/old.png')], { under: 'nib' })
-    expect((await old.fetch(`${ORIGIN}/asset/Work/old.png`))?.status).toBe(200)
+  test('a row is found only in the database named after the app', async () => {
     const now = load([pixel('/Work/new.png')], { under: 'orden' })
     expect((await now.fetch(`${ORIGIN}/asset/Work/new.png`))?.status).toBe(200)
+    const old = load([pixel('/Work/old.png')], { under: 'nib' })
+    expect((await old.fetch(`${ORIGIN}/asset/Work/old.png`))?.status).toBe(404)
   })
 
   test('a browser that has never opened the app gets a miss, not an error', async () => {
@@ -305,13 +311,6 @@ describe('a notice the worker showed, pressed', () => {
     expect(window).toEqual({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
   })
 
-  test('knows a notice shown before the rename by its old tag', async () => {
-    const window: OpenWindow = { focused: 0, said: [] }
-    await load([], { windows: [window] }).press({ nibNotice: 'c_2' })
-
-    expect(window).toEqual({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
-  })
-
   test('opens Orden when no window of it is open', async () => {
     expect(await load([]).press({ ordenNotice: 'c_2' })).toEqual({ closed: true, opened: ['/'] })
   })
@@ -321,5 +320,27 @@ describe('a notice the worker showed, pressed', () => {
     await load([], { windows: [window] }).press(undefined)
 
     expect(window).toEqual({ focused: 1, said: [] })
+  })
+
+  test('goes to the window that showed it, not the one in front, nor a file opened on its own', async () => {
+    const file: OpenWindow = { focused: 0, said: [], url: `${ORIGIN}/asset/Work/a.pdf`, holds: [] }
+    const front: OpenWindow = { focused: 0, said: [], holds: [] }
+    const showing: OpenWindow = { focused: 0, said: [], holds: ['c_2'] }
+
+    await load([], { windows: [file, front, showing] }).press({ ordenNotice: 'c_2' })
+
+    expect(showing).toMatchObject({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
+    expect(front).toMatchObject({ focused: 0, said: [] })
+    expect(file).toMatchObject({ focused: 0, said: [] })
+  })
+
+  test('goes to the first window of the app when none answers for it', async () => {
+    const file: OpenWindow = { focused: 0, said: [], url: `${ORIGIN}/asset/Work/a.pdf` }
+    const app: OpenWindow = { focused: 0, said: [] }
+
+    await load([], { windows: [file, app] }).press({ ordenNotice: 'c_2' })
+
+    expect(app).toMatchObject({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
+    expect(file.focused).toBe(0)
   })
 })

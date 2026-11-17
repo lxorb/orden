@@ -379,7 +379,8 @@ export class Protection {
     return held
   }
 
-  agentsMayWithin(path: string): boolean {
+  agentsMayAll(path: string | null | undefined): boolean {
+    if (!path || !this.any) return true
     if (!this.agentsMay(path)) return false
     return Object.keys(this.spaces).every(
       (root) =>

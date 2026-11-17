@@ -25,14 +25,14 @@
 
   function done() {
     if (picked) keepHeard({ id: picked, said: picked === 'other' ? where.trim() : '' })
-    setup.next()
+    setup.next('heard')
   }
 </script>
 
 <Screen
   title="How did you hear about Orden?"
   primary={{ label: 'Continue', disabled: picked === null, onclick: done }}
-  quiet={{ label: 'Skip', onclick: () => setup.next() }}
+  quiet={{ label: 'Skip', onclick: () => setup.next('heard') }}
 >
   <div class="list rise" role="radiogroup" aria-label="How did you hear about Orden?">
     {#each HEARD as one (one.id)}

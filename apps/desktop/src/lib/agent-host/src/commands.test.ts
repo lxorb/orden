@@ -60,6 +60,8 @@ vi.mock('../../protect/src/api', () => ({
   buried: async () => ({ waits: () => waiting }),
   protection: {
     agentsMay: (path: string) => !shut.has(path),
+    agentsMayAll: (path: string) =>
+      ![...shut].some((one) => one === path || one.startsWith(`${path}/`)),
     ways: (root: string) =>
       root === '/s/Home' ? { Journal: 'device' } : { 'Diary.md': 'password' },
   },

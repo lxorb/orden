@@ -19,6 +19,7 @@ export interface TrashItem {
   ref: string
   from?: string
   note?: { spaceId: string; path: string }
+  arrived?: boolean
 }
 
 interface DeviceEntry {
@@ -27,6 +28,7 @@ interface DeviceEntry {
   name: string
   from: string
   trashedAt: number
+  arrived?: boolean
 }
 
 function kindOf(kind: string): TrashItem['kind'] {
@@ -80,6 +82,7 @@ class Trash {
       purgeAt: entry.trashedAt + KEEP_FOR,
       source: 'device' as const,
       from: entry.from.replace(/\\/g, '/'),
+      ...(entry.arrived === true ? { arrived: true } : {}),
     }))
   }
 

@@ -21,7 +21,7 @@ MEASURE = """
 (kinds) => {
   const canvas = document.createElement('canvas').getContext('2d')
   const rows = []
-  for (const mark of document.querySelectorAll('[role="dialog"] .orden-mark')) {
+  for (const mark of document.querySelectorAll('[role="region"][aria-label="Settings"] .orden-mark')) {
     const svg = mark.querySelector('svg')
     const drawn = svg?.getBoundingClientRect()
     if (!drawn || !drawn.width) continue
@@ -159,12 +159,12 @@ def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
             """(width) => {
               const style = document.getElementById('help-mark-wrap') ?? document.createElement('style')
               style.id = 'help-mark-wrap'
-              style.textContent = `[role="dialog"] .orden-setting .name { flex: none !important;
+              style.textContent = `[role="region"][aria-label="Settings"] .orden-setting .name { flex: none !important;
                 inline-size: ${width}px !important; min-inline-size: 0 !important }
-                [role="dialog"] :is(.hint.caption, .steps .link) {
+                [role="region"][aria-label="Settings"] :is(.hint.caption, .steps .link) {
                   max-inline-size: ${Math.max(width, 110)}px !important }`
               document.head.append(style)
-              return Math.max(...[...document.querySelectorAll('[role="dialog"] .orden-mark')]
+              return Math.max(...[...document.querySelectorAll('[role="region"][aria-label="Settings"] .orden-mark')]
                 .map((mark) => mark.parentElement.getBoundingClientRect().height))
             }""",
             width,
@@ -182,7 +182,7 @@ def look(browser: Browser, tag: str, scale: int = 1, touch: bool = False, scheme
     if touch:
         page.evaluate("() => document.documentElement.toggleAttribute('data-touch', true)")
     page.evaluate("() => window.ordenApp.settings.show('general')")
-    wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] .explain')", "the settings")
+    wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"] .explain')", "the settings")
     panes(page, tag, PANES)
     wrapped(page, tag, "general", ("?",))
     page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")

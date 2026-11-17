@@ -15,6 +15,14 @@ vi.mock('../../accounts/src/api', () => ({
   },
 }))
 
+const kept = new Map<string, string>()
+vi.stubGlobal('localStorage', {
+  getItem: (key: string) => kept.get(key) ?? null,
+  setItem: (key: string, value: string) => kept.set(key, value),
+  removeItem: (key: string) => kept.delete(key),
+  clear: () => kept.clear(),
+})
+
 const { feedback } = await import('./feedback.svelte')
 const { log } = await import('../../platform/src/api')
 
@@ -22,6 +30,7 @@ beforeEach(() => {
   api.answer = null
   api.fails = null
   api.sent = []
+  kept.clear()
   feedback.show()
 })
 
@@ -71,5 +80,31 @@ describe('a report', () => {
     feedback.close()
     feedback.show()
     expect(feedback.received).toBeNull()
+  })
+})
+
+describe('the requests sent before (#2059)', () => {
+  test('are none until one is received', async () => {
+    expect(feedback.past).toEqual([])
+    api.fails = new Error('offline')
+    await expect(feedback.send('It broke.')).rejects.toThrow()
+    api.fails = null
+    api.answer = { ok: true, id: 'r0' }
+    await feedback.send('No page for this one.')
+    expect(feedback.past).toEqual([])
+  })
+
+  test('are kept on the device, newest first, by their first line and their page', async () => {
+    api.answer = { ok: true, id: 'r1', url: 'https://orden.so/v1/feedback/r1/a' }
+    await feedback.send('It broke.\nWhen I pressed save.')
+    api.answer = { ok: true, id: 'r2', url: 'https://orden.so/v1/feedback/r2/b' }
+    await feedback.send('Again.')
+
+    feedback.close()
+    feedback.show()
+    expect(feedback.past.map((one) => [one.title, one.url])).toEqual([
+      ['Again.', 'https://orden.so/v1/feedback/r2/b'],
+      ['It broke.', 'https://orden.so/v1/feedback/r1/a'],
+    ])
   })
 })

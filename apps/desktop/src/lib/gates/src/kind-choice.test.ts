@@ -82,14 +82,14 @@ describe('a stored list of kinds turned off', () => {
 })
 
 describe('the kinds a device has', () => {
-  test('are what is written, the online terminal and an application on a page in a browser', () => {
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'web'])
+  test('are what is written, the AI chat, the online terminal and an application on a page in a browser', () => {
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'ai', 'online', 'web'])
   })
 
   test('take Pass in once Settings turns the password manager on', () => {
     setWord(EXPERIMENTAL_WORD, true)
     setWord(PASS_WORD, true)
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'pass', 'web'])
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'ai', 'online', 'pass', 'web'])
     setWord(PASS_WORD, false)
     expect(kindsHere()).not.toContain('pass')
   })
@@ -102,9 +102,10 @@ describe('the kinds a device has', () => {
     expect(kindsHere()).toContain('chat')
   })
 
-  test('leave the web out on a phone', () => {
+  test('leave the web and the AI chat out on a phone', () => {
     viewport.device = 'phone'
     expect(kindsHere()).not.toContain('web')
+    expect(kindsHere()).not.toContain('ai')
   })
 
   test('and on a tablet', () => {
@@ -117,7 +118,7 @@ describe('turning a kind off', () => {
   test('takes it out of the chooser and the file list, and nothing else', () => {
     setKind('canvas', false)
 
-    expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'online', 'web'])
+    expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'ai', 'online', 'web'])
     expect(newFileRows().map((one) => one?.label)).toEqual([
       'New note',
       'New page note',
@@ -136,7 +137,7 @@ describe('turning a kind off', () => {
   })
 
   test('is refused for the last kind offered', () => {
-    for (const kind of ['note', 'canvas', 'pages', 'online'] as const) setKind(kind, false)
+    for (const kind of ['note', 'canvas', 'pages', 'ai', 'online'] as const) setKind(kind, false)
     expect(hiddenKinds.shown).toEqual(['web'])
 
     setKind('web', false)

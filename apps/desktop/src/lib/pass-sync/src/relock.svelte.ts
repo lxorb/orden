@@ -4,6 +4,7 @@ import type { RelockAfter } from './settings'
 export class Relock {
   private timer: ReturnType<typeof setTimeout> | null = null
   private watching = false
+  private gone = false
   private readonly after: () => RelockAfter
   private readonly lock: () => void
 
@@ -14,6 +15,7 @@ export class Relock {
 
   away(): void {
     this.back()
+    this.gone = true
     const minutes = this.after()
     if (minutes === 0) return
     this.timer = setTimeout(() => {
@@ -25,6 +27,11 @@ export class Relock {
   back(): void {
     if (this.timer !== null) clearTimeout(this.timer)
     this.timer = null
+    this.gone = false
+  }
+
+  rearm(): void {
+    if (this.gone) this.away()
   }
 
   watch(): void {

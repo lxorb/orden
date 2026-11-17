@@ -141,7 +141,7 @@ class Runner {
   lastSyncedAt = $state<number | null>(null)
   heldNotes = $state.raw<readonly Held[]>([])
 
-  private current: Engine | null = null
+  private current = $state.raw<Engine | null>(null)
 
   get engine(): Engine | null {
     return this.local ? null : this.current
@@ -173,7 +173,7 @@ class Runner {
   private binding = Promise.resolve()
   private watched: Watched | null = null
 
-  private local = false
+  private local = $state(false)
 
   private lane: Promise<unknown> = Promise.resolve()
 
@@ -1333,7 +1333,7 @@ class Runner {
     return names?.get(device) ?? ''
   }
 
-  private seen: Rows = { spaces: [], notes: [] }
+  private seen = $state.raw<Rows>({ spaces: [], notes: [] })
   private seenAt = $state.raw(new Map<string, { id: string; version: number; hash: string }>())
   private readonly relay = new LiveRelay((kind, what) => this.say(kind, what))
   private readonly mirrors = new Mirrors({

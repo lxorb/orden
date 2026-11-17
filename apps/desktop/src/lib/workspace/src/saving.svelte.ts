@@ -284,9 +284,7 @@ export class Saving {
     stalled: () => Promise<T>,
   ): Promise<T> {
     const notes = this.under(from)
-    let letGo = () => {
-      // Replaced the moment the promise below hands over its resolver.
-    }
+    let letGo: () => void = () => undefined
     const moving = new Promise<void>((go) => {
       letGo = () => go()
     })

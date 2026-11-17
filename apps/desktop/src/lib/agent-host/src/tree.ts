@@ -25,8 +25,8 @@ import {
   writableAt,
 } from '../../agent-verbs/src/api'
 import { indexOf } from './links'
-import { treeReadable } from './guarded'
 import { inFlight as moving } from '../../file-ops/src/api'
+import { readableAll } from './guarded'
 
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const
 type Kind = (typeof KINDS)[number]
@@ -130,7 +130,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
 
   const source = onDisk(place, from)
   writableAt(place, source)
-  treeReadable(place.space.root, source)
+  readableAll(source, from)
 
   const question = await asked(call, null, `Move ${from} to ${to} in ${place.space.name}`)
   if (question) return question
@@ -160,12 +160,12 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const { relative, entry } = await named(place, need(call, 'path'))
   const path = onDisk(place, relative)
-  treeReadable(place.space.root, path)
 
   if (workspace.keepsArchived(path)) {
     throw new Refused('archived', `${relative} is archived, and archived files are kept`)
   }
   writableAt(place, path)
+  readableAll(path, relative)
 
   const rev = maybe(call, 'if_rev')
   if (rev !== null && !entry.is_dir) {

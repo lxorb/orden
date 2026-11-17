@@ -30,7 +30,7 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -44,6 +44,7 @@ import {
   type Marks,
 } from '@orden/glasses/choices'
 import {
+  forget,
   isNumber,
   isRecord,
   isString,
@@ -58,6 +59,7 @@ import { theme } from '../../theme/src/api'
 import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
+const OWED_KEY = 'orden:modes-owed'
 
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
@@ -198,12 +200,15 @@ function marksOf(value: unknown): Marks {
   return out
 }
 
+const LONGEST_PHRASE = 60
+
 function wordsOf(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {}
 
   const out: Record<string, string> = {}
   for (const [id, phrase] of Object.entries(value)) {
-    if (isString(phrase) && phrase.trim() && phrase.length <= 60) out[id] = phrase.trim()
+    if (isString(phrase) && phrase.trim() && phrase.length <= LONGEST_PHRASE)
+      out[id] = phrase.trim()
   }
 
   return out
@@ -749,7 +754,7 @@ class Modes {
   }
 
   setGlassesWord(id: string, phrase: string) {
-    const wanted = phrase.trim().toLowerCase()
+    const wanted = phrase.trim().toLowerCase().slice(0, LONGEST_PHRASE).trim()
     const words = Object.fromEntries(
       Object.entries(this.glassesWords).filter(([one]) => one !== id),
     )
@@ -873,7 +878,7 @@ class Modes {
       return null
     }
 
-    const unheard = this.sent === asked
+    const unheard = this.sent === asked && !Object.keys(this.owed).length
 
     const theirs = ligatureScope(remote.ligatures)
     if (theirs && unheard && theirs !== this.ligatures) {
@@ -1039,7 +1044,24 @@ class Modes {
 
   private sent = 0
 
-  private owed: AccountSettings = {}
+  private get owedTo(): { who: string | null; patch: AccountSettings } | null {
+    const kept = stored(OWED_KEY)
+    if (!isRecord(kept) || !isRecord(kept.patch)) return null
+    const owner = typeof kept.who === 'string' ? kept.who : null
+    const who = account.user?.id ?? null
+    return owner === null || who === null || owner === who
+      ? { who: owner, patch: kept.patch }
+      : null
+  }
+
+  private get owed(): AccountSettings {
+    return this.owedTo?.patch ?? {}
+  }
+
+  private set owed(patch: AccountSettings) {
+    if (!Object.keys(patch).length) forget(OWED_KEY)
+    else keepJson(OWED_KEY, { who: account.user?.id ?? this.owedTo?.who ?? null, patch })
+  }
 
   private session = 0
 
@@ -1048,21 +1070,17 @@ class Modes {
     this.owed = {}
   }
 
+  forgetUnowned(): void {
+    if (this.owedTo?.who === null) this.owed = {}
+  }
+
   private share(patch: AccountSettings) {
     this.sent++
+    if (account.noAccountForSure) return
+    this.owed = { ...this.owed, ...patch }
 
     const token = account.accountToken
-    if (!token) {
-      this.owed = { ...this.owed, ...patch }
-      return
-    }
-
-    const owed = this.owed
-    const session = this.session
-    this.owed = {}
-    void api.saveSettings(token, { ...owed, ...patch }).catch(() => {
-      if (this.session === session) this.owed = { ...owed, ...patch, ...this.owed }
-    })
+    if (token) void this.settle(token)
   }
 
   private async settle(token: string): Promise<void> {
@@ -1070,11 +1088,33 @@ class Modes {
     if (!Object.keys(owed).length) return
 
     const session = this.session
-    this.owed = {}
+    if (!(await this.delivered(token, owed, session))) return
+    if (this.session !== session) return
+    const said = (value: unknown) => JSON.stringify(value)
+    this.owed = Object.fromEntries(
+      Object.entries(this.owed).filter(
+        ([name, value]) => said(value) !== said(owed[name as keyof AccountSettings]),
+      ),
+    )
+  }
+
+  private async delivered(
+    token: string,
+    patch: AccountSettings,
+    session: number,
+  ): Promise<boolean> {
     try {
-      await api.saveSettings(token, owed)
-    } catch {
-      if (this.session === session) this.owed = { ...owed, ...this.owed }
+      await api.saveSettings(token, patch)
+      return true
+    } catch (error) {
+      if (!turnedDown(error)) return false
+      const keys = Object.keys(patch) as (keyof AccountSettings)[]
+      if (keys.length < 2) return true
+      for (const key of keys) {
+        if (this.session !== session) return true
+        if (!(await this.delivered(token, { [key]: patch[key] }, session))) return false
+      }
+      return true
     }
   }
 
@@ -1245,3 +1285,4 @@ export function watchUndated(changed: () => void): () => void {
 }
 
 account.forgetWithSession(() => modes.forgetSession())
+account.holdsNoAccount(() => modes.forgetUnowned())

@@ -19,6 +19,17 @@ export class ApiError extends Error {
   }
 }
 
+const TRY_AGAIN: ReadonlySet<number> = new Set([401, 408, 429])
+
+export function turnedDown(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    !TRY_AGAIN.has(error.status)
+  )
+}
+
 export function fromServer(error: unknown): error is ApiError {
   return error instanceof ApiError && isRecord(error.body) && isString(error.body.error)
 }
@@ -30,7 +41,7 @@ export async function request<T>(
   const headers: Record<string, string> = {}
   if (options.body !== undefined) headers['content-type'] = 'application/json'
   if (options.token) headers.authorization = `Bearer ${options.token}`
-  if (options.device) headers['x-nib-device'] = deviceName()
+  if (options.device) headers['x-orden-device'] = deviceName()
 
   const response = await fetchInTime(`${BASE}${path}`, {
     method: options.method ?? (options.body === undefined ? 'GET' : 'POST'),

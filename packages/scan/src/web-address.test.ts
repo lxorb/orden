@@ -5,7 +5,7 @@ import { droppedAddress, favicon, isWebAddress, keysOf, plainOrigin } from './we
 test('the app’s own origins are refused with a trailing dot too', () => {
   for (const url of [
     'http://tauri.localhost./',
-    'https://nib.localhost../',
+    'https://orden.localhost../',
     'http://IPC.localhost./',
   ]) {
     expect(isWebAddress(url), url).toBe(false)

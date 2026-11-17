@@ -321,6 +321,17 @@ describe('Typora extensions', () => {
     expect(html).toContain('<sup>2</sup>')
   })
 
+  test('subscript and superscript stop at whitespace, like the editor', () => {
+    expect(renderMarkdown('costs ~5 and ~10 each')).not.toContain('<sub>')
+    expect(renderMarkdown('cd ~/foo and ~/bar')).not.toContain('<sub>')
+    expect(renderMarkdown('x^2 and y^3')).not.toContain('<sup>')
+    expect(renderMarkdown('a ~b\\ c~ d')).toContain('<sub>')
+    expect(renderMarkdown('a ^b\\ c^ d')).toContain('<sup>')
+    expect(renderMarkdown('a ~b\\~c~ d')).toContain('<sub>b~c</sub>')
+    expect(renderMarkdown('~a b~ c')).not.toContain('<del>')
+    expect(renderMarkdown('~~a b~~ c')).toContain('<del>a b</del>')
+  })
+
   test('inline math', () => {
     const html = renderMarkdown('mass $E=mc^2$ here')
     expect(html).toContain('math-inline')
@@ -856,6 +867,20 @@ describe('what a note cannot do to the page around it', () => {
     const html = published('H~2~O and X^2^')
     expect(html).toContain('<sub>2</sub>')
     expect(html).toContain('<sup>2</sup>')
+  })
+
+  test('so do the sub and sup tags an AI answer writes, and nothing else they hold', () => {
+    const html = published(
+      'MAD ≈ P<sub>diast</sub> + ⅓ × (P<SUB>syst</SUB> − P<sub>diast</sub>), x<sup>2</sup>',
+    )
+    expect(html).toContain('P<sub>diast</sub>')
+    expect(html).toContain('P<sub>syst</sub>')
+    expect(html).toContain('x<sup>2</sup>')
+    expect(published('a<sub>*i*</sub>')).toContain('a<sub><em>i</em></sub>')
+    expect(published('a<sub onclick=alert(1)>b</sub>')).not.toContain('<sub onclick')
+    expect(published('a<sub>b <img src=x onerror=alert(1)></sub>')).not.toContain('<img src=x')
+    expect(published('a<sub>left open')).not.toContain('<sub>')
+    expect(published('a<sub>b</sup>')).not.toContain('<sub>')
   })
 
   const noHandlers = (html: string) => expect(html).not.toMatch(/<[a-z]+[^>]*\son[a-z]+\s*=/i)

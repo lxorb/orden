@@ -533,7 +533,7 @@ describe('a file explorer', () => {
     expect(target.querySelector('input.rename')).toBeNull()
   })
 
-  test('a file dragged in from elsewhere onto a picked folder lands in that folder', async () => {
+  test('a note dragged in from the tree onto a picked folder moves into that folder', async () => {
     await explorer()
     press('p')
     await settled()
@@ -553,7 +553,7 @@ describe('a file explorer', () => {
     })
     row.dispatchEvent(drop)
     await settled()
-    expect(changed).toEqual(['copy /home/me/Orden/Work/x.md /home/me/Pictures'])
+    expect(changed).toEqual(['move /home/me/Orden/Work/x.md /home/me/Pictures'])
   })
 
   test('draws only the rows of a long folder in columns that can be seen', async () => {

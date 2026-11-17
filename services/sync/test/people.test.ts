@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { presenceOf } from '../src/sync-server/src/people/presence'
-import { profileChanges, statusIn } from '../src/sync-server/src/people/profile'
+import { presenceOf } from '../src/sync-server-engine/src/people/presence'
+import { profileChanges, statusIn } from '../src/sync-server-engine/src/people/profile'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 import { connect, hangUp, hub, send } from './hub-fakes'
 import { invited } from './sync2'
@@ -248,6 +248,20 @@ describe('the routes', () => {
     const gone = await call<PeopleReply>(env, '/v2/me/avatar', { method: 'DELETE', token: member })
     expect(gone.json.profile.avatar).toBeNull()
     expect(env.db.prepare('select count(*) as n from blobs').get()).toEqual({ n: 0 })
+  })
+
+  test('signing in again brings the account’s face with it, as reading the account does', async () => {
+    const small = await upload(member, 'small face')
+    const large = await upload(member, 'large face')
+    await call(env, '/v2/me/avatar', { method: 'PUT', token: member, body: { s: small, l: large } })
+
+    const logged = await mail(() => call(env, '/v1/auth/code', { body: { email: MEMBER } }))
+    const code = /(\d{3}) (\d{3})/.exec(logged)
+    const verified = await call<{ user: { avatar: unknown } }>(env, '/v1/auth/verify', {
+      body: { email: MEMBER, code: `${code?.[1]}${code?.[2]}` },
+    })
+
+    expect(verified.json.user.avatar).toEqual({ s: small, l: large })
   })
 
   test('a face given back stays where the account’s own note shows it', async () => {

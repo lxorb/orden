@@ -218,7 +218,7 @@
     const paper =
       page.file && page.page
         ? await paperOf(
-            { file: page.file, note: store.path, root: spaceRoot },
+            store.paperAt(page.file, spaceRoot),
             page.page,
             asked.signal,
             true,

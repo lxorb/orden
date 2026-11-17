@@ -65,4 +65,3 @@ describe('a locked note or folder copied to a path too long to keep', () => {
     expect(new Protection().agentsMay(`${ROOT}/${deep}/Diary.md`)).toBe(false)
   })
 })
-

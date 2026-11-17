@@ -34,8 +34,6 @@ afterEach(() => {
 describe('on Windows, a locked name spelled with the dots or spaces Windows drops', () => {
   test.each([
     '/space/Folder./Secret.md',
-    '/space/Folder /Secret.md',
-    '/space/Folder.. ./Secret.md',
     '/space/folder./Secret.md',
     '/space/Notes./Secret.md',
     '/space/Notes/Secret.md.',

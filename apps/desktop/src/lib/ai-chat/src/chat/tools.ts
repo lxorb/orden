@@ -1,6 +1,6 @@
 import { isDesktop, invoke } from '../../../platform/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
-import { READER_TABS } from '../../../ai-providers/src/api'
+import { READER_TABS, rightsKey } from '../../../ai-providers/src/api'
 import type { Mode, ToolOutput } from '../../../ai-providers/src/api'
 import { record, text, type ToolDef } from './wire'
 
@@ -22,7 +22,7 @@ interface Listed {
 }
 
 function agentOf(provider: Provider) {
-  return { id: provider.id, name: provider.name, readerTabs: READER_TABS }
+  return { id: rightsKey(provider.id), name: provider.name, readerTabs: READER_TABS }
 }
 
 function toolIn(value: unknown): ToolDef | null {
@@ -41,7 +41,7 @@ export function outputIn(value: unknown): ToolOutput {
   const result = record(value)
   const content = Array.isArray(result.content) ? result.content.map(record) : []
   const given = record(result._meta)
-  const meta = record(given['so.orden.Orden/answer'] ?? given['ch.emilvinu.nib/answer'])
+  const meta = record(given['so.orden.Orden/answer'])
   const approval = meta.status === 'needs_approval' ? text(meta.approval) : ''
   return {
     text: content
@@ -87,17 +87,17 @@ export const crateTools: Tools = {
   },
 
   async call(provider, mode, name, args, thread) {
-    if (name === 'run_agent' || name === 'agent_result') {
-      const { answerText, helperHere } = await import('../helpers/run')
-      const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
-      return {
-        text: answerText(answered),
-        images: [],
-        error: 'refused' in answered,
-        ...('agent' in answered ? { agent: answered.agent } : {}),
-      }
-    }
     try {
+      if (name === 'run_agent' || name === 'agent_result') {
+        const { answerText, helperHere } = await import('../helpers/run')
+        const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
+        return {
+          text: answerText(answered),
+          images: [],
+          error: 'refused' in answered,
+          ...('agent' in answered ? { agent: answered.agent } : {}),
+        }
+      }
       const answered = await invoke<unknown>('ai_agent_call', {
         agent: agentOf(provider),
         mode,

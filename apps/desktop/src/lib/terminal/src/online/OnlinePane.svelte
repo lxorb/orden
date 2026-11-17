@@ -1,13 +1,13 @@
 <script lang="ts">
   import { Facts } from '../../../ui-kit/src/api'
-  import { region } from '../../../platform/src/api'
   import { localDate, localNumber } from '../../../platform/src/api'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../../../ui-kit/src/api'
   import { within } from '../../../platform/src/api'
   import { runner } from '../../../sync-client/src/api'
   import { workspace } from '../../../workspace/src/api'
-  import { cityOf } from './calls'
+  import { summaryOf } from './choosing'
+  import MachinePicker from './MachinePicker.svelte'
   import { opens, rowsOf, type SessionRow } from './listing'
   import { machine } from './machine.svelte'
   import { sessions } from './sessions.svelte'
@@ -58,33 +58,28 @@
   const awake = $derived(state === 'awake' || state === 'starting')
   const server = $derived(known?.machine?.host === 'hetzner')
 
-  const gb = (value: number) => `${localNumber(Math.round(value))} GB`
-
   function bytes(value: number): string {
     const [amount, unit] = value >= 1e9 ? [value / 1e9, 'GB'] : [value / 1e6, 'MB']
     const shown = amount < 10 ? Math.round(amount * 10) / 10 : Math.round(amount)
     return `${localNumber(shown)} ${unit}`
   }
 
-  const spec = $derived.by(() => {
-    const about = known?.machine?.server
-    if (!about) return null
-    const parts = [
-      about.type.toUpperCase(),
-      ...(about.location ? [cityOf(about.location)] : []),
-      `${localNumber(about.cores)} vCPU`,
-      gb(about.memoryGb),
-      gb(about.diskGb),
-    ]
-    if (about.price !== null && about.currency) {
-      const price = new Intl.NumberFormat(region(), {
-        style: 'currency',
-        currency: about.currency,
-      }).format(about.price)
-      parts.push(`${price} a month`)
-    }
-    return parts.map((part) => part.replaceAll(' ', '\u00a0'))
+  const about = $derived(known?.machine?.server ?? null)
+  const summary = $derived(about ? summaryOf(about) : null)
+
+  const allowed = $derived(known?.allowed === true)
+
+  $effect(() => {
+    if (allowed) void machine.offer()
   })
+
+  const offers = $derived(machine.offers)
+
+  const choosable = $derived(
+    offers !== null && (!known?.machine || known.machine.host === 'hetzner'),
+  )
+
+  const running = $derived((sessions.list ?? []).filter((one) => one.alive === true).length)
 
   const stateWords = $derived(
     state === 'awake'
@@ -160,15 +155,28 @@
 </script>
 
 <div class="online">
-  {#if known?.machine}
+  {#if known?.machine ?? choosable}
     <div class="card">
       <div class="orden-setting setting">
         <span class="name">
           Machine
-          {#if spec}<small><Facts parts={spec} /></small>{/if}
+          {#if summary}
+            <small class="summary"><Facts parts={summary.about} /></small>
+            {#if summary.cost.length}<small class="summary"><Facts parts={summary.cost} /></small
+              >{/if}
+          {/if}
         </span>
         <div class="row">
           <span class="hint">{stateWords}</span>
+          {#if choosable}
+            <button
+              class="orden-chip"
+              aria-expanded={machine.picking}
+              disabled={state === 'starting' || state === 'stopping'}
+              onclick={() => (machine.picking = !machine.picking)}
+              >{about?.made ? 'Change' : 'Choose'}</button
+            >
+          {/if}
           <button
             class="orden-chip"
             disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
@@ -177,6 +185,12 @@
           >
         </div>
       </div>
+    </div>
+  {/if}
+
+  {#if machine.picking && offers}
+    <div class="card">
+      <MachinePicker {offers} server={about} {running} chosen={() => machine.chosen()} />
     </div>
   {/if}
 

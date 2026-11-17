@@ -23,11 +23,11 @@ async function repositoryTop(folder: string, root: string): Promise<string | nul
 
 export async function shutNothingFor(program: string, folder: string, os: Os): Promise<boolean> {
   const streamed = folder.replace(/^[A-Za-z]:/, '').includes(':')
-  if (streamed || namesByShortName(folder) || !protection.agentsMayWithin(folder)) return false
+  if (streamed || namesByShortName(folder) || !protection.agentsMayAll(folder)) return false
   if (programOf(program, os).toLowerCase() !== 'git') return true
   const root = workspace.spaces.find((one) => within(one.root, folder, one.root) !== null)?.root
   const top = root ? await repositoryTop(folder, root) : null
-  if (root === undefined || top === null || !protection.agentsMayWithin(root)) return false
+  if (root === undefined || top === null || !protection.agentsMayAll(root)) return false
   return !(await buried()).buriedWithin(root, '')
 }
 

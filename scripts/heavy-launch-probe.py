@@ -284,10 +284,10 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
         )
         terminals = 0
         for name in sorted(webs):
-            window.ask(f"nib.workspace.showSpace({json.dumps(ids[name])}).then(() => 'shown')")
+            window.ask(f"orden.workspace.showSpace({json.dumps(ids[name])}).then(() => 'shown')")
             time.sleep(0.8)
             for file in webs[name]:
-                window.ask(f"nib.workspace.openWeb({json.dumps(file)}).then(() => 'opened')")
+                window.ask(f"orden.workspace.openWeb({json.dumps(file)}).then(() => 'opened')")
                 time.sleep(1.2)
             if terminals < TERMINALS:
                 terminals += 1
@@ -302,7 +302,7 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
                 time.sleep(4)
             say(f"{name}: {len(webs[name])} web tabs")
 
-        window.ask("nib.commands ? 'ok' : 'none'")
+        window.ask("orden.commands ? 'ok' : 'none'")
         asked(window, "commands.run", {"id": "ask-panel"})
         window.ask(WALLPAPER)
         asked(window, "commands.run", {"id": "theme:wallpaper"})
@@ -313,10 +313,10 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
         say(f"extension: {installed}")
 
         first = space_name(0)
-        window.ask(f"nib.workspace.showSpace({json.dumps(ids[first])}).then(() => 'shown')")
+        window.ask(f"orden.workspace.showSpace({json.dumps(ids[first])}).then(() => 'shown')")
         time.sleep(1)
         front = webs[first][0]
-        window.ask(f"nib.workspace.openWeb({json.dumps(front)}).then(() => 'opened')")
+        window.ask(f"orden.workspace.openWeb({json.dumps(front)}).then(() => 'opened')")
         time.sleep(5)
         said = window.ask("JSON.stringify({ tabs: orden.workspace.tabs.length, kinds: orden.workspace.tabs.map((t) => t.kind) })")
         say(f"front set: {said}")
@@ -415,7 +415,7 @@ class Pulse:
 def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float) -> dict:
 
     logs = launch_drive.local(identifier) / "logs"
-    log = logs / "orden.log" if (logs / "orden.log").exists() or not (logs / "nib.log").exists() else logs / "nib.log"
+    log = logs / "orden.log"
     before = log.read_text(encoding="utf-8", errors="replace") if log.exists() else ""
     app, window, hwnd, _ = started(exe, identifier, spaces, trace=False)
     page: list[float] = []
@@ -430,7 +430,7 @@ def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float
         while time.perf_counter() < end:
             name = names[turn % len(names)]
             began = time.perf_counter()
-            window.ask(f"nib.workspace.showSpace({json.dumps(ids[name])}).then(() => 'shown')")
+            window.ask(f"orden.workspace.showSpace({json.dumps(ids[name])}).then(() => 'shown')")
             page.append((time.perf_counter() - began) * 1000)
             for _ in range(3):
                 began = time.perf_counter()

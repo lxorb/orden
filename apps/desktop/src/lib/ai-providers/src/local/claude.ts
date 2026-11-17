@@ -8,7 +8,7 @@ import {
   type ToolHeard,
 } from './heard'
 
-const OWN = /^mcp__(?:orden|nib)__/
+const OWN = /^mcp__orden__/
 
 export function claudeReader(): (line: string) => Heard {
   let streamed = false

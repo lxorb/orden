@@ -210,11 +210,7 @@ jobs:
           test -x "result/bin/$pname"
           find result/bin result/share -type f -o -type l | sort | tee files.txt
           case "$pname" in
-            orden)
-              test "$(readlink result/bin/nib)" = orden
-              expected=2
-              ;;
-            orden-unstable | orden-source) expected=1 ;;
+            orden | orden-unstable | orden-source) expected=1 ;;
             *) echo "::error::unexpected Nix package name: $pname"; exit 1 ;;
           esac
           test "$(find result/bin -mindepth 1 | wc -l)" -eq "$expected"

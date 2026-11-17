@@ -125,7 +125,9 @@ export class Mirror {
   }
 
   async start(): Promise<void> {
-    this.seen = seenOf(await this.disk.loadSeen())
+    const there = await this.disk.isDir('')
+    if (!there) await this.disk.mkdir('')
+    this.seen = there ? seenOf(await this.disk.loadSeen()) : {}
     await this.queue(() => this.settle(null))
     if (this.halted()) return
     this.stops.push(
@@ -470,7 +472,6 @@ function keep(mount: Mounted, disk: (folder: string) => WorkDisk = crateDisk): H
   const run = async () => {
     if (stop.signal.aborted) return
     const working = disk(key)
-    await working.mkdir('').catch(() => undefined)
     const mirror = new Mirror(mount.folder, working)
     try {
       await mirror.start()

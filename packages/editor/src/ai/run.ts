@@ -8,15 +8,15 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { fenceCode, fenceLanguage } from '../fence'
-import { enclosingNamed } from '../nodes'
 import { documentOf, type SharedDoc } from '../shared'
+import { enclosingNamed } from '../nodes'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
 export interface AiAsk {
   prompt: string
   note: string | null
-  doc: SharedDoc | null
-  place: string | null
+  shows: SharedDoc | null
+  place?: string | null
   started: (model: string) => void
   wrote: (text: string) => void
 }
@@ -159,7 +159,7 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
     {
       prompt,
       note: mentionsNote(prompt) ? view.state.doc.toString() : null,
-      doc: documentOf(view),
+      shows: documentOf(view),
       place: view.state.facet(aiPlace),
       started: (model) => beginAnswer(view, id, model),
       wrote: (text) => writeAnswer(view, id, text),

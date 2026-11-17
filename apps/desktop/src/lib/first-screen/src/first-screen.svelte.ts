@@ -104,6 +104,7 @@ export function frontOf(state: Session): Draft | null {
     const frame = state.layout?.frame
     if (!frame) return state.tabs?.[state.active ?? 0] ?? null
     if (frame.kind !== 'pane' || frame.pane.stacked === true) return null
+    if (frame.pane.active < 0) return null
     return frame.pane.tabs[frame.pane.active] ?? frame.pane.tabs[0] ?? null
   })()
 

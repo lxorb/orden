@@ -8,6 +8,7 @@ const world = vi.hoisted(() => ({
 }))
 
 vi.mock('../../ai-chat/src/quick.svelte', () => ({
+  side: { open: false, of: null },
   quick: {
     open: true,
     ready: true,

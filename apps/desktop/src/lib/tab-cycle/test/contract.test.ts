@@ -47,6 +47,12 @@ describe('stepping through the tabs', () => {
     expect(world.active).toBe('a')
   })
 
+  test('comes back to the tabs from an essential in front', () => {
+    world.active = 'essential'
+    cycleTab(-1)
+    expect(world.active).toBe('c')
+  })
+
   test('keeps the chosen order', () => {
     tabCycle.setByUse(true)
     expect(tabCycle.byUse).toBe(true)

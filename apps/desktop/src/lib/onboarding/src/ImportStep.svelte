@@ -19,7 +19,7 @@
     for (const trouble of await bringing().browser(importer)) setup.tell(trouble)
     setup.got('browser')
     stage = 'done'
-    setTimeout(() => setup.next(), 700)
+    setTimeout(() => setup.next('import'), 700)
   }
 </script>
 
@@ -42,7 +42,7 @@
     disabled: stage === 'done',
     onclick: () => void bring(),
   }}
-  quiet={{ label: 'Not now', disabled: stage !== 'asking', onclick: () => setup.next() }}
+  quiet={{ label: 'Not now', disabled: stage !== 'asking', onclick: () => setup.next('import') }}
 >
   <ul class="o-list rise">
     {#each BROUGHT as one (one)}

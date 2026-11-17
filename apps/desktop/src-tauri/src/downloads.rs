@@ -15,6 +15,8 @@ const DOWNLOADS_DIR: &str = "ORDEN_DOWNLOADS_DIR";
 
 const LONGEST_NAME: usize = 180;
 
+const LONGEST_EXTENSION: usize = 32;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum State {
@@ -290,12 +292,20 @@ pub(crate) fn clean_name(suggested: &OsStr) -> String {
         stem.to_string()
     };
 
-    let room = LONGEST_NAME.saturating_sub(ext.chars().count()).max(1);
-    if stem.chars().count() <= room {
+    let (stem, ext) = if ext.len() > LONGEST_EXTENSION {
+        (format!("{stem}{ext}"), "")
+    } else {
+        (stem, ext)
+    };
+    let room = LONGEST_NAME.saturating_sub(ext.len()).max(1);
+    if stem.len() <= room {
         return format!("{stem}{ext}");
     }
-    let cut: String = stem.chars().take(room).collect();
-    format!("{}{ext}", cut.trim_end_matches(['.', ' ']))
+    let mut end = room;
+    while !stem.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}{ext}", stem[..end].trim_end_matches(['.', ' ']))
 }
 
 fn split_extension(name: &str) -> (&str, &str) {
@@ -709,6 +719,21 @@ mod tests {
             .extension()
             .is_some_and(|ext| ext.eq_ignore_ascii_case("pdf")));
         assert_eq!(kept.chars().count(), super::LONGEST_NAME);
+    }
+
+    #[test]
+    fn a_long_name_in_any_script_fits_a_file_system_name() {
+        let wide = name(&format!("{}.pdf", "日".repeat(150)));
+        assert!(wide.len() <= super::LONGEST_NAME, "{}", wide.len());
+        assert!(wide.ends_with("日.pdf"));
+        let faces = name(&format!("{}.png", "😀".repeat(100)));
+        assert!(faces.len() <= super::LONGEST_NAME);
+        assert!(Path::new(&faces)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("png")));
+        let tail = name(&format!("a.{}", "x".repeat(300)));
+        assert!(tail.len() <= super::LONGEST_NAME, "{}", tail.len());
+        assert!(tail.starts_with("a."));
     }
 
     #[test]

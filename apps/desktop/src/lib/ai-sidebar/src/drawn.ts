@@ -1,5 +1,5 @@
 import type { RenderOptions } from '@orden/markdown'
-import { escape } from '@orden/markdown/html'
+import { escapeAll } from '@orden/markdown/html'
 import { viewHtml } from '../../chat-kit/src/api'
 import { notePicture } from '../../link-index/src/api'
 
@@ -22,9 +22,8 @@ const DRIVE = /^[a-z]:[\\/]/i
 
 function placeOf(src: string): { here: boolean; host: string } {
   if (DRIVE.test(src)) return { here: true, host: '' }
-  const written = src.replace(/&amp;/g, '&')
   try {
-    const read = HERE.map((base) => ({ base, at: new URL(written, base) }))
+    const read = HERE.map((base) => ({ base, at: new URL(src, base) }))
     const here = read.every(
       ({ base, at }) => at.protocol === base.protocol && at.host === base.host,
     )
@@ -59,20 +58,29 @@ export function withCodeBars(html: string, copy: string, sized = false): string 
   })
 }
 
+const WRITTEN = /&(amp|lt|gt|quot|#39);/g
+
+const WRITTEN_AS: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
+
+function unwritten(attribute: string): string {
+  return attribute.replace(WRITTEN, (whole, name: string) => WRITTEN_AS[name] ?? whole)
+}
+
 function pictures(html: string, from: string | null, shown: ReadonlySet<string>): string {
   return html.replace(PICTURE, (whole, attributes: string) => {
-    const src = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
+    const written = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
+    const src = unwritten(written)
     if (!src) return ''
     if (/^data:/i.test(src)) return whole
     const { here, host } = placeOf(src)
     if (here) {
-      return `<img${attributes.replace(`src="${src}"`, () => `src="${escape(notePicture(src, from, ''))}"`)}>`
+      return `<img${attributes.replace(`src="${written}"`, () => `src="${escapeAll(notePicture(src, from, ''))}"`)}>`
     }
     if (shown.has(src)) return whole
     const alt = /\balt="([^"]*)"/.exec(attributes)?.[1] ?? ''
     return (
-      `<button type="button" class="picture-held" data-picture="${src}" title="${src}">` +
-      `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || host || src}</span></button>`
+      `<button type="button" class="picture-held" data-picture="${written}" title="${written}">` +
+      `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || escapeAll(host || src)}</span></button>`
     )
   })
 }

@@ -432,10 +432,7 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
     };
 
     let start = match asked.under {
-        Some((prefix, backend)) => parts
-            .iter()
-            .position(|part| part.prefix == prefix)
-            .and_then(|part| Some((part, forest.backend(part, backend)?))),
+        Some((prefix, backend)) => found_in(parts, &forest, prefix, backend),
         None => forest.root(0).map(|root| (0, root)),
     };
     if let Some((part, node)) = start {
@@ -465,13 +462,23 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
     }
 }
 
+fn found_in<'a>(
+    parts: &[Part],
+    forest: &Forest<'a>,
+    prefix: &str,
+    backend: u64,
+) -> Option<(usize, &'a Value)> {
+    parts
+        .iter()
+        .enumerate()
+        .filter(|(_, part)| part.prefix == prefix)
+        .find_map(|(at, _)| forest.backend(at, backend).map(|node| (at, node)))
+}
+
 pub fn holds(parts: &[Part], prefix: &str, backend: u64) -> bool {
     let none = HashSet::new();
     let forest = Forest::new(parts, &none);
-    parts
-        .iter()
-        .position(|part| part.prefix == prefix)
-        .is_some_and(|part| forest.backend(part, backend).is_some())
+    found_in(parts, &forest, prefix, backend).is_some()
 }
 
 struct Writer<'a> {
@@ -838,6 +845,29 @@ mod tests {
                 origin: "https://shop.example",
             },
         )
+    }
+
+    #[test]
+    fn an_element_of_a_frame_in_the_page_s_own_process_is_held_and_written() {
+        let parts = vec![
+            Part {
+                prefix: String::new(),
+                nodes: page(),
+                owner: None,
+            },
+            Part {
+                prefix: String::new(),
+                nodes: frame(),
+                owner: Some((0, 13)),
+            },
+        ];
+        assert!(holds(&parts, "", 20));
+        assert!(holds(&parts, "", 5));
+        assert!(!holds(&parts, "", 99));
+        assert_eq!(
+            written(&parts, Some(("", 20)), MOST).text,
+            "- button \"Pay now\" [ref=e20]"
+        );
     }
 
     #[test]

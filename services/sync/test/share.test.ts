@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
-import { MOST_MEMBERS } from '../src/sync-server/src/spaces/share'
+import { MOST_MEMBERS } from '../src/sync-server-engine/src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 
@@ -829,7 +829,7 @@ describe('an invitation', () => {
     ).toEqual({ n: 0 })
   })
 
-  test('opens one sign-in when it is followed twice at once', async () => {
+  test('opens no sign-in by itself, however often it is followed', async () => {
     const link = await inviteLink('fresh@example.com', 'read')
     const sessions = () =>
       (env.db.prepare('select count(*) as n from sessions').get() as { n: number }).n
@@ -839,8 +839,12 @@ describe('an invitation', () => {
       [0, 1].map(() => call(env, `/v1/join/${link}`, { method: 'POST' })),
     )
 
-    expect(answers.map((one) => one.status).sort()).toEqual([200, 404])
-    expect(sessions() - before).toBe(1)
+    expect(answers.map((one) => [one.status, one.json.code])).toEqual([
+      [200, true],
+      [200, true],
+    ])
+    expect(answers.some((one) => 'token' in one.json)).toBe(false)
+    expect(sessions() - before).toBe(0)
   })
 
   test('stops being a shortcut once it has run out', async () => {

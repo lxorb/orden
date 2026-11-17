@@ -175,6 +175,31 @@ describe('while a page is being built', () => {
     expect(pages.of('a').openable).toBe(true)
   })
 
+  test('an address given while the page is being built is gone to once it arrives', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+
+    void pages.go('a', 'https://example.org/')
+    arrive()
+    await shown
+    await settle()
+
+    expect(last('web_navigate')).toMatchObject({ tab: 'a', url: 'https://example.org/' })
+    expect(pages.of('a').url).toBe('https://example.org/')
+  })
+
+  test('the address the page was built with is not gone to again', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+
+    void pages.go('a', SITE)
+    arrive()
+    await shown
+    await settle()
+
+    expect(commands()).not.toContain('web_navigate')
+  })
+
   test('a second placement asks for no second page', async () => {
     const shown = pages.show('a', SITE, PANE)
     const arrive = await asked()
@@ -413,6 +438,39 @@ test('a page that lands is photographed once, not once per report', async () => 
   await settle()
 
   expect(commands().filter((one) => one === 'web_shot')).toHaveLength(1)
+})
+
+describe('while the address is being typed', () => {
+  async function typing() {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+    const moved = await hearing('orden://web-tab')
+    const went = (url: string) =>
+      moved({ payload: { tab: 'a', url, title: '', back: true, forward: false, loading: false } })
+    pages.typing('a', true)
+    return went
+  }
+
+  test('a page that moves on its own is where the tab is once the typing ends', async () => {
+    const went = await typing()
+    went('https://example.com/b')
+    expect(pages.of('a').url).toBe(SITE)
+
+    pages.typing('a', false)
+    expect(pages.of('a').url).toBe('https://example.com/b')
+  })
+
+  test('an address gone to keeps its place when the typing ends', async () => {
+    const went = await typing()
+    went('https://example.com/b')
+    await pages.go('a', 'https://example.org/')
+
+    pages.typing('a', false)
+    expect(pages.of('a').url).toBe('https://example.org/')
+  })
 })
 
 describe("a page's mark", () => {
@@ -1264,20 +1322,22 @@ describe("the card's corner a page is placed with", () => {
     )
   })
 
-  test("is its own pane's corner, as that pane's card says it", () => {
+  test("is its own pane's foot, square where that card's foot is square", () => {
     const card = {}
     const hole = { closest: (selector: string) => (selector === '[data-pane]' ? card : null) }
-    const foot = (radius: string) =>
+    const foot = (left: string, right: string) =>
       Object.assign(globalThis, {
         document: { querySelector: () => null },
-        getComputedStyle: (of: object) => ({
-          getPropertyValue: (token: string) =>
-            of === card && token === '--card-radius' ? radius : '10px',
-        }),
+        getComputedStyle: (of: object) =>
+          of === card
+            ? { borderBottomLeftRadius: left, borderBottomRightRadius: right }
+            : { getPropertyValue: () => '10px' },
       })
-    foot('10px')
+    foot('10px', '10px')
     expect(cardCorner(hole as unknown as Element)).toBe(10)
-    foot('0px')
+    foot('0px', '0px')
+    expect(cardCorner(hole as unknown as Element)).toBe(0)
+    foot('10px', '0px')
     expect(cardCorner(hole as unknown as Element)).toBe(0)
   })
 

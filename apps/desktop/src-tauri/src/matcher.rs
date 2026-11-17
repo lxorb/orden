@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
-use crate::regex::{Pattern, BUDGET};
+use crate::regex::{budget_for, Pattern};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -108,7 +108,7 @@ struct Facts<'a> {
     body: &'a str,
     starts: OnceCell<Vec<usize>>,
     tags: Vec<String>,
-    front: HashMap<String, String>,
+    front: HashMap<String, Vec<String>>,
     units: [Vec<Region>; UNITS],
     budget: Cell<usize>,
 }
@@ -319,7 +319,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
     out
 }
 
-fn front_matter(body: &str) -> HashMap<String, String> {
+fn front_matter(body: &str) -> HashMap<String, Vec<String>> {
     let mut out = HashMap::new();
     let Some(block) = front_matter_block(body) else {
         return out;
@@ -330,14 +330,16 @@ fn front_matter(body: &str) -> HashMap<String, String> {
             continue;
         }
 
-        let Some((name, value)) = line.split_once(':') else {
+        let Some((name, _)) = line.split_once(':') else {
             continue;
         };
-        if name.trim().is_empty() {
+        let name = name.trim();
+        if name.is_empty() {
             continue;
         }
 
-        out.insert(name.trim().to_lowercase(), value.trim().to_string());
+        out.entry(name.to_lowercase())
+            .or_insert_with(|| crate::front_matter::list(body, &block, name));
     }
 
     out
@@ -529,8 +531,17 @@ impl Matcher {
             },
             units,
             starts,
-            budget: Cell::new(BUDGET),
+            budget: Cell::new(budget_for(body.len())),
         }
+    }
+}
+
+fn patterned_in(term: &Term) -> bool {
+    match term {
+        Term::Regex(_) => true,
+        Term::All(of) | Term::Any(of) => of.iter().any(patterned_in),
+        Term::Not(of) | Term::Scope { of, .. } => patterned_in(of),
+        _ => false,
     }
 }
 
@@ -556,7 +567,11 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             answered.then_some(out)
         }
 
-        Term::Not(of) => walk(of, note, facts, region).is_none().then(Vec::new),
+        Term::Not(of) => {
+            let found = walk(of, note, facts, region);
+            let undecided = facts.budget.get() == 0 && patterned_in(of);
+            (found.is_none() && !undecided).then(Vec::new)
+        }
 
         Term::Text {
             needle,
@@ -603,15 +618,18 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             let held = facts.front.get(name);
 
             if matches!(compare, Compare::Null) {
-                return held.is_none_or(|one| one.trim().is_empty()).then(Vec::new);
+                return held
+                    .is_none_or(|all| all.iter().all(|one| one.trim().is_empty()))
+                    .then(Vec::new);
             }
 
             let held = held?;
             match value {
                 None => Some(Vec::new()),
-                Some(wanted) => {
-                    held_against(held, wanted, *compare, upto.as_deref()).then(Vec::new)
-                }
+                Some(wanted) => held
+                    .iter()
+                    .any(|one| held_against(one, wanted, *compare, upto.as_deref()))
+                    .then(Vec::new),
             }
         }
 
@@ -1095,6 +1113,32 @@ mod tests {
     }
 
     #[test]
+    fn front_matter_answers_for_every_member_of_a_list_and_a_value_however_written() {
+        let pair = |one: &str, said: &str, compare: &str| {
+            format!(
+                r#"{{"kind":"property","name":"{one}","value":"{said}","compare":"{compare}"}}"#
+            )
+        };
+        let missing = |one: &str| {
+            format!(r#"{{"kind":"property","name":"{one}","value":null,"compare":"null"}}"#)
+        };
+
+        let listed = "---\nauthors:\n  - Herbert\n  - Ursula\ntags: [a, b] # old\n---\n\nWords.\n";
+        assert!(answers(&pair("authors", "herbert", "has"), listed));
+        assert!(answers(&pair("authors", "Ursula", "is"), listed));
+        assert!(!answers(&pair("authors", "Frank", "has"), listed));
+        assert!(answers(&pair("tags", "a", "is"), listed));
+        assert!(answers(&pair("tags", "b", "is"), listed));
+        assert!(!answers(&pair("tags", "old", "has"), listed));
+        assert!(!answers(&missing("authors"), listed));
+
+        let quoted = "---\nstatus: \"done\"\nnext: done # soon\nempty:\n---\n";
+        assert!(answers(&pair("status", "done", "is"), quoted));
+        assert!(answers(&pair("next", "done", "is"), quoted));
+        assert!(answers(&missing("empty"), quoted));
+    }
+
+    #[test]
     fn a_block_nobody_closed_holds_no_keys() {
         const OPEN: &str = "---\nstatus: done\n\n# Plan\n";
 
@@ -1221,6 +1265,36 @@ mod tests {
 
         assert_eq!(marked(&pattern("note", false), body), ["note", "note"]);
         assert_eq!(marked(&pattern("の.", false), body), ["のn", "のa", "のn"]);
+    }
+
+    #[test]
+    fn a_pattern_finds_its_match_in_a_note_of_a_few_pages() {
+        let body = format!(
+            "{}the zebra\n",
+            format!("{}\n", "the cat sat on the mat ".repeat(20)).repeat(10)
+        );
+        let query = pattern("the.*zebra", false);
+        assert_eq!(lines(&query, &body), ["the zebra"]);
+        assert!(!answers(
+            &format!(r#"{{"kind":"not","of":{query}}}"#),
+            &body
+        ));
+    }
+
+    #[test]
+    fn a_pattern_that_runs_out_never_counts_as_missing() {
+        let body = format!("{}\n", "a".repeat(30)).repeat(2000);
+        let hopeless = pattern("(a+)+b", false);
+        assert!(!answers(&hopeless, &body));
+        assert!(!answers(
+            &format!(r#"{{"kind":"not","of":{hopeless}}}"#),
+            &body
+        ));
+        let absent = format!(r#"{{"kind":"not","of":{}}}"#, text("zzz"));
+        assert!(answers(
+            &format!(r#"{{"kind":"any","of":[{hopeless},{absent}]}}"#),
+            &body
+        ));
     }
 
     #[test]

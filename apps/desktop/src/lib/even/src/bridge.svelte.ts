@@ -255,7 +255,7 @@ class Bridge {
       settings: 'Settings',
       reset: 'Reset glasses settings',
       done: 'Done',
-      today: 'Today',
+      today: 'Todos',
     }
   }
 

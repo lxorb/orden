@@ -622,6 +622,32 @@ describe('the right side and the scratchpad take turns', () => {
     expect(workspace.rightShows).toBeNull()
   })
 
+  test('on a phone, a note opened from the drawer is shown over the card and the side', async () => {
+    const was = viewport.device
+    viewport.device = 'phone'
+    try {
+      for (const right of [() => pad.show(false), () => workspace.showPanel('outline')]) {
+        right()
+        workspace.panel = 'tree'
+        await workspace.open('/space/a.md')
+        expect(workspace.panel).toBeNull()
+        expect(pad.on).toBe(false)
+        expect(workspace.rightShows).toBeNull()
+      }
+    } finally {
+      viewport.device = was
+    }
+  })
+
+  test('beside a wide window, a note opened keeps the side and the card as they were', async () => {
+    workspace.showPanel('outline')
+    await workspace.open('/space/a.md')
+    expect(workspace.rightShows).toBe('outline')
+    pad.show(false)
+    await workspace.open('/space/a.md')
+    expect(pad.on).toBe(true)
+  })
+
   test('the drawer opens it out of the way of itself, and shuts it the same way', () => {
     workspace.panel = 'tree'
     workspace.rightPanel = 'outline'
@@ -1424,6 +1450,19 @@ describe('walking back along a trail', () => {
     expect(looking.trail).toEqual(['/space/b.md'])
     expect(looking.path).toBe('/space/b.md')
   })
+
+  test('and stays on the note it shows when the gone one was behind it, so Forward still goes on', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    looking.trail = ['/space/a.md', '/space/gone.md', '/space/b.md', '/space/c.md']
+    looking.at = 2
+
+    await workspace.walk(1, looking.id)
+
+    expect(looking.trail).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(looking.trail[looking.at]).toBe('/space/b.md')
+    expect(looking.path).toBe('/space/b.md')
+  })
 })
 
 describe('a strip whose tabs start at its pane’s edge (#1139)', () => {
@@ -1684,6 +1723,21 @@ describe('closing what is in a pane', () => {
       '/space/c.md',
     ])
     writes.mockRestore()
+  })
+
+  test("a closed pane's tabs come back after the tabs of the pane they reopen into", async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    await workspace.open('/space/c.md')
+
+    await workspace.closePane(workspace.panes.focusedId)
+    await workspace.reopenClosed()
+
+    expect(workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+      '/space/c.md',
+    ])
   })
 
   test('a tab dragged out of a pane closes the pane behind it', async () => {
@@ -3023,6 +3077,24 @@ describe('closing a tab with unsaved words', () => {
     expect(sent.filter((call) => call.command === 'write_note').map((call) => call.path)).toEqual(
       expect.arrayContaining(['/space/One.md', '/space/Two.md']),
     )
+  })
+
+  test('Save on the one draft among several tabs closes all of them once it is saved', async () => {
+    await workspace.open('/space/a.md')
+    const plain = workspace.tabs.find((one) => one.path === '/space/a.md')
+    const tab = draft('# Plan\n\nwords')
+    if (!plain) throw new Error('no note')
+    sheet.answer = 'save'
+
+    await workspace.closeMany([plain.id, tab.id])
+    await vi.waitFor(() => expect(placing.asked).toHaveLength(1))
+    expect(open(plain.id) && open(tab.id)).toBe(true)
+
+    await workspace.save(tab, '/space', 'Plan.md')
+    placing.asked[0]?.saved?.()
+    await vi.waitFor(() => expect(open(tab.id)).toBe(false))
+    expect(open(plain.id)).toBe(false)
+    expect(sheet.asked).toHaveLength(1)
   })
 
   test('asks nothing of an empty new tab, a note with a file, or a website', async () => {
@@ -4414,6 +4486,17 @@ describe('what a tab s own menu does to the strip', () => {
     expect(strip()).toEqual([])
   })
 
+  test('closes every tab of a strip with none of them in front', async () => {
+    await opened('/space/a.md', '/space/b.md')
+    workspace.deselect()
+    const pane = workspace.panes.focusedId
+
+    expect(workspace.closesAllIn(pane)).toBe(2)
+    await workspace.closeAllIn(pane)
+
+    expect(strip()).toEqual([])
+  })
+
   test('says how many tabs each close would take', async () => {
     const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
 
@@ -4461,8 +4544,8 @@ describe('what a tab s own menu does to the strip', () => {
     },
   )
 
-  test('does not duplicate the chat, which there is only one of', () => {
-    workspace.openChat()
+  test('does not duplicate an AI chat, which shows one thread', () => {
+    workspace.openChat('t1')
     const chat = workspace.active
     if (!chat) throw new Error('no chat')
 
@@ -4484,19 +4567,33 @@ describe('what a tab s own menu does to the strip', () => {
     },
   )
 
-  test('reopening a closed chat while another is open brings that one to the front', async () => {
+  test('reopening a closed AI chat brings back its own thread beside the other', async () => {
     await workspace.open('/space/a.md')
-    workspace.openChat()
+    workspace.openChat('t1', 'First')
     const first = workspace.active
     if (!first) throw new Error('no chat')
     workspace.closeEach([first.id])
-    workspace.openChat()
-    const second = workspace.active
+    workspace.openChat('t2', 'Second')
 
     await workspace.reopenClosed()
 
-    expect(workspace.tabs.filter((tab) => tab.kind === 'chat')).toHaveLength(1)
-    expect(workspace.active).toBe(second)
+    const chats = workspace.tabs.filter((tab) => tab.kind === 'chat')
+    expect(chats.map((tab) => tab.address).sort()).toEqual(['t1', 't2'])
+    expect(workspace.active.address).toBe('t1')
+  })
+
+  test('opens each AI chat thread in its own tab, and the same thread in the same tab', () => {
+    const one = workspace.openChat('t1', 'One')
+    const two = workspace.openChat('t2', 'Two')
+    const again = workspace.openChat('t1', 'One')
+    const fresh = workspace.openChat()
+
+    const chats = workspace.tabs.filter((tab) => tab.kind === 'chat')
+    expect(new Set([one, two, fresh]).size).toBe(3)
+    expect(again).toBe(one)
+    expect(chats).toHaveLength(3)
+    expect(chats.find((tab) => tab.id === two)?.name).toBe('Two')
+    expect(chats.find((tab) => tab.id === fresh)?.address).toBeUndefined()
   })
 
   test('moves a tab into a new pane beside its own when there is no other', async () => {
@@ -4943,6 +5040,29 @@ describe('an essential', () => {
     workspace.close(c.id)
     await workspace.reopenClosed()
     expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
+  })
+
+  test('in front at a restart gives the strip the tab used last, not the first', async () => {
+    keep('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const written = workspace.layout()
+
+    onePane()
+    await workspace.applyLayout(written, false)
+
+    expect(workspace.active?.path).toBe('/space/c.md')
+  })
+
+  test('duplicated, puts its copy at the end of the strip', async () => {
+    keep('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const essential = workspace.tabs.find((one) => one.essential === '/space/a.md')!
+
+    ops.duplicateTab(essential.id)
+
+    expect(strip()).toEqual(['/space/b.md', '/space/c.md', '/space/a.md'])
   })
 
   test('shows its file with no tab in the strip', async () => {

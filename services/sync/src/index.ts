@@ -18,45 +18,17 @@ import {
   NAME_LIMIT,
   failed,
   programMayReach,
-  people,
-  ownProfile,
-  presentOwnProfile,
   push,
   sendDue,
-  fillFronts,
-  sweepLeftovers,
-  finishErasing,
-  sweepAnswers,
   sweepVersions,
   expireGuests,
   guestMayReach,
   presentGuest,
   renameGuest,
-  notes,
-  rooms,
-  devices,
-  hubDoor,
   settings,
   protectedRoutes,
-  v2Docs,
-  v2Spaces,
-  sweepMisnamed,
-  v2Blobs,
-  v2Files,
-  v2Maps,
-  sweepTreeOps,
-  spaces,
-  join,
   usage,
-  recheckDomains,
-  expireRequests,
-  sharedWithMe,
   themes,
-  time,
-  inbox,
-  pad,
-  purgeExpired,
-  trash,
   QUOTA,
   usedBytes,
   steadyEnv,
@@ -66,7 +38,38 @@ import {
   type Whoever,
 } from './sync-server/src/api'
 import {
+  people,
+  ownProfile,
+  presentOwnProfile,
+  fillFronts,
+  sweepLeftovers,
+  finishErasing,
+  sweepAnswers,
+  notes,
+  rooms,
+  devices,
+  hubDoor,
+  v2Docs,
+  v2Spaces,
+  sweepMisnamed,
+  v2Blobs,
+  v2Files,
+  v2Maps,
+  sweepTreeOps,
+  spaces,
+  join,
+  recheckDomains,
+  expireRequests,
+  sharedWithMe,
+  time,
+  inbox,
+  pad,
+  purgeExpired,
+  trash,
+} from './sync-server-engine/src/api'
+import {
   account,
+  addressUndo,
   accountById,
   auth,
   forgetHalfDone,
@@ -167,6 +170,7 @@ app.route('/v2/online/machine', machineBundle)
 app.route('/v1/join', join)
 
 app.route('/v1/account/left', left)
+app.route('/v1/account/undo', addressUndo)
 
 app.route('/v1/feedback', feedback)
 
@@ -414,7 +418,7 @@ function serve(request: Request, env: Env, context?: ExecutionContext) {
 
 export default { fetch: serve, scheduled }
 
-export { NoteRoom } from './sync-server/src/api'
-export { AccountHub } from './sync-server/src/api'
+export { NoteRoom } from './sync-server-engine/src/api'
+export { AccountHub } from './sync-server-engine/src/api'
 export { ChatLog } from './sync-server-chats/src/api'
 export { AppRelay } from './sync-server-machines/src/api'

@@ -49,7 +49,7 @@
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { keptAt, readsBefore, roomFor, settled, stripLanding } from './free'
+  import { keptAt, readsBefore, roomFor, settled, stripLanding, stripPlace } from './free'
   import { meets, packed, pushedAside } from './pack'
   import {
     around,
@@ -152,7 +152,7 @@
     const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
     if (!panesOf) return null
     const corner = { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h }
-    const slots = lay(panesOf, corner, { tabsOf, shapeOf }).slots
+    const slots = lay(panesOf, corner, { tabsOf, shapeOf, named: CAPTION_ROOM }).slots
     if (slots.length) return outlineFor(key, slots)
     return outlineOf([standIn(corner)], NAME_ROOM, nameWide(key))
   }
@@ -246,9 +246,10 @@
     flyFrame = 0
   }
 
-  const NAME_ROOM = 72
+  const NAMES_MOST = 2.5
   const SPACE_NAMES_MOST = 2
-  const NAMES_MOST = 1.8
+  const NAME_ROOM = 72
+  const CAPTION_ROOM = 8 + 20 * NAMES_MOST
 
   const shapeOf = (paneId: string): number => {
     const measured = shownBox(paneId)
@@ -349,7 +350,7 @@
         {
           key,
           frame: panesOf,
-          slots: lay(panesOf, place, { tabsOf, shapeOf }).slots,
+          slots: lay(panesOf, place, { tabsOf, shapeOf, named: CAPTION_ROOM }).slots,
         },
       ]
     }),
@@ -453,8 +454,6 @@
     if (pane && pane.w > 0) return { w: pane.w, h: pane.w * (slot.h / slot.w) }
     return { w: slot.w * 3, h: slot.h * 3 }
   }
-
-  const CAPTION_ROOM = 44
 
   function captioned(box: Box): Box {
     return { ...box, h: box.h + CAPTION_ROOM }
@@ -1344,16 +1343,12 @@
     }
     const id = ids[0]
     if (!id) return
-    const strip = tabsOf(landing.paneId)
-    const back = strip.filter((one) => one !== id)
-    const into = landing.before === null ? back.length : back.indexOf(landing.before)
-    if (strip.indexOf(id) === into && byId.get(id)?.paneId === landing.paneId) return
+    const into = stripPlace(tabsOf(landing.paneId), id, landing.before)
+    if (into === null) return
 
-    const held = workspace.heldIn(landing.paneId).filter((one) => one.id !== id)
-    const before = landing.before === null ? -1 : held.findIndex((one) => one.id === landing.before)
     const fronts = workspace.panes.all.map((one) => [one.id, one.activeTabId] as const)
     const working = workspace.activeTabId
-    workspace.moveTab(id, landing.paneId, before < 0 ? held.length : before)
+    workspace.moveTab(id, landing.paneId, into)
     const paneOf = (tab: string | null) => workspace.tabs.find((one) => one.id === tab)?.paneId
     for (const [pane, front] of fronts)
       if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)

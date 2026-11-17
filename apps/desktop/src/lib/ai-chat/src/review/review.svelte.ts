@@ -23,7 +23,7 @@ import { writeFile } from '../../../file-writes/src/api'
 import { answeringAt, onSend, onSent } from '../chat/sends'
 import { readOutside, SUMMED_OUTSIDE } from '../chat/transcript'
 import type { Thread, Turn } from '../../../ai-providers/src/api'
-import { cutForEdit } from './branches'
+import { cutForEdit, switchBranch as switchTail } from './branches'
 import {
   agentsOf,
   type Change,
@@ -39,6 +39,7 @@ import { markUnmade, redoFile, undoFile } from './file-ops'
 import { type FileChange, fileChangesOf, spaceNamed } from './files'
 import { type Choice, type Made, planFor, type Plan, type Step } from './plan'
 import { summarized } from './summary'
+import { engineOf } from '../store/setup'
 
 const { onTracks, putBackIn, trackedAgents, tracksAside, tracksOf, undoSomeIn } = await agentDocs()
 
@@ -540,19 +541,17 @@ class Review {
 }
 
 async function rewound(thread: Thread): Promise<void> {
-  const setup = Object.values(import.meta.glob<SetupModule>('../sidebar/setup.ts'))[0]
-  if (!setup) return
   const { ai } = await import('../../../ai-providers/src/api')
   const provider = ai.provider(thread.provider)
   if (!provider) return
-  const engine = await (await setup()).engineOf(provider.kind).catch(() => null)
+  const engine = await engineOf(provider.kind).catch(() => null)
   engine?.rewound?.(thread)
 }
 
-interface SetupModule {
-  engineOf(
-    kind: import('../../../ai-providers/src/api').ProviderKind,
-  ): Promise<import('../../../ai-providers/src/api').Engine>
+export function switchBranch(thread: Thread, turn: string, step: number): boolean {
+  if (!switchTail(thread, turn, step)) return false
+  void rewound(thread)
+  return true
 }
 
 export const review = new Review()

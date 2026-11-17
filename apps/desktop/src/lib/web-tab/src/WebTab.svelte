@@ -15,7 +15,7 @@
   import { chrome, landed } from '../../theme/src/api'
   import { startup } from '../../launch/src/api'
   import { hiddenKinds, passOn } from '../../gates/src/api'
-  import { shareThisFile } from '../../sharing/src/api'
+  import { canShareItem, shareThisFile } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { swiping } from '../../back-swipe/src/api'
   import { findBar, passFill, takeoverBar } from '../../surfaces/src/api'
@@ -69,7 +69,6 @@
   import WebExtensionPopup from './WebExtensionPopup.svelte'
   import WebExtensions from './WebExtensions.svelte'
   import { extensions, type Extension } from './extensions.svelte'
-  import { runsExtensions } from './shell-parts'
   import WebSite from './WebSite.svelte'
   import { NewHere } from '../../new-here/src/api'
 
@@ -330,7 +329,7 @@
       window.removeEventListener('keydown', pressed, true)
 
       const held = pages.peek(tab.id)
-      if (held) held.typing = false
+      pages.typing(tab.id, false)
 
       if (held?.filling) {
         held.filling = false
@@ -434,7 +433,7 @@
 
   let showingDownloads = $state(false)
 
-  const extending = runsExtensions
+  const extending = isDesktop
 
   let showingExtensions = $state(false)
 
@@ -574,8 +573,9 @@
     print: () => void pages.print(tab.id),
     find: isDesktop ? () => (page.find.open = true) : undefined,
     save: clip,
-    share: () => {
-      if (tab.path !== null) void shareThisFile(tab.path)
+    get share() {
+      const path = tab.path
+      return path !== null && canShareItem(path) ? () => void shareThisFile(path) : undefined
     },
     settings: () => settingsWindow().show(),
   }
@@ -636,7 +636,7 @@
         showingExtensions = false
       }}
       ontyping={(on: boolean) => {
-        pages.of(tab.id).typing = on
+        pages.typing(tab.id, on)
       }}
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
       onbrowser={(which: 'history' | 'clear') =>

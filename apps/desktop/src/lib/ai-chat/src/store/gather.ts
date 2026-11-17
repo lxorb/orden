@@ -50,6 +50,12 @@ async function markedFrom(
 
 const agentsMay = (path: string) => protection.agentsMay(path)
 
+function agentsMayPicked(picked: Picked | null): boolean {
+  if (picked) return protection.agentsMay(picked.path)
+  const open = workspace.activeSpace?.root
+  return open ? protection.agentsMayAll(open) : !protection.any
+}
+
 async function noteAttachment(root: string, path: string): Promise<Attachment | null> {
   if (!agentsMay(path)) return null
   const text = await workspace.noteText(path)
@@ -143,7 +149,7 @@ async function attachmentOf(
     case 'tab':
       return await pageAttachment(chip.id, chip.label)
     case 'selection': {
-      if (!selection.trim() || !agentsMay(picked?.path ?? '')) return null
+      if (!selection.trim() || !agentsMayPicked(picked)) return null
       if (!agentsMay(workspace.active?.path ?? '')) return null
       const one = { label: 'selection', text: fitted(selection, SELECTION) }
       return (await pickedFromOthers(picked)) ? { ...one, untrusted: true } : one
@@ -162,7 +168,7 @@ async function attachmentOf(
     case 'picture':
       return chip.image ? { label: chip.label, image: chip.image } : null
     case 'words':
-      if (!chip.text || (chip.from && !agentsMay(chip.from))) return null
+      if (!chip.text || !protection.agentsMay(chip.from)) return null
       if (chip.theirs) return { label: chip.label, text: fitted(chip.text, NOTE), untrusted: true }
       return await markedFrom(
         { label: chip.label, text: fitted(chip.text, NOTE) },

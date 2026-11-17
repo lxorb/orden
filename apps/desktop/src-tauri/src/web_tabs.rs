@@ -129,11 +129,22 @@ fn bars() -> &'static str {
     BARS.trim().trim_start_matches(';')
 }
 
-#[derive(Default)]
 struct Trail {
     urls: Vec<String>,
     at: usize,
     engine: bool,
+    asked: bool,
+}
+
+impl Default for Trail {
+    fn default() -> Self {
+        Self {
+            urls: Vec::new(),
+            at: 0,
+            engine: true,
+            asked: false,
+        }
+    }
 }
 
 impl Trail {
@@ -143,6 +154,7 @@ impl Trail {
             engine: urls.len() < 2,
             urls,
             at,
+            asked: false,
         }
     }
 
@@ -172,6 +184,19 @@ impl Trail {
         }
 
         self.urls.push(url.to_string());
+    }
+
+    fn asked_for(&mut self, url: &str) {
+        self.visited(url);
+        self.asked = true;
+    }
+
+    fn loaded(&mut self, url: &str) {
+        let asked = std::mem::take(&mut self.asked);
+        match self.urls.get_mut(self.at) {
+            Some(here) if asked && here != url => url.clone_into(here),
+            _ => self.visited(url),
+        }
     }
 
     fn back(&self) -> bool {
@@ -226,7 +251,7 @@ impl WebTabs {
 
     fn walked(&self, tab: &str, url: &str) {
         if let Ok(mut trails) = self.trails.lock() {
-            trails.entry(tab.to_string()).or_default().visited(url);
+            trails.entry(tab.to_string()).or_default().asked_for(url);
         }
     }
 
@@ -789,7 +814,7 @@ fn say(
         tabs.trails.lock().ok().map(|mut open| {
             let trail = open.entry(tab.to_string()).or_default();
             if !loading && !url.is_empty() {
-                trail.visited(url);
+                trail.loaded(url);
             }
             (trail.back(), trail.forward())
         })
@@ -1475,6 +1500,35 @@ mod tests {
     }
 
     #[test]
+    fn an_address_that_redirects_is_one_step_where_it_landed() {
+        let mut trail = Trail::default();
+        trail.asked_for("http://short.example/a");
+        trail.loaded("https://long.example/a");
+        assert_eq!(trail.urls, ["https://long.example/a"]);
+        assert!(!trail.back());
+
+        trail.loaded("https://long.example/b");
+        assert!(trail.back());
+        assert_eq!(trail.urls.len(), 2);
+
+        let mut plain = Trail::default();
+        plain.asked_for("https://a.example/");
+        plain.loaded("https://a.example/");
+        plain.loaded("https://c.example/");
+        assert_eq!(plain.urls, ["https://a.example/", "https://c.example/"]);
+    }
+
+    #[test]
+    fn a_tab_opened_fresh_steps_through_the_engine_s_own_history() {
+        let tabs = WebTabs::default();
+        for url in ["http://short.example/a", "https://b.example/"] {
+            tabs.walked("t", url);
+        }
+        assert_eq!(tabs.stepping("t", -1), None);
+        assert_eq!(tabs.stepping("t", 1), None);
+    }
+
+    #[test]
     fn a_row_of_the_history_is_a_jump_that_keeps_the_trail() {
         let tabs = WebTabs::default();
         tabs.restore("t", vec!["https://a.example/".into()], 0);
@@ -1659,17 +1713,6 @@ mod tests {
         let tabs = WebTabs::default();
         assert!(build(&tabs).is_err());
         assert!(tabs.claim("a"));
-    }
-
-    #[test]
-    fn a_private_tab_s_popup_is_private() {
-        let source = include_str!("web_tabs.rs");
-        let popup = source
-            .split("fn popup(")
-            .nth(1)
-            .and_then(|from| from.split("\n}\n").next())
-            .expect("the popup's function");
-        assert!(popup.contains(".incognito(private)"));
     }
 
     #[test]

@@ -220,6 +220,16 @@ describe('entry ids', () => {
     expect(heldName('.')).toBe('_')
     expect(heldName('a/b\u0000c')).toBe('a_b_c')
   })
+
+  test('an answer to an op naming a note no disk holds is read under the feed’s name for it', () => {
+    const long = `${'x'.repeat(300)}.md`
+    const id = 'a'.repeat(32)
+    const read = opsResponseOf({
+      results: [{ op: 'p1', ok: true, id, parent: null, name: long }],
+      cursor: 1,
+    })
+    expect(read?.results[0]).toEqual({ op: 'p1', ok: true, id, parent: null, name: heldName(long) })
+  })
 })
 
 describe('names', () => {

@@ -34,10 +34,6 @@ import {
   mayGuess,
   maySendAnswer,
   mayTakeAnswer,
-  noteKey,
-  noteKind,
-  keepAnswer,
-  readSpaceFiles,
   publishes,
   readSite,
   SVG_POLICY,
@@ -51,7 +47,9 @@ import {
   type Env,
   type Note,
   type Space,
+  notesOfSite,
 } from '../../sync-server/src/api'
+import { noteKey, noteKind, keepAnswer, readSpaceFiles } from '../../sync-server-engine/src/api'
 import '@orden/markdown/eager'
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@orden/markdown/links'
 import { blogFence } from './code'
@@ -404,15 +402,8 @@ function titleOf(page: Page): string {
 
 async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
   const shut = await shutFor(env, space.user_id)
-  const listing = await env.DB.prepare(
-    `select * from notes where space_id = ? and deleted = 0 and kind != 'file'
-      order by path limit ?`,
-  )
-    .bind(space.id, MOST_LISTED)
-    .all<Note>()
-
   const listed: Page[] = []
-  for (const note of listing.results) {
+  for await (const note of notesOfSite<Note>(env, space.id, '*')) {
     if (isCanvasTarget(note.path) || isPagesTarget(note.path)) continue
     if (noteKind(note) === 'plane') continue
 
@@ -420,6 +411,7 @@ async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
     if (!publishes(site.rules, note.path, front) || shut(space.id, note.path)) continue
 
     listed.push({ note, front, slug: pageOf(note.path, front) })
+    if (listed.length >= MOST_LISTED) break
   }
 
   return apart(listed)

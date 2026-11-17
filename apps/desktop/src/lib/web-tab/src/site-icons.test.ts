@@ -169,6 +169,29 @@ describe('the list when the account changes', () => {
     expect(siteIcons.list).toEqual([])
   })
 
+  test('never brings back a site a clearing took while it was being told of', async () => {
+    const free = hold()
+    const telling = siteIcons.saw('https://github.com/', 'GitHub', PNG)
+
+    await siteIcons.forgetSince(0)
+    free()
+    await telling
+
+    expect(siteIcons.list).toEqual([])
+  })
+
+  test('never brings back the account list a clearing came during', async () => {
+    server.sites = [{ site: 'a.dev', label: 'A', seen: 10, hash: 'y' }]
+    const free = hold()
+    const asking = siteIcons.refresh()
+
+    await siteIcons.forgetSince(0)
+    free()
+    await asking
+
+    expect(siteIcons.list).toEqual([])
+  })
+
   test('never keeps a site the last account was telling of', async () => {
     const free = hold()
     const telling = siteIcons.saw('https://github.com/', 'GitHub', PNG)

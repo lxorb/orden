@@ -164,6 +164,7 @@ class AnthropicReader implements Reader {
   private readonly blocks: Block[] = []
   private readonly open = new Map<number, Open>()
   private usage: Usage
+  private counted: Record<string, unknown> = {}
   private stop = ''
   private over = false
   private category = ''
@@ -177,7 +178,8 @@ class AnthropicReader implements Reader {
     switch (said.type) {
       case 'message_start': {
         const message = record(said.message)
-        this.usage = anthropicUsage(message.usage, this.window)
+        this.counted = record(message.usage)
+        this.usage = anthropicUsage(this.counted, this.window)
         return { changed: [], model: text(message.model), usage: this.usage }
       }
       case 'message_stop':
@@ -193,15 +195,9 @@ class AnthropicReader implements Reader {
         const delta = record(said.delta)
         this.stop = text(delta.stop_reason) || this.stop
         this.category = text(record(delta.stop_details).category) || this.category
-        const usage = record(said.usage)
-        this.usage = anthropicUsage(
-          {
-            input_tokens: usage.input_tokens ?? this.usage.input - this.usage.cached,
-            cache_read_input_tokens: usage.cache_read_input_tokens ?? this.usage.cached,
-            output_tokens: usage.output_tokens,
-          },
-          this.window,
-        )
+        const given = Object.entries(record(said.usage)).filter(([, value]) => value != null)
+        this.counted = { ...this.counted, ...Object.fromEntries(given) }
+        this.usage = anthropicUsage(this.counted, this.window)
         return { changed: [], usage: this.usage }
       }
       case 'error':

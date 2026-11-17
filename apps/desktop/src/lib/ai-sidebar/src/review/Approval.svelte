@@ -19,7 +19,7 @@
 
 <div class="approval">
   {#if part.result?.text}<p>{part.result.text}</p>{/if}
-  <Asked {part} />
+  <Asked {part} {thread} />
   <div class="answers">
     <button class="orden-button" disabled={answering} onclick={() => void answer(true)}
       >Approve</button

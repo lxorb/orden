@@ -17,7 +17,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { protection } = await import('../../protect/src/api')
-const { treeReadable } = await import('./guarded')
+const { readableAll } = await import('./guarded')
 
 const ROOT = '/space'
 const ORIGINAL = `${ROOT}/Work`
@@ -33,7 +33,7 @@ describe.each([`${ROOT}/Work (# Name clash 2026-11-15 abc1234 #)`, `${ROOT}/Work
     })
 
     test('may not be moved or deleted by an agent', () => {
-      expect(() => treeReadable(ROOT, copy)).toThrow(/protected/)
+      expect(() => readableAll(copy, copy)).toThrow(/protected/)
     })
 
     test('keeps the note inside locked when it moves', () => {

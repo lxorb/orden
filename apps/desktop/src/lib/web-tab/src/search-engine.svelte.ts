@@ -58,6 +58,11 @@ class SearchEngine {
     return true
   }
 
+  heard() {
+    this.choice = read()
+    this.made = isRecord(stored(KEY))
+  }
+
   private write(next: Choice) {
     this.choice = next
     this.made = true
@@ -66,3 +71,9 @@ class SearchEngine {
 }
 
 export const searchEngine = new SearchEngine()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === KEY) searchEngine.heard()
+  })
+}

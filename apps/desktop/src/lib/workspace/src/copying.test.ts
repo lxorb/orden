@@ -27,6 +27,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.mock('../../file-writes/src/api', async (original) => ({
   ...(await original<typeof import('../../file-writes/src/api')>()),
   copyPath: async (from: string, to: string) => {
+    if (from.includes('Locked')) throw new Error('denied')
     for (const [path, text] of [...disk]) {
       if (path === from || path.startsWith(`${from}/`)) disk.set(to + path.slice(from.length), text)
     }
@@ -78,7 +79,13 @@ function rig(entries: Entry[]) {
     protection: { copied: () => undefined, moved: () => undefined },
     rootHolding: () => '/s',
     entryAt: (path: string) => entries.find((one) => one.path === path) ?? null,
-    showEntry: () => undefined,
+    shown: new Set<string>(),
+    showEntry(one: Entry) {
+      this.shown.add(one.path)
+    },
+    heardGone(path: string) {
+      this.shown.delete(path)
+    },
     freshEntry: (path: string) => entry(path),
     freeNameOnDisk: async (_dir: string, wanted: string) => (wanted === 'Trip' ? 'Trip x' : wanted),
     fileMoved: async (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
@@ -214,5 +221,17 @@ describe('a copy keeps what Orden keeps about the item', () => {
 
     expect(protection.locked('/s/Trip copy/Trip copy.md')).toBe(true)
     expect(protection.agentsMay('/s/Trip copy/Trip copy.md')).toBe(false)
+  })
+})
+
+describe('a copy that fails', () => {
+  test('takes its placeholder row out of the tree again', async () => {
+    disk.clear()
+    disk.set('/s/Locked.md', '# Locked\n')
+    const ws = rig([entry('/s/Locked.md')])
+    const made = await copyRows(ws as never, [{ from: '/s/Locked.md', into: '/s/Box' }])
+
+    expect(made).toEqual([])
+    expect([...ws.shown]).toEqual([])
   })
 })

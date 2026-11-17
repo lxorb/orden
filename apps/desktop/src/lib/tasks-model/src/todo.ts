@@ -1,5 +1,5 @@
 import { err, failure, ok, type Result } from '@orden/contracts'
-import type { InboxFields, InboxValue } from '@orden/sync-core'
+import { inboxChangeOf, inboxStamp, type InboxFields, type InboxValue } from '@orden/sync-core'
 
 export const PRIORITIES = [0, 1, 2, 3] as const
 
@@ -51,6 +51,41 @@ export const LIMITS = {
 } as const
 
 export const KIND = 'todo'
+
+const DESCRIPTION_BYTES = 12_000
+
+const encoder = new TextEncoder()
+
+const bytesOf = (text: string): number => encoder.encode(JSON.stringify(text)).length
+
+function wholeSlice(text: string, end: number): string {
+  const code = text.charCodeAt(end - 1)
+  return text.slice(0, code >= 0xd800 && code <= 0xdbff ? end - 1 : end)
+}
+
+function cutToBytes(text: string, most: number): string {
+  if (bytesOf(text) <= most) return text
+  let low = 0
+  let high = text.length
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2)
+    if (bytesOf(text.slice(0, middle)) <= most) low = middle
+    else high = middle - 1
+  }
+  return wholeSlice(text, low)
+}
+
+export function fittedDescription(text: string): string {
+  return cutToBytes(wholeSlice(text, LIMITS.description), DESCRIPTION_BYTES)
+}
+
+export function titledOf(text: string): { title: string; description?: string } {
+  if (text.length <= LIMITS.title) return { title: text }
+  return {
+    title: `${wholeSlice(text, LIMITS.title - 1).trimEnd()}…`,
+    description: fittedDescription(text),
+  }
+}
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -176,6 +211,14 @@ export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
     out.order = patch.order
   }
   return ok(out)
+}
+
+export function fitsOneChange(id: string, fields: InboxFields, device: string): Result<void> {
+  const stamp = inboxStamp(Number.MAX_SAFE_INTEGER, 0, device)
+  const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stamp]))
+  return inboxChangeOf({ id, fields, stamps })
+    ? ok(undefined)
+    : refused('this todo is too long to keep; shorten its description or subtasks')
 }
 
 export const newId = (): string => `t${crypto.randomUUID().replace(/-/g, '').slice(0, 15)}`

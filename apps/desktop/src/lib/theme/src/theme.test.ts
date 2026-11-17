@@ -20,6 +20,13 @@ function memoryStorage(): Storage {
 
 let kept = memoryStorage()
 
+const storageHeard: ((event: { key: string | null }) => void)[] = []
+
+function anotherWindowWrote(key: string, value: string) {
+  kept.setItem(key, value)
+  for (const listener of storageHeard) listener({ key })
+}
+
 const media = {
   light: false,
   contrast: false,
@@ -30,6 +37,12 @@ let dataset: Record<string, string> = {}
 let resolves: Record<string, string> = {}
 let painted: Record<string, string> = {}
 let style: { id: string; textContent: string; remove: () => void } | null = null
+let hearing: ((event: { key: string | null }) => void)[] = []
+
+function writtenElsewhere(values: Record<string, string>) {
+  for (const [key, value] of Object.entries(values)) kept.setItem(key, value)
+  for (const key of Object.keys(values)) for (const heard of hearing) heard({ key })
+}
 
 function systemPrefers(light: boolean) {
   media.light = light
@@ -45,9 +58,16 @@ function stubs() {
   resolves = {}
   painted = {}
   style = null
+  hearing = []
 
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
+    addEventListener: (name: string, listener: (event: { key: string | null }) => void) => {
+      if (name === 'storage') {
+        hearing.push(listener)
+        storageHeard.push(listener)
+      }
+    },
     matchMedia: (query: string) => ({
       get matches() {
         return query.includes('contrast') ? media.contrast : media.light
@@ -71,6 +91,7 @@ function stubs() {
         },
       },
     },
+    addEventListener: () => undefined,
     querySelector: () => null,
     getElementById: () => null,
     createElement: () => {
@@ -245,6 +266,52 @@ describe('what the dropdown offers', () => {
   test('the built-in carries both schemes, so it is one theme and not two', () => {
     expect(theme.active.variants).toEqual(['dark', 'light'])
     expect(theme.switchable).toBe(true)
+  })
+})
+
+describe('a second window', () => {
+  test('is heard over a preview that has ended', () => {
+    theme.init()
+    const [first, second] = theme.accents.slice(-2).map((one) => one.id)
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent: first } }))
+    theme.preview('contrast', theme.kept.scheme, second ?? '')
+    theme.preview(theme.kept.id, theme.kept.scheme, theme.kept.accent)
+
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent: second } }))
+    expect(theme.accent).toBe(second)
+  })
+
+  test('reads the folder again for a theme it has not listed', async () => {
+    theme.init()
+    await settled()
+    installed('rose', 'Rose', '[data-theme="dark"] { --bg: #200; }')
+    anotherWindowWrote('orden:theme', 'file:rose')
+    await settled(() => theme.active.id === 'file:rose')
+    expect(theme.active.id).toBe('file:rose')
+  })
+
+  test('is heard when it changes the theme or the scheme', () => {
+    theme.init()
+    anotherWindowWrote('orden:theme', 'contrast')
+    expect(theme.id).toBe('contrast')
+    expect(theme.kept.id).toBe('contrast')
+
+    anotherWindowWrote('orden:theme-scheme', 'light')
+    expect(theme.scheme).toBe('light')
+  })
+
+  test('keeps a theme setting it chose when this one changes another', () => {
+    theme.init()
+    const accent = theme.accents.at(-1)?.id ?? ''
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent } }))
+    expect(theme.kept.accent).toBe(accent)
+
+    theme.setFor('somewhere', 'dial', 3)
+    const written = JSON.parse(kept.getItem('orden:theme-settings') ?? '{}') as Record<
+      string,
+      { accent?: string }
+    >
+    expect(written['*']?.accent).toBe(accent)
   })
 })
 
@@ -1487,5 +1554,48 @@ describe('a theme’s own faces', () => {
   test('and touch nothing else a theme says', () => {
     const css = ':root { --bg: #fff; --text: #111; }\n#write h1 { color: red; }'
     expect(chosenFirst(css)).toBe(css)
+  })
+})
+
+describe('another window of the app', () => {
+  const chosen = (accent: string) => JSON.stringify({ '*': { accent } })
+
+  test('quick add wears the look the app chose and follows each change, keeping nothing', async () => {
+    writtenElsewhere({
+      'orden:theme': 'contrast',
+      'orden:theme-scheme': 'light',
+      'orden:theme-settings': chosen('red'),
+    })
+
+    theme.init(false)
+    await vi.waitFor(() => expect(injected()).toContain('--text: #'))
+
+    expect(theme.id).toBe('contrast')
+    expect(dataset.theme).toBe('light')
+
+    writtenElsewhere({
+      'orden:theme': 'default',
+      'orden:theme-scheme': 'dark',
+      'orden:theme-settings': chosen('teal'),
+    })
+    await vi.waitFor(() => expect(dataset.theme).toBe('dark'))
+
+    expect(theme.id).toBe('default')
+    expect(theme.accent).toBe('teal')
+    expect(painted['--accent']).toBe('#33c7ba')
+    expect(host.asked).toEqual([])
+    expect(kept.getItem('orden:theme')).toBe('default')
+    expect(kept.getItem('orden:theme-settings')).toBe(chosen('teal'))
+    expect(kept.getItem('orden:theme-sheet')).toBeNull()
+  })
+
+  test('a second window of notes follows a scheme and accent chosen in the first', async () => {
+    theme.init()
+    writtenElsewhere({ 'orden:theme-scheme': 'light', 'orden:theme-settings': chosen('orange') })
+    await vi.waitFor(() => expect(painted['--accent']).toBe('#c44500'))
+
+    expect(theme.scheme).toBe('light')
+    expect(dataset.theme).toBe('light')
+    expect(theme.accent).toBe('orange')
   })
 })

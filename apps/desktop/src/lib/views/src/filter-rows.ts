@@ -15,7 +15,14 @@ export const OPERATORS: readonly Operator[] = [
   'tag',
 ]
 
-export type FilterRow = { property: string; op: Operator; value: string } | { kept: Filter }
+export interface ValueRow {
+  property: string
+  op: Operator
+  value: string
+  quoted?: boolean
+}
+
+export type FilterRow = ValueRow | { kept: Filter }
 
 export interface FilterRows {
   join: 'and' | 'or'
@@ -29,30 +36,44 @@ const askedByNull = (holds: Holds | undefined) => holds === 'truth' || holds ===
 
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
 
-function literal(value: string): string {
+const CLOCK = /^(today|now)\(\)(\s*[+-]\s*"[^"]*")?$/
+
+function literal(value: string, text: boolean): string {
   const trimmed = value.trim()
+  if (text) return JSON.stringify(value)
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return trimmed
   if (trimmed === 'true' || trimmed === 'false') return trimmed
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return `date(${JSON.stringify(trimmed)})`
-  if (/^(today|now)\(\)(\s*[+-]\s*"[^"]*")?$/.test(trimmed)) return trimmed
+  if (CLOCK.test(trimmed)) return trimmed
   return JSON.stringify(value)
 }
 
-function unliteral(written: string): string | null {
+function unliteral(written: string): { value: string; quoted: boolean } | null {
+  const value = valueIn(written)
+  if (value === null) return null
+  const quoted = /^"(?:[^"\\]|\\.)*"$/.test(written.trim())
+  return { value, quoted: quoted && literal(value, false) !== written.trim() }
+}
+
+function valueIn(written: string): string | null {
   const trimmed = written.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed) || trimmed === 'true' || trimmed === 'false') return trimmed
   const dated = /^date\(("(?:[^"\\]|\\.)*")\)$/.exec(trimmed)
   if (dated?.[1]) return String(JSON.parse(dated[1]))
-  if (/^(today|now)\(\)/.test(trimmed)) return trimmed
+  if (CLOCK.test(trimmed)) return trimmed
   if (/^"(?:[^"\\]|\\.)*"$/.test(trimmed)) return String(JSON.parse(trimmed))
   return null
 }
 
-export function expressionOf(
-  row: { property: string; op: Operator; value: string },
-  holds?: HoldsOf,
-): string {
+export const withProperty = (row: ValueRow, property: string): ValueRow => ({
+  property,
+  op: row.op,
+  value: row.value,
+})
+
+export function expressionOf(row: ValueRow, holds?: HoldsOf): string {
   const { property, op, value } = row
+  const text = row.quoted === true
   switch (op) {
     case '==':
     case '!=':
@@ -60,19 +81,22 @@ export function expressionOf(
     case '>':
     case '<=':
     case '>=':
-      return `${property} ${op} ${literal(value)}`
+      return `${property} ${op} ${literal(value, text)}`
     case 'empty':
       return askedByNull(holds?.(property)) ? `${property} == null` : `${property}.isEmpty()`
     case 'filled':
       return askedByNull(holds?.(property)) ? `${property} != null` : `!${property}.isEmpty()`
     case 'contains':
-      return `${property}.contains(${literal(value)})`
+      return `${property}.contains(${literal(value, text)})`
     case 'tag':
       return property.startsWith('task.')
         ? `task.hasTag(${JSON.stringify(value.replace(/^#/, ''))})`
         : `file.hasTag(${JSON.stringify(value.replace(/^#/, ''))})`
   }
 }
+
+const quotedRow = (read: { value: string; quoted: boolean }) =>
+  read.quoted ? read : { value: read.value }
 
 export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   const text = expression.trim()
@@ -84,8 +108,8 @@ export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
 
   const contains = /^([A-Za-z_][\w.]*)\.contains\((.+)\)$/.exec(text)
   if (contains?.[1] && contains[2]) {
-    const value = unliteral(contains[2])
-    if (value !== null) return { property: contains[1], op: 'contains', value }
+    const read = unliteral(contains[2])
+    if (read !== null) return { property: contains[1], op: 'contains', ...quotedRow(read) }
   }
 
   const nulled = /^([A-Za-z_][\w.]*)\s*(==|!=)\s*null$/.exec(text)
@@ -96,8 +120,8 @@ export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   const compared = /^([A-Za-z_][\w.]*)\s*(==|!=|<=|>=|<|>)\s*(.+)$/.exec(text)
   const op = OPERATORS.find((one) => one === compared?.[2])
   if (compared?.[1] && compared[3] && op) {
-    const value = unliteral(compared[3])
-    if (value !== null) return { property: compared[1], op, value }
+    const read = unliteral(compared[3])
+    if (read !== null) return { property: compared[1], op, ...quotedRow(read) }
   }
 
   const empty = /^(!?)([A-Za-z_][\w.]*)\.isEmpty\(\)$/.exec(text)

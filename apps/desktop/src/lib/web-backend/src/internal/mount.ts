@@ -1,4 +1,4 @@
-import { inTurn } from '../../../platform/src/api'
+import { inTurn, keep, storedText } from '../../../platform/src/api'
 import { readsAsText } from '../web/commands'
 import { mountRows } from '../web/store'
 import { folderBytes } from './bytes'
@@ -10,8 +10,23 @@ let count = 0
 
 const INDEX_TURN_AT_MOST = 10_000
 
-function desktopWorld(foldsCase: boolean): InternalWorld {
-  const world: InternalWorld = { now: () => Date.now(), key: () => crypto.randomUUID(), foldsCase }
+const NEWEST = 'orden:internal-index:'
+
+function newestOf(folder: string): NonNullable<InternalWorld['newest']> {
+  const name = `${NEWEST}${folder}`
+  return {
+    read: () => Number(storedText(name)) || 0,
+    write: (gen) => void keep(name, String(gen)),
+  }
+}
+
+function desktopWorld(folder: string, foldsCase: boolean): InternalWorld {
+  const world: InternalWorld = {
+    now: () => Date.now(),
+    key: () => crypto.randomUUID(),
+    foldsCase,
+    newest: newestOf(folder),
+  }
   world.exclusive = <T>(name: string, then: () => Promise<T>): Promise<T> =>
     inTurn(() => name, then, INDEX_TURN_AT_MOST)
   if (typeof BroadcastChannel === 'function') {
@@ -41,7 +56,7 @@ export async function mountInternal(
   const opened = await InternalFolder.open(
     folder,
     how.bytes ?? folderBytes(folder),
-    how.world ?? desktopWorld(how.foldsCase),
+    how.world ?? desktopWorld(folder, how.foldsCase),
   )
   count += 1
   const web = `/internal-${String(count)}`

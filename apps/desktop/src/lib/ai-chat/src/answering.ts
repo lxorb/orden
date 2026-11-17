@@ -2,7 +2,7 @@ import type { AiAsk } from '@orden/editor'
 import { TexDelimiters } from '@orden/markdown/streamed'
 import { busy, message } from '../../ui-kit/src/api'
 import { complete, wasStopped, ai } from '../../ai-providers/src/api'
-import { SHUT_HERE, shutToAgents } from './shut'
+import { agentsMayRead, SHUT_TO_AGENTS } from './store/around'
 
 const SYSTEM = [
   'You are answering inside a markdown note, and your answer is written straight',
@@ -21,8 +21,8 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
     busy.failed('Add an AI provider in Settings first.')
     throw new Error('no provider')
   }
-  if (shutToAgents(ask.doc, ask.place)) {
-    busy.failed(SHUT_HERE)
+  if (!agentsMayRead(ask.shows, ask.place ?? null)) {
+    busy.failed(SHUT_TO_AGENTS)
     throw new Error('shut to agents')
   }
 

@@ -113,7 +113,7 @@ for _ in range(60):
     time.sleep(0.5)
 run("(orden.workspace.openWebsite(), 'opened')")
 time.sleep(0.5)
-tab = run("nib.workspace.activeTabId")
+tab = run("orden.workspace.activeTabId")
 run(f"(orden.pages.go({json.dumps(tab)}, 'http://127.0.0.1:{PAGES}/'), 'sent')")
 time.sleep(5)
 

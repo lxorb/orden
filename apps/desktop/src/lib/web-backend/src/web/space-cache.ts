@@ -18,6 +18,11 @@ export function holdAtMost(characters: number): void {
 
 const READ_AT_ONCE = 256
 
+function inPathOrder(one: string, other: string): number {
+  if (one === other) return 0
+  return one < other ? -1 : 1
+}
+
 class Held implements SearchNote {
   private lowered: string | null = null
   private lines: readonly number[] | null = null
@@ -163,7 +168,7 @@ class Space {
 
   private async walk(base: string, visit: (note: Held) => boolean): Promise<void> {
     if (this.root !== base) this.forget(base)
-    this.order = []
+    const walked: string[] = []
     const walking = { on: true }
 
     await files.each((row) => {
@@ -172,11 +177,14 @@ class Space {
       this.read += 1
       if (!searched(base, row.path)) return
 
-      this.order.push(row.path)
+      walked.push(row.path)
       if (!visit(this.keep(base, row))) walking.on = false
     })
 
-    if (walking.on) this.whole = true
+    if (!walking.on || this.root !== base) return
+
+    this.order = [...new Set([...walked, ...this.order])].sort(inPathOrder)
+    this.whole = true
   }
 
   private keep(base: string, row: FileRow): Held {

@@ -4,18 +4,19 @@ import {
   askHub,
   newId,
   now,
-  reachedItem,
-  reachedSpace,
   type Env,
   type Variables,
 } from '../../../sync-server/src/api'
+import { reachedItem, reachedSpace } from '../../../sync-server-engine/src/api'
 import { askMachine } from './ask'
 import { audit } from './audit'
+import { mayCost, spentOn } from './budget'
 import { NOT_FOUND } from './door'
 import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
 import { ALLOWANCE, type HostKind, resetAt } from '@orden/online'
 import { usedOf } from './meter'
+import { offersOf } from './offers'
 import { MOST_SESSIONS, type Refusal, type SessionNow } from '@orden/online/wire'
 import { allowed, serviceOf } from './service'
 
@@ -47,6 +48,9 @@ interface MachineRow {
   region: string
   spec: string | null
   price_month: number | null
+  price_hour: number | null
+  priced_at: number | null
+  spent: number
   price_currency: string | null
   server_id: number | null
   disk_used: number
@@ -56,7 +60,8 @@ interface MachineRow {
 async function machineOf(env: Env, userId: string): Promise<MachineRow | null> {
   return await env.DB.prepare(
     `select id, user_id, state, created_at, woke_at, slept_at, home_bytes, backup_at, held,
-            host, size, region, spec, price_month, price_currency, server_id, disk_used, disk_total
+            host, size, region, spec, price_month, price_hour, priced_at, spent, price_currency,
+            server_id, disk_used, disk_total
        from machines where user_id = ?`,
   )
     .bind(userId)
@@ -81,8 +86,8 @@ async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
 
 const asked = (machine: MachineRow) => ({ 'x-orden-user': machine.user_id })
 
-function serverOf(machine: MachineRow) {
-  if (machine.server_id === null || !machine.spec) return null
+function specOf(machine: MachineRow) {
+  if (!machine.spec) return null
   let spec: unknown
   try {
     spec = JSON.parse(machine.spec)
@@ -93,14 +98,24 @@ function serverOf(machine: MachineRow) {
   if (typeof cores !== 'number' || typeof memory !== 'number' || typeof disk !== 'number') {
     return null
   }
+  return { cores, memory, disk }
+}
+
+function serverOf(machine: MachineRow, at: number) {
+  const spec = specOf(machine)
+  const made = machine.server_id !== null
+  if (!spec || (!made && machine.host !== 'hetzner')) return null
   return {
     type: machine.size,
     location: machine.region,
-    cores,
-    memoryGb: memory,
-    diskGb: disk,
+    cores: spec.cores,
+    memoryGb: spec.memory,
+    diskGb: spec.disk,
     price: machine.price_month,
+    hourly: machine.price_hour,
     currency: machine.price_currency,
+    made,
+    spent: made ? spentOn(machine, at) : null,
   }
 }
 
@@ -122,12 +137,71 @@ online.get('/machine', async (context) => {
       homeBytes: machine.home_bytes,
       backupAt: machine.backup_at,
       host: machine.host,
-      server: serverOf(machine),
+      server: serverOf(machine, at),
       disk: machine.disk_total > 0 ? { used: machine.disk_used, total: machine.disk_total } : null,
     },
     used: await usedOf(context.env, user.id, at),
     limit: ALLOWANCE,
     resetAt: resetAt(at),
+  })
+})
+
+online.get('/types', async (context) => {
+  const offers = await offersOf(context.env, now())
+  return offers ? context.json(offers) : context.json({ error: NOT_FOUND }, 404)
+})
+
+online.post('/machine/type', async (context) => {
+  const env = context.env
+  const user = context.get('user')
+  const at = now()
+  const body = await readBody(context)
+  const name = body.text('type', 40)
+  const location = body.text('location', 40)
+  if (body.problem || !name) return context.json({ error: 'type' }, 400)
+  if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
+
+  const offers = await offersOf(env, at)
+  if (!offers) return context.json({ error: NOT_FOUND }, 404)
+  const machine = await ensureMachine(env, user.id)
+  if (machine.host !== 'hetzner') return context.json({ error: 'host' }, 409)
+  const made = machine.server_id !== null
+  const place = made ? machine.region : location
+  const offer = offers.types.find((one) => one.name === name)
+  const price = offer?.prices.find((one) => one.location === place)
+  if (!offer || !price) return context.json({ error: 'type' }, 400)
+  if (machine.state === 'starting' || machine.state === 'stopping') {
+    return context.json({ error: 'busy' }, 409)
+  }
+
+  const spec = JSON.stringify({ cores: offer.cores, memory: offer.memoryGb, disk: offer.diskGb })
+  if (!made) {
+    await env.DB.prepare(
+      `update machines set size = ?2, region = ?3, spec = ?4, price_month = ?5, price_hour = ?6,
+         price_currency = ?7 where id = ?1`,
+    )
+      .bind(machine.id, name, place, spec, price.monthly, price.hourly, offers.currency)
+      .run()
+    return context.json({ state: machine.state })
+  }
+
+  const had = specOf(machine)
+  if (had && offer.diskGb < had.disk) return context.json({ error: 'disk' }, 409)
+  const current = offers.types.find((one) => one.name === machine.size)
+  if (current && current.arch !== offer.arch) return context.json({ error: 'arch' }, 409)
+  if (name === machine.size) return context.json({ state: machine.state })
+  const more = price.monthly - (machine.price_month ?? 0)
+  const { ceiling } = await serviceOf(env)
+  if (more > 0 && !(await mayCost(env, ceiling, at, more, offers.currency))) {
+    return context.json(refused('budget'), 409)
+  }
+  const answer = await askMachine(env, machine.id, 'resize', {
+    ...asked(machine),
+    'x-orden-type': name,
+    'x-orden-who': user.id,
+  })
+  return context.json({
+    state: answer ? (await answer.json<{ state: string }>()).state : machine.state,
   })
 })
 

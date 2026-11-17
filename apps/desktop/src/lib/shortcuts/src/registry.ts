@@ -692,6 +692,14 @@ const APP_ENTRIES: Shortcut[] = [
     ? []
     : [
         {
+          id: 'app.handwriting',
+          label: () => 'Handwriting',
+          category: 'paragraph',
+          scope: 'app',
+          key: null,
+          run: () => void runCommand('app.handwriting'),
+        } satisfies Shortcut,
+        {
           id: 'app.tasks',
           label: () => 'Todos',
           category: 'view',
@@ -1352,7 +1360,8 @@ function cycleTab(direction: number, mayUseOrder = false) {
 
 function closeAroundActive(which: Around) {
   const id = workspace.activeTabId
-  if (id) void workspace.closeAround(id, which)
+  if (which === 'all') void workspace.closeAllIn(workspace.panes.focusedId)
+  else if (id) void workspace.closeAround(id, which)
 }
 
 function moveTab(direction: number) {
@@ -1534,17 +1543,18 @@ export function runEntry(id: string, context: AppContext, via?: UsageVia): boole
   return true
 }
 
+export function known(id: string): boolean {
+  if (EDITOR_BY_ID.has(id)) return true
+
+  const entry = BY_ID.get(id)
+  return !!entry && entry.scope === 'app' && !!entry.run
+}
+
 export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
 
   const entry = BY_ID.get(id)
-  return (
-    !!entry &&
-    entry.scope === 'app' &&
-    !!entry.run &&
-    (isDesktop || !entry.desktop) &&
-    entry.shown?.() !== false
-  )
+  return !!entry && known(id) && (isDesktop || !entry.desktop) && entry.shown?.() !== false
 }
 
 export const SYSTEM_KEYS: Record<Platform, string[]> = {

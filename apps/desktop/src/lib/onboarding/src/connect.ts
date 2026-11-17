@@ -25,13 +25,13 @@ export function signInKind(plan: Plan): ProviderKind | null {
   return LOCAL[plan] ?? null
 }
 
-async function accountOf(kind: ProviderKind): Promise<Account> {
+async function accountOf(kind: ProviderKind): Promise<{ account: Account; made: boolean }> {
   const { ai } = await import('../../ai-providers/src/api')
   const held = ai.accounts.find((one) => one.kind === kind)
-  if (held) return held
+  if (held) return { account: held, made: false }
   const made = ai.add(kind)
   await ai.written()
-  return ai.accounts.find((one) => one.id === made.id) ?? made
+  return { account: ai.accounts.find((one) => one.id === made.id) ?? made, made: true }
 }
 
 async function withModel(account: Account): Promise<void> {
@@ -50,7 +50,7 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
     try {
       await invoke('chatgpt_sign_in')
       await plans.checkChatgpt()
-      const account = await accountOf('chatgpt')
+      const { account } = await accountOf('chatgpt')
       void withModel(account).catch(() => undefined)
       return { state: 'in', id: account.id }
     } catch (error) {
@@ -66,27 +66,40 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
   }
 
   const local = kind as LocalKind
-  const account = await accountOf(local)
+  const { account, made } = await accountOf(local)
   const standing = await plans.check({ id: account.id, kind: local })
   if (standing.state === 'in') return { state: 'in', id: account.id }
+  const takeBack = async () => {
+    if (made) (await import('../../ai-providers/src/api')).ai.remove(account.id)
+  }
   if (standing.state === 'missing' || !standing.program) {
+    await takeBack()
     void openExternal(INSTALL[local])
     return { state: 'failed', said: 'Not installed' }
   }
   const { signIn } = await (await import('../../ai-providers/src/api')).localCli()
-  await signIn(local, standing.program, standing.home)
+  if (!(await signIn(local, standing.program, standing.home).catch(() => false))) {
+    await takeBack()
+    return { state: 'failed', said: 'Could not sign in.' }
+  }
   plans.watch({ id: account.id, kind: local })
   return { state: 'waiting', id: account.id }
 }
 
-async function keyed(account: Account, typed: string): Promise<string | null> {
-  const { writeKey } = await import('../../ai-providers/src/api')
+async function keyed(account: Account, typed: string, made: boolean): Promise<string | null> {
+  const { ai, forgetKey, readSecret, writeKey } = await import('../../ai-providers/src/api')
+  const before = made ? null : await readSecret(account.id).catch(() => null)
   try {
     await writeKey(account.id, typed.trim())
     await withModel(account)
     return null
   } catch (error) {
-    return message(error, 'that key could not be saved')
+    if (made) {
+      await forgetKey(account.id, true).catch(() => undefined)
+      ai.remove(account.id)
+    } else if (before) await writeKey(account.id, before).catch(() => undefined)
+    else await forgetKey(account.id).catch(() => undefined)
+    return message(error, 'That key could not be saved.')
   }
 }
 
@@ -94,7 +107,8 @@ export async function connectKey(
   kind: 'anthropic' | 'openai' | 'gemini',
   typed: string,
 ): Promise<string | null> {
-  return keyed(await accountOf(kind), typed)
+  const { account, made } = await accountOf(kind)
+  return keyed(account, typed, made)
 }
 
 export async function connectCompatible(
@@ -106,7 +120,7 @@ export async function connectCompatible(
   ai.update(made.id, { name: provider.name, baseUrl: provider.baseUrl ?? '' })
   await ai.written()
   const account = ai.accounts.find((one) => one.id === made.id) ?? made
-  if (provider.keyed) return keyed(account, typed)
+  if (provider.keyed) return keyed(account, typed, true)
   try {
     await withModel(account)
     return null

@@ -262,6 +262,43 @@ describe('bytes up', () => {
     const kept = await env.NOTES.get(`blobs/${hash}`)
     expect(new Uint8Array(await kept!.arrayBuffer())).toEqual(data)
   })
+
+  test('in parts, kept while the last other holder gives the same bytes back', async () => {
+    const data = bytes(1000, 5)
+    const hash = await hashOf(data)
+    const other = await signIn(env, 'other@example.com')
+    expect((await upload(data, 'audio/webm', other)).status).toBe(201)
+    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
+      token,
+      body: { hash, size: 1000 },
+    })
+    const sent = await call<{ part: number; etag: string }>(
+      env,
+      `/v2/blobs/parts/${started.json.upload}/1`,
+      { method: 'PUT', token, raw: data },
+    )
+
+    const get = env.NOTES.get.bind(env.NOTES)
+    let handedBack = false
+    env.NOTES.get = async (...args: Parameters<typeof get>) => {
+      const found = await get(...args)
+      if (!handedBack && args[0] === `blobs/${hash}`) {
+        handedBack = true
+        await call(env, `/v1/blobs/${hash}`, { method: 'DELETE', token: other })
+      }
+      return found
+    }
+    const done = await call(env, `/v2/blobs/parts/${started.json.upload}`, {
+      token,
+      body: { parts: [sent.json] },
+    })
+    env.NOTES.get = get
+
+    expect(handedBack).toBe(true)
+    expect(done.status).toBe(201)
+    const kept = await env.NOTES.get(`blobs/${hash}`)
+    expect(new Uint8Array(await kept!.arrayBuffer())).toEqual(data)
+  })
 })
 
 describe('bytes down', () => {
@@ -542,7 +579,7 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     const diagram = 'a'.repeat(64)
     await plant(diagram)
 
-    const { sweepMisnamed } = await import('../src/sync-server/src/sync2/files')
+    const { sweepMisnamed } = await import('../src/sync-server-engine/src/sync2/files')
     expect(await sweepMisnamed(env)).toBe(1)
 
     expect(await env.NOTES.get(`blobs/${hash}`)).toBeNull()

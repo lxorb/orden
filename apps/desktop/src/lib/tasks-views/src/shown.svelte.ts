@@ -11,6 +11,8 @@ import {
   type Sort,
   sortedTodos,
   type Todo,
+  todoSpaceOf,
+  isTodoSpace,
 } from '../../tasks-model/src/api'
 
 export const SORT_NAMES: Readonly<Record<Sort, string>> = {
@@ -21,6 +23,7 @@ export const SORT_NAMES: Readonly<Record<Sort, string>> = {
 
 export interface Space {
   readonly id: string
+  readonly also?: readonly string[]
   readonly name: string
 }
 
@@ -88,6 +91,7 @@ export class Shown {
     return {
       onlySpace: this.onlySpace,
       space: this.space?.id ?? null,
+      spaceAlso: this.space?.also ?? [],
       label: label !== null && this.labels.includes(label) ? label : ALL_LABELS,
       today: this.world.today(),
     }
@@ -97,6 +101,7 @@ export class Shown {
     return labelsOf(this.world.todos(), {
       onlySpace: this.onlySpace,
       space: this.space?.id ?? null,
+      spaceAlso: this.space?.also ?? [],
       today: this.world.today(),
     })
   }
@@ -111,7 +116,7 @@ export class Shown {
 
   spaceName(id: string | null): string | null {
     if (id === null) return null
-    return this.spaces.find((one) => one.id === id)?.name ?? null
+    return this.spaces.find((one) => isTodoSpace(one, id))?.name ?? null
   }
 }
 
@@ -130,9 +135,10 @@ export function shellWorld(todos: () => readonly Todo[]): ShownWorld {
     todos,
     activeSpace: () => {
       const space = workspace()?.activeSpace ?? null
-      return space ? { id: space.id, name: space.name } : null
+      return space ? { ...todoSpaceOf(space), name: space.name } : null
     },
-    spaces: () => (workspace()?.spaces ?? []).map((one) => ({ id: one.id, name: one.name })),
+    spaces: () =>
+      (workspace()?.spaces ?? []).map((one) => ({ ...todoSpaceOf(one), name: one.name })),
     today: () => dayOf(),
     kept: () => storage()?.json(KEPT),
     keep: (value) => void storage()?.keepJson(KEPT, value),

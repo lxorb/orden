@@ -88,6 +88,7 @@ export const EN: Grammar = {
   },
 
   dayWords: new Set(['on', 'by', 'due']),
+  deadlineWords: new Set(['by', 'due']),
   timeWords: new Set(['at', '@']),
   meridiem: { am: 'am', pm: 'pm', 'a.m': 'am', 'p.m': 'pm' },
   oclock: new Set(["o'clock", 'oclock']),
@@ -113,6 +114,12 @@ export const EN: Grammar = {
     yearly: 'every year',
     annually: 'every year',
   },
+  ofTheMonth: [
+    ['of', 'the', 'month'],
+    ['of', 'month'],
+    ['of', 'every', 'month'],
+    ['of', 'each', 'month'],
+  ],
   starting: new Set(['starting', 'from']),
   until: new Set(['until']),
   workdays: new Set(['weekday', 'weekdays', 'workday', 'workdays']),

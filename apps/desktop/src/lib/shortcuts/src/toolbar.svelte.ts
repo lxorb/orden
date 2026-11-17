@@ -1,10 +1,12 @@
 import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
-import { BY_ID, runnable } from './registry'
+import type { AccountSettings } from '../../accounts/src/api'
+import { AccountOwed } from './account-owed'
+import { BY_ID, known, runnable } from './registry'
 import { forget, isString, keepJson, stored } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:toolbar'
+const OWED_KEY = 'orden:toolbar-owed'
 
 const MOST_BUTTONS = 24
 
@@ -79,6 +81,10 @@ class Toolbar {
   chosen = $state<string[] | null>(null)
 
   get ids(): readonly string[] {
+    return this.held.filter(runnable)
+  }
+
+  private get held(): readonly string[] {
     return this.chosen ?? DEFAULT_TOOLBAR
   }
 
@@ -89,19 +95,29 @@ class Toolbar {
   restore() {
     const held = stored(STORAGE_KEY)
     this.chosen = usable(held)
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY) this.restore()
+    })
   }
 
   add(id: string) {
-    if (!runnable(id) || this.ids.includes(id) || this.ids.length >= MOST_BUTTONS) return
+    if (!runnable(id) || this.held.includes(id) || this.held.length >= MOST_BUTTONS) return
 
-    this.chosen = [...this.ids, id]
+    this.chosen = [...this.held, id]
     this.settle()
   }
 
   remove(id: string) {
     if (!this.ids.includes(id)) return
 
-    this.chosen = this.ids.filter((one) => one !== id)
+    this.chosen = this.held.filter((one) => one !== id)
     this.settle()
   }
 
@@ -116,7 +132,8 @@ class Toolbar {
     list.splice(from, 1)
     list.splice(landing, 0, held)
 
-    this.chosen = list
+    const moved = list[Symbol.iterator]()
+    this.chosen = this.held.map((one) => (runnable(one) ? (moved.next().value ?? one) : one))
     this.settle()
   }
 
@@ -132,8 +149,14 @@ class Toolbar {
     this.share()
   }
 
+  private readonly owed = new AccountOwed(OWED_KEY)
+
   receive(remote: AccountSettings) {
     const theirs = remote.toolbar
+    if (this.owed.standing) {
+      this.share()
+      return
+    }
     if (theirs === undefined) {
       if (this.chosen) this.share()
       return
@@ -148,10 +171,7 @@ class Toolbar {
   }
 
   private share() {
-    const token = account.accountToken
-    if (!token) return
-
-    void api.saveSettings(token, { toolbar: this.chosen }).catch(() => undefined)
+    this.owed.send({ toolbar: this.chosen })
   }
 }
 
@@ -160,7 +180,7 @@ export function usable(value: unknown): string[] | null {
 
   const out: string[] = []
   for (const one of value) {
-    if (!isString(one) || out.includes(one) || !runnable(one)) continue
+    if (!isString(one) || out.includes(one) || !known(one)) continue
     out.push(one)
     if (out.length >= MOST_BUTTONS) break
   }
