@@ -9,6 +9,7 @@ import {
   type Line,
   type SelectionRange,
   type StateCommand,
+  type Text,
   type Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
@@ -875,7 +876,9 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   if (marks === undefined || notQuoted(state, line)) return false
 
   const levels = marks.split('>').length - 1
-  const kept = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
+  const lead = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
+  const left = state.update({ changes: { from: line.from, to: line.to, insert: lead } })
+  const kept = (apartFromWordsAbove(left.newDoc, line.from + lead.length)?.insert ?? '') + lead
 
   dispatch(
     state.update({
@@ -1187,14 +1190,26 @@ function endEmptyTask(state: EditorState): TransactionSpec | null {
   const quote = EMPTY_ORDERED_TASK.exec(line.text)?.[1]
   if (quote === undefined || range.head !== line.to || inCode(state, line.from)) return null
 
+  const left = state.update({ changes: { from: line.from, to: line.to, insert: quote } })
+  const apart = apartFromWordsAbove(left.newDoc, line.from + quote.length)
+  const insert = (apart?.insert ?? '') + quote
   return {
-    changes: { from: line.from, to: line.to, insert: quote },
-    selection: { anchor: line.from + quote.length },
+    changes: { from: line.from, to: line.to, insert },
+    selection: { anchor: line.from + insert.length },
     userEvent: 'input',
   }
 }
 
 const QUOTED_LEAD = /^(?:[ \t]*>[ \t]?)*/u
+
+function apartFromWordsAbove(doc: Text, head: number): { from: number; insert: string } | null {
+  const line = doc.lineAt(head)
+  const lead = QUOTED_LEAD.exec(line.text)?.[0] ?? ''
+  if (head !== line.to || line.text !== lead || line.number < 2) return null
+  const above = doc.line(line.number - 1).text
+  if (!above.replace(QUOTED_LEAD, '').trim()) return null
+  return { from: line.from, insert: `${lead.trimEnd()}\n` }
+}
 
 const ITEM_LEAD = /^(?:[ \t]*>[ \t]?)*[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[.\][ \t]+)?$/u
 
@@ -1320,6 +1335,14 @@ const continueListsAt: StateCommand = ({ state, dispatch }) => {
         if (!opensListUnderWords(state, line, before.head)) return []
         const quote = QUOTED_LEAD.exec(line.text)?.[0] ?? ''
         return [{ from: made.changes.mapPos(line.from, -1), insert: `${quote.trimEnd()}\n` }]
+      })
+      made.newSelection.ranges.forEach((range, at) => {
+        const before = state.selection.ranges[at]
+        if (!before?.empty) return
+        const line = state.doc.lineAt(before.head)
+        if (before.head !== line.to || !ITEM_LEAD.test(line.text)) return
+        const left = apartFromWordsAbove(made.newDoc, range.head)
+        if (left) apart.push(left)
       })
       if (!boxes.length && !apart.length) {
         dispatch(made)

@@ -83,6 +83,11 @@ export function readsWords(path: string): boolean {
   return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
 }
 
+function besideNote(files: readonly string[], folder: string, name: string): string | null {
+  const wanted = foldName(folder ? `${folder}/${name}` : name)
+  return files.find((path) => foldName(path) === wanted) ?? null
+}
+
 function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }
@@ -1470,10 +1475,12 @@ class Links {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null
-    const found =
-      other !== null && notePath !== null
-        ? resolveFile(this.otherIndex(other, notePath), name, 'wikilink')
-        : this.fileNamed(name)
+    const index =
+      other !== null && notePath !== null ? this.otherIndex(other, notePath) : this.spaceFiles(null)
+    const from =
+      notePath === null ? null : other !== null ? within(other, notePath) : this.relative(notePath)
+    const beside = from === null ? null : besideNote(index.files, folderOf(from), name)
+    const found = beside ?? resolveFile(index, name, 'wikilink')
     return found === null ? null : insideSpace(root, found)
   }
 

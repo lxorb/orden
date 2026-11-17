@@ -63,7 +63,10 @@
   }
 
   const readsOthers = $derived(
-    tab.doc.includes('```query') || tab.doc.includes('```tasks') || tab.doc.includes('![['),
+    tab.doc.includes('```query') ||
+      tab.doc.includes('```tasks') ||
+      tab.doc.includes('[[') ||
+      tab.doc.includes(']('),
   )
 
   function note() {
@@ -84,13 +87,16 @@
     )
     if (mine !== latest) return
 
+    const again = html !== ''
+    const kept = scroller?.scrollTop ?? 0
     html = next
 
     await tick()
     changed()
     requestAnimationFrame(() => {
       if (mine !== latest) return
-      show(untrack(() => tab.anchor) ?? 0)
+      if (again && scroller && !headings().elements.length) scroller.scrollTop = kept
+      else show(untrack(() => tab.anchor) ?? 0)
 
       undrawn?.()
       const papers = surface

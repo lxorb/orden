@@ -30,7 +30,7 @@ vi.mock('./link-index/src/api', () => ({
   },
 }))
 
-const { mountPreview } = await import('./preview-card')
+const { mountPreview } = await import('./pane-tree/src/preview-card')
 
 test('words typed in a glance are written over the note it opened on, so words written elsewhere meanwhile stay', async () => {
   const host = document.createElement('div')

@@ -445,7 +445,9 @@ function xhtmlDocument(title: string, lang: string, css: string, body: string): 
 <link rel="stylesheet" type="text/css" href="${css}" />
 </head>
 <body>
+<div id="write">
 ${body}
+</div>
 </body>
 </html>
 `

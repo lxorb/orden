@@ -35,30 +35,17 @@ function frontMatterEnd(text: string): number {
 }
 
 const ATX = /^ {0,3}#{1,6}(?:\s|$)/
-const UNDERLINE = /^ {0,3}(?:=+|-+)[ \t]*$/
-const NOT_PROSE = /^(?: {4}|\t|[ \t]*(?:[-*+>|]|\d+[.)])(?:\s|$))/
 
 export function headingOffsets(text: string): number[] {
   const found: number[] = []
   const code = new CodeBlocks()
   let at = frontMatterEnd(text)
-  let prose: number | null = null
 
   for (;;) {
     const end = text.indexOf('\n', at)
     const line = text.slice(at, end === -1 ? text.length : end)
 
-    if (code.line(line) !== WORDS) {
-      prose = null
-    } else if (ATX.test(line)) {
-      found.push(at)
-      prose = null
-    } else if (prose !== null && UNDERLINE.test(line)) {
-      found.push(prose)
-      prose = null
-    } else {
-      prose = line.trim() === '' || NOT_PROSE.test(line) ? null : at
-    }
+    if (code.line(line) === WORDS && ATX.test(line)) found.push(at)
 
     if (end === -1) return found
     at = end + 1

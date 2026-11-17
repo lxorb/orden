@@ -287,9 +287,16 @@ export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): s
     return held === wanted || (!whole && held.endsWith(`/${wanted}`))
   })
 
+  const own = index.path?.replace(/\\/g, '/') ?? ''
+  const folder = own.slice(0, Math.max(0, own.lastIndexOf('/')))
+  const beside = foldName(folder ? `${folder}/${wanted}` : wanted)
+  const near = (path: string) => (foldName(path) === beside ? 0 : 1)
   return (
     [...found].sort(
-      (one, other) => one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
+      (one, other) =>
+        near(one) - near(other) ||
+        one.split('/').length - other.split('/').length ||
+        (one < other ? -1 : 1),
     )[0] ?? null
   )
 }

@@ -36,23 +36,23 @@ function pressEnter(doc: string, times: number, caret = doc.length): string {
 
 describe('leaving a list', () => {
   test('a second Enter ends a bullet list', () => {
-    expect(pressEnter('- an item', 2)).toBe('- an item\n')
+    expect(pressEnter('- an item', 2)).toBe('- an item\n\n')
   })
 
   test('a second Enter ends an ordered list', () => {
-    expect(pressEnter('1. one', 2)).toBe('1. one\n')
+    expect(pressEnter('1. one', 2)).toBe('1. one\n\n')
   })
 
   test('a second Enter ends a task list', () => {
-    expect(pressEnter('- [ ] a task', 2)).toBe('- [ ] a task\n')
+    expect(pressEnter('- [ ] a task', 2)).toBe('- [ ] a task\n\n')
   })
 
   test('a second Enter ends a quote', () => {
-    expect(pressEnter('> a quote', 2)).toBe('> a quote\n')
+    expect(pressEnter('> a quote', 2)).toBe('> a quote\n\n')
   })
 
   test('a second Enter leaves the inner quote and stays in the outer one', () => {
-    expect(pressEnter('> > deep', 2)).toBe('> > deep\n> ')
+    expect(pressEnter('> > deep', 2)).toBe('> > deep\n>\n> ')
   })
 
   test('a second Enter steps out of the inner list, not out of both', () => {

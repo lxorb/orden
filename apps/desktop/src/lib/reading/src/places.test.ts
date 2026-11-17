@@ -69,9 +69,8 @@ describe('where the headings of a note are', () => {
     expect(headingOffsets(note)).toEqual([0, note.indexOf('## Two')])
   })
 
-  test('the underlined spelling counts, from its words', () => {
-    const note = 'One\n===\n\ntext\n\nTwo\n---\n\nmore\n'
-    expect(headingOffsets(note)).toEqual([0, note.indexOf('Two')])
+  test('the underlined spelling is words, as Orden reads it', () => {
+    expect(headingOffsets('One\n===\n\ntext\n\nTwo\n---\n\nmore\n')).toEqual([])
   })
 
   test('a rule after a blank line is a rule, not a heading', () => {
