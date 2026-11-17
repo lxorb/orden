@@ -203,6 +203,23 @@ ws.closeTab?.(tab.id)
 return { said: said.slice(0, 300) }
 """
 
+TURN_ON = """
+localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-apps']))
+window.__unturned = true
+setTimeout(() => location.reload(), 50)
+return true
+"""
+
+def turned_on(app: App) -> None:
+    app.value(TURN_ON)
+    ready = "!window.__unturned && !!orden.workspace && JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]').includes('experimental-apps')"
+    until = time.monotonic() + 90
+    while time.monotonic() < until:
+        if app.eval(ready).get("value") is True:
+            return
+        time.sleep(1)
+    raise SystemExit("the app did not come back with applications turned on")
+
 def tabs(app: App, notepad: str) -> list[str]:
     wrong: list[str] = []
     until = time.monotonic() + 60
@@ -233,6 +250,7 @@ def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     notepad = next((one for one in listed["list"] if one[1].lower().startswith("notepad")), None)
     if not notepad:
         return [*wrong, "Notepad was not listed"]
+    turned_on(app)
     wrong.extend(tabs(app, notepad[0]))
 
     before = notepads_here()
