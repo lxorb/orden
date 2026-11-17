@@ -1,11 +1,18 @@
 import { mount } from 'svelte'
 import { invoke, platform } from '../../platform/src/api'
+import HoldToQuit from './HoldToQuit.svelte'
 import QuitSheet from './QuitSheet.svelte'
 import { asks, rowsHere, showRow, type Why } from './rows'
-import { quitAsk } from './state.svelte'
+import { holding, quitAsk } from './state.svelte'
 import { rowsEverywhere, showElsewhere } from './windows'
 
 let mounted = false
+
+let holdMounted = false
+
+let holdTimer: ReturnType<typeof setTimeout> | undefined
+
+const HOLD_SHOWN = 1_500
 
 async function label(): Promise<string> {
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
@@ -45,4 +52,14 @@ export async function quitAsked() {
   if (quitAsk.open) return
   const going = await mayStop('quit').catch(() => true)
   await invoke(going ? 'quit_confirmed' : 'keep_running').catch(() => undefined)
+}
+
+export function holdToQuit() {
+  if (!holdMounted) {
+    mount(HoldToQuit, { target: document.body })
+    holdMounted = true
+  }
+  holding.shown = true
+  clearTimeout(holdTimer)
+  holdTimer = setTimeout(() => (holding.shown = false), HOLD_SHOWN)
 }

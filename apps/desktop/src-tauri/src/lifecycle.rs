@@ -371,15 +371,21 @@ fn front_to_the_next() {
 mod asked_to_quit {
     use objc2::runtime::{AnyObject, Imp, Sel};
     use objc2::{ffi, sel, MainThreadMarker};
-    use objc2_app_kit::NSApplication;
+    use objc2_app_kit::{NSApplication, NSEventMask, NSEventModifierFlags, NSEventType};
+    use objc2_foundation::{NSDate, NSString};
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::OnceLock;
-    use tauri::AppHandle;
+    use tauri::{AppHandle, Emitter as _};
 
     static APP: OnceLock<AppHandle> = OnceLock::new();
 
+    const CANCEL: usize = 0;
     const NOW: usize = 1;
     const LATER: usize = 2;
+
+    const HOLD: f64 = 1.0;
+
+    const QUIT_HOLD: &str = "orden://quit-hold";
 
     static WAITING: AtomicBool = AtomicBool::new(false);
 
@@ -421,6 +427,10 @@ mod asked_to_quit {
         if super::state(app).now() == super::LEAVING {
             return NOW;
         }
+        if let_go_early() {
+            hold_to_quit(app);
+            return CANCEL;
+        }
 
         super::quit(app);
         if super::state(app).now() == super::LEAVING {
@@ -429,6 +439,55 @@ mod asked_to_quit {
 
         WAITING.store(true, Ordering::SeqCst);
         LATER
+    }
+
+    fn let_go_early() -> bool {
+        let Some(main) = MainThreadMarker::new() else {
+            return false;
+        };
+        let application = NSApplication::sharedApplication(main);
+        let Some(pressed) = application.currentEvent() else {
+            return false;
+        };
+        if pressed.r#type() != NSEventType::KeyDown
+            || !pressed
+                .modifierFlags()
+                .contains(NSEventModifierFlags::Command)
+        {
+            return false;
+        }
+        let key = pressed.keyCode();
+        let until = NSDate::dateWithTimeIntervalSinceNow(HOLD);
+        let mode = NSString::from_str("kCFRunLoopDefaultMode");
+        let heard = NSEventMask::KeyDown | NSEventMask::KeyUp | NSEventMask::FlagsChanged;
+        while let Some(event) = application.nextEventMatchingMask_untilDate_inMode_dequeue(
+            heard,
+            Some(&until),
+            &mode,
+            true,
+        ) {
+            let still = match event.r#type() {
+                NSEventType::KeyDown => event.isARepeat() && event.keyCode() == key,
+                NSEventType::FlagsChanged => event
+                    .modifierFlags()
+                    .contains(NSEventModifierFlags::Command),
+                _ => false,
+            };
+            if !still {
+                application.postEvent_atStart(&event, true);
+                return true;
+            }
+        }
+        false
+    }
+
+    fn hold_to_quit(app: &AppHandle) {
+        if let Some(window) = crate::launch::document_windows(app)
+            .into_iter()
+            .find(|window| window.is_focused().unwrap_or(false))
+        {
+            let _ = app.emit_to(window.label(), QUIT_HOLD, ());
+        }
     }
 
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
