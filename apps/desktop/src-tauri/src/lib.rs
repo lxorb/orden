@@ -842,6 +842,7 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     chromium_pump::start(handle);
     page_scale::start(handle);
     extensions::tabs::start(handle);
+    extensions::preinstall(handle);
 }
 
 #[cfg(desktop)]
