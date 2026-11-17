@@ -300,6 +300,48 @@ mod tests {
     }
 
     #[test]
+    fn every_page_made_for_the_app_s_own_use_is_hidden_as_it_is_made() {
+        let shown = ["web_tabs.rs", "popup.rs"];
+        let root = crate::app_dir().join("src");
+        let mut sources = vec![root];
+        let mut seen = Vec::new();
+        let mut checked = 0;
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let named = path.file_name().and_then(|name| name.to_str());
+                if named.is_some_and(|name| shown.contains(&name)) {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+                for (at, _) in text.match_indices("crate::engine::add_child(") {
+                    checked += 1;
+                    let after = &text[at..text.len().min(at + 400)];
+                    if !after.contains(".hide()") {
+                        seen.push(path.display().to_string());
+                    }
+                }
+            }
+        }
+        assert!(
+            checked >= 3,
+            "the scan found the pages it is about ({checked})"
+        );
+        assert!(
+            seen.is_empty(),
+            "a page of the app's own left in sight: {seen:?}"
+        );
+    }
+
+    #[test]
     fn every_window_of_an_app_page_is_in_the_interface_s_profile() {
         let root = crate::app_dir().join("src");
         let mut sources = vec![root.clone()];

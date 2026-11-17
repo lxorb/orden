@@ -17,6 +17,21 @@ pub mod macos;
 ))]
 pub mod linux;
 
+#[cfg(windows)]
+pub(crate) use windows::put_out_of_sight;
+
+#[cfg(target_os = "macos")]
+pub(crate) use macos::put_out_of_sight;
+
+#[cfg(any(
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+pub(crate) use linux::put_out_of_sight;
+
 use tauri_runtime::dpi::PhysicalRect;
 use winit::monitor::MonitorHandle;
 

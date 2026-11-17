@@ -8,6 +8,7 @@ mod event_loop;
 mod fullscreen;
 mod monitor;
 mod progress;
+mod unhosted;
 mod utils;
 mod wake;
 mod webview;
@@ -18,5 +19,6 @@ pub(crate) use application::{
   AppDelegate, AppDelegateEvent, activate_application, set_application_event_handler,
 };
 pub(crate) use fullscreen::FullscreenTransition;
+pub(crate) use unhosted::put_out_of_sight;
 pub(crate) use wake::MainThreadWake;
 pub(crate) use window::nswindow;
