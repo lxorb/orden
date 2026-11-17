@@ -61,4 +61,4 @@ providePort('quit.thread', {
   },
 })
 
-export { answerQuitting, mayStop, quitAsked } from './quitting/src/api'
+export { answerQuitting, holdToQuit, mayStop, quitAsked } from './quitting/src/api'

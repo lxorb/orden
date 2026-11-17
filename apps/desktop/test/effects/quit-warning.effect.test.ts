@@ -206,3 +206,17 @@ test('an AI turn in flight is a row, named by its thread', async () => {
   finish()
   await sending
 })
+
+test('a short press of Cmd+Q says to hold it, and the words go again', async () => {
+  vi.useFakeTimers()
+  const { holdToQuit } = await import('../../src/lib/quit-ports')
+  const { holding } = await import('../../src/lib/quitting/src/api')
+  await holdToQuit()
+  flushSync()
+  expect(document.body.textContent).toContain('Hold ⌘Q to quit')
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(holding.shown).toBe(true)
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(holding.shown).toBe(false)
+  vi.useRealTimers()
+})
