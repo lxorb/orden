@@ -64,7 +64,7 @@ impl Home {
     }
 
     fn made(&self) -> Result<(), String> {
-        crate::paths::made(&self.dir)?;
+        orden_base::paths::made(&self.dir)?;
         if self.tool == Tool::Codex {
             let config = self.dir.join("config.toml");
             let held = std::fs::read_to_string(&config).ok();
@@ -88,19 +88,19 @@ pub fn under(root: &Path, tool: Tool, account: Option<&str>) -> Result<Option<Ho
     let Some(id) = account else {
         return Ok(None);
     };
-    if !crate::ai_accounts::has_own_home(root, id, kind_of(tool))? {
+    if !orden_store::ai_accounts::has_own_home(root, id, kind_of(tool))? {
         return Ok(None);
     }
     let home = Home {
         tool,
-        dir: crate::ai_accounts::home_dir(root, id)?,
+        dir: orden_store::ai_accounts::home_dir(root, id)?,
     };
     home.made()?;
     Ok(Some(home))
 }
 
 pub fn of(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option<Home>, String> {
-    under(&crate::ai_accounts::root(app)?, tool, account)
+    under(&orden_store::ai_accounts::root(app)?, tool, account)
 }
 
 pub fn removed(home: &Home) -> Result<(), String> {
@@ -119,7 +119,7 @@ mod tests {
         let dir =
             std::env::temp_dir().join(format!("orden-ai-homes-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
-        crate::ai_accounts::write(
+        orden_store::ai_accounts::write(
             &dir,
             r#"{"accounts":[
                 {"id":"claude-code","kind":"claude-code","name":"","model":""},

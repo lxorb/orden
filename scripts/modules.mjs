@@ -111,6 +111,30 @@ function workspacePackages(root) {
   return names
 }
 
+function crateProblems(module, json) {
+  const cargo = readFileSync(join(module.absolute, 'Cargo.toml'), 'utf8')
+  const found = []
+  if (/^name = "([^"]+)"$/m.exec(cargo)?.[1] !== `orden-${json.name}`)
+    found.push(`${module.dir}/Cargo.toml: the crate is named orden-${json.name}`)
+  const reached = new Set()
+  for (const [, crate, folder] of cargo.matchAll(
+    /^orden-([a-z0-9-]+) = \{[^}]*path = "\.\.\/([a-z0-9-]+)"/gm,
+  )) {
+    if (crate !== folder)
+      found.push(`${module.dir}/Cargo.toml: orden-${crate} lives in ../${crate}, not ../${folder}`)
+    reached.add(folder)
+  }
+  for (const one of reached)
+    if (!json.dependsOn.includes(one))
+      found.push(
+        `${module.dir}/Cargo.toml: depends on orden-${one}, which module.json does not declare`,
+      )
+  for (const one of json.dependsOn)
+    if (!reached.has(one))
+      found.push(`${module.file}: declares '${one}', which Cargo.toml does not depend on`)
+  return found
+}
+
 function contractTestOf(module) {
   return CONTRACT_TESTS[module.lang].find((one) => existsSync(join(module.absolute, one))) ?? null
 }
@@ -232,6 +256,8 @@ export function check(root = ROOT) {
     }
     if (module.lang === 'rust' && !existsSync(join(module.absolute, 'Cargo.toml'))) {
       problems.push(`${module.dir}: a Rust module is one crate, with its own Cargo.toml`)
+    } else if (module.lang === 'rust') {
+      problems.push(...crateProblems(module, json))
     }
     if (!existsSync(join(module.absolute, module.api)))
       problems.push(`${module.dir}: missing its api, ${module.api}`)
@@ -314,12 +340,12 @@ export function moduleOf(file, modules) {
   return found
 }
 
-function runContracts(root) {
+function runContracts(root, lang) {
   const { modules, problems } = check(root)
   if (problems.length > 0) return 1
   let failed = 0
   for (const module of modules) {
-    if (!module.test) continue
+    if (!module.test || (lang && module.lang !== lang)) continue
     const command =
       module.lang === 'rust'
         ? [
@@ -357,14 +383,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       )
     }
   } else if (mode === '--contracts') {
-    process.exitCode = runContracts(ROOT)
+    process.exitCode = runContracts(ROOT, process.argv[3])
   } else if (mode === '--check') {
     const { modules, problems } = check()
     for (const problem of problems) console.error(`modules: ${problem}`)
     if (problems.length > 0) process.exitCode = 1
     else console.log(`modules: ${modules.length} module${modules.length === 1 ? '' : 's'} in order`)
   } else {
-    console.error('usage: node scripts/modules.mjs [--check | --list | --contracts]')
+    console.error('usage: node scripts/modules.mjs [--check | --list | --contracts [ts | rust]]')
     process.exitCode = 2
   }
 }

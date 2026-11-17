@@ -21,7 +21,7 @@ fn past(used: u64, ceiling: u32) -> Option<String> {
 #[cfg(windows)]
 pub fn engine_bytes() -> u64 {
     let own = std::process::id();
-    let all = crate::terminal::process::processes();
+    let all = orden_pty::terminal::process::processes();
     let mut below = vec![own];
     let mut at = 0;
     while at < below.len() {

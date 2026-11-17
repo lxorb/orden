@@ -1,0 +1,6 @@
+{
+  "name": "import",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

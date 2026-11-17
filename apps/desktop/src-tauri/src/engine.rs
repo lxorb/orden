@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use tauri::webview::WebviewBuilder;
 use tauri::{AppHandle, Runtime};
 
-use crate::paths::{config_dir, made};
+use orden_base::paths::{config_dir, made};
 
 const ROOT: &str = orden_web_engine::ROOT;
 
@@ -63,9 +63,10 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         }
         if root
             .parent()
-            .is_some_and(|config| !crate::gpu::accelerated(config))
+            .is_some_and(|config| !orden_system::gpu::accelerated(config))
         {
-            engine = engine.command_line_args(crate::gpu::OFF.map(|switch| (switch, None::<&str>)));
+            engine = engine
+                .command_line_args(orden_system::gpu::OFF.map(|switch| (switch, None::<&str>)));
         }
         engine = engine.root_cache_path(root);
     }
@@ -150,10 +151,10 @@ pub(crate) fn take_ui_window(
     Some(windows.remove(0))
 }
 
-pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
+pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
     manager: &'a M,
     config: &tauri::utils::config::WindowConfig,
-) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
+) -> Result<tauri::WebviewWindowBuilder<'a, orden_base::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
     let building = {
@@ -165,16 +166,16 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     Ok(building.initialization_script(crate::old_home::script()))
 }
 
-pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
-    building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
-) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
+pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(
+    building: tauri::WebviewWindowBuilder<'_, orden_base::Engine, M>,
+) -> tauri::WebviewWindowBuilder<'_, orden_base::Engine, M> {
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
         .initialization_script(crate::kept::kept_script())
         .initialization_script(crate::window_drag::SCRIPT)
         .initialization_script(crate::page_drag::SCRIPT)
-        .initialization_script(crate::gpu::SCRIPT)
+        .initialization_script(orden_system::gpu::SCRIPT)
         .initialization_script(crate::page_scale::SCRIPT)
         .initialization_script(crate::keyboard::PRESS_SCRIPT)
         .initialization_script(crate::page_scheme::SCRIPT);
@@ -184,9 +185,9 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     }
 }
 
-pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
-    building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
-) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
+pub(crate) fn own_profile<M: tauri::Manager<orden_base::Engine>>(
+    building: tauri::WebviewWindowBuilder<'_, orden_base::Engine, M>,
+) -> tauri::WebviewWindowBuilder<'_, orden_base::Engine, M> {
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building.browser_runtime_style(RuntimeStyle::Alloy);
     match OWN_PROFILE.get() {
@@ -260,39 +261,27 @@ mod tests {
 
     #[test]
     fn nothing_pumps_inside_with_webview() {
-        let root = crate::app_dir().join("src");
-        let mut sources = vec![root];
         let mut inside = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
-                for (at, _) in text.match_indices(".with_webview(") {
-                    let call = &text[at + ".with_webview(".len()..];
-                    let mut depth = 1usize;
-                    let end = call
-                        .char_indices()
-                        .find(|&(_, one)| {
-                            match one {
-                                '(' => depth += 1,
-                                ')' => depth -= 1,
-                                _ => {}
-                            }
-                            depth == 0
-                        })
-                        .map_or(call.len(), |(end, _)| end);
-                    let call = &call[..end];
-                    if call.contains("web_worlds::cleared(") || call.contains("web_worlds::sent(") {
-                        inside.push(path.display().to_string());
-                    }
+        for (_, path) in crate::sources() {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+            for (at, _) in text.match_indices(".with_webview(") {
+                let call = &text[at + ".with_webview(".len()..];
+                let mut depth = 1usize;
+                let end = call
+                    .char_indices()
+                    .find(|&(_, one)| {
+                        match one {
+                            '(' => depth += 1,
+                            ')' => depth -= 1,
+                            _ => {}
+                        }
+                        depth == 0
+                    })
+                    .map_or(call.len(), |(end, _)| end);
+                let call = &call[..end];
+                if call.contains("web_worlds::cleared(") || call.contains("web_worlds::sent(") {
+                    inside.push(path.display().to_string());
                 }
             }
         }
@@ -343,28 +332,16 @@ mod tests {
 
     #[test]
     fn every_window_of_an_app_page_is_in_the_interface_s_profile() {
-        let root = crate::app_dir().join("src");
-        let mut sources = vec![root.clone()];
         let mut past = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
-                let of_the_app =
-                    text.contains("WebviewUrl::App(") || text.contains("WebviewUrl::default()");
-                let in_it =
-                    text.contains("engine::own_window(") || text.contains("engine::own_profile(");
-                if of_the_app && !in_it {
-                    past.push(path.display().to_string());
-                }
+        for (_, path) in crate::sources() {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+            let of_the_app =
+                text.contains("WebviewUrl::App(") || text.contains("WebviewUrl::default()");
+            let in_it =
+                text.contains("engine::own_window(") || text.contains("engine::own_profile(");
+            if of_the_app && !in_it {
+                past.push(path.display().to_string());
             }
         }
         assert!(

@@ -197,12 +197,12 @@ fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String>
 
 fn write_file(path: &std::path::Path, kept: &BTreeMap<String, String>) -> Result<(), String> {
     if let Some(folder) = path.parent() {
-        crate::paths::made(folder)?;
+        orden_base::paths::made(folder)?;
         #[cfg(unix)]
         private(folder, 0o700);
     }
     let text = serde_json::to_vec(kept).map_err(|error| error.to_string())?;
-    crate::paths::write_privately(path, &text)
+    orden_base::paths::write_privately(path, &text)
 }
 
 #[cfg(unix)]

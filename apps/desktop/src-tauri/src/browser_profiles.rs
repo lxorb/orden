@@ -4,8 +4,8 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::paths::folded;
 use crate::{chromium_profiles, firefox_profiles, safari, zen_profiles};
+use orden_base::paths::folded;
 
 #[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct Profile {

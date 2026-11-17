@@ -1,0 +1,28 @@
+[package]
+name = "orden-dictation"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+orden-base = { path = "../base" }
+tauri.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+zip.workspace = true
+flate2.workspace = true
+libloading.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true, features = ["Win32_System_SystemInformation"] }
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use crate::browser_profiles::{once, Profile};
 use crate::firefox_profiles::BROWSERS_DIR;
-use crate::paths::folder_named;
+use orden_base::paths::folder_named;
 
 pub(crate) const BROWSERS: [&str; 8] = [
     "chrome", "edge", "brave", "chromium", "vivaldi", "opera", "opera-gx", "arc",
@@ -127,10 +127,10 @@ fn arc_homes(local: &Path) -> Vec<PathBuf> {
 #[tauri::command(async)]
 pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
     let listed = profiles("arc");
-    let asked = crate::paths::folded(Path::new(&profile));
+    let asked = orden_base::paths::folded(Path::new(&profile));
     let one = listed
         .iter()
-        .find(|one| crate::paths::folded(Path::new(&one.path)) == asked)
+        .find(|one| orden_base::paths::folded(Path::new(&one.path)) == asked)
         .ok_or_else(|| format!("{profile} is not a profile Arc lists"))?;
     let path = sidebar_of(Path::new(&one.path)).ok_or("Arc keeps no sidebar here")?;
     let size = fs::metadata(&path)

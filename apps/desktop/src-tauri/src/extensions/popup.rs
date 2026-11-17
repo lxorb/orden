@@ -50,7 +50,7 @@ fn answering(app: &AppHandle) -> Option<Webview> {
         .unwrap_or_else(PoisonError::into_inner)
         .clone()?;
     let view = app.get_webview(&label)?;
-    let _doing = crate::stall::doing("extension popup: asked");
+    let _doing = orden_crashes::stall::doing("extension popup: asked");
     if crate::web_answers::answers(&view) {
         Some(view)
     } else {
@@ -158,7 +158,7 @@ pub async fn extension_popup_open(
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<Option<String>, String>>(1);
     let building = app.clone();
     app.run_on_main_thread(move || {
-        let _doing = crate::stall::doing("extension_popup_open: building the popup");
+        let _doing = orden_crashes::stall::doing("extension_popup_open: building the popup");
         if !is_wanted(&label) {
             let _ = sending.try_send(Ok(None));
             return;
@@ -197,7 +197,7 @@ pub async fn extension_popup_open(
 #[tauri::command]
 pub fn extension_popup_place(app: AppHandle, rect: Rect) {
     if let Some(view) = answering(&app) {
-        let _doing = crate::stall::doing("extension_popup_place");
+        let _doing = orden_crashes::stall::doing("extension_popup_place");
         let scale = crate::page_scale::of(&view.window()).unwrap_or(1.0);
         let _ = view.set_position(PhysicalPosition::new(rect.x * scale, rect.y * scale));
         let _ = view.set_size(PhysicalSize::new(
@@ -227,7 +227,7 @@ fn closed(app: &AppHandle) {
     let Some(view) = app.get_webview(&label) else {
         return;
     };
-    let _doing = crate::stall::doing("extension popup: closing");
+    let _doing = orden_crashes::stall::doing("extension popup: closing");
     if crate::web_answers::answers(&view) {
         let _ = view.close();
     } else {

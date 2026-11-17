@@ -1,0 +1,36 @@
+[package]
+name = "orden-pty"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+orden-base = { path = "../base" }
+tauri.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+dirs.workspace = true
+getrandom.workspace = true
+portable-pty = "0.9"
+
+[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+libc.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true, features = [
+  "Wdk_System_Threading",
+  "Win32_Foundation",
+  "Win32_System_Console",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Kernel",
+  "Win32_System_Threading",
+  "Win32_UI_Shell",
+] }
+
+[dev-dependencies]
+tempfile.workspace = true

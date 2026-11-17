@@ -450,7 +450,9 @@ mod engine {
                 frames_learned(view, tab, session);
                 let learnt = known_frames().contexts.get(&key).cloned();
                 if learnt.is_none() {
-                    crate::trace::mark("pass: a message from a frame the engine did not place");
+                    orden_base::trace::mark(
+                        "pass: a message from a frame the engine did not place",
+                    );
                 }
                 learnt
             },

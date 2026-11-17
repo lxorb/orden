@@ -102,6 +102,7 @@ describe('chats from other services', () => {
       join(ROOT, 'packages/chats/src'),
       join(ROOT, 'apps/desktop/src/lib/chats-client'),
       join(ROOT, 'apps/desktop/src-tauri/src'),
+      join(ROOT, 'apps/desktop/src-tauri/crates'),
     ].flatMap((dir) =>
       files(dir, (path) => SERVICES.test(relative(dir, path))).map((path) => relative(ROOT, path)),
     )

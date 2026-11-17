@@ -10,7 +10,7 @@ on:
       - apps/desktop/src-tauri/wix/**
       - apps/desktop/src-tauri/tauri.conf.json
       - apps/desktop/src-tauri/tauri.macos.conf.json
-      - apps/desktop/src-tauri/src/bundle_name.rs
+      - apps/desktop/src-tauri/crates/system/src/bundle_name.rs
       - apps/desktop/src-tauri/src/default_browser.rs
       - apps/desktop/src-tauri/tauri.windows.conf.json
       - apps/desktop/src-tauri/Info.plist

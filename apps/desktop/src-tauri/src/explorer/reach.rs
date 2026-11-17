@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use tauri::{AppHandle, Manager as _};
 
-use crate::paths::{folded, inside, path_key, spoken};
+use orden_base::paths::{folded, inside, path_key, spoken};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Use {
@@ -73,7 +73,7 @@ pub struct Fences {
 impl Fences {
     pub fn of(app: &AppHandle) -> Self {
         Self {
-            spaces: crate::paths::spaces_dir(app).ok(),
+            spaces: orden_base::paths::spaces_dir(app).ok(),
             own: crate::agents::files::own_folders(app),
             home: app.path().home_dir().ok(),
         }

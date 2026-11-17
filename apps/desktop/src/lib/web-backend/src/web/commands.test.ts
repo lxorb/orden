@@ -173,7 +173,7 @@ beforeEach(() => {
 
 describe('a note too large to be one', () => {
   const crate = readFileSync(
-    fileURLToPath(new URL('../../../../../src-tauri/src/notes.rs', import.meta.url)),
+    fileURLToPath(new URL('../../../../../src-tauri/crates/notes/src/notes.rs', import.meta.url)),
     'utf8',
   )
 
@@ -202,7 +202,7 @@ describe('a name Windows keeps for a device', () => {
 
   test('is refused for a note or a folder made, renamed or copied to it, in the desktop’s words', async () => {
     const crate = readFileSync(
-      fileURLToPath(new URL('../../../../../src-tauri/src/paths.rs', import.meta.url)),
+      fileURLToPath(new URL('../../../../../src-tauri/crates/base/src/paths.rs', import.meta.url)),
       'utf8',
     )
     expect(crate).toContain(

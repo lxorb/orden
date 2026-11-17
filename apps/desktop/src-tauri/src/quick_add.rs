@@ -29,7 +29,7 @@ fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Opti
 
 #[tauri::command]
 pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> Option<String> {
-    if !crate::launch::is_document_window(webview.label()) {
+    if !orden_base::labels::is_document_window(webview.label()) {
         return None;
     }
     let probe = std::env::var(PROBE_KEY).ok();
@@ -71,7 +71,7 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     crate::placement::keyboard_to(window.as_ref());
 }
 
-fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::Engine>> {
+fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_base::Engine>> {
     let builder = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add.html".into()))
         .initialization_script(crate::old_home::script())
         .title("Orden")
@@ -95,7 +95,7 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
     crate::placement::built(builder)
 }
 
-fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) {
+fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<orden_base::Engine>) {
     let Ok(pointer) = app.cursor_position() else {
         let _ = window.center();
         return;

@@ -83,7 +83,8 @@ fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     if std::fs::symlink_metadata(&path).is_ok() {
         return Err(format!("{} is there again", path.display()));
     }
-    crate::carry::rename_new(back, &path).map_err(|why| format!("{}: {why}", path.display()))?;
+    orden_base::carry::rename_new(back, &path)
+        .map_err(|why| format!("{}: {why}", path.display()))?;
     Ok(path)
 }
 
@@ -151,7 +152,9 @@ fn newest_from<T>(
     at: i64,
 ) -> Option<T> {
     held.filter(|(_, from, when)| {
-        *when >= at - 2 && crate::paths::inside(from, back) && crate::paths::inside(back, from)
+        *when >= at - 2
+            && orden_base::paths::inside(from, back)
+            && orden_base::paths::inside(back, from)
     })
     .max_by_key(|(_, _, when)| *when)
     .map(|(item, _, _)| item)

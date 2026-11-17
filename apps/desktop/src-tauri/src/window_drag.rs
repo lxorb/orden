@@ -8,7 +8,7 @@ pub async fn window_move_resize(
     edge: Option<String>,
     at: Option<Pressed>,
 ) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         let direction = Edge::parse(edge.as_deref())
             .ok_or_else(|| format!("{} is not an edge", edge.unwrap_or_default()))?;
         {
@@ -30,7 +30,7 @@ pub async fn window_move_resize(
                     }
                     said => said.map_err(|error| error.to_string()),
                 };
-            crate::logs::say(
+            orden_base::logs::say(
                 webview.app_handle(),
                 if done.is_ok() { "info" } else { "error" },
                 &match &done {
@@ -68,7 +68,10 @@ pub struct Pressed {
     y: i32,
 }
 
-fn by_the_runtime(window: &tauri::Window<crate::Engine>, edge: Edge) -> Result<String, String> {
+fn by_the_runtime(
+    window: &tauri::Window<orden_base::Engine>,
+    edge: Edge,
+) -> Result<String, String> {
     use tauri_runtime::ResizeDirection;
 
     let direction = match edge {

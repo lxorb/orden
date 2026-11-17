@@ -38,14 +38,14 @@ fn handed(app: AppHandle, url: Url) {
             }
         }
         if crate::web_tabs::tab_may_open(&url) {
-            crate::logs::say(
+            orden_base::logs::say(
                 &app,
                 "info",
                 "extensions: a tab one opened, as a tab of Orden's",
             );
             crate::launch::hand_over(&app, crate::launch::Handed::Pages, vec![url.to_string()]);
         } else {
-            crate::logs::say(
+            orden_base::logs::say(
                 &app,
                 "info",
                 &format!(

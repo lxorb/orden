@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::browser_profiles::{copied, known, profiles_of};
-use crate::paths::folded;
+use orden_base::paths::folded;
 
 const MOST_VISITS: i64 = 2000;
 

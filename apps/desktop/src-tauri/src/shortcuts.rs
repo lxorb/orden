@@ -16,13 +16,13 @@ pub fn shortcuts_offered() -> bool {
 
 #[tauri::command]
 pub async fn open_shortcuts() -> Result<(), String> {
-    crate::lane::off_the_runtime(|| -> Result<(), String> {
+    orden_base::lane::off_the_runtime(|| -> Result<(), String> {
         #[cfg(target_os = "macos")]
         {
             std::process::Command::new("/usr/bin/open")
                 .args(["-b", "com.apple.shortcuts"])
                 .spawn()
-                .map(crate::printed::left_running)
+                .map(orden_base::printed::left_running)
                 .map_err(|error| format!("could not open Shortcuts: {error}"))
         }
         #[cfg(not(target_os = "macos"))]

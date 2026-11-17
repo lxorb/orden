@@ -10,7 +10,7 @@ use crate::browser_profiles::{
 #[cfg(test)]
 use crate::browser_profiles::{entries_in, installed_defaults};
 use crate::firefox_profiles::{tree_of, FAVICONS, PLACES, SEARCH};
-use crate::paths::folder_named;
+use orden_base::paths::folder_named;
 
 pub type ZenProfile = Profile;
 

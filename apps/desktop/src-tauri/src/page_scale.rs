@@ -84,7 +84,7 @@ pub fn interface_zoom_chosen() -> f64 {
 
 #[tauri::command(async)]
 pub fn interface_zoom_choose(
-    app: tauri::AppHandle<crate::Engine>,
+    app: tauri::AppHandle<orden_base::Engine>,
     factor: f64,
 ) -> Result<(), String> {
     {
@@ -92,7 +92,7 @@ pub fn interface_zoom_choose(
     }
 }
 
-pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
+pub fn read_chosen(app: &tauri::AppHandle<orden_base::Engine>) {
     engine::read_chosen(app);
 }
 
@@ -108,8 +108,8 @@ mod engine {
         *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
-        let kept = crate::paths::config_dir(app)
+    pub fn read_chosen(app: &tauri::AppHandle<orden_base::Engine>) {
+        let kept = orden_base::paths::config_dir(app)
             .ok()
             .and_then(|config| std::fs::read_to_string(config.join(FILE)).ok())
             .and_then(|text| text.trim().parse().ok())
@@ -119,16 +119,16 @@ mod engine {
         }
     }
 
-    pub fn choose(app: &tauri::AppHandle<crate::Engine>, factor: f64) -> Result<(), String> {
+    pub fn choose(app: &tauri::AppHandle<orden_base::Engine>, factor: f64) -> Result<(), String> {
         use tauri::Manager as _;
 
         let zoom = super::zoom_of(factor).ok_or("that is not a zoom")?;
-        let config = crate::paths::config_dir(app)?;
-        crate::paths::made(&config)?;
-        crate::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
+        let config = orden_base::paths::config_dir(app)?;
+        orden_base::paths::made(&config)?;
+        orden_base::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
         *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner) = zoom;
 
-        for window in crate::launch::document_windows(app) {
+        for window in orden_base::labels::document_windows(app) {
             zooming(window.label());
             if let Some(view) = app.get_webview(window.label()) {
                 let _ = view.set_zoom(zoom * desktop());
@@ -164,7 +164,7 @@ mod engine {
             .unwrap_or(1.0)
     }
 
-    fn native_read(window: &tauri::Window<crate::Engine>) -> f64 {
+    fn native_read(window: &tauri::Window<orden_base::Engine>) -> f64 {
         if super::CHROMIUM_SCALES_ITSELF {
             window
                 .scale_factor()
@@ -176,7 +176,7 @@ mod engine {
         }
     }
 
-    pub fn heard(webview: &tauri::Webview<crate::Engine>, ratio: f64) {
+    pub fn heard(webview: &tauri::Webview<orden_base::Engine>, ratio: f64) {
         let window = webview.window();
         let native = native_read(&window);
         let label = window.label().to_owned();
@@ -200,7 +200,7 @@ mod engine {
             .insert(window.to_owned(), ratio);
     }
 
-    pub fn of(window: &tauri::Window<crate::Engine>) -> f64 {
+    pub fn of(window: &tauri::Window<orden_base::Engine>) -> f64 {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
             .get(window.label())
@@ -209,9 +209,9 @@ mod engine {
     }
 }
 
-pub fn start(app: &tauri::AppHandle<crate::Engine>) {
+pub fn start(app: &tauri::AppHandle<orden_base::Engine>) {
     let scale = engine::start();
-    crate::logs::say(
+    orden_base::logs::say(
         app,
         "info",
         &format!(
@@ -226,7 +226,7 @@ pub fn start(app: &tauri::AppHandle<crate::Engine>) {
 }
 
 #[tauri::command(async)]
-pub fn page_scale_seen(webview: tauri::Webview<crate::Engine>, ratio: f64) {
+pub fn page_scale_seen(webview: tauri::Webview<orden_base::Engine>, ratio: f64) {
     if !ratio.is_finite() || ratio <= 0.0 {
         return;
     }
@@ -237,7 +237,7 @@ pub fn page_scale_seen(webview: tauri::Webview<crate::Engine>, ratio: f64) {
     clippy::unnecessary_wraps,
     reason = "the window's scale, elsewhere, can fail"
 )]
-pub fn of(window: &tauri::Window<crate::Engine>) -> tauri::Result<f64> {
+pub fn of(window: &tauri::Window<orden_base::Engine>) -> tauri::Result<f64> {
     {
         Ok(engine::of(window))
     }

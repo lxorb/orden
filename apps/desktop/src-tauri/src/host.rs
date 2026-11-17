@@ -20,7 +20,7 @@ pub(crate) fn system() -> &'static dyn WindowSystem {
     clippy::useless_conversion,
     reason = "a window's handle is an X11 id, a view pointer or an HWND by platform; one number holds any of them"
 )]
-pub(crate) fn window_id(window: &tauri::Window<crate::Engine>) -> Option<NativeWindow> {
+pub(crate) fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWindow> {
     use raw_window_handle::{HasWindowHandle as _, RawWindowHandle};
 
     let handle = window.window_handle().ok()?;

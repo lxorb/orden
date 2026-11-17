@@ -1,0 +1,6 @@
+{
+  "name": "store",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

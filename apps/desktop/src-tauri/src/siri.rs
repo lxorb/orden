@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use security_framework::os::macos::code_signing::{Flags, SecCode, SecRequirement};
 use tauri::{AppHandle, Emitter as _};
 
-use crate::paths::{config_dir, inside, made, spaces_dir, write_atomically, TRASH};
+use orden_base::paths::{config_dir, inside, made, spaces_dir, write_atomically, TRASH};
 
 const INBOX: &str = ".Inbox.md";
 

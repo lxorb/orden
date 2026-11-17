@@ -156,7 +156,7 @@ pub fn logged(
     log::write(
         app,
         log::Line {
-            at: crate::clock::now(),
+            at: orden_base::clock::now(),
             agent: caller.id(),
             verb,
             tab,
@@ -350,7 +350,7 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
 }
 
 pub(crate) fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
-    if crate::launch::is_document_window(webview.label()) {
+    if orden_base::labels::is_document_window(webview.label()) {
         Ok(())
     } else {
         Err("only Orden's own window may ask that".into())
@@ -392,7 +392,7 @@ pub async fn agents_dialog_path(
     path: String,
     write: bool,
 ) -> Answer {
-    crate::lane::off_the_runtime(move || -> Answer {
+    orden_base::lane::off_the_runtime(move || -> Answer {
         if let Err(why) = from_the_app(&webview) {
             return Answer::error(Code::NotGranted, why);
         }
@@ -406,7 +406,7 @@ pub async fn agents_dialog_path(
         };
         match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
             Ok(path) => {
-                crate::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
+                orden_base::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
                 Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
             }
             Err(answer) => answer,
@@ -584,7 +584,7 @@ pub async fn agents_capture(
     full_page: Option<bool>,
     page: Option<crate::pdf::PdfPage>,
 ) -> Answer {
-    crate::lane::off_the_runtime(move || -> Answer {
+    orden_base::lane::off_the_runtime(move || -> Answer {
         if let Err(why) = from_the_app(&webview) {
             return Answer::error(Code::NotGranted, why);
         }

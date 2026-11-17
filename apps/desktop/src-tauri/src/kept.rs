@@ -64,13 +64,13 @@ fn kept_key(name: &str) -> Option<String> {
 }
 
 fn write_down(one: &Write) -> Result<(), String> {
-    crate::paths::made(&one.folder)?;
+    orden_base::paths::made(&one.folder)?;
     let bytes = serde_json::to_vec(&one.said).map_err(|error| error.to_string())?;
-    crate::paths::write_atomically(&kept_file(&one.folder, &one.key), &bytes)
+    orden_base::paths::write_atomically(&kept_file(&one.folder, &one.key), &bytes)
 }
 
 fn kept_folder(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(crate::paths::config_dir(app)?.join(FOLDER))
+    Ok(orden_base::paths::config_dir(app)?.join(FOLDER))
 }
 
 fn to_writer(app: &AppHandle, key: String, said: Said) -> Result<(), String> {

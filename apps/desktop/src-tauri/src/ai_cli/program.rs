@@ -135,7 +135,7 @@ fn path_from_shell(shell: &OsStr, patience: std::time::Duration) -> Option<OsStr
         .stderr(Stdio::null())
         .spawn()
         .ok()?;
-    let heard = crate::printed::chunks(child.stdout.take()?);
+    let heard = orden_base::printed::chunks(child.stdout.take()?);
 
     let started = Instant::now();
     let mut printed = Vec::new();

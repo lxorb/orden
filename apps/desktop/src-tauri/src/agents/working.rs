@@ -28,12 +28,12 @@ fn same_name(one: &str, other: &str) -> bool {
 
 fn kept(spaces: &Path, path: &Path) -> Kept {
     let home = spaces.join(KEPT);
-    if !crate::paths::inside(&home, path) {
+    if !orden_base::paths::inside(&home, path) {
         return Kept::No;
     }
-    let names: Vec<String> = crate::paths::folded(path)
+    let names: Vec<String> = orden_base::paths::folded(path)
         .components()
-        .skip(crate::paths::folded(&home).components().count())
+        .skip(orden_base::paths::folded(&home).components().count())
         .filter_map(|part| match part {
             Component::Normal(name) => Some(name.to_string_lossy().into_owned()),
             _ => None,
@@ -47,8 +47,8 @@ fn kept(spaces: &Path, path: &Path) -> Kept {
 }
 
 pub fn kept_twin(spaces: &Path, path: &Path) -> Option<PathBuf> {
-    let rest = crate::paths::folded(path)
-        .strip_prefix(crate::paths::folded(spaces))
+    let rest = orden_base::paths::folded(path)
+        .strip_prefix(orden_base::paths::folded(spaces))
         .ok()?
         .to_path_buf();
     let mut parts = rest.components();
@@ -63,7 +63,7 @@ pub fn kept_twin(spaces: &Path, path: &Path) -> Option<PathBuf> {
 }
 
 pub fn on_disk(app: &AppHandle, path: &Path) -> Result<PathBuf, String> {
-    let Ok(spaces) = crate::paths::spaces_dir(app) else {
+    let Ok(spaces) = orden_base::paths::spaces_dir(app) else {
         return Ok(path.to_path_buf());
     };
     match kept(&spaces, path) {

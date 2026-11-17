@@ -6,9 +6,9 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-use crate::paths::{config_dir, made, openable, write_atomically};
-use crate::spaces::{list_spaces, Space};
-use crate::tree::{read_tree, Entry, TreeOptions};
+use orden_base::paths::{config_dir, made, openable, write_atomically};
+use orden_notes::spaces::{list_spaces, Space};
+use orden_notes::tree::{read_tree, Entry, TreeOptions};
 
 const FILE: &str = "launch.json";
 
@@ -91,16 +91,16 @@ pub fn start(app: &AppHandle) -> bool {
 
 fn read(app: &AppHandle, plan: Plan) -> Answer {
     let spaces = list_spaces(app.clone()).ok();
-    crate::trace::mark("read ahead: spaces");
+    orden_base::trace::mark("read ahead: spaces");
 
     let tree = plan.root.as_ref().and_then(|root| {
         let options = serde_json::from_value::<TreeOptions>(plan.options.clone()).ok();
         read_tree(app.clone(), root.clone(), options).ok()
     });
-    crate::trace::mark("read ahead: tree");
+    orden_base::trace::mark("read ahead: tree");
 
     let notes = notes_of(app, &plan.notes);
-    crate::trace::mark(&format!("read ahead: {} notes", notes.len()));
+    orden_base::trace::mark(&format!("read ahead: {} notes", notes.len()));
 
     Answer {
         plan,
@@ -122,7 +122,7 @@ fn notes_of(app: &AppHandle, paths: &[String]) -> BTreeMap<String, String> {
             Ok(meta) if meta.len() <= LONGEST_NOTE => {}
             _ => continue,
         }
-        let Ok(words) = crate::notes::note_words(app, path) else {
+        let Ok(words) = orden_notes::notes::note_words(app, path) else {
             continue;
         };
         if bytes + words.len() > MOST_BYTES {
@@ -137,7 +137,7 @@ fn notes_of(app: &AppHandle, paths: &[String]) -> BTreeMap<String, String> {
 
 #[tauri::command]
 pub async fn launch_ahead(app: AppHandle) -> Option<Answer> {
-    crate::lane::off_the_runtime(move || -> Option<Answer> {
+    orden_base::lane::off_the_runtime(move || -> Option<Answer> {
         taken().or_else(|| planned(&app).map(|plan| read(&app, plan)))
     })
     .await

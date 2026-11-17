@@ -38,6 +38,9 @@ function moved(line, pins, table) {
 
   if (name === 'tauri-build') return [`tauri-build = "=${pin('tauri-build')}"`]
   if (name === 'tauri-utils') return [`tauri-utils = "=${pin('tauri-utils')}"`]
+  if (name === 'tauri' && table === '[workspace.dependencies]') {
+    return [`tauri = "=${pin('tauri')}"`]
+  }
   if (name === 'tauri') {
     const features = featuresOf(line)
     if (table === '[dependencies]') {
@@ -60,11 +63,6 @@ function moved(line, pins, table) {
         : []),
     ]
   }
-  if (name === 'tauri-plugin-dialog' && table === LINUX_DESKTOP) {
-    return [
-      `tauri-plugin-dialog = { version = "=${pin(name)}", default-features = false, features = ["xdg-portal"] }`,
-    ]
-  }
   if (name.startsWith('tauri-plugin-')) {
     const rest = /^[a-z-]+ = \{ version = "[^"]*"(.*)$/.exec(line)?.[1]
     return [
@@ -78,9 +76,6 @@ function moved(line, pins, table) {
   }
   return [line]
 }
-
-const LINUX_DESKTOP =
-  '[target.\'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))\'.dependencies]'
 
 const PATCHED = [['tauri-runtime-cef', 'linux/tauri-runtime-cef']]
 

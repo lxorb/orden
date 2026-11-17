@@ -216,7 +216,7 @@ fn folder(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| error.to_string())?
         .join("agents")
         .join("log");
-    crate::paths::made(&dir)?;
+    orden_base::paths::made(&dir)?;
     Ok(dir)
 }
 

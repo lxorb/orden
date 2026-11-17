@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::browser_profiles::{copied, ini_profiles, known, once, Profile};
-use crate::paths::folder_named;
+use orden_base::paths::folder_named;
 
 pub(crate) const BROWSERS_DIR: &str = "ORDEN_BROWSERS_DIR";
 

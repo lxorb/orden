@@ -138,7 +138,7 @@ pub(super) fn asked(app: &AppHandle, path: &str, using: Use) -> Result<PathBuf, 
 
 #[tauri::command]
 pub async fn explorer_list(app: AppHandle, path: String) -> Result<Listing, String> {
-    crate::lane::off_the_runtime(move || -> Result<Listing, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Listing, String> {
         let folder = asked(&app, &path, Use::List)?;
         let (entries, cut) = entries(&folder, MOST_LISTED)?;
         app.state::<Explored>().saw(&folder);
@@ -164,7 +164,7 @@ pub struct Place {
 
 #[tauri::command]
 pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
-    crate::lane::off_the_runtime(move || -> Vec<Place> {
+    orden_base::lane::off_the_runtime(move || -> Vec<Place> {
         let paths = app.path();
         let mut out: Vec<Place> = [
             ("home", paths.home_dir().ok()),
@@ -174,7 +174,7 @@ pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
             ("pictures", paths.picture_dir().ok()),
             ("music", paths.audio_dir().ok()),
             ("videos", paths.video_dir().ok()),
-            ("spaces", crate::paths::spaces_dir(&app).ok()),
+            ("spaces", orden_base::paths::spaces_dir(&app).ok()),
         ]
         .into_iter()
         .filter_map(|(kind, path)| {
@@ -271,7 +271,7 @@ pub struct Facts {
 
 #[tauri::command]
 pub async fn explorer_facts(app: AppHandle, path: String) -> Result<Facts, String> {
-    crate::lane::off_the_runtime(move || -> Result<Facts, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Facts, String> {
         let path = asked(&app, &path, Use::Look)?;
         let meta =
             fs::symlink_metadata(&path).map_err(|why| format!("{}: {why}", path.display()))?;
@@ -312,10 +312,11 @@ fn letters(meta: &fs::Metadata) -> String {
 
 #[tauri::command]
 pub async fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Response, String> {
-    crate::lane::off_the_runtime(move || -> Result<Response, String> {
+    orden_base::lane::off_the_runtime(move || -> Result<Response, String> {
         use std::io::Read as _;
         let path = asked(&app, &path, Use::Look)?;
-        let file = super::opened_file(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        let file = orden_base::paths::opened_file(&path)
+            .map_err(|why| format!("{}: {why}", path.display()))?;
         let mut bytes = Vec::new();
         file.take(most.min(MOST_PEEKED) + 1)
             .read_to_end(&mut bytes)
@@ -334,7 +335,7 @@ fn peeked(mut bytes: Vec<u8>, most: u64) -> Vec<u8> {
 
 #[tauri::command]
 pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         let path = asked(&app, &path, Use::Look)?;
         tauri_plugin_opener::open_path(&path, None::<&str>).map_err(|why| why.to_string())
     })
@@ -343,7 +344,7 @@ pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn explorer_icon(ending: String) -> Option<String> {
-    crate::lane::off_the_runtime(move || crate::apps_host::kinds::icon(&ending)).await
+    orden_base::lane::off_the_runtime(move || orden_apps::apps_host::kinds::icon(&ending)).await
 }
 
 #[cfg(test)]

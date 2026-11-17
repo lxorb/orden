@@ -473,7 +473,7 @@ fn question(
 }
 
 fn runs_in_reach(app: &AppHandle, grant: &Grant, cwd: &Path) -> bool {
-    let Ok(root) = crate::paths::spaces_dir(app) else {
+    let Ok(root) = orden_base::paths::spaces_dir(app) else {
         return false;
     };
     match (std::fs::canonicalize(root), std::fs::canonicalize(cwd)) {
@@ -583,7 +583,7 @@ fn absolute(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
             "{asked} is not an absolute path: say where it is, or start it with ~/"
         ));
     }
-    Ok(crate::paths::folded(&given))
+    Ok(orden_base::paths::folded(&given))
 }
 
 fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result<PathBuf, String> {
@@ -656,7 +656,7 @@ fn spawned(
         session: session.to_owned(),
         program: program.display().to_string(),
         args: asked.args.clone(),
-        at: crate::clock::now(),
+        at: orden_base::clock::now(),
         kept,
         child: Mutex::new(Some(child)),
         family,
@@ -921,7 +921,7 @@ mod tests {
         }
         assert_eq!(
             absolute("~/a/../b", Some(&home)).expect("home"),
-            crate::paths::folded(&home.join("b"))
+            orden_base::paths::folded(&home.join("b"))
         );
         assert!(located(
             "no-such-program-anywhere",

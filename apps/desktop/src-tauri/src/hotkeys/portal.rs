@@ -58,7 +58,7 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
     let portal = match Portal::open() {
         Ok(portal) => portal,
         Err(error) => {
-            crate::logs::say(
+            orden_base::logs::say(
                 app,
                 "info",
                 &format!("global keys: no desktop portal for them here ({error})"),
@@ -67,7 +67,7 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
             return;
         }
     };
-    crate::logs::say(
+    orden_base::logs::say(
         app,
         "info",
         &format!(
@@ -159,7 +159,7 @@ impl Portal {
                 super::bound(app, held, refused);
             }
             Err(error) => {
-                crate::logs::say(app, "info", &format!("global keys: not bound ({error})"));
+                orden_base::logs::say(app, "info", &format!("global keys: not bound ({error})"));
                 super::bound(app, BTreeMap::new(), wanted.keys().copied().collect());
             }
         }
@@ -270,7 +270,7 @@ impl Portal {
             .name("orden-portal-presses".into())
             .spawn(move || {
                 if let Err(error) = presses(&bus, &app) {
-                    crate::logs::say(&app, "info", &format!("global keys: deaf ({error})"));
+                    orden_base::logs::say(&app, "info", &format!("global keys: deaf ({error})"));
                 }
             });
     }
