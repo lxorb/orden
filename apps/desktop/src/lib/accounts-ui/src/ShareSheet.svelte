@@ -6,7 +6,7 @@
   import { isShared, share } from '../../sharing/src/api'
   import { called } from '../../accounts/src/api'
   import type { GivenRole, Member, Sharing } from '../../accounts/src/api'
-  import { Copyable } from '../../ui-controls/src/api'
+  import { Copyable, QrCode } from '../../ui-controls/src/api'
   import { FileMark } from '../../marks/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { Sheet } from '../../ui-controls/src/api'
@@ -80,6 +80,12 @@
     if (share.busy) return
     if (link) void share.revoke()
     else void share.setLink('read', 'approval')
+  }
+
+  const sharable = 'share' in navigator
+
+  function shareLink(url: string) {
+    navigator.share({ title: subject, url }).catch(() => undefined)
   }
 
   function toggleAsking() {
@@ -314,7 +320,23 @@
 
         <div class="row">
           <Copyable value={link?.url ?? ''} word="Copy link" disabled={!link} />
+          {#if sharable}
+            <button
+              class="share"
+              type="button"
+              disabled={!link}
+              onclick={() => link && shareLink(link.url)}
+            >
+              Share
+            </button>
+          {/if}
         </div>
+
+        {#if link}
+          <div class="reach">
+            <QrCode value={link.url} label="QR code for the link" />
+          </div>
+        {/if}
 
         <button
           class="orden-action is-danger"
@@ -451,6 +473,35 @@
 
   .asks {
     color: var(--muted-strong);
+  }
+
+  .share {
+    flex: none;
+    padding: 6px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-strong);
+    cursor: default;
+  }
+
+  @media (hover: hover) {
+    .share:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  .share:active:not(:disabled) {
+    background: var(--press);
+  }
+
+  .reach {
+    display: flex;
+    padding: var(--space-1) 0 var(--space-2);
   }
 
   .under {
