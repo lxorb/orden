@@ -64,5 +64,6 @@ export interface MachineHost {
   usage(id: string, since: number): Promise<{ cpuS: number; egressBytes: number }>
   readonly alwaysOn?: boolean
   reboot?(id: string): Promise<void>
+  resize?(id: string, type: string, hard: boolean): Promise<boolean>
   remove?(id: string): Promise<void>
 }
