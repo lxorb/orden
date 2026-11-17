@@ -296,8 +296,8 @@ describe('a token, in an account that keeps notes from agents', () => {
   afterEach(() => env.close())
 
   test('reads no protected note and writes nothing in that space', async () => {
-    expect((await call(env, `/v1/notes/${diary}`, { token: key })).status).toBe(403)
-    expect((await call(env, `/v1/notes/${diary}/versions`, { token: key })).status).toBe(403)
+    expect((await call(env, `/v1/notes/${diary}`, { token: key })).status).toBe(404)
+    expect((await call(env, `/v1/notes/${diary}/versions`, { token: key })).status).toBe(404)
     expect(
       (
         await call(env, `/v1/notes/${diary}`, {
@@ -306,7 +306,7 @@ describe('a token, in an account that keeps notes from agents', () => {
           body: { content: 'overwritten', baseVersion: 1 },
         })
       ).status,
-    ).toBe(403)
+    ).toBe(404)
     expect(
       (
         await call(env, `/v1/notes/${plan}`, {
@@ -316,7 +316,11 @@ describe('a token, in an account that keeps notes from agents', () => {
         })
       ).status,
     ).toBe(403)
-    expect((await call(env, `/v1/spaces/${home}/changes?since=0`, { token: key })).status).toBe(403)
+    const changes = await call(env, `/v1/spaces/${home}/changes?since=0`, { token: key })
+    expect(JSON.stringify(changes.json)).toContain('Plan.md')
+    expect(JSON.stringify(changes.json)).not.toMatch(/Diary|secret/)
+    expect((await call(env, `/v2/spaces/${home}/feed`, { token: key })).status).toBe(403)
+    expect((await call(env, `/v2/spaces/${work}/feed`, { token: key })).status).toBe(200)
     expect((await call(env, `/v1/notes/${diary}`, { token })).json).toMatchObject({
       content: 'the secret words',
     })
@@ -331,7 +335,7 @@ describe('a token, in an account that keeps notes from agents', () => {
     const escaped = (id: string) =>
       id.replace(/./g, (one) => `%${one.charCodeAt(0).toString(16).padStart(2, '0')}`)
 
-    expect((await call(env, `/v1/notes/${escaped(diary)}`, { token: key })).status).toBe(403)
+    expect((await call(env, `/v1/notes/${escaped(diary)}`, { token: key })).status).toBe(404)
     expect(
       (
         await call(env, `/v1/notes/${escaped(diary)}`, {
@@ -340,11 +344,15 @@ describe('a token, in an account that keeps notes from agents', () => {
           body: { content: 'overwritten', baseVersion: 1 },
         })
       ).status,
-    ).toBe(403)
-    expect(
-      (await call(env, `/v1/spaces/${escaped(home)}/changes?since=0`, { token: key })).status,
-    ).toBe(403)
-    expect((await call(env, `/v2/spaces/${escaped(home)}/feed`, { token: key })).status).toBe(403)
+    ).toBe(404)
+    for (const path of [
+      `/v1/spaces/${escaped(home)}/changes?since=0`,
+      `/v2/spaces/${escaped(home)}/feed`,
+    ]) {
+      expect(JSON.stringify((await call(env, path, { token: key })).json), path).not.toMatch(
+        /Diary|secret/,
+      )
+    }
     expect((await call(env, `/v1/notes/${diary}`, { token })).json).toMatchObject({
       content: 'the secret words',
     })
