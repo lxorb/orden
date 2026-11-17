@@ -217,6 +217,42 @@ describe('a space somebody shared', () => {
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
 
+  test('takes the folder this device remembers as its own, instead of sending it up as a copy', () => {
+    const result = plan({
+      local: [local('Work')],
+      remote: [theirs('Work')],
+      homes: [{ root: '/spaces/Work', spaceId: 'id-Work' }],
+    })
+
+    expect(result.pair).toEqual([{ root: '/spaces/Work', spaceId: 'id-Work' }])
+    expect(result.upload).toEqual([])
+    expect(result.adopt).toEqual([])
+  })
+
+  test('takes it before a space of the account’s own claims it by name', () => {
+    const result = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
+      homes: [{ root: '/spaces/Work', spaceId: 'id-theirs' }],
+    })
+
+    expect(result.pair).toEqual([{ root: '/spaces/Work', spaceId: 'id-theirs' }])
+    expect(result.adopt.map((one) => one.id)).toEqual(['id-mine'])
+    expect(result.upload).toEqual([])
+  })
+
+  test('leaves a remembered folder alone once that space is gone from the account', () => {
+    const result = plan({
+      local: [local('Work')],
+      remote: [theirs('Other', 'id-other')],
+      homes: [{ root: '/spaces/Work', spaceId: 'id-Work' }],
+      deleted: ['id-Work'],
+    })
+
+    expect(result.pair).toEqual([])
+    expect(result.upload.map((one) => one.name)).toEqual(['Work'])
+  })
+
   test('is adopted beside the account’s own space of the same name', () => {
     const result = plan({
       local: [local('Work')],

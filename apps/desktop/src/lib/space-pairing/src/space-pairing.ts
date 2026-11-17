@@ -1,6 +1,12 @@
 import type { SyncPairing } from '@orden/contracts'
 import { account, api } from '../../accounts/src/api'
-import { leaveSpaces, leftByAnother } from '../../left-spaces/src/api'
+import {
+  forgetHome,
+  homeOf,
+  keepHomes,
+  leaveSpaces,
+  leftByAnother,
+} from '../../left-spaces/src/api'
 import { forgetSeedSpace, seedSpaceRoot } from '../../seeded/src/api'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
@@ -74,10 +80,11 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
   const owes = holder()
   const ending = owes === null ? new Set<string>() : await endsSettled(token, owes)
   const kept = new Set(mirrors.map((one) => one.spaceId))
+  const local = workspace.spaces
+    .filter((space) => !theirs(space.root))
+    .map((space) => ({ name: space.name, root: space.root }))
   const plan = planSpaces({
-    local: workspace.spaces
-      .filter((space) => !theirs(space.root))
-      .map((space) => ({ name: space.name, root: space.root })),
+    local,
     remote: account.spaces
       .filter((space) => !ending.has(space.id) || kept.has(space.id))
       .map((space) => ({
@@ -86,6 +93,10 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
         shared: space.role !== 'owner',
       })),
     mirrors,
+    homes: local.flatMap(({ root }) => {
+      const spaceId = homeOf(root, who)
+      return spaceId === null ? [] : [{ root, spaceId }]
+    }),
     deleted: account.deletedSpaces,
     untouched: await untouchedDefault(),
   })
@@ -94,6 +105,7 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
     const space = workspace.spaces.find((one) => samePath(one.root, root))
     pairing.unpair(root)
     if (space) await workspace.deleteSpace(space.id, true)
+    forgetHome(root)
   }
 
   for (const root of plan.discard) {
@@ -130,7 +142,7 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
           (theirs(one.root) || paired().some((pair) => samePath(pair.root, one.root))),
       )
 
-    const root = await workspace.adoptSpace(space.name, taken)
+    const root = await workspace.adoptSpace(space.name, taken, space.id)
     if (root) pairing.pair(root, space.id, shared(space.id))
     if (root && who) leaveSpaces(who, [root])
   }
@@ -142,6 +154,10 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
         .map((one) => one.root)
         .filter((root) => !theirs(root)),
     ])
+    keepHomes(
+      who,
+      paired().filter((one) => !theirs(one.root)),
+    )
   }
 
   const accountId = account.user?.id ?? null
