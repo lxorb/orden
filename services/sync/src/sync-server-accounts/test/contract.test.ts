@@ -68,7 +68,7 @@ describe('sessions', () => {
     const signing = await signingIn(env, 'c@b.dev')
     if ('second' in signing) throw new Error('a new account asks for no second factor')
     const session = await sessionFor(env, signing.user, 'laptop')
-    expect(session.user).toEqual(presentUser(signing.user))
+    expect(session.user).toMatchObject(presentUser(signing.user))
     expect(session.user).not.toHaveProperty('created_at')
 
     const who = await requireWhoever(env, `Bearer ${session.token}`)

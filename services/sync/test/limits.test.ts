@@ -67,6 +67,18 @@ describe('mail from one machine', () => {
     expect((await askForACode('elsewhere@example.com', '198.51.100.4')).status).toBe(200)
   })
 
+  test('counts one network of IPv6 addresses as one machine, however it is written', async () => {
+    for (let at = 0; at < 20; at++) {
+      const machine = `2001:db8${at % 2 ? ':0:0' : ''}::${(at + 1).toString(16)}`
+      expect((await askForACode(`six-${at}@example.com`, machine)).status).toBe(200)
+    }
+
+    expect((await askForACode('six-more@example.com', '2001:0DB8:0000:0000:ffff::1')).status).toBe(
+      429,
+    )
+    expect((await askForACode('next-door@example.com', '2001:db8:0:1::1')).status).toBe(200)
+  })
+
   test('does not hold a resend against it, since no message goes out', async () => {
     await askForACode('same@example.com', '203.0.113.7')
     for (let at = 0; at < 30; at++) await askForACode('same@example.com', '203.0.113.7')

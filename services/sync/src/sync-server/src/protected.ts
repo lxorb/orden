@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
+import { nameKey } from '@orden/sync-core'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
 import { LONGEST_PATH, staysInside } from './paths'
-import type { Env, Variables } from './types'
+import type { Env, Variables, Whoever } from './types'
 
 type Way = 'password' | 'device'
 
@@ -80,7 +81,11 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
 
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
-  return Object.keys(ways).some((key) => key === '' || path === key || path.startsWith(`${key}/`))
+  const folded = nameKey(path)
+  return Object.keys(ways).some((key) => {
+    const held = nameKey(key)
+    return held === '' || folded === held || folded.startsWith(`${held}/`)
+  })
 }
 
 export type Shut = (spaceId: string, path: string) => boolean
@@ -91,6 +96,13 @@ export const PROTECTED = (path: string) =>
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
   return (spaceId, path) => covers(held.spaces[spaceId], path)
+}
+
+export async function programShut(
+  env: Env,
+  who: Whoever & { program?: true },
+): Promise<Shut | null> {
+  return who.kind === 'user' && who.program ? await shutFor(env, who.user.id) : null
 }
 
 const TOO_MUCH = 'that is more than an account protects'

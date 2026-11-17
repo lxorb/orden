@@ -2,7 +2,14 @@ import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { EVENTS_A_MINUTE, LONGEST_SEARCH, MOST_BODY } from '@orden/chats/limits'
 import { postEventsOf } from '@orden/chats/wire'
-import { askInChunks, places, within, type Env, type Whoever } from '../../../sync-server/src/api'
+import {
+  askInChunks,
+  places,
+  shutFor,
+  within,
+  type Env,
+  type Whoever,
+} from '../../../sync-server/src/api'
 import { accountById } from '../../../sync-server-accounts/src/api'
 import {
   askChat,
@@ -93,17 +100,18 @@ async function chatsOf(
 ): Promise<Known[]> {
   const rows = await listed(env, who, null, most)
   if (!rows.length) return []
+  const shut = await shutFor(env, who.kind === 'user' ? who.user.id : '')
   const found = await askInChunks(
     rows.map((one) => one.id),
     async (chunk) => {
       const { results } = await env.DB.prepare(
-        `select ch.id as id, f.path as path, sp.name as space from chats ch
+        `select ch.id as id, f.path as path, sp.id as space_id, sp.name as space from chats ch
            join spaces sp on sp.id = ch.space_id
            left join notes f on f.id = ch.file_id and f.deleted = 0
           where ch.id in (${places(chunk.length)})`,
       )
         .bind(...chunk)
-        .all<{ id: string; path: string | null; space: string }>()
+        .all<{ id: string; path: string | null; space_id: string; space: string }>()
       return results
     },
   )
@@ -112,7 +120,7 @@ async function chatsOf(
   return rows.flatMap((row): Known[] => {
     const chat = named.get(row.id)
     const name = (chat?.path?.split('/').pop() ?? '').replace(/\.chat$/i, '')
-    if (!chat || !name) return []
+    if (!chat?.path || !name || shut(chat.space_id, chat.path)) return []
     const behind = row.lastSeq > row.readSeq && row.lastBy !== me
     return [
       {

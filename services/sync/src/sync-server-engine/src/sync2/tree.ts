@@ -3,6 +3,7 @@ import {
   applyOp,
   heldName,
   LONGEST_NAME,
+  shortened,
   contentChanged,
   kindOfName,
   nameKey,
@@ -19,6 +20,7 @@ import {
 import {
   chunks,
   type Env,
+  followOnlyNote,
   type Moved,
   newId,
   now,
@@ -134,6 +136,7 @@ interface Folders {
 class Placing {
   private readonly folders = new Map<string, Folders>()
   private readonly taken = new Map<string | null, Set<string>>()
+  private readonly askedFor = new Map<string, Folders>()
 
   constructor(entries: Iterable<TreeEntry>) {
     for (const entry of entries) this.add(entry)
@@ -149,12 +152,23 @@ class Placing {
   }
 
   folder(parent: string | null, name: string): Folders | undefined {
-    return this.folders.get(`${parent ?? ''}\u0000${nameKey(name)}`)
+    const at = `${parent ?? ''}\u0000${nameKey(name)}`
+    return this.askedFor.get(at) ?? this.folders.get(at)
   }
 
-  free(parent: string | null, wanted: string): string {
+  asked(parent: string | null, name: string, folder: TreeEntry) {
+    const at = `${parent ?? ''}\u0000${nameKey(name)}`
+    this.askedFor.set(at, this.slot(folder.parent, nameKey(folder.name)))
+  }
+
+  free(parent: string | null, wanted: string, kind: EntryKind): string {
     const taken = this.namesIn(parent)
-    return freePath(wanted, (candidate) => taken.has(nameKey(candidate)))
+    let name = heldName(wanted)
+    for (;;) {
+      const found = freePath(name, (candidate) => taken.has(nameKey(candidate)))
+      if (found.length <= LONGEST_NAME) return found
+      name = shortened(name, found.length - LONGEST_NAME, kind)
+    }
   }
 
   private slot(parent: string | null, key: string): Folders {
@@ -187,6 +201,7 @@ export class Tree {
   private readonly answered = new Map<string, OpResult>()
   private unmarked = false
   moves: Moved[] = []
+  gone: string[] = []
 
   constructor(
     readonly spaceId: string,
@@ -233,7 +248,7 @@ export class Tree {
       let parent: string | null = null
       for (const part of parts) parent = this.folderFor(placing, parent, part, live, row.seq)
 
-      const placed = live ? placing.free(parent, name) : name
+      const placed = live ? placing.free(parent, name, 'note') : name
       const entry = noteEntry(row, placed)
       entry.parent = parent
       entry.kind = kindIn(row.kind === 'note' ? kindOfName(name) : row.kind, name)
@@ -268,7 +283,7 @@ export class Tree {
       id: newId(),
       kind: 'folder',
       parent,
-      name: live ? placing.free(parent, name) : name,
+      name: live ? placing.free(parent, name, 'folder') : name,
       deleted: !live,
       seq: this.tick(),
       docSeq: 0,
@@ -276,6 +291,7 @@ export class Tree {
     if (!live) folder.deletedIn = seq
     this.state.entries.set(folder.id, folder)
     placing.add(folder)
+    placing.asked(parent, name, folder)
     return folder.id
   }
 
@@ -380,6 +396,11 @@ export class Tree {
       const from = this.paths.get(id)
       const entry = this.state.entries.get(id)
       return from === undefined || !entry || entry.deleted ? [] : [{ id, from, to }]
+    })
+    this.gone = [...this.state.entries.values()].flatMap((entry) => {
+      const from = this.paths.get(entry.id)
+      const wasLive = this.before.get(entry.id)?.deleted === false
+      return entry.kind !== 'folder' && entry.deleted && wasLive && from !== undefined ? [from] : []
     })
 
     const folders: Record<string, unknown>[] = []
@@ -1020,6 +1041,7 @@ export async function changeTree<T>(
     try {
       await env.DB.batch(batch)
       await rememberMoves(env, spaceId, tree.moves).catch(() => undefined)
+      await followOnlyNote(env, spaceId, tree.moves, tree.gone).catch(() => undefined)
       return {
         value,
         cursor: tree.state.cursor,

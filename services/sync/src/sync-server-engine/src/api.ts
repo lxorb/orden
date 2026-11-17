@@ -3,7 +3,7 @@ export { deviceOfSession, devices, devicesEnded } from './hub/devices'
 export { hubDoor } from './hub/door'
 export { DEVICE } from './hub/frames'
 export { AccountHub } from './hub/hub'
-export { inbox, writeInbox } from './inbox'
+export { heldInbox, inbox, writeInbox } from './inbox'
 export { ISSUES, sweepLeftovers } from './leftovers'
 export {
   addNote,
@@ -50,6 +50,7 @@ export {
   holdsItsName,
   NO_SUCH_FILE,
   spellsADiagramName,
+  stillThere,
   sweepMisnamed,
   v2Blobs,
   v2Files,
