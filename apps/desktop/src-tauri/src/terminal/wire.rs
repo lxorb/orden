@@ -11,6 +11,10 @@ pub const INPUT: u8 = 2;
 pub const SIZE: u8 = 3;
 pub const END: u8 = 4;
 pub const TAKE: u8 = 5;
+pub const NAME: u8 = 6;
+
+pub const TAKING: u8 = 1;
+pub const ASKING: u8 = 2;
 
 pub const HI: u8 = 10;
 pub const SCREEN: u8 = 11;
@@ -26,6 +30,12 @@ pub struct Hi {
     pub cols: u16,
     pub rows: u16,
     pub writer: bool,
+    #[serde(default)]
+    pub last: u64,
+    #[serde(default)]
+    pub clients: u32,
+    #[serde(default)]
+    pub exit: Option<i64>,
 }
 
 pub fn frame(kind: u8, body: &[u8]) -> Vec<u8> {

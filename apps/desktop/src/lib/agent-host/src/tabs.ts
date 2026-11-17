@@ -374,9 +374,10 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
   switch (op) {
     case 'list':
-      if (maybe(call, 'kind') === 'online') {
-        const list = (await agentTabKindLoaded('online')).list
-        if (!list) throw new Refused('unsupported_on_this_engine', 'there are no online tabs here')
+      if (maybe(call, 'kind') === 'online' || maybe(call, 'kind') === 'terminal') {
+        const kind = maybe(call, 'kind') ?? ''
+        const list = (await agentTabKindLoaded(kind)).list
+        if (!list) throw new Refused('unsupported_on_this_engine', `there are no ${kind} tabs here`)
         return list(call.args, call.caller)
       }
       return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)

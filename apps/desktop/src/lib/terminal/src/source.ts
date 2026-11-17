@@ -25,6 +25,7 @@ export type Said =
   | { refused: string; gone?: boolean }
   | { note: string }
   | { held: { by: string; since: number; taken: boolean } | null }
+  | { writer: boolean }
 
 export interface Source {
   readonly remote: boolean
@@ -66,6 +67,7 @@ export class PtySource implements Source {
     remote: boolean,
     private readonly key: string = id,
     private readonly plain = false,
+    private readonly name: string | null = null,
   ) {
     this.remote = remote
   }
@@ -80,6 +82,7 @@ export class PtySource implements Source {
       if (message instanceof ArrayBuffer) said({ out: new Uint8Array(message) })
       else if (!isRecord(message)) return
       else if (isNumber(message.exit)) said({ exit: message.exit })
+      else if (typeof message.writer === 'boolean') said({ writer: message.writer })
       else if (
         typeof message.screen === 'string' &&
         isNumber(message.cols) &&
@@ -95,6 +98,7 @@ export class PtySource implements Source {
       rows,
       key: this.key,
       plain: this.plain,
+      name: this.name,
       output,
     })
     this.fresh = !isRecord(spawned) || spawned.fresh !== false
@@ -118,6 +122,10 @@ export class PtySource implements Source {
 
   detach(): void {
     void invoke('pty_detach', { id: this.id }).catch(() => undefined)
+  }
+
+  take(): void {
+    void invoke('pty_take', { id: this.id }).catch(() => undefined)
   }
 
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {

@@ -478,7 +478,13 @@ fn ending_command(key: &str) -> String {
     .join(" ")
 }
 
-pub fn connect(webview: &Webview, id: &str, key: &str, plain: bool) -> Result<Fresh, String> {
+pub fn connect(
+    webview: &Webview,
+    id: &str,
+    key: &str,
+    plain: bool,
+    label: super::hold::Label,
+) -> Result<Fresh, String> {
     let places = places(webview)?;
     let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
 
@@ -518,6 +524,7 @@ pub fn connect(webview: &Webview, id: &str, key: &str, plain: bool) -> Result<Fr
         } else {
             FAREWELL.as_bytes().to_vec()
         },
+        label,
     })
 }
 
@@ -871,6 +878,7 @@ mod tests {
                     ],
                 },
                 farewell: FAREWELL.as_bytes().to_vec(),
+                label: hold::Label::default(),
             })
         };
         let open = || {
