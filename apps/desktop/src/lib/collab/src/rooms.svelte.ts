@@ -5,7 +5,7 @@ import type { PlaneSurface } from '@orden/markdown/plane'
 import { busy } from '../../ui-kit/src/api'
 import { sha256, without } from '../../platform/src/api'
 import { roomKindOf } from './kind'
-import type { PlaneRoom, Room, Seen } from '../../collab-rooms/src/api'
+import type { PlaneRoom, Room, Seen, Worn } from '../../collab-rooms/src/api'
 import { deviceName, ownAccent, personFace, personName } from './who'
 import { type Scheme, theme } from '../../theme/src/api'
 import type { NoteDoc } from '../../documents/src/api'
@@ -186,10 +186,10 @@ class Rooms {
     })
   }
 
-  rename(person: string | undefined) {
+  rename(person: string | undefined, worn?: Worn) {
     untrack(() => {
-      for (const joined of this.held.values()) joined.room.rename(person)
-      for (const one of this.carried.values()) one.room.rename(person)
+      for (const joined of this.held.values()) joined.room.rename(person, worn)
+      for (const one of this.carried.values()) one.room.rename(person, worn)
     })
   }
 

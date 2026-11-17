@@ -1,7 +1,7 @@
 export { apart } from './apart'
 export { bind } from './bind'
 export { CarriedPlaneRoom, CarriedRoom, type Carrying } from './carried'
-export type { Who } from './door'
+export type { Who, Worn } from './door'
 export { HAND, handsIn, saidHand } from './hands'
 export { peersIn, relative, type Seen } from './peers'
 export { PlaneBinding } from './plane-bind'
