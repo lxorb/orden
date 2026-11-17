@@ -98,6 +98,7 @@ function memoryStorage(): Storage {
   }
 }
 vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal('BroadcastChannel', undefined)
 
 function locksOf() {
   const holders = new Set<string>()

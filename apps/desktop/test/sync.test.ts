@@ -377,6 +377,7 @@ function memoryStorage(): Storage {
 }
 
 vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal('BroadcastChannel', undefined)
 
 let account: typeof import('../src/lib/accounts/src/account.svelte').account
 let sync: typeof import('../src/lib/sync-store/src/api').sync
