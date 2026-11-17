@@ -51,6 +51,35 @@ function partsOf(state: EditorState, from: number, to: number): Part[] {
   return parts
 }
 
+function oddStars(text: string): boolean {
+  return text.length % 2 === 1
+}
+
+function marksOf(state: EditorState, part: Part, mark: string): Part | null {
+  const size = mark.length
+  const doc = state.doc
+  const line = doc.lineAt(part.from)
+  const words = doc.sliceString(part.from, part.to)
+  const italic = mark === '*'
+  const starsAt = (text: string) => !italic || oddStars(text)
+
+  const inFront = words.startsWith(mark) && starsAt(/^\*+/u.exec(words)?.[0] ?? '')
+  const before =
+    doc.sliceString(Math.max(0, part.from - size), part.from) === mark &&
+    starsAt(/\*+$/u.exec(line.text.slice(0, part.from - line.from))?.[0] ?? '')
+  const inBack =
+    words.length >= (inFront ? size * 2 : size) &&
+    words.endsWith(mark) &&
+    starsAt(/\*+$/u.exec(words)?.[0] ?? '')
+  const after =
+    doc.sliceString(part.to, Math.min(doc.length, part.to + size)) === mark &&
+    starsAt(/^\*+/u.exec(doc.sliceString(part.to, doc.lineAt(part.to).to))?.[0] ?? '')
+
+  const open = inFront ? part.from : before ? part.from - size : null
+  const close = inBack ? part.to - size : after ? part.to : null
+  return open === null || close === null ? null : { from: open, to: close }
+}
+
 function wrapEach(
   state: EditorState,
   parts: readonly Part[],
@@ -59,32 +88,23 @@ function wrapEach(
   adding: boolean,
 ): { changes: ChangeSpec[]; range: SelectionRange } {
   const size = mark.length
-  const marked =
-    !adding &&
-    parts.every((part) => {
-      const words = state.doc.sliceString(part.from, part.to)
-      const stars = mark === '*' ? (/^\*+/u.exec(words)?.[0].length ?? 0) : 1
-      return (
-        words.length >= size * 2 &&
-        words.startsWith(mark) &&
-        words.endsWith(mark) &&
-        stars % 2 === 1
-      )
-    })
+  const found = adding ? [] : parts.map((part) => marksOf(state, part, mark))
+  const marks = found.length && found.every(Boolean) ? (found as Part[]) : null
 
-  const changes = parts.flatMap((part): ChangeSpec[] =>
-    marked
-      ? [
-          { from: part.from, to: part.from + size },
-          { from: part.to - size, to: part.to },
-        ]
-      : [
-          { from: part.from, insert: mark },
-          { from: part.to, insert: mark },
-        ],
-  )
-  const grown = (marked ? -size : size) * 2 * parts.length
-  return { changes, range: EditorSelection.range(range.from, range.to + grown) }
+  const changes = marks
+    ? marks.flatMap((one): ChangeSpec[] => [
+        { from: one.from, to: one.from + size },
+        { from: one.to, to: one.to + size },
+      ])
+    : parts.flatMap((part): ChangeSpec[] => [
+        { from: part.from, insert: mark },
+        { from: part.to, insert: mark },
+      ])
+  const set = state.changes(changes)
+  return {
+    changes,
+    range: EditorSelection.range(set.mapPos(range.from, -1), set.mapPos(range.to, 1)),
+  }
 }
 
 export function marksAcross(mark: string, adding = false): StateCommand {

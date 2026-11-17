@@ -1,6 +1,6 @@
 import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
-import type { BlockContext, InlineContext, Line, MarkdownConfig } from '@lezer/markdown'
+import type { BlockContext, InlineContext, LeafBlock, Line, MarkdownConfig } from '@lezer/markdown'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { parseWikilink, shownSpan } from '@orden/markdown/links'
 import { tagAt } from '@orden/markdown/tags'
@@ -38,6 +38,34 @@ const PercentComment: MarkdownConfig = {
       },
     },
   ],
+  parseBlock: [
+    {
+      name: 'PercentCommentBlock',
+      before: 'HTMLBlock',
+      endLeaf: (_cx: BlockContext, line: Line, leaf: LeafBlock) =>
+        opensPercentBlock(restOf(line)) && (leaf.content.match(/%%/g) ?? []).length % 2 === 0,
+      parse(cx: BlockContext, line: Line) {
+        if (!opensPercentBlock(restOf(line))) return false
+
+        const from = cx.lineStart + line.pos
+        let to = cx.lineStart + line.text.length
+        while (cx.nextLine()) {
+          to = cx.lineStart + line.text.length
+          if (line.text.slice(line.pos).includes('%%')) {
+            cx.nextLine()
+            break
+          }
+        }
+
+        cx.addElement(cx.elt('CommentBlock', from, to))
+        return true
+      },
+    },
+  ],
+}
+
+function opensPercentBlock(rest: string): boolean {
+  return rest.startsWith('%%') && !rest.slice(2).includes('%%')
 }
 
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }

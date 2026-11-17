@@ -114,8 +114,8 @@ function unquoted(line: string, marks: number): string {
 
 const ITEM_LEAD = /^((?:[ \t]*>)*[ \t]*)(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
-function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
-  const special = intoEmptyItem(state, range, text)
+function placedAt(state: EditorState, range: SelectionRange, written: string): Landing {
+  const special = intoEmptyItem(state, range, written)
   if (special) return special
 
   const line = state.doc.lineAt(range.from)
@@ -128,6 +128,13 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const gap = `\n${lead.trimEnd()}\n${lead}`
 
   const inFront = before.length === prefix.length
+  const nested = inFront && quoteDepth(prefix) > 0 ? quoteDepth(written) : 0
+  const text = nested
+    ? written
+        .split('\n')
+        .map((one) => unquoted(one, nested))
+        .join('\n')
+    : written
   const first = text.slice(0, text.indexOf('\n') + 1 || text.length).trimEnd()
   const whole = range.empty || !after.trim()
   const marked = inFront && whole && text.endsWith('\n') ? ITEM_LEAD.exec(prefix) : null
@@ -171,13 +178,14 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
       ? `\n${lead.trimEnd()}`
       : ''
   const over = inFront && !before && first.startsWith('|') && apart(line.number - 1) ? '\n' : ''
-  const blockEnd = text.slice(text.lastIndexOf('\n', text.length - 2) + 1, -1)
+  const lazyTaker = (one: string) => TAKES_LAZY.test(one) || one.trimStart().startsWith('|')
   const ahead =
+    !opens &&
+    !closes &&
     text.endsWith('\n') &&
     after.trim() !== '' &&
-    !TAKES_LAZY.test(after) &&
-    !after.trimStart().startsWith('|') &&
-    (TAKES_LAZY.test(blockEnd) || blockEnd.trimStart().startsWith('|'))
+    !lazyTaker(after) &&
+    text.split('\n').some(lazyTaker)
       ? `\n${lead}`
       : ''
   const plain = !opens && !closes && !under && !over && !ahead

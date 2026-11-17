@@ -566,6 +566,14 @@ function quoted(lines: readonly string[]): string {
 const FROM_A_SHEET =
   /<google-sheets-html-origin|\bdata-sheets-root\b|urn:schemas-microsoft-com:office:excel/i
 
+const FROM_LIBREOFFICE = /<meta\b[^>]*\bcontent=["']?LibreOffice/i
+
+const CALC_CELLS = /\bsd(?:val|num)=|<colgroup\b[^>]*\bwidth=/i
+
+function fromASheet(html: string): boolean {
+  return FROM_A_SHEET.test(html) || (FROM_LIBREOFFICE.test(html) && CALC_CELLS.test(html))
+}
+
 function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
   const heads = (table: HTMLTableElement) => sheet || headed(table)
 
@@ -1005,5 +1013,5 @@ function tidy(markdown: string): string {
 
 export function htmlToMarkdown(html: string, options: FromHtmlOptions = {}): string {
   if (!html.trim()) return ''
-  return tidy(converter(options, FROM_A_SHEET.test(html)).turndown(html))
+  return tidy(converter(options, fromASheet(html)).turndown(html))
 }
