@@ -991,6 +991,33 @@ describe('taking over what the account holds', () => {
     expect(patches).toEqual([])
   })
 
+  test('a setting the account refuses stays on the device, and holds back none of the rest (#1800)', async () => {
+    const { ApiError } = await import('../../accounts/src/api')
+    const patches: Held[] = []
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      if ('glassesWords' in patch) throw new ApiError(400, 'glassesWords is refused')
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: {} })
+
+    modes.setGlassesWord('next', 'next page')
+    modes.toggleSilent()
+    await modes.adopt('token')
+    expect(patches.at(-1)).toEqual({ silent: modes.silent })
+    expect(modes.glassesWords).toEqual({ next: 'next page' })
+
+    patches.length = 0
+    modes.setVimKeys(true)
+    await modes.adopt('token')
+    expect(patches).toEqual([{ vim: true }])
+  })
+
+  test('a glasses phrase is cut to the 60 characters the account keeps (#1800)', () => {
+    modes.setGlassesWord('next', 'a'.repeat(70))
+    expect(modes.glassesWords.next).toBe('a'.repeat(60))
+  })
+
   describe('a phone or a tablet on the account', () => {
     async function adoptedOn(device: 'desktop' | 'phone', account: Held) {
       const patches: Held[] = []
