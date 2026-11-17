@@ -98,13 +98,25 @@ vi.mock('../../workspace/src/api', () => ({
       }
     },
     deleteSpace: () => Promise.resolve(),
-    adoptSpace: (name: string, fresh: boolean) => {
+    adoptSpace: async (name: string, fresh: boolean, home?: string) => {
       world.adopted.push({ name, fresh })
       const existing = fresh ? undefined : world.spaces.find((one) => one.name === name)
-      if (existing) return Promise.resolve(existing.root)
+      if (existing) return existing.root
+      const { homeOf } = await import('../../left-spaces/src/api')
+      const { account: signed } = await import('../../accounts/src/account.svelte')
+      const kept = world.onDisk.find(
+        (one) =>
+          one.name === name &&
+          home !== undefined &&
+          homeOf(one.root, signed.user?.id ?? null) === home,
+      )
+      if (kept) {
+        world.spaces.push(kept)
+        return kept.root
+      }
       const root = `/${name} 2`
       world.spaces.push({ id: root, name: `${name} 2`, root })
-      return Promise.resolve(root)
+      return root
     },
     applyIcon: (root: string) => {
       world.icons.push(root)
@@ -189,6 +201,73 @@ describe('signing in on a device another account signed out of', () => {
     expect(pairs).toContainEqual({ root: '/Hunt out', spaceId: 'a-Hunt out', shared: false })
     expect(world.made).toEqual(['Fresh'])
     expect(leftBy('/Hunt out')).toBe('a')
+  })
+})
+
+describe('a space somebody shared that this device keeps', () => {
+  function sharedWith(id: string, names: string[]) {
+    signedIn(id, [])
+    account.spaces = names.map((name) => ({ id: `${id}-${name}`, name, role: 'write' })) as never
+  }
+
+  async function keptOnce() {
+    world.spaces = [{ id: '1', name: 'Team', root: '/Team' }]
+    sharedWith('a', ['Team'])
+    const first = pairing()
+    first.pairs.push({ root: '/Team', spaceId: 'a-Team', shared: true })
+    await pairSpaces('token-a', first.pairing)
+    world.made = []
+    world.adopted = []
+  }
+
+  test('is taken back into its folder on a new sign-in, not sent up as the account’s own and copied', async () => {
+    await keptOnce()
+    const { pairs, pairing: held } = pairing()
+
+    await pairSpaces('token-a', held)
+
+    expect(world.made).toEqual([])
+    expect(world.adopted).toEqual([])
+    expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: true }])
+    expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
+  })
+
+  test('comes back into its own folder after its link was dropped, not into a numbered copy', async () => {
+    await keptOnce()
+    world.spaces = []
+    world.onDisk = [{ id: '1', name: 'Team', root: '/Team' }]
+    const { pairs, pairing: held } = pairing()
+
+    await pairSpaces('token-a', held)
+    await pairSpaces('token-a', held)
+
+    expect(world.made).toEqual([])
+    expect(pairs).toEqual([{ root: '/Team', spaceId: 'a-Team', shared: true }])
+    expect(world.spaces.map((one) => one.root)).toEqual(['/Team'])
+  })
+
+  test('is still copied beside a folder of that name it never lived in', async () => {
+    world.spaces = []
+    world.onDisk = [{ id: '1', name: 'Team', root: '/Team' }]
+    sharedWith('a', ['Team'])
+    const { pairs, pairing: held } = pairing()
+
+    await pairSpaces('token-a', held)
+
+    expect(pairs).toEqual([{ root: '/Team 2', spaceId: 'a-Team', shared: true }])
+  })
+
+  test('is not taken into the folder it lived in for another account', async () => {
+    await keptOnce()
+    world.spaces = []
+    world.onDisk = [{ id: '1', name: 'Team', root: '/Team' }]
+    signedIn('b', [])
+    account.spaces = [{ id: 'a-Team', name: 'Team', role: 'write' }] as never
+    const { pairs, pairing: held } = pairing()
+
+    await pairSpaces('token-b', held)
+
+    expect(pairs).toEqual([{ root: '/Team 2', spaceId: 'a-Team', shared: true }])
   })
 })
 

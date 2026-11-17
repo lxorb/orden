@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
 import { identifier, samePath, invoke, windows } from '../../platform/src/api'
-import { leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
+import { forgetHome, homeOf, leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 import { services } from './services'
@@ -9,12 +9,15 @@ export async function adoptSpace(
   ws: HoldsSpaces,
   name: string,
   fresh = false,
+  home?: string,
 ): Promise<string | null> {
   const existing = fresh ? undefined : ws.spaces.find((space) => space.name === name)
   if (existing) return existing.root
 
   const created =
-    (fresh ? null : await keptFolder(name.trim())) ??
+    (fresh && home === undefined
+      ? null
+      : await keptFolder(name.trim(), fresh ? home : undefined)) ??
     (await invoke<{ name: string; path: string }>('create_space', {
       name: name.trim(),
     }).catch(() => null))
@@ -33,10 +36,20 @@ export async function adoptSpace(
   return created.path
 }
 
-async function keptFolder(name: string): Promise<{ name: string; path: string } | null> {
+async function keptFolder(
+  name: string,
+  home?: string,
+): Promise<{ name: string; path: string } | null> {
   const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)
   const who = account.user?.id ?? null
-  return listed?.find((one) => one.name === name && !leftByAnother(one.path, who)) ?? null
+  return (
+    listed?.find(
+      (one) =>
+        one.name === name &&
+        !leftByAnother(one.path, who) &&
+        (home === undefined || homeOf(one.path, who) === home),
+    ) ?? null
+  )
 }
 
 export async function addSpace(ws: HoldsSpaces, name: string) {
@@ -48,6 +61,7 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
 
   if (!created) return
 
+  forgetHome(created.path)
   const listed = ws.spaces.find((one) => samePath(one.root, created.path))
   const space: Space = listed ?? { id: identifier(), name: created.name, root: created.path }
   if (!listed) ws.spaces = [...ws.spaces, space]

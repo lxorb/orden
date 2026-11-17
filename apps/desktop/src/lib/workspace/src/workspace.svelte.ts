@@ -2169,8 +2169,8 @@ class Workspace {
     mark('spaces listed')
   }
 
-  async adoptSpace(name: string, fresh = false): Promise<string | null> {
-    return (await changes()).adoptSpace(this, name, fresh)
+  async adoptSpace(name: string, fresh = false, home?: string): Promise<string | null> {
+    return (await changes()).adoptSpace(this, name, fresh, home)
   }
 
   async addSpace(name: string) {

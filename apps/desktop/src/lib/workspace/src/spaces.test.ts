@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const sent: { command: string; args: Record<string, unknown> }[] = []
 
@@ -58,7 +59,10 @@ vi.mock('../../left-spaces/src/api', async (importOriginal) => ({
   },
 }))
 
+vi.stubGlobal('localStorage', memoryStorage())
+
 const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
+const { keepHomes } = await import('../../left-spaces/src/api')
 const { adoptSpace, deleteSpace, renameSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('./workspace.svelte').Space
@@ -103,6 +107,7 @@ beforeEach(() => {
   filtering = null
   theirs = new Set()
   who.user = null
+  localStorage.clear()
 })
 
 describe('reading the spaces folder', () => {
@@ -332,5 +337,35 @@ describe('a space of the account taken in', () => {
     listed = [{ name: 'Notes', path: '/spaces/Notes' }]
 
     expect(await adoptSpace(ws, 'Notes', true)).toBe('/spaces/Notes 2')
+  })
+})
+
+describe('a space somebody shared taken in afresh', () => {
+  test('lands in the folder this device remembers it in, not in a numbered copy', async () => {
+    who.user = { id: 'a' }
+    keepHomes('a', [{ root: '/spaces/Team', spaceId: 'shared-team' }])
+    const { ws } = store([])
+    listed = [{ name: 'Team', path: '/spaces/Team' }]
+
+    expect(await adoptSpace(ws, 'Team', true, 'shared-team')).toBe('/spaces/Team')
+    expect(sent.map((one) => one.command)).not.toContain('create_space')
+  })
+
+  test('but not in a folder of that name remembered for another space', async () => {
+    who.user = { id: 'a' }
+    keepHomes('a', [{ root: '/spaces/Team', spaceId: 'mine' }])
+    const { ws } = store([])
+    listed = [{ name: 'Team', path: '/spaces/Team' }]
+
+    expect(await adoptSpace(ws, 'Team', true, 'shared-team')).toBe('/spaces/Team 2')
+  })
+
+  test('nor in one remembered for it by another account', async () => {
+    who.user = { id: 'b' }
+    keepHomes('a', [{ root: '/spaces/Team', spaceId: 'shared-team' }])
+    const { ws } = store([])
+    listed = [{ name: 'Team', path: '/spaces/Team' }]
+
+    expect(await adoptSpace(ws, 'Team', true, 'shared-team')).toBe('/spaces/Team 2')
   })
 })
