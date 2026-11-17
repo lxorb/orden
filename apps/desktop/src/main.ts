@@ -48,6 +48,10 @@ if (isMobile && (await (await import('./lib/workspace/src/moved')).spacesMoved()
   await new Promise<never>(() => undefined)
 }
 
+if ((window as { ordenOldDatabases?: boolean }).ordenOldDatabases) {
+  await (await import('./lib/handoff/src/api')).carryOldDatabases().catch(() => undefined)
+}
+
 const outside: unknown = await (window as { ordenOutside?: Promise<unknown> }).ordenOutside
 if (
   isDesktop &&

@@ -1,8 +1,19 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, MutexGuard, PoisonError};
+
+mod databases;
 
 const CARRIED: &str = "old-engine-carried";
+
+const DATABASES_CARRIED: &str = "old-engine-databases-carried";
+
+const CHROMIUM_DATABASES: &str = "EBWebView/Default/IndexedDB";
+
+const WAITING_SCRIPT: &str = "window.ordenOldDatabases = true;";
+
+static WAITING: Mutex<Option<String>> = Mutex::new(None);
 
 const CHROMIUM_ORIGIN: &[u8] = b"_http://tauri.localhost\0";
 
@@ -18,24 +29,88 @@ const LOG_BLOCK: usize = 32768;
 
 type Values = BTreeMap<String, String>;
 
+fn config() -> Option<PathBuf> {
+    dirs::config_dir().map(|dir| dir.join(env!("ORDEN_IDENTIFIER")))
+}
+
 pub fn carry_storage() {
-    let id = env!("ORDEN_IDENTIFIER");
-    let Some(config) = dirs::config_dir().map(|dir| dir.join(id)) else {
+    let Some(config) = config() else {
         return;
     };
-    let homes: Vec<Home> = [id, crate::old_home::OLD]
+    let homes: Vec<Home> = [env!("ORDEN_IDENTIFIER"), crate::old_home::OLD]
         .into_iter()
         .map(|name| Home {
             chromium: dirs::data_local_dir().map(|dir| dir.join(name).join(CHROMIUM_STORAGE)),
+            databases: dirs::data_local_dir().map(|dir| dir.join(name).join(CHROMIUM_DATABASES)),
             webkit: dirs::home_dir().map(|dir| dir.join("Library/WebKit").join(name)),
         })
         .collect();
     carry(&config, &homes);
+    carry_databases(&config, &homes);
 }
 
 struct Home {
     chromium: Option<PathBuf>,
+    databases: Option<PathBuf>,
     webkit: Option<PathBuf>,
+}
+
+fn waiting() -> MutexGuard<'static, Option<String>> {
+    WAITING.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+fn carry_databases(config: &Path, homes: &[Home]) {
+    if config.join(DATABASES_CARRIED).exists() {
+        return;
+    }
+    let profile = config
+        .join(orden_web_engine::ROOT)
+        .join(orden_web_engine::APP_PROFILE);
+    for home in homes {
+        if let Some(old) = home.databases.as_deref().filter(|dir| dir.is_dir()) {
+            if databases::carry_chromium(old, &profile).is_ok() {
+                databases_carried(config);
+            }
+            return;
+        }
+        if let Some(dir) = home.webkit.as_deref().filter(|dir| dir.is_dir()) {
+            let found = databases::webkit(dir);
+            if found.is_empty() {
+                databases_carried(config);
+            } else {
+                *waiting() = serde_json::to_string(&found).ok();
+            }
+            return;
+        }
+    }
+}
+
+fn databases_carried(config: &Path) {
+    if orden_base::paths::made(config).is_ok() {
+        let _ = orden_base::paths::write_atomically(&config.join(DATABASES_CARRIED), b"");
+    }
+}
+
+pub(crate) fn script() -> &'static str {
+    if waiting().is_some() {
+        WAITING_SCRIPT
+    } else {
+        ""
+    }
+}
+
+#[tauri::command(async)]
+pub(crate) fn old_engine_databases() -> Option<String> {
+    waiting().clone()
+}
+
+#[tauri::command(async)]
+pub(crate) fn old_engine_databases_carried() {
+    if waiting().take().is_some() {
+        if let Some(config) = config() {
+            databases_carried(&config);
+        }
+    }
 }
 
 fn carry(config: &Path, homes: &[Home]) {
@@ -334,16 +409,19 @@ fn webkit_stores(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
             continue;
         }
         let name = entry.file_name();
-        if name == WEBKIT_LEGACY || (name == WEBKIT_STORE && webkit_app_origin(&path)) {
+        if name == WEBKIT_LEGACY
+            || (name == WEBKIT_STORE
+                && path
+                    .parent()
+                    .and_then(Path::parent)
+                    .is_some_and(webkit_app_origin))
+        {
             found.push(path);
         }
     }
 }
 
-fn webkit_app_origin(store: &Path) -> bool {
-    let Some(origin) = store.parent().and_then(Path::parent) else {
-        return false;
-    };
+fn webkit_app_origin(origin: &Path) -> bool {
     let first_party = origin.parent().and_then(Path::file_name) == origin.file_name();
     first_party
         && fs::read(origin.join("origin")).is_ok_and(|said| {
@@ -445,6 +523,7 @@ mod tests {
         let config = scratch("update");
         let homes = [Home {
             chromium: Some(fixture()),
+            databases: None,
             webkit: None,
         }];
         carry(&config, &homes);
@@ -466,6 +545,7 @@ mod tests {
         crate::kept::forget_now(&folder, "orden:device").unwrap();
         let homes = [Home {
             chromium: Some(fixture()),
+            databases: None,
             webkit: None,
         }];
         carry(&config, &homes);
@@ -499,10 +579,12 @@ mod tests {
         let homes = [
             Home {
                 chromium: Some(missing.clone()),
+                databases: None,
                 webkit: Some(missing),
             },
             Home {
                 chromium: None,
+                databases: None,
                 webkit: Some(former.clone()),
             },
         ];

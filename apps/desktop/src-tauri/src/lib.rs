@@ -233,6 +233,8 @@ macro_rules! desktop_commands {
             orden_notes::outside::outside_spaces,
             orden_notes::outside::take_in_outside,
             orden_notes::outside::settle_outside,
+            old_engine::old_engine_databases,
+            old_engine::old_engine_databases_carried,
             old_home::former_homes,
             old_home::keep_after_move,
             old_home::drop_after_move,
