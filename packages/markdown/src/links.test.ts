@@ -1206,11 +1206,11 @@ describe('a block in a list, a fence in a fence, and code after code', () => {
   test('a block named apart inside a list item keeps the list whole', () => {
     const more = '- a\n\n  more about a\n  ```\n  x\n  ```\n- b\n'
     expect(namedBlock(more, 2, id)?.source).toBe(
-      more.replace('```\n- b', '```\n\n  ^new123\n\n- b'),
+      more.replace('```\n- b', '```\n\n  ^new123\n- b'),
     )
     const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
     const named = namedBlock(table, 2, id)?.source ?? ''
-    expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n\n- Next'))
+    expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n- Next'))
     expect(block(named, 'new123')).toBe('  | a | b |\n  | - | - |\n  | 1 | 2 |')
     const rule = '1. Step one\n\n   ---\n\n2. Step two\n'
     expect(namedBlock(rule, 2, id)?.source).toBe(
@@ -1233,5 +1233,51 @@ describe('a block in a list, a fence in a fence, and code after code', () => {
     const named = namedBlock(note, 0, id)?.source ?? ''
     expect(named).toBe('    a\n\n^new123\n\n```\nb\n```\n\nafter\n')
     expect(block(named, 'new123')).toBe('    a')
+  })
+})
+
+describe('a block in a quote, a loose item, or under an item', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+  const quotes = (text: string) => renderMarkdown(text).split('<blockquote').length - 1
+
+  test('a name for an indented line of a paragraph is no code', () => {
+    const note = 'Docs are at\n    <https://example.com>\n'
+    const named = namedBlock(note, 1, id)?.source ?? ''
+    expect(named).not.toContain('    ^n')
+    expect(block(named, 'n')).toBe('Docs are at\n    <https://example.com>')
+  })
+
+  test('a quote holding a fence is one block', () => {
+    const note = '> Run:\n> ```\n> npm i\n> ```\n> then restart\n'
+    const named = namedBlock(note, 1, id)?.source ?? ''
+    expect(quotes(named)).toBe(1)
+    expect(block(named, 'n')).toBe(note.trimEnd())
+    expect(block(note.replace('restart', 'restart ^q'), 'q')).toBe(note.trimEnd())
+  })
+
+  test('code after a paragraph in a loose item is in the item it names', () => {
+    const note = '1. Install:\n\n   Run this:\n\n   ```bash\n   npm i\n   ```\n2. Next\n'
+    const named = namedBlock(note, 5, id)?.source ?? ''
+    expect(named).toBe(note.replace('Install:', 'Install: ^n'))
+    expect(block(named, 'n')).toContain('npm i')
+  })
+
+  test('code indented less than an item is no part of it', () => {
+    const note = '1. Install\n\n  ```bash\n  npm i\n  ```\n\nAfter\n'
+    expect(namedBlock(note, 3, id)?.source).toBe(note.replace('```\n\nAfter', '```\n\n^n\n\nAfter'))
+  })
+
+  test('a line of an item over code or a table names the item and keeps the list tight', () => {
+    const code = '- Install\n  with npm:\n  ```bash\n  npm i\n  ```\n- Run it\n'
+    const named = namedBlock(code, 1, id)?.source ?? ''
+    expect(named).toBe(code.replace('with npm:', 'with npm: ^n'))
+    expect(renderMarkdown(named)).not.toContain('<p>')
+    const table = '- a\n  | x | y |\n  | - | - |\n  | 1 | 2 |\n- b\n'
+    expect(namedBlock(table, 2, id)?.source).toBe(table.replace('- a', '- a ^n'))
+  })
+
+  test('code a fence never closes takes no name', () => {
+    expect(namedBlock('Intro\n\n```js\nlet a = 1\n', 3, id)).toBeNull()
   })
 })

@@ -8,6 +8,7 @@ import {
   nameIndent,
   itemLines,
   layoutOf,
+  openFenceIn,
   ownLine,
   rowsOf,
 } from '@orden/markdown/links'
@@ -115,6 +116,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   }
 
   const last = doc.lineAt(ownEnd(view.state, span))
+  if (openFenceIn(rows, at, last.number - 1)) return null
   const under = writtenLine(view.state, last.number + 1, 1)
   const already =
     under && ownLine(under.text)

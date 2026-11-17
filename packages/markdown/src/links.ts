@@ -668,29 +668,42 @@ export interface Layout {
   held: Map<number, Held>
   goesOn: boolean[]
   runOf: number[]
+  unclosed: Set<number>
 }
 
 export function layoutOf(rows: readonly Lined[]): Layout {
   const runOf: number[] = []
+  const unclosed = new Set<number>()
   const code = new CodeBlocks()
   let start = -1
+  let fenced = false
   let closed = false
+  const ends = () => {
+    if (start !== -1 && fenced && !closed) unclosed.add(start)
+  }
   for (let at = 0; at < rows.length; at++) {
     const row = rows[at]
     const open = code.fence
     const kind = !row || row.matter ? WORDS : code.line(row.text)
     if (kind === WORDS) {
+      ends()
       start = -1
       runOf.push(-1)
       continue
     }
     if (kind === OPENS || start === -1 || closed) {
+      ends()
       start = at
+      fenced = kind === OPENS
       closed = false
     }
     runOf.push(start)
-    if (kind !== OPENS && open !== null && code.fence === null) closed = true
+    if (kind !== OPENS && open !== null && code.fence === null) {
+      if (!code.closedFence) unclosed.add(start)
+      closed = true
+    }
   }
+  ends()
 
   const goesOn: boolean[] = new Array<boolean>(rows.length).fill(false)
   let next = -1
@@ -702,7 +715,7 @@ export function layoutOf(rows: readonly Lined[]): Layout {
       (!blank || (next !== -1 && rows[next]?.code === true && runOf[next] === runOf[at]))
     if (!blank) next = at
   }
-  return { held: heldBlocks(rows), goesOn, runOf }
+  return { held: heldBlocks(rows), goesOn, runOf, unclosed }
 }
 
 export interface BlockSpan {
@@ -750,7 +763,7 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
   const item = itemLines(rows, at)
   if (item) return { ...item, apart: false }
 
-  const inside = blocks.get(at)
+  const inside = blocks.get(at) ?? quoteAround(rows, at)
   if (inside) return { first: inside.first, last: inside.last, indent: 0, apart: false }
 
   const stops = (line: number) => {
@@ -774,8 +787,36 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
 export const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
 
 export function nameIndent(rows: readonly Lined[], at: number): string {
-  const row = rows[at]
-  return !row || row.code ? '' : (/^[ \t]*/u.exec(row.text)?.[0] ?? '')
+  const code = new CodeBlocks()
+  for (let line = 0; line <= at && line < rows.length; line++) {
+    const row = rows[line]
+    if (row && !row.matter) code.line(row.text)
+  }
+  return ' '.repeat(code.listWidth)
+}
+
+export function openFenceIn(rows: readonly Lined[], first: number, last: number): boolean {
+  const { runOf, unclosed } = layoutOf(rows)
+  for (let line = first; line <= last; line++) {
+    if (rows[line]?.code && unclosed.has(runOf[line] ?? -1)) return true
+  }
+  return false
+}
+
+export function quoteAround(rows: readonly Lined[], at: number): Held | null {
+  const code = new CodeBlocks()
+  const inQuote = rows.map((row) => {
+    if (row.matter) return false
+    code.line(row.text)
+    return code.quoted
+  })
+  const quoted = (line: number) => inQuote[line] === true
+  if (!quoted(at)) return null
+  let first = at
+  let last = at
+  while (first > 0 && quoted(first - 1)) first--
+  while (last + 1 < rows.length && quoted(last + 1)) last++
+  return { first, last }
 }
 
 export function itemLines(
@@ -786,31 +827,36 @@ export function itemLines(
   const first = itemStart(rows, at, blocks)
   if (first === null) return null
 
-  const indent = LIST_ITEM.exec(rows[first]?.text ?? '')?.[1]?.length ?? 0
-  const under = (line: number) => depthOf(rows[line]?.text ?? '') > indent
+  const marker = LIST_ITEM.exec(rows[first]?.text ?? '')
+  const indent = depthOf(marker?.[1] ?? '')
+  const content = depthOf(marker?.[0].replace(/\S/gu, ' ') ?? '')
+  const depth = (line: number) => depthOf(rows[line]?.text ?? '')
   let last = first
   while (last + 1 < rows.length) {
     const next = rows[last + 1]
     if (!next) break
     const held = blocks.get(last + 1)
-    if (held && under(held.first)) {
+    if (held && depth(held.first) >= content) {
       last = held.last
       continue
     }
     if (!next.code && !next.text.trim()) {
       let ahead = last + 2
       while (ahead < rows.length && !rows[ahead]?.text.trim()) ahead++
-      if (ahead < rows.length && under(ahead) && (rows[ahead]?.code || blocks.has(ahead))) {
+      if (ahead < rows.length && depth(ahead) >= content) {
         last = ahead - 1
         continue
       }
       break
     }
-    const inside = under(last + 1)
-    if (next.code ? next.text.trim() !== '' && !inside : !inside) break
+    if (
+      next.code ? next.text.trim() !== '' && depth(last + 1) < content : depth(last + 1) <= indent
+    ) {
+      break
+    }
     last++
   }
-  return { first, last, indent }
+  return { first, last, indent: marker?.[1]?.length ?? 0 }
 }
 
 function itemStart(rows: readonly Lined[], at: number, blocks: Map<number, Held>): number | null {
@@ -830,14 +876,23 @@ function itemStart(rows: readonly Lined[], at: number, blocks: Map<number, Held>
       return null
     }
     const marker = above.code || blocks.has(up) ? null : LIST_ITEM.exec(above.text)
-    if (marker && (marker[1]?.length ?? 0) < depth) return up
+    const content = depthOf(marker?.[0].replace(/\S/gu, ' ') ?? '')
+    if (marker && depthOf(marker[1] ?? '') < depth && (!block || depth >= content)) {
+      return up
+    }
     if (block && !above.code && !marker && depthOf(above.text) === 0) return null
   }
   return null
 }
 
 function depthOf(line: string): number {
-  return line.length - line.trimStart().length
+  let width = 0
+  for (const one of line) {
+    if (one === '\t') width += 4 - (width % 4)
+    else if (one === ' ') width++
+    else break
+  }
+  return width
 }
 
 export function ownLine(line: string): boolean {

@@ -72,6 +72,7 @@ export class CodeBlocks {
   private leaf: Leaf = null
   private item = false
   private named: string | null = null
+  private shut = false
 
   copy(): CodeBlocks {
     const copy = new CodeBlocks()
@@ -88,6 +89,23 @@ export class CodeBlocks {
     return this.named
   }
 
+  get closedFence(): boolean {
+    return this.shut
+  }
+
+  get quoted(): boolean {
+    return this.containers.some((container) => container.quote)
+  }
+
+  get listWidth(): number {
+    let width = 0
+    for (const container of this.containers) {
+      if (container.quote) break
+      width += container.width
+    }
+    return width
+  }
+
   get fence(): string | null {
     return this.leaf !== null && typeof this.leaf === 'object' ? this.leaf.mark : null
   }
@@ -96,6 +114,7 @@ export class CodeBlocks {
     const line = expanded(raw.endsWith('\r') ? raw.slice(0, -1) : raw)
     this.item = false
     this.named = null
+    this.shut = false
     let at = 0
     let matched = 0
 
@@ -127,6 +146,7 @@ export class CodeBlocks {
       if (closesFence(rest, this.leaf.mark)) {
         this.leaf = null
         this.named = fenceName(rest)
+        this.shut = true
       }
       return CODE
     }

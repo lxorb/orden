@@ -6,7 +6,9 @@ import {
   itemLines,
   layoutOf,
   LIST_ITEM,
+  openFenceIn,
   ownLine,
+  quoteAround,
   type Row,
   rowsOf,
 } from './links'
@@ -32,6 +34,8 @@ function endOf(rows: readonly Row[], line: number): number {
   const { held: blocks, goesOn, runOf } = layoutOf(rows)
   const held = blocks.get(line)
   if (held?.first === line) return held.last
+  const quote = quoteAround(rows, line)
+  if (quote) return quote.last
 
   let end = line
   for (;;) {
@@ -58,11 +62,11 @@ export function namedBlock(
   const plain = !row.code && !blocks.has(line)
   if (plain && isHeading(row.text)) return null
   if (plain && listed(row)) return namedItem(rows, source, line, id)
-  const item = row.code || blocks.has(line) ? itemLines(rows, line) : null
+  const item = itemLines(rows, line)
   if (item && item.first !== line) return namedItem(rows, source, item.first, id)
-
-  const from = blocks.get(line)?.first ?? line
+  const from = blocks.get(line)?.first ?? quoteAround(rows, line)?.first ?? line
   const end = endOf(rows, from)
+  if (openFenceIn(rows, from, end)) return null
   const lines = source.split('\n')
   const last = lines[end] ?? ''
   const ending = last.endsWith('\r') ? '\r' : ''
@@ -75,7 +79,8 @@ export function namedBlock(
 
   const name = id()
   if (nameStandsApart(rows.slice(from, end + 1))) {
-    const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
+    const below = rows[end + 1]
+    const beneath = (below?.text.trim() ?? '') === '' || listed(below) ? [] : [ending]
     lines.splice(end + 1, 0, ending, `${nameIndent(rows, from)}^${name}${ending}`, ...beneath)
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`
@@ -99,7 +104,9 @@ function namedItem(
     !listed(rows[end + 1]) &&
     !rows[end + 1]?.code &&
     !blocks.has(end + 1) &&
-    rows[end + 1]?.text.trim()
+    rows[end + 1]?.text.trim() &&
+    !/^\s*[|>]/u.test(rows[end + 1]?.text ?? '') &&
+    !RULE.test((rows[end + 1]?.text ?? '').trim())
   ) {
     end++
   }
