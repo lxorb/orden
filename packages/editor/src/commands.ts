@@ -1264,7 +1264,8 @@ export const continueLists: StateCommand = (target) => {
     state: target.state,
     dispatch: (made: Transaction) => target.dispatch(pastFold(made, fold)),
   }
-  if (continueListsAt(past)) return true
+  const heading = FOLD_OPENER.exec(target.state.doc.lineAt(fold.from).text)?.[2] !== undefined
+  if (!heading && continueListsAt(past)) return true
   const below = belowFold(target.state, fold)
   if (!below) return false
   target.dispatch(target.state.update(below))
@@ -1282,8 +1283,10 @@ function belowFold(state: EditorState, fold: { from: number; to: number }): Tran
   const next = last.number < state.doc.lines ? state.doc.line(last.number + 1) : null
   const heading = opener[2] !== undefined
   const blank = `\n${lead.trimEnd()}`
-  const above = heading && words(last) ? blank : ''
-  const under = heading && words(next) ? blank : ''
+  const midLine = fold.to < last.to
+  const above = heading && !midLine && words(last) ? blank : ''
+  const cut = last.text.slice(0, fold.to - last.from)
+  const under = midLine ? `\n${cut}` : heading && words(next) ? blank : ''
   const opened = `${above}\n${lead}`
   return {
     changes: { from: fold.to, insert: opened + under },

@@ -96,10 +96,20 @@ export function placed(state: EditorState, written: string): TransactionSpec {
   return everywhere(state, (range) => placedAt(state, keptBreak(state, range, text), text))
 }
 
-const QUOTE_LEAD = /^(?:[ \t]*>)+[ \t]?/
+const QUOTE_MARK = /^[ \t]*>[ \t]?/
 
 function quoteDepth(text: string): number {
   return (/^(?:[ \t]*>)*/.exec(text)?.[0] ?? '').split('>').length - 1
+}
+
+function unquoted(line: string, marks: number): string {
+  let rest = line
+  for (let left = marks; left > 0; left--) {
+    const mark = QUOTE_MARK.exec(rest)
+    if (!mark) return rest
+    rest = rest.slice(mark[0].length)
+  }
+  return rest
 }
 
 const ITEM_LEAD = /^((?:[ \t]*>)*[ \t]*)(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
@@ -123,10 +133,12 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const marked = inFront && whole && text.endsWith('\n') ? ITEM_LEAD.exec(prefix) : null
   if (marked && OPENS_BLOCK.test(first)) {
     const outer = marked[1] ?? ''
-    const carried = quoteDepth(outer) > 0 && quoteDepth(text) === quoteDepth(outer)
+    const depth = quoteDepth(text)
+    const carried = depth > 0 && AN_ITEM.test(unquoted(text, depth).trimStart())
     const insert = (range.empty ? text : text.slice(0, -1))
       .split('\n')
-      .map((one) => (one ? outer + (carried ? one.replace(QUOTE_LEAD, '') : one) : one))
+      .map((one) => (carried ? unquoted(one, depth) : one))
+      .map((one, at, all) => (one ? outer + one : at < all.length - 1 ? outer.trimEnd() : one))
       .join('\n')
     return {
       changes: { from: line.from, to: range.empty ? line.from : range.to, insert },
@@ -159,12 +171,21 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
       ? `\n${lead.trimEnd()}`
       : ''
   const over = inFront && !before && first.startsWith('|') && apart(line.number - 1) ? '\n' : ''
-  const plain = !opens && !closes && !under && !over
+  const blockEnd = text.slice(text.lastIndexOf('\n', text.length - 2) + 1, -1)
+  const ahead =
+    text.endsWith('\n') &&
+    after.trim() !== '' &&
+    !TAKES_LAZY.test(after) &&
+    !after.trimStart().startsWith('|') &&
+    (TAKES_LAZY.test(blockEnd) || blockEnd.trimStart().startsWith('|'))
+      ? `\n${lead}`
+      : ''
+  const plain = !opens && !closes && !under && !over && !ahead
   if (!inFront && plain && (!lead || !text.includes('\n'))) return plainAt(range, text)
 
   const from = opens ? line.from + before.trimEnd().length : range.from
   const to = closes ? range.to + (after.length - after.trimStart().length) : range.to
-  const head = over + (opens ? gap : '') + held(text)
+  const head = over + (opens ? gap : '') + held(text) + ahead
 
   return {
     changes: { from, to, insert: head + (closes || (opens && after.trim()) ? gap : '') + under },

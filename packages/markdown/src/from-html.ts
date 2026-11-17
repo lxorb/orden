@@ -142,11 +142,20 @@ function angled(tex: string): string {
   return tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
 }
 
+const BESIDE_ROWS = new Set(['CAPTION', 'COLGROUP', 'COL'])
+
 function firstBody(element: Element | null): boolean {
   if (element?.nodeName !== 'TBODY') return false
 
-  const before = element.previousElementSibling
-  return before === null || (before.nodeName === 'THEAD' && !before.textContent.trim())
+  for (
+    let before = element.previousElementSibling;
+    before;
+    before = before.previousElementSibling
+  ) {
+    if (BESIDE_ROWS.has(before.nodeName)) continue
+    if (before.nodeName !== 'THEAD' || before.textContent.trim()) return false
+  }
+  return true
 }
 
 function headed(table: HTMLTableElement): boolean {
@@ -794,15 +803,27 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
     },
   })
 
+  const captions = new WeakMap<Node, string>()
+
+  service.addRule('caption', {
+    filter: 'caption',
+    replacement: (content, node) => {
+      captions.set(node, content.replace(/\s*\n+\s*/g, ' ').trim())
+      return ''
+    },
+  })
+
   service.addRule('table', {
     filter: (node) => node.nodeName === 'TABLE',
     replacement: (content, node) => {
+      const table = node as HTMLTableElement
       const rows = content.replace(/^\n+/, '').trimEnd()
-      if (!rows) return ''
-      if (alone(node as HTMLTableElement)) return `\n\n${rows}\n\n`
-      if (heads(node as HTMLTableElement)) return `\n\n${rows}\n\n`
+      const caption = table.caption ? (captions.get(table.caption) ?? '') : ''
+      const above = caption ? `\n\n${caption}` : ''
+      if (!rows) return above ? `${above}\n\n` : ''
+      if (alone(table) || heads(table)) return `${above}\n\n${rows}\n\n`
 
-      return `\n\n${emptyHeading(node as HTMLTableElement)}\n${rows}\n\n`
+      return `${above}\n\n${emptyHeading(table)}\n${rows}\n\n`
     },
   })
 
