@@ -106,10 +106,11 @@ async function openSession(env: Env, userId: string, device = ''): Promise<strin
   return token
 }
 
+const BY_ADDRESS = `select id, email, name, created_at from users
+  where email = ?1 or id = (select user_id from user_addresses where email = ?1)`
+
 async function accountFor(env: Env, address: string): Promise<User> {
-  const held = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
-    .bind(address)
-    .first<User>()
+  const held = await env.DB.prepare(BY_ADDRESS).bind(address).first<User>()
 
   if (held) return held
 
@@ -122,10 +123,7 @@ async function accountFor(env: Env, address: string): Promise<User> {
     .bind(user.id, user.email, user.created_at, await startingVersion(env))
     .run()
 
-  const account =
-    (await env.DB.prepare('select id, email, name, created_at from users where email = ?')
-      .bind(address)
-      .first<User>()) ?? user
+  const account = (await env.DB.prepare(BY_ADDRESS).bind(address).first<User>()) ?? user
 
   if (wrote.meta.changes > 0) {
     try {

@@ -69,6 +69,7 @@ import {
 } from './sync-server-engine/src/api'
 import {
   account,
+  addressUndo,
   accountById,
   auth,
   forgetHalfDone,
@@ -155,6 +156,7 @@ app.route('/v2/online/machine', machineBundle)
 app.route('/v1/join', join)
 
 app.route('/v1/account/left', left)
+app.route('/v1/account/undo', addressUndo)
 
 app.route('/v1/feedback', feedback)
 

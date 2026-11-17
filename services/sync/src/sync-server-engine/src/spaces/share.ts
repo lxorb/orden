@@ -1,5 +1,6 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import {
+  accountAddress,
   type Env,
   forgetEmptyGuest,
   forgetMailed,
@@ -336,7 +337,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const asked = body.text('role', 16)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const email = normaliseEmail(given ?? '')
+  const email = await accountAddress(context.env, normaliseEmail(given ?? ''))
   const role = givenRole(asked)
 
   if (!isEmail(email)) return context.json({ error: NOT_AN_EMAIL }, 400)
