@@ -10,7 +10,7 @@ from typing import Any
 
 from urllib.parse import urlsplit
 
-from harness import LAUNCHED, Drive, harmless
+from harness import BUILT_IN, LAUNCHED, Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -397,6 +397,7 @@ class Browser:
             reduced_motion="reduce",
             service_workers="allow",
         )
+        await context.add_init_script(BUILT_IN)
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('orden:session', 'sweep') } catch {}")
         own = re.escape(urlsplit(DRIVE.origin).netloc)
