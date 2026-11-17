@@ -1,7 +1,7 @@
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import { isOnlineTab, MADE_NAME } from '../../online-terms/src/api'
-import { folderOf } from '../../platform/src/api'
+import { folderOf, invoke } from '../../platform/src/api'
 import { shellName, shells } from './shells.svelte'
 import { hostIdOf, readSpec, writeSpec } from './spec'
 
@@ -31,6 +31,7 @@ export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
   tab.name = called
   tab.note.replace(writeSpec({ ...spec, name }), false)
   workspace.scheduleSession()
+  if (spec.key) void invoke('pty_name', { key: spec.key, name: name ?? '' }).catch(() => undefined)
 }
 
 async function shellCalled(id: string): Promise<string> {

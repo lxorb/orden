@@ -85,7 +85,6 @@
     }
   }
 
-  const FORMER_HANDLE = 'nib'
   let host: HTMLDivElement
   const rise = firstScreen.rise()
   const states = new EditorStates()
@@ -164,7 +163,7 @@
     )
     view = created
     bar = overlayScrollbar(created.scrollDOM, created.dom)
-    if (__DRIVEABLE__) Object.assign(window, { orden: created, [FORMER_HANDLE]: created })
+    if (__DRIVEABLE__) Object.assign(window, { orden: created })
 
     return () => {
       states.releaseAll(created)

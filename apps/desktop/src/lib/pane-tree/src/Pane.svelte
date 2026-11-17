@@ -43,6 +43,7 @@
   import {
     type Pane,
     panesIn,
+    paneToward,
     topRow,
     type Landing,
     EDGE,
@@ -117,6 +118,9 @@
       !alone.on &&
       !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
   )
+  const atLeft = $derived(!paneToward(workspace.panes.frame, pane.id, 'left'))
+  const atRight = $derived(!paneToward(workspace.panes.frame, pane.id, 'right'))
+  const atFoot = $derived(!paneToward(workspace.panes.frame, pane.id, 'down'))
   const ownSurface = $derived(
     !!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')),
   )
@@ -364,6 +368,9 @@
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
   class:straight={!stripped && flushFirst(pane.id)}
+  class:at-left={atLeft}
+  class:at-right={atRight}
+  class:at-foot={atFoot}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   use:dropOver={over}
@@ -486,11 +493,13 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'chat'}
-    {#await askPanel() then ChatPanel}
-      <ChatPanel wide />
-    {:catch}
-      {@render unreachable()}
-    {/await}
+    {#key tab.id}
+      {#await askPanel() then ChatPanel}
+        <ChatPanel wide {tab} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
   {:else if tab?.kind === 'terminal'}
     {#key tab.id}
       {#await terminalSurface() then TerminalTab}
@@ -668,6 +677,22 @@
     box-shadow:
       var(--card-shadow),
       0 0 0 1px var(--card-edge);
+    transition: border-radius var(--dur-base) var(--ease-out);
+  }
+
+  .pane.at-left {
+    border-top-left-radius: var(--left-edge, var(--card-radius));
+    border-bottom-left-radius: var(--left-edge, var(--card-radius));
+  }
+
+  .pane.at-right {
+    border-top-right-radius: var(--right-edge, var(--card-radius));
+    border-bottom-right-radius: var(--right-edge, var(--card-radius));
+  }
+
+  .pane.at-foot {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .pane.straight {

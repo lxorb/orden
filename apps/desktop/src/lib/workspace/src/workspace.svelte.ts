@@ -85,10 +85,10 @@ import {
   OpenDocuments,
   secondWebTabs,
   draftFile,
+  fileNamed,
   hasWords,
   isDraft,
   isUnsaved,
-  worthAFile,
   fetchAcross,
   meetAcross,
   oweTo,
@@ -753,7 +753,7 @@ class Workspace {
     for (const tab of this.tabs) tab.reading = false
     if (state.sets !== undefined) void startup.turn('doors').then(sets)
 
-    this.oneDocument()
+    this.onePane()
 
     void this.takeWhatWasLeft(slot)
 
@@ -1122,7 +1122,7 @@ class Workspace {
       )
     }
 
-    this.oneDocument()
+    this.onePane()
 
     webPages().keepOnly(this.tabs.map((tab) => tab.id))
     this.persist()
@@ -1133,10 +1133,7 @@ class Workspace {
 
     return {
       frame: frameDraft(frame, (pane) => {
-        const tabs = [
-          ...this.tabsIn(pane.id).filter((tab) => !tab.inPrivate),
-          ...[...this.puttingAway].filter((tab) => tab.paneId === pane.id),
-        ]
+        const tabs = this.tabsIn(pane.id).filter((tab) => !tab.inPrivate)
         const ids = tabs.map((tab) => tab.id)
         const shown = pane.activeTabId ?? this.panes.lastOf(ids)
         return {
@@ -1442,10 +1439,7 @@ class Workspace {
     const chosen = this.chosenFor(tab)
     const one = this.otherOne(tab)
     if (one) {
-      if (activate) {
-        this.panes.activate(one.paneId, one.id)
-        this.onlyOne(one)
-      }
+      if (activate) this.panes.activate(one.paneId, one.id)
       return one
     }
     const coming = this.essentialsComing.findIndex((path) => samePath(tab.path, path))
@@ -1456,10 +1450,7 @@ class Workspace {
     } else {
       this.tabs = opener === null ? [...this.tabs, tab] : this.besideOf(tab, opener)
     }
-    if (activate) {
-      this.panes.activate(tab.paneId, tab.id)
-      this.onlyOne(tab)
-    }
+    if (activate) this.panes.activate(tab.paneId, tab.id)
     if (chosenOn) this.close(chosenOn.id, false)
 
     return tab
@@ -1517,44 +1508,8 @@ class Workspace {
     return this.placed(tab, tab.paneId, besideAt(this.tabsIn(tab.paneId), opener, previous))
   }
 
-  private onlyOne(kept: Tab) {
-    if (!viewport.touch || kept.kind === 'settings') return
-
-    for (const other of this.tabs) {
-      if (other.id === kept.id || !this.panes.at(other.paneId)) continue
-      const held = this.tabs.some((one) => one !== other && one.note === other.note)
-      if (!held && isDraft(other.note) && worthAFile(other.note)) this.putAwayWritten(other)
-      else this.close(other.id)
-    }
-  }
-
-  private readonly puttingAway = new Set<Tab>()
-
-  private putAwayWritten(tab: Tab) {
-    const paneId = tab.paneId
-    const at = Math.max(this.tabsIn(paneId).indexOf(tab), 0)
-    this.puttingAway.add(tab)
-    this.close(tab.id, false)
-
-    void import('./placing')
-      .then((one) => one.putAway(this, tab, paneId, at))
-      .catch((error: unknown) => {
-        log('warn', `a put-away draft's words did not reach Recently deleted: ${String(error)}`)
-      })
-  }
-
-  putAwayDone(tab: Tab, paneId: string, at: number) {
-    this.puttingAway.delete(tab)
-    this.closed.record({ draft: this.draftOf(tab), paneId, at })
-    this.persist()
-  }
-
-  oneDocument() {
-    if (!viewport.touch) return
-
-    this.collapsePanes()
-    const kept = this.active ?? this.tabsIn(this.panes.focusedId)[0]
-    if (kept) this.onlyOne(kept)
+  onePane() {
+    if (viewport.touch) this.collapsePanes()
   }
 
   openView(
@@ -1622,14 +1577,23 @@ class Workspace {
     return tab !== null && this.panes.at(tab.paneId)?.activeTabId === tab.id
   }
 
-  openChat() {
-    const was = this.singleHere('chat')
+  openChat(thread?: string, name = 'New chat'): string {
+    const was = thread
+      ? this.tabs.find((one) => this.isHere(one, 'chat') && one.address === thread)
+      : null
+    const tab =
+      was ??
+      new Tab(
+        this.document({ kind: 'chat', path: null, name, text: '', dirty: false }),
+        this.panes.focusedId,
+      )
     if (was) this.panes.activate(was.paneId, was.id)
     else {
-      const doc = { kind: 'chat', path: null, name: 'Ask', text: '', dirty: false } as const
-      this.add(new Tab(this.document(doc), this.panes.focusedId))
+      tab.address = thread
+      this.add(tab)
     }
     this.persist()
+    return tab.id
   }
 
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
@@ -1741,7 +1705,7 @@ class Workspace {
   private arrive(tab: Tab, how: OpenHow) {
     const activate = how.activate !== false
     this.add(tab, activate, this.openedFrom(how, tab.paneId))
-    if (how.preview) this.previewIn(tab)
+    if (how.preview && !viewport.touch) this.previewIn(tab)
     if (activate) this.dropScaffolding(tab)
   }
 
@@ -2739,7 +2703,6 @@ class Workspace {
 
       this.panes.activate(back.paneId, back.tab.id)
       this.panes.focus(back.paneId)
-      this.onlyOne(back.tab)
       this.persist()
       return
     }
@@ -2894,6 +2857,11 @@ class Workspace {
       return false
     }
     if (!(await this.writableAt(intoFolder, ...paths))) {
+      const copying =
+        !undoing &&
+        (await this.writableAt(intoFolder)) &&
+        (await this.asksOwnCopy(outermost(paths).map((one) => nameOf(one))))
+      if (copying) await this.copyMany(paths, intoFolder)
       this.clearSelection()
       return false
     }
@@ -2930,6 +2898,32 @@ class Workspace {
     const { copyRows } = await import('./copying')
     const rows = outermost(paths).map((from) => ({ from, into: intoFolder }))
     await this.copied(await copyRows(this, rows), intoFolder)
+  }
+
+  async copyOwn(note: NoteDoc, intoFolder: string): Promise<void> {
+    if (!(await this.writableAt(intoFolder))) return
+    const name = note.path === null ? fileNamed(note.name, note.kind) : nameOf(note.path)
+    if (!(await this.asksOwnCopy([name]))) return
+
+    const bytes =
+      note.path === null
+        ? new TextEncoder().encode(note.latest)
+        : await invoke<ArrayBuffer>('read_file', { path: note.path }).catch(() => null)
+    if (bytes !== null) await this.bringIn([new File([bytes], name)], intoFolder)
+  }
+
+  private async asksOwnCopy(names: readonly string[]): Promise<boolean> {
+    const [only] = names
+    if (only === undefined) return false
+    const { prompt } = await import('../../ui-kit/src/api')
+    return prompt.confirm({
+      title:
+        names.length === 1
+          ? `Make your own copy of ${shownName(only)}?`
+          : `Make your own copies of ${names.length} items?`,
+      detail: 'What is shared with you stays as it is.',
+      confirmLabel: 'Make a copy',
+    })
   }
 
   async duplicateMany(paths: string[]) {
@@ -4069,7 +4063,9 @@ class Workspace {
   }
 
   canDuplicateTab(tab: Tab): boolean {
-    return !viewport.touch && tab.kind !== 'graph' && !TAB_KINDS[tab.kind].single
+    return (
+      !viewport.touch && tab.kind !== 'graph' && tab.kind !== 'chat' && !TAB_KINDS[tab.kind].single
+    )
   }
 
   canSplit(along: Along, tabId?: string): boolean {

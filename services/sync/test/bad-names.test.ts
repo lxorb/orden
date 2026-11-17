@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { feedPageOf, isName, type FeedItem } from '@orden/sync-core'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { cleanPath, noteBeside } from '../src/sync-server/src/notes'
+import { cleanPath, noteBeside } from '../src/sync-server-engine/src/notes'
 import type { Note } from '../src/sync-server/src/types'
 import { call, type RpcView, signIn, type TestEnv, testEnv } from './harness'
 

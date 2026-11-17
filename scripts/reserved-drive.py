@@ -60,7 +60,7 @@ def there(path):
 def text_of(path):
     return run(f"nib.invoke('read_note', {{ path: {json.dumps(str(path))} }}).catch(() => null)")
 
-root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)
@@ -90,7 +90,7 @@ refused("copied to conin$.md", "copy_path", {"from": str(plan), "to": str(folder
 if not there(plan):
     failures.append("the note asked to be renamed is gone")
 
-saved = run("nib.workspace.noteFrom('# NUL\\n\\nwords').then((path) => path)")
+saved = run("orden.workspace.noteFrom('# NUL\\n\\nwords').then((path) => path)")
 print(f"reserved: a note made from words headed NUL is saved as {Path(saved).name if saved else saved!r}")
 if not saved or Path(saved).name.split(".")[0].strip().upper() == "NUL":
     failures.append(f"a note headed NUL was saved under the device's name: {saved!r}")

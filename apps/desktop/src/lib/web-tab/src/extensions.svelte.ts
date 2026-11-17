@@ -133,7 +133,8 @@ class Extensions {
     let said: unknown[]
     for (;;) {
       const moves = this.moves
-      said = await invoke<unknown[]>('extensions_list').catch(() => [])
+      const answer = await invoke<unknown>('extensions_list').catch(() => [])
+      said = Array.isArray(answer) ? answer : []
       if (mine !== this.asked) return
       if (moves === this.moves) break
       await this.moving

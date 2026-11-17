@@ -78,12 +78,15 @@ const RUNS: Record<string, Run> = {
     if (thread) autocompact(host, thread, context.args)
   },
   context: ({ panel }) => panel.openContext(),
-  btw: async ({ args }) => {
-    const { quick } = await import('../quick.svelte')
-    quick.show()
-    if (args && quick.open) {
-      quick.question = args
-      await quick.ask()
+  btw: async ({ args, thread, panel }) => {
+    const { quick, side } = await import('../quick.svelte')
+    const main = thread ?? panel.ensure?.()
+    const asked = main ? side : quick
+    if (main) side.aside(main)
+    else quick.show()
+    if (args && asked.open) {
+      asked.question = args
+      await asked.ask()
     }
   },
   copy: async ({ args, thread }) => {

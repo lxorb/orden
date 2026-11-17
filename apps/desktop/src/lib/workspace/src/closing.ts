@@ -17,6 +17,7 @@ import { workspace } from './workspace.svelte'
 interface Quitting {
   quitAsked(): Promise<void>
   answerQuitting(window: string): Promise<void>
+  holdToQuit(): Promise<void>
 }
 
 export async function guardClose(quitting: () => Promise<Quitting>): Promise<void> {
@@ -40,6 +41,10 @@ export async function guardClose(quitting: () => Promise<Quitting>): Promise<voi
       void settledForInstaller(owed)
     })
     await own.listen('orden://quit-ask', () => void (async () => (await quitting()).quitAsked())())
+    await own.listen(
+      'orden://quit-hold',
+      () => void (async () => (await quitting()).holdToQuit())(),
+    )
     void startup.turn('right').then(async () => (await quitting()).answerQuitting(own.label))
   }
 }

@@ -172,7 +172,7 @@ def answer():
         press(button)
         time.sleep(1)
 
-ACTIVE = "nib.workspace.activeSpace && orden.workspace.activeSpace.name"
+ACTIVE = "orden.workspace.activeSpace && orden.workspace.activeSpace.name"
 SWITCHER = '[data-space-drop="switcher"]'
 SPACES = "[data-spaces-open]"
 
@@ -311,7 +311,7 @@ def pens(round_):
     run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
     until(f"!document.querySelector('{PANEL}')", 2)
 
-VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
+VISIBLE = "orden.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
     ".find((tab) => orden.pages.each().some(([id]) => id === tab.dataset.tab));"
@@ -332,13 +332,13 @@ def web_tab_in_front():
 if not web_tab_in_front():
     raise SystemExit(f"::error::{DESK}: no web tab's page in sight to put popups over")
 first = run(ACTIVE)
-if (run("nib.workspace.spaces.length") or 0) < 2:
-    run("nib.workspace.addSpace('Second space')")
+if (run("orden.workspace.spaces.length") or 0) < 2:
+    run("orden.workspace.addSpace('Second space')")
     time.sleep(1.5)
     if run(ACTIVE) != first:
         run(f"(async () => {{ const one = orden.workspace.spaces.find((s) => s.name === {json.dumps(first)}); if (one) await orden.workspace.selectSpace(one.id) }})()")
         time.sleep(1.5)
-other = run(f"nib.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
+other = run(f"orden.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
 print(f"{DESK}: spaces {first!r} and {other!r}, the page's ratio {ratio()}")
 
 run(HEARD)
@@ -351,7 +351,7 @@ for round_ in range(1, ROUNDS + 1):
     zoom_in_the_menu(round_)
     time.sleep(0.5)
 
-run("nib.workspace.newCanvas()")
+run("orden.workspace.newCanvas()")
 if until("!!document.querySelector('.cluster button.pen')", 10):
     for round_ in range(1, ROUNDS + 1):
         pens(round_)

@@ -13,7 +13,7 @@
   import ChatRow from './ChatRow.svelte'
   import ChatWindow from './ChatWindow.svelte'
 
-  const { rail = false }: { rail?: boolean } = $props()
+  const { rail = false, quiet = false }: { rail?: boolean; quiet?: boolean } = $props()
 
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
@@ -52,7 +52,7 @@
   })
 
   $effect(() => {
-    if (!rail) requestAnimationFrame(() => field?.focus())
+    if (!rail && !untrack(() => quiet)) requestAnimationFrame(() => field?.focus())
   })
 
   function rowMenu(event: MouseEvent, one: ThreadHead) {

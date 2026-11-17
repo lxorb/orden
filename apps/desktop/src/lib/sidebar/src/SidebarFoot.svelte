@@ -9,12 +9,10 @@
   import { sidebarPart, settingsWindow } from '@orden/contracts'
 
   const {
-    theming = true,
     scratch = true,
     onwho = showAccount,
     onsettings = () => settingsWindow().show(),
   }: {
-    theming?: boolean
     scratch?: boolean
     onwho?: (event: MouseEvent) => void
     onsettings?: () => void
@@ -24,9 +22,6 @@
 
   const pad = sidebarPart('scratchpad')
   const padOn = $derived(pad?.open?.() ?? false)
-
-  const pick = (event: MouseEvent) =>
-    void import('../../theme-looks/src/api').then((one) => one.pickTheme(event))
 </script>
 
 <div class="foot" data-region="foot">
@@ -73,26 +68,6 @@
         /></svg
       >
     </button>
-
-    {#if theming && !viewport.touch}
-      <button
-        class="orden-glyph act"
-        title="Themes"
-        aria-label="Themes"
-        aria-haspopup="dialog"
-        onclick={pick}
-      >
-        <svg class="themes" viewBox="0 0 24 24">
-          <path
-            d="M12 2.5a9.5 9.5 0 0 0 0 19c.9 0 1.6-.7 1.6-1.6 0-.42-.17-.8-.42-1.07-.28-.28-.42-.62-.42-1.07a1.56 1.56 0 0 1 1.59-1.59h1.9c2.9 0 5.28-2.38 5.28-5.28C21.5 6.31 17.2 2.5 12 2.5z"
-          />
-          <circle class="dot" cx="13.5" cy="7" r="1.1" />
-          <circle class="dot" cx="17.2" cy="10.6" r="1.1" />
-          <circle class="dot" cx="9" cy="7.8" r="1.1" />
-          <circle class="dot" cx="7.1" cy="12.4" r="1.1" />
-        </svg>
-      </button>
-    {/if}
 
     {#if scratch && pad && viewport.touch && !__EVEN_PLUGIN__}
       <button
@@ -211,15 +186,6 @@
 
   .act .gear {
     stroke-width: 1.6;
-  }
-
-  .act .themes {
-    stroke-width: 1.6;
-  }
-
-  .act .themes .dot {
-    fill: currentColor;
-    stroke: none;
   }
 
   .act .bug {

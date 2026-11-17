@@ -282,10 +282,10 @@ def main() -> int:
         time.sleep(2)
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
 
-        zen.until(app, "nib.workspace.activeSpace?.name ?? null", lambda one: one == "Notes", 60)
+        zen.until(app, "orden.workspace.activeSpace?.name ?? null", lambda one: one == "Notes", 60)
 
         def bring(row: str) -> None:
-            app.ask("nib.settings.show('import') || 'shown'")
+            app.ask("orden.settings.show('import') || 'shown'")
             zen.until(app, zen.ROWS, lambda one: isinstance(one, list) and row in one)
             said[f"pressed {row}"] = app.ask(zen.PRESS % json.dumps(row))
             zen.until(
@@ -296,7 +296,7 @@ def main() -> int:
             )
             time.sleep(2)
 
-        app.ask("nib.settings.show('import') || 'shown'")
+        app.ask("orden.settings.show('import') || 'shown'")
         said["rows"] = zen.until(app, zen.ROWS, lambda one: isinstance(one, list) and "Chrome" in one)
         said["pane"] = camera.photograph(args.identifier, (args.shots / "browser-import-pane.png").resolve())
 

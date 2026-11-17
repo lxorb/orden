@@ -95,16 +95,46 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
     'New note',
     'New canvas',
     'New page note',
+    'New AI chat',
     'Online terminal',
+    'New web note',
     'New application',
     'Pass',
-    'New web note',
   ])
   expect([...target.querySelectorAll('.line')].map(names)).toEqual([
     ['New note', 'New canvas', 'New page note'],
-    ['Online terminal', 'New application', 'Pass'],
+    ['New AI chat'],
+    ['Online terminal'],
     ['New web note'],
+    ['New application', 'Pass'],
   ])
+})
+
+test('folds each group into one card where the lines do not fit, a lone kind staying itself', async () => {
+  const made = makers()
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320)
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(320)
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(144)
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(120)
+  here()
+  flushSync()
+
+  expect(names(target)).toEqual(['Notes', 'New AI chat', 'Online terminal', 'New web note', 'Apps'])
+  const notes = target.querySelector<HTMLElement>('[data-group="notes"]')
+  expect(notes?.getAttribute('aria-haspopup')).toBe('menu')
+  expect(notes?.querySelector('kbd')).toBeNull()
+  expect(notes?.querySelector('[data-more]')).not.toBeNull()
+
+  const { menu } = await import('../../src/lib/ui-kit/src/api')
+  const shown = vi.spyOn(menu, 'show').mockImplementation(() => undefined)
+  notes?.click()
+  await vi.waitFor(() => expect(shown).toHaveBeenCalled())
+  const rows = shown.mock.calls[0]?.[1] ?? []
+  expect(rows.map((row) => row?.label)).toEqual(['New note', 'New canvas', 'New page note'])
+  expect(made).toEqual([])
+
+  press('c')
+  expect(made).toEqual(['canvas'])
 })
 
 test('each wearing its letter, which a screen reader is told as its key', () => {
@@ -115,19 +145,21 @@ test('each wearing its letter, which a screen reader is told as its key', () => 
     'N',
     'C',
     'P',
+    'Q',
     'O',
+    'W',
     'A',
     'K',
-    'W',
   ])
   expect(buttons().map((one) => one.getAttribute('aria-keyshortcuts'))).toEqual([
     'N',
     'C',
     'P',
+    'Q',
     'O',
+    'W',
     'A',
     'K',
-    'W',
   ])
 })
 
@@ -227,7 +259,7 @@ test('is one stop for Tab, whichever button the keyboard is on', () => {
   makers()
   here()
 
-  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1])
+  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1])
 })
 
 test('takes the keyboard once what held it in the tab just closed is gone', async () => {

@@ -1,5 +1,5 @@
 {
   "name": "sync-server-feedback",
   "layer": "foundation",
-  "dependsOn": ["sync-server", "sync-server-accounts"]
+  "dependsOn": ["sync-server", "sync-server-accounts", "sync-server-engine"]
 }

@@ -29,7 +29,7 @@ test('a press on the account opens its menu, and Settings in it opens the settin
   expect(menu.up).toBe(true)
 
   const rows = menu.items.filter((one): one is MenuItem => one !== null)
-  expect(rows.map((one) => one.label)).toEqual(['Account', 'Settings', 'Sign out'])
+  expect(rows.map((one) => one.label)).toEqual(['Account', 'Settings', 'Themes', 'Sign out'])
 
   rows.find((one) => one.label === 'Settings')?.run()
   expect(settings.open).toBe(true)

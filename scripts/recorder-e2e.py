@@ -184,7 +184,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         space = ran(
             held,
-            "nib.workspace.activeSpace"
+            "orden.workspace.activeSpace"
             " ? orden.workspace.activeSpace.name"
             " : orden.workspace.addSpace('Recordings').then(() => orden.workspace.activeSpace?.name ?? null)",
         )
@@ -193,7 +193,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
             wrong("no space could be made, so there is nowhere to record into")
             return
 
-        note = ran(held, "nib.workspace.createNote().then(() => orden.workspace.active?.path ?? null)")
+        note = ran(held, "orden.workspace.createNote().then(() => orden.workspace.active?.path ?? null)")
         say(f"recording into {note!r}")
 
         answer = asked(held, "commands.run", {"id": "record"})
@@ -220,7 +220,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
             wrong(f"the Record command would not stop it: {answer}")
         time.sleep(4.0)
 
-        text = ran(held, "nib.workspace.active?.doc ?? ''")
+        text = ran(held, "orden.workspace.active?.doc ?? ''")
         say(f"the note now says {str(text)[:120]!r}")
         if "![[recording-" not in str(text):
             wrong("the note holds no embed, so nothing was written")

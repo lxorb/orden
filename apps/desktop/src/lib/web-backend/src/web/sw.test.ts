@@ -278,11 +278,11 @@ describe('the asset worker', () => {
     expect((await odd.fetch(`${ORIGIN}/asset/Work/a.png`))?.status).toBe(404)
   })
 
-  test('a row an older version kept under its own name is still found', async () => {
-    const old = load([pixel('/Work/old.png')], { under: 'nib' })
-    expect((await old.fetch(`${ORIGIN}/asset/Work/old.png`))?.status).toBe(200)
+  test('a row is found only in the database named after the app', async () => {
     const now = load([pixel('/Work/new.png')], { under: 'orden' })
     expect((await now.fetch(`${ORIGIN}/asset/Work/new.png`))?.status).toBe(200)
+    const old = load([pixel('/Work/old.png')], { under: 'nib' })
+    expect((await old.fetch(`${ORIGIN}/asset/Work/old.png`))?.status).toBe(404)
   })
 
   test('a browser that has never opened the app gets a miss, not an error', async () => {
@@ -302,13 +302,6 @@ describe('a notice the worker showed, pressed', () => {
     const pressed = await load([], { windows: [window] }).press({ ordenNotice: 'c_2' })
 
     expect(pressed).toEqual({ closed: true, opened: [] })
-    expect(window).toEqual({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
-  })
-
-  test('knows a notice shown before the rename by its old tag', async () => {
-    const window: OpenWindow = { focused: 0, said: [] }
-    await load([], { windows: [window] }).press({ nibNotice: 'c_2' })
-
     expect(window).toEqual({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
   })
 

@@ -152,7 +152,7 @@
     const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
     if (!panesOf) return null
     const corner = { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h }
-    const slots = lay(panesOf, corner, { tabsOf, shapeOf }).slots
+    const slots = lay(panesOf, corner, { tabsOf, shapeOf, named: CAPTION_ROOM }).slots
     if (slots.length) return outlineFor(key, slots)
     return outlineOf([standIn(corner)], NAME_ROOM, nameWide(key))
   }
@@ -246,9 +246,10 @@
     flyFrame = 0
   }
 
-  const NAME_ROOM = 72
+  const NAMES_MOST = 2.5
   const SPACE_NAMES_MOST = 2
-  const NAMES_MOST = 1.8
+  const NAME_ROOM = 72
+  const CAPTION_ROOM = 8 + 20 * NAMES_MOST
 
   const shapeOf = (paneId: string): number => {
     const measured = shownBox(paneId)
@@ -349,7 +350,7 @@
         {
           key,
           frame: panesOf,
-          slots: lay(panesOf, place, { tabsOf, shapeOf }).slots,
+          slots: lay(panesOf, place, { tabsOf, shapeOf, named: CAPTION_ROOM }).slots,
         },
       ]
     }),
@@ -453,8 +454,6 @@
     if (pane && pane.w > 0) return { w: pane.w, h: pane.w * (slot.h / slot.w) }
     return { w: slot.w * 3, h: slot.h * 3 }
   }
-
-  const CAPTION_ROOM = 44
 
   function captioned(box: Box): Box {
     return { ...box, h: box.h + CAPTION_ROOM }

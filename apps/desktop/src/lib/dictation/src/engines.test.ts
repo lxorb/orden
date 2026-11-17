@@ -46,7 +46,8 @@ vi.mock('../../platform/src/stored', () => ({
   forget: (key: string) => world.stored.delete(key),
 }))
 
-const { canDictate, deviceHears, engines, whereTo } = await import('./engines.svelte')
+const { canDictate, deviceHears, engines, showsDictateButton, whereTo } =
+  await import('./engines.svelte')
 const { local } = await import('./local.svelte')
 
 const PARAKEET = { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 670_000_000 }
@@ -111,6 +112,23 @@ describe('the roads offered', () => {
     expect(deviceHears()).toBe(false)
     world.os = 'linux'
     expect(deviceHears()).toBe(false)
+  })
+})
+
+describe('the dictate button', () => {
+  test('shows wherever a road is offered but in the Mac app, whose system dictates in any field', () => {
+    world.token = 'a token'
+    expect(showsDictateButton()).toBe(true)
+    world.native = true
+    world.os = 'windows'
+    expect(showsDictateButton()).toBe(true)
+    world.os = 'macos'
+    expect(canDictate()).toBe(true)
+    expect(showsDictateButton()).toBe(false)
+  })
+
+  test('is not shown where no road is offered', () => {
+    expect(showsDictateButton()).toBe(false)
   })
 })
 

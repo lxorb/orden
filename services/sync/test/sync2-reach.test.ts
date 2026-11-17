@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { hash32, type Op, type OpContext, type TreeEntry } from '@orden/sync-core'
-import { type ByPath, creatingAt, movingTo } from '../src/sync-server/src/sync2/ops'
+import { type ByPath, creatingAt, movingTo } from '../src/sync-server-engine/src/sync2/ops'
 import {
   changeTree,
   reachOf,
   readReach,
   readTree,
   type Tree,
-} from '../src/sync-server/src/sync2/tree'
+} from '../src/sync-server-engine/src/sync2/tree'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { live } from './sync2'
 

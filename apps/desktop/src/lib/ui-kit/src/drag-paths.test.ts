@@ -166,6 +166,13 @@ describe('a row carried by its place in a list', () => {
     here.carryPage(sheet, { note: '/s/a.pages', page: 'p2' })
     expect(here.isPageDrag(sheet)).toBe(true)
     expect(here.draggedPage(sheet)).toEqual({ note: '/s/a.pages', page: 'p2' })
+
+    const asked = transfer()
+    here.carryAiChat(asked, { id: 't1', title: 'Plans' })
+    expect(here.isAiChatDrag(asked)).toBe(true)
+    expect(here.isTreeDrag(asked)).toBe(false)
+    expect(here.draggedAiChat(asked)).toEqual({ id: 't1', title: 'Plans' })
+    expect(here.draggedAiChat(transfer(['text/plain']))).toBeNull()
     here.carriedNothing()
   })
 
@@ -177,6 +184,8 @@ describe('a row carried by its place in a list', () => {
     there.carrySection(section, 3)
     const sheet = transfer()
     there.carryPage(sheet, { note: '/s/a.pages', page: 'p2' })
+    const asked = transfer()
+    there.carryAiChat(asked, { id: 't1', title: 'Plans' })
     there.carriedNothing()
 
     vi.resetModules()
@@ -188,6 +197,7 @@ describe('a row carried by its place in a list', () => {
     expect(here.draggedSection(section)).toBeNull()
     expect(here.isPageDrag(sheet)).toBe(false)
     expect(here.draggedPage(sheet)).toBeNull()
+    expect(here.draggedAiChat(asked)).toBeNull()
     expect(here.landing(drop(mark), 'linux')).toBeNull()
   })
 })

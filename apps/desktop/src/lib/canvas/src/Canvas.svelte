@@ -119,7 +119,6 @@
 
   const QUANTUM = 400
 
-  const FAR_SCALE = 0.35
   const MOST_CARDS = 300
   const MADE_A_FRAME = 60
 
@@ -397,9 +396,7 @@
   })
 
   const far = $derived(
-    camera.scale < FAR_SCALE ||
-      cards.length > MOST_CARDS ||
-      (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
+    cards.length > MOST_CARDS || (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
   )
 
   const wanted = $derived(

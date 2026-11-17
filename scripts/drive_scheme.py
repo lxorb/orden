@@ -1,7 +1,8 @@
 import json
 import time
 
-THEMES = "[data-region=foot] button.act[aria-label='Themes']"
+ACCOUNT = "[data-region=foot] button.who"
+MENU = "[role=menu] [role=menuitem]"
 PICKER = "[role=dialog][aria-label='Themes']"
 NAMES = {"light": "Light", "dark": "Dark"}
 SCHEME = "document.documentElement.dataset.theme"
@@ -15,6 +16,14 @@ GONE = f"!document.querySelector({json.dumps(PICKER)})"
 
 def mode(scheme):
     return f"{PICKER} .modes button[aria-label='{NAMES[scheme]}']"
+
+
+def themes_row(run):
+    at = run(
+        "[...document.querySelectorAll(%s)].find((one) => one.textContent.trim() === 'Themes')?.dataset.at ?? null"
+        % json.dumps(MENU)
+    )
+    return None if at is None else f"{MENU}[data-at='{at}']"
 
 
 def other(scheme):
@@ -32,12 +41,20 @@ def waited(run, code, seconds):
 def switch(run, box, press, want, seconds=4):
     if run(SCHEME) == want:
         return "kept"
-    button = box(THEMES)
+    account = box(ACCOUNT)
+    if not isinstance(account, dict):
+        return "no account button"
+    press(account)
+    if not waited(run, f"!!document.querySelector({json.dumps(MENU)})", seconds):
+        return "the account button opened no menu"
+    row = themes_row(run)
+    button = box(row) if row else None
     if not isinstance(button, dict):
-        return "no themes button"
+        run(CLOSE)
+        return "no Themes in the account menu"
     press(button)
     if not waited(run, f"!!document.querySelector({json.dumps(PICKER)})", seconds):
-        return "the themes button opened no picker"
+        return "Themes in the account menu opened no picker"
     choice = box(mode(want))
     if not isinstance(choice, dict):
         run(CLOSE)
@@ -52,12 +69,15 @@ def switch(run, box, press, want, seconds=4):
 
 def clicked(run, want, seconds=4):
     said = run(
-        "(async () => { const button = document.querySelector(%s); if (!button) return 'no themes button';"
-        " button.click(); for (let i = 0; i < 40 && !document.querySelector(%s); i++)"
-        " await new Promise((done) => setTimeout(done, 50));"
+        "(async () => { const wait = (ms) => new Promise((done) => setTimeout(done, ms));"
+        " const account = document.querySelector(%s); if (!account) return 'no account button';"
+        " account.click(); await wait(50);"
+        " const row = [...document.querySelectorAll(%s)].find((one) => one.textContent.trim() === 'Themes');"
+        " if (!row) return 'no Themes in the account menu'; row.click();"
+        " for (let i = 0; i < 40 && !document.querySelector(%s); i++) await wait(50);"
         " const choice = document.querySelector(%s); if (!choice) return 'no choice in the picker';"
         " choice.click(); return 'pressed' })()"
-        % (json.dumps(THEMES), json.dumps(PICKER), json.dumps(mode(want)))
+        % (json.dumps(ACCOUNT), json.dumps(MENU), json.dumps(PICKER), json.dumps(mode(want)))
     )
     if said != "pressed":
         return said

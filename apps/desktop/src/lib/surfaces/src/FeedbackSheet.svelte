@@ -18,6 +18,7 @@
   let sending = $state(false)
   let error = $state<string | null>(null)
   let pictureError = $state<string | null>(null)
+  let looking = $state(false)
 
   const received = $derived(feedback.received)
 
@@ -31,7 +32,11 @@
     sending = false
     error = null
     pictureError = null
+    looking = false
   })
+
+  const day = (at: number) =>
+    new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 
   async function send() {
     if (!text.trim() || sending) return
@@ -126,6 +131,32 @@
           <button type="button" class="orden-button" onclick={() => feedback.close()}>Done</button>
         </div>
       </div>
+    {:else if looking}
+      <div class="received">
+        <p class="title">Past requests</p>
+        <ul class="past">
+          {#each feedback.past as one (one.url)}
+            <li>
+              <a
+                class="orden-row"
+                href={one.url}
+                onclick={(event) => {
+                  event.preventDefault()
+                  followHref(one.url, event)
+                }}
+              >
+                <span class="orden-row-label">{one.title}</span>
+                <span class="when">{day(one.at)}</span>
+              </a>
+            </li>
+          {/each}
+        </ul>
+        <div class="row">
+          <button type="button" class="orden-button is-quiet" onclick={() => (looking = false)}
+            >Back</button
+          >
+        </div>
+      </div>
     {:else}
       <form
         onsubmit={(event) => {
@@ -198,6 +229,11 @@
         {/if}
 
         <div class="row">
+          {#if feedback.past.length}
+            <button type="button" class="see" onclick={() => (looking = true)}
+              >See past requests</button
+            >
+          {/if}
           <button type="button" class="orden-button is-quiet" onclick={() => feedback.close()}
             >Cancel</button
           >
@@ -277,6 +313,49 @@
     font-weight: var(--weight-strong);
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+
+  .see {
+    margin-inline-end: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  @media (hover: hover) {
+    .see:hover {
+      color: var(--text-strong);
+    }
+  }
+
+  .past {
+    display: flex;
+    flex-direction: column;
+    max-height: 18rem;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  .past a {
+    display: flex;
+    gap: var(--space-3);
+    color: var(--text-strong);
+    text-decoration: none;
+  }
+
+  .when {
+    flex: none;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
   }
 
   .pictures {

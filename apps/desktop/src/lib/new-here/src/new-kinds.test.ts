@@ -1,4 +1,4 @@
-import { providePort, registerTabKind } from '@orden/contracts'
+import { providePort, registerCommand, registerTabKind } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -31,9 +31,10 @@ providePort('terminal.making', {
   online: noting('online'),
 })
 registerTabKind('application', () => Promise.resolve({ make: noting('application') }))
+registerCommand('ai.tab', () => Promise.resolve(() => void noting('ai')()))
 
 await import('../../web-tab/src/api')
-const { kindLines, newKinds } = await import('./new-kinds')
+const { fitsWhole, groupOf, kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
@@ -68,11 +69,12 @@ function makers(): string[] {
 }
 
 describe('the kinds a new tab can be', () => {
-  test('are the four, an online terminal, an application and Pass, in the order a reader is offered them', () => {
+  test('are the four, an AI chat, an online terminal, an application and Pass, in the order a reader is offered them', () => {
     expect(newKinds().map((one) => one.kind)).toEqual([
       'note',
       'canvas',
       'pages',
+      'ai',
       'online',
       'application',
       'pass',
@@ -80,12 +82,41 @@ describe('the kinds a new tab can be', () => {
     ])
   })
 
-  test('stand in three lines: what is written, what runs, and the web', () => {
+  test('stand in groups: notes, chats, terminals, the browser, then the apps', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
-      ['online', 'application', 'pass'],
+      ['ai'],
+      ['online'],
       ['web'],
+      ['application', 'pass'],
     ])
+  })
+
+  test('fold into one card a group of several, which offers them all, and leave one alone', async () => {
+    const [notes, , terminals] = kindLines(newKinds())
+    expect(groupOf(terminals ?? [])?.kind).toBe('online')
+    expect(groupOf(terminals ?? [])?.grouped).toBeUndefined()
+
+    const group = groupOf(notes ?? [])
+    expect(group?.label()).toBe('Notes')
+    expect(group?.grouped).toBe(true)
+    expect(group?.letter).toBe('')
+    const rows = await group?.others?.()
+    expect(rows?.map((row) => row && [row.label, row.hint])).toEqual([
+      ['New note', 'N'],
+      ['New canvas', 'C'],
+      ['New page note', 'P'],
+    ])
+  })
+
+  test('are shown whole while every line fits, and as groups once they do not', () => {
+    const lines = kindLines(newKinds())
+    const card = { width: 144, height: 120, gap: 12 }
+    expect(fitsWhole(lines, { width: 1000, height: 700 }, card, false)).toBe(true)
+    expect(fitsWhole(lines, { width: 1000, height: 400 }, card, false)).toBe(false)
+    expect(fitsWhole(lines, { width: 300, height: 600 }, card, false)).toBe(false)
+    expect(fitsWhole(lines, { width: 300, height: 700 }, { ...card, height: 48 }, true)).toBe(true)
+    expect(fitsWhole(lines, { width: 0, height: 0 }, card, false)).toBe(true)
   })
 
   test('read as the words every menu in the app already uses', () => {
@@ -93,6 +124,7 @@ describe('the kinds a new tab can be', () => {
       'New note',
       'New canvas',
       'New page note',
+      'New AI chat',
       'Online terminal',
       'New application',
       'Pass',
@@ -105,6 +137,7 @@ describe('the kinds a new tab can be', () => {
       'note',
       'canvas',
       'pages',
+      'chat',
       'terminal',
       'application',
       'key',
@@ -142,6 +175,7 @@ describe('the kinds a new tab can be', () => {
 
     await vi.waitFor(() =>
       expect([...made].sort()).toEqual([
+        'ai',
         'application',
         'canvas',
         'note',
@@ -184,7 +218,7 @@ describe('the kinds a new tab can be', () => {
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 
-    expect(letters).toEqual(['n', 'c', 'p', 'o', 'a', 'k', 'w'])
+    expect(letters).toEqual(['n', 'c', 'p', 'q', 'o', 'a', 'k', 'w'])
     expect(new Set(letters).size).toBe(letters.length)
   })
 })
