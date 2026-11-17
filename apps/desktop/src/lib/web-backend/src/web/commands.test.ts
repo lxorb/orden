@@ -353,6 +353,37 @@ describe('renaming', () => {
       webInvoke('rename_note', { from: '/Notes/gone.md', to: '/Notes/here.md' }),
     ).rejects.toThrow()
   })
+
+  test('never puts a PDF over another one', async () => {
+    const pdf = (path: string, data: string) =>
+      disk.assets.set(path, { path, type: 'application/pdf', data, modified: 1 })
+    pdf('/Notes/A/slides.pdf', 'AAAA')
+    pdf('/Notes/B/slides.pdf', 'BBBB')
+    await webInvoke('write_highlights', { path: '/Notes/B/slides.pdf', content: '{"b":1}' })
+    await webInvoke('write_highlights', { path: '/Notes/A/slides.pdf', content: '{"a":1}' })
+
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/A/slides.pdf', to: '/Notes/B/slides.pdf' }),
+    ).rejects.toThrow(/already lives there/)
+
+    expect(disk.assets.get('/Notes/B/slides.pdf')?.data).toBe('BBBB')
+    expect(disk.assets.get('/Notes/A/slides.pdf')?.data).toBe('AAAA')
+    expect(disk.files.get('/Notes/B/slides.pdf.highlights.json')?.content).toBe('{"b":1}')
+  })
+
+  test('never puts a folder over one that holds only pictures', async () => {
+    const picture = (path: string, data: string) =>
+      disk.assets.set(path, { path, type: 'image/png', data, modified: 1 })
+    picture('/Notes/img/image.png', 'AAAA')
+    picture('/Notes/assets/image.png', 'BBBB')
+
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/img', to: '/Notes/assets' }),
+    ).rejects.toThrow(/already lives there/)
+
+    expect(disk.assets.get('/Notes/assets/image.png')?.data).toBe('BBBB')
+    expect(disk.assets.get('/Notes/img/image.png')?.data).toBe('AAAA')
+  })
 })
 
 describe('copying', () => {
@@ -399,6 +430,26 @@ describe('copying', () => {
       webInvoke('copy_path', { from: '/Notes/Work', to: '/Notes/Work/Work' }),
     ).rejects.toThrow()
     expect(await read('/Notes/b.md')).toBe('b')
+  })
+
+  test('never writes into a folder that holds only pictures', async () => {
+    disk.assets.set('/Notes/img/image.png', {
+      path: '/Notes/img/image.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+    disk.assets.set('/Notes/assets/image.png', {
+      path: '/Notes/assets/image.png',
+      type: 'image/png',
+      data: 'BBBB',
+      modified: 1,
+    })
+
+    await expect(
+      webInvoke('copy_path', { from: '/Notes/img', to: '/Notes/assets' }),
+    ).rejects.toThrow(/already lives there/)
+    expect(disk.assets.get('/Notes/assets/image.png')?.data).toBe('BBBB')
   })
 })
 
@@ -499,6 +550,29 @@ describe('a file the app reads as words, written as bytes', () => {
 })
 
 describe('the trash', () => {
+  test('two deletes at once both land in Recently deleted, and both come back', async () => {
+    await write('/Notes/One.md', 'one')
+    await write('/Notes/Two.md', 'two')
+
+    const [one, two] = await Promise.all([
+      webInvoke<{ id: string }>('trash_item', { path: '/Notes/One.md', kind: 'note' }),
+      webInvoke<{ id: string }>('trash_item', { path: '/Notes/Two.md', kind: 'note' }),
+    ])
+
+    expect(one.id).not.toBe(two.id)
+    expect((await webInvoke<{ name: string }[]>('list_trash')).map((e) => e.name).sort()).toEqual([
+      'One.md',
+      'Two.md',
+    ])
+    await Promise.all([
+      webInvoke('restore_trash', { id: one.id }),
+      webInvoke('restore_trash', { id: two.id }),
+    ])
+    expect(await webInvoke('list_trash')).toEqual([])
+    expect(disk.files.get('/Notes/One.md')?.content).toBe('one')
+    expect(disk.files.get('/Notes/Two.md')?.content).toBe('two')
+  })
+
   test('a note deleted before its space stays out of a new space of that name', async () => {
     await webInvoke('create_folder', { path: '/Notes' })
     await webInvoke('write_note', { path: '/Notes/Idea.md', content: 'words' })
@@ -539,6 +613,20 @@ describe('the trash', () => {
     expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/Idea.md')
     expect(await read('/Notes/Idea.md')).toBe('# Idea')
     expect(await webInvoke('list_trash')).toEqual([])
+  })
+
+  test('remembers which deleted notes sync put there and which the reader did', async () => {
+    await write('/Notes/Gone elsewhere.md', 'theirs')
+    await write('/Notes/Mine.md', 'mine')
+
+    await webInvoke('trash_item', { path: '/Notes/Gone elsewhere.md', kind: 'note', arrived: true })
+    await webInvoke('trash_item', { path: '/Notes/Mine.md', kind: 'note' })
+
+    const listed = await webInvoke<{ name: string; arrived?: boolean }[]>('list_trash')
+    expect(Object.fromEntries(listed.map((one) => [one.name, one.arrived === true]))).toEqual({
+      'Gone elsewhere.md': true,
+      'Mine.md': false,
+    })
   })
 
   test('holds a picture, which lives with the assets alone, and puts it back', async () => {

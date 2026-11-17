@@ -27,7 +27,9 @@ function heedStops(): Promise<unknown> {
         }
       }),
     )
-    .catch(() => undefined)
+    .catch(() => {
+      hearing = null
+    })
   return hearing
 }
 

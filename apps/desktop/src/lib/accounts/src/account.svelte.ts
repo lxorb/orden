@@ -20,6 +20,8 @@ export interface Vault {
 
 const TRIES = [400, 1200, 2500]
 
+const ASK_BEFORE_LEAVING = 3000
+
 function rejected(error: unknown): boolean {
   return fromServer(error) && error.status === 401
 }
@@ -57,9 +59,18 @@ class Session {
 
   private lookedFor: () => void = () => undefined
 
+  private sessionLookedFor = $state(false)
+
   readonly looked = new Promise<void>((done) => {
-    this.lookedFor = done
+    this.lookedFor = () => {
+      this.sessionLookedFor = true
+      done()
+    }
   })
+
+  get noAccountForSure(): boolean {
+    return this.sessionLookedFor && !this.user && (!this.token || !!this.guest)
+  }
 
   readonly signedIn = $derived(!!this.token && (!!this.user || !!this.guest))
   readonly accountToken = $derived(this.user ? this.token : null)
@@ -76,6 +87,16 @@ class Session {
 
   forgetWithSession(clear: (kept: boolean) => void) {
     this.alsoForget.add(clear)
+  }
+
+  private readonly unheard = new Set<() => void>()
+
+  holdsNoAccount(clear: () => void) {
+    this.unheard.add(clear)
+  }
+
+  private heardNoAccount() {
+    for (const clear of this.unheard) clear()
   }
 
   private mayLeave: () => Promise<boolean> = () => Promise.resolve(true)
@@ -96,7 +117,10 @@ class Session {
 
   private async lookForSession() {
     const saved = (await this.vault?.read()) ?? storedText(STORAGE_KEY)
-    if (!saved) return
+    if (!saved) {
+      this.heardNoAccount()
+      return
+    }
 
     keep(STORAGE_KEY, saved)
     this.token = saved
@@ -115,6 +139,7 @@ class Session {
       if (this.token !== token) return true
       this.user = who.user ?? null
       this.guest = who.guest ?? null
+      if (!this.user) this.heardNoAccount()
     } catch (error) {
       if (!rejected(error)) return false
       if (this.token === token) this.forget()
@@ -196,6 +221,14 @@ class Session {
     return true
   }
 
+  askForCode(email: string, resendIn: number) {
+    this.email = email
+    this.error = null
+    this.step = 'code'
+    this.open = true
+    this.startResendTimer(resendIn)
+  }
+
   askForSecond(holding: string) {
     this.holding = holding
     this.error = null
@@ -203,14 +236,30 @@ class Session {
     this.open = true
   }
 
-  private leaveFor(next: { user?: Account | null; guest?: Guest | null }) {
-    const was = this.user ? this.user.id : this.guest ? `guest:${this.guest.id}` : null
+  private async leaveFor(token: string, next: { user?: Account | null; guest?: Guest | null }) {
+    const unanswered = !this.signedAs && this.token !== token ? this.token : null
+    const heard = unanswered ? await this.heldBy(unanswered) : null
+
+    const was = this.signedAs ?? heard
     const now = next.user ? next.user.id : next.guest ? `guest:${next.guest.id}` : null
     if (was && was !== now && !(this.guest && next.user)) this.forget()
+    if (unanswered && !was) this.heardNoAccount()
+  }
+
+  private get signedAs(): string | null {
+    return this.user ? this.user.id : this.guest ? `guest:${this.guest.id}` : null
+  }
+
+  private async heldBy(token: string): Promise<string | null> {
+    const who = await Promise.race([
+      api.me(token).catch(() => null),
+      waited(ASK_BEFORE_LEAVING).then(() => null),
+    ])
+    return who?.user ? who.user.id : who?.guest ? `guest:${who.guest.id}` : null
   }
 
   private async settleIn(token: string, user: Account): Promise<void> {
-    this.leaveFor({ user })
+    await this.leaveFor(token, { user })
     this.guest = null
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
@@ -251,7 +300,7 @@ class Session {
   }
 
   async arrive(token: string, who: { user?: Account; guest?: Guest }) {
-    this.leaveFor(who)
+    await this.leaveFor(token, who)
     this.stopResendTimer()
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
@@ -290,7 +339,8 @@ class Session {
 
     const who = await api.rename(token, name)
     if (this.token !== token) return
-    if (who.user) this.user = who.user
+    if (who.user)
+      this.user = this.user?.id === who.user.id ? { ...this.user, ...who.user } : who.user
     if (who.guest) this.guest = who.guest
   }
 

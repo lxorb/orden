@@ -20,10 +20,10 @@ export function reachable(call: Call): Space[] {
   return workspace.spaces.filter((space) => reaches(call, space))
 }
 
-export function reachesSpaceId(call: Call, id: string | null): boolean {
+export function reachesSpace(call: Call, id: string | null): boolean {
   const agent = call.caller.agent
-  if (id === null || agent === null || agent.spaces === 'all') return true
-  return reachable(call).some((one) => one.id === id)
+  if (agent === null || agent.spaces === 'all') return true
+  return id !== null && reachable(call).some((one) => one.id === id)
 }
 
 export function tabsInReach(call: Call): Tab[] {

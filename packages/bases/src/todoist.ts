@@ -110,7 +110,7 @@ function term(raw: string, options: TodoistOptions, at: number): string {
   const within = /^(?:next |nächsten? )?(\d+) (days?|tagen?|tage)$/.exec(lower)
   if (within) return `task.date >= today() && task.date < today() + "${within[1]}d"`
 
-  const keyed = /^([a-zäö ]+?)\s*:\s*(.*)$/.exec(text)
+  const keyed = /^([a-zäö ]+?)\s*:\s*(.*)$/i.exec(text)
   if (keyed) {
     const key = (keyed[1] ?? '').toLowerCase().replace(/\s+/g, ' ')
     const value = (keyed[2] ?? '').trim()

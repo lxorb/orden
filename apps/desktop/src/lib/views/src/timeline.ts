@@ -17,6 +17,7 @@ export interface Bar {
   toTime?: string
   fromShift?: number
   toShift?: number
+  ownDates?: boolean
 }
 
 function shiftIn(value: Value, day: string | null): number {
@@ -26,7 +27,8 @@ function shiftIn(value: Value, day: string | null): number {
 function timeIn(value: Value): string {
   if (typeof value === 'string') return value.slice(10)
   if (!isDateValue(value) || !value.time) return ''
-  return `T${value.time.replace(/^(\d{2}:\d{2}):00$/, '$1')}${value.zone ?? ''}`
+  const zone = value.zone === 'UTC' ? 'Z' : (value.zone ?? '')
+  return `T${value.time.replace(/^(\d{2}:\d{2}):00$/, '$1')}${zone}`
 }
 
 export function barOf(
@@ -50,7 +52,7 @@ export function barOf(
     const to = deadline && from !== 'task.deadline' ? 'task.deadline' : from
     let end = deadline && from !== 'task.deadline' ? deadline : start
     if (end < start) end = start
-    return { row, start, end, from, to }
+    return { row, start, end, from, to, ownDates: true }
   }
 
   const fromProperty = dates.start ?? 'file.ctime'
@@ -116,14 +118,26 @@ export function dragged(
     if (bar.to !== bar.from) out[bar.to] = to(addDays(bar.end, days))
     return out
   }
+  if (bar.from === bar.to) return stretched(bar, part, days)
   if (part === 'start') {
     const start = addDays(bar.start, days)
-    const field =
-      bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
-    return { [field]: from(start > bar.end ? bar.end : start) }
+    return { [bar.from]: from(start > bar.end ? bar.end : start) }
   }
   const end = addDays(bar.end, days)
   return { [bar.to]: to(end < bar.start ? bar.start : end) }
+}
+
+function stretched(bar: Bar, part: 'start' | 'end', days: number): Record<string, string> {
+  if (!bar.ownDates) return {}
+  const start = part === 'start' ? addDays(bar.start, days) : bar.start
+  const end = part === 'end' ? addDays(bar.end, days) : bar.end
+  if (start >= end) return {}
+  if (bar.from === 'task.deadline') {
+    return part === 'start'
+      ? { 'task.start': start }
+      : { 'task.start': start, 'task.deadline': end }
+  }
+  return part === 'start' ? { [bar.from]: start, 'task.deadline': end } : { 'task.deadline': end }
 }
 
 export interface Arrow {

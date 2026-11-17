@@ -105,22 +105,23 @@ describe('Reopen closed tab', () => {
 
 describe('Close all tabs', () => {
   test('is greyed on a strip with nothing it may close', () => {
-    vi.spyOn(workspace, 'closesAround').mockReturnValue(0)
+    vi.spyOn(workspace, 'closesAllIn').mockReturnValue(0)
 
     expect(row('Close all tabs').disabled).toBe(true)
   })
 
-  test("closes around the tab in front of this strip's pane", () => {
+  test("closes the tabs of this strip's pane, whether or not one is in front", () => {
     vi.spyOn(workspace.panes, 'at').mockImplementation((id) =>
-      id === PANE ? ({ activeTabId: 'mine' } as ReturnType<typeof workspace.panes.at>) : null,
+      id === PANE ? ({ activeTabId: null } as ReturnType<typeof workspace.panes.at>) : null,
     )
-    vi.spyOn(workspace, 'closesAround').mockReturnValue(2)
-    const close = vi.spyOn(workspace, 'closeAround').mockResolvedValue()
+    const counted = vi.spyOn(workspace, 'closesAllIn').mockReturnValue(2)
+    const close = vi.spyOn(workspace, 'closeAllIn').mockResolvedValue()
 
     const item = row('Close all tabs')
     expect(item.disabled).toBe(false)
+    expect(counted).toHaveBeenCalledWith(PANE)
 
     item.run()
-    expect(close).toHaveBeenCalledWith('mine', 'all')
+    expect(close).toHaveBeenCalledWith(PANE)
   })
 })

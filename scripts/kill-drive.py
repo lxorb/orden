@@ -50,7 +50,7 @@ def scheme():
 
 def drafts():
     return run(
-        "nib.workspace.tabs.filter((tab) => (tab.doc ?? '').includes("
+        "orden.workspace.tabs.filter((tab) => (tab.doc ?? '').includes("
         + json.dumps(WORDS)
         + ")).length"
     )

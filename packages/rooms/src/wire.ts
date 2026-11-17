@@ -18,9 +18,9 @@ const STEP1 = 0
 const STEP2 = 1
 const UPDATE = 2
 
-const TOKEN = 'nib.token.'
+const TOKEN = 'orden.token.'
 
-const TOKENS = ['orden.token.', 'nib.token.']
+const TOKENS = [TOKEN, 'nib.token.']
 
 export function subprotocol(token: string): string {
   return `${TOKEN}${token}`

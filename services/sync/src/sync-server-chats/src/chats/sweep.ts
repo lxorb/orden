@@ -1,4 +1,5 @@
-import { AT_A_TIME, places, noteChatFiles, type Env } from '../../../sync-server/src/api'
+import { AT_A_TIME, places, type Env } from '../../../sync-server/src/api'
+import { noteChatFiles } from '../../../sync-server-engine/src/api'
 const KEPT_FOR = 30 * 24 * 60 * 60 * 1000
 
 export async function sweepChats(env: Env, at: number): Promise<number> {

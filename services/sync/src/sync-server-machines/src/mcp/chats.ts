@@ -21,7 +21,6 @@ import {
   type Reached,
 } from '../../../sync-server-chats/src/api'
 import type { TokenRow } from './tokens'
-import { zoneOf } from './zone'
 
 const string = { type: 'string' }
 
@@ -85,8 +84,7 @@ function words(args: Record<string, unknown>, name: string): string | undefined 
 }
 
 function whole(args: Record<string, unknown>, name: string, fallback: number, most: number) {
-  const sent = args[name]
-  const value = sent === null ? Number.NaN : Number(sent)
+  const value = Number(args[name])
   return Number.isFinite(value) ? Math.min(Math.max(1, Math.floor(value)), most) : fallback
 }
 
@@ -102,29 +100,27 @@ async function chatsOf(
 ): Promise<Known[]> {
   const rows = await listed(env, who, null, most)
   if (!rows.length) return []
+  const shut = await shutFor(env, who.kind === 'user' ? who.user.id : '')
   const found = await askInChunks(
     rows.map((one) => one.id),
     async (chunk) => {
       const { results } = await env.DB.prepare(
-        `select ch.id as id, f.path as path, sp.id as spaceId, sp.name as space from chats ch
+        `select ch.id as id, f.path as path, sp.id as space_id, sp.name as space from chats ch
            join spaces sp on sp.id = ch.space_id
            left join notes f on f.id = ch.file_id and f.deleted = 0
           where ch.id in (${places(chunk.length)})`,
       )
         .bind(...chunk)
-        .all<{ id: string; path: string | null; spaceId: string; space: string }>()
+        .all<{ id: string; path: string | null; space_id: string; space: string }>()
       return results
     },
   )
-  const shut = who.kind === 'user' ? await shutFor(env, who.user.id) : null
-  const named = new Map(
-    found.filter((one) => !(one.path && shut?.(one.spaceId, one.path))).map((one) => [one.id, one]),
-  )
+  const named = new Map(found.map((one) => [one.id, one]))
   const me = whoOf(who)
   return rows.flatMap((row): Known[] => {
     const chat = named.get(row.id)
     const name = (chat?.path?.split('/').pop() ?? '').replace(/\.chat$/i, '')
-    if (!chat || !name) return []
+    if (!chat?.path || !name || shut(chat.space_id, chat.path)) return []
     const behind = row.lastSeq > row.readSeq && row.lastBy !== me
     return [
       {
@@ -231,7 +227,7 @@ async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
   return messagesText(known.name, shown, await readingOf(env, who, [known.id]))
 }
 
-async function searchChats(env: Env, token: TokenRow, who: Whoever, args: Record<string, unknown>) {
+async function searchChats(env: Env, who: Whoever, args: Record<string, unknown>) {
   const query = words(args, 'query')
   if (!query) return 'Search for what?'
   if (query.length > LONGEST_SEARCH) return `A search is at most ${LONGEST_SEARCH} characters.`
@@ -244,8 +240,7 @@ async function searchChats(env: Env, token: TokenRow, who: Whoever, args: Record
     )
   ).flatMap((one) => (one.reached ? [{ id: one.id, reached: one.reached }] : []))
   const names = new Map(all.map((one) => [one.id, one.name]))
-  const asked: Record<string, string> = { q: query, zone: await zoneOf(env, token.user_id) }
-  const hits = (await searched(env, who, (key) => asked[key], picked))
+  const hits = (await searched(env, who, (key) => (key === 'q' ? query : undefined), picked))
     .slice(0, whole(args, 'limit', 20, MOST_FOUND))
     .map((one) => ({ chat: names.get(one.chat) ?? one.chat, message: one.message }))
   const reading = await readingOf(env, who, [...new Set(picked.map((one) => one.id))])
@@ -335,7 +330,7 @@ export async function callChatTool(
     case 'read_chat':
       return await readChat(env, who, args)
     case 'search_chats':
-      return await searchChats(env, token, who, args)
+      return await searchChats(env, who, args)
     case 'post_message':
       return await postMessage(env, token, who, args)
     case 'react':

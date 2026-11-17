@@ -6,6 +6,7 @@ import { workspace } from '../../workspace/src/api'
 import { dropRow, writeRow } from './act'
 import { addNote } from './add'
 import { dropInto } from './drop'
+import { keyWritten } from './columns'
 import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
 import type { ViewSpec } from '../../tab-kinds/src/api'
@@ -15,6 +16,7 @@ export interface Kit {
   live: LiveView
   spec: ViewSpec
   file: string | null
+  readonly home: string | null
   compact: boolean
   open(row: Row, how?: 'aside' | 'tab'): void
   choose(row: Row, tab?: boolean): void
@@ -61,14 +63,17 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     live,
     spec,
     file,
+    get home() {
+      return file ?? live.writtenAt
+    },
     compact,
     writes,
     get writable() {
       return !live.fixed && reachable()
     },
     get adds() {
-      if (!reachable()) return false
-      const to = file ?? workspace.activeSpace?.root
+      if (!reachable() || live.view?.orden.rows === 'tasks') return false
+      const to = kit.home ?? workspace.activeSpace?.root
       return to === undefined || canWriteAt(to)
     },
     open(row, how = 'aside') {
@@ -101,13 +106,18 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     drop(row, key, property, from) {
       const by = property ?? live.view?.groupBy?.property
       if (by === undefined || !writes(row)) return
-      const drop = dropInto(by, key, row, from ?? null)
+      const written = live.base ? keyWritten(live.base, by, key, live.rows) : key
+      const drop = dropInto(by, written, row, from ?? null)
       if (drop) void dropRow(row, drop)
     },
     add(group, template) {
       const base = live.base
       if (!base || !reachable()) return
-      void addNote(base, live.at, file, group, template === undefined ? {} : { template })
+      const placed = group && {
+        ...group,
+        key: keyWritten(base, group.property, group.key, live.rows),
+      }
+      void addNote(base, live.at, kit.home, placed, template === undefined ? {} : { template })
     },
     change(edit, unlocking = false) {
       const base = live.base

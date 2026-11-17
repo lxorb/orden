@@ -117,6 +117,22 @@ describe('a helper', () => {
     expect(runs).toHaveLength(0)
   })
 
+  test('with no model asked runs an API provider’s own model, and a local one its default', async () => {
+    const API: Provider = { id: 'anthropic', kind: 'anthropic', name: '', model: 'claude-opus-5-5' }
+    const { made, runs } = roads()
+    const onApi: Roads = {
+      ...made,
+      offered: () => Promise.resolve([{ provider: API, models: [] }]),
+    }
+    const started = await helpers.start(asked(null, ''), onApi)
+    if ('refused' in started) throw new Error(started.refused)
+    expect(started).toMatchObject({ provider: 'anthropic', model: 'claude-opus-5-5' })
+    expect(runs[0]?.thread.model).toBe('claude-opus-5-5')
+
+    await helpers.start(asked(parent('p11'), ''), made)
+    expect(runs[1]?.thread).toMatchObject({ provider: 'claude-code', model: '' })
+  })
+
   test('still running after the wait is said as running', async () => {
     const { made } = roads()
     const started = await helpers.start(asked(parent('p4'), 'opus'), made)

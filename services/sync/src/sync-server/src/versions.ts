@@ -327,26 +327,40 @@ export async function versionsAt(
   spaceId: string,
   under: string,
   at: number,
+  kept: (path: string) => boolean = () => true,
 ): Promise<{ note_id: string; path: string; hash: string }[]> {
   const prefix = folderPrefix(under)
+  const out: { note_id: string; path: string; hash: string }[] = []
 
-  const { results } = await env.DB.prepare(
-    `select v.note_id as note_id, n.path as path, v.hash as hash
-       from note_versions v
-       join notes n on n.id = v.note_id
-      where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
-        and (v.hash != n.hash or n.deleted = 1)
-        and (n.updated_at > ?3 or n.deleted = 1)
-        and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
-        and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
-      order by n.path
-      limit ?4`,
-  )
-    .bind(spaceId, prefix, at, AT_ONCE)
-    .all<{ note_id: string; path: string; hash: string }>()
+  let after = { path: '', id: '' }
+  for (let page = 0; page < MOST_PAGES && out.length < AT_ONCE; page++) {
+    const asked = AT_ONCE - out.length
+    const { results } = await env.DB.prepare(
+      `select v.note_id as note_id, n.path as path, v.hash as hash
+         from note_versions v
+         join notes n on n.id = v.note_id
+        where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
+          and (n.path > ?5 or (n.path = ?5 and v.note_id > ?6))
+          and (v.hash != n.hash or n.deleted = 1)
+          and (n.updated_at > ?3 or n.deleted = 1)
+          and (n.deleted = 0 or (n.deleted_at is not null and n.deleted_at > ?3))
+          and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
+        order by n.path, v.note_id
+        limit ?4`,
+    )
+      .bind(spaceId, prefix, at, asked, after.path, after.id)
+      .all<{ note_id: string; path: string; hash: string }>()
 
-  return results
+    out.push(...results.filter((one) => kept(one.path)))
+    const last = results.at(-1)
+    if (!last || results.length < asked) break
+    after = { path: last.path, id: last.note_id }
+  }
+
+  return out
 }
+
+const MOST_PAGES = 20
 
 const HORIZON = "coalesce(json_extract(u.settings, '$.keepVersions'), ?2) * 86400000"
 

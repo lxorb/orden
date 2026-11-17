@@ -198,6 +198,15 @@ def let_in(page: Page, label: str, keeps: bool = False) -> None:
 
     wait_for(page, "() => window.ordenApp.account.signedIn", f"[{label}] the session")
 
+def types_the_mailed_code(page: Page, worker, label: str, address: str, already: int) -> None:
+    code = worker.waits_for_mail(
+        address, r"(\d{6}) is your (?:nibeditor|Orden) code", f"[{label}] the sign-in code", already
+    ).group(1)
+    boxes = page.locator(".digits input").first
+    boxes.wait_for(timeout=15_000)
+    boxes.fill(code)
+    say(f"[{label}] typed the code mailed to {address}")
+
 def asked_nothing(page: Page, label: str, wrong) -> None:
     for what, selector in (
         ("an address field", "input[type=email]"),
@@ -430,13 +439,16 @@ def main() -> int:
 
         dismiss(owner)
 
+        already = len(worker.written())
         writer = fresh(browser, "writer", at=f"{ORIGIN}/join/{token}")
+        if writer.evaluate("() => window.ordenApp.account.signedIn"):
+            wrong("the invitation signed the writer in before the code was typed")
+        types_the_mailed_code(writer, worker, "writer", WRITER, already)
         let_in(writer, "writer", keeps=True)
-        asked_nothing(writer, "writer", wrong)
         theirs = joined(writer, "writer", space["id"], "write")
         settled(writer, "writer")
         writer.screenshot(path=str(SHOTS / "invited-straight-in.png"))
-        say(f"{WRITER} is in {SPACE} without having typed a thing")
+        say(f"{WRITER} is in {SPACE} once the mailed code is typed")
 
         held = writer.evaluate("() => window.ordenApp.account.user?.email ?? null")
         if held != WRITER:
@@ -660,9 +672,10 @@ def main() -> int:
         if "shared the space" in said:
             wrong("the mail about one note says a space was shared")
 
+        already = len(worker.written())
         alone = fresh(browser, "alone", at=f"{ORIGIN}/join/{token}")
+        types_the_mailed_code(alone, worker, "alone", ALONE, already)
         let_in(alone, "alone", keeps=True)
-        asked_nothing(alone, "alone", wrong)
         shared_with_you(alone, "alone")
         settled(alone, "alone")
         say(f"{ALONE} is in, holding one file")

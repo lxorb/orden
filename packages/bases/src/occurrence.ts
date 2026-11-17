@@ -151,9 +151,14 @@ export function tick(
       edits.push({ from: target.from, to: target.from + target.text.length, insert: nextLine })
       return edits
     }
-    edits.push({ from: target.from, to: target.from, insert: `${block.join('\n')}\n` })
+    const lineBreak = note.includes('\r\n') ? '\r\n' : '\n'
+    edits.push({
+      from: target.from,
+      to: target.from,
+      insert: `${block.join(lineBreak)}${lineBreak}`,
+    })
   } else if (task.onCompletion === 'delete') {
-    const end = target.from + target.text.length + (line < lines.length - 1 ? 1 : 0)
+    const end = lines[line + 1]?.from ?? target.from + target.text.length
     return [{ from: target.from, to: end, insert: '' }]
   }
 

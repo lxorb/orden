@@ -14,6 +14,17 @@ describe('a look kept with the account', () => {
     expect(lookWrong({ ...LOOK, theme: 'file:My Theme', css: ':root{}' })).toBeNull()
   })
 
+  test('keeps the values of a file theme under its own name', () => {
+    const named = `file:${'a'.repeat(60)} b`
+    const look = {
+      theme: 'file:My Theme',
+      scheme: 'light',
+      values: { '*': { accent: 'blue' }, 'file:My Theme': { warmth: 70 }, [named]: { warmth: 5 } },
+    }
+    expect(lookWrong(look)).toBeNull()
+    expect(lookIn(look)).toEqual(look)
+  })
+
   test('refuses what is not one', () => {
     expect(lookWrong(null)).not.toBeNull()
     expect(lookWrong({ ...LOOK, scheme: 'dim' })).not.toBeNull()
@@ -22,6 +33,7 @@ describe('a look kept with the account', () => {
     expect(lookWrong({ ...LOOK, values: { '*': { accent: { deep: true } } } })).not.toBeNull()
     expect(lookWrong({ ...LOOK, css: 'x'.repeat(MOST_LOOK_CSS + 1) })).not.toBeNull()
     expect(lookWrong({ ...LOOK, more: true })).not.toBeNull()
+    expect(lookWrong({ ...LOOK, values: { 'file:a/b': { warmth: 1 } } })).not.toBeNull()
   })
 
   test('read from an account keeps what it can and drops the rest', () => {

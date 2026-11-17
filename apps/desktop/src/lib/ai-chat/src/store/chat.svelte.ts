@@ -55,7 +55,11 @@ import {
   nextMode,
   ai,
   FIRST_STATE,
+  type Move,
+  movedKeys,
+  movedTo,
   next as nextState,
+  onMoves,
   type SessionEvent,
   type SessionState,
   statesOf,
@@ -118,7 +122,7 @@ export interface Head {
   kept: boolean
 }
 
-export type ChatHost = 'side' | 'tab'
+export type ChatHost = string
 
 export interface Around {
   front: Front | null
@@ -233,6 +237,7 @@ class Chat implements Panel {
     this.started = true
     otherWindowWrote((id) => this.heardWritten(id))
     otherWindowDeleted((id) => this.heardDeleted(id))
+    onMoves((moves) => this.moved(moves))
     this.listing = false
     this.popover = null
     if (!this.open) this.show(this.fresh())
@@ -245,6 +250,17 @@ class Chat implements Panel {
     if (!open || open.turns.length || !space || open.space === space) return
     if (this.running.includes(open.id)) return
     open.space = space
+  }
+
+  private moved(moves: readonly Move[]): void {
+    for (const thread of new Set([...this.live.values(), ...(this.open ? [this.open] : [])]))
+      thread.provider = movedTo(thread.provider, moves)
+    for (const one of moves) this.asking.delete(one.from)
+    this.models = movedKeys(this.models, moves)
+    this.every = this.merged(
+      this.every.map((one) => ({ ...one, provider: movedTo(one.provider, moves) })),
+    )
+    this.redraw()
   }
 
   private async arrive(opening: boolean): Promise<void> {
@@ -490,18 +506,23 @@ class Chat implements Panel {
     })
   }
 
-  watched = $state.raw<{ id: string; turns: readonly Turn[] } | null>(null)
-  private watching: Thread | null = null
+  watched = $state.raw<Readonly<Record<string, readonly Turn[]>>>({})
+  private readonly watching = new Set<Thread>()
   private readonly drawWatched = onceAFrame(() => {
-    const thread = this.watching
-    this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
+    this.watched = Object.fromEntries([...this.watching].map((one) => [one.id, [...one.turns]]))
   })
 
-  watch(thread: Thread | null): void {
-    const before = this.watching
-    this.watching = thread
-    if (before && before !== thread) this.spare(before)
-    this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
+  watch(thread: Thread): void {
+    this.watching.add(thread)
+    this.watched = { ...this.watched, [thread.id]: [...thread.turns] }
+  }
+
+  unwatch(thread: Thread): void {
+    if (!this.watching.delete(thread)) return
+    this.watched = Object.fromEntries(
+      Object.entries(this.watched).filter(([id]) => id !== thread.id),
+    )
+    this.spare(thread)
   }
 
   adopt(thread: Thread, open = false): void {
@@ -605,7 +626,7 @@ class Chat implements Panel {
       this.everything = true
     }
     if (thread === this.open) this.draw()
-    if (thread === this.watching) this.drawWatched()
+    if (this.watching.has(thread)) this.drawWatched()
   }
 
   get answeredElsewhere(): boolean {
@@ -991,7 +1012,7 @@ class Chat implements Panel {
     const followed = this.following.delete(thread.id)
     this.everything = true
     if (thread === this.open) this.redraw()
-    if (thread === this.watching) this.drawWatched()
+    if (this.watching.has(thread)) this.drawWatched()
     if (!thread.turns.length) {
       if (thread === this.open) {
         this.here(this.space)
@@ -1011,7 +1032,7 @@ class Chat implements Panel {
     if (
       this.live.get(id) !== thread ||
       thread === this.open ||
-      thread === this.watching ||
+      this.watching.has(thread) ||
       this.running.includes(id) ||
       this.stoppers.has(id) ||
       this.unkept.has(thread) ||
@@ -1040,15 +1061,23 @@ class Chat implements Panel {
     provider: Provider,
     draft: Draft,
     stopper: AbortController,
+    firstAsked?: number,
+    cut = false,
   ): Promise<Ended> {
     if (isDeleted(thread.id) && (await staysDeleted(thread.id)))
       return { stop: 'stopped', turn: null, usage: null }
     const engine = await engineOf(provider.kind)
+    if (cut) engine.rewound?.(thread)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
+    let askedAt = firstAsked
     await engine.send(
       thread,
       draft,
       (event) => {
+        if (event.type === 'turn' && event.turn.role === 'you' && askedAt !== undefined) {
+          event.turn.at = askedAt
+          askedAt = undefined
+        }
         if (event.type === 'turn' && event.turn.role === 'model') ended.turn = event.turn
         else if (event.type === 'usage')
           ended.usage = ended.usage ? added(ended.usage, event.usage) : event.usage
@@ -1235,7 +1264,7 @@ class Chat implements Panel {
   ): void {
     const at = thread.turns.length
     let stop: Stop = 'end'
-    void this.sendDraft(thread, provider, draft, stopper)
+    void this.sendDraft(thread, provider, draft, stopper, taken[0]?.at, true)
       .then((ended) => (stop = ended.stop))
       .catch((error: unknown) => {
         stop = 'error'
@@ -1289,6 +1318,7 @@ class Chat implements Panel {
       this.asking.set(provider.id, asked)
     }
     const list = await asked
+    if (this.asking.get(provider.id) !== asked) return list
     if (list.length) this.models = { ...this.models, [provider.id]: list }
     else this.asking.delete(provider.id)
     return list
@@ -1402,7 +1432,7 @@ class Chat implements Panel {
       .then((engine) => engine.compact(thread, focus))
       .catch((error: unknown) => {
         stop = 'error'
-        this.trouble = message(error, 'The model did not answer.')
+        if (thread === this.open) this.trouble = message(error, 'The model did not answer.')
       })
       .then(() => this.ended(thread, stopper, false, stop))
   }
@@ -1441,7 +1471,9 @@ class Chat implements Panel {
     this.show(copy)
     this.relist()
     rememberOpen(copy.id)
-    void keepThread(copy).then(() => this.refreshHeads())
+    void keepThread(copy)
+      .catch(() => undefined)
+      .then(() => this.refreshHeads())
     this.focus()
   }
 

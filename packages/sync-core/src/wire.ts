@@ -197,7 +197,7 @@ export interface SnapshotPage {
   next: string | null
 }
 
-export const ROOM_V2 = 'nib.v2'
+export const ROOM_V2 = 'orden.v2'
 
 export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
 
@@ -221,9 +221,9 @@ export const BEAT_ANSWER = 'ok'
 
 export const FENCE_HEADER = 'x-orden-fence'
 
-export const TOKEN_PROTOCOL = 'nib.token.'
+export const TOKEN_PROTOCOL = 'orden.token.'
 
-export const DEVICE_PROTOCOL = 'nib.device.'
+export const DEVICE_PROTOCOL = 'orden.device.'
 
 const DEVICE_PROTOCOLS = ['orden.device.', 'nib.device.']
 
@@ -404,8 +404,8 @@ function opResultOf(value: unknown): OpResult | null {
 
   if (value.ok === true) {
     if (value.id === undefined) return { op, ok: true }
-    if (!isId(value.id) || !isParent(value.parent) || !isName(value.name)) return null
-    return { op, ok: true, id: value.id, parent: value.parent, name: value.name }
+    if (!isId(value.id) || !isParent(value.parent) || typeof value.name !== 'string') return null
+    return { op, ok: true, id: value.id, parent: value.parent, name: heldName(value.name) }
   }
   if (isId(value.merged)) return { op, merged: value.merged }
   const refused = REFUSALS.find((one) => one === value.refused)

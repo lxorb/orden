@@ -1,6 +1,7 @@
 import { loadMaths } from '@orden/markdown/engines'
 import { TexDelimiters } from '@orden/markdown/streamed'
 import { beforeAll, describe, expect, it, test, vi } from 'vitest'
+import { notePicture } from '../../link-index/src/api'
 import { answerHtml, inLineGroups, LINES_A_GROUP, withCodeBars } from './drawn'
 
 describe('withCodeBars', () => {
@@ -139,6 +140,21 @@ describe('an answer, drawn as a note is', () => {
     expect(shown).toContain('<img src="https://example.com/cat.png?q=1" alt="a cat">')
   })
 
+  test('a picture from elsewhere with an ampersand in its address is shown once asked', () => {
+    const address = 'https://e.com/c.png?w=1&h=2'
+    const held = answerHtml(`![a](${address})`)
+    expect(held).toContain('data-picture="https://e.com/c.png?w=1&amp;h=2"')
+    const shown = answerHtml(`![a](${address})`, { shown: new Set([address]) })
+    expect(shown).toContain('<img src="https://e.com/c.png?w=1&amp;h=2" alt="a">')
+  })
+
+  test('a picture of the reader’s own with an ampersand in its name is the file of that name', () => {
+    const from = '/notes/Home/Plan.md'
+    const html = answerHtml('![a](a&b.png)', { from })
+    const src = /src="([^"]*)"/.exec(html)?.[1] ?? ''
+    expect(src).toBe(notePicture('a&b.png', from, '').replace(/&/g, '&amp;'))
+  })
+
   test('raw HTML the model wrote is its characters, and frames are taken out', () => {
     const html = answerHtml('<b>bold</b>\n\n<iframe src="https://example.com"></iframe>')
     expect(html).not.toContain('<b>')
@@ -176,5 +192,19 @@ describe('a long block of code while it arrives', () => {
     expect(first.endsWith('</span></span>')).toBe(true)
     expect(second.startsWith('<span class="hl-comment">')).toBe(true)
     expect(grouped.replace(/<[^>]+>/g, '')).toBe(code.replace(/<[^>]+>/g, ''))
+  })
+})
+
+describe('subscript and superscript in an answer (#2088)', () => {
+  test('come out as sub and sup whichever way the model writes them', () => {
+    const tagged = answerHtml(
+      'MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)',
+    )
+    expect(tagged).toContain('P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)')
+
+    const marked = answerHtml('P~diast~ and x^2^')
+    expect(marked).toContain('P<sub>diast</sub> and x<sup>2</sup>')
+
+    expect(answerHtml('$P_{diast}$')).toContain('class="math-inline"')
   })
 })

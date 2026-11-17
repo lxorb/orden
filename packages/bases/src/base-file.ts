@@ -53,6 +53,8 @@ function readOptions(raw: unknown): SelectOption[] | undefined {
     if (one.group === 'todo' || one.group === 'doing' || one.group === 'done')
       option.group = one.group
     if (typeof one.tone === 'string' || typeof one.tone === 'number') option.tone = String(one.tone)
+    const kept = rest(one, ['value', 'group', 'tone'])
+    if (Object.keys(kept).length) option.kept = kept
     return [option]
   })
 }
@@ -175,6 +177,8 @@ function readOrdenBase(raw: unknown): OrdenBase {
       property: plain.id.property,
       prefix: scalar(plain.id.prefix),
     }
+    const kept = rest(plain.id, ['property', 'prefix'])
+    if (Object.keys(kept).length) orden.id.kept = kept
   }
   if (typeof plain.locked === 'boolean') orden.locked = plain.locked
   return orden
@@ -269,17 +273,28 @@ function viewPlain(view: View): Plain {
   ])
 }
 
+function optionPlain({ kept, ...option }: SelectOption): Plain {
+  return present([...Object.entries(option), ...Object.entries(kept ?? {})])
+}
+
 function ordenBasePlain(orden: OrdenBase): Plain {
   return present([
     ['template', orden.template],
-    ['id', orden.id && { property: orden.id.property, prefix: orden.id.prefix }],
+    [
+      'id',
+      orden.id && {
+        property: orden.id.property,
+        prefix: orden.id.prefix,
+        ...orden.id.kept,
+      },
+    ],
     [
       'properties',
       Object.fromEntries(
         Object.entries(orden.properties).map(([key, one]) => [
           key,
           present([
-            ['options', one.options?.map((option) => present(Object.entries(option)))],
+            ['options', one.options?.map(optionPlain)],
             ['format', one.format],
             ['one', one.one],
             ...Object.entries(one.kept),

@@ -39,9 +39,28 @@
 
   const phone = $derived(viewport.device === 'phone' && !__EVEN_PLUGIN__)
 
+  const phoneDoor = () =>
+    __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api')
+
+  const touchTabs = $derived(viewport.touch && !__EVEN_PLUGIN__)
+  const tabCount = $derived(workspace.tabsIn(workspace.panes.focusedId).length)
+  let grid = $state(false)
+  let pressed: { x: number; y: number } | null = null
+
+  function turned(event: PointerEvent) {
+    const from = pressed
+    pressed = null
+    if (!from || !touchTabs) return
+    const dx = event.clientX - from.x
+    const dy = event.clientY - from.y
+    void phoneDoor()
+      .then((one) => one.tabSwipe())
+      .then((one) => one.turnTab(dx, dy))
+  }
+
   function showMore(event: MouseEvent) {
     const from = event.currentTarget as HTMLElement
-    void (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api'))
+    void phoneDoor()
       .then((one) => one.noteMore())
       .then((one) => one.showNoteMore(from))
   }
@@ -202,10 +221,10 @@
   style:--panes-wide={panes ? `${panes}px` : undefined}
   style:--strip-lead={viewport.touch
     ? undefined
-    : `max(0px, calc(var(--space-1) + var(--lights-start, 0px) + ${leadWide}px - var(--card-inset)))`}
+    : `max(0px, calc(var(--space-1) + var(--lights-start, 0px) + ${leadWide}px - var(--left-inset, var(--card-inset))))`}
   style:--strip-end={viewport.touch
     ? undefined
-    : `max(0px, calc(${overPanes}px - var(--card-inset)))`}
+    : `max(0px, calc(${overPanes}px - var(--right-inset, var(--card-inset))))`}
 >
   {#if viewport.touch}
     {#if phone && !listless}
@@ -221,7 +240,14 @@
       {@render leftToggle()}
     {/if}
 
-    <h1 class="title" data-save-anchor>
+    <h1
+      class="title"
+      data-save-anchor
+      data-turns-pages={touchTabs || undefined}
+      onpointerdown={(event) => (pressed = { x: event.clientX, y: event.clientY })}
+      onpointerup={turned}
+      onpointercancel={() => (pressed = null)}
+    >
       {#if showing}<TabMark tab={showing} />{:else if scratchpadOn()}<FileMark mark="note" />{/if}
       <span class="name">{title}</span>
       {#if showing && isDraft(showing.note)}
@@ -230,6 +256,23 @@
         >
       {/if}
     </h1>
+
+    {#if touchTabs && tabCount}
+      <button
+        class="orden-glyph tabs"
+        data-tabs-button
+        aria-label="Tabs"
+        aria-haspopup="dialog"
+        onclick={() => (grid = true)}
+      >
+        <span class="count">{tabCount > 99 ? '99+' : tabCount}</span>
+      </button>
+    {/if}
+    {#if grid}
+      {#await phoneDoor().then((one) => one.loadTabGrid()) then TabGrid}
+        <TabGrid.default onclose={() => (grid = false)} />
+      {/await}
+    {/if}
 
     {#if phone}
       {#if showing}
@@ -307,8 +350,11 @@
   .heads {
     position: absolute;
     inset-block: 0;
-    inset-inline-start: var(--card-inset);
-    width: calc(var(--panes-wide, 100%) - 2 * var(--card-inset));
+    inset-inline-start: var(--left-inset, var(--card-inset));
+    width: calc(
+      var(--panes-wide, 100%) - var(--left-inset, var(--card-inset)) -
+        var(--right-inset, var(--card-inset))
+    );
     display: flex;
     pointer-events: none;
   }
@@ -416,6 +462,20 @@
     padding-top: var(--inset-top);
     padding-inline-end: var(--inset-right);
     padding-inline-start: calc(var(--inset-left) + (var(--row-height) - var(--icon-lg)) / 2);
+  }
+
+  .tabs .count {
+    min-width: calc(var(--icon-lg) + 2px);
+    height: calc(var(--icon-lg) + 2px);
+    display: grid;
+    place-items: center;
+    padding: 0 2px;
+    border: 1.5px solid currentColor;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-strong);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   .more svg {

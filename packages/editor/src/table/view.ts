@@ -576,6 +576,11 @@ export class TableView {
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
+    cell.addEventListener(PASTE_TEXT, (event) => {
+      if (event instanceof CustomEvent && typeof event.detail === 'string') {
+        this.typeInCell(event.detail, cell, at)
+      }
+    })
 
     return cell
   }
@@ -731,7 +736,12 @@ export class TableView {
 
   private pasteInCell(event: ClipboardEvent, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
-    const text = (event.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n/g, ' ')
+    this.typeInCell(event.clipboardData?.getData('text/plain') ?? '', cell, at)
+  }
+
+  private typeInCell(said: string, cell: HTMLElement, at: CellAddress) {
+    if (this.editor.state.readOnly) return
+    const text = said.replace(/\r?\n/g, ' ')
     if (!text) return
 
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- no replacement reaches the browser's own undo stack
@@ -1026,4 +1036,18 @@ function keepEdit(editor: EditorView, from: number, source: string, text: string
   const { state } = editor
   if (state.readOnly || state.doc.sliceString(from, from + source.length) !== source) return
   editor.dispatch({ changes: { from, to: from + source.length, insert: text } })
+}
+
+const PASTE_TEXT = 'orden:paste-text'
+
+export function editableCellAt(view: EditorView, target: EventTarget | null): HTMLElement | null {
+  if (!(target instanceof Element)) return null
+  const cell = target.closest('td, th')
+  if (!(cell instanceof HTMLElement) || cell.contentEditable !== 'true') return null
+  return view.contentDOM.contains(cell) ? cell : null
+}
+
+export function pasteIntoCell(cell: HTMLElement, text: string): void {
+  cell.focus()
+  cell.dispatchEvent(new CustomEvent(PASTE_TEXT, { detail: text }))
 }

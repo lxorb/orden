@@ -975,6 +975,93 @@ describe('publishing one note instead of the space', () => {
 
     expect(published.json.space.blog.note).toBe('home.md')
   })
+
+  test('follows the note through a rename, and a new note at its old name stays private', async () => {
+    const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const renamed = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { baseVersion: 1, path: 'about.md', content: '# Home\n\nMine.\n' },
+    })
+    expect(renamed.status, renamed.text).toBe(200)
+    await addNote('home.md', '# Draft\n\nPrivate.\n')
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.status).toBe(200)
+    expect(root.text).toContain('Mine.')
+    expect(root.text).not.toContain('Private.')
+    expect((await publish({ subdomain: 'me', title: 'Me' })).json.space.blog.note).toBe('about.md')
+  })
+
+  test('follows the note through a rename and a move on sync v2', async () => {
+    const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
+    await publish({ subdomain: 'me', note: 'home.md' })
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+
+    const changed = await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: {
+        ops: [
+          { op: 'r1', t: 'rename', id, name: 'About.md', seen: 1e9 },
+          { op: 'f1', t: 'mkdir', id: 'f1', parent: null, name: 'Kept', seen: 1e9 },
+          { op: 'm1', t: 'move', id, parent: 'f1', seen: 1e9 },
+        ],
+      },
+    })
+    expect(changed.status, changed.text).toBe(200)
+    await addNote('home.md', '# Draft\n\nPrivate.\n')
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.text).toContain('Mine.')
+    expect(root.text).not.toContain('Private.')
+  })
+
+  test('is not served once its note is deleted, even when another note takes its name', async () => {
+    const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    await addNote('home.md', '# Draft\n\nPrivate.\n')
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.text).not.toContain('Private.')
+  })
+
+  test('is not served once the folder holding its note is deleted on sync v2', async () => {
+    await addNote('Site/home.md', '# Home\n\nMine.\n')
+    await publish({ subdomain: 'me', note: 'Site/home.md' })
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    const folder = env.db
+      .prepare("select id from folders where space_id = ? and name = 'Site'")
+      .get(space) as { id: string }
+
+    const deleted = await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'd1', t: 'delete', id: folder.id, seen: 1e9 }] },
+    })
+    expect(deleted.status, deleted.text).toBe(200)
+    await addNote('Site/home.md', '# Draft\n\nPrivate.\n')
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.text).not.toContain('Private.')
+  })
+
+  test('is not served once its note is deleted on sync v2', async () => {
+    const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
+    await publish({ subdomain: 'me', note: 'home.md' })
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+
+    await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'd1', t: 'delete', id, seen: 1e9 }] },
+    })
+    await addNote('home.md', '# Draft\n\nPrivate.\n')
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.text).not.toContain('Private.')
+  })
 })
 
 describe('a site of one note', () => {
@@ -1303,7 +1390,7 @@ describe('what a writer commented out', () => {
     const feed = await call(env, '/feed.xml', { host: 'field.nibeditor.com' })
     expect(feed.text).not.toContain('hidden-inline')
 
-    const { fillFronts } = await import('../src/sync-server/src/site/fill')
+    const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
@@ -1320,7 +1407,7 @@ describe('what a writer commented out', () => {
     await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)
     env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
 
-    const { fillFronts } = await import('../src/sync-server/src/site/fill')
+    const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
@@ -1332,7 +1419,7 @@ describe('what a writer commented out', () => {
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
 
-    const { fillFronts } = await import('../src/sync-server/src/site/fill')
+    const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
@@ -1342,7 +1429,7 @@ describe('what a writer commented out', () => {
     await addNote('Post.md', POST)
     env.db.exec("update notes set front_rev = 1 where path = 'Post.md'; drop table note_pictures")
 
-    const { fillFronts } = await import('../src/sync-server/src/site/fill')
+    const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
 
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({

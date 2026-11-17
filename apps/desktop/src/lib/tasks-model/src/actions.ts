@@ -1,7 +1,7 @@
 import type { Priority as QuickPriority } from '@orden/markdown/task-line'
 import { dayOf, shownTodos, sortedTodos } from './query'
 import { todos } from './start.svelte'
-import type { Priority, Todo } from './todo'
+import { titledOf, type Priority, type Todo } from './todo'
 
 interface TaskOut {
   at: string
@@ -37,7 +37,7 @@ export async function addTask(
   const said = text.trim()
   if (!said) return null
   if (options.typed === false) {
-    const made = await todos.add({ title: said })
+    const made = await todos.add(titledOf(said))
     return made.ok ? { id: made.value.id } : null
   }
   const [{ parseQuickAdd }, { region }] = await Promise.all([
@@ -46,9 +46,10 @@ export async function addTask(
   ])
   const read = parseQuickAdd(said, [region()], new Date())
   const made = await todos.add({
-    title: read.text || said,
+    ...titledOf(read.text || said),
     labels: read.fields.tags,
-    deadline: read.fields.deadline ?? read.fields.due ?? null,
+    start: read.fields.due ?? null,
+    deadline: read.fields.deadline ?? null,
     priority: priorityOf(read.fields.priority),
   })
   return made.ok ? { id: made.value.id } : null

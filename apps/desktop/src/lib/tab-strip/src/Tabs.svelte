@@ -6,9 +6,11 @@
     carriedMark,
     Cross,
     dragged,
+    draggedAiChat,
     draggedBookmark,
     dropOver,
     initial,
+    isAiChatDrag,
     isBookmarkDrag,
     isTreeDrag,
     longPress,
@@ -669,7 +671,10 @@
   }
 
   const takes = (transfer: DataTransfer | null) =>
-    isTreeDrag(transfer) || isBookmarkDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
+    isTreeDrag(transfer) ||
+    isBookmarkDrag(transfer) ||
+    isAiChatDrag(transfer) ||
+    mayCarryAddress(transfer?.types ?? [])
 
   function over(event: DragEvent) {
     if (!takes(event.dataTransfer)) return
@@ -678,7 +683,9 @@
     event.stopPropagation()
     if (
       event.dataTransfer &&
-      (isTreeDrag(event.dataTransfer) || isBookmarkDrag(event.dataTransfer))
+      (isTreeDrag(event.dataTransfer) ||
+        isBookmarkDrag(event.dataTransfer) ||
+        isAiChatDrag(event.dataTransfer))
     ) {
       event.dataTransfer.dropEffect = 'move'
     }
@@ -704,6 +711,12 @@
       void here(essentialDropping()).then(({ droppedEssential }) =>
         droppedEssential(mark, paneId, at),
       )
+      return
+    }
+
+    const asked = draggedAiChat(transfer)
+    if (asked) {
+      workspace.moveTab(workspace.openChat(asked.id, asked.title || 'Untitled'), paneId, at)
       return
     }
 

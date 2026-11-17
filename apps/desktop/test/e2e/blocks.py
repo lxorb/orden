@@ -402,10 +402,140 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
+KINDS = """# A note to reach
+
+A paragraph to reach.
+
+- a bullet to reach
+
+- [ ] a task to reach
+
+> a quote to reach
+
+1. a number to reach
+
+שורה בעברית לנסות
+"""
+
+ON_THE_WAY = """
+([words, x, y]) => {
+  const line = [...document.querySelectorAll('.cm-line')].find((one) => one.textContent.includes(words))
+  const mark = line?.querySelector('.orden-block-handle')
+  const under = document.elementFromPoint(x, y)
+  return {
+    line: !!under && line?.contains(under),
+    shown: mark ? Number(getComputedStyle(mark).opacity) : 0,
+    grip: !!under && !!mark?.contains(under),
+  }
+}
+"""
+
+def drive_gap(browser: Browser) -> None:
+    lines = ["A note to reach", "A paragraph to reach", "a bullet to reach", "a task to reach",
+             "a quote to reach", "a number to reach", "שורה בעברית"]
+    for width in (1180, 480):
+        page = fresh(browser, f"gap {width}", width=width, note=KINDS)
+        for words in lines:
+            line = line_of(page, words)
+            mark = line.locator(".orden-block-handle")
+            text = page.evaluate(
+                """(words) => {
+                  const line = [...document.querySelectorAll('.cm-line')].find((one) => one.textContent.includes(words))
+                  const range = document.createRange()
+                  range.selectNodeContents(line)
+                  const rects = [...range.getClientRects()].filter((one) => one.width > 0)
+                  const box = rects[0] ?? line.getBoundingClientRect()
+                  const rtl = getComputedStyle(line).direction === 'rtl'
+                  return { x: rtl ? box.right - 4 : box.left + 4, y: box.top + box.height / 2 }
+                }""",
+                words,
+            )
+            page.mouse.move(text["x"], text["y"])
+            page.wait_for_timeout(300)
+            grip = mark.bounding_box()
+            if not grip:
+                wrong(f"[gap {width}] {words!r} drew no mark")
+                continue
+            goal = {"x": grip["x"] + grip["width"] / 2, "y": grip["y"] + grip["height"] / 2}
+            lost = []
+            for step in range(1, 13):
+                x = text["x"] + (goal["x"] - text["x"]) * step / 12
+                y = text["y"] + (goal["y"] - text["y"]) * step / 12
+                page.mouse.move(x, y)
+                page.wait_for_timeout(40)
+                seen = page.evaluate(ON_THE_WAY, [words, x, y])
+                if not seen["line"] or seen["shown"] < 0.99:
+                    lost.append(step)
+                if step == 6:
+                    page.wait_for_timeout(700)
+                    rested = page.evaluate(ON_THE_WAY, [words, x, y])
+                    if rested["shown"] < 0.99:
+                        wrong(f"[gap {width}] resting between {words!r} and its mark hides the mark")
+            seen = page.evaluate(ON_THE_WAY, [words, goal["x"], goal["y"]])
+            say(f"[gap {width}] {words!r}: lost on steps {lost}, grabbable {seen['grip']}")
+            if lost:
+                wrong(f"[gap {width}] the mark of {words!r} went away on the way to it: steps {lost}")
+            if not seen["grip"] or seen["shown"] < 0.99:
+                wrong(f"[gap {width}] the mark of {words!r} is not there to take hold of")
+            if words == "a task to reach":
+                page.mouse.move(goal["x"] + (text["x"] - goal["x"]) / 2, goal["y"])
+                page.wait_for_timeout(200)
+                shot(page, f"05-between-task-and-mark-{width}")
+        page.mouse.move(goal["x"], goal["y"])
+        page.mouse.down()
+        top = line_of(page, "A note to reach").bounding_box()
+        page.mouse.move(top["x"] + 40, top["y"] + 2, steps=12)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        if not source(page).startswith("שורה בעברית"):
+            wrong(f"[gap {width}] the line reached through the gap could not be carried: {source(page)[:40]!r}")
+        page.context.close()
+
+LAST_LINE = """() => {
+  const line = [...document.querySelectorAll('.cm-line')].at(-1)
+  return { text: line.textContent, heading: /orden-h\\d/.test(line.className), bullet: !!line.querySelector('.orden-bullet') }
+}"""
+
+def drive_lone_mark(browser: Browser) -> None:
+    page = fresh(browser, "lone mark")
+    page.evaluate("() => { if (!window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
+    page.evaluate(
+        "() => { const view = window.orden; const end = view.state.doc.length;"
+        " view.dispatch({ selection: { anchor: end } }); view.focus() }"
+    )
+    page.keyboard.press("Enter")
+    page.keyboard.press("Enter")
+    for mark, kind in (("#", "heading"), ("-", "bullet")):
+        page.keyboard.type(mark)
+        page.wait_for_timeout(300)
+        alone = page.evaluate(LAST_LINE)
+        shot(page, f"50-lone-{kind}-mark")
+        say(f"[lone {mark}] {json.dumps(alone, ensure_ascii=False)}")
+        if alone[kind] or alone["text"] != mark:
+            wrong(f"[lone {mark}] a mark with no space after it is drawn as a {kind}: {alone}")
+        page.keyboard.type(" Title")
+        page.wait_for_timeout(300)
+        spaced = page.evaluate(LAST_LINE)
+        shot(page, f"51-spaced-{kind}-mark")
+        say(f"[spaced {mark}] {json.dumps(spaced, ensure_ascii=False)}")
+        if not spaced[kind]:
+            wrong(f"[spaced {mark}] a mark with a space after it is not drawn as a {kind}: {spaced}")
+        page.evaluate(
+            "() => { const view = window.orden; const line = view.state.doc.line(view.state.doc.lines);"
+            " view.dispatch({ changes: { from: line.from, to: line.to }, selection: { anchor: line.from } }) }"
+        )
+        page.wait_for_timeout(200)
+    page.evaluate("() => { if (window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
+    page.context.close()
+
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the mark ---")
         drive_marks(browser)
+        say("--- a lone heading or list mark ---")
+        drive_lone_mark(browser)
+        say("--- the gap before a line ---")
+        drive_gap(browser)
         say("--- a narrow window ---")
         drive_narrow(browser)
         say("--- what it opens ---")

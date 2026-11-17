@@ -151,7 +151,7 @@ def shown(app) -> dict:
     return said if isinstance(said, dict) else {}
 
 def to_space(app, space: str) -> None:
-    ask(app, f"nib.workspace.showSpace({json.dumps(space)}).then(() => 'shown')")
+    ask(app, f"orden.workspace.showSpace({json.dumps(space)}).then(() => 'shown')")
     time.sleep(0.6)
 
 def ticking(ticks: Ticks, seconds: float) -> int:
@@ -187,7 +187,7 @@ def settings_shot(app, identifier: str, scheme: str, shots: pathlib.Path) -> Non
     ask(app, f"localStorage.setItem('orden:theme-scheme', {json.dumps(scheme)}) || 'kept'")
     ask(app, "(location.reload(), 'reloading')", 10)
     time.sleep(3)
-    until(lambda: ask(app, "nib.workspace.restored") is True, 60)
+    until(lambda: ask(app, "orden.workspace.restored") is True, 60)
     ask(app, "(orden.settings.show('general'), 'shown')")
     time.sleep(1.5)
     row = ask(
@@ -252,8 +252,8 @@ def main() -> int:
         to_space(app, work)
         idea = f"{json.dumps(str(root / 'Work' / 'Idea.md'))}"
         clock = f"{json.dumps(str(root / 'Work' / 'Clock.url'))}"
-        ask(app, f"nib.workspace.openEntry({idea}).then(() => 'idea')")
-        ask(app, f"nib.workspace.openWeb({clock}).then(() => 'clock')")
+        ask(app, f"orden.workspace.openEntry({idea}).then(() => 'idea')")
+        ask(app, f"orden.workspace.openWeb({clock}).then(() => 'clock')")
         check(bool(until(lambda: ticks.since(0) > 3, 30)), "the page in Work runs")
         ask(
             app,

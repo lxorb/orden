@@ -9,7 +9,7 @@ import {
 import { copyText } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
-import { asOneUndo, writeEach } from './act'
+import { asOneUndo, deleteTask, duplicateTask, linkToTask, writeEach } from './act'
 import { grouped } from './column-menu'
 import { bare } from './columns'
 import { forgottenGroup, renamedGroup, setHidden, setProperty } from './edit'
@@ -63,9 +63,9 @@ function toneOption(kit: Kit, property: string, value: string, tone: string | nu
     property,
     optionsAt(base, property).map((one) => {
       if (one.value !== value) return one
-      const next: SelectOption = { value: one.value }
-      if (one.group) next.group = one.group
-      if (tone !== null) next.tone = tone
+      const next: SelectOption = { ...one }
+      if (tone === null) delete next.tone
+      else next.tone = tone
       return next
     }),
   )
@@ -224,13 +224,15 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
     {
       label: 'Duplicate',
       run: () => {
-        if (path) void workspace.duplicate(path)
+        if (row.task) void duplicateTask(row)
+        else if (path) void workspace.duplicate(path)
       },
     },
     {
       label: 'Copy link',
       run: () => {
-        void copyText(noteLink(row))
+        if (row.task) void linkToTask(row).then((link) => (link ? copyText(link) : undefined))
+        else void copyText(noteLink(row))
       },
     },
     DIVIDER,
@@ -238,7 +240,8 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
       label: 'Delete',
       danger: true,
       run: () => {
-        if (path) void workspace.remove(path, false)
+        if (row.task) void deleteTask(row)
+        else if (path) void workspace.remove(path, false)
       },
     },
   ]

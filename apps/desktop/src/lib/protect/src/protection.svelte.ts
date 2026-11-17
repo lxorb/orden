@@ -104,6 +104,8 @@ const WAYS: Folding<Record<string, Way>> = {
   same,
 }
 
+const buried = () => import('./buried')
+
 const synced = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
@@ -203,6 +205,18 @@ export class Protection {
     if (!path || !this.any) return true
     const locks = this.covering(path)
     return !locks.length || unlocks.agentsMay(locks)
+  }
+
+  agentsMayAll(path: string | null | undefined): boolean {
+    if (!path || !this.any) return true
+    if (!this.agentsMay(path)) return false
+    return Object.entries(this.spaces).every(([root, kept]) => {
+      const at = within(root, path, root)
+      if (at === null) return true
+      return Object.keys(kept.ways)
+        .filter((key) => key !== SPACE && within(at, key, root) !== null)
+        .every((key) => this.agentsMay(insideSpace(root, key)))
+    })
   }
 
   get password(): Hashed | null {
@@ -313,6 +327,17 @@ export class Protection {
     if (root === null || from === to) return
     const move = moving(from, to, root, into)
     if (!move.was) return
+    const above = this.covering(from).find(
+      (one) => !samePath(one.root, root) || within(move.was, one.key, root) === null,
+    )
+    this.carry(move, root)
+    const now = relativeTo(move.there, to)
+    if (above && insideItsSpace(now) && !this.covering(to).length) {
+      this.put(move.there, { ...this.ways(move.there), [now]: above.way })
+    }
+  }
+
+  private carry(move: ReturnType<typeof moving>, root: string): void {
     const held = Object.entries(this.ways(root)).filter(([key]) => key !== SPACE)
     if (move.across) {
       const { left, went } = carried(
@@ -353,14 +378,21 @@ export class Protection {
     if (Object.keys(came).length) this.put(into, { ...this.ways(into), ...came })
   }
 
-  gone(path: string, root: string | null): void {
+  gone(path: string, root: string | null, back?: string): void {
     if (root === null) return
     const at = relativeTo(root, path)
     const held = this.ways(root)
+    if (back) void buried().then((one) => one.buryUnder(back, held, at, root))
     const next = Object.fromEntries(
       Object.entries(held).filter(([key]) => key === SPACE || within(at, key, root) === null),
     )
     if (Object.keys(next).length !== Object.keys(held).length) this.put(root, next)
+  }
+
+  async cameBack(path: string, root: string | null, back: string): Promise<void> {
+    if (root === null) return
+    const came = (await buried()).dugUp(back, relativeTo(root, path))
+    if (came) this.put(root, { ...this.ways(root), ...came })
   }
 
   spaceMoved(from: string, to: string): void {
@@ -389,6 +421,13 @@ export class Protection {
     this.revision++
     keepJson(STORAGE_KEY, this.spaces)
   }
+
+  heard(): void {
+    this.spaces = read()
+    this.hashed = hashedOf(stored(PASSWORD_KEY))
+    this.owner = storedText(OWNER_KEY)
+    this.revision++
+  }
 }
 
 export function noteBehind(tab: { kind: string; path: string | null }): string | null {
@@ -396,3 +435,11 @@ export function noteBehind(tab: { kind: string; path: string | null }): string |
 }
 
 export const protection = new Protection()
+
+const KEPT: ReadonlySet<string> = new Set([STORAGE_KEY, PASSWORD_KEY, OWNER_KEY])
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== null && KEPT.has(event.key)) protection.heard()
+  })
+}

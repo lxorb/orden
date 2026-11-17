@@ -4,7 +4,7 @@ const { written, template, moved, plan, before, writing, trusted, ran, shut } = 
   shut: new Set<string>(),
   trusted: { yes: true },
   ran: [] as { base: { guarded?: boolean } }[][],
-  writing: { pairs: [] as unknown[], changed: true },
+  writing: { pairs: [] as unknown[], changed: true, now: 0, most: 0, hold: Promise.resolve() },
   before: [] as unknown[][],
   written: new Map<string, string>(),
   template: { folder: '' },
@@ -34,7 +34,13 @@ vi.mock('./automate', () => ({
 }))
 vi.mock('./act', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./act')>()),
-  writeEach: async () => writing.changed,
+  writeEach: async () => {
+    writing.now++
+    writing.most = Math.max(writing.most, writing.now)
+    await writing.hold
+    writing.now--
+    return writing.changed
+  },
 }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
@@ -304,5 +310,47 @@ describe('a note renamed or moved', () => {
     await settle()
 
     expect(before).toEqual([[]])
+  })
+})
+
+describe('a note saved before its space is first read', () => {
+  test('is not looked at as a note just made, since what it was is not known yet', async () => {
+    await readHeld('/s/Shared/Tasks.base')
+    const row = { kind: 'note', space: 'Shared', path: 'Bugs/Old.md', note: { status: 'Done' } }
+    heardChange({
+      root: '/s/Shared',
+      space: 'Shared',
+      path: 'Bugs/Old.md',
+      removed: [],
+      added: [row] as never,
+      firstRead: true,
+    })
+    await new Promise((done) => setTimeout(done, 150))
+
+    expect(before).toEqual([])
+  })
+})
+
+describe('notes that reach a numbered base at about the same time', () => {
+  test('are looked at one after the other, so each sees the id the one before it was given', async () => {
+    plan.folder = ''
+    writing.changed = true
+    writing.most = 0
+    let release: () => void = () => undefined
+    writing.hold = new Promise<void>((done) => (release = done))
+    writing.pairs = [{ row: { space: 'Shared', path: 'Bugs/Written.md' }, change: {} }]
+    await readHeld('/s/Shared/Tasks.base')
+    heard('Shared', 'Bugs/A.md', [])
+    heard('Shared', 'Bugs/B.md', [])
+    await new Promise((done) => setTimeout(done, 150))
+    expect(before).toHaveLength(1)
+
+    release()
+    await new Promise((done) => setTimeout(done, 20))
+    writing.pairs = []
+    writing.hold = Promise.resolve()
+
+    expect(before).toHaveLength(2)
+    expect(writing.most).toBe(1)
   })
 })

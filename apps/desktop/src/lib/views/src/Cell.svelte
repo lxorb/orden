@@ -14,6 +14,7 @@
     holdsLists,
     isNoteProperty,
     optionsOf,
+    optionWritten,
     toneOf,
   } from './columns'
   import { formatted } from './format'
@@ -21,7 +22,8 @@
   import { openExternal } from '../../platform/src/api'
   import type { Kit } from './kit'
   import type { ListChange } from '../../rows/src/api'
-  import { isDateValue } from './values'
+  import { isDateValue, isDurationValue } from './values'
+  import { writeDuration } from '@orden/markdown/task-line'
 
   const {
     row,
@@ -86,11 +88,13 @@
         ? ''
         : here
           ? here.iso + (here.time ? ` ${here.time.slice(0, 5)}` : '')
-          : typeof value === 'boolean'
-            ? String(value)
-            : Array.isArray(value)
-              ? ''
-              : shown
+          : isDurationValue(value)
+            ? writeDuration(Math.round(value.ms / 60_000))
+            : typeof value === 'boolean' || typeof value === 'number'
+              ? String(value)
+              : Array.isArray(value)
+                ? ''
+                : shown
     return {
       key: bare(property),
       kind,
@@ -119,6 +123,9 @@
         ? rewritten(value, { kind: 'date', iso, time })
         : { kind: 'date', iso, time }
     }
+    const base = kit.live.base
+    if (editor === 'select' && base)
+      return optionWritten(base, property, value, kit.live.rows, words)
     return words
   }
 
@@ -173,11 +180,11 @@
       />
     {/if}
   </span>
-{:else if editor === 'checkbox' && typeof value === 'boolean'}
+{:else if editor === 'checkbox' && (typeof value === 'boolean' || value === null)}
   <input
     type="checkbox"
     class="orden-checkbox"
-    checked={value}
+    checked={value === true}
     disabled={!writable}
     aria-label={bare(property)}
     onchange={(event) => {

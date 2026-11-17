@@ -84,7 +84,7 @@ function widgetState(today: TodayRow[]): WidgetState {
       workspace.notes.filter((one) => !workspace.archive.has(one.path)),
       kept,
     ),
-    today: { title: 'Today', empty: '', tasks: today },
+    today: { title: 'Todos', empty: '', tasks: today },
   }
 }
 

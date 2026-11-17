@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { deletesTyped } from './typed-delete'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { agentMarks } from '../../workspace/src/api'
@@ -13,7 +14,7 @@
   import ChatRow from './ChatRow.svelte'
   import ChatWindow from './ChatWindow.svelte'
 
-  const { rail = false }: { rail?: boolean } = $props()
+  const { rail = false, quiet = false }: { rail?: boolean; quiet?: boolean } = $props()
 
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
@@ -52,7 +53,7 @@
   })
 
   $effect(() => {
-    if (!rail) requestAnimationFrame(() => field?.focus())
+    if (!rail && !untrack(() => quiet)) requestAnimationFrame(() => field?.focus())
   })
 
   function rowMenu(event: MouseEvent, one: ThreadHead) {
@@ -83,7 +84,11 @@
     } else if (event.key === 'Enter') {
       event.preventDefault()
       if (one) void chat.openThread(one.id)
-    } else if (event.key === 'Delete' && one) {
+    } else if (
+      event.key === 'Delete' &&
+      one &&
+      !deletesTyped(event.currentTarget as HTMLInputElement)
+    ) {
       event.preventDefault()
       if (event.shiftKey) void chat.remove(one.id)
       else toggleArchived(one)

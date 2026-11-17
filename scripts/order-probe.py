@@ -219,7 +219,7 @@ KEPT = """JSON.stringify({
 })"""
 
 def showing(app: App) -> None:
-    app.ask("nib.workspace.panel === 'tree' ? true : orden.workspace.showPanel('tree')")
+    app.ask("orden.workspace.panel === 'tree' ? true : orden.workspace.showPanel('tree')")
     time.sleep(0.8)
 
 def ready(app: App) -> None:
@@ -263,7 +263,7 @@ def main() -> int:
 
         orders: dict[str, list[str]] = {}
         for mode, label in ORDERS:
-            talk.ask(f"nib.workspace.setSort({mode!r})")
+            talk.ask(f"orden.workspace.setSort({mode!r})")
             time.sleep(0.5)
             names = talk.ask(TOP_NAMES)
             if not isinstance(names, list):
@@ -285,7 +285,7 @@ def main() -> int:
         if orders.get("manual") != by_name:
             wrong("Manual did not start out as name order for a space nobody has arranged")
 
-        talk.ask("nib.workspace.setSort('manual')")
+        talk.ask("orden.workspace.setSort('manual')")
         time.sleep(0.3)
         before = talk.ask(TOP_NAMES)
         pressed = talk.ask(MOVE_ZETA_UP)

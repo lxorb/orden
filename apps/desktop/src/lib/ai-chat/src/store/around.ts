@@ -1,5 +1,7 @@
+import type { SharedDoc } from '@orden/editor'
 import { withinSpace } from '../../../platform/src/api'
 import { views } from '../../../panes/src/api'
+import { protection } from '../../../protect/src/api'
 import { workspace } from '../../../workspace/src/api'
 import type { Front, Picked } from './gather'
 import type { Mention } from './mentions'
@@ -17,6 +19,16 @@ export function selectionHere(): { text: string; picked: Picked | null } {
   if (!text.trim()) return { text: '', picked: null }
   const holder = workspace.tabs.find((tab) => tab.note.live === views.selectedIn())
   return { text, picked: holder ? { path: holder.path, shared: holder.note.shared } : null }
+}
+
+export const SHUT_TO_AGENTS =
+  'This note is protected: unlock it and choose Let agents read in its menu.'
+
+export function agentsMayRead(shows: SharedDoc | null): boolean {
+  const tab = shows ? workspace.tabs.find((one) => one.note.live === shows) : undefined
+  if (tab) return protection.agentsMay(tab.path)
+  const open = workspace.activeSpace?.root
+  return open ? protection.agentsMayAll(open) : !protection.any
 }
 
 export const SELECTION_CHIP: Mention = { kind: 'selection', id: 'selection', label: 'selection' }

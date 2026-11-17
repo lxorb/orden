@@ -3,10 +3,18 @@ import type { Draft, EngineEvent, Part, Thread, Turn } from '../../../ai-provide
 
 const { memoryStorage } = await import('../../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal(
+  'BroadcastChannel',
+  class {
+    onmessage = null
+    postMessage = () => undefined
+    close = () => undefined
+  },
+)
 
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
-const refusing = vi.hoisted(() => ({ delete: false, after: Promise.resolve() }))
+const refusing = vi.hoisted(() => ({ delete: false, write: false, after: Promise.resolve() }))
 
 vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../platform/src/tauri')>()),
@@ -20,6 +28,7 @@ vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
     if (command === 'ai_thread_read')
       return Promise.resolve(shelf.get(String(args.id))?.body ?? null)
     if (command === 'ai_thread_write') {
+      if (refusing.write) return Promise.reject(new Error('the disk is full'))
       shelf.set(String(args.id), { head: args.head, body: String(args.body) })
       return Promise.resolve(null)
     }
@@ -157,6 +166,43 @@ describe('the panel’s chats', () => {
       ['Recipes', 'home'],
       ['Quarterly plan', 'work'],
     ])
+  })
+
+  test('move a chat open on an account the vault moved to a fresh id along with it', async () => {
+    const plan = await had('work', 'Quarterly plan', 1_000)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await chat.openThread(plan.id, false)
+    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    chat.models = { p: [] }
+
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ p: 'p-2' })
+
+    expect(chat.thread?.provider).toBe('p-2')
+    expect(chat.head?.provider).toBe('p-2')
+    expect(chat.heads.map((one) => one.provider)).toEqual(['p-2'])
+    expect(chat.models).toEqual({ 'p-2': [] })
+  })
+
+  test('drop a model list asked before the vault moved its account off that id', async () => {
+    const chat = await launched()
+    chat.know(['work'])
+    let answer: (list: never[]) => void = () => undefined
+    const asked = vi
+      .spyOn(engine, 'models')
+      .mockReturnValueOnce(new Promise((done) => (answer = done)))
+    const listing = chat.loadModels({ id: 'p', kind: 'compatible', model: 'm', name: 'Fake' })
+    await vi.waitFor(() => expect(asked).toHaveBeenCalled())
+
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ p: 'p-3' })
+    answer([{ id: 'theirs', name: 'Theirs' } as never])
+    await listing
+
+    asked.mockRestore()
+    expect(chat.models.p).toBeUndefined()
   })
 
   test('let go of a chat read once another is open, so a long session holds only what it shows', async () => {
@@ -700,6 +746,20 @@ describe('the field while a message is changed', () => {
 
     await vi.waitFor(() => expect(sentWords()).toEqual(['second']))
   })
+  test('says a compaction failed only in the thread it failed in', async () => {
+    const chat = await asked()
+    let fail: (error: Error) => void = () => undefined
+    const compact = vi.fn(() => new Promise<void>((_, reject) => (fail = reject)))
+    ;(engine as unknown as { compact: unknown }).compact = compact
+    chat.compact()
+    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
+    chat.newThread()
+    fail(new Error('too long'))
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(chat.trouble).toBeNull()
+  })
+
   test('sends a queued message taken after an earlier one as itself, not as the earlier one changed', async () => {
     const chat = await asked()
     edits.length = 0
@@ -1059,6 +1119,66 @@ describe('a chat while it answers', () => {
     expect(chat.thread?.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
     expect(chat.trouble).toBeTruthy()
     expect(engine.send).not.toHaveBeenCalled()
+  })
+
+  test('a branch the disk will not keep still opens, and its refusal is handled', async () => {
+    const chat = await asked()
+    const from = chat.thread!.id
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    onTestFinished(() => {
+      process.off('unhandledRejection', unhandled)
+      refusing.write = false
+    })
+    refusing.write = true
+
+    chat.branch()
+    await settled()
+
+    expect(chat.thread?.id).not.toBe(from)
+    expect(unhandled).not.toHaveBeenCalled()
+  })
+
+  test('Ask again sends the message at its first time, so what the first try changed is its own', async () => {
+    const chat = await asked()
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    engine.send.mockImplementationOnce((into, draft, on) => {
+      const you: Turn = { id: 'u2', role: 'you', at: 5_000, parts: [], draft }
+      into.turns.push(you)
+      on({ type: 'turn', turn: you })
+      on({ type: 'done', stop: 'end' })
+      return Promise.resolve()
+    })
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(thread.turns.map((one) => one.id)).toEqual(['u2']))
+    expect(thread.turns[0]?.at).toBe(1)
+  })
+
+  test('Ask again tells the engine the chat was cut before it sends the message again', async () => {
+    const chat = await asked()
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    const order: string[] = []
+    const rewound = vi.fn((cut: Thread) => {
+      order.push(`rewound:${cut.turns.length}`)
+    })
+    ;(engine as unknown as { rewound: unknown }).rewound = rewound
+    onTestFinished(() => {
+      delete (engine as unknown as { rewound?: unknown }).rewound
+    })
+    engine.send.mockImplementationOnce((into, _draft, on) => {
+      order.push(`send:${into.turns.length}`)
+      on({ type: 'done', stop: 'end' })
+      return Promise.resolve()
+    })
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(order).toEqual(['rewound:0', 'send:0']))
+    expect(rewound).toHaveBeenCalledWith(thread)
   })
 
   test('keeps the message and its answer on Ask again refused before any turn', async () => {
@@ -2350,12 +2470,30 @@ describe('a chat started outside the panel', () => {
     })
     chat.watch(thread)
     await ended
-    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(2))
+    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(2))
 
     await chat.sendIn(thread, 'Second', [], { front: null, selection: '', picked: null })
-    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(4))
-    expect(chat.watched?.turns[2]?.draft?.text).toBe('Second')
-    chat.watch(null)
-    expect(chat.watched).toBeNull()
+    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(4))
+    expect(chat.watched[thread.id]?.[2]?.draft?.text).toBe('Second')
+    chat.unwatch(thread)
+    expect(chat.watched).toEqual({})
+  })
+
+  test('draws two watched chats at once, each as it goes on', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const none = { front: null, selection: '', picked: null }
+    const one = chat.startHere('One', [], none)
+    const two = chat.startHere('Two', [], none)
+    chat.watch(one.thread)
+    chat.watch(two.thread)
+    await Promise.all([one.ended, two.ended])
+
+    await vi.waitFor(() => expect(chat.watched[one.thread.id]?.length).toBe(2))
+    await vi.waitFor(() => expect(chat.watched[two.thread.id]?.length).toBe(2))
+    chat.unwatch(one.thread)
+    expect(Object.keys(chat.watched)).toEqual([two.thread.id])
+    chat.unwatch(two.thread)
   })
 })

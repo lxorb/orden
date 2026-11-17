@@ -113,6 +113,41 @@ describe('the todos, with Orden closed', () => {
     expect(rows.map((one) => one.id)).toContain(id)
   })
 
+  test('a change lands over what a device with a clock ahead wrote to the same field', async () => {
+    const key = await connector()
+    const id = (await json(key, 'add_task', { title: 'Call the bank' })).id as string
+    const ahead = `${(Date.now() + 86_400_000).toString(36).padStart(9, '0')}-0000-phone`
+    env.db
+      .prepare('update inbox_items set stamps = json_set(stamps, ?, ?) where id = ?')
+      .run('$.done', ahead, id)
+
+    expect(await json(key, 'update_task', { id, done: true })).toMatchObject({ done: true })
+    expect((await json(key, 'list_tasks', { done: true })).todos[0]).toMatchObject({
+      id,
+      done: true,
+    })
+    const stamps = JSON.parse(
+      (env.db.prepare('select stamps from inbox_items where id = ?').get(id) as { stamps: string })
+        .stamps,
+    ) as Record<string, string>
+    expect((stamps.done ?? '') > ahead).toBe(true)
+  })
+
+  test('a change that would make a todo larger than a device reads is refused, the todo kept', async () => {
+    const key = await connector()
+    const id = (await json(key, 'add_task', { title: 'Call the bank' })).id as string
+
+    const said = await tool(key, 'update_task', { id, description: '€'.repeat(8000) })
+    expect(said).toMatch(/too large/)
+    expect((await json(key, 'list_tasks', {})).todos).toMatchObject([
+      { id, title: 'Call the bank' },
+    ])
+    expect(await tool(key, 'add_task', { title: 'Big', description: '€'.repeat(8000) })).toMatch(
+      /too large/,
+    )
+    expect((await json(key, 'list_tasks', {})).todos).toHaveLength(1)
+  })
+
   test('refused in sentences: a token that only reads, a todo that is gone, a bad day, no title', async () => {
     expect(await tool(await connector(true), 'add_task', { title: 'No' })).toMatch(/only read/)
     const key = await connector()

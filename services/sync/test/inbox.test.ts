@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { inboxStamp, INBOX_PAGE, MOST_INBOX_ITEMS, type InboxPage } from '@orden/sync-core'
+import {
+  inboxPageOf,
+  inboxStamp,
+  INBOX_PAGE,
+  MOST_INBOX_BYTES,
+  MOST_INBOX_ITEMS,
+  type InboxPage,
+} from '@orden/sync-core'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -136,6 +143,24 @@ describe('the inbox an account keeps', () => {
     expect(
       env.db.prepare('select count(*) as n from inbox_items where user_id = ?').get(user.id),
     ).toEqual({ n: MOST_INBOX_ITEMS })
+  })
+
+  test('keeps no to-do that two changes to two fields grow past what a device reads', async () => {
+    const half = 'w'.repeat(MOST_INBOX_BYTES / 2)
+    expect((await write([todo('a', { text: half })], token)).status).toBe(200)
+    expect((await write([todo('a', { notes: half }, 2)], token)).status).toBe(200)
+
+    const page = inboxPageOf((await read()).json)
+    expect(page?.items.map((one) => one.id)).toEqual(['a'])
+    expect(page?.items[0]?.fields).toEqual({ text: half })
+  })
+
+  test('hands back a to-do sent at the most a change holds, so every device reads it', async () => {
+    const change = todo('a', { text: '' })
+    const room = MOST_INBOX_BYTES - new TextEncoder().encode(JSON.stringify(change)).length
+    expect((await write([todo('a', { text: 'w'.repeat(room) })])).status).toBe(200)
+
+    expect(inboxPageOf((await read()).json)?.items.map((one) => one.id)).toEqual(['a'])
   })
 
   test('asks to be signed in', async () => {

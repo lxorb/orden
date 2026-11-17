@@ -1,6 +1,7 @@
 import {
   agentVerbNames,
   type AgentHeard,
+  type PortMap,
   providePort,
   runAgentVerb,
   type WebLent,
@@ -892,6 +893,18 @@ describe('the reader tabs', () => {
       expect(every.result.map((one) => one.id)).toContain('x1')
     })
 
+    test('are not listed in the answer to a move', async () => {
+      const moved = vi.fn()
+      Object.assign(workspace, { moveTab: moved })
+      const answered = (await call(
+        'workspace_tabs',
+        { op: 'move', tab: 't2', pane: 'p1' },
+        onlyWork(),
+      )) as { result?: { id: string }[] }
+      expect(moved).toHaveBeenCalledWith('t2', 'p1', null)
+      expect(answered.result?.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
+    })
+
     test('do not exist by their id', async () => {
       for (const op of ['rename', 'focus', 'close', 'split', 'save']) {
         expect(
@@ -1066,6 +1079,15 @@ describe('what asks the reader first', () => {
       await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
     ).toMatchObject({ status: 'needs_approval' })
     await vi.waitFor(() => expect(ran).toContain('export-pdf:cancelled'))
+  })
+
+  test('a key an object holds by inheritance is no setting', async () => {
+    for (const key of ['constructor', 'toString', '__proto__']) {
+      expect(await call('read_setting', { key }), key).toMatchObject({ code: 'no_such_setting' })
+      expect(await call('write_setting', { key, value: 'x' }), key).toMatchObject({
+        code: 'no_such_setting',
+      })
+    }
   })
 
   test('a setting asks, and a value it cannot be is refused before anybody is asked', async () => {
@@ -1374,37 +1396,42 @@ describe('the notes, on the road', () => {
     )
   })
 
-  test('a task written twice is ticked only by its nth, as edit_note finds it', async () => {
-    files.set('/s/Home/Soup.md', '# Soup\n\n- [ ] Buy milk\n- [ ] Buy milk\n')
-    const twice = {
-      path: 'Soup.md',
-      space: 'home',
-      rev: 'r1',
-      open: false,
-      typing: false,
-      text: '# Soup\n\n- [ ] Buy milk\n- [ ] Buy milk\n',
-      tasks: [
-        { anchor: { task: 'Buy milk', nth: 1 }, done: false, line: 2 },
-        { anchor: { task: 'Buy milk', nth: 2 }, done: false, line: 3 },
-      ],
-    }
-    docs.readNote.mockResolvedValueOnce(twice)
+  test('a task written twice is not picked for the agent, which names the one it means', async () => {
+    files.set('/s/Home/Plants.md', '# Plants\n\n- [x] water plants\n- [ ] water plants\n')
+    const twice = (path: string) =>
+      Promise.resolve({
+        path,
+        space: 'home',
+        rev: 'r1',
+        open: false,
+        typing: false,
+        text: files.get('/s/Home/Plants.md') ?? '',
+        tasks: [
+          { anchor: { task: 'water plants', nth: 1 }, done: true, line: 2 },
+          { anchor: { task: 'water plants', nth: 2 }, done: false, line: 3 },
+        ],
+      })
+    docs.readNote.mockImplementationOnce((at) => twice(at.path))
     expect(
-      await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true }),
+      await call('set_task', {
+        space: 'Home',
+        path: 'Plants',
+        at: { task: 'water plants' },
+        done: true,
+      }),
     ).toMatchObject({ code: 'ambiguous' })
     expect(docs.editNote).not.toHaveBeenCalled()
-
-    docs.readNote.mockResolvedValueOnce(twice)
+    docs.readNote.mockImplementationOnce((at) => twice(at.path))
     await call('set_task', {
       space: 'Home',
-      path: 'Soup',
-      at: { task: 'Buy milk', nth: 2 },
+      path: 'Plants',
+      at: { task: 'water plants', nth: 2 },
       done: true,
     })
-    expect(docs.editNote).toHaveBeenLastCalledWith(
-      { id: 'claude-code', name: 'Claude Code' },
-      { path: 'Soup.md', space: 'home' },
-      [{ at: { task: 'Buy milk', nth: 2 }, replace: '- [x] Buy milk' }],
+    expect(docs.editNote).toHaveBeenCalledWith(
+      expect.anything(),
+      { path: 'Plants.md', space: 'home' },
+      [{ at: { task: 'water plants', nth: 2 }, replace: '- [x] water plants' }],
       'r1',
       undefined,
     )
@@ -1504,6 +1531,18 @@ describe('a page into a note', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  test('lands in no folder outside the space, and in no hidden one', async () => {
+    for (const folder of ['../Secret', '.obsidian', 'Notes/../../Secret']) {
+      expect(await call('capture_to_note', { tab: 'w1', as: 'clip', folder })).toMatchObject({
+        code: 'bad_arguments',
+      })
+    }
+    expect([...files.keys()].filter((key) => key.includes('A page'))).toEqual([])
+    expect(await call('capture_to_note', { tab: 'w1', as: 'clip', folder: 'Clips' })).toMatchObject(
+      { result: { path: 'Clips/A page.md', created: true } },
+    )
   })
 
   test('an agent tab is clipped the same way, through the crate', async () => {
@@ -1801,6 +1840,77 @@ describe('to-dos and bases', () => {
     await todos.remove(id)
   })
 
+  test('a todo of a space the agent does not reach is not listed, changed or added to', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const kept = await todos.add({ title: 'Hidden plan', space: secret.id })
+    const loose = await todos.add({ title: 'Loose one', space: null })
+    if (!kept.ok || !loose.ok) throw new Error('not added')
+    try {
+      const listed = JSON.stringify(await call('list_tasks', { done: true }))
+      expect(listed).not.toContain('Hidden plan')
+      expect(listed).not.toContain('Loose one')
+      expect(JSON.stringify(await call('list_tasks', {}, READER))).toContain('Hidden plan')
+      for (const id of [kept.value.id, loose.value.id]) {
+        expect(await call('update_task', { id, done: true })).toMatchObject({
+          code: 'no_such_file',
+        })
+      }
+      expect(todos.todo(kept.value.id)?.done).toBe(false)
+      expect(
+        await call('update_task', { id: kept.value.id, space: 'Secret' }, READER),
+      ).toMatchObject({ result: { space: secret.id } })
+      const everywhere = agent({ spaces: 'all' })
+      expect(JSON.stringify(await call('list_tasks', {}, everywhere))).toContain('Loose one')
+    } finally {
+      await todos.remove(kept.value.id)
+      await todos.remove(loose.value.id)
+    }
+  })
+
+  test('a todo is not moved into an open space the agent does not reach', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const kept = await todos.add({ title: 'Stays at work', space: work.id })
+    if (!kept.ok) throw new Error('not added')
+    workspace.activeSpaceId = 'home'
+    try {
+      expect(
+        await call('update_task', { id: kept.value.id, space: null }, agent({ spaces: ['Work'] })),
+      ).toMatchObject({ code: 'no_such_space' })
+      expect(todos.todo(kept.value.id)?.space).toBe(work.id)
+    } finally {
+      workspace.activeSpaceId = 'work'
+      await todos.remove(kept.value.id)
+    }
+  })
+
+  test('a todo is not added into an open space the agent does not reach', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const before = todos.todos.length
+    expect(await call('add_task', { text: 'Sneak' }, agent({ spaces: ['Home'] }))).toMatchObject({
+      code: 'no_such_space',
+    })
+    expect(todos.todos.length).toBe(before)
+  })
+
+  test('a todo in a synced space carries the account id, and the older local one still counts', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const gone = providePort('sync.store', {
+      remoteIdFor: (root: string) => (root === '/s/Work' ? 'acct-work' : null),
+    } as unknown as PortMap['sync.store'])
+    const before = await todos.add({ title: 'Older', space: work.id })
+    const added = await call('add_task', { text: 'Newer' })
+    const id = (added as { result: { id: string } }).result.id
+    expect(todos.todo(id)?.space).toBe('acct-work')
+    expect(await call('list_tasks', { space: 'Work' })).toMatchObject({ result: { total: 2 } })
+    expect(await call('list_tasks', { space: 'acct-work' })).toMatchObject({ result: { total: 2 } })
+    expect(await call('update_task', { id, space: '' }, agent({ spaces: 'all' }))).toMatchObject({
+      result: { space: null },
+    })
+    gone()
+    await todos.remove(id)
+    if (before.ok) await todos.remove(before.value.id)
+  })
+
   test('a change takes a day or the space off when sent empty, and leaves done alone when sent null', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const added = await call('add_task', { text: 'Pay rent', deadline: '2026-12-01' })
@@ -1810,7 +1920,9 @@ describe('to-dos and bases', () => {
     expect(await call('update_task', { id, deadline: '', done: null })).toMatchObject({
       result: { deadline: null, done: true },
     })
-    expect(await call('update_task', { id, space: '' })).toMatchObject({ result: { space: null } })
+    expect(await call('update_task', { id, space: '' }, agent({ spaces: 'all' }))).toMatchObject({
+      result: { space: null },
+    })
     await todos.remove(id)
   })
 
@@ -1870,41 +1982,9 @@ describe('to-dos and bases', () => {
     for (const one of made) await todos.remove((one as { result: { id: string } }).result.id)
   })
 
-  test('an agent granted Work and Home neither lists nor changes a Secret todo', async () => {
-    const { todos } = await import('../src/lib/tasks-model/src/api')
-    const hidden = await todos.add({ title: 'Secret plan', space: secret.id })
-    const loose = await todos.add({ title: 'Anywhere', space: null })
-    const id = hidden.ok ? hidden.value.id : ''
-    const listed = (await call('list_tasks', {})) as { result: { todos: { title: string }[] } }
-    const updated = await call('update_task', { id, title: 'Changed' })
-    const byReader = (await call('list_tasks', {}, READER)) as {
-      result: { todos: { title: string }[] }
-    }
-    const kept = todos.todo(id)?.title
-    await todos.remove(id)
-    if (loose.ok) await todos.remove(loose.value.id)
-    expect({
-      listed: listed.result.todos.map((one) => one.title),
-      updated,
-      kept,
-      byReader: byReader.result.todos.map((one) => one.title).sort(),
-    }).toEqual({
-      listed: ['Anywhere'],
-      updated: {
-        ok: false,
-        status: 'error',
-        code: 'no_such_file',
-        message: `there is no todo ${id}`,
-        error: `there is no todo ${id}`,
-      },
-      kept: 'Secret plan',
-      byReader: ['Anywhere', 'Secret plan'],
-    })
-  })
-
   test('every todo is listed, one that starts later and one done another day too', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
-    const later = await todos.add({ title: 'Next week', start: '2099-01-01', space: null })
+    const later = await todos.add({ title: 'Next week', start: '2099-01-01', space: work.id })
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-10T10:00:00.000Z'))
     const finished = await todos.add({ title: 'Last week', space: home.id })
@@ -1925,22 +2005,6 @@ describe('to-dos and bases', () => {
       withDone: ['Last week', 'Next week'],
       inHome: ['Last week'],
     })
-  })
-
-  test('a todo is not added into an open space the agent was not granted', async () => {
-    const { todos } = await import('../src/lib/tasks-model/src/api')
-    workspace.activeSpaceId = 'secret'
-    try {
-      expect(await call('add_task', { text: 'Sneak in' })).toMatchObject({
-        code: 'no_such_space',
-      })
-      expect(todos.todos.map((one) => one.title)).not.toContain('Sneak in')
-      const own = await call('add_task', { text: 'Mine' }, READER)
-      expect(own).toMatchObject({ result: { title: 'Mine', space: secret.id } })
-      await todos.remove((own as { result: { id: string } }).result.id)
-    } finally {
-      workspace.activeSpaceId = 'work'
-    }
   })
 
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
@@ -2192,6 +2256,17 @@ describe('to-dos and bases', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  test('a base at the top of a space takes a row at the top of the space', async () => {
+    files.set(
+      '/s/Home/Tasks.base',
+      'filters: file.hasTag("todo")\nviews:\n  - type: table\n    name: All\n',
+    )
+    expect(
+      await call('add_row', { space: 'Home', base: 'Tasks.base', title: 'Call' }),
+    ).toMatchObject({ result: { path: 'Call.md', created: true } })
+    expect(files.has('/s/Home/Call.md')).toBe(true)
   })
 
   test('edits asked at once all land, none written over another', async () => {
@@ -2750,6 +2825,51 @@ describe('a note the reader protected', () => {
       protection.set('/s/Home', '/s/Home/Books', null)
       protection.set('/s/Home', '/s/Home/Soup.md', null)
       protection.set('/s/Home', '/s/Home/Shelf/Emma.md', null)
+      unlocks.lockAll()
+    }
+  })
+
+  test('is not moved out of its lock or trashed by an agent, nor a folder holding it', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    files.set('/s/Home/Books/Dune.md', 'the secret words\n')
+    files.set('/s/Home/Shelf/Emma.md', 'the other words\n')
+    protection.set('/s/Home', '/s/Home/Books', 'password')
+    protection.set('/s/Home', '/s/Home/Shelf/Emma.md', 'password')
+    protection.set('/s/Home', '/s/Home/Soup.md', 'password')
+    try {
+      for (const [verb, args] of [
+        ['move_file', { space: 'Home', path: 'Books/Dune.md', to: 'Dune.md' }],
+        ['move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup.md' }],
+        ['trash_file', { space: 'Home', path: 'Soup' }],
+        ['trash_file', { space: 'Home', path: 'Books/Dune.md' }],
+        ['trash_file', { space: 'Home', path: 'Shelf' }],
+      ] as const) {
+        expect(await call(verb, args)).toMatchObject({ code: 'protected' })
+      }
+      expect(files.has('/s/Home/Books/Dune.md')).toBe(true)
+      expect(files.has('/s/Home/Soup.md')).toBe(true)
+      expect(workspace.remove).not.toHaveBeenCalled()
+    } finally {
+      protection.set('/s/Home', '/s/Home/Books', null)
+      protection.set('/s/Home', '/s/Home/Shelf/Emma.md', null)
+      protection.set('/s/Home', '/s/Home/Soup.md', null)
+    }
+  })
+
+  test('is not exported by an agent to a path it can read, nor the space holding it', async () => {
+    const { protection } = await import('../src/lib/protect/src/protection.svelte')
+    answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
+    const { unlocks } = await import('../src/lib/protect/src/unlocked.svelte')
+    const front = tabs[0]?.path ?? ''
+    protection.set('/s/Work', front, 'password')
+    unlocks.unlock(protection.covering(front))
+    try {
+      expect(
+        await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
+      ).toMatchObject({ code: 'protected' })
+      expect(ran.some((one) => one.startsWith('export-pdf'))).toBe(false)
+    } finally {
+      protection.set('/s/Work', front, null)
       unlocks.lockAll()
     }
   })

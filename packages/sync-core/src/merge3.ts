@@ -323,11 +323,51 @@ function apart(base: string, side: readonly Edit[], other: readonly Edit[]): Edi
   })
 }
 
+function applied(base: string, side: readonly Edit[]): string {
+  let out = ''
+  let at = 0
+  for (const edit of side) {
+    out += base.slice(at, edit.from) + edit.insert
+    at = edit.to
+  }
+  return out + base.slice(at)
+}
+
+function cost(side: readonly Edit[]): number {
+  return side.reduce((sum, edit) => sum + (edit.to - edit.from) + edit.insert.length, 0)
+}
+
+function besideACopy(base: string, edit: Edit): boolean {
+  const copied = (piece: string, at: number, after: number) =>
+    piece !== '' &&
+    (base.slice(at - piece.length, at) === piece ||
+      base.slice(after, after + piece.length) === piece)
+  return (
+    copied(base.slice(edit.from, edit.to), edit.from, edit.to) ||
+    copied(edit.insert, edit.from, edit.from)
+  )
+}
+
+function heldBy(
+  base: string,
+  side: readonly Edit[],
+  others: readonly Edit[],
+  other: string,
+): Edit[] {
+  const whole = cost(edits(base, other, 'semantic'))
+  return side.filter((edit) => {
+    if (!besideACopy(base, edit) || others.some((one) => sameEdit(one, edit))) return true
+    const rest = cost(edits(applied(base, [edit]), other, 'semantic'))
+    return rest + cost([edit]) !== whole
+  })
+}
+
 export function analyse(base: string, local: string, remote: string): Analysis {
   const roughMine = edits(base, local, 'semantic')
   const roughTheirs = edits(base, remote, 'semantic')
-  const mine = apart(base, roughMine, roughTheirs)
-  const theirs = apart(base, roughTheirs, roughMine)
+  const finerMine = apart(base, roughMine, roughTheirs)
+  const theirs = heldBy(base, apart(base, roughTheirs, roughMine), finerMine, local)
+  const mine = heldBy(base, finerMine, theirs, applied(base, theirs))
   const { identical, local: onlyMine, remote: onlyTheirs } = paired(mine, theirs)
   const meetings = grouped(base, onlyMine, onlyTheirs)
 

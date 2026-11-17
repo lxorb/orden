@@ -1,6 +1,6 @@
 import { readTint } from '../../ui-kit/src/api'
 
-export const LONGEST_NAME = 80
+const LONGEST_NAME = 80
 
 const LONGEST_NOTE = 1000
 
@@ -58,8 +58,10 @@ function tagsOf(value: unknown): string[] {
   return out
 }
 
+export const activityName = (name: string): string => name.trim().slice(0, LONGEST_NAME).trim()
+
 export function activityOf(id: string, value: Record<string, unknown>): Activity | null {
-  const name = textOr(value.name, LONGEST_NAME).trim()
+  const name = typeof value.name === 'string' ? activityName(value.name) : ''
   if (!name) return null
   return {
     id,
@@ -91,7 +93,7 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
 
 export function activityValue(activity: Activity): Record<string, unknown> {
   return {
-    name: activity.name,
+    name: activityName(activity.name),
     tint: activity.tint,
     parent: activity.parent,
     archived: activity.archived,

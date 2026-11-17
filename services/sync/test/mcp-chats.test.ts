@@ -209,6 +209,25 @@ describe('chats through the connector', () => {
     expect(await tool(key, 'read_chat', { chat: 'nowhere' })).toMatch(/^No chat called nowhere/)
   })
 
+  test('a chat its reader protected is neither listed, read, searched nor written in', async () => {
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token: owner,
+      body: { protected: { 'thesis.chat': 'password' } },
+    })
+    const key = await connector(owner)
+    expect(await tool(key, 'list_chats')).toBe('No chats.')
+    expect(await tool(key, 'read_chat', { chat })).toMatch(/^No chat called /)
+    expect(await tool(key, 'search_chats', { query: 'chapter' })).not.toContain('Draft')
+    expect(await tool(key, 'post_message', { chat, text: 'planted' })).toMatch(/^No chat called /)
+    expect(await tool(key, 'react', { chat, message: 'x', emoji: '👍' })).toMatch(
+      /^No chat called /,
+    )
+    expect(JSON.stringify(await state(owner))).not.toContain('planted')
+
+    expect(await tool(await connector(writer), 'list_chats')).toContain('#thesis')
+  })
+
   test('searched with the search language', async () => {
     const said = await tool(await connector(owner), 'search_chats', { query: 'chapter from:me' })
     expect(said).toMatch(/^- #thesis · /)

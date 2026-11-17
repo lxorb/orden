@@ -20,13 +20,28 @@ interface Getter {
   clock: boolean
 }
 
+const PLAIN_NAME = /^[A-Za-z_$][\w$]*$/
+
+function keyNamed(property: string): string | null {
+  const name = property.startsWith('note.')
+    ? property.slice(5)
+    : /^(file|formula|task|this)\./.test(property)
+      ? null
+      : property
+  return name === null || PLAIN_NAME.test(name) ? null : name
+}
+
 function getter(property: string): Getter {
   try {
     const compiled = compile(property)
+    const key = keyNamed(property)
     return {
       local: compiled.local,
       clock: compiled.clock,
       run: (scope) => {
+        if (key !== null && scope.row && Object.hasOwn(scope.row.note, key)) {
+          return fieldOf(scope.row.note, key)
+        }
         try {
           return compiled.run(scope)
         } catch {
@@ -57,6 +72,17 @@ function getter(property: string): Getter {
       run: (scope) => (scope.row ? fieldOf(scope.row.note, name) : null),
     }
   }
+}
+
+const thisIds = new WeakMap<Row, number>()
+let thisCount = 0
+
+function thisId(row: Row): number {
+  const known = thisIds.get(row)
+  if (known !== undefined) return known
+  thisCount += 1
+  thisIds.set(row, thisCount)
+  return thisCount
 }
 
 const NONE: Getter = { local: true, clock: false, run: () => null }
@@ -139,8 +165,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     const key = [
       context.today,
       clock ? context.now : '',
-      context.this?.path ?? '',
-      context.this?.space ?? '',
+      context.this ? thisId(context.this) : '',
       context.me ?? '',
       context.zone ?? '',
     ].join('\n')
@@ -235,6 +260,42 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       return out
     }
 
+    const orderKeys = <T extends { key: Value }>(keys: T[], by: Sort): T[] => {
+      const options = optionOrder(base, by.property)
+      const placed = view.orden.groups ?? []
+      const rank = (key: Value): number => {
+        const name = groupName(key)
+        const own = placed.indexOf(name)
+        if (own !== -1) return own
+        const option = options.indexOf(name)
+        return placed.length + (option === -1 ? options.length : option)
+      }
+      const noneFirst = view.orden.noneFirst === true
+      if (view.orden.groupOrder !== 'rows')
+        keys.sort((a, b) => {
+          if (a.key === null || b.key === null)
+            return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
+          const byRank = rank(a.key) - rank(b.key)
+          if (byRank !== 0) return byRank
+          const order =
+            by.property === 'file.path' && typeof a.key === 'string' && typeof b.key === 'string'
+              ? byNoteName(a.key, b.key)
+              : sortCompare(a.key, b.key, context.zone)
+          return by.direction === 'DESC' ? -order : order
+        })
+      return keys
+    }
+
+    const lanesOf = (groups: Group[], by: Sort): Value[] => {
+      const seen = new Map<string, { key: Value }>()
+      for (const group of groups)
+        for (const one of group.sub ?? []) {
+          const name = groupName(one.key)
+          if (!seen.has(name)) seen.set(name, { key: one.key })
+        }
+      return orderKeys([...seen.values()], by).map((one) => one.key)
+    }
+
     const grouped = (
       members: { row: Row; facts: RowFacts }[],
       keyOf: (one: RowFacts) => Val,
@@ -268,28 +329,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
           for (const member of each) into(member, one)
         } else into(key, one)
       }
-      const keys = [...groups.values()]
-      const placed = view.orden.groups ?? []
-      const rank = (key: Value): number => {
-        const name = groupName(key)
-        const own = placed.indexOf(name)
-        if (own !== -1) return own
-        const option = options.indexOf(name)
-        return placed.length + (option === -1 ? options.length : option)
-      }
-      const noneFirst = view.orden.noneFirst === true
-      if (view.orden.groupOrder !== 'rows')
-        keys.sort((a, b) => {
-          if (a.key === null || b.key === null)
-            return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
-          const byRank = rank(a.key) - rank(b.key)
-          if (byRank !== 0) return byRank
-          const order =
-            by.property === 'file.path' && typeof a.key === 'string' && typeof b.key === 'string'
-              ? byNoteName(a.key, b.key)
-              : sortCompare(a.key, b.key, context.zone)
-          return by.direction === 'DESC' ? -order : order
-        })
+      const keys = orderKeys([...groups.values()], by)
       return keys.map(({ key, members: inGroup }) => {
         const only = cutGroup(inGroup, groupName(key))
         const out: Group = {
@@ -319,10 +359,11 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       subBy ? (members) => grouped(members, (one) => one.sub, subBy) : undefined,
       true,
     )
-    if (limit === null) return { groups, total: kept.length, summaries: summaries(kept) }
+    const laned = subBy ? { lanes: lanesOf(groups, subBy) } : {}
+    if (limit === null) return { groups, ...laned, total: kept.length, summaries: summaries(kept) }
     const onScreen = new Set(groups.flatMap((group) => group.rows))
     const limited = kept.filter((one) => onScreen.has(one.row))
-    return { groups, total: limited.length, summaries: summaries(limited) }
+    return { groups, ...laned, total: limited.length, summaries: summaries(limited) }
   }
 
   return { view, answer }

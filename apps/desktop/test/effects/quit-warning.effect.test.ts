@@ -87,28 +87,46 @@ async function quitting(): Promise<{ answered: Promise<void> }> {
   return { answered }
 }
 
+async function closing(): Promise<{ answered: Promise<boolean> }> {
+  others = ['orden-2']
+  const answered = mayStop('window')
+  await vi.waitFor(() => expect(quitAsk.open).toBe(true))
+  flushSync()
+  return { answered }
+}
+
 test('a shell is running, so a close has something to ask about', () => {
   expect(anythingRuns()).toBe(true)
 })
 
-test('only the busy terminal is named, and Quit anyway goes on', async () => {
-  const { answered } = await quitting()
-
-  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit Orden?')
-  expect(names()).toEqual(['claude · orden'])
-  expect(asked).toContain('quit_show')
-
-  button('Quit anyway')?.click()
-  await answered
+test('a terminal keeps running through a quit, so a quit asks nothing about it', async () => {
+  await quitAsked()
+  expect(quitAsk.open).toBe(false)
   expect(asked.at(-1)).toBe('quit_confirmed')
+  expect(asked).not.toContain('quit_show')
+})
+
+test('the last window closing and a restart leave terminals running and ask nothing', async () => {
+  expect(await mayStop('window')).toBe(true)
+  expect(await mayStop('restart')).toBe(true)
+  expect(quitAsk.open).toBe(false)
+})
+
+test('only the busy terminal is named, and Close anyway goes on', async () => {
+  const { answered } = await closing()
+
+  expect(sheet()?.querySelector('.title')?.textContent).toBe('Close window?')
+  expect(names()).toEqual(['claude · orden'])
+
+  button('Close anyway')?.click()
+  expect(await answered).toBe(true)
   expect(quitAsk.warning).toBe('running')
 })
 
 test('Cancel keeps everything running', async () => {
-  const { answered } = await quitting()
+  const { answered } = await closing()
   button('Cancel')?.click()
-  await answered
-  expect(asked.at(-1)).toBe('keep_running')
+  expect(await answered).toBe(false)
 })
 
 test('nothing but shells at their prompt: no question at all', async () => {
@@ -119,71 +137,47 @@ test('nothing but shells at their prompt: no question at all', async () => {
   expect(asked).not.toContain('quit_show')
 })
 
-test("Don't ask again is Settings' Never, and the next quit asks nothing", async () => {
-  const { answered } = await quitting()
+test("Don't ask again is Settings' Never, and the next close asks nothing", async () => {
+  const { answered } = await closing()
   const never = document.querySelector<HTMLInputElement>('.tick input')
   never?.click()
   flushSync()
-  button('Quit anyway')?.click()
+  button('Close anyway')?.click()
   await answered
   expect(quitAsk.warning).toBe('never')
 
   asked.length = 0
-  await quitAsked()
-  expect(asked).toEqual(['quit_confirmed'])
+  expect(await mayStop('window')).toBe(true)
+  expect(asked).toEqual([])
 })
 
 test('Always lists the idle shells as well', async () => {
   quitAsk.warnWhen('always')
-  const { answered } = await quitting()
+  const { answered } = await closing()
   expect(names()).toEqual(['claude · orden', 'PowerShell · orden'])
   quitAsk.answer('stay')
   await answered
 })
 
-test('a row pressed calls the quit off and goes to its tab', async () => {
+test('a row pressed calls the close off and goes to its tab', async () => {
   const shown = vi.spyOn(workspace, 'activeTabId', 'set').mockImplementation(() => undefined)
-  const { answered } = await quitting()
+  const { answered } = await closing()
 
   document.querySelector<HTMLButtonElement>('.rows button')?.click()
-  await answered
-  expect(asked.at(-1)).toBe('keep_running')
+  expect(await answered).toBe(false)
   expect(shown).toHaveBeenCalledWith('a')
   shown.mockRestore()
 })
 
 test("a window's own close names its own, and says close while another window stays", async () => {
-  others = ['nib-2']
-  const closing = mayStop('window')
-  await vi.waitFor(() => expect(quitAsk.open).toBe(true))
-  flushSync()
-
+  const { answered } = await closing()
   expect(sheet()?.querySelector('.title')?.textContent).toBe('Close window?')
   expect(asked).not.toContain('quit_show')
   button('Close anyway')?.click()
-  expect(await closing).toBe(true)
+  expect(await answered).toBe(true)
 })
 
-test('the last window closing is the app quitting', async () => {
-  const closing = mayStop('window')
-  await vi.waitFor(() => expect(quitAsk.open).toBe(true))
-  flushSync()
-  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit Orden?')
-  button('Cancel')?.click()
-  expect(await closing).toBe(false)
-})
-
-test("an update's restart asks the same way", async () => {
-  const restarting = mayStop('restart')
-  await vi.waitFor(() => expect(quitAsk.open).toBe(true))
-  flushSync()
-  expect(sheet()?.querySelector('.title')?.textContent).toBe('Restart Orden?')
-  button('Restart anyway')?.click()
-  expect(await restarting).toBe(true)
-})
-
-test('an AI turn in flight is a row, named by its thread', async () => {
-  busy.set('pty-a', false)
+async function answering(): Promise<() => Promise<void>> {
   const { watching } = await aiChat.chatSends()
   let finish: () => void = () => undefined
   const engine = watching({
@@ -198,11 +192,54 @@ test('an AI turn in flight is a row, named by its thread', async () => {
     () => undefined,
     new AbortController().signal,
   )
+  return async () => {
+    finish()
+    await sending
+  }
+}
 
+test('an AI turn in flight is a row, named by its thread', async () => {
+  const done = await answering()
   const { answered } = await quitting()
   expect(names()).toEqual(['Fix the build'])
   quitAsk.answer('stay')
   await answered
-  finish()
-  await sending
+  await done()
+})
+
+test('the last window closing is the app quitting', async () => {
+  const done = await answering()
+  const closing = mayStop('window')
+  await vi.waitFor(() => expect(quitAsk.open).toBe(true))
+  flushSync()
+  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit Orden?')
+  expect(names()).toEqual(['Fix the build'])
+  button('Cancel')?.click()
+  expect(await closing).toBe(false)
+  await done()
+})
+
+test("an update's restart asks the same way", async () => {
+  const done = await answering()
+  const restarting = mayStop('restart')
+  await vi.waitFor(() => expect(quitAsk.open).toBe(true))
+  flushSync()
+  expect(sheet()?.querySelector('.title')?.textContent).toBe('Restart Orden?')
+  button('Restart anyway')?.click()
+  expect(await restarting).toBe(true)
+  await done()
+})
+
+test('a short press of Cmd+Q says to hold it, and the words go again', async () => {
+  vi.useFakeTimers()
+  const { holdToQuit } = await import('../../src/lib/quit-ports')
+  const { holding } = await import('../../src/lib/quitting/src/api')
+  await holdToQuit()
+  flushSync()
+  expect(document.body.textContent).toContain('Hold ⌘Q to quit')
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(holding.shown).toBe(true)
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(holding.shown).toBe(false)
+  vi.useRealTimers()
 })

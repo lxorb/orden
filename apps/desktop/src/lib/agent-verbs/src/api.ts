@@ -25,7 +25,7 @@ export {
   placeFor,
   placeOf,
   reachable,
-  reachesSpaceId,
+  reachesSpace,
   sharedSource,
   tabsInReach,
   writableAt,

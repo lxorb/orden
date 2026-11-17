@@ -7,6 +7,30 @@ import { quietMarks } from './reveal'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
+function decorated(doc: string, cursor: number, quiet: boolean) {
+  return buildDecorations(
+    parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(cursor),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          quietMarks.of(quiet),
+        ],
+      }),
+    ),
+  )
+}
+
+function lineClasses(doc: string, cursor: number, quiet: boolean): string[] {
+  const out: string[] = []
+  decorated(doc, cursor, quiet).decorations.between(0, doc.length, (_from, _to, value) => {
+    const spec = value.spec as { class?: string }
+    if (spec.class) out.push(spec.class)
+  })
+  return out
+}
+
 function concealed(doc: string, cursor: number, quiet: boolean): string[] {
   const state = parsed(
     EditorState.create({
@@ -36,6 +60,26 @@ describe('quiet marks', () => {
     const doc = '# Title'
     expect(concealed(doc, 4, false)).toEqual([])
     expect(concealed(doc, 4, true)).toEqual(['# '])
+  })
+
+  test('a # becomes a heading only once a space follows it', () => {
+    for (const quiet of [true, false]) {
+      expect(concealed('#', 1, quiet)).toEqual([])
+      expect(lineClasses('#', 1, quiet)).not.toContain('orden-h1')
+      expect(concealed('###', 3, quiet)).toEqual([])
+      expect(lineClasses('###', 3, quiet)).not.toContain('orden-h3')
+      expect(lineClasses('# ', 2, quiet)).toContain('orden-h1')
+    }
+    expect(concealed('# ', 2, true)).toEqual(['# '])
+    expect(concealed('a\n#', 0, false)).toEqual([])
+  })
+
+  test('a list mark becomes a bullet only once a space follows it', () => {
+    for (const quiet of [true, false]) {
+      expect(concealed('-', 1, quiet)).toEqual([])
+      expect(concealed('a\n\n-', 0, quiet)).toEqual([])
+      expect(concealed('a\n\n- ', 0, quiet)).toEqual(['-'])
+    }
   })
 
   test('inline code hides its backticks, a fence does not', () => {

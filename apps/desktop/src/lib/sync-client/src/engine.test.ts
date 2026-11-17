@@ -7,6 +7,8 @@ import {
   unframe,
   seedUpdate,
   type DocRefusal,
+  type PullAnswer,
+  type PullRequest,
   type PushRequest,
 } from '@orden/sync-core'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
@@ -2096,5 +2098,98 @@ describe('a note another device renames', () => {
     expect(here.disk.files.has(`${ROOT}/Renamed.md`)).toBe(true)
     expect(found.length).toBeGreaterThan(0)
     expect(found.every((id) => id === PLAN)).toBe(true)
+  })
+})
+
+describe('a note made here that the account already has', () => {
+  async function madeTwice(here: string, open = false) {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd0')
+    await there.disk.write(`${ROOT}/.Inbox.md`, '- [ ] milk\n')
+    await there.engine.created(`${ROOT}/.Inbox.md`, false, '- [ ] milk\n')
+    await there.engine.pass(SPACE)
+
+    const made = await device(account, 'd1')
+    await made.disk.write(`${ROOT}/.Inbox.md`, here)
+    await made.engine.created(`${ROOT}/.Inbox.md`, false, here)
+    const mine = made.engine.entryAt(`${ROOT}/.Inbox.md`)
+    const doc = open && mine ? await made.engine.hold(mine.id) : null
+    await made.engine.pass(SPACE)
+    return { ...made, doc, mine }
+  }
+
+  test('is merged into the account’s note and stays on disk with both sides', async () => {
+    const here = await madeTwice('- [ ] eggs\n')
+
+    const kept = here.disk.files.get(`${ROOT}/.Inbox.md`)
+    expect(kept).toContain('milk')
+    expect(kept).toContain('eggs')
+  })
+
+  test('open in an editor, waits for the editor to let go, then merges what was typed', async () => {
+    const here = await madeTwice('- [ ] eggs\n', true)
+    const { doc, mine } = here
+    expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toBe('- [ ] eggs\n')
+
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(11, '- [ ] bread\n'), HERE)
+    await here.disk.write(`${ROOT}/.Inbox.md`, doc?.text() ?? '')
+    await here.engine.saved(`${ROOT}/.Inbox.md`, doc?.text() ?? '')
+    if (mine) await here.engine.letGo(mine.id)
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const view = await here.account.view()
+    const inboxes = view.entries.filter((one) => one.name.startsWith('.Inbox'))
+    expect(inboxes).toHaveLength(1)
+    const text = view.texts[inboxes[0]?.id ?? ''] ?? ''
+    for (const task of ['milk', 'eggs', 'bread']) expect(text).toContain(task)
+    for (const task of ['milk', 'eggs', 'bread']) {
+      expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toContain(task)
+    }
+  })
+
+  test('stays on disk when the merge changes nothing on the account', async () => {
+    const here = await madeTwice('- [ ] milk\n')
+    await here.engine.pass(SPACE)
+
+    expect(here.disk.files.get(`${ROOT}/.Inbox.md`)).toContain('milk')
+  })
+})
+
+describe('a note the account has started again on a new epoch', () => {
+  async function restarted(after: 'refused' | 'answered') {
+    const one = await device()
+    const world = one.engine.core.world
+    const ask = world.account.ask.bind(world.account)
+    const asked: PullRequest['docs'][number][] = []
+    world.account.ask = async (route, body, space) => {
+      if (route !== 'pull') return await ask(route, body, space)
+      const docs = (body as PullRequest).docs
+      asked.push(...docs.filter((doc) => doc.id === PLAN))
+      if (asked.length === 1) return { docs: [{ id: PLAN, epoch: 2, epochBase: '' }] }
+      if (after === 'refused') {
+        return { docs: docs.map((doc): PullAnswer => ({ id: doc.id, refused: 'gone' })) }
+      }
+      return await ask(route, body, space)
+    }
+    one.engine.core.wanted(SPACE).set(PLAN, { docSeq: 5, epoch: 1 })
+    await one.engine.pass(SPACE)
+    return { one, asked }
+  }
+
+  test('keeps its words while the account will not yet give the new epoch', async () => {
+    const { one } = await restarted('refused')
+    const doc = await one.engine.core.doc(PLAN)
+    expect(doc?.text()).toBe(SEEDED[0]?.text)
+    expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+  })
+
+  test('takes the new epoch whole once the account gives it', async () => {
+    const { one, asked } = await restarted('answered')
+    expect(asked[1]).toMatchObject({ id: PLAN, epoch: 2 })
+    const doc = await one.engine.core.doc(PLAN)
+    expect(doc?.epoch).toBe(2)
+    expect(doc?.text()).toBe(await textOn(one.account, PLAN))
+    expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
   })
 })

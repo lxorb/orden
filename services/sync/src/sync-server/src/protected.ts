@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
-import { tryDecodeURIComponent } from 'hono/utils/url'
+import { nameKey } from '@orden/sync-core'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
-import { LONGEST_PATH, staysInside } from './spaces/paths'
-import type { Env, Variables } from './types'
+import { LONGEST_PATH, staysInside } from './paths'
+import type { Env, Variables, Whoever } from './types'
 
 type Way = 'password' | 'device'
 
@@ -79,22 +79,12 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
   return readProtected(await rawFor(env, userId))
 }
 
-function folded(path: string): string {
-  let out = ''
-  for (const one of path.normalize('NFC')) {
-    const upper = one.toUpperCase()
-    const lower = upper.toLowerCase()
-    out += Array.from(upper).length !== 1 ? one : Array.from(lower).length === 1 ? lower : upper
-  }
-  return out
-}
-
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
-  const asked = folded(path)
+  const folded = nameKey(path)
   return Object.keys(ways).some((key) => {
-    const kept = folded(key)
-    return kept === '' || asked === kept || asked.startsWith(`${kept}/`)
+    const held = nameKey(key)
+    return held === '' || folded === held || folded.startsWith(`${held}/`)
   })
 }
 
@@ -103,42 +93,16 @@ export type Shut = (spaceId: string, path: string) => boolean
 export const PROTECTED = (path: string) =>
   `${path} is protected. The reader can open it in Orden; an agent cannot.`
 
-const SPACE_ROUTE = /^\/v[12]\/spaces\/([^/]+)\/(?:changes|notes|rollback|feed)$/
-
-const NOTE_ROUTE = /^\/v1\/notes\/([^/]+)(?:\/|$)/
-
-const routed = (segment: string | undefined) =>
-  segment === undefined ? undefined : tryDecodeURIComponent(segment)
-
-const KEPT_FROM_TOKENS = 'This space keeps notes from agents, so a token cannot reach it.'
-
-export async function keptFromProgram(
-  env: Env,
-  userId: string,
-  method: string,
-  path: string,
-): Promise<string | null> {
-  const { spaces } = await protectedFor(env, userId)
-  if (!Object.keys(spaces).length) return null
-  if (path === '/v2/docs/pull') return KEPT_FROM_TOKENS
-
-  const space = routed(SPACE_ROUTE.exec(path)?.[1])
-  if (space !== undefined) return spaces[space] ? KEPT_FROM_TOKENS : null
-
-  const id = routed(NOTE_ROUTE.exec(path)?.[1])
-  if (id === undefined) return null
-  const note = await env.DB.prepare('select space_id, path from notes where id = ?')
-    .bind(id)
-    .first<{ space_id: string; path: string }>()
-  const ways = note ? spaces[note.space_id] : undefined
-  if (!note || !ways) return null
-  if (method !== 'GET') return KEPT_FROM_TOKENS
-  return covers(ways, note.path) ? PROTECTED(note.path) : null
-}
-
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
   return (spaceId, path) => covers(held.spaces[spaceId], path)
+}
+
+export async function programShut(
+  env: Env,
+  who: Whoever & { program?: true },
+): Promise<Shut | null> {
+  return who.kind === 'user' && who.program ? await shutFor(env, who.user.id) : null
 }
 
 const TOO_MUCH = 'that is more than an account protects'

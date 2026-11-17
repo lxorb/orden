@@ -7,18 +7,17 @@ import { dueWithin } from './due'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
 
-const QUERIES = ['orden', 'nib'] as const
+const QUERY = 'orden'
 
 const MOST_LINKS = 1
 
 export async function startAutomation(): Promise<() => void> {
   if (!isNative) {
     const here = new URL(window.location.href)
-    const query = QUERIES.find((one) => here.searchParams.has(one))
-    const asked = query === undefined ? null : here.searchParams.get(query)
-    if (query === undefined || asked === null) return () => undefined
+    const asked = here.searchParams.get(QUERY)
+    if (asked === null) return () => undefined
 
-    here.searchParams.delete(query)
+    here.searchParams.delete(QUERY)
     window.history.replaceState(null, '', `${here.pathname}${here.search}${here.hash}`)
     await follow(asked)
 

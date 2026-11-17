@@ -268,3 +268,17 @@ describe('ticking every task of a long list', () => {
     expect(growth(ticked, 1_000)).toBeLessThan(GROWS_AT_MOST)
   })
 })
+
+describe('a note with CRLF line breaks', () => {
+  test('loses a ticked task that deletes itself together with its line break', () => {
+    const note = 'a\r\n- [ ] x 🏁 delete\r\nb\r\n'
+    expect(appliedEdits(note, tick(note, 1, '2026-11-15'))).toBe('a\r\nb\r\n')
+  })
+
+  test('gets the next occurrence on a line of its own with the same line break', () => {
+    const note = 'a\r\n- [ ] pay 🔁 every day 📅 2026-11-15\r\nb\r\n'
+    const ticked = appliedEdits(note, tick(note, 1, '2026-11-15'))
+    expect(ticked.split('\r\n')).toHaveLength(5)
+    expect(ticked.replace(/\r\n/g, '')).not.toContain('\n')
+  })
+})

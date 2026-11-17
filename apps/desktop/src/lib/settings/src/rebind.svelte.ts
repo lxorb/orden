@@ -1,5 +1,5 @@
 import { type Modifier, writeTap } from '../../double-tap/src/api'
-import { readCombination } from '../../ui-kit/src/api'
+import { chorded, readCombination } from '../../ui-kit/src/api'
 import { type Shortcut, shortcuts } from '../../shortcuts/src/api'
 import { BY_ID } from '../../shortcuts/src/api'
 
@@ -27,8 +27,17 @@ export class Rebind {
     if (!clash) return
 
     for (const holder of clash.holders) shortcuts.set(holder.id, null)
-    shortcuts.set(clash.id, clash.key)
+    if (clash.key === shortcuts.defaultFor(clash.id)) shortcuts.reset(clash.id)
+    else shortcuts.set(clash.id, clash.key)
     this.clash = null
+  }
+
+  reset(id: string) {
+    this.forget()
+    const key = shortcuts.defaultFor(id)
+    const holders = key ? shortcuts.conflicts(id, key) : []
+    if (key && holders.length) this.clash = { id, key, holders }
+    else shortcuts.reset(id)
   }
 
   record(event: KeyboardEvent) {
@@ -40,7 +49,7 @@ export class Rebind {
       return
     }
 
-    if (event.key === 'Backspace' || event.key === 'Delete') {
+    if ((event.key === 'Backspace' || event.key === 'Delete') && !chorded(event)) {
       shortcuts.set(id, null)
       this.listening = null
       return

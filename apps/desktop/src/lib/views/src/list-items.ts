@@ -123,11 +123,16 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
   return out
 }
 
-export function laneKeys(groups: readonly Group[]): Group['key'][] {
+export function laneKeys(
+  groups: readonly Group[],
+  order: readonly Group['key'][] = [],
+): Group['key'][] {
   const seen = new Map<string, Group['key']>()
   for (const group of groups)
     for (const one of group.sub ?? []) seen.set(groupName(one.key), one.key)
-  return [...seen.values()]
+  const ordered = order.filter((key) => seen.has(groupName(key)))
+  const placed = new Set(ordered.map(groupName))
+  return [...ordered, ...[...seen].filter(([name]) => !placed.has(name)).map(([, key]) => key)]
 }
 
 export function withEveryDay(groups: readonly Group[], from: string, through: string): Group[] {

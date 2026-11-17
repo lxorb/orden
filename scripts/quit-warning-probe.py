@@ -82,7 +82,7 @@ def closed_by_hand(app) -> None:
         user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
 
 def active(window) -> str:
-    return str(window.run("nib.workspace.activeTabId"))
+    return str(window.run("orden.workspace.activeTabId"))
 
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
     app = run_probe(exe, env=environment)
@@ -131,7 +131,7 @@ def main() -> int:
         idle = window.open(shell, "PowerShell", "probe-quit-idle")
         check(bool(until(lambda: any(row.rstrip().endswith(">") for row in window.rows()), 40)), "the second shell draws its prompt")
         time.sleep(2.0)
-        busy_name = window.run(f"nib.workspace.tabs.find((one) => one.id === {json.dumps(busy)})?.shown")
+        busy_name = window.run(f"orden.workspace.tabs.find((one) => one.id === {json.dumps(busy)})?.shown")
         say(f"busy tab {busy} is called {busy_name!r}, idle tab {idle}")
 
         closed_by_hand(app)

@@ -34,7 +34,7 @@ use session::Claude;
 
 fn claude_code_offered() -> bool {
     !matches!(
-        option_env!("ORDEN_CLAUDE_CODE").or(option_env!("NIB_CLAUDE_CODE")),
+        option_env!("ORDEN_CLAUDE_CODE"),
         Some("off" | "0" | "false")
     )
 }

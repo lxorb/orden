@@ -34,13 +34,22 @@ import {
   judgedForWriting,
   onDisk,
   type Place,
+  placeFor,
+  reachesSpace,
   placeOf,
-  reachesSpaceId,
   writableAt,
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
 import { guardedAt } from './guard'
-import { isPriority, type Priority, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+import {
+  isPriority,
+  type Priority,
+  type Todo,
+  type TodoPatch,
+  type TodoSpace,
+  isTodoSpace,
+  todoSpaceOf,
+} from '../../tasks-model/src/api'
 import { at, made, noteOf } from './notes'
 import { notes } from './docs'
 
@@ -114,10 +123,28 @@ function todoOut(todo: Todo) {
   }
 }
 
-function spaceIdOf(call: Call): string | null {
-  const unplaced =
-    maybe(call, 'space') === null && !threadSpaceOf(call.caller) && !workspace.activeSpace
-  return unplaced ? null : placeOf(call).space.id
+function namedSpace(call: Call): TodoSpace | null {
+  const named = maybe(call, 'space')
+  if (named === null) return null
+  const kept = workspace.spaces.find((one) => todoSpaceOf(one).id === named)
+  return todoSpaceOf(placeFor(call, kept?.id ?? named).space)
+}
+
+function openSpace(call: Call): TodoSpace | null {
+  const thread = threadSpaceOf(call.caller)
+  const open = workspace.spaces.find((one) => one.id === thread) ?? workspace.activeSpace ?? null
+  if (!reachesSpace(call, open?.id ?? null)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  return open ? todoSpaceOf(open) : null
+}
+
+function reachesTodoSpace(call: Call, id: string | null): boolean {
+  if (reachesSpace(call, id)) return true
+  return (
+    id !== null &&
+    workspace.spaces.some((one) => isTodoSpace(todoSpaceOf(one), id) && reachesSpace(call, one.id))
+  )
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -152,7 +179,7 @@ function patchOf(call: Call): TodoPatch {
   if (typeof description === 'string') patch.description = description
   const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
   if (labels !== undefined) patch.labels = labels
-  if ('space' in call.args) patch.space = maybe(call, 'space') === null ? null : spaceIdOf(call)
+  if ('space' in call.args) patch.space = namedSpace(call)?.id ?? null
   const start = dayArg(call, 'start')
   if (start !== undefined) patch.start = start
   const deadline = dayArg(call, 'deadline' in call.args ? 'deadline' : 'due')
@@ -165,17 +192,21 @@ function patchOf(call: Call): TodoPatch {
 
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const { todos, sortedTodos } = await model()
-  const space = maybe(call, 'space') === null ? null : placeOf(call).space.id
+  const space = namedSpace(call)
   const label = maybe(call, 'label')
   const withDone = flag(call, 'done')
   const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
+  const inSpace = (one: Todo) =>
+    space === null ||
+    one.space === space.id ||
+    (one.space !== null && (space.also?.includes(one.space) ?? false))
   const shown = sortedTodos(
     todos.todos.filter(
       (one) =>
-        (space === null || one.space === space) &&
+        inSpace(one) &&
         (label === null || one.labels.includes(label)) &&
         (withDone || !one.done) &&
-        reachesSpaceId(call, one.space),
+        reachesTodoSpace(call, one.space),
     ),
     'deadline',
   )
@@ -185,10 +216,13 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const title = maybe(call, 'title') ?? need(call, 'text')
-  const patch = patchOf(call)
-  const space = 'space' in call.args ? (patch.space ?? null) : spaceIdOf(call)
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
+  const patch = patchOf(call)
+  const space = 'space' in call.args ? (patch.space ?? null) : (openSpace(call)?.id ?? null)
+  if (!reachesTodoSpace(call, space)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
   const made = await todos.add({ ...patch, title, space, done: false })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
@@ -198,11 +232,15 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was || !reachesSpaceId(call, was.space))
+  if (!was || !reachesTodoSpace(call, was.space))
     throw new Refused('no_such_file', `there is no todo ${id}`)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
-  const kept = await todos.update(id, patchOf(call))
+  const patch = patchOf(call)
+  if ('space' in call.args && !reachesTodoSpace(call, patch.space ?? null)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  const kept = await todos.update(id, patch)
   if (!kept.ok) throw new Refused('bad_arguments', kept.error.message)
   return done(todoOut(kept.value))
 }
@@ -289,12 +327,12 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
-  const said = (where.folder ?? folderOf(relative)).replace(/^\/+|^\.$/, '')
-  const folder = said ? judgedForWriting(said) : ''
+  const looksIn = (where.folder ?? folderOf(relative)).trim().replace(/^\/+/, '')
+  const folder = looksIn === '' || looksIn === '.' ? '' : judgedForWriting(looksIn)
   const rows = await rowsStore()
   const template = await templateOf(place, where.template, rows.of(place.space.name))
   const name = judgedForWriting(noteName(maybe(call, 'title') ?? 'Untitled'))
-  const path = await freePath(place, folder === '.' ? '' : folder, name)
+  const path = await freePath(place, folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
 

@@ -439,15 +439,15 @@ def main() -> int:
         time.sleep(3)
 
         ImageGrab.grab().save(args.out / "start.png")
-        app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
+        app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         until = time.monotonic() + 40
         while time.monotonic() < until:
-            if app.eval("nib.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is True:
+            if app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is True:
                 break
             time.sleep(0.5)
         time.sleep(3)
         ImageGrab.grab().save(args.out / "built.png")
-        under = app.eval("nib.pages.under")
+        under = app.eval("orden.pages.under")
         print(f"under: {under}", flush=True)
         if isinstance(under, dict):
             hung = user32.IsHungAppWindow(hwnd)
@@ -491,7 +491,7 @@ def main() -> int:
         time.sleep(1)
 
         def told() -> dict:
-            title = app.eval("nib.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('under ')) || ''")
+            title = app.eval("orden.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('under ')) || ''")
             try:
                 return json.loads(str(title)[len("under "):])
             except ValueError:

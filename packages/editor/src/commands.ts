@@ -164,7 +164,7 @@ export function shiftHeading(delta: number): StateCommand {
   }
 }
 
-function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
+function toggleLinePrefix(prefix: string, pattern: RegExp, replaces = pattern): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
     const allPrefixed = lines.every((line) => pattern.test(line.text))
@@ -179,7 +179,9 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
         const end = task ? Math.max(task.marker, matched.length) : matched.length
         return { from: line.from + indent, to: line.from + end, insert: '' }
       }
-      return { from: line.from + indent, to: line.from + matched.length, insert: prefix }
+      const old = replaces.exec(line.text)?.[0] ?? INDENT.exec(line.text)?.[0] ?? ''
+      const lead = old.length - old.trimStart().length
+      return { from: line.from + lead, to: line.from + old.length, insert: prefix }
     })
 
     dispatch(state.update({ changes, userEvent: 'input' }))
@@ -187,11 +189,11 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   }
 }
 
-export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
-export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
-
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
+
+export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
+export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/, MARKER)
 
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
 
@@ -295,14 +297,19 @@ export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
   const pattern = /^\s*\d+[.)]\s+/
   const allNumbered = lines.every((line) => pattern.test(line.text))
+  const counts: { indent: number; count: number }[] = []
 
-  const changes: ChangeSpec[] = lines.map((line, index) => {
-    const existing = pattern.exec(line.text)
-    return {
-      from: line.from,
-      to: line.from + (existing?.[0].length ?? 0),
-      insert: allNumbered ? '' : `${index + 1}. `,
-    }
+  const changes: ChangeSpec[] = lines.map((line) => {
+    const old = (allNumbered ? pattern : MARKER).exec(line.text)?.[0] ?? ''
+    const indent = (INDENT.exec(line.text)?.[0] ?? '').length
+    const from = line.from + indent
+    const to = line.from + Math.max(old.length, indent)
+    if (allNumbered) return { from, to, insert: '' }
+    while (counts.length && (counts.at(-1)?.indent ?? 0) > indent) counts.pop()
+    const level = counts.at(-1)
+    if (level?.indent === indent) level.count += 1
+    else counts.push({ indent, count: 1 })
+    return { from, to, insert: `${counts.at(-1)?.count ?? 1}. ` }
   })
 
   dispatch(state.update({ changes, userEvent: 'input' }))

@@ -1,6 +1,8 @@
 import {
   type LocalKind,
   isLocal,
+  movedSince,
+  onMoves,
   type Provider,
   type ProviderKind,
 } from '../../../ai-providers/src/api'
@@ -58,6 +60,8 @@ if (typeof addEventListener === 'function') {
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
 const PARTLY =
   'Change part of a note with edit_note rather than write_note: they may be typing in it.'
+const MATHS =
+  'Write maths as $…$ inline and $$…$$ on lines of their own, and a subscript or superscript outside maths as H~2~O and x^2^.'
 
 const SYSTEM: Record<Thread['mode'], string> = {
   approve: [
@@ -66,12 +70,14 @@ const SYSTEM: Record<Thread['mode'], string> = {
     CITE,
     PARTLY,
     'Reply in the language of the request, in markdown, briefly: no preamble, no sign-off.',
+    MATHS,
   ].join(' '),
   plan: [
     'You are the reader’s assistant inside Orden, their notes app and web browser, in a panel beside what they are reading.',
     'You are in Plan mode: read what you need, then write the plan as one new note with create_note, a task (- [ ]) per step, and change nothing else.',
     CITE,
     'Reply in the language of the request, briefly.',
+    MATHS,
   ].join(' '),
   auto: [
     'You are the reader’s agent inside Orden, their notes app and web browser, in a panel beside what they are reading.',
@@ -79,6 +85,7 @@ const SYSTEM: Record<Thread['mode'], string> = {
     CITE,
     PARTLY,
     'Reply in the language of the request, briefly, saying what you did.',
+    MATHS,
   ].join(' '),
   full: [
     'You are the reader’s agent inside Orden, their notes app and web browser, in a panel beside what they are reading.',
@@ -87,6 +94,7 @@ const SYSTEM: Record<Thread['mode'], string> = {
     CITE,
     PARTLY,
     'Reply in the language of the request, briefly, saying what you did.',
+    MATHS,
   ].join(' '),
 }
 
@@ -116,7 +124,9 @@ function modelTurn(thread: Thread): Turn {
 function lastModel(thread: Thread): string {
   for (let at = thread.turns.length - 1; at >= 0; at--) {
     const turn = thread.turns[at]
-    if (turn?.role === 'model' && turn.model) return `${turn.provider ?? ''}/${turn.model}`
+    if (turn?.role === 'model' && turn.model) {
+      return `${movedSince(turn.provider ?? '', turn.at)}/${turn.model}`
+    }
   }
   return ''
 }
@@ -128,6 +138,11 @@ function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
     : listing
 }
 
+function failRunning(turn: Turn): void {
+  for (const part of turn.parts)
+    if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
+}
+
 function keptOut(name: string): ToolOutput {
   return { text: `${name} is not available in this chat.`, images: [], error: true }
 }
@@ -137,6 +152,11 @@ export function createApiEngine(setup: Setup): Engine {
   const answers = setup.answers ?? crateAnswers
   const listed = new Map<string, ModelInfo[]>()
   const steering = new Map<string, string[]>()
+  let moves = 0
+  onMoves((moved) => {
+    moves++
+    for (const one of moved) listed.delete(one.from)
+  })
 
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
@@ -147,8 +167,9 @@ export function createApiEngine(setup: Setup): Engine {
   async function modelOf(provider: Provider, id: string): Promise<ModelInfo> {
     let models = listed.get(provider.id)
     if (!models) {
+      const before = moves
       models = await catalogue(provider).catch(() => [])
-      if (models.length) listed.set(provider.id, models)
+      if (models.length && before === moves) listed.set(provider.id, models)
     }
     return models.find((one) => one.id === id) ?? unlisted(provider, id)
   }
@@ -323,6 +344,7 @@ export function createApiEngine(setup: Setup): Engine {
           if (signal.aborted) throw new DOMException('stopped', 'AbortError')
         } else if (ending !== 'end') {
           stop = ending
+          failRunning(turn)
           say({ kind: 'notice', code: ending, text: result.answer.refusal ?? '' })
           break
         }
@@ -359,8 +381,7 @@ export function createApiEngine(setup: Setup): Engine {
       on({ type: 'done', stop })
     } catch (error) {
       close(false)
-      for (const part of turn.parts)
-        if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
+      failRunning(turn)
       if (wasStopped(error) || signal.aborted || leaving) {
         say({ kind: 'notice', code: 'stopped', text: '' })
         on({ type: 'done', stop: 'stopped' })

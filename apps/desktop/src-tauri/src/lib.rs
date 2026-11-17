@@ -69,7 +69,6 @@ mod firefox_profiles;
 mod fonts;
 #[cfg(desktop)]
 mod foreground;
-pub mod former_name;
 mod front_matter;
 #[cfg(all(desktop, target_os = "linux"))]
 mod front_x;
@@ -509,6 +508,14 @@ macro_rules! desktop_commands {
             terminal::pty_program,
             terminal::pty_ssh,
             terminal::pty_kill,
+            terminal::pty_detach,
+            terminal::pty_held,
+            terminal::pty_take,
+            terminal::pty_name,
+            terminal::pty_end,
+            terminal::terminal_sessions,
+            terminal::terminal_tmux,
+            terminal::remote::remote_end,
             terminal::history::terminal_history_read,
             terminal::history::terminal_history_write,
             terminal::history::terminal_history_forget,
@@ -640,6 +647,15 @@ pub fn run() {
     run_on(tauri::Builder::default());
     #[cfg(desktop)]
     run_on(tauri::Builder::default().runtime(engine::cef_runtime()));
+}
+
+#[cfg(desktop)]
+#[must_use]
+pub fn terminal_hold() -> Option<i32> {
+    std::env::args_os()
+        .nth(1)
+        .is_some_and(|first| first == terminal::hold::MODE)
+        .then(terminal::hold::serve)
 }
 
 #[cfg(desktop)]
@@ -842,6 +858,7 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     chromium_pump::start(handle);
     page_scale::start(handle);
     extensions::tabs::start(handle);
+    extensions::preinstall(handle);
 }
 
 #[cfg(desktop)]
@@ -940,6 +957,7 @@ fn ready(
                 #[cfg(target_os = "macos")]
                 lights::hold(&window);
                 window.show()?;
+                placement::raised(&window.as_ref().window());
             }
         }
         first_window(handle);

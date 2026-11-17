@@ -1,32 +1,35 @@
 import { DIAGRAM_SCHEMES, diagramKey } from '@orden/markdown/diagrams'
 import { Hono } from 'hono'
 import {
-  allows,
-  blobKey,
-  BYTES,
   type Env,
   fits,
   fitsSql,
-  hashOfBytes,
-  held,
-  holdsItsName,
   hooks,
-  letGo,
   NOT_A_HASH,
   now,
   OUT_OF_SPACE,
-  reachedSpace,
   readSite,
-  readSpaceFiles,
   said,
   type Space,
   spaceForHost,
-  spellsADiagramName,
   SVG_POLICY,
   type Variables,
   type Whoever,
-  WRONG_BYTES,
 } from '../../sync-server/src/api'
+import {
+  allows,
+  blobKey,
+  BYTES,
+  hashOfBytes,
+  held,
+  holdsItsName,
+  letGo,
+  reachedSpace,
+  readSpaceFiles,
+  spellsADiagramName,
+  stillThere,
+  WRONG_BYTES,
+} from '../../sync-server-engine/src/api'
 
 const LIMITS: Record<string, number> = {
   'image/png': 16 * 1024 * 1024,
@@ -89,9 +92,10 @@ blobs.put('/:hash', async (context) => {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  if (!there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))) {
-    await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
-  }
+  const put = () =>
+    context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
+  const placed = !there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))
+  if (placed) await put()
   const written = await context.env.DB.prepare(
     `insert into blobs (hash, user_id, size, type, created_at)
      select ?1, ?2, ?3, ?4, ?5 where ${fitsSql('?2', '?3')}
@@ -106,6 +110,7 @@ blobs.put('/:hash', async (context) => {
       return context.json({ error: OUT_OF_SPACE }, 507)
     }
   }
+  if (!(await stillThere(context.env, hash))) await put()
 
   return context.json({ hash, stored: true }, 201)
 })

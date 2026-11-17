@@ -14,6 +14,8 @@ pub const MARKDOWN: [&str; 4] = ["md", "markdown", "mdown", "mkd"];
 
 pub const TRASH: &str = ".trash";
 
+const ORDEN_DIR: &str = ".orden";
+
 pub const MAX_DEPTH: usize = 32;
 
 static WRITES: AtomicU64 = AtomicU64::new(0);
@@ -536,6 +538,19 @@ fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
     judged_as(NAMING, root, path)
 }
 
+pub fn below_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    judged_below(&spaces_dir(app)?, path)
+}
+
+fn judged_below(root: &Path, path: &str) -> Result<PathBuf, String> {
+    let target = judged(root, path)?;
+    let kept = root.join(ORDEN_DIR);
+    if inside(&target, root) || inside(&target, &kept) {
+        return Err(format!("{path} is not a folder to take away"));
+    }
+    Ok(target)
+}
+
 fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
@@ -763,6 +778,22 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
         .replace('\\', "/")
 }
 
+pub(crate) fn opened_file(path: &Path) -> std::io::Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = options.open(path)?;
+    if file.metadata()?.is_file() {
+        Ok(file)
+    } else {
+        Err(std::io::Error::other("not a file that can be read"))
+    }
+}
+
 pub fn at_most(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
     Ok(at_most_stamped(target, limit)?.map(|(bytes, _)| bytes))
 }
@@ -771,7 +802,7 @@ pub fn at_most_stamped(
     target: &Path,
     limit: u64,
 ) -> Result<Option<(Vec<u8>, fs::Metadata)>, String> {
-    let file = fs::File::open(target).map_err(|error| cannot("read", target, &error))?;
+    let file = opened_file(target).map_err(|error| cannot("read", target, &error))?;
     let meta = file
         .metadata()
         .map_err(|error| cannot("read", target, &error))?;
@@ -807,8 +838,8 @@ fn into_place(
     bytes: &[u8],
     pour: impl FnOnce(&mut fs::File) -> std::io::Result<()>,
 ) -> Result<(), String> {
-    let linked = fs::symlink_metadata(target).is_ok_and(|meta| meta.file_type().is_symlink());
-    let opened = (!linked)
+    let plain = fs::symlink_metadata(target).is_ok_and(|meta| meta.file_type().is_file());
+    let opened = plain
         .then(|| fs::OpenOptions::new().write(true).open(target).ok())
         .flatten();
     let Some(mut file) = opened else {
@@ -971,8 +1002,9 @@ mod tests {
         a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
-        judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, path_key_as,
-        same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked, ORIGIN,
+        judged_below, judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of,
+        path_key_as, same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked,
+        ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1183,6 +1215,20 @@ mod tests {
         assert!(said(&["Documents", "Nibble", "a.md"]).is_err());
         assert!(said(&["Documents"]).is_err());
         assert!(judged(&root, "").is_err());
+    }
+
+    #[test]
+    fn neither_the_spaces_folder_nor_its_own_folder_is_taken_away_whole() {
+        let root = path(&["Documents", "Orden"]);
+        let said = |one: &[&str]| judged_below(&root, &path(one).to_string_lossy());
+
+        assert!(said(&["Documents", "Orden"]).is_err());
+        assert!(said(&["Documents", "Orden", "Work", ".."]).is_err());
+        assert!(said(&["Documents", "Orden", ".orden"]).is_err());
+        assert!(said(&["Documents", "Orden", ".orden", "Work", "Work"]).is_ok());
+        assert!(said(&["Documents", "Orden", ".orden", ".work", "Work"]).is_ok());
+        assert!(said(&["Documents", "Orden", "Work"]).is_ok());
+        assert!(said(&["Documents", "Orden", "Work", "Old"]).is_ok());
     }
 
     #[test]
@@ -1551,6 +1597,32 @@ mod tests {
             std::fs::read_dir(dir.path()).expect("the folder").count(),
             1
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_pipe_named_like_a_note_is_neither_waited_on_nor_written_into() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pipe = crate::explorer::tests::pipe_in(dir.path());
+        let (said, heard) = std::sync::mpsc::channel();
+        let read = pipe.clone();
+        std::thread::spawn(move || {
+            let _ = said.send(super::at_most(&read, 1024).is_err());
+        });
+        assert_eq!(
+            heard.recv_timeout(std::time::Duration::from_secs(5)),
+            Ok(true)
+        );
+        let (said, heard) = std::sync::mpsc::channel();
+        let written = pipe.clone();
+        std::thread::spawn(move || {
+            let _ = said.send(super::write_in_place(&written, b"text").is_ok());
+        });
+        assert_eq!(
+            heard.recv_timeout(std::time::Duration::from_secs(5)),
+            Ok(true)
+        );
+        assert_eq!(std::fs::read(&pipe).expect("the note"), b"text");
     }
 
     #[cfg(unix)]

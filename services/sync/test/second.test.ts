@@ -537,7 +537,7 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     expect(made.headers.get('location')).toBe(null)
   })
 
-  test('on an invitation, which lets the address in without signing it in', async () => {
+  test('on an invitation, once the mailed code is typed', async () => {
     const { secret } = await enrolled('a@b.dev')
     const owner = await signIn(env, 'owner@b.dev')
     const listed = await call(env, '/v1/spaces', { token: owner })
@@ -551,8 +551,16 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     )
     const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1] ?? ''
 
-    const joined = await call<SecondView>(env, `/v1/join/${link}`, { method: 'POST', body: {} })
-    expect(joined.status).toBe(200)
+    let asked: { status: number; json: SecondView } | undefined
+    const mailed = await mail(async () => {
+      asked = await call<SecondView>(env, `/v1/join/${link}`, { method: 'POST', body: {} })
+    })
+    expect(asked?.status).toBe(200)
+    expect(asked?.json.token).toBeUndefined()
+    const code = /(\d{3}) (\d{3})/.exec(mailed)
+    const joined = await call<SecondView>(env, '/v1/auth/verify', {
+      body: { email: 'a@b.dev', code: `${code?.[1] ?? ''}${code?.[2] ?? ''}` },
+    })
     expect(joined.json.token).toBeUndefined()
     expect(joined.json.second).toBe(true)
 

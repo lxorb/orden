@@ -12,6 +12,9 @@ import {
   insertPageBreak,
   calloutSign,
   insertTableToEdit,
+  editableCellAt,
+  pasteHere,
+  pasteIntoCell,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -54,15 +57,6 @@ function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
 
   command({ state: view.state, dispatch: (transaction: Transaction) => view.dispatch(transaction) })
-  view.focus()
-}
-
-async function paste(view: EditorView) {
-  const text = await navigator.clipboard.readText().catch(() => '')
-  if (!text) return
-
-  const range = view.state.selection.main
-  view.dispatch({ changes: { from: range.from, to: range.to, insert: text } })
   view.focus()
 }
 
@@ -242,8 +236,26 @@ function rowsFor(place: CommandPlace, on: object | undefined): MenuEntry[] {
   return commandRows(place, on).map(({ label, run }) => ({ label, run }))
 }
 
-function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
-  const selected = !!view && !view.state.selection.main.empty
+function pasteInto(view: EditorView, cell: HTMLElement | null): void {
+  if (!cell) {
+    pasteHere(view)
+    view.focus()
+    return
+  }
+  void navigator.clipboard
+    .readText()
+    .then((text) => pasteIntoCell(cell, text))
+    .catch(() => undefined)
+}
+
+function editorMenu(
+  view: EditorView | undefined,
+  block: MenuEntry[],
+  cell: HTMLElement | null = null,
+): MenuEntry[] {
+  const selected = cell
+    ? !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
+    : !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
 
@@ -265,7 +277,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
       hint: shortcuts.hint('fixed.paste'),
       disabled: locked,
       run: () => {
-        if (view) void paste(view)
+        if (view) pasteInto(view, cell)
       },
     },
   ]
@@ -439,7 +451,11 @@ export function showEditorMenu(
     [
       ...pictureEntries(view, event),
       ...linkEntries(view, event, path),
-      ...editorMenu(view, blockEntries(view, at, path)),
+      ...editorMenu(
+        view,
+        blockEntries(view, at, path),
+        view ? editableCellAt(view, event.target) : null,
+      ),
       ...recordingEntries(view, at),
     ],
     { near: true, until: unlocks.held },

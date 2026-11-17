@@ -27,6 +27,7 @@ import {
 import { indexOf } from './links'
 import { readable } from './guarded'
 import { inFlight as moving } from '../../file-ops/src/api'
+import { readableAll } from './guarded'
 
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const
 type Kind = (typeof KINDS)[number]
@@ -131,6 +132,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   const source = onDisk(place, from)
   readable(source, from)
   writableAt(place, source)
+  readableAll(source, from)
 
   const question = await asked(call, null, `Move ${from} to ${to} in ${place.space.name}`)
   if (question) return question
@@ -170,6 +172,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   }
   for (const held of everyPathIn(entry)) readable(held, relativeTo(place.space.root, held))
   writableAt(place, path)
+  readableAll(path, relative)
 
   const rev = maybe(call, 'if_rev')
   if (rev !== null && !entry.is_dir) {

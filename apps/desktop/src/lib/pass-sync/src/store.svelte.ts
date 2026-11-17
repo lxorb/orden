@@ -75,7 +75,7 @@ import {
   without,
 } from './rows'
 import type { LockWay, PassSettings } from './settings'
-import { keepSettings, readSettings } from './settings'
+import { keepSettings, readSettings, SETTINGS_KEY } from './settings'
 import type { InvitedRole, Sharing } from './share'
 import type { Person } from './people'
 import { codeOf, confirmedPerson } from './people'
@@ -564,6 +564,12 @@ export class PassStore {
     })
   }
 
+  heardSettings(): void {
+    const was = this.settings.relockAfter
+    this.settings = { ...readSettings(), lock: this.settings.lock }
+    if (this.settings.relockAfter !== was) this.relock.rearm()
+  }
+
   setSetting<K extends keyof PassSettings>(key: K, value: PassSettings[K]): void {
     this.settings = { ...this.settings, [key]: value }
     keepSettings(this.settings)
@@ -1039,3 +1045,9 @@ export class PassStore {
 }
 
 export const pass = new PassStore()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === SETTINGS_KEY) pass.heardSettings()
+  })
+}

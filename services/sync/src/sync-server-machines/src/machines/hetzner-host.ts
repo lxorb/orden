@@ -1,14 +1,15 @@
 import type { Env } from '../../../sync-server/src/api'
 import type { MachineHost } from '@orden/online'
 import type { Refusal } from '@orden/online/wire'
-import { audit, type Place } from './audit'
+import { audit, type Named } from './audit'
 import { bundleSha } from './bundle'
 import { cloudInit, sshKeyOf } from './cloudinit'
-import { Hetzner, HetznerError, type ServerType } from './hetzner'
+import { spentOn } from './budget'
+import { Hetzner, HetznerError, type Pricing, type ServerType } from './hetzner'
 import { type Access, Tunnels } from './tunnel'
 
 const SERVER_TYPE = 'cx43'
-const LOCATIONS: readonly Place[] = ['nbg1', 'fsn1']
+const LOCATIONS: readonly string[] = ['nbg1', 'fsn1']
 
 const LABEL = 'orden-machine'
 
@@ -136,7 +137,33 @@ export function firewallRules(ssh: boolean): unknown[] {
 
 interface Row {
   ssh_key: string | null
+  size: string
+  region: string
 }
+
+interface Priced {
+  size: string
+  price_month: number | null
+  price_hour: number | null
+  priced_at: number | null
+  spent: number
+}
+
+function chosenOf(row: { size: string; region: string }) {
+  return row.size !== 'small' && row.region !== 'eu' ? row : null
+}
+
+export function costOf(type: ServerType, location: string, pricing: Pricing) {
+  const price = type.prices.find((one) => one.location === location)
+  const ip = pricing.ipv4.get(location)
+  return {
+    monthly: Math.round(((price?.monthly ?? 0) + (ip?.monthly ?? 0)) * 100) / 100,
+    hourly: Math.round(((price?.hourly ?? 0) + (ip?.hourly ?? 0)) * 10_000) / 10_000,
+  }
+}
+
+const specOf = (type: ServerType) =>
+  JSON.stringify({ cores: type.cores, memory: type.memory, disk: type.disk })
 
 export class HetznerHost implements MachineHost {
   readonly alwaysOn = true
@@ -182,22 +209,25 @@ export class HetznerHost implements MachineHost {
     if (!secret) throw new Error('no link secret for the new server')
     if (!bundle) throw new Error('this Worker carries no machine bundle')
 
-    const row = await this.env.DB.prepare('select ssh_key from machines where id = ?')
+    const row = await this.env.DB.prepare('select ssh_key, size, region from machines where id = ?')
       .bind(id)
       .first<Row>()
     const sshKey = row?.ssh_key ? sshKeyOf(row.ssh_key) : null
+    const chosen = row ? chosenOf(row) : null
+    const wanted = chosen?.size ?? SERVER_TYPE
+    const asked = chosen ? [chosen.region] : LOCATIONS
 
-    const type = await setup.hetzner.serverType(SERVER_TYPE)
-    const places = LOCATIONS.filter((one) => !type.available.length || type.available.includes(one))
+    const type = await setup.hetzner.serverType(wanted)
+    const places = asked.filter((one) => !type.available.length || type.available.includes(one))
     const first = places[0]
     if (!first)
       throw new HetznerError(
         503,
         'resource_unavailable',
-        `no ${SERVER_TYPE} to be had in ${LOCATIONS.join(' or ')}`,
+        `no ${wanted} to be had in ${asked.join(' or ')}`,
       )
-    const { monthly: ipv4, currency } = await setup.hetzner.ipv4(first)
-    if (!(await setup.mayCost(priceIn(type, first) + ipv4, currency)))
+    const pricing = await setup.hetzner.pricing()
+    if (!(await setup.mayCost(costOf(type, first, pricing).monthly, pricing.currency)))
       throw new HostRefused('budget')
 
     const firewall =
@@ -221,31 +251,76 @@ export class HetznerHost implements MachineHost {
       try {
         const made = await setup.hetzner.createServer({
           name: names.server,
-          serverType: SERVER_TYPE,
+          serverType: wanted,
           location,
           userData,
           labels: { [LABEL]: id },
           firewall,
         })
-        const ip = location === first ? ipv4 : (await setup.hetzner.ipv4(location)).monthly
-        const place = LOCATIONS.find((one) => one === made.location) ?? location
+        const place = places.find((one) => one === made.location) ?? location
+        const cost = costOf(type, place, pricing)
         await this.record(id, {
           server_id: made.id,
           server_status: made.status,
           region: place,
-          size: SERVER_TYPE,
-          spec: JSON.stringify({ cores: type.cores, memory: type.memory, disk: type.disk }),
-          price_month: Math.round((priceIn(type, location) + ip) * 100) / 100,
-          price_currency: currency,
+          size: wanted,
+          spec: specOf(type),
+          price_month: cost.monthly,
+          price_hour: cost.hourly,
+          price_currency: pricing.currency,
+          priced_at: Date.now(),
+          spent: 0,
         })
-        await audit(this.env, id, 'server', { detail: place })
+        await audit(this.env, id, 'server', { detail: place as Named })
         return
       } catch (error) {
         if (!(error instanceof HetznerError) || !UNAVAILABLE.has(error.code)) throw error
         last = error
       }
     }
-    throw last instanceof Error ? last : new Error(`no ${SERVER_TYPE} could be made`)
+    throw last instanceof Error ? last : new Error(`no ${wanted} could be made`)
+  }
+
+  async resize(id: string, type: string, hard: boolean): Promise<boolean> {
+    const setup = this.need()
+    const server = await serverOfMachine(setup.hetzner, id)
+    if (!server) throw new Error('the machine has no server')
+    try {
+      if (server.type === type) {
+        await this.priced(id, type, server.location)
+        if (server.status === 'off') await setup.hetzner.powerOn(server.id)
+        return server.status === 'running'
+      }
+      if (server.status === 'running') await setup.hetzner.shutdown(server.id, hard)
+      if (server.status === 'off') await setup.hetzner.changeType(server.id, type)
+      return false
+    } catch (error) {
+      if (error instanceof HetznerError && error.code === 'locked') return false
+      throw error
+    }
+  }
+
+  private async priced(id: string, size: string, location: string): Promise<void> {
+    const had = await this.env.DB.prepare(
+      'select size, price_month, price_hour, priced_at, spent from machines where id = ?',
+    )
+      .bind(id)
+      .first<Priced>()
+    if (!had || had.size === size) return
+    const { hetzner } = this.need()
+    const [type, pricing] = await Promise.all([hetzner.serverType(size), hetzner.pricing()])
+    const cost = costOf(type, location, pricing)
+    const at = Date.now()
+    await this.record(id, {
+      size,
+      spec: specOf(type),
+      price_month: cost.monthly,
+      price_hour: cost.hourly,
+      price_currency: pricing.currency,
+      spent: spentOn(had, at) ?? 0,
+      priced_at: at,
+    })
+    await audit(this.env, id, 'resize', { detail: size as Named })
   }
 
   private async record(id: string, fields: Record<string, string | number>): Promise<void> {
@@ -332,10 +407,6 @@ export class HetznerHost implements MachineHost {
     await tunnels.remove(names.tunnel, names.hostname)
     await tunnels.remove(names.formerTunnel, names.hostname)
   }
-}
-
-function priceIn(type: ServerType, location: string): number {
-  return type.prices.find((one) => one.location === location)?.monthly ?? 0
 }
 
 async function deleteWhenFree(hetzner: Hetzner, id: number): Promise<void> {

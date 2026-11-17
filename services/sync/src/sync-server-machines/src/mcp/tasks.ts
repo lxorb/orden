@@ -4,14 +4,17 @@ import {
   PROTECTED,
   shutFor,
   objectIn,
-  writeInbox,
-  cleanPath,
-  MOVED,
-  blobKey,
   type Shut,
   type Env,
   type Note,
 } from '../../../sync-server/src/api'
+import {
+  writeInbox,
+  heldInbox,
+  cleanPath,
+  MOVED,
+  blobKey,
+} from '../../../sync-server-engine/src/api'
 import {
   AgentError,
   clockOf,
@@ -25,11 +28,11 @@ import {
 import { noteRowsOf } from '@orden/scan/rows'
 import {
   type InboxChange,
-  type InboxHeld,
-  inboxChangeOf,
+  inboxFits,
   inboxStamp,
   mergedInbox,
   metaFromText,
+  newer,
 } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import {
@@ -413,28 +416,28 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   return patch
 }
 
-const TOO_LARGE = 'That todo is too large for Orden to keep. Shorten its description or labels.'
+const STAMP = /^([0-9a-z]{9})-([0-9a-z]{4})-/
 
-async function fitsDevices(env: Env, userId: string, change: InboxChange): Promise<boolean> {
-  if (!inboxChangeOf(change)) return false
-  const held = await env.DB.prepare(
-    'select fields, stamps, seq, at from inbox_items where user_id = ? and id = ?',
-  )
-    .bind(userId, change.id)
-    .first<{ fields: string; stamps: string; seq: number; at: number }>()
-  const was = held
-    ? { fields: objectIn(held.fields) ?? {}, stamps: objectIn(held.stamps) ?? {} }
-    : null
-  const merged = mergedInbox(was as InboxHeld | null, change)
-  const item = { id: change.id, fields: merged.fields, stamps: merged.stamps }
-  return inboxChangeOf({ ...item, seq: Number.MAX_SAFE_INTEGER, at: Date.now() }) !== null
+function stampPast(now: string, held: string | undefined): string {
+  if (!newer(held, now)) return now
+  const [, time = '0', step = '0'] = STAMP.exec(held ?? '') ?? []
+  const at = parseInt(time, 36)
+  const next = parseInt(step, 36) + 1
+  return next < 36 ** 4 ? inboxStamp(at, next, 'mcp') : inboxStamp(at + 1, 0, 'mcp')
 }
 
 async function keep(env: Env, userId: string, id: string, fields: Fields): Promise<void> {
-  const stamp = inboxStamp(Date.now(), 0, 'mcp')
-  const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stamp]))
+  const held = await heldInbox(env, userId, id)
+  const now = inboxStamp(Date.now(), 0, 'mcp')
+  const stamps = Object.fromEntries(
+    Object.keys(fields).map((key) => [key, stampPast(now, held?.stamps[key])]),
+  )
   const change = { id, fields: fields as InboxChange['fields'], stamps }
-  if (!(await fitsDevices(env, userId, change))) throw new Said(TOO_LARGE)
+  if (!inboxFits({ id, ...mergedInbox(held, change) })) {
+    throw new Said(
+      'That would make the todo too large for a device to read. Say it in fewer words.',
+    )
+  }
   const kept = await writeInbox(env, userId, [change], 'mcp')
   if (kept === 'full') throw new Said('That is more todos than an account keeps.')
 }

@@ -189,6 +189,7 @@ test('a restored terminal draws its history, at its own size, before its shell s
   expect(writes[1]).toBe(`write ${ESC}[0m\r\n${ESC}[2mRestored ${when}${ESC}[22m\r\n`)
 
   expect(done).toEqual([
+    'pty_held',
     'terminal_history_read',
     'open',
     'resize 100x20',
@@ -211,6 +212,7 @@ test('on Windows the history goes above the screen before the shell starts', asy
   expect(writes[1]).toContain(`${'\r\n'.repeat(39)}${ESC}[H${ESC}[2mRestored `)
 
   expect(done).toEqual([
+    'pty_held',
     'terminal_history_read',
     'open',
     'resize 100x20',
@@ -228,6 +230,7 @@ test('a terminal with nothing kept starts its shell at once', async () => {
 
   expect(done.filter((one) => one.startsWith('write '))).toEqual([])
   expect(done).toEqual([
+    'pty_held',
     'terminal_history_read',
     'open',
     'fit',

@@ -7,26 +7,35 @@ export function serveAssets(): void {
 
   navigator.serviceWorker.addEventListener('controllerchange', drawAgain)
 
-  void navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => undefined)
+  void navigator.serviceWorker
+    .register('/sw.js', { scope: '/' })
+    .then(() => navigator.serviceWorker.ready)
+    .then((held) => held.active?.postMessage({ ordenKeep: codeLoaded() }))
+    .catch(() => undefined)
+}
+
+const BUILT = '/assets/'
+
+function codeLoaded(): string[] {
+  return performance
+    .getEntriesByType('resource')
+    .map((one) => new URL(one.name))
+    .filter((url) => url.origin === location.origin && url.pathname.startsWith(BUILT))
+    .map((url) => url.pathname)
 }
 
 function drawAgain(): void {
   const under = `[src^="${ASSET_ROUTE}"]`
-  const found = document.querySelectorAll(
+  const found = document.querySelectorAll<HTMLImageElement | HTMLMediaElement | HTMLSourceElement>(
     `img${under}, audio${under}, video${under}, source${under}`,
   )
 
   for (const one of found) {
-    if (
-      !(one instanceof HTMLImageElement) &&
-      !(one instanceof HTMLMediaElement) &&
-      !(one instanceof HTMLSourceElement)
-    ) {
-      continue
-    }
-
     const { src } = one
     one.src = ''
     one.src = src
+    if (one instanceof HTMLSourceElement && one.parentElement instanceof HTMLMediaElement) {
+      one.parentElement.load()
+    }
   }
 }

@@ -5,12 +5,17 @@ class OnlineSessions {
   list = $state<Listed[] | null>(null)
   failed = $state(false)
 
+  private asked = 0
+
   async refresh(): Promise<void> {
+    const turn = ++this.asked
     try {
-      this.list = await listed()
+      const list = await listed()
+      if (turn !== this.asked) return
+      this.list = list
       this.failed = false
     } catch {
-      this.failed = true
+      if (turn === this.asked) this.failed = true
     }
   }
 

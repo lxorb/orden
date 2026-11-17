@@ -10,6 +10,7 @@ export type KindName =
   | 'canvas'
   | 'pages'
   | 'chat'
+  | 'ai'
   | 'terminal'
   | 'remote'
   | 'online'
@@ -25,6 +26,7 @@ export function kindsHere(): KindName[] {
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken && chatsOn()) here.push('chat')
+  if (web) here.push('ai')
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
   if (appsOn()) here.push('application')
@@ -63,6 +65,16 @@ class HiddenKinds {
 
   restore() {
     this.hidden = stringList(stored(KINDS_KEY)) ?? []
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key === KINDS_KEY) this.restore()
+    })
   }
 }
 

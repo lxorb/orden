@@ -10,6 +10,8 @@ use crate::paths::{self, a_space, cannot, is_reserved};
 
 const MAX_NAME: usize = 64;
 
+const MOST_NAME_BYTES: usize = 200;
+
 const MAX_TRIES: usize = 500;
 
 #[derive(Serialize)]
@@ -134,7 +136,13 @@ fn folder_name(input: &str) -> Option<String> {
         return None;
     }
 
-    let capped: String = trimmed.chars().take(MAX_NAME).collect();
+    let mut capped = String::new();
+    for letter in trimmed.chars().take(MAX_NAME) {
+        if capped.len() + letter.len_utf8() > MOST_NAME_BYTES {
+            break;
+        }
+        capped.push(letter);
+    }
     let capped = capped
         .trim_matches(|letter: char| letter == '.' || letter.is_whitespace())
         .to_string();
@@ -253,6 +261,16 @@ mod tests {
         assert_eq!(
             folder_name(&long).map(|name| name.chars().count()),
             Some(MAX_NAME)
+        );
+    }
+
+    #[test]
+    fn a_name_of_wide_letters_still_fits_a_file_system_name() {
+        let named = folder_name(&"🌲".repeat(64)).expect("a name");
+        assert!(named.len() <= 200, "{}", named.len());
+        assert_eq!(
+            folder_name(&"日".repeat(64)).map(|one| one.chars().count()),
+            Some(64)
         );
     }
 

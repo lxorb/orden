@@ -188,7 +188,13 @@ export async function chooseTab(tab: string): Promise<void> {
 export function cardCorner(within?: Element | null): number {
   if (typeof document === 'undefined') return 0
   const card = within?.closest('[data-pane]')
-  if (card) return parseFloat(getComputedStyle(card).getPropertyValue('--card-radius')) || 0
+  if (card) {
+    const { borderBottomLeftRadius, borderBottomRightRadius } = getComputedStyle(card)
+    return Math.min(
+      parseFloat(borderBottomLeftRadius) || 0,
+      parseFloat(borderBottomRightRadius) || 0,
+    )
+  }
   const panes = document.querySelector('main') ?? document.documentElement
   return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
 }
@@ -305,6 +311,10 @@ class Pages {
 
   private readonly gone = new Set<string>()
 
+  private readonly goingTo = new WeakMap<Page, string>()
+
+  private readonly movedWhileTyping = new WeakSet<Page>()
+
   private listening: Promise<void> | null = null
 
   each(): [string, Page][] {
@@ -414,6 +424,10 @@ class Pages {
       page.opening = false
     }
 
+    const goingTo = this.goingTo.get(page)
+    this.goingTo.delete(page)
+    if (goingTo && handed) void this.go(tabId, goingTo, page.upgrade)
+
     const wanted = page.wanted
     page.wanted = null
     if (!wanted) return
@@ -440,6 +454,7 @@ class Pages {
     page.pane = pane
     const tried = page.url
     const forOwn = page.own
+    this.goingTo.delete(page)
 
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
@@ -477,6 +492,10 @@ class Pages {
       page.opening = false
     }
 
+    const goingTo = this.goingTo.get(page)
+    this.goingTo.delete(page)
+    if (goingTo) page.url = goingTo
+
     const wanted = page.wanted
     page.wanted = null
     if (page.live && page.crashed) {
@@ -496,6 +515,8 @@ class Pages {
     }
 
     if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
+
+    if (goingTo && goingTo !== tried) void this.go(tabId, goingTo, page.upgrade)
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
@@ -839,9 +860,20 @@ class Pages {
     ;(await sleeping()).bound(this)
   }
 
+  typing(tabId: string, on: boolean) {
+    const page = this.held.get(tabId)
+    if (!page) return
+    page.typing = on
+    if (on || !this.movedWhileTyping.has(page)) return
+    this.movedWhileTyping.delete(page)
+    if (page.at) page.url = page.at
+  }
+
   async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
+
+    this.movedWhileTyping.delete(page)
 
     page.upgrade = upgrade
     page.url = url
@@ -857,6 +889,7 @@ class Pages {
       return
     }
 
+    if (page.opening) this.goingTo.set(page, url)
     if (!page.live) return
 
     leftPage(tabId)
@@ -1118,6 +1151,7 @@ class Pages {
         page.forward = said.forward
         if (said.url) page.at = said.url
         if (said.url && !page.typing) page.url = said.url
+        else if (said.url && said.url !== page.url) this.movedWhileTyping.add(page)
         if (said.title) {
           page.title = said.title
           page.titled = true

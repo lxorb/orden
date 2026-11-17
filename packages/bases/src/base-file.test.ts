@@ -271,3 +271,35 @@ describe('writing a change', () => {
     )
   })
 })
+
+describe('keys this version does not know', () => {
+  test('stay on an option and on the id when the base is written again', () => {
+    const yaml = `views:
+  - type: table
+    name: All
+orden:
+  id:
+    property: num
+    prefix: T-
+    start: 100
+  properties:
+    status:
+      options:
+        - value: Todo
+          group: todo
+          colour: red
+          icon: star
+`
+    const base = readBase(yaml)
+    const view = base.views[0]
+    if (!view) throw new Error('no view')
+    const written = readBase(writeBase({ ...base, views: [{ ...view, name: 'Renamed' }] }, yaml))
+    expect(written.orden.id?.kept).toEqual({ start: 100 })
+    expect(written.orden.properties.status?.options?.[0]).toEqual({
+      value: 'Todo',
+      group: 'todo',
+      kept: { colour: 'red', icon: 'star' },
+    })
+    expect(written.views[0]?.name).toBe('Renamed')
+  })
+})

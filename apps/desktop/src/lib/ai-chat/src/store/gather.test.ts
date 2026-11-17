@@ -128,6 +128,7 @@ vi.mock('../chat/threads', () => ({
 }))
 
 const { draftOf } = await import('./gather')
+const { protection } = await import('../../../protect/src/api')
 
 describe('a message in a thread of another space than the one in front', () => {
   test('asks the thread’s space for its passages, not the one in front', async () => {
@@ -268,5 +269,49 @@ describe('words somebody else may have steered', () => {
       WORK,
     )
     expect(draft.attachments.map((one) => [one.label, !!one.untrusted])).toEqual([['Bob', true]])
+  })
+})
+
+describe('words from a note shut to agents', () => {
+  const PLAN = '/notes/Home/Plan.md'
+  const selection = { kind: 'selection' as const, id: 'selection', label: 'selection' }
+  const shut = async <T>(run: () => Promise<T>): Promise<T> => {
+    protection.set(HOME.root, PLAN, 'password')
+    try {
+      return await run()
+    } finally {
+      protection.set(HOME.root, PLAN, null)
+    }
+  }
+
+  test('a quote of a shut note stays home', async () => {
+    const quote = {
+      kind: 'words' as const,
+      id: 'q',
+      label: 'Plan:2',
+      text: 'The budget',
+      from: PLAN,
+    }
+    const draft = await shut(() => draftOf('q', [quote], 'auto', null, '', HOME))
+    expect(JSON.stringify(draft)).not.toContain('The budget')
+  })
+
+  test('a selection made in a shut note stays home while no note is in front', async () => {
+    const picked = { path: PLAN, shared: null }
+    const draft = await shut(() =>
+      draftOf('q', [selection], 'auto', null, 'The budget', HOME, picked),
+    )
+    expect(draft.attachments).toEqual([])
+  })
+
+  test('a selection of no known note stays home while its space holds a shut note', async () => {
+    const draft = await shut(() => draftOf('q', [selection], 'auto', null, 'The budget', HOME))
+    expect(draft.attachments).toEqual([])
+  })
+
+  test('a selection of an open note still goes', async () => {
+    const picked = { path: '/notes/Work/Plan.md', shared: null }
+    const draft = await shut(() => draftOf('q', [selection], 'auto', null, 'Friday', WORK, picked))
+    expect(draft.attachments.map((one) => one.text)).toEqual(['Friday'])
   })
 })

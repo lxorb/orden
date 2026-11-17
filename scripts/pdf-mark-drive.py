@@ -78,7 +78,7 @@ def mark(path):
         " const mark = row && row.querySelector('.mark svg'); return mark ? mark.innerHTML : null })()"
     )
 
-root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)
@@ -111,7 +111,7 @@ if not until(
     sys.exit("::error::the file list never showed the files put in the space")
 
 made = str(folder / "Lecture.pages")
-run(f"nib.workspace.openPdf({json.dumps(str(lecture))}); true")
+run(f"orden.workspace.openPdf({json.dumps(str(lecture))}); true")
 if not until(f"{LISTED}orden.workspace.entryAt({json.dumps(made)})?.path ?? null"):
     sys.exit("::error::opening the PDF made no page note")
 print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"nib.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
@@ -144,7 +144,7 @@ else:
 run(f"(() => {{ for (const tab of orden.workspace.tabs) if (tab.path === {json.dumps(made)}) orden.workspace.close(tab.id); return true }})()")
 time.sleep(1)
 run("void orden.workspace.addSpace('Elsewhere'), true")
-if not until("nib.workspace.activeSpace && orden.workspace.activeSpace.name === 'Elsewhere'"):
+if not until("orden.workspace.activeSpace && orden.workspace.activeSpace.name === 'Elsewhere'"):
     failures.append("the second space never opened")
 else:
     run(f"void orden.workspace.openPdf({json.dumps(made)}), true")
@@ -161,7 +161,7 @@ else:
             break
         time.sleep(0.25)
     subprocess.run(["grim", str(OUT / "pdf-mark-elsewhere.png")], check=False)
-    front = run("nib.workspace.activeSpace && orden.workspace.activeSpace.name")
+    front = run("orden.workspace.activeSpace && orden.workspace.activeSpace.name")
     listed = run(f"!!orden.workspace.entryAt({json.dumps(made)})")
     print(f"pdf mark: {front!r} is in front, and its list holds the note: {listed}")
     if front != "Elsewhere" or listed:

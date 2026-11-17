@@ -1,8 +1,15 @@
 import type { Effort } from '../../../ai-providers/src/api'
 import { isEffort } from '../chat/effort'
 import type { Provider } from '../../../ai-providers/src/api'
-import { FIRST_MODE, type Mode, modeIn } from '../../../ai-providers/src/api'
-import { isRecord, isString, keepJson, stored } from '../../../platform/src/api'
+import {
+  FIRST_MODE,
+  lastMove,
+  type Mode,
+  modeIn,
+  movedKeys,
+  movesAfter,
+} from '../../../ai-providers/src/api'
+import { isNumber, isRecord, isString, keepJson, stored } from '../../../platform/src/api'
 
 const STORAGE_KEY = 'orden:ai-sidebar'
 
@@ -27,6 +34,7 @@ interface Prefs {
   open: Record<string, string>
   rail: boolean
   models: Record<string, string>
+  moved: number
 }
 
 function read(): Prefs {
@@ -41,9 +49,11 @@ function read(): Prefs {
     open: {},
     rail: true,
     models: {},
+    moved: 0,
   }
   if (!isRecord(saved)) return out
   if (saved.rail === false) out.rail = false
+  if (isNumber(saved.moved)) out.moved = saved.moved
   out.mode = modeIn(saved.mode) ?? FIRST_MODE
   out.task = modeIn(saved.task) ?? FIRST_TASK_MODE
   if (isString(saved.taskAsk)) out.taskAsk = saved.taskAsk
@@ -69,8 +79,19 @@ function read(): Prefs {
 
 let prefs: Prefs | null = null
 
+function caughtUp(prefs: Prefs): Prefs {
+  const moves = movesAfter(prefs.moved)
+  if (!moves.length) return prefs
+  return {
+    ...prefs,
+    efforts: movedKeys(prefs.efforts, moves),
+    models: movedKeys(prefs.models, moves),
+    moved: lastMove(moves),
+  }
+}
+
 function held(): Prefs {
-  prefs ??= read()
+  prefs = caughtUp(prefs ?? read())
   return prefs
 }
 

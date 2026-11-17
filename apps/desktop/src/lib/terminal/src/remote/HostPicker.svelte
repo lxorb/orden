@@ -19,6 +19,7 @@
     plainlyDestination,
     said,
     searchName,
+    withAbout,
   } from './hosts'
   import { remote } from './hosts.svelte'
   import { hostPicker } from './picker.svelte'
@@ -93,11 +94,7 @@
     menu.show(event, [
       {
         label: host.pinned ? 'Unpin' : 'Pin',
-        run: () =>
-          void remote.keep((kept) => ({
-            ...kept,
-            about: { ...kept.about, [host.id]: { ...kept.about[host.id], pinned: !host.pinned } },
-          })),
+        run: () => void remote.keep((kept) => withAbout(kept, host.id, { pinned: !host.pinned })),
       },
       { label: 'Settings', run: () => hostPicker.manage() },
     ])

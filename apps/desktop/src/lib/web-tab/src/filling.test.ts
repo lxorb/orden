@@ -56,3 +56,10 @@ test('a second say of the same thing changes nothing', async () => {
   await filling.take('a')
   expect(frame.asked).toEqual([true])
 })
+
+test('a page that gives the screen back before it has it ends up holding nothing', async () => {
+  await Promise.all([filling.take('a'), filling.give('a')])
+
+  expect(filling.by).toBe(null)
+  expect(frame.full).toBe(false)
+})
