@@ -200,23 +200,24 @@ function scan(
         }
 
         case 'Paragraph': {
-          const embed = embedOfBlock(state, node.from, node.to)
-          if (embed && !MEDIA.has(embedKind(embed.target))) {
-            const span = found(node.from, node.to)
-            if (span.revealed) return false
-
-            ranges.push(
-              Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
-                span.from,
-                span.to,
-              ),
-            )
-            return false
-          }
-
           const last = doc.lineAt(node.to).number
           for (let number = doc.lineAt(node.from).number; number <= last; number++) {
             const line = doc.line(number)
+            const start = line.from + line.text.length - line.text.trimStart().length
+            const embed = embedOfBlock(state, start, line.to)
+            if (embed && !MEDIA.has(embedKind(embed.target))) {
+              const span = found(line.from, line.to)
+              if (!span.revealed) {
+                ranges.push(
+                  Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
+                    span.from,
+                    span.to,
+                  ),
+                )
+              }
+              continue
+            }
+
             if (line.length > TOC_MAX || !/\[toc\]/i.test(line.text)) continue
 
             const span = found(line.from, line.to)

@@ -1,10 +1,11 @@
 import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
 import type { BlockContext, InlineContext, Line, MarkdownConfig } from '@lezer/markdown'
-import { CommentLines, stripLine } from '@orden/markdown/comments'
+import { stripLine } from '@orden/markdown/comments'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { parseWikilink, shownSpan } from '@orden/markdown/links'
 import { tagAt } from '@orden/markdown/tags'
+import { commentStateAt } from './comment-state'
 import { markTags } from './tags'
 import {
   BACKSLASH,
@@ -64,30 +65,10 @@ const PercentComment: MarkdownConfig = {
   ],
 }
 
-const commentReaders = new WeakMap<Input, { reader: CommentLines; at: number }>()
-
-function commentOpenAt(input: Input, at: number): boolean {
-  let held = commentReaders.get(input)
-  if (!held || held.at > at) {
-    held = {
-      reader: new CommentLines(),
-      at: frontMatterBlock(input.read(0, input.length))?.to ?? 0,
-    }
-    commentReaders.set(input, held)
-  }
-  if (at <= held.at) return false
-
-  const lines = input.read(held.at, at).split('\n')
-  lines.pop()
-  for (const line of lines) held.reader.line(line)
-  held.at = at
-  return held.reader.inside !== null
-}
-
 function opensPercentBlock(cx: BlockContext, rest: string): boolean {
   if (!rest.startsWith('%%') || stripLine(rest, null).inside !== '%%') return false
   const { input } = cx as unknown as { input: Input }
-  return !commentOpenAt(input, cx.lineStart)
+  return commentStateAt(input, cx.lineStart) === null
 }
 
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }

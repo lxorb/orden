@@ -38,8 +38,11 @@ const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode|BlockM
 
 const OPENS_BELOW = /^(?:BulletList|OrderedList|Blockquote|Table|HTMLBlock)$/
 
+const LONE_EMBED = /^!\[\[[^[\]]+\]\]$/
+
 function standsApart(state: EditorState, line: Line, below: boolean): boolean {
-  if (line.text.trim() === '') return true
+  const text = line.text.trim()
+  if (text === '' || LONE_EMBED.test(text)) return true
   for (
     let node: SyntaxNode | null = syntaxTree(state).resolve(line.from, 1);
     node;

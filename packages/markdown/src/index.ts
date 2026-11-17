@@ -370,6 +370,8 @@ function needsOwn(options: RenderOptions): boolean {
   )
 }
 
+const FOOTNOTE_IDS = /(id="|href="#)(fn|fnref)-/g
+
 function inside(options: RenderOptions): RenderOptions {
   const rest = { ...options }
   delete rest.resolveEmbed
@@ -472,20 +474,20 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = html.replace(TOC_MARK, () => contents)
   }
 
-  embeds.sections.forEach((section, at) => {
-    const embedded = renderMarkdown(section.text, {
-      ...inside(options),
-      ...(section.escapeHtml ? { escapeHtml: true } : {}),
-    })
-    html = html.replace(embeds.marker(at), () => embedded)
-  })
-
   if (options.footnotes) {
     html = html.replace(
       /(?:<li id="fn-[\s\S]*?<\/li>\n?)+/g,
       (block) => `<section class="footnotes"><ol>${block}</ol></section>`,
     )
   }
+
+  embeds.sections.forEach((section, at) => {
+    const embedded = renderMarkdown(section.text, {
+      ...inside(options),
+      ...(section.escapeHtml ? { escapeHtml: true } : {}),
+    }).replace(FOOTNOTE_IDS, `$1$2-embed${at}-`)
+    html = html.replace(embeds.marker(at), () => embedded)
+  })
 
   if (options.properties === 'properties') {
     const rows = readProperties(source)

@@ -3,6 +3,7 @@ import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from
 import { fenceName } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { enclosing } from '../nodes'
+import { commentStateAt } from './comment-state'
 import { BACKTICK, isSpace, TILDE } from './syntax'
 
 function fenceEnd(line: Line): number {
@@ -98,7 +99,9 @@ interface Outer {
   readonly baseParse?: PartialParse | null | undefined
 }
 
-function watchDeclines(parse: PartialParse): PartialParse & Outer {
+const parsedFrom = new WeakMap<Tree, Input>()
+
+function watchDeclines(parse: PartialParse, input: Input): PartialParse & Outer {
   const found: number[] = []
 
   return {
@@ -119,7 +122,10 @@ function watchDeclines(parse: PartialParse): PartialParse & Outer {
       declining = found
       try {
         const tree = parse.advance()
-        if (tree) openFences.set(tree, found)
+        if (tree) {
+          openFences.set(tree, found)
+          parsedFrom.set(tree, input)
+        }
         return tree
       } finally {
         declining = outer
@@ -220,39 +226,45 @@ function withoutFrontMatter(
   return out
 }
 
-const COMMENT_LINE = /^[ \t>]*%%/m
+function startsLine(input: Input, at: number): boolean {
+  return at === 0 || input.read(at - 1, at) === '\n'
+}
+
+function lineStartIn(fragment: TreeFragment, input: Input, before: Input): number | null {
+  const { from, to, offset } = fragment
+  if (startsLine(input, from) && startsLine(before, from + offset)) return from
+  const lineEnd = input.read(from, to).indexOf('\n')
+  return lineEnd < 0 ? null : from + lineEnd + 1
+}
+
+function sameCommentState(fragment: TreeFragment, input: Input, before: Input): boolean {
+  const at = lineStartIn(fragment, input, before)
+  if (at === null) return true
+  return commentStateAt(input, at) === commentStateAt(before, at + fragment.offset)
+}
 
 function withoutStaleComments(
   fragments: readonly TreeFragment[],
   input: Input,
 ): readonly TreeFragment[] {
-  const [first] = fragments
-  if (!first) return fragments
-  let edit = first.from > 0 ? 0 : -1
-  for (let at = 0; edit < 0 && at < fragments.length - 1; at++) {
-    const here = fragments[at]
-    const next = fragments[at + 1]
-    if (here && next && here.to < next.from) edit = here.to
-  }
-  if (edit < 0 || !COMMENT_LINE.test(input.read(edit, input.length))) return fragments
-
-  const out: TreeFragment[] = []
+  const kept: TreeFragment[] = []
+  let end = 0
+  let shift = 0
+  let trusted = true
   for (const fragment of fragments) {
-    if (fragment.to <= edit) out.push(fragment)
-    else if (fragment.from < edit) {
-      out.push(
-        new TreeFragment(
-          fragment.from,
-          edit,
-          fragment.tree,
-          fragment.offset,
-          fragment.openStart,
-          true,
-        ),
-      )
-    }
+    const { from, offset } = fragment
+    const before = parsedFrom.get(fragment.tree)
+    const unchanged: boolean =
+      trusted &&
+      before !== undefined &&
+      offset === shift &&
+      input.read(end, from) === before.read(end + shift, from + shift)
+    trusted = before !== undefined && (unchanged || sameCommentState(fragment, input, before))
+    if (trusted) kept.push(fragment)
+    end = fragment.to
+    shift = offset
   }
-  return out
+  return kept.length === fragments.length ? fragments : kept
 }
 
 function parserOf(parse: PartialParse): MarkdownParser | null {
@@ -266,19 +278,19 @@ const alreadyCut = new WeakSet<readonly TreeFragment[]>()
 const FencedCode: MarkdownConfig = {
   wrap(inner, input, fragments, ranges) {
     if (alreadyCut.has(fragments)) return inner
-    if (fragments.length === 0) return watchDeclines(inner)
+    if (fragments.length === 0) return watchDeclines(inner, input)
 
     const cut = withoutStaleComments(
       withoutUnclosedFences(withoutFrontMatter(fragments, input), input),
       input,
     )
-    if (cut === fragments) return watchDeclines(inner)
+    if (cut === fragments) return watchDeclines(inner, input)
 
     const parser = parserOf(inner)
-    if (!parser) return watchDeclines(inner)
+    if (!parser) return watchDeclines(inner, input)
 
     alreadyCut.add(cut)
-    return watchDeclines(parser.startParse(input, cut, ranges))
+    return watchDeclines(parser.startParse(input, cut, ranges), input)
   },
   parseBlock: [
     {

@@ -21,7 +21,8 @@ export const blockMath: TokenizerExtension = {
   },
 }
 
-const OPENS_BLOCK = /^(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|>|\|)/
+const OPENS_BLOCK =
+  /^(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|>|\||`{3,}|~{3,}|\$\$|<|\[[^\]]*\]:|(?:[-*_][ \t]*){3,}$)/
 
 export const definitionList: TokenizerExtension = {
   name: 'definitionList',
