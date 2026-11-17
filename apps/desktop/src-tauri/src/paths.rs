@@ -1059,9 +1059,11 @@ mod tests {
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
         judged_below, judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of,
-        path_key_as, same_path, space_root, stays_in_space, unspoken, upcased, walked, write_atomically,
-        Naming, Picked, ORIGIN,
+        path_key_as, same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked,
+        ORIGIN,
     };
+    #[cfg(unix)]
+    use super::{stays_in_space, walked};
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
 
