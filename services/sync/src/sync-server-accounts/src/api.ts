@@ -6,9 +6,7 @@ export {
   presentUser,
   requireWhoever,
   sendCode,
-  sessionFor,
   sessions,
-  signingIn,
   verifyCode,
 } from './auth'
 export {

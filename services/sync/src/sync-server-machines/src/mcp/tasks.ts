@@ -7,7 +7,13 @@ import {
   type Env,
   type Note,
 } from '../../../sync-server/src/api'
-import { writeInbox, cleanPath, MOVED, blobKey } from '../../../sync-server-engine/src/api'
+import {
+  writeInbox,
+  heldInbox,
+  cleanPath,
+  MOVED,
+  blobKey,
+} from '../../../sync-server-engine/src/api'
 import {
   AgentError,
   clockOf,
@@ -18,7 +24,7 @@ import {
   withProperties,
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
-import { type InboxChange, inboxStamp } from '@orden/sync-core'
+import { type InboxChange, inboxFits, inboxStamp, mergedInbox, newer } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { askedSpace, marked, noteBody, putNote, type Space, spaceSource } from './tools'
 import type { TokenRow } from './tokens'
@@ -367,10 +373,28 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   return patch
 }
 
+const STAMP = /^([0-9a-z]{9})-([0-9a-z]{4})-/
+
+function stampPast(now: string, held: string | undefined): string {
+  if (!newer(held, now)) return now
+  const [, time = '0', step = '0'] = STAMP.exec(held ?? '') ?? []
+  const at = parseInt(time, 36)
+  const next = parseInt(step, 36) + 1
+  return next < 36 ** 4 ? inboxStamp(at, next, 'mcp') : inboxStamp(at + 1, 0, 'mcp')
+}
+
 async function keep(env: Env, userId: string, id: string, fields: Fields): Promise<void> {
-  const stamp = inboxStamp(Date.now(), 0, 'mcp')
-  const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stamp]))
+  const held = await heldInbox(env, userId, id)
+  const now = inboxStamp(Date.now(), 0, 'mcp')
+  const stamps = Object.fromEntries(
+    Object.keys(fields).map((key) => [key, stampPast(now, held?.stamps[key])]),
+  )
   const change = { id, fields: fields as InboxChange['fields'], stamps }
+  if (!inboxFits({ id, ...mergedInbox(held, change) })) {
+    throw new Said(
+      'That would make the todo too large for a device to read. Say it in fewer words.',
+    )
+  }
   const kept = await writeInbox(env, userId, [change], 'mcp')
   if (kept === 'full') throw new Said('That is more todos than an account keeps.')
 }

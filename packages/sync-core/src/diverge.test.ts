@@ -47,6 +47,20 @@ function cleanLinesAreWhole(base: string, local: string, remote: string, merge: 
 }
 
 describe('diverge', () => {
+  test('the same line taken out on both sides beside its copy, with a heading changed here, loses no other line', () => {
+    const base = '# Shop\n- [ ] milk\n- [ ] milk\n- [ ] eggs\n'
+    const local = '# Shopping\n- [ ] milk\n- [ ] eggs\n'
+    const remote = '# Shop\n- [ ] milk\n- [ ] eggs\n'
+
+    for (const [one, other] of [
+      [local, remote],
+      [remote, local],
+    ] as const) {
+      const result = diverge(base, one, other, LOCAL_NEWER)
+      expect(result.resolution).toBe(local)
+    }
+  })
+
   test('edits in different paragraphs are clean, and the resolution holds both', () => {
     const base = 'First paragraph here.\n\nSecond paragraph there.\n'
     const local = 'First paragraph, edited here.\n\nSecond paragraph there.\n'

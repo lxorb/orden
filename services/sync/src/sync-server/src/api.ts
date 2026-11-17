@@ -104,7 +104,14 @@ export {
   RESTAMP,
 } from './pictures'
 export { programMayReach } from './programs'
-export { PROTECTED, protectedRoutes, protectLikewise, type Shut, shutFor } from './protected'
+export {
+  PROTECTED,
+  programShut,
+  protectedRoutes,
+  protectLikewise,
+  type Shut,
+  shutFor,
+} from './protected'
 export { forgetEndedTargets } from './push/live'
 export { forgetReminders, sendDue } from './push/reminders'
 export { push } from './push/targets'
@@ -152,7 +159,9 @@ export {
 } from './site/gate'
 export { escape, type Head, headOf } from './site/head'
 export { hostnameOf, spaceForHost } from './site/host'
+export { notesOfSite } from './site/notes'
 export {
+  followOnlyNote,
   legacyPathsOf,
   type Moved,
   pageOf,

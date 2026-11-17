@@ -18,6 +18,7 @@ import {
   type Variables,
   words,
   wrong,
+  notesOfSite,
 } from '../../../sync-server/src/api'
 import { fits } from './columns'
 import { isCanvasTarget } from '@orden/markdown/links'
@@ -29,7 +30,6 @@ import { atLeast, presentSpace, spaceOf } from './space'
 export const site = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 const SHOWN = 50
-const MOST_LISTED = 2000
 
 site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
@@ -51,12 +51,13 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
     otherwise: given.otherwise === 'none' ? 'none' : 'all',
   }
 
-  const { results } = await context.env.DB.prepare(
-    `select path, front, size, kind, epoch from notes where space_id = ? and deleted = 0 and kind != 'file'
-      order by path limit ?`,
-  )
-    .bind(space.id, MOST_LISTED)
-    .all<{ path: string; front: string | null; size: number; kind: string; epoch: number }>()
+  const results = notesOfSite<{
+    path: string
+    front: string | null
+    size: number
+    kind: string
+    epoch: number
+  }>(context.env, space.id, 'path, front, size, kind, epoch')
 
   const adds: string[] = []
   const removes: string[] = []
@@ -64,7 +65,7 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   let before = 0
   let bytes = 0
 
-  for (const row of results) {
+  for await (const row of results) {
     if (isCanvasTarget(row.path) || noteKind(row) === 'plane') continue
 
     const front = readFront(row.front)

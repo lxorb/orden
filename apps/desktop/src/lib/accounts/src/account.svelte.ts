@@ -221,6 +221,14 @@ class Session {
     return true
   }
 
+  askForCode(email: string, resendIn: number) {
+    this.email = email
+    this.error = null
+    this.step = 'code'
+    this.open = true
+    this.startResendTimer(resendIn)
+  }
+
   askForSecond(holding: string) {
     this.holding = holding
     this.error = null

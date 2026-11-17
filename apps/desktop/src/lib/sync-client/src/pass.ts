@@ -509,11 +509,18 @@ async function pullDocs(
     const batch = due.slice(at, at + PULL_BATCH)
     const asking: PullDoc[] = []
     const asked = new Map<string, Doc | null>()
+    const anew = new Map<string, number>()
     for (const entry of batch) {
       const doc = await core.doc(entry.id)
-      const epoch = doc?.epoch ?? wanted.get(entry.id)?.epoch ?? 1
+      const want = wanted.get(entry.id)?.epoch
+      if (doc && want !== undefined && want !== doc.epoch) anew.set(entry.id, want)
+      const epoch = anew.get(entry.id) ?? doc?.epoch ?? want ?? 1
       asked.set(entry.id, doc)
-      asking.push({ id: entry.id, epoch, sv: doc ? doc.confirmedSv() : EMPTY_SV })
+      asking.push({
+        id: entry.id,
+        epoch,
+        sv: doc && !anew.has(entry.id) ? doc.confirmedSv() : EMPTY_SV,
+      })
     }
     const reply = await ask(core, space, 'pull', { docs: asking, part: true })
     if (!alive() || reply === null) return null
@@ -535,18 +542,20 @@ async function pullDocs(
       if (doc !== (asked.get(one.id) ?? null) || !space.isLive(one.id)) continue
 
       if ('epoch' in one) {
-        if (doc) {
-          doc.restart(Y.encodeStateAsUpdateV2(new Y.Doc()), 0, one.epoch, core.freshClient())
-          doc.pulled = 0
-          changes.push(...core.docChanges(doc))
-        }
+        const again = anew.get(one.id) === one.epoch
         wanted.set(one.id, { docSeq: wanted.get(one.id)?.docSeq ?? 0, epoch: one.epoch })
-        brought += 1
+        if (!again) brought += 1
         continue
       }
 
-      doc ??= core.made(one.id, shape, wanted.get(one.id)?.epoch ?? 1)
-      doc.took(one.update, one.seq)
+      const epoch = anew.get(one.id)
+      if (doc && epoch !== undefined) {
+        doc.restart(one.update, one.seq, epoch, core.freshClient())
+        doc.pulled = 0
+      } else {
+        doc ??= core.made(one.id, shape, wanted.get(one.id)?.epoch ?? 1)
+        doc.took(one.update, one.seq)
+      }
       doc.pulled = Math.max(doc.pulled, wanted.get(one.id)?.docSeq ?? 0)
       wanted.delete(one.id)
       changes.push(...core.docChanges(doc))
@@ -605,6 +614,8 @@ async function mergeDays(core: Core, space: SpaceState) {
 
     const theirs = await core.doc(into)
     if (!theirs || !target || core.hasPending(into) || core.isHeld(into)) continue
+    if (core.pinned.has(mine)) continue
+    changes.push(...(await handedOver(core, space, mine)))
     const base = create.mergeable?.text ?? ''
     const remote = theirs.text()
     if (target.parent === null && carriedOwn(target.name)) {
@@ -650,17 +661,20 @@ async function mergeDays(core: Core, space: SpaceState) {
       }
     }
 
-    const own = space.entries.get(mine)
-    if (own?.local_path && !core.pinned.has(mine)) {
-      const full = core.world.join(space.row.root, own.local_path)
-      if (await core.world.disk.exists(full)) await core.world.disk.remove(full, 'file')
-    }
-    space.entries.delete(mine)
-    changes.push(remove('entries', mine), ...core.forgetChanges(mine))
     done()
     space.changed()
     await core.commit(changes)
   }
+}
+
+async function handedOver(core: Core, space: SpaceState, mine: string): Promise<Change[]> {
+  const path = space.entries.get(mine)?.local_path
+  if (path) {
+    const full = core.world.join(space.row.root, path)
+    if (await core.world.disk.exists(full)) await core.world.disk.remove(full, 'file')
+  }
+  space.entries.delete(mine)
+  return [remove('entries', mine), ...core.forgetChanges(mine)]
 }
 
 function pushable(core: Core, entry: EntryRow): boolean {

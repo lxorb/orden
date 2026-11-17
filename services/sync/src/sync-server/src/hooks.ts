@@ -1,4 +1,4 @@
-import type { Env, Note, Space, SpaceFile, User, Whoever } from './types'
+import type { Env, Note, Space, SpaceFile, Whoever } from './types'
 
 export interface Ended {
   machine: string
@@ -13,10 +13,13 @@ export interface Session {
   user: { id: string; email: string; name: string | null; [more: string]: unknown }
 }
 
+type CodeSent =
+  | { ok: true; resendIn: number }
+  | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
+
 interface AccountHooks {
   whoever(env: Env, header: string | undefined): Promise<Whoever | null>
-  signingIn(env: Env, address: string): Promise<{ second: true; holding: string } | { user: User }>
-  sessionFor(env: Env, user: User, device?: string): Promise<Session>
+  sendCode(env: Env, address: string, machine: string | null): Promise<CodeSent>
 }
 
 interface BlogHooks {

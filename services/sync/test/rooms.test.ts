@@ -1820,10 +1820,7 @@ describe('somebody who stops being in the space while the file is open', () => {
     }
 
     test('at the access asked again', async () => {
-      const { socket, entered, prepare } = await hungAt(
-        /case when sp.user_id = me.user_id/,
-        'first',
-      )
+      const { socket, entered, prepare } = await hungAt(/case when sp.deleted = 1 then/, 'first')
       expect(socket.closedWith?.code).toBe(1011)
       expect(entered()).toBe(true)
       env.DB.prepare = prepare
@@ -1846,7 +1843,7 @@ describe('somebody who stops being in the space while the file is open', () => {
   })
 
   test('is let in as the door said where the database cannot be asked again', async () => {
-    env.justBefore(/case when sp.user_id = me.user_id/, () => {
+    env.justBefore(/case when sp.deleted = 1 then/, () => {
       throw new Error('D1 is not answering')
     })
 
@@ -1977,6 +1974,29 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(socket.closedWith?.code).toBe(1008)
     expect(theirs.closed).toBe(true)
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('has every signed-in socket closed when the owner deletes the space', async () => {
+    const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
+    const theirs = await signedIn(owner, ownerId)
+    const socket = await signedIn(writer, writerId)
+
+    expect(
+      (await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status,
+    ).toBe(200)
+
+    expect(socket.closedWith?.code).toBe(1008)
+    expect(theirs.closedWith?.code).toBe(1008)
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('closes a signed-in socket within a minute once the space is gone', async () => {
+    const socket = await signedIn(writer, writerId)
+    env.db.prepare('update spaces set deleted = 1 where id = ?').run(spaceId)
+
+    await aMinuteLater(() => typeInto(socket))
+
+    expect(socket.closedWith?.code).toBe(1008)
   })
 
   test('stops writing when invited again as a reader, as a role changed any other way', async () => {

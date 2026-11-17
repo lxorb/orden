@@ -68,18 +68,48 @@ function rail(as: string) {
   return call(env, '/v1/spaces', { token: as })
 }
 
+async function codeOf(work: () => Promise<unknown>): Promise<string> {
+  const logged = await mail(work)
+  const code = /(\d{3}) (\d{3})/.exec(logged)
+  if (!code) throw new Error(`no code was sent:\n${logged}`)
+  return `${code[1]}${code[2]}`
+}
+
+async function walkedIn(link: string, email: string, guest?: string) {
+  let asked: Awaited<ReturnType<typeof follow>> | undefined
+  const code = await codeOf(async () => {
+    asked = await follow(link, guest ? { as: guest } : {})
+  })
+  const verified = await call(env, '/v1/auth/verify', {
+    body: { email, code, ...(guest ? { guest } : {}) },
+  })
+  const token: string = verified.json.token
+  return { asked, token, joined: await follow(link, { as: token }) }
+}
+
 describe('the link in an invitation', () => {
-  test('opens the space with nothing typed at all', async () => {
+  test('mails a code to the address it was sent to, and signs nobody in', async () => {
     const link = await inviteLink(GUEST, 'write')
-    const { status, json } = await follow(link)
+    const logged = await mail(async () => {
+      const { status, json } = await follow(link)
+      expect(status).toBe(200)
+      expect(json).toEqual({ code: true, email: GUEST, resendIn: expect.any(Number) })
+    })
 
-    expect(status).toBe(200)
-    expect(json.token).toBeTruthy()
-    expect(json.user.email).toBe(GUEST)
-    expect(json.space.name).toBe(SHARED)
-    expect(json.space.role).toBe('write')
+    expect(logged).toContain(GUEST)
+    expect(logged).toMatch(/\d{3} \d{3}/)
+    expect((await shareView()).json.members[0]?.pending).toBe(true)
+  })
 
-    const { json: rails } = await rail(json.token)
+  test('opens the space once the mailed code is typed', async () => {
+    const link = await inviteLink(GUEST, 'write')
+    const { joined, token } = await walkedIn(link, GUEST)
+
+    expect(joined.status).toBe(200)
+    expect(joined.json.space.name).toBe(SHARED)
+    expect(joined.json.space.role).toBe('write')
+
+    const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => [one.name, one.role])).toEqual([
       ['Notes', 'owner'],
       [SHARED, 'write'],
@@ -88,10 +118,9 @@ describe('the link in an invitation', () => {
 
   test('makes the account for an address that has never been used', async () => {
     const link = await inviteLink('later@example.com', 'read')
-    const { json } = await follow(link)
+    const { token } = await walkedIn(link, 'later@example.com')
 
-    expect(json.user.email).toBe('later@example.com')
-    const { json: rails } = await rail(json.token)
+    const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
 
@@ -100,23 +129,23 @@ describe('the link in an invitation', () => {
     const mine = (await call(env, '/v1/spaces', { token: already, body: { name: 'Mine' } })).json
       .space.id
 
-    const { json } = await follow(await inviteLink(GUEST, 'read'))
+    const { token } = await walkedIn(await inviteLink(GUEST, 'read'), GUEST)
 
-    const { json: rails } = await rail(json.token)
+    const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.id)).toContain(mine)
   })
 
-  test('is in the space the moment it is followed, not pending', async () => {
+  test('is in the space the moment it is walked through, not pending', async () => {
     const link = await inviteLink(GUEST, 'read')
     expect((await shareView()).json.members[0]?.pending).toBe(true)
 
-    await follow(link)
+    await walkedIn(link, GUEST)
     expect((await shareView()).json.members[0]?.pending).toBe(false)
   })
 
   test('works once, and says so afterwards', async () => {
     const link = await inviteLink(GUEST, 'write')
-    expect((await follow(link)).status).toBe(200)
+    expect((await walkedIn(link, GUEST)).joined.status).toBe(200)
 
     expect((await follow(link)).status).toBe(404)
     const { status, json } = await call<JoinView>(env, `/v1/join/${link}`)
@@ -126,7 +155,7 @@ describe('the link in an invitation', () => {
 
   test('leaves the code as the way in once it has been used', async () => {
     const link = await inviteLink(GUEST, 'write')
-    await follow(link)
+    await walkedIn(link, GUEST)
 
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
@@ -798,11 +827,15 @@ describe('a guest becoming an account', () => {
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
 
-    const { status, json } = await follow(await inviteToMore(GUEST), { as: asked.json.token })
-    expect(status).toBe(200)
-    expect(json.user.email).toBe(GUEST)
+    const {
+      asked: told,
+      joined,
+      token,
+    } = await walkedIn(await inviteToMore(GUEST), GUEST, asked.json.token)
+    expect(told?.json.token).toBeUndefined()
+    expect(joined.status).toBe(200)
 
-    const { json: rails } = await rail(json.token)
+    const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
   })
 

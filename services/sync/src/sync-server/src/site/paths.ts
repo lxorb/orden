@@ -84,6 +84,33 @@ export async function rememberOldPaths(
   await env.DB.batch(writes)
 }
 
+export async function followOnlyNote(
+  env: Env,
+  spaceId: string,
+  moves: readonly Pick<Moved, 'from' | 'to'>[],
+  gone: readonly string[],
+): Promise<void> {
+  if (!moves.length && !gone.length) return
+  const space = await env.DB.prepare('select blog_note from spaces where id = ?')
+    .bind(spaceId)
+    .first<{ blog_note: string | null }>()
+  const pinned = space?.blog_note
+  if (!pinned) return
+
+  if (gone.includes(pinned)) {
+    await env.DB.prepare('update spaces set blog_enabled = 0 where id = ? and blog_note = ?')
+      .bind(spaceId, pinned)
+      .run()
+    return
+  }
+
+  const to = moves.find((one) => one.from === pinned)?.to
+  if (to === undefined || to === pinned) return
+  await env.DB.prepare('update spaces set blog_note = ? where id = ? and blog_note = ?')
+    .bind(to, spaceId, pinned)
+    .run()
+}
+
 const MOST_MOVES_REMEMBERED = 500
 
 export interface Moved {

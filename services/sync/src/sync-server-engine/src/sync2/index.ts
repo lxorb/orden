@@ -1,4 +1,11 @@
-import { keepRequestOf, opsRequestOf, pullRequestOf, pushRequestOf } from '@orden/sync-core'
+import {
+  heldName,
+  keepRequestOf,
+  opsRequestOf,
+  pullRequestOf,
+  pushRequestOf,
+  type OpResult,
+} from '@orden/sync-core'
 import { indexRequestOf, searchRequestOf } from '@orden/scan/wire'
 import { Hono } from 'hono'
 import {
@@ -65,8 +72,12 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
     await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
   }
 
-  return answer(context, { results: done.value, cursor: done.cursor })
+  return answer(context, { results: done.value.map(heldNamed), cursor: done.cursor })
 })
+
+function heldNamed(result: OpResult): OpResult {
+  return 'name' in result ? { ...result, name: heldName(result.name) } : result
+}
 
 v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
