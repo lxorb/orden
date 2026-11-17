@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import {
     cleanLabel,
     isTodoSpace,
@@ -34,13 +35,24 @@
   let newSubtask = $state('')
   let refused = $state<string | null>(null)
   let seen = $state<string | null>(null)
+  let titleFrom = ''
+  let descriptionFrom = ''
 
   $effect(() => {
-    if (seen === todo.id) return
-    seen = todo.id
-    title = todo.title
-    description = todo.description
-    refused = null
+    const id = todo.id
+    const nextTitle = todo.title
+    const nextDescription = todo.description
+    const fresh = seen !== id
+    if (fresh) {
+      seen = id
+      refused = null
+    }
+    untrack(() => {
+      if (fresh || title === titleFrom) title = nextTitle
+      if (fresh || description === descriptionFrom) description = nextDescription
+    })
+    titleFrom = nextTitle
+    descriptionFrom = nextDescription
   })
 
   const suggestions = $derived(knownLabels.filter((one) => !todo.labels.includes(one)))
@@ -51,8 +63,8 @@
 
   function saveTitle() {
     const next = title.trim()
-    if (next === '') title = todo.title
-    else if (next !== todo.title) void change({ title: next })
+    title = next === '' ? todo.title : next
+    if (next !== '' && next !== todo.title) void change({ title: next })
   }
 
   function saveDescription() {

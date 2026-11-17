@@ -1,5 +1,13 @@
 import { deadlineField, startField } from '@orden/markdown/task-dates'
 import {
+  type Priority,
+  readDuration,
+  readTask,
+  readTime,
+  type TaskFields,
+  WORD_BY_PRIORITY,
+} from '@orden/markdown/task-line'
+import {
   type Base,
   isButton,
   readButtons,
@@ -8,11 +16,12 @@ import {
   type Row,
   type RowKinds,
   type TaskChange,
+  type TaskRow,
   type Value,
 } from '@orden/bases'
 import type { RowChange } from '../../rows/src/api'
 import type { Holds, HoldsOf } from './filter-rows'
-import { isLinkValue } from './values'
+import { dayIn, isDurationValue, isLinkValue } from './values'
 
 export type Editor =
   | 'text'
@@ -173,6 +182,32 @@ export function holdsLists(property: string, rows: readonly Row[]): boolean {
   return noteKind(bare(property), rows) === 'list'
 }
 
+const readsAsNumber = (words: string) => words !== '' && String(Number(words)) === words
+
+function holdsNumbers(base: Base, property: string, value: Value, rows: readonly Row[]): boolean {
+  if (value !== null) return typeof value === 'number'
+  const holds = holdsOf(base, rows)(property)
+  if (holds !== undefined) return holds === 'number'
+  const options = optionsOf(base, property)
+  return options.length > 0 && options.every(readsAsNumber)
+}
+
+export function optionWritten(
+  base: Base,
+  property: string,
+  value: Value,
+  rows: readonly Row[],
+  words: string,
+): Value {
+  return readsAsNumber(words) && holdsNumbers(base, property, value, rows) ? Number(words) : words
+}
+
+export function keyWritten(base: Base, property: string, key: Value, rows: readonly Row[]): Value {
+  return typeof key === 'string' && isNoteProperty(property)
+    ? optionWritten(base, property, null, rows, key)
+    : key
+}
+
 export function editorOf(base: Base, property: string, rows: readonly Row[]): Editor {
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'
   if (isButton(property)) return 'button'
@@ -184,21 +219,117 @@ export function editorOf(base: Base, property: string, rows: readonly Row[]): Ed
 
 export function changeOf(row: Row, property: string, value: Value | null): RowChange | null {
   if (property.startsWith('task.')) {
-    if (row.kind !== 'task') return null
+    if (row.kind !== 'task' || !row.task) return null
     const field = property.slice(5)
     if (!(field in TASK_EDITORS)) return null
-    const reads = row.task?.dueReads
-    const written =
-      field === 'start' && row.task
-        ? startField(row.task, reads)
-        : field === 'deadline' && row.task
-          ? deadlineField(row.task, reads)
-          : field
-    const task: TaskChange = { [written]: value }
-    return { task }
+    const task = taskChange(row.task, field, value)
+    return task ? { task } : null
   }
   if (!isNoteProperty(property)) return null
   return { note: { [bare(property)]: value } }
+}
+
+const PRIORITIES: readonly Priority[] = [1, 2, 3, 4, 5, 6]
+
+const PRIORITY_BY_WORD = new Map<string, Priority>([
+  ...PRIORITIES.map((priority): [string, Priority] => [String(priority), priority]),
+  ...PRIORITIES.map((priority): [string, Priority] => [WORD_BY_PRIORITY[priority], priority]),
+  ['normal', 4],
+])
+
+const STATUS_BY_NAME: Partial<Record<string, string>> = {
+  'to do': ' ',
+  todo: ' ',
+  doing: '/',
+  done: 'x',
+  cancelled: '-',
+}
+
+function priorityOf(value: Value): Priority | undefined {
+  const said =
+    typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : ''
+  return PRIORITY_BY_WORD.get(said.toLowerCase().replace(/^p(?=\d$)/, ''))
+}
+
+function statusOf(value: Value): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const named = STATUS_BY_NAME[value.trim().toLowerCase()]
+  if (named !== undefined) return named
+  return value.length === 1 && readTask(`- [${value}] task`)?.status === value ? value : undefined
+}
+
+function minutesOf(value: Value): number | undefined {
+  if (typeof value === 'number') return value >= 0 ? Math.round(value) : undefined
+  if (isDurationValue(value)) return Math.round(value.ms / 60_000)
+  return typeof value === 'string' ? (readDuration(value) ?? undefined) : undefined
+}
+
+function statusChange(task: TaskFields, status: string): TaskChange | null {
+  if (status === task.status) return null
+  if (status.toLowerCase() === 'x') return task.done ? null : { done: true }
+  if (status === ' ' && task.done) return { done: false }
+  if (status === '-') return { cancelled: true, completed: null }
+  return { status, completed: null, cancelledOn: null }
+}
+
+function dayChange(task: TaskRow, field: string, value: Value | null): TaskChange | null {
+  const day = value === null ? null : dayIn(value)
+  if (value !== null && day === null) return null
+  const reads = task.dueReads
+  const written =
+    field === 'start'
+      ? startField(task, reads)
+      : field === 'deadline'
+        ? deadlineField(task, reads)
+        : field === 'scheduled'
+          ? 'scheduled'
+          : 'due'
+  return { [written]: day }
+}
+
+function taskChange(task: TaskRow, field: string, value: Value | null): TaskChange | null {
+  switch (field) {
+    case 'status': {
+      const status = statusOf(value)
+      return status === undefined ? null : statusChange(task, status)
+    }
+    case 'done':
+      return typeof value === 'boolean' ? { done: value } : null
+    case 'due':
+    case 'scheduled':
+    case 'start':
+    case 'deadline':
+      return dayChange(task, field, value)
+    case 'duration': {
+      const duration = value === null ? null : minutesOf(value)
+      return duration === undefined ? null : { duration }
+    }
+    case 'priority': {
+      if (value === null) return { priority: null }
+      const priority = priorityOf(value)
+      return priority === undefined ? null : { priority }
+    }
+    case 'time': {
+      if (value === null) return { time: null }
+      const time = typeof value === 'string' ? readTime(value) : null
+      return time ? { time: time.time, ...(time.zone ? { zone: time.zone } : {}) } : null
+    }
+    case 'tags':
+      if (value === null) return { tags: [] }
+      return Array.isArray(value)
+        ? { tags: value.flatMap((one) => (typeof one === 'string' ? [one.replace(/^#/, '')] : [])) }
+        : null
+    case 'text':
+      return typeof value === 'string' && value.trim() !== '' ? { text: value } : null
+    case 'assignee':
+      return value === null
+        ? { assignee: null }
+        : typeof value === 'string'
+          ? { assignee: value }
+          : null
+    default:
+      return null
+  }
 }
 
 const TASK_FIELDS = [

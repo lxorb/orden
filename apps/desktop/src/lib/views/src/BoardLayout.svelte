@@ -37,7 +37,7 @@
   import BoardNew from './BoardNew.svelte'
   import { cardEntries, columnEntries, optionFor, renameOption } from './board-menus'
   import { toneColour, valueText } from './chips'
-  import { editorOf, displayName } from './columns'
+  import { editorOf, displayName, keyWritten } from './columns'
   import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
   import { dropInto, inTurn } from './drop'
   import {
@@ -337,10 +337,11 @@
     if (!carries) return
 
     const fromKey = groups.find((one) => groupName(one.key) === from.column)?.key
-    const first = from.column === name ? null : dropInto(by, group.key, row, fromKey)
+    const written = (on: string, key: Value) => (base ? keyWritten(base, on, key, live.rows) : key)
+    const first = from.column === name ? null : dropInto(by, written(by, group.key), row, fromKey)
     const second =
       toLane !== undefined && sub !== undefined && from.lane !== lane
-        ? dropInto(sub, toLane, row, laneOf(from.lane))
+        ? dropInto(sub, written(sub, toLane), row, laneOf(from.lane))
         : null
     const drops = inTurn([first, second])
     if (!drops.length) return

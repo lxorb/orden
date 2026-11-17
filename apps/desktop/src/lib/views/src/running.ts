@@ -91,6 +91,7 @@ const waiting = new Map<
 const SETTLE = 80
 
 const runs = new Set<Promise<void>>()
+const lastRun = new Map<string, Promise<void>>()
 
 export async function settledRuns(): Promise<void> {
   while (runs.size) await Promise.allSettled([...runs])
@@ -179,7 +180,7 @@ async function run(space: string, path: string, removed: readonly Row[]) {
 }
 
 export function heardChange(change: RowsChange) {
-  if (change.path === null || !running()) return
+  if (change.path === null || change.firstRead || !running()) return
   if (!change.added.some((row) => row.kind === 'note')) return
   if (change.from) heard(change.space, change.path, change.from.rows, change.from)
   else {
@@ -195,8 +196,16 @@ function settling(key: string, space: string, path: string, before: readonly Row
     removed: before,
     timer: setTimeout(() => {
       waiting.delete(key)
-      const one: Promise<void> = run(space, path, before).finally(() => runs.delete(one))
+      const prior = lastRun.get(space)
+      const one: Promise<void> = (prior ?? Promise.resolve())
+        .catch(() => undefined)
+        .then(() => run(space, path, before))
+        .finally(() => {
+          runs.delete(one)
+          if (lastRun.get(space) === one) lastRun.delete(space)
+        })
       runs.add(one)
+      lastRun.set(space, one)
     }, SETTLE),
   })
 }
