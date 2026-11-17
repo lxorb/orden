@@ -8,7 +8,7 @@ function shownAfterNaming(source: string, line: number): string | null {
   return sectionOf(result.source, { heading: null, block: result.id })
 }
 
-describe('naming words or a heading that touch a block of another kind', () => {
+describe('naming words that touch a block of another kind', () => {
   test('words right above a code fence are named, not the code', () => {
     expect(shownAfterNaming('Some text\n```\nlet a = 1\n```\n\nafter\n', 0)).toContain('Some text')
   })
@@ -17,15 +17,15 @@ describe('naming words or a heading that touch a block of another kind', () => {
     expect(shownAfterNaming('Some text\n***\n\nafter\n', 0)).toContain('Some text')
   })
 
-  test('a setext heading underlined with dashes is named, not the rule under it', () => {
+  test('words above a long dash rule are named, not the rule', () => {
     expect(shownAfterNaming('Title\n-----\n\nmore\n', 0)).toContain('Title')
   })
 
-  test('a setext heading with words right under it is named, not the words', () => {
+  test('words above a rule with words under it are named, not the words', () => {
     expect(shownAfterNaming('Title\n---\nmore words\n', 0)).toContain('Title')
   })
 
-  test('a setext heading with words right under it is named alone', () => {
-    expect(shownAfterNaming('Title\n=====\nmore words\n', 0)).not.toContain('more words')
+  test('a line of equals signs stays part of its paragraph, as Orden has no setext headings', () => {
+    expect(shownAfterNaming('Title\n=====\nmore words\n', 0)).toBe('Title\n=====\nmore words')
   })
 })

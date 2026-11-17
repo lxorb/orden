@@ -834,7 +834,7 @@ describe('naming a block by where it ends', () => {
       'para\n\n| a |\n| - |\n| 1 |\n\n^new123',
     ],
     ['a rule under words', 'para\n***\n\nb', 'para ^new123\n***\n\nb'],
-    ['words with a rule under them', 'Title\n---\n\nb', 'Title\n---\n\n^new123\n\nb'],
+    ['words with a rule under them', 'Title\n---\n\nb', 'Title ^new123\n---\n\nb'],
     ['words with equals signs under them', 'Title\n===\n\nb', 'Title\n===\n\n^new123\n\nb'],
   ])('%s', (_what, source, wanted) => {
     const line = source.startsWith('para\n\n') ? 2 : 0

@@ -114,8 +114,9 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
   const last = doc.lineAt(ownEnd(view.state, span))
   const under = writtenLine(view.state, last.number + 1, 1)
-  const already =
-    under && ownLine(under.text)
+  const already = ownLine(last.text)
+    ? blockIdOf(last.text)
+    : under && ownLine(under.text)
       ? blockIdOf(under.text)
       : span.kind !== 'code' && blockIdOf(last.text)
   if (already) return `#^${already}`

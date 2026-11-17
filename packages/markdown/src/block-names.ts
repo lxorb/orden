@@ -1,6 +1,6 @@
 import { blockAround, blockIdOf, itemHolding, ownLine, type Row, rowsOf } from './links'
 
-const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
+const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)\r?$/u
 
 const AN_ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/u
 
@@ -10,9 +10,7 @@ const QUOTE = /^ {0,3}>/u
 
 const FENCE = /^ {0,3}(?:`{3,}|~{3,})/u
 
-const UNDERLINE = /^ {0,3}(?:=+|-+)[ \t]*$/u
-
-const STARS = /^ {0,3}(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/u
+const BREAK = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})\r?$/u
 
 const TABLE_RULE = /^[\s|:-]*-[\s|:-]*$/u
 
@@ -74,9 +72,8 @@ function endOf(rows: readonly Row[], line: number): number {
     if (here?.code ? !next.code : !next.text.trim()) return end
     if (!next.code && (AN_ITEM.test(next.text) || HEADING.test(next.text))) return end
     if (!here?.code && next.code && FENCE.test(next.text)) return end
-    if (!here?.code && !next.code && !QUOTE.test(here?.text ?? '')) {
-      if (UNDERLINE.test(next.text)) return end + 1
-      if (STARS.test(next.text)) return end
+    if (!here?.code && !next.code && !QUOTE.test(here?.text ?? '') && BREAK.test(next.text)) {
+      return end
     }
     if (!here?.code && !next.code && QUOTE.test(next.text) !== QUOTE.test(here?.text ?? '')) {
       return end

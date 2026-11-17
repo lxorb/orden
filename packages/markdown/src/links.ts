@@ -509,11 +509,34 @@ export function headingText(line: string): string {
   return (found[1] ?? '').replace(BLOCK_ID, '').replace(CLOSING_HASHES, '').trim()
 }
 
+const COMMENTS: readonly (readonly [RegExp, string])[] = [
+  [/^[ \t]{0,3}<!--/, '-->'],
+  [/^[ \t]{0,3}%%/, '%%'],
+]
+
+function* wordRows(text: string): Generator<Row> {
+  let closer: string | null = null
+  for (const row of lines(text)) {
+    if (row.code || row.matter) continue
+    if (closer !== null) {
+      if (row.text.includes(closer)) closer = null
+      continue
+    }
+    const opened = COMMENTS.find(([opens]) => opens.test(row.text))
+    if (opened) {
+      const [opens, closes] = opened
+      const rest = row.text.replace(opens, '')
+      if (!rest.includes(closes)) closer = closes
+      continue
+    }
+    yield row
+  }
+}
+
 export function headingsOf(text: string): string[] {
   const found: string[] = []
 
-  for (const row of lines(text)) {
-    if (row.code) continue
+  for (const row of wordRows(text)) {
     if (HEADING.test(row.text)) found.push(headingText(row.text))
   }
 
@@ -534,13 +557,11 @@ function headingSection(source: string, wanted: string): string | null {
   const needle = wanted.trim().toLowerCase()
   const slug = slugify(wanted)
 
-  const code = new CodeBlocks()
   let start = -1
   let level = 0
 
-  for (const [index, line] of lines.entries()) {
-    if (code.line(line) !== WORDS) continue
-
+  for (const row of wordRows(source)) {
+    const { line: index, text: line } = row
     const hashes = HEADING.exec(line)?.[1]
     if (!hashes) continue
 
@@ -561,32 +582,13 @@ function headingSection(source: string, wanted: string): string | null {
 }
 
 const OWN_BLOCK =
-  /^ {0,3}(?:#{1,6}(?:[ \t]|$)|`{3,}|~{3,}|\||(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
+  /^ {0,3}(?:#{1,6}(?:[ \t\r]|$)|`{3,}|~{3,}|\||(?:-[ \t\r]*){3,}$|(?:\*[ \t\r]*){3,}$|(?:_[ \t\r]*){3,}$)/
 
 const TABLE_ROW = /^ {0,3}\|/
 
 const QUOTED = /^ {0,3}>/
 
-const UNDERLINE = /^ {0,3}(?:=+|-+)[ \t]*$/
-
-function underlines(rows: readonly Row[], at: number): boolean {
-  const row = rows[at]
-  const above = rows[at - 1]
-  if (!row || !above || row.code || above.code || !UNDERLINE.test(row.text)) return false
-  const words = above.text
-  return (
-    !!words.trim() &&
-    indentOf(words) < 4 &&
-    !OWN_BLOCK.test(words) &&
-    !QUOTED.test(words) &&
-    !LIST_ITEM.test(words) &&
-    !UNDERLINE.test(words)
-  )
-}
-
 export function blockAround(rows: readonly Row[], at: number): { start: number; end: number } {
-  if (underlines(rows, at)) return { start: blockAround(rows, at - 1).start, end: at }
-
   const row = rows[at]
   const text = row?.text ?? ''
   let start = at
@@ -617,17 +619,6 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
         (quoted || !LIST_ITEM.test(one.text)),
     )
     if (item) start = at
-    if (!quoted && !item) {
-      if (underlines(rows, end + 1)) end++
-      for (let under = start + 1; under <= end; under++) {
-        if (!underlines(rows, under)) continue
-        if (under < at) start = under + 1
-        else {
-          end = under
-          break
-        }
-      }
-    }
   }
 
   return { start, end }
@@ -777,7 +768,7 @@ export function blocksOf(text: string): NoteBlock[] {
   let apart = true
 
   for (const row of rows) {
-    if (row.line <= through) continue
+    if (row.line <= through || row.matter) continue
     if (!row.code && row.text.trim() === '') {
       apart = true
       continue

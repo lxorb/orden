@@ -1,6 +1,7 @@
 import { foldable, syntaxTree } from '@codemirror/language'
-import type { EditorState, Line } from '@codemirror/state'
+import type { EditorState, Line, Text } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
+import { ownLine } from '@orden/markdown/links'
 import { headingLevel } from '../headings'
 import { enclosing } from '../nodes'
 
@@ -52,7 +53,16 @@ function spanOf(state: EditorState, node: SyntaxNode, kind: BlockKind): BlockSpa
     return { from: first.from, to: section ? section.to : first.to, kind }
   }
 
-  return { from: first.from, to: doc.lineAt(Math.min(node.to, doc.length)).to, kind }
+  const to = doc.lineAt(Math.min(node.to, doc.length)).to
+  return { from: first.from, to: kind === 'list' ? to : ownIdEnd(doc, to), kind }
+}
+
+export function ownIdEnd(doc: Text, to: number): number {
+  let number = doc.lineAt(to).number + 1
+  while (number <= doc.lines && !doc.line(number).text.trim()) number++
+  if (number > doc.lines) return to
+  const line = doc.line(number)
+  return ownLine(line.text) ? line.to : to
 }
 
 export function blocksIn(state: EditorState, from: number, to: number): BlockSpan[] {
@@ -69,6 +79,8 @@ export function blocksIn(state: EditorState, from: number, to: number): BlockSpa
 
       const span = spanOf(state, node.node, kind)
       const line = doc.lineAt(span.from).from
+      const named = found.some((one) => one.from < span.from && one.to >= span.to)
+      if (named && kind === 'paragraph' && ownLine(doc.lineAt(span.from).text)) return false
       if (!taken.has(line)) {
         taken.add(line)
         found.push(span)

@@ -8,6 +8,8 @@ import {
   type StateCommand,
   type Transaction,
 } from '@codemirror/state'
+import { ownLine } from '@orden/markdown/links'
+import { ownIdEnd } from './block/span'
 import { inCode } from './code'
 import { selectedLines } from './commands'
 import { enclosingNamed } from './nodes'
@@ -184,9 +186,14 @@ function tableBeside(
   const inDoc = (number: number) => number >= 1 && number <= doc.lines
   let near = line.number + delta
   if (inDoc(near) && !doc.line(near).text.trim()) near += delta
+  if (delta < 0 && inDoc(near) && ownLine(doc.line(near).text)) {
+    near += delta
+    if (inDoc(near) && !doc.line(near).text.trim()) near += delta
+  }
   if (!inDoc(near)) return null
 
-  return tableAt(state, doc.line(near).from)
+  const table = tableAt(state, doc.line(near).from)
+  return table && { from: table.from, to: ownIdEnd(doc, table.to) }
 }
 
 function tableAt(state: EditorState, at: number): { from: number; to: number } | null {

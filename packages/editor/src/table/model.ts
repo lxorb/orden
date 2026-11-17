@@ -7,7 +7,7 @@ export interface TableModel {
   names?: (string | null)[] | undefined
 }
 
-const ROW_NAME = /\|[ \t]*\^([A-Za-z0-9-]+)[ \t]*$/
+const ROW_NAME = /[ \t]\^([A-Za-z0-9-]+)[ \t]*$/
 
 export function displayWidth(text: string): number {
   let width = 0
@@ -78,7 +78,7 @@ export function parseTable(source: string): TableModel | null {
   const named = bodyLines.map((line) => ROW_NAME.exec(line))
   const rows = bodyLines.map((line, at) => {
     const name = named[at]
-    return splitRow(name ? line.slice(0, name.index + 1) : line)
+    return splitRow(name ? line.slice(0, name.index) : line)
   })
   const names = named.map((name) => name?.[1] ?? null)
 

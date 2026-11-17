@@ -1434,6 +1434,12 @@ first.
 | EC310 | Medium | Turn into Task un-ticked done tasks (forty-third re-audit) | Fixed | `block/shape.ts` stripped `[x]` with the marker and wrote a fresh `- [ ] ` | A ticked task keeps its tick | `block/turn-into-ticked.test.ts` (fails before) |
 | EC311 | Medium | In a note with Windows line endings the hover card opened one character further per line above the target, or blank near the end of the note (forty-third re-audit) | Fixed | `wikilink/hover.ts` counted offsets over the raw text with `\r` kept, while the card's editor counts a line break as one | Landing offsets count each line break once | `wikilink/hover-anchor-crlf.test.ts` (fails before) |
 | EC312 | Medium | A table row ending in a block id (`\| 1 \| 2 \| ^t1`) drew an extra column, and the first cell edit moved the id inside the pipes, breaking links to it (forty-third re-audit) | Fixed | `table/model.ts` `parseTable` read the id as a cell | The table model keeps each row's id beside it through edits, row moves, sorts and column changes, and writes it back after the row | `table/row-block-id.test.ts` (fails before) |
+| EC313 | Medium | Naming the words above a line of only `=` or `-` split the paragraph or turned the dash into a list item, a regression from EC308 (forty-fourth re-audit) | Fixed | EC308 read `=`/`-` lines as setext underlines, but Orden turns setext headings off | Such lines stay words of their paragraph; naming stops only before a fence or a rule of three or more marks | `block-naming-no-setext.test.ts` (fails before) |
+| EC314 | Medium | Move up or down, Delete and Alt-Down left the own-line id that Copy link writes under a table, fence or rule behind, so the link then named another block (forty-fourth re-audit) | Fixed | `block/span.ts` ended a block at its node and listed the `^id` line as a block of its own, and `list-keys.ts` jumped to the table's end | A block's span takes the own-line id under it, the id line is not a block of its own, and a line moved past a table goes past its id too | `block/move-named-blocks.test.ts` (fails before) |
+| EC315 | Medium | A table row id with no closing pipe (`\| 1 \| 2 ^t1`) was drawn in the last cell and moved inside the pipes by the first edit or Reformat (forty-fourth re-audit, case EC312 missed) | Fixed | `table/model.ts` only read an id after a closing pipe | A row's trailing ` ^id` is set aside whether or not the row ends in a pipe | `table/row-block-id-open-end.test.ts` (fails before) |
+| EC316 | Medium | In notes with Windows line endings, rules were not seen as block edges, so links, embeds, the block list and naming took in the rule and the next paragraph (forty-fourth re-audit) | Fixed | The rule patterns in `links.ts` and `block-names.ts` ended in `[ \t]*$`, which a trailing `\r` does not match | The patterns accept a trailing `\r` | `crlf-block-bounds.test.ts` (fails before) |
+| EC317 | Medium | The `[[Note#^` block list offered front-matter lines that do nothing when picked (forty-fourth re-audit) | Fixed | `blocksOf` never skipped front-matter rows | Front matter is left out of the block list | `wikilink/front-matter-blocks.test.ts` (fails before) |
+| EC318 | Medium | A `#` line in front matter or inside an HTML or `%%` comment was listed as a heading, and a commented-out heading cut short the section embedded above it (forty-fourth re-audit) | Fixed | `headingsOf` and `headingSection` only skipped code | Both read only rows outside code, front matter and comments | `hidden-headings.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1597,6 +1603,12 @@ Seen, judged minor, left as they are:
 - Typing in the hover card of a CRLF note writes the note back with LF endings (forty-third re-audit).
 - An own-line id after a bullet list followed by a numbered list embeds both lists (forty-third re-audit).
 - An unclosed `$$` at the end of a note draws without its last line, and `![[Note]] ^x` is not drawn as an embed block (forty-third re-audit).
+- Duplicate on a named fence puts the copy between the original and its own-line id (forty-fourth re-audit).
+- Two cursors pressing Enter at the ends of `1. a` and `2. b` write `3.` twice in the source; it still draws right (forty-fourth re-audit).
+- Tab in a source-mode table row indents the row, and Tab on a list's first item indents it (forty-fourth re-audit).
+- A cell ending `x \| ^t1` has the id set aside from the escaped pipe (forty-fourth re-audit).
+- `<mark>` is not drawn, only `<u>`; `[[Note#A#B]]` heading paths are not supported (forty-fourth re-audit).
+- The app's outline (`outline.ts`) still lists a heading inside an HTML comment (forty-fourth re-audit).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.
