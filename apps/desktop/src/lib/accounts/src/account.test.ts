@@ -76,6 +76,8 @@ vi.mock('./client', async (importOriginal) => {
         return { spaces: [{ id: 's1', name: 'Theirs' }], deleted: [] }
       },
       signOut: () => Promise.resolve({ ok: true as const }),
+      rename: (_token: string, name: string) =>
+        Promise.resolve({ user: { id: 'u1', email: 'me@example.com', name } }),
       usage: () => Promise.resolve({ used: 0, limit: 0 }),
     },
   }
@@ -182,6 +184,18 @@ describe('the countdown to another code', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('a name given to the account', () => {
+  test('keeps the picture and the rest of the profile the account already had', async () => {
+    await account.verify('123456')
+    const face = { s: 'a'.repeat(64), l: 'b'.repeat(64) }
+    if (account.user) account.user = { ...account.user, avatar: face, pronouns: 'she/her' }
+
+    await account.rename('Ada')
+
+    expect(account.user).toMatchObject({ name: 'Ada', avatar: face, pronouns: 'she/her' })
   })
 })
 

@@ -10,7 +10,7 @@ type RevokedRole = 'none' | 'read'
 
 export interface Session {
   token: string
-  user: { id: string; email: string; name: string | null }
+  user: { id: string; email: string; name: string | null; [more: string]: unknown }
 }
 
 interface AccountHooks {
