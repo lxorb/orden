@@ -48,6 +48,7 @@ function endOf(rows: readonly Row[], line: number): number {
     } else if (
       blocks.has(end + 1) ||
       (!quoted[end] && quoted[end + 1]) ||
+      next.code ||
       !next.text.trim() ||
       listed(next) ||
       isHeading(next.text)

@@ -741,8 +741,8 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     let first = from
     for (; first > 0 && held(first - 1) && blocks.get(first - 1) === blocks.get(first); first--) {
       const above = first - 1
-      if (plain(above) && HEADING.test(text(above))) break
-      if (apart && rows[first]?.code && plain(above) && LIST_ITEM.test(text(above))) break
+      if (plain(above) && HEADING.test(text(above)) && !itemLines(rows, above, blocks)) break
+      if (apart && rows[first]?.code && plain(above) && !itemLines(rows, first, blocks)) break
     }
     return first
   }
@@ -839,8 +839,8 @@ export function quoteAround(rows: readonly Lined[], at: number): Held | null {
 export function itemLines(
   rows: readonly Lined[],
   at: number,
+  blocks: Map<number, Held> = heldBlocks(rows),
 ): { first: number; last: number; indent: number } | null {
-  const blocks = heldBlocks(rows)
   const first = itemStart(rows, at, blocks)
   if (first === null) return null
 

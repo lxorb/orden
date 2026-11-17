@@ -1012,7 +1012,7 @@ describe('naming a block by where it ends', () => {
   const id = () => 'new123'
 
   test.each([
-    ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para\n```\nx\n```\n\n^new123\n\nafter'],
+    ['words over a fence', 'para\n```\nx\n```\n\nafter', 'para ^new123\n```\nx\n```\n\nafter'],
     [
       'a table under words',
       'para\n\n| a |\n| - |\n| 1 |',
@@ -1205,7 +1205,7 @@ describe('a block in a list, a fence in a fence, and code after code', () => {
 
   test('a block named apart inside a list item keeps the list whole', () => {
     const more = '- a\n\n  more about a\n  ```\n  x\n  ```\n- b\n'
-    expect(namedBlock(more, 2, id)?.source).toBe(more.replace('```\n- b', '```\n\n  ^new123\n- b'))
+    expect(namedBlock(more, 2, id)?.source).toBe(more.replace('about a', 'about a ^new123'))
     const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
     const named = namedBlock(table, 2, id)?.source ?? ''
     expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n- Next'))
@@ -1325,5 +1325,24 @@ describe('a block beside a heading, a quote line in a comment, and a comment und
     const named = namedBlock(note, 1, id)?.source ?? ''
     expect(named).toBe(note.replace('quote here', 'quote here ^n'))
     expect(block(named, 'n')).toBe('> quote here')
+  })
+})
+
+describe('a name under a list holding code, and code right under words', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a name written under a list whose item holds code is the whole list', () => {
+    const note = '- one\n- Install:\n  ```bash\n  npm i\n  ```\n\n^x\n'
+    expect(block(note, 'x')).toBe('- one\n- Install:\n  ```bash\n  npm i\n  ```')
+    const sub = '- a\n  ## Sub\n  text\n\n^x\n'
+    expect(block(sub, 'x')).toBe('- a\n  ## Sub\n  text')
+  })
+
+  test('code right under words is a block of its own', () => {
+    const note = 'Run this:\n```bash\nnpm i\n```\n\nAfter\n'
+    expect(namedBlock(note, 0, id)?.source).toBe(note.replace('this:', 'this: ^n'))
+    const code = namedBlock(note, 2, id)?.source ?? ''
+    expect(block(code, 'n')).toBe('```bash\nnpm i\n```')
   })
 })
