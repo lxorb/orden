@@ -10,16 +10,15 @@ describe('reading a link', () => {
   })
 
   test('reads both ways of writing the scheme, and the browser one', () => {
-    expect(readUri('nib:open?path=A.md')?.action).toBe('open')
+    expect(readUri('orden:open?path=A.md')?.action).toBe('open')
     expect(readUri('orden:///open?path=A.md')?.action).toBe('open')
     expect(readUri('web+orden://open?path=A.md')?.action).toBe('open')
     expect(readUri('ORDEN://Open?path=A.md')?.action).toBe('open')
   })
 
-  test('still reads a link written before the rename, for one release', () => {
-    expect(readUri('nib://open?path=A.md')?.action).toBe('open')
-    expect(readUri('web+nib://open?path=A.md')?.action).toBe('open')
-    expect(isOrdenUri('NIB://Open')).toBe(true)
+  test('reads no link under the name before the rename', () => {
+    expect(readUri('nib://open?path=A.md')).toBeNull()
+    expect(isOrdenUri('NIB://Open')).toBe(false)
   })
 
   test('reads the x-callback-url spelling as the plain action', () => {

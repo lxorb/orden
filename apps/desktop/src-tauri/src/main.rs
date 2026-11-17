@@ -7,7 +7,6 @@ fn main() {
     if let Some(code) = orden::terminal_hold() {
         std::process::exit(code);
     }
-    orden::former_name::carry_env();
     #[cfg(desktop)]
     if orden::cef_helper() {
         return;

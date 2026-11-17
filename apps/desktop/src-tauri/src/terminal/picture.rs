@@ -165,10 +165,7 @@ fn is_ours(name: &str) -> bool {
     let Some((stem, end)) = name.rsplit_once('.') else {
         return false;
     };
-    let Some(hex) = stem
-        .strip_prefix("orden-")
-        .or_else(|| stem.strip_prefix("nib-"))
-    else {
+    let Some(hex) = stem.strip_prefix("orden-") else {
         return false;
     };
     hex.len() == 16
@@ -282,7 +279,7 @@ mod tests {
     fn only_our_own_pictures_are_ours_to_forget() {
         assert!(is_ours("orden-0011223344556677.png"));
         assert!(is_ours("orden-aabbccddeeff0011.jpg"));
-        assert!(is_ours("nib-0011223344556677.png"));
+        assert!(!is_ours("nib-0011223344556677.png"));
         assert!(!is_ours("orden-0011223344556677.jpeg"));
         assert!(!is_ours("orden-00112233.png"));
         assert!(!is_ours("holiday.png"));

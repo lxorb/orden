@@ -419,7 +419,7 @@ def main() -> int:
                 if case == "closed":
                     for one in tabs(app):
                         if one["id"] != tab and str(one.get("kind")) == "web":
-                            app.ask(f"nib.workspace.close('{one['id']}')")
+                            app.ask(f"orden.workspace.close('{one['id']}')")
                     report["closed, tabs after closing"] = len(tabs(app))
                 if case == "stop" and going:
                     app.ask(f"window.__TAURI_INTERNALS__.invoke('web_download_cancel', {{ id: {going[-1]['id']} }})")
@@ -441,8 +441,8 @@ def main() -> int:
             }
             for one in now:
                 if one["id"] != tab and str(one.get("kind")) == "web" and not str(one.get("name", "")).startswith(SITE):
-                    app.ask(f"nib.workspace.close('{one['id']}')")
-            app.ask(f"nib.workspace.activate?.('{tab}')")
+                    app.ask(f"orden.workspace.close('{one['id']}')")
+            app.ask(f"orden.workspace.activate?.('{tab}')")
 
         listed = app.ask("window.__TAURI_INTERNALS__.invoke('web_downloads')")
         report["the crate's list"] = listed

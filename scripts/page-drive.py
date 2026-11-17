@@ -188,7 +188,7 @@ def stale():
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.3)
-    before = run("nib.workspace.notes.map((one) => one.path).sort()")
+    before = run("orden.workspace.notes.map((one) => one.path).sort()")
     lifted(rows[-1], rows[1])
     heard = run("window.__heard.splice(0)") or []
     if "dragover" not in heard:
@@ -209,7 +209,7 @@ def stale():
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.5)
-    after = run("nib.workspace.notes.map((one) => one.path).sort()")
+    after = run("orden.workspace.notes.map((one) => one.path).sort()")
     if after != before:
         fail(f"a drag that lost its pointer moved a note: {set(after or []) ^ set(before or [])}")
     if "drop" in (run("window.__heard.splice(0)") or []):
@@ -327,7 +327,7 @@ def zoom():
     first = until(HOLE, "the web tab's hole")
     if not first:
         return
-    site = run("nib.workspace")
+    site = run("orden.workspace")
     width = first["sidebar"] * first["ratio"]
     print("at 100%", first, site is not None)
     corners(picture("zoom-100"), first, "100%")

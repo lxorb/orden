@@ -502,7 +502,7 @@ def main() -> int:
         app.eval(
             "for (const one of document.querySelectorAll('button'))"
             " if (one.textContent.trim() === 'Keep running') one.click();"
-            " for (const tab of [...nib.workspace.tabs]) orden.workspace.close(tab.id, false); return true"
+            " for (const tab of [...orden.workspace.tabs]) orden.workspace.close(tab.id, false); return true"
         )
         time.sleep(1)
         app.eval(
@@ -515,14 +515,14 @@ def main() -> int:
         still = app.eval("matchMedia('(prefers-reduced-motion: reduce)').matches")
         if still is not False:
             wrong.append(f"the window asks for no movement ({still}), so nothing would be filmed moving")
-        print(f"the engine: {app.eval('navigator.userAgent')}; pages under the app: {app.eval('nib.pages.under')}", flush=True)
+        print(f"the engine: {app.eval('navigator.userAgent')}; pages under the app: {app.eval('orden.pages.under')}", flush=True)
         wrong += round_trip(app, desk, "notes", None, args.out, scale)
         wrong += round_trip(app, desk, "notes-again", None, args.out, scale)
 
-        app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
+        app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         until = time.monotonic() + 40
         while time.monotonic() < until:
-            if app.eval("nib.pages.each().some(([, page]) => page.sent && page.sent.visible && page.live)") is True:
+            if app.eval("orden.pages.each().some(([, page]) => page.sent && page.sent.visible && page.live)") is True:
                 break
             time.sleep(0.5)
         time.sleep(3)
@@ -530,7 +530,7 @@ def main() -> int:
             "(() => { const all = orden.pages.each().map(([, page]) => page.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
         )
-        print(f"pages under the app: {app.eval('nib.pages.under')}", flush=True)
+        print(f"pages under the app: {app.eval('orden.pages.under')}", flush=True)
         if not isinstance(hole, dict):
             wrong.append(f"the web tab's page was never shown: {hole}")
         else:

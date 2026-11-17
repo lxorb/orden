@@ -69,7 +69,6 @@ mod firefox_profiles;
 mod fonts;
 #[cfg(desktop)]
 mod foreground;
-pub mod former_name;
 mod front_matter;
 #[cfg(all(desktop, target_os = "linux"))]
 mod front_x;

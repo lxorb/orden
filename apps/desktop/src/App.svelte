@@ -445,7 +445,6 @@
         terminals: () => import('./lib/terminal/src/api').then((one) => one.sessions()),
       },
     })
-    Object.assign(window, { nibApp: (window as unknown as { ordenApp: object }).ordenApp })
 
     void Promise.all([
       import('./lib/import/src/api').then((one) => one.importingStore()),
