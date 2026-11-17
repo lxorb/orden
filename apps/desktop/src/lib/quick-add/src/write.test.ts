@@ -2,7 +2,8 @@ import { expect, test, vi } from 'vitest'
 
 const added = vi.hoisted(() => [] as Record<string, unknown>[])
 
-vi.mock('../../tasks-model/src/api', () => ({
+vi.mock('../../tasks-model/src/api', async (original) => ({
+  ...(await original<typeof import('../../tasks-model/src/api')>()),
   priorityOf: () => 0,
   todos: {
     add: (patch: Record<string, unknown>) => {
