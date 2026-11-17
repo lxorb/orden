@@ -303,13 +303,7 @@ impl Pattern {
         let found = if searched <= from && from <= was {
             was
         } else {
-            let found = self.literal_from(text, from, &literal.letters);
-            let scanned = found.unwrap_or(text.len()).saturating_sub(from);
-            budget.set(budget.get().saturating_sub(scanned / LETTERS_PER_STEP));
-            if budget.get() == 0 {
-                return None;
-            }
-            let found = found.unwrap_or(usize::MAX);
+            let found = self.literal_from(text, from, &literal.letters, budget)?;
             seen.set((from, found));
             found
         };
@@ -326,7 +320,13 @@ impl Pattern {
         Some(at.max(from))
     }
 
-    fn literal_from(&self, text: &str, from: usize, letters: &[char]) -> Option<usize> {
+    fn literal_from(
+        &self,
+        text: &str,
+        from: usize,
+        letters: &[char],
+        budget: &Cell<usize>,
+    ) -> Option<usize> {
         let same = |got: char, want: char| {
             if self.fold {
                 folded(got) == folded(want)
@@ -334,19 +334,38 @@ impl Pattern {
                 got == want
             }
         };
-        let first = *letters.first()?;
-        let rest = letters.get(1..)?;
-        text.get(from..)?
-            .char_indices()
-            .filter(|&(_, c)| same(c, first))
-            .find(|&(at, c)| {
-                let Some(mut ahead) = text.get(from + at + c.len_utf8()..).map(str::chars) else {
-                    return false;
-                };
-                rest.iter()
-                    .all(|&want| ahead.next().is_some_and(|got| same(got, want)))
-            })
-            .map(|(at, _)| from + at)
+        let charge = |work: usize| {
+            budget.set(budget.get().saturating_sub(work / LETTERS_PER_STEP));
+            budget.get() > 0
+        };
+        let (Some((&first, rest)), Some(tail)) = (letters.split_first(), text.get(from..)) else {
+            return Some(usize::MAX);
+        };
+        let mut work = 0;
+        for (at, c) in tail.char_indices() {
+            work += 1;
+            if same(c, first) {
+                let mut ahead = tail.get(at + c.len_utf8()..).unwrap_or("").chars();
+                let mut held = true;
+                for &want in rest {
+                    work += 1;
+                    if !ahead.next().is_some_and(|got| same(got, want)) {
+                        held = false;
+                        break;
+                    }
+                }
+                if held {
+                    return charge(work).then_some(from + at);
+                }
+            }
+            if work >= LETTERS_PER_STEP * 64 {
+                if !charge(work) {
+                    return None;
+                }
+                work = 0;
+            }
+        }
+        charge(work).then_some(usize::MAX)
     }
 
     fn past_bounded(
@@ -1605,6 +1624,8 @@ fn bounded_lead(node: &Node, program: &Program) -> Option<Vec<Start>> {
 
 const WIDEST_BEFORE_LITERAL: usize = 4096;
 
+const LONGEST_LITERAL: usize = 8;
+
 fn literal_lead(node: &Node) -> Option<Vec<Start>> {
     if calls_back(node) {
         return None;
@@ -1621,6 +1642,7 @@ fn literal_lead(node: &Node) -> Option<Vec<Start>> {
                     Node::Char(c) => Some(*c),
                     _ => None,
                 })
+                .take(LONGEST_LITERAL)
                 .collect();
             return (width > 0).then(|| vec![Start::Literal(Literal { width, letters })]);
         }
