@@ -1,7 +1,8 @@
 import { dropTarget, targetFor } from '../../tree/src/api'
-import { dur } from '../../platform/src/api'
+import { dur, samePath } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
-import { isUnsaved } from '../../documents/src/api'
+import { isUnsaved, type Tab } from '../../documents/src/api'
+import { canWriteAt, mayCarryBetween } from '../../sharing/src/api'
 import { type Landing, zoneAt } from '../../panes/src/api'
 import type { Bounds } from './layout'
 import { keyOf, stripOf, type TabDrag } from './drag.svelte'
@@ -53,26 +54,40 @@ function folderAt(x: number, y: number): string | null {
   return under?.closest('[data-space-rest]') ? (workspace.activeSpace?.root ?? null) : null
 }
 
-function unsaved(tabId: string) {
+function theirs(tab: Tab): boolean {
+  if (tab.path === null) return tab.note.shared !== null
+  const here = workspace.activeSpace?.root
+  const from = workspace.rootHolding(tab.path)
+  return (
+    here !== undefined &&
+    from !== null &&
+    !samePath(from, here) &&
+    (!canWriteAt(tab.path) || !mayCarryBetween(from, here))
+  )
+}
+
+function filed(tabId: string) {
   const tab = workspace.tabs.find((one) => one.id === tabId)
-  return tab && isUnsaved(tab.note) ? tab : null
+  return tab && (isUnsaved(tab.note) || theirs(tab)) ? tab : null
 }
 
 export function overList(tabId: string, point: { x: number; y: number } | null): void {
   overSpaces({ tab: tabId }, point)
   overBookmarks(tabId, point)
   overChat(point)
-  const folder = point && unsaved(tabId) ? folderAt(point.x, point.y) : null
+  const folder = point && filed(tabId) ? folderAt(point.x, point.y) : null
   if (folder !== null) dropTarget.over(folder)
   else if (dropTarget.folder !== null) dropTarget.clear()
 }
 
 export function droppedOnList(tabId: string): void {
   const folder = dropTarget.folder
-  const tab = unsaved(tabId)
+  const tab = filed(tabId)
   dropTarget.clear()
   if (droppedOnSpace({ tab: tabId }) || droppedOnBookmarks(tabId) || droppedOnChat(tabId)) return
-  if (folder !== null && tab) void workspace.save(tab, folder)
+  if (folder === null || !tab) return
+  if (isUnsaved(tab.note)) void workspace.save(tab, folder)
+  else void workspace.copyOwn(tab.note, folder)
 }
 
 const easeOut = () =>
