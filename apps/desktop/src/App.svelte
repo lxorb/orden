@@ -172,6 +172,8 @@
   const rightOpen = $derived(
     padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
   )
+  const leftShut = $derived(viewport.drawer || workspace.openOn('left') === null)
+  const rightShut = $derived(viewport.drawer || !rightOpen)
   const docked = $derived(
     viewport.drawer || bare || filled
       ? 0
@@ -788,6 +790,8 @@
       class="document"
       inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
       class:open={!!workspace.panel}
+      class:left-shut={leftShut}
+      class:right-shut={rightShut}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
       class:settling={drawer.settle !== null}
@@ -1134,7 +1138,18 @@
     min-width: 0;
     min-height: 0;
     display: flex;
-    padding: 0 var(--card-inset) var(--card-inset);
+    padding: 0 var(--right-inset, var(--card-inset)) 0 var(--left-inset, var(--card-inset));
+    transition: padding var(--dur-base) var(--ease-out);
+  }
+
+  .document.left-shut {
+    --left-inset: 0px;
+    --left-edge: 0px;
+  }
+
+  .document.right-shut {
+    --right-inset: 0px;
+    --right-edge: 0px;
   }
 
   .panes.under-pad {
