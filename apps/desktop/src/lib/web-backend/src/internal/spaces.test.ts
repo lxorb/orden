@@ -118,6 +118,12 @@ const disk = vi.hoisted(() => {
       case 'create_folder':
         mkdirs(path)
         return undefined
+      case 'remove_empty_folder':
+        if ([...files.keys(), ...dirs].some((one) => one.startsWith(`${path}/`))) {
+          throw new Error('the folder is not empty')
+        }
+        dirs.delete(path)
+        return undefined
       case 'delete_folder':
         for (const one of [...files.keys()]) if (under(path, one)) files.delete(one)
         for (const one of [...dirs]) if (under(path, one)) dirs.delete(one)
@@ -275,6 +281,42 @@ describe('a new space', () => {
     expect(await call('list_spaces')).toEqual([{ name: 'Goals', path: renamed.path }])
   })
 
+  test('renamed while a save is on its way, takes the save along and leaves nothing under the old name', async () => {
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+    await call('write_note', { path: `${made.path}/Plan.md`, content: 'one' })
+
+    const write = disk.crate
+    let release = (): void => undefined
+    const held = new Promise<void>((done) => (release = done))
+    disk.crate = (command, args) => {
+      if (command === 'write_note' && String(args.path).includes('/.entries/')) {
+        disk.crate = write
+        return held.then(() => write(command, args))
+      }
+      return write(command, args)
+    }
+
+    try {
+      const saving = call('write_note', { path: `${made.path}/Plan.md`, content: 'two' })
+      const renaming = call<{ path: string }>('rename_space', { from: made.path, name: 'Goals' })
+      for (let turn = 0; turn < 50 && !disk.dirs.has('/spaces/.orden/Goals'); turn += 1) {
+        await new Promise((later) => setTimeout(later, 0))
+      }
+      release()
+      await saving
+      const renamed = await renaming
+
+      expect(await call('read_note', { path: `${renamed.path}/Plan.md` })).toBe('two')
+    } finally {
+      disk.crate = write
+    }
+
+    const left = [...disk.files.keys(), ...disk.dirs].filter((one) =>
+      one.startsWith('/spaces/.orden/Plans'),
+    )
+    expect(left).toEqual([])
+  })
+
   test('goes to Recently deleted whole and comes back from it', async () => {
     const made = await call<{ path: string }>('create_space', { name: 'Plans' })
     await call('write_note', { path: `${made.path}/Plan.md`, content: 'ship it' })
@@ -319,6 +361,66 @@ describe('a new space', () => {
     await call('rename_note', { from: `${made.path}/Paper.pdf`, to: `${other.path}/Paper.pdf` })
     expect(await call('read_highlights', { path: `${other.path}/Paper.pdf` })).toBe('[]')
     expect(await call('path_exists', { path: `${made.path}/Paper.pdf` })).toBe(false)
+  })
+})
+
+describe('a note carried in from a folder', () => {
+  test('in a folder deeper than the listing reaches leaves what it could not carry where it was', async () => {
+    disk.dirs.add('/spaces/Disk')
+    disk.dirs.add('/spaces/Disk/Work')
+    disk.dirs.add('/spaces/Disk/Work/Deep')
+    disk.files.set('/spaces/Disk/Work/Plan.md', 'ship it')
+    disk.files.set('/spaces/Disk/Work/Deep/Far.md', 'far down')
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+
+    const write = disk.crate
+    disk.crate = (command, args) => {
+      const listed = write(command, args) as { children?: { path: string; children?: unknown[] }[] }
+      if (command !== 'read_tree') return listed
+      for (const child of listed.children ?? []) child.children = []
+      return listed
+    }
+    try {
+      await call('rename_note', { from: '/spaces/Disk/Work', to: `${made.path}/Work` })
+    } finally {
+      disk.crate = write
+    }
+
+    expect(await call('read_note', { path: `${made.path}/Work/Plan.md` })).toBe('ship it')
+    expect(disk.files.has('/spaces/Disk/Work/Plan.md')).toBe(false)
+    expect(disk.files.get('/spaces/Disk/Work/Deep/Far.md')).toBe('far down')
+  })
+
+  test('that is not UTF-8 text is refused, and stays where it was, byte for byte', async () => {
+    const latin = new Uint8Array([0x43, 0x61, 0x66, 0xe9])
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set('/spaces/Disk/Old.md', latin)
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+
+    await expect(
+      call('rename_note', { from: '/spaces/Disk/Old.md', to: `${made.path}/Old.md` }),
+    ).rejects.toThrow('not UTF-8')
+    expect(disk.files.get('/spaces/Disk/Old.md')).toEqual(latin)
+    expect(await call('path_exists', { path: `${made.path}/Old.md` })).toBe(false)
+  })
+
+  test('is refused where a note of the same name, spelled another way, already lives', async () => {
+    const nfc = 'Caf\u00e9.md'
+    const nfd = 'Cafe\u0301.md'
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set(`/spaces/Disk/${nfd}`, 'from the folder')
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+    await call('write_note', { path: `${made.path}/${nfc}`, content: 'kept here' })
+
+    await expect(
+      call('rename_note', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` }),
+    ).rejects.toThrow('something already lives there')
+    await expect(
+      call('copy_path', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` }),
+    ).rejects.toThrow('something already lives there')
+
+    expect(await call('read_note', { path: `${made.path}/${nfc}` })).toBe('kept here')
+    expect(disk.files.get(`/spaces/Disk/${nfd}`)).toBe('from the folder')
   })
 })
 
