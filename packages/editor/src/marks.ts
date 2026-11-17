@@ -125,7 +125,10 @@ export function marksAcross(mark: string, adding = false): StateCommand {
 
 const HIGHLIGHT = '=='
 
-function litOf(state: EditorState, part: Part): { from: number; to: number; close: number } | null {
+function litOf(
+  state: EditorState,
+  part: Part,
+): { from: number; to: number; close: number; colour: HighlightColour } | null {
   const size = HIGHLIGHT.length
   const doc = state.doc
   const words = doc.sliceString(part.from, part.to)
@@ -145,8 +148,8 @@ function litOf(state: EditorState, part: Part): { from: number; to: number; clos
         ? part.to
         : null
   if (open === null || close === null) return null
-  const colour = readHighlight(doc.sliceString(open + size, close)).from
-  return { from: open, to: open + size + colour, close }
+  const read = readHighlight(doc.sliceString(open + size, close))
+  return { from: open, to: open + size + read.from, close, colour: read.colour }
 }
 
 export function highlightAcross(colour: HighlightColour): StateCommand {
@@ -155,7 +158,7 @@ export function highlightAcross(colour: HighlightColour): StateCommand {
       const held = inside(state, range.from, range.to)
       const parts = partsOf(state, held.from, held.to)
       const found = parts.map((part) => litOf(state, part))
-      const lit = found.every(Boolean)
+      const lit = found.every((one) => one?.colour.emoji === colour.emoji)
 
       const changes = state.changes(
         parts.flatMap((part, at): ChangeSpec[] => {
@@ -166,7 +169,16 @@ export function highlightAcross(colour: HighlightColour): StateCommand {
               { from: marks.close, to: marks.close + HIGHLIGHT.length },
             ]
           }
-          if (marks) return []
+          if (marks) {
+            if (marks.colour.emoji === colour.emoji) return []
+            return [
+              {
+                from: marks.from + HIGHLIGHT.length,
+                to: marks.to,
+                insert: writeHighlight('', colour),
+              },
+            ]
+          }
           return [
             { from: part.from, insert: HIGHLIGHT + writeHighlight('', colour) },
             { from: part.to, insert: HIGHLIGHT },

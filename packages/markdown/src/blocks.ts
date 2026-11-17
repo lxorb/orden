@@ -21,6 +21,8 @@ export const blockMath: TokenizerExtension = {
   },
 }
 
+const OPENS_BLOCK = /^(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|>|\|)/
+
 export const definitionList: TokenizerExtension = {
   name: 'definitionList',
   level: 'block',
@@ -39,6 +41,7 @@ export const definitionList: TokenizerExtension = {
     }
 
     if (!items.length || items.some((item) => !item.details.length)) return undefined
+    if (items.some((item) => OPENS_BLOCK.test(item.term))) return undefined
 
     return {
       type: 'definitionList',

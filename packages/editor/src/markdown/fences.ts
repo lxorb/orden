@@ -220,6 +220,41 @@ function withoutFrontMatter(
   return out
 }
 
+const COMMENT_LINE = /^[ \t>]*%%/m
+
+function withoutStaleComments(
+  fragments: readonly TreeFragment[],
+  input: Input,
+): readonly TreeFragment[] {
+  const [first] = fragments
+  if (!first) return fragments
+  let edit = first.from > 0 ? 0 : -1
+  for (let at = 0; edit < 0 && at < fragments.length - 1; at++) {
+    const here = fragments[at]
+    const next = fragments[at + 1]
+    if (here && next && here.to < next.from) edit = here.to
+  }
+  if (edit < 0 || !COMMENT_LINE.test(input.read(edit, input.length))) return fragments
+
+  const out: TreeFragment[] = []
+  for (const fragment of fragments) {
+    if (fragment.to <= edit) out.push(fragment)
+    else if (fragment.from < edit) {
+      out.push(
+        new TreeFragment(
+          fragment.from,
+          edit,
+          fragment.tree,
+          fragment.offset,
+          fragment.openStart,
+          true,
+        ),
+      )
+    }
+  }
+  return out
+}
+
 function parserOf(parse: PartialParse): MarkdownParser | null {
   const own = (parse as { parser?: MarkdownParser }).parser
   if (own) return own
@@ -233,7 +268,10 @@ const FencedCode: MarkdownConfig = {
     if (alreadyCut.has(fragments)) return inner
     if (fragments.length === 0) return watchDeclines(inner)
 
-    const cut = withoutUnclosedFences(withoutFrontMatter(fragments, input), input)
+    const cut = withoutStaleComments(
+      withoutUnclosedFences(withoutFrontMatter(fragments, input), input),
+      input,
+    )
     if (cut === fragments) return watchDeclines(inner)
 
     const parser = parserOf(inner)
