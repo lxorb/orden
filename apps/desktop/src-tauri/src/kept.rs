@@ -92,13 +92,33 @@ pub fn kept_forget(app: AppHandle, key: String) -> Result<(), String> {
     to_writer(&app, key, Said::Gone)
 }
 
+pub(crate) fn keep_unless_said(folder: &Path, key: &str, value: String) -> Result<(), String> {
+    if key.is_empty() || kept_file(folder, key).exists() {
+        return Ok(());
+    }
+    write_down(&Write {
+        folder: folder.to_path_buf(),
+        key: key.to_owned(),
+        said: Said::Value(value),
+    })
+}
+
+#[cfg(test)]
+pub(crate) fn forget_now(folder: &Path, key: &str) -> Result<(), String> {
+    write_down(&Write {
+        folder: folder.to_path_buf(),
+        key: key.to_owned(),
+        said: Said::Gone,
+    })
+}
+
 #[derive(Serialize, Default, Debug, PartialEq, Eq)]
-struct Kept {
-    values: BTreeMap<String, String>,
+pub(crate) struct Kept {
+    pub(crate) values: BTreeMap<String, String>,
     gone: Vec<String>,
 }
 
-fn read_back(folder: &Path) -> Kept {
+pub(crate) fn read_back(folder: &Path) -> Kept {
     let mut kept = Kept::default();
     let Ok(entries) = std::fs::read_dir(folder) else {
         return kept;
@@ -129,11 +149,15 @@ pub fn read_kept(app: &AppHandle) {
 }
 
 pub fn kept_script() -> String {
-    let kept = READ
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take()
-        .unwrap_or_default();
+    kept_script_of(
+        READ.lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take()
+            .unwrap_or_default(),
+    )
+}
+
+pub(crate) fn kept_script_of(kept: Kept) -> String {
     let json = serde_json::to_string(&kept)
         .unwrap_or_else(|_| r#"{"values":{},"gone":[]}"#.to_string())
         .replace('<', "\\u003c");

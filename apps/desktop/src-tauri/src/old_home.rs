@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const OLD: &str = "ch.emilvinu.nib";
+pub(crate) const OLD: &str = "ch.emilvinu.nib";
 
 const NEW: &str = "so.orden.Orden";
 

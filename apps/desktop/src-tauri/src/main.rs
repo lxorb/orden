@@ -14,6 +14,8 @@ fn main() {
     #[cfg(desktop)]
     orden::old_home::carry_home();
     #[cfg(desktop)]
+    orden::old_engine::carry_storage();
+    #[cfg(desktop)]
     if std::env::args_os()
         .nth(1)
         .is_some_and(|first| first == "mcp")

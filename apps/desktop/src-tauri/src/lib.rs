@@ -120,6 +120,8 @@ mod notices;
 #[cfg(desktop)]
 mod obsidian_vaults;
 #[cfg(desktop)]
+pub mod old_engine;
+#[cfg(desktop)]
 pub mod old_home;
 #[cfg(desktop)]
 mod outside;
