@@ -2,7 +2,9 @@ import {
   blockIdOf,
   heldBlocks,
   isHeading,
+  nameIndent,
   itemLines,
+  layoutOf,
   LIST_ITEM,
   ownLine,
   type Row,
@@ -27,7 +29,7 @@ function listed(row: Row | undefined): boolean {
 }
 
 function endOf(rows: readonly Row[], line: number): number {
-  const blocks = heldBlocks(rows)
+  const { held: blocks, goesOn, runOf } = layoutOf(rows)
   const held = blocks.get(line)
   if (held?.first === line) return held.last
 
@@ -35,8 +37,9 @@ function endOf(rows: readonly Row[], line: number): number {
   for (;;) {
     const next = rows[end + 1]
     if (!next) return end
-    if (!rows[end]?.code && blocks.has(end + 1)) return end
-    if (rows[end]?.code ? !next.code : !next.text.trim() || listed(next) || isHeading(next.text)) {
+    if (rows[end]?.code) {
+      if (!next.code || runOf[end + 1] !== runOf[end] || !goesOn[end + 1]) return end
+    } else if (blocks.has(end + 1) || !next.text.trim() || listed(next) || isHeading(next.text)) {
       return end
     }
     end++
@@ -50,9 +53,11 @@ export function namedBlock(
 ): { id: string; source: string } | null {
   const rows = rowsOf(source)
   const row = rows[line]
-  if (!row || row.matter || (!row.code && isHeading(row.text))) return null
-  if (listed(row)) return namedItem(rows, source, line, id)
+  if (!row || row.matter) return null
   const blocks = heldBlocks(rows)
+  const plain = !row.code && !blocks.has(line)
+  if (plain && isHeading(row.text)) return null
+  if (plain && listed(row)) return namedItem(rows, source, line, id)
   const item = row.code || blocks.has(line) ? itemLines(rows, line) : null
   if (item && item.first !== line) return namedItem(rows, source, item.first, id)
 
@@ -71,7 +76,7 @@ export function namedBlock(
   const name = id()
   if (nameStandsApart(rows.slice(from, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
-    lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
+    lines.splice(end + 1, 0, ending, `${nameIndent(rows, from)}^${name}${ending}`, ...beneath)
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`
   }

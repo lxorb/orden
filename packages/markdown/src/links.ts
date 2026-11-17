@@ -1,4 +1,4 @@
-import { closingTicks, CodeBlocks, WORDS } from './fences'
+import { closingTicks, CodeBlocks, OPENS, WORDS } from './fences'
 import { frontMatterBlock } from './front-matter'
 import { readInQuotes } from './yaml'
 
@@ -664,35 +664,32 @@ export function heldBlocks(rows: readonly Lined[]): Map<number, Held> {
   return held
 }
 
-const FENCE = /^\s*(?:`{3,}|~{3,})/u
-
-interface Layout {
+export interface Layout {
   held: Map<number, Held>
   goesOn: boolean[]
   runOf: number[]
 }
 
-function layoutOf(rows: readonly Lined[]): Layout {
+export function layoutOf(rows: readonly Lined[]): Layout {
   const runOf: number[] = []
+  const code = new CodeBlocks()
   let start = -1
-  let fenced = false
   let closed = false
   for (let at = 0; at < rows.length; at++) {
     const row = rows[at]
-    if (!row?.code) {
+    const open = code.fence
+    const kind = !row || row.matter ? WORDS : code.line(row.text)
+    if (kind === WORDS) {
       start = -1
       runOf.push(-1)
       continue
     }
-    const fence = FENCE.test(row.text)
-    if (start === -1 || closed || (!fenced && fence)) {
+    if (kind === OPENS || start === -1 || closed) {
       start = at
-      fenced = fence
       closed = false
-    } else if (fenced && fence) {
-      closed = true
     }
     runOf.push(start)
+    if (kind !== OPENS && open !== null && code.fence === null) closed = true
   }
 
   const goesOn: boolean[] = new Array<boolean>(rows.length).fill(false)
@@ -775,6 +772,11 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
 }
 
 export const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
+
+export function nameIndent(rows: readonly Lined[], at: number): string {
+  const row = rows[at]
+  return !row || row.code ? '' : (/^[ \t]*/u.exec(row.text)?.[0] ?? '')
+}
 
 export function itemLines(
   rows: readonly Lined[],

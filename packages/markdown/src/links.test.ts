@@ -1185,3 +1185,53 @@ describe('a block beside maths, a comment or a pre', () => {
     expect(performance.now() - started).toBeLessThan(2000)
   })
 })
+
+describe('a block in a list, a fence in a fence, and code after code', () => {
+  const id = () => 'new123'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a fence holding a shorter fence is one block', () => {
+    const note = 'Example:\n\n````md\n```js\nx\n```\n```` ^abc\n\nafter\n'
+    expect(block(note, 'abc')).toBe('````md\n```js\nx\n```\n````')
+    expect(block(note.replace(/`{4}/g, '~~~'), 'abc')).toBe('~~~md\n```js\nx\n```\n~~~')
+    const blank = '````md\n```js\nx\n\n```\n````\n\nafter\n'
+    const named = namedBlock(blank, 0, id)?.source ?? ''
+    expect(block(named, 'new123')).toBe('````md\n```js\nx\n\n```\n````')
+    expect(blocksOf(named).map((one) => [one.line, one.id])).toEqual([
+      [0, 'new123'],
+      [9, null],
+    ])
+  })
+
+  test('a block named apart inside a list item keeps the list whole', () => {
+    const more = '- a\n\n  more about a\n  ```\n  x\n  ```\n- b\n'
+    expect(namedBlock(more, 2, id)?.source).toBe(
+      more.replace('```\n- b', '```\n\n  ^new123\n\n- b'),
+    )
+    const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
+    const named = namedBlock(table, 2, id)?.source ?? ''
+    expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n\n- Next'))
+    expect(block(named, 'new123')).toBe('  | a | b |\n  | - | - |\n  | 1 | 2 |')
+    const rule = '1. Step one\n\n   ---\n\n2. Step two\n'
+    expect(namedBlock(rule, 2, id)?.source).toBe(
+      rule.replace('---\n\n2.', '---\n\n   ^new123\n\n2.'),
+    )
+  })
+
+  test('a list-looking line inside maths, a pre or a comment names the whole block', () => {
+    expect(namedBlock('$$\n- x + y\n$$\n', 1, id)?.source).toBe('$$\n- x + y\n$$\n\n^new123\n')
+    expect(namedBlock('<pre>\n- item\n</pre>\n', 1, id)?.source).toBe(
+      '<pre>\n- item\n</pre>\n\n^new123\n',
+    )
+    expect(namedBlock('<!--\n# Draft\n-->\n', 1, id)?.source).toBe(
+      '<!--\n# Draft\n-->\n\n^new123\n',
+    )
+  })
+
+  test('indented code and the fence after it are two blocks', () => {
+    const note = '    a\n\n```\nb\n```\n\nafter\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe('    a\n\n^new123\n\n```\nb\n```\n\nafter\n')
+    expect(block(named, 'new123')).toBe('    a')
+  })
+})
