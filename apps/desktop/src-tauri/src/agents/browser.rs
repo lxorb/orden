@@ -1395,9 +1395,11 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    use super::handed_from_own;
     use super::{
-        beyond_the_grant, handed_from_own, handing_granted, hidden_within, modifiers, plainly,
-        policy, question_key, seen, Act, Caller, Facts, Grant, Scope,
+        beyond_the_grant, handing_granted, hidden_within, modifiers, plainly, policy, question_key,
+        seen, Act, Caller, Facts, Grant, Scope,
     };
 
     #[cfg(unix)]

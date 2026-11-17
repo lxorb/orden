@@ -250,7 +250,6 @@ fn work(
                 spaces[at] = None;
                 heard.push(Heard::gone(at));
             } else if touched.is_empty() && !batch.rescan[at] && !failing {
-                continue;
             } else if batch.rescan[at] || failing || batch.raw[at] >= OVERFLOWING {
                 let unwatched = {
                     let mut watcher = lock_watcher(watcher);
@@ -307,7 +306,7 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
 
     let mut carried: Vec<(usize, PathBuf)> = Vec::new();
     for one in heard.iter_mut() {
-        for seen in one.seen.iter_mut() {
+        for seen in &mut one.seen {
             let Seen::Created(to) = seen else {
                 continue;
             };
@@ -762,7 +761,7 @@ mod tests {
         let roots = [&one, &two]
             .iter()
             .map(|space| Root {
-                given: space.to_path_buf(),
+                given: (*space).clone(),
                 real: fs::canonicalize(space).expect("a real path"),
             })
             .collect();

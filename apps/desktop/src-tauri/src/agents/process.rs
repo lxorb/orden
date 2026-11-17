@@ -1,3 +1,4 @@
+use std::fmt::Write as _;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -559,7 +560,7 @@ fn summary(program: &str, asked: &Process) -> String {
 
 fn word(line: &mut String, said: &str) {
     if said.is_empty() || said.contains(char::is_whitespace) || said.contains('"') {
-        line.push_str(&format!("{said:?}"));
+        let _ = write!(line, "{said:?}");
     } else {
         line.push_str(said);
     }
