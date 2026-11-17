@@ -635,7 +635,9 @@
       return
     }
 
-    if (!pick(event, entry)) void workspace.openRow(entry.path, { preview: true })
+    if (pick(event, entry)) return
+    if (entry.is_dir && !workspace.isExpanded(entry.path)) workspace.toggleFolder(entry.path)
+    void workspace.openRow(entry.path, { preview: true })
   }
 
   $effect(() => {
