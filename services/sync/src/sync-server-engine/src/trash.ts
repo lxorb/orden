@@ -18,6 +18,7 @@ import {
   picturesOf,
   places,
   readSite,
+  RESTAMP,
   type Space,
   type Variables,
 } from '../../sync-server/src/api'
@@ -27,7 +28,7 @@ import { eraseRooms } from './rooms'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
 import { MOST_OWN_SPACES, presentSpace, TOO_MANY_SPACES } from './spaces/space'
-import { noteChatFiles, noteUnused, RESTAMP, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
+import { noteChatFiles, noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
 import { readSpaceFiles } from './spaces/files'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000

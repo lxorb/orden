@@ -1,10 +1,10 @@
-import { chunks, type Env, now } from '../../sync-server/src/api'
+import { chunks, type Env, now, RESTAMP } from '../../sync-server/src/api'
 import { letGo, reading } from './used'
 
 export const RIGHT_AFTER = 25
 export const NIGHTLY = 200
 export const GRACE = 30 * 24 * 60 * 60 * 1000
-export const RESTAMP = 'on conflict(user_id, hash) do update set since = max(since, excluded.since)'
+export const DEVICES_COUNT_FOR = 90 * 24 * 60 * 60 * 1000
 
 const HASHES_AT_ONCE = 10_000
 
@@ -65,25 +65,32 @@ export async function sweepUnused(
   asked?: { user: string; since: number },
 ): Promise<number> {
   const { results } = await env.DB.prepare(
-    `select user_id, hash from unused_blobs
-      where since <= ?2 or (user_id = ?3 and since >= ?4)
+    `select user_id, hash from unused_blobs u
+      where (since <= ?2
+             and not exists (select 1 from devices d
+                              where d.user_id = u.user_id and d.revoked_at is null
+                                and coalesce(d.last_seen_at, d.created_at) < u.since
+                                and coalesce(d.last_seen_at, d.created_at) >= ?5))
+         or (user_id = ?3 and since >= ?4)
       order by user_id = ?3 and since >= ?4 desc, since, hash limit ?1`,
   )
-    .bind(most, at - GRACE, asked?.user ?? '', asked?.since ?? 0)
+    .bind(most, at - GRACE, asked?.user ?? '', asked?.since ?? 0, at - DEVICES_COUNT_FOR)
     .all<{ user_id: string; hash: string }>()
 
   const done = reading()
   let decided = 0
   for (const one of results) {
     const settled = await letGo(env, one.user_id, one.hash, true, done)
+    const versioned = done.versioned.has(`${one.user_id} ${one.hash}`)
+    const gone = settled && !versioned
     await env.DB.prepare(
-      settled
+      gone
         ? 'delete from unused_blobs where user_id = ?1 and hash = ?2'
         : 'update unused_blobs set since = ?3 where user_id = ?1 and hash = ?2',
     )
-      .bind(one.user_id, one.hash, ...(settled ? [] : [at - GRACE]))
+      .bind(one.user_id, one.hash, ...(gone ? [] : [versioned ? at : at - GRACE]))
       .run()
-    if (settled) decided += 1
+    if (gone) decided += 1
   }
   return decided
 }

@@ -5,8 +5,16 @@ import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { sweepChats } from '../src/sync-server-chats/src/chats/sweep'
 import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
+import { saveNote } from '../src/sync-server-engine/src/notes'
 import { purgeExpired } from '../src/sync-server-engine/src/trash'
-import { GRACE, NIGHTLY, sweepUnused } from '../src/sync-server-engine/src/unused'
+import {
+  DEVICES_COUNT_FOR,
+  GRACE,
+  NIGHTLY,
+  sweepUnused,
+} from '../src/sync-server-engine/src/unused'
+import type { Note } from '../src/sync-server/src/types'
+import { sweepVersions } from '../src/sync-server/src/versions'
 import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { FakeSocket } from './room'
 import { framed, type Live, live } from './sync2'
@@ -1134,5 +1142,110 @@ describe('a picture nothing shows any more', () => {
     expect(holds(deleted)).toBe(0)
     expect(holds(waiting)).toBe(1)
     expect(listed()).toBe(1)
+  })
+
+  async function rewritten(id: string, content: string): Promise<void> {
+    const note = env.db.prepare('select * from notes where id = ?').get(id) as Note
+    expect(await saveNote(env, note, content, note.path)).not.toBeNull()
+  }
+  const versionsGone = () => sweepVersions(env, Date.now() + 2 * GRACE)
+  const owner = () =>
+    (env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string })
+      .user_id
+  const phoneSeen = (at: number) =>
+    env.db
+      .prepare(
+        `insert into devices (id, user_id, name, platform, created_at, last_seen_at)
+         values ('phone', ?1, 'Phone', 'ios', ?2, ?2)
+         on conflict(id) do update set last_seen_at = excluded.last_seen_at`,
+      )
+      .run(owner(), at)
+
+  test('goes once the grace has passed after a note that stays stops showing it', async () => {
+    const hash = await picture('dropped')
+    const id = await shows('A.md', hash)
+    await rewritten(id, 'no picture now\n')
+    await versionsGone()
+
+    expect(listed()).toBe(1)
+    await purgeExpired(env, Date.now() + GRACE - DAY)
+    expect(holds(hash)).toBe(1)
+
+    await purgeExpired(env, Date.now() + GRACE)
+    expect(holds(hash)).toBe(0)
+    expect(listed()).toBe(0)
+  })
+
+  test('stays when another note still shows it', async () => {
+    const hash = await picture('twice')
+    const id = await shows('A.md', hash)
+    await shows('B.md', hash)
+    await rewritten(id, 'gone here\n')
+    await versionsGone()
+
+    await purgeExpired(env, Date.now() + GRACE)
+
+    expect(holds(hash)).toBe(1)
+    expect(listed()).toBe(0)
+  })
+
+  test('stays when the note shows it again inside the grace', async () => {
+    const hash = await picture('back')
+    const id = await shows('A.md', hash)
+    await rewritten(id, 'gone for now\n')
+    await versionsGone()
+    daysAgo(20)
+    await rewritten(id, `back again ![](https://orden.so/i/${hash}.png)\n`)
+
+    await purgeExpired(env, Date.now() + GRACE)
+
+    expect(holds(hash)).toBe(1)
+    expect(listed()).toBe(0)
+  })
+
+  test('stays while a saved version shows it, and goes a grace after that version goes', async () => {
+    const hash = await picture('versioned')
+    const id = await shows('A.md', hash)
+    await rewritten(id, 'gone from the note\n')
+
+    await purgeExpired(env, Date.now() + GRACE)
+    expect(holds(hash)).toBe(1)
+    expect(listed()).toBe(1)
+
+    await versionsGone()
+    await purgeExpired(env, Date.now() + 2 * GRACE - DAY)
+    expect(holds(hash)).toBe(1)
+
+    await purgeExpired(env, Date.now() + 2 * GRACE)
+    expect(holds(hash)).toBe(0)
+    expect(listed()).toBe(0)
+  })
+
+  test('waits for a device not seen since it was let go of', async () => {
+    phoneSeen(Date.now() - DAY)
+    const hash = await picture('offline')
+    const id = await shows('A.md', hash)
+    await rewritten(id, 'gone while the phone sleeps\n')
+    await versionsGone()
+
+    await purgeExpired(env, Date.now() + GRACE)
+    expect(holds(hash)).toBe(1)
+    expect(listed()).toBe(1)
+
+    phoneSeen(Date.now() + DAY)
+    await purgeExpired(env, Date.now() + GRACE + DAY)
+    expect(holds(hash)).toBe(0)
+  })
+
+  test('stops waiting for a device away longer than devices count', async () => {
+    phoneSeen(Date.now() - DAY)
+    const hash = await picture('lost phone')
+    const id = await shows('A.md', hash)
+    await rewritten(id, 'gone, phone in a drawer\n')
+    await versionsGone()
+
+    await purgeExpired(env, Date.now() + DEVICES_COUNT_FOR)
+
+    expect(holds(hash)).toBe(0)
   })
 })
