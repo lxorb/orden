@@ -37,6 +37,22 @@ describe('the search a selection asks for', () => {
     })
   })
 
+  test('is words even where its tokens together look like a pattern or a property', () => {
+    expect(parseQuery(asWritten('/Users/David to Backups/'))).toEqual({
+      kind: 'all',
+      of: [word('/Users/David'), word('to'), word('Backups/')],
+    })
+    expect(parseQuery(asWritten('[citation needed]'))).toEqual({
+      kind: 'all',
+      of: [word('[citation'), word('needed]')],
+    })
+    expect(parseQuery(asWritten('/tmp/a+b c/'))).toEqual({
+      kind: 'all',
+      of: [word('/tmp/a+b'), word('c/')],
+    })
+    expect(parseQuery(asWritten('(a b)'))).toEqual({ kind: 'all', of: [word('(a'), word('b)')] })
+  })
+
   test('and leaves plain words as they were', () => {
     expect(asWritten('quick brown')).toBe('quick brown')
   })

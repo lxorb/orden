@@ -214,7 +214,8 @@ class Parser {
         }
 
         const ends = after >= this.source.length || /[\s)]/.test(this.source.charAt(after))
-        if (ends && FLAGS.test(flags)) {
+        if (ends && !FLAGS.test(flags)) return null
+        if (ends) {
           this.at = after
           return { kind: 'regex', source, fold: flags.includes('i') }
         }

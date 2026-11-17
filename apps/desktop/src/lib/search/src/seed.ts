@@ -18,9 +18,14 @@ function readsAsItself(token: string): boolean {
   return query.kind === 'text' && query.text === token
 }
 
+function quoted(token: string): string {
+  return `"${token.replace(/[\\"]/g, '\\$&')}"`
+}
+
 export function asWritten(words: string): string {
-  return words
-    .split(/\s+/)
-    .map((token) => (readsAsItself(token) ? token : `"${token.replace(/[\\"]/g, '\\$&')}"`))
-    .join(' ')
+  const tokens = words.split(/\s+/)
+  const each = tokens.map((token) => (readsAsItself(token) ? token : quoted(token))).join(' ')
+  const all = tokens.map(quoted).join(' ')
+  const same = JSON.stringify(parseQuery(each)) === JSON.stringify(parseQuery(all))
+  return same ? each : all
 }

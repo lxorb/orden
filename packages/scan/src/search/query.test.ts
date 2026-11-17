@@ -251,6 +251,20 @@ describe('regular expressions', () => {
     expect(parseQuery('/Plan/gi')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
   })
 
+  test('a path keeps the terms after it as they were', () => {
+    expect(parseQuery('/usr/bin line:/TODO/')).toEqual({
+      kind: 'all',
+      of: [
+        word('/usr/bin'),
+        { kind: 'scope', unit: 'line', of: { kind: 'regex', source: 'TODO', fold: false } },
+      ],
+    })
+    expect(parseQuery('/a/x OR /b/')).toEqual({
+      kind: 'any',
+      of: [word('/a/x'), { kind: 'regex', source: 'b', fold: false }],
+    })
+  })
+
   test('close at the slash that ends the word', () => {
     expect(parseQuery('/a/b/')).toEqual({ kind: 'regex', source: 'a/b', fold: false })
   })
