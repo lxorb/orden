@@ -42,6 +42,12 @@ class Setup {
 
   private trail: Step[] = []
   private told = 0
+  private visits = 0
+
+  stillHere(): () => boolean {
+    const visit = this.visits
+    return () => this.showing && this.visits === visit
+  }
 
   resume() {
     if (this.trail.length) return
@@ -59,6 +65,7 @@ class Setup {
   }
 
   private open(step: Step) {
+    this.visits++
     this.step = step
     this.trail = [step]
     this.showing = true
@@ -102,6 +109,7 @@ class Setup {
 
   next() {
     const step = stepAfter(this.step, this.answers, this.reach)
+    this.visits++
     this.forward = true
     this.trail.push(step)
     this.step = step
@@ -112,6 +120,7 @@ class Setup {
   back() {
     if (this.trail.length < 2) return
     this.trail.pop()
+    this.visits++
     this.forward = false
     this.step = this.trail.at(-1) ?? 'account'
     this.keep()

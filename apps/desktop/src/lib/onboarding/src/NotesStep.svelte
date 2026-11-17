@@ -58,6 +58,7 @@
     if (!chosen || bringing) return
     const app = chosen.id === UNLISTED ? null : chosen.id
     const how = way
+    const here = setup.stillHere()
     if (how && how !== 'computer') {
       bringing = true
       const outcome = await bring()
@@ -67,9 +68,10 @@
       setup.tell(outcome.trouble)
       setup.got('notes')
     }
+    if (!here()) return
     setup.answer({ notes: app })
     await settleMarkdown(app)
-    setup.next()
+    if (here()) setup.next()
   }
 </script>
 

@@ -102,4 +102,17 @@ describe('the first-launch setup', () => {
       'Containers stay in Firefox',
     ])
   })
+
+  test('tells work started on a step whether that step is still the one showing', async () => {
+    const setup = await fresh()
+    setup.begin(false)
+    const onAccount = setup.stillHere()
+    expect(onAccount()).toBe(true)
+    setup.next()
+    expect(onAccount()).toBe(false)
+    const onSecond = setup.stillHere()
+    setup.back()
+    setup.next()
+    expect(onSecond()).toBe(false)
+  })
 })

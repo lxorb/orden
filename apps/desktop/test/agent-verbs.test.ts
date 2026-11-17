@@ -1,6 +1,7 @@
 import {
   agentVerbNames,
   type AgentHeard,
+  type PortMap,
   providePort,
   runAgentVerb,
   type WebLent,
@@ -1770,6 +1771,23 @@ describe('to-dos and bases', () => {
       code: 'no_such_space',
     })
     expect(todos.todos.length).toBe(before)
+  })
+
+  test('a todo in a synced space carries the account id, and the older local one still counts', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const gone = providePort('sync.store', {
+      remoteIdFor: (root: string) => (root === '/s/Work' ? 'acct-work' : null),
+    } as unknown as PortMap['sync.store'])
+    const before = await todos.add({ title: 'Older', space: work.id })
+    const added = await call('add_task', { text: 'Newer' })
+    const id = (added as { result: { id: string } }).result.id
+    expect(todos.todo(id)?.space).toBe('acct-work')
+    expect(await call('list_tasks', { space: 'Work' })).toMatchObject({ result: { total: 2 } })
+    expect(await call('list_tasks', { space: 'acct-work' })).toMatchObject({ result: { total: 2 } })
+    expect(await call('update_task', { id, space: '' })).toMatchObject({ result: { space: null } })
+    gone()
+    await todos.remove(id)
+    if (before.ok) await todos.remove(before.value.id)
   })
 
   test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {

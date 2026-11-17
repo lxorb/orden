@@ -24,6 +24,7 @@ vi.mock('../keys', async (original) => ({
 const { memoryStorage } = await import('../../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
+await import('../../../sync-client/src/api')
 const { ai } = await import('../store.svelte')
 const { startVault, vault, world } = await import('./start.svelte')
 const { movedSince } = await import('../moves')

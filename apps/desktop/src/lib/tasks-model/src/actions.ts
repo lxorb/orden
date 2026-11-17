@@ -48,7 +48,8 @@ export async function addTask(
   const made = await todos.add({
     title: read.text || said,
     labels: read.fields.tags,
-    deadline: read.fields.deadline ?? read.fields.due ?? null,
+    start: read.fields.due ?? null,
+    deadline: read.fields.deadline ?? null,
     priority: priorityOf(read.fields.priority),
   })
   return made.ok ? { id: made.value.id } : null

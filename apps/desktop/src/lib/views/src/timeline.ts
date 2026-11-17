@@ -15,6 +15,7 @@ export interface Bar {
   to: string
   fromTime?: string
   toTime?: string
+  ownDates?: boolean
 }
 
 function timeIn(value: Value): string {
@@ -44,7 +45,7 @@ export function barOf(
     const to = deadline && from !== 'task.deadline' ? 'task.deadline' : from
     let end = deadline && from !== 'task.deadline' ? deadline : start
     if (end < start) end = start
-    return { row, start, end, from, to }
+    return { row, start, end, from, to, ownDates: true }
   }
 
   const fromProperty = dates.start ?? 'file.ctime'
@@ -106,14 +107,26 @@ export function dragged(
     if (bar.to !== bar.from) out[bar.to] = `${addDays(bar.end, days)}${toTime}`
     return out
   }
+  if (bar.from === bar.to) return stretched(bar, part, days)
   if (part === 'start') {
     const start = addDays(bar.start, days)
-    const field =
-      bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
-    return { [field]: `${start > bar.end ? bar.end : start}${fromTime}` }
+    return { [bar.from]: `${start > bar.end ? bar.end : start}${fromTime}` }
   }
   const end = addDays(bar.end, days)
   return { [bar.to]: `${end < bar.start ? bar.start : end}${toTime}` }
+}
+
+function stretched(bar: Bar, part: 'start' | 'end', days: number): Record<string, string> {
+  if (!bar.ownDates) return {}
+  const start = part === 'start' ? addDays(bar.start, days) : bar.start
+  const end = part === 'end' ? addDays(bar.end, days) : bar.end
+  if (start >= end) return {}
+  if (bar.from === 'task.deadline') {
+    return part === 'start'
+      ? { 'task.start': start }
+      : { 'task.start': start, 'task.deadline': end }
+  }
+  return part === 'start' ? { [bar.from]: start, 'task.deadline': end } : { 'task.deadline': end }
 }
 
 export interface Arrow {

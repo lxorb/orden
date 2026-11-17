@@ -33,10 +33,13 @@ import {
 } from './registry'
 import { saveFront } from '../../save-place/src/api'
 import { ran } from '../../usage/src/api'
+import { owed } from './toolbar.svelte'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './registry'
 
 const STORAGE_KEY = 'orden:shortcuts'
+const OWED_KEY = 'orden:shortcuts-owed'
+owed.untilSignOut(OWED_KEY)
 
 const WRITE_CHORD = 'Mod-s'
 const PRESET_KEY = 'orden:preset'
@@ -210,6 +213,10 @@ class Shortcuts {
   }
 
   receive(remote: AccountSettings) {
+    if (owed.owes(OWED_KEY)) {
+      this.share()
+      return
+    }
     const theirs = remote.shortcuts
     if (!theirs || typeof theirs !== 'object') {
       if (Object.keys(this.overrides).length || this.preset !== 'default') this.share()
@@ -233,9 +240,10 @@ class Shortcuts {
     const token = account.accountToken
     if (!token) return
 
-    void api
-      .saveSettings(token, { shortcuts: this.overrides, preset: this.preset })
-      .catch(() => undefined)
+    owed.saving(
+      OWED_KEY,
+      api.saveSettings(token, { shortcuts: this.overrides, preset: this.preset }),
+    )
   }
 
   pressed(id: string, event: Keystroke): boolean {

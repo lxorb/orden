@@ -5,15 +5,28 @@ export interface LookWorld {
   wear(look: Look): Promise<void>
   read(token: string): Promise<{ look?: unknown }>
   save(token: string, look: Look): Promise<unknown>
+  owedKept?(): boolean
+  keepOwed?(owed: boolean): void
 }
 
 export class LookSync {
   private session = 0
   private sent = 0
   private saving = 0
-  private owed = false
+  private owing: boolean
 
-  constructor(private readonly world: LookWorld) {}
+  constructor(private readonly world: LookWorld) {
+    this.owing = world.owedKept?.() ?? false
+  }
+
+  private get owed(): boolean {
+    return this.owing
+  }
+
+  private set owed(owed: boolean) {
+    this.owing = owed
+    this.world.keepOwed?.(owed)
+  }
 
   picked(): void {
     this.sent++

@@ -34,6 +34,7 @@
   $effect(() => {
     if (entered.length !== LENGTH || entered === submitted) return
     submitted = entered
+    const here = setup.stillHere()
     void account.code(entered).then((accepted) => {
       account.open = false
       if (!accepted) {
@@ -47,7 +48,9 @@
         settling,
         ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
       )
-      setTimeout(() => setup.next(), 900)
+      setTimeout(() => {
+        if (here()) setup.next()
+      }, 900)
     })
   })
 

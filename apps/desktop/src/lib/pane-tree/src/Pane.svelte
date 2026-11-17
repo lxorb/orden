@@ -146,6 +146,12 @@
 
   const columnViews = $state<Record<string, EditorView | undefined>>({})
 
+  function takeColumn(id: string) {
+    if (id === pane.activeTabId && workspace.panes.focusedId === pane.id) return
+    workspace.focusPane(pane.id)
+    workspace.activate(id)
+  }
+
   $effect(() => {
     if (!stacking) return
 
@@ -570,7 +576,11 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="stack" data-region="editor">
       {#each columns as one (one.id)}
-        <section class="column" class:is-active={one.id === pane.activeTabId}>
+        <section
+          class="column"
+          class:is-active={one.id === pane.activeTabId}
+          onfocusin={() => takeColumn(one.id)}
+        >
           <button
             class="spine"
             title={one.shown}
