@@ -372,6 +372,7 @@ export interface Trashed {
   from: string
   trashedAt: number
   apart?: boolean
+  arrived?: boolean
 }
 
 export interface TreeRows {

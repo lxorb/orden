@@ -638,7 +638,7 @@ async function deletedThere(
   await invoke('snapshot_note', { path: target, content: local }).catch(() => undefined)
   const how = syncDeletes(target, 'file')
     ? invoke('delete_note', { path: target })
-    : invoke('trash_item', { path: target, kind: 'note' })
+    : invoke('trash_item', { path: target, kind: 'note', arrived: true })
   await how.catch((error: unknown) => {
     log(
       'warn',

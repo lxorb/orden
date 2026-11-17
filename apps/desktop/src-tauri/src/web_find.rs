@@ -49,7 +49,6 @@ const LEFT: &str =
 fn looked(term: &str, look: Look) -> String {
     let term = serde_json::to_string(term).unwrap_or_else(|_| "''".to_string());
     LOOKED
-        .replace("__TERM__", &term)
         .replace(
             "__BACK__",
             if look == Look::Previous {
@@ -62,6 +61,7 @@ fn looked(term: &str, look: Look) -> String {
             "__FRESH__",
             if look == Look::Fresh { "true" } else { "false" },
         )
+        .replace("__TERM__", &term)
 }
 
 #[tauri::command]
@@ -105,6 +105,12 @@ pub fn forget(_tab: &str) {}
 #[cfg(test)]
 mod tests {
     use super::{looked, Found, Look};
+
+    #[test]
+    fn a_word_that_reads_like_a_flag_is_looked_for_as_written() {
+        let script = looked("__BACK__ and __FRESH__", Look::Next);
+        assert!(script.contains("(\"__BACK__ and __FRESH__\", false, false)"));
+    }
 
     #[test]
     fn a_word_is_handed_to_the_page_as_a_string_and_nothing_else() {

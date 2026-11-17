@@ -1278,6 +1278,9 @@ fn files_of(
             if !path.is_file() {
                 return Err(absent());
             }
+            if matches!(caller, Caller::Agent(_)) && twin.is_none() {
+                handed_from_own(root.as_deref(), &super::files::own_folders(app), &path)?;
+            }
             let mut inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
                 if inside && beyond_the_grant(root, &logical, &grant.spaces) {
@@ -1300,6 +1303,10 @@ fn files_of(
         .collect()
 }
 
+fn handed_from_own(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Result<(), Answer> {
+    super::files::behind_but_spaces(spaces, own, path).map_or(Ok(()), Err)
+}
+
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
     if matches!(spaces, Spaces::All(_)) {
         return false;
@@ -1315,7 +1322,36 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{beyond_the_grant, modifiers, policy, question_key, seen, Act, Facts, Grant};
+    use super::{
+        beyond_the_grant, handed_from_own, modifiers, policy, question_key, seen, Act, Facts, Grant,
+    };
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_of_ordens_own_folder_is_never_handed_to_a_page() {
+        let dir = tempfile::tempdir().unwrap();
+        let own = dir.path().join("config");
+        std::fs::create_dir_all(&own).unwrap();
+        let secret = own.join("automation.json");
+        std::fs::write(&secret, "{}").unwrap();
+        let alias = dir.path().join("alias");
+        std::os::unix::fs::symlink(&own, &alias).unwrap();
+        let free = dir.path().join("free.txt");
+        std::fs::write(&free, "x").unwrap();
+        let spaces = own.join("Spaces");
+        std::fs::create_dir_all(spaces.join("Work")).unwrap();
+        let report = spaces.join("Work").join("report.pdf");
+        std::fs::write(&report, "pdf").unwrap();
+        let sneaking = spaces.join("Work").join("sneaking.json");
+        std::os::unix::fs::symlink(&secret, &sneaking).unwrap();
+        let fenced = [own.clone()];
+        let handed = |path: &Path| handed_from_own(Some(&spaces), &fenced, path);
+        assert!(handed(&secret).is_err());
+        assert!(handed(&alias.join("automation.json")).is_err());
+        assert!(handed(&free).is_ok());
+        assert!(handed(&report).is_ok());
+        assert!(handed(&sneaking).is_err());
+    }
     use crate::agents::grants::{Every, SiteRule, Spaces};
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;

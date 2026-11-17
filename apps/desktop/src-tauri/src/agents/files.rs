@@ -133,10 +133,28 @@ pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> 
 }
 
 pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
-    behind(&own_folders(app), path)
+    behind_but_spaces(
+        crate::paths::spaces_dir(app).ok().as_deref(),
+        &own_folders(app),
+        path,
+    )
 }
 
-fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
+pub(super) fn behind_but_spaces(
+    spaces: Option<&Path>,
+    own: &[PathBuf],
+    path: &Path,
+) -> Option<Answer> {
+    let in_spaces = spaces.is_some_and(|spaces| {
+        crate::paths::inside(spaces, path) && crate::paths::inside(&real(spaces), &real(path))
+    });
+    if in_spaces {
+        return None;
+    }
+    behind(own, path)
+}
+
+pub(super) fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
     let real_path = real(path);
     fenced
         .iter()
@@ -287,12 +305,10 @@ fn question(
     if !grant.asks(category) {
         return None;
     }
-    let folder = folder_of(path, asked.op);
-    if category == Category::Files
-        && ancestors(&folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
-    {
+    if category == Category::Files && always_allowed(grant, asked.op, path, to) {
         return None;
     }
+    let folder = asked_about(grant, asked.op, path, to);
     let key = approvals::key(
         "files",
         None,
@@ -318,6 +334,22 @@ fn question(
             key,
         },
     ))
+}
+
+fn covered(grant: &Grant, folder: &Path) -> bool {
+    ancestors(folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
+}
+
+fn always_allowed(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> bool {
+    covered(grant, &folder_of(path, op)) && to.is_none_or(|to| covered(grant, &folder_of(to, op)))
+}
+
+fn asked_about(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> PathBuf {
+    let from = folder_of(path, op);
+    match to.map(|to| folder_of(to, op)) {
+        Some(into) if covered(grant, &from) && !covered(grant, &into) => into,
+        _ => from,
+    }
 }
 
 fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
@@ -712,6 +744,51 @@ mod tests {
         assert!(!globbed("?.md", "üb.md"));
         assert!(globbed("Ärger*", "ärger.txt"));
         assert!(globbed("*.MD", "Übersicht.md"));
+    }
+
+    #[test]
+    fn a_folder_always_allowed_does_not_let_a_copy_or_move_write_elsewhere() {
+        let mut grant = crate::agents::grants::Grant::own("a".into(), "A");
+        grant.always.insert("/a".into(), vec![Category::Files]);
+        let from = Path::new("/a/x.txt");
+        assert!(always_allowed(&grant, FilesOp::Read, from, None));
+        assert!(always_allowed(
+            &grant,
+            FilesOp::Copy,
+            from,
+            Some(Path::new("/a/y.txt"))
+        ));
+        assert!(!always_allowed(
+            &grant,
+            FilesOp::Copy,
+            from,
+            Some(Path::new("/b/x.txt"))
+        ));
+        assert!(!always_allowed(
+            &grant,
+            FilesOp::Move,
+            from,
+            Some(Path::new("/home/me/.config/autostart/x.desktop"))
+        ));
+        assert!(!always_allowed(
+            &grant,
+            FilesOp::Copy,
+            Path::new("/b/x.txt"),
+            Some(Path::new("/a/x.txt"))
+        ));
+        assert_eq!(
+            asked_about(&grant, FilesOp::Copy, from, Some(Path::new("/b/x.txt"))),
+            Path::new("/b")
+        );
+        assert_eq!(
+            asked_about(
+                &grant,
+                FilesOp::Copy,
+                Path::new("/c/x.txt"),
+                Some(Path::new("/b/x.txt"))
+            ),
+            Path::new("/c")
+        );
     }
 
     fn temp() -> PathBuf {

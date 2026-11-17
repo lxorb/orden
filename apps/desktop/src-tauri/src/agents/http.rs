@@ -177,7 +177,7 @@ async fn once(
     let _ = rustls::crypto::ring::default_provider().install_default();
     let client = Client::builder()
         .redirect(redirect::Policy::none())
-        .resolve(&host(url), address)
+        .resolve(&pinned(url), address)
         .timeout(left)
         .build()
         .map_err(|why| Answer::error(Code::Failed, why.to_string()))?;
@@ -303,6 +303,10 @@ fn headers_of(headers: &HeaderMap) -> BTreeMap<String, String> {
             .or_insert(value);
     }
     all
+}
+
+fn pinned(url: &Url) -> String {
+    url.host_str().unwrap_or_default().to_owned()
 }
 
 fn host(url: &Url) -> String {
@@ -466,6 +470,17 @@ fn redirected(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_address_looked_up_is_pinned_under_the_name_the_request_asks_for() {
+        for (said, asked) in [
+            ("http://x.rebind.example./", "x.rebind.example."),
+            ("https://Example.COM/a", "example.com"),
+        ] {
+            let url = Url::parse(said).expect("a url");
+            assert_eq!(pinned(&url), asked);
+        }
+    }
 
     #[test]
     fn the_apps_own_endpoint_is_never_reached() {
