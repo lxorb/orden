@@ -6,7 +6,12 @@ import {
   sealVersion,
   unwrapVaultKey,
 } from '@orden/pass/keys'
-import type { Changes, ItemRow as WireItem, VaultRow as WireVault } from '@orden/pass/wire'
+import type {
+  Accepted,
+  Changes,
+  ItemRow as WireItem,
+  VaultRow as WireVault,
+} from '@orden/pass/wire'
 import type { Change, ItemRow, VaultRow, VersionRow } from './local'
 import { KEPT_AFTER_DELETE } from './local'
 import { rekeyed } from './rekey'
@@ -24,7 +29,7 @@ import {
   keepVaultBase,
 } from './synced'
 import type { TrustReason } from './trust-problem'
-import { vaultDistrust } from './vault-trust'
+import { keptPin, vaultDistrust } from './vault-trust'
 
 export type Pulled = 'pulled' | 'conflict' | 'deferred'
 
@@ -62,7 +67,12 @@ function deviceItemOf(row: WireItem): ItemRow {
   return { ...row, pending: false }
 }
 
-function deviceVaultOf(row: WireVault, key: string, pub: string): VaultRow {
+function deviceVaultOf(
+  row: WireVault,
+  key: string,
+  pub: string,
+  accepted: Accepted | null,
+): VaultRow {
   return {
     id: row.id,
     rev: row.rev,
@@ -75,7 +85,7 @@ function deviceVaultOf(row: WireVault, key: string, pub: string): VaultRow {
     pending: false,
     deleted: false,
     proof: row.proof,
-    accepted: row.accepted,
+    accepted,
     handovers: row.handovers,
   }
 }
@@ -183,7 +193,7 @@ async function appliedVault(
       return 'pulled'
     }
   }
-  const next = deviceVaultOf(row, row.key, doing.pub)
+  const next = deviceVaultOf(row, row.key, doing.pub, await keptPin(doing.me, row, local))
   doing.change.vaults.push(next)
   await keepVaultBase(rows, row.id, { rev: row.rev, meta: row.meta })
   if (!local) doing.fresh.push(row.id)

@@ -24,7 +24,8 @@ export function selectionHere(): { text: string; picked: Picked | null } {
 export const SHUT_TO_AGENTS =
   'This note is protected: unlock it and choose Let agents read in its menu.'
 
-export function agentsMayRead(shows: SharedDoc | null): boolean {
+export function agentsMayRead(shows: SharedDoc | null, place: string | null = null): boolean {
+  if (place !== null) return protection.agentsMay(place)
   const tab = shows ? workspace.tabs.find((one) => one.note.live === shows) : undefined
   if (tab) return protection.agentsMay(tab.path)
   const open = workspace.activeSpace?.root

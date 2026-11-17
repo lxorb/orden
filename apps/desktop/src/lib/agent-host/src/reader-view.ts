@@ -94,7 +94,8 @@ export function arrangePanes(call: Call, layout: string, tab: Tab | null): void 
     case 'single': {
       const into = workspace.panes.focusedId
       for (const one of [...workspace.tabs]) {
-        if (one.paneId !== into) workspace.moveTab(one.id, into)
+        const shown = workspace.panes.at(one.paneId) !== null
+        if (shown && one.paneId !== into) workspace.moveTab(one.id, into)
       }
       return
     }

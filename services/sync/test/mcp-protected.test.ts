@@ -63,6 +63,15 @@ describe('an agent reaching the account', () => {
     ).toContain('is protected')
   })
 
+  test('cannot write into it by another spelling of its folder', async () => {
+    expect(
+      await tool('write_note', { space: 'Home', path: 'diary/Planted.md', content: 'planted' }),
+    ).toContain('is protected')
+    expect(
+      await tool('write_note', { space: 'Home', path: 'DIARY/Planted.md', content: 'planted' }),
+    ).toContain('is protected')
+  })
+
   test('cannot write into it by spelling it in other letters', async () => {
     for (const path of ['diary/New.md', 'DIARY/Today.md', 'D\u0131ary/New.md']) {
       expect(await tool('write_note', { space: 'Home', path, content: 'planted' })).toContain(

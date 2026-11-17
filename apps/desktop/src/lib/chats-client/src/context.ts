@@ -1,6 +1,7 @@
 import { type Message, type Who } from '@orden/chats'
-import { messagesText } from '@orden/chats/agent'
+import { messagesText, oneLine } from '@orden/chats/agent'
 import { chatLink } from '@orden/chats/links'
+import { protection } from '../../protect/src/api'
 import { chats } from './store.svelte'
 
 const MOST_MESSAGES = 200
@@ -15,8 +16,8 @@ export type Part = 'unread' | 'unread-or-newest'
 
 export async function chatPart(chat: string, part: Part): Promise<ChatPart | null> {
   const entry = chats.entry(chat)
-  if (!entry) return null
-  const name = entry.name ?? 'chat'
+  if (!entry || !protection.agentsMay(entry.path ?? entry.root)) return null
+  const name = oneLine(entry.name ?? 'chat')
   const newest = await chats.history(chat, { limit: MOST_MESSAGES })
   let messages: Message[] = newest.filter((one) => one.seq > entry.readSeq)
   const unread = messages.some((one) => one.author !== chats.me)

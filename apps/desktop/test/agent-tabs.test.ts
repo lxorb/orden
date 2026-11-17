@@ -907,7 +907,7 @@ describe('the reader terminals', () => {
     expect(await call('read_terminal', { tab: 'n1' })).toMatchObject({ code: 'bad_arguments' })
   })
 
-  test('type: an allowed program with Enter goes, and answers what it printed', async () => {
+  test('type: even a listed program with Enter is asked first, then answers what it printed', async () => {
     running.add('t1')
     const said = await call('type_terminal', { tab: 't1', text: 'git log', wait_ms: 1 })
     expect(screen.typed).toEqual(['git log\r'])
@@ -915,7 +915,9 @@ describe('the reader terminals', () => {
       result: { typed: 'git log + Enter' },
       untrusted: 'terminal output',
     })
-    expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
+    expect(asked.find((one) => one.command === 'agents_ask')?.args).toMatchObject({
+      category: 'terminal',
+    })
   })
 
   test('type: at most 100 keys and a line of 10000 characters, refused before anything is typed', async () => {

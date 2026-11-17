@@ -13,6 +13,7 @@ import {
 import { type NoteDoc } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import type { Space } from '../../workspace/src/api'
+import type { Protection } from '../../protect/src/api'
 import { keptBody, webTitleOf, webUrlOf } from './note'
 import { sameSite } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
@@ -20,14 +21,16 @@ import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 export interface Converts {
   readonly notes: readonly Entry[]
   readonly activeSpace: Space | null
+  readonly protection: Pick<Protection, 'copied'>
+  rootHolding(path: string | null): string | null
   entryAt(path: string): Entry | null
   documentAt(path: string): NoteDoc | null
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
-  fileGone(path: string, kind: 'file'): Promise<void>
+  fileGone(path: string, kind: 'file', back?: string): Promise<void>
   loadTree(): Promise<void>
-  bin(path: string, isFolder: boolean): Promise<unknown>
+  bin(path: string, isFolder: boolean): Promise<{ trashId?: string; back?: string } | null>
 }
 
 export async function asShortcut(ws: Converts, path: string): Promise<string | null> {
@@ -54,23 +57,27 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
     ws.showEntry(ws.freshEntry(target, false))
     await writeFile(target, written)
   }
+  ws.protection.copied(path, target, ws.rootHolding(path), ws.rootHolding(target))
 
   const kept = keptBody(text)
   if (kept === null) {
-    await oldNoteGone(ws, path)
-    await ws.fileGone(path, 'file')
+    const binned = await oldNoteGone(ws, path)
+    if (binned) await ws.fileGone(path, 'file', binned.back)
   } else await writeFile(path, kept).catch(() => undefined)
 
   await ws.loadTree()
   return target
 }
 
-async function oldNoteGone(ws: Converts, path: string) {
-  try {
-    await ws.bin(path, false)
-  } catch {
-    // Said above: a note that stays is a note beside a shortcut, and harmless.
-  }
+async function oldNoteGone(
+  ws: Converts,
+  path: string,
+): Promise<{ back: string | undefined } | null> {
+  const kept = await ws.bin(path, false).then(
+    (one) => one ?? {},
+    () => null,
+  )
+  return kept && { back: kept.trashId ?? kept.back }
 }
 
 export async function convertWebsites(ws: Converts): Promise<number> {

@@ -483,6 +483,12 @@ describe('a package manager, by what is known to be free', () => {
   ])('goes: %s', (line) => {
     expect(onBoth(line, listed)).toBe(true)
   })
+
+  test('single quotes Command Prompt passes on as they are never hide a path leaving the folder', () => {
+    expect(onTheList("git commit -m 'fix two words'", ['git'], 'unix')).toBe(true)
+    expect(onTheList("rg -n secret 'a ../Private '", ['rg'], 'unix')).toBe(true)
+    expect(onTheList("rg -n secret 'a ../Private '", ['rg'], 'windows')).toBe(false)
+  })
 })
 
 describe('a line as the shell hands it over', () => {
@@ -514,7 +520,6 @@ describe('a line as the shell hands it over', () => {
 
   test.each([
     'git commit -m "fix two words"',
-    "git commit -m 'fix two words'",
     'git log --format="%h %s"',
     'git log --grep "a -c word"',
     'git diff -- "a file.md"',

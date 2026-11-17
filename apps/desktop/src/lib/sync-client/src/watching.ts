@@ -1,5 +1,6 @@
 import { askSheet } from '@orden/contracts'
 import {
+  landedElsewhere,
   scanSpace,
   type SpaceChange,
   type SpaceNews,
@@ -15,6 +16,7 @@ import { holdsDocument } from './kinds'
 import { kindOfName } from './create'
 import { relative } from './engine'
 import { madeTwice } from './twins'
+import { workspace } from './ports'
 
 const BATCH = 100
 
@@ -108,8 +110,11 @@ export async function watchFolders(how: Watching): Promise<Watched> {
         return scanned(how, news.root)
       })
     }
+    const landed = landedElsewhere(news.changes)
     for (const change of news.changes) {
+      const to = change.kind === 'removed' ? landed.get(change.path) : undefined
       queue.push(() => {
+        if (to !== undefined) lockedAlike(change.path, to)
         behind(how.engine.placed(change.path)?.space.id)
         return changed(how, change)
       })
@@ -175,11 +180,21 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
   if (placed && !how.ready(placed.space.id)) return
   const disk = engine.core.world.disk
   if (change.kind === 'renamed') {
-    if (!kept(engine, change.path, change.dir)) return
+    if (!kept(engine, change.path, change.dir)) {
+      if (!kept(engine, change.from, change.dir)) return
+      lockedAlike(change.from, change.path)
+      return gone(engine, change.from)
+    }
+    if (engine.placed(change.from)?.space !== placed?.space) {
+      lockedAlike(change.from, change.path)
+      await gone(engine, change.from)
+      return came(engine, change.path, change.dir)
+    }
     const entry = engine.entryAt(change.from)
     const respelled = entry !== null && entry === engine.entryAt(change.path)
     const left = respelled || !(await disk.exists(change.from))
     const there = await disk.exists(change.path)
+    if (!left && there) lockedAlike(change.from, change.path)
     if (left && there && !engine.ownWork(change.from) && !engine.ownWork(change.path)) {
       if (entry) {
         await engine.moved(change.from, change.path)
@@ -201,6 +216,11 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
     return
   }
   if (change.kind === 'created' || !change.dir) await came(engine, change.path, change.dir)
+}
+
+function lockedAlike(from: string, to: string): void {
+  const desk = workspace()
+  desk.copied(from, to, desk.rootHolding(from), desk.rootHolding(to))
 }
 
 async function gone(engine: Engine, path: string): Promise<void> {

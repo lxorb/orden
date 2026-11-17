@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import {
   askHub,
   claimGuest,
-  claimGuestsAt,
   codeMessage,
   deviceIn,
   type Env,
@@ -144,8 +143,6 @@ async function accountFor(env: Env, address: string): Promise<User> {
 async function claimWhatWasGuested(env: Env, user: User, held: string | null): Promise<void> {
   const guest = held ? await guestForToken(env, held) : null
   if (guest) await claimGuest(env, guest.id, user)
-
-  await claimGuestsAt(env, user)
 }
 
 export async function signingIn(
@@ -422,6 +419,10 @@ sessions.delete('/', async (context) => {
     .bind(user.id, mine)
     .all<Ended>()
 
+  await context.env.DB.batch([
+    context.env.DB.prepare('delete from oauth_grants where user_id = ?').bind(user.id),
+    context.env.DB.prepare('delete from oauth_codes where user_id = ?').bind(user.id),
+  ])
   await sessionsEnded(context.env, user.id, ending)
 
   return context.json({ ended: ending.length })

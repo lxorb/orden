@@ -12,6 +12,7 @@ type Engine = import('./asking.svelte').Engine
 const ROOT = '/space'
 const NOTE = `${ROOT}/Diary.md`
 const LOCK = { root: ROOT, key: 'Diary.md', way: 'password' as const }
+const moving = { file: false }
 const side = (words: string) => ({ device: 'Laptop', at: 1, excerpt: { text: words, marks: [] } })
 
 const engine = {
@@ -19,8 +20,11 @@ const engine = {
     notes: [
       { id: 'one', path: NOTE, name: 'Diary', mine: side('what nobody'), theirs: side('may read') },
     ],
-    answer: (_id: string, answer: string) =>
-      Promise.resolve(answer === 'both' ? `${ROOT}/Diary 2.md` : undefined),
+    answer: (_id: string, answer: string) => {
+      if (answer !== 'both') return Promise.resolve(undefined)
+      if (moving.file) workspace.protection.moved(NOTE, `${ROOT}/Diary 2.md`, ROOT)
+      return Promise.resolve(`${ROOT}/Diary 2.md`)
+    },
   },
   store: { read: () => Promise.resolve(null) },
   on: () => () => undefined,
@@ -42,6 +46,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  moving.file = false
   workspace.protection.set(ROOT, `${ROOT}/Diary 2.md`, null)
   gone()
   vi.restoreAllMocks()
@@ -71,5 +76,18 @@ describe('both ways kept of a protected note', () => {
     await asking.answer(asked, 'both')
     unlocks.lockAll()
     expect(workspace.protection.locked(`${ROOT}/Diary 2.md`)).toBe(true)
+  })
+
+  test('of a file sync moved aside to keep both leave the original as protected as the copy', async () => {
+    vi.spyOn(workspace, 'openRow').mockResolvedValue(undefined)
+    moving.file = true
+    unlocks.unlock([LOCK])
+    flushSync()
+    const asked = asking.asked
+    if (!asked) throw new Error('asked')
+    await asking.answer(asked, 'both')
+    unlocks.lockAll()
+    expect(workspace.protection.locked(`${ROOT}/Diary 2.md`)).toBe(true)
+    expect(workspace.protection.locked(NOTE)).toBe(true)
   })
 })

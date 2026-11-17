@@ -130,7 +130,14 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
     )
   }
 
-  return done(read, sharedSource(place, relative))
+  const linkedFrom = (read.backlinks ?? []).flatMap((one) =>
+    isRecord(one) && typeof one.path === 'string' ? [one.path] : [],
+  )
+  const marked =
+    sharedSource(place, relative) ??
+    linkedFrom.map((one) => sharedSource(place, one)).find((one) => one !== null) ??
+    null
+  return done(read, marked)
 }
 
 export async function editNote(call: Call): Promise<AgentAnswer> {

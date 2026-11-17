@@ -1,6 +1,7 @@
 export { Channel, invoke } from './native'
 export {
   type Listed,
+  landedElsewhere,
   onUnwatched,
   scanSpace,
   scanWorking,

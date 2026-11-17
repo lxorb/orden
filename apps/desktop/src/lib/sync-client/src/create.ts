@@ -11,7 +11,7 @@ import {
 import type { Core } from './core'
 import { MINE } from './docs'
 import { holdsDocument, shapeOf, turn } from './kinds'
-import { folderOf, joined, nameOf, SEP, type SpaceState } from './places'
+import { folderOf, hiddenPath, joined, nameOf, SEP, type SpaceState } from './places'
 import { wrote } from './project'
 import { GONE_KEPT, goneRow, outgoingBytes } from './records'
 import { put, remove, type Change, type EntryRow } from './store'
@@ -93,7 +93,7 @@ export async function made(
   space: SpaceState,
   what: Made,
 ): Promise<{ id: string; changes: Change[] }> {
-  if (inForeignCopy(what.path)) return { id: freshId(core), changes: [] }
+  if (inForeignCopy(what.path) || hiddenPath(what.path)) return { id: freshId(core), changes: [] }
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(what.path), changes)
   const name = nameOf(what.path)

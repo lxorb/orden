@@ -116,4 +116,16 @@ describe('what to draw for a written icon', () => {
     expect(iconLibrary.drawing({ kind: 'lucide', name: 'not-an-icon-anybody-drew' })).toBeNull()
     expect(iconLibrary.drawing({ kind: 'set', set: 'never-loaded', name: 'thing' })).toBeNull()
   })
+
+  test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+    'a set or line icon named %s, as anybody can write in a shared note, is nothing to draw',
+    async (name) => {
+      iconLibrary.load()
+      await settled()
+
+      expect(iconLibrary.drawing({ kind: 'set', set: name, name: 'x' })).toBeNull()
+      expect(iconLibrary.loading(name)).toBe(false)
+      expect(iconLibrary.spaceShape(name)).toBeNull()
+    },
+  )
 })

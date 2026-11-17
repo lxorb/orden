@@ -738,14 +738,26 @@ describe('a guest becoming an account', () => {
     expect((await call(env, '/v1/me', { token: json.token })).status).toBe(401)
   })
 
-  test('hands over what a guest said its address was, once that address is proved', async () => {
-    const link = await shareLink('read', 'approval')
-    await follow(link, { body: { email: GUEST } })
+  test('hands nothing to the account at an address a guest only typed', async () => {
+    const link = await shareLink('write', 'approval')
+    await follow(link, { body: { name: 'Bob', email: GUEST } })
 
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
 
     const token = await signIn(env, GUEST)
+    expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes'])
+    expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
+  })
+
+  test('hands over what a guest asked for and was let in to, when its device signs in', async () => {
+    const link = await shareLink('read', 'approval')
+    const asked = await follow(link, { body: { email: GUEST } })
+
+    const guest = (await shareView()).json.requests[0]?.guest ?? ''
+    await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
+
+    const token = await signIn(env, GUEST, asked.json.token)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
 

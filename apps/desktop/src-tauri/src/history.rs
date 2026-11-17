@@ -190,13 +190,16 @@ fn rehome_in(root: &Path, from: &str, to: &str) -> usize {
         let Some(rest) = was.strip_prefix(from) else {
             continue;
         };
-        if !rest.starts_with(['/', '\\']) {
+        if !rest.is_empty() && !rest.starts_with(['/', '\\']) {
             continue;
         }
 
         let now = format!("{to}{rest}");
         let there = kept_folder(root, &now);
         if there.exists() {
+            if joined(&note, &there) {
+                moved += 1;
+            }
             continue;
         }
         if crate::carry::rename_new(&note, &there).is_ok() {
@@ -206,6 +209,28 @@ fn rehome_in(root: &Path, from: &str, to: &str) -> usize {
     }
 
     moved
+}
+
+fn joined(note: &Path, there: &Path) -> bool {
+    let Ok(versions) = fs::read_dir(note) else {
+        return false;
+    };
+    for version in versions.flatten().map(|entry| entry.path()) {
+        let Some(name) = version.file_name() else {
+            continue;
+        };
+        if name == OsStr::new(ORIGIN) {
+            continue;
+        }
+        let _ = crate::carry::rename_new(&version, &there.join(name));
+    }
+    let left = fs::read_dir(note).map_or(0, |entries| {
+        entries
+            .flatten()
+            .filter(|entry| entry.file_name() != OsStr::new(ORIGIN))
+            .count()
+    });
+    left == 0 && fs::remove_dir_all(note).is_ok()
 }
 
 fn moment(file: &Path) -> Option<u64> {
@@ -284,6 +309,25 @@ mod tests {
     }
 
     #[test]
+    fn a_history_follows_its_note_when_the_note_is_renamed() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let was = format!("{OLD}/Notes/Draft.md");
+        let before = kept_at(root.path(), &was);
+        let beside = kept_at(root.path(), &format!("{OLD}/Notes/Draft.md 2"));
+
+        let now = format!("{OLD}/Notes/Diary.md");
+        assert_eq!(rehome_in(root.path(), &was, &now), 1);
+
+        assert!(!before.exists());
+        assert!(beside.exists());
+        assert!(root
+            .path()
+            .join(folder_key(&now))
+            .join("1773500400000.md")
+            .exists());
+    }
+
+    #[test]
     fn a_history_outside_the_old_folder_stays_where_it_is() {
         let root = tempfile::tempdir().expect("a temp folder");
         let beside = kept_at(root.path(), &format!("{OLD}2/Notes/a.md"));
@@ -303,6 +347,27 @@ mod tests {
         assert_eq!(rehome_in(root.path(), OLD, NEW), 0);
         assert!(before.exists());
         assert!(already.exists());
+        assert_eq!(
+            fs::read_to_string(already.join("1773500400000.md")).expect("its version"),
+            "a version"
+        );
+    }
+
+    #[test]
+    fn a_history_joins_one_already_kept_at_the_new_path() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let before = kept_at(root.path(), &format!("{OLD}/Notes/a.md"));
+        fs::write(before.join("1773500500000.md"), "a later version").expect("a version");
+        fs::remove_file(before.join("1773500400000.md")).expect("one version only");
+        let already = kept_at(root.path(), &format!("{NEW}/Notes/a.md"));
+
+        assert_eq!(rehome_in(root.path(), OLD, NEW), 1);
+        assert!(!before.exists());
+        assert!(already.join("1773500400000.md").exists());
+        assert_eq!(
+            fs::read_to_string(already.join("1773500500000.md")).expect("the moved version"),
+            "a later version"
+        );
     }
 
     const NOW: u64 = 1_773_500_400_000;

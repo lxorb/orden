@@ -8,7 +8,8 @@ import {
   type SettingsSectionId,
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
-import { seen } from './guarded'
+import { readable, seen } from './guarded'
+import { noteBehind, protection } from '../../protect/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../panes/src/api'
@@ -59,8 +60,10 @@ function front(tab: Tab): boolean {
   return workspace.showing(tab.paneId)?.id === tab.id
 }
 
+const shut = (tab: Tab) => noteBehind(tab) !== null && !protection.agentsMay(noteBehind(tab))
+
 function addressOf(tab: Tab): string | null {
-  if (tab.kind !== 'web' || (tab.path !== null && !seen(tab.path))) return null
+  if (tab.kind !== 'web' || shut(tab)) return null
   return webPages().addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
@@ -355,6 +358,8 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
 async function saveTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   if (!isUnsaved(tab.note)) throw new Refused('exists', `tab ${tab.id} has a file already`)
+  const behind = noteBehind(tab)
+  if (behind !== null) readable(behind, tab.shown)
 
   const place = placeFor(call, null)
   const relative = judgedForWriting(need(call, 'path'))
@@ -447,7 +452,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
 export function readerTabs(): ReaderTab[] {
   return workspace.tabs
-    .filter((tab) => tab.kind === 'web' && (tab.path === null || seen(tab.path)))
+    .filter((tab) => tab.kind === 'web' && !shut(tab))
     .map((tab) => {
       const shown = workspace.panes.at(tab.paneId) !== null && front(tab)
       const home = workspace.spaceOf(tab.note)
@@ -467,7 +472,7 @@ const LENT_UNMARKED = ACTIVE_FOR + 5_000
 
 export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
-  if (!tab || (tab.path !== null && !seen(tab.path))) return null
+  if (!tab || shut(tab)) return null
 
   const lending = portOf('web.lending')
   if (!lending.ok) return null

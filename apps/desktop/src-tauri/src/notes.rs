@@ -133,7 +133,8 @@ pub fn write_bytes(app: AppHandle, request: Request<'_>) -> Result<(), String> {
             .get("base64")
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| format!("{path} was handed nothing to write"))?;
-        return bytes_written(&chosen(&app, path)?, path, base64);
+        let target = chosen(&app, path)?;
+        return bytes_written(&target, path, base64);
     }
     let (Written { path }, bytes) = raw_sent(request.headers(), request.body())?;
     write_file(&chosen(&app, &path)?, &path, &bytes)

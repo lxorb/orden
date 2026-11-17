@@ -140,6 +140,26 @@ describe('an answer, drawn as a note is', () => {
     expect(shown).toContain('<img src="https://example.com/cat.png?q=1" alt="a cat">')
   })
 
+  test.each([
+    'https:/evil.example/p.png?d=secret',
+    'https:evil.example/p.png?d=secret',
+    'HTTPS:/evil.example/p.png?d=secret',
+    '//evil.example/p.png?d=secret',
+    'http:evil.example/p.png?d=secret',
+    'http:/evil.example/p.png?d=secret',
+    'HTTP:evil.example/p.png?d=secret',
+  ])('a picture at %s, which the page reads as another host, is held too', (src) => {
+    const held = answerHtml(`![x](${src})`)
+    expect(held).not.toContain('<img')
+    expect(held).toContain('class="picture-held"')
+    expect(held).toContain('<span>x</span>')
+  })
+
+  test('a picture named from the note it answers about is still drawn', () => {
+    expect(answerHtml('![a](pics/a.png)')).toContain('<img')
+    expect(answerHtml('![a](/pics/a.png)')).toContain('<img')
+  })
+
   test('a picture from elsewhere with an ampersand in its address is shown once asked', () => {
     const address = 'https://e.com/c.png?w=1&h=2'
     const held = answerHtml(`![a](${address})`)

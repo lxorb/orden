@@ -22,7 +22,17 @@ interface TerminalMakingPort {
   readonly online: () => Promise<void>
 }
 
+interface TerminalJudgePort {
+  readonly runsFree: (
+    program: string,
+    args: readonly string[],
+    programs: readonly string[],
+    folder: string,
+  ) => Promise<boolean>
+}
+
 export interface TerminalPorts {
+  readonly 'terminal.judge': TerminalJudgePort
   readonly 'terminal.lines': TerminalLinesPort
   readonly 'terminal.making': TerminalMakingPort
 }

@@ -67,14 +67,16 @@ vi.mock('./view.svelte', () => ({ viewOf: () => view }))
 
 const trashed: string[][] = []
 const carried: { paths: string[]; to: string; how: string }[] = []
+const fences: boolean[] = []
 vi.mock('./changes', () => ({
   changeable: () => true,
   trash: (_view: unknown, paths: string[]) => {
     trashed.push(paths)
     return Promise.resolve()
   },
-  carry: (_view: unknown, paths: string[], to: string, how: string) => {
+  carry: (_view: unknown, paths: string[], to: string, how: string, fenced?: boolean) => {
     carried.push({ paths, to, how })
+    fences.push(fenced === true)
     return Promise.resolve()
   },
   renamePath: () => Promise.resolve(),
@@ -199,4 +201,24 @@ describe("an agent's file explorer", () => {
       { kind: 'outside', steps: [{ op: 'made', path: '/home/me/Downloads/Scans' }] },
     ])
   })
+})
+
+describe('a path that steps aside with . or ..', () => {
+  test('is never carried, so nothing leaves the spaces by way of a folder outside them', async () => {
+    for (const paths of [
+      ['../Orden/Work/Private/Diary.md'],
+      ['/home/me/Downloads/../Orden/Work/Private/Diary.md'],
+      ['/home/me/Downloads/./a.zip'],
+    ]) {
+      const answer = await call({ op: 'copy', tab: 'e1', paths, to: '~/Downloads' }, 'autonomous')
+      expect(answer).toMatchObject({ code: 'bad_arguments' })
+    }
+    expect(carried).toEqual([])
+  })
+})
+
+test('an agent’s copy is carried fenced, so a source that is a space by another spelling is refused where it is read', async () => {
+  fences.length = 0
+  await call({ op: 'copy', tab: 'e1', paths: ['a.zip'], to: '~/Desktop' }, 'autonomous')
+  expect(fences).toEqual([true])
 })

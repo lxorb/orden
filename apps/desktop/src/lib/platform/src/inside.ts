@@ -20,6 +20,17 @@ export function insideOnly(said: string): string | null {
   return steps.join('/')
 }
 
+const SHORT_NAME = /^([^\s.~]{0,6}~\d{1,6})(\.[^\s.]{1,3})?$/
+
+function shortName(step: string): boolean {
+  const base = SHORT_NAME.exec(step.replace(/[. ]+$/, ''))?.[1]
+  return base !== undefined && base.length <= 8
+}
+
+export function namesByShortName(path: string): boolean {
+  return path.split(/[\\/]/).some(shortName)
+}
+
 function onWindows(): boolean {
   const os = (globalThis as { window?: { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } } })
     .window?.__TAURI_OS_PLUGIN_INTERNALS__

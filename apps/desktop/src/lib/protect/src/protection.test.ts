@@ -105,10 +105,10 @@ describe('a protected path that moves', () => {
     expect(protection.own(ROOT, ROOT)?.way).toBe('password')
   })
 
-  test('that is deleted is forgotten, the space kept', () => {
+  test('that is deleted is forgotten, the space kept', async () => {
     protection.set(ROOT, ROOT, 'password')
     protection.set(ROOT, at('Inside/deep.md'), 'password')
-    protection.gone(at('Inside'), ROOT)
+    await protection.gone(at('Inside'), ROOT)
     expect(protection.ways(ROOT)).toEqual({ [SPACE]: 'password' })
   })
 
@@ -172,8 +172,8 @@ describe('a protected path that moves', () => {
   test('deleted and put back, is protected again with what was protected inside it', async () => {
     protection.set(ROOT, at('Secret.md'), 'password')
     protection.set(ROOT, at('Trip/Diary.md'), 'device')
-    protection.gone(at('Secret.md'), ROOT, 't1')
-    protection.gone(at('Trip'), ROOT, 't2')
+    await protection.gone(at('Secret.md'), ROOT, 't1')
+    await protection.gone(at('Trip'), ROOT, 't2')
     expect(protection.ways(ROOT)).toEqual({})
     await import('./buried')
     const later = new Protection()
@@ -185,9 +185,6 @@ describe('a protected path that moves', () => {
     expect(later.covering(at('Trip 2/Diary.md'))).toEqual([
       { root: ROOT, key: 'Trip 2/Diary.md', way: 'device' },
     ])
-    later.gone(at('Secret.md'), ROOT)
-    await later.cameBack(at('Secret.md'), ROOT, 't1')
-    expect(later.covering(at('Secret.md'))).toEqual([])
   })
 
   test('with its space renamed follows the space', () => {
@@ -300,6 +297,67 @@ describe('a copy an outside sync tool left of a protected note', () => {
       { root: ROOT, key: 'Inside', way: 'device' },
       { root: ROOT, key: 'Inside/Diary.md', way: 'password' },
     ])
+  })
+})
+
+describe('a protected note put in Recently deleted', () => {
+  test('is protected again when it is put back', async () => {
+    protection.set(ROOT, at('Diary.md'), 'password')
+    await protection.gone(at('Diary.md'), ROOT, 'trash-1')
+    expect(protection.covering(at('Diary.md'))).toEqual([])
+    await protection.cameBack(at('Diary.md'), ROOT, 'trash-1')
+    expect(protection.covering(at('Diary.md'))).toEqual([
+      { root: ROOT, key: 'Diary.md', way: 'password' },
+    ])
+  })
+
+  test('keeps what was protected inside a folder, wherever the folder is put back', async () => {
+    protection.set(ROOT, at('Trip/Diary.md'), 'device')
+    protection.set(ROOT, at('Trip'), 'password')
+    await protection.gone(at('Trip'), ROOT, 'trash-2')
+    await protection.cameBack(at('Trip 2'), ROOT, 'trash-2')
+    expect(protection.ways(ROOT)).toEqual({ 'Trip 2': 'password', 'Trip 2/Diary.md': 'device' })
+  })
+
+  test('is protected again after the app starts over', async () => {
+    protection.set(ROOT, at('Diary.md'), 'password')
+    await protection.gone(at('Diary.md'), ROOT, 'trash-3')
+    const later = new Protection()
+    await later.cameBack(at('Diary.md'), ROOT, 'trash-3')
+    expect(later.own(ROOT, at('Diary.md'))?.way).toBe('password')
+  })
+
+  test('brings back nothing for another note put back', async () => {
+    protection.set(ROOT, at('Diary.md'), 'password')
+    await protection.gone(at('Diary.md'), ROOT, 'trash-4')
+    await protection.cameBack(at('Other.md'), ROOT, 'trash-5')
+    expect(protection.ways(ROOT)).toEqual({})
+  })
+})
+
+describe('a note moved out from under a lock', () => {
+  test('in its space, stays locked as it was', () => {
+    protection.set(ROOT, at('Private'), 'password')
+    protection.moved(at('Private/Diary.md'), at('Diary.md'), ROOT)
+    expect(protection.covering(at('Diary.md'))).toEqual([
+      { root: ROOT, key: 'Diary.md', way: 'password' },
+    ])
+    expect(protection.own(ROOT, at('Private'))?.way).toBe('password')
+  })
+
+  test('to another space, carries the lock of the folder or space it left', () => {
+    protection.set(ROOT, ROOT, 'device')
+    protection.moved(at('Diary.md'), `${OTHER}/Diary.md`, ROOT, OTHER)
+    expect(protection.covering(`${OTHER}/Diary.md`)).toEqual([
+      { root: OTHER, key: 'Diary.md', way: 'device' },
+    ])
+  })
+
+  test('into a place already locked, takes no lock of its own', () => {
+    protection.set(ROOT, at('Private'), 'password')
+    protection.set(ROOT, at('Vault'), 'device')
+    protection.moved(at('Private/Diary.md'), at('Vault/Diary.md'), ROOT)
+    expect(protection.ways(ROOT)).toEqual({ Private: 'password', Vault: 'device' })
   })
 })
 

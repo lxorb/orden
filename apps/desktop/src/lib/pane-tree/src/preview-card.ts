@@ -49,6 +49,7 @@ export function mountPreview(
     writeLink: pickedLink,
     shortcuts: shortcuts.forEditor,
     trustedMarkup: trustsHtmlAt(path),
+    place: path,
     openLink: followHref,
     resolveImage: (src: string) => notePicture(src, path, said),
   })

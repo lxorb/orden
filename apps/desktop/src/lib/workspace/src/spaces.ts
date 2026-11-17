@@ -15,7 +15,7 @@ export interface HoldsSpaces {
   readonly tabs: Tab[]
   setsRead: unknown
   fileMoved(from: string, to: string, kind: 'space'): Promise<void>
-  fileGone(path: string, kind: 'space'): Promise<void>
+  fileGone(path: string, kind: 'space', back?: string): Promise<void>
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   close(id: string): void
   clearSelection(): void

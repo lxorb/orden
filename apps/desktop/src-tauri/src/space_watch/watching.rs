@@ -233,6 +233,7 @@ fn work(
     let mut failed_at: Vec<Option<Instant>> = vec![None; roots.len()];
 
     while let Some(batch) = shared.next() {
+        let mut heard = Vec::new();
         for (at, root) in roots.iter().enumerate() {
             let Some(space) = spaces[at].as_mut() else {
                 continue;
@@ -244,7 +245,6 @@ fn work(
                 failed_at[at] = Some(Instant::now());
             }
 
-            let mut heard = Vec::new();
             if !root.real.is_dir() {
                 let _ = lock_watcher(watcher).unwatch(&root.real);
                 spaces[at] = None;
@@ -260,8 +260,10 @@ fn work(
                     let _ = watcher.unwatch(&root.real);
                     arm(&mut watcher, root)
                 };
-                *space = Space::read(&root.real).unwrap_or_default();
+                let was = std::mem::replace(space, Space::read(&root.real).unwrap_or_default());
                 released[at].clear();
+                let moves = was.moves_into(space, &root.real);
+                heard.extend(moves.chunks(MOST_CHANGES).map(|some| Heard::seen(at, some)));
                 heard.push(Heard {
                     unwatched,
                     ..Heard::scan(at)
@@ -270,26 +272,82 @@ fn work(
                 let (seen, held) = space.settle(&root.real, touched, batch.cut, &released[at]);
                 shared.touch_again(at, &held);
                 released[at] = held.into_iter().collect();
-                heard.extend(seen.chunks(MOST_CHANGES).map(|some| Heard {
-                    root: at,
-                    seen: some.to_vec(),
-                    scan: false,
-                    gone: false,
-                    unwatched: None,
-                }));
+                heard.extend(seen.chunks(MOST_CHANGES).map(|some| Heard::seen(at, some)));
             }
+        }
 
-            for one in heard {
-                if shared.stopped() || !sink(one) {
-                    shared.stop();
-                    return;
-                }
+        moved_across(roots, &mut heard);
+        for one in heard {
+            if one.seen.is_empty() && !one.scan && !one.gone {
+                continue;
+            }
+            if shared.stopped() || !sink(one) {
+                shared.stop();
+                return;
             }
         }
     }
 }
 
+fn moved_across(roots: &[Root], heard: &mut [Heard]) {
+    let mut left: Vec<(usize, PathBuf, String)> = Vec::new();
+    for one in heard.iter() {
+        for seen in &one.seen {
+            if let Seen::Removed {
+                rel, id: Some(id), ..
+            } = seen
+            {
+                left.push((one.root, rel.clone(), id.clone()));
+            }
+        }
+    }
+    if left.is_empty() {
+        return;
+    }
+
+    let mut carried: Vec<(usize, PathBuf)> = Vec::new();
+    for one in heard.iter_mut() {
+        for seen in one.seen.iter_mut() {
+            let Seen::Created(to) = seen else {
+                continue;
+            };
+            let Some((from_root, rel, _)) = left.iter().find(|(from_root, rel, id)| {
+                *from_root != one.root
+                    && to.id.as_ref() == Some(id)
+                    && !carried
+                        .iter()
+                        .any(|(at, done)| at == from_root && done == rel)
+            }) else {
+                continue;
+            };
+            carried.push((*from_root, rel.clone()));
+            *seen = Seen::Renamed {
+                from: roots[*from_root].given.join(rel),
+                to: to.clone(),
+            };
+        }
+    }
+
+    for one in heard.iter_mut() {
+        let root = one.root;
+        one.seen.retain(|seen| {
+            !matches!(seen, Seen::Removed { rel, .. }
+                if carried.iter().any(|(at, done)| *at == root && done == rel))
+        });
+    }
+}
+
 impl Heard {
+    fn seen(root: usize, seen: &[Seen]) -> Self {
+        Self {
+            root,
+            seen: seen.to_vec(),
+            scan: false,
+            gone: false,
+            unwatched: None,
+        }
+    }
+
     fn scan(root: usize) -> Self {
         Self {
             root,
@@ -690,6 +748,32 @@ mod tests {
 
         fs::remove_file(root.join("Box").join("Thought.md")).expect("deleted");
         assert_eq!(said(&until_quiet(&heard)), ["removed Box/Thought.md"]);
+    }
+
+    #[test]
+    fn a_note_moved_to_another_space_is_renamed_into_it_and_not_removed() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let (one, two) = (dir.path().join("One"), dir.path().join("Two"));
+        for space in [&one, &two] {
+            fs::create_dir_all(space).expect("a space");
+        }
+        fs::write(one.join("Diary.md"), "words").expect("a note");
+        let (tell, heard) = channel();
+        let roots = [&one, &two]
+            .iter()
+            .map(|space| Root {
+                given: space.to_path_buf(),
+                real: fs::canonicalize(space).expect("a real path"),
+            })
+            .collect();
+        let _watch = watch(roots, Box::new(move |one| tell.send(one).is_ok())).expect("watching");
+        assert_eq!(until_quiet(&heard).len(), 2);
+
+        fs::rename(one.join("Diary.md"), two.join("Diary.md")).expect("moved");
+        let after = until_quiet(&heard);
+        let from = slash(&one.join("Diary.md"));
+        assert_eq!(said(&after), [format!("renamed {from} Diary.md")]);
+        assert!(after.iter().all(|heard| heard.root == 1), "{after:?}");
     }
 
     #[test]
