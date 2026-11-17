@@ -28,6 +28,7 @@ import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref, WORTH_REMEMBERING } from './tags'
 import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
+  type EmbeddedNote,
   type EmbedResolver,
   type Embeds,
   embedSink,
@@ -59,6 +60,7 @@ export interface RenderOptions {
   resolveNoteHref?: (target: string) => string | null
   tagHref?: TagHref
   resolveEmbed?: EmbedResolver
+  pictures?: (html: string, embedded: EmbeddedNote | null) => string
   breaks?: boolean
   locale?: string
   headings?: Heading[]
@@ -375,6 +377,7 @@ const FOOTNOTE_IDS = /(id="|href="#)(fn|fnref)-/g
 function inside(options: RenderOptions): RenderOptions {
   const rest = { ...options }
   delete rest.resolveEmbed
+  delete rest.pictures
   delete rest.toc
   delete rest.cover
   delete rest.blockAnchors
@@ -481,14 +484,6 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     )
   }
 
-  embeds.sections.forEach((section, at) => {
-    const embedded = renderMarkdown(section.text, {
-      ...inside(options),
-      ...(section.escapeHtml ? { escapeHtml: true } : {}),
-    }).replace(FOOTNOTE_IDS, `$1$2-embed${at}-`)
-    html = html.replace(embeds.marker(at), () => embedded)
-  })
-
   if (options.properties === 'properties') {
     const rows = readProperties(source)
     html = (rows === null ? propertiesSource(source) : propertiesTable(rows)) + html
@@ -496,8 +491,23 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = propertiesSource(source) + html
   }
 
-  if (!options.cover) return html
-  return coverFigure(options.cover === true ? coverOf(source) : options.cover) + html
+  if (options.cover) {
+    html = coverFigure(options.cover === true ? coverOf(source) : options.cover) + html
+  }
+
+  const pictures = options.pictures
+  if (pictures) html = pictures(html, null)
+
+  embeds.sections.forEach((section, at) => {
+    const drawn = renderMarkdown(section.text, {
+      ...inside(options),
+      ...(section.escapeHtml ? { escapeHtml: true } : {}),
+    }).replace(FOOTNOTE_IDS, `$1$2-embed${at}-`)
+    const embedded = pictures ? pictures(drawn, section) : drawn
+    html = html.replace(embeds.marker(at), () => embedded)
+  })
+
+  return html
 }
 
 export function tableOfContents(headings: Heading[]): string {

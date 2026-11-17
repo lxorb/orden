@@ -24,6 +24,12 @@ export function withPictures(html: string, note: Note): string {
   return mapSources(html, (src) => escapeAll(notePicture(attributeText(src), note.path, note.text)))
 }
 
+const TABLE = /<table>[\s\S]*?<\/table>/g
+
+function scrollingTables(html: string): string {
+  return html.replace(TABLE, (table) => `<div class="reading-table">${table}</div>`)
+}
+
 const MEASURE = 'orden:reading'
 
 export const tagAnchor: TagHref = (tag) => `#${tag}`
@@ -45,7 +51,7 @@ export async function readingHtml(
   )
 
   const at = performance.now()
-  const html = withPictures(
+  const html = scrollingTables(
     renderMarkdown(note.text, {
       footnotes: true,
       blockAnchors: true,
@@ -56,8 +62,9 @@ export async function readingHtml(
       resolveLink: pointer(note),
       ...(embed ? { resolveEmbed: embed } : {}),
       ...(tagHref ? { tagHref } : {}),
+      pictures: (part, embedded) =>
+        withPictures(part, embedded?.path ? { text: embedded.text, path: embedded.path } : note),
     }),
-    note,
   )
   performance.measure(MEASURE, { start: at, detail: { bytes: note.text.length } })
 

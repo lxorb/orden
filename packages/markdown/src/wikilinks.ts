@@ -22,10 +22,11 @@ export type EmbedResolver = (link: Wikilink) => string | EmbeddedNote | null
 export interface EmbeddedNote {
   text: string
   escapeHtml: boolean
+  path?: string
 }
 
 export interface Embeds {
-  sections: { text: string; escapeHtml: boolean }[]
+  sections: EmbeddedNote[]
   marker: (at: number) => string
 }
 
@@ -167,7 +168,7 @@ function frame(
   const section = sectionOf(note.text, link)
   if (section === null) return null
 
-  const at = options.embeds.sections.push({ text: section, escapeHtml: note.escapeHtml }) - 1
+  const at = options.embeds.sections.push({ ...note, text: section }) - 1
   const name = escape(shownText(link))
 
   return `<figure class="embed">\n<div class="embed-body">${options.embeds.marker(

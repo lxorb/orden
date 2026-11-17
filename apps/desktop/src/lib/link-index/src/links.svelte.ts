@@ -1418,7 +1418,7 @@ class Links {
       this.embedded(target, from, inSpaceOf),
       import('../../sharing/src/api'),
     ])
-    return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path) }
+    return found && { text: found.text, escapeHtml: !trustsHtmlAt(found.path), path: found.path }
   }
 
   private async embedded(

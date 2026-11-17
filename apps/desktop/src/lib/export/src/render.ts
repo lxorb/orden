@@ -36,6 +36,7 @@ export interface HtmlOptions {
   fence?: Fence
   readNote?: (target: string) => Promise<string | EmbeddedNote | null>
   embed?: (link: Wikilink) => string | EmbeddedNote | null
+  pictures?: (html: string, embedded: EmbeddedNote | null) => string
   escapeHtml?: boolean
 }
 
@@ -60,6 +61,7 @@ export function buildBody(source: string, options: HtmlOptions = {}): string {
     ...(options.fence ? { code: options.fence } : {}),
     ...(options.embed ? { resolveEmbed: options.embed } : {}),
     ...(options.escapeHtml ? { escapeHtml: true } : {}),
+    ...(options.pictures ? { pictures: options.pictures } : {}),
   })
 }
 

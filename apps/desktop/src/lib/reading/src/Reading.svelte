@@ -62,7 +62,9 @@
     }
   }
 
-  const asks = $derived(tab.doc.includes('```query') || tab.doc.includes('```tasks'))
+  const readsOthers = $derived(
+    tab.doc.includes('```query') || tab.doc.includes('```tasks') || tab.doc.includes('![['),
+  )
 
   function note() {
     return untrack(() => {
@@ -116,7 +118,7 @@
       tab.note.revision,
       theme.current,
       trustsHtmlIn(tab.note),
-      asks ? links.version : 0,
+      readsOthers ? links.version : 0,
       links.locksSeen(),
       modes.hardBreaks,
     ]
