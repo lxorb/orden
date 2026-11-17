@@ -41,7 +41,7 @@ let hearing: ((event: { key: string | null }) => void)[] = []
 
 function writtenElsewhere(values: Record<string, string>) {
   for (const [key, value] of Object.entries(values)) kept.setItem(key, value)
-  for (const heard of hearing) heard({ key: Object.keys(values)[0] ?? null })
+  for (const key of Object.keys(values)) for (const heard of hearing) heard({ key })
 }
 
 function systemPrefers(light: boolean) {
