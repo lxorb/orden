@@ -1784,7 +1784,9 @@ describe('to-dos and bases', () => {
     expect(todos.todo(id)?.space).toBe('acct-work')
     expect(await call('list_tasks', { space: 'Work' })).toMatchObject({ result: { total: 2 } })
     expect(await call('list_tasks', { space: 'acct-work' })).toMatchObject({ result: { total: 2 } })
-    expect(await call('update_task', { id, space: '' })).toMatchObject({ result: { space: null } })
+    expect(await call('update_task', { id, space: '' }, agent({ spaces: 'all' }))).toMatchObject({
+      result: { space: null },
+    })
     gone()
     await todos.remove(id)
     if (before.ok) await todos.remove(before.value.id)
