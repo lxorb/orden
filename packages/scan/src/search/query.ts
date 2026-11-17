@@ -166,7 +166,7 @@ class Parser {
 
     if (name === 'case') {
       this.folding = false
-      return null
+      return /^(?:[\s)]|$)/u.test(this.source.slice(this.at)) ? null : this.term()
     }
 
     if (unit) {

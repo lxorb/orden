@@ -320,6 +320,19 @@ describe('a word with brackets in a group', () => {
     })
   })
 
+  test('case: before a word still takes a minus or a scope', () => {
+    expect(parseQuery('-case:Plan')).toEqual({ kind: 'not', of: word('Plan', false) })
+    expect(parseQuery('task:case:Plan')).toEqual({
+      kind: 'scope',
+      unit: 'task',
+      of: word('Plan', false),
+    })
+    expect(parseQuery('meeting -case:Plan')).toEqual({
+      kind: 'all',
+      of: [word('meeting'), { kind: 'not', of: word('Plan', false) }],
+    })
+  })
+
   test('a field that gives nothing leaves no bracket behind', () => {
     expect(parseQuery('case:)')).toEqual({ kind: 'all', of: [] })
   })
