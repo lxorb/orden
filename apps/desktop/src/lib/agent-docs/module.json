@@ -1,0 +1,19 @@
+{
+  "name": "agent-docs",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "markdown",
+    "platform",
+    "protect",
+    "rooms",
+    "scan",
+    "scratchpad",
+    "theme",
+    "link-index",
+    "documents",
+    "workspace",
+    "panes"
+  ]
+}

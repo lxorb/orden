@@ -1,18 +1,18 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/sharing.svelte', async (original) => ({
-  ...(await original<typeof import('../../src/lib/sharing.svelte')>()),
+vi.mock('../../src/lib/sharing/src/api', async (original) => ({
+  ...(await original<typeof import('../../src/lib/sharing/src/sharing.svelte')>()),
   roleOf: (root: string) => (root === '/spaces/Lab' ? 'read' : 'owner'),
   isShared: (root: string) => root === '/spaces/Lab',
 }))
 
-const { default: SpacePicker } = await import('../../src/lib/SpacePicker.svelte')
-const { spacePicker } = await import('../../src/lib/space-picker.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { overlays } = await import('../../src/lib/overlays')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { default: SpacePicker } = await import('../../src/lib/spaces/src/SpacePicker.svelte')
+const { spacePicker } = await import('../../src/lib/spaces/src/space-picker.svelte')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
 Element.prototype.scrollIntoView = () => undefined
 

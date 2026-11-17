@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { said } from '../src/lib/said.svelte'
+import { said } from '../src/lib/ui-kit/src/api'
 
 beforeEach(() => {
   vi.useFakeTimers()

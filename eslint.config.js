@@ -2,7 +2,7 @@ import js from '@eslint/js'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, relative, resolve, sep } from 'node:path'
 import { check as checkModules, moduleOf, ROOT } from './scripts/modules.mjs'
 
@@ -83,6 +83,52 @@ const noCopyAppend = {
   },
 }
 
+const EFFECTS = new Set(['$effect', '$effect.pre'])
+
+function calleeName(callee) {
+  if (callee.type === 'Identifier') return callee.name
+  if (
+    callee.type === 'MemberExpression' &&
+    callee.object.type === 'Identifier' &&
+    callee.property.type === 'Identifier'
+  )
+    return `${callee.object.name}.${callee.property.name}`
+  return null
+}
+
+const effectImports = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      loose:
+        'An effect starts this import and nothing can call off what it does once loaded: load it through whenLoaded from @orden/contracts and hand back its call-off from the effect when a late load must not land.',
+    },
+  },
+  create(context) {
+    return {
+      ImportExpression(node) {
+        const loader = node.parent
+        const call = loader.parent
+        if (
+          loader.type === 'ArrowFunctionExpression' &&
+          loader.body === node &&
+          call?.type === 'CallExpression' &&
+          call.arguments[0] === loader &&
+          calleeName(call.callee) === 'whenLoaded'
+        )
+          return
+        for (let up = loader; up; up = up.parent) {
+          if (up.type === 'CallExpression' && EFFECTS.has(calleeName(up.callee))) {
+            context.report({ node, messageId: 'loose' })
+            return
+          }
+        }
+      },
+    }
+  },
+}
+
 const MODULES = checkModules().modules.filter((one) => one.lang === 'ts')
 
 const MODULE_FILES = MODULES.map((one) => `${one.dir}/**/*.{ts,svelte}`)
@@ -92,7 +138,9 @@ const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
 function moduleOfSpecifier(from, specifier) {
   if (specifier.startsWith('.')) {
     const target = resolve(dirname(from), specifier)
-    const file = ENDINGS.map((one) => target + one).find((one) => existsSync(one)) ?? target
+    const file =
+      ENDINGS.map((one) => target + one).find((one) => existsSync(one) && statSync(one).isFile()) ??
+      target
     return { module: moduleOf(file, MODULES), file, subpath: null }
   }
   if (!specifier.startsWith('@orden/')) return null
@@ -139,6 +187,53 @@ const noDeepImports = {
           messageId: 'deep',
           data: { name: module.name, api: `${module.dir}/${module.api}`, what: specifier },
         })
+      }
+    })
+  },
+}
+
+const STATIC_IMPORTS =
+  /(?:^|[\n;}])[^\S\n]*(?:import|export)\s+(?!type\b)[^'"]*?\bfrom\s*['"](\.[^'"]*)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"](\.[^'"]*)['"]/g
+
+const evaluatedWithApi = new Map()
+
+function withApi(module) {
+  const known = evaluatedWithApi.get(module.absolute)
+  if (known) return known
+  const reached = new Set()
+  const queue = [resolve(module.absolute, module.api)]
+  while (queue.length > 0) {
+    const file = queue.shift()
+    if (reached.has(file) || !existsSync(file)) continue
+    reached.add(file)
+    for (const match of readFileSync(file, 'utf8').matchAll(STATIC_IMPORTS)) {
+      const target = resolve(dirname(file), match[1] ?? match[2])
+      const found = ENDINGS.map((one) => target + one).find(
+        (one) => existsSync(one) && statSync(one).isFile(),
+      )
+      if (found && moduleOf(found, MODULES) === module) queue.push(found)
+    }
+  }
+  evaluatedWithApi.set(module.absolute, reached)
+  return reached
+}
+
+const ownApi = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      own: "Module '{{own}}' evaluates this file while its api loads, so importing its own api ({{what}}) here reads names not yet there; import the file that holds them.",
+    },
+  },
+  create(context) {
+    return eachImport(context, (node, specifier, own, found) => {
+      if (found.module !== own || node.type === 'ImportExpression' || node.importKind === 'type')
+        return
+      const api = resolve(own.absolute, own.api)
+      if (found.file !== api || context.filename === api) return
+      if (withApi(own).has(context.filename)) {
+        context.report({ node, messageId: 'own', data: { own: own.name, what: specifier } })
       }
     })
   },
@@ -272,7 +367,7 @@ export default tseslint.config(
   },
   {
     files: ['apps/**/*.{ts,svelte}'],
-    ignores: ['apps/desktop/src/lib/motion.ts'],
+    ignores: ['apps/desktop/src/lib/platform/src/motion.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -373,10 +468,12 @@ export default tseslint.config(
           'no-deep-imports': noDeepImports,
           'declared-dependencies': declaredDependencies,
           'pending-imports': pendingImports,
+          'own-api': ownApi,
+          'effect-imports': effectImports,
         },
       },
     },
-    rules: { 'orden/no-comments': 'error' },
+    rules: { 'orden/no-comments': 'error', 'orden/effect-imports': 'error' },
   },
   {
     files: MODULE_FILES,
@@ -385,13 +482,14 @@ export default tseslint.config(
       'orden/no-deep-imports': 'error',
       'orden/declared-dependencies': 'error',
       'orden/pending-imports': 'error',
+      'orden/own-api': 'error',
     },
   },
   {
     ignores: [
       '**/*.test.ts',
       '**/test/**',
-      'apps/desktop/src/lib/chats/**',
+      'apps/desktop/src/lib/chats-client/**',
       'packages/chats/**',
       'services/sync/src/sync-server-chats/src/chats/**',
     ],

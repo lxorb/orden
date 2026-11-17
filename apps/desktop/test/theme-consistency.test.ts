@@ -174,18 +174,21 @@ describe('the paper a note is written on', () => {
   }
 
   test('is what a pane lays under itself', () => {
-    expect(ruleOf('lib/Pane.svelte', 'pane')).toContain(PAPER)
+    expect(ruleOf('lib/pane-tree/src/Pane.svelte', 'pane')).toContain(PAPER)
   })
 
   test('is the page itself, whole, under the scratchpad', () => {
-    expect(ruleOf('lib/scratchpad/ScratchpadCard.svelte', 'card')).toContain(
+    expect(ruleOf('lib/scratchpad/src/ScratchpadCard.svelte', 'card')).toContain(
       'background: var(--bg);',
     )
   })
 
   test('is see-through under a pane alone', () => {
     const offenders = components
-      .filter((one) => one.name !== 'lib/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
+      .filter(
+        (one) =>
+          one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text),
+      )
       .map((one) => one.name)
 
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])
@@ -194,13 +197,41 @@ describe('the paper a note is written on', () => {
 
 describe('what a side shows', () => {
   const FLOATING = ['orden-layer', 'orden-screen', 'orden-bubble']
-  const sidebar = readFileSync(join(SOURCE, 'lib/Sidebar.svelte'), 'utf8')
-  const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
-  const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
-    const door = one[1] ?? ''
-    const from = new RegExp(`export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
-    return `lib/${from.exec(surfaces)?.[1] ?? door}`
-  })
+  const sidebar = readFileSync(join(SOURCE, 'lib/sidebar/src/Sidebar.svelte'), 'utf8')
+  const surfaces = readFileSync(join(SOURCE, 'lib/surfaces/src/api.ts'), 'utf8')
+  const features = readFileSync(join(SOURCE, 'lib/features.ts'), 'utf8')
+  const loaded = (path: string, loader: string) => {
+    const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
+    const file = new RegExp(`export const ${loader} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
+    return `lib/${path.replace(/[^/]+$/, '')}${file.exec(api)?.[1] ?? ''}`
+  }
+  const named = (path: string, name: string) => {
+    const api = readFileSync(join(SOURCE, 'lib', `${path}.ts`), 'utf8')
+    const file = new RegExp(`default as ${name} \\} from '\\./([^']+)'`).exec(api)?.[1] ?? ''
+    return `lib/${path.replace(/[^/]+$/, '')}${file}`
+  }
+  const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)]
+    .filter((one) => surfaces.includes(`export const ${one[1] ?? ''} = `))
+    .map((one) => {
+      const door = one[1] ?? ''
+      const [, id, root] =
+        new RegExp(
+          `export const ${door} = held\\(\\s*(?:from\\('([\\w-]+)'\\)|\\(\\) => import\\('\\.\\./\\.\\./([^']+)'\\))`,
+        ).exec(surfaces) ?? []
+      if (root) return `lib/${root}`
+      const body =
+        new RegExp(`\\n\\s*'?${id ?? ''}'?: (?!waits)([^\\n]*),\\n`).exec(features)?.[1] ?? ''
+      const lazy =
+        /import\('\.\/([^']+)'\)\.then\(\((?:api|one)\) => (?:\(\{ default: (?:api|one)\.(\w+) \}\)|(?:api|one)\.(\w+)\(\))\)/.exec(
+          body,
+        )
+      if (lazy)
+        return lazy[2] ? named(lazy[1] ?? '', lazy[2]) : loaded(lazy[1] ?? '', lazy[3] ?? '')
+      const from = new RegExp(
+        `import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`,
+      ).exec(features)?.[1]
+      return loaded(from ?? '', body.trim())
+    })
 
   interface Node {
     type?: string
@@ -233,9 +264,9 @@ describe('what a side shows', () => {
   }
 
   test('finds the panels', () => {
-    expect(shown).toContain('lib/scratchpad/ScratchpadCard.svelte')
-    expect(shown).toContain('lib/views/TasksPanel.svelte')
-    expect(shown).toContain('lib/ai/sidebar/ChatPanel.svelte')
+    expect(shown).toContain('lib/scratchpad/src/ScratchpadCard.svelte')
+    expect(shown).toContain('lib/tasks-views/src/TodosPanel.svelte')
+    expect(shown).toContain('lib/ai-sidebar/src/ChatPanel.svelte')
   })
 
   test.each(shown.map((name) => [name]))('%s stands in it', (name) => {
@@ -261,7 +292,7 @@ describe('what runs out under something', () => {
   const style = (name: string) => components.find((one) => one.name === name)?.text ?? ''
 
   test('the AI panel’s thread fades by a mask', () => {
-    expect(style('lib/ai/sidebar/Conversation.svelte')).toMatch(
+    expect(style('lib/ai-sidebar/src/Conversation.svelte')).toMatch(
       /\.talk\s*\{[^}]*mask-image:\s*linear-gradient\(to bottom/,
     )
   })
@@ -278,7 +309,7 @@ describe('what runs out under something', () => {
 
 describe('what the AI chat is filled with', () => {
   const chat = components.filter((one) =>
-    /^lib\/(?:ai\/(?:sidebar|review)\/|QuickQuestion\.svelte$)/.test(one.name),
+    /^lib\/ai-sidebar\/src\/(?!(?:Answer|Thinking|DoWithAiCard)\.svelte$)/.test(one.name),
   )
   const style = (name: string) => chat.find((one) => one.name === name)?.text ?? ''
 
@@ -287,10 +318,10 @@ describe('what the AI chat is filled with', () => {
   })
 
   test('the reader’s message is a wash of the ink over whatever it stands on', () => {
-    expect(style('lib/ai/sidebar/Conversation.svelte')).toMatch(
+    expect(style('lib/ai-sidebar/src/Conversation.svelte')).toMatch(
       /\n\s*\.bubble\s*\{[^}]*background:\s*var\(--ink-wash\)/,
     )
-    expect(style('lib/QuickQuestion.svelte')).toMatch(
+    expect(style('lib/ai-sidebar/src/QuickQuestion.svelte')).toMatch(
       /\n\s*\.said\s*\{[^}]*background:\s*var\(--ink-wash\)/,
     )
   })

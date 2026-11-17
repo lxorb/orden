@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { Panes } from '../../src/lib/workspace/panes.svelte'
+import { Panes } from '../../src/lib/panes/src/api'
 
 describe('a drag over the panes', () => {
   let panes: Panes

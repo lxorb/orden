@@ -1,0 +1,110 @@
+import type { AgentReaderPort } from '@orden/contracts'
+import type { AgentAnswer } from '../../automation/src/api'
+import { show } from '../../notify/src/api'
+import { openAgentSession } from '../../workspace/src/api'
+import {
+  type Call,
+  count,
+  done,
+  maybe,
+  need,
+  Refused,
+  readerPort,
+  stopRefused,
+  stopSignal,
+} from '../../agent-verbs/src/api'
+
+const WAIT = 60_000
+const MOST_WAIT = 120_000
+
+const MOST_CHOICES = 12
+const MOST_MESSAGE = 2000
+const LONGEST_CHOICE = 200
+const MOST_OPEN = 5
+
+export async function askReader(call: Call): Promise<AgentAnswer> {
+  const agent = call.caller.agent
+  if (agent === null) throw new Refused('by_hand', 'the command line asks the reader nothing')
+  const patience = count(call, 'wait_ms', WAIT, MOST_WAIT)
+
+  const reader = readerPort()
+  const id = maybe(call, 'id')
+  if (id !== null) {
+    if (!(await reader.knows(agent.id, id)))
+      throw new Refused('bad_arguments', `there is no question ${id}`)
+    return heard(reader, call, id, patience)
+  }
+
+  const kind = need(call, 'kind')
+  const message = need(call, 'message')
+  if (message.length > MOST_MESSAGE) {
+    throw new Refused('bad_arguments', `a message is at most ${MOST_MESSAGE} characters`)
+  }
+
+  if (kind === 'notice') {
+    show({ title: agent.name, body: message, opened: () => openAgentSession(agent.id) })
+    return done({ shown: true })
+  }
+  if (kind !== 'choice' && kind !== 'text') {
+    throw new Refused('bad_arguments', 'kind is notice, choice or text')
+  }
+
+  const choices = Array.isArray(call.args.choices)
+    ? call.args.choices.map(String).filter((one) => one.trim() !== '')
+    : []
+  if (kind === 'choice' && (choices.length < 1 || choices.length > MOST_CHOICES)) {
+    throw new Refused('bad_arguments', `a choice offers 1 to ${MOST_CHOICES} choices`)
+  }
+  const placeholder = maybe(call, 'placeholder')
+  if ([...choices, placeholder ?? ''].some((one) => one.length > LONGEST_CHOICE)) {
+    throw new Refused(
+      'bad_arguments',
+      `a choice or placeholder is at most ${LONGEST_CHOICE} characters`,
+    )
+  }
+
+  if ((await reader.waiting(agent.id)) >= MOST_OPEN) {
+    throw new Refused(
+      'bad_arguments',
+      `the reader has ${MOST_OPEN} of your questions open: ask about one by its id first`,
+    )
+  }
+
+  const asked = await reader.ask({
+    agent: agent.id,
+    kind,
+    message,
+    choices: kind === 'choice' ? choices : [],
+    placeholder,
+  })
+  show({
+    title: agent.name,
+    body: message,
+    tag: `ask-${asked}`,
+    opened: () => openAgentSession(agent.id),
+    ...(kind === 'text'
+      ? {
+          reply: {
+            placeholder: placeholder ?? '',
+            send: 'Send',
+            replied: (words: string) => reader.answer(asked, words),
+          },
+        }
+      : {}),
+  })
+  return heard(reader, call, asked, patience)
+}
+
+async function heard(
+  reader: AgentReaderPort,
+  call: Call,
+  id: string,
+  patience: number,
+): Promise<AgentAnswer> {
+  const halting = await stopSignal(call)
+  const said = await reader.heard(id, patience, halting.signal).finally(halting.end)
+  if (halting.signal.aborted && said === null) throw stopRefused(`question ${id} is still open`)
+  if (said === null) return done({ id, waiting: true })
+
+  return said.answer === null ? done({ id, dismissed: true }) : done({ id, answer: said.answer })
+}

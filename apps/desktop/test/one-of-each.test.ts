@@ -114,15 +114,15 @@ describe('the row a list is made of', () => {
 
   test('and the lists wear the class rather than a row of their own', () => {
     const lists = [
-      'lib/Bookmarks.svelte',
-      'lib/ContextMenu.svelte',
-      'lib/HitList.svelte',
-      'lib/Palette.svelte',
-      'lib/SearchPanel.svelte',
-      'lib/SettingsPanel.svelte',
-      'lib/Sidebar.svelte',
-      'lib/TagTree.svelte',
-      'lib/Tree.svelte',
+      'lib/sidebar/src/Bookmarks.svelte',
+      'lib/context-menu/src/ContextMenu.svelte',
+      'lib/links-panel/src/HitList.svelte',
+      'lib/search/src/SearchPanel.svelte',
+      'lib/settings/src/SettingsPanel.svelte',
+      'lib/sidebar/src/Sidebar.svelte',
+      'lib/search/src/TagTree.svelte',
+      'lib/sidebar/src/Tree.svelte',
+      'lib/palette/src/Palette.svelte',
     ]
 
     const missing = lists.filter(
@@ -228,14 +228,14 @@ describe('the ring a keyboard leaves', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/Canvas.svelte',
-      'lib/ContextMenu.svelte',
-      'lib/Reading.svelte',
-      'lib/agents/ui/PairingBubble.svelte',
-      'lib/ai/vault/VaultApprove.svelte',
-      'lib/pass/PassFill.svelte',
-      'lib/theme-picker/ThemePicker.svelte',
-      'lib/web-tab/WebAsk.svelte',
+      'lib/agents/src/ui/PairingBubble.svelte',
+      'lib/ai-providers/src/vault/VaultApprove.svelte',
+      'lib/canvas/src/Canvas.svelte',
+      'lib/context-menu/src/ContextMenu.svelte',
+      'lib/pass-ui/src/PassFill.svelte',
+      'lib/reading/src/Reading.svelte',
+      'lib/theme-looks/src/picker/ThemePicker.svelte',
+      'lib/web-tab/src/WebAsk.svelte',
     ])
   })
 
@@ -288,16 +288,16 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/AccountBadge.svelte',
-      'lib/ShareSheet.svelte',
-      'lib/Sheet.svelte',
-      'lib/SpaceBadge.svelte',
-      'lib/SpaceMenu.svelte',
-      'lib/agents/settings/AgentMark.svelte',
-      'lib/agents/ui/PairingBubble.svelte',
-      'lib/ai/vault/VaultApprove.svelte',
-      'lib/pass/VaultMark.svelte',
-      'lib/tab-strip/TabCard.svelte',
+      'lib/accounts-ui/src/ShareSheet.svelte',
+      'lib/accounts/src/AccountBadge.svelte',
+      'lib/agents/src/settings/AgentMark.svelte',
+      'lib/agents/src/ui/PairingBubble.svelte',
+      'lib/ai-providers/src/vault/VaultApprove.svelte',
+      'lib/pass-ui/src/VaultMark.svelte',
+      'lib/spaces/src/SpaceBadge.svelte',
+      'lib/spaces/src/SpaceMenu.svelte',
+      'lib/tab-strip/src/TabCard.svelte',
+      'lib/ui-controls/src/Sheet.svelte',
     ])
   })
 
@@ -308,12 +308,12 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(asking).toEqual([
-      'lib/PromptSheet.svelte',
-      'lib/PublishSheet.svelte',
-      'lib/ShareSheet.svelte',
-      'lib/SpaceBadge.svelte',
-      'lib/save-place/SavePlace.svelte',
-      'lib/tab-strip/TabCard.svelte',
+      'lib/accounts-ui/src/ShareSheet.svelte',
+      'lib/publishing/src/PublishSheet.svelte',
+      'lib/save-place/src/SavePlace.svelte',
+      'lib/spaces/src/SpaceBadge.svelte',
+      'lib/surfaces/src/PromptSheet.svelte',
+      'lib/tab-strip/src/TabCard.svelte',
     ])
   })
 })
@@ -334,19 +334,18 @@ describe('the switch', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/GraphControls.svelte',
-      'lib/ImportSheet.svelte',
-      'lib/Palette.svelte',
-      'lib/ShareSheet.svelte',
-      'lib/Switch.svelte',
-      'lib/ai/DoWithAiCard.svelte',
-      'lib/ai/sidebar/ModelPicker.svelte',
-      'lib/chats/view/PollSheet.svelte',
-      'lib/pass/SwitchRow.svelte',
-      'lib/views/AutomationsBuilder.svelte',
-      'lib/views/DisplayBuilder.svelte',
-      'lib/views/ViewSettings.svelte',
-      'lib/web-tab/WebClear.svelte',
+      'lib/accounts-ui/src/ShareSheet.svelte',
+      'lib/ai-sidebar/src/DoWithAiCard.svelte',
+      'lib/ai-sidebar/src/ModelPicker.svelte',
+      'lib/chats-client/src/view/PollSheet.svelte',
+      'lib/graph-view/src/GraphControls.svelte',
+      'lib/import/src/ImportSheet.svelte',
+      'lib/palette/src/Palette.svelte',
+      'lib/pass-ui/src/SwitchRow.svelte',
+      'lib/ui-controls/src/Switch.svelte',
+      'lib/views/src/AutomationsBuilder.svelte',
+      'lib/views/src/ViewSettings.svelte',
+      'lib/web-tab/src/WebClear.svelte',
     ])
   })
 })
@@ -401,7 +400,7 @@ describe('the cross that shuts something', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(drawing).toEqual(['lib/Cross.svelte', 'lib/Titlebar.svelte'])
+    expect(drawing).toEqual(['lib/titlebar/src/Titlebar.svelte', 'lib/ui-kit/src/Cross.svelte'])
   })
 
   test('and no button spells one as a letter', () => {
@@ -418,7 +417,7 @@ describe('the button with words in it', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
     expect(shared).toContain('.orden-button')
 
-    expect(draw(/\.orden-button/)).toEqual(['lib/UpdateNotice.svelte'])
+    expect(draw(/\.orden-button/)).toEqual(['lib/updates/src/UpdateNotice.svelte'])
   })
 
   test('and no component draws a primary of its own', () => {
@@ -438,7 +437,7 @@ describe('the action in a card', () => {
   })
 
   test('and laid into a grouped card on a phone by the one sheet that has those', () => {
-    expect(draw(/\.orden-action|\.action\b/)).toEqual(['lib/SettingsPanel.svelte'])
+    expect(draw(/\.orden-action|\.action\b/)).toEqual(['lib/settings/src/SettingsPanel.svelte'])
   })
 })
 
@@ -485,7 +484,7 @@ describe('the fade on something refused', () => {
         .map((rule) => `${one.name}: ${rule.selector}`),
     )
 
-    expect(own).toEqual(['lib/ImportSheet.svelte: .drop:disabled'])
+    expect(own).toEqual(['lib/import/src/ImportSheet.svelte: .drop:disabled'])
   })
 })
 
@@ -494,6 +493,13 @@ describe('the segmented control', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
     expect(shared).toContain('.orden-segmented')
     expect(draw(/\.orden-segmented|\.segmented\b/)).toEqual([])
+  })
+
+  test('keeps its height in a column that runs short, though it scrolls sideways', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    const rule = /\n\.orden-segmented \{([^}]*)\}/.exec(shared)?.[1] ?? ''
+    expect(rule).toContain('overflow-x: auto')
+    expect(rule).toContain('min-height: min-content')
   })
 
   test('is the class every one of them wears', () => {
@@ -505,7 +511,7 @@ describe('the segmented control', () => {
 })
 
 describe('how a surface swaps what it is showing', () => {
-  const slide = readFileSync(join(SOURCE, 'lib/slide.ts'), 'utf8')
+  const slide = readFileSync(join(SOURCE, 'lib/ui-kit/src/slide.ts'), 'utf8')
 
   test('is one module, and it moves nothing but a transform and an opacity', () => {
     expect(slide).toContain('export function arrive')
@@ -525,7 +531,7 @@ describe('how a surface swaps what it is showing', () => {
   })
 
   test('and its durations come through the one place reduced motion is answered', () => {
-    expect(slide).toContain("from './motion'")
+    expect(slide).toMatch(/from '(?:\.\.?\/)+platform\/src\/api'/)
     expect(slide).toContain('duration: dur(ms)')
   })
 
@@ -543,17 +549,20 @@ describe('how a surface swaps what it is showing', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(without).toEqual(['lib/CanvasCatch.svelte', 'lib/CanvasRub.svelte'])
+    expect(without).toEqual([
+      'lib/canvas/src/CanvasCatch.svelte',
+      'lib/canvas/src/CanvasRub.svelte',
+    ])
   })
 })
 
 describe('a value beside its copy button', () => {
   test('is one component', () => {
-    expect(draw(/\.copyable/)).toEqual(['lib/Copyable.svelte'])
+    expect(draw(/\.copyable/)).toEqual(['lib/ui-controls/src/Copyable.svelte'])
   })
 
   test('and the button is another, which is the only thing that copies', () => {
-    expect(draw(/\.copy\b/)).toEqual(['lib/CopyButton.svelte'])
+    expect(draw(/\.copy\b/)).toEqual(['lib/ui-controls/src/CopyButton.svelte'])
   })
 })
 
@@ -571,27 +580,27 @@ describe('the bubble a sentence appears in', () => {
       .sort()
 
     expect(own).toEqual([
-      'lib/Hint.svelte',
-      'lib/HintCard.svelte',
-      'lib/NameField.svelte',
-      'lib/agents/ui/PairingBubble.svelte',
-      'lib/ai/vault/VaultApprove.svelte',
-      'lib/chats/view/Tip.svelte',
-      'lib/pass/PassFill.svelte',
-      'lib/tab-strip/TabCard.svelte',
-      'lib/web-tab/WebAsk.svelte',
-      'lib/web-tab/WebDialog.svelte',
-      'lib/web-tab/WebDownloads.svelte',
-      'lib/web-tab/WebExtensionPopup.svelte',
-      'lib/web-tab/WebExtensions.svelte',
-      'lib/web-tab/WebSite.svelte',
+      'lib/agents/src/ui/PairingBubble.svelte',
+      'lib/ai-providers/src/vault/VaultApprove.svelte',
+      'lib/chats-client/src/view/Tip.svelte',
+      'lib/hints/src/HintCard.svelte',
+      'lib/pass-ui/src/PassFill.svelte',
+      'lib/sidebar/src/NameField.svelte',
+      'lib/tab-strip/src/TabCard.svelte',
+      'lib/ui-controls/src/Hint.svelte',
+      'lib/web-tab/src/WebAsk.svelte',
+      'lib/web-tab/src/WebDialog.svelte',
+      'lib/web-tab/src/WebDownloads.svelte',
+      'lib/web-tab/src/WebExtensionPopup.svelte',
+      'lib/web-tab/src/WebExtensions.svelte',
+      'lib/web-tab/src/WebSite.svelte',
     ])
   })
 })
 
 describe('the sentence behind a setting', () => {
   test('is one component, so it is one bubble in one place', () => {
-    expect(draw(/\.explain\b|\.sentence\b/)).toEqual(['lib/Hint.svelte'])
+    expect(draw(/\.explain\b|\.sentence\b/)).toEqual(['lib/ui-controls/src/Hint.svelte'])
   })
 
   test('and the settings ask for it rather than drawing their own', () => {
@@ -601,14 +610,13 @@ describe('the sentence behind a setting', () => {
       .sort()
 
     expect(own).toEqual([
-      'lib/AiPane.svelte',
-      'lib/SettingsPanel.svelte',
-      'lib/SyncPane.svelte',
-      'lib/access/Access.svelte',
-      'lib/agents/settings/Words.svelte',
-      'lib/ai/DoWithAiCard.svelte',
-      'lib/people/ProfileRows.svelte',
-      'lib/views/DisplayBuilder.svelte',
+      'lib/accounts-ui/src/ProfileRows.svelte',
+      'lib/agents/src/access/Access.svelte',
+      'lib/agents/src/settings/Words.svelte',
+      'lib/ai-sidebar/src/AiPane.svelte',
+      'lib/ai-sidebar/src/DoWithAiCard.svelte',
+      'lib/settings/src/SettingsPanel.svelte',
+      'lib/settings/src/SyncPane.svelte',
     ])
   })
 })
@@ -616,7 +624,7 @@ describe('the sentence behind a setting', () => {
 describe('saying Copied for a moment', () => {
   test('happens in one place, so it is one length of a moment', () => {
     const says = components.filter((one) => one.text.includes("'Copied'")).map((one) => one.name)
-    expect(says).toEqual(['lib/CopyButton.svelte'])
+    expect(says).toEqual(['lib/ui-controls/src/CopyButton.svelte'])
   })
 })
 

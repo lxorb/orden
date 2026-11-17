@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import functools
 import hashlib
-import json
 import re
 import time
 import urllib.error
@@ -61,21 +61,7 @@ NOTES = {
     ),
 }
 
-def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
-    data = None if body is None else json.dumps(body).encode()
-    ask = urllib.request.Request(f"{ORIGIN}{path}", data=data, method=method)
-    if token:
-        ask.add_header("authorization", f"Bearer {token}")
-    if data is not None:
-        ask.add_header("content-type", "application/json")
-
-    try:
-        with urllib.request.urlopen(ask, timeout=30) as answer:
-            said = answer.read().decode()
-            return json.loads(said) if said else {}
-    except urllib.error.HTTPError as refused:
-        said = refused.read().decode()
-        return {"status": refused.code, **(json.loads(said) if said else {})}
+request = functools.partial(harness.request, refused=True)
 
 class Answer:
 
@@ -250,7 +236,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     for section in ["sync", "account"]:
         page.evaluate("() => window.ordenApp.publish.close()")
         page.evaluate(f"() => window.ordenApp.settings.show('{section}')")
-        page.wait_for_selector(".orden-screen.sheet", timeout=15000)
+        page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
 
@@ -447,8 +433,7 @@ def dressing(token: str, space: str) -> None:
         method="PUT",
         headers={"authorization": f"Bearer {token}", "content-type": "text/css"},
     )
-    with urllib.request.urlopen(put, timeout=30) as answer:
-        answer.read()
+    harness.opened(put)
 
     request(
         f"/v1/spaces/{space}/files",

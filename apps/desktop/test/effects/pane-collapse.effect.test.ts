@@ -2,8 +2,8 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { warmWindow } from './warm-window'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -44,9 +44,9 @@ Element.prototype.scrollIntoView = () => undefined
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
-const { views } = await import('../../src/lib/views.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+const { views } = await import('../../src/lib/panes/src/api')
 const App = (await import('../../src/App.svelte')).default
 
 await warmWindow(

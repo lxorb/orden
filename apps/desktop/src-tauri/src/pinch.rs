@@ -1,5 +1,3 @@
-#![cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
-
 use serde_json::{json, Value};
 
 pub fn first_window(app: &tauri::AppHandle) {
@@ -10,59 +8,12 @@ pub fn first_window(app: &tauri::AppHandle) {
     }
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn let_through(webview: &tauri::Webview) {
-    let _ = webview.with_webview(|platform| pinch_zoom_on(&platform));
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the page's settings are WebView2's own, reached through its COM interfaces"
-)]
-fn pinch_zoom_on(platform: &tauri::webview::PlatformWebview) {
-    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings5;
-    use windows_core::Interface as _;
-
-    unsafe {
-        let Ok(core) = platform.controller().CoreWebView2() else {
-            return;
-        };
-        let Ok(settings) = core.Settings() else {
-            return;
-        };
-        if let Ok(five) = settings.cast::<ICoreWebView2Settings5>() {
-            let _ = five.SetIsPinchZoomEnabled(true);
-        }
-    }
-}
-
-#[cfg(not(all(windows, not(feature = "cef"))))]
 pub fn let_through(_webview: &tauri::Webview) {}
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn web_page(platform: &tauri::webview::PlatformWebview, _app: &tauri::AppHandle, _label: &str) {
-    pinch_zoom_on(platform);
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the runtime hands the page over as a bare pointer, and WKWebView's magnification is set through it"
-)]
-pub fn web_page(platform: &tauri::webview::PlatformWebview, _app: &tauri::AppHandle, _label: &str) {
-    use objc2::rc::Retained;
-    use objc2_web_kit::WKWebView;
-
-    if let Some(view) = unsafe { Retained::retain(platform.inner().cast::<WKWebView>()) } {
-        unsafe { view.setAllowsMagnification(true) };
-    }
-}
-
-#[cfg(all(feature = "cef", target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub use gestures::web_page;
 
-#[cfg(all(feature = "cef", not(target_os = "linux")))]
+#[cfg(not(target_os = "linux"))]
 pub fn web_page(
     _platform: &tauri::webview::PlatformWebview,
     _app: &tauri::AppHandle,
@@ -70,65 +21,19 @@ pub fn web_page(
 ) {
 }
 
-#[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
-pub fn web_page(
-    _platform: &tauri::webview::PlatformWebview,
-    _app: &tauri::AppHandle,
-    _label: &str,
-) {
-}
-
-#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
-const CONTROL: u32 = 0x0008;
-#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
-const TURN_PER_E: f64 = 600.0;
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 const SPEED: u32 = 4000;
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 const STILL: f64 = 1e-4;
 
-#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
-pub fn is_pinch(keys: u32, ctrl_held: bool, fingers: u32, from_touch: bool) -> bool {
-    keys & CONTROL != 0 && (!ctrl_held || fingers >= 2 || from_touch)
-}
-
-#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
-pub fn scale_of_turn(turn: i16) -> f64 {
-    (f64::from(turn) / TURN_PER_E).exp()
-}
-
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Asked {
     pub at: (f64, f64),
     pub scale: f64,
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 impl Asked {
     pub fn params(self) -> Value {
         json!({
@@ -141,13 +46,7 @@ impl Asked {
     }
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 #[derive(Debug)]
 pub struct Owed {
     flying: bool,
@@ -165,13 +64,7 @@ impl Default for Owed {
     }
 }
 
-#[cfg_attr(
-    not(any(
-        all(windows, not(feature = "cef")),
-        all(feature = "cef", target_os = "linux")
-    )),
-    allow(dead_code)
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 impl Owed {
     pub fn gather(&mut self, by: f64, at: (f64, f64)) {
         if by.is_finite() && by > 0.0 {
@@ -198,7 +91,7 @@ impl Owed {
     }
 }
 
-#[cfg(all(feature = "cef", target_os = "linux"))]
+#[cfg(target_os = "linux")]
 mod gestures {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex, OnceLock, PoisonError};
@@ -368,32 +261,7 @@ mod gestures {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_pinch, scale_of_turn, Asked, Owed};
-
-    #[test]
-    fn a_ctrl_wheel_with_ctrl_not_held_is_a_pinch() {
-        assert!(
-            is_pinch(0x0008, false, 0, false),
-            "Windows' pinch, Ctrl never pressed"
-        );
-        assert!(is_pinch(0x0008, true, 2, false), "two fingers on the pad");
-        assert!(is_pinch(0x0008, true, 0, true), "marked as the pad's own");
-        assert!(
-            !is_pinch(0x0008, true, 0, false),
-            "Ctrl and a mouse's wheel"
-        );
-        assert!(!is_pinch(0x0008, true, 1, false));
-        assert!(!is_pinch(0, false, 2, true), "a plain scroll");
-        assert!(!is_pinch(0x0004, false, 2, false), "Shift and the wheel");
-    }
-
-    #[test]
-    fn a_turn_out_magnifies_and_back_undoes_it() {
-        assert!(scale_of_turn(120) > 1.1 && scale_of_turn(120) < 1.4);
-        assert!(scale_of_turn(-120) < 1.0);
-        assert!((scale_of_turn(120) * scale_of_turn(-120) - 1.0).abs() < 1e-12);
-        assert!((scale_of_turn(0) - 1.0).abs() < f64::EPSILON);
-    }
+    use super::{Asked, Owed};
 
     #[test]
     fn one_pinch_is_in_flight_and_the_rest_wait_for_it_as_one() {

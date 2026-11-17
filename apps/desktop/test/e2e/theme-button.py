@@ -28,7 +28,8 @@ def fresh(browser: Browser) -> Page:
 
 
 def opened(page: Page) -> None:
-    page.locator("[data-region=foot] [aria-label=Themes]").click()
+    page.locator("[data-region=foot] [aria-haspopup=menu]").click()
+    page.locator("[role=menu] [role=menuitem]", has_text="Themes").first.click()
     wait_for(page, f"!!document.querySelector({PICKER!r})", "the theme picker")
     wait_for(page, f"!!document.activeElement?.closest({PICKER!r})", "the picker to take the keys")
     page.wait_for_timeout(300)
@@ -41,15 +42,20 @@ def card(page: Page, name: str) -> object:
 def drive(browser: Browser) -> None:
     page = fresh(browser)
     foot = page.locator("[data-region=foot]")
-    if foot.locator("[aria-label=Light], [aria-label=Dark]").count():
-        wrong("the light and dark switch is still in the foot")
+    if foot.locator("[aria-label=Light], [aria-label=Dark], [aria-label=Themes]").count():
+        wrong("a theme switch is still in the foot, beside the settings")
+    foot.locator("[aria-haspopup=menu]").click()
+    wait_for(page, "!!document.querySelector('[role=menu]')", "the account menu")
+    shot(page, "chromium-account-menu")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
 
     for side in ("light", "dark"):
         page.evaluate(f"() => window.ordenApp.theme.setScheme({side!r})")
         page.wait_for_timeout(200)
         kept = page.evaluate(THEME)
         opened(page)
-        shot(page, f"{harness.ENGINE}-{side}-open")
+        shot(page, f"chromium-{side}-open")
 
         card(page, "Contrast").hover()
         page.wait_for_timeout(300)
@@ -57,7 +63,7 @@ def drive(browser: Browser) -> None:
             wrong(f"[{side}] pointing at Contrast did not try it")
         if page.locator(PICKER).get_attribute("data-seeing") != "id":
             wrong(f"[{side}] the picker stays solid while a theme is tried")
-        shot(page, f"{harness.ENGINE}-{side}-trying")
+        shot(page, f"chromium-{side}-trying")
         if page.locator(PICKER).get_attribute("data-seeing") != "id":
             wrong(f"[{side}] the picker went solid while the shot was taken")
 
@@ -73,7 +79,7 @@ def drive(browser: Browser) -> None:
         tried = page.evaluate(THEME)
         if tried == kept:
             wrong(f"[{side}] the arrow tried nothing")
-        shot(page, f"{harness.ENGINE}-{side}-arrow")
+        shot(page, f"chromium-{side}-arrow")
         page.wait_for_timeout(300)
         if page.evaluate(FOCUS_SHOWN) < 0.9:
             wrong(f"[{side}] the search field fades while the arrow tries a theme")
@@ -83,7 +89,7 @@ def drive(browser: Browser) -> None:
             wrong(f"[{side}] typing Con did not try Contrast")
         if page.evaluate(FOCUS_SHOWN) < 0.9:
             wrong(f"[{side}] the search field fades while typing, the words can hardly be read")
-        shot(page, f"{harness.ENGINE}-{side}-typing")
+        shot(page, f"chromium-{side}-typing")
         page.keyboard.press("Control+a")
         page.keyboard.press("Backspace")
         page.wait_for_timeout(300)
@@ -108,4 +114,4 @@ def drive(browser: Browser) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the themes button opens a picker that tries a theme see-through and keeps it"))
+    raise SystemExit(DRIVE.run(drive, "Themes in the account menu opens a picker that tries a theme see-through and keeps it"))

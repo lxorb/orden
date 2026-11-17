@@ -1,6 +1,6 @@
 import '@orden/themes/tokens.css'
 import './pass-link.css'
-import { shownLink } from './lib/pass/link-page'
+import { shownLink } from './lib/pass-links/src/api'
 
 const light = matchMedia('(prefers-color-scheme: light)').matches
 document.documentElement.dataset.theme = light ? 'light' : 'dark'

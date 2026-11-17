@@ -1,0 +1,5 @@
+{
+  "name": "updates",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "parting", "platform", "ui-controls", "ui-kit"]
+}

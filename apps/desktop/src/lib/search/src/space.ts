@@ -1,0 +1,74 @@
+import { protection } from '../../protect/src/api'
+import { keptAway } from '../../away/src/api'
+import { internal, invoke, isNative } from '../../platform/src/api'
+import { searchInternal, searchInWorker } from '../../web-backend/src/api'
+import type { FuzzyHit } from '@orden/scan/search/fuzzy'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
+
+const HITS = 'orden://search-hits'
+
+export interface Found {
+  hits: Hit[]
+  loose: FuzzyHit[]
+}
+
+const PAPERS = 20
+
+let asked = 0
+
+export async function searchSpace(
+  root: string,
+  query: Query,
+  terms: string[],
+  limit: number,
+  onFound: (found: Found) => void,
+  excluded: readonly string[] = [],
+): Promise<void> {
+  const shut = protection.shutIn(root)
+  if (shut === null) return
+  if (shut.length) {
+    excluded = [...excluded, ...shut]
+    const told = onFound
+    const open = (one: { path: string }) => !protection.locked(one.path)
+    onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
+  }
+  const { papersFor, searchPapers } = await (await import('../../pdf/src/api')).papers()
+  await papersFor(root)
+  const papers = searchPapers(root, query, PAPERS, excluded)
+  if (papers.length) onFound({ hits: papers, loose: [] })
+
+  if (!isNative) {
+    let found = 0
+    const loose: FuzzyHit[] = []
+    const gathered = (batch: Found) => {
+      found += batch.hits.length
+      loose.push(...batch.loose)
+      if (batch.hits.length) onFound({ hits: batch.hits, loose: [] })
+    }
+    await searchInWorker(root, query, terms, limit, gathered, excluded)
+    await keptAway.search(root, query, terms, limit - found, gathered, excluded)
+    const guesses = loose.sort((one, other) => other.score - one.score).slice(0, limit)
+    if (guesses.length) onFound({ hits: [], loose: guesses })
+    return
+  }
+
+  if (internal.routed) {
+    if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
+  }
+
+  const id = ++asked
+  const { hearHere } = await import('../../windows/src/api')
+  const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
+    const batch = event.payload
+    if (batch.id !== id) return
+
+    onFound({ hits: batch.hits ?? [], loose: batch.loose ?? [] })
+  })
+
+  try {
+    await invoke('search_space', { root, query, terms, limit, id, excluded })
+  } finally {
+    stop()
+  }
+}

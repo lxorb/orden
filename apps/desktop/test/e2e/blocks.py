@@ -54,7 +54,23 @@ ROWS = """
 }))
 """
 
-def fresh(browser: Browser, label: str, finger: bool = False, width: int = 1180) -> Page:
+LIST = """# A note of blocks
+
+cleanes konto fuer ethcc emails
+
+quaestur:
+- [ ] clean up the repo
+- [ ] payrexx import
+- [ ] abacus zahlungsmethode fuer auslaendische kunden
+
+
+
+
+"""
+
+def fresh(
+    browser: Browser, label: str, finger: bool = False, width: int = 1180, note: str = NOTE
+) -> Page:
     context = browser.new_context(
         viewport={"width": width, "height": 820} if not finger else {"width": 420, "height": 880},
         color_scheme="light",
@@ -79,7 +95,7 @@ def fresh(browser: Browser, label: str, finger: bool = False, width: int = 1180)
         else None,
     )
     DRIVE.open(page)
-    say(f"[{label}] the space holds {page.evaluate(SEED, [NOTE])}")
+    say(f"[{label}] the space holds {page.evaluate(SEED, [note])}")
 
     page.evaluate(
         """async () => {
@@ -301,6 +317,77 @@ def drive_drag(browser: Browser) -> None:
 
     page.context.close()
 
+DROP_LINE = """
+() => {
+  const line = document.querySelector('.cm-line.orden-block-over, .cm-line.orden-block-under')
+  if (!line) return null
+  const box = line.getBoundingClientRect()
+  const under = line.classList.contains('orden-block-under')
+  return { text: line.textContent.trim(), under, y: Math.round(under ? box.bottom : box.top) }
+}
+"""
+
+def carry_to(page: Page, words: str, x: float, y: float, label: str):
+    line_of(page, words).hover()
+    page.wait_for_timeout(300)
+    mark = line_of(page, words).locator(".orden-block-handle").bounding_box()
+    if not mark:
+        raise SystemExit("nothing to drag")
+    page.mouse.move(mark["x"] + mark["width"] / 2, mark["y"] + mark["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(x, y, steps=12)
+    page.wait_for_timeout(200)
+    drawn = page.evaluate(DROP_LINE)
+    shot(page, f"32-drop-line-{label}")
+    page.mouse.up()
+    page.wait_for_timeout(500)
+    return drawn
+
+def drive_drop_line(browser: Browser) -> None:
+    cases = [
+        ("end", "payrexx import", "abacus zahlungsmethode", 0.75, "abacus zahlungsmethode", True),
+        ("below", "payrexx import", None, 0, "abacus zahlungsmethode", True),
+        ("gap", "payrexx import", "quaestur:", -0.6, "quaestur:", False),
+        ("top", "abacus zahlungsmethode", "cleanes konto", 0.2, "cleanes konto", False),
+        ("middle", "abacus zahlungsmethode", "clean up the repo", 0.75, "payrexx import", False),
+    ]
+    for label, words, onto, part, edge, under in cases:
+        page = fresh(browser, f"drop {label}", note=LIST)
+        content = page.locator(".cm-content").bounding_box()
+        if onto:
+            box = line_of(page, onto).bounding_box()
+            y = box["y"] + box["height"] * part
+            x = box["x"] + 40
+        else:
+            last = page.locator(".cm-line").last.bounding_box()
+            y = last["y"] + last["height"] + 120
+            x = content["x"] + 40
+        drawn = carry_to(page, words, x, y, label)
+        text = source(page)
+        rows = [one for one in text.split("\n") if one.strip()]
+        row = lambda words: next(at for at, one in enumerate(rows) if words in one)
+        say(f"[drop {label}] the line: {json.dumps(drawn, ensure_ascii=False)}")
+        if not drawn:
+            wrong(f"[drop {label}] no line shows where the block would land")
+            page.context.close()
+            continue
+        if edge not in drawn["text"]:
+            wrong(f"[drop {label}] the line is on {drawn['text']!r}, not on {edge!r}")
+        if drawn["under"] != under:
+            wrong(f"[drop {label}] the line is {'under' if drawn['under'] else 'over'} its line")
+        if label in ("end", "below"):
+            if words not in rows[-1]:
+                wrong(f"[drop {label}] the block did not land last: {rows[-3:]}")
+            if "abacus" not in rows[-2]:
+                wrong(f"[drop {label}] the block did not land right under the last one: {rows[-3:]}")
+        if label == "gap" and row("quaestur:") != row(words) + 1:
+            wrong(f"[drop {label}] the block did not land in the gap: {rows[:4]}")
+        if label == "top" and words not in rows[1]:
+            wrong(f"[drop {label}] the block did not land at the top: {rows[:3]}")
+        if label == "middle" and row(words) != row("clean up the repo") + 1:
+            wrong(f"[drop {label}] the block did not land under the middle one: {rows}")
+        page.context.close()
+
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
 
@@ -315,10 +402,140 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
+KINDS = """# A note to reach
+
+A paragraph to reach.
+
+- a bullet to reach
+
+- [ ] a task to reach
+
+> a quote to reach
+
+1. a number to reach
+
+שורה בעברית לנסות
+"""
+
+ON_THE_WAY = """
+([words, x, y]) => {
+  const line = [...document.querySelectorAll('.cm-line')].find((one) => one.textContent.includes(words))
+  const mark = line?.querySelector('.orden-block-handle')
+  const under = document.elementFromPoint(x, y)
+  return {
+    line: !!under && line?.contains(under),
+    shown: mark ? Number(getComputedStyle(mark).opacity) : 0,
+    grip: !!under && !!mark?.contains(under),
+  }
+}
+"""
+
+def drive_gap(browser: Browser) -> None:
+    lines = ["A note to reach", "A paragraph to reach", "a bullet to reach", "a task to reach",
+             "a quote to reach", "a number to reach", "שורה בעברית"]
+    for width in (1180, 480):
+        page = fresh(browser, f"gap {width}", width=width, note=KINDS)
+        for words in lines:
+            line = line_of(page, words)
+            mark = line.locator(".orden-block-handle")
+            text = page.evaluate(
+                """(words) => {
+                  const line = [...document.querySelectorAll('.cm-line')].find((one) => one.textContent.includes(words))
+                  const range = document.createRange()
+                  range.selectNodeContents(line)
+                  const rects = [...range.getClientRects()].filter((one) => one.width > 0)
+                  const box = rects[0] ?? line.getBoundingClientRect()
+                  const rtl = getComputedStyle(line).direction === 'rtl'
+                  return { x: rtl ? box.right - 4 : box.left + 4, y: box.top + box.height / 2 }
+                }""",
+                words,
+            )
+            page.mouse.move(text["x"], text["y"])
+            page.wait_for_timeout(300)
+            grip = mark.bounding_box()
+            if not grip:
+                wrong(f"[gap {width}] {words!r} drew no mark")
+                continue
+            goal = {"x": grip["x"] + grip["width"] / 2, "y": grip["y"] + grip["height"] / 2}
+            lost = []
+            for step in range(1, 13):
+                x = text["x"] + (goal["x"] - text["x"]) * step / 12
+                y = text["y"] + (goal["y"] - text["y"]) * step / 12
+                page.mouse.move(x, y)
+                page.wait_for_timeout(40)
+                seen = page.evaluate(ON_THE_WAY, [words, x, y])
+                if not seen["line"] or seen["shown"] < 0.99:
+                    lost.append(step)
+                if step == 6:
+                    page.wait_for_timeout(700)
+                    rested = page.evaluate(ON_THE_WAY, [words, x, y])
+                    if rested["shown"] < 0.99:
+                        wrong(f"[gap {width}] resting between {words!r} and its mark hides the mark")
+            seen = page.evaluate(ON_THE_WAY, [words, goal["x"], goal["y"]])
+            say(f"[gap {width}] {words!r}: lost on steps {lost}, grabbable {seen['grip']}")
+            if lost:
+                wrong(f"[gap {width}] the mark of {words!r} went away on the way to it: steps {lost}")
+            if not seen["grip"] or seen["shown"] < 0.99:
+                wrong(f"[gap {width}] the mark of {words!r} is not there to take hold of")
+            if words == "a task to reach":
+                page.mouse.move(goal["x"] + (text["x"] - goal["x"]) / 2, goal["y"])
+                page.wait_for_timeout(200)
+                shot(page, f"05-between-task-and-mark-{width}")
+        page.mouse.move(goal["x"], goal["y"])
+        page.mouse.down()
+        top = line_of(page, "A note to reach").bounding_box()
+        page.mouse.move(top["x"] + 40, top["y"] + 2, steps=12)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        if not source(page).startswith("שורה בעברית"):
+            wrong(f"[gap {width}] the line reached through the gap could not be carried: {source(page)[:40]!r}")
+        page.context.close()
+
+LAST_LINE = """() => {
+  const line = [...document.querySelectorAll('.cm-line')].at(-1)
+  return { text: line.textContent, heading: /orden-h\\d/.test(line.className), bullet: !!line.querySelector('.orden-bullet') }
+}"""
+
+def drive_lone_mark(browser: Browser) -> None:
+    page = fresh(browser, "lone mark")
+    page.evaluate("() => { if (!window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
+    page.evaluate(
+        "() => { const view = window.orden; const end = view.state.doc.length;"
+        " view.dispatch({ selection: { anchor: end } }); view.focus() }"
+    )
+    page.keyboard.press("Enter")
+    page.keyboard.press("Enter")
+    for mark, kind in (("#", "heading"), ("-", "bullet")):
+        page.keyboard.type(mark)
+        page.wait_for_timeout(300)
+        alone = page.evaluate(LAST_LINE)
+        shot(page, f"50-lone-{kind}-mark")
+        say(f"[lone {mark}] {json.dumps(alone, ensure_ascii=False)}")
+        if alone[kind] or alone["text"] != mark:
+            wrong(f"[lone {mark}] a mark with no space after it is drawn as a {kind}: {alone}")
+        page.keyboard.type(" Title")
+        page.wait_for_timeout(300)
+        spaced = page.evaluate(LAST_LINE)
+        shot(page, f"51-spaced-{kind}-mark")
+        say(f"[spaced {mark}] {json.dumps(spaced, ensure_ascii=False)}")
+        if not spaced[kind]:
+            wrong(f"[spaced {mark}] a mark with a space after it is not drawn as a {kind}: {spaced}")
+        page.evaluate(
+            "() => { const view = window.orden; const line = view.state.doc.line(view.state.doc.lines);"
+            " view.dispatch({ changes: { from: line.from, to: line.to }, selection: { anchor: line.from } }) }"
+        )
+        page.wait_for_timeout(200)
+    page.evaluate("() => { if (window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
+    page.context.close()
+
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the mark ---")
         drive_marks(browser)
+        say("--- a lone heading or list mark ---")
+        drive_lone_mark(browser)
+        say("--- the gap before a line ---")
+        drive_gap(browser)
         say("--- a narrow window ---")
         drive_narrow(browser)
         say("--- what it opens ---")
@@ -327,6 +544,8 @@ def main() -> int:
         drive_selection(browser)
         say("--- dragging one ---")
         drive_drag(browser)
+        say("--- where it would land ---")
+        drive_drop_line(browser)
         say("--- a finger ---")
         drive_finger(browser)
 

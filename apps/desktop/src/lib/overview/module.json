@@ -1,0 +1,25 @@
+{
+  "name": "overview",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "camera",
+    "graph",
+    "platform",
+    "protect",
+    "sharing",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "reading",
+    "shortcuts",
+    "link-index",
+    "panes",
+    "tab-kinds",
+    "documents",
+    "workspace",
+    "held-database",
+    "surfaces",
+    "marks"
+  ]
+}

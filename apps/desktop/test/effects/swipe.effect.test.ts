@@ -1,10 +1,11 @@
+import { providePort, webPages } from '@orden/contracts'
 import { flushSync } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import recorded from './swipe-replays.json'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   isMobile: false,
@@ -16,7 +17,7 @@ const note = { id: 'n1', kind: 'note', paneId: 'p1', canGoBack: true, canGoForwa
 const site = { id: 'w1', kind: 'web', paneId: 'p2', canGoBack: false, canGoForward: false }
 const shownIn = new SvelteMap<string, unknown>()
 
-vi.mock('../../src/lib/workspace.svelte', () => ({
+vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     tabs: [note, site],
     showing: (pane: string) => shownIn.get(pane) ?? null,
@@ -28,10 +29,6 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../../src/lib/web-tab/pages.svelte', () => ({
-  pages: { of: () => ({ back: true, forward: false, zoom: 2 }) },
-}))
-
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const strip = this.classList.contains('head')
   const rect = { x: 0, y: 0, width: 800, height: strip ? 40 : 600 }
@@ -39,11 +36,28 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
 }
 
 const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } =
-  await import('../../src/lib/back-swipe/swipes')
-const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/gesture')
-const { swipeChoice } = await import('../../src/lib/back-swipe/choice.svelte')
-const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
-const { overlays } = await import('../../src/lib/overlays')
+  await import('../../src/lib/back-swipe/src/swipes')
+const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/src/gesture')
+const { swipeChoice } = await import('../../src/lib/back-swipe/src/choice.svelte')
+const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
+
+const PAGE = {
+  url: null,
+  title: '',
+  kept: null,
+  back: true,
+  forward: false,
+  zoom: 2,
+  shot: null,
+  loading: false,
+  icon: null,
+  live: false,
+  shown: false,
+  playing: false,
+  muted: false,
+}
+providePort('web.pages', { ...webPages(), of: () => PAGE })
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 
 let stop: () => void
 let words: HTMLElement
@@ -325,7 +339,7 @@ test('a finger from the side of the pane goes back when it lifts far enough alon
 })
 
 test('over a web page the arrow comes in over the page s picture, and is a layer of its own', async () => {
-  const { layersOver } = await import('../../src/lib/web-tab/covers')
+  const { layersOver } = await import('../../src/lib/web-tab/src/covers')
   const hole = found('.hole')
   expect(layersOver(hole)).toEqual([])
 

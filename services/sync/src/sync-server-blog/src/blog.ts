@@ -32,10 +32,6 @@ import {
   mayGuess,
   maySendAnswer,
   mayTakeAnswer,
-  noteKey,
-  noteKind,
-  keepAnswer,
-  readSpaceFiles,
   publishes,
   readSite,
   SVG_POLICY,
@@ -50,6 +46,7 @@ import {
   type Note,
   type Space,
 } from '../../sync-server/src/api'
+import { noteKey, noteKind, keepAnswer, readSpaceFiles } from '../../sync-server-engine/src/api'
 import '@orden/markdown/eager'
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@orden/markdown/links'
 import { blogFence } from './code'

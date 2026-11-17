@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { held, latched } from '../../src/lib/surfaces.svelte'
+import { held, latched } from '../../src/lib/ui-kit/src/api'
 import { reactive, root, watch } from './runes.svelte'
 
 function flakyImport<T>(component: T, failures: number) {

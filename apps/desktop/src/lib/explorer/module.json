@@ -1,0 +1,23 @@
+{
+  "name": "explorer",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "markdown",
+    "platform",
+    "shortcuts",
+    "ui-controls",
+    "ui-kit",
+    "file-undo",
+    "documents",
+    "tree",
+    "agent-protocol",
+    "agent-verbs",
+    "automation",
+    "workspace",
+    "files-out",
+    "gates",
+    "accounts",
+    "marks"
+  ]
+}

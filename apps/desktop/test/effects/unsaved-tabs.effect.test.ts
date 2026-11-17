@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const written: { path: string; content: string }[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -45,10 +45,10 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { overlays } = await import('../../src/lib/overlays')
-const { askPlace } = await import('../../src/lib/save-place/ask')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
+const { askPlace } = await import('../../src/lib/save-place/src/ask')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 
 let target: HTMLElement
 let app: ReturnType<typeof mount> | null = null

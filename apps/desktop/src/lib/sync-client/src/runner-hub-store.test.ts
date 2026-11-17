@@ -143,10 +143,10 @@ const settle = (ms = 50) => new Promise((done) => setTimeout(done, ms))
 async function aWindow() {
   vi.resetModules()
   await import('../../sync-ports')
-  const { workspace } = await import('../../workspace.svelte')
+  const { workspace } = await import('../../workspace/src/api')
   Object.assign(workspace, { spaces: [{ root: '/Notes', name: 'Notes' }] })
   const { runner } = await import('./runner.svelte')
-  const { account } = await import('../../account.svelte')
+  const { account } = await import('../../accounts/src/account.svelte')
   return { runner, account }
 }
 type Window = Awaited<ReturnType<typeof aWindow>>
@@ -159,8 +159,8 @@ function signIn(one: Window) {
 
 const wrong = () => crate.log.filter((line) => line.startsWith('WRONG'))
 
-vi.mock('../../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
 }))
 vi.mock('./watching', () => ({
@@ -171,8 +171,8 @@ vi.mock('./watching', () => ({
   }),
 }))
 
-vi.mock('../../backoff', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../backoff')>()),
+vi.mock('../../platform/src/backoff', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/backoff')>()),
   pollDelay: () => 400,
 }))
 

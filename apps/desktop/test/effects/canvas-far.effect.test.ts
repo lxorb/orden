@@ -2,8 +2,8 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
 const made: string[] = []
-vi.mock('../../src/lib/canvas/render', async (actual) => {
-  const real = await actual<typeof import('../../src/lib/canvas/render')>()
+vi.mock('../../src/lib/plane/src/render', async (actual) => {
+  const real = await actual<typeof import('../../src/lib/plane/src/render')>()
   return {
     ...real,
     cardHtml: (...args: Parameters<typeof real.cardHtml>) => {
@@ -13,9 +13,9 @@ vi.mock('../../src/lib/canvas/render', async (actual) => {
   }
 })
 
-const Canvas = (await import('../../src/lib/Canvas.svelte')).default
-const { emptyCanvas, writeCanvas } = await import('../../src/lib/canvas/format')
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+const Canvas = (await import('../../src/lib/canvas/src/Canvas.svelte')).default
+const { emptyCanvas, writeCanvas } = await import('@orden/markdown/canvas')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 
 let close: (() => void) | undefined
 
@@ -114,4 +114,25 @@ test('near, draws them as cards, and an undo makes none of them again', () => {
   const after = cards()
   expect(after).toHaveLength(6)
   for (const [at, card] of after.entries()) expect(card).toBe(before[at])
+})
+
+test('zoomed far out, a board of a few cards still shows their words, not boxes', () => {
+  const { target, host } = opened(6)
+  for (let step = 0; step < 16; step += 1) {
+    host.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '-',
+        code: 'Minus',
+        ctrlKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    flushSync()
+  }
+
+  expect(target.querySelector('canvas[data-far]')).toBeNull()
+  expect(target.querySelectorAll('.node')).toHaveLength(6)
+  expect(target.querySelector('.node')?.textContent).toContain('card')
 })

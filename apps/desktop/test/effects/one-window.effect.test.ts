@@ -3,8 +3,8 @@ import { afterAll, beforeEach, expect, test, vi } from 'vitest'
 const SITE = '/space/Site.url'
 const MAIL = '/space/Mail.url'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) =>
@@ -15,13 +15,15 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     ),
 }))
 
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { heldElsewhere } = await import('../../src/lib/web-tab/one-window.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+await import('../../src/lib/workspace-ports')
+const { heldElsewhere } = await import('../../src/lib/web-tab/src/one-window.svelte')
 
 const other = new BroadcastChannel('orden:web-notes')
 const heard: Record<string, unknown>[] = []

@@ -1,0 +1,5 @@
+{
+  "name": "context-menu",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "ui-controls", "ui-kit", "usage", "shortcuts"]
+}

@@ -3,25 +3,26 @@ import { flushSync, mount, unmount } from 'svelte'
 
 const file = { text: '' }
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   invoke: (command: string) => Promise.resolve(command === 'read_note' ? file.text : undefined),
 }))
 
 const heard = new Map<string, (event: { payload: unknown }) => void>()
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: (name: string, handler: (event: { payload: unknown }) => void) => {
     heard.set(name, handler)
     return Promise.resolve(() => undefined)
   },
 }))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { writeShortcut } = await import('@orden/scan/shortcut')
-const FileMark = (await import('../../src/lib/FileMark.svelte')).default
+const { FileMark } = await import('../../src/lib/marks/src/api')
 
 const picture = (one: string) =>
   `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QD${one}ADhgGAWjR9awAAAABJRU5ErkJggg==`

@@ -327,7 +327,7 @@ export async function openSyncStore(
     const { openNative } = await import('./native-sync-store')
     return openNative(account, leads, device)
   }
-  const { openWeb } = await import('../../web/sync-store')
+  const { openWeb } = await import('./browser-store')
   return openWeb(account, device)
 }
 
@@ -336,7 +336,7 @@ export async function deviceOfSyncStore(account: string): Promise<string | null>
     const { deviceNative } = await import('./native-sync-store')
     return deviceNative(account)
   }
-  const { deviceWeb } = await import('../../web/sync-store')
+  const { deviceWeb } = await import('./browser-store')
   return deviceWeb(account)
 }
 
@@ -345,7 +345,7 @@ export async function forgetSyncStore(account: string): Promise<void> {
     const { forgetNative } = await import('./native-sync-store')
     return forgetNative(account)
   }
-  const { forgetWeb } = await import('../../web/sync-store')
+  const { forgetWeb } = await import('./browser-store')
   return forgetWeb(account)
 }
 

@@ -1,13 +1,10 @@
 use serde::Deserialize;
-#[cfg(any(windows, feature = "cef"))]
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::webview::PageLoadEvent;
-#[cfg(not(feature = "cef"))]
-use tauri::webview::PlatformWebview;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::clock;
@@ -19,10 +16,6 @@ const PATIENCE: Duration = Duration::from_secs(45);
 
 static PRINTS: AtomicU32 = AtomicU32::new(0);
 
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(dead_code)
-)]
 #[derive(Clone, Deserialize)]
 pub struct PdfPage {
     pub width: f64,
@@ -31,9 +24,6 @@ pub struct PdfPage {
     pub landscape: bool,
 }
 
-#[cfg(not(feature = "cef"))]
-type Printable = PlatformWebview;
-#[cfg(feature = "cef")]
 type Printable = tauri::WebviewWindow<crate::Engine>;
 
 #[tauri::command]
@@ -41,7 +31,6 @@ pub fn pdf_supported() -> bool {
     printer::available()
 }
 
-#[cfg(any(windows, feature = "cef"))]
 pub(crate) fn printing(paper: &PdfPage) -> Value {
     let margin = paper.margin.max(0.0);
     json!({
@@ -59,10 +48,10 @@ pub(crate) fn printing(paper: &PdfPage) -> Value {
     })
 }
 
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(test)]
 const POINTS_PER_INCH: f64 = 72.0;
 
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(test)]
 fn sheet_in_points(page: &PdfPage) -> (f64, f64, f64) {
     let (width, height) = if page.landscape && page.width < page.height {
         (page.height, page.width)
@@ -77,7 +66,7 @@ fn sheet_in_points(page: &PdfPage) -> (f64, f64, f64) {
     )
 }
 
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(test)]
 fn on_its_side(width: f64, height: f64) -> bool {
     width > height
 }
@@ -112,18 +101,12 @@ pub async fn print_pdf(app: AppHandle, request: tauri::ipc::Request<'_>) -> Resu
     })
 }
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-const DIALOG_PATIENCE: Duration = Duration::from_secs(60 * 60);
-
 const TOO_LONG: &str = "the print took too long";
 
 #[tauri::command]
-#[cfg_attr(
-    not(all(target_os = "macos", not(feature = "cef"))),
-    allow(
-        clippy::unused_async,
-        reason = "one signature for every platform; only a Mac has a dialog to wait for"
-    )
+#[allow(
+    clippy::unused_async,
+    reason = "one signature for every platform; only a Mac has a dialog to wait for"
 )]
 pub async fn print_page(
     webview: tauri::Webview,
@@ -131,19 +114,6 @@ pub async fn print_page(
 ) -> Result<(), String> {
     let (html, page) = printed(&request)?;
 
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    {
-        use tauri::Manager as _;
-
-        let app = webview.app_handle().clone();
-        let parent = webview.window();
-        in_hidden_window(&app, html, DIALOG_PATIENCE, move |view, done| {
-            printer::dialog(view, &parent, page.as_ref(), done)
-        })
-        .await
-    }
-
-    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
     {
         let _ = (webview, html, page);
         Err("the print dialog here is the page's own".into())
@@ -192,10 +162,6 @@ where
     let building =
         WebviewWindowBuilder::new(app, format!("print-{job}"), WebviewUrl::External(url));
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    let building = building.additional_browser_args(&crate::engine::browser_args(app));
-
-    #[cfg(feature = "cef")]
     let building = crate::engine::own_profile(building);
 
     let window = building
@@ -218,22 +184,8 @@ where
 
                 let failed = done.clone();
 
-                #[cfg(feature = "cef")]
                 if let Err(error) = print(&window, done) {
                     let _ = failed.send(Err(error));
-                }
-
-                #[cfg(not(feature = "cef"))]
-                {
-                    let asked = window.with_webview(move |webview| {
-                        if let Err(error) = print(&webview, done) {
-                            let _ = failed.send(Err(error));
-                        }
-                    });
-
-                    if let Err(error) = asked {
-                        give_up(&window, &error.to_string());
-                    }
                 }
             });
         })
@@ -338,343 +290,6 @@ fn written_alone(path: &std::path::Path, html: &str) -> std::io::Result<()> {
     opening.open(path)?.write_all(html.as_bytes())
 }
 
-#[cfg(not(feature = "cef"))]
-fn give_up(window: &tauri::WebviewWindow, error: &str) {
-    eprintln!("print_pdf: {error}");
-    let _ = window.destroy();
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-mod printer {
-    use super::PdfPage;
-    use std::sync::mpsc::Sender;
-    use tauri::webview::PlatformWebview;
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2Environment6, ICoreWebView2_7, COREWEBVIEW2_PRINT_ORIENTATION_LANDSCAPE,
-        COREWEBVIEW2_PRINT_ORIENTATION_PORTRAIT,
-    };
-    use webview2_com::PrintToPdfCompletedHandler;
-    use windows_core::{Interface, HSTRING};
-
-    pub fn available() -> bool {
-        true
-    }
-
-    fn describe(error: windows_core::Error) -> String {
-        error.to_string()
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "WebView2's print engine is reached through its COM interfaces"
-    )]
-    pub fn print(
-        webview: &PlatformWebview,
-        output: &str,
-        page: &PdfPage,
-        done: Sender<Result<(), String>>,
-    ) -> Result<(), String> {
-        unsafe {
-            let controller = webview.controller();
-            controller.SetIsVisible(true).map_err(describe)?;
-
-            let core = controller.CoreWebView2().map_err(describe)?;
-            let printer: ICoreWebView2_7 = core.cast().map_err(describe)?;
-            let environment: ICoreWebView2Environment6 =
-                webview.environment().cast().map_err(describe)?;
-
-            let settings = environment.CreatePrintSettings().map_err(describe)?;
-            settings
-                .SetOrientation(if page.landscape {
-                    COREWEBVIEW2_PRINT_ORIENTATION_LANDSCAPE
-                } else {
-                    COREWEBVIEW2_PRINT_ORIENTATION_PORTRAIT
-                })
-                .map_err(describe)?;
-            settings.SetPageWidth(page.width).map_err(describe)?;
-            settings.SetPageHeight(page.height).map_err(describe)?;
-            settings.SetMarginTop(page.margin).map_err(describe)?;
-            settings.SetMarginBottom(page.margin).map_err(describe)?;
-            settings.SetMarginLeft(page.margin).map_err(describe)?;
-            settings.SetMarginRight(page.margin).map_err(describe)?;
-            settings.SetScaleFactor(1.0).map_err(describe)?;
-            settings.SetShouldPrintBackgrounds(true).map_err(describe)?;
-            settings
-                .SetShouldPrintHeaderAndFooter(false)
-                .map_err(describe)?;
-
-            let target = HSTRING::from(output);
-            let handler = PrintToPdfCompletedHandler::create(Box::new(move |result, written| {
-                let _ = done.send(match result {
-                    Err(error) => Err(error.to_string()),
-                    Ok(()) if !written => Err("the PDF could not be written".into()),
-                    Ok(()) => Ok(()),
-                });
-                Ok(())
-            }));
-
-            printer
-                .PrintToPdf(&target, &settings, &handler)
-                .map_err(describe)
-        }
-    }
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod printer {
-    use super::{on_its_side, sheet_in_points, PdfPage};
-    use std::cell::{Cell, RefCell};
-    use std::ffi::c_void;
-    use std::sync::mpsc::Sender;
-
-    use objc2::rc::Retained;
-    use objc2::runtime::{AnyObject, NSObject};
-    use objc2::{define_class, msg_send, sel, ClassType, DefinedClass, MainThreadOnly};
-    use objc2_app_kit::{
-        NSPaperOrientation, NSPrintHeaderAndFooter, NSPrintInfo, NSPrintJobSavingURL,
-        NSPrintOperation, NSPrintSaveJob, NSPrintingPaginationMode, NSWindow,
-    };
-    use objc2_foundation::{
-        MainThreadMarker, NSCopying as _, NSNumber, NSObjectProtocol, NSSize, NSString, NSURL,
-    };
-    use objc2_web_kit::WKWebView;
-    use tauri::webview::PlatformWebview;
-
-    pub fn available() -> bool {
-        WKWebView::class().responds_to(sel!(printOperationWithPrintInfo:))
-    }
-
-    struct Waiting {
-        output: Option<String>,
-        done: Cell<Option<Sender<Result<(), String>>>>,
-    }
-
-    define_class!(
-        #[unsafe(super(NSObject))]
-        #[thread_kind = MainThreadOnly]
-        #[name = "OrdenPdfPrinted"]
-        #[ivars = Waiting]
-        struct Printed;
-
-        impl Printed {
-            #[unsafe(method(printOperationDidRun:success:contextInfo:))]
-            fn did_run(
-                &self,
-                _operation: &NSPrintOperation,
-                success: bool,
-                _context: *mut c_void,
-            ) {
-                let Some(done) = self.ivars().done.take() else {
-                    return;
-                };
-
-                let _ = done.send(match &self.ivars().output {
-                    Some(output) if !(success && std::path::Path::new(output).is_file()) => {
-                        Err("the PDF could not be written".into())
-                    }
-                    _ => Ok(()),
-                });
-            }
-        }
-    );
-
-    impl Printed {
-        #[allow(
-            unsafe_code,
-            reason = "an Objective-C object is initialised through its superclass"
-        )]
-        fn new(
-            mtm: MainThreadMarker,
-            output: Option<&str>,
-            done: Sender<Result<(), String>>,
-        ) -> Retained<Self> {
-            let this = Self::alloc(mtm).set_ivars(Waiting {
-                output: output.map(str::to_owned),
-                done: Cell::new(Some(done)),
-            });
-            unsafe { msg_send![super(this), init] }
-        }
-
-        fn answered(&self) -> bool {
-            let done = self.ivars().done.take();
-            let answered = done.is_none();
-            self.ivars().done.set(done);
-            answered
-        }
-    }
-
-    thread_local! {
-        static PRINTING: RefCell<Vec<Retained<Printed>>> = const { RefCell::new(Vec::new()) };
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "wry hands the webview and its window out as bare Objective-C pointers"
-    )]
-    fn held(
-        webview: &PlatformWebview,
-    ) -> Result<(Retained<WKWebView>, Retained<NSWindow>), String> {
-        let (view, window) = unsafe {
-            (
-                Retained::retain(webview.inner().cast::<WKWebView>()),
-                Retained::retain(webview.ns_window().cast::<NSWindow>()),
-            )
-        };
-        view.zip(window)
-            .ok_or_else(|| "there was no page to print".into())
-    }
-
-    fn lay_out(info: &NSPrintInfo, page: &PdfPage) {
-        let (width, height, margin) = sheet_in_points(page);
-
-        info.setOrientation(if on_its_side(width, height) {
-            NSPaperOrientation::Landscape
-        } else {
-            NSPaperOrientation::Portrait
-        });
-        info.setPaperSize(NSSize::new(width, height));
-        info.setTopMargin(margin);
-        info.setBottomMargin(margin);
-        info.setLeftMargin(margin);
-        info.setRightMargin(margin);
-        info.setScalingFactor(1.0);
-        info.setHorizontallyCentered(false);
-        info.setVerticallyCentered(false);
-        info.setHorizontalPagination(NSPrintingPaginationMode::Automatic);
-        info.setVerticalPagination(NSPrintingPaginationMode::Automatic);
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "WKWebView's print operation is reached through the Objective-C runtime"
-    )]
-    fn operation(view: &WKWebView, info: &NSPrintInfo) -> Retained<NSPrintOperation> {
-        let operation = unsafe {
-            info.dictionary().insert(
-                NSPrintHeaderAndFooter,
-                NSNumber::new_bool(false).as_ref() as &AnyObject,
-            );
-
-            let preferences = view.configuration().preferences();
-            if preferences.respondsToSelector(sel!(setShouldPrintBackgrounds:)) {
-                preferences.setShouldPrintBackgrounds(true);
-            }
-
-            view.printOperationWithPrintInfo(info)
-        };
-
-        if let Some(printing) = operation.view() {
-            printing.setFrame(view.frame());
-        }
-        operation
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a modal print reports back through an Objective-C selector"
-    )]
-    fn run(
-        operation: &NSPrintOperation,
-        window: &NSWindow,
-        output: Option<&str>,
-        done: Sender<Result<(), String>>,
-    ) -> Result<(), String> {
-        let mtm =
-            MainThreadMarker::new().ok_or("the print was not asked for on the main thread")?;
-
-        let printed = Printed::new(mtm, output, done);
-        PRINTING.with_borrow_mut(|held| {
-            held.retain(|one| !one.answered());
-            held.push(printed.clone());
-        });
-
-        unsafe {
-            operation.runOperationModalForWindow_delegate_didRunSelector_contextInfo(
-                window,
-                Some(printed.as_ref() as &AnyObject),
-                Some(sel!(printOperationDidRun:success:contextInfo:)),
-                std::ptr::null_mut(),
-            );
-        }
-        Ok(())
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a print info's save settings are an Objective-C dictionary"
-    )]
-    pub fn print(
-        webview: &PlatformWebview,
-        output: &str,
-        page: &PdfPage,
-        done: Sender<Result<(), String>>,
-    ) -> Result<(), String> {
-        let (view, window) = held(webview)?;
-
-        let info = NSPrintInfo::new();
-        lay_out(&info, page);
-
-        unsafe {
-            info.setJobDisposition(NSPrintSaveJob);
-            let target = NSURL::fileURLWithPath(&NSString::from_str(output));
-            info.dictionary()
-                .insert(NSPrintJobSavingURL, target.as_ref() as &AnyObject);
-        }
-
-        let operation = operation(&view, &info);
-        operation.setShowsPrintPanel(false);
-        operation.setShowsProgressPanel(false);
-
-        run(&operation, &window, Some(output), done)
-    }
-
-    pub fn dialog(
-        webview: &PlatformWebview,
-        parent: &tauri::Window,
-        page: Option<&PdfPage>,
-        done: Sender<Result<(), String>>,
-    ) -> Result<(), String> {
-        let (view, _) = held(webview)?;
-        let parent = parent
-            .ns_window()
-            .ok()
-            .and_then(|pointer| {
-                #[allow(unsafe_code, reason = "tauri hands a window out as a bare pointer")]
-                unsafe {
-                    Retained::retain(pointer.cast::<NSWindow>())
-                }
-            })
-            .ok_or("there is no window to show the print dialog on")?;
-
-        let info = NSPrintInfo::sharedPrintInfo().copy();
-        if let Some(page) = page {
-            lay_out(&info, page);
-        }
-
-        let operation = operation(&view, &info);
-        operation.setShowsPrintPanel(true);
-        operation.setShowsProgressPanel(true);
-
-        run(&operation, &parent, None, done)
-    }
-
-    pub fn sheet(webview: &PlatformWebview) -> Result<(), String> {
-        let (view, window) = held(webview)?;
-        let operation = operation(&view, &NSPrintInfo::sharedPrintInfo().copy());
-        operation.setShowsPrintPanel(true);
-        operation.setShowsProgressPanel(true);
-
-        let (done, _) = std::sync::mpsc::channel();
-        run(&operation, &window, None, done)
-    }
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub(crate) fn print_sheet(webview: &PlatformWebview) -> Result<(), String> {
-    printer::sheet(webview)
-}
-
-#[cfg(feature = "cef")]
 mod printer {
     use super::{printing, PdfPage, Printable, Value, PATIENCE};
     use base64::Engine as _;
@@ -712,26 +327,6 @@ mod printer {
         crate::paths::write_atomically(Path::new(output), &bytes)?;
         let _ = done.send(Ok(()));
         Ok(())
-    }
-}
-
-#[cfg(all(not(any(windows, target_os = "macos")), not(feature = "cef")))]
-mod printer {
-    use super::PdfPage;
-    use std::sync::mpsc::Sender;
-    use tauri::webview::PlatformWebview;
-
-    pub fn available() -> bool {
-        false
-    }
-
-    pub fn print(
-        _webview: &PlatformWebview,
-        _output: &str,
-        _page: &PdfPage,
-        _done: Sender<Result<(), String>>,
-    ) -> Result<(), String> {
-        Err("printing to a file is not available here".into())
     }
 }
 
@@ -818,7 +413,6 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).expect("the file"), "words");
     }
 
-    #[cfg(feature = "cef")]
     #[test]
     fn chromium_writes_the_file_itself() {
         assert!(super::pdf_supported());

@@ -1,11 +1,12 @@
+import { tabKindLoaded } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 let front: string | null = null
 const asked: string[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => 'windows',
@@ -25,7 +26,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 const channels: { onmessage: ((message: unknown) => void) | null }[] = []
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
     constructor() {
@@ -145,15 +146,17 @@ Element.prototype.animate = () =>
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { readSpec, writeSpec } = await import('../../src/lib/terminal/spec')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { tabMenu } = await import('../../src/lib/tab-strip/menu')
-const { renameTerminal } = await import('../../src/lib/terminal/rename')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-await import('../../src/lib/tab-strip/TabNameField.svelte')
-await import('../../src/lib/terminal/TerminalMark.svelte')
-await import('../../src/lib/tab-strip/ops')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { tabMenu } = await import('../../src/lib/tab-strip/src/menu')
+const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
+await import('../../src/lib/tab-strip/src/TabNameField.svelte')
+await import('../../src/lib/terminal/src/TerminalMark.svelte')
+await import('../../src/lib/tab-strip/src/ops')
+await import('../../src/lib/features')
+await tabKindLoaded('terminal')
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

@@ -14,7 +14,7 @@ import {
   recoveryCost,
   recoveryHash,
   resealBorrowed,
-} from '../src/sync-server/src/second'
+} from '../src/sync-server-accounts/src/second'
 import { opened } from '../src/sync-server/src/ai-key'
 
 async function nightly(env: TestEnv): Promise<void> {
@@ -52,7 +52,7 @@ describe('what a recovery code costs to hash', () => {
   })
 
   test('and nothing a running Worker can reach says otherwise', async () => {
-    const module: Record<string, unknown> = await import('../src/sync-server/src/second')
+    const module: Record<string, unknown> = await import('../src/sync-server-accounts/src/second')
 
     expect(Object.keys(module)).not.toContain('costRecoveryLess')
     const setters = Object.entries(module).filter(

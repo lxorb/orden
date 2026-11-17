@@ -1,0 +1,78 @@
+<script lang="ts">
+  import { Cross } from '../../../ui-kit/src/api'
+  import { Hint } from '../../../ui-controls/src/api'
+
+  const {
+    words,
+    placeholder,
+    hint,
+    parse,
+    onadd,
+    onremove,
+  }: {
+    words: readonly string[]
+    placeholder: string
+    hint?: string
+    parse: (typed: string) => Promise<string | null>
+    onadd: (word: string) => void
+    onremove: (word: string) => void
+  } = $props()
+
+  let refused = $state(false)
+
+  async function add(field: HTMLInputElement) {
+    const typed = field.value
+    if (!typed.trim()) return
+
+    const word = await parse(typed)
+    refused = word === null
+    if (word === null) return
+
+    onadd(word)
+    field.value = ''
+  }
+</script>
+
+<div class="orden-setting words">
+  {#if words.length}
+    <div class="list">
+      {#each words as word (word)}
+        <button class="orden-tag" title="Remove" onclick={() => onremove(word)}>
+          {word}<Cross small />
+        </button>
+      {/each}
+    </div>
+  {/if}
+  <input
+    class="orden-field is-value add"
+    type="text"
+    {placeholder}
+    aria-label={placeholder}
+    aria-invalid={refused}
+    spellcheck="false"
+    autocapitalize="off"
+    autocomplete="off"
+    oninput={() => (refused = false)}
+    onchange={(event) => void add(event.currentTarget)}
+  />
+  {#if hint}<Hint text={hint} />{/if}
+</div>
+
+<style>
+  .words {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    padding-block: var(--space-1);
+  }
+
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .words > .add {
+    inline-size: auto;
+  }
+</style>

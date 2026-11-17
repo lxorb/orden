@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'vitest'
-import { keyboardStays, staysOn } from '../../src/lib/caret'
+import { keyboardStays, staysOn } from '../../src/lib/ui-kit/src/api'
 
 afterEach(() => document.body.replaceChildren())
 

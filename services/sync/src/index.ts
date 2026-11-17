@@ -3,16 +3,7 @@ import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import {
   SIGN_IN,
   SIGN_IN_TO_DO_THAT,
-  account,
-  left,
-  accountById,
-  auth,
-  presentUser,
-  requireWhoever,
-  sessions,
   readBody,
-  blobs,
-  publicBlobs,
   hostnameOf,
   spaceForHost,
   blogRootOf,
@@ -27,30 +18,37 @@ import {
   NAME_LIMIT,
   failed,
   programMayReach,
-  people,
-  ownProfile,
-  presentOwnProfile,
   push,
   sendDue,
-  fillFronts,
-  sweepLeftovers,
-  finishErasing,
-  forgetHalfDone,
-  resealBorrowed,
-  second,
-  sweepAnswers,
   sweepVersions,
   expireGuests,
   guestMayReach,
   presentGuest,
   renameGuest,
+  settings,
+  protectedRoutes,
+  usage,
+  themes,
+  QUOTA,
+  usedBytes,
+  steadyEnv,
+  SAID,
+  type Env,
+  type Variables,
+  type Whoever,
+} from './sync-server/src/api'
+import {
+  people,
+  ownProfile,
+  presentOwnProfile,
+  fillFronts,
+  sweepLeftovers,
+  finishErasing,
+  sweepAnswers,
   notes,
   rooms,
   devices,
   hubDoor,
-  siteIcons,
-  settings,
-  protectedRoutes,
   v2Docs,
   v2Spaces,
   sweepMisnamed,
@@ -60,28 +58,28 @@ import {
   sweepTreeOps,
   spaces,
   join,
-  crashes,
-  sweepCrashes,
-  usage,
-  feedback,
-  openWaitingIssues,
   recheckDomains,
   expireRequests,
   sharedWithMe,
-  themes,
   time,
   inbox,
   pad,
   purgeExpired,
   trash,
-  QUOTA,
-  usedBytes,
-  steadyEnv,
-  SAID,
-  type Env,
-  type Variables,
-  type Whoever,
-} from './sync-server/src/api'
+} from './sync-server-engine/src/api'
+import {
+  account,
+  addressUndo,
+  accountById,
+  auth,
+  forgetHalfDone,
+  left,
+  presentUser,
+  requireWhoever,
+  resealBorrowed,
+  second,
+  sessions,
+} from './sync-server-accounts/src/api'
 import { cors } from 'hono/cors'
 import {
   ask,
@@ -101,7 +99,9 @@ import {
   online,
   syncAdmin,
 } from './sync-server-machines/src/api'
+import { blobs, publicBlobs, siteIcons } from './sync-server-blobs/src/api'
 import { serveBlog } from './sync-server-blog/src/api'
+import { crashes, feedback, openWaitingIssues, sweepCrashes } from './sync-server-feedback/src/api'
 import {
   chatDoor,
   chats,
@@ -156,6 +156,7 @@ app.route('/v2/online/machine', machineBundle)
 app.route('/v1/join', join)
 
 app.route('/v1/account/left', left)
+app.route('/v1/account/undo', addressUndo)
 
 app.route('/v1/feedback', feedback)
 
@@ -403,7 +404,7 @@ function serve(request: Request, env: Env, context?: ExecutionContext) {
 
 export default { fetch: serve, scheduled }
 
-export { NoteRoom } from './sync-server/src/api'
-export { AccountHub } from './sync-server/src/api'
+export { NoteRoom } from './sync-server-engine/src/api'
+export { AccountHub } from './sync-server-engine/src/api'
 export { ChatLog } from './sync-server-chats/src/api'
 export { AppRelay } from './sync-server-machines/src/api'

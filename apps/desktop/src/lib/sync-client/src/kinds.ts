@@ -11,7 +11,7 @@ import {
   type Verdict,
 } from '@orden/sync-core'
 import * as Y from 'yjs'
-import { settleShortcuts } from '../../web-tab/settle'
+import { settleShortcuts } from '@orden/scan/settle'
 
 export type Shape = 'words' | 'plane' | 'link'
 

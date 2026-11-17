@@ -1,10 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import * as focusing from '../../src/lib/focus'
-import { said } from '../../src/lib/said.svelte'
-import UndoToast from '../../src/lib/UndoToast.svelte'
-import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { said } from '../../src/lib/ui-kit/src/api'
+import UndoToast from '../../src/lib/workspace/src/UndoToast.svelte'
+import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast/src/api'
+import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.animate = () =>
   ({
@@ -127,11 +126,17 @@ describe('from the keyboard', () => {
     flushSync()
     undo()?.focus()
     from.focus = () => undefined
-    const note = vi.spyOn(focusing, 'focusEditor').mockReturnValue(true)
+    const editor = document.body.appendChild(document.createElement('div'))
+    editor.dataset.region = 'editor'
+    const writing = editor.appendChild(document.createElement('div'))
+    writing.className = 'cm-content'
+    writing.tabIndex = 0
+    vi.spyOn(editor, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList)
 
     void unmount(shown)
     await Promise.resolve()
-    expect(note).toHaveBeenCalled()
+    expect(document.activeElement).toBe(writing)
+    editor.remove()
 
     shown = mount(UndoToast, { target: host })
     from.remove()

@@ -2,9 +2,10 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import '../../src/lib/theme-ports'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: (command: string) =>
@@ -55,12 +56,12 @@ window.matchMedia = (query: string) =>
     removeEventListener: () => undefined,
   }) as unknown as MediaQueryList
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { theme } = await import('../../src/lib/theme.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
-const { chrome } = await import('../../src/lib/glass/chrome.svelte')
-const { grounds } = await import('../../src/lib/glass/grounds.svelte')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { theme } = await import('../../src/lib/theme/src/theme.svelte')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+const { chrome } = await import('../../src/lib/theme/src/chrome.svelte')
+const { grounds } = await import('../../src/lib/theme-looks/src/glass/grounds.svelte')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 
 const BLACK = 'https://black.example/'
 const WHITE = 'https://white.example/'
@@ -201,7 +202,7 @@ test('the pair is the reader’s to choose, and with the frame not following it 
 })
 
 test('a tab on its way to an address never read keeps its colour, then changes once', async () => {
-  const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+  const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
   const tab = workspace.openPage(BLACK) ?? ''
   grounds.said(tab, BLACK, '#0f0f0f')
   workspace.activate(tab)
@@ -273,7 +274,7 @@ test('the next launch opens on the colour it was left on, before anything is wor
   chrome.sleep()
   vi.resetModules()
   localStorage.setItem('orden:glass-chrome', kept ?? '')
-  const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
+  const fresh = (await import('../../src/lib/theme/src/chrome.svelte')).chrome
   fresh.wake('light')
   expect(tint()).toBe('#0f0f0f')
   expect(fresh.theme).toBe('dark')
@@ -291,7 +292,7 @@ test('the next launch opens on the pair it was left on', async () => {
   expect(pair()).toBeNull()
   vi.resetModules()
   localStorage.setItem('orden:glass-chrome', kept ?? '')
-  const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
+  const fresh = (await import('../../src/lib/theme/src/chrome.svelte')).chrome
   fresh.wake('light')
   expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
   fresh.sleep()
@@ -302,7 +303,9 @@ test('the shell, the bar and the open tab ease the colour rather than jump to it
   expect(source('src/App.svelte')).toMatch(
     /background: var\(--shell-ground\);\s*transition: background var\(--dur-/,
   )
-  expect(source('src/lib/web-tab/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
-  expect(source('src/lib/Tabs.svelte')).toMatch(/transition:\s+--tab-ground var\(--dur-/)
+  expect(source('src/lib/web-tab/src/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
+  expect(source('src/lib/tab-strip/src/Tabs.svelte')).toMatch(
+    /transition:\s+--tab-ground var\(--dur-/,
+  )
   expect(source('../../packages/themes/src/glass.css')).toMatch(/@property --tab-ground/)
 })

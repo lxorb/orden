@@ -1,0 +1,63 @@
+<script lang="ts">
+  import { cubicOut } from 'svelte/easing'
+  import { closeOnBack, overlays } from '../../ui-kit/src/api'
+  import { fade, LAYER, region, scale } from '../../platform/src/api'
+  import { trap } from '../../ui-controls/src/api'
+  import { quickAdd } from './asked.svelte'
+  import type { Entry } from './entry'
+  import QuickAdd from './QuickAdd.svelte'
+  import { links } from '../../link-index/src/api'
+  import { dayOf, labelsOf, todos } from '../../tasks-model/src/api'
+  import { ai } from '../../ai-providers/src/api'
+  import { addTask } from './write'
+
+  const labels = $derived(labelsOf(todos.todos, { onlySpace: false, space: null, today: dayOf() }))
+
+  $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
+  $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))
+
+  async function added(entry: Entry, open: boolean): Promise<boolean> {
+    const went = (await addTask(entry, { open })) !== null
+    if (went && open) quickAdd.hide()
+    return went
+  }
+</script>
+
+{#if quickAdd.open}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div
+    class="orden-scrim scrim"
+    transition:fade={{ duration: LAYER.fade }}
+    onclick={() => quickAdd.hide()}
+  ></div>
+  <div
+    class="orden-screen sheet"
+    use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label="Add task"
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
+  >
+    <QuickAdd
+      langs={[region()]}
+      tags={[...new Set([...links.spaceTags.map((one) => one.tag), ...labels])]}
+      provider={ai.providerFor('ask')}
+      prefill={quickAdd.prefill}
+      smart={quickAdd.smart}
+      onsubmit={added}
+      onclose={() => quickAdd.hide()}
+    />
+  </div>
+{/if}
+
+<style>
+  .scrim {
+    --scrim-z: var(--z-screen);
+  }
+
+  .sheet {
+    --screen-width: var(--screen-list);
+
+    z-index: var(--z-screen);
+  }
+</style>

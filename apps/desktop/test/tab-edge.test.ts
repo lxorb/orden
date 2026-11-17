@@ -5,10 +5,16 @@ import { contrastCss } from '@orden/themes/contrast'
 import { glassCss } from '@orden/themes/glass'
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS } from '../src/lib/accents'
-import { frameFor, type Material, type Scheme, type Sides, spanUnder } from '../src/lib/glass/tint'
-import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/legibility'
-import { floorFor, paletteOf, sheetColour } from '../src/lib/wallpaper/floors'
+import { ACCENTS } from '../src/lib/theme/src/accents'
+import type { Scheme } from '@orden/contracts'
+import {
+  frameFor,
+  type Material,
+  type Sides,
+  spanUnder,
+} from '../src/lib/theme-looks/src/glass/tint'
+import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/ui-controls/src/legibility'
+import { floorFor, paletteOf, sheetColour } from '../src/lib/theme-looks/src/wallpaper/floors'
 
 const FLOOR = 1.5
 
@@ -16,7 +22,7 @@ const TOKENS = readFileSync(
   fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)),
   'utf8',
 )
-const TABS = readFileSync(join(import.meta.dirname, '../src/lib/Tabs.svelte'), 'utf8')
+const TABS = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
 
 const SCHEMES: Scheme[] = ['dark', 'light']
 
@@ -200,7 +206,10 @@ describe('the open tab', () => {
     expect(TABS).toContain('style:--lead="{lead}px"')
     expect(rule('.tabs.flush .tab.first .fill')).toMatch(/inset-inline-start: 0;/)
     expect(TABS).toMatch(/\.tabs\.flush \.tab\.first\.active \.fill::before \{\s+display: none;/)
-    const pane = readFileSync(join(import.meta.dirname, '../src/lib/Pane.svelte'), 'utf8')
+    const pane = readFileSync(
+      join(import.meta.dirname, '../src/lib/pane-tree/src/Pane.svelte'),
+      'utf8',
+    )
     expect(pane).toContain('class:straight={!stripped && flushFirst(pane.id)}')
     expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)
   })

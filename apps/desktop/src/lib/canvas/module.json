@@ -1,0 +1,28 @@
+{
+  "name": "canvas",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "camera",
+    "accounts",
+    "collab",
+    "editor",
+    "markdown",
+    "pdf",
+    "plane",
+    "platform",
+    "sharing",
+    "ui-controls",
+    "ui-kit",
+    "parting",
+    "shortcuts",
+    "windows",
+    "link-index",
+    "documents",
+    "workspace",
+    "modes",
+    "marks",
+    "link-format",
+    "panes"
+  ]
+}

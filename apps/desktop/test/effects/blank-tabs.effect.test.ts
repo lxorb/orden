@@ -1,17 +1,20 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
-vi.mock('../../src/lib/own-window', () => ({ hearHere: () => Promise.resolve(() => undefined) }))
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
+  hearHere: () => Promise.resolve(() => undefined),
+}))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { tabOverview } = await import('../../src/lib/surfaces.svelte')
-await import('../../src/lib/workspace/blank-tabs.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { tabOverview } = await import('../../src/lib/workspace/src/api')
+await import('../../src/lib/workspace/src/blank-tabs.svelte')
 
 const open = (id: string) => workspace.tabs.some((one) => one.id === id)
 

@@ -927,3 +927,22 @@ export function freshId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(ID_LENGTH / 2))
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
+
+let waiting: { text: string; canvas: Canvas } | null = null
+
+export function parseAhead(text: string): boolean {
+  const canvas = canvasIn(text)
+  waiting = canvas ? { text, canvas } : null
+  return canvas !== null
+}
+
+export function takeParsed(text: string): Canvas | null {
+  const held = waiting?.text === text ? waiting.canvas : null
+  if (held) waiting = null
+
+  return held
+}
+
+export function forgetParsed(): void {
+  waiting = null
+}

@@ -128,9 +128,6 @@ jobs:
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
-      - name: The launch hands the thread back
-        run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
-
       - name: A thousand pages open at once
         run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/big-pdf.py
 
@@ -140,7 +137,7 @@ jobs:
       - name: A release carries no handle
         run: |
           pnpm --filter @orden/desktop build
-          if grep -rqE "ordenApp|nibApp" apps/desktop/dist/assets; then
+          if grep -rq "ordenApp" apps/desktop/dist/assets; then
             echo "a release bundle carries window.ordenApp" >&2
             exit 1
           fi
@@ -153,77 +150,6 @@ jobs:
           path: |
             apps/desktop/test/e2e/shots/smoke
             apps/desktop/test/e2e/shots/layout-sweep
-          if-no-files-found: ignore
-
-  webkit:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
-
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: The browser the drives hold
-        run: |
-          python3 -m pip install --quiet --break-system-packages playwright pillow
-          bash scripts/ci-apt.sh --playwright webkit
-          python3 -m playwright install webkit
-
-      - name: The core drives, as a Mac
-        env:
-          ORDEN_ENGINE: webkit
-        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,new-tabs,find-bar,hover-preview,frames,handed,callouts,highlights-links-breaks,task-rows
-
-      - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: webkit-shots
-          path: apps/desktop/test/e2e/shots
-          if-no-files-found: ignore
-
-  webkit-mac:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
-    runs-on: macos-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
-
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: The browser the drives hold
-        run: |
-          python3 -m pip install --quiet --break-system-packages playwright pillow
-          python3 -m playwright install webkit
-
-      - name: The floor, on a Mac
-        env:
-          ORDEN_ENGINE: webkit
-        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,find-bar,hover-preview
-
-      - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: webkit-mac-shots
-          path: apps/desktop/test/e2e/shots
           if-no-files-found: ignore
 
   rust:
@@ -256,14 +182,14 @@ jobs:
           toolchain: stable
           components: clippy, rustfmt
 
-      - name: The desktop manifest, CEF on Linux and macOS
-        if: runner.os != 'Windows'
+      - name: The desktop manifest
         run: |
           node scripts/linux-manifest.mjs --check
           bash scripts/linux-cef.sh
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           save-if: ${{ github.ref == 'refs/heads/main' }}
@@ -309,12 +235,6 @@ jobs:
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
-      - name: The window's thread, alone
-        if: runner.os == 'Windows'
-        timeout-minutes: 10
-        run: |
-          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --test window_thread -- --ignored
-
       - name: Latency, alone
         if: runner.os == 'Linux'
         timeout-minutes: 10
@@ -348,7 +268,9 @@ jobs:
         run: |
           source scripts/edge-profile.sh
           config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-          pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+          bash scripts/linux-cef.sh tauri build --target x86_64-pc-windows-msvc --no-bundle \
+            --ignore-version-mismatches --config "$config"
+          bash scripts/cef-beside.sh apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release
 
       - name: Notepad, hosted and shown
         run: |
@@ -441,6 +363,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: apps/desktop/src-tauri
           shared-key: android
           save-if: false
@@ -505,6 +428,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: apps/desktop/src-tauri
           shared-key: clippy-${{ matrix.target }}
           save-if: ${{ github.ref == 'refs/heads/main' }}

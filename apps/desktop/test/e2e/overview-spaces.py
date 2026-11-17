@@ -14,7 +14,7 @@ async () => {
   const home = ws.activeSpace
   const bee = await ws.addSpace('Bee')
   await ws.showSpace(home.id)
-  const { invoke } = await import('/src/lib/tauri.ts')
+  const { invoke } = await import('/src/lib/platform/src/api.ts')
   const put = async (root, name) => {
     const path = root + '/' + name + '.md'
     await invoke('write_note', { path, content: '# ' + name + '\n\nwords\n' })
@@ -44,7 +44,7 @@ def tab(page: Page, name: str) -> dict:
 
 def open_overview(page: Page) -> None:
     page.evaluate(
-        "async () => { const { toggleTabOverview } = await import('/src/lib/surfaces.svelte.ts');"
+        "async () => { const { toggleTabOverview } = await import('/src/lib/workspace/src/api.ts');"
         " toggleTabOverview() }"
     )
     page.wait_for_selector(".canvas .window", timeout=8000)
@@ -52,7 +52,7 @@ def open_overview(page: Page) -> None:
 
 def close_overview(page: Page) -> None:
     page.evaluate(
-        "async () => { const { tabOverview } = await import('/src/lib/surfaces.svelte.ts');"
+        "async () => { const { tabOverview } = await import('/src/lib/workspace/src/api.ts');"
         " tabOverview.open = false }"
     )
     wait_for(page, "!document.querySelector('.canvas .window')", "the overview away")
@@ -161,7 +161,7 @@ def drive(browser: Browser) -> None:
         wrong("words typed over the view landed in the note behind it")
     page.keyboard.press("Escape")
     page.wait_for_timeout(800)
-    if page.evaluate("async () => (await import('/src/lib/surfaces.svelte.ts')).tabOverview.open"):
+    if page.evaluate("async () => (await import('/src/lib/workspace/src/api.ts')).tabOverview.open"):
         wrong("Escape did not put the view away")
     open_overview(page)
     all_spaces(page)
@@ -181,7 +181,7 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """async (root) => {
-          const { invoke } = await import('/src/lib/tauri.ts')
+          const { invoke } = await import('/src/lib/platform/src/api.ts')
           await invoke('write_note', { path: root + '/A2.md', content: '# theirs\\n' })
         }""",
         ids["beeRoot"],
@@ -210,7 +210,7 @@ def drive(browser: Browser) -> None:
     close_overview(page)
     page.evaluate(
         """async (root) => {
-          const { invoke } = await import('/src/lib/tauri.ts')
+          const { invoke } = await import('/src/lib/platform/src/api.ts')
           await invoke('delete_note', { path: root + '/A2.md' }).catch(() => undefined)
         }""",
         ids["beeRoot"],

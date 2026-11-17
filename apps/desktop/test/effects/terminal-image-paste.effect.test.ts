@@ -9,8 +9,8 @@ const KEPT = '/home/emil/.cache/so.orden.Orden/images/nib-8899aabbccddeeff.png'
 const kept: Record<string, unknown>[] = []
 let outside: string[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => 'linux',
@@ -38,7 +38,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
   },
@@ -90,14 +90,14 @@ Object.defineProperty(navigator, 'clipboard', {
   },
 })
 
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { openRemote } = await import('../../src/lib/remote/open')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
-const { busy } = await import('../../src/lib/busy.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { openRemote } = await import('../../src/lib/terminal/src/remote/open')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
+const { busy } = await import('../../src/lib/ui-kit/src/busy.svelte')
 const { flushSync } = await import('svelte')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 type Opened = ReturnType<typeof sessionOf>
 
@@ -262,7 +262,7 @@ test('so is one pasted from the menu when the clipboard holds no text', async ()
     new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
   )
   flushSync()
-  const { menu } = await import('../../src/lib/menu.svelte')
+  const { menu } = await import('../../src/lib/ui-kit/src/api')
   const row = menu.items.find((one) => one !== null && 'label' in one && one.label === 'Paste')
   if (!row || !('run' in row)) throw new Error('no Paste row')
   row.run()

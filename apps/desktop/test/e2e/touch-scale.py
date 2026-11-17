@@ -319,7 +319,7 @@ def one(
     page.wait_for_timeout(300)
 
     page.evaluate("() => window.ordenApp.settings.show()")
-    page.wait_for_selector(".orden-screen.sheet", timeout=15000)
+    page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
     page.wait_for_timeout(900)
     rows.update(measure(page, SETTINGS))
     shot(page, f"{label}-{name}-settings-{scheme}")

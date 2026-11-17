@@ -126,19 +126,13 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
-        #[cfg(target_os = "ios")]
-        RunEvent::SceneRequested { scene, .. } => {
-            if let Some(main) = objc2::MainThreadMarker::new() {
-                objc2_ui_kit::UIApplication::sharedApplication(main)
-                    .requestSceneSessionDestruction_options_errorHandler(
-                        &scene.session(),
-                        None,
-                        None,
-                    );
+        RunEvent::ExitRequested { code, api, .. } => {
+            #[cfg(target_os = "macos")]
+            if code == Some(tauri::RESTART_EXIT_CODE) {
+                front_to_the_next();
             }
+            exit_requested(app, code, &api);
         }
-
-        RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
         RunEvent::Exit => {
             crate::crashes::ended_well();
@@ -162,7 +156,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(window) = app.get_window(&label) {
                 crate::keyboard::no_hidden_menu(&window);
             }
-            #[cfg(feature = "cef")]
             crate::keyboard::window_came_back(app, &label);
         }
 
@@ -340,10 +333,7 @@ pub fn quit_now(app: &AppHandle) {
             }
         };
 
-        #[cfg(any(windows, target_os = "macos", feature = "cef"))]
         crate::web_cookies::kept(&window, ask);
-        #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
-        ask();
     }
 }
 
@@ -358,18 +348,44 @@ pub fn keep_running(app: AppHandle) {
 }
 
 #[cfg(target_os = "macos")]
+fn front_to_the_next() {
+    use objc2::sel;
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::NSApplication;
+    use objc2_foundation::{NSBundle, NSObjectProtocol};
+
+    let Some(main) = MainThreadMarker::new() else {
+        return;
+    };
+    let app = NSApplication::sharedApplication(main);
+    let yields = app.respondsToSelector(sel!(yieldActivationToApplicationWithBundleIdentifier:));
+    if !yields || !app.isActive() {
+        return;
+    }
+    if let Some(ours) = NSBundle::mainBundle().bundleIdentifier() {
+        app.yieldActivationToApplicationWithBundleIdentifier(&ours);
+    }
+}
+
+#[cfg(target_os = "macos")]
 mod asked_to_quit {
     use objc2::runtime::{AnyObject, Imp, Sel};
     use objc2::{ffi, sel, MainThreadMarker};
-    use objc2_app_kit::NSApplication;
+    use objc2_app_kit::{NSApplication, NSEventMask, NSEventModifierFlags, NSEventType};
+    use objc2_foundation::{NSDate, NSString};
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::OnceLock;
-    use tauri::AppHandle;
+    use tauri::{AppHandle, Emitter as _};
 
     static APP: OnceLock<AppHandle> = OnceLock::new();
 
+    const CANCEL: usize = 0;
     const NOW: usize = 1;
     const LATER: usize = 2;
+
+    const HOLD: f64 = 1.0;
+
+    const QUIT_HOLD: &str = "orden://quit-hold";
 
     static WAITING: AtomicBool = AtomicBool::new(false);
 
@@ -411,6 +427,10 @@ mod asked_to_quit {
         if super::state(app).now() == super::LEAVING {
             return NOW;
         }
+        if let_go_early() {
+            hold_to_quit(app);
+            return CANCEL;
+        }
 
         super::quit(app);
         if super::state(app).now() == super::LEAVING {
@@ -421,8 +441,56 @@ mod asked_to_quit {
         LATER
     }
 
+    fn let_go_early() -> bool {
+        let Some(main) = MainThreadMarker::new() else {
+            return false;
+        };
+        let application = NSApplication::sharedApplication(main);
+        let Some(pressed) = application.currentEvent() else {
+            return false;
+        };
+        if pressed.r#type() != NSEventType::KeyDown
+            || !pressed
+                .modifierFlags()
+                .contains(NSEventModifierFlags::Command)
+        {
+            return false;
+        }
+        let key = pressed.keyCode();
+        let until = NSDate::dateWithTimeIntervalSinceNow(HOLD);
+        let mode = NSString::from_str("kCFRunLoopDefaultMode");
+        let heard = NSEventMask::KeyDown | NSEventMask::KeyUp | NSEventMask::FlagsChanged;
+        while let Some(event) = application.nextEventMatchingMask_untilDate_inMode_dequeue(
+            heard,
+            Some(&until),
+            &mode,
+            true,
+        ) {
+            let still = match event.r#type() {
+                NSEventType::KeyDown => event.isARepeat() && event.keyCode() == key,
+                NSEventType::FlagsChanged => event
+                    .modifierFlags()
+                    .contains(NSEventModifierFlags::Command),
+                _ => false,
+            };
+            if !still {
+                application.postEvent_atStart(&event, true);
+                return true;
+            }
+        }
+        false
+    }
+
+    fn hold_to_quit(app: &AppHandle) {
+        if let Some(window) = crate::launch::document_windows(app)
+            .into_iter()
+            .find(|window| window.is_focused().unwrap_or(false))
+        {
+            let _ = app.emit_to(window.label(), QUIT_HOLD, ());
+        }
+    }
+
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
-        #[cfg(feature = "cef")]
         use tauri::Manager as _;
         if !WAITING.swap(false, Ordering::SeqCst) {
             return false;
@@ -467,6 +535,11 @@ fn exit_requested(app: &AppHandle, code: Option<i32>, api: &ExitRequestApi) {
 
 fn state(app: &AppHandle) -> tauri::State<'_, Quitting> {
     app.state::<Quitting>()
+}
+
+pub fn leaving(app: &AppHandle) -> bool {
+    app.try_state::<Quitting>()
+        .is_some_and(|quitting| matches!(quitting.now(), ASKING | LEAVING))
 }
 
 #[derive(Debug, PartialEq, Eq)]

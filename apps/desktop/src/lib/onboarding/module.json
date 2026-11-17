@@ -1,0 +1,26 @@
+{
+  "name": "onboarding",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "ai-providers",
+    "back-swipe",
+    "platform",
+    "sharing",
+    "tab-strip",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "usage",
+    "sync-mirror",
+    "modes",
+    "feedback",
+    "tab-cycle",
+    "file-writes",
+    "seeded",
+    "spaces",
+    "workspace",
+    "glyphs"
+  ]
+}

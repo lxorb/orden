@@ -1,0 +1,5 @@
+{
+  "name": "protect",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "accounts", "platform", "sync-core", "file-ops"]
+}

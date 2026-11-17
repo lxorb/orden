@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { sha256 } from '../../bytes'
+import { sha256 } from '../../platform/src/bytes'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -160,7 +160,7 @@ describe('a note', () => {
 
 describe('a note this browser keeps no words of', () => {
   test('is held by the account, with nothing here to read', async () => {
-    const { keptAway } = await import('../../web/away.svelte')
+    const { keptAway } = await import('../../away/src/api')
     keptAway.keep([{ id: 'n1', path: '/Notes/away.md', size: 4, modified: 1 }], () =>
       Promise.resolve(false),
     )

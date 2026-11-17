@@ -1,0 +1,19 @@
+{
+  "name": "phone",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "platform",
+    "tab-strip",
+    "ui-kit",
+    "tab-kinds",
+    "documents",
+    "session",
+    "workspace",
+    "gates",
+    "surfaces",
+    "settings",
+    "marks"
+  ]
+}

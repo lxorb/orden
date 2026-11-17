@@ -1,0 +1,8 @@
+export { drawFile, inlineFiles } from './drawn'
+export { paint, rangeOf, wordsOf } from './find'
+export { headingOffsets, positionOf, sectionAt } from './places'
+export type { Section } from './places'
+export { pointer, readingHtml, tagAnchor, unreadableHtml, withPictures } from './render'
+export { default as FindBar } from './FindBar.svelte'
+
+export const loadReading = () => import('./Reading.svelte')

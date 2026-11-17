@@ -1,0 +1,16 @@
+{
+  "name": "pdf",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "markdown",
+    "platform",
+    "scan",
+    "sharing",
+    "sync-client",
+    "workspace",
+    "sync-store",
+    "launch",
+    "link-format"
+  ]
+}

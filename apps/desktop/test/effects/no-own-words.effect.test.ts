@@ -1,11 +1,14 @@
 import { EditorState, EditorView } from '@orden/editor'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
-import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
-import { showEditorMenu } from '../../src/lib/editor-menu'
-import { menu } from '../../src/lib/menu.svelte'
-import { modes } from '../../src/lib/modes.svelte'
-import { settings } from '../../src/lib/settings.svelte'
+import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
+import { showEditorMenu } from '../../src/lib/editor-menu/src/api'
+import { menu } from '../../src/lib/ui-kit/src/api'
+import { modes } from '../../src/lib/modes/src/api'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
+
+providePort('settings.window', settings)
 
 Element.prototype.animate = () =>
   ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation

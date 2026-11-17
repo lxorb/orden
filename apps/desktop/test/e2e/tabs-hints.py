@@ -29,9 +29,6 @@ SEED = """
 async (names) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
-  // The first run's questions put by, as Done does: the card a first visit puts up
-  // beside the welcome note is a `.card` too, which `card_up` took for a tab's.
-  window.ordenApp.settings.setup = null
   for (const one of [...ws.tabs]) ws.close(one.id)
 
   for (const name of names) {

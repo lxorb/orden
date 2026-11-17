@@ -24,7 +24,7 @@ import {
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
-import { holderOf } from '../../pages/held'
+import { holderOf } from '@orden/markdown/pages'
 import { claimed, waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { away, awayUnder, keepingChange, type LettingGo, trim, used, usedChanges } from './keeping'
@@ -309,6 +309,14 @@ export class Engine implements AskedEngine {
     return out
   }
 
+  awayAt(path: string): Pick<AwayFile, 'id' | 'path' | 'size' | 'modified'> | null {
+    if (this.core.handPaths.length) return null
+    const placed = this.placed(path)
+    const entry = this.entryAt(path)
+    if (!placed || !entry || !away(placed.space, entry)) return null
+    return { id: entry.id, path, size: entry.size ?? 0, modified: entry.mtime ?? 0 }
+  }
+
   fetch(path: string): Promise<boolean> {
     return this.core.use(async () => {
       const placed = this.placed(path)
@@ -331,6 +339,11 @@ export class Engine implements AskedEngine {
     for (const id of ids) this.core.asked.add(id)
     const life = this.core.life
     if (!(await pullNow(this.core, space, ids, () => this.core.life === life))) return false
+    for (const one of entries) {
+      if (one.local_path || this.core.isHeld(one.id)) continue
+      const doc = await this.core.doc(one.id)
+      if (doc) await this.core.commit(await project(this.core, space, one, doc))
+    }
     if (entries.some((one) => !one.local_path)) return false
     let kept = false
     for (const one of entries) {

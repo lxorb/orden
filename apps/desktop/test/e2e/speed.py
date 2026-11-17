@@ -687,7 +687,7 @@ async () => {
 
   // The page painted - and the render's own measure beside it, which is what the
   // renderer already takes for exactly this question; see `MEASURE` in
-  // lib/reading/render.ts. A spin on a selector that never matched measured the
+  // lib/reading/src/render.ts. A spin on a selector that never matched measured the
   // spin, which is how the first run of this said twenty-five seconds.
   for (let spin = 0; spin < 900; spin++) {
     await window.__painted()

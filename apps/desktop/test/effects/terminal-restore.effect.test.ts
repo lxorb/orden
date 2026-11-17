@@ -6,8 +6,8 @@ let system = 'windows'
 const KERNEL_FOLDER = '/Users/me/work/orden'
 let typing: ((data: string) => void) | null = null
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => system,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
@@ -24,7 +24,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: unknown = null
   },
@@ -125,12 +125,12 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { flushSync } = await import('svelte')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 const ESC = '\x1b'
 
@@ -141,7 +141,7 @@ const HISTORY = {
   text: 'PS C:\\work> npm run build\r\nfailed: 3 errors\r\nPS C:\\work> ',
 }
 
-const { localDate } = await import('../../src/lib/region')
+const { localDate } = await import('../../src/lib/platform/src/region')
 const when = localDate(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
 
 function restored(key: string): InstanceType<typeof Tab> {
@@ -189,6 +189,7 @@ test('a restored terminal draws its history, at its own size, before its shell s
   expect(writes[1]).toBe(`write ${ESC}[0m\r\n${ESC}[2mRestored ${when}${ESC}[22m\r\n`)
 
   expect(done).toEqual([
+    'pty_held',
     'terminal_history_read',
     'open',
     'resize 100x20',
@@ -211,6 +212,7 @@ test('on Windows the history goes above the screen before the shell starts', asy
   expect(writes[1]).toContain(`${'\r\n'.repeat(39)}${ESC}[H${ESC}[2mRestored `)
 
   expect(done).toEqual([
+    'pty_held',
     'terminal_history_read',
     'open',
     'resize 100x20',
@@ -228,6 +230,7 @@ test('a terminal with nothing kept starts its shell at once', async () => {
 
   expect(done.filter((one) => one.startsWith('write '))).toEqual([])
   expect(done).toEqual([
+    'pty_held',
     'terminal_history_read',
     'open',
     'fit',

@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
-import type { Cut } from '../../src/lib/web-tab/covers'
+import type { Cut } from '../../src/lib/web-tab/src/covers'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
@@ -12,8 +12,8 @@ let cuts: boolean | 'under' = false
 
 let answersLooks: number | null = null
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
@@ -28,7 +28,10 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
+
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 
@@ -131,19 +134,19 @@ let over: Element | null = null
 
 document.elementFromPoint = () => over ?? document.querySelector('.hole')
 
-const { overlays } = await import('../../src/lib/overlays')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-const { startup } = await import('../../src/lib/startup.svelte')
-const { hovering } = await import('../../src/lib/tab-strip/hover-card.svelte')
-const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const { startup } = await import('../../src/lib/launch/src/api')
+const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
+const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
 
 await Promise.all([
-  import('../../src/lib/web-tab/visited'),
-  import('../../src/lib/web-tab/web-data.svelte'),
-  import('../../src/lib/web-tab/merged'),
-  import('../../src/lib/web-tab/keys'),
-  import('../../src/lib/web-tab/downloads.svelte'),
+  import('../../src/lib/web-tab/src/visited'),
+  import('../../src/lib/web-tab/src/web-data.svelte'),
+  import('../../src/lib/web-tab/src/merged'),
+  import('../../src/lib/web-tab/src/keys'),
+  import('../../src/lib/web-tab/src/downloads.svelte'),
 ])
 
 let target: HTMLElement
@@ -320,7 +323,7 @@ test('a menu over the page is cut out of it, and the page stays', async () => {
   void unmount(app)
 })
 
-async function hoverOver(tab: import('../../src/lib/workspace.svelte').Tab) {
+async function hoverOver(tab: import('../../src/lib/workspace/src/api').Tab) {
   const pane = document.createElement('div')
   pane.setAttribute('data-pane', tab.paneId)
   pane.setAttribute('data-box', JSON.stringify({ x: 0, y: 0, width: 800, height: 600 }))

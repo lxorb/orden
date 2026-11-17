@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { readFrame } from '../src/sync-server/src/hub/frames'
+import { readFrame } from '../src/sync-server-engine/src/hub/frames'
 import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { computer, connect, hub, type Hubs, hubs, send } from './hub-fakes'
 
@@ -238,5 +238,48 @@ describe('ending a device', () => {
     const answer = await call(env, '/v2/devices/device-nobody', { method: 'DELETE', token })
     expect(answer.status).toBe(404)
     expect(answer.json.error).toBe('no such device')
+  })
+})
+
+describe('one session open in two browsers', () => {
+  let env: TestEnv
+  let running: Hubs
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    at(0)
+    env = testEnv()
+    running = hubs(env)
+    env.HUB = running.HUB
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    env.close()
+  })
+
+  test('keeps both hub sockets, each its own device', async () => {
+    const laptop = await computer(env, running, 'twice@example.com', 'Laptop')
+    const { hub: made } = running.of(laptop.user)
+    const other = connect(made, {
+      device: 'device-other',
+      who: laptop.user,
+      session: laptop.session,
+    })
+    await send(made, other, {
+      t: 'hello',
+      device: 'device-other',
+      name: 'Browser',
+      platform: 'web',
+      app: '1.0.0',
+    })
+
+    expect(laptop.socket.closedWith).toBeNull()
+    expect(other.closedWith).toBeNull()
+    expect(
+      env.db
+        .prepare('select id from devices where session_id = ? and revoked_at is null order by id')
+        .all(laptop.session),
+    ).toEqual([{ id: 'device-laptop' }, { id: 'device-other' }])
   })
 })

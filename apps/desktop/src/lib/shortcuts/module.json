@@ -1,0 +1,23 @@
+{
+  "name": "shortcuts",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "editor",
+    "export-formats",
+    "platform",
+    "save-place",
+    "sync-core",
+    "tab-fill",
+    "ui-kit",
+    "usage",
+    "panes",
+    "workspace",
+    "modes",
+    "double-tap",
+    "tab-cycle",
+    "gates",
+    "spaces"
+  ]
+}

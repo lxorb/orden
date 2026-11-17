@@ -1,0 +1,5 @@
+{
+  "name": "glasses-choices",
+  "layer": "shell",
+  "dependsOn": ["contracts", "accounts", "glasses", "modes"]
+}

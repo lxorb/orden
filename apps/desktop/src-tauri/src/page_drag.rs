@@ -1,4 +1,3 @@
-#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("page_drag.js");
 
 #[cfg(test)]

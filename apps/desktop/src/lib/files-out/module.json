@@ -1,0 +1,13 @@
+{
+  "name": "files-out",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "downloads",
+    "markdown",
+    "platform",
+    "ui-kit",
+    "file-writes",
+    "web-backend"
+  ]
+}

@@ -324,7 +324,6 @@ class ReminderReceiver : BroadcastReceiver() {
         Reminders.carried(intent)?.let {
           Reminders.dismiss(context, it)
           Reminders.pressed(context, "done", it)
-          MainActivity.reminded()
         }
       Intent.ACTION_BOOT_COMPLETED,
       Intent.ACTION_MY_PACKAGE_REPLACED,

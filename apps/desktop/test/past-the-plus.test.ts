@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { TAB_KINDS } from '../src/lib/workspace/tab-kinds'
+import { TAB_KINDS } from '../src/lib/tab-kinds/src/api'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
@@ -29,9 +29,9 @@ describe('the phone’s + button over Settings', () => {
   test.each(['nav', '.body'])(
     'leaves the end of the list and of a page, %s, scrollable out from under it',
     (scroller) => {
-      expect(roomUnderThePlus(read('lib/SettingsPanel.svelte'), `.sheet.phone ${scroller}`)).toBe(
-        true,
-      )
+      expect(
+        roomUnderThePlus(read('lib/settings/src/SettingsPanel.svelte'), `.sheet.phone ${scroller}`),
+      ).toBe(true)
     },
   )
 })

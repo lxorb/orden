@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -24,9 +24,9 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
 
 let target: HTMLElement
 

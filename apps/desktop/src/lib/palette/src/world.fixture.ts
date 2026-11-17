@@ -1,0 +1,113 @@
+import type { Command } from '../../commands/src/api'
+import type { Visit } from '@orden/scan/visits'
+import type { World } from './kinds'
+import type { OpenTab, Row } from './rows'
+import type { Bookmark, PaletteSetting, Entry } from '@orden/contracts'
+
+export const ROOT = '/Space'
+
+export const file = (path: string): Entry => ({
+  name: path.slice(path.lastIndexOf('/') + 1),
+  path: `${ROOT}/${path}`,
+  is_dir: false,
+  modified: 0,
+  created: 0,
+  children: [],
+})
+
+export const command = (id: string, label: string, more: Partial<Command> = {}): Command => ({
+  id,
+  label,
+  run: () => undefined,
+  ...more,
+})
+
+export const tab = (id: string, shown: string, more: Partial<OpenTab> = {}): OpenTab => ({
+  id,
+  kind: 'note',
+  path: null,
+  shown,
+  url: null,
+  ...more,
+})
+
+export const visit = (url: string, title: string, more: Partial<Visit> = {}): Visit => ({
+  url,
+  title,
+  visits: 1,
+  typed: 0,
+  last: NOW - 60_000,
+  ...more,
+})
+
+export const setting = (
+  label: string,
+  where: string,
+  more: Partial<PaletteSetting> = {},
+): PaletteSetting => ({
+  section: 'editor',
+  label,
+  where,
+  names: [],
+  words: [],
+  row: true,
+  icon: '',
+  switched: () => null,
+  value: () => null,
+  press: null,
+  ...more,
+})
+
+export const NOW = Date.UTC(2026, 8, 30, 12)
+
+export function world(more: Partial<World> = {}): World {
+  return {
+    root: ROOT,
+    files: [],
+    tabs: [],
+    active: null,
+    focused: null,
+    recent: [],
+    bookmarks: [] as Bookmark[],
+    commands: [],
+    pages: [],
+    settings: [],
+    hosts: [],
+    worth: () => 0,
+    now: NOW,
+    ...more,
+  }
+}
+
+export function named(row: Row): string {
+  switch (row.kind) {
+    case 'note':
+      return row.entry.name.replace(/\.md$/, '')
+    case 'tab':
+      return `tab ${row.tab.shown}`
+    case 'command':
+      return `> ${row.command.label}`
+    case 'bookmark':
+      return `bookmark ${row.label}`
+    case 'page':
+      return `page ${row.title}`
+    case 'setting':
+      return `setting ${row.setting.label}`
+    case 'place':
+      return `# ${row.text}`
+    case 'make':
+      return `new ${row.make.name}`
+    case 'agents':
+      return 'agents'
+    case 'address':
+      return `go ${row.address}`
+    case 'host':
+      return `host ${row.host.name}`
+    case 'group':
+      return `hosts ${row.group}`
+    case 'connect':
+      return `ssh ${row.said}`
+    case 'message':
+      return `message ${row.line}`
+  }
+}

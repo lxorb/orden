@@ -1,0 +1,14 @@
+{
+  "name": "chat-kit",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "platform",
+    "ui-kit",
+    "editor",
+    "markdown",
+    "theme",
+    "fences",
+    "highlight"
+  ]
+}

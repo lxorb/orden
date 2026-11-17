@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -38,17 +38,17 @@ Element.prototype.animate = () =>
 
 Element.prototype.scrollIntoView = () => undefined
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
-const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
-const { run } = await import('../../src/lib/canvas/actions')
-const { CanvasStore } = await import('../../src/lib/canvas/store.svelte')
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-const { panesOf } = await import('../../src/lib/workspace/session')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-const Pane = (await import('../../src/lib/Pane.svelte')).default
-await import('../../src/lib/NewHere.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+const { cycleTab } = await import('../../src/lib/tab-cycle/src/api')
+const { run } = await import('../../src/lib/canvas/src/actions')
+const { CanvasStore } = await import('../../src/lib/canvas/src/store.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
+const { panesOf } = await import('../../src/lib/session/src/api')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
+const Pane = (await import('../../src/lib/pane-tree/src/Pane.svelte')).default
+await import('../../src/lib/new-here/src/api')
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

@@ -10,7 +10,7 @@ from typing import Any
 
 from urllib.parse import urlsplit
 
-from harness import ENGINE, LAUNCHED, Drive, harmless
+from harness import LAUNCHED, Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -395,7 +395,7 @@ class Browser:
             device_scale_factor=2 if phone else 1,
             color_scheme="light",
             reduced_motion="reduce",
-            service_workers="block" if ENGINE == "webkit" else "allow",
+            service_workers="allow",
         )
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('orden:session', 'sweep') } catch {}")
@@ -775,10 +775,7 @@ async def sweep() -> list[Browser]:
         wanted = sys.argv[sys.argv.index("--only") + 1].split(",")
         kinds = [one for one in kinds if f"{one.kind}-{'in' if one.signed_in else 'out'}" in wanted]
     async with async_playwright() as play:
-        if ENGINE == "webkit":
-            browser = await play.webkit.launch()
-        else:
-            browser = await play.chromium.launch(channel=os.environ.get("ORDEN_BROWSER", "chromium"))
+        browser = await play.chromium.launch(channel=os.environ.get("ORDEN_BROWSER", "chromium"))
         try:
             results = await asyncio.gather(*(sweep_one(one, browser) for one in kinds), return_exceptions=True)
         finally:

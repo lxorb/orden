@@ -1,0 +1,5 @@
+{
+  "name": "crate",
+  "layer": "foundation",
+  "dependsOn": ["contracts"]
+}

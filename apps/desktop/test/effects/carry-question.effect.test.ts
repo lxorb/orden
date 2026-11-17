@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const mac = vi.hoisted(() => ({ on: false }))
 
-vi.mock('../../src/lib/tauri', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => (mac.on ? 'macos' : 'windows'),
 }))
@@ -33,9 +33,9 @@ afterEach(() => {
 for (const on of [false, true]) {
   test(`Enter answers Only the file${on ? ', on a Mac too' : ''}`, async () => {
     mac.on = on
-    const { prompt } = await import('../../src/lib/prompt.svelte')
-    const { carryQuestion } = await import('../../src/lib/workspace/carry-question')
-    const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
+    const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
+    const { carryQuestion } = await import('../../src/lib/chats-client/src/carry-question')
+    const PromptSheet = (await import('../../src/lib/surfaces/src/PromptSheet.svelte')).default
     const shown = mount(PromptSheet, { target })
     close = () => void unmount(shown)
 

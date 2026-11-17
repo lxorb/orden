@@ -1,13 +1,6 @@
 import { type Context, Hono } from 'hono'
 import {
-  sendCode,
-  verifyCode,
   WRONG_CODE,
-  accepted,
-  asksForSecond,
-  halfWay,
-  spendHalf,
-  whoseHalf,
   normaliseEmail,
   now,
   randomToken,
@@ -16,6 +9,15 @@ import {
   sameRedirect,
   type Env,
 } from '../../../sync-server/src/api'
+import {
+  accepted,
+  asksForSecond,
+  halfWay,
+  sendCode,
+  spendHalf,
+  verifyCode,
+  whoseHalf,
+} from '../../../sync-server-accounts/src/api'
 import { type Client, clientFor, clientWasUsed } from './clients'
 import { codeStep, emailStep, page, refusal, secondStep } from './consent'
 import {

@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -16,9 +16,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const { Disk } = await import('../disk')
 disk.current = new Disk()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pane } = await import('../../src/lib/workspace/pane-tree')
-const Tree = (await import('../../src/lib/Tree.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { pane } = await import('../../src/lib/panes/src/api')
+const Tree = (await import('../../src/lib/sidebar/src/Tree.svelte')).default
 
 const PLAN = '/space/Plan.md'
 const IDEAS = '/space/Ideas.md'

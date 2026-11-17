@@ -1,0 +1,15 @@
+{
+  "name": "collab-rooms",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "markdown",
+    "rooms",
+    "sync-core",
+    "accounts",
+    "platform",
+    "theme",
+    "sync-mirror"
+  ]
+}

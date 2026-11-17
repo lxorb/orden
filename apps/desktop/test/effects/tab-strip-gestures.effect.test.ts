@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -48,13 +48,13 @@ Element.prototype.animate = () =>
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
-const { picks } = await import('../../src/lib/tab-strip/drag.svelte')
-const { tabMenuTitle } = await import('../../src/lib/tab-strip/menu')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-await import('../../src/lib/tab-strip/closing.svelte')
-await import('../../src/lib/tab-strip/picking.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
+const { picks } = await import('../../src/lib/tab-strip/src/drag.svelte')
+const { tabMenuTitle } = await import('../../src/lib/tab-strip/src/menu')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
+await import('../../src/lib/tab-strip/src/closing.svelte')
+await import('../../src/lib/tab-strip/src/picking.svelte')
 
 const settles = <T>(check: () => T) => vi.waitFor(check, { timeout: 10_000 })
 

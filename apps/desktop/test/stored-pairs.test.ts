@@ -121,7 +121,7 @@ function audit(given: readonly { name: string; text: string }[]) {
       uses.set(said, [...(uses.get(said) ?? []), { way, side, at }])
     }
     const visit = (node: ts.Node) => {
-      if (ts.isCallExpression(node) && name !== 'lib/stored.ts') {
+      if (ts.isCallExpression(node) && name !== 'lib/platform/src/stored.ts') {
         const [key, value] = node.arguments
         const parent = node.parent
         const parsedAfter =

@@ -1,0 +1,19 @@
+{
+  "name": "history",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "markdown",
+    "platform",
+    "sharing",
+    "ui-controls",
+    "ui-kit",
+    "snapshots",
+    "documents",
+    "protect",
+    "workspace",
+    "sync-store",
+    "modes"
+  ]
+}

@@ -1,13 +1,24 @@
+import { protection } from './protect/src/api'
 import { providePort } from '@orden/contracts'
-import { account } from './account.svelte'
-import { api, ApiError, BASE, BYTES_WITHIN, fetchInTime, fromServer, request } from './api'
-import { howFor } from './new-tab'
-import { forget, keep, keepJson, stored, storedText } from './stored'
-import { invoke, isDesktop, isNative, joinPath, platform } from './tauri'
-import { waited } from './timing'
-import { workspace } from './workspace.svelte'
-import { ROOTS_MOVED, rootsMoved } from './workspace/roots-moved'
-import { hearWrites } from './workspace/write-file'
+import { account, api, ApiError, BASE, fromServer, request } from './accounts/src/api'
+import {
+  forget,
+  keep,
+  keepJson,
+  BYTES_WITHIN,
+  fetchInTime,
+  stored,
+  storedText,
+  invoke,
+  isDesktop,
+  isNative,
+  joinPath,
+  platform,
+  waited,
+} from './platform/src/api'
+import { workspace, howFor } from './workspace/src/api'
+import { ROOTS_MOVED, rootsMoved } from './workspace/src/roots-moved'
+import { hearWrites } from './file-writes/src/api'
 
 providePort('sync.host', {
   get isNative() {
@@ -95,8 +106,8 @@ providePort('sync.workspace', {
   },
   entryAt: (path) => workspace.entryAt(path),
   rootHolding: (path) => workspace.rootHolding(path),
-  locked: (path) => workspace.protection.locked(path),
-  copied: (from, to, root, into) => workspace.protection.copied(from, to, root, into),
+  locked: (path) => protection.locked(path),
+  copied: (from, to, root, into) => protection.copied(from, to, root, into),
   open: (path) => workspace.open(path),
   openBehind: (path) => workspace.openRow(path, howFor('behind')),
   dropSpace: (id) => workspace.dropSpace(id),
@@ -105,6 +116,9 @@ providePort('sync.workspace', {
   writesSettled: () => workspace.writesSettled(),
   arrived: (path) => workspace.arrived(path),
   fileCame: (path, kind) => workspace.fileCame(path, kind),
+  fileWritten: (path) => {
+    if (!__EVEN_PLUGIN__) void import('./pdf/src/api').then((pdf) => pdf.sheetArrived(path))
+  },
   fileMoved: (from, to, kind) => workspace.fileMoved(from, to, kind),
   fileGone: (path, kind, back) => workspace.fileGone(path, kind, back),
   heardMove: (from, to) => workspace.heardMove(from, to),
@@ -119,20 +133,30 @@ providePort('sync.workspace', {
   describes: (root) => workspace.itemMeta.describes(root),
   metaFromEngine: (root) => workspace.itemMeta.fromEngine(root),
   notesDescribed: async (root) => {
-    const { moveOwnKeysSoon } = await import('./workspace/own-keys-moved')
+    const { moveOwnKeysSoon } = await import('./workspace/src/own-keys-moved')
     moveOwnKeysSoon(root, workspace, true)
-    const { markOldListsSoon } = await import('./rows/old-lists')
-    markOldListsSoon(root, true, workspace)
-    const { keepSetextMarked } = await import('./workspace/setext')
+    const { keepSetextMarked } = await import('./workspace/src/setext')
     keepSetextMarked(workspace, root)
   },
   spaceUnpaired: async (root) => {
-    const { markOldListsSoon } = await import('./rows/old-lists')
-    const { moveOwnKeysSoon } = await import('./workspace/own-keys-moved')
-    markOldListsSoon(root, true, workspace)
+    const { moveOwnKeysSoon } = await import('./workspace/src/own-keys-moved')
     moveOwnKeysSoon(root, workspace, false)
   },
   hearWrites: (hearing) => hearWrites(hearing),
   rootMoves: () => rootsMoved(),
   forgetRootMoves: () => forget(ROOTS_MOVED),
+  bookmarksOf: (root) => workspace.bookmarks.of(root),
+  bookmarksSaid: (root, landed, list) => workspace.bookmarks.said(root, landed, list),
+  archivedIn: (root, path) => workspace.archive.holdsIn(root, path),
+  shownText: (path) => {
+    const note = workspace.openNotes.find((one) => one.path === path)?.note
+    return note && !note.dirty ? note.text : null
+  },
+  reload: (path, text) => workspace.reload(path, text),
+  leaveTheWelcomeNote: () => workspace.leaveTheWelcomeNote(),
+})
+
+providePort('sync.pairing', {
+  pairSpaces: async (token, pairing) =>
+    (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
 })

@@ -1,12 +1,12 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
 
-vi.mock('../../src/lib/link-index.svelte', () => ({
+vi.mock('../../src/lib/link-index/src/api', () => ({
   links: {
     rootOf: () => '/space',
     websitesHere: new Map([
@@ -23,7 +23,7 @@ vi.mock('../../src/lib/link-index.svelte', () => ({
   },
 }))
 
-const AddressField = (await import('../../src/lib/web-tab/AddressField.svelte')).default
+const AddressField = (await import('../../src/lib/web-tab/src/AddressField.svelte')).default
 
 let target: HTMLElement | null = null
 let app: ReturnType<typeof mount> | null = null

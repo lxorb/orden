@@ -8,7 +8,7 @@ from harness import Drive
 from settling import quiet
 
 DRIVE = Drive(__file__)
-say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
+say, wrong, shot, waited = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.waited
 
 SCALE = 2
 
@@ -55,6 +55,7 @@ def look(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, device_scale_factor=SCALE)
     DRIVE.open(page)
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
+    waited(page, f"!!document.querySelector({LABELS[0][1]!r})", "the Appearance pane")
     quiet(page)
     page.wait_for_timeout(600)
     shot(page, "settings")

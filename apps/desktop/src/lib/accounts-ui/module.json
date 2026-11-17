@@ -1,0 +1,19 @@
+{
+  "name": "accounts-ui",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "theme",
+    "platform",
+    "ui-controls",
+    "ui-kit",
+    "sharing",
+    "chat-kit",
+    "emoji",
+    "workspace",
+    "sync-mirror",
+    "sync-store",
+    "marks"
+  ]
+}

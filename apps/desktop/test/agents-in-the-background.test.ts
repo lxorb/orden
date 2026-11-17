@@ -1,10 +1,24 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-const DIR = fileURLToPath(new URL('../src/lib/agents/workspace', import.meta.url))
-const DOOR = 'reader-view.ts'
+const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
+const KIT = /from '[./]*agent-verbs\/src\/api'/
+
+const DOORS: Record<string, RegExp[]> = {
+  'agent-verbs/src/front.ts': [
+    /'background' in call\.args && !flag\(call, 'background'\)/,
+    /needScope\(call, 'workspace\.focus'/,
+    /agentMarks\.opened/,
+  ],
+  'agent-host/src/reader-view.ts': [/asksFront\(call/, /needScope\(call, 'workspace\.focus'/],
+  'terminal/src/agent/verbs.ts': [/asksFront\(call/, /activate: front/],
+  'terminal/src/agent/online.ts': [
+    /asksFront\(call/,
+    /madeOnline\(front \? null : workspace\.activeTabId, front\)/,
+  ],
+}
 
 const TAKES = [
   /workspace\.activate\(/,
@@ -15,14 +29,30 @@ const TAKES = [
   /scratchpad\.show\(/,
   /scrollIntoView/,
   /\.focus\(\)/,
-  /import\('\.\.\/\.\.\/terminal\/open'\)/,
-  /import\('\.\.\/\.\.\/online\/open'\)/,
-  /import\('\.\.\/\.\.\/chats\/view\/open'\)/,
+  /\bopenTerminal\(/,
+  /\bmadeOnline\(/,
+  /\bopenChat\((?![^)]*activate: false)/,
 ]
 
-const sources = readdirSync(DIR).filter(
-  (name) => name.endsWith('.ts') && !name.endsWith('.test.ts') && name !== DOOR,
-)
+function filesIn(folder: string): string[] {
+  return readdirSync(folder).flatMap((name) => {
+    const path = join(folder, name)
+    if (statSync(path).isDirectory()) return name === 'node_modules' ? [] : filesIn(path)
+    return name.endsWith('.ts') && !name.endsWith('.test.ts') ? [path] : []
+  })
+}
+
+const named = (path: string) => relative(LIB, path).split(sep).join('/')
+
+const sources = filesIn(LIB).filter((path) => {
+  const name = named(path)
+  if (name in DOORS) return false
+  return (
+    name.startsWith('agent-host/') ||
+    name.startsWith('agent-verbs/') ||
+    KIT.test(readFileSync(path, 'utf8'))
+  )
+})
 
 describe('an agent at work, in the background', () => {
   test('the agents’ verbs are all here to be read', () => {
@@ -30,22 +60,22 @@ describe('an agent at work, in the background', () => {
   })
 
   test('no verb changes the reader’s screen but through the one door', () => {
-    for (const name of sources) {
-      const text = readFileSync(join(DIR, name), 'utf8')
-      for (const take of TAKES) expect(text, `${name}: ${String(take)}`).not.toMatch(take)
+    for (const path of sources) {
+      const text = readFileSync(path, 'utf8')
+      for (const take of TAKES) expect(text, `${named(path)}: ${String(take)}`).not.toMatch(take)
     }
   })
 
-  test('the door lands everything behind unless the front was asked for', () => {
-    const door = readFileSync(join(DIR, DOOR), 'utf8')
-    expect(door).toMatch(/'background' in call\.args && !flag\(call, 'background'\)/)
-    expect(door).toMatch(/needScope\(call, 'workspace\.focus'/)
-    expect(door).toMatch(/agentMarks\.opened/)
+  test('the doors land everything behind unless the front was asked for', () => {
+    for (const [name, marks] of Object.entries(DOORS)) {
+      const door = readFileSync(join(LIB, name), 'utf8')
+      for (const mark of marks) expect(door, `${name}: ${String(mark)}`).toMatch(mark)
+    }
   })
 
   test('a tab an agent shows of itself lands behind; only the reader’s press brings it forward', () => {
     const activity = readFileSync(
-      join(import.meta.dirname, '../src/lib/agents/ui/activity.svelte.ts'),
+      join(import.meta.dirname, '../src/lib/agents/src/ui/activity.svelte.ts'),
       'utf8',
     )
     expect(activity).toMatch(/void this\.show\(said\.tab, false\)/)

@@ -56,7 +56,7 @@ describe('the durations JavaScript hands out', () => {
       .filter(
         (one) =>
           /duration:\s*(dur\(|LAYER\.)/.test(one.text) &&
-          !/from '(?:\.\.?\/)+(?:lib\/)?motion'/.test(one.text),
+          !/from '(?:\.\.?\/)+(?:lib\/)?(?:motion|platform\/src\/api)'/.test(one.text),
       )
       .map((one) => one.name)
 

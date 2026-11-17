@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
-import { LONGEST_PATH, staysInside } from './spaces/paths'
+import { LONGEST_PATH, staysInside } from './paths'
 import type { Env, Variables } from './types'
 
 type Way = 'password' | 'device'

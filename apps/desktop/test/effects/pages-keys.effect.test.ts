@@ -1,11 +1,11 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { emptyPages } from '@orden/markdown/pages'
-import Pages from '../../src/lib/Pages.svelte'
-import { writeCanvas } from '../../src/lib/canvas/format'
-import { CanvasStore } from '../../src/lib/canvas/store.svelte'
-import { tools } from '../../src/lib/canvas/tools.svelte'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import Pages from '../../src/lib/pages/src/Pages.svelte'
+import { writeCanvas } from '@orden/markdown/canvas'
+import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
+import { tools } from '../../src/lib/canvas/src/tools.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 Element.prototype.animate = () =>
   ({

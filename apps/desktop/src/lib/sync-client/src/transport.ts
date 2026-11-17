@@ -8,7 +8,7 @@ import {
 } from '@orden/scan/wire'
 import type { Blobs, Replaced } from './files'
 import type { Account, Route } from './world'
-import { passing } from '../../backoff'
+import { passing } from '../../platform/src/api'
 
 export class Refused extends Error {
   override name = 'Refused'
@@ -61,7 +61,7 @@ export function accountOver(reaching: Reaching): Account {
         headers: {
           authorization: `Bearer ${token}`,
           accept: OCTETS,
-          'x-nib-device': reaching.device(),
+          'x-orden-device': reaching.device(),
           ...(reading ? {} : { 'content-type': OCTETS }),
         },
         ...(reading ? {} : { body: new Uint8Array(frame(body)) }),
@@ -95,7 +95,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
     if (!token) return null
     const headers = new Headers(init.headers)
     headers.set('authorization', `Bearer ${token}`)
-    headers.set('x-nib-device', reaching.device())
+    headers.set('x-orden-device', reaching.device())
     try {
       const response = await reaching.fetch(
         new Request(`${reaching.base}${path}`, { ...init, headers }),
@@ -184,7 +184,7 @@ export function readingOver(reaching: Reaching): Reading {
           headers: {
             authorization: `Bearer ${token}`,
             'content-type': 'application/json',
-            'x-nib-device': reaching.device(),
+            'x-orden-device': reaching.device(),
           },
           body: JSON.stringify(body),
         }),

@@ -1,0 +1,17 @@
+{
+  "name": "mobile",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "commands",
+    "markdown",
+    "platform",
+    "sharing",
+    "tasks-model",
+    "ui-kit",
+    "space-kept",
+    "workspace",
+    "modes",
+    "panes"
+  ]
+}

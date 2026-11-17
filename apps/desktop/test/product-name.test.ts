@@ -17,8 +17,7 @@ function identifier(text: string, at: number, length: number): boolean {
 }
 
 const NAMED: Record<string, string[]> = {
-  'lib/welcome.ts': ['# Welcome to Nib', '# Welcome to nibeditor'],
-  'lib/web/commands.ts': ['Nib'],
+  'lib/web-backend/src/web/commands.ts': ['Nib'],
 }
 
 const renaming = (text: string) => text.includes('Orden')
@@ -175,7 +174,7 @@ describe('the name a reader sees', () => {
       short_name: string
     }
     expect([manifest.name, manifest.short_name]).toEqual(['Orden Pass', 'Orden Pass'])
-    const gate = readFileSync(join(SOURCE, 'lib/pass/web/PassWeb.svelte'), 'utf8')
+    const gate = readFileSync(join(SOURCE, 'lib/pass-ui/src/web/PassWeb.svelte'), 'utf8')
     expect(gate).toContain('title="Orden Pass"')
   })
 

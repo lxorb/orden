@@ -1,0 +1,31 @@
+{
+  "name": "pane-tree",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "away",
+    "collab",
+    "documents",
+    "editor",
+    "first-screen",
+    "graph",
+    "link-index",
+    "markdown",
+    "modes",
+    "panes",
+    "platform",
+    "protect",
+    "sharing",
+    "shortcuts",
+    "tab-kinds",
+    "tab-strip",
+    "theme",
+    "ui-kit",
+    "workspace",
+    "gates",
+    "surfaces",
+    "editor-menu",
+    "accounts",
+    "link-format"
+  ]
+}

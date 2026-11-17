@@ -1,0 +1,21 @@
+{
+  "name": "icon-picker",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "icons",
+    "platform",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "workspace",
+    "chats",
+    "markdown",
+    "marks",
+    "online",
+    "scan",
+    "tree",
+    "glyphs"
+  ]
+}

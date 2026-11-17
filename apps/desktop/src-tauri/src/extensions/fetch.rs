@@ -1,27 +1,8 @@
-#[cfg(not(feature = "cef"))]
-use super::link::Store;
-
-#[cfg(not(feature = "cef"))]
-const PRODUCT_VERSION: &str = "140.0.0.0";
-
 const MOST_BYTES: usize = 256 * 1024 * 1024;
 
 const CONNECTING: std::time::Duration = std::time::Duration::from_secs(20);
 
 const SILENT: std::time::Duration = std::time::Duration::from_secs(60);
-
-#[cfg(not(feature = "cef"))]
-fn service(store: Store, response: &str, x: &str) -> Result<String, String> {
-    match store {
-        Store::Chrome => Ok(format!(
-            "https://clients2.google.com/service/update2/crx?response={response}&acceptformat=crx3&prodversion={PRODUCT_VERSION}&x={x}"
-        )),
-        Store::Edge => Ok(format!(
-            "https://edge.microsoft.com/extensionwebstorebase/v1/crx?response={response}&prod=chromiumcrx&prodchannel=&prodversion={PRODUCT_VERSION}&x={x}"
-        )),
-        Store::Firefox => Err("addons.mozilla.org is asked through its own API".into()),
-    }
-}
 
 pub fn client() -> Result<reqwest::Client, String> {
     let _ = rustls::crypto::ring::default_provider().install_default();
@@ -30,31 +11,6 @@ pub fn client() -> Result<reqwest::Client, String> {
         .read_timeout(SILENT)
         .build()
         .map_err(|error| error.to_string())
-}
-
-#[cfg(not(feature = "cef"))]
-pub async fn crx(store: Store, id: &str) -> Result<Vec<u8>, String> {
-    let x = format!("id%3D{id}%26installsource%3Dondemand%26uc");
-    download(&service(store, "redirect", &x)?).await
-}
-
-#[cfg(not(feature = "cef"))]
-pub async fn newer(
-    store: Store,
-    id: &str,
-    version: &str,
-) -> Result<Option<(String, String)>, String> {
-    let x = format!("id%3D{id}%26v%3D{version}%26uc");
-    let said = client()?
-        .get(service(store, "updatecheck", &x)?)
-        .send()
-        .await
-        .and_then(reqwest::Response::error_for_status)
-        .map_err(offline)?
-        .text()
-        .await
-        .map_err(offline)?;
-    Ok(update_in(&said).filter(|(found, _)| later(found, version)))
 }
 
 pub async fn download(url: &str) -> Result<Vec<u8>, String> {
@@ -88,7 +44,7 @@ pub fn offline(error: reqwest::Error) -> String {
     format!("the store could not be reached: {error}")
 }
 
-#[cfg(any(not(feature = "cef"), test))]
+#[cfg(test)]
 fn update_in(xml: &str) -> Option<(String, String)> {
     let at = xml.find("<updatecheck")?;
     let tag = &xml[at..at + xml[at..].find('>')?];
@@ -103,7 +59,7 @@ fn update_in(xml: &str) -> Option<(String, String)> {
     Some((attribute("version")?, attribute("codebase")?))
 }
 
-#[cfg(any(not(feature = "cef"), test))]
+#[cfg(test)]
 pub fn later(a: &str, b: &str) -> bool {
     let numbers = |version: &str| -> Vec<u64> {
         version

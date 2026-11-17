@@ -15,8 +15,6 @@ const SKIPPED = new Set([
   'patches',
   'shots',
   'tauri-runtime-cef',
-  'tauri-runtime-wry',
-  'wry',
 ])
 
 const NOT_OURS = [

@@ -6,11 +6,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use tauri::{AppHandle, Manager};
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub(crate) mod mac;
-#[cfg(all(windows, not(feature = "cef")))]
-pub(crate) mod win;
-
 const FOLDER: &str = "carried";
 
 const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
@@ -174,7 +169,7 @@ pub async fn page_carry(
             &mut *CARRYING.lock().unwrap_or_else(PoisonError::into_inner),
             made,
         ));
-        Ok(cfg!(feature = "cef"))
+        Ok(true)
     })
     .await
     .map_err(|error| format!("the files could not be carried: {error}"))?
@@ -187,14 +182,12 @@ pub async fn page_carry_end() {
         .unwrap_or_else(PoisonError::into_inner)
         .take();
     crate::lane::off_the_runtime(move || {
-        #[cfg(feature = "cef")]
         shown::forget();
         drop_untaken(carried);
     })
     .await;
 }
 
-#[cfg(feature = "cef")]
 mod shown {
     use std::sync::{Mutex, PoisonError};
     use std::time::Duration;
@@ -266,7 +259,6 @@ mod shown {
     }
 }
 
-#[cfg(feature = "cef")]
 #[tauri::command]
 pub async fn page_carry_over(
     app: AppHandle,
@@ -288,18 +280,6 @@ pub async fn page_carry_over(
         taken();
     }
     Ok(dropped)
-}
-
-#[cfg(not(feature = "cef"))]
-#[tauri::command]
-#[allow(
-    unused_variables,
-    clippy::needless_pass_by_value,
-    clippy::unused_async,
-    reason = "a page under WebView2 or WebKit is handed the drag by the system itself"
-)]
-pub async fn page_carry_over(tab: String, phase: String, x: f64, y: f64) -> bool {
-    false
 }
 
 #[cfg(test)]
@@ -467,7 +447,6 @@ mod tests {
         assert!(root.join("new").is_dir());
     }
 
-    #[cfg(feature = "cef")]
     #[test]
     fn a_page_is_told_the_drag_entered_once_and_its_drop_after_it_moved() {
         use super::shown::steps;
@@ -480,7 +459,6 @@ mod tests {
         assert!(steps(None, "a", "leave").is_empty());
     }
 
-    #[cfg(feature = "cef")]
     #[test]
     fn a_page_is_handed_the_file_its_words_and_its_address() {
         use super::shown::data_of;

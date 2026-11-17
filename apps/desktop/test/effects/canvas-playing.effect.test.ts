@@ -1,13 +1,14 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 
-const Canvas = (await import('../../src/lib/Canvas.svelte')).default
-const { emptyCanvas, writeCanvas } = await import('../../src/lib/canvas/format')
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
+const Canvas = (await import('../../src/lib/canvas/src/Canvas.svelte')).default
+const { emptyCanvas, writeCanvas } = await import('@orden/markdown/canvas')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 
 let close: (() => void) | undefined
 
 afterEach(() => {
+  vi.restoreAllMocks()
   close?.()
   close = undefined
   document.body.replaceChildren()
@@ -21,6 +22,15 @@ function opened(file: string) {
   const nodes = [
     { id: 'clip', type: 'file' as const, file, x: 0, y: 0, width: 320, height: 180 },
     { id: 'words', type: 'text' as const, text: 'beside', x: 400, y: 0, width: 200, height: 80 },
+    ...Array.from({ length: 400 }, (_, at) => ({
+      id: `far${String(at)}`,
+      type: 'text' as const,
+      text: 'away',
+      x: 3000 + (at % 20) * 40,
+      y: Math.floor(at / 20) * 30,
+      width: 30,
+      height: 20,
+    })),
   ]
   const note = new NoteDoc(
     {
@@ -32,8 +42,13 @@ function opened(file: string) {
     },
     () => undefined,
   )
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(0, 0, 800, 600),
+  )
+  const tab = new Tab(note, 'pane')
+  tab.camera = { x: 0, y: 0, scale: 1 }
   const target = document.body.appendChild(document.createElement('div'))
-  const shown = mount(Canvas, { target, props: { tab: new Tab(note, 'pane'), focused: true } })
+  const shown = mount(Canvas, { target, props: { tab, focused: true } })
   close = () => void unmount(shown, { outro: false })
   flushSync()
   const host = target.querySelector<HTMLElement>('.canvas')

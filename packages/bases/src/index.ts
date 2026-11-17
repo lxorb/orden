@@ -1,5 +1,6 @@
 export * from './types'
 export { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
+export { lineOfTask } from './task-hash'
 export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './occurrence'
 export { answer, cellValue, groupName, orderId, placeOfKey, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
@@ -17,7 +18,6 @@ export {
   WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
-export { ACCOUNT_INBOX, INBOX_PATH, isInboxPath } from './inbox'
 export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'

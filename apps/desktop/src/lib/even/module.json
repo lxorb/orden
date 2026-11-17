@@ -1,0 +1,24 @@
+{
+  "name": "even",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "collab",
+    "glasses",
+    "glasses-choices",
+    "markdown",
+    "platform",
+    "ui-kit",
+    "settings",
+    "web-backend",
+    "ai-providers",
+    "scan",
+    "search",
+    "workspace",
+    "tasks-model",
+    "modes",
+    "panes",
+    "marks"
+  ]
+}

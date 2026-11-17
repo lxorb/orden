@@ -73,6 +73,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           key: mac-move
@@ -99,6 +100,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           key: mac-window

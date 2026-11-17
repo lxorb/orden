@@ -1,45 +1,75 @@
 <script lang="ts">
+  import { spaceArchiving } from './lib/spaces/src/api'
+  import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
-  import { scanHeadings } from './lib/outline'
-  import { moveSection } from './lib/sections'
-  import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
-  import { closeOnBack } from './lib/backstack.svelte'
-  import { keyboardStays, takesCaret } from './lib/caret'
+  import { moveSection, isDraft, scanHeadings } from './lib/documents/src/api'
+  import {
+    busy,
+    closeOnBack,
+    currentPlatform,
+    menu,
+    overlays,
+    pageHeight,
+    paneCorners,
+    prompt,
+    reloading,
+    said,
+    scrollerOf,
+    showField,
+    textFieldOf,
+    viewport,
+    escapeLeaves,
+    fullscreen,
+    keyboardStays,
+    takesCaret,
+    linkScroll,
+    type ScrollEnd,
+    systemMenu,
+    Door,
+  } from './lib/ui-kit/src/api'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
-  import { iconChoice } from './lib/icon-choice.svelte'
-  import { currentPlatform } from './lib/keys'
-  import { menu, textFieldOf } from './lib/menu.svelte'
-  import { overlays } from './lib/overlays'
-  import PaneTree from './lib/PaneTree.svelte'
-  import FirstScreen from './lib/FirstScreen.svelte'
-  import Sidebar from './lib/Sidebar.svelte'
-  import SizeBadge from './lib/SizeBadge.svelte'
-  import StorageWarning from './lib/StorageWarning.svelte'
-  import { watchTextSize } from './lib/text-size'
-  import UpdateNotice from './lib/UpdateNotice.svelte'
-  import { renamed } from './lib/renamed.svelte'
-  import { account } from './lib/account.svelte'
-  import { joining } from './lib/joining.svelte'
-  import { arriving } from './lib/arriving.svelte'
-  import { busy } from './lib/busy.svelte'
-  import FirstSync from './lib/FirstSync.svelte'
-  import Progress from './lib/Progress.svelte'
-  import { drawer, rightDrawer } from './lib/drawer.svelte'
-  import { swipeOpens } from './lib/swipe-opens'
-  import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
-  import { alone } from './lib/alone.svelte'
-  import { chrome } from './lib/glass/chrome.svelte'
-  import { paintCodePalette } from './lib/highlight'
-  import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
-  import { recovery } from './lib/recovery.svelte'
-  import { reloading } from './lib/reloading.svelte'
-  import { hasStatusBar } from './lib/regions'
-  import { pages } from './lib/pages/showing.svelte'
-  import { inRooms, rooms } from './lib/rooms.svelte'
-  import { said } from './lib/said.svelte'
-  import { search } from './lib/search.svelte'
-  import { prompt } from './lib/prompt.svelte'
-  import { hiddenKinds, settings } from './lib/settings.svelte'
+  import { OUTSIDE_FOLDER, whenLoaded } from '@orden/contracts'
+  import { iconChoice } from './lib/icon-picker/src/api'
+  import { PaneTree } from './lib/pane-tree/src/api'
+  import {
+    FirstScreen,
+    SizeBadge,
+    StorageWarning,
+    FirstSync,
+    Progress,
+    StatusBar,
+    PadColumn,
+    PullMark,
+  } from './lib/frame/src/api'
+  import { Sidebar } from './lib/sidebar/src/api'
+  import { loadWhatsNew, UpdateNotice, updates } from './lib/updates/src/api'
+  import { startup } from './lib/launch/src/api'
+  import { renamed } from './lib/launch/src/renamed.svelte'
+  import { account, arriving, usage } from './lib/accounts/src/api'
+  import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
+  import {
+    drawer,
+    drawerFollowing,
+    rightDrawer,
+    swipeOpens,
+    alone,
+    hasStatusBar,
+    paletteWords,
+    tabOverview,
+    workspace,
+    writeNew,
+    pull,
+  } from './lib/workspace/src/api'
+  import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
+  import { chrome, theme } from './lib/theme/src/api'
+  import { paintCodePalette } from './lib/highlight/src/api'
+  import { recovery } from './lib/history/src/api'
+  import { pages } from './lib/pages/src/api'
+  import { inRooms, rooms } from './lib/collab/src/api'
+  import { search } from './lib/search/src/api'
+  import { settings } from './lib/settings/src/api'
+  import { paletteDoor } from './lib/palette/src/api'
+  import { hiddenKinds } from './lib/gates/src/api'
   import {
     contextMenu,
     fillBar,
@@ -53,11 +83,8 @@
     importSheet,
     exportSheet,
     spacePickerDialog,
-    tabOverview,
     tabOverviewLayer,
     hostPickerDialog,
-    paletteDoor,
-    paletteWords,
     promptSheet,
     publishSheet,
     quickAddSheet,
@@ -68,56 +95,38 @@
     rewriteSheet,
     shareSheet,
     signInSheet,
-    firstSpaceDoor,
-    menuBarDoor,
     undoToastNotice,
     keysMovedNotice,
     outsideNotice,
     crashAsk,
     crashAskDue,
-    OUTSIDE,
-  } from './lib/surfaces.svelte'
-  import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
+  } from './lib/surfaces/src/api'
   import { start } from './lib/start'
-  import { startup } from './lib/startup.svelte'
-  import { sync } from './lib/sync.svelte'
-  import StatusBar from './lib/StatusBar.svelte'
-  import { paneCorners } from './lib/pane-corners.svelte'
-  import Titlebar from './lib/Titlebar.svelte'
-  import { modes } from './lib/modes.svelte'
-  import { links } from './lib/link-index.svelte'
-  import { updates } from './lib/updates.svelte'
-  import { usage } from './lib/usage.svelte'
-  import { invoke, isDesktop, isNative, platform } from './lib/tauri'
-  import { storedText } from './lib/stored'
-  import { theme } from './lib/theme.svelte'
-  import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
-  import { workspace } from './lib/workspace.svelte'
-  import { sidebarKey, used } from './lib/workspace/undo.svelte'
-  import { saveFront } from './lib/save-place/door'
-  import PadColumn from './lib/scratchpad/PadColumn.svelte'
-  import { shown as pad } from './lib/scratchpad/is.svelte'
-  import { isDraft } from './lib/workspace/drafts'
-  import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
-  import { shortcuts } from './lib/shortcuts.svelte'
-  import { toolbar } from './lib/toolbar.svelte'
-  import { pull } from './lib/pull.svelte'
-  import PullMark from './lib/PullMark.svelte'
-  import type { AppContext } from './lib/shortcuts/registry'
-  import { writeNew } from './lib/write-new'
-  import { gate } from './lib/onboarding/gate.svelte'
-  import Door from './lib/Door.svelte'
+  import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
+  import { sync } from './lib/sync-store/src/api'
+  import { Titlebar } from './lib/titlebar/src/api'
+  import { choices, modes, watchTextSize } from './lib/modes/src/api'
+  import { links } from './lib/link-index/src/api'
+  import { windowDocuments } from './lib/windows/src/api'
+  import { type ShownTab, views, viewShowing, WhenShown } from './lib/panes/src/api'
+  import { sidebarKey, used } from './lib/file-undo/src/api'
+  import { saveFront } from './lib/save-place/src/api'
+  import { shown as pad } from './lib/scratchpad/src/api'
+  import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
+  import { doubleTaps, shortcuts, toolbar } from './lib/shortcuts/src/api'
+  import type { AppContext } from './lib/shortcuts/src/api'
+  import { firstSpaceDoor, gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
 
   if (renamed.showing) void renameNotice.ask()
   if (isDesktop && !__EVEN_PLUGIN__) {
     setTimeout(() => {
-      void import('./lib/ai/keys-moved.svelte')
-        .then(({ keysMoved }) => keysMoved.check())
+      void import('./lib/ai-providers/src/api')
+        .then((one) => one.checkKeysMoved())
         .then((say) => (say ? keysMovedNotice.ask() : undefined))
     }, 3000)
   }
 
-  if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE) !== null) void outsideNotice.ask()
+  if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
 
   if (isDesktop && !__EVEN_PLUGIN__ && crashAskDue()) {
     void startup.turn('rooms').then(() => crashAsk.ask())
@@ -126,12 +135,12 @@
   $effect(() => {
     if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
     let stop: (() => void) | null = null
-    let gone = false
-    void import('./lib/apps/host.svelte').then(({ hostApps }) => {
-      if (!gone) stop = hostApps()
-    })
+    const off = whenLoaded(
+      () => import('./lib/apps/src/api'),
+      ({ hostApps }) => (stop = hostApps()),
+    )
     return () => {
-      gone = true
+      off()
       stop?.()
     }
   })
@@ -144,10 +153,11 @@
 
   const fabLabel = $derived(hiddenKinds.offers('note') ? 'New note' : 'New tab')
 
-  let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
-  let macMenuKey: typeof import('./lib/system-menu').macMenuKey = () => false
+  type SystemMenu = Awaited<ReturnType<typeof systemMenu>>
+  let keepsSystemMenu: SystemMenu['keepsSystemMenu'] = () => false
+  let macMenuKey: SystemMenu['macMenuKey'] = () => false
   if (currentPlatform() === 'mac') {
-    void import('./lib/system-menu').then((one) => {
+    void systemMenu().then((one) => {
       keepsSystemMenu = one.keepsSystemMenu
       macMenuKey = one.macMenuKey
     })
@@ -162,6 +172,8 @@
   const rightOpen = $derived(
     padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
   )
+  const leftShut = $derived(viewport.drawer || workspace.openOn('left') === null)
+  const rightShut = $derived(viewport.drawer || !rightOpen)
   const docked = $derived(
     viewport.drawer || bare || filled
       ? 0
@@ -207,7 +219,7 @@
   $effect(() => {
     const active = workspace.active
     const facts = active && { shown: active.shown, path: active.path, draft: isDraft(active.note) }
-    void import('./lib/window-document').then(({ windowDocument }) => {
+    return whenLoaded(windowDocuments, ({ windowDocument }) => {
       const inWindow = windowDocument(facts, onMac)
       document.title = inWindow.title
       if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
@@ -222,11 +234,17 @@
 
         shortcuts.receive(remote)
         toolbar.receive(remote)
-        void import('./lib/kind-choice').then((one) => one.receive(remote))
+        whenLoaded(
+          () => import('./lib/gates/src/api'),
+          (one) => one.receive(remote),
+        )
         recovery.receive(remote)
-        void import('./lib/space-archive').then((one) => one.receive(remote))
+        whenLoaded(spaceArchiving, (one) => void one.receive(remote))
         if (!__EVEN_PLUGIN__)
-          void import('./lib/chats/hush.svelte').then(({ hush }) => hush.receive(remote))
+          whenLoaded(
+            () => import('./lib/chats-client/src/api'),
+            ({ hush }) => hush.receive(remote),
+          )
       })
     }
   })
@@ -264,7 +282,7 @@
 
   $effect(() => watchTextSize())
 
-  $effect(() => workspace.oneDocument())
+  $effect(() => workspace.onePane())
 
   $effect(() => {
     const who = account.user?.id
@@ -359,13 +377,10 @@
     if (!host || !swipeOpens()) return
 
     let stop: (() => void) | null = null
-    let live = true
-    void import('./lib/drawer-follow').then((one) => {
-      if (live) stop = one.followDrawers(host)
-    })
+    const off = whenLoaded(drawerFollowing, (one) => (stop = one.followDrawers(host)))
 
     return () => {
-      live = false
+      off()
       stop?.()
     }
   })
@@ -419,6 +434,7 @@
         settings,
         setup: gate,
         modes,
+        choices,
         shortcuts,
         theme,
         toolbar,
@@ -426,20 +442,18 @@
         viewport,
         links,
         views,
-        terminals: () => import('./lib/terminal/sessions.svelte'),
+        terminals: () => import('./lib/terminal/src/api').then((one) => one.sessions()),
       },
     })
-    Object.assign(window, { nibApp: (window as unknown as { ordenApp: object }).ordenApp })
 
     void Promise.all([
-      import('./lib/importing.svelte'),
-      import('./lib/publishing.svelte'),
-      import('./lib/ai/store.svelte'),
-      import('./lib/ai/rewriting.svelte'),
+      import('./lib/import/src/api').then((one) => one.importingStore()),
+      import('./lib/publishing/src/api'),
+      import('./lib/ai-providers/src/api'),
+      rewritingStore(),
       import('./lib/sync-client/test/fake-engine.svelte'),
-      import('./lib/agents/settings/fake'),
-      import('./lib/wallpaper/wallpaper.svelte'),
-      import('./lib/themes/store.svelte'),
+      import('./lib/agents/src/api').then((one) => one.agentStandIn()),
+      import('./lib/theme-looks/src/api'),
     ]).then(
       ([
         { importing },
@@ -448,56 +462,54 @@
         { rewriting },
         sync2,
         { standIn },
-        { wallpaper },
-        { store },
+        { wallpaper, store },
       ]) => {
         Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
           tasks: () =>
             Promise.all([
-              import('./lib/rows/rows.svelte'),
-              import('./lib/views/open'),
-              import('./lib/workspace/write-file'),
-              import('./lib/rows/todo-lists'),
-            ]).then(([{ rows }, views, { writeFile }, { makeList }]) => ({
+              import('./lib/tasks-model/src/api'),
+              import('./lib/views/src/api').then((one) => one.baseOpening()),
+              import('./lib/rows/src/api'),
+              import('./lib/file-writes/src/api'),
+            ]).then(([{ todos }, { openTodos, openBaseFile }, { rows }, { writeFile }]) => ({
+              todos,
+              openTodos,
+              openBaseFile,
               rows,
-              ...views,
               writeFile,
-              makeList,
             })),
           chats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no chats in the Even Realities plugin'))
               : Promise.all([
-                  import('./lib/chats/store.svelte'),
-                  import('./lib/chats/view/open'),
+                  import('./lib/chats-client/src/api').then((one) => one.chatStore()),
+                  import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           time: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no time tracker in the Even Realities plugin'))
-              : import('./lib/time/time.svelte').then(({ time }) => time),
+              : import('./lib/time/src/api').then(({ time }) => time),
           agents: { standIn },
           ai,
           aiChats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
-              : import('./lib/ai/sidebar/chat.svelte').then(({ chat }) => chat),
+              : chatStore().then(({ chat }) => chat),
           aiVault: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
-              : Promise.all([import('./lib/ai/vault/start.svelte'), import('./lib/ai/keys')]).then(
-                  ([{ vault }, keys]) => ({
-                    vault,
-                    writeKey: keys.writeKey,
-                    readSecret: keys.readSecret,
-                  }),
-                ),
+              : import('./lib/ai-providers/src/api').then(({ vault, writeKey, readSecret }) => ({
+                  vault,
+                  writeKey,
+                  readSecret,
+                })),
           importing,
           publish,
           rewriting,
           sync2,
           wallpaper,
           themeStore: store,
-          downloads: () => import('./lib/web-tab/downloads.svelte').then((one) => one.downloads),
+          downloads: () => webDownloads().then((one) => one.downloads),
         })
       },
     )
@@ -539,7 +551,9 @@
     event.preventDefault()
     event.stopPropagation()
     if (!__EVEN_PLUGIN__) {
-      void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
+      void import('./lib/context-menu/src/api')
+        .then((one) => one.loadFieldMenu())
+        .then((one) => one.showFieldMenu(event, field))
     }
   }
 
@@ -669,7 +683,8 @@
   let untap: (() => void) | undefined
   void startup
     .turn('doors')
-    .then(() => import('./lib/tapped').then(({ hear }) => (untap = hear(appContext))))
+    .then(doubleTaps)
+    .then(({ hear }) => (untap = hear(appContext)))
   onDestroy(() => untap?.())
 
   async function showCommands() {
@@ -692,7 +707,8 @@
   if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
     void startup
       .turn('doors')
-      .then(menuBarDoor)
+      .then(() => import('./lib/native-menu/src/api'))
+      .then((one) => one.loadMenuBar())
       .then(({ followMenuBar }) =>
         followMenuBar(() => ({
           view,
@@ -773,6 +789,8 @@
       class="document"
       inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
       class:open={!!workspace.panel}
+      class:left-shut={leftShut}
+      class:right-shut={rightShut}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
       class:settling={drawer.settle !== null}
@@ -922,7 +940,7 @@
     {/if}
     {#if renamed.showing && renameNotice.asked}
       {#await renameNotice.asked then RenameNotice}
-        <RenameNotice />
+        <RenameNotice ongone={() => renamed.dismiss()} />
       {/await}
     {/if}
     {#if updates.ready}
@@ -956,12 +974,12 @@
 <SizeBadge />
 
 {#if !__EVEN_PLUGIN__}
-  <Door open={gate.showing} load={() => import('./lib/onboarding/Setup.svelte')}>
+  <Door open={gate.showing} load={loadSetup}>
     {#snippet children(Setup)}
       <Setup.default />
     {/snippet}
   </Door>
-  <Door open={gate.guiding} load={() => import('./lib/onboarding/Guide.svelte')}>
+  <Door open={gate.guiding} load={loadGuide}>
     {#snippet children(Guide)}
       <Guide.default />
     {/snippet}
@@ -1006,6 +1024,11 @@
 {#if shareSheet.asked}
   {#await shareSheet.asked then ShareSheet}
     <ShareSheet />
+  {/await}
+{/if}
+{#if updates.news}
+  {#await loadWhatsNew() then { default: WhatsNew }}
+    <WhatsNew {...updates.news} onclose={() => (updates.news = null)} />
   {/await}
 {/if}
 {#if publishSheet.asked}
@@ -1119,7 +1142,18 @@
     min-width: 0;
     min-height: 0;
     display: flex;
-    padding: 0 var(--card-inset) var(--card-inset);
+    padding: 0 var(--right-inset, var(--card-inset)) 0 var(--left-inset, var(--card-inset));
+    transition: padding var(--dur-base) var(--ease-out);
+  }
+
+  .document.left-shut {
+    --left-inset: 0px;
+    --left-edge: 0px;
+  }
+
+  .document.right-shut {
+    --right-inset: 0px;
+    --right-edge: 0px;
   }
 
   .panes.under-pad {

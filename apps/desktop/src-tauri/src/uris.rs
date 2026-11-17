@@ -30,7 +30,7 @@ pub fn watch(app: &AppHandle) {
 
         #[cfg(desktop)]
         handing(&opened, urls);
-        #[cfg(not(desktop))]
+        #[cfg(mobile)]
         let _ = opened.emit_to("main", OPENED, urls);
     });
 
@@ -135,7 +135,7 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     std::mem::take(&mut *urls)
 }
 
-const SCHEMES: [&str; 2] = ["orden:", "nib:"];
+const SCHEME: &str = "orden:";
 
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
     urls.iter()
@@ -146,10 +146,8 @@ fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
 
 fn is_ours(url: &str) -> bool {
     let url = url.trim_start();
-    SCHEMES.iter().any(|ours| {
-        url.get(..ours.len())
-            .is_some_and(|scheme| scheme.eq_ignore_ascii_case(ours))
-    })
+    url.get(..SCHEME.len())
+        .is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
 }
 
 #[cfg(test)]
@@ -241,9 +239,9 @@ mod tests {
     }
 
     #[test]
-    fn still_says_a_link_written_before_the_rename() {
-        assert_eq!(said(vec!["nib://open?path=Idea.md".to_string()]).len(), 1);
-        assert_eq!(said(vec!["NIB://search".to_string()]).len(), 1);
+    fn says_no_link_under_the_name_before_the_rename() {
+        assert!(said(vec!["nib://open?path=Idea.md".to_string()]).is_empty());
+        assert!(said(vec!["NIB://search".to_string()]).is_empty());
     }
 
     #[test]

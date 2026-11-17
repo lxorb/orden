@@ -112,7 +112,7 @@ async (base) => {
 
 EDIT = """
 async ([provider, quote, replace]) => {
-  const docs = await import('/src/lib/agents/docs/index.ts')
+  const docs = await import('/src/lib/agent-docs/src/index.ts')
   await docs.notes.editNote({ id: `orden-${provider}`, name: 'Fake' }, { path: 'Herons.md' }, [
     { at: { quote }, replace },
   ])
@@ -224,6 +224,11 @@ def drive(browser: Browser, scheme: str) -> None:
     type_and_send(page, "Second of two")
     waited(page, "document.querySelectorAll('.ask .queued').length === 1", "the queued message")
     shot(page, f"{tag}03-queued")
+    waiting = page.locator(".ask .when").all_inner_texts()
+    if waiting != ["Sends when the current reply finishes"]:
+        wrong(f"the queued message does not say it waits for the reply: {waiting}")
+    if not page.locator('.ask .queued [aria-label="Send into the running answer"]').count():
+        wrong("a model that takes words mid-answer offers no way to send the queued one in now")
     Model.pause = 0.02
     waited(page, f"document.querySelectorAll('.ask .said').length >= 4", "the queued message to go")
     idle(page)
@@ -508,14 +513,14 @@ BOX = """
 }
 """
 
-QUICK = "() => import('/src/lib/ai/quick-door.ts').then((door) => door.askQuickly())"
+QUICK = "() => import('/src/lib/ai-chat/src/api.ts').then((door) => door.askQuickly())"
 
 def menu_row(page: Page, words: str):
     return page.locator(".menu [role=menuitem]").filter(has_text=words).first
 
 STEPS = """
 async () => {
-  const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
+  const { chat } = await import('/src/lib/ai-chat/src/store/chat.svelte.ts')
   const thread = chat.thread
   const turn = [...thread.turns].reverse().find((one) => one.role === 'model')
   const ok = (text) => ({ text, images: [], error: false })
@@ -535,7 +540,7 @@ async () => {
 
 ASKING = """
 async () => {
-  const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
+  const { chat } = await import('/src/lib/ai-chat/src/store/chat.svelte.ts')
   const thread = chat.thread
   thread.turns.push({ id: 'you-ask', role: 'you', at: Date.now(), draft: { text: 'Shout the first words too', attachments: [] }, parts: [] })
   thread.turns.push({ id: 'model-ask', role: 'model', at: Date.now(), parts: [

@@ -1,0 +1,19 @@
+{
+  "name": "graph-view",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "camera",
+    "graph",
+    "graph-drawing",
+    "markdown",
+    "platform",
+    "scan",
+    "theme",
+    "ui-kit",
+    "space-kept",
+    "ui-controls",
+    "workspace",
+    "hints"
+  ]
+}

@@ -2,7 +2,8 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { note } from './reading-find-redraw-world.svelte'
 
-vi.mock('../../src/lib/reading/render', () => ({
+vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
+vi.mock('../../src/lib/reading/src/render', () => ({
   readingHtml: async (source: { text: string }) =>
     source.text
       .split('\n')
@@ -11,26 +12,31 @@ vi.mock('../../src/lib/reading/render', () => ({
   unreadableHtml: (text: string) => text,
   tagAnchor: (tag: string) => `#${tag}`,
 }))
-vi.mock('../../src/lib/reading/drawn', () => ({ inlineFiles: () => () => undefined }))
-vi.mock('../../src/lib/views/mount', () => ({
-  mountBases: (page: HTMLElement) => {
-    for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')
-    return () => undefined
-  },
+vi.mock('../../src/lib/views/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/views/src/api')>()),
+  baseMounting: () =>
+    Promise.resolve({
+      mountBases: (page: HTMLElement) => {
+        for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')
+        return () => undefined
+      },
+    }),
 }))
-vi.mock('../../src/lib/scrollbar', () => ({ scrollbar: () => ({ destroy: () => undefined }) }))
-vi.mock('../../src/lib/sharing.svelte', () => ({ trustsHtmlIn: () => false }))
-vi.mock('../../src/lib/link-index.svelte', () => ({
+vi.mock('../../src/lib/ui-kit/src/scrollbar', () => ({
+  scrollbar: () => ({ destroy: () => undefined }),
+}))
+vi.mock('../../src/lib/sharing/src/api', () => ({ trustsHtmlIn: () => false }))
+vi.mock('../../src/lib/link-index/src/api', () => ({
   links: { version: 0, index: () => null, locksSeen: () => '' },
 }))
-vi.mock('../../src/lib/workspace.svelte', () => ({
+vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     rootHolding: () => null,
     notePlace: () => undefined,
     toggleReading: () => undefined,
   },
 }))
-vi.mock('../../src/lib/shortcuts.svelte', () => ({
+vi.mock('../../src/lib/shortcuts/src/api', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) => id === 'edit.find' && event.key === 'f',
     tooltip: (label: string) => label,
@@ -40,7 +46,7 @@ vi.mock('../../src/lib/shortcuts.svelte', () => ({
 
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const Reading = (await import('../../src/lib/Reading.svelte')).default
+const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
 
 const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
 

@@ -23,7 +23,7 @@ describe('the note’s corners', () => {
   })
 
   test('which the focused pane draws, inside its own box', () => {
-    const pane = read('lib/Pane.svelte')
+    const pane = read('lib/pane-tree/src/Pane.svelte')
     expect(pane).toMatch(
       /\{#if paneCorners\.draw && workspace\.panes\.focusedId === pane\.id\}\s*\{@render paneCorners\.draw\(\)\}/,
     )
@@ -32,20 +32,24 @@ describe('the note’s corners', () => {
   })
 
   test('none of them is placed against the window', () => {
-    for (const path of ['lib/StatusBar.svelte', 'lib/PagesZoom.svelte', 'lib/CanvasBar.svelte']) {
+    for (const path of [
+      'lib/frame/src/StatusBar.svelte',
+      'lib/pages/src/PagesZoom.svelte',
+      'lib/canvas/src/CanvasBar.svelte',
+    ]) {
       expect(read(path), path).not.toMatch(/position:\s*fixed/)
     }
   })
 
   test('a bar docked to an edge finds the edge in its own frame, not the window’s', () => {
-    const bar = read('lib/CanvasBar.svelte')
+    const bar = read('lib/canvas/src/CanvasBar.svelte')
     expect(bar).not.toMatch(/nearestDock\([^)]*window\.inner/)
     expect(bar).toContain('frameOf(cluster)')
   })
 
   test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
-    expect(read('lib/PaneTree.svelte')).toContain('tracks(split)')
-    const tree = read('lib/workspace/pane-tree.ts')
+    expect(read('lib/pane-tree/src/PaneTree.svelte')).toContain('tracks(split)')
+    const tree = read('lib/panes/src/pane-tree.ts')
     const share =
       /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
     expect(share).toContain('var(--card-gap)')

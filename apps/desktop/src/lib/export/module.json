@@ -1,0 +1,28 @@
+{
+  "name": "export",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "export-formats",
+    "files-out",
+    "markdown",
+    "platform",
+    "sharing",
+    "theme",
+    "themes",
+    "ui-controls",
+    "ui-kit",
+    "pages",
+    "plane",
+    "shortcuts",
+    "web-backend",
+    "link-index",
+    "tab-kinds",
+    "protect",
+    "workspace",
+    "fences",
+    "highlight",
+    "modes"
+  ]
+}

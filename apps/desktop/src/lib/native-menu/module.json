@@ -1,0 +1,24 @@
+{
+  "name": "native-menu",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "double-tap",
+    "editor",
+    "gates",
+    "modes",
+    "platform",
+    "shortcuts",
+    "ui-kit",
+    "usage",
+    "workspace",
+    "commands",
+    "export-formats",
+    "markdown",
+    "protect",
+    "tab-fill",
+    "ui-controls",
+    "updates"
+  ]
+}

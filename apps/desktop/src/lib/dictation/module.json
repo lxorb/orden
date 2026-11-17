@@ -1,0 +1,20 @@
+{
+  "name": "dictation",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "ai-providers",
+    "crate",
+    "editor",
+    "markdown",
+    "platform",
+    "sharing",
+    "shortcuts",
+    "ui-kit",
+    "link-index",
+    "workspace",
+    "commands",
+    "panes"
+  ]
+}

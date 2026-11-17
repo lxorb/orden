@@ -5,9 +5,8 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - apps/desktop/src-tauri/src/web_visual.rs
       - apps/desktop/src-tauri/src/web_tabs.rs
-      - apps/desktop/src-tauri/windows/wry/**
+      - apps/desktop/src-tauri/linux/tauri-runtime-cef/src/**
       - apps/desktop/src/lib/web-tab/**
       - scripts/web-under-drive.py
       - scripts/overview-drive.py
@@ -50,7 +49,9 @@ jobs:
         run: |
           source scripts/edge-profile.sh
           config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-          pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+          bash scripts/linux-cef.sh tauri build --target x86_64-pc-windows-msvc --no-bundle \
+            --ignore-version-mismatches --config "$config"
+          bash scripts/cef-beside.sh apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release
 
       - name: Driven
         run: |

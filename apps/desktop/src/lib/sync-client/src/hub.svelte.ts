@@ -1,7 +1,6 @@
 import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { untrack } from 'svelte'
-import { BEAT_EVERY, roomDelay } from '../../backoff'
-import { heldForLife } from '../../locks'
+import { BEAT_EVERY, roomDelay, heldForLife } from '../../platform/src/api'
 import { madeDeviceId } from './made-device'
 import { account, invoke, isDesktop, platform, remote } from './ports'
 import {
@@ -197,7 +196,6 @@ export class Hub {
         {
           opened: () => {
             clearTimeout(this.opening)
-            this.tries = 0
             this.quiet = 0
             void this.hello()
             this.stopBeat?.()
@@ -241,6 +239,7 @@ export class Hub {
       this.again()
       return
     }
+    this.tries = 0
     this.write(BEAT)
   }
 
@@ -341,7 +340,7 @@ async function deviceName(): Promise<string> {
     const named = await invoke<unknown>('device_name').catch(() => null)
     if (typeof named === 'string' && named.trim()) return named.trim()
   }
-  const { deviceName: platformName } = await import('../../rooms/who')
+  const { deviceName: platformName } = await import('../../collab/src/api')
   return platformName('Browser')
 }
 

@@ -6,10 +6,12 @@ import { describe, expect, test } from 'vitest'
 const LIB = fileURLToPath(new URL('../src/lib/', import.meta.url))
 
 const FILES = [
-  'workspace.svelte.ts',
-  ...readdirSync(join(LIB, 'workspace'))
+  ...readdirSync(join(LIB, 'workspace/src'))
     .filter((name) => name.endsWith('.ts') && !name.endsWith('.test.ts') && name !== 'moved.ts')
-    .map((name) => `workspace/${name}`),
+    .map((name) => `workspace/src/${name}`),
+  ...readdirSync(join(LIB, 'session/src'))
+    .filter((name) => name.endsWith('.ts') && !name.endsWith('.test.ts'))
+    .map((name) => `session/src/${name}`),
 ]
 
 const PATH = String.raw`[\w$.?]*(?:[pP]ath|PATH|[rR]oot|[fF]older|\bdir)\b(?!\s*\()`

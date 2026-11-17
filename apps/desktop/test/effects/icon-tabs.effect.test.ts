@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -48,11 +48,11 @@ Element.prototype.animate = () =>
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { iconTabs } = await import('../../src/lib/tab-strip/icon-tabs.svelte')
-const { OPENED_LEAST, WIDTH } = await import('../../src/lib/tab-strip/layout')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-await import('../../src/lib/tab-strip/closing.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { iconTabs } = await import('../../src/lib/tab-strip/src/icon-tabs.svelte')
+const { OPENED_LEAST, WIDTH } = await import('../../src/lib/tab-strip/src/layout')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
+await import('../../src/lib/tab-strip/src/closing.svelte')
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

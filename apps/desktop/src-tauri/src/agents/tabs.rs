@@ -1,23 +1,15 @@
 use std::sync::atomic::{AtomicU64, Ordering};
-#[cfg(all(windows, not(feature = "cef")))]
-use std::sync::mpsc::sync_channel;
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Emitter as _, Url};
-#[cfg(all(windows, not(feature = "cef")))]
-use tauri::{LogicalPosition, LogicalSize, Manager as _, WebviewBuilder, WebviewUrl};
 
-#[cfg(any(windows, feature = "cef"))]
 use super::cdp;
 use super::engines::{self, View};
 use super::quiet::{self, Owner};
 use super::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
 
 pub const LABEL: &str = "agent-";
-
-#[cfg(all(windows, not(feature = "cef")))]
-const AWAY: f64 = -10_000.0;
 
 pub const WIDTH: u32 = 1280;
 pub const HEIGHT: u32 = 800;
@@ -326,7 +318,6 @@ pub fn said(app: &AppHandle, tab: &Tab) {
     );
 }
 
-#[cfg(any(windows, feature = "cef"))]
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let Some(reader) = super::engines::reader_of(tab.store_name.as_deref()) else {
         return build_page(app, tab, address);
@@ -345,27 +336,6 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     Ok(())
 }
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    build_page(app, tab, address)
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    super::engines::webkit::build(
-        app,
-        &Owner {
-            agent: tab.agent.clone(),
-            tab: tab.id.clone(),
-            label: tab.label(),
-        },
-        tab.store_name.as_deref(),
-        tab.size,
-        address.map(Url::as_str),
-    )
-}
-
-#[cfg(feature = "cef")]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     super::engines::cef::build(
         app,
@@ -378,170 +348,6 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
         tab.size,
         address.map(Url::as_str),
     )
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    let window =
-        super::shell::host(app).ok_or("Orden has no window for an agent's tab to live in")?;
-    let label = tab.label();
-    let blank: Url = "about:blank"
-        .parse()
-        .map_err(|error| format!("no blank page: {error}"))?;
-    let builder = WebviewBuilder::new(label.clone(), WebviewUrl::External(blank))
-        .focused(false)
-        .devtools(false)
-        .disable_drag_drop_handler();
-    let builder = crate::engine::web_store(builder, app, tab.store_name.as_deref())?;
-
-    let (answered, answer) = sync_channel::<Result<(), String>>(1);
-    let building = app.clone();
-    let owner = Owner {
-        agent: tab.agent.clone(),
-        tab: tab.id.clone(),
-        label: label.clone(),
-    };
-    let store = tab.store_name.clone();
-    let (width, height) = tab.size;
-    let going = address.map(ToString::to_string);
-    app.run_on_main_thread(move || {
-        let builder =
-            crate::web_tabs::on_shared_session(builder, &window, &building, store.as_deref());
-        let made = crate::engine::add_child(
-            &window,
-            builder,
-            LogicalPosition::new(AWAY, AWAY),
-            LogicalSize::new(f64::from(width), f64::from(height)),
-        )
-        .map_err(|error| format!("the page could not be built: {error}"));
-        let made = made.and_then(|view| {
-            let setting = building.clone();
-            let telling = answered.clone();
-            crate::engine::with_platform!(view, move |platform| {
-                crate::web_tabs::keep_session(store.as_deref(), &platform);
-                let Some(core) = cdp::core_of(&platform) else {
-                    let _ = telling.try_send(Ok(()));
-                    return;
-                };
-                crate::web_worlds::cleared(&platform, "", move |_| {
-                    quiet::quieten(&setting, &core, &owner);
-                    cdp::follow(&core, &owner.label);
-                    listen(&setting, &core, &owner);
-                    match going {
-                        Some(url) => navigate_now(&core, &url),
-                        None => quiet::hand_over(&owner.tab, Some(&core)),
-                    }
-                    let _ = telling.try_send(Ok(()));
-                });
-            })
-            .map_err(|error| format!("the page could not be set up: {error}"))
-        });
-        if made.is_err() {
-            let _ = answered.try_send(made);
-        }
-    })
-    .map_err(|error| format!("the window could not be reached: {error}"))?;
-
-    answer
-        .recv_timeout(BUILDING)
-        .map_err(|_| "the page was never built".to_string())?
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the page is sent through WebView2's own COM interface"
-)]
-fn navigate_now(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2, url: &str) {
-    let _ = unsafe { core.Navigate(&windows_core::HSTRING::from(url)) };
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "navigation and title events are WebView2's own, reached through its COM interfaces"
-)]
-fn listen(
-    app: &AppHandle,
-    core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2,
-    owner: &Owner,
-) {
-    use webview2_com::{
-        DocumentTitleChangedEventHandler, NavigationCompletedEventHandler,
-        NavigationStartingEventHandler,
-    };
-    use windows_core::PWSTR;
-
-    let starting = {
-        let (owner, app) = (owner.clone(), app.clone());
-        NavigationStartingEventHandler::create(Box::new(move |_, args| {
-            let Some(args) = args else {
-                return Ok(());
-            };
-            let mut uri = PWSTR::null();
-            let url = unsafe {
-                args.Uri(&raw mut uri)?;
-                webview2_com::take_pwstr(uri)
-            };
-            if let Err(why) = may_open(&owner, &url) {
-                unsafe { args.SetCancel(true)? };
-                cdp::heard(&owner.label)
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .say(
-                        "warning",
-                        format!("Orden stopped the page going to {url}: {why}"),
-                    );
-                return Ok(());
-            }
-            set(&owner.tab, |one| one.loading = true);
-            let _ = &app;
-            Ok(())
-        }))
-    };
-    let completed = {
-        let (owner, app) = (owner.clone(), app.clone());
-        NavigationCompletedEventHandler::create(Box::new(move |sender, _| {
-            let mut uri = PWSTR::null();
-            let url = sender.and_then(|core| {
-                unsafe { core.Source(&raw mut uri).ok()? };
-                Some(webview2_com::take_pwstr(uri))
-            });
-            set(&owner.tab, |one| {
-                one.loading = false;
-                if let Some(url) = url {
-                    one.url = url;
-                }
-            });
-            if let Some(tab) = tabs().iter().find(|one| one.id == owner.tab).cloned() {
-                said(&app, &tab);
-            }
-            Ok(())
-        }))
-    };
-    let titled = {
-        let (owner, app) = (owner.clone(), app.clone());
-        DocumentTitleChangedEventHandler::create(Box::new(move |sender, _| {
-            let mut title = PWSTR::null();
-            let title = sender.and_then(|core| {
-                unsafe { core.DocumentTitle(&raw mut title).ok()? };
-                Some(webview2_com::take_pwstr(title))
-            });
-            if let Some(title) = title {
-                set(&owner.tab, |one| one.title = title);
-            }
-            if let Some(tab) = tabs().iter().find(|one| one.id == owner.tab).cloned() {
-                said(&app, &tab);
-            }
-            Ok(())
-        }))
-    };
-    let mut token = 0i64;
-    unsafe {
-        let _ = core.add_NavigationStarting(&starting, &raw mut token);
-        let _ = core.add_NavigationCompleted(&completed, &raw mut token);
-        let _ = core.add_DocumentTitleChanged(&titled, &raw mut token);
-    }
 }
 
 pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
@@ -568,48 +374,6 @@ pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
     Some(id)
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn build_popup(app: &AppHandle, id: &str) {
-    let Some(tab) = tabs().iter().find(|one| one.id == id).cloned() else {
-        quiet::hand_over(id, None);
-        return;
-    };
-    let building = app.clone();
-    std::thread::spawn(move || {
-        if build(&building, &tab, None).is_err() {
-            let id = tab.id.clone();
-            tabs().retain(|one| one.id != id);
-            let _ = building.run_on_main_thread(move || quiet::hand_over(&id, None));
-        } else {
-            said(&building, &tab);
-        }
-    });
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub fn open_popup(app: &AppHandle, opener: &Owner, url: &str) {
-    let Ok(address) = web_address(url) else {
-        return;
-    };
-    if may_open(opener, url).is_err() {
-        return;
-    }
-    let Some(id) = reserve_popup(opener, url) else {
-        return;
-    };
-    let Some(tab) = tabs().iter().find(|one| one.id == id).cloned() else {
-        return;
-    };
-    let building = app.clone();
-    std::thread::spawn(move || {
-        if build(&building, &tab, Some(&address)).is_err() {
-            tabs().retain(|one| one.id != tab.id);
-        } else {
-            said(&building, &tab);
-        }
-    });
-}
-
 static SHOWN: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 pub fn shown_as(id: &str) -> Option<String> {
@@ -621,62 +385,6 @@ pub fn shown_as(id: &str) -> Option<String> {
         .map(|(_, reader)| reader.clone())
 }
 
-#[allow(
-    unsafe_code,
-    reason = "the page's settings are WebView2's own, reached through its COM interfaces"
-)]
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
-    let tab = tabs()
-        .iter()
-        .find(|one| one.id == id)
-        .cloned()
-        .ok_or("there is no such agent tab")?;
-    let label = tab.label();
-    let view = app.get_webview(&label).ok_or(PARKED)?;
-    tabs().retain(|one| one.id != id);
-    SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .push((id.to_string(), reader.to_string()));
-    let _ = view.with_webview(|platform| {
-        let Some(core) = cdp::core_of(&platform) else {
-            return;
-        };
-        unsafe {
-            use webview2_com::Microsoft::Web::WebView2::Win32::{
-                ICoreWebView2Settings3, ICoreWebView2Settings4, ICoreWebView2_8,
-            };
-            use windows_core::Interface as _;
-            if let Ok(settings) = core.Settings() {
-                let _ = settings.SetAreDefaultScriptDialogsEnabled(true);
-                let _ = settings.SetAreDefaultContextMenusEnabled(true);
-                let _ = settings.SetAreDevToolsEnabled(true);
-                if let Ok(three) = settings.cast::<ICoreWebView2Settings3>() {
-                    let _ = three.SetAreBrowserAcceleratorKeysEnabled(true);
-                }
-                if let Ok(four) = settings.cast::<ICoreWebView2Settings4>() {
-                    let _ = four.SetIsGeneralAutofillEnabled(true);
-                    let _ = four.SetIsPasswordAutosaveEnabled(true);
-                }
-            }
-            if let Ok(eight) = core.cast::<ICoreWebView2_8>() {
-                let _ = eight.SetIsMuted(false);
-            }
-        }
-    });
-    crate::web_tabs::hand_page_to(app, reader, &label, tab.store_name.clone());
-    let _ = app.emit(
-        EVENT,
-        Event::Closed {
-            agent: tab.agent,
-            id: tab.id,
-        },
-    );
-    Ok(())
-}
-
-#[cfg(feature = "cef")]
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     if held(id).is_none() {
         return Err("there is no such agent tab".into());
@@ -687,19 +395,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
         .push((id.to_string(), reader.to_string()));
     close(app, id);
     Err("an agent's page on Orden's own Chromium has no window: the tab loads its address".into())
-}
-
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
-    if !tabs().iter().any(|one| one.id == id) {
-        return Err("there is no such agent tab".into());
-    }
-    SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .push((id.to_string(), reader.to_string()));
-    close(app, id);
-    Err("an agent's page on WKWebView is shown as a reader's tab of its own: the tab loads its address".into())
 }
 
 fn start_ticking(app: &AppHandle) {

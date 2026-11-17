@@ -1,0 +1,25 @@
+{
+  "name": "palette",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "markdown",
+    "matching",
+    "platform",
+    "scan",
+    "sharing",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "usage",
+    "commands",
+    "link-index",
+    "documents",
+    "workspace",
+    "gates",
+    "hints",
+    "marks",
+    "glyphs"
+  ]
+}

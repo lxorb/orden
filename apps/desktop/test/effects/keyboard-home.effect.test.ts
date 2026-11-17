@@ -4,8 +4,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 const asked: string[] = []
 let pageTakesIt = false
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   invoke: (command: string) => {
     asked.push(command)
@@ -17,8 +17,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const { overlays } = await import('../../src/lib/overlays')
-const { adrift, pressedThrough } = await import('../../src/lib/keyboard-home')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
+await import('../../src/lib/ui-controls/src/keyboard-home')
+const { adrift, pressedThrough } = await import('../../src/lib/ui-controls/src/api')
 
 let editor: EditorView
 let terminal: HTMLTextAreaElement

@@ -32,53 +32,6 @@ async fn answered(heard: &mut tauri::async_runtime::Receiver<bool>, patience: Du
         .unwrap_or(false)
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-mod engine {
-    use tauri::Webview;
-    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_3;
-    use webview2_com::{ExecuteScriptCompletedHandler, TrySuspendCompletedHandler};
-    use windows_core::{Interface as _, HSTRING};
-
-    use super::{Said, PAUSE, PLAY};
-
-    #[allow(
-        unsafe_code,
-        reason = "the engine's own suspend is reached through its COM interfaces"
-    )]
-    pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
-        view.with_webview(move |platform| {
-            let Ok(core) = (unsafe { platform.controller().CoreWebView2() }) else {
-                return;
-            };
-            let Ok(three) = core.cast::<ICoreWebView2_3>() else {
-                return;
-            };
-
-            if paused {
-                let then = ExecuteScriptCompletedHandler::create(Box::new(move |_, _| {
-                    if said.is_closed() {
-                        return Ok(());
-                    }
-                    let done = TrySuspendCompletedHandler::create(Box::new(move |done, frozen| {
-                        let _ = said.try_send(done.is_ok() && frozen);
-                        Ok(())
-                    }));
-                    unsafe { three.TrySuspend(&done) }
-                }));
-                let _ = unsafe { core.ExecuteScript(&HSTRING::from(PAUSE), &then) };
-                return;
-            }
-
-            let woke = unsafe { three.Resume() };
-            let _ = said.try_send(woke.is_ok());
-            let done = ExecuteScriptCompletedHandler::create(Box::new(|_, _| Ok(())));
-            let _ = unsafe { core.ExecuteScript(&HSTRING::from(PLAY), &done) };
-        })
-        .map_err(|error| format!("that page could not be reached: {error}"))
-    }
-}
-
-#[cfg(feature = "cef")]
 mod engine {
     use serde_json::json;
     use tauri::Webview;
@@ -104,24 +57,6 @@ mod engine {
         };
         crate::engine::devtools::tell(view, None, told);
         let _ = said.try_send(true);
-        Ok(())
-    }
-}
-
-#[cfg(all(not(windows), not(feature = "cef")))]
-mod engine {
-    use tauri::Webview;
-
-    use super::{Said, PAUSE, PLAY};
-
-    #[allow(
-        clippy::needless_pass_by_value,
-        reason = "the same answer as the other engines'"
-    )]
-    pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
-        view.eval(if paused { PAUSE } else { PLAY })
-            .map_err(|error| format!("that page could not be reached: {error}"))?;
-        let _ = said.try_send(!paused);
         Ok(())
     }
 }

@@ -1,9 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest'
-import Canvas from '../../src/lib/Canvas.svelte'
-import { emptyCanvas, readCanvas, writeCanvas } from '../../src/lib/canvas/format'
-import { CanvasStore } from '../../src/lib/canvas/store.svelte'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import Canvas from '../../src/lib/canvas/src/Canvas.svelte'
+import { emptyCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
+import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 class NoLayout {
   observe() {

@@ -1,0 +1,19 @@
+{
+  "name": "publishing",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "files-out",
+    "platform",
+    "theme",
+    "theme-looks",
+    "ui-controls",
+    "ui-kit",
+    "markdown",
+    "workspace",
+    "fences",
+    "sync-store",
+    "marks"
+  ]
+}

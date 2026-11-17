@@ -10,7 +10,6 @@ export {
 export { aloneHere } from './budget'
 export { connect } from './connect.svelte'
 export type { Core } from './core'
-export { syncDeletes } from './deletes'
 export { default as HeldMark } from './HeldMark.svelte'
 export { deviceId, hub } from './hub.svelte'
 export { type Leadership, leadSync } from './lead'
@@ -57,6 +56,9 @@ export {
   type WebRow,
   type WrittenRow,
 } from './store'
+export { deviceActivity, startHere } from './here'
 export { unsynced } from './unsynced.svelte'
 export { watchFolders } from './watching'
 export type { Disk, FileKind, World } from './world'
+
+export const papersCarrying = () => import('./papers-carrying')

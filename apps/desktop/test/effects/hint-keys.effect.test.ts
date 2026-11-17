@@ -1,7 +1,10 @@
 import { flushSync, mount } from 'svelte'
 import { expect, test } from 'vitest'
-import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
-import { settings } from '../../src/lib/settings.svelte'
+import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
+
+providePort('settings.window', settings)
 
 Element.prototype.animate = () => ({ finished: Promise.resolve() }) as unknown as Animation
 globalThis.ResizeObserver = class {

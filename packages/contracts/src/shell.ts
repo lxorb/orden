@@ -1,6 +1,3 @@
-import type { CommandId } from './ids'
-import type { Result } from './result'
-
 export type FileMark =
   | 'note'
   | 'folder'
@@ -66,22 +63,17 @@ export function isTabKind(value: unknown): value is TabKind {
   return typeof value === 'string' && (TAB_KINDS as readonly string[]).includes(value)
 }
 
-export interface TabKindExtension {
-  readonly kind: TabKind
-  readonly traits: TabKindTraits
-}
-
 export interface CommandExtension {
-  readonly id: CommandId
+  readonly id: string
   readonly label: string
-  readonly hint?: string
+  readonly hint?: string | undefined
   readonly also?: readonly string[]
   readonly byHand?: boolean
   readonly ownWindow?: boolean
   readonly checked?: boolean
   readonly danger?: boolean
   readonly disabled?: boolean
-  readonly run: () => void | Promise<void>
+  readonly run: () => void
 }
 
 export type SettingsSectionId =
@@ -106,42 +98,9 @@ export type SettingsSectionId =
   | 'import'
   | 'export'
 
-export interface SettingsSectionExtension {
-  readonly id: SettingsSectionId
-  readonly label: string
-  readonly icon: string
-}
-
 export type SidebarPanelId =
   'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
 
 export type PanelSide = 'left' | 'right'
 
-export interface SidebarPanelExtension {
-  readonly id: SidebarPanelId
-  readonly side: PanelSide
-  readonly label: string
-}
-
 export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
-
-export interface ShellExtensions {
-  readonly tabKinds: readonly TabKindExtension[]
-  readonly commands: readonly CommandExtension[]
-  readonly settingsSections: readonly SettingsSectionExtension[]
-  readonly sidebarPanels: readonly SidebarPanelExtension[]
-}
-
-export interface ShellRegistry {
-  tabKind(extension: TabKindExtension): Result<void>
-  command(extension: CommandExtension): Result<void>
-  settingsSection(extension: SettingsSectionExtension): Result<void>
-  sidebarPanel(extension: SidebarPanelExtension): Result<void>
-}
-
-export const EMPTY_EXTENSIONS: ShellExtensions = {
-  tabKinds: [],
-  commands: [],
-  settingsSections: [],
-  sidebarPanels: [],
-}

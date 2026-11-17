@@ -10,8 +10,8 @@ const SPACES = [
   { name: 'Home', path: '/spaces/Home' },
 ]
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -25,7 +25,7 @@ const PLAN = '/spaces/Work/Plan.md'
 const FOOD = '/spaces/Home/Food.md'
 
 async function run() {
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   const onScreen = () =>
     workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
   return { workspace, onScreen }
@@ -59,7 +59,7 @@ test('a set comes back on the tab it was left on when one before it has gone', a
   vi.resetModules()
   const { workspace, onScreen } = await run()
   await workspace.restore()
-  const { tabSets } = await import('../../src/lib/workspace/spaces')
+  const { tabSets } = await import('../../src/lib/workspace/src/spaces')
   await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Notes.md'), {
     timeout: 15_000,

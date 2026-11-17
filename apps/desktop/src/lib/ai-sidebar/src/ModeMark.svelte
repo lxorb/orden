@@ -1,0 +1,28 @@
+<script lang="ts">
+  import type { Mode } from '../../ai-providers/src/api'
+
+  const { mode }: { mode: Mode } = $props()
+
+  const PATHS: Record<Mode, string> = {
+    approve:
+      'M4.4 7.2V3.6a.8.8 0 0 1 1.6 0v2.8V2.8a.8.8 0 0 1 1.6 0v3.6V3.4a.8.8 0 0 1 1.6 0v4.4l.5-.9a.8.8 0 0 1 1.4.8l-1.6 2.7a2.4 2.4 0 0 1-2.1 1.2H6.6a2.2 2.2 0 0 1-2.2-2.2z',
+    auto: 'M7.4 1.6L3.2 7.4h3.2l-.8 4 4.2-5.8H6.6z',
+    full: 'M3.2 6.2h6.6v5H3.2zM4.6 6.2V4.4a1.9 1.9 0 0 1 3.6-.8',
+    plan: 'M2.4 3.5h.01M2.4 6.5h.01M2.4 9.5h.01M4.6 3.5h6M4.6 6.5h6M4.6 9.5h4',
+  }
+</script>
+
+<svg class="mark" viewBox="0 0 13 13" aria-hidden="true"><path d={PATHS[mode]} /></svg>
+
+<style>
+  .mark {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>

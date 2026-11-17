@@ -1,0 +1,5 @@
+{
+  "name": "usage",
+  "layer": "shell",
+  "dependsOn": ["contracts", "accounts", "platform", "sync-core", "updates", "workspace"]
+}

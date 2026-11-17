@@ -28,13 +28,13 @@ runs:
         toolchain: stable
         targets: ${{ inputs.rust-targets || inputs.target }}
 
-    - name: The desktop manifest, CEF on Linux and macOS
-      if: runner.os != 'Windows'
+    - name: The desktop manifest
       shell: bash
       run: bash scripts/linux-cef.sh
 
     - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       with:
+        env-vars: ImageVersion
         workspaces: |
           apps/desktop/src-tauri
         key: ${{ inputs.target }}
@@ -48,7 +48,7 @@ runs:
         sudo apt-get install -y libgtk-4-dev libdbus-1-dev libnss3 cmake ninja-build patchelf xdg-utils squashfs-tools
 
     - name: The CEF distribution
-      if: runner.os == 'Linux'
+      if: runner.os != 'macOS'
       shell: bash
       run: bash scripts/linux-cef.sh cef
 

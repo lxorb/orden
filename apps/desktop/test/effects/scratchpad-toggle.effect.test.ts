@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -35,15 +35,18 @@ globalThis.ResizeObserver = class {
 }
 
 const { Disk } = await import('../disk')
-const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
-const { default: Sidebar } = await import('../../src/lib/Sidebar.svelte')
-const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/ScratchpadCard.svelte')
-const { shown, toggleScratchpad } = await import('../../src/lib/scratchpad/is.svelte')
-const { scratchpad } = await import('../../src/lib/scratchpad/pad')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { menu } = await import('../../src/lib/menu.svelte')
-const { tabMenu } = await import('../../src/lib/tab-strip/menu')
-type MenuEntry = import('../../src/lib/menu-item').MenuEntry
+const { Titlebar } = await import('../../src/lib/titlebar/src/api')
+const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')
+await (await import('../sidebar-parts')).registerSidebarParts()
+const { loadScratchpadCard, pad, shown, toggleScratchpad } =
+  await import('../../src/lib/scratchpad/src/api')
+const { default: ScratchpadCard } = await loadScratchpadCard()
+const scratchpad = await pad()
+const { workspace } = await import('../../src/lib/workspace/src/api')
+await import('../../src/lib/workspace-ports')
+const { menu } = await import('../../src/lib/ui-kit/src/api')
+const { tabMenu } = await import('../../src/lib/tab-strip/src/menu')
+type MenuEntry = import('../../src/lib/ui-kit/src/menu-item').MenuEntry
 
 let target: HTMLElement
 let undo: (() => void)[] = []
@@ -117,7 +120,7 @@ test('open or shut, the bar has the button and the side none', () => {
 })
 
 test('a phone’s bar has no switch of the scratchpad’s', async () => {
-  const { viewport } = await import('../../src/lib/viewport.svelte')
+  const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
   viewport.device = 'phone'
   undo.push(() => (viewport.device = 'desktop'))
   bar()
@@ -294,7 +297,7 @@ test("a note in a space keeps the rows the scratchpad's switch leaves out", asyn
 test('a scratchpad that will not read is never opened empty', async () => {
   disk.current?.files.set(PAD, 'a year of notes\n')
   disk.current?.unreadable.add(PAD)
-  const { unread } = await import('../../src/lib/unread.svelte')
+  const { unread } = await import('../../src/lib/workspace/src/notices.svelte')
 
   shown.show()
   const column = document.createElement('div')

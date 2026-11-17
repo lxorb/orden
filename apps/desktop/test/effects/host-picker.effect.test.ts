@@ -1,3 +1,4 @@
+import { providePort } from '@orden/contracts'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -5,8 +6,8 @@ let config: unknown[] = []
 let kept: Record<string, unknown> = { own: [], about: {}, order: [], groups: [] }
 const asked: { command: string; args: unknown }[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: unknown) => {
@@ -23,7 +24,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const confirmed: { title: string; detail?: string }[] = []
 let sure = true
 
-vi.mock('../../src/lib/prompt.svelte', () => ({
+vi.mock('../../src/lib/ui-kit/src/prompt.svelte', () => ({
   prompt: {
     confirm: (options: { title: string; detail?: string }) => {
       confirmed.push(options)
@@ -49,12 +50,13 @@ Element.prototype.animate = () => {
 }
 Element.prototype.scrollIntoView = () => undefined
 
-const { default: HostPicker } = await import('../../src/lib/remote/HostPicker.svelte')
-const { hostPicker } = await import('../../src/lib/remote/picker.svelte')
-const { remote } = await import('../../src/lib/remote/hosts.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { readSpec } = await import('../../src/lib/terminal/spec')
-const { settings } = await import('../../src/lib/settings.svelte')
+const { default: HostPicker } = await import('../../src/lib/terminal/src/remote/HostPicker.svelte')
+const { hostPicker } = await import('../../src/lib/terminal/src/remote/picker.svelte')
+const { remote } = await import('../../src/lib/terminal/src/remote/hosts.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { readSpec } = await import('../../src/lib/terminal/src/spec')
+const { settings } = await import('../../src/lib/settings/src/api')
+providePort('settings.window', settings)
 
 const NOW = Date.now()
 

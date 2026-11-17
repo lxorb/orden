@@ -1,4 +1,4 @@
-import { locksHere, locksWork } from '../../locks'
+import { locksHere, locksWork } from '../../platform/src/api'
 
 const BYTES_PER_CHARACTER = 6
 

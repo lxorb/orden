@@ -1,0 +1,22 @@
+{
+  "name": "reading",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "markdown",
+    "pdf",
+    "platform",
+    "scan",
+    "theme",
+    "link-index",
+    "fences",
+    "documents",
+    "modes",
+    "sharing",
+    "shortcuts",
+    "ui-kit",
+    "views",
+    "workspace"
+  ]
+}

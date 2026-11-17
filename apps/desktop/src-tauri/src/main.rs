@@ -3,8 +3,11 @@
 use orden_lib as orden;
 
 fn main() {
-    orden::former_name::carry_env();
-    #[cfg(feature = "cef")]
+    #[cfg(desktop)]
+    if let Some(code) = orden::terminal_hold() {
+        std::process::exit(code);
+    }
+    #[cfg(desktop)]
     if orden::cef_helper() {
         return;
     }

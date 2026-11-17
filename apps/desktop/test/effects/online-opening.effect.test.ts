@@ -1,3 +1,4 @@
+import { providePort, webPages } from '@orden/contracts'
 import { flushSync } from 'svelte'
 import { beforeEach, expect, test, vi } from 'vitest'
 
@@ -8,24 +9,23 @@ const state = vi.hoisted(() => ({
   active: null as string | null,
 }))
 
-vi.mock('../../src/lib/workspace.svelte', async () => {
+vi.mock('../../src/lib/workspace/src/api', async () => {
   const { reactive } = await import('./online-opening-world.svelte')
   return { workspace: reactive(state, opened, closed) }
 })
-vi.mock('../../src/lib/web-tab/pages.svelte', async () => {
-  const { pagesOf } = await import('./online-opening-world.svelte')
-  return { pages: pagesOf() }
-})
+const { pagesOf } = await import('./online-opening-world.svelte')
+providePort('web.pages', { ...webPages(), ...pagesOf() })
 const external: string[] = []
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   openExternal: (url: string) => {
     external.push(url)
     return Promise.resolve()
   },
 }))
 
-const { Opener, Pace, whereToOpen } = await import('../../src/lib/online/opening.svelte')
+const { Opener, Pace, whereToOpen } =
+  await import('../../src/lib/terminal/src/online/opening.svelte')
 const { land, reset } = await import('./online-opening-world.svelte')
 
 const SIGN_IN =

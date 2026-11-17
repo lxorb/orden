@@ -1,14 +1,15 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => 'windows',
   invoke: () => Promise.resolve(undefined),
 }))
 
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
@@ -20,12 +21,12 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { prompt } = await import('../../src/lib/prompt.svelte')
-const { overlays } = await import('../../src/lib/overlays')
-const { hiddenTabs } = await import('../../src/lib/workspace/hidden-tabs.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
-type Tab = import('../../src/lib/workspace.svelte').Tab
+const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
+const { hiddenTabs } = await import('../../src/lib/workspace/src/hidden-tabs.svelte')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const PromptSheet = (await import('../../src/lib/surfaces/src/PromptSheet.svelte')).default
+type Tab = import('../../src/lib/workspace/src/api').Tab
 
 let target: HTMLElement
 let close: (() => void) | undefined

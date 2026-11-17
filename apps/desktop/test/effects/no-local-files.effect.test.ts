@@ -2,8 +2,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const opened: string[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -12,10 +12,10 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-const { appCommands } = await import('../../src/lib/commands')
-const { guardDrops } = await import('../../src/lib/drops')
-const { SHORTCUTS } = await import('../../src/lib/shortcuts/registry')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { appCommands } = await import('../../src/lib/commands/src/api')
+const { guardDrops } = await import('../../src/lib/ui-kit/src/api')
+const { SHORTCUTS } = await import('../../src/lib/shortcuts/src/api')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
 beforeEach(() => {
   opened.length = 0
@@ -72,7 +72,7 @@ let stop: (() => void) | undefined
 let somewhere: HTMLElement
 
 beforeEach(() => {
-  stop = guardDrops()
+  stop = guardDrops(() => undefined)
   somewhere = document.createElement('div')
   document.body.append(somewhere)
 })

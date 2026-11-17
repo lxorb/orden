@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -36,11 +36,12 @@ globalThis.ResizeObserver = class {
 
 const { Disk } = await import('../disk')
 const { noteIndex, resolveNote } = await import('../../../../packages/editor/src/wikilink/notes')
-const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/ScratchpadCard.svelte')
-const { scratchpad } = await import('../../src/lib/scratchpad/pad')
-const { links } = await import('../../src/lib/link-index.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { startup } = await import('../../src/lib/startup.svelte')
+const { loadScratchpadCard, pad } = await import('../../src/lib/scratchpad/src/api')
+const { default: ScratchpadCard } = await loadScratchpadCard()
+const scratchpad = await pad()
+const { links } = await import('../../src/lib/link-index/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { startup } = await import('../../src/lib/launch/src/api')
 
 let target: HTMLElement
 let undo: (() => void)[] = []

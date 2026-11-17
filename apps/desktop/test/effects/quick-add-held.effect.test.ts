@@ -3,8 +3,8 @@ import { afterEach, expect, test, vi } from 'vitest'
 
 let answer: string | null = null
 
-vi.mock('../../src/lib/tauri', async (original) => ({
-  ...(await original<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: vi.fn((command: string) =>
     Promise.resolve(command === 'quick_add_key' ? answer : undefined),
   ),
@@ -15,8 +15,8 @@ Object.defineProperty(navigator, 'locks', {
   value: { request: (_name: string, _how: unknown, held: () => Promise<void>) => held() },
 })
 
-const { listen } = await import('../../src/lib/quick-add/anywhere.svelte')
-const { quickAdd } = await import('../../src/lib/quick-add/asked.svelte')
+const { listen } = await import('../../src/lib/quick-add/src/anywhere.svelte')
+const { quickAdd } = await import('../../src/lib/quick-add/src/asked.svelte')
 
 let stop: (() => void) | undefined
 

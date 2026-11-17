@@ -112,12 +112,11 @@ describe('the arguments', () => {
 })
 
 describe('words read the way quick add reads them', () => {
-  const read = quickWords(['en'], new Date('2026-10-04T09:00:00'), ['Errands'])
+  const read = quickWords(['en'], new Date('2026-10-04T09:00:00'))
 
-  test('the grammar, and where the words say the task goes', () => {
-    const said = read('Call mum tomorrow 4pm p1 >Errands /Later')
+  test('the grammar', () => {
+    const said = read('Call mum tomorrow 4pm p1')
     expect(taskLine(said.fields)).toBe('- [ ] Call mum [time:: 16:00] 🔺 🛫 2026-10-05')
-    expect(said).toMatchObject({ note: 'Errands', heading: 'Later' })
   })
 
   test("the Tasks plugin's marks written in the words win", () => {

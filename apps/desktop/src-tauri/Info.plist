@@ -18,6 +18,19 @@
 				<string>com.adobe.pdf</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Text document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.plain-text</string>
+				<string>net.daringfireball.markdown</string>
+			</array>
+		</dict>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Orden uses the microphone while you record or dictate, and for a site in a web tab when you allow it.</string>

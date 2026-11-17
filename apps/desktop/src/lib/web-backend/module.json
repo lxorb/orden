@@ -1,0 +1,18 @@
+{
+  "name": "web-backend",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "away",
+    "bases",
+    "crate",
+    "handoff",
+    "markdown",
+    "platform",
+    "scan",
+    "snapshots",
+    "sync-core",
+    "ui-kit",
+    "seeded"
+  ]
+}

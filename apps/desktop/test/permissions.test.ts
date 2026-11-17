@@ -46,7 +46,7 @@ function sources(): [string, string][] {
 }
 
 function windowMethods(): string[] {
-  const source = read('../src/lib/tauri.ts')
+  const source = read('../src/lib/platform/src/tauri.ts')
   const [, block] = /interface WindowLike \{([\s\S]*?)\n\}/.exec(source) ?? []
   if (block === undefined) throw new Error('WindowLike interface not found in tauri.ts')
 
@@ -54,7 +54,7 @@ function windowMethods(): string[] {
 }
 
 const APPEARANCE = {
-  file: '../src/lib/theme.svelte.ts',
+  file: '../src/lib/theme/src/theme.svelte.ts',
   calls: ['getCurrentWindow().setTheme('],
   permission: 'core:window:allow-set-theme',
 }
@@ -96,7 +96,7 @@ describe('window permissions', () => {
   })
 
   test('full screen is the crate’s, and the window plugin’s is not granted', () => {
-    const tauri = read('../src/lib/tauri.ts')
+    const tauri = read('../src/lib/platform/src/tauri.ts')
     const lib = read('../src-tauri/src/lib.rs')
     for (const command of Object.values(CRATE)) {
       expect(tauri).toContain(`('${command}'`)
@@ -143,8 +143,8 @@ describe('writing an export', () => {
   test('writes bytes through a command the crate registers and the frontend calls', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
     expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
-    expect(read('../src/lib/export/save.ts')).toContain('writeBytes(')
-    expect(read('../src/lib/workspace/write-file.ts')).toContain("invoke('write_bytes'")
+    expect(read('../src/lib/files-out/src/save.ts')).toContain('writeBytes(')
+    expect(read('../src/lib/file-writes/src/api.ts')).toContain("invoke('write_bytes'")
   })
 
   test('and the write is whole, which is what the plugin could not give it', () => {
@@ -155,18 +155,20 @@ describe('writing an export', () => {
   })
 
   test('asks the desktop where to save, which needs the save dialog', () => {
-    expect(read('../src/lib/export/save.ts')).toContain("import('@tauri-apps/plugin-dialog')")
+    expect(read('../src/lib/files-out/src/save.ts')).toContain(
+      "import('@tauri-apps/plugin-dialog')",
+    )
     expect(capabilities.permissions).toContain('dialog:allow-save')
   })
 
   test('shows the finished file in the file manager, which the opener covers', () => {
-    expect(read('../src/lib/export/save.ts')).toContain("import('../reveal')")
-    expect(read('../src/lib/reveal.ts')).toContain('revealItemInDir')
+    expect(read('../src/lib/files-out/src/save.ts')).toContain("from './reveal'")
+    expect(read('../src/lib/files-out/src/reveal.ts')).toContain('revealItemInDir')
     expect(capabilities.permissions).toContain('opener:default')
   })
 
   test('a phone writes into its own documents folder, since it has no dialog', () => {
-    expect(read('../src/lib/export/save.ts')).toContain('spaces_root')
+    expect(read('../src/lib/files-out/src/save.ts')).toContain('spaces_root')
     expect(mobile.permissions.filter((one) => one.startsWith('dialog:'))).toEqual([])
   })
 })
@@ -174,12 +176,14 @@ describe('writing an export', () => {
 describe('looking for a new version', () => {
   test('goes through the app’s own command, which needs no permission of its own', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('updates::check_update')
-    expect(read('../src/lib/updater.ts')).toContain("invoke<unknown>('check_update'")
+    expect(read('../src/lib/updates/src/updater.ts')).toContain("invoke<unknown>('check_update'")
     expect(capabilities.permissions).not.toContain('updater:allow-check')
   })
 
   test('downloads and installs through the plugin, which is granted both', () => {
-    expect(read('../src/lib/updater.ts')).toContain("import('@tauri-apps/plugin-updater')")
+    expect(read('../src/lib/updates/src/updater.ts')).toContain(
+      "import('@tauri-apps/plugin-updater')",
+    )
     expect(capabilities.permissions).toContain('updater:allow-download')
     expect(capabilities.permissions).toContain('updater:allow-install')
   })
@@ -251,7 +255,7 @@ describe('phone permissions', () => {
   })
 
   test('a link tapped in a note can still leave the app', () => {
-    expect(read('../src/lib/tauri.ts')).toContain('await openUrl(url)')
+    expect(read('../src/lib/platform/src/tauri.ts')).toContain('await openUrl(url)')
     expect(mobile.permissions).toContain('opener:allow-open-url')
     expect(mobile.permissions).toContain('opener:allow-default-urls')
   })

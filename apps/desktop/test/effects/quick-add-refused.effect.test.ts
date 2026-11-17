@@ -1,19 +1,19 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { Entry } from '../../src/lib/quick-add/entry'
+import type { Entry } from '../../src/lib/quick-add/src/entry'
 
 const invoked: string[] = []
-vi.mock('../../src/lib/tauri', async (original) => ({
-  ...(await original<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
+  ...(await original<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: vi.fn((command: string) => {
     invoked.push(command)
     return Promise.resolve(undefined)
   }),
 }))
 
-const { default: QuickAdd } = await import('../../src/lib/quick-add/QuickAdd.svelte')
-const { default: Window } = await import('../../src/lib/quick-add/Window.svelte')
-const { CHANNEL } = await import('../../src/lib/quick-add/channel')
+const { default: QuickAdd } = await import('../../src/lib/quick-add/src/QuickAdd.svelte')
+const { default: Window } = await import('../../src/lib/quick-add/src/Window.svelte')
+const { CHANNEL } = await import('../../src/lib/quick-add/src/channel')
 
 let shown: ReturnType<typeof mount> | undefined
 
@@ -195,14 +195,12 @@ describe('lines pasted as a task each', () => {
     flushSync()
   }
 
-  test('each goes into the note it names, under its heading, and the rest where the field points', async () => {
+  test('each becomes a task', async () => {
     const handed: Entry[] = []
     shown = mount(QuickAdd, {
       target: document.body,
       props: {
         langs: ['en'],
-        notes: ['Groceries', 'Work'],
-        prefill: { note: 'Plans', heading: 'Soon' },
         onsubmit: (entry: Entry) => {
           handed.push(entry)
           return true
@@ -212,38 +210,10 @@ describe('lines pasted as a task each', () => {
     })
     flushSync()
 
-    paste('Milk >Groceries\nCall Ada >Work /Calls\nSketch the plan')
+    paste('Milk\nCall Ada\nSketch the plan')
     document.querySelector<HTMLButtonElement>('.pasted .add')?.click()
     await settled()
 
-    expect(handed.map((one) => [one.text, one.note, one.heading])).toEqual([
-      ['Milk', 'Groceries', undefined],
-      ['Call Ada', 'Work', 'Calls'],
-      ['Sketch the plan', 'Plans', 'Soon'],
-    ])
-  })
-
-  test('a note typed in the field takes no heading from the note it was opened on', async () => {
-    const handed: Entry[] = []
-    shown = mount(QuickAdd, {
-      target: document.body,
-      props: {
-        langs: ['en'],
-        notes: ['Groceries'],
-        prefill: { note: 'Plans', heading: 'Soon' },
-        onsubmit: (entry: Entry) => {
-          handed.push(entry)
-          return true
-        },
-        onclose: () => undefined,
-      },
-    })
-    flushSync()
-
-    await typeAndAdd('Milk >Groceries')
-
-    expect(handed.map((one) => [one.text, one.note, one.heading])).toEqual([
-      ['Milk', 'Groceries', undefined],
-    ])
+    expect(handed.map((one) => one.text)).toEqual(['Milk', 'Call Ada', 'Sketch the plan'])
   })
 })

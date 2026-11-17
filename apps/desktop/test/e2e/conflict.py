@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import functools
 import json
 import sys
 import time
-import urllib.error
-import urllib.request
 
 from playwright.sync_api import Browser, Page
 
@@ -43,26 +42,7 @@ def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-def request(path: str, token: str | None = None, body: dict | None = None, method: str | None = None):
-    data = None if body is None else json.dumps(body).encode()
-    headers = {}
-    if data is not None:
-        headers["content-type"] = "application/json"
-    if token:
-        headers["authorization"] = f"Bearer {token}"
-
-    call = urllib.request.Request(
-        f"{ORIGIN}{path}",
-        data=data,
-        headers=headers,
-        method=method or ("GET" if data is None else "POST"),
-    )
-    try:
-        with urllib.request.urlopen(call, timeout=30) as answer:
-            return json.loads(answer.read() or b"null")
-    except urllib.error.HTTPError as refused:
-        said = refused.read().decode()
-        return {"status": refused.code, **(json.loads(said) if said else {})}
+request = functools.partial(harness.request, refused=True)
 
 class Worker(harness.Worker):
 
@@ -214,6 +194,14 @@ def open_note(page: Page, name: str) -> bool:
         )
     )
 
+def arrived(page: Page, name: str) -> bool:
+    until = time.monotonic() + PATIENCE
+    while not open_note(page, name):
+        if time.monotonic() > until:
+            return False
+        page.wait_for_timeout(500)
+    return True
+
 def close_note(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -275,7 +263,7 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
             f"[{label}/{which}] the space",
         )
         settled(page, f"[{label}/{which}] the first pass")
-        if not open_note(page, name):
+        if not arrived(page, name):
             failed(f"[{label}/{which}] never got the note")
             for one in pages.values():
                 one.context.close()
@@ -376,6 +364,7 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
     }
 
     words: dict[str, str] = {}
+    mains: dict[str, str] = {}
     kept: dict[str, str] = {}
     waiting: dict[str, list[str]] = {}
     for which, page in pages.items():
@@ -387,6 +376,7 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
             say(f"[{label}/{which}]   {one}: {json.dumps(said)[:170]}")
 
         words[which] = " ".join(held_here.values())
+        mains[which] = held_here.get(name, "")
         waiting[which] = clashes_here(page, about)
         kept[which] = " ".join([*history_here(page, about), *waiting[which]])
         page.screenshot(path=str(SHOTS / f"{rule}-{away}-{how}-{which}.png"))
@@ -436,6 +426,9 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         say(f"[{label}] waiting in the pane: one={len(waiting['one'])} two={len(waiting['two'])}")
         if words["one"] != words["two"] and not waiting["one"] and not waiting["two"]:
             failed(f"[{label}] the two machines disagree and the pane is not waiting on anything")
+
+    if mains["one"] != mains["two"] and not waiting["one"] and not waiting["two"]:
+        failed(f"[{label}] the note differs between the machines and nothing waits in the pane")
 
     for which, page in pages.items():
         said = page.evaluate(

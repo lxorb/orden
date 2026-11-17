@@ -14,7 +14,7 @@ own (never `so.orden.Orden`), and a probe shows a notice only when started with
 with no banner (`SuppressPopup`). On the way out - pass, fail or crash - every toast of
 that id is taken off and the id's registration removed, and the run fails if one is left.
 A press cannot be made from outside the process that showed the toast, so what a press and
-a reply do is the page's tests' (src/lib/notify.test.ts, src/lib/chats/notify.test.ts).
+a reply do is the page's tests' (src/lib/notify.test.ts, src/lib/chats-client/src/notify.test.ts).
 Where the person at the machine turned Windows' notifications off, Windows holds no toast
 at all: the bridge is still asked and must answer, and the action centre's half is
 skipped and said so.

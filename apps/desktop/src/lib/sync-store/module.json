@@ -1,0 +1,19 @@
+{
+  "name": "sync-store",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "collab",
+    "documents",
+    "file-ops",
+    "platform",
+    "sync-client",
+    "sync-core",
+    "sync-mirror",
+    "modes",
+    "launch",
+    "space-owed"
+  ],
+  "pending": ["apps/desktop/src/lib/sync-ports.ts"]
+}

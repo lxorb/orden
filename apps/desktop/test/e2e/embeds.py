@@ -134,11 +134,6 @@ def fresh(browser: Browser, finger: bool) -> Page:
             else {}
         ),
     )
-    if harness.WEBKIT:
-        context.route(
-            "https://www.youtube-nocookie.com/**",
-            lambda route: route.fulfill(content_type="text/html", body="<!doctype html><title>Player</title>"),
-        )
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
@@ -231,7 +226,7 @@ def drive(browser: Browser) -> None:
     else:
         if "youtube-nocookie.com/embed/dQw4w9WgXcQ" not in (frame["src"] or ""):
             wrong(f"the frame points at {frame['src']}")
-        asked = "allow-scripts allow-same-origin" + ("" if harness.WEBKIT else " allow-presentation")
+        asked = "allow-scripts allow-same-origin allow-presentation"
         if frame["sandbox"] != asked:
             wrong(f"the frame's sandbox is {frame['sandbox']!r}")
         if frame["referrer"] != "origin":

@@ -1,0 +1,37 @@
+import { expect, test, vi } from 'vitest'
+
+const listen = vi.fn(() => true)
+const held = { on: 0, off: 0 }
+
+vi.mock('../../../platform/src/api', async (original) => ({
+  ...(await original<typeof import('../../../platform/src/api')>()),
+  frameWord: () => Promise.resolve(''),
+  method: (name: string) => (name === 'listen' ? listen : undefined),
+  answer: () => undefined,
+}))
+vi.mock('../../../ui-kit/src/api', async (original) => ({
+  ...(await original<typeof import('../../../ui-kit/src/api')>()),
+  busy: {
+    start: (_label: string, run: () => Promise<void>) => {
+      held.on++
+      void run().then(() => held.off++)
+    },
+  },
+}))
+vi.mock('../../../commands/src/api', () => ({ writeAtCaret: () => undefined }))
+vi.mock('../../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../panes/src/api')>()),
+  views: { of: () => null },
+}))
+vi.mock('../../../workspace/src/api', () => ({ workspace: { panes: { focusedId: 'a' } } }))
+
+const { dictating, toggle } = await import('./dictating')
+
+test('a microphone the activity was not asked for with a word is not listening', async () => {
+  toggle({} as Parameters<typeof toggle>[0])
+  expect(dictating()).toBe(true)
+
+  await vi.waitFor(() => expect(dictating()).toBe(false))
+  expect(listen).not.toHaveBeenCalledWith('', true)
+  await vi.waitFor(() => expect(held.off).toBe(1))
+})

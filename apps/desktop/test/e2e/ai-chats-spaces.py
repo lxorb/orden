@@ -22,7 +22,7 @@ async () => {
   if (!ws.spaces.some((one) => one.name === 'Home')) await ws.addSpace('Home')
   const home = ws.spaces.find((one) => one.name === 'Home').id
   if (ws.activeSpaceId !== work) await ws.selectSpace(work)
-  const { keepThread, newThread } = await import('/src/lib/ai/chat/threads.ts')
+  const { keepThread, newThread } = await import('/src/lib/ai-chat/src/chat/threads.ts')
   const chat = (space, title, updated, length) => {
     const thread = newThread(space, made.id, 'fake-small')
     thread.title = title
@@ -72,7 +72,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     DRIVE.waited(page, f"document.querySelector('{FIELD}')", "the panel's field")
-    page.evaluate("(id) => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.openThread(id, false))", made["plan"])
+    page.evaluate("(id) => import('/src/lib/ai-chat/src/store/chat.svelte.ts').then(({ chat }) => chat.openThread(id, false))", made["plan"])
     DRIVE.waited(page, "document.querySelector('.ask .title')?.textContent?.includes('Quarterly plan')", "the plan open")
     page.wait_for_timeout(400)
     page.evaluate(f"() => {{ const t = document.querySelector('{TALK}'); t.scrollTop = Math.round(t.scrollHeight / 3); t.dispatchEvent(new Event('scroll')) }}")
@@ -91,7 +91,7 @@ def drive(browser: Browser, scheme: str) -> None:
     check(f"[{scheme}] the words in the field are still there", after["field"] == "and the budget for the second quarter")
     check(f"[{scheme}] at the same place: {before['scroll']} and {after['scroll']}", before["scroll"] and abs((after["scroll"] or 0) - before["scroll"]) <= 2)
 
-    page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
+    page.evaluate("() => import('/src/lib/ai-chat/src/store/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
     DRIVE.waited(page, "document.querySelectorAll('.ask .threads .row, .ask .list .row').length >= 2", "the list")
     titles = page.evaluate("() => [...document.querySelectorAll('.ask .list .row .title')].map((one) => one.textContent.trim())")
     shot(page, f"{scheme}-3-list")
@@ -107,7 +107,7 @@ def drive(browser: Browser, scheme: str) -> None:
 
     page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["home"])
     DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name === 'Home'", "the other space")
-    space = page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => { chat.newThread(); return chat.thread?.space })")
+    space = page.evaluate("() => import('/src/lib/ai-chat/src/store/chat.svelte.ts').then(({ chat }) => { chat.newThread(); return chat.thread?.space })")
     check(f"[{scheme}] a new chat starts in the space in front", space == made["home"])
     page.context.close()
 

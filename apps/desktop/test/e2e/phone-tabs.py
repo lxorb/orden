@@ -69,7 +69,7 @@ def phone(browser: Browser, dark: bool) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    DRIVE.seed(page, "# Groceries\n\n- [ ] milk\n- [ ] eggs", lists=True)
+    DRIVE.seed(page, "# Groceries\n\nmilk and eggs")
     DRIVE.seed(page, "# Ideas\n\nA thought")
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
@@ -118,23 +118,16 @@ def phone(browser: Browser, dark: bool) -> None:
         wrong("[phone] back did not bring the tab bar")
 
     tab(page, "tasks")
-    wait_for(page, "document.querySelector('[data-panel=tasks]')?.innerText.includes('bread')", "the new task listed")
-    page.locator("[data-panel=tasks] [role=checkbox]").first.tap()
-    wait_for(
-        page,
-        "window.ordenApp.workspace.tabs.some((one) => one.note?.name?.startsWith('Groceries') && one.doc.includes('- [x]'))",
-        "a task ticked off",
-    )
+    wait_for(page, "document.querySelector('[data-panel=tasks] [data-todos-add]')", "the todos panel")
+    page.locator("[data-panel=tasks] [data-todos-add]").fill("milk")
+    page.keyboard.press("Enter")
+    wait_for(page, "document.querySelector('[data-panel=tasks]')?.innerText.includes('milk')", "the todo listed")
+    page.locator("[data-panel=tasks] [data-todo] .tick").first.tap()
+    wait_for(page, "document.querySelector('[data-panel=tasks] [data-todo].done')", "a todo ticked off")
     page.wait_for_timeout(300)
     if page.evaluate(COVERED):
         wrong("[phone] a notice covers the tab bar")
     DRIVE.shot(page, f"{tag}tasks")
-
-    page.locator("[data-panel=tasks] .where").last.tap()
-    wait_for(page, "window.ordenApp.workspace.panel === null", "the task's note")
-    page.wait_for_timeout(400)
-    page.locator("[data-phone-back]").tap()
-    wait_for(page, "window.ordenApp.workspace.panel === 'tasks'", "back on the tasks, where it came from")
 
     tab(page, "search")
     field = page.locator("[data-panel=search] input").first

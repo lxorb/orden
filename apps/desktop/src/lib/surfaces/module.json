@@ -1,0 +1,32 @@
+{
+  "name": "surfaces",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts-ui",
+    "collab",
+    "context-menu",
+    "documents",
+    "editor",
+    "feedback",
+    "graph",
+    "history",
+    "platform",
+    "sharing",
+    "tab-fill",
+    "ui-kit",
+    "icon-picker",
+    "ui-controls",
+    "windows",
+    "foreign",
+    "markdown",
+    "modes",
+    "shortcuts",
+    "sync-client",
+    "new-here",
+    "spaces",
+    "workspace",
+    "marks",
+    "launch"
+  ]
+}

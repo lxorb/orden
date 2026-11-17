@@ -1,0 +1,27 @@
+{
+  "name": "import",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "bases",
+    "markdown",
+    "pdf",
+    "platform",
+    "scan",
+    "sharing",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "accounts",
+    "handoff",
+    "link-format",
+    "file-writes",
+    "shortcuts",
+    "workspace",
+    "protect",
+    "sync-store",
+    "modes",
+    "tree",
+    "glyphs"
+  ]
+}

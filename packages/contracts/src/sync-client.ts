@@ -1,4 +1,5 @@
 import type { Entry, ItemMeta, MetaPatch } from './item'
+import type { Bookmark } from './bookmark'
 import type { SpaceRole } from './user'
 
 export interface SyncHostPort {
@@ -174,6 +175,7 @@ export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   writesSettled(): Promise<unknown>
   arrived(path: string): Promise<unknown>
   fileCame(path: string, kind: Exclude<SyncFileKind, 'space'>): Promise<void>
+  fileWritten(path: string): void
   fileMoved(from: string, to: string, kind: SyncFileKind): Promise<unknown>
   fileGone(path: string, kind: SyncFileKind, back?: string): Promise<unknown>
   heardMove(from: string, to: string): void
@@ -192,6 +194,38 @@ export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   hearWrites(hearing: SyncWriteHearing): () => void
   rootMoves(): readonly SyncRootMove[]
   forgetRootMoves(): void
+  bookmarksOf(root: string): Bookmark[]
+  bookmarksSaid(root: string, landed: boolean, list: readonly Bookmark[]): void
+  archivedIn(root: string, path: string): boolean
+  shownText(path: string): string | null
+  reload(path: string, text: string): void
+  leaveTheWelcomeNote(): Promise<unknown>
+}
+
+export interface SyncStorePort {
+  readonly engineReady: boolean
+  readonly passing: boolean
+  pass(): Promise<unknown>
+  nudge(): void
+  remoteIdFor(root: string): string | null
+  roleKept(root: string): string | null
+  pushBookmarks(root: string): Promise<void>
+  pathOf(id: string): string | null
+  idOf(path: string): string | null
+  moved(from: string, to: string): unknown
+  entryIdAt(root: string, path: string): string | null
+  entryPathOf(root: string, id: string): string | null
+}
+
+export interface SyncPairing {
+  pairs(): { root: string; spaceId: string; shared: boolean }[]
+  pair(root: string, spaceId: string, shared: boolean): void
+  unpair(root: string): void
+  share(root: string, shared: boolean): void
+}
+
+export interface SyncPairingPort {
+  pairSpaces(token: string, pairing: SyncPairing): Promise<void>
 }
 
 export interface SyncPorts {
@@ -201,4 +235,6 @@ export interface SyncPorts {
   readonly 'sync.account': SyncAccountPort
   readonly 'sync.api': SyncApiPort
   readonly 'sync.workspace': SyncWorkspacePort
+  readonly 'sync.store': SyncStorePort
+  readonly 'sync.pairing': SyncPairingPort
 }

@@ -1,11 +1,11 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/surfaces.svelte', async (original) => {
+vi.mock('../../src/lib/surfaces/src/api', async (original) => {
   const Drawn = (await import('./Drawn.svelte')).default
   const drawn = () => Promise.resolve(Drawn)
   return {
-    ...(await original<typeof import('../../src/lib/surfaces.svelte')>()),
+    ...(await original<typeof import('../../src/lib/surfaces/src/api')>()),
     askPanel: drawn,
     canvasSurface: drawn,
     chatSurface: drawn,
@@ -18,16 +18,17 @@ vi.mock('../../src/lib/surfaces.svelte', async (original) => {
   }
 })
 
-vi.mock('../../src/lib/terminal/sessions.svelte', () => ({
+vi.mock('../../src/lib/terminal/src/sessions.svelte', () => ({
   screenOf: () => ({ text: '$ make\nall done', cols: 80 }),
 }))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-const { TAB_KINDS } = await import('../../src/lib/workspace/tab-kinds')
-const { faces } = await import('../../src/lib/overview/faces.svelte')
-const { scrollbackOf } = await import('../../src/lib/overview/previews')
-const Offstage = (await import('../../src/lib/overview/Offstage.svelte')).default
+await import('../../src/lib/terminal-ports')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
+const { TAB_KINDS } = await import('../../src/lib/tab-kinds/src/api')
+const { faces } = await import('../../src/lib/overview/src/faces.svelte')
+const { scrollbackOf } = await import('../../src/lib/overview/src/previews')
+const Offstage = (await import('../../src/lib/overview/src/Offstage.svelte')).default
 
 let shown: ReturnType<typeof mount> | undefined
 afterEach(() => {

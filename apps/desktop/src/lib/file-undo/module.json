@@ -1,0 +1,5 @@
+{
+  "name": "file-undo",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "file-ops", "markdown", "platform", "scan"]
+}

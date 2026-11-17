@@ -147,11 +147,28 @@ function drawnBy(path: string, found = new Set<string>()): Set<string> {
   found.add(path)
   for (const one of read(path).matchAll(/from\s+'(\.{1,2}\/[^']+\.svelte)'/g))
     drawnBy(join(path, '..', caught(one)), found)
+  for (const one of read(path).matchAll(
+    /import\s+\{([^}]*)\}\s+from\s+'(\.{1,2}\/[^']+\/src\/api)'/g,
+  )) {
+    const api = join(path, '..', `${caught(one, 2)}.ts`)
+    if (!existsSync(api)) continue
+    const names = new Set(
+      caught(one)
+        .split(',')
+        .map((name) => name.trim()),
+    )
+    for (const part of read(api).matchAll(
+      /export \{ default as (\w+) \} from '(\.\/[^']+\.svelte)'/g,
+    ))
+      if (names.has(caught(part))) drawnBy(join(api, '..', caught(part, 2)), found)
+  }
   return found
 }
 
 const bar = new Set<string>()
-for (const path of drawnBy(join(ROOT, 'apps', 'desktop', 'src', 'lib', 'Titlebar.svelte')))
+for (const path of drawnBy(
+  join(ROOT, 'apps', 'desktop', 'src', 'lib', 'titlebar', 'src', 'Titlebar.svelte'),
+))
   classesIn(path, read(path), bar)
 
 describe('the names a drive looks for in the top bar', () => {
@@ -202,7 +219,7 @@ describe('the build a drive steers', () => {
 })
 
 describe('the activity a drive stands in for', () => {
-  const BRIDGE = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'mobile', 'bridge.ts')
+  const BRIDGE = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'platform', 'src', 'mobile-bridge.ts')
 
   const declared = new Map<string, string[]>()
   const block = BRIDGE.slice(BRIDGE.indexOf('export interface OrdenSystem {'))
@@ -251,5 +268,36 @@ describe('the activity a drive stands in for', () => {
     }
 
     expect(wrong, `${name} stands in for an activity the app no longer talks to`).toEqual([])
+  })
+})
+
+describe('the Worker a drive asks', () => {
+  const helper = (source: string): string =>
+    /^def request\([\s\S]*?(?=^[^\s)])/m.exec(source)?.[0] ?? ''
+
+  test('every drive asks it through harness.request, not a urlopen of its own', () => {
+    const own = drives.filter(
+      (name) => name !== 'harness.py' && /\burlopen\(/.test(helper(read(E2E, name))),
+    )
+    expect(own).toEqual([])
+  })
+
+  test('harness.request asks again when the dev server lost the request on its way', () => {
+    const harness = read(E2E, 'harness.py')
+    expect(harness).toMatch(/^DROPPED = b"Network connection lost"$/m)
+    expect(helper(harness)).toMatch(/\bopened\(/)
+    expect(/^def opened\([\s\S]*?(?=^[^\s)])/m.exec(harness)?.[0]).toMatch(/DROPPED not in said/)
+  })
+})
+
+describe('the modules a drive loads from the dev server', () => {
+  test('are all still where the drive asks for them', () => {
+    const gone = drives.flatMap((name) =>
+      [...read(E2E, name).matchAll(/\bimport\(\s*["'](\/src\/[^"'?]+)["']/g)]
+        .map((found) => caught(found))
+        .filter((path) => !existsSync(join(ROOT, 'apps', 'desktop', path)))
+        .map((path) => `${name}: ${path}`),
+    )
+    expect(gone).toEqual([])
   })
 })

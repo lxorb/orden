@@ -111,7 +111,7 @@ def main() -> int:
         app, window, hwnd, _ = heavy.started(told.exe, told.identifier, spaces, trace=False)
         time.sleep(5)
 
-        window.ask(f"nib.workspace.openWeb({json.dumps(str(space / 'One.url'))}).then(() => 'opened')")
+        window.ask(f"orden.workspace.openWeb({json.dumps(str(space / 'One.url'))}).then(() => 'opened')")
         check(bool(heavy.until(lambda: "One" in heard.loaded, 20)), "the first page loads")
 
         browser = next(

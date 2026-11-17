@@ -452,24 +452,6 @@ pub fn keyboard_to<R: Runtime>(webview: &Webview<R>) {
     let _ = webview.set_focus();
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-#[allow(
-    unsafe_code,
-    reason = "the page is given the keyboard through WebView2's COM interface"
-)]
-pub fn keyboard_into(
-    page: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Controller,
-) {
-    if away().is_some() {
-        return;
-    }
-    let _ = unsafe {
-        page.MoveFocus(
-            webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
-        )
-    };
-}
-
 #[tauri::command]
 pub fn take_keyboard(webview: Webview) {
     keyboard_to(&webview);
@@ -953,7 +935,7 @@ mod tests {
                 if name == "keyboard.rs" {
                     assert_eq!(
                         text.matches("crate::placement::away().is_some()").count(),
-                        3,
+                        2,
                         "keyboard.rs hands the keyboard over past the guard"
                     );
                     continue;

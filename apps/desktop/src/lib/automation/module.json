@@ -1,0 +1,22 @@
+{
+  "name": "automation",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "commands",
+    "markdown",
+    "platform",
+    "protect",
+    "sharing",
+    "sync-core",
+    "ui-kit",
+    "web-backend",
+    "windows",
+    "link-index",
+    "workspace",
+    "sync-store",
+    "documents",
+    "panes"
+  ]
+}

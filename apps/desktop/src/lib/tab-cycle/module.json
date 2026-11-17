@@ -1,0 +1,5 @@
+{
+  "name": "tab-cycle",
+  "layer": "shell",
+  "dependsOn": ["documents", "panes", "platform", "workspace"]
+}

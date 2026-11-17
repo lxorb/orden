@@ -23,8 +23,10 @@ const lockLayout = () => read(ANDROID, 'res', 'layout', 'widget_notes_lock.xml')
 const rowsIn = (text: string) =>
   [...text.matchAll(/@\+id\/orden_row_(\d+)/g)].map((one) => Number(one[1]))
 
-const commands = read(SOURCE, 'lib', 'commands.ts')
-const bridge = read(SOURCE, 'lib', 'mobile', 'bridge.ts')
+const commands =
+  read(SOURCE, 'lib', 'commands', 'src', 'commands.ts') +
+  read(SOURCE, 'lib', 'dictation', 'src', 'recorder', 'commands.ts')
+const bridge = read(SOURCE, 'lib', 'platform', 'src', 'mobile-bridge.ts')
 
 function sources(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -91,7 +93,7 @@ describe('what another app may share with Orden', () => {
 
     expect(views).toHaveLength(1)
     expect(views[0]).toContain('android:scheme="orden"')
-    expect(views[0]).toContain('android:scheme="nib"')
+    expect(views[0]).not.toContain('android:scheme="nib"')
     expect(manifest).not.toContain('android:scheme="content"')
     expect(manifest).not.toContain('android:scheme="file"')
     expect(manifest).not.toContain('android:mimeType="text/markdown"')
@@ -173,7 +175,7 @@ describe('the quick settings tiles', () => {
       ...[...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1]),
       ...[...`${widgets}${today}`.matchAll(/command\(context, "([\w.-]+)"/g)].map((one) => one[1]),
     ]
-    const handed = read(SOURCE, 'lib', 'mobile', 'handed.ts')
+    const handed = read(SOURCE, 'lib', 'mobile', 'src', 'handed.ts')
     const list = /HANDED[^[]*\[([^\]]*)\]/.exec(handed)?.[1] ?? ''
     expect(new Set(sent)).toEqual(new Set([...list.matchAll(/'([\w.-]+)'/g)].map((one) => one[1])))
   })
@@ -191,7 +193,7 @@ describe('the home screen widget', () => {
   })
 
   test('has a row for every note the page sends', () => {
-    const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
+    const state = read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     expect(most).toBeGreaterThan(0)
 
@@ -357,7 +359,7 @@ describe('the Today widget', () => {
   })
 
   test('has a box and the words for every task the page sends', () => {
-    const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
+    const state = read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     const ids = (kind: string, text: string) =>
       [...text.matchAll(new RegExp(String.raw`orden_today_${kind}_(\d+)`, 'g'))].map((one) =>
@@ -370,10 +372,18 @@ describe('the Today widget', () => {
     }
   })
 
+  test('is called Todos, on the phone and on the glasses, since it lists undated todos too (#2073)', () => {
+    const strings = read(ANDROID, 'res', 'values', 'strings.xml')
+    expect(strings).toContain('<string name="widget_today">Todos</string>')
+    expect(read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')).toContain("title: 'Todos'")
+    expect(read(SOURCE, 'lib', 'even', 'src', 'bridge.svelte.ts')).toContain("today: 'Todos'")
+    expect(strings).not.toMatch(/for today/)
+  })
+
   test('ticks through the page, which reads the anchor the activity hands over', () => {
     expect(kotlin).toContain('MainActivity.EXTRA_TICK')
     expect(activity).toContain('json.put("tick", ticking)')
-    expect(read(SOURCE, 'lib', 'mobile', 'handed.ts')).toContain('tickTask(at, space, true)')
+    expect(read(SOURCE, 'lib', 'mobile', 'src', 'handed.ts')).toContain('tickTask(at, true)')
     expect(widgets).toContain('TodayWidget.refresh(context)')
   })
 })

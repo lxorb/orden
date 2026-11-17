@@ -1503,6 +1503,7 @@ select:focus-visible,
   grid-auto-flow: column;
   gap: 2px;
   max-width: 100%;
+  min-height: min-content;
   padding: 3px;
   overflow-x: auto;
   scrollbar-width: none;

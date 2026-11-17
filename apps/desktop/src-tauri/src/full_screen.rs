@@ -41,11 +41,6 @@ fn away() -> bool {
 }
 
 #[cfg(test)]
-pub fn noted_for_test(label: &str, on: bool) {
-    noted(label, on, true);
-}
-
-#[cfg(test)]
 mod tests {
     use super::{is_on, noted, FULL};
 

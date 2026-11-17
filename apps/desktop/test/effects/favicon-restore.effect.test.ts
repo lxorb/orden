@@ -2,8 +2,8 @@ import { afterEach, expect, test, vi } from 'vitest'
 
 const invoked: string[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   invoke: (command: string) => {
     invoked.push(command)
@@ -11,7 +11,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
@@ -26,15 +27,15 @@ afterEach(() => {
 })
 
 test('a tab restored with no page wears the mark its site last showed, in its first frame', async () => {
-  const before = await import('../../src/lib/web-tab/favicons')
+  const before = await import('../../src/lib/web-tab/src/favicons')
   before.saw(SITE, MARK)
   before.write()
 
   vi.resetModules()
   const { flushSync, mount, unmount } = await import('svelte')
-  const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-  const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-  const TabMark = (await import('../../src/lib/TabMark.svelte')).default
+  const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
+  const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+  const { TabMark } = await import('../../src/lib/marks/src/api')
 
   const doc = new NoteDoc(
     { kind: 'web', path: null, name: 'WhatsApp', text: '', dirty: false },

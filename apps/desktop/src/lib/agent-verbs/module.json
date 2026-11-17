@@ -1,0 +1,14 @@
+{
+  "name": "agent-verbs",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "agent-docs",
+    "agent-protocol",
+    "automation",
+    "documents",
+    "platform",
+    "sharing",
+    "workspace"
+  ]
+}

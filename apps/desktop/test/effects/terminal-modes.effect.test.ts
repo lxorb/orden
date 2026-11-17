@@ -5,8 +5,8 @@ let output: { onmessage: ((message: unknown) => void) | null } | null = null
 let busy = true
 const files = new Map<string, unknown>()
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => 'windows',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
@@ -23,7 +23,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
   },
@@ -49,12 +49,12 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
+const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
 const { flushSync } = await import('svelte')
-const { written } = await import('../../src/lib/parting')
+const { written } = await import('../../src/lib/parting/src/api')
 
 type Opened = ReturnType<typeof sessionOf>
 

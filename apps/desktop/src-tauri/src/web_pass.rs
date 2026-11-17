@@ -1,8 +1,3 @@
-#![cfg_attr(
-    not(any(windows, feature = "cef", target_os = "macos")),
-    allow(dead_code)
-)]
-
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Mutex, PoisonError};
@@ -302,12 +297,10 @@ pub(crate) fn forget(tab: &str) {
     engine::forget(tab);
 }
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub(crate) struct Queues<J: Send + 'static> {
     held: Mutex<HashMap<String, Sender<J>>>,
 }
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 impl<J: Send + 'static> Queues<J> {
     pub(crate) fn new() -> Self {
         Self {
@@ -344,18 +337,15 @@ impl<J: Send + 'static> Queues<J> {
     }
 }
 
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
     frames_in(tree, main)
         .into_iter()
         .find(|one| one.frame == was.frame && one.origin == was.origin)
 }
 
-#[cfg(feature = "cef")]
 pub(crate) use engine::binding_called;
 pub(crate) use engine::listen;
 
-#[cfg(any(windows, feature = "cef"))]
 mod engine {
     use std::collections::HashMap;
     use std::sync::{LazyLock, Mutex, MutexGuard, PoisonError};
@@ -589,7 +579,6 @@ mod engine {
         known.frames.retain(|(owner, _), _| owner != tab);
     }
 
-    #[cfg(feature = "cef")]
     pub(crate) fn listen(
         _webview: &tauri::webview::PlatformWebview,
         _app: AppHandle,
@@ -597,271 +586,8 @@ mod engine {
         _window: String,
     ) {
     }
-
-    #[cfg(all(windows, not(feature = "cef")))]
-    pub(crate) fn listen(
-        webview: &tauri::webview::PlatformWebview,
-        app: AppHandle,
-        tab: String,
-        window: String,
-    ) {
-        use tauri::Manager as _;
-
-        let Some(core) = cdp::core_of(webview) else {
-            return;
-        };
-        let _ = cdp::hear(&core, "Runtime.bindingCalled", move |session, params| {
-            let Some(view) = app.get_webview(&crate::web_tabs::label_of(&tab)) else {
-                return;
-            };
-            binding_called(&view, &app, &window, &tab, Some(session), &params);
-        });
-    }
 }
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod engine {
-    use std::cell::RefCell;
-    use std::collections::HashMap;
-    use std::time::Duration;
-
-    use block2::RcBlock;
-    use objc2::rc::Retained;
-    use objc2::runtime::{AnyObject, NSObject, ProtocolObject};
-    use objc2::{define_class, msg_send, DefinedClass, MainThreadOnly};
-    use objc2_foundation::{MainThreadMarker, NSError, NSNumber, NSObjectProtocol, NSString};
-    use objc2_web_kit::{
-        WKContentWorld, WKFrameInfo, WKScriptMessage, WKScriptMessageHandler,
-        WKUserContentController, WKWebView,
-    };
-    use tauri::{AppHandle, Webview};
-
-    use super::Place;
-
-    const PATIENCE: Duration = Duration::from_secs(10);
-
-    const MOST_FRAMES: usize = 256;
-
-    struct Held {
-        app: AppHandle,
-        tab: String,
-        window: String,
-    }
-
-    type Frames = HashMap<(String, String), (Retained<WKFrameInfo>, String)>;
-
-    thread_local! {
-        static FRAMES: RefCell<Frames> = RefCell::new(HashMap::new());
-    }
-
-    define_class!(
-        #[unsafe(super(NSObject))]
-        #[thread_kind = MainThreadOnly]
-        #[name = "OrdenPassMessages"]
-        #[ivars = Held]
-        struct Messages;
-
-        unsafe impl NSObjectProtocol for Messages {}
-
-        unsafe impl WKScriptMessageHandler for Messages {
-            #[unsafe(method(userContentController:didReceiveScriptMessage:))]
-            fn received(&self, _controller: &WKUserContentController, message: &WKScriptMessage) {
-                message_heard(self.ivars(), message);
-            }
-        }
-    );
-
-    #[allow(
-        unsafe_code,
-        reason = "a script message and the frame it came from are read through the Objective-C runtime"
-    )]
-    fn message_heard(held: &Held, message: &WKScriptMessage) {
-        let (payload, frame) = unsafe {
-            let body = message.body();
-            let Some(text) = body.downcast_ref::<NSString>() else {
-                return;
-            };
-            (text.to_string(), message.frameInfo())
-        };
-        let Some(heard) = super::message_read(&payload) else {
-            return;
-        };
-        let Some(doc) = heard.doc.clone() else {
-            return;
-        };
-        let place = unsafe {
-            let origin = frame.securityOrigin();
-            Place {
-                frame: doc.clone(),
-                origin: crate::web_tabs::origin_written(
-                    &origin.protocol().to_string(),
-                    &origin.host().to_string(),
-                    origin.port(),
-                ),
-                url: frame
-                    .request()
-                    .URL()
-                    .and_then(|url| url.absoluteString())
-                    .map(|url| url.to_string())
-                    .unwrap_or_default(),
-                top: frame.isMainFrame(),
-            }
-        };
-        FRAMES.with_borrow_mut(|all| {
-            if all.len() >= MOST_FRAMES {
-                all.retain(|(owner, _), _| owner != &held.tab);
-            }
-            all.insert((held.tab.clone(), doc), (frame, place.origin.clone()));
-        });
-        super::said_emitted(&held.app, &held.window, &held.tab, &place, &heard.said);
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a content world is named through the Objective-C runtime"
-    )]
-    fn orden_world(mtm: MainThreadMarker) -> Retained<WKContentWorld> {
-        unsafe { WKContentWorld::worldWithName(&NSString::from_str(crate::web_worlds::WORLD), mtm) }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a WKWebView's script message handlers are set through the Objective-C runtime"
-    )]
-    pub(crate) fn listen(
-        webview: &tauri::webview::PlatformWebview,
-        app: AppHandle,
-        tab: String,
-        window: String,
-    ) {
-        let Some(mtm) = MainThreadMarker::new() else {
-            return;
-        };
-        let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
-            return;
-        };
-        let messages = Messages::alloc(mtm).set_ivars(Held { app, tab, window });
-        let messages: Retained<Messages> = unsafe { msg_send![super(messages), init] };
-        let world = orden_world(mtm);
-        let name = NSString::from_str(super::BINDING);
-        unsafe {
-            let content = view.configuration().userContentController();
-            content.removeScriptMessageHandlerForName_contentWorld(&name, &world);
-            content.addScriptMessageHandler_contentWorld_name(
-                ProtocolObject::from_ref(&*messages),
-                &world,
-                &name,
-            );
-        }
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "a frame is filled through WKWebView's Objective-C interface, from the pointer wry hands out"
-    )]
-    pub(super) async fn frame_fill(
-        view: Webview,
-        tab: String,
-        frame: String,
-        origin: String,
-        form: String,
-        values: HashMap<String, String>,
-        submit: bool,
-    ) -> Result<bool, String> {
-        let asked = super::fill_asked(&form, &origin, Some(&frame), &values, submit);
-        let body = format!("return ({})({asked})", super::FILL);
-        let (sending, mut answered) = tauri::async_runtime::channel::<Result<bool, String>>(1);
-        view.with_webview(move |platform| {
-            let refused = sending.clone();
-            let say = move |said: Result<bool, String>| {
-                let _ = refused.try_send(said);
-            };
-            let Some(mtm) = MainThreadMarker::new() else {
-                say(Err("not on the window's thread".into()));
-                return;
-            };
-            let Some(web) = (unsafe { Retained::retain(platform.inner().cast::<WKWebView>()) })
-            else {
-                say(Err("the page has gone".into()));
-                return;
-            };
-            let Some((info, was)) =
-                FRAMES.with_borrow(|all| all.get(&(tab.clone(), frame.clone())).cloned())
-            else {
-                say(Err("Pass has heard nothing from that frame".into()));
-                return;
-            };
-            if was != origin {
-                say(Err("that frame is on another site now".into()));
-                return;
-            }
-            let answering = sending.clone();
-            let done = RcBlock::new(move |value: *mut AnyObject, error: *mut NSError| {
-                let said = unsafe {
-                    if error.as_ref().is_some() {
-                        Err("the page could not be filled".to_string())
-                    } else {
-                        Ok(value
-                            .as_ref()
-                            .and_then(|value| value.downcast_ref::<NSNumber>())
-                            .is_some_and(NSNumber::as_bool))
-                    }
-                };
-                let _ = answering.try_send(said);
-            });
-            unsafe {
-                web.callAsyncJavaScript_arguments_inFrame_inContentWorld_completionHandler(
-                    &NSString::from_str(&body),
-                    None,
-                    Some(&info),
-                    &orden_world(mtm),
-                    Some(&done),
-                );
-            }
-        })
-        .map_err(|_| "the page could not be reached to fill it".to_string())?;
-        match tokio::time::timeout(PATIENCE, answered.recv()).await {
-            Ok(Some(said)) => said,
-            _ => Err("the page did not answer".into()),
-        }
-    }
-
-    pub(super) fn forget(tab: &str) {
-        let tab = tab.to_string();
-        FRAMES.with_borrow_mut(|all| all.retain(|(owner, _), _| owner != &tab));
-    }
-}
-
-#[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-mod engine {
-    use std::collections::HashMap;
-
-    use tauri::{AppHandle, Webview};
-
-    pub(crate) fn listen(
-        _webview: &tauri::webview::PlatformWebview,
-        _app: AppHandle,
-        _tab: String,
-        _window: String,
-    ) {
-    }
-
-    pub(super) async fn frame_fill(
-        _view: Webview,
-        _tab: String,
-        _frame: String,
-        _origin: String,
-        _form: String,
-        _values: HashMap<String, String>,
-        _submit: bool,
-    ) -> Result<bool, String> {
-        Ok(false)
-    }
-
-    pub(super) fn forget(_tab: &str) {}
-}
-
-#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 fn frames_in(tree: Option<&Value>, main: bool) -> Vec<Place> {
     let mut found = Vec::new();
     let mut walking: Vec<&Value> = tree.into_iter().collect();

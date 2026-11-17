@@ -1,0 +1,21 @@
+{
+  "name": "quick-add",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "ai-providers",
+    "bases",
+    "crate",
+    "dictation",
+    "editor",
+    "markdown",
+    "platform",
+    "shortcuts",
+    "tasks-model",
+    "ui-controls",
+    "ui-kit",
+    "web-backend",
+    "windows",
+    "link-index"
+  ]
+}

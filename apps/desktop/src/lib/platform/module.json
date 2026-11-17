@@ -1,0 +1,5 @@
+{
+  "name": "platform",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "crate", "markdown"]
+}

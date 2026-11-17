@@ -1,0 +1,169 @@
+import { escapeAll } from '@orden/markdown/html'
+import { CODE_PALETTES } from '@orden/editor'
+import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@orden/markdown'
+import { exportCss, themeCss } from '@orden/themes/raw'
+import { accentTokens, DEFAULT_ACCENT } from '../../theme/src/api'
+import { busy } from '../../ui-kit/src/api'
+import { invoke, isDesktop } from '../../platform/src/api'
+import { type Fence, prepareEmbeds, prepareFences } from '../../fences/src/api'
+import { titleOf } from './document'
+import { inlinePictures, type Picture } from './pictures'
+import {
+  pageCss,
+  pageSetupFor,
+  runningDate,
+  withRunningText,
+  chooseTarget,
+  CONTENT_POLICY,
+  inlineImages,
+} from '../../files-out/src/api'
+import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
+import { paletteCss } from '../../highlight/src/api'
+import { mathCss } from './math-fonts'
+import { DEFAULT_PAGE_SETUP, type PageSetup } from '@orden/contracts'
+import type { Scheme } from '../../theme/src/api'
+import { diskPathOf } from '../../web-backend/src/api'
+
+export interface HtmlOptions {
+  bare?: boolean
+  resolveImage?: (src: string) => string
+  scheme?: Scheme
+  accent?: string
+  codeTheme?: string
+  css?: string
+  page?: PageSetup
+  date?: string
+  fence?: Fence
+  readNote?: (target: string) => Promise<string | EmbeddedNote | null>
+  embed?: (link: Wikilink) => string | EmbeddedNote | null
+  escapeHtml?: boolean
+}
+
+function declarations(tokens: Record<string, string>): string {
+  return Object.entries(tokens)
+    .map(([token, value]) => `${token}: ${value};`)
+    .join(' ')
+}
+
+function accentCss(accent: string, scheme: Scheme): string {
+  return [
+    `:root { ${declarations(accentTokens(accent, scheme))} }`,
+    `@media print { :root { ${declarations(accentTokens(accent, 'light'))} } }`,
+  ].join('\n')
+}
+
+export function buildBody(source: string, options: HtmlOptions = {}): string {
+  return renderMarkdown(source, {
+    footnotes: true,
+    toc: true,
+    cover: true,
+    ...(options.fence ? { code: options.fence } : {}),
+    ...(options.embed ? { resolveEmbed: options.embed } : {}),
+    ...(options.escapeHtml ? { escapeHtml: true } : {}),
+  })
+}
+
+export function buildStyles(body: string, source: string, options: HtmlOptions = {}): string {
+  const palette =
+    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES.at(0)
+
+  return [
+    mathCss(body),
+    themeCss,
+    accentCss(options.accent ?? DEFAULT_ACCENT, options.scheme ?? 'light'),
+    exportCss,
+    palette ? paletteCss(palette) : '',
+    pageCss(pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)),
+    options.css ?? '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
+export function buildHtml(source: string, name: string, options: HtmlOptions = {}): string {
+  const title = titleOf(source, name)
+  const author = frontMatterValue(source, 'author')
+  const lang = frontMatterValue(source, 'lang') ?? 'en'
+  const body = buildBody(source, options)
+
+  const meta = [
+    '<meta charset="utf-8">',
+    `<meta http-equiv="Content-Security-Policy" content="${CONTENT_POLICY}">`,
+    author ? `<meta name="author" content="${escapeAll(author)}">` : '',
+    `<title>${escapeAll(title)}</title>`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  if (options.bare) {
+    return `<!doctype html>\n<html lang="${escapeAll(lang)}">\n<head>\n${meta}\n</head>\n<body>\n${body}</body>\n</html>\n`
+  }
+
+  const scheme = options.scheme ?? 'light'
+  const setup = pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)
+  const date = runningDate(source, options.date)
+
+  const styles = buildStyles(body, source, options)
+  const page = withRunningText(`<div id="write">\n${body}</div>\n`, setup, title, date)
+
+  return `<!doctype html>
+<html lang="${escapeAll(lang)}" data-theme="${scheme}">
+<head>
+${meta}
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="generator" content="Orden">
+<style>
+${styles}
+</style>
+</head>
+<body>
+${page}</body>
+</html>
+`
+}
+
+export async function renderNote(
+  source: string,
+  name: string,
+  options: HtmlOptions = {},
+  pictures?: readonly Picture[],
+): Promise<string> {
+  const fence = await prepareFences(source, options.scheme ?? 'light', { highlight: !options.bare })
+  const embed = options.readNote ? await prepareEmbeds(source, options.readNote) : undefined
+  const html = buildHtml(source, name, { ...options, fence, ...(embed ? { embed } : {}) })
+
+  if (options.bare) return html
+  if (pictures) return inlinePictures(html, pictures)
+
+  return options.resolveImage ? inlineImages(html, options.resolveImage) : html
+}
+
+export async function exportPandoc(
+  source: string,
+  name: string,
+  format: PandocFormat,
+  note: string | null = null,
+) {
+  if (!isDesktop || __EVEN_PLUGIN__) return
+
+  const spec = PANDOC_FORMATS.find((entry) => entry.id === format)
+  if (!spec) return
+
+  const target = await chooseTarget(name, spec.extension, spec.label)
+  if (!target) return
+
+  const missing = await invoke<string[]>('run_pandoc', {
+    source,
+    output: target,
+    format,
+    note: note === null ? null : await diskPathOf(note),
+  })
+  if (missing.length) {
+    busy.failed(
+      missing.length === 1
+        ? '1 attachment was missing from the export or could not be read'
+        : `${missing.length} attachments were missing from the export or could not be read`,
+    )
+  }
+  return target
+}

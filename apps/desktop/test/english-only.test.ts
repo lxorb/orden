@@ -96,7 +96,7 @@ describe('Orden speaks English only', () => {
 
   test('nor a language to choose in the settings', () => {
     const general = readFileSync(
-      join(ROOT, 'apps/desktop/src/lib/settings/general-pane.ts'),
+      join(ROOT, 'apps/desktop/src/lib/settings/src/general-pane.ts'),
       'utf8',
     )
     expect(general).not.toContain("'general.language'")

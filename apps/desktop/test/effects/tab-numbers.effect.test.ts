@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -19,10 +19,10 @@ if (typeof globalThis.CSS === 'undefined') {
   vi.stubGlobal('CSS', { escape: (text: string) => text })
 }
 
-const { numbers } = await import('../../src/lib/tab-strip/numbers.svelte')
-const { replay } = await import('../../src/lib/web-tab/keys')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-type Tab = import('../../src/lib/workspace.svelte').Tab
+const { numbers } = await import('../../src/lib/tab-strip/src/numbers.svelte')
+const { replay } = await import('../../src/lib/ui-kit/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+type Tab = import('../../src/lib/workspace/src/api').Tab
 
 const NAMES = ['a', 'b', 'c']
 

@@ -42,7 +42,7 @@ function moduleBody(text: string, signature: string): string {
 }
 
 describe('what a space offers', () => {
-  const space = moduleBody(read('lib/space-actions.ts'), 'export function spaceMenu(space: Space)')
+  const space = moduleBody(read('lib/spaces/src/api.ts'), 'export function spaceMenu(space: Space)')
 
   test('the space itself: its name, its mark, who may reach it', () => {
     for (const entry of ["'Rename'", "'Choose an icon'", "'Share'", "'Publish'"]) {
@@ -73,7 +73,7 @@ describe('what a space offers', () => {
 
   test('but not for a space somebody else shared', () => {
     const nudge = moduleBody(
-      read('lib/space-actions.ts'),
+      read('lib/spaces/src/api.ts'),
       'function canNudge(space: Space, by: -1 | 1): boolean',
     )
 
@@ -81,8 +81,8 @@ describe('what a space offers', () => {
   })
 
   test('through the one menu the switcher opens, however it is asked for', () => {
-    const switcher = read('lib/SpaceMenu.svelte')
-    const rows = read('lib/SpaceList.svelte')
+    const switcher = read('lib/spaces/src/SpaceMenu.svelte')
+    const rows = read('lib/spaces/src/SpaceList.svelte')
 
     expect(switcher).toContain('menu.show(event, spaceMenu(space)')
     expect(switcher).toContain('<SpaceList {typing} {choose} {about} />')
@@ -95,9 +95,9 @@ describe('what a space offers', () => {
 describe('the path a note sits at', () => {
   const everywhere = [
     ...componentSources(),
-    read('lib/menu.svelte.ts'),
-    read('lib/commands.ts'),
-    read('lib/app-menu.ts'),
+    read('lib/row-menu/src/api.ts'),
+    read('lib/commands/src/commands.ts'),
+    read('lib/native-menu/src/app-menu.ts'),
   ].join('\n')
 
   test('is not a row in any menu, on any device', () => {
@@ -111,11 +111,11 @@ describe('the path a note sits at', () => {
 describe('making a folder', () => {
   const everywhere = [
     ...componentSources(),
-    read('lib/row-menu.ts'),
-    read('lib/menu.svelte.ts'),
-    read('lib/commands.ts'),
-    read('lib/app-menu.ts'),
-    read('lib/shortcuts/registry.ts')
+    read('lib/row-menu/src/row-menu.ts'),
+    read('lib/row-menu/src/api.ts'),
+    read('lib/commands/src/commands.ts'),
+    read('lib/native-menu/src/app-menu.ts'),
+    read('lib/shortcuts/src/registry.ts')
       .split('\n')
       .filter((line) => !line.includes("['explorer."))
       .join('\n'),
@@ -127,7 +127,7 @@ describe('making a folder', () => {
   })
 
   test('and no row can be drawn as one but an empty note that holds notes', () => {
-    const marks = read('lib/file-mark.ts')
+    const marks = read('lib/marks/src/file-mark.ts')
     const byName = marks.slice(marks.indexOf('export function fileMark'))
     expect(byName.slice(0, byName.indexOf('\n}\n'))).not.toContain('folder')
     expect(everywhere).not.toContain("mark: 'folder'")
@@ -136,10 +136,10 @@ describe('making a folder', () => {
 })
 
 describe('what a row of the file list offers', () => {
-  const tree = read('lib/Tree.svelte')
-  const source = read('lib/row-menu.ts')
+  const tree = read('lib/sidebar/src/Tree.svelte')
+  const source = read('lib/row-menu/src/row-menu.ts')
   const row = moduleBody(source, 'export function rowMenu(entry: Entry)')
-  const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
+  const entries = moduleBody(read('lib/row-menu/src/api.ts'), 'export function iconEntries(')
 
   test('its name, and where it goes', () => {
     for (const entry of ["'Rename'", 'moveEntry(entry)']) {
@@ -157,9 +157,13 @@ describe('what a row of the file list offers', () => {
     expect(entries).toContain("'Choose an icon'")
   })
 
-  test('and the way back to no icon, only while it wears one', () => {
-    expect(entries).toContain("'Remove icon'")
-    expect(entries).toContain('chosenIcon(path) === null')
+  test('and the way back to no icon is in the picker, not the menu', () => {
+    expect(entries).not.toContain('Remove icon')
+    const picker = read('lib/icon-picker/src/IconPicker.svelte')
+    expect(picker).toMatch(
+      /\(worn !== null \|\| tint !== null\)[\s\S]{0,80}onclick=\{remove\}>Remove icon</,
+    )
+    expect(picker).toMatch(/function remove\(\)[\s\S]{0,120}wear\(asked, null, null\)/)
   })
 
   test('choosing opens the one picker there is', () => {
@@ -195,20 +199,25 @@ describe('what a row of the file list offers', () => {
       tree.indexOf('function openRowAt('),
     )
 
-    expect(door).toContain("import('./row-menu')")
+    expect(door).toContain('rowMenus().then(({ rowMenu })')
     expect(door).toContain('menu.show(event, rowMenu(entry), { title })')
-    expect(read('lib/surfaces.svelte.ts')).toContain("import('./row-menu')")
+    expect(read('lib/features.ts')).toContain('one.rowMenus()')
   })
 })
 
 describe("what the strip's empty stretch offers", () => {
-  const tabs = read('lib/Tabs.svelte')
+  const tabs = read('lib/tab-strip/src/Tabs.svelte')
   const door = () => body(tabs, 'function showStripMenu(')
 
   test('the menu is the strip menu, fetched by the press', () => {
-    expect(door()).toContain("import('./tab-strip/strip-menu')")
+    expect(door()).toContain('here(stripMenus())')
     expect(door()).toContain('menu.show(event, stripMenu(paneId))')
-    expect(read('lib/surfaces.svelte.ts')).toContain("import('./tab-strip/strip-menu')")
+    expect(read('lib/features.ts')).toContain(
+      "import('./tab-strip/src/api').then((one) => one.stripMenus())",
+    )
+    expect(read('lib/tab-strip/src/shell-parts.ts')).toContain(
+      "stripMenus = () => import('./strip-menu')",
+    )
   })
 
   test('asked for on the strip, and only where nothing else is under the point', () => {
@@ -223,7 +232,7 @@ describe("what the strip's empty stretch offers", () => {
 })
 
 describe('what the plus in the tab strip offers', () => {
-  const tabs = read('lib/Tabs.svelte')
+  const tabs = read('lib/tab-strip/src/Tabs.svelte')
 
   const plus = tabs.slice(
     tabs.indexOf('class="new"'),

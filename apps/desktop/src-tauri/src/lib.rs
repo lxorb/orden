@@ -39,7 +39,7 @@ mod carry;
 mod chatgpt;
 #[cfg(desktop)]
 mod chromium_profiles;
-#[cfg(all(target_os = "linux", feature = "cef"))]
+#[cfg(target_os = "linux")]
 mod chromium_pump;
 mod clock;
 mod code_blocks;
@@ -69,7 +69,6 @@ mod firefox_profiles;
 mod fonts;
 #[cfg(desktop)]
 mod foreground;
-pub mod former_name;
 mod front_matter;
 #[cfg(all(desktop, target_os = "linux"))]
 mod front_x;
@@ -97,6 +96,8 @@ mod keyboard;
 mod lane;
 #[cfg(desktop)]
 mod launch;
+#[cfg(desktop)]
+mod letters;
 #[cfg(desktop)]
 mod lifecycle;
 #[cfg(target_os = "macos")]
@@ -152,11 +153,6 @@ mod pdf;
 mod pinch;
 #[cfg(desktop)]
 mod placement;
-#[cfg(all(windows, not(feature = "cef")))]
-#[doc(hidden)]
-pub mod window_thread {
-    pub use crate::placement::{managed, note_every_window};
-}
 #[cfg(desktop)]
 mod presence;
 #[cfg(desktop)]
@@ -169,8 +165,6 @@ mod regex;
 mod reminders;
 #[cfg(desktop)]
 mod retired_chats;
-#[cfg(all(desktop, not(feature = "cef")))]
-mod retired_engine;
 #[cfg(desktop)]
 mod safari;
 mod search;
@@ -217,7 +211,7 @@ mod web_answers;
 mod web_certificate;
 #[cfg(desktop)]
 mod web_clear;
-#[cfg(any(windows, target_os = "macos", feature = "cef"))]
+#[cfg(desktop)]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_cut;
@@ -257,10 +251,6 @@ mod web_swipe;
 mod web_tabs;
 #[cfg(desktop)]
 mod web_tint;
-#[cfg(all(windows, not(feature = "cef")))]
-mod web_visual;
-#[cfg(all(windows, not(feature = "cef")))]
-mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
 #[cfg(desktop)]
@@ -518,6 +508,14 @@ macro_rules! desktop_commands {
             terminal::pty_program,
             terminal::pty_ssh,
             terminal::pty_kill,
+            terminal::pty_detach,
+            terminal::pty_held,
+            terminal::pty_take,
+            terminal::pty_name,
+            terminal::pty_end,
+            terminal::terminal_sessions,
+            terminal::terminal_tmux,
+            terminal::remote::remote_end,
             terminal::history::terminal_history_read,
             terminal::history::terminal_history_write,
             terminal::history::terminal_history_forget,
@@ -631,33 +629,36 @@ mod entry {
     }
 }
 
-#[cfg(all(target_os = "linux", not(feature = "cef")))]
+#[cfg(all(desktop, not(feature = "cef")))]
 compile_error!(
-    "Linux builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
+    "desktop builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
 );
 
-#[cfg(not(feature = "cef"))]
+#[cfg(mobile)]
 pub type Engine = tauri::Wry;
 
-#[cfg(feature = "cef")]
+#[cfg(desktop)]
 pub type Engine = tauri::DynRuntime;
 
 pub fn run() {
     #[cfg(target_os = "linux")]
     linux::prepare();
-    #[cfg(all(windows, not(feature = "cef")))]
-    web_visual::arm_visuals();
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    page_carry::mac::arm();
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    dropped_paths::arm();
-    #[cfg(not(feature = "cef"))]
+    #[cfg(mobile)]
     run_on(tauri::Builder::default());
-    #[cfg(feature = "cef")]
+    #[cfg(desktop)]
     run_on(tauri::Builder::default().runtime(engine::cef_runtime()));
 }
 
-#[cfg(feature = "cef")]
+#[cfg(desktop)]
+#[must_use]
+pub fn terminal_hold() -> Option<i32> {
+    std::env::args_os()
+        .nth(1)
+        .is_some_and(|first| first == terminal::hold::MODE)
+        .then(terminal::hold::serve)
+}
+
+#[cfg(desktop)]
 #[must_use]
 pub fn cef_helper() -> bool {
     if !std::env::args_os().any(|arg| arg.as_encoded_bytes().starts_with(b"--type=")) {
@@ -704,7 +705,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_single_instance::init(
             launch::second_launch_heard,
         ))
-        .manage(launch::Pending::default());
+        .manage(launch::Pending::default())
+        .manage(launch::restart_env());
     #[cfg(desktop)]
     let builder = lifecycle::managed(builder);
     #[cfg(desktop)]
@@ -780,18 +782,13 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 }
 
 fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
-    #[cfg(feature = "cef")]
+    #[cfg(desktop)]
     let builder = builder.on_web_content_process_terminate(|view, ended| {
         use tauri::webview::WebContentProcessTerminationReason as Reason;
         if !matches!(ended.reason, Reason::Normal) {
             crashes::page_ended(view.label());
             web_page::ended(view);
         }
-    });
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    let builder = builder.on_web_content_process_terminate(|view: &tauri::Webview| {
-        crashes::page_ended(view.label());
-        web_page::ended(view);
     });
     builder
 }
@@ -855,12 +852,13 @@ fn hearing(handle: &tauri::AppHandle) {
     std::thread::spawn(shell_menu::forget);
 }
 
-#[cfg(feature = "cef")]
+#[cfg(desktop)]
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
     chromium_pump::start(handle);
     page_scale::start(handle);
     extensions::tabs::start(handle);
+    extensions::preinstall(handle);
 }
 
 #[cfg(desktop)]
@@ -923,7 +921,7 @@ fn ready(
 
     #[cfg(desktop)]
     hearing(handle);
-    #[cfg(feature = "cef")]
+    #[cfg(desktop)]
     engine_started(handle);
 
     #[cfg(desktop)]
@@ -959,6 +957,7 @@ fn ready(
                 #[cfg(target_os = "macos")]
                 lights::hold(&window);
                 window.show()?;
+                placement::raised(&window.as_ref().window());
             }
         }
         first_window(handle);
@@ -984,8 +983,6 @@ fn ready(
     if web_first {
         web_tabs::warm(handle);
     }
-    #[cfg(all(desktop, not(feature = "cef")))]
-    retired_engine::clear_leftovers(handle);
     trace::write(handle);
 
     #[cfg(desktop)]

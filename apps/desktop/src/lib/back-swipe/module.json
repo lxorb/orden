@@ -1,0 +1,5 @@
+{
+  "name": "back-swipe",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "ui-kit", "windows", "documents", "workspace"]
+}

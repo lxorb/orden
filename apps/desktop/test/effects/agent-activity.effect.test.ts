@@ -1,9 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { agentMarks } from '../../src/lib/agent-marks.svelte'
-import AgentSession from '../../src/lib/agents/ui/AgentSession.svelte'
-import { FakeCrate } from '../../src/lib/agents/ui/fake'
-import { ended, start, started } from '../../src/lib/agents/ui/index'
+import { agentMarks } from '../../src/lib/workspace/src/api'
+import AgentSession from '../../src/lib/agents/src/ui/AgentSession.svelte'
+import { FakeCrate } from '../../src/lib/agents/src/ui/fake'
+import { ended, start, started } from '../../src/lib/agents/src/ui/index'
 
 Element.prototype.animate = () =>
   ({
@@ -195,7 +195,7 @@ describe("an agent's session", () => {
 
 describe('Full permissions', () => {
   test('an agent that asks nothing has its tab shown without a question, behind the reader', async () => {
-    const { workspace } = await import('../../src/lib/workspace.svelte')
+    const { workspace } = await import('../../src/lib/workspace/src/api')
     workspace.openBlank('Reading', '# Reading')
     const reading = workspace.activeTabId
     fake.connect('claude', 'Claude Code')

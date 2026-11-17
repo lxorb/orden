@@ -17,7 +17,7 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-const { default: WebHistory } = await import('../../src/lib/web-tab/WebHistory.svelte')
+const { default: WebHistory } = await import('../../src/lib/web-tab/src/WebHistory.svelte')
 
 const BOOK = 'orden:web-visits:history-test'
 

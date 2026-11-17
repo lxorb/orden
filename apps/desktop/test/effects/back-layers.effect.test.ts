@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { closeOnBack } from '../../src/lib/backstack.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
+import { closeOnBack } from '../../src/lib/ui-kit/src/backstack.svelte'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
 const settled = async () => {
   for (let turn = 0; turn < 12; turn++) await new Promise((resolve) => setTimeout(resolve, 5))

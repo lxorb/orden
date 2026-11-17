@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { ACCENTS, accentTokens } from '../src/lib/accents'
+import { ACCENTS, accentTokens } from '../src/lib/theme/src/accents'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
@@ -140,7 +140,7 @@ describe('the stylesheets', () => {
         name: path.replace(/\\/g, '/').split('/src/').pop() ?? path,
         text: readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''),
       }))
-      .filter((one) => one.name !== 'lib/Titlebar.svelte')
+      .filter((one) => one.name !== 'Titlebar.svelte')
       .filter((one) => WHITE_INK.test(one.text))
       .map((one) => one.name)
 

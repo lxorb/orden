@@ -1,8 +1,11 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
-import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
-import { settings } from '../../src/lib/settings.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
+import SettingsPanel from '../../src/lib/settings/src/SettingsPanel.svelte'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
+
+providePort('settings.window', settings)
 
 Element.prototype.animate = () =>
   ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation

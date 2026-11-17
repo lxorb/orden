@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const installed = vi.hoisted(() => new Set(['DejaVu Sans', 'DejaVu Sans Mono', 'Inter']))
 
-vi.mock('../../src/lib/font-families', async (original) => ({
-  ...(await original<typeof import('../../src/lib/font-families')>()),
+vi.mock('../../src/lib/settings/src/font-families', async (original) => ({
+  ...(await original<typeof import('../../src/lib/settings/src/font-families')>()),
   installedFamilies: () =>
     Promise.resolve([
       { name: 'DejaVu Sans', mono: false },
@@ -16,7 +16,7 @@ vi.mock('../../src/lib/font-families', async (original) => ({
 
 Element.prototype.scrollIntoView = () => undefined
 
-const FontPicker = (await import('../../src/lib/settings/FontPicker.svelte')).default
+const FontPicker = (await import('../../src/lib/settings/src/FontPicker.svelte')).default
 
 let target: HTMLElement
 let app: ReturnType<typeof mount>

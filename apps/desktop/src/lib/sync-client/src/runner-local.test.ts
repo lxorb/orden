@@ -32,8 +32,8 @@ vi.mock('./store', async (importOriginal) => {
   }
 })
 
-vi.mock('../../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
 }))
@@ -74,7 +74,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { runner } = await import('./runner.svelte')
-const { account } = await import('../../account.svelte')
+const { account } = await import('../../accounts/src/account.svelte')
 
 describe('the engine kept signed out', () => {
   test('is nobody’s to ask about, and lets go of its store before the account’s opens', async () => {
@@ -136,9 +136,9 @@ describe('the engine kept signed out', () => {
         deleted: false,
       }),
     ])
-    const { noteRootsMoved, rootsMoved } = await import('../../workspace/roots-moved')
+    const { noteRootsMoved, rootsMoved } = await import('../../workspace/src/roots-moved')
     noteRootsMoved([{ from: '/Vault/Notes', to: '/Spaces/Notes' }])
-    const { workspace } = await import('../../workspace.svelte')
+    const { workspace } = await import('../../workspace/src/api')
     workspace.spaces = [{ id: 'w9', name: 'Notes', root: '/Spaces/Notes' }]
 
     try {

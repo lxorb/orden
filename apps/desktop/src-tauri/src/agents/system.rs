@@ -219,18 +219,6 @@ fn environment(
     (env, withheld)
 }
 
-fn engine() -> &'static str {
-    if cfg!(feature = "cef") {
-        "Chromium (CEF)"
-    } else if cfg!(windows) {
-        "WebView2"
-    } else if cfg!(target_os = "macos") {
-        "WKWebView"
-    } else {
-        "WebKitGTK"
-    }
-}
-
 fn info(app: &AppHandle) -> SystemInfo {
     let mut screens = app.available_monitors().unwrap_or_default();
     if let Ok(Some(primary)) = app.primary_monitor() {
@@ -247,7 +235,7 @@ fn info(app: &AppHandle) -> SystemInfo {
         arch: std::env::consts::ARCH.to_owned(),
         locale: tauri_plugin_os::locale(),
         app_version: app.package_info().version.to_string(),
-        webview: Some(engine().to_owned()),
+        webview: Some("Chromium (CEF)".to_owned()),
         displays: screens
             .iter()
             .map(|one| Display {

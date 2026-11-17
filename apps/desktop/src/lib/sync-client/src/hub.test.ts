@@ -1,7 +1,7 @@
 import '../../sync-ports'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { BEAT_EVERY } from '../../backoff'
-import { account } from '../../account.svelte'
+import { BEAT_EVERY } from '../../platform/src/backoff'
+import { account } from '../../accounts/src/account.svelte'
 import { Hub, type HubWorld, type SocketEvents } from './hub.svelte'
 
 interface Opened {
@@ -78,7 +78,7 @@ describe('a device’s hub socket', () => {
     const socket = await open()
 
     expect(socket.url).toMatch(/^wss?:\/\/.+\/v2\/hub$/)
-    expect(socket.protocols).toEqual(['nib.token.token-1', 'nib.device.device-0001'])
+    expect(socket.protocols).toEqual(['orden.token.token-1', 'orden.device.device-0001'])
     expect(JSON.parse(socket.said[0] ?? '')).toMatchObject({
       t: 'hello',
       device: 'device-0001',
@@ -198,6 +198,54 @@ describe('a device’s hub socket', () => {
     expect(asked).toHaveBeenCalledTimes(1)
     expect(sockets).toHaveLength(2)
     expect(hub.state).toBe('open')
+    account.token = null
+    asked.mockRestore()
+  })
+
+  test('waits longer each time it is shut out again while the session still holds', async () => {
+    const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
+    account.token = 'token-1'
+    const hub = new Hub(world())
+    hub.follow('token-1')
+
+    const until = Date.now() + 60_000
+    while (Date.now() < until) {
+      const socket = sockets.at(-1)
+      if (socket && !socket.open) {
+        socket.open = true
+        socket.events.opened()
+        await vi.advanceTimersByTimeAsync(0)
+        socket.events.closed(1008)
+      }
+      await vi.advanceTimersByTimeAsync(100)
+    }
+
+    expect(sockets.length).toBeLessThanOrEqual(12)
+    expect(asked.mock.calls.length).toBeLessThanOrEqual(12)
+    hub.follow(null)
+    account.token = null
+    asked.mockRestore()
+  })
+
+  test('comes back at its first wait once a socket has kept its beat', async () => {
+    const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
+    account.token = 'token-1'
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    for (let turn = 0; turn < 4; turn++) {
+      const socket = await open()
+      socket.events.closed(1008)
+      while (sockets.length === turn + 1) await vi.advanceTimersByTimeAsync(100)
+    }
+
+    const kept = await open()
+    for (const tick of [...ticks]) tick()
+    kept.events.heard('ok')
+    kept.events.closed(1006)
+    await vi.advanceTimersByTimeAsync(600)
+
+    expect(sockets).toHaveLength(6)
+    hub.follow(null)
     account.token = null
     asked.mockRestore()
   })

@@ -6,8 +6,8 @@ let refuse = false
 let front: string | null = null
 let reached: Record<string, unknown> | null = null
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => 'windows',
@@ -35,7 +35,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 const channels: { onmessage: ((message: unknown) => void) | null }[] = []
 
-vi.mock('../../src/lib/native', () => ({
+vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
     constructor() {
@@ -130,14 +130,14 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { readSpec, writeSpec } = await import('../../src/lib/terminal/spec')
-const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
-const { openRemote } = await import('../../src/lib/remote/open')
-const { shells } = await import('../../src/lib/terminal/shells.svelte')
-const { renameTerminal } = await import('../../src/lib/terminal/rename')
-const { setTerminalIcon } = await import('../../src/lib/icon-target')
-const TerminalTab = (await import('../../src/lib/terminal/TerminalTab.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
+const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
+const { openRemote } = await import('../../src/lib/terminal/src/remote/open')
+const { shells } = await import('../../src/lib/terminal/src/shells.svelte')
+const { renameTerminal } = await import('../../src/lib/terminal/src/rename')
+const { setTerminalIcon } = await import('../../src/lib/terminal/src/api')
+const TerminalTab = (await import('../../src/lib/terminal/src/TerminalTab.svelte')).default
 
 const spawns = () => asked.filter((one) => one.command === 'pty_spawn')
 
@@ -359,7 +359,7 @@ test('a name cleared while it is a host gives the tab the local shell back as it
 
 test('a split or duplicate of a local terminal is a terminal of its own, not the same words', async () => {
   const tab = await adopted()
-  const { duplicateTab } = await import('../../src/lib/tab-strip/ops')
+  const { duplicateTab } = await import('../../src/lib/tab-strip/src/ops')
   duplicateTab(tab.id)
   const copy = workspace.tabs.at(-1)
   if (!copy || copy === tab) throw new Error('no copy')

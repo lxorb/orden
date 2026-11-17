@@ -1,0 +1,5 @@
+{
+  "name": "tree",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "file-ops", "markdown", "platform", "space-kept"]
+}

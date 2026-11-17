@@ -1,19 +1,14 @@
-import { INBOX_PATH } from '@orden/bases/inbox'
-import { fileBytes, sha256 } from '../../bytes'
-import { deviceName } from '../../device'
-import { keptShaped, mountOf } from '../../internal/roots'
-import { mountedFor } from '../../internal/watch'
-import { links } from '../../link-index.svelte'
-import { evictedHere } from '../../icloud-placeholder'
-import { onDisk } from '../../on-disk'
-import { holderOf } from '../../pages/held'
-import { scanSpace } from '../../space-watch'
+import { OWN_FILE as INBOX_PATH, syncDeletes } from '@orden/sync-core'
+import { fileBytes, sha256, deviceName, iCloud, onDisk } from '../../platform/src/api'
+import { keptMounts } from '../../web-backend/src/api'
+import { links } from '../../link-index/src/api'
+import { holderOf } from '@orden/markdown/pages'
+import { scanSpace } from '../../crate/src/api'
 import { windowsPath } from './places'
 import { invoke, isDesktop, isNative, joinPath, platform, remote } from './ports'
 import { classifier } from './classify'
 import { accountOver, type Reading, readingOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
-import { syncDeletes } from './deletes'
 
 export interface Telling {
   holdingWrites(from: string, run: () => Promise<void>, stalled: () => Promise<void>): Promise<void>
@@ -93,7 +88,7 @@ function diskOf(telling: Telling): Disk {
     },
     mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
     exists: thereOrUnsure,
-    evicted: evictedHere,
+    evicted: async (path) => (await iCloud()).evictedHere(path),
   }
 }
 
@@ -115,16 +110,8 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
     const at = slashed(path)
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
   }
-  const kept = (await mountedFor(root)) ? mountOf(root) : null
-  if (!kept && keptShaped(root)) throw new Error(`${root} is a space kept here, not mounted`)
-  if (kept) {
-    const top = kept.inside ? `${kept.inside}/` : ''
-    return (await kept.mount.folder.list()).flatMap(({ path, entry }) =>
-      path.startsWith(top) && path !== kept.inside
-        ? [{ path: path.slice(top.length), dir: !entry.key }]
-        : [],
-    )
-  }
+  const kept = await (await keptMounts()).listedUnder(root)
+  if (kept) return kept
   if (isDesktop()) {
     const all = await scanSpace(root).catch(() => null)
     if (all) {

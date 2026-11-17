@@ -1,13 +1,13 @@
 import { expect, test, vi } from 'vitest'
 import { computed, root } from './runes.svelte'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   invoke: () => Promise.resolve(undefined),
 }))
 
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 
 test('a pane can read its page out of a derived the first time it asks', () => {
   let read: (() => unknown) | undefined

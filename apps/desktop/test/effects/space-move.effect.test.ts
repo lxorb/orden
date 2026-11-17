@@ -10,8 +10,8 @@ const SPACES = [
   { name: 'Uni', path: '/spaces/Uni' },
 ]
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -28,11 +28,12 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const { Disk } = await import('../disk')
 disk.current = new Disk()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-await import('../../src/lib/workspace/sets.svelte')
-const { pane } = await import('../../src/lib/workspace/pane-tree')
-const { moveToSpace } = await import('../../src/lib/workspace/moving-space')
-const { written } = await import('../../src/lib/parting')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+await import('../../src/lib/workspace-ports')
+await import('../../src/lib/workspace/src/sets.svelte')
+const { pane } = await import('../../src/lib/panes/src/api')
+const { moveToSpace } = await import('../../src/lib/workspace/src/moving-space')
+const { written } = await import('../../src/lib/parting/src/api')
 
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'
@@ -229,7 +230,7 @@ describe('a move taken back', () => {
 
 describe('a move that was refused', () => {
   test('says so, with the way to try again, and answers that nothing moved', async () => {
-    const { failed } = await import('../../src/lib/views/failed.svelte')
+    const { failed } = await import('../../src/lib/workspace/src/notices.svelte')
     failed.dismiss()
     files().set('/spaces/Home/Plan.md', '# theirs\n')
     await workspace.openEntry(PLAN)
@@ -291,7 +292,7 @@ describe('a tab with nowhere to come back to', () => {
   })
 
   test('closed in a space archived since: stays closed, and says so', async () => {
-    const { busy } = await import('../../src/lib/busy.svelte')
+    const { busy } = await import('../../src/lib/ui-kit/src/busy.svelte')
     busy.clear()
     await workspace.showSpace('home')
     await workspace.openEntry(FOOD)
@@ -307,7 +308,7 @@ describe('a tab with nowhere to come back to', () => {
   })
 
   test('a move whose space is archived since: not undone, file and tab together, and said', async () => {
-    const { failed } = await import('../../src/lib/views/failed.svelte')
+    const { failed } = await import('../../src/lib/workspace/src/notices.svelte')
     failed.dismiss()
     await workspace.openEntry(PLAN)
     await moveToSpace([tabAt(PLAN).id], 'home')
@@ -321,7 +322,7 @@ describe('a tab with nowhere to come back to', () => {
   })
 
   test('a redo into a space archived since: not done, and said', async () => {
-    const { failed } = await import('../../src/lib/views/failed.svelte')
+    const { failed } = await import('../../src/lib/workspace/src/notices.svelte')
     failed.dismiss()
     await workspace.openEntry(PLAN)
     await moveToSpace([tabAt(PLAN).id], 'home')

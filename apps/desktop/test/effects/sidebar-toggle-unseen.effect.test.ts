@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-const SidebarToggle = (await import('../../src/lib/SidebarToggle.svelte')).default
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { SidebarToggle } = await import('../../src/lib/titlebar/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 
 let shown: ReturnType<typeof mount>
 let toggle: HTMLButtonElement
@@ -54,10 +54,10 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
       // Nothing to measure.
     }
   }
-  const { viewport } = await import('../../src/lib/viewport.svelte')
-  const { fullscreen } = await import('../../src/lib/fullscreen.svelte')
-  const { default: Sidebar } = await import('../../src/lib/Sidebar.svelte')
-  const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
+  const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+  const { fullscreen } = await import('../../src/lib/ui-kit/src/api')
+  const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')
+  const { Titlebar } = await import('../../src/lib/titlebar/src/api')
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
   workspace.activeSpaceId = 'work'
   workspace.tabs = []

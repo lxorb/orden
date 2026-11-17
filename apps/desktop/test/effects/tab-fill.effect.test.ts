@@ -9,8 +9,8 @@ vi.hoisted(() => {
   })
 })
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -56,13 +56,13 @@ Element.prototype.scrollIntoView = () => undefined
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
-const { STARTS_RIGHT } = await import('../../src/lib/workspace/panels')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+const { STARTS_RIGHT } = (await import('../../src/lib/session/src/api')).panels
 const App = (await import('../../src/App.svelte')).default
-await import('../../src/lib/tab-fill/fill')
-await import('../../src/lib/tab-fill/FillBar.svelte')
+await import('../../src/lib/tab-fill/src/fill')
+await import('../../src/lib/tab-fill/src/FillBar.svelte')
 
 await warmWindow(
   () => {

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
 
-const PASS = fileURLToPath(new URL('../src/lib/pass/', import.meta.url))
+const PASS = fileURLToPath(new URL('../src/lib/pass-ui/src/', import.meta.url))
 
 interface Node {
   type: string

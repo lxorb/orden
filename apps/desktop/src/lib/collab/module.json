@@ -1,0 +1,16 @@
+{
+  "name": "collab",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "collab-rooms",
+    "editor",
+    "markdown",
+    "theme",
+    "accounts",
+    "platform",
+    "ui-kit",
+    "documents",
+    "modes"
+  ]
+}

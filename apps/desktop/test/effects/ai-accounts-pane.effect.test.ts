@@ -8,8 +8,8 @@ const world = vi.hoisted(() => ({
   chatgpt: null as { email: string } | null,
 }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   openExternal: () => Promise.resolve(),
   invoke: (command: string, args: unknown) => {
@@ -38,7 +38,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/ai/accounts-file', () => ({
+vi.mock('../../src/lib/ai-providers/src/accounts-file', () => ({
   COPY: 'orden:ai-accounts',
   STALE: 'stale',
   readKept: () => Promise.resolve({ text: world.file.text, stamp: String(world.file.stamp) }),
@@ -50,7 +50,7 @@ vi.mock('../../src/lib/ai/accounts-file', () => ({
   hearChanges: () => Promise.resolve(),
 }))
 
-vi.mock('../../src/lib/ai/keys', () => ({
+vi.mock('../../src/lib/ai-providers/src/keys', () => ({
   keysAreGuarded: () => true,
   keysInFile: () => Promise.resolve(false),
   keysMoved: () => () => undefined,
@@ -68,21 +68,21 @@ vi.mock('../../src/lib/ai/keys', () => ({
   readSecret: () => Promise.resolve(null),
 }))
 
-vi.mock('../../src/lib/ai/complete', () => ({
+vi.mock('../../src/lib/ai-providers/src/complete', () => ({
   listModels: () => Promise.resolve(['model-a']),
 }))
 
-vi.mock('../../src/lib/ai/vault/start.svelte', () => ({
+vi.mock('../../src/lib/ai-providers/src/vault/start.svelte', () => ({
   browserVault: { on: false },
   keepBrowserInVault: () => Promise.resolve(),
   vault: { standing: 'open', allowed: [], seen: {}, remove: () => Promise.resolve(true) },
   startVault: () => undefined,
 }))
 
-const { default: AiPane } = await import('../../src/lib/AiPane.svelte')
-const { ai } = await import('../../src/lib/ai/store.svelte')
-const { NONE, added } = await import('../../src/lib/ai/accounts')
-const { usage } = await import('../../src/lib/ai/usage.svelte')
+const { default: AiPane } = await import('../../src/lib/ai-sidebar/src/AiPane.svelte')
+const { ai } = await import('../../src/lib/ai-providers/src/store.svelte')
+const { NONE, added } = await import('../../src/lib/ai-providers/src/accounts')
+const { usage } = await import('../../src/lib/ai-providers/src/usage.svelte')
 
 Element.prototype.animate = () =>
   ({

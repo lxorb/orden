@@ -1,0 +1,5 @@
+{
+  "name": "ui-controls",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "platform", "theme", "ui-kit", "windows"]
+}

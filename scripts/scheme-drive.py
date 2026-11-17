@@ -139,7 +139,7 @@ def fail(what, name):
     failures.append(what)
     shoot(name)
 
-VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
+VISIBLE = "orden.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
     ".find((tab) => orden.pages.each().some(([id]) => id === tab.dataset.tab));"

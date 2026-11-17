@@ -51,7 +51,7 @@ function refusal(url) {
         upgrade: 'websocket',
         'sec-websocket-version': '13',
         'sec-websocket-key': 'ZTJlZTJlZTJlZTJlZTJlMg==',
-        'sec-websocket-protocol': `nib.token.${TOKEN}, nib.device.${DEVICE}`,
+        'sec-websocket-protocol': `orden.token.${TOKEN}, orden.device.${DEVICE}`,
       },
     })
     asked.on('upgrade', () => settle('it upgraded the second time'))
@@ -67,7 +67,7 @@ function refusal(url) {
 
 async function socket(session, since) {
   const url = `${BASE.replace(/^http/, 'ws')}/v2/online/${encodeURIComponent(session)}/socket`
-  const ws = new WebSocket(url, [`nib.token.${TOKEN}`, `nib.device.${DEVICE}`])
+  const ws = new WebSocket(url, [`orden.token.${TOKEN}`, `orden.device.${DEVICE}`])
   ws.binaryType = 'arraybuffer'
   const born = performance.now()
   const at = {}

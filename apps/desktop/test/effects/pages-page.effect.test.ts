@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { PageNode } from '../../src/lib/canvas/format'
+import type { PageNode } from '@orden/markdown/canvas'
 
 interface Asked {
   density: number
@@ -11,8 +11,8 @@ const asked: Asked[] = []
 const words = vi.fn(() => Promise.resolve(null))
 const closeUps = vi.fn(() => Promise.resolve(null))
 
-vi.mock('../../src/lib/pages/paper', async (original) => ({
-  ...(await original<typeof import('../../src/lib/pages/paper')>()),
+vi.mock('../../src/lib/pdf/src/api', async (original) => ({
+  ...(await original<typeof import('../../src/lib/pdf/src/api')>()),
   paperOf: (_at: unknown, _number: number, _signal: unknown, _aside: boolean, density: number) =>
     new Promise((settle) => asked.push({ density, settle })),
   wordsInto: words,

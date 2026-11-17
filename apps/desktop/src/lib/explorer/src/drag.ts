@@ -1,0 +1,129 @@
+import { type PickedFile, webPages } from '@orden/contracts'
+import {
+  caughtFiles,
+  carriedNothing,
+  carryFromExplorer,
+  dragged,
+  explorerDragged,
+  isExplorerDrag,
+  isFileDrop,
+  isTreeDrag,
+  message,
+} from '../../ui-kit/src/api'
+import { invoke, joinPath, platform } from '../../platform/src/api'
+import { workspace } from '../../workspace/src/api'
+import type { OutsideStep } from '../../file-undo/src/api'
+import { carry, changeable, freeName, takenNames } from './changes'
+import { listFolder } from './commands'
+import { inASpace } from './open'
+import type { ExplorerView } from './view.svelte'
+
+export function startDrag(event: DragEvent, paths: string[]) {
+  if (!event.dataTransfer || !paths.length) return
+  carryFromExplorer(
+    event.dataTransfer,
+    paths,
+    paths.every((one) => inASpace(one)),
+  )
+  webPages().carryIn(paths)
+}
+
+export function endDrag() {
+  webPages().carriedIn()
+  carriedNothing()
+}
+
+function takes(transfer: DataTransfer | null): boolean {
+  return isExplorerDrag(transfer) || isTreeDrag(transfer) || isFileDrop(transfer)
+}
+
+export function dropHow(event: DragEvent): 'copy' | 'move' {
+  const copying = platform() === 'macos' ? event.altKey : event.ctrlKey
+  return copying || isFileDrop(event.dataTransfer) ? 'copy' : 'move'
+}
+
+export function over(event: DragEvent): boolean {
+  if (!takes(event.dataTransfer)) return false
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = dropHow(event)
+  return true
+}
+
+export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
+  const transfer = event.dataTransfer
+  if (!transfer || !takes(transfer)) return
+  event.preventDefault()
+  const how = dropHow(event)
+  if (isFileDrop(transfer)) {
+    const caught = caughtFiles(transfer)
+    void import('../../ui-controls/src/api')
+      .then(({ filesUnder }) => filesUnder(caught))
+      .then((files) => writeInto(view, files, folder))
+    return
+  }
+  const paths = isExplorerDrag(transfer) ? explorerDragged(transfer) : dragged(transfer)
+  carriedNothing()
+  if (paths.length) void carry(view, paths, folder, how)
+}
+
+export const WRITTEN_AT_ONCE = 8 * 1024 * 1024
+
+async function* pieces(file: PickedFile): AsyncGenerator<Uint8Array> {
+  if (!file.slice || file.size === undefined) {
+    yield new Uint8Array(await file.arrayBuffer())
+    return
+  }
+  for (let at = 0; at === 0 || at < file.size; at += WRITTEN_AT_ONCE) {
+    yield new Uint8Array(await file.slice(at, at + WRITTEN_AT_ONCE).arrayBuffer())
+  }
+}
+
+export async function writeInto(view: ExplorerView, files: readonly PickedFile[], folder: string) {
+  if (!files.length || !changeable(view)) return
+  if (inASpace(folder)) {
+    await workspace.bringIn(files, folder)
+    await view.reload()
+    return
+  }
+  const listing = await listFolder(folder).catch(() => null)
+  if (!listing) return
+  const taken = takenNames(listing.entries.map((one) => one.name))
+  const tops = new Map<string, string>()
+  const made: string[] = []
+  try {
+    for (const file of files) {
+      const [top = file.name, ...rest] = (
+        file.webkitRelativePath?.length ? file.webkitRelativePath : file.name
+      ).split('/')
+      let name = tops.get(top)
+      let fresh = name === undefined
+      if (name === undefined) {
+        name = freeName(taken, top)
+        taken.add(name.toLowerCase())
+        tops.set(top, name)
+      }
+      const under = [name, ...rest].join('/')
+      let more = false
+      for await (const bytes of pieces(file)) {
+        await invoke('explorer_write', {
+          folder,
+          under,
+          bytes,
+          ...(more ? { more } : {}),
+          ...(fresh ? { fresh } : {}),
+        })
+        if (fresh) made.push(name)
+        fresh = false
+        more = true
+      }
+    }
+  } catch (error) {
+    view.tell(message(error, 'could not copy this'))
+  }
+  const steps: OutsideStep[] = made.map((name) => ({
+    op: 'made',
+    path: joinPath(listing.path, name),
+  }))
+  if (steps.length) workspace.undone.record({ kind: 'outside', steps })
+  await view.reload()
+}

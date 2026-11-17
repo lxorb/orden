@@ -1,0 +1,15 @@
+{
+  "name": "rows",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "bases",
+    "markdown",
+    "platform",
+    "scan",
+    "link-index",
+    "file-ops",
+    "protect",
+    "workspace"
+  ]
+}

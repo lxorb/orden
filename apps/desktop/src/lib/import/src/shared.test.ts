@@ -1,0 +1,365 @@
+import { renderMarkdown } from '@orden/markdown'
+import { readTask } from '@orden/markdown/task-line'
+import { plainWords } from '@orden/markdown/task-reminders'
+import type { Arrived, SharedItem } from '@orden/contracts'
+import { describe, expect, test } from 'vitest'
+import {
+  arrivedFrom,
+  embedFor,
+  isNote,
+  isPicture,
+  sharedPlan,
+  sharedTask,
+  sharedTitle,
+  sharedMarkdown,
+  sharedWords,
+} from './shared'
+
+function item(one: Partial<SharedItem>): SharedItem {
+  return { name: '', mime: '', size: 0, text: null, ...one }
+}
+
+function arrived(one: Partial<Arrived>): Arrived {
+  return { action: 'android.intent.action.SEND', subject: '', items: [], ...one }
+}
+
+const bytes = (text: string) => new TextEncoder().encode(text)
+
+describe('what the activity said', () => {
+  test('a share of words', () => {
+    const read = arrivedFrom(
+      JSON.stringify({
+        action: 'android.intent.action.SEND',
+        subject: 'The plan',
+        items: [{ name: '', mime: 'text/plain', size: 0, text: 'Two lines\nabout it' }],
+      }),
+    )
+
+    expect(read?.subject).toBe('The plan')
+    expect(read?.items).toEqual([
+      { name: '', mime: 'text/plain', size: 0, text: 'Two lines\nabout it' },
+    ])
+  })
+
+  test('a share of a picture, which is bytes to ask for', () => {
+    const read = arrivedFrom(
+      JSON.stringify({
+        action: '',
+        subject: '',
+        items: [{ name: 'a.png', mime: 'image/png', size: 12 }],
+      }),
+    )
+
+    expect(read?.items).toEqual([{ name: 'a.png', mime: 'image/png', size: 12, text: null }])
+  })
+
+  test('nothing at all, in every shape nothing arrives in', () => {
+    expect(arrivedFrom('')).toBe(null)
+    expect(arrivedFrom('undefined')).toBe(null)
+    expect(arrivedFrom('null')).toBe(null)
+    expect(arrivedFrom('[]')).toBe(null)
+    expect(arrivedFrom('{"items":[]}')).toBe(null)
+    expect(arrivedFrom('{"items":[{"name":"a.png","size":0}]}')).toBe(null)
+  })
+
+  test('an item whose fields are not what they say', () => {
+    const read = arrivedFrom(
+      '{"action":7,"subject":{},"items":[{"name":null,"mime":1,"size":"12","text":"x"},"no"]}',
+    )
+
+    expect(read).toEqual({
+      action: '',
+      subject: '',
+      items: [{ name: '', mime: '', size: 0, text: 'x' }],
+    })
+  })
+})
+
+describe('what each thing is', () => {
+  test('a picture by its type, or by its name where there is no type', () => {
+    expect(isPicture(item({ mime: 'image/jpeg' }))).toBe(true)
+    expect(isPicture(item({ name: 'holiday.JPG', mime: 'application/octet-stream' }))).toBe(true)
+    expect(isPicture(item({ name: 'report.pdf', mime: 'application/pdf' }))).toBe(false)
+    expect(isPicture(item({ name: 'a.png', text: 'not really' }))).toBe(false)
+  })
+
+  test('a note is markdown, or plain text, which is a note nobody called one', () => {
+    expect(isNote(item({ name: 'Plan.md', mime: 'text/markdown' }))).toBe(true)
+    expect(isNote(item({ name: 'Plan.markdown', mime: 'application/octet-stream' }))).toBe(true)
+    expect(isNote(item({ name: 'notes.txt', mime: 'text/plain' }))).toBe(true)
+    expect(isNote(item({ name: 'a.png', mime: 'image/png' }))).toBe(false)
+  })
+})
+
+describe('what the note is called', () => {
+  test('the subject, which is the title of the page a link came from', () => {
+    expect(
+      sharedTitle(
+        arrived({ subject: 'Costs: Q1/Q2', items: [item({ text: 'https://x.test/a' })] }),
+      ),
+    ).toBe('Costs Q1 Q2')
+  })
+
+  test('the first line of the words, when there is no subject', () => {
+    expect(sharedTitle(arrived({ items: [item({ text: '# The plan\n\nand the rest' })] }))).toBe(
+      'The plan',
+    )
+  })
+
+  test('the host, for a link and nothing else', () => {
+    expect(
+      sharedTitle(arrived({ items: [item({ text: 'https://www.example.test/a/b?c' })] })),
+    ).toBe('example.test')
+  })
+
+  test('the file, for a share with no words in it', () => {
+    expect(
+      sharedTitle(arrived({ items: [item({ name: 'holiday.png', mime: 'image/png', size: 4 })] })),
+    ).toBe('holiday')
+  })
+})
+
+describe('a share as a task', () => {
+  test('its title, linked to where it came from', () => {
+    expect(
+      sharedTask(
+        arrived({ subject: 'Read: the plan [draft]', items: [item({ text: 'https://x.test/a' })] }),
+      ),
+    ).toBe('[Read the plan draft](https://x.test/a)')
+  })
+
+  test('its first line, where it came from nowhere', () => {
+    expect(
+      sharedTask(arrived({ items: [item({ text: 'Call the plumber\nabout the sink' })] })),
+    ).toBe('Call the plumber')
+  })
+
+  test('its words are words, in the link and out of it', () => {
+    expect(sharedTask(arrived({ items: [item({ text: 'Prices $5-$10 ~5 min' })] }))).toBe(
+      'Prices \\$5-\\$10 \\~5 min',
+    )
+    expect(
+      sharedTask(arrived({ subject: 'Cost $5-$10', items: [item({ text: 'https://x.test/a' })] })),
+    ).toBe('[Cost \\$5-\\$10](https://x.test/a)')
+    const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Prices $5-$10 ~5 min' })] }))}`
+    expect(renderMarkdown(line)).toContain('Prices $5-$10 ~5 min</li>')
+  })
+
+  test('no word of it is read as a field of the task', () => {
+    for (const said of [
+      'Read later #tips',
+      'Concert 📅 2026-11-01 ⏫',
+      'Pay rent 🔁 every month',
+      'Plan it ^abc',
+    ]) {
+      const task = readTask(`- [ ] ${sharedTask(arrived({ items: [item({ text: said })] }))}`)
+      expect(task?.tags).toEqual([])
+      expect(task?.due).toBeUndefined()
+      expect(task?.priority).toBe(4)
+      expect(task?.recurrence).toBeUndefined()
+      expect(task?.fields).toEqual({})
+      expect(plainWords(task?.text ?? '').replace(/\u2060/g, '')).toBe(said)
+    }
+    const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Read later #tips' })] }))}`
+    expect(renderMarkdown(line, { tagHref: (tag) => `#${tag}` })).toContain('Read later #tips</li>')
+  })
+
+  test('a tag in what was shared is not a tag in the task', () => {
+    const task = sharedTask(
+      arrived({ items: [item({ text: '<img src=https://t.example/p.gif> https://x.test/a' })] }),
+    )
+    expect(task).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+})
+
+describe('the markdown for one thing', () => {
+  test('a picture is drawn and a file is linked', () => {
+    expect(embedFor(item({ name: 'a b.png', mime: 'image/png' }), 'assets/a b.png')).toBe(
+      '![](assets/a%20b.png)',
+    )
+    expect(
+      embedFor(item({ name: 'report.pdf', mime: 'application/pdf' }), 'assets/report.pdf'),
+    ).toBe('[report.pdf](assets/report.pdf)')
+  })
+
+  test("a file's name is words, its tags and brackets as well", () => {
+    const linked = embedFor(item({ name: '<img src=x>[1].zip' }), 'assets/a.zip')
+    expect(linked).toBe('[\\<img src=x>\\[1\\].zip](assets/a.zip)')
+    expect(renderMarkdown(linked)).toBe(
+      '<p><a href="assets/a.zip">&lt;img src=x&gt;[1].zip</a></p>\n',
+    )
+  })
+})
+
+describe('what a share becomes', () => {
+  const day = new Date('2026-09-12T10:00:00Z')
+
+  test('shared words are words, and a tag in them opens no markup', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'A page',
+        items: [
+          item({ text: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>' }),
+        ],
+      }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('Fine \\<img src=https://t.example/p.gif>\\<style>')
+    expect(text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+
+  test('a link, with where it came from and when', () => {
+    const plan = sharedPlan(
+      arrived({ subject: 'A page', items: [item({ text: 'Read this: https://x.test/a' })] }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    expect(plan.files).toHaveLength(1)
+    const note = plan.files[0]
+    expect(note?.kind).toBe('note')
+    expect(note?.path).toBe('A page.md')
+    expect(note?.kind === 'note' && note.text).toBe(
+      '---\ndate: 2026-09-12\nsource: https://x.test/a\n---\n\n# A page\n\nRead this: https://x.test/a\n',
+    )
+  })
+
+  test('shared words read back as themselves, and shared markdown stays markdown', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'Prices',
+        items: [
+          item({ mime: 'text/plain', text: 'Tickets $5-$10, format is %%d\nrest' }),
+          item({ mime: 'text/markdown', text: 'Some **bold** and $x^2$' }),
+        ],
+      }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    const note = plan.files[0]
+    expect(note?.kind === 'note' && note.text).toContain(
+      'Tickets \\$5-\\$10, format is %\\%d\nrest\n\nSome **bold** and $x^2$',
+    )
+    expect(sharedMarkdown(arrived({ items: [item({ text: 'wait ~5 or ~10' })] }))).toBe(
+      'wait \\~5 or \\~10',
+    )
+  })
+
+  test('a picture, which lands where the setting says and is drawn in the note', () => {
+    const plan = sharedPlan(
+      arrived({ items: [item({ name: 'holiday.png', mime: 'image/png', size: 3 })] }),
+      new Map([[0, bytes('png')]]),
+      day,
+      'assets',
+    )
+
+    expect(plan.files.map((one) => one.path)).toEqual(['holiday.md', 'assets/holiday.png'])
+    const note = plan.files[0]
+    expect(note?.kind === 'note' && note.text).toContain('![](assets/holiday.png)')
+  })
+
+  test('the folder the setting names, including the note’s own', () => {
+    const one = arrived({ items: [item({ name: 'a.png', mime: 'image/png', size: 3 })] })
+    const written = (folder: string) =>
+      sharedPlan(one, new Map([[0, bytes('png')]]), day, folder).files.map((file) => file.path)
+
+    expect(written('')).toEqual(['a.md', 'a.png'])
+    expect(written('/assets/')).toEqual(['a.md', 'assets/a.png'])
+  })
+
+  test('a PDF on its own is its page note, as one imported is (#400)', () => {
+    const plan = sharedPlan(
+      arrived({ items: [item({ name: 'Lecture 4.pdf', mime: 'application/pdf', size: 4 })] }),
+      new Map([[0, bytes('%PDF')]]),
+      day,
+      'assets',
+    )
+
+    expect(plan.format).toBe('pdf-pages')
+    expect(plan.files).toEqual([
+      { kind: 'file', path: 'Lecture 4.pdf', bytes: bytes('%PDF'), pages: true },
+    ])
+  })
+
+  test('but a PDF with words, or beside another file, is a file a note is about', () => {
+    const paper = item({ name: 'paper.pdf', mime: 'application/pdf', size: 4 })
+    const said = sharedPlan(
+      arrived({ items: [item({ text: 'Read this first' }), paper] }),
+      new Map([[1, bytes('%PDF')]]),
+      day,
+      'assets',
+    )
+    expect(said.files.map((one) => one.path)).toEqual(['Read this first.md', 'assets/paper.pdf'])
+    expect(said.files.some((one) => one.kind === 'file' && one.pages)).toBe(false)
+  })
+
+  test('a markdown file is its own note, with its own bytes', () => {
+    const plan = sharedPlan(
+      arrived({
+        items: [item({ name: 'Kit list.md', mime: 'text/markdown', size: 9 })],
+      }),
+      new Map([[0, bytes('# Kit\n\nA tent')]]),
+      day,
+      'assets',
+    )
+
+    expect(plan.files).toEqual([{ kind: 'note', path: 'Kit list.md', text: '# Kit\n\nA tent' }])
+  })
+
+  test('words and pictures and a file, in one note', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'Trip',
+        items: [
+          item({ text: 'What we need' }),
+          item({ name: 'tent.png', mime: 'image/png', size: 3 }),
+          item({ name: 'route.pdf', mime: 'application/pdf', size: 3 }),
+        ],
+      }),
+      new Map([
+        [1, bytes('png')],
+        [2, bytes('pdf')],
+      ]),
+      day,
+      'assets',
+    )
+
+    expect(plan.files.map((one) => one.path)).toEqual([
+      'Trip.md',
+      'assets/tent.png',
+      'assets/route.pdf',
+    ])
+
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('What we need')
+    expect(text).toContain('![](assets/tent.png)')
+    expect(text).toContain('[route.pdf](assets/route.pdf)')
+    expect(text).not.toContain('source:')
+  })
+
+  test('a file nothing carried bytes for is left out entirely', () => {
+    const plan = sharedPlan(
+      arrived({ items: [item({ name: 'gone.png', mime: 'image/png', size: 40 })] }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    expect(plan.files).toEqual([])
+  })
+
+  test('the words that came over, however many items carried them', () => {
+    expect(sharedWords(arrived({ items: [item({ text: 'one' }), item({ text: 'two' })] }))).toBe(
+      'one\n\ntwo',
+    )
+  })
+})

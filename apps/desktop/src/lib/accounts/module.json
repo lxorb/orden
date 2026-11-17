@@ -1,0 +1,5 @@
+{
+  "name": "accounts",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "camera", "markdown", "platform", "ui-kit", "kept-for-good"]
+}

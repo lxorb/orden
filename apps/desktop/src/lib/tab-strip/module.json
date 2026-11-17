@@ -1,0 +1,32 @@
+{
+  "name": "tab-strip",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "camera",
+    "editor",
+    "platform",
+    "save-place",
+    "sharing",
+    "shortcuts",
+    "tab-fill",
+    "ui-kit",
+    "space-kept",
+    "panes",
+    "documents",
+    "tree",
+    "workspace",
+    "scan",
+    "ui-controls",
+    "collab",
+    "theme",
+    "markdown",
+    "modes",
+    "double-tap",
+    "surfaces",
+    "row-menu",
+    "accounts",
+    "spaces",
+    "marks"
+  ]
+}

@@ -460,7 +460,7 @@ def main() -> int:
             say(f"photographed {shoot}")
 
             running = shells_of(app.pid)
-            window.run(f"nib.workspace.close({json.dumps(back)})")
+            window.run(f"orden.workspace.close({json.dumps(back)})")
             ended = until(lambda: not any(alive(pid) for pid, _name in running), 15)
             check(bool(ended), f"closing the tab ends its shell (were {running})")
             left = shells_of(app.pid)

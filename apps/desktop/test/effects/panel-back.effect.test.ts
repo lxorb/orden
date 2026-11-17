@@ -1,9 +1,9 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { closeOnBack } from '../../src/lib/backstack.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
-import { STARTS_RIGHT } from '../../src/lib/workspace/panels'
+import { closeOnBack } from '../../src/lib/ui-kit/src/backstack.svelte'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
+import { panels } from '../../src/lib/session/src/api'
 import { computed, root, watch } from './runes.svelte'
 
 beforeEach(async () => {
@@ -15,7 +15,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   workspace.panel = null
-  workspace.right = [...STARTS_RIGHT]
+  workspace.right = [...panels.STARTS_RIGHT]
   viewport.device = 'desktop'
 })
 

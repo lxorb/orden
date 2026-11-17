@@ -195,6 +195,24 @@ fn unread_link(argv: &[String]) -> Option<Vec<String>> {
 
 pub const TOKEN_FLAG: &str = "--activation-token=";
 
+pub fn restart_env() -> tauri::Env {
+    let mut env = tauri::Env::default();
+    env.args_os = restarted_with(&env.args_os);
+    env
+}
+
+fn restarted_with(args: &[std::ffi::OsString]) -> Vec<std::ffi::OsString> {
+    let flags = args
+        .iter()
+        .skip(1)
+        .take_while(|one| one.as_os_str() != crate::web_handed::LINK_FLAG)
+        .filter(|one| {
+            let said = one.to_string_lossy();
+            said.starts_with("--") && without_ours(&[said.into_owned()]).len() == 1
+        });
+    args.iter().take(1).chain(flags).cloned().collect()
+}
+
 pub const BACKGROUND_FLAG: &str = "--background";
 
 pub fn in_background<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> bool {
@@ -299,19 +317,16 @@ fn window_builder<'a>(
         .title("Orden")
         .inner_size(1180.0, 760.0)
         .min_inner_size(520.0, 400.0);
-    #[cfg(not(all(target_os = "macos", feature = "cef")))]
+    #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
+    let builder = match crate::ground::worn() {
+        Some(colour) => builder.background_color(colour),
+        None => builder,
+    };
 
-    #[cfg(not(target_os = "macos"))]
-    let builder = builder.transparent(true);
     #[cfg(target_os = "macos")]
     let builder = builder.visible(false);
 
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder
-        .additional_browser_args(&crate::engine::browser_args(app))
-        .initialization_script(crate::page_scheme::SCRIPT);
-    #[cfg(feature = "cef")]
     let builder = crate::engine::own_window(builder);
 
     builder
@@ -420,8 +435,8 @@ fn free_label(app: &AppHandle) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        handed_by, in_background, is_document_window, receiver, token_in, unread_link,
-        without_ours, Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
+        handed_by, in_background, is_document_window, receiver, restarted_with, token_in,
+        unread_link, without_ours, Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
     };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
@@ -625,5 +640,34 @@ mod tests {
             taken.is_empty(),
             "a webview built with Tauri's drop handler on: {taken:?}"
         );
+    }
+
+    #[test]
+    fn a_restart_hands_nothing_over_again() {
+        let line = |args: &[&str]| -> Vec<std::ffi::OsString> {
+            args.iter().map(std::ffi::OsString::from).collect()
+        };
+        let bing = "https://www.bing.com/search?q=ordnett&FORM=WSBEDG&PC=WSBREC";
+        assert_eq!(
+            restarted_with(&line(&["orden.exe", "--url", bing])),
+            line(&["orden.exe"])
+        );
+        assert_eq!(
+            restarted_with(&line(&[
+                "orden",
+                "--remote-debugging-port=9222",
+                "notes/a.md",
+                "orden://open?x=1",
+                "https://example.com/",
+                "--quick-add",
+                "--stop-agents",
+                "--background",
+                "--activation-token=abc",
+                "--url",
+                "--kept-after-the-link",
+            ])),
+            line(&["orden", "--remote-debugging-port=9222"])
+        );
+        assert_eq!(restarted_with(&[]), line(&[]));
     }
 }

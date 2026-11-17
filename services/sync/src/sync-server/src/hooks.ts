@@ -1,5 +1,4 @@
-import type { SpaceFile } from './spaces/files'
-import type { Env, Note, Space } from './types'
+import type { Env, Note, Space, SpaceFile, User, Whoever } from './types'
 
 export interface Ended {
   machine: string
@@ -8,6 +7,17 @@ export interface Ended {
 }
 
 type RevokedRole = 'none' | 'read'
+
+export interface Session {
+  token: string
+  user: { id: string; email: string; name: string | null }
+}
+
+interface AccountHooks {
+  whoever(env: Env, header: string | undefined): Promise<Whoever | null>
+  signingIn(env: Env, address: string): Promise<{ second: true; holding: string } | { user: User }>
+  sessionFor(env: Env, user: User, device?: string): Promise<Session>
+}
 
 interface BlogHooks {
   publishesFile(env: Env, space: Space, file: SpaceFile, request: Request): Promise<boolean>
@@ -47,13 +57,19 @@ interface MachineHooks {
   machinesSignedOut(env: Env, who: string, logins: readonly string[]): Promise<void>
 }
 
+interface FeedbackHooks {
+  withdrawIssues(env: Env, numbers: readonly number[]): Promise<number[]>
+}
+
 interface PassHooks {
   erased: readonly (readonly [table: string, sql: string])[]
 }
 
 export interface Hooks {
+  accounts: AccountHooks
   blog: BlogHooks
   chats: ChatHooks
+  feedback: FeedbackHooks
   machines: MachineHooks
   pass: PassHooks
 }
@@ -65,6 +81,9 @@ export function wire(hooks: Hooks): void {
 }
 
 export function hooks(): Hooks {
-  if (!wired) throw new Error('sync-server: wire the blog, chats, machines and pass hooks first')
+  if (!wired)
+    throw new Error(
+      'sync-server: wire the accounts, blog, chats, feedback, machines and pass hooks first',
+    )
   return wired
 }

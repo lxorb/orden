@@ -166,7 +166,7 @@ def main() -> int:
         until = time.perf_counter() + 60
         opened: object = None
         while time.perf_counter() < until and opened != "opened":
-            opened = app.ask(f"nib.workspace.openPage({json.dumps(url)}) && 'opened'")
+            opened = app.ask(f"orden.workspace.openPage({json.dumps(url)}) && 'opened'")
             if opened != "opened":
                 time.sleep(1)
         said["opened"] = opened
@@ -179,7 +179,7 @@ def main() -> int:
             time.sleep(0.5)
         said["before the restart"] = before
         app.ask(
-            "nib.workspace.activate(orden.workspace.tabs.find((one) => one.kind === 'note').id)"
+            "orden.workspace.activate(orden.workspace.tabs.find((one) => one.kind === 'note').id)"
             " || 'note'"
         )
         time.sleep(3)

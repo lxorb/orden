@@ -83,7 +83,7 @@ MORE_SPACES = """
   // `sync.tracked` whether it is a file shared on its own, and that walks the
   // mirrors and reads each one's root. A mirror without one threw, and an
   // exception in a row takes the whole sidebar with it. See newMirror in
-  // sync/mirror.ts for the shape.
+  // sync-mirror/src/mirror.ts for the shape.
   const stand = (spaceId, root) => ({
     spaceId,
     root,
@@ -379,7 +379,7 @@ WITH_SOMEBODY = """
   const tab = app.workspace.tabs.find((one) => one.path && one.path.endsWith('.md'))
   if (!tab) return null
 
-  app.rooms.present = { ...app.rooms.present, [tab.note.key]: 1 }
+  app.rooms.heard(tab.note.key, 1, { people: [{ key: 'nina', name: 'Nina', face: null, fill: '#7a5cff' }], mine: 0 })
   return tab.path
 }
 """

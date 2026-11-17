@@ -1,0 +1,5 @@
+{
+  "name": "downloads",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform", "ui-kit"]
+}

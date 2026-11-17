@@ -1,22 +1,34 @@
 import { untrack } from 'svelte'
-import { passing, pollDelay, RECONCILE_INTERVAL } from '../../backoff'
-import { log } from '../../log'
-import { type Pairing, pairSpaces } from '../../space-pairing'
-import { readMirror, type Mirror } from '../../sync/mirror'
+import {
+  passing,
+  pollDelay,
+  RECONCILE_INTERVAL,
+  log,
+  onDisk,
+  nameOf,
+  pathKey,
+  samePath,
+  oneWriteAt,
+  type Said,
+  windows,
+} from '../../platform/src/api'
+import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
+import { type HoldCheck, spend } from '@orden/sync-core'
 import { isRecord } from './shape'
-import { type SyncFileDoer, type SyncFileOp, whenPortProvided } from '@orden/contracts'
-import { owesAtTheEnd, owesLast, writing } from '../../parting'
-import { keptAway } from '../../web/away.svelte'
-import { onDisk } from '../../on-disk'
+import {
+  type SyncFileDoer,
+  type SyncFileOp,
+  type SyncPairing,
+  whenPortProvided,
+} from '@orden/contracts'
+import { owesAtTheEnd, owesLast, writing } from '../../parting/src/api'
+import { keptAway } from '../../away/src/api'
 import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
-import { links } from '../../link-index.svelte'
+import { links } from '../../link-index/src/api'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
-import { forgetIndex, type IndexStore, openIndex } from '../../web/index-store'
-import { nameOf, pathKey, samePath } from '../../space-paths'
+import { forgetIndex, type IndexStore, openIndex } from './index-store'
 import { followRoots } from './roots'
-import { oneWriteAt, type Said, windows } from '../../windows'
-import { sheetArrived } from '../../pdf/sheets.svelte'
 import {
   account,
   isDesktop,
@@ -24,16 +36,17 @@ import {
   joinPath,
   keepJson,
   remote,
+  spacePairing,
   stored,
   waited,
   workspace,
   type LiveNote,
 } from './ports'
 import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
-import type { PlaneSurface } from '../../canvas/shared'
+import type { PlaneSurface } from '@orden/markdown/plane'
 import type { Watched } from './watching'
-import { rooms } from '../../rooms.svelte'
-import { theme } from '../../theme.svelte'
+import { rooms } from '../../collab/src/api'
+import { theme } from '../../theme/src/api'
 import * as Y from 'yjs'
 import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'
 import { attach, attachPlane, type Attached, meetWords, type PlaneJoin } from './binding'
@@ -49,8 +62,7 @@ import { type Leadership, leadSync } from './lead'
 import { forgetMadeDeviceId, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
-import { type Holding, spend } from '../../sync/holding'
-import type { Carried } from '../../pages/carried'
+import type { Carried } from './papers-carried'
 import { holdsDocument, joinsAs, shapeOf, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
@@ -67,8 +79,8 @@ import {
 import { deviceOfSyncStore, forgetSyncStore, get, openSyncStore, put, remove } from './store'
 import { eachDue, reachable, sentAll } from './rounds'
 import { pairsFromV1 } from './v1-pairs'
-import { usage } from '../../usage.svelte'
-import { forgetAccount, leaveSpaces } from '../../left-spaces'
+import { usage } from '../../accounts/src/api'
+import { forgetAccount, leaveSpaces } from '../../left-spaces/src/api'
 import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
@@ -114,7 +126,7 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
 async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
   const waiting = (path: string) => /^\.(orden|nib)-moving-/.test(path.split('/').pop() ?? '')
   if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
-  const { asidesBack } = await import('../../sync/pass')
+  const { asidesBack } = await notePass()
   return {
     cursor: v1.cursor,
     notes: await asidesBack(root, v1.notes, v1.moving),
@@ -128,7 +140,7 @@ class Runner {
   lastSyncedAt = $state<number | null>(null)
   heldNotes = $state.raw<readonly Held[]>([])
 
-  private current: Engine | null = null
+  private current = $state.raw<Engine | null>(null)
 
   get engine(): Engine | null {
     return this.local ? null : this.current
@@ -160,7 +172,7 @@ class Runner {
   private binding = Promise.resolve()
   private watched: Watched | null = null
 
-  private local = false
+  private local = $state(false)
 
   private lane: Promise<unknown> = Promise.resolve()
 
@@ -316,6 +328,12 @@ class Runner {
       return null
     }
     this.current = engine
+    if (!isNative()) {
+      keptAway.reach(
+        (path) => engine.awayAt(path),
+        (path) => this.fetchAway(engine, path),
+      )
+    }
     await followRoots(engine.core)
     if (!isNative()) {
       const store = await openIndex(user.id).catch(() => null)
@@ -379,7 +397,7 @@ class Runner {
     this.stops.push(engine.on('placed', () => this.rebind()))
     if (isDesktop()) {
       const { watchFolders } = await import('./watching')
-      const watched = watchFolders({
+      const watched = await watchFolders({
         engine,
         ready: (id) => this.firsts.has(id),
         changed: () => this.nudge(),
@@ -426,7 +444,7 @@ class Runner {
     if (!isDesktop()) this.stops.push(this.hearsWrites())
     if (isDesktop()) {
       const { watchFolders } = await import('./watching')
-      const watched = watchFolders({
+      const watched = await watchFolders({
         engine,
         ready: (id) => this.firsts.has(id),
         changed: () => this.nudge(),
@@ -847,7 +865,7 @@ class Runner {
         this.status = 'idle'
         return
       }
-      void import('../../pages/carrying').then(({ carryNow }) =>
+      void import('./papers-carrying').then(({ carryNow }) =>
         carryNow(
           () => pageNotes(engine),
           (note, failed) => void engine.said(note.space, failed),
@@ -924,7 +942,7 @@ class Runner {
     this.reconciledAt = Date.now()
     const core = engine.core
     const changes: Parameters<typeof core.commit>[0][number][] = []
-    const pairing: Pairing = {
+    const pairing: SyncPairing = {
       pairs: () =>
         [...core.spaces.values()].map((space) => ({
           root: space.row.root,
@@ -958,7 +976,7 @@ class Runner {
         changes.push(...core.addSpace(one.spaceId, one.root, one.role))
       }
     }
-    await pairSpaces(token, pairing)
+    await spacePairing().pairSpaces(token, pairing)
     if (account().token !== token) return
     await core.commit(changes)
     this.watched?.follow()
@@ -1001,7 +1019,7 @@ class Runner {
     },
     written: (path) => {
       this.treeStale()
-      sheetArrived(path)
+      workspace().fileWritten(path)
     },
     writing: async (path, text, write) => {
       if (windows.alone) {
@@ -1199,7 +1217,7 @@ class Runner {
 
   private async named(spaceId: string, root: string) {
     const token = account().token
-    const { holder, sendName } = await import('../../space-owed')
+    const { holder, sendName } = await import('../../space-owed/src/api')
     const accountId = holder()
     const listed = account().spaces.find((one) => one.id === spaceId)
     const name = workspace().spaces.find((one) => samePath(one.root, root))?.name ?? nameOf(root)
@@ -1248,7 +1266,7 @@ class Runner {
     return isIdAt(said) ? said : { none: 'not-running' }
   }
 
-  async holds(path: string, how: Holding = {}): Promise<boolean> {
+  async holds(path: string, how: HoldCheck = {}): Promise<boolean> {
     if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
     if (keptAway.at(path)) return true
@@ -1307,7 +1325,7 @@ class Runner {
     return names?.get(device) ?? ''
   }
 
-  private seen: Rows = { spaces: [], notes: [] }
+  private seen = $state.raw<Rows>({ spaces: [], notes: [] })
   private seenAt = $state.raw(new Map<string, { id: string; version: number; hash: string }>())
   private readonly relay = new LiveRelay((kind, what) => this.say(kind, what))
   private readonly mirrors = new Mirrors({

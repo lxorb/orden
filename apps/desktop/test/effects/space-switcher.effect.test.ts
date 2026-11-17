@@ -1,10 +1,10 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import SpaceSwitcher from '../../src/lib/SpaceSwitcher.svelte'
-import Titlebar from '../../src/lib/Titlebar.svelte'
-import { spacesMenu } from '../../src/lib/surfaces.svelte'
-import { viewport } from '../../src/lib/viewport.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import SpaceSwitcher from '../../src/lib/sidebar/src/SpaceSwitcher.svelte'
+import { Titlebar } from '../../src/lib/titlebar/src/api'
+import { spacesMenu } from '../../src/lib/surfaces/src/api'
+import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.scrollIntoView = () => undefined
 

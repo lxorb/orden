@@ -1,0 +1,18 @@
+{
+  "name": "link-index",
+  "layer": "foundation",
+  "dependsOn": [
+    "contracts",
+    "chats",
+    "editor",
+    "graph",
+    "link-format",
+    "markdown",
+    "online",
+    "platform",
+    "scan",
+    "sharing",
+    "ui-kit",
+    "launch"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "archive",
+  "layer": "features",
+  "dependsOn": ["contracts", "platform", "file-undo", "tree", "workspace", "ui-kit", "marks"]
+}

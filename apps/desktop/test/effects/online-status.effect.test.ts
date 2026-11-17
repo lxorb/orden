@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
-import { Arrival } from '../../src/lib/online/arrival.svelte'
+import { Arrival } from '../../src/lib/terminal/src/online/arrival.svelte'
 
-const OnlineStatus = (await import('../../src/lib/online/OnlineStatus.svelte')).default
+const OnlineStatus = (await import('../../src/lib/terminal/src/online/OnlineStatus.svelte')).default
 
 let app: ReturnType<typeof mount> | null = null
 let target: HTMLElement

@@ -44,7 +44,6 @@ fn no_paper() -> Answer {
     Answer::error(Code::BadArguments, "a PDF needs the paper it is printed on")
 }
 
-#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     use super::engines::{self, Engine};
     use super::verbs::Captured;
@@ -98,14 +97,6 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
             Err(refused) => refused,
         }
     })
-}
-
-#[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
-fn taken(_app: &AppHandle, _caller: &Caller, _tab: &str, _asked: Asked) -> Answer {
-    Answer::error(
-        Code::UnsupportedOnThisEngine,
-        "capturing a page is not available on this engine yet",
-    )
 }
 
 #[cfg(test)]

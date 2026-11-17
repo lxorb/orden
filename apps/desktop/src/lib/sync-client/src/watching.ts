@@ -1,16 +1,15 @@
+import { askSheet } from '@orden/contracts'
 import {
   scanSpace,
   type SpaceChange,
   type SpaceNews,
   unwatchSpaces,
   watchSpaces,
-} from '../../space-watch'
-import { carriedOwn } from '@orden/bases/inbox'
-import { keptShaped } from '../../internal/roots'
-import { hearInternal, listInternal, mountedFor } from '../../internal/watch'
+} from '../../crate/src/api'
+import { isOwnFile as carriedOwn } from '@orden/sync-core'
+import { keptMounts } from '../../web-backend/src/api'
 import { inForeignCopy } from '@orden/sync-core'
-import { samePath } from '../../space-paths'
-import { syncMark } from '../../surfaces.svelte'
+import { keptShaped, samePath } from '../../platform/src/api'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { kindOfName } from './create'
@@ -29,7 +28,7 @@ function hidden(path: string): boolean {
 
 function foreign(path: string): boolean {
   if (!inForeignCopy(path)) return false
-  void syncMark.ask()
+  void askSheet('sync-mark')
   return true
 }
 
@@ -43,15 +42,14 @@ export function kept(engine: Engine, path: string, dir: boolean): boolean {
 
 let toldOfLimit = false
 
-function limitReached(): void {
+async function limitReached(): Promise<void> {
   if (toldOfLimit) return
   toldOfLimit = true
-  void import('../../notify').then(({ notify }) =>
-    notify(
-      'Some changes may not be noticed',
-      'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
-      'watch-limit',
-    ),
+  const { notify } = await import('../../notify/src/api')
+  notify(
+    'Some changes may not be noticed',
+    'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
+    'watch-limit',
   )
 }
 
@@ -72,7 +70,8 @@ function spaceAt(engine: Engine, root: string) {
   return [...engine.core.spaces.values()].find((one) => samePath(one.row.root, root))
 }
 
-export function watchFolders(how: Watching): Watched {
+export async function watchFolders(how: Watching): Promise<Watched> {
+  const mounts = await keptMounts()
   const queue: (() => Promise<void>)[] = []
   let draining = false
   let stopped = false
@@ -99,7 +98,7 @@ export function watchFolders(how: Watching): Watched {
   }
 
   const heard = (news: SpaceNews) => {
-    if (news.unwatched === 'limit') limitReached()
+    if (news.unwatched === 'limit') void limitReached()
     if (news.gone) return
     if (news.scan) {
       const again = started.has(news.root)
@@ -127,11 +126,11 @@ export function watchFolders(how: Watching): Watched {
     }
     for (const root of roots) {
       if (inside.has(root)) continue
-      const stop = hearInternal(root, (changes) => {
+      const stop = mounts.hearInternal(root, (changes) => {
         heard({ root, changes, scan: false, gone: false })
       })
       if (!stop) {
-        if (keptShaped(root)) void mountedFor(root).then((yes) => yes && follow())
+        if (keptShaped(root)) void mounts.mountedFor(root).then((yes) => yes && follow())
         continue
       }
       inside.set(root, stop)
@@ -237,7 +236,8 @@ export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
   const space = spaceAt(engine, root)
   if (!space || !how.ready(space.id)) return
-  const listed = (await listInternal(root)) ?? (keptShaped(root) ? null : await scanSpace(root))
+  const inside = await (await keptMounts()).listInternal(root)
+  const listed = inside ?? (keptShaped(root) ? null : await scanSpace(root))
   if (!listed) return
   const seen = new Set<string>()
   const unread: string[] = []

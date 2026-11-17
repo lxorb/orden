@@ -130,7 +130,7 @@ test("a row's name keeps a readable width and what does not fit beside it wraps 
 })
 
 test('a dropdown in a row and a pane in the list are as long as their words', () => {
-  const panel = readFileSync(join(SRC, 'lib/SettingsPanel.svelte'), 'utf8')
+  const panel = readFileSync(join(SRC, 'lib/settings/src/SettingsPanel.svelte'), 'utf8')
   const sheet = readFileSync(
     fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url)),
     'utf8',

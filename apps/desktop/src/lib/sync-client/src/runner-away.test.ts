@@ -16,15 +16,15 @@ vi.stubGlobal('localStorage', {
   setItem: () => undefined,
   removeItem: () => undefined,
 })
-vi.mock('../../tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isNative: false,
   isDesktop: false,
 }))
 
 const { runner } = await import('./runner.svelte')
-const { keptAway } = await import('../../web/away.svelte')
-const { windows } = await import('../../windows')
+const { keptAway } = await import('../../away/src/api')
+const { windows } = await import('../../platform/src/windows')
 
 const ROOT = '/browser/space'
 const SPACE = 'sim'
@@ -285,5 +285,31 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     open.leaderId = null
     keptAway.clear()
     vi.useRealTimers()
+  })
+})
+
+describe('a browser keeping no words of a note the engine has just heard of', () => {
+  test('finds it away and brings it back before the away list is retold', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const other = await device(account, 'o', false)
+    await other.engine.pass(SPACE)
+    await other.disk.write(`${ROOT}/Board.md`, '# Board\n')
+    await other.engine.created(`${ROOT}/Board.md`, false, '# Board\n')
+    await other.engine.pass(SPACE)
+
+    const browser = await device(account, 'b', true)
+    await browser.engine.pass(SPACE)
+    keptAway.clear()
+    keptAway.reach(
+      (path) => browser.engine.awayAt(path),
+      (path) => browser.engine.fetch(path),
+    )
+
+    expect(keptAway.all()).toEqual([])
+    expect(keptAway.at(`${ROOT}/Board.md`)?.path).toBe(`${ROOT}/Board.md`)
+    expect(await keptAway.bringBack(`${ROOT}/Board.md`)).toBe(true)
+    expect(await browser.disk.read(`${ROOT}/Board.md`)).toBe('# Board\n')
+    expect(keptAway.at(`${ROOT}/Board.md`)).toBeNull()
+    keptAway.clear()
   })
 })

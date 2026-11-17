@@ -1,0 +1,205 @@
+<script lang="ts">
+  import { account, arriving, AccountBadge } from '../../accounts/src/api'
+  import { showAccount } from '../../settings/src/api'
+  import { DOWNLOAD_URL } from '../../updates/src/api'
+  import { dur, fade, isNative, openExternal } from '../../platform/src/api'
+  import { showFeedback } from '../../surfaces/src/api'
+  import { SCRATCHPAD_MARK, viewport } from '../../ui-kit/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { sidebarPart, settingsWindow } from '@orden/contracts'
+
+  const {
+    scratch = true,
+    onwho = showAccount,
+    onsettings = () => settingsWindow().show(),
+  }: {
+    scratch?: boolean
+    onwho?: (event: MouseEvent) => void
+    onsettings?: () => void
+  } = $props()
+
+  const who = $derived(account.name)
+
+  const pad = sidebarPart('scratchpad')
+  const padOn = $derived(pad?.open?.() ?? false)
+</script>
+
+<div class="foot" data-region="foot">
+  <button
+    class="who"
+    class:looking={account.restoring}
+    title={who ?? 'Sign in'}
+    aria-label={who ?? 'Sign in'}
+    disabled={account.restoring}
+    aria-haspopup="menu"
+    onclick={onwho}
+  >
+    <AccountBadge />
+    <span class="orden-row-label">{who ?? 'Sign in'}</span>
+  </button>
+
+  {#if arriving.showing}
+    <span class="coming" transition:fade={{ duration: dur(160) }} role="status" aria-live="polite">
+      {arriving.said}
+    </span>
+  {/if}
+
+  <div class="acts">
+    {#if !isNative && !__EVEN_PLUGIN__ && !viewport.touch}
+      <button
+        class="orden-glyph act"
+        title="Download the app"
+        aria-label="Download the app"
+        onclick={() => void openExternal(DOWNLOAD_URL)}
+      >
+        <svg viewBox="0 0 14 14"><path d="M7 1.5v7.5M3.8 6l3.2 3.2L10.2 6M2 12.5h10" /></svg>
+      </button>
+    {/if}
+
+    <button
+      class="orden-glyph act"
+      title="Send feedback"
+      aria-label="Send feedback"
+      onclick={showFeedback}
+    >
+      <svg class="bug" viewBox="0 0 14 14"
+        ><path
+          d="M4.6 4.2a2.4 2.4 0 0 1 4.8 0M3.9 5.4h6.2v3.4a3.1 3.1 0 0 1-6.2 0zM7 5.4v6.4M3.9 7.4H1.6M10.1 7.4h2.3M4.2 9.9l-1.9 1.4M9.8 9.9l1.9 1.4M4.4 5.4 2.6 3.8M9.6 5.4l1.8-1.6"
+        /></svg
+      >
+    </button>
+
+    {#if scratch && pad && viewport.touch && !__EVEN_PLUGIN__}
+      <button
+        class="orden-glyph act"
+        class:is-on={padOn}
+        aria-pressed={padOn}
+        title={shortcuts.tooltip('Scratchpad', 'app.scratchpad')}
+        aria-label="Scratchpad"
+        onclick={() => pad.toggle?.()}
+      >
+        <svg viewBox="0 0 13 13"><path d={SCRATCHPAD_MARK} /></svg>
+      </button>
+    {/if}
+
+    <button
+      class="orden-glyph act"
+      title={shortcuts.tooltip('Settings', 'app.settings')}
+      aria-label="Settings"
+      onclick={onsettings}
+    >
+      <svg class="gear" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3.2" />
+        <path
+          d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.1 4.7a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"
+        />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<style>
+  .foot {
+    position: relative;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--header-height);
+    padding: 0 var(--space-1);
+    border-top: 1px solid var(--chrome-seam);
+  }
+
+  .who {
+    display: flex;
+    align-items: center;
+    border: none;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+
+    flex: 1;
+    min-width: 0;
+    gap: var(--row-gap);
+    min-height: var(--row-height);
+    padding: 0 calc(var(--row-pad) - var(--space-1));
+    font-size: var(--text-row);
+    text-align: start;
+  }
+
+  button:focus-visible {
+    outline-offset: -1px;
+  }
+
+  @media (hover: hover) {
+    .who:hover:not(:disabled) {
+      background: var(--surface-hover);
+      color: var(--text-strong);
+    }
+  }
+
+  .who:active:not(:disabled) {
+    background: var(--surface-press);
+    color: var(--text-strong);
+  }
+
+  .who .orden-row-label {
+    flex: 0 1 auto;
+  }
+
+  .looking {
+    animation: looking 1.6s var(--ease-in-out) infinite;
+  }
+
+  @keyframes looking {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+
+    50% {
+      opacity: 0.85;
+    }
+  }
+
+  .coming {
+    flex: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .acts {
+    flex: none;
+    display: flex;
+    gap: 2px;
+  }
+
+  .act .gear {
+    stroke-width: 1.6;
+  }
+
+  .act .bug {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .looking {
+      animation: none;
+    }
+  }
+
+  :global([data-touch]:not([data-device='phone'])) .foot {
+    padding-bottom: max(0px, calc(var(--inset-bottom) - var(--keyboard, 0px)));
+  }
+</style>

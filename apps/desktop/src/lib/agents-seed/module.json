@@ -1,0 +1,5 @@
+{
+  "name": "agents-seed",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform"]
+}

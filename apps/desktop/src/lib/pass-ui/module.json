@@ -1,0 +1,26 @@
+{
+  "name": "pass-ui",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "files-out",
+    "pass",
+    "pass-sync",
+    "platform",
+    "protect",
+    "shortcuts",
+    "sync-client",
+    "theme",
+    "theme-looks",
+    "ui-controls",
+    "ui-kit",
+    "documents",
+    "sidebar",
+    "modes",
+    "surfaces",
+    "icon-picker",
+    "glyphs"
+  ],
+  "pending": ["apps/desktop/src/lib/theme-ports.ts"]
+}

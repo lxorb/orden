@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const written: string[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -36,10 +36,10 @@ window.matchMedia = ((query: string) => ({
   removeEventListener: () => undefined,
 })) as unknown as typeof window.matchMedia
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { writeNew } = await import('../../src/lib/write-new')
-const { isDraft } = await import('../../src/lib/workspace/drafts')
-const Pane = (await import('../../src/lib/Pane.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { writeNew } = await import('../../src/lib/workspace/src/write-new')
+const { isDraft } = await import('../../src/lib/documents/src/api')
+const Pane = (await import('../../src/lib/pane-tree/src/Pane.svelte')).default
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

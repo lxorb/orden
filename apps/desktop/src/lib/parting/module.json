@@ -1,0 +1,5 @@
+{
+  "name": "parting",
+  "layer": "foundation",
+  "dependsOn": ["contracts"]
+}

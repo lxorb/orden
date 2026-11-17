@@ -38,16 +38,7 @@ function textOf(report: Report, name: string): string {
 
 const PLAN = 0
 
-const SHELL = [
-  'workspace.svelte',
-  'workspace/',
-  'account.svelte',
-  'settings.svelte',
-  'tauri',
-  'stored',
-  'api',
-  'new-tab',
-]
+const SHELL = ['workspace/', 'account.svelte', 'settings/', 'tauri', 'stored', 'api', 'new-tab']
 
 function sources(folder: string): string[] {
   const out: string[] = []

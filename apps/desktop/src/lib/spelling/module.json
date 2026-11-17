@@ -1,0 +1,5 @@
+{
+  "name": "spelling",
+  "layer": "foundation",
+  "dependsOn": ["platform"]
+}

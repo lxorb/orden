@@ -3,7 +3,7 @@
 Emil, 2026-10-03: the icon of a `.url` row in the left sidebar often differed from the
 same page's tab icon - WhatsApp and Slack most, whose marks carry an unread count. The
 tab follows the page's live mark; the row now does too while the tab is open, and keeps
-the last one after it closes (see `faviconFor` in apps/desktop/src/lib/chosen-icon.ts).
+the last one after it closes (see `faviconFor` in apps/desktop/src/lib/marks/src/chosen-icon.ts).
 
 This serves a page of its own, opens its web note in a tab, and swaps the page's mark
 twice the way a chat site does - a badge on, the badge off - through the page's own
@@ -160,7 +160,7 @@ def main() -> int:
         time.sleep(1)
         running, app = probe.launch(args.exe, args.identifier, unlike=app.at)
         until = time.perf_counter() + 60
-        while time.perf_counter() < until and not isinstance(app.ask("nib.workspace.tabs.length"), int):
+        while time.perf_counter() < until and not isinstance(app.ask("orden.workspace.tabs.length"), int):
             time.sleep(0.5)
 
         app.open("A note.md", SPACE)
@@ -197,7 +197,7 @@ def main() -> int:
             check(row is not None and row == worn, f"{what}: and the row with it")
 
         last = worn
-        app.ask(f"nib.workspace.close('{tab}')")
+        app.ask(f"orden.workspace.close('{tab}')")
         time.sleep(1.5)
         row, _ = pictures_of(app, tab)
         check(row == last, "the tab closed: the row keeps the last mark it showed")

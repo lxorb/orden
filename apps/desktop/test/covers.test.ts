@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
-import { COVERS } from '../src/lib/web-tab/covers'
+import { COVERS } from '../src/lib/web-tab/src/covers'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
@@ -12,7 +12,8 @@ const RUNG =
 
 const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .fab': 'a touch screen only, which builds no native page',
-  'lib/phone/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
+  'lib/phone/src/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
+  'lib/phone/src/TabGrid.svelte .grid-sheet': 'a touch screen only, which builds no native page',
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
   'App.svelte .notices.over': 'the same row, over a drawer: see .notices and .panels',
   'App.svelte .notices.above': 'the same row, over the tab overview: see .notices',
@@ -20,41 +21,41 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'fixed only as a drawer, which is a phone or a tablet, and those build no native page',
   'App.svelte .panels.right': 'the right drawer: see .panels',
   'App.svelte .scrim': 'the drawers’ scrim, shown only where there are drawers: see .panels',
-  'lib/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
-  'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
-  'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
-  'lib/overview/Offstage.svelte .offstage': 'drawn off the window, where no page is',
-  'lib/overview/Overview.svelte .under':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .floor':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .top':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .window':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .closer':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .rider':
-    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
-  'lib/overview/Overview.svelte .window.is-front':
+  'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
+  'lib/surfaces/src/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
+  'lib/frame/src/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
+  'lib/overview/src/Offstage.svelte .offstage': 'drawn off the window, where no page is',
+  'lib/overview/src/Overview.svelte .under':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
+  'lib/overview/src/Overview.svelte .floor':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
+  'lib/overview/src/Overview.svelte .top':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
+  'lib/overview/src/Overview.svelte .window':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
+  'lib/overview/src/Overview.svelte .closer':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
+  'lib/overview/src/Overview.svelte .rider':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
+  'lib/overview/src/Overview.svelte .window.is-front':
     'the same, stacked over its neighbours: see .window',
-  'lib/overview/Overview.svelte .window.is-held':
+  'lib/overview/src/Overview.svelte .window.is-held':
     'the same, stacked over its neighbours: see .window',
-  'lib/overview/Overview.svelte .closer.is-front':
+  'lib/overview/src/Overview.svelte .closer.is-front':
     'the same, stacked over its neighbours: see .closer',
-  'lib/overview/Overview.svelte .closer.is-held':
+  'lib/overview/src/Overview.svelte .closer.is-held':
     'the same, stacked over its neighbours: see .closer',
-  'lib/overview/Overview.svelte .rider.is-front':
+  'lib/overview/src/Overview.svelte .rider.is-front':
     'the same, stacked over its neighbours: see .rider',
-  'lib/even/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
-  'lib/tab-strip/TabChip.svelte .chip':
+  'lib/even/src/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
+  'lib/tab-strip/src/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',
-  'lib/tab-strip/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
-  'lib/pass/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
+  'lib/tab-strip/src/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
+  'lib/pass-ui/src/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
 }
 
 const MADE_BY: Record<string, string> = {
-  'lib/Tree.svelte .row.carried': 'lib/tree-lift.ts',
+  'lib/sidebar/src/Tree.svelte .row.carried': 'lib/sidebar/src/tree-lift.ts',
 }
 
 interface Node {
@@ -207,14 +208,14 @@ test('nothing is excused that is in the registry after all, or is no layer any m
 })
 
 const PLACED_INSIDE: Record<string, string> = {
-  'lib/pass/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebAsk.svelte .ask':
+  'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebAsk.svelte .ask':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',
-  'lib/web-tab/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/src/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
 }
 
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {

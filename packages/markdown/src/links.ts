@@ -151,6 +151,8 @@ export function isNoteTarget(target: string): boolean {
   return schemeOf(target) === ''
 }
 
+export const PDF_SIDECAR = '.highlights.json'
+
 export function isPdfTarget(target: string): boolean {
   return /\.pdf$/i.test(target.trim())
 }

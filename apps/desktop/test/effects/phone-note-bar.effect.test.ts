@@ -1,11 +1,19 @@
+import { providePort } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { viewport } = await import('../../src/lib/viewport.svelte')
-const { menu } = await import('../../src/lib/menu.svelte')
-const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
-const { showNoteMore } = await import('../../src/lib/phone/note-more')
+providePort('commands.app', {
+  rows: async (view) => {
+    const { appCommands } = await import('../../src/lib/commands/src/api')
+    return appCommands(view as Parameters<typeof appCommands>[0])
+  },
+})
+
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
+const { menu } = await import('../../src/lib/ui-kit/src/api')
+const { Titlebar } = await import('../../src/lib/titlebar/src/api')
+const { showNoteMore } = await (await import('../../src/lib/phone/src/api')).noteMore()
 
 afterEach(() => {
   viewport.device = 'desktop'
@@ -47,11 +55,11 @@ test("a phone's note bar has one More button in place of the search and the side
   }
 })
 
-test('and its menu holds the outline, the links, the history and the tab, each once', () => {
+test('and its menu holds the outline, the links, the history and the tab, each once', async () => {
   viewport.device = 'phone'
   const { host, done } = bar()
   try {
-    showNoteMore(host.querySelector<HTMLButtonElement>('header [data-phone-more]')!)
+    await showNoteMore(host.querySelector<HTMLButtonElement>('header [data-phone-more]')!)
     expect(menu.open).toBe(true)
     const labels = menu.items.flatMap((one) => (one ? [one.label] : []))
 

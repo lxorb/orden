@@ -1,0 +1,5 @@
+{
+  "name": "icons",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "ui-kit", "platform"]
+}

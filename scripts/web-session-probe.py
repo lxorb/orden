@@ -483,7 +483,7 @@ def main() -> int:
             " ctrlKey: true, bubbles: true, cancelable: true })); true"
         )
         time.sleep(1.5)
-        said["zoomed to"] = app.ask(f"nib.pages.of('{tab}').zoom")
+        said["zoomed to"] = app.ask(f"orden.pages.of('{tab}').zoom")
         ok = ok and said["zoomed to"] == ZOOMED
 
         app.open(f"{OWN}.url")
@@ -505,7 +505,7 @@ def main() -> int:
         time.sleep(3)
         said["the partitioned cookie after the copy went"] = seen(app, tab)
         ok = ok and logged_in(said["the partitioned cookie after the copy went"])
-        app.ask(f"nib.workspace.close('{own}')")
+        app.ask(f"orden.workspace.close('{own}')")
         time.sleep(1)
 
         said["the file the keeper wrote"] = (
@@ -519,10 +519,10 @@ def main() -> int:
         alongside = seen(app, beside)
         said["a second tab open at once"] = alongside
         said["two tabs share one session"] = alongside.get("sid") == SID
-        app.ask(f"nib.workspace.close('{beside}')")
+        app.ask(f"orden.workspace.close('{beside}')")
         time.sleep(1)
 
-        app.ask(f"nib.workspace.close('{tab}')")
+        app.ask(f"orden.workspace.close('{tab}')")
         time.sleep(2)
         said["closed"] = tab_of(app, SITE) is None
 
@@ -552,7 +552,7 @@ def main() -> int:
         relaunched = seen(app, tab)
         said["after relaunch, loaded again"] = relaunched
         said["the rest kept on relaunch"] = kept_the_rest(relaunched, base)
-        said["the tab's zoom on relaunch"] = app.ask(f"nib.pages.of('{tab}').zoom")
+        said["the tab's zoom on relaunch"] = app.ask(f"orden.pages.of('{tab}').zoom")
         ok = ok and kept_the_rest(relaunched, base) and said["the tab's zoom on relaunch"] == ZOOMED
 
         app.open(f"{OWN}.url")

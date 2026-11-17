@@ -1,0 +1,23 @@
+{
+  "name": "search",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "editor",
+    "pdf",
+    "platform",
+    "scan",
+    "away",
+    "web-backend",
+    "windows",
+    "protect",
+    "launch",
+    "documents",
+    "markdown",
+    "matching",
+    "scratchpad",
+    "sharing",
+    "ui-kit",
+    "workspace"
+  ]
+}

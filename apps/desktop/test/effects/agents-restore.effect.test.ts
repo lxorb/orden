@@ -5,8 +5,8 @@ vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -29,7 +29,7 @@ async function leftOpen(typed: string | null) {
   localStorage.clear()
   vi.resetModules()
 
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
   workspace.activeSpaceId = 'work'
   await workspace.loadTree()
@@ -51,7 +51,7 @@ async function leftOpen(typed: string | null) {
   }
   disk.current.files.delete(STAND_IN)
   vi.resetModules()
-  return (await import('../../src/lib/workspace.svelte')).workspace
+  return (await import('../../src/lib/workspace/src/api')).workspace
 }
 
 test('a clean tab on it is not put back, and the file stays', async () => {

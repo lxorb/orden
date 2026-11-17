@@ -1,0 +1,5 @@
+{
+  "name": "tasks-model",
+  "layer": "content",
+  "dependsOn": ["contracts", "sync-core", "bases", "markdown", "platform", "held-database"]
+}

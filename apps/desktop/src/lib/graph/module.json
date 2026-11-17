@@ -1,0 +1,5 @@
+{
+  "name": "graph",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "markdown", "scan"]
+}

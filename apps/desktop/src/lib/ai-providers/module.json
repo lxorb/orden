@@ -1,0 +1,15 @@
+{
+  "name": "ai-providers",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "crate",
+    "platform",
+    "sync-client",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "glyphs"
+  ]
+}

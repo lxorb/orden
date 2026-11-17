@@ -10,8 +10,8 @@ vi.hoisted(() => {
   })
 })
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -21,9 +21,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { roving } = await import('../../src/lib/roving')
-const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { roving } = await import('../../src/lib/ui-kit/src/api')
+const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
 function nothing() {
   return undefined

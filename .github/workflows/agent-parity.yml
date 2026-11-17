@@ -27,10 +27,10 @@ jobs:
         include:
           - runner: macos-latest
             target: aarch64-apple-darwin
-            engine: wkwebview
+            engine: chromium
           - runner: windows-latest
             target: x86_64-pc-windows-msvc
-            engine: webview2
+            engine: chromium
           - runner: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             engine: chromium
@@ -67,7 +67,9 @@ jobs:
               echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
               ;;
             Windows)
-              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+                --ignore-version-mismatches --config "$config"
+              bash scripts/cef-beside.sh apps/desktop/src-tauri/target/${{ matrix.target }}/release
               echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.exe" >>"$GITHUB_ENV"
               ;;
           esac
@@ -94,7 +96,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: agent-parity-${{ matrix.engine }}
+          name: agent-parity-${{ runner.os }}
           path: parity-${{ matrix.engine }}.json
           if-no-files-found: warn
           retention-days: 14

@@ -89,6 +89,16 @@ pub struct Asked {
 }
 
 pub fn becomes(url: &Url, asked: Asked, extensions: &impl ExtensionUrls) -> Becomes {
+    if matches!(url.scheme(), "blob" | "data")
+        && frame_may_open(url, extensions)
+        && !internal(url.as_str())
+    {
+        return if asked.unasked {
+            Becomes::Nothing
+        } else {
+            Becomes::Window
+        };
+    }
     let handed = || tab_may_open(url, extensions).then(|| url.to_string());
     if asked.said {
         return handed().map_or(Becomes::Nothing, Becomes::Tab);

@@ -3,8 +3,8 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Held } from '../../src/lib/sync-client/src/asking.svelte'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   platform: () => 'windows',
@@ -33,14 +33,14 @@ globalThis.ResizeObserver = class {
   disconnect = () => undefined
 }
 
-const { overlays } = await import('../../src/lib/overlays')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { asking, QUIET } = await import('../../src/lib/sync-client/src/asking.svelte')
 const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')
 const { back } = await import('../../src/lib/sync-client/src/resurrected.svelte')
-const { UNDO_LINGER } = await import('../../src/lib/undo-toast.svelte')
+const { UNDO_LINGER } = await import('../../src/lib/undo-toast/src/api')
 const HeldMark = (await import('../../src/lib/sync-client/src/HeldMark.svelte')).default
-const UndoToast = (await import('../../src/lib/UndoToast.svelte')).default
+const UndoToast = (await import('../../src/lib/workspace/src/UndoToast.svelte')).default
 
 const PATHS = ['/space/Plan.md', '/space/Trip.md', '/space/Other.md']
 

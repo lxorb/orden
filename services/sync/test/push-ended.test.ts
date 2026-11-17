@@ -9,7 +9,6 @@ import { computer, type Hubs, hubs } from './hub-fakes'
 const EMAIL = 'phone@example.com'
 const ZONE = 'Europe/Zurich'
 const AT = momentOf({ date: '2099-01-05', time: '09:00' }, ZONE)
-const TASK = '- [ ] Private task [remind:: 2099-01-05 09:00]\n'
 
 let env: TestEnv
 let running: Hubs
@@ -76,19 +75,15 @@ async function setUp() {
     expect(registered.status).toBe(200)
   }
 
-  const space = (await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } }))
-    .json.space.id
-  const made = await call(env, `/v1/spaces/${space}/notes`, {
-    token: laptop.token,
-    body: { path: 'Plan.md', content: '' },
-  })
-  const note = (made.json as { note: { id: string; version: number } }).note
-  env.db.prepare('update notes set meta = ? where id = ?').run('{"todo-list":"yes"}', note.id)
-  await call(env, `/v1/notes/${note.id}`, {
-    method: 'PUT',
-    token: laptop.token,
-    body: { content: TASK, baseVersion: note.version },
-  })
+  const made = await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } })
+  const space = (made.json as { space: { id: string } }).space.id
+  env.db
+    .prepare(
+      `insert into push_reminders
+         (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at, tries, retry_at)
+       values (?, 'r1', ?, ?, ?, 'Private task', '', 'todo', 'h', 0, null, 0, null)`,
+    )
+    .run(`inbox:${laptop.user}`, laptop.user, space, AT)
   return { phone, laptop }
 }
 

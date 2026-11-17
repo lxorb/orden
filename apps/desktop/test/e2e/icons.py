@@ -117,7 +117,7 @@ def sets(page: Page, label: str, where: str) -> None:
     page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{where}.png"))
     say(f"[{label}] wrote picker-{where}.png")
     check(
-        page.locator(".sheet .orden-segmented:not(.variant)").count() == 0,
+        page.locator(".sheet .orden-segmented").count() == 0,
         f"[{label}] the picker has no tabs",
     )
 
@@ -213,7 +213,7 @@ def outline(page: Page, label: str, where: str) -> None:
     say(f"[{label}] choosing again for {page.evaluate(CANVAS_ICON)}")
     sheet = page.locator(".sheet")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
-    sheet.locator(".variant button").nth(1).click()
+    sheet.locator("label.tick input").check()
     sheet.locator("input.orden-field").fill("thinking face")
     sheet.locator(".tint").nth(3).click()
     cell = sheet.locator('button.cell[aria-label="thinking face"]:has(svg.drawn)').first
@@ -250,10 +250,10 @@ def outline(page: Page, label: str, where: str) -> None:
     say(f"[{label}] and once more for {page.evaluate(CANVAS_ICON)}")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
     check(
-        sheet.locator(".variant button").nth(1).get_attribute("aria-checked") == "true",
+        sheet.locator("label.tick input").is_checked(),
         f"[{label}] the picker opens on outlines for a row that wears one",
     )
-    sheet.locator(".variant button").nth(0).click()
+    sheet.locator("label.tick input").uncheck()
     sheet.locator("input.orden-field").fill("thinking face")
     sheet.locator('button.cell[aria-label="thinking face"]:has(.emoji)').first.click()
     worn = wait_for(

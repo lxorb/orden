@@ -88,11 +88,16 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
     if not opened:
         failed(f"{note} did not open to write {new[:40]!r}")
         return False
-    page.wait_for_function(
-        "(name) => window.ordenApp.workspace.active?.name === name && !!window.orden",
-        arg=note,
-        timeout=15000,
-    )
+    try:
+        page.wait_for_function(
+            "([name, old]) => { const tab = window.ordenApp.workspace.active;"
+            " return tab?.name === name && !tab.coming && !!window.orden"
+            " && window.orden.state.doc.toString().includes(old) }",
+            arg=[note, old],
+            timeout=15000,
+        )
+    except Exception:
+        say(f"{note} never showed {old!r} in its editor")
     done = page.evaluate(
         """([old, now]) => {
           const view = window.orden

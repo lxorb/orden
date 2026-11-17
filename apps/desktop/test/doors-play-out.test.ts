@@ -65,18 +65,17 @@ function rootTags(text: string): string[] {
 const MOVES = /\s(?:transition|in|out):/
 
 const NOT_YET = new Set([
-  'lib/SettingsPanel.svelte: ./DeleteAccount.svelte',
-  'lib/web-tab/WebTab.svelte: ../agents/ui/TakeoverBar.svelte',
-  'lib/web-tab/WebTab.svelte: findBar',
+  'lib/settings/src/SettingsPanel.svelte: ./DeleteAccount.svelte',
+  'lib/web-tab/src/WebTab.svelte: findBar',
 ])
 
 function doors(): Map<string, string> {
-  const text = readFileSync(join(LIB, 'surfaces.svelte.ts'), 'utf8')
+  const text = readFileSync(join(LIB, 'surfaces/src/api.ts'), 'utf8')
   const found = new Map<string, string>()
   const each = /export const (\w+) = (?:held|latched)\(([\s\S]*?)\n(?=export|\/\*\*|$)/g
   for (const [, name, body] of text.matchAll(each)) {
-    const file = /import\('(\.\/[^']+\.svelte)'\)/.exec(body ?? '')?.[1]
-    if (name && file) found.set(name, join(LIB, file))
+    const file = /import\('(\.\.\/\.\.\/[^']+\.svelte)'\)/.exec(body ?? '')?.[1]
+    if (name && file) found.set(name, resolve(LIB, 'surfaces/src', file))
   }
   return found
 }
@@ -102,11 +101,11 @@ describe('a component fetched through a door', () => {
   })
 
   test('which is what the list of spaces is', () => {
-    const switcher = readFileSync(join(LIB, 'SpaceSwitcher.svelte'), 'utf8')
+    const switcher = readFileSync(join(LIB, 'sidebar/src/SpaceSwitcher.svelte'), 'utf8')
     expect(switcher).toMatch(/<Door \{open\} load=\{\(\) => spacesMenu\(\)\}>/)
-    expect(rootTags(readFileSync(join(LIB, 'SpaceMenu.svelte'), 'utf8')).join('\n')).toMatch(
-      /transition:arrive/,
-    )
+    expect(
+      rootTags(readFileSync(join(LIB, 'spaces/src/SpaceMenu.svelte'), 'utf8')).join('\n'),
+    ).toMatch(/transition:arrive/)
   })
 })
 

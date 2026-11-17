@@ -23,9 +23,9 @@ function componentsWith(glyph: string): string[] {
   return found.sort()
 }
 
-const titlebar = read('lib/Titlebar.svelte')
-const sidebar = read('lib/Sidebar.svelte')
-const toggle = read('lib/SidebarToggle.svelte')
+const titlebar = read('lib/titlebar/src/Titlebar.svelte')
+const sidebar = read('lib/sidebar/src/Sidebar.svelte')
+const toggle = read('lib/titlebar/src/SidebarToggle.svelte')
 
 const PANEL = '<rect x="1" y="2.5" width="12" height="9" rx="1.5" />'
 
@@ -35,8 +35,8 @@ describe('the button that opens the file list', () => {
     expect(toggle).toContain("'Hide left sidebar'")
 
     for (const [name, text] of [
-      ['lib/Titlebar.svelte', titlebar],
-      ['lib/Sidebar.svelte', sidebar],
+      ['lib/titlebar/src/Titlebar.svelte', titlebar],
+      ['lib/sidebar/src/Sidebar.svelte', sidebar],
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
       expect(text, `${name} uses the component`).toMatch(
@@ -51,7 +51,9 @@ describe('the button that opens the file list', () => {
   })
 
   test('is said and not shown in the drawer head on the same condition as the bar', () => {
-    expect(sidebar).toContain("import { swipeOpens } from './swipe-opens'")
+    expect(sidebar).toMatch(
+      /import \{[^}]*\bswipeOpens\b[^}]*\} from '\.\.\/\.\.\/workspace\/src\/api'/,
+    )
     expect(sidebar.replace(/\s+/g, ' ')).toContain('<SidebarToggle unseen={swipeOpens()} />')
   })
 
@@ -70,11 +72,13 @@ describe('the button that opens the file list', () => {
     expect(read('App.svelte')).toContain('if (!host || !swipeOpens()) return')
     expect(toggle).toContain('class:orden-said={unseen && !keyed}')
     expect(titlebar).toMatch(/hint="drawer"/)
-    expect(read('lib/hints.svelte.ts')).toMatch(/HINTS = \['drawer'/)
+    expect(read('lib/hints/src/hints.svelte.ts')).toMatch(/HINTS = \['drawer'/)
   })
 
   test('and nothing else anywhere draws one', () => {
-    const others = componentsWith(PANEL).filter((name) => name !== 'lib/SidebarToggle.svelte')
+    const others = componentsWith(PANEL).filter(
+      (name) => name !== 'lib/titlebar/src/SidebarToggle.svelte',
+    )
     expect(others, `these draw the sidebar glyph again: ${others.join(', ')}`).toEqual([])
   })
 
@@ -119,11 +123,11 @@ describe("the sides' buttons on a desktop", () => {
   })
 
   test('have no setting that moves them, and no hint that comes with it', () => {
-    for (const text of [titlebar, sidebar, read('lib/settings/appearance-pane.ts')]) {
+    for (const text of [titlebar, sidebar, read('lib/settings/src/appearance-pane.ts')]) {
       expect(text).not.toMatch(/sideToggles|side-toggles/)
     }
     expect(titlebar).not.toMatch(/hint="edge"/)
-    expect(read('lib/hints.svelte.ts')).not.toContain("'edge'")
+    expect(read('lib/hints/src/hints.svelte.ts')).not.toContain("'edge'")
   })
 })
 

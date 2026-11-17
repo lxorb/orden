@@ -19,8 +19,7 @@
   --block-room: calc(2 * var(--space-5));
   max-width: calc(var(--measure) - 2 * var(--space-5));
   min-width: 0;
-  margin: 0 max(var(--space-5), calc(50% - var(--measure) / 2 + var(--space-5)));
-  margin-inline-start: max(var(--block-room), calc(50% - var(--measure) / 2 + var(--space-5)));
+  margin: 0 max(var(--block-room), calc(50% - var(--measure) / 2 + var(--space-5)));
   padding: var(--space-7) 0 45vh;
 }
 
@@ -1469,6 +1468,14 @@
   display: inline;
 }
 
+.orden-block-slot::before {
+  content: '';
+  position: absolute;
+  inset-block: -0.3em;
+  inset-inline-end: 0;
+  width: calc(var(--space-5) + var(--line-inset, 0px) + 15px);
+}
+
 .orden-block-handle {
   position: absolute;
   top: 50%;
@@ -1488,7 +1495,7 @@
   cursor: grab;
   opacity: 0;
   transition:
-    opacity var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out) 250ms,
     background var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
 }
@@ -1496,6 +1503,7 @@
 .cm-line:hover > .orden-block-slot .orden-block-handle,
 .orden-block-handle:focus-visible {
   opacity: 1;
+  transition-delay: 0s;
 }
 
 .orden-block-handle:hover {
@@ -1517,6 +1525,7 @@
 }
 
 @media (hover: none) {
+  .orden-block-slot::before,
   .orden-block-handle {
     display: none;
   }

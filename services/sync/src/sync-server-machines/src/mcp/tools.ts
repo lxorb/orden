@@ -1,12 +1,17 @@
-import { clockOf } from '@orden/bases/agent'
 import { untrusted } from '@orden/chats/agent'
-import { isAccountInbox } from '@orden/bases/inbox'
 import { findLinks } from '@orden/markdown'
 import type { ItemMeta } from '@orden/sync-core'
 import {
   byteLength,
   pokeNow,
-  inboxText,
+  fits,
+  PROTECTED,
+  shutFor,
+  type Env,
+  type Note,
+  type Shut,
+} from '../../../sync-server/src/api'
+import {
   addNote,
   cleanPath,
   readablePath,
@@ -18,18 +23,10 @@ import {
   writeWords,
   noteKind,
   readsAs,
-  fits,
-  hashOfBytes,
   spacesFor,
-  PROTECTED,
-  shutFor,
-  type Env,
-  type Note,
   type ListedSpace as Space,
-  type Shut,
-} from '../../../sync-server/src/api'
+} from '../../../sync-server-engine/src/api'
 export { type Space, spacesFor }
-import { dated, zoneOf } from './dated'
 import type { TokenRow } from './tokens'
 const MOST_NOTES = 1000
 const MOST_MATCHES = 50
@@ -303,49 +300,20 @@ async function writeNote(
   space: Space,
   args: Record<string, unknown>,
   device: string | undefined,
-  user: string,
 ): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
-  const held = await noteRead(env, space.id, path)
   const put = await putNote(env, space, path, asked ?? '', device)
   if (put === MOVED) return changedWhileWriting(path)
   if (typeof put === 'string') return put
-  if (held && held !== MOVED) {
-    const { today } = clockOf(new Date(), await zoneOf(env, user))
-    await dated(env, space, put.path, held.words, asked ?? '', held.note, today)
-  }
   return `Saved ${put.path}.`
 }
 
-export function changedWhileWriting(path: string): string {
+function changedWhileWriting(path: string): string {
   return `${path} changed while I was writing it. Read it again first.`
-}
-
-const READS = 3
-
-export async function noteRead(
-  env: Env,
-  spaceId: string,
-  path: string,
-): Promise<{ note: Note; words: string } | null | typeof MOVED> {
-  for (let tries = 0; tries < READS; tries++) {
-    const note = await env.DB.prepare(
-      "select * from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
-    )
-      .bind(spaceId, path)
-      .first<Note>()
-    if (!note) return null
-    const object = await env.NOTES.get(noteKey(spaceId, note.id))
-    const bytes = object ? await object.arrayBuffer() : new ArrayBuffer(0)
-    if ((await hashOfBytes(bytes)) === note.hash) {
-      return { note, words: new TextDecoder().decode(bytes) }
-    }
-  }
-  return MOVED
 }
 
 export async function putNote(
@@ -436,7 +404,6 @@ export async function callTool(
     case 'read_note': {
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space
-      if (isAccountInbox(text(args, 'path') ?? '')) return inboxText(env, userId)
       return readNote(env, space, args, await shutFor(env, userId))
     }
 
@@ -467,7 +434,7 @@ export async function callTool(
       const path = cleanPath(text(args, 'path') ?? '')
       if (path && (await shutFor(env, userId))(space.id, path)) return PROTECTED(path)
 
-      return writeNote(env, space, args, token.device, userId)
+      return writeNote(env, space, args, token.device)
     }
 
     default:

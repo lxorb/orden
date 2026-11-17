@@ -2,24 +2,31 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { overlays } from '../../src/lib/overlays'
-import SidebarFoot from '../../src/lib/SidebarFoot.svelte'
-import { settings } from '../../src/lib/settings.svelte'
-import { theme } from '../../src/lib/theme.svelte'
-import { store } from '../../src/lib/themes/store.svelte'
-import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { overlays } from '../../src/lib/ui-kit/src/overlays'
+import { menu, type MenuItem } from '../../src/lib/ui-kit/src/api'
+import SidebarFoot from '../../src/lib/sidebar/src/SidebarFoot.svelte'
+import ContextMenu from '../../src/lib/context-menu/src/ContextMenu.svelte'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
+import { theme } from '../../src/lib/theme/src/theme.svelte'
+import { store } from '../../src/lib/theme-looks/src/gallery/store.svelte'
+import { picking, pickTheme } from '../../src/lib/theme-looks/src/picker/picking.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
+
+providePort('settings.window', settings)
+import '../../src/lib/theme-ports'
 
 await Promise.all([
   import('@orden/themes/glass'),
-  import('../../src/lib/glass/settings'),
-  import('../../src/lib/glass/follow.svelte'),
-  import('../../src/lib/wallpaper/sheet'),
-  import('../../src/lib/wallpaper/settings'),
-  import('../../src/lib/wallpaper/wallpaper.svelte'),
-  import('../../src/lib/material'),
-  import('../../src/lib/themes/declared'),
-  import('../../src/lib/theme-picker/ThemePicker.svelte'),
+  import('../../src/lib/theme-looks/src/api'),
+  import('../../src/lib/theme-looks/src/glass/settings'),
+  import('../../src/lib/theme-looks/src/glass/follow.svelte'),
+  import('../../src/lib/theme-looks/src/wallpaper/sheet'),
+  import('../../src/lib/theme-looks/src/wallpaper/settings'),
+  import('../../src/lib/theme-looks/src/wallpaper/wallpaper.svelte'),
+  import('../../src/lib/theme/src/material'),
+  import('../../src/lib/theme/src/declared'),
+  import('../../src/lib/theme-looks/src/picker/ThemePicker.svelte'),
   import('@orden/themes/tokens.css?raw'),
 ])
 
@@ -109,22 +116,23 @@ afterEach(() => {
   store.close()
 })
 
-test('the themes button in the sidebar foot opens it over itself, in place of a light and dark switch', async () => {
+test('Themes in the account menu opens it, and the sidebar foot holds no themes button (#2063)', async () => {
   const target = document.createElement('div')
   document.body.append(target)
   const foot = mount(SidebarFoot, { target })
   flushSync()
 
-  expect(target.querySelector('[aria-label="Light"], [aria-label="Dark"]')).toBeNull()
-  const button = target.querySelector<HTMLElement>('[aria-label="Themes"]')
-  button?.dispatchEvent(
-    new MouseEvent('click', { bubbles: true, cancelable: true, clientX: 200, clientY: 700 }),
-  )
+  expect(
+    target.querySelector('[aria-label="Themes"], [aria-label="Light"], [aria-label="Dark"]'),
+  ).toBeNull()
+  target.querySelector<HTMLElement>('[aria-haspopup="menu"]')?.click()
+  const rows = menu.items.filter((one): one is MenuItem => one !== null)
+  rows.find((one) => one.label === 'Themes')?.run()
+  menu.hide()
   await expect.poll(() => picking.open).toBe(true)
   flushSync()
 
   expect(dialog()).not.toBeNull()
-  expect(picking.at?.x).toBe(200)
   expect(theme.current).toBe('dark')
 
   void unmount(foot, { outro: false })
@@ -145,16 +153,23 @@ function modeOf(scheme: 'light' | 'dark'): string {
   return shape.replace('{PICKER}', driven('PICKER')).replace('{NAMES[scheme]}', names[scheme] ?? '')
 }
 
-test('the native drives switch the scheme through the button and the choices drawn here', async () => {
+test('the native drives switch the scheme through the account menu and the choices drawn here', async () => {
   const target = document.createElement('div')
   document.body.append(target)
   const foot = mount(SidebarFoot, { target })
+  const menuDrawn = mount(ContextMenu, { target })
   flushSync()
 
   for (const scheme of ['light', 'dark'] as const) {
-    const button = document.querySelector<HTMLElement>(driven('THEMES'))
-    expect(button, 'the drives press a themes button the foot no longer draws').not.toBeNull()
-    button?.click()
+    const account = document.querySelector<HTMLElement>(driven('ACCOUNT'))
+    expect(account, 'the drives press an account button the foot no longer draws').not.toBeNull()
+    account?.click()
+    flushSync()
+    const row = [...document.querySelectorAll<HTMLElement>(driven('MENU'))].find(
+      (one) => one.textContent.trim() === 'Themes',
+    )
+    expect(row, 'the drives press Themes in a menu that no longer offers it').toBeDefined()
+    row?.click()
     await expect.poll(() => picking.open).toBe(true)
     flushSync()
     expect(document.querySelector(driven('PICKER'))).not.toBeNull()
@@ -173,12 +188,13 @@ test('the native drives switch the scheme through the button and the choices dra
     expect(picking.open).toBe(false)
   }
 
+  void unmount(menuDrawn, { outro: false })
   void unmount(foot, { outro: false })
   target.remove()
 })
 
 test('the palette’s row opens it where the palette stands', async () => {
-  const { appCommands } = await import('../../src/lib/commands')
+  const { appCommands } = await import('../../src/lib/commands/src/api')
   const row = appCommands().find((one) => one.id === 'themes')
   expect(row?.label).toBe('Switch theme')
 

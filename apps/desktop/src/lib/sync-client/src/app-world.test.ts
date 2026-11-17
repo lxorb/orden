@@ -6,7 +6,7 @@ const renames: Record<string, unknown>[] = []
 const trashed: Record<string, unknown>[] = []
 const saved: unknown[][] = []
 
-vi.mock('../../tauri', () => ({
+vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   isDesktop: false,
   platform: () => 'web',
@@ -53,11 +53,14 @@ vi.mock('../../tauri', () => ({
     return Promise.reject(new Error(`nothing at ${path}`))
   },
 }))
-vi.mock('../../api', () => ({ api: {}, BASE: '' }))
-vi.mock('../../link-index.svelte', () => ({
+vi.mock('../../accounts/src/client', () => ({ api: {}, BASE: '' }))
+vi.mock('../../link-index/src/api', () => ({
   links: { noteSaved: (...said: unknown[]) => saved.push(said) },
 }))
-vi.mock('../../space-watch', () => ({ scanSpace: () => Promise.resolve([]) }))
+vi.mock('../../crate/src/api', async (original) => ({
+  ...(await original<typeof import('../../crate/src/api')>()),
+  scanSpace: () => Promise.resolve([]),
+}))
 
 const { appWorld } = await import('./app-world')
 

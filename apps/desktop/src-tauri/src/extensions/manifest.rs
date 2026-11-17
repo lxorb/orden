@@ -25,24 +25,6 @@ pub fn read(folder: &Path) -> Result<About, String> {
     Ok(about(&manifest, |key| message(folder, &manifest, key)))
 }
 
-#[cfg(not(feature = "cef"))]
-pub fn keyed(folder: &Path, key: &[u8]) -> Result<(), String> {
-    use base64::Engine as _;
-
-    let path = folder.join("manifest.json");
-    let text =
-        fs::read_to_string(&path).map_err(|_| "that extension has no manifest".to_string())?;
-    let mut manifest: Map<String, Value> =
-        serde_json::from_str(text.trim_start_matches('\u{feff}'))
-            .map_err(|_| "that extension's manifest cannot be read".to_string())?;
-    manifest.insert(
-        "key".into(),
-        Value::String(base64::engine::general_purpose::STANDARD.encode(key)),
-    );
-    let written = serde_json::to_string_pretty(&manifest).map_err(|error| error.to_string())?;
-    fs::write(&path, written).map_err(|error| error.to_string())
-}
-
 fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     let words = |field: &str| {
         let said = manifest

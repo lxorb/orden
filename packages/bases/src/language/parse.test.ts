@@ -12,8 +12,6 @@ function said(add: QuickAdd) {
   if (add.fields.tags.length === 0) delete fields.tags
   if (add.fields.remind.length === 0) delete fields.remind
   const out: Record<string, unknown> = { text: add.text, ...fields }
-  if (add.note !== undefined) out.note = add.note
-  if (add.heading !== undefined) out.heading = add.heading
   return out
 }
 
@@ -188,25 +186,6 @@ describe('the marks', () => {
   ])('priority %s', (mark, priority) => {
     expect(said(en(`Fix the sink ${mark}`))).toEqual({ text: 'Fix the sink', priority })
     expect(said(de(`Spüle reparieren ${mark}`))).toEqual({ text: 'Spüle reparieren', priority })
-  })
-
-  test.each([
-    ['>Errands', 'Errands', undefined],
-    ['>Work/Thesis', 'Work/Thesis', undefined],
-    ['>Errands /Phone', 'Errands', 'Phone'],
-    ['>"Moving flat"', 'Moving flat', undefined],
-  ])('where %s', (mark, note, heading) => {
-    const out: Record<string, unknown> = { text: 'Call bank', note }
-    if (heading) out.heading = heading
-    expect(said(en(`Call bank ${mark}`))).toEqual(out)
-    expect(said(de(`Call bank ${mark}`))).toEqual(out)
-  })
-
-  test("a name with spaces is the space's own note", () => {
-    expect(said(en('Call bank >Moving flat soon', { notes: ['Moving flat'] }))).toEqual({
-      text: 'Call bank soon',
-      note: 'Moving flat',
-    })
   })
 
   test.each(['#family', '@family', '%family'])('tag %s', (mark) => {

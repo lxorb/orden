@@ -121,11 +121,7 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Store::Agent => Some(format!("agent_{}", caller.id())),
         Store::Reader | Store::Space => {
             let reader = store_for(app, open.space.as_deref(), &open.url);
-            if engines::TWINS {
-                Some(engines::twin_of(reader.as_deref()))
-            } else {
-                reader
-            }
+            Some(engines::twin_of(reader.as_deref()))
         }
     };
     let most = match caller {

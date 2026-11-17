@@ -44,7 +44,7 @@ function declarations(style: string): string {
 
 describe('a mark that fills the box it was given', () => {
   test('is taken out of the line box it would otherwise sit in', () => {
-    const style = declarations(named('lib/Icon.svelte').style)
+    const style = declarations(named('lib/glyphs/src/Icon.svelte').style)
     const glyph = /\.glyph\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
 
     expect(glyph).toMatch(/display\s*:\s*block/)
@@ -53,16 +53,16 @@ describe('a mark that fills the box it was given', () => {
   })
 
   test('and the title bar names no space of its own', () => {
-    const bar = named('lib/Titlebar.svelte')
+    const bar = named('lib/titlebar/src/Titlebar.svelte')
     expect(bar.text).not.toContain('<SpaceSwitcher')
     expect(bar.text).not.toContain('<SpaceMark')
     expect(bar.text).not.toContain('{space.name}')
   })
 
   test('and so does the space named over the file list, out of the one badge', () => {
-    const switcher = named('lib/SpaceSwitcher.svelte')
-    const badge = named('lib/SpaceBadge.svelte')
-    const row = named('lib/SpaceRow.svelte')
+    const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
+    const badge = named('lib/spaces/src/SpaceBadge.svelte')
+    const row = named('lib/spaces/src/SpaceRow.svelte')
 
     expect(badge.text.match(/<SpaceMark /g)).toHaveLength(1)
     expect(badge.text).toMatch(/class="orden-badge"[\s\S]{0,200}<SpaceMark/)
@@ -73,7 +73,7 @@ describe('a mark that fills the box it was given', () => {
   })
 
   test('and the chevron beside it is stroked in its own ink, not filled in black', () => {
-    const style = declarations(named('lib/SpaceSwitcher.svelte').style)
+    const style = declarations(named('lib/sidebar/src/SpaceSwitcher.svelte').style)
     const chevron = /\.chevron\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
 
     expect(chevron).toMatch(/fill\s*:\s*none/)
@@ -88,18 +88,18 @@ describe('the mark that says shared', () => {
       .filter((one) => /lucide\/dist\/esm\/icons\/(users|share-2)\.mjs/.test(one.text))
       .map((one) => one.name)
 
-    expect(drawn).toEqual(['lib/SharedMark.svelte'])
+    expect(drawn).toEqual(['lib/ui-kit/src/SharedMark.svelte'])
   })
 
   test('is small and quiet, which is what a mark beside a name is', () => {
-    const style = declarations(named('lib/SharedMark.svelte').style)
+    const style = declarations(named('lib/ui-kit/src/SharedMark.svelte').style)
     expect(style).toMatch(/color\s*:\s*var\(--muted\)/)
     expect(style).toMatch(/width\s*:\s*var\(--icon-sm\)/)
   })
 
   test('and says it in a word as well, for a reader who cannot see it', () => {
-    expect(named('lib/SharedMark.svelte').text).toMatch(/aria-label=\{label\}/)
-    expect(named('lib/SharedMark.svelte').text).toMatch(/'Shared'/)
+    expect(named('lib/ui-kit/src/SharedMark.svelte').text).toMatch(/aria-label=\{label\}/)
+    expect(named('lib/ui-kit/src/SharedMark.svelte').text).toMatch(/'Shared'/)
   })
 
   test('and nothing draws a dot for it any more', () => {
@@ -119,26 +119,29 @@ describe('the mark that says shared', () => {
       .sort()
 
     expect(dots).toEqual([
-      'lib/JoinPending.svelte',
-      'lib/JoinSheet.svelte',
-      'lib/Tabs.svelte',
-      'lib/ai/UnreadDot.svelte',
-      'lib/views/DisplayBuilder.svelte',
+      'lib/sharing/src/JoinPending.svelte',
+      'lib/sharing/src/JoinSheet.svelte',
+      'lib/tab-strip/src/Tabs.svelte',
+      'lib/ui-kit/src/UnreadDot.svelte',
     ])
   })
 
   test('and the file list says it on the note itself', () => {
-    const tree = named('lib/Tree.svelte')
-    expect(tree.text).toContain("import SharedMark from './SharedMark.svelte'")
+    const tree = named('lib/sidebar/src/Tree.svelte')
+    expect(tree.text).toMatch(
+      /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
+    )
     expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
     expect(tree.text).toContain('othersIn(')
     expect(tree.text).toContain('isSharedItem(')
   })
 
   test('and the switcher says it with the mark instead', () => {
-    const switcher = named('lib/SpaceSwitcher.svelte')
-    const row = named('lib/SpaceRow.svelte')
-    expect(switcher.text).toContain("import SharedMark from './SharedMark.svelte'")
+    const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
+    const row = named('lib/spaces/src/SpaceRow.svelte')
+    expect(switcher.text).toMatch(
+      /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
+    )
     expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text).toContain('<SharedMark icon={Eye} label="Read-only" />')
@@ -148,7 +151,7 @@ describe('the mark that says shared', () => {
 
 describe('the sidebar button', () => {
   test('is one glyph, drawn one way in both states', () => {
-    const style = declarations(named('lib/SidebarToggle.svelte').style)
+    const style = declarations(named('lib/titlebar/src/SidebarToggle.svelte').style)
     const edge = [...style.matchAll(/\.edge\s*\{([^}]*)\}|\.edge[^{]*\{([^}]*)\}/g)]
       .map((one) => one[1] ?? one[2] ?? '')
       .join(';')
@@ -158,7 +161,7 @@ describe('the sidebar button', () => {
   })
 
   test('and nothing in the component picks a second drawing by state', () => {
-    const text = named('lib/SidebarToggle.svelte').text
+    const text = named('lib/titlebar/src/SidebarToggle.svelte').text
     expect(text.match(/<svg/g)).toHaveLength(1)
     expect(text).not.toMatch(/\{#if[^}]*open[^}]*\}[\s\S]{0,200}<svg/)
   })
@@ -166,7 +169,7 @@ describe('the sidebar button', () => {
 
 describe('the row across the top of the app', () => {
   test('is the header height', () => {
-    const style = declarations(named('lib/Titlebar.svelte').style)
+    const style = declarations(named('lib/titlebar/src/Titlebar.svelte').style)
     expect(style).toMatch(/height\s*:\s*var\(--header-height\)/)
   })
 })

@@ -1,68 +1,97 @@
-import { agentMarks, listenForAgents } from './agent-marks.svelte'
-import { account } from './account.svelte'
-import { busy } from './busy.svelte'
-import { installAiRunner } from './ai/ask'
-import { guardDrops } from './drops'
-import { joining } from './joining.svelte'
-import { collectErrors, log } from './log'
-import { onTheActivity } from './mobile/bridge'
-import { modes } from './modes.svelte'
+import { hinting } from './hints/src/api'
+import { oneWindow } from './web-tab/src/api'
+import { door } from '@orden/markdown/door'
+import { account, connectors } from './accounts/src/api'
+import { busy, guardDrops, outsideDrops, reloading, viewport } from './ui-kit/src/api'
+import { installAiRunner } from './ai-chat/src/api'
+import { joining } from './sharing/src/api'
 import {
-  anythingRuns,
-  GIVE_UP,
-  settleUp,
-  stillWriting,
-  trayKeeper,
-  writeOwed,
-  written,
-} from './parting'
-import { warmDoors } from './surfaces.svelte'
-import type { Across } from './workspace/across'
-import { recovery } from './recovery.svelte'
-import { reloading } from './reloading.svelte'
-import { record } from './sync/record.svelte'
-import { hiddenKinds, settings } from './settings.svelte'
-import { gate } from './onboarding/gate.svelte'
-import { startup } from './startup.svelte'
-import { shortcuts } from './shortcuts.svelte'
-import { currentWindow, internal, isDesktop, isMobile, platform } from './tauri'
-import { waited } from './timing'
-import { factsOfLaunch, mark } from './trace'
-import { theme } from './theme.svelte'
-import { pull } from './pull.svelte'
-import { toolbar } from './toolbar.svelte'
-import { trash } from './trash.svelte'
-import { installStaged, ready, settledForInstaller } from './updater'
-import { updates } from './updates.svelte'
-import { viewport } from './viewport.svelte'
-import { workspace } from './workspace.svelte'
+  collectErrors,
+  log,
+  isDesktop,
+  platform,
+  onTheActivity,
+  factsOfLaunch,
+  mark,
+  stallWatch,
+} from './platform/src/api'
+import { startup } from './launch/src/api'
+import { choices, modes } from './modes/src/api'
+import { warmDoors } from './features'
+import { recovery } from './history/src/api'
+import { record } from './sync-mirror/src/api'
+import { settings } from './settings/src/api'
+import { hiddenKinds } from './gates/src/api'
+import { gate } from './onboarding/src/api'
+import { shortcuts, toolbar } from './shortcuts/src/api'
+import { theme } from './theme/src/api'
+import { convertAll, keepWorking } from './web-backend/src/api'
+import { trash } from './trash/src/api'
+import { updates } from './updates/src/api'
+import { startRunner } from './views/src/api'
+import {
+  acrossStarting,
+  type Across,
+  blankTabs,
+  closing,
+  featureGates,
+  outsideHearing,
+  pull,
+  workspace,
+} from './workspace/src/api'
+import { providePort } from '@orden/contracts'
+
+if (!__EVEN_PLUGIN__) {
+  providePort('quit.ask', {
+    mayStop: async (why) => (await import('./quit-ports')).mayStop(why),
+  })
+}
 
 const DAY = 24 * 60 * 60 * 1000
+
+async function openPdfs(paths: readonly string[]) {
+  const { showPdfs } = await (await import('./pdf/src/api')).handed()
+  await showPdfs(paths)
+}
+
+async function listenForAgents(): Promise<() => void> {
+  if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
+
+  const { listen } = await import('@tauri-apps/api/event')
+  const heard = door(() =>
+    import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()),
+  )
+
+  return listen<unknown>('orden://agent', ({ payload }) => {
+    void heard().then((hear) => hear(payload))
+  })
+}
 
 export function start(): () => void {
   mark('start')
   collectErrors()
-  void startup.turn('doors').then(async () => (await import('./stalls')).watchStalls())
+  void startup.turn('doors').then(async () => (await stallWatch()).watchStalls())
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('doors')
-      .then(async () => (await import('./themes/store.svelte')).store.keepUp())
+      .then(async () => (await import('./theme-looks/src/api')).store.keepUp())
       .catch((error: unknown) => log('warn', `themes: ${String(error)}`))
   }
   factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()
   theme.init()
-  if (!__EVEN_PLUGIN__) void import('./themes/synced.svelte').then((one) => one.syncLook())
+  if (!__EVEN_PLUGIN__) void import('./theme-looks/src/api').then((one) => one.syncLook())
   modes.restore()
   shortcuts.restore()
   toolbar.restore()
   pull.restore()
   hiddenKinds.restore()
-  settings.restore()
+  connectors.restore()
+  choices.restore()
   if (!__EVEN_PLUGIN__) gate.restore()
   const settling = setTimeout(() => {
     startup.settled = true
-    if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.settle())
+    if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.settle())
   }, 20_000)
   installAiRunner()
   recovery.restore()
@@ -84,12 +113,12 @@ export function start(): () => void {
     .then(async () => {
       mark('space restored')
       if (!__EVEN_PLUGIN__) {
-        const { startAutomation } = await import('./automation/start')
+        const { startAutomation } = await (await import('./automation/src/api')).automationStart()
         stopAutomation = await startAutomation()
         stopAgents = await listenForAgents()
       }
       if (onTheActivity()) {
-        const { startHanded } = await import('./mobile/handed')
+        const { startHanded } = await import('./mobile/src/api')
         stopHanded = startHanded()
       }
     })
@@ -102,12 +131,12 @@ export function start(): () => void {
 
   const stopRecovery = recovery.start()
 
-  const stopStrayDrops = guardDrops()
+  const stopStrayDrops = guardDrops((paths) => void openPdfs(paths))
 
-  void guardClose()
+  void (async () => (await closing()).guardClose(() => import('./quit-ports')))()
 
   const stopReloading = reloading.watch(async () => {
-    settle()
+    ;(await closing()).settle()
     await workspace.writesSettled()
     return !workspace.writing && !busy.active
   })
@@ -120,32 +149,31 @@ export function start(): () => void {
     // Answered by reloading.svelte.ts.
   })
 
-  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
-
   if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./reminders/start.svelte'))
+    void startup
+      .turn('right')
+      .then(() => import('./rows/src/api'))
+      .then(() => startRunner())
   }
 
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenPassOn }) =>
+      .then(featureGates)
+      .then(({ whenAppsOn, whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
         whenPassOn(
-          () => void import('./pass/syncing.svelte').then((one) => one.startPassSync()),
-          () => void import('./pass/open').then((one) => one.quietPass()),
-        ),
-      )
-  }
-
-  if (!__EVEN_PLUGIN__) {
+          () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
+          () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
+        )
+        whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats()))
+        whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime()))
+        whenAppsOn()
+        whenExplorerOn()
+      })
     void startup
       .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenChatsOn }) => whenChatsOn(() => void import('./chats/start.svelte')))
-    void startup
-      .turn('right')
-      .then(() => import('./chats/retired'))
+      .then(() => import('./chats-client/src/api'))
+      .then((one) => one.retireChats())
       .then((one) => one.forgetRetiredChatsHere())
       .catch(() => undefined)
   }
@@ -153,29 +181,25 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenTimeOn }) => whenTimeOn(() => void import('./time/start.svelte')))
+      .then(() => import('./tasks-model/src/api'))
+      .then(({ startTodos }) => startTodos())
   }
 
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./feature-gate.svelte'))
-      .then(({ whenAppsOn, whenExplorerOn }) => {
-        whenAppsOn()
-        whenExplorerOn()
-      })
+      .then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
   }
 
   if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./scratchpad/start.svelte'))
+    void startup.turn('right').then(blankTabs)
   }
 
-  if (!__EVEN_PLUGIN__) {
-    void startup.turn('right').then(() => import('./workspace/blank-tabs.svelte'))
-  }
-
-  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./overview/faces.svelte'))
+  if (!__EVEN_PLUGIN__)
+    void startup
+      .turn('right')
+      .then(() => import('./overview/src/api'))
+      .then((one) => one.wakeFaces())
 
   if (!__EVEN_PLUGIN__) {
     void startup.turn('rooms').then(() =>
@@ -186,70 +210,71 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup
-      .turn('right')
-      .then(() => import('./internal/convert'))
-      .then(({ convertAll }) => convertAll(workspace))
-      .then(() => import('./internal/work'))
-      .then(({ keepWorking }) => keepWorking())
-      .then(() => (platform() === 'macos' ? import('./quick-add/shortcuts') : null))
-      .then((one) => one?.hearShortcuts())
-      .catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
+    void (async () => {
+      await startup.turn('right')
+      await convertAll(workspace)
+      await keepWorking()
+      if (platform() !== 'macos') return
+      const { quickShortcuts } = await import('./quick-add/src/api')
+      await (await quickShortcuts()).hearShortcuts()
+    })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
+    void startup.turn('rooms').then(() => oneWindow())
   }
 
   if (!__EVEN_PLUGIN__) {
     let fetched: Promise<Across> | null = null
-    const across = () =>
-      (fetched ??= import('./workspace/across').then(({ startAcross }) => startAcross()))
+    const across = () => (fetched ??= acrossStarting().then(({ startAcross }) => startAcross()))
     workspace.acrossWhenWriting(across)
     void startup.turn('rooms').then(across)
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup
-      .turn('rooms')
-      .then(() => import('./workspace/outside.svelte').then(({ hearOutside }) => hearOutside()))
+    void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
   }
 
   let stopAnywhere: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('right')
-      .then(() => import('./quick-add/anywhere.svelte'))
+      .then(() => import('./quick-add/src/api'))
+      .then((one) => one.quickAnywhere())
       .then((one) => (stopAnywhere = one.listen()))
   }
 
   let stopOutsideDrops: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void import('./outside-drops')
+    void outsideDrops()
       .then(({ hearOutsideDrops }) => hearOutsideDrops())
       .then((stop) => (stopOutsideDrops = stop))
       .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
   }
 
+  const reporting = !import.meta.env.DEV && !__DRIVEABLE__
+
   let stopCrashes: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('rooms')
-      .then(() => import('./crash-reports/watch.svelte'))
-      .then((one) => (stopCrashes = one.watchForCrashes(!import.meta.env.DEV)))
+      .then(() => import('./crash-reports/src/api'))
+      .then((one) => one.watchCrashes(reporting))
+      .then((stop) => (stopCrashes = stop))
   }
 
   let stopUsage: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('rooms')
-      .then(() => import('./usage/watch.svelte'))
-      .then((one) => (stopUsage = one.watchUsage(!import.meta.env.DEV)))
+      .then(() => import('./usage/src/api'))
+      .then((one) => one.watchUsage(reporting))
+      .then((stop) => (stopUsage = stop))
   }
 
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
-    void import('./typing-pointer').then((one) => (stopPointer = one.hidePointerWhileTyping()))
+    void import('./ui-controls/src/api').then((one) => (stopPointer = one.hidePointerWhileTyping()))
   }
 
   return () => {
@@ -267,103 +292,5 @@ export function start(): () => void {
     stopAutomation?.()
     stopHanded?.()
     stopAgents?.()
-  }
-}
-
-async function guardClose() {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      if (isMobile) settle()
-      else save()
-    } else if (isMobile) void workspace.loadTree()
-  })
-  addEventListener('pagehide', () => settle())
-
-  const window = await currentWindow()
-  await window.onCloseRequested((event) => void onClose(event, window))
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    const { getCurrentWindow } = await import('@tauri-apps/api/window')
-    const own = getCurrentWindow()
-    await own.listen('orden://quit', () => void onQuit(window))
-    await own.listen('orden://update-settle', () => {
-      settle()
-      void settledForInstaller(owed)
-    })
-    await own.listen(
-      'orden://quit-ask',
-      () => void import('./quitting/ask').then((one) => one.quitAsked()),
-    )
-    void startup
-      .turn('right')
-      .then(async () => (await import('./quitting/windows')).answer(own.label))
-  }
-}
-
-interface Closing {
-  preventDefault(): void
-}
-
-interface Closable {
-  destroy(): Promise<void>
-}
-
-let going = false
-
-async function onClose(event: Closing, window: Closable) {
-  save()
-
-  const hide = agentMarks.holding ? agentMarks.hide : trayKeeper()
-  if (hide) {
-    event.preventDefault()
-    if ((await hide()) || going) return
-    await go()
-    await window.destroy()
-    return
-  }
-
-  if (!isDesktop) return
-
-  const runs = anythingRuns()
-  if (!runs) settle()
-  if (!runs && !workspace.writing && !stillWriting() && !ready() && !going) return
-
-  event.preventDefault()
-  if (going) return
-  if (!__EVEN_PLUGIN__ && runs && !(await (await import('./quitting/ask')).mayStop('window')))
-    return
-  await go()
-  await window.destroy()
-}
-
-async function onQuit(window: Closable) {
-  if (going) return
-
-  await go()
-  await window.destroy()
-}
-
-function settle() {
-  settleUp()
-  workspace.graphSettings.flush()
-}
-
-function save() {
-  writeOwed()
-  workspace.graphSettings.flush()
-}
-
-function owed() {
-  return Promise.all([workspace.writesSettled(), written(), internal.flush?.()])
-}
-
-async function go(): Promise<void> {
-  settle()
-  going = true
-  try {
-    await Promise.race([owed(), waited(GIVE_UP)])
-    await installStaged(true)
-  } finally {
-    going = false
   }
 }

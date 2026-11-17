@@ -1,10 +1,13 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
-import { account } from '../../src/lib/account.svelte'
-import { menu, type MenuItem } from '../../src/lib/menu.svelte'
-import { settings } from '../../src/lib/settings.svelte'
-import SidebarFoot from '../../src/lib/SidebarFoot.svelte'
-import { workspace } from '../../src/lib/workspace.svelte'
+import { account } from '../../src/lib/accounts/src/account.svelte'
+import { menu, type MenuItem } from '../../src/lib/ui-kit/src/api'
+import { providePort } from '@orden/contracts'
+import { settings } from '../../src/lib/settings/src/api'
+import SidebarFoot from '../../src/lib/sidebar/src/SidebarFoot.svelte'
+import { workspace } from '../../src/lib/workspace/src/api'
+
+providePort('settings.window', settings)
 
 afterEach(() => {
   account.user = null
@@ -26,7 +29,7 @@ test('a press on the account opens its menu, and Settings in it opens the settin
   expect(menu.up).toBe(true)
 
   const rows = menu.items.filter((one): one is MenuItem => one !== null)
-  expect(rows.map((one) => one.label)).toEqual(['Account', 'Settings', 'Sign out'])
+  expect(rows.map((one) => one.label)).toEqual(['Account', 'Settings', 'Themes', 'Sign out'])
 
   rows.find((one) => one.label === 'Settings')?.run()
   expect(settings.open).toBe(true)

@@ -2,12 +2,10 @@ import { describe, expect, test, vi } from 'vitest'
 import type { Engine } from './engine'
 import { scanned, kept, watchFolders, type Watching } from './watching'
 
-vi.mock('../../surfaces.svelte', () => ({ syncMark: { ask: () => undefined } }))
-
 const watch = vi.hoisted(() => ({ heard: (_news: unknown): void => undefined }))
 const listing = vi.hoisted(() => ({ answer: (): Promise<unknown[]> => Promise.resolve([]) }))
-vi.mock('../../space-watch', async (original) => ({
-  ...(await original<typeof import('../../space-watch')>()),
+vi.mock('../../crate/src/api', async (original) => ({
+  ...(await original<typeof import('../../crate/src/api')>()),
   scanSpace: () => listing.answer(),
   watchSpaces: (_roots: string[], heard: (news: unknown) => void) => {
     watch.heard = heard
@@ -120,7 +118,7 @@ describe('a launch scan', () => {
 })
 
 describe('what is heard while a first pass runs', () => {
-  const started = () => {
+  const started = async () => {
     const created = vi.fn(() => Promise.resolve())
     const entries = new Map()
     const space = {
@@ -133,7 +131,7 @@ describe('what is heard while a first pass runs', () => {
       wantedAt: () => [],
     }
     let ready = false
-    const watched = watchFolders({
+    const watched = await watchFolders({
       engine: {
         created,
         placed: (path: string) => ({ space, path: path.slice(ROOT.length + 1) }),
@@ -161,7 +159,7 @@ describe('what is heard while a first pass runs', () => {
   const file = { path: `${ROOT}/late.md`, dir: false, size: 5, mtime: 1, id: null }
 
   test('is read once it is over, not at the next launch', async () => {
-    const { created, watched, hear, passed } = started()
+    const { created, watched, hear, passed } = await started()
     await hear({ scan: true })
     await hear({ changes: [{ kind: 'created', ...file }] })
     expect(created).not.toHaveBeenCalled()
@@ -174,7 +172,7 @@ describe('what is heard while a first pass runs', () => {
   })
 
   test('a watch lost in the middle of it counts as well', async () => {
-    const { created, watched, hear, passed } = started()
+    const { created, watched, hear, passed } = await started()
     await hear({ scan: true })
     await hear({ scan: true })
 
@@ -186,7 +184,7 @@ describe('what is heard while a first pass runs', () => {
   })
 
   test('nothing heard but the start of the watch: the pass read all of that', async () => {
-    const { created, watched, hear, passed } = started()
+    const { created, watched, hear, passed } = await started()
     await hear({ scan: true })
 
     const asked = vi.fn(() => Promise.resolve([file]))

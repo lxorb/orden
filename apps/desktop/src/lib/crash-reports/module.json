@@ -1,0 +1,16 @@
+{
+  "name": "crash-reports",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "platform",
+    "ui-controls",
+    "ui-kit",
+    "usage",
+    "updates",
+    "workspace",
+    "feedback",
+    "surfaces"
+  ]
+}

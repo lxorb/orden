@@ -1,0 +1,24 @@
+{
+  "name": "apps",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "crate",
+    "online",
+    "online-link",
+    "platform",
+    "sharing",
+    "sync-client",
+    "ui-controls",
+    "ui-kit",
+    "settings",
+    "documents",
+    "file-writes",
+    "agent-verbs",
+    "automation",
+    "pdf",
+    "workspace",
+    "gates"
+  ]
+}

@@ -6,8 +6,8 @@ vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -63,7 +63,7 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
     }),
   )
 
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   await workspace.restore()
   flushSync()
 
@@ -71,8 +71,8 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
   expect(workspace.active?.path).toBe(PAD)
   expect(workspace.documentAt(PAD)?.text).toBe('Old words\nNot yet written\n')
 
-  const { shown } = await import('../../src/lib/scratchpad/is.svelte')
-  const { scratchpad } = await import('../../src/lib/scratchpad/pad')
+  const { pad, shown } = await import('../../src/lib/scratchpad/src/api')
+  const scratchpad = await pad()
   vi.spyOn(scratchpad, 'where').mockResolvedValue(PAD)
 
   workspace.activate(workspace.tabs[0]?.id ?? '')

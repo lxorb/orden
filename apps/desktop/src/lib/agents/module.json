@@ -1,0 +1,19 @@
+{
+  "name": "agents",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "agent-protocol",
+    "accounts",
+    "agent-docs",
+    "dictation",
+    "platform",
+    "shortcuts",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "workspace",
+    "notify",
+    "marks"
+  ]
+}

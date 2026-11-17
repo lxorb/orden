@@ -1,14 +1,14 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import Canvas from '../../src/lib/Canvas.svelte'
-import { blankCanvas, readCanvas } from '../../src/lib/canvas/format'
-import { tools } from '../../src/lib/canvas/tools.svelte'
-import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
+import Canvas from '../../src/lib/canvas/src/Canvas.svelte'
+import { blankCanvas, readCanvas } from '@orden/markdown/canvas'
+import { tools } from '../../src/lib/canvas/src/tools.svelte'
+import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 const stored = vi.hoisted(() => ({ pictures: 0 }))
 
-vi.mock('../../src/lib/assets', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/assets')>()),
+vi.mock('../../src/lib/workspace/src/api', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/workspace/src/api')>()),
   storeImage: () => {
     stored.pictures += 1
     return Promise.resolve('/space/assets/shot.png')

@@ -1,9 +1,9 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { expect, test } from 'vitest'
 
-const Bookmarks = (await import('../../src/lib/Bookmarks.svelte')).default
-const { carry } = await import('../../src/lib/drag-paths')
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const Bookmarks = (await import('../../src/lib/sidebar/src/Bookmarks.svelte')).default
+const { carry } = await import('../../src/lib/ui-kit/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 
 const file = (path: string, is_dir = false) => {
   const name = path.split('/').pop() ?? path

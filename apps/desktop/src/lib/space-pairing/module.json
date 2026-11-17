@@ -1,0 +1,16 @@
+{
+  "name": "space-pairing",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "agents-seed",
+    "platform",
+    "protect",
+    "seeded",
+    "sharing",
+    "space-owed",
+    "workspace",
+    "left-spaces"
+  ]
+}

@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
@@ -13,7 +13,10 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-vi.mock('../../src/lib/own-window', () => ({
+vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
+
+vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 
@@ -49,20 +52,20 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
 
 document.elementFromPoint = () => document.querySelector('.hole')
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { pages } = await import('../../src/lib/web-tab/pages.svelte')
-const { saver } = await import('../../src/lib/web-tab/saver.svelte')
-const { startup } = await import('../../src/lib/startup.svelte')
-const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const { saver } = await import('../../src/lib/web-tab/src/saver.svelte')
+const { startup } = await import('../../src/lib/launch/src/api')
+const { cycleTab } = await import('../../src/lib/tab-cycle/src/api')
 const { default: Cycling } = await import('./Cycling.svelte')
 
 await Promise.all([
-  import('../../src/lib/web-tab/visited'),
-  import('../../src/lib/web-tab/web-data.svelte'),
-  import('../../src/lib/web-tab/merged'),
-  import('../../src/lib/web-tab/keys'),
-  import('../../src/lib/web-tab/downloads.svelte'),
-  import('../../src/lib/web-tab/resting'),
+  import('../../src/lib/web-tab/src/visited'),
+  import('../../src/lib/web-tab/src/web-data.svelte'),
+  import('../../src/lib/web-tab/src/merged'),
+  import('../../src/lib/web-tab/src/keys'),
+  import('../../src/lib/web-tab/src/downloads.svelte'),
+  import('../../src/lib/web-tab/src/resting'),
 ])
 
 let target: HTMLElement

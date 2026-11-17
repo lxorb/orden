@@ -10,8 +10,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-WEBKIT = os.environ.get("ORDEN_ENGINE", "chromium") == "webkit"
-MOD = "Meta" if WEBKIT else "Control"
+MOD = "Control"
 
 SEED = """
 async ({ path, data }) => {
@@ -207,8 +206,7 @@ def by_pen_and_finger(browser: Browser) -> None:
 
 
 def drive(browser: Browser) -> None:
-    if not WEBKIT:
-        by_pen_and_finger(browser)
+    by_pen_and_finger(browser)
     context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=2)
     page = opened(context)
     if not page:
@@ -225,8 +223,6 @@ def drive(browser: Browser) -> None:
         wrong(f"dragging over a line of the PDF chose {chosen!r}")
     page.keyboard.press(f"{MOD}+c")
     page.wait_for_timeout(200)
-    if WEBKIT and not page.evaluate("() => window.__copied.length"):
-        page.evaluate("() => document.execCommand('copy')")
     copied = page.evaluate("() => window.__copied")
     if not any("kestrel" in one for one in copied):
         wrong(f"{MOD}+C copied {copied!r}")

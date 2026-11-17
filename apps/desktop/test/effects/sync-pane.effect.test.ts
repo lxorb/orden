@@ -2,8 +2,8 @@ import '../../src/lib/sync-ports'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
 
@@ -14,9 +14,9 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
 const { connectFake } = await import('../../src/lib/sync-client/test/fake-engine.svelte')
-const SyncPane = (await import('../../src/lib/SyncPane.svelte')).default
+const SyncPane = (await import('../../src/lib/settings/src/SyncPane.svelte')).default
 
 const PLAN = {
   id: 'Plan',

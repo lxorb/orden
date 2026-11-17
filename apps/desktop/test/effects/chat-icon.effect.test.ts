@@ -5,8 +5,8 @@ const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
 const files: Record<string, string> = {}
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args: { path?: string; content?: string } = {}) => {
     const path = String(args.path)
     if (command === 'write_note') files[path] = String(args.content)
@@ -16,18 +16,17 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-const ChatMark = (await import('../../src/lib/chats/view/ChatMark.svelte')).default
-const FileMark = (await import('../../src/lib/FileMark.svelte')).default
-const { GLYPHS } = await import('../../src/lib/chats/view/glyphs')
-const { elsewhere } = await import('../../src/lib/marks-elsewhere.svelte')
-const TabMark = (await import('../../src/lib/TabMark.svelte')).default
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const { openChat } = await import('../../src/lib/chats/view/open')
-const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../src/lib/settings.svelte')
-const { setFileIcon } = await import('../../src/lib/file-icon')
-const { iconEntries } = await import('../../src/lib/menu.svelte')
-const { iconLibrary } = await import('../../src/lib/icon-library.svelte')
-const { loadIcons } = await import('../../src/lib/icons')
+const ChatMark = (await import('../../src/lib/chats-client/src/view/ChatMark.svelte')).default
+const { GLYPHS } = await import('../../src/lib/chat-kit/src/api')
+const { elsewhere } = await import('../../src/lib/link-index/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const { openChat } = await import('../../src/lib/chats-client/src/view/open')
+const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../src/lib/gates/src/api')
+const { setFileIcon } = await import('../../src/lib/icon-picker/src/file-icon')
+const { iconEntries } = await import('../../src/lib/row-menu/src/api')
+const { FileMark, TabMark } = await import('../../src/lib/marks/src/api')
+const { iconLibrary } = await import('../../src/lib/glyphs/src/api')
+const { loadIcons } = await import('../../src/lib/ui-kit/src/api')
 
 iconLibrary.set = await loadIcons()
 
@@ -158,9 +157,8 @@ test('an icon chosen for an open chat is written into its pointer and worn every
   expect(files[path]).toBe(`{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"orange"}\n`)
   await wearing(['rocket, coloured', 'rocket, coloured', 'rocket, coloured'], marks)
 
-  const remove = iconEntries(path).find((one) => one?.label === 'Remove icon')
-  if (!remove) throw new Error('no Remove icon in the menu')
-  remove.run()
+  expect(iconEntries(path).map((one) => one?.label)).toEqual(['Choose an icon'])
+  await setFileIcon(path, null)
   await vi.waitFor(() => expect(files[path]).toBe(bare))
   await wearing(['kind', 'kind', '#'], marks)
 

@@ -61,7 +61,6 @@ SIGNED_IN = """
   app.account.token = 'a-drive-session'
   app.account.user = { id: 'drive', email: 'drive@example.com', name: 'Drive' }
   app.account.settling = false
-  app.modes.glassesModel = 'gpt-6-astra'
   return !!app.account.accountToken
 }
 """

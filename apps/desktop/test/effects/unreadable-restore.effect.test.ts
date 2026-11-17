@@ -5,8 +5,8 @@ vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -27,7 +27,7 @@ test('a canvas that no longer reads is not reopened as a blank plane', async () 
   localStorage.clear()
 
   {
-    const { workspace } = await import('../../src/lib/workspace.svelte')
+    const { workspace } = await import('../../src/lib/workspace/src/api')
     workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
     workspace.activeSpaceId = 'work'
     await workspace.loadTree()
@@ -40,7 +40,7 @@ test('a canvas that no longer reads is not reopened as a blank plane', async () 
   const broken = '{"nodes":[{"id":"a","type":"text","text":"precious"}],"edges":[],}'
   disk.current.files.set(BOARD, broken)
   vi.resetModules()
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   await workspace.restore()
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Plan.md'))
 
@@ -61,7 +61,7 @@ test('a page note that does not read is not opened as a blank one, nor put back 
   vi.resetModules()
 
   {
-    const { workspace } = await import('../../src/lib/workspace.svelte')
+    const { workspace } = await import('../../src/lib/workspace/src/api')
     workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
     workspace.activeSpaceId = 'work'
     await workspace.loadTree()
@@ -78,7 +78,7 @@ test('a page note that does not read is not opened as a blank one, nor put back 
 
   disk.current.files.set(LECTURE, broken)
   vi.resetModules()
-  const { workspace } = await import('../../src/lib/workspace.svelte')
+  const { workspace } = await import('../../src/lib/workspace/src/api')
   await workspace.restore()
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Plan.md'))
 

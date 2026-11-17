@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import WEBKIT, Drive
+from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -12,15 +12,13 @@ def row_input(page: Page, name: str):
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 860})
-    if not WEBKIT:
-        context.grant_permissions(["local-fonts"])
+    context.grant_permissions(["local-fonts"])
     page = context.new_page()
     DRIVE.open(page)
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     field = row_input(page, "Note font")
     field.scroll_into_view_if_needed()
-    if not WEBKIT:
-        picks_from_the_list(page, field)
+    picks_from_the_list(page, field)
     missing(page, field)
 
 def picks_from_the_list(page: Page, field) -> None:

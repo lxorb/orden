@@ -1,0 +1,29 @@
+{
+  "name": "ai-sidebar",
+  "layer": "features",
+  "dependsOn": [
+    "contracts",
+    "agent-docs",
+    "ai-chat",
+    "ai-providers",
+    "dictation",
+    "editor",
+    "markdown",
+    "platform",
+    "scan",
+    "shortcuts",
+    "theme",
+    "ui-controls",
+    "ui-kit",
+    "windows",
+    "link-index",
+    "protect",
+    "workspace",
+    "chat-kit",
+    "tasks-model",
+    "feedback",
+    "surfaces",
+    "panes",
+    "glyphs"
+  ]
+}

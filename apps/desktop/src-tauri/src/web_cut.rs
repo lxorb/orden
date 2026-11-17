@@ -4,9 +4,6 @@ use std::sync::{LazyLock, Mutex, PoisonError};
 use serde::Deserialize;
 use tauri::Webview;
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub mod under;
-
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
     pub x: f64,
@@ -74,37 +71,15 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
     Some(whole)
 }
 
-pub const CUTS: bool = cfg!(any(
-    all(windows, not(feature = "cef")),
-    all(target_os = "linux", feature = "cef")
-));
+pub const CUTS: bool = cfg!(target_os = "linux");
 
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Layering {
     Cuts(bool),
-    #[cfg_attr(
-        not(any(
-            all(windows, not(feature = "cef")),
-            all(target_os = "macos", not(feature = "cef"))
-        )),
-        allow(
-            dead_code,
-            reason = "only the system's engines on Windows and a Mac draw a page under the app yet"
-        )
-    )]
-    Under(&'static str),
 }
 
 pub fn layering(label: &str) -> Layering {
-    #[cfg(all(windows, not(feature = "cef")))]
-    if crate::web_visual::is_drawn_under(label) {
-        return Layering::Under("under");
-    }
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    if under::under(label) {
-        return Layering::Under("under");
-    }
     let _ = label;
     Layering::Cuts(CUTS)
 }
@@ -119,8 +94,6 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
 
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
     if !CUTS {
-        #[cfg(all(target_os = "macos", not(feature = "cef")))]
-        under::cut(view, cut.as_ref());
         engine::round(view, corner);
         return;
     }
@@ -148,65 +121,9 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    under::forget(label);
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-mod engine {
-    use tauri::Webview;
-    use windows::Win32::Foundation::{BOOL, HWND};
-    use windows::Win32::Graphics::Gdi::{
-        CombineRgn, CreateRectRgn, CreateRoundRectRgn, DeleteObject, SetWindowRgn, HRGN, RGN_DIFF,
-        RGN_OR,
-    };
-
-    use super::Shape;
-
-    pub fn round(_view: &Webview, _corner: f64) {}
-
-    #[allow(
-        unsafe_code,
-        reason = "the controller's window is asked through WebView2's COM interface, and the region set through GDI"
-    )]
-    pub fn shape(view: &Webview, shape: Shape) {
-        let _ = view.with_webview(move |platform| unsafe {
-            let mut held = windows_com::Win32::Foundation::HWND::default();
-            if platform.controller().ParentWindow(&raw mut held).is_err() {
-                return;
-            }
-            let window = HWND(held.0);
-            let Some(pieces) = shape else {
-                SetWindowRgn(window, HRGN::default(), BOOL::from(true));
-                return;
-            };
-            let region = match pieces.split_first() {
-                None => CreateRectRgn(0, 0, 0, 0),
-                Some((&(left, top, right, bottom, round), hollows)) => {
-                    let whole = CreateRectRgn(left, top, right, bottom - round / 2);
-                    if round > 0 {
-                        let corners =
-                            CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
-                        CombineRgn(whole, whole, corners, RGN_OR);
-                        let _ = DeleteObject(corners);
-                    }
-                    for &(left, top, right, bottom, round) in hollows {
-                        let hollow =
-                            CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
-                        CombineRgn(whole, whole, hollow, RGN_DIFF);
-                        let _ = DeleteObject(hollow);
-                    }
-                    whole
-                }
-            };
-            if SetWindowRgn(window, region, BOOL::from(true)) == 0 {
-                let _ = DeleteObject(region);
-            }
-        });
-    }
-}
-
-#[cfg(all(target_os = "linux", feature = "cef"))]
+#[cfg(target_os = "linux")]
 mod engine {
     use std::sync::LazyLock;
 
@@ -376,47 +293,7 @@ mod engine {
     }
 }
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
-mod engine {
-    use objc2::msg_send;
-    use objc2::rc::Retained;
-    use objc2::runtime::AnyObject;
-    use objc2_web_kit::WKWebView;
-    use tauri::Webview;
-
-    use super::Shape;
-
-    pub fn shape(_view: &Webview, _shape: Shape) {}
-
-    #[allow(
-        unsafe_code,
-        reason = "the page's layer is reached and rounded through the Objective-C runtime"
-    )]
-    pub fn round(view: &Webview, corner: f64) {
-        let corner = corner.max(0.0);
-        let _ = view.with_webview(move |platform| unsafe {
-            let Some(page) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
-                return;
-            };
-            page.setWantsLayer(true);
-            let layer: *mut AnyObject = msg_send![&*page, layer];
-            let Some(layer) = layer.as_ref() else {
-                return;
-            };
-            let flipped: bool = msg_send![layer, contentsAreFlipped];
-            let bottom: usize = if flipped { 4 | 8 } else { 1 | 2 };
-            let _: () = msg_send![layer, setCornerRadius: corner];
-            let _: () = msg_send![layer, setMaskedCorners: bottom];
-            let _: () = msg_send![layer, setMasksToBounds: corner > 0.0];
-        });
-    }
-}
-
-#[cfg(not(any(
-    all(windows, not(feature = "cef")),
-    all(target_os = "linux", feature = "cef"),
-    all(target_os = "macos", not(feature = "cef"))
-)))]
+#[cfg(not(target_os = "linux"))]
 mod engine {
     use tauri::Webview;
 

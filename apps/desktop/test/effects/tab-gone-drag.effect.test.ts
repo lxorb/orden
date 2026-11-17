@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
@@ -39,8 +39,8 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-const Tabs = (await import('../../src/lib/Tabs.svelte')).default
+const { workspace } = await import('../../src/lib/workspace/src/api')
+const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 
 const STRIP = { left: 0, right: 1000, top: 0, bottom: 38, x: 0, y: 0, width: 1000, height: 38 }
 
@@ -76,7 +76,7 @@ function pointer(type: string, clientX: number, clientY = 20, buttons = 1): Poin
 }
 
 async function carriedOut() {
-  await import('../../src/lib/tab-strip/carrying')
+  await import('../../src/lib/tab-strip/src/carrying')
   workspace.tabs = []
   for (let at = 0; at < 3; at++) workspace.openWebsite()
   const paneId = workspace.panes.focusedId

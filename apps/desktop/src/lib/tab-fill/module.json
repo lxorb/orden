@@ -1,0 +1,5 @@
+{
+  "name": "tab-fill",
+  "layer": "shell",
+  "dependsOn": ["contracts", "platform", "ui-kit", "workspace"]
+}

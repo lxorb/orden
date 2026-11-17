@@ -1,5 +1,5 @@
-import { readMirror } from '../../sync/mirror'
-import { samePath } from '../../space-paths'
+import { readMirror } from '../../sync-mirror/src/api'
+import { samePath } from '../../platform/src/api'
 import { isRecord } from './shape'
 
 export interface V1Pair {

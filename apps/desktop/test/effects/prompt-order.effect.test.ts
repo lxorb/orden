@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-vi.mock('../../src/lib/tauri', async (actual) => ({
-  ...(await actual<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
+  ...(await actual<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   platform: () => 'macos',
 }))
@@ -29,8 +29,8 @@ afterEach(() => {
 })
 
 test('a Mac puts the default last, at the right edge', async () => {
-  const { prompt } = await import('../../src/lib/prompt.svelte')
-  const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
+  const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
+  const PromptSheet = (await import('../../src/lib/surfaces/src/PromptSheet.svelte')).default
   const shown = mount(PromptSheet, { target })
   close = () => void unmount(shown)
 

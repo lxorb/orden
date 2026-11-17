@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 describe('the strip', () => {
-  const css = readFileSync(join(import.meta.dirname, '../src/lib/Tree.svelte'), 'utf8')
+  const css = readFileSync(join(import.meta.dirname, '../src/lib/sidebar/src/Tree.svelte'), 'utf8')
 
   test('is the row’s whole height, and drawn nowhere', () => {
     const rule = /\.twist::before \{([^}]*)\}/.exec(css)?.[1] ?? ''
@@ -18,7 +18,10 @@ describe('the strip', () => {
 })
 
 describe('the tag tree’s twist', () => {
-  const css = readFileSync(join(import.meta.dirname, '../src/lib/TagTree.svelte'), 'utf8')
+  const css = readFileSync(
+    join(import.meta.dirname, '../src/lib/search/src/TagTree.svelte'),
+    'utf8',
+  )
 
   test('is pressed a step wider than it is drawn, on the row’s whole height', () => {
     const rule = /\.twist::before \{([^}]*)\}/.exec(css)?.[1] ?? ''

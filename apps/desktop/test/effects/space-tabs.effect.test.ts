@@ -10,8 +10,8 @@ const SPACES = [
   { name: 'Uni', path: '/spaces/Uni' },
 ]
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -24,11 +24,11 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const { Disk } = await import('../disk')
 disk.current = new Disk()
 
-const { workspace } = await import('../../src/lib/workspace.svelte')
-await import('../../src/lib/workspace/sets.svelte')
-const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
-const { pane } = await import('../../src/lib/workspace/pane-tree')
-const { shown: pad } = await import('../../src/lib/scratchpad/is.svelte')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+await import('../../src/lib/workspace/src/sets.svelte')
+const { deleteSpace } = await import('../../src/lib/workspace/src/space-changes')
+const { pane } = await import('../../src/lib/panes/src/api')
+const { shown: pad } = await import('../../src/lib/scratchpad/src/api')
 
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'

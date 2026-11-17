@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const moved = vi.hoisted(() => [] as string[])
 
-vi.mock('../../src/lib/tab-strip/to-space', () => ({
+vi.mock('../../src/lib/tab-strip/src/to-space', () => ({
   spacesOf: () => [{ id: 'home' }, { id: 'uni' }],
   spacesOfPaths: () => [{ id: 'home' }],
   toSpace: (ids: string[], space: string) => {
@@ -11,7 +11,7 @@ vi.mock('../../src/lib/tab-strip/to-space', () => ({
   },
 }))
 
-vi.mock('../../src/lib/workspace.svelte', () => ({
+vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     tabs: [{ id: 't1' }],
     spaces: [
@@ -26,7 +26,7 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
 }))
 
 const { droppedOnSpace, followTreeDrag, leftSpaces, overSpaces } =
-  await import('../../src/lib/tab-strip/space-drop')
+  await import('../../src/lib/tab-strip/src/space-drop')
 
 const SPANS: Record<string, [number, number]> = {
   switcher: [0, 20],

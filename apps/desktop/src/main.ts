@@ -1,14 +1,27 @@
-import './lib/former-keys'
-import './lib/renamed.svelte'
+import './lib/backend-ports'
+import {
+  isDesktop,
+  isMobile,
+  platform,
+  serveAssets,
+  mark,
+  markPainted,
+  watchFirstInput,
+} from './lib/platform/src/api'
+import './lib/launch/src/renamed.svelte'
 import './lib/sync-ports'
+import './lib/theme-ports'
+import './lib/sharing-ports'
+import './lib/terminal-ports'
+import './lib/plane-ports'
+import './lib/chat-ports'
+import './lib/workspace-ports'
+import './lib/features'
 import '@orden/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'
-import { mark, markPainted, watchFirstInput } from './lib/trace'
-import { serveAssets } from './lib/web/asset-worker'
-import { isDesktop, isMobile, platform } from './lib/tauri'
-import { watchPresses } from './lib/downloads/started'
-import { holdComposingKeys } from './lib/keys'
+import { watchPresses } from './lib/downloads/src/api'
+import { holdComposingKeys } from './lib/ui-kit/src/api'
 
 mark('modules evaluated')
 
@@ -30,7 +43,7 @@ document.documentElement.toggleAttribute('data-skips-unseen', 'userAgentData' in
 const target = document.getElementById('app')
 if (!target) throw new Error('index.html has no #app to mount into')
 
-if (isMobile && (await (await import('./lib/workspace/moved')).spacesMoved())) {
+if (isMobile && (await (await import('./lib/workspace/src/moved')).spacesMoved())) {
   location.reload()
   await new Promise<never>(() => undefined)
 }
@@ -39,13 +52,13 @@ const outside: unknown = await (window as { ordenOutside?: Promise<unknown> }).o
 if (
   isDesktop &&
   typeof outside === 'string' &&
-  (await (await import('./lib/workspace/outside')).takeIn())
+  (await (await import('./lib/workspace/src/outside')).takeIn())
 ) {
   location.reload()
   await new Promise<never>(() => undefined)
 }
 
-if (isDesktop && (await (await import('./lib/workspace/former-home')).finishFormerHome())) {
+if (isDesktop && (await (await import('./lib/workspace/src/former-home')).finishFormerHome())) {
   location.reload()
   await new Promise<never>(() => undefined)
 }

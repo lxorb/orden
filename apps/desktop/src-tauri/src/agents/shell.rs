@@ -356,10 +356,38 @@ fn tray(app: &AppHandle, on: bool, agents: bool, words: &Words) {
                 open(tray.app_handle());
             }
         });
+    #[cfg(target_os = "macos")]
+    if let Some(icon) = menu_bar_mark() {
+        built = built.icon(icon).icon_as_template(true);
+    }
+    #[cfg(windows)]
     if let Some(icon) = app.default_window_icon() {
         built = built.icon(icon.clone());
     }
     let _ = built.build(app);
+}
+
+#[cfg(any(test, target_os = "macos"))]
+fn menu_bar_mark() -> Option<tauri::image::Image<'static>> {
+    let bytes: &[u8] = include_bytes!("../../icons/tray.png");
+    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
+    decoder.set_transformations(png::Transformations::EXPAND);
+    let mut reader = decoder.read_info().ok()?;
+    let mut pixels = vec![0; reader.output_buffer_size()?];
+    let info = reader.next_frame(&mut pixels).ok()?;
+    let rows = usize::try_from(info.height).ok()?;
+    if info.color_type != png::ColorType::Rgba
+        || info.bit_depth != png::BitDepth::Eight
+        || info.line_size != usize::try_from(info.width).ok()? * 4
+    {
+        return None;
+    }
+    pixels.truncate(info.line_size * rows);
+    Some(tauri::image::Image::new_owned(
+        pixels,
+        info.width,
+        info.height,
+    ))
 }
 
 #[cfg(any(windows, target_os = "macos"))]
@@ -398,6 +426,19 @@ fn tray(_app: &AppHandle, _on: bool, _agents: bool, _words: &Words) {}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_menu_bar_mark_is_black_on_clear_so_macos_tints_it_like_its_own() {
+        let mark = menu_bar_mark().expect("the mark decodes");
+        assert_eq!((mark.width(), mark.height()), (36, 36));
+        let (pixels, _) = mark.rgba().as_chunks::<4>();
+        assert!(pixels.iter().all(|one| one[..3] == [0, 0, 0]));
+        let drawn = pixels.iter().filter(|one| one[3] > 128).count();
+        assert!(
+            drawn > 36 * 36 / 4 && drawn < 36 * 36 * 3 / 4,
+            "{drawn} pixels drawn"
+        );
+    }
 
     #[test]
     fn an_agent_is_connected_for_ten_minutes_after_its_last_call() {

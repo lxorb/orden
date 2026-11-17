@@ -3,20 +3,21 @@ import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vi
 
 const opened = vi.hoisted(() => [] as string[])
 
-vi.mock('../../src/lib/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
+vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
-vi.mock('../../src/lib/tab-strip/letters.svelte', () => ({
+vi.mock('../../src/lib/tab-strip/src/letters.svelte', () => ({
   essentialLetters: {
     given: { '/space/Notes.md': 'N' },
     pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null),
   },
 }))
-vi.mock('../../src/lib/essentials.svelte', () => ({
-  openEssential: (path: string) => void opened.push(path),
+vi.mock('../../src/lib/workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/workspace/src/api')>()),
+  essentials: () => Promise.resolve({ openEssential: (path: string) => void opened.push(path) }),
 }))
 
 Element.prototype.animate = () =>
@@ -30,10 +31,10 @@ if (typeof globalThis.CSS === 'undefined') {
   vi.stubGlobal('CSS', { escape: (text: string) => text })
 }
 
-const { numbers } = await import('../../src/lib/tab-strip/numbers.svelte')
-const { replay } = await import('../../src/lib/web-tab/keys')
-const { workspace } = await import('../../src/lib/workspace.svelte')
-type Tab = import('../../src/lib/workspace.svelte').Tab
+const { numbers } = await import('../../src/lib/tab-strip/src/numbers.svelte')
+const { replay } = await import('../../src/lib/ui-kit/src/api')
+const { workspace } = await import('../../src/lib/workspace/src/api')
+type Tab = import('../../src/lib/workspace/src/api').Tab
 
 const NAMES = ['a', 'b']
 

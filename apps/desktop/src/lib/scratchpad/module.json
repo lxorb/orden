@@ -1,0 +1,23 @@
+{
+  "name": "scratchpad",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "editor",
+    "platform",
+    "rooms",
+    "scan",
+    "shortcuts",
+    "sync-core",
+    "ui-kit",
+    "parting",
+    "link-index",
+    "file-writes",
+    "workspace",
+    "held-database",
+    "modes",
+    "ui-controls",
+    "link-format"
+  ]
+}

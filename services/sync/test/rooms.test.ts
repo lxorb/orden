@@ -7,10 +7,10 @@ import { pushPlane, readPlane } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import { sha256 } from '../src/sync-server/src/crypto'
 import { BEAT, BEAT_ANSWER, NOW_READS } from '@orden/sync-core'
-import { roomsRevoked } from '../src/sync-server/src/rooms'
-import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/sync-server/src/rooms/state'
-import { writesOf } from '../src/sync-server/src/rooms/kind'
-import { NoteRoom } from '../src/sync-server/src/rooms/room'
+import { roomsRevoked } from '../src/sync-server-engine/src/rooms'
+import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/sync-server-engine/src/rooms/state'
+import { writesOf } from '../src/sync-server-engine/src/rooms/kind'
+import { NoteRoom } from '../src/sync-server-engine/src/rooms/room'
 import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
 import { doorway, FakeSocket, type FakeState, join, room, running, say } from './room'
 
@@ -244,6 +244,65 @@ describe('a room', () => {
       const read = await call(env, `/v1/notes/${noteId}`, { token })
       expect(read.json.content).toBe('# Together\none\ntwo\n')
       expect(read.json.note.version).toBe(3)
+    })
+
+    describe('while somebody is in the room', () => {
+      async function inTheRoom() {
+        const live = running(env)
+        env.ROOMS = live.ROOMS
+        const { room: made, state } = live.of(noteId)
+        const inside = new Device(await join(made, { id: noteId, spaceId, who: 'writer' }))
+        await say(made, state, inside.socket, syncStep1(inside.doc))
+        await settle(made, state, [inside])
+        await say(made, state, inside.socket, inside.type(11, 'from the room\n'))
+        await made.alarm()
+        return { made, state, inside }
+      }
+
+      async function writtenPast(words: string) {
+        const at = await call(env, `/v1/notes/${noteId}`, { token })
+        const pushed = await call(env, `/v1/notes/${noteId}`, {
+          token,
+          method: 'PUT',
+          body: { path: 'together.md', content: words, baseVersion: at.json.note.version },
+        })
+        expect(pushed.status).toBe(200)
+      }
+
+      test('reaches whoever is in it, so the room and the note agree', async () => {
+        const { made, state, inside } = await inTheRoom()
+
+        await writtenPast('# Together\nfrom the other device\n')
+        await state.idle()
+        await settle(made, state, [inside])
+
+        expect(inside.words).toBe('# Together\nfrom the other device\n')
+
+        await say(made, state, inside.socket, inside.type(inside.words.length, 'and more\n'))
+        await made.alarm()
+
+        expect(await held()).toEqual(['together.md'])
+        const read = await call(env, `/v1/notes/${noteId}`, { token })
+        expect(read.json.content).toBe('# Together\nfrom the other device\nand more\n')
+      })
+
+      test('waits for the settle and keeps it beside when the room holds unsettled words', async () => {
+        const { made, state, inside } = await inTheRoom()
+        await say(made, state, inside.socket, inside.type(inside.words.length, 'not settled\n'))
+
+        await writtenPast('# Together\nfrom the other device\n')
+        await state.idle()
+        await settle(made, state, [inside])
+
+        expect(inside.words).toBe('# Together\nfrom the room\nnot settled\n')
+
+        await made.alarm()
+
+        const notes = await held()
+        expect(notes).toHaveLength(2)
+        const read = await call(env, `/v1/notes/${noteId}`, { token })
+        expect(read.json.content).toBe('# Together\nfrom the room\nnot settled\n')
+      })
     })
   })
 
@@ -1220,6 +1279,33 @@ describe('a canvas in a room', () => {
     const one = await onPlane(made, state, { id: noteId, spaceId })
 
     expect(writeCanvas(one.canvas)).toBe(writeCanvas(DRAWN))
+  })
+
+  test('takes in a canvas written past it, and hands it to whoever is drawing', async () => {
+    const live = running(env)
+    env.ROOMS = live.ROOMS
+    const { room: made, state } = live.of(noteId)
+    const one = new Plane(await join(made, { id: noteId, spaceId, kind: 'plane', who: 'drawer' }))
+    await say(made, state, one.socket, syncStep1(one.doc))
+    await drain(made, state, [one])
+
+    const past: Canvas = {
+      ...DRAWN,
+      nodes: [
+        { id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'written past' },
+      ],
+      at: { ...DRAWN.at, card: 2000 },
+    }
+    const pushed = await call(env, `/v1/notes/${noteId}`, {
+      token,
+      method: 'PUT',
+      body: { path: 'Board.canvas', content: writeCanvas(past), baseVersion: 1 },
+    })
+    expect(pushed.status).toBe(200)
+    await state.idle()
+    await drain(made, state, [one])
+
+    expect(JSON.stringify(one.canvas.nodes)).toContain('written past')
   })
 
   test('carries a stroke to the other device, whole', async () => {

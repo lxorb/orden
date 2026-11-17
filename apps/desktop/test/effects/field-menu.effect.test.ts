@@ -1,8 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import ContextMenu from '../../src/lib/ContextMenu.svelte'
-import { fieldEntries, showFieldMenu } from '../../src/lib/field-menu'
-import { menu, type MenuItem, textFieldOf } from '../../src/lib/menu.svelte'
+import ContextMenu from '../../src/lib/context-menu/src/ContextMenu.svelte'
+import { fieldEntries, showFieldMenu } from '../../src/lib/context-menu/src/field-menu'
+import { menu, type MenuItem, textFieldOf } from '../../src/lib/ui-kit/src/api'
 
 Element.prototype.animate = () =>
   ({

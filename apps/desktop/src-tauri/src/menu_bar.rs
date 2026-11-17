@@ -27,7 +27,7 @@ pub enum StandIn {
 
 #[tauri::command]
 pub fn hand_to_keyboard(app: tauri::AppHandle, action: StandIn) {
-    #[cfg(all(target_os = "macos", feature = "cef"))]
+    #[cfg(target_os = "macos")]
     use tauri::Manager as _;
     #[cfg(target_os = "macos")]
     let _ = app.run_on_main_thread(move || send(action));

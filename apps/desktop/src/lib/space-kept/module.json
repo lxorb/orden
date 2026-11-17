@@ -1,0 +1,5 @@
+{
+  "name": "space-kept",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "accounts", "file-ops", "platform", "sync-core"]
+}

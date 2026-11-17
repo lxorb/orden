@@ -1,0 +1,5 @@
+{
+  "name": "away",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "platform", "scan"]
+}
