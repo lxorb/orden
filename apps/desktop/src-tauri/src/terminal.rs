@@ -1,10 +1,12 @@
 pub mod history;
+pub mod hold;
 pub mod picture;
 pub(crate) mod process;
 pub mod remote;
 mod session;
 pub mod shells;
 mod ssh_config;
+mod wire;
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -14,7 +16,7 @@ use serde::Serialize;
 use tauri::ipc::{Channel, InvokeResponseBody};
 use tauri::{AppHandle, Manager, Webview};
 
-use session::{Out, Session};
+use session::{Fresh, Out, Place, Session};
 
 #[derive(Default)]
 pub struct Terminals {
@@ -33,6 +35,7 @@ struct Held {
 #[derive(Serialize)]
 pub struct Spawned {
     pid: Option<u32>,
+    fresh: bool,
 }
 
 const REFUSED: &str = "not a window of this app";
@@ -73,7 +76,7 @@ impl Terminals {
             .is_some_and(|ended| *ended > stamp)
     }
 
-    fn end_where(&self, owner: Option<&str>) {
+    fn end_where(&self, owner: Option<&str>, kill: bool) {
         if let Some(owner) = owner {
             let ended = self.tick.fetch_add(1, Ordering::SeqCst) + 1;
             self.loads
@@ -96,7 +99,11 @@ impl Terminals {
 
         std::thread::spawn(move || {
             for held in ending {
-                held.session.end();
+                if kill {
+                    held.session.end();
+                } else {
+                    held.session.detach();
+                }
             }
         });
     }
@@ -108,13 +115,15 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
 
 pub fn page_started(webview: &Webview) {
     if let Some(terminals) = webview.try_state::<Terminals>() {
-        terminals.end_where(Some(webview.label()));
+        terminals.end_where(Some(webview.label()), false);
     }
 }
 
 pub fn window_gone(app: &AppHandle, label: &str) {
     if let Some(terminals) = app.try_state::<Terminals>() {
-        terminals.end_where(Some(label));
+        let kill =
+            !crate::lifecycle::leaving(app) && !crate::launch::document_windows(app).is_empty();
+        terminals.end_where(Some(label), kill);
     }
 }
 
@@ -128,8 +137,24 @@ pub fn end_all(app: &AppHandle) {
         sessions.drain().map(|(_, held)| held).collect()
     };
     for held in ending {
-        held.session.end();
+        held.session.detach();
     }
+}
+
+fn place(webview: &Webview) -> Result<Place, String> {
+    let data = webview
+        .app_handle()
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("could not find the app's data folder: {error}"))?;
+    let program = std::env::current_exe().map_err(|error| error.to_string())?;
+    Ok(Place {
+        folder: data.join("terminal-held"),
+        starter: hold::Starter {
+            program,
+            args: vec![hold::MODE.to_owned()],
+        },
+    })
 }
 
 fn owner(webview: &Webview) -> Result<String, String> {
@@ -166,6 +191,10 @@ pub async fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, S
     .await
 }
 
+#[allow(
+    clippy::too_many_arguments,
+    reason = "a Tauri command takes its arguments one by one"
+)]
 #[tauri::command]
 pub async fn pty_spawn(
     webview: Webview,
@@ -174,12 +203,17 @@ pub async fn pty_spawn(
     folder: Option<String>,
     cols: u16,
     rows: u16,
+    key: Option<String>,
+    plain: Option<bool>,
     output: Channel<InvokeResponseBody>,
 ) -> Result<Spawned, String> {
     let stamp = webview.state::<Terminals>().stamp();
     crate::lane::off_the_runtime(move || -> Result<Spawned, String> {
         let owner = owner(&webview)?;
         usable(&id)?;
+        let key = key
+            .filter(|one| usable(one).is_ok())
+            .unwrap_or_else(|| id.clone());
         let terminals = webview.state::<Terminals>();
         if terminals.lock().contains_key(&id) {
             return Err(format!("terminal {id} is already running"));
@@ -187,17 +221,25 @@ pub async fn pty_spawn(
 
         let host = remote::host_id(&shell);
         let remote = host.is_some();
-        let launch = match host {
-            Some(host) => remote::connect(&webview, host)?,
-            None => shells::find(&shell)
-                .ok_or_else(|| format!("no shell {shell} here"))?
-                .launch(folder.as_deref(), &shells::ThisMachine),
-        };
-        let (session, started) = session::Session::open(&launch, cols, rows)?;
+        let place = place(&webview)?;
+        let (session, started) = Session::open(&place, &key, cols, rows, || match host {
+            Some(host) => remote::connect(&webview, host, &key, plain.unwrap_or(false)),
+            None => Ok(Fresh {
+                launch: shells::find(&shell)
+                    .ok_or_else(|| format!("no shell {shell} here"))?
+                    .launch(folder.as_deref(), &shells::ThisMachine),
+                farewell: Vec::new(),
+            }),
+        })?;
         let pid = session.pid();
+        let fresh = session.fresh();
         let session = Arc::new(session);
         if !kept_alone(&terminals, &id, owner, stamp, &session, remote) {
-            session.end();
+            if fresh {
+                session.end();
+            } else {
+                session.detach();
+            }
             started.run(Box::new(|_| {}), |_| {});
             return Err(format!("terminal {id} is already running"));
         }
@@ -207,6 +249,17 @@ pub async fn pty_spawn(
             Box::new(move |out| {
                 let _ = match out {
                     Out::Bytes(bytes) => output.send(InvokeResponseBody::Raw(bytes)),
+                    Out::Screen(bytes, cols, rows) => output.send(InvokeResponseBody::Json(
+                        serde_json::json!({
+                            "screen": String::from_utf8_lossy(&bytes),
+                            "cols": cols,
+                            "rows": rows,
+                        })
+                        .to_string(),
+                    )),
+                    Out::Writer(writer) => output.send(InvokeResponseBody::Json(
+                        serde_json::json!({ "writer": writer }).to_string(),
+                    )),
                     Out::Exit(exit) => {
                         output.send(InvokeResponseBody::Json(format!("{{\"exit\":{exit}}}")))
                     }
@@ -229,7 +282,17 @@ pub async fn pty_spawn(
             },
         );
 
-        Ok(Spawned { pid })
+        Ok(Spawned { pid, fresh })
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn pty_held(webview: Webview, key: String) -> Result<bool, String> {
+    crate::lane::off_the_runtime(move || -> Result<bool, String> {
+        owner(&webview)?;
+        usable(&key)?;
+        Ok(session::held(&place(&webview)?, &key))
     })
     .await
 }
@@ -280,7 +343,7 @@ pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<
     let owner = owner(&webview)?;
     webview
         .state::<Terminals>()
-        .with(&owner, &id, |session| session.resize(cols, rows))?
+        .with(&owner, &id, |session| session.resize(cols, rows))
 }
 
 #[tauri::command]
@@ -330,22 +393,38 @@ pub fn pty_usage(webview: Webview, id: String) -> Result<Option<crate::usage::Us
         .and_then(|pid| crate::usage::sample(&format!("pty:{id}"), crate::usage::Whose::Tree(pid))))
 }
 
+fn let_go(webview: &Webview, id: &str) -> Result<Option<Held>, String> {
+    let owner = owner(webview)?;
+    let terminals = webview.state::<Terminals>();
+    let mut sessions = terminals.lock();
+    Ok(match sessions.get(id) {
+        Some(held) if held.owner == owner => sessions.remove(id),
+        _ => None,
+    })
+}
+
 #[tauri::command]
 pub fn pty_kill(webview: Webview, id: String) -> Result<(), String> {
-    let owner = owner(&webview)?;
-    let terminals = webview.state::<Terminals>();
-    let held = {
-        let mut sessions = terminals.lock();
-        match sessions.get(&id) {
-            Some(held) if held.owner == owner => sessions.remove(&id),
-            _ => None,
-        }
-    };
-
-    if let Some(held) = held {
+    if let Some(held) = let_go(&webview, &id)? {
         std::thread::spawn(move || held.session.end());
     }
     Ok(())
+}
+
+#[tauri::command]
+pub fn pty_detach(webview: Webview, id: String) -> Result<(), String> {
+    if let Some(held) = let_go(&webview, &id)? {
+        held.session.detach();
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn pty_take(webview: Webview, id: String) -> Result<(), String> {
+    let owner = owner(&webview)?;
+    webview
+        .state::<Terminals>()
+        .with(&owner, &id, Session::take)
 }
 
 #[cfg(test)]
@@ -361,6 +440,8 @@ mod tests {
     }
 
     fn idle_shell() -> Session {
+        static FOLDER: std::sync::OnceLock<tempfile::TempDir> = std::sync::OnceLock::new();
+        static NEXT: AtomicU64 = AtomicU64::new(0);
         let (program, args) = if cfg!(windows) {
             let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
             (
@@ -376,7 +457,21 @@ mod tests {
             folder: Some(std::env::temp_dir()),
             env: Vec::new(),
         };
-        let (session, started) = Session::open(&launch, 80, 24).expect("a shell");
+        let place = Place {
+            folder: FOLDER
+                .get_or_init(|| tempfile::tempdir().expect("a folder"))
+                .path()
+                .to_path_buf(),
+            starter: hold::tests::starter(),
+        };
+        let key = format!("idle{}", NEXT.fetch_add(1, Ordering::SeqCst));
+        let (session, started) = Session::open(&place, &key, 80, 24, || {
+            Ok(Fresh {
+                launch,
+                farewell: Vec::new(),
+            })
+        })
+        .expect("a shell");
         started.run(Box::new(|_| {}), |_| {});
         session
     }
@@ -421,7 +516,7 @@ mod tests {
     fn a_shell_started_for_a_page_since_reloaded_is_never_kept() {
         let terminals = Terminals::default();
         let stamp = terminals.stamp();
-        terminals.end_where(Some("main"));
+        terminals.end_where(Some("main"), true);
         let late = Arc::new(idle_shell());
         assert!(!kept_alone(
             &terminals,
