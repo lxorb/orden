@@ -18,7 +18,10 @@ function opening(line: string, at: number): { from: number; to: number; close: s
   return found
 }
 
-function stripLine(line: string, inside: string | null): { text: string; inside: string | null } {
+export function stripLine(
+  line: string,
+  inside: string | null,
+): { text: string; inside: string | null } {
   let out = ''
   let at = 0
   let open = inside

@@ -1440,6 +1440,11 @@ first.
 | EC316 | Medium | In notes with Windows line endings, rules were not seen as block edges, so links, embeds, the block list and naming took in the rule and the next paragraph (forty-fourth re-audit) | Fixed | The rule patterns in `links.ts` and `block-names.ts` ended in `[ \t]*$`, which a trailing `\r` does not match | The patterns accept a trailing `\r` | `crlf-block-bounds.test.ts` (fails before) |
 | EC317 | Medium | The `[[Note#^` block list offered front-matter lines that do nothing when picked (forty-fourth re-audit) | Fixed | `blocksOf` never skipped front-matter rows | Front matter is left out of the block list | `wikilink/front-matter-blocks.test.ts` (fails before) |
 | EC318 | Medium | A `#` line in front matter or inside an HTML or `%%` comment was listed as a heading, and a commented-out heading cut short the section embedded above it (forty-fourth re-audit) | Fixed | `headingsOf` and `headingSection` only skipped code | Both read only rows outside code, front matter and comments | `hidden-headings.test.ts` (fails before) |
+| EC319 | Medium | A `%%` comment opened mid-line and closed on its own line hid every heading after it from heading links, embeds and the hover card (forty-fifth re-audit, regression from EC318) | Fixed | `links.ts` only saw comment openers at a line start, so the closing `%%` was read as a new opener | Headings and the block list read comments the way the reading view does (`stripLine`), openers anywhere in a line | `comment-closer-headings.test.ts` (fails before) |
+| EC320 | Medium | The `[[Note#^` block list offered commented-out lines, and picking one named a comment that draws as nothing (forty-fifth re-audit) | Fixed | `blocksOf` skipped front matter and code but not comments | Lines that are wholly comment are left out | `wikilink/comment-blocks.test.ts` (fails before) |
+| EC321 | Medium | A paragraph inside a named quote or list item took the container's own-line id, so Delete, Move and Turn into removed, carried off or rewrote the id (forty-fifth re-audit, regression from EC314) | Fixed | `block/span.ts` extended every non-list span over an own-line id, nested ones too, and Turn into shaped the id line | Only top-level blocks take the id under them, and Turn into leaves an own-line id as it is | `block-container-id.test.ts` (fails before) |
+| EC322 | Medium | Move up, and a drop on the id line, landed a block between a named table, fence or paragraph and its id (forty-fifth re-audit, gap in EC314) | Fixed | `blockAt` on an own-line id returned the id as a block of its own | An own-line id resolves to the block it names | `block-id-line-landing.test.ts` (fails before) |
+| EC323 | Medium | Copy link on a list's last item reused the id under the list and linked the whole list (forty-fifth re-audit) | Fixed | `blockTarget` took an own-line id under the item's last line as the item's | A list item never reuses the list's own-line id | `block-copy-link-item.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1609,6 +1614,11 @@ Seen, judged minor, left as they are:
 - A cell ending `x \| ^t1` has the id set aside from the escaped pipe (forty-fourth re-audit).
 - `<mark>` is not drawn, only `<u>`; `[[Note#A#B]]` heading paths are not supported (forty-fourth re-audit).
 - The app's outline (`outline.ts`) still lists a heading inside an HTML comment (forty-fourth re-audit).
+- Moving the last paragraph out of a quote leaves an empty `>` line at the quote's end (forty-fifth re-audit).
+- Headings inside quotes, callouts and list items are drawn and listed in `[toc]` but not offered by heading completion (forty-fifth re-audit).
+- A `$$` block holding a LaTeX `%%` line, `<!-->` and `%%%` lines, or an odd number of fence lines inside an HTML comment can hide later headings from heading links (forty-fifth re-audit).
+- Insert footnote with two carets writes one footnote; Enter after a bare `$$` adds no closing `$$` (forty-fifth re-audit).
+- Under a heading, an own-line list id gets no block handle (forty-fifth re-audit).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

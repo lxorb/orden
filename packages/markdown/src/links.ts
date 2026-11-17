@@ -1,3 +1,4 @@
+import { stripLine } from './comments'
 import { closingTicks, CodeBlocks, WORDS } from './fences'
 import { frontMatterBlock } from './front-matter'
 
@@ -509,27 +510,26 @@ export function headingText(line: string): string {
   return (found[1] ?? '').replace(BLOCK_ID, '').replace(CLOSING_HASHES, '').trim()
 }
 
-const COMMENTS: readonly (readonly [RegExp, string])[] = [
-  [/^[ \t]{0,3}<!--/, '-->'],
-  [/^[ \t]{0,3}%%/, '%%'],
-]
+function hiddenLines(text: string, rows: readonly Row[]): Set<number> {
+  const hidden = new Set<number>()
+  if (!text.includes('<!--') && !text.includes('%%')) return hidden
+
+  let inside: string | null = null
+  for (const row of rows) {
+    if (row.code || row.matter) continue
+    const before = inside
+    const stripped = stripLine(row.text, inside)
+    inside = stripped.inside
+    if (before !== null || (!stripped.text.trim() && row.text.trim())) hidden.add(row.line)
+  }
+  return hidden
+}
 
 function* wordRows(text: string): Generator<Row> {
-  let closer: string | null = null
-  for (const row of lines(text)) {
-    if (row.code || row.matter) continue
-    if (closer !== null) {
-      if (row.text.includes(closer)) closer = null
-      continue
-    }
-    const opened = COMMENTS.find(([opens]) => opens.test(row.text))
-    if (opened) {
-      const [opens, closes] = opened
-      const rest = row.text.replace(opens, '')
-      if (!rest.includes(closes)) closer = closes
-      continue
-    }
-    yield row
+  const rows = rowsOf(text)
+  const hidden = hiddenLines(text, rows)
+  for (const row of rows) {
+    if (!row.code && !row.matter && !hidden.has(row.line)) yield row
   }
 }
 
@@ -764,11 +764,12 @@ const BLOCK_LABEL = 80
 export function blocksOf(text: string): NoteBlock[] {
   const found: NoteBlock[] = []
   const rows = rowsOf(text)
+  const hidden = hiddenLines(text, rows)
   let through = -1
   let apart = true
 
   for (const row of rows) {
-    if (row.line <= through || row.matter) continue
+    if (row.line <= through || row.matter || hidden.has(row.line)) continue
     if (!row.code && row.text.trim() === '') {
       apart = true
       continue

@@ -116,7 +116,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const under = writtenLine(view.state, last.number + 1, 1)
   const already = ownLine(last.text)
     ? blockIdOf(last.text)
-    : under && ownLine(under.text)
+    : span.kind !== 'list' && under && ownLine(under.text)
       ? blockIdOf(under.text)
       : span.kind !== 'code' && blockIdOf(last.text)
   if (already) return `#^${already}`
@@ -259,7 +259,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       if (seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
-      if (!line.text.trim()) continue
+      if (!line.text.trim() || (number > first && ownLine(line.text))) continue
 
       const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
       if (items[0] !== number || (itemwise && number > first && !LISTED.has(shape))) {

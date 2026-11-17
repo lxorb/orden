@@ -54,7 +54,8 @@ function spanOf(state: EditorState, node: SyntaxNode, kind: BlockKind): BlockSpa
   }
 
   const to = doc.lineAt(Math.min(node.to, doc.length)).to
-  return { from: first.from, to: kind === 'list' ? to : ownIdEnd(doc, to), kind }
+  const named = kind !== 'list' && (!node.parent || node.parent.name === 'Document')
+  return { from: first.from, to: named ? ownIdEnd(doc, to) : to, kind }
 }
 
 export function ownIdEnd(doc: Text, to: number): number {
@@ -103,8 +104,24 @@ function withinQuote(state: EditorState, node: SyntaxNode): BlockSpan | null {
   return kind ? spanOf(state, top, kind) : null
 }
 
+function namedAbove(state: EditorState, line: Line): BlockSpan | null {
+  const above = writtenLine(state, line.number - 1, -1)
+  if (!above) return null
+  let top: SyntaxNode | null = null
+  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(above.to, -1); node;) {
+    if (node.parent?.name === 'Document') top = node
+    node = node.parent
+  }
+  const kind = top && kindOf(top.name)
+  if (!top || !kind || kind === 'heading') return null
+  const span = spanOf(state, top, kind)
+  return span.to >= line.to ? span : null
+}
+
 export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   const line = state.doc.lineAt(pos)
+  const owner = ownLine(line.text) ? namedAbove(state, line) : null
+  if (owner) return owner
   const starting = blocksIn(state, line.from, line.to).find(
     (span) => state.doc.lineAt(span.from).from === line.from,
   )
