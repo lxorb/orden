@@ -90,7 +90,7 @@ describe('the three markdown spellings', () => {
   test('write a name said from the top as a path from the top', () => {
     expect(
       formatLink({ name: '/Plan', path: 'Plan.md', from: 'Work/Journal.md' }, 'shortest'),
-    ).toBe('[/Plan](/Plan.md)')
+    ).toBe('[Plan](/Plan.md)')
   })
 
   test('always show something, since a markdown link with no words shows none', () => {

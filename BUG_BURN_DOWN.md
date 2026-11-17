@@ -1122,6 +1122,14 @@ parity with the web N1-N16), each finding traced to an input. Each fix starts fr
 failing regression test. Four native search commits from the desktop backend thread (DB19,
 DB20 and the pattern budget) are cherry-picked here too, so the two branches merge cleanly.
 
+Merged with `unstable` on 2026-11-17, after #2139, #2141, #2144, #2145, #2148 and #2150 had
+fixed some of the same things a second way. One design was kept per overlap: the block
+spans, block names, export links in front matter, completion inside a written link and
+the rename walk are this section's; the CLI thread's rule that a file named by its name
+alone is the one beside the note first (as for notes) now holds for pictures and files
+too, and its position tracking while a block is named, its picker alias and its cached
+file lookup were kept. `links.fileFor` takes the link kind, wikilink by default.
+
 | # | Severity | Bug | Status | Root cause | Fix | Verification |
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | High | Renaming or moving up a tag that holds `İ` ate the character after the tag | Fixed `9041a0a5` | The span to replace was measured on the folded text, and `İ` folds to two characters | The span is taken from the name as written | `tags.test.ts` "as long as the name is written, even where folding makes it longer" (failed before) |
