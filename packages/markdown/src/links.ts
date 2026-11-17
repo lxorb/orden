@@ -736,9 +736,14 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     return { first: runOf[at] ?? at, last: at, indent: 0, apart: false }
   }
 
-  const reach = (from: number) => {
+  const plain = (line: number) => rows[line]?.code !== true && !blocks.has(line)
+  const reach = (from: number, apart = false) => {
     let first = from
-    while (first > 0 && held(first - 1) && blocks.get(first - 1) === blocks.get(first)) first--
+    for (; first > 0 && held(first - 1) && blocks.get(first - 1) === blocks.get(first); first--) {
+      const above = first - 1
+      if (plain(above) && HEADING.test(text(above))) break
+      if (apart && rows[first]?.code && plain(above) && LIST_ITEM.test(text(above))) break
+    }
     return first
   }
 
@@ -746,7 +751,7 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     if (at > 0 && !held(at - 1)) {
       let last = at - 1
       while (last > 0 && !held(last)) last--
-      const first = quoteAround(rows, last)?.first ?? reach(last)
+      const first = quoteAround(rows, last)?.first ?? reach(last, true)
       return { first, last, indent: 0, apart: true }
     }
     return {
@@ -808,7 +813,12 @@ export function openFenceIn(rows: readonly Lined[], first: number, last: number)
 
 export function quotedRows(rows: readonly Lined[]): boolean[] {
   const code = new CodeBlocks()
-  return rows.map((row) => {
+  const held = heldBlocks(rows)
+  return rows.map((row, at) => {
+    if (held.has(at)) {
+      code.line('')
+      return false
+    }
     if (row.matter) return false
     code.line(row.text)
     return code.quoted

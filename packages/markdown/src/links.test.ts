@@ -1301,3 +1301,29 @@ describe('a paragraph right over a quote, and a name before a later step', () =>
     expect(namedBlock(note, 2, id)?.source).toBe(note.replace('```\n2.', '```\n\n^n\n\n2.'))
   })
 })
+
+describe('a block beside a heading, a quote line in a comment, and a comment under a quote', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a comment holding a line that starts with > is one block', () => {
+    const note = 'Intro\n\n<!--\nDraft quote:\n> Old wording here\nmore notes\n-->\n\nAfter\n'
+    const named = namedBlock(note, 2, id)?.source ?? ''
+    expect(block(named, 'n')).toBe('<!--\nDraft quote:\n> Old wording here\nmore notes\n-->')
+    expect(blocksOf(note).map((one) => one.line)).toEqual([0, 2, 8])
+  })
+
+  test('code straight under a heading or a step is named without them', () => {
+    const note = '## Install\n```bash\nnpm i\n```\n\nThen run it.\n'
+    expect(block(namedBlock(note, 2, id)?.source ?? '', 'n')).toBe('```bash\nnpm i\n```')
+    const steps = '1. Install:\n```bash\nnpm i\n```\n2. Run:\n'
+    expect(block(namedBlock(steps, 2, id)?.source ?? '', 'n')).toBe('```bash\nnpm i\n```')
+  })
+
+  test('a comment straight under a quote is not part of it', () => {
+    const note = 'Intro\n> quote here\n<!--\n- x\n-->\n\nAfter\n'
+    const named = namedBlock(note, 1, id)?.source ?? ''
+    expect(named).toBe(note.replace('quote here', 'quote here ^n'))
+    expect(block(named, 'n')).toBe('> quote here')
+  })
+})
