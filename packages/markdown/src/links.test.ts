@@ -908,6 +908,28 @@ describe('a block name on a line of its own', () => {
     expect(block('Run:\n```\na\n\nb\n```\n^x', 'x')).toBe('Run:\n```\na\n\nb\n```')
   })
 
+  test('a block named apart reaches back only to an opener its own closing line closes', () => {
+    const note =
+      '<!-- weekly template -->\n\n# Week 46\n\nMonday notes.\n\n| Step | Path |\n| --- | --- |\n| 1 | Login --> Home |\n\nAfter.\n'
+    const named = namedBlock(note, 8, () => 'flow')?.source ?? ''
+    expect(named).toContain('| 1 | Login --> Home |\n\n^flow\n')
+    expect(sectionOf(named, { heading: null, block: 'flow' })).toBe(
+      '| Step | Path |\n| --- | --- |\n| 1 | Login --> Home |',
+    )
+    const list = '```html\n<!-- nav -->\n```\n\n- Login --> Home\n\n^l\n'
+    expect(sectionOf(list, { heading: null, block: 'l' })).toBe('- Login --> Home')
+  })
+
+  test('a line inside maths or a fence under a list is named with its whole block', () => {
+    const maths = 'Intro\n\n$$\na\n\nb\n$$\n\nAfter\n'
+    const named = namedBlock(maths, 3, () => 'new123')?.source ?? ''
+    expect(named).toBe('Intro\n\n$$\na\n\nb\n$$\n\n^new123\n\nAfter\n')
+    expect(blocksOf(maths).map((one) => one.line)).toEqual([0, 2, 8])
+    const fence = '- Set the config:\n```json\n{\n  "port": 8080\n}\n```\n\nAfter.\n'
+    const config = namedBlock(fence, 3, () => 'new123')?.source ?? ''
+    expect(config).toBe(fence.replace('```\n\nAfter.', '```\n\n^new123\n\nAfter.'))
+  })
+
   test('the block list leaves front matter out, and reads a name on a closing fence', () => {
     const listed = (text: string) => blocksOf(text).map((one) => [one.line, one.text, one.id])
     expect(listed('---\ntags:\n  - work\n---\nFirst para\n')).toEqual([[4, 'First para', null]])

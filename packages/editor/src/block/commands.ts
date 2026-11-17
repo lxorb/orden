@@ -1,7 +1,7 @@
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
-import { blockIdOf, freeBlockId, blockIds, ownLine, rowsOf } from '@orden/markdown/links'
+import { blockIdOf, freeBlockId, blockIds, itemLines, ownLine, rowsOf } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
 import { enclosing } from '../nodes'
@@ -97,6 +97,10 @@ export function blockTarget(view: EditorView, pos: number): string | null {
     for (let at = first.number - 1; rows[at]?.code; at++) {
       const old = rows[at]?.fenceName
       if (old) return `#^${old}`
+    }
+    const item = itemLines(rows, first.number - 1)
+    if (item && item.first !== first.number - 1) {
+      return blockTarget(view, doc.line(item.first + 1).from)
     }
     if (!verbatim.has(first.number)) return null
   }

@@ -1,4 +1,13 @@
-import { blockIdOf, isHeading, itemLines, LIST_ITEM, ownLine, type Row, rowsOf } from './links'
+import {
+  blockIdOf,
+  heldBlocks,
+  isHeading,
+  itemLines,
+  LIST_ITEM,
+  ownLine,
+  type Row,
+  rowsOf,
+} from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
 
@@ -13,24 +22,13 @@ function nameStandsApart(run: readonly Row[]): boolean {
   return run.some((row) => row.text.includes('|') && TABLE_RULE.test(row.text))
 }
 
-const CLOSERS: readonly (readonly [RegExp, string])[] = [
-  [/^ {0,3}\$\$\s*$/u, '$$'],
-  [/^ {0,3}<!--/u, '-->'],
-  [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
-]
-
 function listed(row: Row | undefined): boolean {
   return !!row && !row.code && LIST_ITEM.test(row.text)
 }
 
 function endOf(rows: readonly Row[], line: number): number {
-  const first = rows[line]?.text ?? ''
-  const closer = CLOSERS.find(([opens]) => opens.test(first))?.[1]
-  if (closer !== undefined && !first.slice(first.indexOf(closer) + 1).includes(closer)) {
-    for (let at = line + 1; at < rows.length; at++) {
-      if (rows[at]?.text.includes(closer)) return at
-    }
-  }
+  const held = heldBlocks(rows).get(line)
+  if (held?.first === line) return held.last
 
   let end = line
   for (;;) {
@@ -55,7 +53,8 @@ export function namedBlock(
   const item = row.code ? itemLines(rows, line) : null
   if (item) return namedItem(rows, source, item.first, id)
 
-  const end = endOf(rows, line)
+  const from = heldBlocks(rows).get(line)?.first ?? line
+  const end = endOf(rows, from)
   const lines = source.split('\n')
   const last = lines[end] ?? ''
   const ending = last.endsWith('\r') ? '\r' : ''
@@ -67,7 +66,7 @@ export function namedBlock(
   if (had) return { id: had, source }
 
   const name = id()
-  if (nameStandsApart(rows.slice(line, end + 1))) {
+  if (nameStandsApart(rows.slice(from, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
     lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
   } else {

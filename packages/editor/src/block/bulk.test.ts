@@ -227,6 +227,15 @@ describe('a link to several blocks', () => {
     expect(said()).toContain('Third words. ')
   })
 
+  test('on code nested in a list item names the item, and keeps the list whole', () => {
+    const doc = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Run it\n'
+    const at = doc.indexOf('   ```bash')
+    const { view, said } = viewOf(doc, at, at)
+
+    const [target] = blockTargets(view, at)
+    expect(said()).toBe(doc.replace('1. Install:', `1. Install: ${target?.slice(1) ?? ''}`))
+  })
+
   test('names a heading by its words rather than writing one in', () => {
     const doc = '# One\n\nwords\n'
     const { view, said } = viewOf(doc, 0, 0)
