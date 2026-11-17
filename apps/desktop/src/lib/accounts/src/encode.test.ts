@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { carriesMetadata } from './encode'
+import { withoutMetadata } from './encode'
 
 const ascii = (text: string) => Array.from({ length: text.length }, (_, at) => text.charCodeAt(at))
 const le32 = (value: number) => [value & 255, (value >> 8) & 255, (value >> 16) & 255, value >>> 24]
@@ -44,29 +44,50 @@ function jpeg(segments: [number, number[]][]): Uint8Array {
 }
 
 describe('a picture about to leave the device', () => {
-  test('carries nothing when it is pixels alone', () => {
-    expect(carriesMetadata(webp([['VP8 ', [1, 2, 3, 4]]]))).toBe(false)
-    expect(carriesMetadata(jpeg([[0xe0, [...ascii('JFIF'), 0]]]))).toBe(false)
+  test('is kept as it is when it is pixels alone', () => {
+    const plainWebp = webp([['VP8 ', [1, 2, 3, 4]]])
+    const plainJpeg = jpeg([[0xe0, [...ascii('JFIF'), 0]]])
+    expect(withoutMetadata(plainWebp)).toEqual(plainWebp)
+    expect(withoutMetadata(plainJpeg)).toEqual(plainJpeg)
   })
 
-  test('is caught carrying where it was taken', () => {
+  test('loses what the encoder wrote about where it was taken, and keeps its pixels (#2076)', () => {
     expect(
-      carriesMetadata(
+      withoutMetadata(
         webp([
           ['VP8X', [8, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
           ['VP8 ', [1, 2, 3]],
           ['EXIF', GPS],
         ]),
       ),
-    ).toBe(true)
-    expect(carriesMetadata(jpeg([[0xe1, GPS]]))).toBe(true)
+    ).toEqual(
+      webp([
+        ['VP8X', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+        ['VP8 ', [1, 2, 3]],
+      ]),
+    )
+    expect(
+      withoutMetadata(
+        jpeg([
+          [0xe0, [...ascii('JFIF'), 0]],
+          [0xe1, GPS],
+        ]),
+      ),
+    ).toEqual(jpeg([[0xe0, [...ascii('JFIF'), 0]]]))
   })
 
-  test('is caught carrying XMP', () => {
-    expect(carriesMetadata(webp([['XMP ', ascii('<x:xmpmeta/>')]]))).toBe(true)
+  test('loses XMP', () => {
+    expect(
+      withoutMetadata(
+        webp([
+          ['VP8 ', [1, 2, 3, 4]],
+          ['XMP ', ascii('<x:xmpmeta/>')],
+        ]),
+      ),
+    ).toEqual(webp([['VP8 ', [1, 2, 3, 4]]]))
   })
 
   test('that is neither format is not one this app made', () => {
-    expect(carriesMetadata(new Uint8Array([0x89, ...ascii('PNG')]))).toBe(true)
+    expect(withoutMetadata(new Uint8Array([0x89, ...ascii('PNG')]))).toBeNull()
   })
 })
