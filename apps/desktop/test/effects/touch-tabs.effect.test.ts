@@ -57,7 +57,7 @@ afterEach(() => {
   viewport.device = 'desktop'
 })
 
-test('a window that becomes a phone comes down to one document, and settles', async () => {
+test('a window that becomes a phone comes down to one pane with every tab, and settles', async () => {
   await workspace.open('/space/One.md')
   await workspace.open('/space/Two.md')
   workspace.split('row')
@@ -67,7 +67,7 @@ test('a window that becomes a phone comes down to one document, and settles', as
   const stop = root(() => {
     watch(() => {
       runs++
-      workspace.oneDocument()
+      workspace.onePane()
     })
   })
 
@@ -76,11 +76,13 @@ test('a window that becomes a phone comes down to one document, and settles', as
   expect(workspace.panes.count).toBe(2)
 
   const kept = workspace.active?.shown
+  const every = open()
   viewport.device = 'phone'
   flushSync()
 
   expect(workspace.panes.count).toBe(1)
-  expect(open()).toEqual([kept])
+  expect(open()).toEqual(every)
+  expect(workspace.active?.shown).toBe(kept)
   expect(runs).toBe(3)
 
   stop()
