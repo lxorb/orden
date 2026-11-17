@@ -132,6 +132,31 @@ export function leavingMessage(code: string) {
   )
 }
 
+export function addressMessage(code: string) {
+  return codeMail(
+    code,
+    `${code} adds this address to your Orden account`,
+    'Your code to add this address to your Orden account',
+    'If you did not ask for it, ignore this message.',
+  )
+}
+
+export function addressMovedMessage(to: string, undo: string) {
+  const said = `Your Orden account now signs in with ${to} instead of this address.`
+  const unasked =
+    'If you did not do this, put it back within 7 days. Every device will be signed out.'
+
+  return {
+    subject: 'Your Orden address was changed',
+    text: `${said}\n\n${unasked}\n${undo}`,
+    html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;color:#1a1d23">
+  <p>${escape(said)}</p>
+  <p style="color:#8a93a2">${unasked}</p>
+  <p><a href="${escape(undo)}">Put my address back</a></p>
+</div>`,
+  }
+}
+
 export function goneMessage() {
   const said = 'Your Orden account and everything it synced have been deleted.'
   const stays = 'The notes on your devices are still there.'

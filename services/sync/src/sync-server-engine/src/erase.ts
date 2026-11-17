@@ -93,6 +93,7 @@ export function erased(): readonly (readonly [table: string, sql: string])[] {
     ['unused_blobs', 'delete from unused_blobs where user_id = ?1'],
     ['blobs', 'delete from blobs where user_id = ?1'],
     ['sessions', 'delete from sessions where user_id = ?1'],
+    ['user_addresses', 'delete from user_addresses where user_id = ?1'],
     [
       'feedback_images',
       'delete from feedback_images where feedback_id in (select id from feedback where user_id = ?1)',

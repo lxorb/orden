@@ -1,3 +1,4 @@
+export { accountAddress, movedAddress } from './addresses'
 export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
 export {
   type Body,
@@ -27,6 +28,8 @@ export {
 } from './crypto'
 export { txtAt } from './dns'
 export {
+  addressMessage,
+  addressMovedMessage,
   codeMessage,
   forgetMailed,
   goneMessage,

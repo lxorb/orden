@@ -30,7 +30,7 @@
   import { Outward } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
   import { localDate } from '../../platform/src/api'
-  import { Security } from '../../accounts-ui/src/api'
+  import { Addresses, Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { holdScroll } from '../../panes/src/api'
@@ -783,10 +783,7 @@
             onchange={(event) => void rename(event.currentTarget.value)}
           />
         </label>
-        <div class="orden-setting setting">
-          <span class="name">Email</span>
-          <span class="orden-field is-value is-read">{account.user.email}</span>
-        </div>
+        <Addresses />
       </div>
 
       {#if !__EVEN_PLUGIN__}
