@@ -138,7 +138,7 @@ describe('an essential dragged into a strip', () => {
       join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'),
       'utf8',
     )
-    expect(tabs).toMatch(/const takes = [^\n]*\n?[^\n]*isBookmarkDrag\(transfer\)/)
+    expect(tabs).toMatch(/const takes = [^\n]*\n(?:[^\n]*\n){0,3}[^\n]*isBookmarkDrag\(transfer\)/)
     expect(tabs).toContain('droppedEssential(mark, paneId, at)')
   })
 

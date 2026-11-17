@@ -1,6 +1,13 @@
 <script lang="ts">
   import KindCard from './KindCard.svelte'
-  import { kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
+  import {
+    fitsWhole,
+    groupOf,
+    kindLines,
+    offeredKinds,
+    type NewKindRow,
+    showOthers,
+  } from './new-kinds'
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
   import { overlays, roving } from '../../ui-kit/src/api'
   import { viewport } from '../../ui-kit/src/api'
@@ -10,6 +17,35 @@
 
   const kinds = $derived(offeredKinds())
   const lines = $derived(kindLines(kinds))
+
+  let room = $state({ width: 0, height: 0 })
+  let card = $state({ width: 0, height: 0, gap: 0 })
+
+  const whole = $derived(
+    lines.length === kinds.length || fitsWhole(lines, room, card, viewport.touch),
+  )
+  const shown = $derived(whole ? lines : [lines.flatMap((line) => groupOf(line) ?? [])])
+
+  function measure(here: HTMLElement) {
+    const read = () => {
+      const style = getComputedStyle(here)
+      const first = here.querySelector<HTMLElement>('.line > button')
+      room = {
+        width: here.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+        height: here.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
+      }
+      if (first)
+        card = {
+          width: first.offsetWidth,
+          height: first.offsetHeight,
+          gap: parseFloat(style.rowGap) || 0,
+        }
+    }
+    read()
+    const watching = new ResizeObserver(read)
+    watching.observe(here)
+    return () => watching.disconnect()
+  }
 
   function choosing() {
     if (chosenOn !== undefined) workspace.chosenOn(chosenOn)
@@ -27,7 +63,7 @@
   function choose(event: MouseEvent, one: NewKindRow) {
     const chevron = event.target instanceof Element && event.target.closest('[data-more]')
     const card = event.currentTarget instanceof Element ? event.currentTarget : null
-    if ((chevron || event.shiftKey) && others(one, card)) return
+    if ((chevron || event.shiftKey || one.grouped) && others(one, card)) return
     make(one)
   }
 
@@ -80,20 +116,24 @@
 <div
   class="here"
   bind:this={element}
+  {@attach measure}
   data-new-here={paneId}
+  data-grouped={whole ? undefined : ''}
   use:roving={{ across: !viewport.touch, rows: 'button', wrap: true }}
   role="group"
   aria-label="New tab"
 >
-  {#each lines as line (line[0]?.line)}
+  {#each shown as line (line[0]?.line)}
     <div class="line">
-      {#each line as one (one.kind)}
+      {#each line as one, at (one.grouped ? one.line : one.kind)}
         <KindCard
           {one}
           letter={one.letter}
-          rise={kinds.indexOf(one)}
-          data-kind={one.kind}
-          aria-keyshortcuts={one.letter.toUpperCase()}
+          rise={whole ? kinds.indexOf(one) : at}
+          data-kind={one.grouped ? undefined : one.kind}
+          data-group={one.grouped ? one.line : undefined}
+          aria-haspopup={one.grouped ? 'menu' : undefined}
+          aria-keyshortcuts={one.grouped ? undefined : one.letter.toUpperCase()}
           onclick={(event: MouseEvent) => choose(event, one)}
           onpointerenter={() => one.ready?.()}
           onfocus={() => one.ready?.()}
@@ -109,7 +149,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     gap: var(--space-3);
     padding: var(--space-6);
     background: var(--empty-ground, var(--bg));

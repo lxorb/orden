@@ -3,7 +3,7 @@ import type { AccountAdapter, AccountView, Route, Seeded } from '@orden/sync-cor
 import { frame, nameKey } from '@orden/sync-core'
 import * as Y from 'yjs'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { documentOf } from '../src/sync-server/src/sync2/docs'
+import { documentOf } from '../src/sync-server-engine/src/sync2/docs'
 import app from '../src'
 import type { Note } from '../src/sync-server/src/types'
 import { call, signIn, type TestEnv, testEnv } from './harness'

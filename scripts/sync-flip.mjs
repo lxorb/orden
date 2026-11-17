@@ -14,7 +14,7 @@ async function ask(path, token, body) {
     headers: {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-      'x-nib-device': 'sync-flip',
+      'x-orden-device': 'sync-flip',
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   })

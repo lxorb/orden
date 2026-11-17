@@ -1,6 +1,6 @@
 import { foldName } from '@orden/markdown/links'
 import type { Command } from '../../commands/src/api'
-import { fileMark } from '../../file-mark'
+import { fileMark } from '../../marks/src/api'
 import {
   shownName,
   rowName,

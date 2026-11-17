@@ -25,6 +25,7 @@ export type Said =
   | { refused: string; gone?: boolean }
   | { note: string }
   | { held: { by: string; since: number; taken: boolean } | null }
+  | { writer: boolean }
 
 export interface Source {
   readonly remote: boolean
@@ -33,6 +34,7 @@ export interface Source {
   resize(cols: number, rows: number): void
   seen(bytes: number): void
   end(): void
+  detach?(): void
   again?(): void
   take?(): void
   image?(bytes: Uint8Array, kind: ImageKind): Promise<string>
@@ -56,12 +58,16 @@ export function remoteShell(host: string): Promise<string | null> {
 export class PtySource implements Source {
   readonly remote: boolean
   reached: string | null = null
+  fresh = true
 
   constructor(
     readonly id: string,
     private readonly shell: string,
     private readonly folder: string | null,
     remote: boolean,
+    private readonly key: string = id,
+    private readonly plain = false,
+    private readonly name: string | null = null,
   ) {
     this.remote = remote
   }
@@ -74,16 +80,28 @@ export class PtySource implements Source {
     const output = new Channel<unknown>()
     output.onmessage = (message) => {
       if (message instanceof ArrayBuffer) said({ out: new Uint8Array(message) })
-      else if (isRecord(message) && isNumber(message.exit)) said({ exit: message.exit })
+      else if (!isRecord(message)) return
+      else if (isNumber(message.exit)) said({ exit: message.exit })
+      else if (typeof message.writer === 'boolean') said({ writer: message.writer })
+      else if (
+        typeof message.screen === 'string' &&
+        isNumber(message.cols) &&
+        isNumber(message.rows)
+      )
+        said({ screen: message.screen, cols: message.cols, rows: message.rows, restored: null })
     }
-    await invoke('pty_spawn', {
+    const spawned = await invoke<unknown>('pty_spawn', {
       id: this.id,
       shell: this.shell,
       folder: this.folder,
       cols,
       rows,
+      key: this.key,
+      plain: this.plain,
+      name: this.name,
       output,
     })
+    this.fresh = !isRecord(spawned) || spawned.fresh !== false
   }
 
   async write(data: string, binary: boolean): Promise<void> {
@@ -100,6 +118,14 @@ export class PtySource implements Source {
 
   end(): void {
     void invoke('pty_kill', { id: this.id }).catch(() => undefined)
+  }
+
+  detach(): void {
+    void invoke('pty_detach', { id: this.id }).catch(() => undefined)
+  }
+
+  take(): void {
+    void invoke('pty_take', { id: this.id }).catch(() => undefined)
   }
 
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {

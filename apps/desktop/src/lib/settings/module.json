@@ -40,13 +40,8 @@
     "spelling",
     "gates",
     "panes",
-    "new-here"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/connectors.svelte.ts",
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/kind-choice.ts",
-    "apps/desktop/src/lib/kind-words.ts"
+    "new-here",
+    "marks",
+    "glyphs"
   ]
 }

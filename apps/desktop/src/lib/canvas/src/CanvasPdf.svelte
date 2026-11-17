@@ -9,7 +9,7 @@
     paperOf,
     type Part,
   } from '../../pdf/src/api'
-  import FileMark from '../../FileMark.svelte'
+  import { FileMark } from '../../marks/src/api'
   import { pixelRatio } from '../../ui-controls/src/api'
 
   const {

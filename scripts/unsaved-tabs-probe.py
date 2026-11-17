@@ -107,12 +107,12 @@ def main() -> int:
         time.sleep(1)
 
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
-        asked(app, f"nib.workspace.showSpace({json.dumps(work)}).then(() => 'work')")
+        asked(app, f"orden.workspace.showSpace({json.dumps(work)}).then(() => 'work')")
         app.open("Idea.md", "Work")
         time.sleep(1)
         asked(app, f"(orden.workspace.openBlank(), orden.workspace.active.note.live.replace({json.dumps(WORDS)}, true), 'typed')")
-        asked(app, f"nib.workspace.openPage({json.dumps(page)}, 'behind') && 'opened'")
-        asked(app, f"nib.workspace.showSpace({json.dumps(home)}).then(() => 'home')")
+        asked(app, f"orden.workspace.openPage({json.dumps(page)}, 'behind') && 'opened'")
+        asked(app, f"orden.workspace.showSpace({json.dumps(home)}).then(() => 'home')")
         time.sleep(2)
         first = app.port
         closing = time.perf_counter()
@@ -127,11 +127,11 @@ def main() -> int:
         said["after the restart"] = back
         web = back.get("web") if isinstance(back, dict) else None
         if isinstance(web, dict):
-            asked(app, f"nib.workspace.activate({json.dumps(web['id'])}) || 'shown'")
+            asked(app, f"orden.workspace.activate({json.dumps(web['id'])}) || 'shown'")
 
-        asked(app, f"nib.workspace.showSpace({json.dumps(work)}).then(() => 'work')")
-        mail = f"nib.workspace.spaces.find((one) => one.id === {json.dumps(home)}).root + '/Mail.url'"
-        asked(app, f"nib.workspace.openWeb({mail}, {{ activate: false }}).then(() => 'opened')")
+        asked(app, f"orden.workspace.showSpace({json.dumps(work)}).then(() => 'work')")
+        mail = f"orden.workspace.spaces.find((one) => one.id === {json.dumps(home)}).root + '/Mail.url'"
+        asked(app, f"orden.workspace.openWeb({mail}, {{ activate: false }}).then(() => 'opened')")
         owner = asked(
             app,
             "(() => { const ws = orden.workspace; const tab = ws.tabs.find((one) => (one.path ?? '')"

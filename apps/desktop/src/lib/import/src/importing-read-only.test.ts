@@ -40,6 +40,10 @@ vi.mock('../../workspace/src/api', () => ({
       children: [{ name: 'Plans', path: '/theirs/Plans', is_dir: true, children: [] }],
     },
   },
+  storeBeside: (_: ArrayBuffer, notePath: string, name: string) => {
+    storedFor.push(notePath)
+    return Promise.resolve(`assets/${name}`)
+  },
 }))
 
 const failed = vi.hoisted((): string[] => [])
@@ -66,12 +70,6 @@ vi.mock('./document', () => ({
 }))
 
 const storedFor = vi.hoisted((): string[] => [])
-vi.mock('../../assets', () => ({
-  storeBeside: (_: ArrayBuffer, notePath: string, name: string) => {
-    storedFor.push(notePath)
-    return Promise.resolve(`assets/${name}`)
-  },
-}))
 
 const { importing } = await import('./importing.svelte')
 

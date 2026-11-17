@@ -1,4 +1,4 @@
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from '../../workspace/src/api'
 import type { Tab } from '../../documents/src/api'
 import { type Call, flag, needScope } from './call'
 

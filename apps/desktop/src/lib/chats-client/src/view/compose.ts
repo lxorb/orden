@@ -33,7 +33,7 @@ export function mentionAt(text: string, caret: number): { from: number; query: s
 export type Special = 'orden' | 'here' | 'everyone'
 
 export function ordenAsked(words: string): string | null {
-  const found = /^\s*@(?:orden|nib)(?:\s+([\s\S]*))?$/i.exec(words)
+  const found = /^\s*@orden(?:\s+([\s\S]*))?$/i.exec(words)
   return found ? (found[1] ?? '').trim() : null
 }
 

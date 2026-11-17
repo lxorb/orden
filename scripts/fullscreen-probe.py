@@ -114,7 +114,7 @@ def main() -> int:
 
         browser.act(port, secret, "open", {"path": "One.md", "space": SPACE})
         time.sleep(1)
-        browser.ask(port, secret, "nib.workspace.split('row')")
+        browser.ask(port, secret, "orden.workspace.split('row')")
         time.sleep(1)
         browser.act(port, secret, "open", {"path": "Two.md", "space": SPACE})
         time.sleep(1.5)
@@ -150,7 +150,7 @@ def main() -> int:
         if escaped.get("full") is not False:
             wrong.append(f"Escape did not leave full screen: {escaped}")
 
-        browser.ask(port, secret, f"nib.workspace.openPage('{site}/page', 'front')")
+        browser.ask(port, secret, f"orden.workspace.openPage('{site}/page', 'front')")
         time.sleep(3)
         browser.ask(port, secret, key("F11"))
         web = settled(port, secret, True)

@@ -215,7 +215,7 @@ def main() -> int:
         if isinstance(again, str):
             check(bool(until(lambda: shown(window, again) == "kept", 10)), f"under its name: {shown(window, again)!r}")
             tabs.shoot(app.pid, shots / "names-restored.png")
-            window.run(f"nib.workspace.close({json.dumps(again)})")
+            window.run(f"orden.workspace.close({json.dumps(again)})")
     finally:
         if app.poll() is None and not close_app(app):
             app.kill()

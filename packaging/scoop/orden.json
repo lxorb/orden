@@ -38,11 +38,7 @@
         ]
     },
     "bin": [
-        "orden.exe",
-        [
-            "orden.exe",
-            "nib"
-        ]
+        "orden.exe"
     ],
     "shortcuts": [
         [

@@ -27,7 +27,7 @@ vi.mock('../../accounts/src/client', () => ({
     ) => {
       expect(type).toBe('image/svg+xml')
       world.sent[hash] = new TextDecoder().decode(bytes)
-      world.said[hash] = headers['x-nib-diagram']!
+      world.said[hash] = headers['x-orden-diagram']!
       return Promise.resolve({ hash, stored: true })
     },
   },

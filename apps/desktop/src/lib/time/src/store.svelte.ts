@@ -6,6 +6,7 @@ import { exchange, type TimeServer } from './exchange'
 import { type Heard, Ledger, type Row } from './ledger'
 import {
   type Activity,
+  activityName,
   activityOf,
   activityValue,
   type Goal,
@@ -13,7 +14,6 @@ import {
   goalOf,
   goalValue,
   type Lane,
-  LONGEST_NAME,
   type Per,
   recordingOf,
   type Rule,
@@ -229,12 +229,12 @@ export class TimeStore {
   }
 
   named(name: string): Activity | null {
-    const wanted = name.trim().toLocaleLowerCase()
+    const wanted = activityName(name).toLocaleLowerCase()
     return this.activities.find((one) => one.name.toLocaleLowerCase() === wanted) ?? null
   }
 
   startNamed(name: string, at = Date.now()): Span | null {
-    const said = name.trim()
+    const said = activityName(name)
     if (!said) return null
     const found = this.named(said)
     if (found?.archived) this.changeActivity(found.id, { archived: false })
@@ -244,7 +244,7 @@ export class TimeStore {
   addActivity(name: string, tint: string | null = null, parent: string | null = null): Activity {
     const activity: Activity = {
       id: crypto.randomUUID(),
-      name: name.trim().slice(0, LONGEST_NAME),
+      name: activityName(name),
       tint: tint ?? ACCENTS[this.activities.length % ACCENTS.length]?.id ?? null,
       parent,
       archived: false,
@@ -258,7 +258,7 @@ export class TimeStore {
     const was = this.activity(id)
     if (!was) return
     const next = { ...was, ...change }
-    if (!next.name.trim()) return
+    if (!activityName(next.name)) return
     this.written([this.write('activity', id, activityValue(next))])
   }
 

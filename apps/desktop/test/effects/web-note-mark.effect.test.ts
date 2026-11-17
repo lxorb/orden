@@ -22,7 +22,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { writeShortcut } = await import('@orden/scan/shortcut')
-const FileMark = (await import('../../src/lib/FileMark.svelte')).default
+const { FileMark } = await import('../../src/lib/marks/src/api')
 
 const picture = (one: string) =>
   `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QD${one}ADhgGAWjR9awAAAABJRU5ErkJggg==`

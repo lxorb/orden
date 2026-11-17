@@ -17,10 +17,8 @@ providePort('search', { panel, show: () => undefined, fromView: () => undefined 
 const { evaluate } = await import('./eval')
 
 describe('a script run with eval', () => {
-  test('reaches the app as orden, and as nib for the scripts written before', async () => {
+  test('reaches the app as orden', async () => {
     expect(await evaluate('orden.links.name')).toBe('links')
-    expect(await evaluate('nib.links.name')).toBe('links')
-    expect(await evaluate('return orden === nib')).toBe(true)
   })
 
   test('hands the script the search panel the search port gives, as it is', async () => {

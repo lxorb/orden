@@ -38,7 +38,6 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
 Depends: libgtk-4-1 (>= 4.14), libnss3, libnspr4, ... (`bundle.linux.deb.depends`)
 usr/bin/orden -> ../share/Orden/orden
-usr/bin/nib and usr/share/Orden/nib, a script that runs orden, for the release after the rename (nib up to 0.20)
 usr/share/Orden/orden, libcef.so, icudtl.dat, v8_context_snapshot.bin, *.pak, locales/en-US*.pak
 usr/share/Orden/libvk_swiftshader.so, vk_swiftshader_icd.json, libvulkan.so.1
 usr/share/Orden/chrome-sandbox (setuid root)
@@ -466,7 +465,7 @@ blank-window bug), unless `WEBKIT_DISABLE_DMABUF_RENDERER` is set either way;
 Mesa keeps it. GStreamer loads its own plugins and nothing else: a
 `GST_PLUGIN_PATH` the session carries (a NixOS profile's `lib/`, Qt and KDE
 plugins and all) is dropped, and its registry is the package's own. No
-`LD_PRELOAD`, no `GDK_BACKEND`. The command is `orden`, with `nib` beside it; the desktop entry and
+`LD_PRELOAD`, no `GDK_BACKEND`. The command is `orden`; the desktop entry and
 icons are installed alongside, so it shows up in a launcher.
 
 **The sandbox under Nix.** The release runs Chromium's sandbox in unprivileged user

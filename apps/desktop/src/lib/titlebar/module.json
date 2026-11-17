@@ -17,7 +17,7 @@
     "theme",
     "ui-kit",
     "windows",
-    "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/FileMark.svelte", "apps/desktop/src/lib/TabMark.svelte"]
+    "workspace",
+    "marks"
+  ]
 }

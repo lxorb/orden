@@ -228,7 +228,7 @@ def in_page(port, expression, path=""):
 def opened(url):
     run("(orden.workspace.openWebsite(), 'opened')")
     time.sleep(0.5)
-    tab = run("nib.workspace.activeTabId")
+    tab = run("orden.workspace.activeTabId")
     run(f"(orden.pages.go({json.dumps(tab)}, {json.dumps(url)}), 'sent')")
     port = urllib.parse.urlparse(url).port
     path = urllib.parse.urlparse(url).path

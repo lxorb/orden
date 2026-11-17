@@ -43,7 +43,7 @@ describe('a chat’s socket', () => {
     const ears = heard()
     const socket = new ChatSocket(CHAT, 'token', 'device-0001', () => 41, ears, dial)
     const [one] = sockets
-    expect(one?.protocols).toEqual(['nib.token.token', 'nib.device.device-0001'])
+    expect(one?.protocols).toEqual(['orden.token.token', 'orden.device.device-0001'])
     one?.on.opened()
     expect(one?.sent[0]).toBe(JSON.stringify({ t: 'hello', since: 41 }))
     expect(socket.read(42)).toBe(true)

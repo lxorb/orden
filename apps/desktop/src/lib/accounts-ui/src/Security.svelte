@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { whenLoaded } from '@orden/contracts'
   import { account } from '../../accounts/src/api'
   import { api, type RemoteSession, type SecondState } from '../../accounts/src/api'
-  import { Copyable } from '../../ui-controls/src/api'
+  import { Copyable, QrCode } from '../../ui-controls/src/api'
   import { CopyButton } from '../../ui-controls/src/api'
   import { localDate } from '../../platform/src/api'
   import { dur, fade } from '../../platform/src/api'
@@ -15,24 +14,6 @@
   let secret = $state<{ holding: string; secret: string; uri: string } | null>(null)
   let code = $state('')
   let codes = $state<string[] | null>(null)
-  let square = $state<string | null>(null)
-
-  $effect(() => {
-    const uri = secret?.uri
-    if (!uri) {
-      square = null
-      return
-    }
-
-    return whenLoaded(
-      () => import('uqr'),
-      ({ renderSVG }) => (square = renderSVG(uri, { border: 1, pixelSize: 6 })),
-      () => {
-        // The secret underneath is the same secret; a square that could not be
-        // drawn costs a reader one paste rather than the setting.
-      },
-    )
-  })
 
   async function look() {
     const token = account.accountToken
@@ -162,10 +143,9 @@
   {#if secret}
     <div class="card" transition:fade={{ duration: dur(130) }}>
       <p class="hint">Scan this with your authenticator app, then type its code.</p>
-      {#if square}
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        <figure class="square">{@html square}</figure>
-      {/if}
+      <div class="square">
+        <QrCode value={secret.uri} label="QR code for your authenticator app" />
+      </div>
       <Copyable value={secret.secret} label="Secret" />
       <div class="orden-setting setting">
         <span class="name">Code from the app</span>
@@ -279,16 +259,6 @@
   .square {
     align-self: flex-start;
     margin: var(--space-2) 0;
-    padding: var(--space-2);
-    border-radius: var(--radius-md);
-    background: #fff;
-    line-height: 0;
-  }
-
-  .square :global(svg) {
-    display: block;
-    width: 8.5rem;
-    height: 8.5rem;
   }
 
   .codes {

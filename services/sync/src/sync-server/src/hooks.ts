@@ -1,5 +1,4 @@
-import type { SpaceFile } from './spaces/files'
-import type { Env, Note, Space, User, Whoever } from './types'
+import type { Env, Note, Space, SpaceFile, User, Whoever } from './types'
 
 export interface Ended {
   machine: string

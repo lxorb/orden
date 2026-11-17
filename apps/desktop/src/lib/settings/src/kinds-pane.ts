@@ -1,15 +1,11 @@
-import { MARKS } from '../../file-mark'
-import { locked, setKind } from '../../kind-choice'
-import { kindName } from '../../kind-words'
-import { kindLines, newKinds } from '../../new-here/src/api'
-import { gated, hiddenKinds } from '../../gates/src/api'
+import { MARKS } from '../../marks/src/api'
+import { locked, setKind, gated, hiddenKinds } from '../../gates/src/api'
+import { kindName, kindLines, lineTitle, newKinds } from '../../new-here/src/api'
 import type { Field, Group, Pane } from './fields'
 
 function kindGroups(): Group[] {
-  const titles = { write: 'Notes', run: 'Terminal', web: 'Web' }
-
   return kindLines(newKinds().filter((one) => !gated(one.kind))).map((line) => ({
-    title: titles[line[0]?.line ?? 'write'],
+    title: lineTitle(line[0]?.line ?? 'notes'),
     fields: line.map((one): Field => ({
       kind: 'switch',
       key: `kinds.${one.kind}`,

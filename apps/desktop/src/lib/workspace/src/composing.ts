@@ -1,4 +1,4 @@
-import { extracted, merged, type Split, splitAt } from '../../composer'
+import { extracted, merged, type Split, splitAt } from '../../link-format/src/api'
 import type { Retargeting } from '../../link-index/src/api'
 import {
   folderOf,

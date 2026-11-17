@@ -1,5 +1,5 @@
 {
   "name": "sync-server-blog",
   "layer": "foundation",
-  "dependsOn": ["markdown", "sync-core", "sync-server"]
+  "dependsOn": ["markdown", "sync-core", "sync-server", "sync-server-engine"]
 }

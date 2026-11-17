@@ -14,6 +14,5 @@
     "sync-core",
     "ui-kit",
     "seeded"
-  ],
-  "pending": ["apps/desktop/src/lib/own-keys.ts"]
+  ]
 }

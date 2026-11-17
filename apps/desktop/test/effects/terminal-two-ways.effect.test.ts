@@ -56,6 +56,7 @@ const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const PromptSheet = (await import('../../src/lib/surfaces/src/PromptSheet.svelte')).default
 const { flushSync, mount, unmount } = await import('svelte')
 const { written } = await import('../../src/lib/parting/src/api')
+await import('../../src/lib/web-tab/src/api')
 
 type Opened = ReturnType<typeof sessionOf>
 

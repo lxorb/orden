@@ -44,7 +44,7 @@ function declarations(style: string): string {
 
 describe('a mark that fills the box it was given', () => {
   test('is taken out of the line box it would otherwise sit in', () => {
-    const style = declarations(named('lib/Icon.svelte').style)
+    const style = declarations(named('lib/glyphs/src/Icon.svelte').style)
     const glyph = /\.glyph\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
 
     expect(glyph).toMatch(/display\s*:\s*block/)

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { keyElsewhere } from '../../layer-keys'
+  import { keyElsewhere, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
   import {
     type Answer,
     groupName,
@@ -11,7 +11,6 @@
     isWhen,
   } from '@orden/bases'
   import { tick, untrack } from 'svelte'
-  import { menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
   import { asOneUndo, dropRow } from './act'
   import AddRow from './AddRow.svelte'
   import {
@@ -40,8 +39,6 @@
   import { toneColour, valueText } from './chips'
   import { editorOf, displayName, keyWritten } from './columns'
   import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
-  import { drawer, rightDrawer } from '../../drawer.svelte'
-  import { claimsGesture, isFinger } from '../../swipe'
   import { type Drop, dropInto } from './drop'
   import {
     placeColumn,
@@ -52,7 +49,7 @@
     setSort,
     setSummary,
   } from './edit'
-  import { notices } from '../../workspace/src/api'
+  import { claimsGesture, drawer, isFinger, notices, rightDrawer } from '../../workspace/src/api'
   import { laneKeys, withEveryDay, withinDays } from './list-items'
   import type { Kit } from './kit'
   import { holdsLists, optionsAt } from './options'

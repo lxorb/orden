@@ -1,5 +1,5 @@
 import { account } from '../../accounts/src/api'
-import { iconChoice } from '../../icon-choice.svelte'
+import { iconChoice } from '../../icon-picker/src/api'
 import { DIVIDER, held, latched, type MenuEntry, trim, prompt } from '../../ui-kit/src/api'
 import {
   canPublish,

@@ -188,7 +188,13 @@ export async function chooseTab(tab: string): Promise<void> {
 export function cardCorner(within?: Element | null): number {
   if (typeof document === 'undefined') return 0
   const card = within?.closest('[data-pane]')
-  if (card) return parseFloat(getComputedStyle(card).getPropertyValue('--card-radius')) || 0
+  if (card) {
+    const { borderBottomLeftRadius, borderBottomRightRadius } = getComputedStyle(card)
+    return Math.min(
+      parseFloat(borderBottomLeftRadius) || 0,
+      parseFloat(borderBottomRightRadius) || 0,
+    )
+  }
   const panes = document.querySelector('main') ?? document.documentElement
   return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
 }
@@ -1083,7 +1089,7 @@ class Pages {
         }
         const path = page.path
         if (said.icon && path) {
-          void Promise.all([import('./favicons'), import('../../chosen-icon')]).then(
+          void Promise.all([import('./favicons'), import('../../marks/src/api')]).then(
             ([one, files]) => one.saw(files.addressOf(path), said.icon),
           )
         }
@@ -1178,6 +1184,7 @@ providePort('web.pages', {
   shoot: (tab) => pages.shoot(tab),
   clip: (tab, selection) => pages.read(tab, selection),
   faviconOf: (url) => favicons.of(url),
+  iconOf: (tab) => pages.iconOf(tab),
   holdStill: () => pages.holdStill(),
   letGo: () => pages.letGo(),
   carryIn: (paths) => carried((carry) => carry.carryToPages(paths)),

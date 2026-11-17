@@ -1,8 +1,6 @@
 import { Hono, type MiddlewareHandler } from 'hono'
+import { tokenIn, readBody, sha256, type Env, type Variables } from '../../sync-server/src/api'
 import {
-  tokenIn,
-  readBody,
-  sha256,
   accountBy,
   minimum,
   move,
@@ -12,11 +10,9 @@ import {
   isMode,
   rolloutView,
   setRollout,
-  type Env,
-  type Variables,
   type Account,
   type Standing,
-} from '../../sync-server/src/api'
+} from '../../sync-server-engine/src/api'
 import { NOT_FOUND } from './machines/door'
 import { serviceOf } from './machines/service'
 interface Admin {

@@ -1,5 +1,5 @@
 import type { TabKindParts, TabMenuEntry } from '@orden/contracts'
-import { iconChoice } from '../../icon-choice.svelte'
+import { iconChoice } from '../../icon-picker/src/api'
 import { iconEntries } from '../../row-menu/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { workspace } from '../../workspace/src/api'

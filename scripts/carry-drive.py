@@ -105,7 +105,7 @@ def fail(what):
 subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
 time.sleep(2)
 
-root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 note = put_note(run, root)
@@ -114,7 +114,7 @@ if not isinstance(note, str):
 if not until(f"void orden.workspace.loadTree(), !!orden.workspace.entryAt({json.dumps(note)})"):
     sys.exit("::error::the file list never showed the note put in the space")
 
-run(f"nib.workspace.openPage({json.dumps(URL)}); true")
+run(f"orden.workspace.openPage({json.dumps(URL)}); true")
 if not until(f"({TITLES}) !== ''", 40):
     sys.exit("::error::the page never loaded")
 time.sleep(2)

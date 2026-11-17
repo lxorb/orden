@@ -19,7 +19,7 @@
   "plugins": {
     "deep-link": {
       "desktop": [
-        { "schemes": ["orden", "nib"] },
+        { "schemes": ["orden"] },
         { "name": "Web site URL", "schemes": ["http", "https"], "role": "Viewer" }
       ]
     }

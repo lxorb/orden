@@ -1,4 +1,4 @@
-import type { AttachmentFolder } from '../../attachments'
+import type { AttachmentFolder } from '../../modes/src/api'
 import type { LinkFormat } from '../../link-format/src/api'
 import type { FormatId } from './plan'
 import type { Source } from './sources'

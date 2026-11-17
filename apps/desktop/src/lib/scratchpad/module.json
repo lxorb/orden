@@ -17,7 +17,7 @@
     "workspace",
     "held-database",
     "modes",
-    "ui-controls"
-  ],
-  "pending": ["apps/desktop/src/lib/composer.ts"]
+    "ui-controls",
+    "link-format"
+  ]
 }

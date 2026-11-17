@@ -118,9 +118,9 @@ def main() -> int:
     try:
         say(f"pid {app.pid}, endpoint {port}")
 
-        root = window.run("nib.workspace.activeSpace ? orden.workspace.activeSpace.root : null")
+        root = window.run("orden.workspace.activeSpace ? orden.workspace.activeSpace.root : null")
         for name in ("Before.md", "After.md"):
-            window.run(f"nib.workspace.openEntry({json.dumps(str(pathlib.Path(str(root)) / name))}).then(() => true)")
+            window.run(f"orden.workspace.openEntry({json.dumps(str(pathlib.Path(str(root)) / name))}).then(() => true)")
             until(lambda n=name: any(tab[1] == n.removesuffix(".md") for tab in strip(window)), 10)
         cmd = str(
             window.run(
@@ -201,10 +201,10 @@ def main() -> int:
             tabs.shoot(app.pid, shots / "terminal-restored-narrow.png")
 
             running = terminal.shells_of(app.pid)
-            window.run(f"nib.workspace.close({json.dumps(back)})")
+            window.run(f"orden.workspace.close({json.dumps(back)})")
             gone = until(lambda: not holding(histories(args.identifier), marker), 10)
             check(bool(gone), "closing the tab removes its lines from the disk")
-            window.run("nib.workspace.reopenClosed().then(() => true)")
+            window.run("orden.workspace.reopenClosed().then(() => true)")
             again = until(
                 lambda: window.run(
                     "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "

@@ -13,10 +13,10 @@ import {
   ASK_SIGNINS_EVERY,
   SIGNED_OUT,
   stillSignedIn,
-  noteUnusedBy,
   steadyEnv,
   type Env,
 } from '../../../sync-server/src/api'
+import { noteUnusedBy } from '../../../sync-server-engine/src/api'
 import {
   admit,
   type Asker,

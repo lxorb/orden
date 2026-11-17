@@ -87,14 +87,4 @@ describe('the handle a drive reads the app through', () => {
       expect(later).toMatch(new RegExp(`${name}[,:]`))
     },
   )
-
-  test('a drive written before the rename still finds the app and the editor by their old names', () => {
-    expect(APP).toContain('nibApp: (window as unknown as { ordenApp: object }).ordenApp')
-    const editor = readFileSync(
-      join(import.meta.dirname, '../src/lib/pane-tree/src/Editor.svelte'),
-      'utf8',
-    )
-    expect(editor).toContain('Object.assign(window, { orden: created, [FORMER_HANDLE]: created })')
-    expect(editor).toContain("const FORMER_HANDLE = 'nib'")
-  })
 })

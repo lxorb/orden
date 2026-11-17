@@ -64,10 +64,13 @@ async function encodedSmall(canvas: HTMLCanvasElement): Promise<Encoded> {
     const webp = await blobOf(canvas, 'image/webp', quality)
     const kept = webp?.type === 'image/webp' ? webp : await blobOf(canvas, 'image/jpeg', quality)
     if (!kept) break
-    const bytes = await kept.arrayBuffer()
+    const bytes = withoutMetadata(new Uint8Array(await kept.arrayBuffer()))
+    if (!bytes) throw new Error('no picture')
     if (bytes.byteLength > MOST_BYTES) continue
-    if (carriesMetadata(new Uint8Array(bytes))) throw new Error('a picture kept its metadata')
-    return { bytes, type: kept.type === 'image/webp' ? 'image/webp' : 'image/jpeg' }
+    return {
+      bytes: bytes.slice().buffer,
+      type: kept.type === 'image/webp' ? 'image/webp' : 'image/jpeg',
+    }
   }
   throw new Error('that picture is too big')
 }
@@ -78,33 +81,54 @@ function blobOf(canvas: HTMLCanvasElement, type: string, quality: number): Promi
   })
 }
 
-export function carriesMetadata(bytes: Uint8Array): boolean {
+const WEBP_METADATA = new Set(['EXIF', 'XMP '])
+const VP8X_METADATA = 0x0c
+const JPEG_METADATA = 0xe1
+
+function joined(head: Uint8Array, parts: readonly Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((sum, one) => sum + one.length, head.length))
+  out.set(head)
+  let at = head.length
+  for (const part of parts) {
+    out.set(part, at)
+    at += part.length
+  }
+  return out
+}
+
+export function withoutMetadata(bytes: Uint8Array): Uint8Array | null {
   const ascii = (at: number, length: number) =>
     String.fromCharCode(...bytes.subarray(at, at + length))
 
   if (ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') {
+    const kept: Uint8Array[] = []
     for (let at = 12; at + 8 <= bytes.length;) {
       const name = ascii(at, 4)
-      if (name === 'EXIF' || name === 'XMP ') return true
-      const size =
-        (bytes[at + 4] ?? 0) |
-        ((bytes[at + 5] ?? 0) << 8) |
-        ((bytes[at + 6] ?? 0) << 16) |
-        ((bytes[at + 7] ?? 0) << 24)
-      at += 8 + size + (size % 2)
+      const size = new DataView(bytes.buffer, bytes.byteOffset + at + 4, 4).getUint32(0, true)
+      const end = Math.min(bytes.length, at + 8 + size + (size % 2))
+      if (!WEBP_METADATA.has(name)) {
+        const chunk = bytes.slice(at, end)
+        if (name === 'VP8X') chunk[8] = (chunk[8] ?? 0) & ~VP8X_METADATA
+        kept.push(chunk)
+      }
+      at = end
     }
-    return false
+    const out = joined(bytes.subarray(0, 12), kept)
+    new DataView(out.buffer).setUint32(4, out.length - 8, true)
+    return out
   }
 
   if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-    for (let at = 2; at + 4 <= bytes.length && bytes[at] === 0xff;) {
-      const marker = bytes[at + 1] ?? 0
-      if (marker === 0xda) return false
-      if (marker === 0xe1) return true
-      at += 2 + (((bytes[at + 2] ?? 0) << 8) | (bytes[at + 3] ?? 0))
+    const kept: Uint8Array[] = []
+    let at = 2
+    while (at + 4 <= bytes.length && bytes[at] === 0xff && bytes[at + 1] !== 0xda) {
+      const end = at + 2 + (((bytes[at + 2] ?? 0) << 8) | (bytes[at + 3] ?? 0))
+      if (bytes[at + 1] !== JPEG_METADATA) kept.push(bytes.subarray(at, end))
+      at = end
     }
-    return false
+    kept.push(bytes.subarray(at))
+    return joined(bytes.subarray(0, 2), kept)
   }
 
-  return true
+  return null
 }
