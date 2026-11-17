@@ -16,10 +16,13 @@
     const importer = browser?.importer
     if (!importer || stage !== 'asking') return
     stage = 'importing'
+    const here = setup.stillHere()
     for (const trouble of await bringing().browser(importer)) setup.tell(trouble)
     setup.got('browser')
     stage = 'done'
-    setTimeout(() => setup.next(), 700)
+    setTimeout(() => {
+      if (here()) setup.next()
+    }, 700)
   }
 </script>
 

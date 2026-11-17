@@ -44,6 +44,7 @@ import {
   type Marks,
 } from '@orden/glasses/choices'
 import {
+  forget as forgetKept,
   isNumber,
   isRecord,
   isString,
@@ -58,6 +59,7 @@ import { theme } from '../../theme/src/api'
 import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
+const OWED_KEY = 'orden:modes-owed'
 
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
@@ -1042,7 +1044,15 @@ class Modes {
 
   private sent = 0
 
-  private owed: AccountSettings = {}
+  private get owed(): AccountSettings {
+    const held = stored(OWED_KEY)
+    return isRecord(held) ? held : {}
+  }
+
+  private set owed(value: AccountSettings) {
+    if (Object.keys(value).length) keepJson(OWED_KEY, value)
+    else forgetKept(OWED_KEY)
+  }
 
   private session = 0
 

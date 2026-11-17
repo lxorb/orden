@@ -180,6 +180,7 @@ export interface Group {
 
 export interface Answer {
   groups: Group[]
+  lanes?: Value[]
   total: number
   summaries: Record<string, Value>
   partial?: boolean

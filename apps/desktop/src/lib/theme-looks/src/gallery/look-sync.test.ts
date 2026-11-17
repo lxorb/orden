@@ -29,7 +29,7 @@ function userOf(token: string): string {
   return token.replace(/^token-/, '')
 }
 
-function device(start: Look, user: string | null = 'a'): Device {
+function device(start: Look, user: string | null = 'a', kept = new Map<string, boolean>()): Device {
   const account = accountDouble(user)
   const pending: Promise<unknown>[] = []
   const track = <T>(work: Promise<T>): Promise<T> => {
@@ -60,6 +60,8 @@ function device(start: Look, user: string | null = 'a'): Device {
           if (other.account.accountToken === token) other.hear()
         }
       },
+      owedKept: () => kept.get('owed') ?? false,
+      keepOwed: (owed) => void kept.set('owed', owed),
     }),
     pick: (look) => {
       one.worn = look
@@ -171,6 +173,25 @@ describe('a theme that follows the account', () => {
 
     expect(laptop.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
+  })
+
+  test('sends a pick that could not be sent before a restart, not the account’s old theme over it', async () => {
+    server.settings.set('a', { look: CLASSIC })
+    const kept = new Map<string, boolean>()
+    const before = device(CLASSIC, 'a', kept)
+    await signIn(before)
+    server.away = true
+    before.pick(DARK_GLASS)
+    await settled(before)
+    server.devices.delete(before)
+    server.away = false
+
+    const after = device(DARK_GLASS, 'a', kept)
+    await signIn(after)
+
+    expect(after.worn).toEqual(DARK_GLASS)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
+    expect(kept.get('owed')).toBe(false)
   })
 
   test('never carries a pick owed to one account into the next', async () => {

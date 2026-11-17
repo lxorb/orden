@@ -78,9 +78,7 @@ export class Selection {
 function couldHold(path: string): string[] {
   const out: string[] = []
 
-  for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
-    out.push(path.slice(0, at))
-  }
+  for (const step of path.matchAll(/[\\/]/g)) out.push(path.slice(0, step.index))
 
   return out
 }

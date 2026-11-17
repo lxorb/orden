@@ -1424,6 +1424,19 @@ describe('walking back along a trail', () => {
     expect(looking.trail).toEqual(['/space/b.md'])
     expect(looking.path).toBe('/space/b.md')
   })
+
+  test('and stays on the note it shows when the gone one was behind it, so Forward still goes on', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    looking.trail = ['/space/a.md', '/space/gone.md', '/space/b.md', '/space/c.md']
+    looking.at = 2
+
+    await workspace.walk(1, looking.id)
+
+    expect(looking.trail).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(looking.trail[looking.at]).toBe('/space/b.md')
+    expect(looking.path).toBe('/space/b.md')
+  })
 })
 
 describe('a strip whose tabs start at its pane’s edge (#1139)', () => {
@@ -3038,6 +3051,24 @@ describe('closing a tab with unsaved words', () => {
     expect(sent.filter((call) => call.command === 'write_note').map((call) => call.path)).toEqual(
       expect.arrayContaining(['/space/One.md', '/space/Two.md']),
     )
+  })
+
+  test('Save on the one draft among several tabs closes all of them once it is saved', async () => {
+    await workspace.open('/space/a.md')
+    const plain = workspace.tabs.find((one) => one.path === '/space/a.md')
+    const tab = draft('# Plan\n\nwords')
+    if (!plain) throw new Error('no note')
+    sheet.answer = 'save'
+
+    await workspace.closeMany([plain.id, tab.id])
+    await vi.waitFor(() => expect(placing.asked).toHaveLength(1))
+    expect(open(plain.id) && open(tab.id)).toBe(true)
+
+    await workspace.save(tab, '/space', 'Plan.md')
+    placing.asked[0]?.saved?.()
+    await vi.waitFor(() => expect(open(tab.id)).toBe(false))
+    expect(open(plain.id)).toBe(false)
+    expect(sheet.asked).toHaveLength(1)
   })
 
   test('asks nothing of an empty new tab, a note with a file, or a website', async () => {

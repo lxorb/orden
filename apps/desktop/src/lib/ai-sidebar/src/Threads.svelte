@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { deletesTyped } from './typed-delete'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { agentMarks } from '../../workspace/src/api'
@@ -83,7 +84,11 @@
     } else if (event.key === 'Enter') {
       event.preventDefault()
       if (one) void chat.openThread(one.id)
-    } else if (event.key === 'Delete' && one) {
+    } else if (
+      event.key === 'Delete' &&
+      one &&
+      !deletesTyped(event.currentTarget as HTMLInputElement)
+    ) {
       event.preventDefault()
       if (event.shiftKey) void chat.remove(one.id)
       else toggleArchived(one)
