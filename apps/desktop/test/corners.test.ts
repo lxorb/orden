@@ -78,11 +78,37 @@ test('every sidebar over the note stands on the paper, under the chrome and its 
   }
 })
 
-test('every pane is a card rounded at all four corners, with no setting that squares its foot', () => {
+test('a pane is a rounded card, but square and flush where it meets the window with no sidebar between', () => {
   const pane = read('./pane-tree/src/Pane.svelte')
   expect(/\n {2}\.pane \{([^}]*)\}/.exec(pane)?.[1]).toContain('border-radius: var(--card-radius);')
+  for (const toward of ['left', 'right', 'down'])
+    expect(pane).toContain(`!paneToward(workspace.panes.frame, pane.id, '${toward}')`)
+  expect(/\.pane\.at-left \{([^}]*)\}/.exec(pane)?.[1]).toContain(
+    'var(--left-edge, var(--card-radius))',
+  )
+  expect(/\.pane\.at-right \{([^}]*)\}/.exec(pane)?.[1]).toContain(
+    'var(--right-edge, var(--card-radius))',
+  )
+  expect(/\.pane\.at-foot \{([^}]*)\}/.exec(pane)?.[1]).toMatch(
+    /border-bottom-left-radius: 0;\s*border-bottom-right-radius: 0;/,
+  )
   expect(pane).not.toMatch(/grounded|--card-foot|flushBottom/)
+
   const app = read('../App.svelte')
+  expect(app).toMatch(
+    /const leftShut = \$derived\(viewport\.drawer \|\| workspace\.openOn\('left'\) === null\)/,
+  )
+  expect(app).toMatch(/const rightShut = \$derived\(viewport\.drawer \|\| !rightOpen\)/)
+  expect(app).toContain('class:left-shut={leftShut}')
+  expect(app).toContain('class:right-shut={rightShut}')
+  expect(/\n {2}\.panes \{([^}]*)\}/.exec(app)?.[1]).toContain(
+    'padding: 0 var(--right-inset, var(--card-inset)) 0 var(--left-inset, var(--card-inset));',
+  )
+  for (const side of ['left', 'right']) {
+    const rule = new RegExp(`\\.document\\.${side}-shut \\{([^}]*)\\}`).exec(app)?.[1] ?? ''
+    expect(rule, side).toContain(`--${side}-inset: 0px;`)
+    expect(rule, side).toContain(`--${side}-edge: 0px;`)
+  }
   expect(app).not.toMatch(/grounded|flushBottom/)
   expect(read('./modes/src/modes.svelte.ts')).not.toContain('flushBottom: boolean')
   expect(read('./web-tab/src/WebTab.svelte')).toContain('cardCorner(hole)')

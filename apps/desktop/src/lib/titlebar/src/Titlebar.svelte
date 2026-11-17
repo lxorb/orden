@@ -202,10 +202,10 @@
   style:--panes-wide={panes ? `${panes}px` : undefined}
   style:--strip-lead={viewport.touch
     ? undefined
-    : `max(0px, calc(var(--space-1) + var(--lights-start, 0px) + ${leadWide}px - var(--card-inset)))`}
+    : `max(0px, calc(var(--space-1) + var(--lights-start, 0px) + ${leadWide}px - var(--left-inset, var(--card-inset))))`}
   style:--strip-end={viewport.touch
     ? undefined
-    : `max(0px, calc(${overPanes}px - var(--card-inset)))`}
+    : `max(0px, calc(${overPanes}px - var(--right-inset, var(--card-inset))))`}
 >
   {#if viewport.touch}
     {#if phone && !listless}
@@ -307,8 +307,11 @@
   .heads {
     position: absolute;
     inset-block: 0;
-    inset-inline-start: var(--card-inset);
-    width: calc(var(--panes-wide, 100%) - 2 * var(--card-inset));
+    inset-inline-start: var(--left-inset, var(--card-inset));
+    width: calc(
+      var(--panes-wide, 100%) - var(--left-inset, var(--card-inset)) -
+        var(--right-inset, var(--card-inset))
+    );
     display: flex;
     pointer-events: none;
   }
