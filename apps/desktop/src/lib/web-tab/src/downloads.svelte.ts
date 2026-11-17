@@ -67,7 +67,11 @@ export function progressOf(list: readonly Download[]): number | 'unknown' | null
 class Downloads {
   list = $state<Download[]>([])
 
+  private stopped: Record<number, true> = {}
+
   heard(one: Download): boolean {
+    if (this.stopped[one.id]) return false
+    if (one.state === 'cancelled') this.stopped[one.id] = true
     const fresh = !this.list.some((each) => each.id === one.id)
     this.list = merged(this.list, one)
     if (fresh && one.state !== 'cancelled') downloadStarted(one.name, { tab: one.tab })

@@ -127,3 +127,10 @@ test('saving the page as a note is a row of the menu, and runs the clipper', () 
   row?.run()
   expect(saved).toBe(1)
 })
+
+test('Share… is greyed on a page with nothing here to share', () => {
+  const rows = webRows(page('https://a.example/'), 1, { ...actions, share: undefined })
+  const share = rows.find((one) => one?.label === 'Share…')
+
+  expect(share?.disabled).toBe(true)
+})

@@ -17,10 +17,10 @@ export function linkWords(html: string): string {
   return inner
     .replace(/<[^>]*>/g, '')
     .replace(/&(#\d+|#x[\da-f]+|[a-z]+);/gi, (whole, name: string) => {
-      if (name.startsWith('#x') || name.startsWith('#X'))
-        return String.fromCodePoint(parseInt(name.slice(2), 16))
-      if (name.startsWith('#')) return String.fromCodePoint(Number(name.slice(1)))
-      return ENTITIES[name.toLowerCase()] ?? whole
+      if (!name.startsWith('#')) return ENTITIES[name.toLowerCase()] ?? whole
+      const hex = name.startsWith('#x') || name.startsWith('#X')
+      const code = hex ? parseInt(name.slice(2), 16) : Number(name.slice(1))
+      return code <= 0x10ffff ? String.fromCodePoint(code) : whole
     })
     .replace(/\s+/g, ' ')
     .trim()

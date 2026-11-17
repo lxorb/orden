@@ -28,9 +28,13 @@ export function keepPage(kept: Kept) {
 
   const home = said.home ?? said.url
   const icon = kept.icon ?? said.icon
-  if (said.url === kept.url && (said.icon === icon || holdsPicture(said.icon))) return
-
   const held = waiting.get(kept.path)
+  if (said.url === kept.url && (said.icon === icon || holdsPicture(said.icon))) {
+    held?.later.cancel()
+    waiting.delete(kept.path)
+    return
+  }
+
   const write = () => {
     waiting.delete(kept.path)
     writing(writeFile(kept, home, icon))

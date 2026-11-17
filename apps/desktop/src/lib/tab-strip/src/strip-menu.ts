@@ -3,8 +3,6 @@ import { shortcuts } from '../../shortcuts/src/api'
 import { workspace } from '../../workspace/src/api'
 
 export function stripMenu(paneId: string): MenuEntry[] {
-  const inFront = workspace.panes.at(paneId)?.activeTabId ?? ''
-
   return [
     {
       label: 'New tab',
@@ -24,8 +22,8 @@ export function stripMenu(paneId: string): MenuEntry[] {
     {
       label: 'Close all tabs',
       hint: shortcuts.hint('app.close-all'),
-      disabled: workspace.closesAround(inFront, 'all') === 0,
-      run: () => void workspace.closeAround(inFront, 'all'),
+      disabled: workspace.closesAllIn(paneId) === 0,
+      run: () => void workspace.closeAllIn(paneId),
     },
   ]
 }

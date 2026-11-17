@@ -44,7 +44,7 @@ export interface WebActions {
   print: () => void
   find?: (() => void) | undefined
   save: () => void
-  share: () => void
+  share?: (() => void) | undefined
   settings: () => void
 }
 
@@ -98,7 +98,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
       : []),
     DIVIDER,
     { label: 'Save as a note', disabled: !has, run: actions.save },
-    { label: 'Share…', disabled: !has, run: actions.share },
+    { label: 'Share…', disabled: !has || !actions.share, run: () => actions.share?.() },
     {
       label: 'Copy link',
       disabled: !has,

@@ -1128,10 +1128,7 @@ class Workspace {
             const at = ids.indexOf(id)
             return at < 0 ? [] : [at]
           }),
-          active: Math.max(
-            0,
-            tabs.findIndex((tab) => tab.id === shown),
-          ),
+          active: tabs.findIndex((tab) => tab.id === shown),
         }
       }),
       focused,
@@ -2566,6 +2563,14 @@ class Workspace {
     )
   }
 
+  async closeAllIn(paneId: string) {
+    await this.closeMany(this.tabsIn(paneId).map((one) => one.id))
+  }
+
+  closesAllIn(paneId: string): number {
+    return this.tabsIn(paneId).length
+  }
+
   closesAround(id: string, which: Around): number {
     const tab = this.tabs.find((one) => one.id === id)
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
@@ -2660,6 +2665,7 @@ class Workspace {
   async reopenClosed() {
     for (let batch = this.closed.take(); batch.length; batch = this.closed.take()) {
       let back: { tab: Tab; paneId: string } | null = null
+      const after: Record<string, number> = {}
       for (const closed of batch) {
         const trashed = closed.trashed
         if (trashed !== undefined) {
@@ -2671,7 +2677,9 @@ class Workspace {
         const draft = await reopening(closed.draft)
         if (!draft) continue
 
-        const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
+        const stays = this.panes.at(closed.paneId) !== null
+        const paneId = stays ? closed.paneId : this.panes.focusedId
+        if (!stays) after[closed.paneId] ??= this.tabsIn(paneId).length
         const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
@@ -2682,7 +2690,8 @@ class Workspace {
           continue
         }
 
-        this.tabs = this.placed(tab, tab.paneId, tab.paneId === paneId ? closed.at : null)
+        const at = tab.paneId !== paneId ? null : (after[closed.paneId] ?? 0) + closed.at
+        this.tabs = this.placed(tab, tab.paneId, at)
         back = { tab, paneId: tab.paneId }
       }
       if (!back) continue
