@@ -173,10 +173,33 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
   }
 }
 
+const NAMED_END = /[ \t]+\^[A-Za-z0-9-]+[ \t]*$/
+
+const bare = (line: string) => line.replace(NAMED_END, '').trim()
+
 function anchorOf(source: string, section: string): number {
   if (section === source) return 0
 
-  const first = section.split('\n')[0] ?? ''
-  const at = first ? source.indexOf(first) : -1
-  return at === -1 ? 0 : at
+  const wanted = section.split('\n').map(bare)
+  const lines = source.split('\n')
+  const starts: number[] = []
+  let offset = 0
+  for (const line of lines) {
+    starts.push(offset)
+    offset += line.length + 1
+  }
+
+  let best = -1
+  let most = 0
+  for (const [index, line] of lines.entries()) {
+    if (!wanted[0] || bare(line) !== wanted[0]) continue
+    let same = 1
+    while (same < wanted.length && bare(lines[index + same] ?? '') === wanted[same]) same++
+    if (same > most) {
+      most = same
+      best = index
+    }
+  }
+
+  return best === -1 ? 0 : (starts[best] ?? 0)
 }

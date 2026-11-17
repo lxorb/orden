@@ -506,7 +506,7 @@ export function headingText(line: string): string {
   const found = HEADING_LINE.exec(line)
   if (found === null) return line.trim()
 
-  return (found[1] ?? '').replace(CLOSING_HASHES, '').trim()
+  return (found[1] ?? '').replace(BLOCK_ID, '').replace(CLOSING_HASHES, '').trim()
 }
 
 export function headingsOf(text: string): string[] {
@@ -718,7 +718,7 @@ export function blocksOf(text: string): NoteBlock[] {
       continue
     }
 
-    if (!current) {
+    if (!current || (!row.code && LIST_ITEM.test(row.text))) {
       current = { line: row.line, text: firstWords(row.text), id: null }
       found.push(current)
     }

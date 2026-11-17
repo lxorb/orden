@@ -2,6 +2,8 @@ import { blockIdOf, ownLine, type Row, rowsOf } from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
 
+const AN_ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/u
+
 const TABLE_RULE = /^[\s|:-]*-[\s|:-]*$/u
 
 function nameStandsApart(run: readonly Row[]): boolean {
@@ -28,11 +30,13 @@ function endOf(rows: readonly Row[], line: number): number {
     }
   }
 
+  const item = !rows[line]?.code && AN_ITEM.test(first)
   let end = line
   for (;;) {
     const next = rows[end + 1]
     if (!next) return end
     if (rows[end]?.code ? !next.code : !next.text.trim()) return end
+    if (item && AN_ITEM.test(next.text)) return end
     end++
   }
 }
