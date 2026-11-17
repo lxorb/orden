@@ -13,7 +13,7 @@ const APP_PROFILE: &str = orden_web_engine::APP_PROFILE;
 
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use orden_web_engine::{debug_port, switches, with_extensions, LOAD_EXTENSION_OFF};
-    use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
+    use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy, SecretStorage};
 
     let sandbox = match orden_web_engine::SandboxPolicy::parse(
         &from_run("ORDEN_CEF_SANDBOX").unwrap_or_default(),
@@ -51,6 +51,9 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .command_line_args(settings.switches.clone())
         .devtools(DevToolsPolicy::Allowed)
         .remote_debugging(debugging);
+    if cfg!(target_os = "macos") {
+        engine = engine.secret_storage(SecretStorage::Mock);
+    }
     if loading {
         engine = engine.disable_features([LOAD_EXTENSION_OFF]);
     }
