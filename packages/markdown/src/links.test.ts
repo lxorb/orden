@@ -1126,3 +1126,62 @@ describe('a line of links nothing closes', () => {
     expect(renderMarkdown(`[a](${'('.repeat(32)}b${')'.repeat(32)})`)).toContain('<a ')
   })
 })
+
+describe('a block beside maths, a comment or a pre', () => {
+  const id = () => 'new123'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a paragraph over maths with a blank line in it is named alone', () => {
+    const note = 'Intro\n$$\na\n\nb\n$$\n\n# Next\n\ntext\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe(note.replace('Intro', 'Intro ^new123'))
+    expect(block(named, 'new123')).toBe('Intro')
+    const maths = namedBlock(note, 1, id)?.source ?? ''
+    expect(maths).toBe(note.replace('$$\n\n#', () => '$$\n\n^new123\n\n#'))
+    expect(block(maths, 'new123')).toBe('$$\na\n\nb\n$$')
+    expect(blocksOf(note).map((one) => one.line)).toEqual([0, 1, 7, 9])
+  })
+
+  test('words under maths are a block of their own', () => {
+    const note = '$$\nx\n$$\nmore\n\n^m\n'
+    expect(block(note, 'm')).toBe('more')
+    expect(block('Intro\n$$\nx\n$$\n^m\n', 'm')).toBe('$$\nx\n$$')
+  })
+
+  test('a pre closes at its own end tag, not at any closing tag', () => {
+    const note = '<pre>\nline one <b>x</b>\n\nline two\n</pre>\n\n^p\n'
+    expect(block(note, 'p')).toBe('<pre>\nline one <b>x</b>\n\nline two\n</pre>')
+    expect(namedBlock('<pre>\nline one <b>x</b>\n\nline two\n</pre>\n', 1, id)?.source).toBe(
+      '<pre>\nline one <b>x</b>\n\nline two\n</pre>\n\n^new123\n',
+    )
+    expect(blocksOf(note).map((one) => [one.line, one.id])).toEqual([[0, 'p']])
+  })
+
+  test('a fence after indented code names only the fence', () => {
+    const note = 'Intro\n\n    old code\n\n```js\nx\n``` ^c\n\nAfter\n'
+    expect(block(note, 'c')).toBe('```js\nx\n```')
+  })
+
+  test('maths in a list item names the item', () => {
+    const note = '- item\n  $$\n  x\n  $$\n- next\n'
+    expect(namedBlock(note, 2, id)?.source).toBe(note.replace('- item', '- item ^new123'))
+    expect(block('- item ^x\n  $$\n  a\n\n  b\n  $$\n- next\n\nAfter\n', 'x')).toBe(
+      '- item\n  $$\n  a\n\n  b\n  $$',
+    )
+  })
+
+  test('code in a loose list item names the item', () => {
+    const note = '1. Install:\n\n   ```bash\n   npm i\n   ```\n2. Run it\n'
+    expect(namedBlock(note, 3, id)?.source).toBe(note.replace('Install:', 'Install: ^new123'))
+    expect(block(note.replace('Install:', 'Install: ^i'), 'i')).toBe(
+      '1. Install:\n\n   ```bash\n   npm i\n   ```',
+    )
+  })
+
+  test('an opener nothing closes holds nothing, however many there are', () => {
+    const note = `${'$$\nx\n\n'.repeat(3000)}end\n`
+    const started = performance.now()
+    expect(blocksOf(note)).toHaveLength(3001)
+    expect(performance.now() - started).toBeLessThan(2000)
+  })
+})

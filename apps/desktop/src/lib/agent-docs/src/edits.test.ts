@@ -162,6 +162,17 @@ describe('what goes in beside a line or a paragraph', () => {
     ).toContain('Intro')
   })
 
+  test('a paragraph over maths, and a pre, are each edited alone', () => {
+    expect(
+      edited('Intro ^i\n$$\na\n\nb\n$$\n\nAfter\n', [{ at: { block: 'i' }, delete: true }]),
+    ).toContain('$$\na\n\nb\n$$')
+    expect(
+      edited('<pre>\nx <b>y</b>\n\nz\n</pre>\n\n^p\n\nAfter\n', [
+        { at: { block: 'p' }, replace: '<pre>\nw\n</pre>' },
+      ]),
+    ).toBe('<pre>\nw\n</pre>\n\n^p\n\nAfter\n')
+  })
+
   test('a code block named on its closing fence is found and replaced whole', () => {
     expect(
       edited('a\n\n```\nx\n``` ^abc123\n\nb\n', [

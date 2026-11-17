@@ -612,10 +612,18 @@ function blockSection(source: string, wanted: string): string | null {
 
 type Lined = Pick<Row, 'text' | 'code' | 'matter' | 'fenceName'>
 
-const OPENERS: readonly (readonly [RegExp, string])[] = [
-  [/^ {0,3}\$\$\s*$/u, '$$'],
-  [/^ {0,3}<!--/u, '-->'],
-  [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
+const MATHS_CLOSE = /^\s*\$\$\s*(?:\^[\w-]+\s*)?$/u
+
+const OPENERS: readonly {
+  opens: RegExp
+  closes: (line: string, tag: string) => boolean
+}[] = [
+  { opens: /^\s*\$\$\s*$/u, closes: (line) => MATHS_CLOSE.test(line) },
+  { opens: /^\s*<!--/u, closes: (line) => line.includes('-->') },
+  {
+    opens: /^\s*<(pre|script|style|textarea)\b/iu,
+    closes: (line, tag) => line.toLowerCase().includes(`</${tag}>`),
+  },
 ]
 
 export interface Held {
@@ -625,18 +633,30 @@ export interface Held {
 
 export function heldBlocks(rows: readonly Lined[]): Map<number, Held> {
   const held = new Map<number, Held>()
+  const missing = new Set<string>()
   for (let at = 0; at < rows.length; at++) {
     const row = rows[at]
     if (!row || row.code || row.matter) continue
-    const opened = OPENERS.map(([opens, closer]) => [opens.exec(row.text), closer] as const).find(
-      ([match]) => match,
+    const found = OPENERS.map((kind) => ({ kind, match: kind.opens.exec(row.text) })).find(
+      (one) => one.match,
     )
-    if (!opened) continue
-    const [match, closer] = opened
-    if (!match || row.text.slice(match.index + match[0].length).includes(closer)) continue
+    if (!found?.match) continue
+    const tag = (found.match[1] ?? '').toLowerCase()
+    const key = `${found.kind.opens.source}${tag}`
+    const rest = row.text.slice(found.match.index + found.match[0].length)
+    if (missing.has(key) || (found.match[0].includes('<') && found.kind.closes(rest, tag))) continue
     let last = at + 1
-    while (last < rows.length && !rows[last]?.matter && !rows[last]?.text.includes(closer)) last++
-    if (last >= rows.length || rows[last]?.matter) continue
+    while (
+      last < rows.length &&
+      !rows[last]?.matter &&
+      !found.kind.closes(rows[last]?.text ?? '', tag)
+    ) {
+      last++
+    }
+    if (last >= rows.length || rows[last]?.matter) {
+      missing.add(key)
+      continue
+    }
     const block = { first: at, last }
     for (let line = at; line <= last; line++) held.set(line, block)
     at = last
@@ -644,14 +664,48 @@ export function heldBlocks(rows: readonly Lined[]): Map<number, Held> {
   return held
 }
 
-function codeGoesOn(rows: readonly Lined[], at: number): boolean {
-  if (!rows[at]?.code) return false
-  if (rows[at].text.trim() !== '') return true
-  for (let next = at + 1; next < rows.length; next++) {
-    const row = rows[next]
-    if (row?.text.trim() !== '') return row?.code === true
+const FENCE = /^\s*(?:`{3,}|~{3,})/u
+
+interface Layout {
+  held: Map<number, Held>
+  goesOn: boolean[]
+  runOf: number[]
+}
+
+function layoutOf(rows: readonly Lined[]): Layout {
+  const runOf: number[] = []
+  let start = -1
+  let fenced = false
+  let closed = false
+  for (let at = 0; at < rows.length; at++) {
+    const row = rows[at]
+    if (!row?.code) {
+      start = -1
+      runOf.push(-1)
+      continue
+    }
+    const fence = FENCE.test(row.text)
+    if (start === -1 || closed || (!fenced && fence)) {
+      start = at
+      fenced = fence
+      closed = false
+    } else if (fenced && fence) {
+      closed = true
+    }
+    runOf.push(start)
   }
-  return false
+
+  const goesOn: boolean[] = new Array<boolean>(rows.length).fill(false)
+  let next = -1
+  for (let at = rows.length - 1; at >= 0; at--) {
+    const row = rows[at]
+    const blank = (row?.text.trim() ?? '') === ''
+    goesOn[at] =
+      row?.code === true &&
+      (!blank || (next !== -1 && rows[next]?.code === true && runOf[next] === runOf[at]))
+    if (!blank) next = at
+  }
+  return { held: heldBlocks(rows), goesOn, runOf }
 }
 
 export interface BlockSpan {
@@ -664,39 +718,54 @@ export interface BlockSpan {
 export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
   const text = (line: number) => rows[line]?.text ?? ''
   const filled = (line: number) => text(line).trim() !== '' && rows[line]?.matter !== true
-  const blocks = heldBlocks(rows)
-  const held = (line: number) => filled(line) || codeGoesOn(rows, line) || blocks.has(line)
+  const { held: blocks, goesOn, runOf } = layoutOf(rows)
+  const held = (line: number) => filled(line) || goesOn[line] === true || blocks.has(line)
   const row = rows[at]
 
   if (row?.code && row.fenceName) {
-    let first = at
-    while (first > 0 && rows[first - 1]?.code) first--
-    return { first, last: at, indent: 0, apart: false }
+    return { first: runOf[at] ?? at, last: at, indent: 0, apart: false }
+  }
+
+  const reach = (from: number) => {
+    let first = from
+    while (first > 0 && held(first - 1) && blocks.get(first - 1) === blocks.get(first)) first--
+    return first
   }
 
   if (ownLine(text(at)) && !row?.code) {
     if (at > 0 && !held(at - 1)) {
       let last = at - 1
       while (last > 0 && !held(last)) last--
-      const closing = blocks.get(last)
-      let first = closing?.last === last ? closing.first : last
-      while (first > 0 && held(first - 1)) first--
-      return { first, last, indent: 0, apart: true }
+      return { first: reach(last), last, indent: 0, apart: true }
     }
-    let first = at
-    while (first > 0 && held(first - 1)) first--
-    return { first, last: at, indent: 0, apart: false }
+    return {
+      first: at > 0 && blocks.has(at - 1) ? reach(at - 1) : reach(at),
+      last: at,
+      indent: 0,
+      apart: false,
+    }
   }
 
-  if (row && !row.code && HEADING.test(row.text))
+  if (row && !row.code && HEADING.test(row.text)) {
     return { first: at, last: at, indent: 0, apart: false }
+  }
 
   const item = itemLines(rows, at)
   if (item) return { ...item, apart: false }
 
+  const inside = blocks.get(at)
+  if (inside) return { first: inside.first, last: inside.last, indent: 0, apart: false }
+
   const stops = (line: number) => {
     const one = rows[line]
-    return !filled(line) || !one || one.code || LIST_ITEM.test(one.text) || HEADING.test(one.text)
+    return (
+      !filled(line) ||
+      !one ||
+      one.code ||
+      blocks.has(line) ||
+      LIST_ITEM.test(one.text) ||
+      HEADING.test(one.text)
+    )
   }
   let first = at
   let last = at
@@ -711,34 +780,56 @@ export function itemLines(
   rows: readonly Lined[],
   at: number,
 ): { first: number; last: number; indent: number } | null {
-  const first = itemStart(rows, at)
+  const blocks = heldBlocks(rows)
+  const first = itemStart(rows, at, blocks)
   if (first === null) return null
 
   const indent = LIST_ITEM.exec(rows[first]?.text ?? '')?.[1]?.length ?? 0
+  const under = (line: number) => depthOf(rows[line]?.text ?? '') > indent
   let last = first
   while (last + 1 < rows.length) {
     const next = rows[last + 1]
     if (!next) break
-    const inside = depthOf(next.text) > indent
-    if (next.code ? next.text.trim() !== '' && !inside : !next.text.trim() || !inside) break
+    const held = blocks.get(last + 1)
+    if (held && under(held.first)) {
+      last = held.last
+      continue
+    }
+    if (!next.code && !next.text.trim()) {
+      let ahead = last + 2
+      while (ahead < rows.length && !rows[ahead]?.text.trim()) ahead++
+      if (ahead < rows.length && under(ahead) && (rows[ahead]?.code || blocks.has(ahead))) {
+        last = ahead - 1
+        continue
+      }
+      break
+    }
+    const inside = under(last + 1)
+    if (next.code ? next.text.trim() !== '' && !inside : !inside) break
     last++
   }
   return { first, last, indent }
 }
 
-function itemStart(rows: readonly Lined[], at: number): number | null {
+function itemStart(rows: readonly Lined[], at: number, blocks: Map<number, Held>): number | null {
   const line = rows[at]?.text ?? ''
-  if (!rows[at]?.code && LIST_ITEM.test(line)) return at
+  if (!rows[at]?.code && !blocks.has(at) && LIST_ITEM.test(line)) return at
 
-  let opening = at
+  const block = rows[at]?.code === true || blocks.has(at)
+  let opening = blocks.get(at)?.first ?? at
   while (rows[at]?.code && opening > 0 && rows[opening - 1]?.code) opening--
   const depth = depthOf(rows[opening]?.text ?? line)
   if (depth === 0) return null
   for (let up = opening - 1; up >= 0; up--) {
     const above = rows[up]
-    if (!above || above.matter || (!above.code && !above.text.trim())) return null
-    const marker = above.code ? null : LIST_ITEM.exec(above.text)
+    if (!above || above.matter) return null
+    if (!above.code && !above.text.trim()) {
+      if (block) continue
+      return null
+    }
+    const marker = above.code || blocks.has(up) ? null : LIST_ITEM.exec(above.text)
     if (marker && (marker[1]?.length ?? 0) < depth) return up
+    if (block && !above.code && !marker && depthOf(above.text) === 0) return null
   }
   return null
 }
@@ -784,11 +875,18 @@ export function blocksOf(text: string): NoteBlock[] {
   let run: NoteBlock | null = null
   let after = false
 
+  let listing = false
+
   const rows = rowsOf(text)
-  const blocks = heldBlocks(rows)
+  const { held: blocks, goesOn } = layoutOf(rows)
   for (const row of rows) {
-    const inside = blocks.has(row.line) && blocks.get(row.line)?.first !== row.line
-    if (row.matter || (row.text.trim() === '' && !codeGoesOn(rows, row.line) && !inside)) {
+    const holding = blocks.get(row.line)
+    const inside = holding !== undefined && holding.first !== row.line
+    const closed = blocks.get(row.line - 1)
+    const bound =
+      holding?.first === row.line ? holding : closed?.last === row.line - 1 ? closed : null
+    const edge = !!bound && !(listing && depthOf(rows[bound.first]?.text ?? '') > 0)
+    if (row.matter || (row.text.trim() === '' && goesOn[row.line] !== true && !inside)) {
       current = null
       run = null
       after = false
@@ -803,10 +901,11 @@ export function blocksOf(text: string): NoteBlock[] {
 
     const heading = !row.code && HEADING.test(row.text)
     const starts = heading || (!row.code && LIST_ITEM.test(row.text)) || after
-    if (!current || (starts && !inside)) {
+    if (!current || (starts && !inside) || edge) {
       current = { line: row.line, text: firstWords(row.text), id: null }
       found.push(current)
       run ??= current
+      listing = !row.code && !inside && LIST_ITEM.test(row.text)
     }
 
     after = heading

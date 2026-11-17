@@ -27,13 +27,15 @@ function listed(row: Row | undefined): boolean {
 }
 
 function endOf(rows: readonly Row[], line: number): number {
-  const held = heldBlocks(rows).get(line)
+  const blocks = heldBlocks(rows)
+  const held = blocks.get(line)
   if (held?.first === line) return held.last
 
   let end = line
   for (;;) {
     const next = rows[end + 1]
     if (!next) return end
+    if (!rows[end]?.code && blocks.has(end + 1)) return end
     if (rows[end]?.code ? !next.code : !next.text.trim() || listed(next) || isHeading(next.text)) {
       return end
     }
@@ -50,10 +52,11 @@ export function namedBlock(
   const row = rows[line]
   if (!row || row.matter || (!row.code && isHeading(row.text))) return null
   if (listed(row)) return namedItem(rows, source, line, id)
-  const item = row.code ? itemLines(rows, line) : null
-  if (item) return namedItem(rows, source, item.first, id)
+  const blocks = heldBlocks(rows)
+  const item = row.code || blocks.has(line) ? itemLines(rows, line) : null
+  if (item && item.first !== line) return namedItem(rows, source, item.first, id)
 
-  const from = heldBlocks(rows).get(line)?.first ?? line
+  const from = blocks.get(line)?.first ?? line
   const end = endOf(rows, from)
   const lines = source.split('\n')
   const last = lines[end] ?? ''
@@ -83,8 +86,18 @@ function namedItem(
 ): { id: string; source: string } {
   const lines = source.split('\n')
   const item = itemLines(rows, line)
+  const blocks = heldBlocks(rows)
   let end = line
-  while (item && end < item.last && !listed(rows[end + 1]) && !rows[end + 1]?.code) end++
+  while (
+    item &&
+    end < item.last &&
+    !listed(rows[end + 1]) &&
+    !rows[end + 1]?.code &&
+    !blocks.has(end + 1) &&
+    rows[end + 1]?.text.trim()
+  ) {
+    end++
+  }
 
   for (let at = line; at <= end; at++) {
     const had = blockIdOf(lines[at] ?? '')
