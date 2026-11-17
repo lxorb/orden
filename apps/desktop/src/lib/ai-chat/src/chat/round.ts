@@ -34,7 +34,8 @@ function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } |
 
   if (ask.perMessage && /per-turn effort|per-message effort|mid-conversation/i.test(said)) {
     learn(provider, model, { perMessage: false })
-    return { ask: { ...ask, perMessage: false, base: ask.effort }, adjusted: {} }
+    const steps = ask.steps.filter((one) => one.role !== 'effort')
+    return { ask: { ...ask, steps, perMessage: false, base: ask.effort }, adjusted: {} }
   }
   const aboutEffort = refusesEffort(said, refused.param)
   if (refusesReasoning(said, refused.param) || (aboutEffort && takesNoEffort(said, refused.code))) {

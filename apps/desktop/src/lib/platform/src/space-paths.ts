@@ -15,11 +15,23 @@ function steps(path: string): string[] {
   return out
 }
 
-function sameName(one: string, other: string, folds: () => boolean): boolean {
+function win32Name(name: string, last: boolean): string {
+  if (/^\.*$/.test(name)) return name
+  return last ? name.replace(/[. ]+$/, '') : name.replace(/\.$/, '')
+}
+
+const DROPPED = /[. ]$/
+
+function spelled(name: string, last: boolean): string {
+  const one = name.normalize('NFC')
+  return DROPPED.test(one) && platform() === 'windows' ? win32Name(one, last) : one
+}
+
+function sameName(one: string, other: string, folds: () => boolean, last: boolean): boolean {
   if (one === other) return true
 
-  const a = one.normalize('NFC')
-  const b = other.normalize('NFC')
+  const a = spelled(one, last)
+  const b = spelled(other, last)
   return a === b || (a.toLowerCase() === b.toLowerCase() && folds())
 }
 
@@ -32,7 +44,10 @@ function foldsAt(path: string): boolean {
 }
 
 function holds(head: readonly string[], file: readonly string[], folds: () => boolean): boolean {
-  return head.length <= file.length && head.every((one, at) => sameName(one, file[at] ?? '', folds))
+  return (
+    head.length <= file.length &&
+    head.every((one, at) => sameName(one, file[at] ?? '', folds, at === file.length - 1))
+  )
 }
 
 export function samePath(
@@ -59,9 +74,8 @@ export function rootedAt<T extends { readonly root: string }>(
 }
 
 export function pathKeyAs(path: string, folds: boolean): string {
-  const key = steps(path)
-    .map((one) => one.normalize('NFC'))
-    .join('/')
+  const parts = steps(path)
+  const key = parts.map((one, at) => spelled(one, at === parts.length - 1)).join('/')
   return folds ? key.toLowerCase() : key
 }
 

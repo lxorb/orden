@@ -187,7 +187,9 @@ function put(field: Field, value: unknown): void {
 
 async function settingOf(call: Call): Promise<{ key: string; setting: Setting }> {
   const key = need(call, 'key')
-  const setting = SETTINGS[key] ?? (await declaredSetting(key, await rows()))
+  const setting =
+    (Object.hasOwn(SETTINGS, key) ? SETTINGS[key] : undefined) ??
+    (await declaredSetting(key, await rows()))
   if (!setting) {
     throw new Refused(
       'no_such_setting',
@@ -220,7 +222,7 @@ async function paneOf(prefix: string, call: Call): Promise<AgentAnswer | null> {
 
 export async function readSetting(call: Call): Promise<AgentAnswer> {
   const named = need(call, 'key')
-  if (!named.includes('.') && !(named in SETTINGS)) {
+  if (!named.includes('.') && !Object.hasOwn(SETTINGS, named)) {
     const pane = await paneOf(named, call)
     if (pane) return pane
   }

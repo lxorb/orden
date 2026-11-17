@@ -23,6 +23,7 @@ export {
   placeFor,
   placeOf,
   reachable,
+  reachesSpace,
   sharedSource,
   tabsInReach,
   writableAt,

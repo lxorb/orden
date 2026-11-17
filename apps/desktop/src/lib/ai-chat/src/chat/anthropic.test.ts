@@ -85,6 +85,51 @@ describe('a streamed message', () => {
     expect(heard[0]?.model).toBe('claude-opus-5-5')
   })
 
+  test('a closing count that says every field keeps the cache written, and wins over the first', () => {
+    const reader = anthropic.reader(MODEL.window)
+    reader.heard({
+      type: 'message_start',
+      message: {
+        model: 'claude-opus-5-5',
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 2000,
+          cache_read_input_tokens: 500,
+          output_tokens: 1,
+        },
+      },
+    })
+    const said = reader.heard({
+      type: 'message_delta',
+      delta: { stop_reason: 'end_turn' },
+      usage: {
+        input_tokens: 12,
+        cache_creation_input_tokens: 2048,
+        cache_read_input_tokens: 1000,
+        output_tokens: 89,
+      },
+    })
+    expect(said.usage).toMatchObject({ input: 12 + 2048 + 1000, cached: 1000, output: 89 })
+
+    const partly = anthropic.reader(MODEL.window)
+    partly.heard({
+      type: 'message_start',
+      message: {
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 2000,
+          cache_read_input_tokens: 500,
+        },
+      },
+    })
+    const after = partly.heard({
+      type: 'message_delta',
+      delta: {},
+      usage: { input_tokens: 10, output_tokens: 7 },
+    })
+    expect(after.usage).toMatchObject({ input: 10 + 2000 + 500, cached: 500, output: 7 })
+  })
+
   test('an answer with no call ends the turn', () => {
     const { answer, reader } = read('anthropic-2')
     expect(answer.ending).toBe('end')

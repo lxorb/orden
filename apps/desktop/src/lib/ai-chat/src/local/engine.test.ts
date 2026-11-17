@@ -371,6 +371,25 @@ describe('a Claude Code thread', () => {
     )
   })
 
+  test('a chat cut back for Ask again opens a new session seeded with only what is left', async () => {
+    const built = engine(CLAUDE)
+    const on = thread(CLAUDE)
+    await send(CLAUDE, on, 'one', built)
+    await send(CLAUDE, on, 'two', built)
+    on.turns.splice(2)
+    built.rewound?.(on)
+    await send(CLAUDE, on, 'two', built)
+
+    expect(opened).toHaveLength(2)
+    expect(opened[0]?.closed).toBe(true)
+    expect(opened[1]?.said[0]?.text).toBe(
+      [
+        '<conversation>\n<user>\none\n</user>\n<assistant>\nHerons wait.\n</assistant>\n</conversation>',
+        '<user>\ntwo\n</user>',
+      ].join('\n\n'),
+    )
+  })
+
   test('a session that ended is opened again and seeded', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)

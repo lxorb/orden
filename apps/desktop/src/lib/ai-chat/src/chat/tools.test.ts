@@ -12,6 +12,11 @@ vi.mock('../../../platform/src/tauri', () => ({
   },
 }))
 
+vi.mock('../helpers/run', () => ({
+  answerText: () => '',
+  helperHere: () => Promise.reject(new Error('the helpers could not start')),
+}))
+
 const { crateTools, outputIn } = await import('./tools')
 
 const CLAUDE = { id: 'anthropic', kind: 'anthropic' as const, name: 'Claude', model: '' }
@@ -74,6 +79,16 @@ describe('the crate is asked', () => {
     })
     expect(output).toEqual({
       text: 'edit_note is not a tool in this mode',
+      images: [],
+      error: true,
+    })
+  })
+})
+
+describe('a helper call', () => {
+  test('that fails is an answer the model reads, not a failed turn', async () => {
+    expect(await crateTools.call(CLAUDE, 'full', 'run_agent', { prompt: 'go' }, 't1')).toEqual({
+      text: 'the helpers could not start',
       images: [],
       error: true,
     })
@@ -147,5 +162,17 @@ describe('an answer, as orden mcp writes it', () => {
         },
       }),
     ).toMatchObject({ approval: 'a17', error: false })
+  })
+})
+
+describe('an account the vault moved to a fresh id', () => {
+  test('asks the crate under the agent rights it had before the move', async () => {
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ anthropic: 'anthropic-7' })
+    answer = { instructions: '', tools: [] }
+
+    await crateTools.list({ ...CLAUDE, id: 'anthropic-7' }, 'plan')
+
+    expect(asked.at(-1)?.args.agent).toEqual({ id: 'anthropic', name: 'Claude', readerTabs: true })
   })
 })

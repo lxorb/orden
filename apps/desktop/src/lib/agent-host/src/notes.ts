@@ -234,12 +234,19 @@ export async function setTask(call: Call): Promise<AgentAnswer> {
 
   const read = await notes.readNote(at(note), ['text', 'tasks'])
   const named = anchor as { task: unknown; nth?: unknown }
-  const row = read.tasks?.find(
+  const rows = (read.tasks ?? []).filter(
     (one) =>
       'task' in one.anchor &&
       one.anchor.task === named.task &&
       (named.nth === undefined || one.anchor.nth === named.nth),
   )
+  if (rows.length > 1) {
+    throw new Refused(
+      'ambiguous',
+      `the task ${String(named.task)} is in ${relative} ${String(rows.length)} times: say nth`,
+    )
+  }
+  const [row] = rows
   if (!row) throw new Refused('not_found', `there is no task ${String(named.task)} in ${relative}`)
   if (row.done === wanted) return done({ path: relative, rev: read.rev, changed: false })
 

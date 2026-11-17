@@ -39,6 +39,16 @@ describe('a lock', () => {
     unlocks.moved('/space/Inside', '/space/Moved', '/space')
     expect(unlocks.shut([{ ...FOLDER, key: 'Moved' }])).toBe(false)
   })
+
+  test('let to agents stays let to them when its path or its space is renamed', () => {
+    unlocks.unlock([FOLDER])
+    unlocks.letAgents([FOLDER], true)
+    unlocks.moved('/space/Inside', '/space/Moved', '/space')
+    const moved = { ...FOLDER, key: 'Moved' }
+    expect(unlocks.agentsMay([moved])).toBe(true)
+    unlocks.spaceMoved('/space', '/renamed')
+    expect(unlocks.agentsMay([{ ...moved, root: '/renamed' }])).toBe(true)
+  })
 })
 
 describe('locking again', () => {

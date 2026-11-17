@@ -20,7 +20,7 @@ import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
 import { movedIn, movedPath, withExtension } from './moving'
-import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
+import { agentsMayAll, insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
 
 const SEARCH_PATIENCE = 8000
 
@@ -70,6 +70,7 @@ export async function newNote(args: Said): Promise<unknown> {
     if (!append && !prepend) {
       throw new Error(`${relative} is already there: say append or prepend to add to it`)
     }
+    agentsMayAll(path, relative)
 
     const after = append ? joined(before, content) : joined(content, before)
     await workspace.replaceInNotes([
@@ -191,6 +192,7 @@ export async function writeFile(args: Said): Promise<unknown> {
   const path = insideSpace(space.root, relative)
   const content = words(args, 'content')
   if (content === null) throw new Error('say the content')
+  agentsMayAll(path, relative)
 
   const before = await workspace.noteText(path)
   if (before === null) {
@@ -218,6 +220,7 @@ export async function moveFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const from = relativeIn(args, 'path')
   const to = relativeIn(args, 'to')
+  agentsMayAll(insideSpace(space.root, from), from)
 
   if ((await workspace.noteText(insideSpace(space.root, from))) === null) {
     throw new Error(`there is no note at ${from}`)
@@ -230,6 +233,7 @@ export async function deleteFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
+  agentsMayAll(path, relative)
 
   if ((await workspace.noteText(path)) === null) {
     throw new Error(`there is no note at ${relative}`)

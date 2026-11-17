@@ -1,6 +1,7 @@
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands, type Command } from '../../commands/src/api'
-import { invoke, answerNextDialog } from '../../platform/src/api'
+import { invoke, answerNextDialog, relativeTo } from '../../platform/src/api'
+import { readable, readableAll } from './guarded'
 import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -165,6 +166,16 @@ function asksOfSetting(id: string): boolean {
   return /^(theme|scheme|accent|properties|code-theme):/.test(id) || id === 'read-only'
 }
 
+function exportsOnlyWhatAgentsMay(id: string): void {
+  const space = workspace.activeSpace
+  if (id === 'export-space') {
+    if (space) readableAll(space.root, space.name)
+    return
+  }
+  const front = workspace.active?.path
+  if (front) readable(front, space ? relativeTo(space.root, front) : front)
+}
+
 export async function runCommand(call: Call): Promise<AgentAnswer> {
   placeFor(call, null)
 
@@ -179,6 +190,7 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
     readersOwn(call, `${id} is the reader's to press`)
   }
   const path = maybe(call, 'path')
+  if (id.startsWith('export-')) exportsOnlyWhatAgentsMay(id)
   const scopes = path !== null && opensADialog(id) ? [] : scopesOf(id)
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
   for (const scope of scopes ?? []) needScope(call, scope, id)

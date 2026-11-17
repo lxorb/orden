@@ -83,7 +83,7 @@ export interface VaultWorld {
   writeSecret(name: string, secret: string): Promise<void>
   deviceName(): string
   local(): Promise<Contents>
-  apply(contents: Contents, before: Contents): Promise<void>
+  apply(contents: Contents, before: Contents, moved: Record<string, string>): Promise<void>
   loadBase(account: string): Base | null
   keepBase(account: string, base: Base | null): void
 }
@@ -396,11 +396,13 @@ export class Vault {
     }
 
     const base = this.world.loadBase(account)
-    const contents = remote ? merged(base, here, remote) : here.contents
+    const { contents, moved } = remote
+      ? merged(base, here, remote)
+      : { contents: here.contents, moved: {} }
     const prints = await printsOf(contents.keys)
     this.seen = contents.seen
     if (!agrees(baseOf(here.contents, here.prints), contents, prints)) {
-      await this.world.apply(contents, local)
+      await this.world.apply(contents, local, moved)
     }
     this.standing = 'open'
     if (remote && agrees(baseOf(remote.contents, remote.prints), contents, prints)) {

@@ -31,6 +31,7 @@ import {
   onDisk,
   type Place,
   placeFor,
+  reachesSpace,
   placeOf,
   writableAt,
 } from '../../agent-verbs/src/api'
@@ -113,7 +114,11 @@ function todoOut(todo: Todo) {
 function spaceIdOf(call: Call): string | null {
   const named = maybe(call, 'space')
   if (named !== null) return placeFor(call, named).space.id
-  return workspace.activeSpace?.id ?? null
+  const open = workspace.activeSpace?.id ?? null
+  if (!reachesSpace(call, open)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  return open
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -164,9 +169,14 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   const label = maybe(call, 'label')
   const limit = typeof call.args.limit === 'number' ? Math.max(1, call.args.limit) : 50
   const shown = sortedTodos(
-    shownTodos(todos.todos, { onlySpace: only, space: spaceIdOf(call), label, today: dayOf() }),
+    shownTodos(todos.todos, {
+      onlySpace: only,
+      space: only ? spaceIdOf(call) : null,
+      label,
+      today: dayOf(),
+    }),
     'deadline',
-  ).filter((one) => flag(call, 'done') || !one.done)
+  ).filter((one) => (flag(call, 'done') || !one.done) && reachesSpace(call, one.space))
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 
@@ -176,11 +186,11 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
   const patch = patchOf(call)
-  const made = await todos.add({
-    ...patch,
-    title,
-    space: 'space' in call.args ? (patch.space ?? null) : (workspace.activeSpace?.id ?? null),
-  })
+  const space = 'space' in call.args ? (patch.space ?? null) : spaceIdOf(call)
+  if (!reachesSpace(call, space)) {
+    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+  }
+  const made = await todos.add({ ...patch, title, space })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
@@ -189,7 +199,8 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await model()
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
+  if (!was || !reachesSpace(call, was.space))
+    throw new Refused('no_such_file', `there is no todo ${id}`)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
   const kept = await todos.update(id, patchOf(call))
@@ -280,11 +291,12 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
-  const folder = judgedForWriting(where.folder ?? folderOf(relative)).replace(/^\.$/, '')
+  const looksIn = (where.folder ?? folderOf(relative)).trim()
+  const folder = looksIn === '' || looksIn === '.' ? '' : judgedForWriting(looksIn)
   const rows = await rowsStore()
   const template = await templateOf(place, base, rows.of(place.space.name))
   const name = noteName(maybe(call, 'title') ?? 'Untitled')
-  const path = await freePath(place, folder === '.' ? '' : folder, name)
+  const path = await freePath(place, folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
 
