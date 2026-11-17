@@ -61,6 +61,7 @@ class Unlocks {
   private proven = false
   private grace: ReturnType<typeof setTimeout> | null = null
   private watching = false
+  private wasAway = false
 
   get any(): boolean {
     return this.open.size > 0
@@ -120,8 +121,8 @@ class Unlocks {
 
   setRelock(minutes: number): void {
     if (!(RELOCK_MINUTES as readonly number[]).includes(minutes)) return
-    this.relock = minutes
     keep(RELOCK_KEY, String(minutes))
+    this.retime(minutes)
   }
 
   private remapped(to: (one: string) => string): void {
@@ -149,8 +150,20 @@ class Unlocks {
     })
   }
 
+  heardRelock(): void {
+    this.retime(readRelock())
+  }
+
+  private retime(minutes: number): void {
+    if (minutes === this.relock) return
+    this.relock = minutes
+    if (this.proven) this.prove()
+    if (this.wasAway) this.away()
+  }
+
   away(): void {
     this.settle()
+    this.wasAway = true
     if (!this.open.size || this.relock === NEVER) return
     if (this.relock === 0) {
       this.lockAll()
@@ -161,6 +174,7 @@ class Unlocks {
 
   back(): void {
     this.settle()
+    this.wasAway = false
   }
 
   private settle(): void {
@@ -188,3 +202,9 @@ class Unlocks {
 }
 
 export const unlocks = new Unlocks()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === RELOCK_KEY) unlocks.heardRelock()
+  })
+}

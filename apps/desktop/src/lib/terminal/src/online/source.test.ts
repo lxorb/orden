@@ -12,7 +12,11 @@ const seen = vi.hoisted((): { words: string | null; written: string[]; passes: n
 }))
 
 vi.mock('../../../accounts/src/account.svelte', () => ({
-  account: { accountToken: 'token', forgetWithSession: () => undefined },
+  account: {
+    accountToken: 'token',
+    forgetWithSession: () => undefined,
+    holdsNoAccount: () => undefined,
+  },
 }))
 vi.mock('../../../sync-store/src/api', () => ({ sync: { version: 2 } }))
 vi.mock('../../../sync-client/src/runner.svelte', () => ({

@@ -278,8 +278,19 @@ describe('choosing a key', () => {
     expect(on('mac', 'Meta-k')).toBeNull()
   })
 
+  test('is refused where it names no key the keyboard has', () => {
+    const { shortcuts } = registry
+    for (const key of ['Ctrl+Shift+K', 'banana', 'Mod-Shift-ctrl k', 'Mod-k k']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toBe('That is not a key combination.')
+    }
+    for (const key of ['F5', 'Mod-F13', 'ContextMenu', 'Mod-Space', 'Mod Mod', 'Mod-لا', 'Mod-𝑥']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toBeNull()
+    }
+  })
+
   test('is refused where it would fire while typing', () => {
     const { shortcuts } = registry
+    expect(shortcuts.refuse('لا')).not.toBeNull()
     expect(shortcuts.refuse('k')).not.toBeNull()
     expect(shortcuts.refuse('Shift-k')).not.toBeNull()
     expect(shortcuts.refuse('F7')).toBeNull()
@@ -308,6 +319,14 @@ describe('choosing a key', () => {
   test('but a list’s own row may have it, where nobody is typing', () => {
     const { shortcuts } = registry
     expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
+  })
+
+  test('and a list’s own row may have a letter, where nobody is typing', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.refuse('r', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('x', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('Shift-x', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('k', 'format.bold')).not.toBeNull()
   })
 
   test('and so may a row whose own key it is', () => {
@@ -628,10 +647,46 @@ describe('two shortcuts on one key', () => {
     ])
   })
 
-  test('leaves the contextual ones out, which is how they share the arrows', () => {
+  test('leaves the contextual ones of other places out, which is how they share the arrows', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('table.below', 'ArrowUp')).toEqual([])
+    expect(shortcuts.conflicts('canvas.nudge.up', 'ArrowUp')).toEqual([])
     expect(shortcuts.conflicts('app.new', 'ArrowDown')).toEqual([])
+    expect(shortcuts.conflicts('table.below', 'ArrowUp').map((one) => one.id)).toEqual([
+      'table.above',
+    ])
+  })
+
+  test('counts the contextual ones that answer in the same place', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('canvas.tool.rect', 'c').map((one) => one.id)).toEqual([
+      'canvas.tool.text',
+    ])
+    expect(shortcuts.conflicts('canvas.tool.rect', 'Mod-Alt-=').map((one) => one.id)).toEqual([
+      'canvas.zoom.in',
+    ])
+  })
+
+  test('counts the list keys the explorer answers to as its own place', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('explorer.hidden', 'Mod-a').map((one) => one.id)).toEqual([
+      'tree.select-all',
+    ])
+    const held = shortcuts.keyFor('explorer.list')
+    expect(held).toBeTruthy()
+    expect(shortcuts.conflicts('tree.rename', held ?? '').map((one) => one.id)).toEqual([
+      'explorer.list',
+    ])
+  })
+
+  test('finds no contextual row clashing as the keys ship, on any system', () => {
+    for (const platform of ['mac', 'win', 'linux']) {
+      const one = Object.create(registry.shortcuts) as typeof registry.shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      for (const entry of registry.SHORTCUTS.filter((row) => row.contextual)) {
+        const key = one.keyFor(entry.id)
+        if (key) expect(one.conflicts(entry.id, key), `${platform} ${entry.id}`).toEqual([])
+      }
+    }
   })
 
   test('is resolved by taking the key, which leaves the other with none', () => {

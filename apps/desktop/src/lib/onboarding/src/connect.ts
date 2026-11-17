@@ -66,15 +66,22 @@ export async function signInWith(plan: Plan): Promise<Connecting> {
   }
 
   const local = kind as LocalKind
-  const { account } = await accountOf(local)
+  const { account, made } = await accountOf(local)
   const standing = await plans.check({ id: account.id, kind: local })
   if (standing.state === 'in') return { state: 'in', id: account.id }
+  const takeBack = async () => {
+    if (made) (await import('../../ai-providers/src/api')).ai.remove(account.id)
+  }
   if (standing.state === 'missing' || !standing.program) {
+    await takeBack()
     void openExternal(INSTALL[local])
     return { state: 'failed', said: 'Not installed' }
   }
   const { signIn } = await (await import('../../ai-providers/src/api')).localCli()
-  await signIn(local, standing.program, standing.home)
+  if (!(await signIn(local, standing.program, standing.home).catch(() => false))) {
+    await takeBack()
+    return { state: 'failed', said: 'Could not sign in.' }
+  }
   plans.watch({ id: account.id, kind: local })
   return { state: 'waiting', id: account.id }
 }
@@ -87,10 +94,12 @@ async function keyed(account: Account, typed: string, made: boolean): Promise<st
     await withModel(account)
     return null
   } catch (error) {
-    if (made) ai.remove(account.id)
-    if (before) await writeKey(account.id, before).catch(() => undefined)
+    if (made) {
+      await forgetKey(account.id, true).catch(() => undefined)
+      ai.remove(account.id)
+    } else if (before) await writeKey(account.id, before).catch(() => undefined)
     else await forgetKey(account.id).catch(() => undefined)
-    return message(error, 'that key could not be saved')
+    return message(error, 'That key could not be saved.')
   }
 }
 

@@ -6,6 +6,7 @@
   import Mark from './Mark.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
+  import { closeOnBack } from '../../ui-kit/src/api'
 
   const LENGTH = 6
   const blank = () => Array.from({ length: LENGTH }, () => '')
@@ -34,7 +35,6 @@
   $effect(() => {
     if (entered.length !== LENGTH || entered === submitted) return
     submitted = entered
-    const here = setup.stillHere()
     void account.code(entered).then((accepted) => {
       account.open = false
       if (!accepted) {
@@ -44,13 +44,12 @@
         return
       }
       signed = true
+      setup.signedIn = true
       whenLoaded(
         settling,
         ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
       )
-      setTimeout(() => {
-        if (here()) setup.next()
-      }, 900)
+      setTimeout(() => setup.next('account'), 900)
     })
   })
 
@@ -78,6 +77,13 @@
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
 
+  function changeEmail() {
+    account.step = 'email'
+    account.error = null
+  }
+
+  $effect(() => closeOnBack(asking && !signed, changeEmail))
+
   function send() {
     if (typed && !account.busy) void account.requestCode()
   }
@@ -90,6 +96,7 @@
 <Screen
   title="Log in or sign up"
   {head}
+  onback={asking && !signed ? changeEmail : null}
   primary={asking || signed
     ? null
     : {
@@ -98,7 +105,7 @@
         busy: account.busy,
         onclick: send,
       }}
-  quiet={signed ? null : { label: 'Use without an account', onclick: () => setup.next() }}
+  quiet={signed ? null : { label: 'Use without an account', onclick: () => setup.next('account') }}
 >
   {#if signed}
     <svg class="tick" viewBox="0 0 24 24" aria-hidden="true">

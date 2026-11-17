@@ -58,7 +58,6 @@
     if (!chosen || bringing) return
     const app = chosen.id === UNLISTED ? null : chosen.id
     const how = way
-    const here = setup.stillHere()
     if (how && how !== 'computer') {
       bringing = true
       const outcome = await bring()
@@ -68,10 +67,9 @@
       setup.tell(outcome.trouble)
       setup.got('notes')
     }
-    if (!here()) return
     setup.answer({ notes: app })
     await settleMarkdown(app)
-    if (here()) setup.next()
+    setup.next('notes')
   }
 </script>
 
@@ -94,7 +92,7 @@
     busy: bringing,
     onclick: () => void done(),
   }}
-  quiet={{ label: 'Skip', disabled: bringing, onclick: () => setup.next() }}
+  quiet={{ label: 'Skip', disabled: bringing, onclick: () => setup.next('notes') }}
 >
   {#if view === 'main'}
     <div class="o-grid rise" role="radiogroup" aria-label="Bring your notes">

@@ -3,6 +3,7 @@ import type { EditorView } from '@orden/editor'
 import { modes } from '../../modes/src/api'
 import { declaredPanes } from './preferences'
 import { shortcuts, SHORTCUTS } from '../../shortcuts/src/api'
+import { showCombination } from '../../ui-kit/src/api'
 import { themeDeclarations } from './appearance-pane'
 import { relockField } from './general-pane'
 import type { Field } from './fields'
@@ -28,7 +29,16 @@ function shortcutFields(): Field[] {
       label: one.label(),
       hint: `The key that runs ${one.label()}, as the keys file writes it; empty for none.`,
       placeholder: '',
-      check: (key) => (key === '' ? null : shortcuts.refuse(key, one.id)),
+      check: (key) => {
+        if (key === '') return null
+        const holder = shortcuts.conflicts(one.id, key)[0]
+        return (
+          shortcuts.refuse(key, one.id) ??
+          (holder
+            ? `${showCombination(key, shortcuts.platform)} already runs ${holder.label()}.`
+            : null)
+        )
+      },
       get: () => shortcuts.keyFor(one.id) ?? '',
       set: (key) => shortcuts.set(one.id, key === '' ? null : key),
     })),

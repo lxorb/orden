@@ -50,6 +50,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
   account: {
     accountToken: 'token',
     forgetWithSession: (clear: () => void) => session.forgets.push(clear),
+    holdsNoAccount: () => undefined,
   },
   api: {
     saveSettings: (_token: string, patch: unknown) => {

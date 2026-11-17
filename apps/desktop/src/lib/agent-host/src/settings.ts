@@ -142,9 +142,14 @@ async function rows(): Promise<Field[]> {
 async function declaredSetting(key: string, all: Field[]): Promise<Setting | null> {
   const { refusal, schemaOf } = await settingSchema()
   const named = all.filter((one) => one.key === key)
-  const schema = schemaOf(named)[key]
+  const declared = schemaOf(named)[key]
   const [first] = named
-  if (!first || !schema) return null
+  if (!first || !declared) return null
+  const open = named.find((one) => one.kind === 'select' && one.open)
+  const schema =
+    open?.kind === 'select' && open.options.length
+      ? { ...declared, enum: open.options.map((one) => one.value) }
+      : declared
 
   const read = () =>
     schema.type === 'list'

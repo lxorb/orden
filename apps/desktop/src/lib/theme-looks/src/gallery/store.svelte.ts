@@ -104,12 +104,14 @@ class Store {
     this.error = null
     this.refused = { id: one.id, notes: [] }
 
+    const worn = !this.installed(one.id) || this.using(one.id)
+
     try {
       const refused = await this.write(one)
       this.refused = { id: one.id, notes: refused }
 
       await theme.reload()
-      this.use(one.id)
+      if (worn) this.use(one.id)
     } catch (error) {
       this.error = message(error, 'could not install that theme')
     } finally {

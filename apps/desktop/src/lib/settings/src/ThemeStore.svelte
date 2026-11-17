@@ -47,6 +47,12 @@
 
   $effect(() => (store.open ? overlays.show(() => store.close()) : undefined))
   $effect(() => closeOnBack(store.open, () => store.close()))
+  $effect(() => closeOnBack(store.open && store.chosen !== null, leavePreview))
+
+  function leavePreview() {
+    store.opened = null
+    previewing = null
+  }
 
   function inject(id: string, css: string) {
     let style = document.getElementById(id)
@@ -131,14 +137,7 @@
   >
     <header role="presentation">
       {#if store.chosen}
-        <button
-          class="orden-glyph back"
-          onclick={() => {
-            store.opened = null
-            previewing = null
-          }}
-          aria-label="Back"
-        >
+        <button class="orden-glyph back" onclick={leavePreview} aria-label="Back">
           <svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
         </button>
         <p class="title">{store.chosen.name}</p>
