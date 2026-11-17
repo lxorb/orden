@@ -1,7 +1,6 @@
 import { locksHere, locksWork } from '../../platform/src/api'
 
 const LEADER = 'orden-sync'
-const FORMER_LEADER = 'nib-sync'
 
 export interface Leadership {
   release(): void
@@ -23,14 +22,10 @@ export async function leadSync(signal?: AbortSignal, account = ''): Promise<Lead
     const refused = () => resolve(signal?.aborted ? null : nobody)
     try {
       locks
-        .request(`${LEADER}:${account}`, options, () =>
-          locks
-            .request(`${FORMER_LEADER}:${account}`, options, () => {
-              resolve({ release })
-              return held
-            })
-            .catch(refused),
-        )
+        .request(`${LEADER}:${account}`, options, () => {
+          resolve({ release })
+          return held
+        })
         .catch(refused)
     } catch {
       refused()

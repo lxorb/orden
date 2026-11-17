@@ -93,7 +93,7 @@ describe('what another app may share with Orden', () => {
 
     expect(views).toHaveLength(1)
     expect(views[0]).toContain('android:scheme="orden"')
-    expect(views[0]).toContain('android:scheme="nib"')
+    expect(views[0]).not.toContain('android:scheme="nib"')
     expect(manifest).not.toContain('android:scheme="content"')
     expect(manifest).not.toContain('android:scheme="file"')
     expect(manifest).not.toContain('android:mimeType="text/markdown"')

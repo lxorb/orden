@@ -4,7 +4,7 @@ export function appSocketPath(app: string): string {
 
 export const UNKNOWN_APP = 'no such application on this account'
 
-export const HOST_PROTOCOL = 'nib.role.host'
+export const HOST_PROTOCOL = 'orden.role.host'
 
 export const HOST_PROTOCOLS: readonly string[] = ['orden.role.host', 'nib.role.host']
 

@@ -167,7 +167,7 @@ note = next((one for one in tabs() if not one["web"]), None)
 if not web or not note:
     raise SystemExit(f"::error::{DESK}: no web tab and note tab side by side in the strip ({tabs()})")
 press(web)
-until("nib.pages.each().some(([, page]) => page.sent && page.sent.visible)", 20)
+until("orden.pages.each().some(([, page]) => page.sent && page.sent.visible)", 20)
 time.sleep(3)
 
 x0, y0 = window()

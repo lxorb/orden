@@ -281,7 +281,7 @@ def main() -> int:
         if isinstance(press, dict) and not isinstance(press.get("is"), bool):
             wrong.append(f"whether Orden is the default browser was not answered: {press}")
 
-        ask(port_, secret, "nib.settings.show('general')")
+        ask(port_, secret, "orden.settings.show('general')")
         hwnd = main_window(running.pid)
         if hwnd:
             sized(hwnd, 1180, 900)

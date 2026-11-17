@@ -160,7 +160,7 @@ def main() -> int:
         time.sleep(2)
 
         page = f"http://127.0.0.1:{port}/"
-        tab = str(app.ask(f"nib.workspace.openPage('{page}?set', 'front')"))
+        tab = str(app.ask(f"orden.workspace.openPage('{page}?set', 'front')"))
         time.sleep(4)
         first = read(app, tab)
         said["first load"] = first

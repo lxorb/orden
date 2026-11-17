@@ -102,11 +102,10 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
-const OWN = new Set<unknown>(['orden', 'nib'])
+const OWN = 'orden'
 
 function toolIn(item: Record<string, unknown>, done: boolean): Heard {
-  if (!OWN.has(item.server) || typeof item.id !== 'string' || typeof item.tool !== 'string')
-    return {}
+  if (item.server !== OWN || typeof item.id !== 'string' || typeof item.tool !== 'string') return {}
   const tool = { id: item.id, name: item.tool, args: item.arguments ?? {} }
   if (!done) return { tool }
   const result = record(item.result)

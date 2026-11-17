@@ -90,7 +90,7 @@ def watched(app: App, pid: int, count: int) -> list[str]:
     opened, live = time.monotonic(), False
     while time.monotonic() - opened < WATCHED:
         asked = time.monotonic()
-        said = app.eval(f"nib.pages.each().filter(([, page]) => page.live).length >= {count}")
+        said = app.eval(f"orden.pages.each().filter(([, page]) => page.live).length >= {count}")
         at = f"web tab {count}, {asked - opened:4.1f} s after it opened"
         if "error" in said:
             return [f"{at}: the endpoint did not answer: {said['error']}"]
@@ -143,7 +143,7 @@ def stalls(identifier: str) -> list[str]:
         pathlib.Path(os.environ.get("XDG_DATA_HOME") or home / ".local" / "share") / identifier,
     ]
     lines: list[str] = []
-    for log in (one for folder in folders for name in ("orden.log", "nib.log") for one in folder.glob(f"**/{name}")):
+    for log in (one for folder in folders for one in folder.glob("**/orden.log")):
         lines += [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if "stall" in line]
     return lines[-20:]
 
@@ -172,7 +172,7 @@ def main() -> int:
         while time.monotonic() < until and app.eval("!!orden.workspace").get("value") is not True:
             time.sleep(1)
         time.sleep(2)
-        said = app.eval("nib.workspace.openBlank('One', '# One\\n\\nSome words.'); return true", 20)
+        said = app.eval("orden.workspace.openBlank('One', '# One\\n\\nSome words.'); return true", 20)
         if said.get("value") is not True:
             raise SystemExit(f"no note was opened: {said}")
         time.sleep(2)
@@ -182,7 +182,7 @@ def main() -> int:
         for count in range(1, TABS + 1):
             forward(process.pid)
             time.sleep(1)
-            said = app.eval(f"nib.workspace.openPage({json.dumps(f'{url}{count}')}); return true", 20)
+            said = app.eval(f"orden.workspace.openPage({json.dumps(f'{url}{count}')}); return true", 20)
             if said.get("value") is not True:
                 raise SystemExit(f"web tab {count} was not opened: {said}")
             wrong += watched(app, process.pid, count)

@@ -30,7 +30,7 @@ export async function request<T>(
   const headers: Record<string, string> = {}
   if (options.body !== undefined) headers['content-type'] = 'application/json'
   if (options.token) headers.authorization = `Bearer ${options.token}`
-  if (options.device) headers['x-nib-device'] = deviceName()
+  if (options.device) headers['x-orden-device'] = deviceName()
 
   const response = await fetchInTime(`${BASE}${path}`, {
     method: options.method ?? (options.body === undefined ? 'GET' : 'POST'),

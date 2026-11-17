@@ -60,7 +60,7 @@ TABS = {
     "sandboxed",
 }
 
-WEB_TABS = "nib.workspace.tabs.filter((tab) => tab.kind === 'web').length"
+WEB_TABS = "orden.workspace.tabs.filter((tab) => tab.kind === 'web').length"
 
 BUTTON = "display:block;box-sizing:border-box;width:100%;height:30px;margin:0 0 2px;font:14px sans-serif"
 OPENER = f"""<!doctype html><title>opener</title>
@@ -265,7 +265,7 @@ for _ in range(60):
     time.sleep(0.5)
 run("(orden.workspace.openWebsite(), 'opened')")
 time.sleep(0.5)
-OWN = run("nib.workspace.activeTabId")
+OWN = run("orden.workspace.activeTabId")
 for _ in range(10):
     run(f"(orden.pages.go({json.dumps(OWN)}, '{SITE}/opener'), 'sent')")
     time.sleep(3)
@@ -296,7 +296,7 @@ for case, wanted in CASES.items():
     press(left + (place["x"] + at[0]) * RATIO, top + (place["y"] + at[1]) * RATIO)
     if case in LATE:
         time.sleep(LATE[case])
-        offered = run(f"nib.pages.of({json.dumps(OWN)}).blocked")
+        offered = run(f"orden.pages.of({json.dumps(OWN)}).blocked")
         if offered != f"{SITE}/landing?blocked":
             failures.append(f"{case}: the tab's bar offered {offered!r}")
             print(f"::error::{case}: the tab's bar offered {offered!r}")
