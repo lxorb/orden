@@ -49,7 +49,7 @@
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { keptAt, readsBefore, roomFor, settled, stripLanding } from './free'
+  import { keptAt, readsBefore, roomFor, settled, stripLanding, stripPlace } from './free'
   import { meets, packed, pushedAside } from './pack'
   import {
     around,
@@ -1343,16 +1343,12 @@
     }
     const id = ids[0]
     if (!id) return
-    const strip = tabsOf(landing.paneId)
-    const back = strip.filter((one) => one !== id)
-    const into = landing.before === null ? back.length : back.indexOf(landing.before)
-    if (strip.indexOf(id) === into && byId.get(id)?.paneId === landing.paneId) return
+    const into = stripPlace(tabsOf(landing.paneId), id, landing.before)
+    if (into === null) return
 
-    const held = workspace.heldIn(landing.paneId).filter((one) => one.id !== id)
-    const before = landing.before === null ? -1 : held.findIndex((one) => one.id === landing.before)
     const fronts = workspace.panes.all.map((one) => [one.id, one.activeTabId] as const)
     const working = workspace.activeTabId
-    workspace.moveTab(id, landing.paneId, before < 0 ? held.length : before)
+    workspace.moveTab(id, landing.paneId, into)
     const paneOf = (tab: string | null) => workspace.tabs.find((one) => one.id === tab)?.paneId
     for (const [pane, front] of fronts)
       if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)

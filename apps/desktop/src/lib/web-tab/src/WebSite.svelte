@@ -74,10 +74,9 @@
   let certificate = $state<Certificate | null>(null)
   let asked = $state(false)
   $effect(() => {
-    if (!https || !url) {
-      certificate = null
-      return
-    }
+    certificate = null
+    asked = false
+    if (!https || !url) return
     let gone = false
     void invoke<Certificate | null>('web_certificate', { tab, address: url })
       .then((said) => {

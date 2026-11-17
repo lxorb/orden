@@ -33,13 +33,11 @@ if (typeof window !== 'undefined') {
 export function cycleTab(direction: number, mayUseOrder = false) {
   const tabs = workspace.tabsIn(workspace.panes.focusedId)
   const current = workspace.activeTabId
-  if (!current) {
+  const index = tabs.findIndex((tab) => tab.id === current)
+  if (!current || index < 0) {
     backToTabs(tabs, direction)
     return
   }
-
-  const index = tabs.findIndex((tab) => tab.id === current)
-  if (index < 0) return
 
   if (!mayUseOrder || !tabCycle.byUse) {
     const next = tabs[(index + direction + tabs.length) % tabs.length]

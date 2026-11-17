@@ -19,16 +19,16 @@ import {
   pngData,
   cssColour,
   loading,
+  paperBytesOf,
   paperIsLocked,
   paperPicture,
-  paperPlaces,
   paperUnder,
   PDF_TO_CSS,
   pdfjs,
   sharpness,
   svgToPng,
 } from '../../pdf/src/api'
-import { fileBytes, isDesktop } from '../../platform/src/api'
+import { isDesktop } from '../../platform/src/api'
 import {
   chooseTarget,
   download,
@@ -319,7 +319,10 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
 
   const papers = new Set(pages.map((page) => page.file).filter((one): one is string => !!one))
   const source = papers.size === 1 ? [...papers][0] : null
-  const bytes = source ? await paperBytes(paperPlaces(source, out.path, out.root)) : null
+  const shared = out.shared ?? null
+  const bytes = source
+    ? await paperBytesOf({ file: source, note: out.path, root: out.root, shared })
+    : null
 
   const opened = bytes ? await PDFDocument.load(bytes, { ignoreEncryption: true }) : null
   if (opened?.isEncrypted) {
@@ -792,12 +795,4 @@ function hexOf(colour: string): { r: number; g: number; b: number } {
     g: ((value >> 8) & 0xff) / 255,
     b: (value & 0xff) / 255,
   }
-}
-
-async function paperBytes(places: readonly string[]): Promise<Uint8Array | null> {
-  for (const path of places) {
-    const bytes = await fileBytes(path).catch(() => null)
-    if (bytes) return bytes
-  }
-  return null
 }

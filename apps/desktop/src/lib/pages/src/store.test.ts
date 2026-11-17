@@ -334,3 +334,27 @@ describe('a glide to a page that is still going', () => {
     vi.stubGlobal('localStorage', memoryStorage())
   })
 })
+
+describe('where a page’s paper is read from', () => {
+  test('names the note it is shared as, when it is shared on its own', () => {
+    const note = new NoteDoc(
+      {
+        kind: 'pages',
+        path: null,
+        name: 'Lecture.pages',
+        text: blankPages(),
+        dirty: false,
+        shared: 'note-1',
+      },
+      () => undefined,
+    )
+    const store = new PagesStore(new Tab(note, 'pane'))
+
+    expect(store.paperAt('Lecture.pdf', null)).toEqual({
+      file: 'Lecture.pdf',
+      note: null,
+      root: null,
+      shared: 'note-1',
+    })
+  })
+})

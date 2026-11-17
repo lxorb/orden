@@ -1686,6 +1686,21 @@ describe('closing what is in a pane', () => {
     writes.mockRestore()
   })
 
+  test("a closed pane's tabs come back after the tabs of the pane they reopen into", async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    await workspace.open('/space/c.md')
+
+    await workspace.closePane(workspace.panes.focusedId)
+    await workspace.reopenClosed()
+
+    expect(workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+      '/space/c.md',
+    ])
+  })
+
   test('a tab dragged out of a pane closes the pane behind it', async () => {
     await workspace.open('/space/a.md')
     await beside('/space/b.md')
@@ -4394,6 +4409,17 @@ describe('what a tab s own menu does to the strip', () => {
     expect(strip()).toEqual([])
   })
 
+  test('closes every tab of a strip with none of them in front', async () => {
+    await opened('/space/a.md', '/space/b.md')
+    workspace.deselect()
+    const pane = workspace.panes.focusedId
+
+    expect(workspace.closesAllIn(pane)).toBe(2)
+    await workspace.closeAllIn(pane)
+
+    expect(strip()).toEqual([])
+  })
+
   test('says how many tabs each close would take', async () => {
     const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
 
@@ -4937,6 +4963,29 @@ describe('an essential', () => {
     workspace.close(c.id)
     await workspace.reopenClosed()
     expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
+  })
+
+  test('in front at a restart gives the strip the tab used last, not the first', async () => {
+    keep('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const written = workspace.layout()
+
+    onePane()
+    await workspace.applyLayout(written, false)
+
+    expect(workspace.active?.path).toBe('/space/c.md')
+  })
+
+  test('duplicated, puts its copy at the end of the strip', async () => {
+    keep('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const essential = workspace.tabs.find((one) => one.essential === '/space/a.md')!
+
+    ops.duplicateTab(essential.id)
+
+    expect(strip()).toEqual(['/space/b.md', '/space/c.md', '/space/a.md'])
   })
 
   test('shows its file with no tab in the strip', async () => {

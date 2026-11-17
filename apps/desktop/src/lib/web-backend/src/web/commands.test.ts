@@ -353,6 +353,37 @@ describe('renaming', () => {
       webInvoke('rename_note', { from: '/Notes/gone.md', to: '/Notes/here.md' }),
     ).rejects.toThrow()
   })
+
+  test('never puts a PDF over another one', async () => {
+    const pdf = (path: string, data: string) =>
+      disk.assets.set(path, { path, type: 'application/pdf', data, modified: 1 })
+    pdf('/Notes/A/slides.pdf', 'AAAA')
+    pdf('/Notes/B/slides.pdf', 'BBBB')
+    await webInvoke('write_highlights', { path: '/Notes/B/slides.pdf', content: '{"b":1}' })
+    await webInvoke('write_highlights', { path: '/Notes/A/slides.pdf', content: '{"a":1}' })
+
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/A/slides.pdf', to: '/Notes/B/slides.pdf' }),
+    ).rejects.toThrow(/already lives there/)
+
+    expect(disk.assets.get('/Notes/B/slides.pdf')?.data).toBe('BBBB')
+    expect(disk.assets.get('/Notes/A/slides.pdf')?.data).toBe('AAAA')
+    expect(disk.files.get('/Notes/B/slides.pdf.highlights.json')?.content).toBe('{"b":1}')
+  })
+
+  test('never puts a folder over one that holds only pictures', async () => {
+    const picture = (path: string, data: string) =>
+      disk.assets.set(path, { path, type: 'image/png', data, modified: 1 })
+    picture('/Notes/img/image.png', 'AAAA')
+    picture('/Notes/assets/image.png', 'BBBB')
+
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/img', to: '/Notes/assets' }),
+    ).rejects.toThrow(/already lives there/)
+
+    expect(disk.assets.get('/Notes/assets/image.png')?.data).toBe('BBBB')
+    expect(disk.assets.get('/Notes/img/image.png')?.data).toBe('AAAA')
+  })
 })
 
 describe('copying', () => {
@@ -399,6 +430,26 @@ describe('copying', () => {
       webInvoke('copy_path', { from: '/Notes/Work', to: '/Notes/Work/Work' }),
     ).rejects.toThrow()
     expect(await read('/Notes/b.md')).toBe('b')
+  })
+
+  test('never writes into a folder that holds only pictures', async () => {
+    disk.assets.set('/Notes/img/image.png', {
+      path: '/Notes/img/image.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+    disk.assets.set('/Notes/assets/image.png', {
+      path: '/Notes/assets/image.png',
+      type: 'image/png',
+      data: 'BBBB',
+      modified: 1,
+    })
+
+    await expect(
+      webInvoke('copy_path', { from: '/Notes/img', to: '/Notes/assets' }),
+    ).rejects.toThrow(/already lives there/)
+    expect(disk.assets.get('/Notes/assets/image.png')?.data).toBe('BBBB')
   })
 })
 
