@@ -25,13 +25,12 @@ export async function mayStop(why: Why): Promise<boolean> {
 
   const window = await label()
   const idle = warning === 'always'
-  const rows = why === 'window' ? await rowsHere(window, idle) : await rowsEverywhere(window, idle)
+  const others = why === 'window' ? await invoke<string[]>('quit_others').catch(() => []) : []
+  const found = why === 'window' ? await rowsHere(window, idle) : await rowsEverywhere(window, idle)
+  const rows = others.length ? found : found.filter((row) => row.kind !== 'terminal')
   if (!asks(warning, rows)) return true
 
-  const alone =
-    why === 'window' &&
-    platform() !== 'macos' &&
-    !(await invoke<string[]>('quit_others').catch(() => [])).length
+  const alone = why === 'window' && platform() !== 'macos' && !others.length
 
   if (why === 'quit') await invoke('quit_show').catch(() => undefined)
   if (!mounted) {

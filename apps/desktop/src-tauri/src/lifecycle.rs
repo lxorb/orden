@@ -537,6 +537,11 @@ fn state(app: &AppHandle) -> tauri::State<'_, Quitting> {
     app.state::<Quitting>()
 }
 
+pub fn leaving(app: &AppHandle) -> bool {
+    app.try_state::<Quitting>()
+        .is_some_and(|quitting| matches!(quitting.now(), ASKING | LEAVING))
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum Exit {
     Pass,

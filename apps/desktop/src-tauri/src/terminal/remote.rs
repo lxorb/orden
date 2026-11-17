@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, Webview};
 
+use super::session::Fresh;
 use super::shells::Launch;
 use super::ssh_config::{self, ConfigHost};
 
@@ -14,6 +15,15 @@ pub const PREFIX: &str = "ssh:";
 const OWN: &str = "n-";
 
 pub(super) const CONNECT_TIMEOUT: &str = "ConnectTimeout=15";
+
+const ALIVE: [&str; 4] = [
+    "-o",
+    "ServerAliveInterval=10",
+    "-o",
+    "ServerAliveCountMax=3",
+];
+
+const FAREWELL: &str = "\u{1b}[9001~";
 
 const MOST_HOSTS: usize = 500;
 const MOST_WORDS: usize = 200;
@@ -397,7 +407,14 @@ fn sets_timeout(resolved: &str) -> bool {
     })
 }
 
-fn bounded(program: &Path, args: Vec<String>) -> Vec<String> {
+fn keeps_alive(resolved: &str) -> bool {
+    resolved.lines().any(|line| {
+        line.strip_prefix("serveraliveinterval ")
+            .is_some_and(|value| value.trim() != "0")
+    })
+}
+
+fn bounded(program: &Path, args: Vec<String>, alive: bool) -> Vec<String> {
     let resolved = std::process::Command::new(program)
         .arg("-G")
         .args(&args)
@@ -405,17 +422,63 @@ fn bounded(program: &Path, args: Vec<String>) -> Vec<String> {
         .stderr(std::process::Stdio::null())
         .output()
         .ok()
-        .filter(|done| done.status.success());
-    if resolved.is_some_and(|done| sets_timeout(&String::from_utf8_lossy(&done.stdout))) {
-        return args;
+        .filter(|done| done.status.success())
+        .map(|done| String::from_utf8_lossy(&done.stdout).into_owned())
+        .unwrap_or_default();
+    let mut options: Vec<String> = Vec::new();
+    if !sets_timeout(&resolved) {
+        options.extend(["-o".to_owned(), CONNECT_TIMEOUT.to_owned()]);
     }
-    ["-o".to_owned(), CONNECT_TIMEOUT.to_owned()]
-        .into_iter()
-        .chain(args)
-        .collect()
+    if alive && !keeps_alive(&resolved) {
+        options.extend(ALIVE.map(str::to_owned));
+    }
+    options.into_iter().chain(args).collect()
 }
 
-pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
+pub fn held_command(key: &str) -> String {
+    let name = format!("orden-{key}");
+    let steps: [&[&str]; 12] = [
+        &["start-server"],
+        &["set", "-gq", "status", "off"],
+        &["set", "-gq", "prefix", "None"],
+        &["set", "-gq", "prefix2", "None"],
+        &["set", "-sq", "escape-time", "0"],
+        &["set", "-sq", "set-clipboard", "on"],
+        &["set", "-sq", "default-terminal", "screen-256color"],
+        &["set", "-saq", "terminal-overrides", ",*:smcup@:rmcup@:Tc"],
+        &["set", "-sq", "user-keys[0]", FAREWELL],
+        &["bind", "-n", "User0", "kill-session"],
+        &["setw", "-gq", "allow-passthrough", "on"],
+        &["new-session", "-A", "-s", &name],
+    ];
+    let quoted = |words: &[&str]| {
+        words
+            .iter()
+            .map(|word| format!("'{word}'"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let steps = steps.map(quoted).join(" ';' ");
+    format!(
+        "{} {steps}",
+        quoted(&["tmux", "-L", "orden", "-f", "/dev/null"])
+    )
+}
+
+fn ending_command(key: &str) -> String {
+    [
+        "tmux",
+        "-L",
+        "orden",
+        "kill-session",
+        "-t",
+        &format!("=orden-{key}"),
+    ]
+    .map(|word| format!("'{word}'"))
+    .join(" ")
+}
+
+pub fn connect(webview: &Webview, id: &str, key: &str, plain: bool) -> Result<Fresh, String> {
     let places = places(webview)?;
     let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
 
@@ -425,7 +488,11 @@ pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
         arguments(&target, places.elsewhere.then_some(places.config.as_path()))
     };
     let program = ssh_program().ok_or_else(|| "no ssh on this machine".to_owned())?;
-    let args = bounded(&program, args);
+    let mut args = bounded(&program, args, !plain);
+    if !plain {
+        args.insert(0, "-t".to_owned());
+        args.push(held_command(key));
+    }
 
     {
         let _writing = WRITING
@@ -436,15 +503,46 @@ pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
         let _ = write_kept(&places.kept, &kept);
     }
 
-    Ok(Launch {
-        program,
-        args,
-        folder: Some(places.home),
-        env: vec![
-            ("TERM".to_owned(), "xterm-256color".to_owned()),
-            ("COLORTERM".to_owned(), "truecolor".to_owned()),
-        ],
+    Ok(Fresh {
+        launch: Launch {
+            program,
+            args,
+            folder: Some(places.home),
+            env: vec![
+                ("TERM".to_owned(), "xterm-256color".to_owned()),
+                ("COLORTERM".to_owned(), "truecolor".to_owned()),
+            ],
+        },
+        farewell: if plain {
+            Vec::new()
+        } else {
+            FAREWELL.as_bytes().to_vec()
+        },
     })
+}
+
+#[tauri::command]
+pub async fn remote_end(webview: Webview, host: String, key: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        super::owner(&webview)?;
+        super::usable(&key)?;
+        let (program, args) = reach(&webview, &host)?;
+        let mut args = bounded(&program, args, false);
+        args.splice(0..0, ["-T", "-o", "BatchMode=yes"].map(str::to_owned));
+        args.push(ending_command(&key));
+        let mut ending = std::process::Command::new(program)
+            .args(args)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .map_err(|error| error.to_string())?;
+        std::thread::spawn(move || {
+            let _ = ending.wait();
+        });
+        Ok(())
+    })
+    .await
 }
 
 pub(super) fn reach(webview: &Webview, id: &str) -> Result<(PathBuf, Vec<String>), String> {
@@ -636,14 +734,201 @@ mod tests {
 
         fs::write(&config, "Host pi\n").unwrap();
         let args = arguments(&Target::Config("pi"), Some(&config));
-        assert_eq!(bounded(&fake, args.clone())[..2], ["-o", CONNECT_TIMEOUT]);
+        assert_eq!(
+            bounded(&fake, args.clone(), false)[..2],
+            ["-o", CONNECT_TIMEOUT]
+        );
 
         fs::write(&config, "Host pi\n    ConnectTimeout 60\n").unwrap();
-        assert_eq!(bounded(&fake, args.clone()), args);
+        assert_eq!(bounded(&fake, args.clone(), false), args);
 
         assert_eq!(
-            bounded(&dir.path().join("gone"), args.clone())[..2],
+            bounded(&dir.path().join("gone"), args.clone(), false)[..2],
             ["-o", CONNECT_TIMEOUT]
+        );
+    }
+
+    #[test]
+    fn a_held_link_is_kept_alive_unless_the_config_already_does() {
+        assert!(!keeps_alive("serveraliveinterval 0\n"));
+        assert!(keeps_alive("user emil\nserveraliveinterval 30\n"));
+        assert!(!keeps_alive(""));
+    }
+
+    #[test]
+    fn a_held_session_is_the_hosts_own_tmux_on_a_server_of_its_own() {
+        let line = held_command("0-abc123");
+        assert!(line.starts_with("'tmux' '-L' 'orden' '-f' '/dev/null' 'start-server' ';' "));
+        assert!(line.ends_with(" ';' 'new-session' '-A' '-s' 'orden-0-abc123'"));
+        assert!(line.contains("'set' '-gq' 'prefix' 'None'"));
+        assert!(line.contains(&format!(
+            "'user-keys[0]' '{FAREWELL}' ';' 'bind' '-n' 'User0' 'kill-session'"
+        )));
+        assert_eq!(line.matches('\'').count() % 2, 0);
+        assert_eq!(
+            ending_command("0-abc123"),
+            "'tmux' '-L' 'orden' 'kill-session' '-t' '=orden-0-abc123'"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_held_session_runs_in_any_posix_shell_as_its_words() {
+        let line = held_command("k1");
+        for shell in ["sh", "bash", "zsh", "dash"] {
+            let Ok(done) = std::process::Command::new(shell)
+                .args(["-c", &format!("printf '%s\\n' {line}")])
+                .output()
+            else {
+                continue;
+            };
+            let words = String::from_utf8_lossy(&done.stdout).into_owned();
+            let words: Vec<&str> = words.lines().collect();
+            assert_eq!(
+                words[..5],
+                ["tmux", "-L", "orden", "-f", "/dev/null"],
+                "{shell}"
+            );
+            assert!(words.contains(&"user-keys[0]"), "{shell}: {words:?}");
+            assert!(words.contains(&FAREWELL), "{shell}: {words:?}");
+            assert!(words.contains(&",*:smcup@:rmcup@:Tc"), "{shell}: {words:?}");
+            assert_eq!(words.last(), Some(&"orden-k1"), "{shell}");
+        }
+    }
+
+    #[cfg(unix)]
+    fn heard_until(
+        heard: &std::sync::mpsc::Receiver<super::super::session::Out>,
+        wanted: &str,
+    ) -> (String, Option<i64>) {
+        use super::super::session::Out;
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(20);
+        let mut seen = Vec::new();
+        while let Ok(out) =
+            heard.recv_timeout(until.saturating_duration_since(std::time::Instant::now()))
+        {
+            match out {
+                Out::Bytes(more) | Out::Screen(more, _, _) => {
+                    seen.extend(more);
+                    if String::from_utf8_lossy(&seen).contains(wanted) {
+                        break;
+                    }
+                }
+                Out::Writer(_) => {}
+                Out::Exit(code) => {
+                    return (String::from_utf8_lossy(&seen).into_owned(), Some(code))
+                }
+            }
+        }
+        (String::from_utf8_lossy(&seen).into_owned(), None)
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_held_session_outlives_its_link_and_ends_with_its_tab() {
+        use super::super::hold;
+        use super::super::session::{Fresh, Place, Session};
+
+        let Ok(found) = std::process::Command::new("tmux").arg("-V").output() else {
+            return;
+        };
+        if !found.status.success() {
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let fake = dir.path().join("ssh");
+        fs::write(
+            &fake,
+            "#!/bin/sh\nfor last; do :; done\nexec sh -c \"$last\"\n",
+        )
+        .unwrap();
+        fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+        let sockets = dir.path().join("tmux");
+        fs::create_dir_all(&sockets).unwrap();
+        let place = Place {
+            folder: dir.path().join("held"),
+            starter: hold::tests::starter(),
+        };
+        let launch = || {
+            Ok(Fresh {
+                launch: Launch {
+                    program: fake.clone(),
+                    args: vec![
+                        "-t".to_owned(),
+                        "--".to_owned(),
+                        "pi".to_owned(),
+                        held_command("r1"),
+                    ],
+                    folder: Some(dir.path().to_path_buf()),
+                    env: vec![
+                        ("TERM".to_owned(), "xterm-256color".to_owned()),
+                        (
+                            "TMUX_TMPDIR".to_owned(),
+                            sockets.to_string_lossy().into_owned(),
+                        ),
+                        ("SHELL".to_owned(), "/bin/sh".to_owned()),
+                        ("TMUX".to_owned(), String::new()),
+                    ],
+                },
+                farewell: FAREWELL.as_bytes().to_vec(),
+            })
+        };
+        let open = || {
+            let (session, started) =
+                Session::open(&place, "r1", 80, 24, launch).expect("a session");
+            let (tell, heard) = std::sync::mpsc::channel();
+            let tell = std::sync::Mutex::new(tell);
+            started.run(
+                Box::new(move |out| {
+                    let _ = tell.lock().expect("the channel").send(out);
+                }),
+                |_| {},
+            );
+            (session, heard)
+        };
+        let listed = || {
+            std::process::Command::new("tmux")
+                .env("TMUX_TMPDIR", &sockets)
+                .args(["-L", "orden", "has-session", "-t", "=orden-r1"])
+                .status()
+                .is_ok_and(|done| done.success())
+        };
+
+        let (first, heard) = open();
+        first.write(b"echo orden-\"\"kept\n".to_vec());
+        let (said, _) = heard_until(&heard, "orden-kept");
+        assert!(said.contains("orden-kept"), "tmux printed: {said:?}");
+        assert!(listed(), "no tmux session of its own");
+
+        let link = i32::try_from(first.pid().expect("a pid")).expect("a pid");
+        std::process::Command::new("kill")
+            .args(["-9", &link.to_string()])
+            .status()
+            .expect("the link cut");
+        let (_, code) = heard_until(&heard, "\u{0}never");
+        assert!(code.is_some(), "the cut link was not noticed");
+        assert!(listed(), "the session went with its link");
+
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while super::super::session::held(&place, "r1") && std::time::Instant::now() < until {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        let (again, heard) = open();
+        assert!(again.fresh());
+        let (said, _) = heard_until(&heard, "orden-kept");
+        assert!(
+            said.contains("orden-kept"),
+            "the same session was not shown again: {said:?}"
+        );
+
+        again.end();
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while listed() && std::time::Instant::now() < until {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        assert!(
+            !listed(),
+            "closing the tab left the session running on the host"
         );
     }
 
