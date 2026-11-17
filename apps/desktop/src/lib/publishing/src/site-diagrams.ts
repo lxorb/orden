@@ -144,7 +144,7 @@ export async function pushDiagrams(
     for (const { hash, svg, said } of drawn) {
       const bytes = new TextEncoder().encode(svg)
       const ok = await api
-        .putBlob(token, hash, 'image/svg+xml', bytes.buffer, { 'x-nib-diagram': said })
+        .putBlob(token, hash, 'image/svg+xml', bytes.buffer, { 'x-orden-diagram': said })
         .then(() => true)
         .catch(() => false)
 

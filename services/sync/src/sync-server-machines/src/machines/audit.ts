@@ -24,8 +24,9 @@ export type EventKind =
   | 'reboot'
   | 'host'
   | 'server'
+  | 'resize'
 
-export type Place = 'nbg1' | 'fsn1'
+export type Named = string & { readonly named: unique symbol }
 
 export type Detail =
   | 'idle'
@@ -48,14 +49,14 @@ export type Detail =
   | 'silent'
   | 'cloudflare'
   | 'hetzner'
-  | Place
+  | Named
   | Failure
   | number
   | null
 
 export type Failure = string & { readonly failure: unique symbol }
 
-export type Step = 'start' | 'link' | 'restore' | 'backup' | 'snapshot' | 'stop'
+export type Step = 'start' | 'link' | 'restore' | 'backup' | 'snapshot' | 'stop' | 'resize'
 
 const SAID_LIMIT = 160
 

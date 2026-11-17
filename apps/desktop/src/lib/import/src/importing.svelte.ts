@@ -190,7 +190,7 @@ class Importing {
     notePath: string,
   ): Promise<string> {
     if (!imported.pictures.length) return imported.markdown
-    const { storeBeside } = await import('../../assets')
+    const { storeBeside } = await import('../../workspace/src/api')
     const { markdown, lost } = await keepPictures(
       imported.markdown,
       imported.pictures,

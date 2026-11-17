@@ -35,7 +35,7 @@ field.addEventListener('input', () => { said.field = field.value; tell() })
 tell()
 </script>"""
 
-TITLES = "nib.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('carried ')) || ''"
+TITLES = "orden.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('carried ')) || ''"
 
 MIDWAY = (
     "return { dragging: orden.workspace.panes.dragging, landing: orden.workspace.panes.landing,"
@@ -133,7 +133,7 @@ def carried(
             time.sleep(0.25)
         return None
 
-    root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+    root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
     if not isinstance(root, str):
         return [f"[carry {name}] no space is open: {root}"], unverified
     note = put_note(ask, root)
@@ -141,7 +141,7 @@ def carried(
         return [f"[carry {name}] the app put no note in the space: {note}"], unverified
     if not until(f"void orden.workspace.loadTree(); return !!orden.workspace.entryAt({json.dumps(note)})"):
         return [f"[carry {name}] the file list never showed the note put in the space"], unverified
-    ask(f"nib.workspace.openPage({json.dumps(url)}); return true")
+    ask(f"orden.workspace.openPage({json.dumps(url)}); return true")
     if not until(f"return ({TITLES}) !== ''", 40):
         seen = ask("return orden.pages.each().map(([id, one]) => [id, one.url, one.title, one.live])")
         return [f"[carry {name}] the page never loaded: {seen}"], unverified

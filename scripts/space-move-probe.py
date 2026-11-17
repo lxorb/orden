@@ -205,7 +205,7 @@ def main() -> int:
         tabs_probe.to_space(app, work)
 
         idea = json.dumps(str(root / "Work" / "Idea.md"))
-        ask(app, f"nib.workspace.openEntry({idea}).then(() => 'idea')")
+        ask(app, f"orden.workspace.openEntry({idea}).then(() => 'idea')")
         tab = ask(
             app,
             "(() => { const ws = orden.workspace; "
@@ -233,7 +233,7 @@ def main() -> int:
             not any(one.startswith("terminal") for one in in_work.get("tabs", [])),
             "and the terminal has left Work's strip",
         )
-        check(ask(app, f"nib.workspace.tabs.some((one) => one.id === {json.dumps(tab)})") is True, "the tab itself is still open")
+        check(ask(app, f"orden.workspace.tabs.some((one) => one.id === {json.dumps(tab)})") is True, "the tab itself is still open")
         after = cmd_of(running.pid)
         check(after == before, f"the same Command Prompt runs: {before} then {after}")
         time.sleep(1)
@@ -244,7 +244,7 @@ def main() -> int:
         in_home = shown(app)
         say(f"Home: {in_home}")
         check("terminal Command Prompt" in in_home.get("tabs", []), "Home holds the terminal")
-        check(ask(app, "nib.workspace.active ? orden.workspace.active.kind : null") == "terminal", "in front")
+        check(ask(app, "orden.workspace.active ? orden.workspace.active.kind : null") == "terminal", "in front")
         kept = until(lambda: MARK in "\n".join(rows(app)), 15)
         check(bool(kept), "with the line it printed still on its screen")
         typed(app, f"echo {AFTER}\r")

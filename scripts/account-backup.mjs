@@ -5,8 +5,8 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, extname, join } from 'node:path'
 
-const API = (process.env.ORDEN_API || process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
-const TOKEN = process.env.ORDEN_TOKEN ?? process.env.NIB_TOKEN ?? ''
+const API = (process.env.ORDEN_API || 'https://orden.so').replace(/\/$/, '')
+const TOKEN = process.env.ORDEN_TOKEN ?? ''
 
 const AT_ONCE = 6
 
@@ -25,7 +25,7 @@ async function get(path, { auth = true, bytes = false } = {}) {
     let response
     try {
       response = await fetch(`${API}${path}`, {
-        headers: auth ? { authorization: `Bearer ${TOKEN}`, 'x-nib-device': 'backup' } : {},
+        headers: auth ? { authorization: `Bearer ${TOKEN}`, 'x-orden-device': 'backup' } : {},
       })
     } catch (error) {
       if (attempt >= TRIES) throw new Error(`GET ${path}: ${error.message}`, { cause: error })

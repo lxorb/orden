@@ -38,7 +38,7 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('reaches no app module but the platform, the undo record, the tree, the ui kit and the workspace', () => {
+  test('reaches no app module but the marks, the platform, the undo record, the tree, the ui kit and the workspace', () => {
     const reached = sources(SRC).flatMap((file) =>
       [...readFileSync(file, 'utf8').matchAll(/from '\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map(
         (found) => found[1],
@@ -46,6 +46,7 @@ describe('the module stands on its own', () => {
     )
     expect([...new Set(reached)].sort()).toEqual([
       'file-undo',
+      'marks',
       'platform',
       'tree',
       'ui-kit',

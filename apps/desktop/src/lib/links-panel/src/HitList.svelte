@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import { fileMark } from '../../file-mark'
-  import FileMark from '../../FileMark.svelte'
+  import { fileMark } from '../../marks/src/api'
+  import { FileMark } from '../../marks/src/api'
   import type { Outgoing, Reference } from '../../link-index/src/api'
   import { linkPieces, shownLine } from './link-line'
   import { roving } from '../../ui-kit/src/api'

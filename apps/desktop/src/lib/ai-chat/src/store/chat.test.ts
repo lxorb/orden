@@ -51,7 +51,7 @@ const place = vi.hoisted(() => ({
   open: vi.fn(() => Promise.resolve()),
 }))
 
-vi.mock('../../../workspace/src/api', () => ({ workspace: place }))
+vi.mock('../../../workspace/src/api', () => ({ workspace: place, agentMarks: { open: null } }))
 
 vi.mock('../commands/found', () => ({
   fromOthers: () => Promise.resolve(false),
@@ -2350,12 +2350,30 @@ describe('a chat started outside the panel', () => {
     })
     chat.watch(thread)
     await ended
-    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(2))
+    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(2))
 
     await chat.sendIn(thread, 'Second', [], { front: null, selection: '', picked: null })
-    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(4))
-    expect(chat.watched?.turns[2]?.draft?.text).toBe('Second')
-    chat.watch(null)
-    expect(chat.watched).toBeNull()
+    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(4))
+    expect(chat.watched[thread.id]?.[2]?.draft?.text).toBe('Second')
+    chat.unwatch(thread)
+    expect(chat.watched).toEqual({})
+  })
+
+  test('draws two watched chats at once, each as it goes on', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const none = { front: null, selection: '', picked: null }
+    const one = chat.startHere('One', [], none)
+    const two = chat.startHere('Two', [], none)
+    chat.watch(one.thread)
+    chat.watch(two.thread)
+    await Promise.all([one.ended, two.ended])
+
+    await vi.waitFor(() => expect(chat.watched[one.thread.id]?.length).toBe(2))
+    await vi.waitFor(() => expect(chat.watched[two.thread.id]?.length).toBe(2))
+    chat.unwatch(one.thread)
+    expect(Object.keys(chat.watched)).toEqual([two.thread.id])
+    chat.unwatch(two.thread)
   })
 })

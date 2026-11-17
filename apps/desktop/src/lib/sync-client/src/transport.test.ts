@@ -60,7 +60,7 @@ describe('the engine over the network', () => {
     expect(ops?.method).toBe('POST')
     expect(new URL(ops?.url ?? '').pathname).toBe(`/v2/spaces/${SPACE}/ops`)
     expect(ops?.headers.get('authorization')).toBe('Bearer token-1')
-    expect(ops?.headers.get('x-nib-device')).toBe('one')
+    expect(ops?.headers.get('x-orden-device')).toBe('one')
     expect(ops?.headers.get('content-type')).toBe('application/octet-stream')
     const body = unframe(new Uint8Array(await ops!.arrayBuffer())) as {
       ops: { t: string; name: string }[]

@@ -95,7 +95,7 @@ export const linksPanel = held(
 )
 export const askPanel = held(
   from('ask') as Loaded<
-    Component<{ ongoto?: ((line: number) => void) | undefined; wide?: boolean }>
+    Component<{ ongoto?: ((line: number) => void) | undefined; wide?: boolean; tab?: Tab }>
   >,
 )
 export const archiveSection = held(from('archive') as Shown)
@@ -140,14 +140,6 @@ export const crashAsk = latched(from('crash-ask') as Shown)
 
 export const undoToastNotice = latched(from('undo-toast') as Shown)
 export const privateMark = held(from('private-mark') as Loaded<Component<{ large?: boolean }>>)
-
-export const terminalMark = held(
-  from('terminal-mark') as Loaded<
-    Component<{
-      tab: Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null }
-    }>
-  >,
-)
 
 export const syncMark = latched(() =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),

@@ -13,6 +13,7 @@ const RUNG =
 const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .fab': 'a touch screen only, which builds no native page',
   'lib/phone/src/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
+  'lib/phone/src/TabGrid.svelte .grid-sheet': 'a touch screen only, which builds no native page',
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
   'App.svelte .notices.over': 'the same row, over a drawer: see .notices and .panels',
   'App.svelte .notices.above': 'the same row, over the tab overview: see .notices',
@@ -22,7 +23,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .scrim': 'the drawers’ scrim, shown only where there are drawers: see .panels',
   'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
   'lib/surfaces/src/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
-  'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
+  'lib/frame/src/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
   'lib/overview/src/Offstage.svelte .offstage': 'drawn off the window, where no page is',
   'lib/overview/src/Overview.svelte .under':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',

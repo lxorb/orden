@@ -1,4 +1,5 @@
 import type { Times } from '@orden/sync-core'
+import { SvelteMap } from 'svelte/reactivity'
 import { Doc } from './docs'
 import { holdsDocument, shapeOf, type Shape } from './kinds'
 import { SpaceState, type Outboxed } from './places'
@@ -75,7 +76,7 @@ export interface CoreEvents {
 }
 
 export class Core {
-  readonly spaces = new Map<string, SpaceState>()
+  readonly spaces = new SvelteMap<string, SpaceState>()
   readonly numbers = new Map<string, DocNumbers>()
   private readonly generations = new Map<string, number>()
   private generation = 0

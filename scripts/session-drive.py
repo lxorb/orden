@@ -105,16 +105,16 @@ if STEP == "first":
     if len(site(found)) != 1:
         raise SystemExit(f"::error::first: {len(site(found))} pages of the site")
     (OUT / "session-counts").write_text(f"{seen} {shown}\n")
-    normal = run("nib.workspace.activeTabId")
-    run("nib.workspace.openWebsite(true); true")
+    normal = run("orden.workspace.activeTabId")
+    run("orden.workspace.openWebsite(true); true")
     private = None
     for _ in range(40):
-        private = run("nib.workspace.activeTabId")
+        private = run("orden.workspace.activeTabId")
         if private and private != normal:
             break
         time.sleep(0.5)
     address = site(found)[0]["url"].split("?")[0]
-    run(f"nib.pages.go({json.dumps(private)}, {json.dumps(address + '?private')}); true")
+    run(f"orden.pages.go({json.dumps(private)}, {json.dumps(address + '?private')}); true")
     titled("a private cookie made", private=True)
     print("session: a private tab made its cookie")
 elif STEP == "again":

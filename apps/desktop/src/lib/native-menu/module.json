@@ -20,6 +20,5 @@
     "tab-fill",
     "ui-controls",
     "updates"
-  ],
-  "pending": ["apps/desktop/src/lib/links.ts", "apps/desktop/src/lib/open-out.ts"]
+  ]
 }

@@ -186,7 +186,7 @@ def read(app: App, tab: str) -> dict[str, str]:
     return until(look) or {}
 
 def go(app: App, tab: str, url: str) -> None:
-    app.ask(f"nib.pages.go('{tab}', '{url}'); true")
+    app.ask(f"orden.pages.go('{tab}', '{url}'); true")
     time.sleep(2.5)
 
 def history_rows(app: App) -> list[str]:
@@ -234,7 +234,7 @@ def main() -> int:
         app.act("open", {"path": f"{NOTE}.md", "space": SPACE})
         time.sleep(2)
 
-        first = app.ask(f"nib.workspace.openPage('{site}/alpha', 'front')")
+        first = app.ask(f"orden.workspace.openPage('{site}/alpha', 'front')")
         tab = str(first)
         time.sleep(3)
         go(app, tab, f"{site}/beta")
@@ -308,7 +308,7 @@ def main() -> int:
         marked = app.ask("document.querySelectorAll('svg.private').length")
         checks["a private tab wears its mark"] = isinstance(marked, int) and marked >= 1
 
-        app.ask(f"nib.workspace.close('{secret_tab}'); true")
+        app.ask(f"orden.workspace.close('{secret_tab}'); true")
         time.sleep(3)
         key(app, "N", "KeyN", shift=True)
         again = until(lambda: next((one for one in tabs(app) if one.get("private")), None))
@@ -319,10 +319,10 @@ def main() -> int:
         said["a private tab after the last one closed"] = forgotten
         checks["closing the last private tab forgets everything"] = forgotten.get("cookie") == "" and forgotten.get("ls") == ""
         checks["closed, it is not on the closed stack"] = "/secret" not in json.dumps(app.ask("JSON.stringify(orden.workspace.closed.stack)"))
-        app.ask(f"nib.workspace.close('{again_tab}'); true")
+        app.ask(f"orden.workspace.close('{again_tab}'); true")
         time.sleep(1)
 
-        app.ask(f"nib.workspace.activate('{tab}'); true")
+        app.ask(f"orden.workspace.activate('{tab}'); true")
         time.sleep(1)
         go(app, tab, f"{site}/plain?set=kept")
         before = read(app, tab)

@@ -47,10 +47,39 @@ MACHINES = {
             "memoryGb": 16,
             "diskGb": 160,
             "price": 16.49,
+            "hourly": 0.0278,
             "currency": "EUR",
+            "made": True,
+            "spent": 7.31,
         },
         "disk": {"used": 131 * GB, "total": 160 * GB},
     },
+}
+
+def offer(name, cores, memory, disk, cpu, arch, monthly, hourly):
+    return {
+        "name": name,
+        "cores": cores,
+        "memoryGb": memory,
+        "diskGb": disk,
+        "cpu": cpu,
+        "arch": arch,
+        "prices": [{"location": place, "monthly": monthly, "hourly": hourly} for place in ("fsn1", "nbg1")],
+    }
+
+OFFERS = {
+    "currency": "EUR",
+    "locations": [
+        {"name": "fsn1", "city": "Falkenstein", "country": "DE"},
+        {"name": "nbg1", "city": "Nuremberg", "country": "DE"},
+    ],
+    "types": [
+        offer("cx23", 2, 4, 40, "shared", "x86", 5.34, 0.0093),
+        offer("cx43", 8, 16, 160, "shared", "x86", 16.49, 0.0278),
+        offer("cx53", 16, 32, 320, "shared", "x86", 27.95, 0.0486),
+        offer("cax31", 8, 16, 160, "shared", "arm", 16.05, 0.0272),
+        offer("ccx33", 8, 32, 240, "dedicated", "x86", 75.47, 0.1212),
+    ],
 }
 
 SESSIONS = [
@@ -125,6 +154,14 @@ class Account:
     def __init__(self) -> None:
         self.sessions = [dict(one) for one in SESSIONS]
         self.ended: list[str] = []
+        self.chosen: list[dict[str, str]] = []
+
+    def offers(self, route: Route) -> None:
+        route.fulfill(status=200, content_type="application/json", body=json.dumps(OFFERS))
+
+    def choose(self, route: Route) -> None:
+        self.chosen.append(json.loads(route.request.post_data or "{}"))
+        route.fulfill(status=200, content_type="application/json", body='{"state": "starting"}')
 
     def answer(self, route: Route) -> None:
         if route.request.method == "DELETE":
@@ -161,7 +198,7 @@ MEASURE = """
   const online = document.querySelector('.online')
   const row = online?.querySelector('.orden-setting')
   const name = row?.querySelector('.name')
-  const action = row?.querySelector('button')
+  const action = row ? [...row.querySelectorAll('button')].at(-1) : null
   const meters = [...(online?.querySelectorAll('.meter') ?? [])].map((meter) => {
     const line = meter.querySelector('.line')
     const words = [...line.children].map(box)
@@ -186,12 +223,15 @@ MEASURE = """
       height: box(name).height,
       words: name.scrollWidth,
       lines: [...name.childNodes].filter((one) => one.textContent.trim()).length,
+      text: name.textContent.replace(/\\s+/g, ' '),
+      bottom: box(name).bottom,
     },
     action: box(action) && {
       width: box(action).width,
       height: box(action).height,
       right: box(action).right,
       label: action.textContent.trim(),
+      top: box(action).top,
       chip: action.classList.contains('orden-chip'),
     },
     meters,
@@ -241,6 +281,8 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
     page.route("https://orden.so/**", lambda route: route.abort())
     account = Account()
     page.route("**/v2/online/terms**", account.answer)
+    page.route("**/v2/online/types", account.offers)
+    page.route("**/v2/online/machine/type", account.choose)
     for machine, about in MACHINES.items():
         page.unroute("**/v2/online/machine")
         page.route("**/v2/online/machine", answering(about))
@@ -262,7 +304,11 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
             continue
         check(f"[{name}] the row's name is as wide as its words", words["width"] >= words["words"] - 0.5)
         check(f"[{name}] the row's name is wider than a word", words["width"] >= 120)
-        check(f"[{name}] the row is a row, not a column ({row['height']:.0f}px)", row["height"] <= 140)
+        under = action["top"] >= words["bottom"] - 1 and words["width"] >= row["width"] * 0.8
+        check(
+            f"[{name}] the row is a row, or its actions sit under its full-width facts ({row['height']:.0f}px)",
+            row["height"] <= 140 or under,
+        )
         check(
             f"[{name}] {action['label']} is the small action at the row's end",
             action["chip"] and action["width"] < row["width"] / 3 and abs(action["right"] - row["end"]) <= 1,
@@ -272,6 +318,12 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
             check(f"[{name}] {meter['label']}: the bar is the card's width", meter["track"] >= meter["wide"] - 1)
         check(f"[{name}] nothing in the pane runs past its side {seen['past']}", not seen["past"])
         check(f"[{name}] the pane does not scroll sideways", not seen["scrolls"])
+        check(
+            f"[{name}] the machine's facts have no dot or bullet between them",
+            not any(mark in words["text"] for mark in "·•∙⋅"),
+        )
+        if machine == "server":
+            check(f"[{name}] the machine's cost this month is beside its price", "this month" in words["text"])
 
         every = f"document.querySelectorAll('.online .orden-setting').length === {len(SESSIONS) + 1}"
         DRIVE.wait_for(page, every, f"[{name}] the sessions")
@@ -295,6 +347,8 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
 
         if kind == "desktop" and width == 1280 and scheme == "light" and machine == "cloud":
             ending(page, account)
+        if machine == "server":
+            picking(page, account, name, kind == "desktop" and width == 1280 and scheme == "light")
 
     page.context.close()
 
@@ -316,6 +370,74 @@ def ending(page: Page, account: Account) -> None:
     shot(page, "end-ended")
     account.sessions = [dict(one) for one in SESSIONS]
     account.ended.clear()
+
+PICKER = """
+() => {
+  const box = (one) => one.getBoundingClientRect()
+  const pane = document.querySelector('.sheet .body')
+  const picker = document.querySelector('.online .picker')
+  if (!picker) return null
+  const rows = [...picker.querySelectorAll('[data-type]')].map((row) => ({
+    type: row.dataset.type,
+    action: row.querySelector('button')?.textContent.trim() ?? row.querySelector('.row .hint')?.textContent.trim() ?? '',
+    price: row.querySelector('.price')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+    height: box(row).height,
+  }))
+  const past = [...picker.querySelectorAll('*')].filter(
+    (one) => box(one).right > box(pane).right + 0.5 || box(one).left < box(pane).left - 0.5,
+  )
+  return { rows, past: past.map((one) => one.className || one.tagName), scrolls: pane.scrollWidth > pane.clientWidth }
+}
+"""
+
+def picking(page: Page, account: Account, name: str, flow: bool) -> None:
+    page.locator(".online .orden-setting").first.get_by_role("button", name="Change").click()
+    DRIVE.wait_for(page, "document.querySelectorAll('.online .picker [data-type]').length === 5", f"[{name}] the machines")
+    quiet(page)
+    shot(page, f"{name}-picker")
+    seen = page.evaluate(PICKER)
+    say(f"[{name}] picker {json.dumps(seen)}")
+    rows = {one["type"]: one for one in seen["rows"]}
+    check(f"[{name}] the machines are listed cheapest first", [one["type"] for one in seen["rows"]] == ["cx23", "cax31", "cx43", "cx53", "ccx33"])
+    check(f"[{name}] a smaller disk cannot be chosen", rows["cx23"]["action"] == "Smaller disk")
+    check(f"[{name}] Arm cannot be chosen for an x86 machine", rows["cax31"]["action"] == "Other CPU")
+    check(f"[{name}] the machine it is now is marked", rows["cx43"]["action"] == "Current")
+    check(f"[{name}] a bigger one can be resized to", rows["cx53"]["action"] == "Resize")
+    check(f"[{name}] each has its monthly and hourly price", "a month" in rows["cx53"]["price"] and "an hour" in rows["cx53"]["price"])
+    check(f"[{name}] nothing in the picker runs past the pane {seen['past']}", not seen["past"])
+    check(f"[{name}] the picker does not scroll sideways", not seen["scrolls"])
+    if flow:
+        resizing(page, account)
+        return
+    page.locator(".online .orden-setting").first.get_by_role("button", name="Change").click()
+    DRIVE.wait_for(page, "!document.querySelector('.online .picker')", f"[{name}] the picker put away")
+
+def resizing(page: Page, account: Account) -> None:
+    resize = page.locator('.online .picker [data-type="cx53"]').get_by_role("button", name="Resize")
+    resize.click()
+    DRIVE.wait_for(page, "document.querySelector('button.orden-button.is-danger')", "the running terminals' warning")
+    shot(page, "resize-warned")
+    warned = page.evaluate("() => document.querySelector('form')?.textContent ?? ''")
+    check("the running terminals are warned of first", "3 terminals are running" in warned)
+    page.keyboard.press("Escape")
+    DRIVE.wait_for(page, "!document.querySelector('button.orden-button.is-danger')", "the warning put away")
+    check("put away, the warning resizes nothing", account.chosen == [])
+
+    resize.click()
+    DRIVE.wait_for(page, "document.querySelector('button.orden-button.is-danger')", "the warning again")
+    page.get_by_role("button", name="Continue").click()
+    DRIVE.wait_for(page, "document.querySelector('form .detail')?.textContent.includes('5 minutes')", "the resize's question")
+    shot(page, "resize-asked")
+    asked = page.evaluate("() => document.querySelector('form')?.textContent ?? ''")
+    say(f"asked: {asked}")
+    check("the question says the restart", "about 5 minutes" in asked)
+    check("the question says the disk cannot shrink", "cannot shrink again" in asked)
+    check("the question says the price difference", "more a month" in asked)
+    check("still nothing is resized", account.chosen == [])
+    page.locator("form").get_by_role("button", name="Resize").click()
+    DRIVE.wait_for(page, "!document.querySelector('.online .picker')", "the picker closed once chosen")
+    check("Resize asks for the chosen type, with no place", account.chosen == [{"type": "cx53"}])
+    account.chosen.clear()
 
 def drive(browser: Browser) -> None:
     for kind, width, height, scheme in LOOKS:

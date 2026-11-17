@@ -3,14 +3,11 @@ import {
   PROTECTED,
   shutFor,
   objectIn,
-  writeInbox,
-  cleanPath,
-  MOVED,
-  blobKey,
   type Shut,
   type Env,
   type Note,
 } from '../../../sync-server/src/api'
+import { writeInbox, cleanPath, MOVED, blobKey } from '../../../sync-server-engine/src/api'
 import {
   AgentError,
   clockOf,

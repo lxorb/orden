@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { whenLoaded } from '@orden/contracts'
   import { flagsOf, report, type Flag } from '@orden/pass/monitor'
   import type { Item } from '@orden/pass/types'
   import { hostOf } from '@orden/pass/urls'
@@ -10,8 +9,9 @@
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import { localDate } from '../../platform/src/api'
-  import { iconChoice } from '../../icon-choice.svelte'
+  import { iconChoice } from '../../icon-picker/src/api'
   import { DIVIDER, menu, type MenuEntry, prompt, said } from '../../ui-kit/src/api'
+  import { QrCode } from '../../ui-controls/src/api'
   import { dur, fade } from '../../platform/src/api'
   import AliasPanel from './AliasPanel.svelte'
   import AttachmentsView from './AttachmentsView.svelte'
@@ -42,21 +42,13 @@
   const reusedWith = $derived(monitored.reused.get(item.id)?.length ?? 0)
   const note = $derived(content.note.trim() === '' ? '' : noteHtml(content.note))
 
-  let qr = $state<string | null>(null)
   let showingQr = $state(false)
 
-  $effect(() => {
-    if (!showingQr || sealed || content.kind !== 'wifi') {
-      qr = null
-      return
-    }
-    const uri = wifiUri(content.ssid, content.password, content.security)
-    return whenLoaded(
-      () => import('uqr'),
-      ({ renderSVG }) => (qr = renderSVG(uri, { border: 1, pixelSize: 6 })),
-      () => undefined,
-    )
-  })
+  const wifiCode = $derived(
+    showingQr && !sealed && content.kind === 'wifi'
+      ? wifiUri(content.ssid, content.password, content.security)
+      : null,
+  )
 
   function flagWord(flag: Flag): string {
     switch (flag) {
@@ -269,10 +261,9 @@
         <button class="line is-pressable" type="button" onclick={() => (showingQr = !showingQr)}>
           <span>{showingQr ? 'Hide QR code' : 'Show QR code'}</span>
         </button>
-        {#if qr}
-          <div class="qr" aria-label="QR code to join {content.ssid}">
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -- the square uqr drew from the network's own name and password -->
-            {@html qr}
+        {#if wifiCode}
+          <div class="qr">
+            <QrCode value={wifiCode} label="QR code to join {content.ssid}" />
           </div>
         {/if}
       </section>
@@ -475,13 +466,7 @@
     display: grid;
     place-items: center;
     padding: var(--space-3);
-  }
-
-  .qr :global(svg) {
-    width: 180px;
-    height: 180px;
-    border-radius: var(--radius-md);
-    background: #fff;
+    --qr-size: 180px;
   }
 
   .note {

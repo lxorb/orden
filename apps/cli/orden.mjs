@@ -6,13 +6,6 @@ import { homedir, platform, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-for (const [name, value] of Object.entries(process.env)) {
-  const rest = /^NIB_(.+)$/.exec(name)?.[1]
-  if (!rest) continue
-  process.env[`ORDEN_${rest}`] ??= value
-  Reflect.deleteProperty(process.env, name)
-}
-
 function endpointFile() {
   if (process.env.ORDEN_ENDPOINT) return process.env.ORDEN_ENDPOINT
 
@@ -126,8 +119,7 @@ const USAGE = `orden - drive the running Orden
 
   Every verb takes --space to work in a space other than the one that is open.
   --json answers as JSON rather than as words. Anything that changes a note needs
-  --yes, and eval is off until this installation's endpoint file says otherwise.
-  nib is the same command.`
+  --yes, and eval is off until this installation's endpoint file says otherwise.`
 
 async function main() {
   const argv = process.argv.slice(2)

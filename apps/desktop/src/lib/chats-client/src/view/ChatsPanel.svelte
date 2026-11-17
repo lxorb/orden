@@ -6,6 +6,7 @@
   import { canWriteAt } from '../../../sharing/src/api'
   import type { ChatEntry, Hit } from '../shapes'
   import ChatMark from './ChatMark.svelte'
+  import { bySpace } from './by-space'
   import { Glyph } from '../../../chat-kit/src/api'
   import { makeChat, openChat } from './open'
   import type { Who } from '@orden/chats'
@@ -32,6 +33,8 @@
       .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
+
+  const grouped = $derived(bySpace(chats, workspace.spaces))
 
   startPriorities()
 
@@ -220,26 +223,29 @@
         >
       {/if}
     </div>
-    {#each chats as chat (chat.id)}
-      {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
-      {@const unread = chat.unread > 0 && !muted}
-      <button
-        type="button"
-        class="orden-row entry"
-        class:unread
-        class:muted
-        class:is-on={workspace.active?.path === chat.path && chat.path !== null}
-        disabled={!chat.path}
-        onclick={() => open(chat)}
-      >
-        <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
-        <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
-        {#if chat.mentions && !muted}
-          <span class="badge">{localNumber(chat.mentions)}</span>
-        {:else if unread}
-          <span class="orden-row-meta count">{localNumber(chat.unread)}</span>
-        {/if}
-      </button>
+    {#each grouped as group (group.key)}
+      {#if grouped.length > 1}<p class="space">{group.name}</p>{/if}
+      {#each group.chats as chat (chat.id)}
+        {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
+        {@const unread = chat.unread > 0 && !muted}
+        <button
+          type="button"
+          class="orden-row entry"
+          class:unread
+          class:muted
+          class:is-on={workspace.active?.path === chat.path && chat.path !== null}
+          disabled={!chat.path}
+          onclick={() => open(chat)}
+        >
+          <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
+          <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
+          {#if chat.mentions && !muted}
+            <span class="badge">{localNumber(chat.mentions)}</span>
+          {:else if unread}
+            <span class="orden-row-meta count">{localNumber(chat.unread)}</span>
+          {/if}
+        </button>
+      {/each}
     {/each}
   {:else}
     <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
@@ -279,6 +285,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .space {
+    margin: var(--space-2) 0 var(--space-1);
+    padding-inline: var(--space-2);
+    overflow: hidden;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .add {

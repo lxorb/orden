@@ -1,4 +1,4 @@
-import { linkTo } from '../../composer'
+import { linkTo } from '../../link-format/src/api'
 import { isRecord, isNumber, isString } from '../../platform/src/api'
 
 export { PDF_SIDECAR as SIDECAR } from '@orden/markdown/links'

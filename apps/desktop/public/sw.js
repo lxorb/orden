@@ -1,6 +1,5 @@
 const ROUTE = '/asset/'
 const DATABASE = 'orden'
-const FORMER_DATABASE = 'nib'
 const STORE = 'assets'
 
 const TYPES = {
@@ -215,7 +214,7 @@ async function answer(request) {
   const path = pathOf(new URL(request.url).pathname)
   if (!path) return missing()
 
-  const row = await rowFor(path).catch(() => null)
+  const row = await rowIn(DATABASE, path).catch(() => null)
   if (!row || typeof row.data !== 'string') return missing()
 
   const bytes = decode(row.data)
@@ -363,14 +362,9 @@ async function rowIn(name, path) {
   })
 }
 
-async function rowFor(path) {
-  const row = await rowIn(DATABASE, path).catch(() => null)
-  return row || rowIn(FORMER_DATABASE, path)
-}
-
 self.addEventListener('notificationclick', (event) => {
   const said = event.notification.data
-  const tag = said?.ordenNotice ?? said?.nibNotice
+  const tag = said?.ordenNotice
   event.notification.close()
   event.waitUntil(cameBackTo(tag))
 })

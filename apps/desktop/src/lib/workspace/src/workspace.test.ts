@@ -149,7 +149,7 @@ const { noteId } = await import('../../modes/src/api')
 const { answeredCase } = await import('../../platform/src/space-paths')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { pages } = await import('../../web-tab/src/pages.svelte')
-const { agentMarks } = await import('../../agent-marks.svelte')
+const { agentMarks } = await import('./agent-marks.svelte')
 const { links } = await import('../../link-index/src/api')
 const { startup } = await import('../../launch/src/api')
 const ops = await import('../../tab-strip/src/ops')
@@ -4467,8 +4467,8 @@ describe('what a tab s own menu does to the strip', () => {
     },
   )
 
-  test('does not duplicate the chat, which there is only one of', () => {
-    workspace.openChat()
+  test('does not duplicate an AI chat, which shows one thread', () => {
+    workspace.openChat('t1')
     const chat = workspace.active
     if (!chat) throw new Error('no chat')
 
@@ -4490,19 +4490,33 @@ describe('what a tab s own menu does to the strip', () => {
     },
   )
 
-  test('reopening a closed chat while another is open brings that one to the front', async () => {
+  test('reopening a closed AI chat brings back its own thread beside the other', async () => {
     await workspace.open('/space/a.md')
-    workspace.openChat()
+    workspace.openChat('t1', 'First')
     const first = workspace.active
     if (!first) throw new Error('no chat')
     workspace.closeEach([first.id])
-    workspace.openChat()
-    const second = workspace.active
+    workspace.openChat('t2', 'Second')
 
     await workspace.reopenClosed()
 
-    expect(workspace.tabs.filter((tab) => tab.kind === 'chat')).toHaveLength(1)
-    expect(workspace.active).toBe(second)
+    const chats = workspace.tabs.filter((tab) => tab.kind === 'chat')
+    expect(chats.map((tab) => tab.address).sort()).toEqual(['t1', 't2'])
+    expect(workspace.active.address).toBe('t1')
+  })
+
+  test('opens each AI chat thread in its own tab, and the same thread in the same tab', () => {
+    const one = workspace.openChat('t1', 'One')
+    const two = workspace.openChat('t2', 'Two')
+    const again = workspace.openChat('t1', 'One')
+    const fresh = workspace.openChat()
+
+    const chats = workspace.tabs.filter((tab) => tab.kind === 'chat')
+    expect(new Set([one, two, fresh]).size).toBe(3)
+    expect(again).toBe(one)
+    expect(chats).toHaveLength(3)
+    expect(chats.find((tab) => tab.id === two)?.name).toBe('Two')
+    expect(chats.find((tab) => tab.id === fresh)?.address).toBeUndefined()
   })
 
   test('moves a tab into a new pane beside its own when there is no other', async () => {

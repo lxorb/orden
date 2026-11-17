@@ -103,6 +103,7 @@ class Decorator {
 
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
+      if (HEADING_LEVEL[name] && !this.spaced(node.firstChild)) return false
       this.markLines(node, lineClass)
       return name !== 'FrontMatter'
     }
@@ -416,7 +417,7 @@ class Decorator {
   }
 
   private listMark(node: SyntaxNode) {
-    if (node.parent?.getChild('Task')) return
+    if (node.parent?.getChild('Task') || !this.spaced(node)) return
 
     const ordered = /\d/.test(this.state.doc.sliceString(node.from, node.to))
     if (ordered) {
@@ -566,6 +567,10 @@ class Decorator {
 
   private tableDelimiter(node: SyntaxNode) {
     this.marks.push(Decoration.mark({ class: 'orden-table-pipe' }).range(node.from, node.to))
+  }
+
+  private spaced(mark: SyntaxNode | null): boolean {
+    return !!mark && /[ \t]/.test(this.state.doc.sliceString(mark.to, mark.to + 1))
   }
 
   private eatSpace(pos: number): number {

@@ -63,6 +63,18 @@ class FakeHost implements MachineHost {
     return Promise.resolve()
   }
 
+  resizeSteps = 2
+  failResize: Error | null = null
+
+  resize(_id: string, type: string, hard: boolean): Promise<boolean> {
+    this.calls.push(`resize ${type}${hard ? ' hard' : ''}`)
+    const failure = this.failResize
+    this.failResize = null
+    if (failure) return Promise.reject(failure)
+    this.resizeSteps -= 1
+    return Promise.resolve(this.resizeSteps <= 0)
+  }
+
   start(_id: string, image: string): Promise<void> {
     this.calls.push(`start ${image}`)
     if (this.failStart) {

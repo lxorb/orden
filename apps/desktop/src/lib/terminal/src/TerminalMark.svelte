@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { chosenIcon, chosenTint } from '../../chosen-icon'
-  import Icon from '../../Icon.svelte'
+  import { chosenIcon, chosenTint } from '../../marks/src/api'
+  import { Icon } from '../../glyphs/src/api'
   import { readIcon, takesTint } from '../../ui-kit/src/api'
   import { marks } from './online/marks.svelte'
   import { isTermTarget } from '@orden/markdown/links'

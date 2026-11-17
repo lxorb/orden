@@ -355,7 +355,7 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   sleep 15
   python3 "$here/idle-cpu.py" "$app_pid" 20 | tee "$out/idle.txt"
   [ "${PIPESTATUS[0]}" = 0 ] || status=1
-  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
+  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name orden.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
@@ -400,7 +400,7 @@ fi
 if [ "$status" = 0 ] && [ "${PASS:-0}" = 1 ]; then
   sleep 3
   python3 "$here/pass-drive.py" "$out" || status=1
-  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec grep -h 'pass' {} + 2>/dev/null | tail -20 || true
+  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name orden.log -exec grep -h 'pass' {} + 2>/dev/null | tail -20 || true
 fi
 
 if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then
@@ -698,7 +698,7 @@ wait "$app_pid" 2>/dev/null || true
 [ -n "$pointer_pid" ] && kill "$pointer_pid" 2>/dev/null || true
 kill "$sway_pid" 2>/dev/null || true
 
-find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec cp {} "$out/app.log" \; 2>/dev/null || true
+find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name orden.log -exec cp {} "$out/app.log" \; 2>/dev/null || true
 echo "::group::orden's output"
 cat "$out/orden.log"
 echo "::endgroup::"

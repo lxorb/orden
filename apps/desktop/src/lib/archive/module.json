@@ -1,6 +1,5 @@
 {
   "name": "archive",
   "layer": "features",
-  "dependsOn": ["contracts", "platform", "file-undo", "tree", "workspace", "ui-kit"],
-  "pending": ["apps/desktop/src/lib/FileMark.svelte", "apps/desktop/src/lib/file-mark.ts"]
+  "dependsOn": ["contracts", "platform", "file-undo", "tree", "workspace", "ui-kit", "marks"]
 }

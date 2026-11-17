@@ -14,7 +14,7 @@ import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../panes/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
 import { hostOf } from '@orden/scan/visits'
-import { agentMarks } from '../../agent-marks.svelte'
+import { agentMarks } from '../../workspace/src/api'
 import { apartOf } from '@orden/scan/shortcut'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -374,9 +374,10 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
   switch (op) {
     case 'list':
-      if (maybe(call, 'kind') === 'online') {
-        const list = (await agentTabKindLoaded('online')).list
-        if (!list) throw new Refused('unsupported_on_this_engine', 'there are no online tabs here')
+      if (maybe(call, 'kind') === 'online' || maybe(call, 'kind') === 'terminal') {
+        const kind = maybe(call, 'kind') ?? ''
+        const list = (await agentTabKindLoaded(kind)).list
+        if (!list) throw new Refused('unsupported_on_this_engine', `there are no ${kind} tabs here`)
         return list(call.args, call.caller)
       }
       return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
