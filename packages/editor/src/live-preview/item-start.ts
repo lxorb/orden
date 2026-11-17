@@ -489,8 +489,32 @@ function deleteWordOverMarks(side: -1 | 1) {
   }
 }
 
+const leadKept = EditorState.transactionFilter.of((transaction) => {
+  if (!transaction.isUserEvent('delete.backward') || !transaction.docChanged) return transaction
+  const { startState } = transaction
+  if (startState.selection.ranges.length > 1 || !startState.selection.main.empty) return transaction
+
+  const head = startState.selection.main.head
+  const line = startState.doc.lineAt(head)
+  const lead = line.from + markedLead(line.text)
+  if (lead === line.from || head <= lead) return transaction
+
+  const ranges: number[][] = []
+  transaction.changes.iterChangedRanges((from, to) => ranges.push([from, to]))
+  const [only] = ranges
+  if (ranges.length !== 1 || only?.[0] !== line.from || only[1] !== head) return transaction
+
+  return {
+    changes: { from: lead, to: head },
+    selection: EditorSelection.cursor(lead),
+    scrollIntoView: true,
+    userEvent: 'delete.backward',
+  }
+})
+
 export const itemStart = [
   snapped,
+  leadKept,
   Prec.high(
     keymap.of([
       { key: 'Enter', run: pushHeadingDown },

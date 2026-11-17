@@ -671,7 +671,7 @@ function converter(options: FromHtmlOptions): TurndownService {
 
       const tag = node.nodeName.toLowerCase()
       const marker = tag === 'sup' ? '^' : '~'
-      const holds = !content.includes(marker) && !/^\s|\s$/.test(content)
+      const holds = !content.includes(marker) && !/\s/.test(content)
 
       return holds ? `${marker}${content}${marker}` : `<${tag}>${content}</${tag}>`
     },

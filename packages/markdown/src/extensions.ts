@@ -90,7 +90,7 @@ export const scripts: MarkedExtension = remembering({
           type: 'subscript',
           raw: inner[0],
           text: inner[1],
-          tokens: this.lexer.inlineTokens(inner[1]),
+          tokens: this.lexer.inlineTokens(inner[1].replace(/\\ /g, ' ')),
         }
       },
       renderer(token: Tokens.Generic) {
@@ -108,7 +108,7 @@ export const scripts: MarkedExtension = remembering({
           type: 'superscript',
           raw: inner[0],
           text: inner[1],
-          tokens: this.lexer.inlineTokens(inner[1]),
+          tokens: this.lexer.inlineTokens(inner[1].replace(/\\ /g, ' ')),
         }
       },
       renderer(token: Tokens.Generic) {

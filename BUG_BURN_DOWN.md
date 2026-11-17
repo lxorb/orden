@@ -1451,6 +1451,9 @@ first.
 | EC327 | Medium | Move down on the item above a named list's last item did nothing, or pulled a nested item above its parent (forty-seventh re-audit, regression from EC326) | Fixed | `block/commands.ts` `beside` took the list's id line as the whole list, which holds the moving item | When the block found below is an owner holding the moving block, the id line is used as the neighbour | `block-list-id-moves.test.ts` (fails before) |
 | EC328 | Medium | Duplicate on a whole picked named list split it in two, each with the same id (forty-seventh re-audit, regression from EC326) | Fixed | Duplicate used the list-id-stretched spans | Duplicate copies the items as they are, and the drag handle and Turn into inside quotes handle own-line ids too | `block-list-id-moves.test.ts` (fails before) |
 | EC329 | Medium | In the reading view, `~5 min, or ~10 min`, `~/notes and ~/work` and `2^10 is 1024 and 2^20` turned into subscript, superscript or strikethrough across words, while the editor showed plain text (forty-seventh re-audit) | Fixed | `@orden/markdown` `extensions.ts` let a sub or superscript span run across spaces, and marked's strikethrough took a single `~` | Sub and superscript end at an unescaped space, as in the editor, and strikethrough needs `~~` | `reading-scripts-spaces.test.ts` (fails before) |
+| EC330 | Medium | A pasted or clipped superscript or subscript holding a space (`2<sup>n - 1</sup>`, Wikipedia note marks) showed raw `^` or `~` in every view (forty-eighth re-audit, regression from EC329) | Fixed | `from-html.ts` wrote `^a b^`, which no longer reads as a script | A script holding any space is kept as its HTML tag; an escaped space inside a script reads as a space in the reading view | `paste-spaced-scripts.test.ts` (fails before) |
+| EC331 | Medium | Turn into Text or Quote on the first item of a numbered list turned the rest of the list into text or quote lines (forty-eighth re-audit) | Fixed | `turnBlocksInto` left the following items numbered from 2, which cannot start a list under a paragraph | The items after it are renumbered from 1, as the list toggle does (EC79) | `block/turn-first-numbered.test.ts` (fails before) |
+| EC332 | Medium | On mac, Cmd-Backspace in a bullet or task deleted the hidden marker or box along with the words (forty-eighth re-audit) | Fixed | CodeMirror's delete to line start ignored the hidden lead that Home stops at (EC135) | Deleting to the line start keeps an item's marker, box and quote marks | `live-preview/line-start-delete.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1639,6 +1642,12 @@ Seen, judged minor, left as they are:
 - `- a\n<!-- c -->\n- b` reads as one loose list in the reading view; indented or empty `$$` blocks differ between the views (forty-seventh re-audit).
 - A quote with `[!word]` in the middle of its first line is drawn as a callout; `a:b:c` draws an emoji (forty-seventh re-audit).
 - `paste.ts` `readClipboard` holds a comment that came in from `unstable` (forty-seventh re-audit; outside this PR).
+- Format Superscript or Subscript over words with a space writes `^a b^`, which no view draws (forty-eighth re-audit).
+- `E=mc^2[^1]` reads `^2[^` as superscript in both views, losing the footnote ref (forty-eighth re-audit).
+- Turn into Text on a middle item of a list leaves it as a lazy line of the item above (forty-eighth re-audit).
+- Move down on the last item of a named list steps only over the id line (forty-eighth re-audit).
+- Upper case turns `:smile:` into `:SMILE:`; Sort lines puts `**bold**` items first and moves a trailing ` ^id` (forty-eighth re-audit).
+- A backslash hard break leaves the `\` visible in the editor (forty-eighth re-audit).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

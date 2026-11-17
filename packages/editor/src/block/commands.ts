@@ -1,6 +1,7 @@
 import type { ChangeSpec, EditorState, Line, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
+import type { SyntaxNode } from '@lezer/common'
 import { blockIdOf, freeBlockId, blockIds, ownLine, rowsOf } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
@@ -295,11 +296,49 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
     }
   }
 
+  if (!LISTED.has(shape)) changes.push(...restartedAfter(view.state, spans))
   if (!changes.length) return false
 
   view.dispatch({ changes, userEvent: 'input', annotations: landInWords.of(true) })
   view.focus()
   return true
+}
+
+function itemAt(state: EditorState, from: number): SyntaxNode | null {
+  const line = state.doc.lineAt(from)
+  for (const node of enclosing(
+    syntaxTree(state).resolveInner(line.from + (LINE_LEAD.exec(line.text)?.[0].length ?? 0), 1),
+  )) {
+    if (node.name === 'ListItem' && state.doc.lineAt(node.from).from === line.from) return node
+  }
+  return null
+}
+
+function restartedAfter(state: EditorState, spans: readonly BlockSpan[]): ChangeSpec[] {
+  const picked = new Set(spans.map((span) => span.from))
+  const starts = (node: SyntaxNode) => state.doc.lineAt(node.from).from
+  const changes: ChangeSpec[] = []
+  const done = new Set<number>()
+
+  for (const span of spans) {
+    const item = span.kind === 'list' ? itemAt(state, span.from) : null
+    if (item?.parent?.name !== 'OrderedList' || done.has(item.parent.from)) continue
+    if (item.prevSibling?.name === 'ListItem' && !picked.has(starts(item.prevSibling))) continue
+    done.add(item.parent.from)
+
+    let count = 0
+    for (let next = item.nextSibling; next?.name === 'ListItem'; next = next.nextSibling) {
+      if (count === 0 && picked.has(starts(next))) continue
+      const mark = next.getChild('ListMark')
+      if (!mark) break
+      count++
+      const written = state.sliceDoc(mark.from, mark.to)
+      const said = `${count}${written.slice(-1)}`
+      if (said !== written) changes.push({ from: mark.from, to: mark.to, insert: said })
+    }
+  }
+
+  return changes
 }
 
 function overBlocks(view: EditorView, pos: number, command: StateCommand): boolean {
