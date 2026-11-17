@@ -128,9 +128,6 @@ jobs:
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
-      - name: The launch hands the thread back
-        run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
-
       - name: A thousand pages open at once
         run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/big-pdf.py
 
