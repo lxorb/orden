@@ -372,6 +372,20 @@ function styledAs(node: Element): 'del' | 'sup' | 'sub' | null {
   return STRUCK.test(style) ? 'del' : null
 }
 
+const MARKED_BY: Readonly<Record<'del' | 'sup' | 'sub', readonly string[]>> = {
+  del: ['DEL', 'S'],
+  sup: ['SUP'],
+  sub: ['SUB'],
+}
+
+function markedAbove(node: Element, kind: 'del' | 'sup' | 'sub'): boolean {
+  for (let up = node.parentElement; up; up = up.parentElement) {
+    if (MARKED_BY[kind].includes(up.nodeName)) return true
+    if (up.nodeName === 'SPAN' && styledAs(up) === kind && marksFor(up) === null) return true
+  }
+  return false
+}
+
 function joined(node: Element, side: -1 | 1): boolean {
   for (let next = side < 0 ? node.previousSibling : node.nextSibling; next;) {
     if (next.nodeType === 1) return true
@@ -535,7 +549,12 @@ function quoted(lines: readonly string[]): string {
   return lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
 }
 
-function converter(options: FromHtmlOptions): TurndownService {
+const FROM_A_SHEET =
+  /<google-sheets-html-origin|\bdata-sheets-root\b|urn:schemas-microsoft-com:office:excel/i
+
+function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
+  const heads = (table: HTMLTableElement) => sheet || headed(table)
+
   const service = new TurndownService({
     headingStyle: 'atx',
     hr: '---',
@@ -605,6 +624,7 @@ function converter(options: FromHtmlOptions): TurndownService {
       const core = words?.[2] ?? ''
       if (!core) return content
       const styled = styledAs(node)
+      if (styled && markedAbove(node, styled)) return content
       const marker = styled === 'sup' ? '^' : styled === 'sub' ? '~' : '~~'
       const marked = styled === 'del' || (!core.includes(marker) && !/\s/u.test(core))
       const written = marked
@@ -640,9 +660,12 @@ function converter(options: FromHtmlOptions): TurndownService {
     filter: ['ul', 'ol'],
     replacement: (content, node) => {
       const parent = node.parentNode
-      if (parent?.nodeName === 'LI' && parent.lastElementChild === node) return `\n${content}`
       const above = node.previousElementSibling?.nodeName === node.nodeName && joined(node, -1)
       const below = node.nextElementSibling?.nodeName === node.nodeName && joined(node, 1)
+      if (parent?.nodeName === 'LI') {
+        const after = parent.lastElementChild === node ? '' : below ? '\n' : '\n\n'
+        return `\n${content}${after}`
+      }
       return `${above ? '\n' : '\n\n'}${content}${below ? '\n' : '\n\n'}`
     },
   })
@@ -696,7 +719,10 @@ function converter(options: FromHtmlOptions): TurndownService {
 
   service.addRule('struck', {
     filter: ['del', 's'],
-    replacement: (content) => (content ? `~~${content}~~` : ''),
+    replacement: (content, node) => {
+      if (!content) return ''
+      return markedAbove(node, 'del') ? content : `~~${content}~~`
+    },
   })
 
   service.addRule('highlight', {
@@ -720,7 +746,8 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       if (!content) return ''
 
-      const tag = node.nodeName.toLowerCase()
+      const tag = node.nodeName === 'SUP' ? 'sup' : 'sub'
+      if (markedAbove(node, tag)) return content
       const marker = tag === 'sup' ? '^' : '~'
       const holds = !content.includes(marker) && !/\s/.test(content)
 
@@ -748,7 +775,7 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       const row = node as HTMLTableRowElement
       const table = row.closest('table')
-      const heading = table !== null && table.rows[0] === row && headed(table)
+      const heading = table !== null && table.rows[0] === row && heads(table)
       const after = table ? (gapsOf(table).after.get(row) ?? 0) : 0
       if (!heading) return `\n${content}${'  |'.repeat(after)}`
 
@@ -766,7 +793,7 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       const rows = content.replace(/^\n+/, '').trimEnd()
       if (!rows) return ''
-      if (headed(node as HTMLTableElement)) return `\n\n${rows}\n\n`
+      if (heads(node as HTMLTableElement)) return `\n\n${rows}\n\n`
 
       return `\n\n${emptyHeading(node as HTMLTableElement)}\n${rows}\n\n`
     },
@@ -812,7 +839,8 @@ function converter(options: FromHtmlOptions): TurndownService {
         return linkedBlocks(content, target)
       }
 
-      return `[${content}](${target})`
+      const label = content.replace(/^\^((?:[^^\s\\]|\\[\s\S])+)\^/u, '<sup>$1</sup>')
+      return `[${label}](${target})`
     },
   })
 
@@ -949,5 +977,5 @@ function tidy(markdown: string): string {
 
 export function htmlToMarkdown(html: string, options: FromHtmlOptions = {}): string {
   if (!html.trim()) return ''
-  return tidy(converter(options).turndown(html))
+  return tidy(converter(options, FROM_A_SHEET.test(html)).turndown(html))
 }

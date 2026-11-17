@@ -1,4 +1,5 @@
 import { ensureSyntaxTree, foldedRanges, syntaxTree } from '@codemirror/language'
+import { insertNewlineAndIndent } from '@codemirror/commands'
 import type { SyntaxNode, Tree } from '@lezer/common'
 import { insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import {
@@ -1260,10 +1261,11 @@ function pastFold(made: Transaction, fold: { from: number; to: number }): Transa
 export const continueLists: StateCommand = (target) => {
   const fold = foldAfterCaret(target.state)
   if (!fold) return continueListsAt(target)
-  return continueListsAt({
+  const past = {
     state: target.state,
-    dispatch: (made) => target.dispatch(pastFold(made, fold)),
-  })
+    dispatch: (made: Transaction) => target.dispatch(pastFold(made, fold)),
+  }
+  return continueListsAt(past) || insertNewlineAndIndent(past)
 }
 
 const continueListsAt: StateCommand = ({ state, dispatch }) => {

@@ -329,6 +329,7 @@ function restartedAfter(state: EditorState, spans: readonly BlockSpan[]): Change
   const done = new Set<number>()
 
   for (const span of spans) {
+    if (span.kind !== 'list' && span.kind !== 'paragraph') continue
     const item = itemAt(state, span.from)
     if (item?.parent?.name !== 'OrderedList' || done.has(item.parent.from)) continue
     const above = siblingItem(item, -1)

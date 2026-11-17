@@ -113,16 +113,17 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
 
   const inFront = before.length === prefix.length
   const first = text.slice(0, text.indexOf('\n') + 1 || text.length).trimEnd()
-  const marked = inFront && text.endsWith('\n') ? ITEM_LEAD.exec(prefix) : null
+  const whole = range.empty || !after.trim()
+  const marked = inFront && whole && text.endsWith('\n') ? ITEM_LEAD.exec(prefix) : null
   if (marked && OPENS_BLOCK.test(first)) {
     const outer = marked[1] ?? ''
-    const insert = text
+    const insert = (range.empty ? text : text.slice(0, -1))
       .split('\n')
       .map((one) => (one ? outer + one : one))
       .join('\n')
     return {
-      changes: { from: line.from, insert },
-      range: EditorSelection.cursor(range.from + insert.length),
+      changes: { from: line.from, to: range.empty ? line.from : range.to, insert },
+      range: EditorSelection.cursor(line.from + insert.length + (range.empty ? before.length : 0)),
     }
   }
   const kind = inFront && !OPENS_BLOCK.test(first) ? sameKind(prefix) : null
