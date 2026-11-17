@@ -282,7 +282,7 @@
 
   $effect(() => watchTextSize())
 
-  $effect(() => workspace.oneDocument())
+  $effect(() => workspace.onePane())
 
   $effect(() => {
     const who = account.user?.id

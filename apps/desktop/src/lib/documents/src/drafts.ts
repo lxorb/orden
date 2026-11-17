@@ -24,18 +24,6 @@ export function hasWords(note: NoteDoc): boolean {
   return note.kind === 'note' ? !note.blank : note.dirty
 }
 
-export function worthAFile(note: NoteDoc): boolean {
-  if (!hasWords(note)) return false
-  if (note.kind !== 'note') return true
-
-  return (
-    note.live.text
-      .sliceString(0, 4096)
-      .replace(/^[ \t]*(?:>[ \t]?)*(?:#{1,6}|[-*+]|\d+[.)])?(?:[ \t]+\[[ xX]\])?[ \t]*/gmu, '')
-      .replace(/[\s\u200B-\u200D\u2060\uFEFF]/gu, '') !== ''
-  )
-}
-
 export function fileNamed(name: string, kind: TabKind): string {
   const extension = TAB_KINDS[kind].extension
   if (extension === null) return name

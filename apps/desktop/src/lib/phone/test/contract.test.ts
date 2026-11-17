@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { loadPhoneTabs, loadPhoneYou, noteMore } from '../src/api'
+import { loadPhoneTabs, loadPhoneYou, loadTabGrid, noteMore, tabSwipe } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -39,7 +39,9 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 
-  test('the tab bar, the button for the reader and the note menu open through doors', () => {
-    for (const one of [loadPhoneTabs, loadPhoneYou, noteMore]) expect(typeof one).toBe('function')
+  test('the tab bar, the button for the reader, the note menu and the tab grid open through doors', () => {
+    for (const one of [loadPhoneTabs, loadPhoneYou, noteMore, loadTabGrid, tabSwipe]) {
+      expect(typeof one).toBe('function')
+    }
   })
 })
