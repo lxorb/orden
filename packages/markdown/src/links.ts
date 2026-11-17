@@ -567,7 +567,7 @@ const TABLE_ROW = /^ {0,3}\|/
 
 const QUOTED = /^ {0,3}>/
 
-function blockAround(rows: readonly Row[], at: number): { start: number; end: number } {
+export function blockAround(rows: readonly Row[], at: number): { start: number; end: number } {
   const row = rows[at]
   const text = row?.text ?? ''
   let start = at
@@ -624,7 +624,7 @@ function indentOf(line: string): number {
   return /^[ \t]*/.exec(line)?.[0].length ?? 0
 }
 
-function itemHolding(lines: readonly string[], at: number): number | null {
+export function itemHolding(lines: readonly string[], at: number): number | null {
   if (LIST_ITEM.test(lines[at] ?? '')) return at
   const indent = indentOf(lines[at] ?? '')
   for (let above = at - 1; above >= 0; above--) {
@@ -662,13 +662,25 @@ export function ownLine(line: string): boolean {
   return trimmed.startsWith('^') && blockIdOf(trimmed) === trimmed.slice(1)
 }
 
+function inList(line: string): boolean {
+  return !QUOTED.test(line) && (LIST_ITEM.test(line) || (!!line.trim() && indentOf(line) > 0))
+}
+
+function listStart(lines: readonly string[], last: number): number | null {
+  let start: number | null = null
+  for (let above = last; above >= 0 && inList(lines[above] ?? ''); above--) {
+    if (LIST_ITEM.test(lines[above] ?? '')) start = above
+  }
+  return start
+}
+
 function blockAbove(source: string, lines: readonly string[], under: number): string {
   const rows = rowsOf(source)
   let last = under - 1
   while (last > 0 && !(lines[last] ?? '').trim() && !rows[last]?.code) last--
   if (last < 0) return ''
 
-  const { start } = blockAround(rows, last)
+  const start = listStart(lines, last) ?? blockAround(rows, last).start
 
   return lines
     .slice(start, last + 1)
@@ -704,28 +716,32 @@ const BLOCK_LABEL = 80
 
 export function blocksOf(text: string): NoteBlock[] {
   const found: NoteBlock[] = []
-  let current: NoteBlock | null = null
+  const rows = rowsOf(text)
+  let through = -1
+  let apart = true
 
-  for (const row of lines(text)) {
+  for (const row of rows) {
+    if (row.line <= through) continue
     if (!row.code && row.text.trim() === '') {
-      current = null
+      apart = true
       continue
     }
 
-    const above = current ? null : found.at(-1)
+    const above = apart ? found.at(-1) : undefined
     if (above && !row.code && ownLine(row.text)) {
       above.id = blockIdOf(row.text)
       continue
     }
 
-    if (!current || (!row.code && LIST_ITEM.test(row.text))) {
-      current = { line: row.line, text: firstWords(row.text), id: null }
-      found.push(current)
+    const { start, end } = blockAround(rows, row.line)
+    const block: NoteBlock = { line: start, text: firstWords(row.text), id: null }
+    for (const one of rows.slice(start, end + 1)) {
+      const id = one.code ? null : blockIdOf(one.text)
+      if (id) block.id = id
     }
-
-    if (row.code) continue
-    const id = blockIdOf(row.text)
-    if (id) current.id = id
+    found.push(block)
+    through = end
+    apart = false
   }
 
   return found

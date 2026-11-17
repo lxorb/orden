@@ -1,4 +1,4 @@
-import { lines, slugify } from '@orden/markdown/links'
+import { headingText, lines, slugify } from '@orden/markdown/links'
 
 export interface Heading {
   level: number
@@ -14,8 +14,8 @@ export function scanHeadings(text: string): Heading[] {
 
   for (const row of lines(text)) {
     if (row.code || row.matter) continue
-    const [, hashes = '', title = ''] = HEADING.exec(row.text) ?? []
-    if (hashes) found.push({ level: hashes.length, text: title.trim(), line: row.line })
+    const [, hashes = ''] = HEADING.exec(row.text) ?? []
+    if (hashes) found.push({ level: hashes.length, text: headingText(row.text), line: row.line })
   }
 
   return found

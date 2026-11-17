@@ -111,3 +111,13 @@ describe('the outline reads code the way the page does', () => {
     ])
   })
 })
+
+describe('a heading that a block link has named', () => {
+  test('is still found by a heading link when the note is opened at it', () => {
+    expect(lineOfHeading(scanHeadings('# Groceries ^new123\n\n- milk\n'), 'Groceries')).toBe(0)
+  })
+
+  test('shows its words alone in the outline', () => {
+    expect(scanHeadings('# Groceries ^new123\n\n- milk\n')[0]?.text).toBe('Groceries')
+  })
+})
