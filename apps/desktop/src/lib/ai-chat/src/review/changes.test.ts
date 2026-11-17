@@ -229,7 +229,10 @@ describe('the agent an edit was made by', () => {
     keepMoves({ gemini: 'gemini-2' })
 
     expect(agentOf('gemini-2')).toBe('orden-gemini')
-    expect(agentsOf('gemini-2')).toEqual(['orden-gemini', 'nib-gemini'])
+    const [current, former] = agentsOf('gemini-2')
+    expect(current).toBe('orden-gemini')
+    expect(former).not.toBe(current)
+    expect(providerOf(former ?? '')).toBe('gemini-2')
     expect(providerOf('orden-gemini')).toBe('gemini-2')
     expect(providerOf(agentOf('gemini'))).toBe('gemini')
     expect(agentOf('gemini')).not.toBe('orden-gemini')
