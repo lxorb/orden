@@ -11,6 +11,10 @@ class CrashReports {
     keepJson(CRASH_REPORTS, on)
   }
 
+  heard(): void {
+    this.on = stored(CRASH_REPORTS) !== false
+  }
+
   ask(): void {
     if (crashAskDue()) this.asking = true
   }

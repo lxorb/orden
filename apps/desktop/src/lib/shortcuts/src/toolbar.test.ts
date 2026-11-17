@@ -161,3 +161,31 @@ describe('the account', () => {
     expect(toolbar.ids).toEqual(held)
   })
 })
+
+describe('a button this device cannot press yet', () => {
+  test('stays on the bar, out of sight, through edits made here', () => {
+    toolbar.receive({ toolbar: ['format.bold', 'app.new-window', 'format.italic'] })
+    expect(toolbar.ids).toEqual(['format.bold', 'format.italic'])
+
+    toolbar.move(1, 0)
+    expect(toolbar.ids).toEqual(['format.italic', 'format.bold'])
+    toolbar.add('paragraph.quote')
+    toolbar.remove('format.bold')
+
+    expect(toolbar.ids).toEqual(['format.italic', 'paragraph.quote'])
+    expect(toolbar.chosen).toEqual(['format.italic', 'app.new-window', 'paragraph.quote'])
+    expect(JSON.parse(localStorage.getItem('orden:toolbar') ?? 'null')).toEqual([
+      'format.italic',
+      'app.new-window',
+      'paragraph.quote',
+    ])
+  })
+
+  test('outlives a relaunch made before it could be pressed', () => {
+    localStorage.setItem('orden:toolbar', JSON.stringify(['format.bold', 'app.new-window']))
+    toolbar.restore()
+
+    expect(toolbar.chosen).toEqual(['format.bold', 'app.new-window'])
+    expect(toolbar.ids).toEqual(['format.bold'])
+  })
+})

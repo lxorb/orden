@@ -25,8 +25,8 @@ test('an import that ends after Back does not move the setup on from the step no
   setup.begin(true)
   await setup.look()
   setup.answer({ browser: 'chrome' })
-  while (setup.step !== 'browser') setup.next()
-  setup.next()
+  while (setup.step !== 'browser') setup.next(setup.step)
+  setup.next(setup.step)
   expect(setup.step).toBe('import')
 
   const target = document.createElement('div')

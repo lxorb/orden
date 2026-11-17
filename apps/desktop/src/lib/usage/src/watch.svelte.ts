@@ -11,7 +11,7 @@ import { account, request } from '../../accounts/src/api'
 import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
-import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
+import { HELP_IMPROVE, USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
 import { flush, pruned } from './queue'
 import { commonOf } from './system'
 import { saveTallies, started, spent, takeTallies, type Tally } from './tally'
@@ -168,6 +168,10 @@ export function watchUsage(sending: boolean): () => void {
     send()
   }
   usageChoice.changes.add(chose)
+  const heard = (event: StorageEvent) => {
+    if (event.key === HELP_IMPROVE) usageChoice.heard()
+  }
+  window.addEventListener('storage', heard)
 
   return () => {
     saveTallies()
@@ -178,5 +182,6 @@ export function watchUsage(sending: boolean): () => void {
     window.removeEventListener('pagehide', saveTallies)
     window.removeEventListener('online', send)
     usageChoice.changes.delete(chose)
+    window.removeEventListener('storage', heard)
   }
 }

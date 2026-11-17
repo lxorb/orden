@@ -1543,17 +1543,18 @@ export function runEntry(id: string, context: AppContext, via?: UsageVia): boole
   return true
 }
 
+export function known(id: string): boolean {
+  if (EDITOR_BY_ID.has(id)) return true
+
+  const entry = BY_ID.get(id)
+  return !!entry && entry.scope === 'app' && !!entry.run
+}
+
 export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
 
   const entry = BY_ID.get(id)
-  return (
-    !!entry &&
-    entry.scope === 'app' &&
-    !!entry.run &&
-    (isDesktop || !entry.desktop) &&
-    entry.shown?.() !== false
-  )
+  return !!entry && known(id) && (isDesktop || !entry.desktop) && entry.shown?.() !== false
 }
 
 export const SYSTEM_KEYS: Record<Platform, string[]> = {

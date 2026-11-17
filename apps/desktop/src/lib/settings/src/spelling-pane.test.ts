@@ -27,6 +27,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { modes } = await import('../../modes/src/api')
 const { spellingPane } = await import('./spelling-pane')
 const { inForceNow } = await import('../../spelling/src/api')
+const { resetPane } = await import('./preferences')
 
 const row = (name: string) => {
   const found = spellingPane(undefined)
@@ -78,5 +79,22 @@ describe('the dictionaries on Orden’s own Chromium', () => {
     expect(held.spellLanguages).toEqual(modes.spellLanguages)
     expect(held.spellLanguages).toContain('sv-SE')
     expect('spellLanguage' in held).toBe(false)
+  })
+
+  test('go back to the reader’s own language alone on a reset, whatever was on before', () => {
+    const first = inForceNow(modes.spellLanguages)[0] ?? ''
+    const before = first === 'de-DE' ? 'Français' : 'Deutsch'
+    row(before).set(true)
+    const own = spellingPane(undefined)
+      .groups.flatMap((group) => group.fields)
+      .find((one) => one.kind === 'switch' && one.member === first)
+    if (own?.kind !== 'switch') throw new Error('no own dictionary')
+    own.set(false)
+    expect(inForceNow(modes.spellLanguages)).not.toContain(first)
+
+    resetPane(spellingPane(undefined))
+
+    expect(inForceNow(modes.spellLanguages)).toEqual([first])
+    expect(told.lists.at(-1)).toEqual([first])
   })
 })

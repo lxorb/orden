@@ -9,6 +9,16 @@ class ClipboardSharing {
     this.on = on
     keep(KEY, on ? 'yes' : 'no')
   }
+
+  heard() {
+    this.on = storedText(KEY) !== 'no'
+  }
 }
 
 export const clipboardSharing = new ClipboardSharing()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === KEY) clipboardSharing.heard()
+  })
+}

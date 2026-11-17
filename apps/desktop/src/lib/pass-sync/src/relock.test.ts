@@ -69,3 +69,25 @@ describe('locking after time away', () => {
     expect(locked).toBe(1)
   })
 })
+
+describe('a relock time changed while away', () => {
+  test('counts by the new time', () => {
+    after = 0
+    const one = relock()
+    one.away()
+    after = 1
+    one.rearm()
+    vi.advanceTimersByTime(60_000)
+    expect(locked).toBe(1)
+  })
+
+  test('does nothing while the window is in use', () => {
+    const one = relock()
+    one.away()
+    one.back()
+    after = 1
+    one.rearm()
+    vi.advanceTimersByTime(60_000)
+    expect(locked).toBe(0)
+  })
+})

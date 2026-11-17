@@ -71,7 +71,6 @@ const CUSTOM_ID = 'orden-custom-css'
 const ACCENT_KEY = 'orden:accent'
 const SHEET_KEY = 'orden:theme-sheet'
 const OFFERED_KEY = 'orden:contrast-offered'
-const CHOSEN_KEYS = [STORAGE_KEY, SCHEME_KEY, SETTINGS_KEY, ACCENT_KEY]
 const CONTRAST_THEME = 'contrast'
 
 const DEFAULT_ID = 'default'
@@ -253,15 +252,65 @@ class Themes {
     if (owns && this.active.translucent === true) standAsBefore()
     this.material = stoodOnNothing() || groundUnknown()
     this.apply()
-    this.listed = this.reload().catch(() => undefined)
+    this.listed = this.reload({ atLaunch: true }).catch(() => undefined)
+    this.hearOthers()
+  }
+
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing) return
+    this.hearing = true
     window.addEventListener('storage', (event) => {
-      if (event.key === null || CHOSEN_KEYS.includes(event.key)) this.chosenElsewhere()
+      if (event.key === STORAGE_KEY || event.key === SCHEME_KEY) this.heardChoice()
+      else if (event.key === SETTINGS_KEY) {
+        const ended = this.id === this.keptId && this.trying.accent === this.kept.accent
+        if (ended) this.trying = without(this.trying, 'accent')
+        this.unkept = false
+        this.chosen = this.storedDrawers()
+        this.paintSettings()
+        this.apply()
+      } else if (event.key === null || event.key === ACCENT_KEY) this.chosenElsewhere()
     })
   }
 
   private chosenElsewhere() {
     this.readChosen()
     this.listed = this.reload().catch(() => undefined)
+  }
+
+  private heardChoice() {
+    const saved = storedText(STORAGE_KEY)
+    const scheme = storedText(SCHEME_KEY)
+    if (saved && saved !== 'null' && !isSchemeChoice(saved)) {
+      this.id = saved
+      this.keptId = saved
+      if (!this.all.some((one) => one.id === saved)) void this.reload().catch(() => undefined)
+    }
+    if (isSchemeChoice(scheme)) {
+      this.scheme = scheme
+      this.keptScheme = scheme
+    }
+    this.apply()
+  }
+
+  private storedDrawers(): ChosenSettings {
+    const drawers: ChosenSettings = Object.fromEntries(
+      Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
+        owner,
+        recordOf(values, isValue),
+      ]),
+    )
+    const accent = storedText(ACCENT_KEY)
+    if (accent !== null && drawers[SHARED]?.accent === undefined) {
+      drawers[SHARED] = { ...drawers[SHARED], accent }
+    }
+    return drawers
+  }
+
+  private unkept = false
+
+  private get writtenDrawers(): ChosenSettings {
+    return stored(SETTINGS_KEY) === null || this.unkept ? this.chosen : this.storedDrawers()
   }
 
   private withLoaded(theme: ThemeInfo): ThemeInfo {
@@ -297,7 +346,7 @@ class Themes {
   }
 
   private restoreSettings(first: boolean, unwritten: boolean) {
-    const drawers = storedSettings()
+    const drawers = this.storedDrawers()
 
     const app = drawers[SHARED]
     if (app) {
@@ -309,9 +358,8 @@ class Themes {
       }
     }
 
-    const held = this.withOldAccent(drawers)
-    this.giveAccent(held, first, unwritten)
-    this.chosen = held
+    this.giveAccent(drawers, first, unwritten)
+    this.chosen = drawers
     this.trying = {}
   }
 
@@ -376,7 +424,7 @@ class Themes {
     this.wearId(CONTRAST_THEME)
   }
 
-  async reload() {
+  async reload({ atLaunch = false } = {}) {
     let found: ThemeFile[]
 
     try {
@@ -416,8 +464,9 @@ class Themes {
 
     const copy = this.files.find((file) => file.id === this.id && copiesBuiltIn(file))
     if (copy?.stamp) this.wearId(copy.stamp.id)
-    else if (!this.all.some((theme) => theme.id === this.id)) this.wearId(DEFAULT_ID)
-    else this.apply()
+    else if (this.all.some((theme) => theme.id === this.id)) this.apply()
+    else if (atLaunch) this.wearId(DEFAULT_ID)
+    else this.select(DEFAULT_ID)
 
     await this.loadCustom()
   }
@@ -490,7 +539,7 @@ class Themes {
       return
 
     this.chosen = values
-    keepJson(SETTINGS_KEY, values)
+    this.unkept = !keepJson(SETTINGS_KEY, values)
     keep(GIVEN_KEY, '')
     this.keptScheme = look.scheme
     keep(SCHEME_KEY, look.scheme)
@@ -598,8 +647,9 @@ class Themes {
         return
       }
     }
-    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
-    keepJson(SETTINGS_KEY, this.chosen)
+    const held = this.writtenDrawers
+    this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
+    this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
     this.tellPicked()
   }
 
@@ -608,9 +658,10 @@ class Themes {
     if (!setting) return
 
     const drawer = this.drawerOf(setting)
-    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
+    const held = this.writtenDrawers
+    this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
-    keepJson(SETTINGS_KEY, this.chosen)
+    this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()

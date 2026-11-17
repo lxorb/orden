@@ -138,8 +138,8 @@
 
 <Screen
   title="Connect your AI"
-  primary={{ label: 'Continue', disabled: !connected, onclick: () => setup.next() }}
-  quiet={{ label: 'Skip', onclick: () => setup.next() }}
+  primary={{ label: 'Continue', disabled: !connected, onclick: () => setup.next('ai') }}
+  quiet={{ label: 'Skip', onclick: () => setup.next('ai') }}
 >
   <div class="o-list rise">
     {#each offered as one (one.id)}

@@ -29,13 +29,25 @@ class Recovery {
     this.days = keepDays(saved.days)
   }
 
+  heard() {
+    this.restore()
+    if (this.sweeper === undefined) return
+    this.retime()
+    void this.sweep()
+  }
+
   start(): () => void {
     this.taken = {}
     this.retime()
     void this.sweep()
     this.sweeper = setInterval(() => void this.sweep(), DAY)
+    const heard = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) this.heard()
+    }
+    if (typeof window !== 'undefined') window.addEventListener('storage', heard)
 
     return () => {
+      if (typeof window !== 'undefined') window.removeEventListener('storage', heard)
       clearInterval(this.ticker)
       clearInterval(this.sweeper)
       this.ticker = undefined

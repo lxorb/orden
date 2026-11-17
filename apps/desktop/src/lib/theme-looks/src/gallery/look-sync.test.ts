@@ -2,6 +2,7 @@ import type { Look } from '@orden/sync-core'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { type AccountDouble, accountDouble } from '../../../accounts/test/fakes'
 import { LookSync } from './look-sync'
+import { OwedMark } from './owed-mark'
 
 const DARK_GLASS: Look = { theme: 'glass', scheme: 'dark', values: { '*': { accent: 'blue' } } }
 const LIGHT_ROSE: Look = { theme: 'file:rose', scheme: 'light', values: {}, css: ':root{}' }
@@ -29,8 +30,12 @@ function userOf(token: string): string {
   return token.replace(/^token-/, '')
 }
 
-function device(start: Look, user: string | null = 'a', kept = new Map<string, boolean>()): Device {
-  const account = accountDouble(user)
+function device(
+  start: Look,
+  user: string | null = 'a',
+  kept = new Map<string, unknown>(),
+  account = accountDouble(user),
+): Device {
   const pending: Promise<unknown>[] = []
   const track = <T>(work: Promise<T>): Promise<T> => {
     pending.push(work)
@@ -41,6 +46,11 @@ function device(start: Look, user: string | null = 'a', kept = new Map<string, b
     account,
     worn: start,
     sync: new LookSync({
+      owing: new OwedMark('orden:look-owed', account, {
+        read: (key) => kept.get(key) ?? null,
+        write: (key, value) => void kept.set(key, value),
+        drop: (key) => void kept.delete(key),
+      }),
       token: () => account.accountToken,
       look: () => one.worn,
       wear: (look) => {
@@ -60,8 +70,6 @@ function device(start: Look, user: string | null = 'a', kept = new Map<string, b
           if (other.account.accountToken === token) other.hear()
         }
       },
-      owedKept: () => kept.get('owed') ?? false,
-      keepOwed: (owed) => void kept.set('owed', owed),
     }),
     pick: (look) => {
       one.worn = look
@@ -175,25 +183,6 @@ describe('a theme that follows the account', () => {
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
 
-  test('sends a pick that could not be sent before a restart, not the account’s old theme over it', async () => {
-    server.settings.set('a', { look: CLASSIC })
-    const kept = new Map<string, boolean>()
-    const before = device(CLASSIC, 'a', kept)
-    await signIn(before)
-    server.away = true
-    before.pick(DARK_GLASS)
-    await settled(before)
-    server.devices.delete(before)
-    server.away = false
-
-    const after = device(DARK_GLASS, 'a', kept)
-    await signIn(after)
-
-    expect(after.worn).toEqual(DARK_GLASS)
-    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
-    expect(kept.get('owed')).toBe(false)
-  })
-
   test('never carries a pick owed to one account into the next', async () => {
     server.settings.set('b', { look: CLASSIC })
     const one = device(CLASSIC)
@@ -242,5 +231,39 @@ describe('a theme that follows the account', () => {
 
     expect(one.worn).toEqual(LIGHT_ROSE)
     expect(server.settings.get('a')?.look).toEqual(LIGHT_ROSE)
+  })
+})
+
+describe('a theme picked while the account could not hear it', () => {
+  test('outlives a relaunch and wins over the account’s older one', async () => {
+    server.settings.set('a', { look: CLASSIC })
+    const kept = new Map<string, unknown>()
+    const first = device(CLASSIC, 'a', kept)
+    await signIn(first)
+    server.away = true
+    first.pick(DARK_GLASS)
+    await settled(first)
+    server.away = false
+
+    const again = device(DARK_GLASS, 'a', kept)
+    await signIn(again)
+
+    expect(again.worn).toEqual(DARK_GLASS)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
+  })
+
+  test('picked before the account is known is not undone once it is', async () => {
+    server.settings.set('a', { look: CLASSIC })
+    const account = accountDouble('a')
+    const known = account.user
+    account.user = null
+    const one = device(CLASSIC, 'a', new Map(), account)
+
+    one.pick(DARK_GLASS)
+    account.user = known
+    await signIn(one)
+
+    expect(one.worn).toEqual(DARK_GLASS)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
 })

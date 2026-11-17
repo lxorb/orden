@@ -16,6 +16,10 @@ class Hush {
   sound = $state(false)
 
   constructor() {
+    this.heard()
+  }
+
+  heard() {
     const saved = stored(KEY)
     if (isRecord(saved)) this.took(saved)
   }
@@ -84,6 +88,12 @@ class Hush {
 }
 
 export const hush = /* @__PURE__ */ new Hush()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === KEY) hush.heard()
+  })
+}
 
 export function dndUntil(): number | null {
   const status = account.user?.status

@@ -4,7 +4,7 @@ import { GIVES_UP_AFTER, InstructionsField, SETTLES_AFTER } from './instructions
 const PATH = '/space/AGENTS.md'
 
 function disk(start: string | null) {
-  const held = { text: start, unreadable: false }
+  const held = { text: start, unreadable: false, refusing: false }
   const writes: { before: string; after: string; first: boolean }[] = []
   const made: string[] = []
   const hands = {
@@ -12,9 +12,10 @@ function disk(start: string | null) {
     read: vi.fn(() => Promise.resolve(held.text)),
     there: vi.fn(() => Promise.resolve(held.unreadable)),
     write: vi.fn((_path: string, before: string, after: string, first: boolean) => {
+      if (held.refusing) return Promise.resolve(false)
       writes.push({ before, after, first })
       held.text = after
-      return Promise.resolve()
+      return Promise.resolve(true)
     }),
     make: vi.fn((_path: string, text: string) => {
       made.push(text)
@@ -199,6 +200,22 @@ describe('the field for a space’s AGENTS.md', () => {
     expect(held.text).toBe('mine')
   })
 
+  test('a write the file refuses, locked meanwhile, stays owed', async () => {
+    const { hands, held } = disk('# Rules')
+    const field = new InstructionsField(PATH, hands)
+    await field.load()
+
+    held.refusing = true
+    field.type('mine')
+    await field.flush()
+    expect(field.dirty).toBe(true)
+
+    held.refusing = false
+    await field.flush()
+    expect(held.text).toBe('mine')
+    expect(field.dirty).toBe(false)
+  })
+
   test('a space that has gone is not made again, and the field locks with its words in it', async () => {
     const { hands, made } = disk(null)
     const field = new InstructionsField(PATH, hands)
@@ -215,7 +232,7 @@ describe('the field for a space’s AGENTS.md', () => {
 
   test('a write that never comes back does not hold up the ones after it', async () => {
     const { hands, writes } = disk('# Rules')
-    hands.write.mockImplementationOnce(() => new Promise<void>(() => undefined))
+    hands.write.mockImplementationOnce(() => new Promise<boolean>(() => undefined))
     const field = new InstructionsField(PATH, hands)
     await field.load()
 
@@ -233,7 +250,7 @@ describe('the field for a space’s AGENTS.md', () => {
     hands.write.mockImplementation((_path, before, after, first) => {
       writes.push({ before, after, first })
       held.text = after.replace(/\n/g, '\r\n')
-      return Promise.resolve()
+      return Promise.resolve(true)
     })
     const field = new InstructionsField(PATH, hands)
     await field.load()

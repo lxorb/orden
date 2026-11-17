@@ -80,6 +80,7 @@ const session = vi.hoisted(() => ({ token: 'session', name: null, rechecked: 0, 
 vi.mock('../../accounts/src/account.svelte', () => ({
   account: Object.assign(session, {
     forgetWithSession: () => undefined,
+    holdsNoAccount: () => undefined,
     recheck: () => {
       session.rechecked += 1
       return Promise.resolve()

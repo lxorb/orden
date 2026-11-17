@@ -1,5 +1,5 @@
 import { type Scheme, settingsWindow } from '@orden/contracts'
-import { accentColour, theme } from '../../../theme/src/api'
+import { accentColour, theme, type ThemeValue } from '../../../theme/src/api'
 import { chooseFiles, PICTURES } from '../../../ui-controls/src/api'
 import { fileBytes, forget, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
 import { message } from '../../../ui-kit/src/api'
@@ -40,12 +40,24 @@ function sharpLongest(blur: number, kept: boolean): number {
   return kept ? side : Math.min(MOVING, side)
 }
 
+const DIALS = ['blur', 'saturation', 'tint', 'tint-colour'] as const
+
+function dials(): Record<string, ThemeValue> {
+  if (theme.id === WALLPAPER_THEME) return theme.values
+  const kept: Record<string, ThemeValue> = {}
+  for (const id of DIALS) {
+    const value = theme.keptFor(WALLPAPER_THEME, id)
+    if (value !== undefined) kept[id] = value
+  }
+  return kept
+}
+
 function blurDial(): number {
-  return Number(theme.values.blur ?? 28)
+  return Number(dials().blur ?? 28)
 }
 
 function toneDial(): Tone {
-  const asked = toneOf(theme.values, theme.accent)
+  const asked = toneOf(dials(), theme.accent)
   return { ...asked, colour: accentColour(asked.colour, 'dark') }
 }
 
@@ -265,6 +277,14 @@ class Wallpaper {
     void this.wearSharp()
   }
 
+  heard(slot: Slot): void {
+    this.held = { ...this.held, [slot]: slot === 'dark' ? heldDark() : heldWallpaper() }
+    this.sources[slot] = null
+    this.sharpened[slot] = null
+    theme.rewear(WALLPAPER_THEME)
+    if (theme.id === WALLPAPER_THEME) void this.wearSharp()
+  }
+
   private write(slot: Slot): void {
     const held = this.held[slot]
     if (!held) return
@@ -277,6 +297,13 @@ function clamp(value: number): number {
 }
 
 export const wallpaper = new Wallpaper()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    const slot = SLOTS.find((one) => KEYS[one] === event.key)
+    if (slot) wallpaper.heard(slot)
+  })
+}
 
 $effect.root(() => {
   let making = false
@@ -310,6 +337,7 @@ $effect.root(() => {
   const baked = changed()
   const said = changed()
   const side = changed()
+  let slept = false
 
   $effect(() => {
     if (!following()) return
@@ -324,9 +352,12 @@ $effect.root(() => {
 
   $effect(() => {
     if (theme.id !== WALLPAPER_THEME) {
+      slept = true
       wallpaper.sleep()
       return
     }
-    if (side(theme.current)) wallpaper.rescheme()
+    const turned = side(theme.current)
+    if (turned || slept) wallpaper.rescheme()
+    slept = false
   })
 })

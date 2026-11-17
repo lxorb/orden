@@ -30,7 +30,7 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, ApiError, type AccountSettings } from '../../accounts/src/api'
+import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -44,7 +44,7 @@ import {
   type Marks,
 } from '@orden/glasses/choices'
 import {
-  forget as forgetKept,
+  forget,
   isNumber,
   isRecord,
   isString,
@@ -878,7 +878,7 @@ class Modes {
       return null
     }
 
-    const unheard = this.sent === asked
+    const unheard = this.sent === asked && !Object.keys(this.owed).length
 
     const theirs = ligatureScope(remote.ligatures)
     if (theirs && unheard && theirs !== this.ligatures) {
@@ -1044,14 +1044,23 @@ class Modes {
 
   private sent = 0
 
-  private get owed(): AccountSettings {
-    const held = stored(OWED_KEY)
-    return isRecord(held) ? held : {}
+  private get owedTo(): { who: string | null; patch: AccountSettings } | null {
+    const kept = stored(OWED_KEY)
+    if (!isRecord(kept) || !isRecord(kept.patch)) return null
+    const owner = typeof kept.who === 'string' ? kept.who : null
+    const who = account.user?.id ?? null
+    return owner === null || who === null || owner === who
+      ? { who: owner, patch: kept.patch }
+      : null
   }
 
-  private set owed(value: AccountSettings) {
-    if (Object.keys(value).length) keepJson(OWED_KEY, value)
-    else forgetKept(OWED_KEY)
+  private get owed(): AccountSettings {
+    return this.owedTo?.patch ?? {}
+  }
+
+  private set owed(patch: AccountSettings) {
+    if (!Object.keys(patch).length) forget(OWED_KEY)
+    else keepJson(OWED_KEY, { who: account.user?.id ?? this.owedTo?.who ?? null, patch })
   }
 
   private session = 0
@@ -1061,41 +1070,51 @@ class Modes {
     this.owed = {}
   }
 
+  forgetUnowned(): void {
+    if (this.owedTo?.who === null) this.owed = {}
+  }
+
   private share(patch: AccountSettings) {
     this.sent++
+    if (account.noAccountForSure) return
+    this.owed = { ...this.owed, ...patch }
 
     const token = account.accountToken
-    if (!token) {
-      this.owed = { ...this.owed, ...patch }
-      return
-    }
-
-    const owed = this.owed
-    this.owed = {}
-    void this.deliver(token, { ...owed, ...patch })
+    if (token) void this.settle(token)
   }
 
   private async settle(token: string): Promise<void> {
     const owed = this.owed
     if (!Object.keys(owed).length) return
 
-    this.owed = {}
-    await this.deliver(token, owed)
+    const session = this.session
+    if (!(await this.delivered(token, owed, session))) return
+    if (this.session !== session) return
+    const said = (value: unknown) => JSON.stringify(value)
+    this.owed = Object.fromEntries(
+      Object.entries(this.owed).filter(
+        ([name, value]) => said(value) !== said(owed[name as keyof AccountSettings]),
+      ),
+    )
   }
 
-  private async deliver(token: string, patch: AccountSettings): Promise<void> {
-    const session = this.session
+  private async delivered(
+    token: string,
+    patch: AccountSettings,
+    session: number,
+  ): Promise<boolean> {
     try {
       await api.saveSettings(token, patch)
+      return true
     } catch (error) {
-      if (this.session !== session) return
-      if (!(error instanceof ApiError && (error.status === 400 || error.status === 413))) {
-        this.owed = { ...patch, ...this.owed }
-        return
-      }
+      if (!turnedDown(error)) return false
       const keys = Object.keys(patch) as (keyof AccountSettings)[]
-      if (keys.length < 2) return
-      for (const key of keys) await this.deliver(token, { [key]: patch[key] })
+      if (keys.length < 2) return true
+      for (const key of keys) {
+        if (this.session !== session) return true
+        if (!(await this.delivered(token, { [key]: patch[key] }, session))) return false
+      }
+      return true
     }
   }
 
@@ -1266,3 +1285,4 @@ export function watchUndated(changed: () => void): () => void {
 }
 
 account.forgetWithSession(() => modes.forgetSession())
+account.holdsNoAccount(() => modes.forgetUnowned())

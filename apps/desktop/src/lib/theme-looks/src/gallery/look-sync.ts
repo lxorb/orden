@@ -1,42 +1,34 @@
 import { lookIn, type Look } from '@orden/sync-core'
+import type { OwedMark } from './owed-mark'
+
 export interface LookWorld {
+  owing: OwedMark
   token(): string | null
   look(): Look
   wear(look: Look): Promise<void>
   read(token: string): Promise<{ look?: unknown }>
   save(token: string, look: Look): Promise<unknown>
-  owedKept?(): boolean
-  keepOwed?(owed: boolean): void
 }
 
 export class LookSync {
   private session = 0
   private sent = 0
   private saving = 0
-  private owing: boolean
+  private owed = false
 
-  constructor(private readonly world: LookWorld) {
-    this.owing = world.owedKept?.() ?? false
-  }
-
-  private get owed(): boolean {
-    return this.owing
-  }
-
-  private set owed(owed: boolean) {
-    this.owing = owed
-    this.world.keepOwed?.(owed)
-  }
+  constructor(private readonly world: LookWorld) {}
 
   picked(): void {
     this.sent++
+    const ticket = this.world.owing.mark()
     const token = this.world.token()
-    if (token) void this.push(token)
+    if (token) void this.push(token, ticket)
   }
 
   async adopt(token: string): Promise<void> {
     const session = this.session
-    if (this.owed) await this.push(token)
+    const owing = this.owed || (this.world.owing.standing && this.saving === 0)
+    if (owing) await this.push(token, this.world.owing.mark())
     if (this.session !== session || this.owed) return
 
     const asked = this.sent
@@ -50,7 +42,7 @@ export class LookSync {
 
     const theirs = lookIn(remote.look)
     if (theirs) await this.world.wear(theirs)
-    else await this.push(token)
+    else await this.push(token, 0)
   }
 
   forget(): void {
@@ -59,7 +51,7 @@ export class LookSync {
     this.saving = 0
   }
 
-  private async push(token: string): Promise<void> {
+  private async push(token: string, ticket: number): Promise<void> {
     const look = lookIn(this.world.look())
     if (!look) return
 
@@ -68,6 +60,7 @@ export class LookSync {
     this.saving++
     try {
       await this.world.save(token, look)
+      if (this.session === session) this.world.owing.heard(ticket)
     } catch {
       if (this.session === session) this.owed = true
     } finally {

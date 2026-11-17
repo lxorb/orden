@@ -1,7 +1,15 @@
 import type { Importer } from '@orden/contracts'
 import { bringing } from './bring'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
-import { type Answers, firstStep, markdownStyleFor, type Reach, type Step, stepAfter } from './flow'
+import {
+  type Answers,
+  firstStep,
+  markdownStyleFor,
+  type Reach,
+  shows,
+  type Step,
+  stepAfter,
+} from './flow'
 import { gate } from './gate.svelte'
 import { heardBefore, keepProgress, readProgress } from './kept'
 import { isMobile } from '../../platform/src/api'
@@ -42,12 +50,6 @@ class Setup {
 
   private trail: Step[] = []
   private told = 0
-  private visits = 0
-
-  stillHere(): () => boolean {
-    const visit = this.visits
-    return () => this.showing && this.visits === visit
-  }
 
   resume() {
     if (this.trail.length) return
@@ -65,7 +67,6 @@ class Setup {
   }
 
   private open(step: Step) {
-    this.visits++
     this.step = step
     this.trail = [step]
     this.showing = true
@@ -98,8 +99,12 @@ class Setup {
     }
   }
 
+  private get earlier(): Step[] {
+    return this.trail.slice(0, -1).filter((step) => shows(step, this.answers, this.reach))
+  }
+
   get canGoBack(): boolean {
-    return this.trail.length > 1
+    return this.earlier.length > 0
   }
 
   answer(change: Partial<Answers>) {
@@ -107,9 +112,9 @@ class Setup {
     this.keep()
   }
 
-  next() {
+  next(from: Step) {
+    if (from !== this.step) return
     const step = stepAfter(this.step, this.answers, this.reach)
-    this.visits++
     this.forward = true
     this.trail.push(step)
     this.step = step
@@ -118,9 +123,9 @@ class Setup {
   }
 
   back() {
-    if (this.trail.length < 2) return
-    this.trail.pop()
-    this.visits++
+    const earlier = this.earlier
+    if (!earlier.length) return
+    this.trail = earlier
     this.forward = false
     this.step = this.trail.at(-1) ?? 'account'
     this.keep()

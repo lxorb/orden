@@ -65,17 +65,15 @@
   $effect(() => closeOnBack(view === 'other', leave))
 
   async function done() {
-    const here = setup.stillHere()
     if (picked === CUSTOM) await applyPreset(custom)
     else if (preset) await applyPreset(preset)
-    if (!here()) return
     setup.answer({ browser: BROWSERS.some((one) => one.id === picked) ? picked : null })
-    setup.next()
+    setup.next('browser')
   }
 
   function skip() {
     setup.answer({ browser: null })
-    setup.next()
+    setup.next('browser')
   }
 </script>
 
