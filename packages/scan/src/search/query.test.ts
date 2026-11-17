@@ -241,6 +241,16 @@ describe('regular expressions', () => {
     expect(parseQuery('/notes/2026')).toEqual(word('/notes/2026'))
   })
 
+  test('are a path, not a pattern, where what follows a slash is no set of flags', () => {
+    expect(parseQuery('/usr/bin')).toEqual(word('/usr/bin'))
+    expect(parseQuery('/Users/david')).toEqual(word('/Users/david'))
+    expect(parseQuery('/usr/local/bin')).toEqual(word('/usr/local/bin'))
+    expect(parseQuery('/dev/null')).toEqual(word('/dev/null'))
+    expect(parseQuery('/a/ii')).toEqual(word('/a/ii'))
+    expect(parseQuery('/Plan/i')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
+    expect(parseQuery('/Plan/gi')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
+  })
+
   test('close at the slash that ends the word', () => {
     expect(parseQuery('/a/b/')).toEqual({ kind: 'regex', source: 'a/b', fold: false })
   })

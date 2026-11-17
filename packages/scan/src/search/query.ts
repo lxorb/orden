@@ -40,6 +40,8 @@ const UNITS: Record<string, Unit> = {
 
 const FIELD = /^([A-Za-z][A-Za-z-]*):/
 
+const FLAGS = /^(?!.*(.).*\1)[dgimsuyv]*$/u
+
 export const OPERATORS: readonly string[] = [
   'tag:',
   'path:',
@@ -212,7 +214,7 @@ class Parser {
         }
 
         const ends = after >= this.source.length || /[\s)]/.test(this.source.charAt(after))
-        if (ends) {
+        if (ends && FLAGS.test(flags)) {
           this.at = after
           return { kind: 'regex', source, fold: flags.includes('i') }
         }
