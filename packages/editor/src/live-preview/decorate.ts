@@ -137,9 +137,13 @@ class Decorator {
         this.commentFields(this.state.doc.lineAt(node.from))
         return true
       case 'HeaderMark':
-      case 'QuoteMark':
         this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
         return true
+      case 'QuoteMark': {
+        const spaced = /^[ \t]/.test(this.state.doc.sliceString(node.to, node.to + 1))
+        this.conceal(node.from, node.to + (spaced ? 1 : 0), blockMarkRevealed(this.state, node))
+        return true
+      }
       case 'CodeMark':
         this.conceal(node.from, node.to, revealed(this.state, node))
         return true

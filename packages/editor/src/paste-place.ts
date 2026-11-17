@@ -112,6 +112,8 @@ function unquoted(line: string, marks: number): string {
   return rest
 }
 
+const CALLOUT_HEAD = /^[ \t]*\[![^\]\s]+\]/
+
 const ITEM_LEAD = /^((?:[ \t]*>)*[ \t]*)(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
 function placedAt(state: EditorState, range: SelectionRange, written: string): Landing {
@@ -128,7 +130,8 @@ function placedAt(state: EditorState, range: SelectionRange, written: string): L
   const gap = `\n${lead.trimEnd()}\n${lead}`
 
   const inFront = before.length === prefix.length
-  const nested = inFront && quoteDepth(prefix) > 0 ? quoteDepth(written) : 0
+  const pastedDepth = inFront && quoteDepth(prefix) > 0 ? quoteDepth(written) : 0
+  const nested = CALLOUT_HEAD.test(unquoted(written, pastedDepth)) ? 0 : pastedDepth
   const text = nested
     ? written
         .split('\n')

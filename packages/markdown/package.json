@@ -15,6 +15,7 @@
     "./chart": "./src/chart.ts",
     "./clip-note": "./src/clip-note.ts",
     "./code": "./src/code.ts",
+    "./comments": "./src/comments.ts",
     "./cover": "./src/cover.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
     "./canvas-extras": "./src/canvas-extras.ts",

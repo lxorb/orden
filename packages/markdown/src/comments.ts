@@ -71,20 +71,39 @@ export function stripLine(
   return { text: out, inside: open }
 }
 
+const QUOTE_LEAD = /^(?:[ \t]*>)+/
+
+function keptInQuote(line: string, text: string, quoted: string): string {
+  if (!quoted || text.startsWith(quoted)) return text
+  const lead = QUOTE_LEAD.exec(line)?.[0] ?? ''
+  return lead.replace(/[ \t]/g, '') === quoted.replace(/[ \t]/g, '') ? lead + text : text
+}
+
 export function withoutComments(source: string): string {
   if (!COMMENTS.some((one) => source.includes(one.open))) return source
+  return strippedLines(source).lines.join('\n')
+}
 
+export function openCommentAfter(source: string): string | null {
+  if (!COMMENTS.some((one) => source.includes(one.open))) return null
+  return strippedLines(source).inside
+}
+
+function strippedLines(source: string): { lines: string[]; inside: string | null } {
   const lines = source.split('\n')
   const out: string[] = []
   let code = new CodeBlocks()
   let inside: string | null = null
 
+  let quoted = ''
+
   for (const line of lines) {
     if (inside) {
       const stripped = stripLine(line, inside)
       inside = stripped.inside
-      out.push(stripped.text)
-      code.line(stripped.text)
+      const text = keptInQuote(line, stripped.text, quoted)
+      out.push(text)
+      code.line(text)
       continue
     }
 
@@ -104,6 +123,7 @@ export function withoutComments(source: string): string {
 
     const stripped = stripLine(line, inside)
     inside = stripped.inside
+    if (inside) quoted = QUOTE_LEAD.exec(line)?.[0] ?? ''
     out.push(stripped.text)
 
     if (stripped.text !== line) {
@@ -112,7 +132,7 @@ export function withoutComments(source: string): string {
     }
   }
 
-  return out.join('\n')
+  return { lines: out, inside }
 }
 
 export function noteWithoutComments(source: string): string {

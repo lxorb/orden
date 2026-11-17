@@ -63,6 +63,45 @@ function drawnAsCode(state: EditorState, from: number, to: number): string | nul
   return `<pre><code${named}>${text}</code></pre>`
 }
 
+const RUNS = new Set([
+  'StrongEmphasis',
+  'Emphasis',
+  'InlineCode',
+  'Link',
+  'Strikethrough',
+  'Highlight',
+])
+
+function marksOf(node: SyntaxNode): SyntaxNode[] {
+  const marks: SyntaxNode[] = []
+  for (let child = node.firstChild; child; child = child.nextSibling) {
+    if (child.name.endsWith('Mark')) marks.push(child)
+  }
+  return marks
+}
+
+function closedRuns(state: EditorState, from: number, to: number): string {
+  const tree = syntaxTree(state)
+  let before = ''
+  let after = ''
+
+  for (let node: SyntaxNode | null = tree.resolveInner(from, 1); node; node = node.parent) {
+    if (!RUNS.has(node.name) || node.from >= from || node.to > to) continue
+    const opener = marksOf(node)
+      .reverse()
+      .find((mark) => mark.to <= from)
+    if (opener) before = state.doc.sliceString(node.from, opener.to) + before
+  }
+
+  for (let node: SyntaxNode | null = tree.resolveInner(to, -1); node; node = node.parent) {
+    if (!RUNS.has(node.name) || node.to <= to || node.from < from) continue
+    const closer = marksOf(node).find((mark) => mark.from >= to)
+    if (closer) after += state.doc.sliceString(closer.from, node.to)
+  }
+
+  return before + state.doc.sliceString(from, to) + after
+}
+
 export function copiedFlavours(
   state: EditorState,
   cut = false,
@@ -78,7 +117,8 @@ export function copiedFlavours(
   if (code) return { text, html: `<div ${OURS}>${code}</div>` }
 
   if (!render) void fetchRenderer()
-  return { text, html: render ? `<div ${OURS}>${render(text)}</div>` : null }
+  const drawn = render?.(closedRuns(state, range.from, range.to))
+  return { text, html: drawn === undefined ? null : `<div ${OURS}>${drawn}</div>` }
 }
 
 function carry(event: ClipboardEvent, view: EditorView, cut: boolean): boolean {

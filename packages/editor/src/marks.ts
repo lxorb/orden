@@ -96,10 +96,14 @@ function wrapEach(
         { from: one.from, to: one.from + size },
         { from: one.to, to: one.to + size },
       ])
-    : parts.flatMap((part): ChangeSpec[] => [
-        { from: part.from, insert: mark },
-        { from: part.to, insert: mark },
-      ])
+    : parts.flatMap((part, at): ChangeSpec[] =>
+        found[at]
+          ? []
+          : [
+              { from: part.from, insert: mark },
+              { from: part.to, insert: mark },
+            ],
+      )
   const set = state.changes(changes)
   return {
     changes,
