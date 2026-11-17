@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { readExcluded } from '../src/sync-server/src/spaces/excluded'
+import { readExcluded } from '../src/sync-server-engine/src/spaces/excluded'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv

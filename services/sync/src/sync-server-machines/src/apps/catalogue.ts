@@ -1,12 +1,7 @@
 import { catalogueOf, MOST_CATALOGUE } from '@orden/online/apps'
 import { Hono } from 'hono'
-import {
-  now,
-  deviceOfSession,
-  NOT_FOUND,
-  type Env,
-  type Variables,
-} from '../../../sync-server/src/api'
+import { now, NOT_FOUND, type Env, type Variables } from '../../../sync-server/src/api'
+import { deviceOfSession } from '../../../sync-server-engine/src/api'
 export const appCatalogues = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 export async function appsOn(env: Env): Promise<boolean> {

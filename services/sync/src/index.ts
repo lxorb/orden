@@ -18,26 +18,37 @@ import {
   NAME_LIMIT,
   failed,
   programMayReach,
-  people,
-  ownProfile,
-  presentOwnProfile,
   push,
   sendDue,
-  fillFronts,
-  sweepLeftovers,
-  finishErasing,
-  sweepAnswers,
   sweepVersions,
   expireGuests,
   guestMayReach,
   presentGuest,
   renameGuest,
+  settings,
+  protectedRoutes,
+  usage,
+  themes,
+  QUOTA,
+  usedBytes,
+  steadyEnv,
+  SAID,
+  type Env,
+  type Variables,
+  type Whoever,
+} from './sync-server/src/api'
+import {
+  people,
+  ownProfile,
+  presentOwnProfile,
+  fillFronts,
+  sweepLeftovers,
+  finishErasing,
+  sweepAnswers,
   notes,
   rooms,
   devices,
   hubDoor,
-  settings,
-  protectedRoutes,
   v2Docs,
   v2Spaces,
   sweepMisnamed,
@@ -47,24 +58,15 @@ import {
   sweepTreeOps,
   spaces,
   join,
-  usage,
   recheckDomains,
   expireRequests,
   sharedWithMe,
-  themes,
   time,
   inbox,
   pad,
   purgeExpired,
   trash,
-  QUOTA,
-  usedBytes,
-  steadyEnv,
-  SAID,
-  type Env,
-  type Variables,
-  type Whoever,
-} from './sync-server/src/api'
+} from './sync-server-engine/src/api'
 import {
   account,
   accountById,
@@ -400,7 +402,7 @@ function serve(request: Request, env: Env, context?: ExecutionContext) {
 
 export default { fetch: serve, scheduled }
 
-export { NoteRoom } from './sync-server/src/api'
-export { AccountHub } from './sync-server/src/api'
+export { NoteRoom } from './sync-server-engine/src/api'
+export { AccountHub } from './sync-server-engine/src/api'
 export { ChatLog } from './sync-server-chats/src/api'
 export { AppRelay } from './sync-server-machines/src/api'

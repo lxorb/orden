@@ -1,5 +1,14 @@
 export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
-export { type Body, bytesAtMost, listIn, objectBody, objectIn, readBody, textAtMost } from './body'
+export {
+  type Body,
+  bytesAtMost,
+  listIn,
+  MOST_BODY_BYTES,
+  objectBody,
+  objectIn,
+  readBody,
+  textAtMost,
+} from './body'
 export { askInChunks, AT_A_TIME, chunks, places } from './bound'
 export { serveApp, servePage, servePass, switchChannel } from './channel'
 export {
@@ -16,21 +25,37 @@ export {
   randomToken,
   sha256,
 } from './crypto'
-export { codeMessage, leavingMessage, mailer, oneLine, refusedMail } from './email'
-export { eraseAccount, finishErasing } from './erase'
+export { txtAt } from './dns'
+export {
+  codeMessage,
+  forgetMailed,
+  goneMessage,
+  inviteMessage,
+  leavingMessage,
+  mailer,
+  mayMail,
+  oneLine,
+  refusedMail,
+  requestMessage,
+} from './email'
 export { failed, note } from './failed'
 export {
   claimGuest,
   claimGuestsAt,
   expireGuests,
+  forgetEmptyGuest,
   guestForToken,
   guestMayReach,
+  guestSignedIn,
+  newGuest,
   presentGuest,
   renameGuest,
 } from './guests'
 export { type Ended, hooks, type Session, wire } from './hooks'
+export { claimDomain, DOMAIN, domainStatus, releaseDomain, releaseLeftDomains } from './hostnames'
 export {
   blogRootOf,
+  blogRoots,
   isAppHost,
   isOwnOrigin,
   originAt,
@@ -38,25 +63,23 @@ export {
   passHost,
   sameOriginPath,
 } from './hosts'
-export { deviceOfSession, devices, devicesEnded } from './hub/devices'
-export { hubDoor } from './hub/door'
-export { DEVICE } from './hub/frames'
-export { AccountHub } from './hub/hub'
-export { pokeNow } from './hub/poke'
-export { askHub, tellHubs } from './hub/reach'
-export { inbox, writeInbox } from './inbox'
-export { ISSUES, sweepLeftovers } from './leftovers'
+export { laterOf, pokeNow, pokeSpace } from './hub/poke'
+export { askHub, eraseHubs, HUB_AWAY, tellHubs } from './hub/reach'
 export {
   machineOf,
   mailCeilings,
   mailNotSent,
   mayAsk,
+  mayChangeTree,
   mayGuess,
   mayInviteToPass,
+  mayKeepVersions,
   mayLeave,
+  mayPushDocuments,
   mayRegister,
   maySendAnswer,
   mayTakeAnswer,
+  mayTellTheOwner,
   mayTranscribe,
   mayTryCode,
   mayTrySecond,
@@ -66,27 +89,14 @@ export {
 } from './limits'
 export { deviceName } from './locks/device-name'
 export { type Holder, SocketLock } from './locks/sockets'
-export {
-  addNote,
-  cleanPath,
-  MAX_NOTE_BYTES,
-  MOVED,
-  noteKey,
-  notes,
-  NoteTaken,
-  readablePath,
-  UNREADABLE,
-  writeWords,
-} from './notes'
-export { OPEN_HEADER, openAnswer, openIn, sweepOpened } from './opened'
-export { pad } from './pad'
+export { OPEN_HEADER, openAnswer, openIn, sweepOpened, WRITTEN_HEADER } from './opened'
 export { bytesOf, digest, hexOf, opens } from './pairing'
-export { presentOwnProfile } from './people/profile'
-export { ownProfile, people } from './people/routes'
+export { LONGEST_PATH, staysInside } from './paths'
+export { forgetPictures, htmlIsLive, keepPictures, picturesOf, picturesOfMeta } from './pictures'
 export { programMayReach } from './programs'
-export { PROTECTED, protectedRoutes, type Shut, shutFor } from './protected'
+export { PROTECTED, protectedRoutes, protectLikewise, type Shut, shutFor } from './protected'
 export { forgetEndedTargets } from './push/live'
-export { sendDue } from './push/reminders'
+export { forgetReminders, sendDue } from './push/reminders'
 export { push } from './push/targets'
 export {
   describeDestination,
@@ -96,86 +106,100 @@ export {
   sameRedirect,
 } from './redirects'
 export {
+  NO_ADDRESS,
+  NO_SUCH_NOTE,
   NO_SUCH_SPACE,
   NOT_A_HASH,
+  NOT_A_PATH,
   NOT_AN_EMAIL,
   NOT_AN_OBJECT,
   NOT_FOUND,
   NOT_JSON,
   OUT_OF_SPACE,
+  ROOM_AWAY,
   SIGN_IN,
   SIGN_IN_TO_DO_THAT,
+  SPACE_IS_FULL,
   TOO_MANY_CHANGES,
   TOOK_TOO_LONG,
   TRY_IN_AN_HOUR,
   WRONG_CODE,
 } from './refused'
-export { rooms, roomsSignedOut } from './rooms'
 export { rounds } from './rounds'
-export { noteKind, readsAs } from './rooms/kind'
-export { NoteRoom } from './rooms/room'
 export { SAID, said, tokenIn } from './said'
 export { settings, shownWords } from './settings'
 export { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from './signins'
-export { fillFronts } from './site/fill'
-export { answersFrom, formHtml, formOf } from './site/form'
-export { type NoteFront, readFront } from './site/front'
-export { gateBody, letIn, matches, newTicket, ticketCookie } from './site/gate'
+export { answersFrom, asCsv, formHtml, formOf } from './site/form'
+export { FRONT_REV, type NoteFront, readFront, titleFrom, writeFront } from './site/front'
+export {
+  gateBody,
+  hashPassword,
+  letIn,
+  matches,
+  newSiteKey,
+  newTicket,
+  ticketCookie,
+} from './site/gate'
 export { escape, type Head, headOf } from './site/head'
 export { hostnameOf, spaceForHost } from './site/host'
-export { legacyPathsOf, pageOf, pathsOf, rememberedNote, slugFor } from './site/paths'
-export { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './site/site'
-export { keepAnswer, sweepAnswers } from './spaces/answers'
-export { readSpaceFiles, type SpaceFile } from './spaces/files'
-export { makeFirstSpace } from './spaces/first'
-export { spaces } from './spaces'
-export { join } from './spaces/join'
-export { type ListedSpace, spacesFor } from './spaces/listed'
-export { recheckDomains } from './spaces/proof'
 export {
-  expireRequests,
-  MOST_MEMBERS,
-  roomForAnItem,
-  roomForItem,
-  roomForMember,
-  sharedWithMe,
-  TOO_MANY_ITEMS,
-} from './spaces/share'
-export { allows, MOST_ITEMS, onceShared, reachedItem, reachedSpace, refusal } from './spaces/space'
+  legacyPathsOf,
+  type Moved,
+  pageOf,
+  pathsOf,
+  rememberedNote,
+  rememberMoves,
+  rememberOldPaths,
+  slugFor,
+} from './site/paths'
+export {
+  folders,
+  LONGEST_ICON,
+  presentSite,
+  publishes,
+  readSite,
+  type Site,
+  type SitePassword,
+  type SiteRules,
+  SVG_POLICY,
+  words,
+  wrong,
+} from './site/site'
+export { forgetWords, keepWords } from './site/words'
 export { steadyEnv } from './steady'
 export { fits, fitsSql, QUOTA, usedBytes } from './storage'
-export { deviceOf, programDevice } from './sync2/device'
-export {
-  blobKey,
-  BYTES,
-  hashOfBytes,
-  held,
-  holdsItsName,
-  NO_SUCH_FILE,
-  spellsADiagramName,
-  sweepMisnamed,
-  v2Blobs,
-  v2Files,
-  WRONG_BYTES,
-} from './sync2/files'
-export {
-  type Account,
-  accountBy,
-  minimum,
-  move,
-  NEEDS_MIN,
-  type Standing,
-  standing,
-} from './sync2/gate'
-export { v2Docs, v2Spaces } from './sync2'
-export { v2Maps } from './sync2/maps'
-export { everyoneBack, isMode, rolloutView, setRollout, startingVersion } from './sync2/rollout'
-export { sweepTreeOps } from './sync2/tree'
 export { themes } from './themes'
-export { time } from './time'
-export { purgeExpired, trash } from './trash'
-export { type Env, type Note, type Space, type User, type Variables, type Whoever } from './types'
-export { noteChatFiles, noteUnusedBy } from './unused'
-export { letGo } from './used'
+export {
+  type Env,
+  type Guest,
+  type Note,
+  type Reached,
+  type Role,
+  type Scope,
+  type Space,
+  type SpaceFile,
+  type User,
+  type Variables,
+  type Whoever,
+} from './types'
 export { usage } from './usage'
-export { deviceIn, sweepVersions } from './versions'
+export {
+  countVersionsAt,
+  deviceIn,
+  forgetBodies,
+  forgetVersions,
+  holdVersion,
+  keepVersion,
+  keepVersionNow,
+  picturesOfVersion,
+  presentVersion,
+  ROLLBACK_AT_ONCE,
+  saidAs,
+  saidOnce,
+  sweepVersions,
+  versionAt,
+  versionKey,
+  versionsAt,
+  versionsFit,
+  versionsOf,
+} from './versions'

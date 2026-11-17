@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { AccountHub, type Joining } from '../src/sync-server/src/hub/hub'
-import type { FromHub } from '../src/sync-server/src/hub/frames'
+import { AccountHub, type Joining } from '../src/sync-server-engine/src/hub/hub'
+import type { FromHub } from '../src/sync-server-engine/src/hub/frames'
 import type { Env } from '../src/sync-server/src/types'
 import { signIn, type TestEnv } from './harness'
 

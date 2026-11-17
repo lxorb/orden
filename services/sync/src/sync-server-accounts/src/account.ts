@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import {
   type Env,
-  eraseAccount,
   leavingMessage,
   machineOf,
   mayLeave,
@@ -15,6 +14,7 @@ import {
   type Variables,
   WRONG_CODE,
 } from '../../sync-server/src/api'
+import { eraseAccount } from '../../sync-server-engine/src/api'
 import { checkCode, sendCode, spendCode } from './auth'
 import { accepted, asksForSecond } from './second'
 

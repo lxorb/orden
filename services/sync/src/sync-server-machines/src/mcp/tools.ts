@@ -4,6 +4,14 @@ import type { ItemMeta } from '@orden/sync-core'
 import {
   byteLength,
   pokeNow,
+  fits,
+  PROTECTED,
+  shutFor,
+  type Env,
+  type Note,
+  type Shut,
+} from '../../../sync-server/src/api'
+import {
   addNote,
   cleanPath,
   readablePath,
@@ -15,15 +23,9 @@ import {
   writeWords,
   noteKind,
   readsAs,
-  fits,
   spacesFor,
-  PROTECTED,
-  shutFor,
-  type Env,
-  type Note,
   type ListedSpace as Space,
-  type Shut,
-} from '../../../sync-server/src/api'
+} from '../../../sync-server-engine/src/api'
 export { type Space, spacesFor }
 import type { TokenRow } from './tokens'
 const MOST_NOTES = 1000

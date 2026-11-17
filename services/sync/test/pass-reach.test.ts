@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { eraseAccount } from '../src/sync-server/src/erase'
+import { eraseAccount } from '../src/sync-server-engine/src/erase'
 import { guestMayReach } from '../src/sync-server/src/guests'
 import { sweepPassLinks } from '../src/sync-server-pass/src'
 import { programMayReach } from '../src/sync-server/src/programs'
