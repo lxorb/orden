@@ -35,7 +35,7 @@ import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../../ai-pro
 import { message } from '../../ui-kit/src/api'
 import { deviceCan, deviceSays } from '../../protect/src/api'
 import { passOn } from '../../gates/src/api'
-import { heardElsewhere } from '../../platform/src/api'
+import { forget, heardElsewhere, storedText } from '../../platform/src/api'
 import { adoptedChange } from './adopt'
 import type { AliasAccount } from './alias-account'
 import type { Picked } from './attachments'
@@ -116,6 +116,8 @@ export interface Unlock {
 export const PIN_TRIES = 5
 
 const DEVICE_SECRET = 'pass-device'
+
+const LEFT_BEHIND = 'orden:pass-left-behind'
 const HIBP = 'hibp'
 const ALIAS = 'alias'
 const SEALED_HERE = [HIBP, ALIAS]
@@ -175,6 +177,7 @@ export class PassStore {
   items = $state.raw<Item[]>([])
   settings = $state.raw<PassSettings>(readSettings())
   pinTries = $state(PIN_TRIES)
+  leftBehind = $state(storedText(LEFT_BEHIND) === '1')
   canDevice = $state(false)
   canPin = $state(false)
   mustChangePassword = $state(false)
@@ -880,6 +883,10 @@ export class PassStore {
     this.vaults = vaults
     this.items = items
     this.state = 'open'
+    if (this.leftBehind) {
+      forget(LEFT_BEHIND)
+      this.leftBehind = false
+    }
     this.relock.watch()
   }
 

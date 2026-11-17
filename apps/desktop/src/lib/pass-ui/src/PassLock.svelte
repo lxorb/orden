@@ -69,7 +69,13 @@
   })
 </script>
 
-<Gate icon={Lock} title="Pass is locked">
+<Gate
+  icon={Lock}
+  title="Pass is locked"
+  line={pass.leftBehind
+    ? 'Some of Pass on this device could not be carried over from the previous version of Orden. What was synced comes back once Pass is open; changes made here and not yet synced are gone.'
+    : ''}
+>
   {#if way === 'device'}
     <button class="orden-button" type="button" disabled={busy} onclick={() => void opened()}>
       Use {deviceName()}

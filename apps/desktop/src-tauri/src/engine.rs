@@ -102,7 +102,9 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
         crate::kept::read_kept(manager.app_handle());
         own_window(building)
     };
-    Ok(building.initialization_script(crate::old_home::script()))
+    Ok(building
+        .initialization_script(crate::old_home::script())
+        .initialization_script(crate::old_engine::script()))
 }
 
 pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(

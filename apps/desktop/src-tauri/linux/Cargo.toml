@@ -237,6 +237,7 @@ orden-system = { path = "crates/system" }
 orden-web = { path = "crates/web" }
 fontdb.workspace = true
 png.workspace = true
+plist.workspace = true
 tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["devtools"] }
 tauri-plugin-dialog.workspace = true
 tauri-plugin-process = "=3.0.0-alpha.3"

@@ -244,6 +244,7 @@ orden-system = { path = "crates/system" }
 orden-web = { path = "crates/web" }
 fontdb.workspace = true
 png.workspace = true
+plist.workspace = true
 tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-dialog.workspace = true
 tauri-plugin-process = "2"
