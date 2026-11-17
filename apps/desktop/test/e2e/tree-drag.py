@@ -56,10 +56,14 @@ def drive(browser: Browser) -> None:
     if now[0] != moving:
         wrong(f"{moving} let go above {under} did not stand there: {now}")
 
+    held = page.evaluate(PATHS)
     drag(page, now[0], now[1], 0.5)
     wait_for(page, f"window.ordenApp.workspace.notes.some((one) => one.path.includes('/{now[1]}/{now[0]}'))", "the note nested")
-    say(f"nested: {page.evaluate(PATHS)}")
+    nested = page.evaluate(PATHS)
+    say(f"nested: {nested}")
     shot(page, "nested")
+    if len(nested) != len(held) or sum(one.endswith(f"/{now[0]}.md") for one in nested) != 1:
+        wrong(f"{now[0]} let go onto {now[1]} was copied, not moved: {nested}")
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))
