@@ -34,13 +34,13 @@ const SURFACES = [
   'lib/canvas/src/CanvasBar.svelte',
   'lib/context-menu/src/ContextMenu.svelte',
   'lib/reading/src/FindBar.svelte',
-  'lib/Links.svelte',
-  'lib/SearchPanel.svelte',
+  'lib/links-panel/src/Links.svelte',
+  'lib/search/src/SearchPanel.svelte',
   'lib/sidebar/src/Sidebar.svelte',
   'lib/sidebar/src/SidebarFoot.svelte',
   'lib/sidebar/src/SpaceSwitcher.svelte',
-  'lib/TagTree.svelte',
-  'lib/Titlebar.svelte',
+  'lib/search/src/TagTree.svelte',
+  'lib/titlebar/src/Titlebar.svelte',
   'lib/sidebar/src/Tree.svelte',
   'lib/palette/src/Palette.svelte',
 ]
@@ -161,7 +161,7 @@ describe('the touch scale', () => {
 
   test('a tree row is a row, and its marks are drawn at the row', () => {
     const tree = components.find((one) => one.name === 'lib/sidebar/src/Tree.svelte')?.style ?? ''
-    const mark = components.find((one) => one.name === 'lib/FileMark.svelte')?.style ?? ''
+    const mark = components.find((one) => one.name === 'lib/marks/src/FileMark.svelte')?.style ?? ''
 
     expect(tree).toContain('var(--row-indent)')
     expect(mark).toContain('width: var(--icon-md)')

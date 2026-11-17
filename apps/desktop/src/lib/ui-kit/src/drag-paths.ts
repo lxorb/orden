@@ -1,7 +1,7 @@
 import type { Bookmark } from '@orden/contracts'
 import type { CarriedFiles } from '@orden/editor'
 import type { Action } from 'svelte/action'
-import type { Platform } from './api'
+import type { Platform } from './keys'
 
 const ONE = 'text/orden-path'
 const MANY = 'text/orden-paths'
@@ -10,6 +10,7 @@ const SECTION = 'text/orden-section'
 const TAB = 'text/orden-tab'
 const EXPLORER = 'text/orden-explorer'
 const PAGE = 'text/orden-page'
+const AI_CHAT = 'text/orden-ai-chat'
 const HERE = `text/orden-from-${crypto.randomUUID()}`
 
 let carrying: readonly string[] = []
@@ -227,6 +228,34 @@ export function draggedPage(transfer: DataTransfer | null): CarriedPage | null {
     const said = JSON.parse(transfer.getData(PAGE)) as Partial<CarriedPage> | null
     return typeof said?.note === 'string' && typeof said.page === 'string'
       ? { note: said.note, page: said.page }
+      : null
+  } catch {
+    return null
+  }
+}
+
+export interface CarriedChat {
+  id: string
+  title: string
+}
+
+export function carryAiChat(transfer: DataTransfer | null, carried: CarriedChat) {
+  if (!transfer) return
+
+  carryHere(transfer, AI_CHAT, JSON.stringify(carried))
+  transfer.effectAllowed = 'move'
+}
+
+export function isAiChatDrag(transfer: DataTransfer | null): boolean {
+  return fromHere(transfer, AI_CHAT)
+}
+
+export function draggedAiChat(transfer: DataTransfer | null): CarriedChat | null {
+  if (!transfer || !isAiChatDrag(transfer)) return null
+  try {
+    const said = JSON.parse(transfer.getData(AI_CHAT)) as Partial<CarriedChat> | null
+    return typeof said?.id === 'string' && said.id !== '' && typeof said.title === 'string'
+      ? { id: said.id, title: said.title }
       : null
   } catch {
     return null

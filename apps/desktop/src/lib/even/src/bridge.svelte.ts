@@ -13,7 +13,7 @@ import {
   resetGlasses,
 } from '../../glasses-choices/src/api'
 import type { Field } from '../../settings/src/api'
-import { fileMark } from '../../file-mark'
+import { fileMark } from '../../marks/src/api'
 import { modes } from '../../modes/src/api'
 import { shownName } from '../../platform/src/api'
 import { quietFor, waitFor } from './pace'
@@ -255,7 +255,7 @@ class Bridge {
       settings: 'Settings',
       reset: 'Reset glasses settings',
       done: 'Done',
-      today: 'Today',
+      today: 'Todos',
     }
   }
 

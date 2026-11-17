@@ -1,4 +1,4 @@
-const SCHEMES = ['orden:', 'web+orden:', 'nib:', 'web+nib:'] as const
+const SCHEMES = ['orden:', 'web+orden:'] as const
 
 const CALLBACK_KEYS = ['x-success', 'x-error', 'x-cancel'] as const
 

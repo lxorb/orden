@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { loadHintCard } from '../../hints/src/api'
   import {
     arrive,
     ASK_MARK,
@@ -30,19 +31,25 @@
     TIME_MARK,
     UnreadDot,
     viewport,
+    fullscreen,
   } from '../../ui-kit/src/api'
-  import { dropOnList } from '../../list-landing.svelte'
-  import { movesSection } from '../../sections'
+  import {
+    alone,
+    swipeOpens,
+    dropOnList,
+    workspace,
+    agentMarks,
+    pullable,
+  } from '../../workspace/src/api'
+  import { movesSection, headingAt, lineOf } from '../../documents/src/api'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { landsIn, dropTarget } from '../../tree/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { agentMarks } from '../../agent-marks.svelte'
-  import { sidebarPart } from '@orden/contracts'
+  import { searching, sidebarPart } from '@orden/contracts'
   import { account, arriving } from '../../accounts/src/api'
-  import { newSpace } from '../../space-actions'
+  import { newSpace } from '../../spaces/src/api'
   import { panels, type Panel, type PanelSide } from '../../session/src/api'
-  import { headingAt, lineOf } from '../../documents/src/api'
   import {
     archiveSection,
     askPanel,
@@ -56,25 +63,19 @@
     tasksPanel,
     timePanel,
   } from '../../surfaces/src/api'
-  import { bookmarkEntry } from '../../menu-entries'
-  import { pullable } from '../../pull.svelte'
-  import { workspace } from '../../workspace/src/api'
+  import { bookmarkEntry, rowMenus } from '../../row-menu/src/api'
   import { links } from '../../link-index/src/api'
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
-  import { search } from '../../search.svelte'
-  import { SidebarWidth } from '../../sidebar-width.svelte'
-  import { fullscreen } from '../../fullscreen.svelte'
-  import { alone } from '../../alone.svelte'
+  import { SidebarWidth } from './sidebar-width.svelte'
+  import { dur, fade, fly } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
-  import SidebarToggle from '../../SidebarToggle.svelte'
-  import { swipeOpens } from '../../swipe-opens'
+  import { SidebarToggle } from '../../titlebar/src/api'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import Tree from './Tree.svelte'
-  import { dur, fade, fly } from '../../platform/src/api'
   import { startup } from '../../launch/src/api'
 
   const {
@@ -345,7 +346,7 @@
       return
     }
 
-    void Promise.all([import('./order-menu'), import('../../row-menu'), own]).then(
+    void Promise.all([import('./order-menu'), rowMenus(), own]).then(
       ([{ orderMenu }, { newFileRows }, { panelMenu }]) =>
         shown([...orderMenu(), DIVIDER, ...panelMenu(id, side, newFileRows())]),
     )
@@ -354,9 +355,7 @@
   function showSpaceMenu(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
-    void import('../../row-menu').then(({ newFileRows }) =>
-      menu.show(event, newFileRows(), titleOfSpace()),
-    )
+    void rowMenus().then(({ newFileRows }) => menu.show(event, newFileRows(), titleOfSpace()))
   }
 
   function titleOfSpace(): { title?: string } {
@@ -365,8 +364,7 @@
   }
 
   function runBookmarked(text: string) {
-    workspace.showPanel('search')
-    search.ask(text)
+    searching()?.show(text)
   }
 
   $effect(() => {
@@ -641,7 +639,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
-        {#await import('../../HintCard.svelte') then card}
+        {#await loadHintCard() then card}
           <card.default
             hint="graph"
             side="below"
@@ -653,7 +651,7 @@
       {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && paletteKey && startup.settled}
-        {#await import('../../HintCard.svelte') then card}
+        {#await loadHintCard() then card}
           <card.default
             hint="palette"
             side="below"

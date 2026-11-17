@@ -19,6 +19,7 @@ export type {
   SpaceRole,
 } from './routes'
 export { account, type Vault } from './account.svelte'
+export { readableSize, usage } from './usage.svelte'
 export { default as AccountBadge } from './AccountBadge.svelte'
 export { api, ApiError, BASE, faceUrl, fromServer, MCP_URL, request, warmCalls } from './client'
 export {
@@ -39,3 +40,4 @@ export { called } from './person'
 export { CLEARS, type Clears, clearsAt, stands } from './status'
 export { farApart } from './zone'
 export { arriving } from './arriving.svelte'
+export { connectors } from './connectors.svelte'

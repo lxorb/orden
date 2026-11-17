@@ -136,3 +136,5 @@ export function serveWorkspace(part: Partial<WorkspaceServices>): void {
 }
 
 export const services = (): WorkspaceServices => served
+
+export const scratchpadOn = (): boolean => served.scratchpad.on

@@ -58,6 +58,8 @@ if (typeof addEventListener === 'function') {
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
 const PARTLY =
   'Change part of a note with edit_note rather than write_note: they may be typing in it.'
+const MATHS =
+  'Write maths as $…$ inline and $$…$$ on lines of their own, and a subscript or superscript outside maths as H~2~O and x^2^.'
 
 const SYSTEM: Record<Thread['mode'], string> = {
   approve: [
@@ -66,12 +68,14 @@ const SYSTEM: Record<Thread['mode'], string> = {
     CITE,
     PARTLY,
     'Reply in the language of the request, in markdown, briefly: no preamble, no sign-off.',
+    MATHS,
   ].join(' '),
   plan: [
     'You are the reader’s assistant inside Orden, their notes app and web browser, in a panel beside what they are reading.',
     'You are in Plan mode: read what you need, then write the plan as one new note with create_note, a task (- [ ]) per step, and change nothing else.',
     CITE,
     'Reply in the language of the request, briefly.',
+    MATHS,
   ].join(' '),
   auto: [
     'You are the reader’s agent inside Orden, their notes app and web browser, in a panel beside what they are reading.',
@@ -79,6 +83,7 @@ const SYSTEM: Record<Thread['mode'], string> = {
     CITE,
     PARTLY,
     'Reply in the language of the request, briefly, saying what you did.',
+    MATHS,
   ].join(' '),
   full: [
     'You are the reader’s agent inside Orden, their notes app and web browser, in a panel beside what they are reading.',
@@ -87,6 +92,7 @@ const SYSTEM: Record<Thread['mode'], string> = {
     CITE,
     PARTLY,
     'Reply in the language of the request, briefly, saying what you did.',
+    MATHS,
   ].join(' '),
 }
 

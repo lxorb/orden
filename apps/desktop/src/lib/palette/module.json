@@ -17,15 +17,9 @@
     "link-index",
     "documents",
     "workspace",
-    "gates"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/Icon.svelte",
-    "apps/desktop/src/lib/TabMark.svelte",
-    "apps/desktop/src/lib/file-mark.ts",
-    "apps/desktop/src/lib/hints.svelte.ts",
-    "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/search.svelte.ts"
+    "gates",
+    "hints",
+    "marks",
+    "glyphs"
   ]
 }

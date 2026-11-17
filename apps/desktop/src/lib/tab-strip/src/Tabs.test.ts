@@ -3,13 +3,13 @@ import { render } from 'svelte/server'
 
 const asked: string[] = []
 
-vi.mock('../../file-mark', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../file-mark')>()
+vi.mock('../../marks/src/api', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../marks/src/api')>()
   return {
     ...real,
-    markOf: (kind: string) => {
-      asked.push(`markOf ${kind}`)
-      return real.markOf(kind as never)
+    TabMark: (...drawn: Parameters<typeof real.TabMark>) => {
+      asked.push('mark')
+      return real.TabMark(...drawn)
     },
   }
 })

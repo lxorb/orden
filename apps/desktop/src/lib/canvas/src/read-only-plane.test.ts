@@ -18,7 +18,8 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
     },
   },
 }))
-vi.mock('../../assets', () => ({
+vi.mock('../../workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../workspace/src/api')>()),
   accountAddress: () => null,
   storeImage: () => {
     asked.stored += 1

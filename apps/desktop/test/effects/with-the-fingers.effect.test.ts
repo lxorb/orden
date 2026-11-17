@@ -2,7 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import arrowSource from '../../src/lib/back-swipe/src/SwipeArrow.svelte?raw'
 import appSource from '../../src/App.svelte?raw'
-import pullSource from '../../src/lib/PullMark.svelte?raw'
+import pullSource from '../../src/lib/frame/src/PullMark.svelte?raw'
 import base from '../../../../packages/themes/src/base.css?raw'
 
 vi.mock('../../src/lib/workspace/src/api', () => ({

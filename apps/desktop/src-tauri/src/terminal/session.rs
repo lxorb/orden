@@ -1,41 +1,57 @@
-use std::io::{Read, Write};
+use std::io::Write;
+use std::net::{Ipv4Addr, Shutdown, SocketAddr, TcpStream};
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use portable_pty::{native_pty_system, Child, ChildKiller, CommandBuilder, MasterPty, PtySize};
-
+use super::hold::{self, Starter};
 use super::process;
 use super::shells::Launch;
+use super::wire;
 
 const FRAME: Duration = Duration::from_millis(16);
 
 const MOST_UNSEEN: usize = 1 << 20;
 
-const LINGER: Duration = Duration::from_millis(500);
+const REACHED_WITHIN: Duration = Duration::from_secs(2);
+
+const GREETED_WITHIN: Duration = Duration::from_secs(10);
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Out {
+    Screen(Vec<u8>, u16, u16),
     Bytes(Vec<u8>),
+    Writer(bool),
     Exit(i64),
 }
 
 pub type Sink = Box<dyn Fn(Out) + Send + Sync>;
 
+pub struct Place {
+    pub folder: PathBuf,
+    pub starter: Starter,
+}
+
+impl Place {
+    fn file(&self, key: &str) -> PathBuf {
+        self.folder.join(format!("{key}.json"))
+    }
+}
+
 pub struct Session {
-    master: Mutex<Option<Box<dyn MasterPty + Send>>>,
-    wanted: Mutex<Option<PtySize>>,
+    key: String,
     input: Sender<Vec<u8>>,
-    killer: Mutex<Box<dyn ChildKiller + Send + Sync>>,
-    pid: Option<u32>,
+    socket: TcpStream,
+    shell: Option<u32>,
+    fresh: bool,
     stream: Arc<Stream>,
 }
 
 pub struct Started {
-    reader: Box<dyn Read + Send>,
-    writer: Box<dyn Write + Send>,
-    child: Box<dyn Child + Send + Sync>,
+    reader: TcpStream,
+    writer: TcpStream,
     queue: Receiver<Vec<u8>>,
     stream: Arc<Stream>,
 }
@@ -48,7 +64,9 @@ struct Stream {
 
 #[derive(Default)]
 struct Flow {
+    screen: Option<(Vec<u8>, u16, u16)>,
     waiting: Vec<u8>,
+    writer: Option<bool>,
     unseen: usize,
     drained: bool,
     exit: Option<i64>,
@@ -69,62 +87,188 @@ impl Stream {
     }
 }
 
+struct Greeted {
+    socket: TcpStream,
+    hi: wire::Hi,
+    screen: Vec<u8>,
+}
+
+fn hello(port: u16, token: &str, flags: u8) -> Result<(TcpStream, wire::Hi), String> {
+    let mut socket = TcpStream::connect_timeout(
+        &SocketAddr::from((Ipv4Addr::LOCALHOST, port)),
+        REACHED_WITHIN,
+    )
+    .map_err(|error| error.to_string())?;
+    let _ = socket.set_nodelay(true);
+    socket
+        .set_read_timeout(Some(GREETED_WITHIN))
+        .map_err(|error| error.to_string())?;
+    let mut hello = vec![flags];
+    hello.extend_from_slice(token.as_bytes());
+    wire::send(&mut socket, wire::HELLO, &hello).map_err(|error| error.to_string())?;
+    let Ok((wire::HI, body)) = wire::heard(&mut socket) else {
+        return Err("the session did not answer".to_owned());
+    };
+    let hi = serde_json::from_slice::<wire::Hi>(&body).map_err(|error| error.to_string())?;
+    Ok((socket, hi))
+}
+
+fn greet(port: u16, token: &str) -> Result<Greeted, String> {
+    let (mut socket, hi) = hello(port, token, wire::TAKING)?;
+    let Ok((wire::SCREEN, screen)) = wire::heard(&mut socket) else {
+        return Err("the session did not answer".to_owned());
+    };
+    socket
+        .set_read_timeout(None)
+        .map_err(|error| error.to_string())?;
+    Ok(Greeted { socket, hi, screen })
+}
+
+fn found(file: &Path) -> Option<Greeted> {
+    let record = hold::read_record(file)?;
+    let greeted = greet(record.port, &record.token).ok();
+    if greeted.is_none() {
+        hold::forget_record(file, &record.token);
+    }
+    greeted
+}
+
+pub fn held(place: &Place, key: &str) -> bool {
+    hold::read_record(&place.file(key)).is_some_and(|record| {
+        TcpStream::connect_timeout(
+            &SocketAddr::from((Ipv4Addr::LOCALHOST, record.port)),
+            REACHED_WITHIN,
+        )
+        .is_ok()
+    })
+}
+
+#[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
+pub struct Listed {
+    pub key: String,
+    pub label: hold::Label,
+    pub shell: Option<u32>,
+    pub started: u64,
+    pub last: u64,
+    pub clients: u32,
+    pub exit: Option<i64>,
+}
+
+fn asking(place: &Place, key: &str) -> Option<(TcpStream, wire::Hi, hold::Record)> {
+    let record = hold::read_record(&place.file(key))?;
+    let (socket, hi) = hello(record.port, &record.token, wire::ASKING).ok()?;
+    Some((socket, hi, record))
+}
+
+pub fn listed(place: &Place) -> Vec<Listed> {
+    let Ok(found) = std::fs::read_dir(&place.folder) else {
+        return Vec::new();
+    };
+    let mut keys: Vec<String> = found
+        .flatten()
+        .filter_map(|one| {
+            let name = one.file_name().into_string().ok()?;
+            let key = name.strip_suffix(".json")?;
+            (!key.contains('.')).then(|| key.to_owned())
+        })
+        .collect();
+    keys.sort();
+    keys.into_iter()
+        .filter_map(|key| {
+            let (_, hi, record) = asking(place, &key)?;
+            Some(Listed {
+                key,
+                label: record.label,
+                shell: hi.shell,
+                started: record.started,
+                last: hi.last.max(record.started),
+                clients: hi.clients,
+                exit: hi.exit,
+            })
+        })
+        .collect()
+}
+
+pub fn told(place: &Place, key: &str, kind: u8, body: &[u8]) -> Result<(), String> {
+    let (mut socket, _, _) = asking(place, key).ok_or_else(|| format!("no session {key}"))?;
+    wire::send(&mut socket, kind, body).map_err(|error| error.to_string())
+}
+
+pub struct Fresh {
+    pub launch: Launch,
+    pub farewell: Vec<u8>,
+    pub label: hold::Label,
+}
+
 impl Session {
-    pub fn open(launch: &Launch, cols: u16, rows: u16) -> Result<(Self, Started), String> {
-        #[cfg(windows)]
-        interrupts_reach_shells();
+    pub fn open(
+        place: &Place,
+        key: &str,
+        cols: u16,
+        rows: u16,
+        fresh: impl FnOnce() -> Result<Fresh, String>,
+    ) -> Result<(Self, Started), String> {
+        let file = place.file(key);
+        let (greeted, fresh) = if let Some(greeted) = found(&file) {
+            (greeted, false)
+        } else {
+            let Fresh {
+                launch,
+                farewell,
+                label,
+            } = fresh()?;
+            let token = hold::token()?;
+            let spec = hold::Spec {
+                program: launch.program,
+                args: launch.args,
+                folder: launch.folder,
+                env: launch.env,
+                cols,
+                rows,
+                file,
+                token: token.clone(),
+                farewell,
+                label,
+            };
+            let port = hold::start(&place.starter, &spec)?;
+            (greet(port, &token)?, true)
+        };
 
-        let pair = native_pty_system()
-            .openpty(size(cols, rows))
-            .map_err(|error| format!("could not open a terminal: {error}"))?;
-
-        let mut command = CommandBuilder::new(&launch.program);
-        command.args(&launch.args);
-        if let Some(folder) = &launch.folder {
-            command.cwd(folder);
-        }
-        for (name, value) in &launch.env {
-            command.env(name, value);
-        }
-
-        let child = pair
-            .slave
-            .spawn_command(command)
-            .map_err(|error| format!("could not start {}: {error}", launch.program.display()))?;
-        drop(pair.slave);
-
-        let reader = pair
-            .master
-            .try_clone_reader()
-            .map_err(|error| error.to_string())?;
-        let writer = pair
-            .master
-            .take_writer()
-            .map_err(|error| error.to_string())?;
+        let Greeted { socket, hi, screen } = greeted;
+        let reader = socket.try_clone().map_err(|error| error.to_string())?;
+        let writer = socket.try_clone().map_err(|error| error.to_string())?;
         let (input, queue) = mpsc::channel();
         let stream = Arc::new(Stream::default());
-
+        if !screen.is_empty() {
+            stream.lock().screen = Some((screen, hi.cols, hi.rows));
+        }
         let session = Self {
-            master: Mutex::new(Some(pair.master)),
-            wanted: Mutex::new(None),
+            key: key.to_owned(),
             input,
-            killer: Mutex::new(child.clone_killer()),
-            pid: child.process_id(),
+            socket,
+            shell: hi.shell,
+            fresh,
             stream: Arc::clone(&stream),
         };
         let started = Started {
             reader,
             writer,
-            child,
             queue,
             stream,
         };
-
         Ok((session, started))
     }
 
     pub fn pid(&self) -> Option<u32> {
-        self.pid
+        self.shell
+    }
+
+    pub fn fresh(&self) -> bool {
+        self.fresh
+    }
+
+    pub fn key(&self) -> &str {
+        &self.key
     }
 
     fn same_stream(&self, stream: &Arc<Stream>) -> bool {
@@ -132,27 +276,17 @@ impl Session {
     }
 
     pub fn write(&self, bytes: Vec<u8>) {
-        let _ = self.input.send(bytes);
+        let _ = self.input.send(wire::frame(wire::INPUT, &bytes));
     }
 
-    fn master(&self) -> MutexGuard<'_, Option<Box<dyn MasterPty + Send>>> {
-        self.master.lock().unwrap_or_else(PoisonError::into_inner)
+    pub fn resize(&self, cols: u16, rows: u16) {
+        let _ = self
+            .input
+            .send(wire::frame(wire::SIZE, &wire::size(cols, rows)));
     }
 
-    pub fn resize(&self, cols: u16, rows: u16) -> Result<(), String> {
-        *self.wanted.lock().unwrap_or_else(PoisonError::into_inner) = Some(size(cols, rows));
-        let master = self.master();
-        let wanted = self
-            .wanted
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take();
-        match (master.as_deref(), wanted) {
-            (Some(master), Some(wanted)) => {
-                master.resize(wanted).map_err(|error| error.to_string())
-            }
-            _ => Ok(()),
-        }
+    pub fn take(&self) {
+        let _ = self.input.send(wire::frame(wire::TAKE, &[]));
     }
 
     pub fn seen(&self, bytes: usize) {
@@ -163,49 +297,39 @@ impl Session {
     }
 
     pub fn busy(&self) -> bool {
-        self.master()
-            .as_deref()
-            .is_some_and(|master| process::busy(self.pid, master))
+        process::busy(self.shell)
     }
 
     pub fn program(&self) -> Option<String> {
-        process::program(self.pid, self.master().as_deref()?)
+        process::program(self.shell)
     }
 
     pub fn ssh(&self) -> Option<super::remote::Destination> {
-        let (program, args) = process::command(self.pid, self.master().as_deref()?)?;
+        let (program, args) = process::command(self.shell)?;
         super::remote::ssh_destination(&program, &args)
     }
 
     pub fn folder(&self) -> Option<String> {
-        process::folder(self.pid)
+        process::folder(self.shell)
     }
 
     pub fn shell(&self) -> Option<u32> {
-        self.pid
+        self.shell
+    }
+
+    fn quiet(&self) {
+        self.stream.lock().ended = true;
+        self.stream.changed.notify_all();
     }
 
     pub fn end(&self) {
-        self.stream.lock().ended = true;
-        self.stream.changed.notify_all();
-        let _ = self
-            .killer
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .kill();
+        self.quiet();
+        let _ = self.input.send(wire::frame(wire::END, &[]));
     }
-}
 
-impl Drop for Session {
-    fn drop(&mut self) {
-        let master = self
-            .master
-            .get_mut()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take();
-        if let Some(master) = master {
-            thread::spawn(move || drop(master));
-        }
+    pub fn detach(&self) {
+        self.quiet();
+        let _ = self.socket.shutdown(Shutdown::Both);
     }
 }
 
@@ -214,13 +338,9 @@ impl Started {
         let Self {
             reader,
             writer,
-            child,
             queue,
             stream,
         } = self;
-
-        let reading = Arc::clone(&stream);
-        thread::spawn(move || read(reader, &reading));
 
         let sending = Arc::clone(&stream);
         thread::spawn(move || send(&sending, &sink));
@@ -228,61 +348,46 @@ impl Started {
         thread::spawn(move || write(writer, &queue));
 
         thread::spawn(move || {
-            wait(child, &stream);
+            read(reader, &stream);
             ended(&|session: &Session| session.same_stream(&stream));
-            linger(&stream);
         });
     }
 }
 
-#[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "SetConsoleCtrlHandler is Win32's own call and has no safe wrapper"
-)]
-fn interrupts_reach_shells() {
-    use std::sync::Once;
-    use windows::Win32::System::Console::SetConsoleCtrlHandler;
-
-    static ONCE: Once = Once::new();
-    ONCE.call_once(|| {
-        let _ = unsafe { SetConsoleCtrlHandler(None, false) };
-    });
-}
-
-fn size(cols: u16, rows: u16) -> PtySize {
-    PtySize {
-        rows: rows.clamp(1, 1000),
-        cols: cols.clamp(2, 1000),
-        pixel_width: 0,
-        pixel_height: 0,
-    }
-}
-
-fn read(mut reader: Box<dyn Read + Send>, stream: &Stream) {
-    let mut buffer = vec![0u8; 64 * 1024];
-
+fn read(mut reader: TcpStream, stream: &Stream) {
     loop {
         {
             let mut flow = stream.lock();
-            while !flow.ended && !flow.drained && flow.unseen + flow.waiting.len() > MOST_UNSEEN {
+            while !flow.ended && flow.unseen + flow.waiting.len() > MOST_UNSEEN {
                 flow = stream.wait(flow);
+            }
+            if flow.ended {
+                break;
             }
         }
 
-        match reader.read(&mut buffer) {
-            Ok(0) => break,
-            Ok(count) => {
-                let mut flow = stream.lock();
+        let heard = wire::heard(&mut reader);
+        let mut flow = stream.lock();
+        match heard {
+            Ok((wire::OUT, bytes)) => {
                 if !flow.ended {
-                    flow.waiting.extend_from_slice(&buffer[..count]);
+                    flow.waiting.extend_from_slice(&bytes);
                 }
-                drop(flow);
-                stream.changed.notify_all();
             }
-            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
-            Err(_) => break,
+            Ok((wire::WRITER, body)) => flow.writer = Some(body.first() == Some(&1)),
+            Ok((wire::EXIT, body)) => {
+                let code = <[u8; 8]>::try_from(body.as_slice()).map_or(-1, i64::from_le_bytes);
+                flow.exit = Some(code);
+                break;
+            }
+            Ok(_) => {}
+            Err(_) => {
+                flow.exit.get_or_insert(-1);
+                break;
+            }
         }
+        drop(flow);
+        stream.changed.notify_all();
     }
 
     stream.lock().drained = true;
@@ -294,11 +399,29 @@ fn send(stream: &Stream, sink: &Sink) {
 
     loop {
         let mut flow = stream.lock();
-        while !flow.ended && flow.waiting.is_empty() && !(flow.drained && flow.exit.is_some()) {
+        while !flow.ended
+            && flow.screen.is_none()
+            && flow.writer.is_none()
+            && flow.waiting.is_empty()
+            && !(flow.drained && flow.exit.is_some())
+        {
             flow = stream.wait(flow);
         }
         if flow.ended {
             return;
+        }
+
+        if let Some((screen, cols, rows)) = flow.screen.take() {
+            drop(flow);
+            sink(Out::Screen(screen, cols, rows));
+            last = Some(Instant::now());
+            continue;
+        }
+
+        if let Some(writer) = flow.writer.take() {
+            drop(flow);
+            sink(Out::Writer(writer));
+            continue;
         }
 
         if flow.waiting.is_empty() {
@@ -329,10 +452,10 @@ fn send(stream: &Stream, sink: &Sink) {
     }
 }
 
-fn write(mut writer: Box<dyn Write + Send>, queue: &Receiver<Vec<u8>>) {
-    for bytes in queue {
+fn write(mut writer: TcpStream, queue: &Receiver<Vec<u8>>) {
+    for frame in queue {
         if writer
-            .write_all(&bytes)
+            .write_all(&frame)
             .and_then(|()| writer.flush())
             .is_err()
         {
@@ -341,38 +464,9 @@ fn write(mut writer: Box<dyn Write + Send>, queue: &Receiver<Vec<u8>>) {
     }
 }
 
-fn wait(mut child: Box<dyn Child + Send + Sync>, stream: &Stream) {
-    let code = child
-        .wait()
-        .map_or(-1, |status| i64::from(status.exit_code()));
-    stream.lock().exit = Some(code);
-    stream.changed.notify_all();
-}
-
-fn linger(stream: &Stream) {
-    let until = Instant::now() + LINGER;
-    let mut flow = stream.lock();
-
-    while !flow.drained && !flow.ended {
-        let left = until.saturating_duration_since(Instant::now());
-        if left.is_zero() {
-            break;
-        }
-        flow = stream
-            .changed
-            .wait_timeout(flow, left)
-            .map_or_else(|poisoned| poisoned.into_inner().0, |(flow, _)| flow);
-    }
-
-    flow.drained = true;
-    drop(flow);
-    stream.changed.notify_all();
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     type Held = Arc<Mutex<Option<Session>>>;
 
@@ -401,10 +495,34 @@ mod tests {
         r#"echo orden-""ok"#
     };
 
+    fn says(word: &str) -> String {
+        if cfg!(windows) {
+            format!("echo orden-%COMSPEC:~0,0%{word}")
+        } else {
+            format!("echo orden-\"\"{word}")
+        }
+    }
+
     const ENTER: &str = if cfg!(windows) { "\r" } else { "\n" };
 
-    fn started(cols: u16, rows: u16) -> (Held, Receiver<Out>) {
-        let (session, parts) = Session::open(&shell(), cols, rows).expect("a shell");
+    fn place() -> (tempfile::TempDir, Place) {
+        let folder = tempfile::tempdir().expect("a folder");
+        let place = Place {
+            folder: folder.path().join("held"),
+            starter: hold::tests::starter(),
+        };
+        (folder, place)
+    }
+
+    fn opened(place: &Place, key: &str, cols: u16, rows: u16) -> (Held, Receiver<Out>) {
+        let (session, parts) = Session::open(place, key, cols, rows, || {
+            Ok(Fresh {
+                launch: shell(),
+                farewell: Vec::new(),
+                label: hold::Label::default(),
+            })
+        })
+        .expect("a shell");
         let held = Arc::new(Mutex::new(Some(session)));
         let (tell, heard) = mpsc::channel();
         let tell = Mutex::new(tell);
@@ -425,6 +543,12 @@ mod tests {
         (held, heard)
     }
 
+    fn started(cols: u16, rows: u16) -> (Held, Receiver<Out>, tempfile::TempDir) {
+        let (folder, place) = place();
+        let (held, heard) = opened(&place, "t1", cols, rows);
+        (held, heard, folder)
+    }
+
     fn typed(held: &Held, bytes: &str) {
         if let Some(session) = held.lock().expect("the session").as_ref() {
             session.write(bytes.as_bytes().to_vec());
@@ -441,7 +565,7 @@ mod tests {
 
         while let Ok(out) = heard.recv_timeout(until.saturating_duration_since(Instant::now())) {
             match out {
-                Out::Bytes(more) => {
+                Out::Bytes(more) | Out::Screen(more, _, _) => {
                     if String::from_utf8_lossy(&more).contains("\u{1b}[6n") {
                         typed(held, "\u{1b}[1;1R");
                     }
@@ -450,6 +574,7 @@ mod tests {
                         break;
                     }
                 }
+                Out::Writer(_) => {}
                 Out::Exit(code) => {
                     return (String::from_utf8_lossy(&bytes).into_owned(), Some(code));
                 }
@@ -459,30 +584,13 @@ mod tests {
         (String::from_utf8_lossy(&bytes).into_owned(), None)
     }
 
-    #[test]
-    fn output_nobody_will_see_is_read_to_its_end_once_the_shell_is_gone() {
-        let stream = Arc::new(Stream::default());
-        {
-            let mut flow = stream.lock();
-            flow.unseen = MOST_UNSEEN + 1;
-            flow.exit = Some(0);
-        }
-        let reading = Arc::clone(&stream);
-        let (done, finished) = std::sync::mpsc::channel();
-        thread::spawn(move || {
-            read(Box::new(std::io::Cursor::new(vec![7_u8; 4096])), &reading);
-            let _ = done.send(());
-        });
-        linger(&stream);
-        assert!(
-            finished.recv_timeout(Duration::from_secs(5)).is_ok(),
-            "the reader still waits for a window that will never say it saw the output"
-        );
+    fn taken(held: &Held) -> Session {
+        held.lock().expect("the session").take().expect("running")
     }
 
     #[test]
     fn a_shell_answers_resizes_and_exits() {
-        let (held, heard) = started(80, 24);
+        let (held, heard, _folder) = started(80, 24);
 
         line(&held, SAYS_OK);
         let (said, _) = printed_until(&held, &heard, "orden-ok");
@@ -492,8 +600,7 @@ mod tests {
             .expect("the session")
             .as_ref()
             .expect("still running")
-            .resize(120, 40)
-            .expect("a resize");
+            .resize(120, 40);
 
         line(&held, "exit 3");
         let (_, code) = printed_until(&held, &heard, "\u{0}never");
@@ -510,12 +617,181 @@ mod tests {
     }
 
     #[test]
+    fn a_session_let_go_of_is_found_again_as_it_was() {
+        let (_folder, place) = place();
+        let (held, heard) = opened(&place, "kept", 80, 24);
+        line(&held, SAYS_OK);
+        let _ = printed_until(&held, &heard, "orden-ok");
+        let first = taken(&held);
+        let pid = first.pid().expect("a pid");
+        assert!(first.fresh());
+        first.detach();
+        drop(first);
+        thread::sleep(Duration::from_millis(300));
+        assert!(alive(pid), "letting go ended the shell");
+        assert!(super::held(&place, "kept"));
+
+        let (again, heard) = opened(&place, "kept", 100, 30);
+        let session = taken(&again);
+        assert!(!session.fresh(), "a second shell was started");
+        assert_eq!(session.pid(), Some(pid));
+        *again.lock().expect("the session") = Some(session);
+        match heard.recv_timeout(Duration::from_secs(10)) {
+            Ok(Out::Screen(screen, cols, rows)) => {
+                assert!(String::from_utf8_lossy(&screen).contains("orden-ok"));
+                assert_eq!((cols, rows), (80, 24));
+            }
+            other => panic!("no screen came back: {other:?}"),
+        }
+        line(&again, SAYS_OK);
+        let (said, _) = printed_until(&again, &heard, "orden-ok");
+        assert!(said.contains("orden-ok"), "the shell printed: {said:?}");
+
+        let session = taken(&again);
+        session.end();
+        let until = Instant::now() + Duration::from_secs(10);
+        while (alive(pid) || super::held(&place, "kept")) && Instant::now() < until {
+            thread::sleep(Duration::from_millis(50));
+        }
+        assert!(!alive(pid), "the shell {pid} outlived its end");
+        assert!(
+            !super::held(&place, "kept"),
+            "the ended session is still listed"
+        );
+    }
+
+    fn writer_said(heard: &Receiver<Out>) -> Option<bool> {
+        let until = Instant::now() + Duration::from_secs(10);
+        while let Ok(out) = heard.recv_timeout(until.saturating_duration_since(Instant::now())) {
+            if let Out::Writer(writer) = out {
+                return Some(writer);
+            }
+        }
+        None
+    }
+
+    #[test]
+    fn a_session_let_go_of_is_listed_named_and_ended_from_the_list() {
+        let (_folder, place) = place();
+        let (held, heard) = opened(&place, "listed", 80, 24);
+        line(&held, SAYS_OK);
+        let _ = printed_until(&held, &heard, "orden-ok");
+        let session = taken(&held);
+        let pid = session.pid().expect("a pid");
+        session.detach();
+        thread::sleep(Duration::from_millis(300));
+
+        let found = listed(&place);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].key, "listed");
+        assert_eq!(found[0].shell, Some(pid));
+        assert_eq!(found[0].clients, 0);
+        assert!(found[0].last >= found[0].started && found[0].started > 0);
+
+        told(&place, "listed", wire::NAME, b"Build").expect("named");
+        thread::sleep(Duration::from_millis(200));
+        assert_eq!(listed(&place)[0].label.name.as_deref(), Some("Build"));
+
+        told(&place, "listed", wire::END, &[]).expect("ended");
+        let until = Instant::now() + Duration::from_secs(10);
+        while (alive(pid) || !listed(&place).is_empty()) && Instant::now() < until {
+            thread::sleep(Duration::from_millis(50));
+        }
+        assert!(!alive(pid), "the shell outlived its end");
+        assert!(listed(&place).is_empty());
+    }
+
+    #[test]
+    fn two_tabs_on_one_session_have_one_writer_and_take_over_switches_it() {
+        let (_folder, place) = place();
+        let (first, first_heard) = opened(&place, "shared", 80, 24);
+        line(&first, SAYS_OK);
+        let _ = printed_until(&first, &first_heard, "orden-ok");
+
+        let (second, second_heard) = opened(&place, "shared", 80, 24);
+        assert_eq!(
+            writer_said(&first_heard),
+            Some(false),
+            "the first still typed"
+        );
+        assert_eq!(listed(&place)[0].clients, 2);
+
+        line(&first, &says("lost"));
+        line(&second, &says("second"));
+        let (said, _) = printed_until(&first, &first_heard, "orden-second");
+        assert!(
+            said.contains("orden-second"),
+            "the writer's line did not reach both"
+        );
+        assert!(!said.contains("orden-lost"), "one that only watches typed");
+
+        first
+            .lock()
+            .expect("the session")
+            .as_ref()
+            .expect("running")
+            .take();
+        assert_eq!(writer_said(&first_heard), Some(true));
+        assert_eq!(writer_said(&second_heard), Some(false));
+
+        taken(&first).end();
+        drop(taken(&second));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_fullscreen_program_comes_back_on_its_own_screen() {
+        let (_folder, place) = place();
+        let (held, heard) = opened(&place, "full", 80, 24);
+        line(&held, r"printf '\033[?1049h\033[?1000hfull-''screen'");
+        let _ = printed_until(&held, &heard, "full-screen");
+        let first = taken(&held);
+        first.detach();
+        drop(first);
+
+        let (again, heard) = opened(&place, "full", 80, 24);
+        let screen = match heard.recv_timeout(Duration::from_secs(10)) {
+            Ok(Out::Screen(screen, _, _)) => String::from_utf8_lossy(&screen).into_owned(),
+            other => panic!("no screen came back: {other:?}"),
+        };
+        let switched = screen.rfind("\u{1b}[?1049h").expect("the second screen");
+        assert!(screen[switched..].contains("full-screen"));
+        taken(&again).end();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn an_ended_session_leaves_no_process_behind() {
+        let (held, heard, _folder) = started(80, 24);
+        line(&held, "sleep 300 & (sleep 301 &) ; echo orden-\"\"started");
+        let _ = printed_until(&held, &heard, "orden-started");
+        let session = taken(&held);
+        let pid = i32::try_from(session.pid().expect("a pid")).expect("a pid");
+        let until = Instant::now() + Duration::from_secs(5);
+        while hold::members(pid).len() < 3 && Instant::now() < until {
+            thread::sleep(Duration::from_millis(50));
+        }
+        assert!(
+            hold::members(pid).len() >= 3,
+            "the shell and its two sleeps: {:?}",
+            hold::members(pid)
+        );
+
+        session.end();
+        let until = Instant::now() + Duration::from_secs(10);
+        while !hold::members(pid).is_empty() && Instant::now() < until {
+            thread::sleep(Duration::from_millis(50));
+        }
+        assert_eq!(hold::members(pid), Vec::<i32>::new(), "left running");
+    }
+
+    #[test]
     fn a_session_ended_by_the_window_kills_its_shell() {
-        let (held, heard) = started(80, 24);
+        let (held, heard, _folder) = started(80, 24);
         line(&held, SAYS_OK);
         let _ = printed_until(&held, &heard, "orden-ok");
 
-        let session = held.lock().expect("the session").take().expect("running");
+        let session = taken(&held);
         let pid = session.pid().expect("a pid");
         session.end();
 
@@ -538,7 +814,7 @@ mod tests {
 
     #[test]
     fn ctrl_c_interrupts_what_is_running() {
-        let (held, heard) = started(80, 24);
+        let (held, heard, _folder) = started(80, 24);
         line(&held, SAYS_OK);
         let _ = printed_until(&held, &heard, "orden-ok");
 
@@ -564,13 +840,12 @@ mod tests {
         }
         assert!(!busy(&held), "Ctrl+C did not stop {long}");
 
-        let session = held.lock().expect("the session").take().expect("running");
-        session.end();
+        taken(&held).end();
     }
 
     #[test]
     fn a_program_that_ends_leaves_the_shell_idle() {
-        let (held, heard) = started(80, 24);
+        let (held, heard, _folder) = started(80, 24);
         line(&held, SAYS_OK);
         let _ = printed_until(&held, &heard, "orden-ok");
 
@@ -599,17 +874,16 @@ mod tests {
         }
         assert!(!busy(&held), "the shell stayed busy after {short} ended");
 
-        let session = held.lock().expect("the session").take().expect("running");
-        session.end();
+        taken(&held).end();
     }
 
     #[test]
     fn a_shell_at_its_prompt_is_not_busy() {
-        let (held, heard) = started(80, 24);
+        let (held, heard, _folder) = started(80, 24);
         line(&held, SAYS_OK);
         let _ = printed_until(&held, &heard, "orden-ok");
 
-        let session = held.lock().expect("the session").take().expect("running");
+        let session = taken(&held);
         assert!(!session.busy());
         session.end();
     }
@@ -639,10 +913,10 @@ mod tests {
         fn shared<T: Send + Sync>() {}
         shared::<Session>();
 
-        let (held, _heard) = started(80, 24);
-        let session = held.lock().expect("the session").take().expect("a session");
-        session.resize(100, 30).expect("resized");
-        session.resize(100, 30).expect("resized again");
+        let (held, _heard, _folder) = started(80, 24);
+        let session = taken(&held);
+        session.resize(100, 30);
+        session.resize(100, 30);
         let began = Instant::now();
         session.end();
         drop(session);

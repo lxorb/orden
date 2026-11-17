@@ -41,7 +41,10 @@ const views = {
     this.onPut?.(pane, view)
   },
 }
-vi.mock('../../views.svelte', () => ({ views }))
+vi.mock('../../panes/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../panes/src/api')>()),
+  views,
+}))
 
 vi.mock('../../agent-verbs/src/api', async (original) => ({
   ...(await original<typeof import('../../agent-verbs/src/api')>()),

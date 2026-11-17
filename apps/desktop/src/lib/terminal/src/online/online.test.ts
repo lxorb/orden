@@ -82,7 +82,7 @@ describe("the account's answer about the machine", () => {
       state: 'asleep',
       held: false,
       host: 'hetzner',
-      server,
+      server: { ...server, hourly: null, made: true, spent: null },
       disk: { used: 17e9, total: 160e9 },
     })
     const unpriced = onlineOf({

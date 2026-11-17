@@ -74,6 +74,8 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
         if page.locator(f"{SHEET} textarea").get_attribute("placeholder") != "Describe the issue":
             wrong(f"[{label}] the field does not say Describe the issue")
         shot(page, f"{label}-sheet")
+        if page.locator(f"{SHEET} button", has_text="See past requests").count():
+            wrong(f"[{label}] the sheet offers past requests before any was sent")
 
         page.locator(f"{SHEET} button", has_text="Cancel").click()
         wait_for(page, f"!document.querySelector({SHEET!r})", f"[{label}] the sheet put away")
@@ -110,6 +112,25 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
                 wrong(f"the report does not say the version and the platform: {one}")
             if "page loaded" not in one["log"]:
                 wrong("the report carries no recent log")
+
+        page.locator(BUG).click()
+        wait_for(page, f"!!document.querySelector({SHEET!r})", "the sheet once a report was sent")
+        page.locator(f"{SHEET} button", has_text="See past requests").click()
+        wait_for(
+            page,
+            f"document.querySelector({SHEET!r})?.textContent.includes('Past requests')",
+            "the past requests",
+        )
+        rows = page.locator(f"{SHEET} .past a")
+        if rows.count() != 1 or "The tab strip lost its line" not in rows.first.inner_text():
+            wrong(f"the past requests are not the one sent: {rows.all_inner_texts()}")
+        elif "/v1/feedback/" not in (rows.first.get_attribute("href") or ""):
+            wrong("the past request does not lead to its page")
+        shot(page, f"{label}-past")
+        page.locator(f"{SHEET} button", has_text="Back").click()
+        wait_for(page, f"!!document.querySelector({SHEET!r} + ' textarea')", "the form again after Back")
+        page.locator(f"{SHEET} button", has_text="Cancel").click()
+        wait_for(page, f"!document.querySelector({SHEET!r})", "the sheet put away again")
 
         page.locator("body").click(position={"x": 700, "y": 400})
         for _ in range(2):

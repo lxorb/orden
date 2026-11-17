@@ -1,0 +1,5 @@
+{
+  "name": "glyphs",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "icons", "launch", "theme", "ui-kit"]
+}

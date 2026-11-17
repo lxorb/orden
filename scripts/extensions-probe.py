@@ -287,7 +287,7 @@ def main() -> int:
         running, app = launch(args.exe, args.identifier, unlike=app.at)
 
         until = time.perf_counter() + 60
-        while time.perf_counter() < until and not isinstance(app.ask("nib.workspace.tabs.length"), int):
+        while time.perf_counter() < until and not isinstance(app.ask("orden.workspace.tabs.length"), int):
             time.sleep(0.5)
         app.open(f"{NOTE}.md", SPACE)
         time.sleep(2)
@@ -370,17 +370,17 @@ def main() -> int:
                 if not ident or not one.get("options page"):
                     continue
                 address = f"chrome-extension://{ident}/{one['options page']}"
-                app.ask(f"nib.workspace.openPage({json.dumps(address)}, 'front')")
+                app.ask(f"orden.workspace.openPage({json.dumps(address)}, 'front')")
                 time.sleep(3)
                 options = page_target(web_port, f"chrome-extension://{ident}/")
                 one["options"] = bool(options) and page_says(options, "document.body ? document.body.querySelectorAll('*').length : 0")
                 for other in tabs(app):
                     if other["id"] != tab and str(other.get("kind")) == "web":
-                        app.ask(f"nib.workspace.close('{other['id']}')")
+                        app.ask(f"orden.workspace.close('{other['id']}')")
                 time.sleep(0.5)
 
         store_page = "https://chromewebstore.google.com/detail/json-formatter/bcjindcccaagfpapjjmafapmmgkkhgoa"
-        app.ask(f"nib.workspace.activate?.('{tab}')")
+        app.ask(f"orden.workspace.activate?.('{tab}')")
         app.invoke("web_navigate", {"tab": tab, "url": store_page})
         time.sleep(8)
         offered = app.ask("JSON.stringify(!!document.querySelector('.webbar .add'))")

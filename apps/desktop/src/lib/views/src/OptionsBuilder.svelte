@@ -49,6 +49,8 @@
     const list = (event.currentTarget as HTMLElement).closest('.options')
     const up = (one: PointerEvent) => {
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      if (one.type === 'pointercancel') return
       const rows = [...(list?.querySelectorAll<HTMLElement>('.row') ?? [])]
       const to = rows.findIndex((row) => {
         const box = row.getBoundingClientRect()
@@ -61,6 +63,7 @@
       write(next)
     }
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }
 
   function prefix(words: string) {

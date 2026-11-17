@@ -116,11 +116,11 @@ describe('the row a list is made of', () => {
     const lists = [
       'lib/sidebar/src/Bookmarks.svelte',
       'lib/context-menu/src/ContextMenu.svelte',
-      'lib/HitList.svelte',
-      'lib/SearchPanel.svelte',
+      'lib/links-panel/src/HitList.svelte',
+      'lib/search/src/SearchPanel.svelte',
       'lib/settings/src/SettingsPanel.svelte',
       'lib/sidebar/src/Sidebar.svelte',
-      'lib/TagTree.svelte',
+      'lib/search/src/TagTree.svelte',
       'lib/sidebar/src/Tree.svelte',
       'lib/palette/src/Palette.svelte',
     ]
@@ -288,14 +288,14 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(wearing).toEqual([
-      'lib/SpaceBadge.svelte',
-      'lib/SpaceMenu.svelte',
       'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/accounts/src/AccountBadge.svelte',
       'lib/agents/src/settings/AgentMark.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/pass-ui/src/VaultMark.svelte',
+      'lib/spaces/src/SpaceBadge.svelte',
+      'lib/spaces/src/SpaceMenu.svelte',
       'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Sheet.svelte',
     ])
@@ -308,11 +308,11 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(asking).toEqual([
-      'lib/PromptSheet.svelte',
-      'lib/SpaceBadge.svelte',
       'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/src/SavePlace.svelte',
+      'lib/spaces/src/SpaceBadge.svelte',
+      'lib/surfaces/src/PromptSheet.svelte',
       'lib/tab-strip/src/TabCard.svelte',
     ])
   })
@@ -400,7 +400,7 @@ describe('the cross that shuts something', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(drawing).toEqual(['lib/Titlebar.svelte', 'lib/ui-kit/src/Cross.svelte'])
+    expect(drawing).toEqual(['lib/titlebar/src/Titlebar.svelte', 'lib/ui-kit/src/Cross.svelte'])
   })
 
   test('and no button spells one as a letter', () => {
@@ -580,10 +580,10 @@ describe('the bubble a sentence appears in', () => {
       .sort()
 
     expect(own).toEqual([
-      'lib/HintCard.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
+      'lib/hints/src/HintCard.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',

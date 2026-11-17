@@ -30,9 +30,9 @@ import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { account, api, ApiError, type AccountSettings } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
-import { type AttachmentFolder, isAttachmentFolder } from '../../attachments'
+import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from '../../link-format/src/api'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from '../../sync-mirror/src/api'
@@ -198,12 +198,15 @@ function marksOf(value: unknown): Marks {
   return out
 }
 
+const LONGEST_PHRASE = 60
+
 function wordsOf(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {}
 
   const out: Record<string, string> = {}
   for (const [id, phrase] of Object.entries(value)) {
-    if (isString(phrase) && phrase.trim() && phrase.length <= 60) out[id] = phrase.trim()
+    if (isString(phrase) && phrase.trim() && phrase.length <= LONGEST_PHRASE)
+      out[id] = phrase.trim()
   }
 
   return out
@@ -749,7 +752,7 @@ class Modes {
   }
 
   setGlassesWord(id: string, phrase: string) {
-    const wanted = phrase.trim().toLowerCase()
+    const wanted = phrase.trim().toLowerCase().slice(0, LONGEST_PHRASE).trim()
     const words = Object.fromEntries(
       Object.entries(this.glassesWords).filter(([one]) => one !== id),
     )
@@ -1058,23 +1061,31 @@ class Modes {
     }
 
     const owed = this.owed
-    const session = this.session
     this.owed = {}
-    void api.saveSettings(token, { ...owed, ...patch }).catch(() => {
-      if (this.session === session) this.owed = { ...owed, ...patch, ...this.owed }
-    })
+    void this.deliver(token, { ...owed, ...patch })
   }
 
   private async settle(token: string): Promise<void> {
     const owed = this.owed
     if (!Object.keys(owed).length) return
 
-    const session = this.session
     this.owed = {}
+    await this.deliver(token, owed)
+  }
+
+  private async deliver(token: string, patch: AccountSettings): Promise<void> {
+    const session = this.session
     try {
-      await api.saveSettings(token, owed)
-    } catch {
-      if (this.session === session) this.owed = { ...owed, ...this.owed }
+      await api.saveSettings(token, patch)
+    } catch (error) {
+      if (this.session !== session) return
+      if (!(error instanceof ApiError && (error.status === 400 || error.status === 413))) {
+        this.owed = { ...patch, ...this.owed }
+        return
+      }
+      const keys = Object.keys(patch) as (keyof AccountSettings)[]
+      if (keys.length < 2) return
+      for (const key of keys) await this.deliver(token, { [key]: patch[key] })
     }
   }
 

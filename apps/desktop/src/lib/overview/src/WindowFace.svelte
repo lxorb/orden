@@ -10,7 +10,7 @@
   import { readingHtml, unreadableHtml } from '../../reading/src/api'
   import { trustsHtmlIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
-  import TabMark from '../../TabMark.svelte'
+  import { TabMark } from '../../marks/src/api'
   import { theme } from '../../theme/src/api'
   import { webPages } from '@orden/contracts'
   import type { Tab } from '../../documents/src/api'

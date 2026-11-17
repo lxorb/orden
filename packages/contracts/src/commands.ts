@@ -28,7 +28,15 @@ export async function runCommand(id: string): Promise<boolean> {
 }
 
 export type CommandPlace =
-  'send' | 'web' | 'agent-undo' | 'export-picker' | 'export' | 'record' | 'ai-accounts'
+  | 'send'
+  | 'web'
+  | 'agent-undo'
+  | 'export-picker'
+  | 'export'
+  | 'record'
+  | 'ai-accounts'
+  | 'rewrite'
+  | 'transcribe'
 
 export type CommandRows = (view: object | undefined) => readonly CommandExtension[]
 

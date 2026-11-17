@@ -267,9 +267,6 @@
             --unset GST_PLUGIN_PATH_1_0 \
             --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"' \
             --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi'
-          ''
-          + pkgs.lib.optionalString (!edge) ''
-            ln -s orden $out/bin/nib
           '';
 
           meta = {

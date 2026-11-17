@@ -3,6 +3,7 @@ import type { TabKind } from './shell'
 export interface TabMenuItem {
   readonly label: string
   readonly hint?: string | undefined
+  readonly checked?: boolean
   readonly disabled?: boolean
   readonly keep?: boolean
   readonly more?: () => Promise<TabMenuEntry[]>
@@ -46,7 +47,7 @@ interface TabIcon {
 
 export interface TabKindParts {
   readonly open?: (path: string, how: OpenHow) => Promise<void>
-  readonly make?: (folder: string, name: string) => Promise<void>
+  readonly make?: (folder?: string, name?: string) => Promise<void>
   readonly menu?: (tab: string) => TabMenuEntry[]
   readonly facts?: (tab: string) => Promise<TabFacts | null>
   readonly hold?: (tab: string) => (() => void) | null

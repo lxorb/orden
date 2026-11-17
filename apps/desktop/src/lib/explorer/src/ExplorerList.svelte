@@ -2,7 +2,7 @@
   import { carried, dropOver, spelled, type Spelling, menu } from '../../ui-kit/src/api'
   import { tick, untrack } from 'svelte'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import { isPicturePath, nameOf, folderOf, samePath } from '../../platform/src/api'
   import { when } from '../../ui-controls/src/api'
   import { renamePath } from './changes'

@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { alone } from '../../alone.svelte'
+  import { alone, workspace } from '../../workspace/src/api'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { clamped, type Frame, paneIn, type Split, tracks } from '../../panes/src/api'
-  import { workspace } from '../../workspace/src/api'
 
   const { frame }: { frame: Frame } = $props()
 

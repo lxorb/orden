@@ -33,7 +33,10 @@ vi.mock('../src/lib/notify/src/api', () => ({
 const heard: ((event: AgentHeard) => void)[] = []
 
 const opened: string[] = []
-vi.mock('../src/lib/focus', () => ({ openAgentSession: (agent: string) => opened.push(agent) }))
+vi.mock('../src/lib/workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/lib/workspace/src/api')>()),
+  openAgentSession: (agent: string) => opened.push(agent),
+}))
 
 const { clipboard } = await import('../src/lib/agent-host/src/clipboard')
 const { askReader } = await import('../src/lib/agent-host/src/ask')

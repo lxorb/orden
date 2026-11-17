@@ -3,7 +3,8 @@ import { render } from 'svelte/server'
 
 const chosen: Record<string, string | null> = {}
 
-vi.mock('../../chosen-icon', () => ({
+vi.mock('../../marks/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../marks/src/api')>()),
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: () => null,
 }))

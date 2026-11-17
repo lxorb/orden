@@ -15,6 +15,5 @@
     "workspace",
     "sync-store",
     "modes"
-  ],
-  "pending": ["apps/desktop/src/lib/usage.svelte.ts"]
+  ]
 }

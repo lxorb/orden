@@ -78,7 +78,7 @@ describe('a device’s hub socket', () => {
     const socket = await open()
 
     expect(socket.url).toMatch(/^wss?:\/\/.+\/v2\/hub$/)
-    expect(socket.protocols).toEqual(['nib.token.token-1', 'nib.device.device-0001'])
+    expect(socket.protocols).toEqual(['orden.token.token-1', 'orden.device.device-0001'])
     expect(JSON.parse(socket.said[0] ?? '')).toMatchObject({
       t: 'hello',
       device: 'device-0001',

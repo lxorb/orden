@@ -20,6 +20,5 @@
     "documents",
     "file-writes",
     "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/layer-keys.ts"]
+  ]
 }

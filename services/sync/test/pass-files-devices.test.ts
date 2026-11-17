@@ -2,7 +2,7 @@ import { blank } from '@orden/pass/envelope'
 import type { Attachment, Envelope, Item, Note } from '@orden/pass/types'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import app from '../src'
-import { sweepLeftovers } from '../src/sync-server/src/leftovers'
+import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
 import { signIn, type TestEnv, testEnv } from './harness'
 
 const FAST = { m: 64, t: 1, p: 1 }

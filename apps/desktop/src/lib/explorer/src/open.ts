@@ -1,4 +1,4 @@
-import { fileMark } from '../../file-mark'
+import { fileMark } from '../../marks/src/api'
 import { nameOf, within } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'

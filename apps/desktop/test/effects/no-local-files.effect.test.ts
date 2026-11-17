@@ -13,7 +13,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { appCommands } = await import('../../src/lib/commands/src/api')
-const { guardDrops } = await import('../../src/lib/drops')
+const { guardDrops } = await import('../../src/lib/ui-kit/src/api')
 const { SHORTCUTS } = await import('../../src/lib/shortcuts/src/api')
 const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 
@@ -72,7 +72,7 @@ let stop: (() => void) | undefined
 let somewhere: HTMLElement
 
 beforeEach(() => {
-  stop = guardDrops()
+  stop = guardDrops(() => undefined)
   somewhere = document.createElement('div')
   document.body.append(somewhere)
 })

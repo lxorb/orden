@@ -12,7 +12,7 @@ import {
   stands,
 } from '../src/api'
 import { clampOffset, sourceSquare, zoomed } from '../src/crop'
-import { carriesMetadata } from '../src/encode'
+import { withoutMetadata } from '../src/encode'
 import { readPerson } from '../src/read'
 
 const SRC = join(import.meta.dirname, '../src')
@@ -96,12 +96,12 @@ describe('a status', () => {
 })
 
 describe('a picture for a face', () => {
-  test('is known to carry metadata by its container, and anything unknown is treated as if it did', () => {
+  test('loses its metadata by its container, and anything unknown is no picture of this app', () => {
     const jpegPlain = new Uint8Array([0xff, 0xd8, 0xff, 0xda, 0, 2])
     const jpegExif = new Uint8Array([0xff, 0xd8, 0xff, 0xe1, 0, 2])
-    expect(carriesMetadata(jpegPlain)).toBe(false)
-    expect(carriesMetadata(jpegExif)).toBe(true)
-    expect(carriesMetadata(new Uint8Array([1, 2, 3]))).toBe(true)
+    expect(withoutMetadata(jpegPlain)).toEqual(jpegPlain)
+    expect(withoutMetadata(jpegExif)).toEqual(new Uint8Array([0xff, 0xd8]))
+    expect(withoutMetadata(new Uint8Array([1, 2, 3]))).toBeNull()
   })
 
   test('a crop stays inside the picture and zooms around the point under the pointer', () => {

@@ -2,6 +2,7 @@ export { putWords, toolPressed, wordsAt } from './actions'
 export { type Found, matches } from './find'
 export { freeScroll, holdFreeScroll } from './free-scroll'
 export { hand } from './hand.svelte'
+export const handwriting = () => import('./handwrite')
 export { pens } from './pens.svelte'
 export { type KeptView } from './place'
 export { FORGIVING, inks, type Tool } from './pointer'

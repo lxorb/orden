@@ -5,8 +5,7 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "bin": {
-    "orden": "./orden.mjs",
-    "nib": "./orden.mjs"
+    "orden": "./orden.mjs"
   },
   "files": [
     "orden.mjs"

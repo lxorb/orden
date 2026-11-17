@@ -30,22 +30,6 @@ export interface Places {
   documentAt(path: string): NoteDoc | null
 }
 
-export interface PuttingAway extends Places {
-  save(tab: Tab): Promise<string | null>
-  putAwayDone(tab: Tab, paneId: string, at: number): void
-}
-
-export async function putAway(
-  ws: PuttingAway,
-  tab: Tab,
-  paneId: string,
-  at: number,
-): Promise<void> {
-  const path = await ws.save(tab)
-  ws.putAwayDone(tab, paneId, at)
-  if (path === null) await trashWords(ws, tab.note)
-}
-
 type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteDoc | null>
 
 export async function keepWeb(

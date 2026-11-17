@@ -303,20 +303,20 @@ describe('what hides a web page', () => {
     'lib/context-menu/src/ContextMenu.svelte': 'menu',
     'lib/crash-reports/src/CrashAsk.svelte': 'dialog',
     'lib/graph-view/src/GraphControls.svelte': 'dropdown',
-    'lib/FeedbackSheet.svelte': 'dialog',
+    'lib/surfaces/src/FeedbackSheet.svelte': 'dialog',
     'lib/collab/src/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/history/src/History.svelte': 'sheet',
     'lib/sharing/src/JoinSheet.svelte': 'sheet',
     'lib/icon-picker/src/IconPicker.svelte': 'sheet',
     'lib/palette/src/Palette.svelte': 'dialog',
-    'lib/PromptSheet.svelte': 'dialog',
+    'lib/surfaces/src/PromptSheet.svelte': 'dialog',
     'lib/ai-sidebar/src/QuickQuestion.svelte': 'dialog',
     'lib/ui-controls/src/Select.svelte': 'dropdown',
     'lib/sidebar/src/Sidebar.svelte':
       'the shut file list, out over the note while the pointer is on it',
     'lib/ui-controls/src/Sheet.svelte': 'sheet',
     'lib/accounts-ui/src/SignIn.svelte': 'sheet',
-    'lib/SpacePicker.svelte': 'dialog',
+    'lib/spaces/src/SpacePicker.svelte': 'dialog',
     'lib/sidebar/src/SpaceSwitcher.svelte': 'menu',
     'lib/overview/src/Overview.svelte': 'dialog',
     'lib/pass-ui/src/PassFill.svelte':
@@ -354,8 +354,8 @@ describe('what hides a web page', () => {
 
   const FURNITURE = [
     'lib/updates/src/UpdateNotice.svelte',
-    'lib/RenameNotice.svelte',
-    'lib/StorageWarning.svelte',
+    'lib/surfaces/src/RenameNotice.svelte',
+    'lib/frame/src/StorageWarning.svelte',
     'lib/dictation/src/recorder/RecordingPill.svelte',
     'lib/sharing/src/JoinPending.svelte',
   ]

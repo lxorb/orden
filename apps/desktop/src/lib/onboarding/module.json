@@ -16,7 +16,11 @@
     "sync-mirror",
     "modes",
     "feedback",
-    "tab-cycle"
-  ],
-  "pending": ["apps/desktop/src/lib/Icon.svelte", "apps/desktop/src/lib/icon-library.svelte.ts"]
+    "tab-cycle",
+    "file-writes",
+    "seeded",
+    "spaces",
+    "workspace",
+    "glyphs"
+  ]
 }

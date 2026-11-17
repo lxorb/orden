@@ -52,19 +52,29 @@ import {
   upperCase,
 } from '@orden/editor'
 import { account } from '../../accounts/src/api'
-import { busy, prompt, viewport, type MenuItem, DIVIDER } from '../../ui-kit/src/api'
-import { turnedOff } from '../../kind-choice'
-import { composerCommands } from '../../composer-commands'
+import { busy, prompt, viewport, type MenuItem, DIVIDER, fullscreen } from '../../ui-kit/src/api'
+import { turnedOff, basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
+import { composerCommands } from './composer-commands'
 import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
 import { canPrint, printable } from '../../export-formats/src/api'
-import { printOpen } from '../../open-out'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { moveTargets } from '../../tree/src/api'
 import { closeAfterLabel } from '../../panes/src/api'
-import { revealPanel, stepRegionFocus } from '../../focus'
-import { newSpace, publishSpace, shareSpace, stepSpace } from '../../space-actions'
-import { spacePicker } from '../../space-picker.svelte'
+import {
+  revealPanel,
+  stepRegionFocus,
+  toggleTabOverview,
+  workspace,
+  agentMarks,
+} from '../../workspace/src/api'
+import {
+  newSpace,
+  publishSpace,
+  shareSpace,
+  stepSpace,
+  toggleSpacePicker,
+} from '../../spaces/src/api'
 import {
   canPublish,
   canShare,
@@ -74,15 +84,11 @@ import {
   lockAllEntry,
   protectEntries,
 } from '../../sharing/src/api'
-import { archiveEntry } from '../../menu-entries'
-import { updates } from '../../updates/src/api'
+import { archiveEntry } from '../../row-menu/src/api'
+import { updates, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
-import { basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
-import { agentMarks } from '../../agent-marks.svelte'
 import { shortcuts } from '../../shortcuts/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
-import { fullscreen } from '../../fullscreen.svelte'
-import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../links'
 import {
   closeWindow,
   internal,
@@ -108,7 +114,6 @@ import {
   settingsWindow,
   showQuickAdd,
 } from '@orden/contracts'
-import { toggleTabOverview, workspace } from '../../workspace/src/api'
 
 async function openCustomCss() {
   if (!isNative) return
@@ -782,7 +787,7 @@ export function appCommands(view?: EditorView): Command[] {
             label: 'Print',
             hint: shortcuts.hint('app.print'),
             disabled: !printable(workspace.active?.kind) || shut(),
-            run: () => busy.start('Printing', () => printOpen(), 'print'),
+            run: () => void runCommand('export.print'),
           },
         ]
       : []),
@@ -1273,7 +1278,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'spaces',
       label: 'Spaces',
       hint: shortcuts.hint('space.switcher'),
-      run: () => spacePicker.toggle(),
+      run: toggleSpacePicker,
     },
     {
       id: 'tab-overview',

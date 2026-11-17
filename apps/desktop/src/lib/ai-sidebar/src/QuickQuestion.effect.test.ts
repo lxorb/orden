@@ -8,6 +8,7 @@ const world = vi.hoisted(() => ({
 }))
 
 vi.mock('../../ai-chat/src/quick.svelte', () => ({
+  side: { open: false, of: null },
   quick: {
     open: true,
     ready: true,
@@ -40,8 +41,8 @@ vi.mock('../../link-index/src/api', async (original) => ({
   },
 }))
 
-vi.mock('../../open-link', async (original) => ({
-  ...(await original<typeof import('../../open-link')>()),
+vi.mock('../../workspace/src/api', async (original) => ({
+  ...(await original<typeof import('../../workspace/src/api')>()),
   followNote: (jump: { path: string | null; target: string }) => world.followed.push(jump),
   followHref: (href: string) => world.hrefs.push(href),
 }))

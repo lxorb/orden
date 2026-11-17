@@ -6,10 +6,10 @@ import {
   now,
   randomToken,
   sha256,
-  programDevice,
   type Env,
   type Variables,
 } from '../../../sync-server/src/api'
+import { programDevice } from '../../../sync-server-engine/src/api'
 import { grantForToken } from '../../../sync-server-chats/src/api'
 export interface TokenRow {
   token_hash: string

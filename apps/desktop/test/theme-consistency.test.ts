@@ -210,25 +210,28 @@ describe('what a side shows', () => {
     const file = new RegExp(`default as ${name} \\} from '\\./([^']+)'`).exec(api)?.[1] ?? ''
     return `lib/${path.replace(/[^/]+$/, '')}${file}`
   }
-  const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
-    const door = one[1] ?? ''
-    const [, id, root] =
-      new RegExp(
-        `export const ${door} = held\\(\\s*(?:from\\('([\\w-]+)'\\)|\\(\\) => import\\('\\.\\./\\.\\./([^']+)'\\))`,
-      ).exec(surfaces) ?? []
-    if (root) return `lib/${root}`
-    const body =
-      new RegExp(`\\n\\s*'?${id ?? ''}'?: (?!waits)([^\\n]*),\\n`).exec(features)?.[1] ?? ''
-    const lazy =
-      /import\('\.\/([^']+)'\)\.then\(\((?:api|one)\) => (?:\(\{ default: (?:api|one)\.(\w+) \}\)|(?:api|one)\.(\w+)\(\))\)/.exec(
-        body,
-      )
-    if (lazy) return lazy[2] ? named(lazy[1] ?? '', lazy[2]) : loaded(lazy[1] ?? '', lazy[3] ?? '')
-    const from = new RegExp(`import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`).exec(
-      features,
-    )?.[1]
-    return loaded(from ?? '', body.trim())
-  })
+  const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)]
+    .filter((one) => surfaces.includes(`export const ${one[1] ?? ''} = `))
+    .map((one) => {
+      const door = one[1] ?? ''
+      const [, id, root] =
+        new RegExp(
+          `export const ${door} = held\\(\\s*(?:from\\('([\\w-]+)'\\)|\\(\\) => import\\('\\.\\./\\.\\./([^']+)'\\))`,
+        ).exec(surfaces) ?? []
+      if (root) return `lib/${root}`
+      const body =
+        new RegExp(`\\n\\s*'?${id ?? ''}'?: (?!waits)([^\\n]*),\\n`).exec(features)?.[1] ?? ''
+      const lazy =
+        /import\('\.\/([^']+)'\)\.then\(\((?:api|one)\) => (?:\(\{ default: (?:api|one)\.(\w+) \}\)|(?:api|one)\.(\w+)\(\))\)/.exec(
+          body,
+        )
+      if (lazy)
+        return lazy[2] ? named(lazy[1] ?? '', lazy[2]) : loaded(lazy[1] ?? '', lazy[3] ?? '')
+      const from = new RegExp(
+        `import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`,
+      ).exec(features)?.[1]
+      return loaded(from ?? '', body.trim())
+    })
 
   interface Node {
     type?: string

@@ -1,0 +1,21 @@
+{
+  "name": "spaces",
+  "layer": "shell",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "accounts-ui",
+    "agents-seed",
+    "file-writes",
+    "matching",
+    "platform",
+    "sharing",
+    "space-pick",
+    "sync-store",
+    "ui-controls",
+    "ui-kit",
+    "workspace",
+    "icon-picker",
+    "marks"
+  ]
+}

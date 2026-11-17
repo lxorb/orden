@@ -93,7 +93,7 @@ describe('what another app may share with Orden', () => {
 
     expect(views).toHaveLength(1)
     expect(views[0]).toContain('android:scheme="orden"')
-    expect(views[0]).toContain('android:scheme="nib"')
+    expect(views[0]).not.toContain('android:scheme="nib"')
     expect(manifest).not.toContain('android:scheme="content"')
     expect(manifest).not.toContain('android:scheme="file"')
     expect(manifest).not.toContain('android:mimeType="text/markdown"')
@@ -370,6 +370,14 @@ describe('the Today widget', () => {
       expect(ids(kind, today), kind).toEqual([...Array(most).keys()])
       expect(ids(kind, kotlin), kind).toEqual([...Array(most).keys()])
     }
+  })
+
+  test('is called Todos, on the phone and on the glasses, since it lists undated todos too (#2073)', () => {
+    const strings = read(ANDROID, 'res', 'values', 'strings.xml')
+    expect(strings).toContain('<string name="widget_today">Todos</string>')
+    expect(read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')).toContain("title: 'Todos'")
+    expect(read(SOURCE, 'lib', 'even', 'src', 'bridge.svelte.ts')).toContain("today: 'Todos'")
+    expect(strings).not.toMatch(/for today/)
   })
 
   test('ticks through the page, which reads the anchor the activity hands over', () => {

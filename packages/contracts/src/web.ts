@@ -57,6 +57,7 @@ export interface WebPagesPort {
   shoot(tab: string): Promise<void>
   clip(tab: string, selection: boolean): Promise<WebClip | null>
   faviconOf(url: string | null | undefined): string | null
+  iconOf(tab: string): string | null
   holdStill(): Promise<void> | null
   letGo(): Promise<void>
   carryIn(paths: readonly string[]): void
@@ -104,11 +105,17 @@ export interface SiteIconsPort {
   held(): Promise<SiteIconsHeld>
 }
 
+export interface WebSitesPort {
+  dropped(folder: string, list: string, html: string): Promise<string | null>
+  showData(path: string): Promise<void>
+}
+
 export interface WebPorts {
   readonly 'web.pages': WebPagesPort
   readonly 'web.lending': WebLendingPort
   readonly 'web.scripts': WebScriptsPort
   readonly 'web.siteIcons': SiteIconsPort
+  readonly 'web.sites': WebSitesPort
 }
 
 const BLANK: WebPageSeen = {
@@ -150,6 +157,7 @@ export const NO_WEB_PAGES: WebPagesPort = {
   shoot: () => Promise.resolve(),
   clip: () => Promise.resolve(null),
   faviconOf: () => null,
+  iconOf: () => null,
   holdStill: () => null,
   letGo: () => Promise.resolve(),
   carryIn: () => undefined,

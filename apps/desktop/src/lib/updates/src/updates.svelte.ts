@@ -10,6 +10,7 @@ import {
   stagedVersion,
   updatedBySystem,
 } from './updater'
+import type { News } from './news'
 
 const EVERY = 6 * 60 * 60 * 1000
 
@@ -27,6 +28,8 @@ const QUIET = 5000
 
 class Updates {
   ready = $state<string | null>(null)
+
+  news = $state<News | null>(null)
 
   managed = $state(false)
 
@@ -46,6 +49,10 @@ class Updates {
     if (!isDesktop) return () => undefined
 
     void this.look()
+    void import('./news')
+      .then((one) => one.newsSince())
+      .then((found) => (this.news = found ?? this.news))
+      .catch(() => undefined)
 
     const timer = setInterval(() => void this.lookIfDue(), TICK)
     const returned = () => void this.lookIfDue()

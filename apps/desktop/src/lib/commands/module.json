@@ -29,20 +29,8 @@
     "files-out",
     "gates",
     "tree",
-    "surfaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/assets.ts",
-    "apps/desktop/src/lib/composer-commands.ts",
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/fullscreen.svelte.ts",
-    "apps/desktop/src/lib/kind-choice.ts",
-    "apps/desktop/src/lib/links.ts",
-    "apps/desktop/src/lib/menu-entries.ts",
-    "apps/desktop/src/lib/open-out.ts",
-    "apps/desktop/src/lib/space-actions.ts",
-    "apps/desktop/src/lib/space-picker.svelte.ts",
-    "apps/desktop/src/lib/usage.svelte.ts"
+    "surfaces",
+    "row-menu",
+    "spaces"
   ]
 }

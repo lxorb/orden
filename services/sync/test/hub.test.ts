@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { readFrame } from '../src/sync-server/src/hub/frames'
+import { readFrame } from '../src/sync-server-engine/src/hub/frames'
 import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { computer, connect, hub, type Hubs, hubs, send } from './hub-fakes'
 

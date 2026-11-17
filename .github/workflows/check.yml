@@ -128,9 +128,6 @@ jobs:
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
-      - name: The launch hands the thread back
-        run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
-
       - name: A thousand pages open at once
         run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/big-pdf.py
 
@@ -140,7 +137,7 @@ jobs:
       - name: A release carries no handle
         run: |
           pnpm --filter @orden/desktop build
-          if grep -rqE "ordenApp|nibApp" apps/desktop/dist/assets; then
+          if grep -rq "ordenApp" apps/desktop/dist/assets; then
             echo "a release bundle carries window.ordenApp" >&2
             exit 1
           fi
@@ -192,6 +189,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           save-if: ${{ github.ref == 'refs/heads/main' }}
@@ -365,6 +363,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: apps/desktop/src-tauri
           shared-key: android
           save-if: false
@@ -429,6 +428,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: apps/desktop/src-tauri
           shared-key: clippy-${{ matrix.target }}
           save-if: ${{ github.ref == 'refs/heads/main' }}

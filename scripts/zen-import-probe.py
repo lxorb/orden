@@ -161,8 +161,8 @@ def main() -> int:
         time.sleep(2)
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
 
-        until(app, "nib.workspace.activeSpace?.name ?? null", lambda one: one == "Notes", 60)
-        app.ask("nib.settings.show('import') || 'shown'")
+        until(app, "orden.workspace.activeSpace?.name ?? null", lambda one: one == "Notes", 60)
+        app.ask("orden.settings.show('import') || 'shown'")
         said["rows"] = until(app, ROWS, lambda one: isinstance(one, list) and "Zen" in one)
         said["pane"] = camera.photograph(args.identifier, (args.shots / "zen-import-pane.png").resolve())
 
@@ -188,13 +188,13 @@ def main() -> int:
         said["a web note"] = guide.read_text(encoding="utf-8") if guide.exists() else None
 
         app.ask(
-            "nib.workspace.showSpace(orden.workspace.spaces.find((one) => one.name === 'Work').id)"
+            "orden.workspace.showSpace(orden.workspace.spaces.find((one) => one.name === 'Work').id)"
             " && 'shown'"
         )
         time.sleep(2)
         said["work"] = camera.photograph(args.identifier, (args.shots / "zen-import-work.png").resolve())
 
-        app.ask("nib.settings.show('import') || 'shown'")
+        app.ask("orden.settings.show('import') || 'shown'")
         until(app, ROWS, lambda one: isinstance(one, list) and "Zen" in one)
         app.ask(PRESS % json.dumps("Zen"))
         until(app, ROWS, lambda one: isinstance(one, list) and "Default (release)" in one)

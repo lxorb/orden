@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { providePort, type Stopping } from '@orden/contracts'
-import { answerQuitting, asWarning, mayStop, quitAsk, quitAsked } from '../src/api'
+import { answerQuitting, asWarning, holdToQuit, mayStop, quitAsk, quitAsked } from '../src/api'
 import { asks, rowsHere, showRow } from '../src/rows'
 
 const HERE = join(import.meta.dirname, '..')
@@ -42,7 +42,8 @@ describe('the module stands on its own', () => {
   })
 
   test('asks, answers the other windows and quits through doors', () => {
-    for (const one of [mayStop, quitAsked, answerQuitting]) expect(typeof one).toBe('function')
+    for (const one of [mayStop, quitAsked, answerQuitting, holdToQuit])
+      expect(typeof one).toBe('function')
   })
 })
 

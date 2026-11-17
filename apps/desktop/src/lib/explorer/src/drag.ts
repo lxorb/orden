@@ -39,9 +39,7 @@ function takes(transfer: DataTransfer | null): boolean {
 
 export function dropHow(event: DragEvent): 'copy' | 'move' {
   const copying = platform() === 'macos' ? event.altKey : event.ctrlKey
-  if (copying) return 'copy'
-  if (event.shiftKey) return 'move'
-  return isExplorerDrag(event.dataTransfer) && !isTreeDrag(event.dataTransfer) ? 'move' : 'copy'
+  return copying || isFileDrop(event.dataTransfer) ? 'copy' : 'move'
 }
 
 export function over(event: DragEvent): boolean {
@@ -58,7 +56,7 @@ export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
   const how = dropHow(event)
   if (isFileDrop(transfer)) {
     const caught = caughtFiles(transfer)
-    void import('../../picking')
+    void import('../../ui-controls/src/api')
       .then(({ filesUnder }) => filesUnder(caught))
       .then((files) => writeInto(view, files, folder))
     return

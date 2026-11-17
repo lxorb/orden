@@ -29,16 +29,8 @@
     "files-out",
     "double-tap",
     "gates",
-    "surfaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/FileMark.svelte",
-    "apps/desktop/src/lib/NewHere.svelte",
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/fullscreen.svelte.ts",
-    "apps/desktop/src/lib/layer-keys.ts",
-    "apps/desktop/src/lib/new-tab.ts"
+    "surfaces",
+    "new-here",
+    "marks"
   ]
 }

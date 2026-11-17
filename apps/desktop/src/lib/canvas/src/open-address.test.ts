@@ -2,7 +2,8 @@ import { expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => ({ hrefs: [] as string[], paths: [] as string[] }))
 
-vi.mock('../../open-link', () => ({
+vi.mock('../../workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../workspace/src/api')>()),
   openHref: (href: string) => opened.hrefs.push(href),
 }))
 
