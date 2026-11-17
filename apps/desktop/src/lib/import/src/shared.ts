@@ -6,8 +6,9 @@ import { busy } from '../../ui-kit/src/api'
 import { isPicturePath } from '../../platform/src/api'
 import { applyImport } from './apply'
 import { dayOf, noteText } from './meta'
-import { safeName, titleFrom } from './names'
+import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
+import { decoded } from './sources'
 
 const NOTES = /\.(md|markdown|mdown|mkd|txt|text)$/i
 
@@ -154,19 +155,20 @@ export function sharedPlan(
   const notes: Planned[] = []
   const beside: Planned[] = []
   const under = folder.replace(/^\/+|\/+$/g, '')
+  const names = new Names()
 
   arrived.items.forEach((item, at) => {
     const held = bytes.get(at)
     if (item.text !== null || !held?.length) return
 
     if (isNote(item)) {
-      const name = `${safeName(item.name.replace(/\.[^.]+$/, ''))}.md`
-      notes.push({ kind: 'note', path: name, text: new TextDecoder().decode(held) })
+      const name = names.free(`${safeName(item.name.replace(/\.[^.]+$/, ''))}.md`)
+      notes.push({ kind: 'note', path: name, text: decoded(held) })
       return
     }
 
     const name = safeName(item.name) || 'shared'
-    const path = under ? `${under}/${name}` : name
+    const path = names.free(under ? `${under}/${name}` : name)
     beside.push({ kind: 'file', path, bytes: held })
     embeds.push(embedFor(item, path))
   })
@@ -176,7 +178,7 @@ export function sharedPlan(
     const title = sharedTitle(arrived)
     about.push({
       kind: 'note',
-      path: `${title}.md`,
+      path: names.free(`${title}.md`),
       text: noteText(title, body, {
         date: dayOf(on.getTime()),
         ...(address ? { extra: [['source', address]] as const } : {}),

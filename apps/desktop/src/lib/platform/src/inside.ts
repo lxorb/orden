@@ -15,8 +15,15 @@ export function insideOnly(said: string): string | null {
   if (!steps.length) return null
   if (steps.some((step) => step === '..')) return null
   if (steps.some(isReserved)) return null
+  if (onWindows() && steps.some((step) => /[. ]$/.test(step))) return null
 
   return steps.join('/')
+}
+
+function onWindows(): boolean {
+  const os = (globalThis as { window?: { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } } })
+    .window?.__TAURI_OS_PLUGIN_INTERNALS__
+  return os?.platform === 'windows'
 }
 
 function holdsUnnameable(path: string): boolean {

@@ -34,8 +34,11 @@ const DEFINITION = new RegExp(
 const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 function asLink(link: FoundLink, target: string): string {
-  const anchor = link.heading ? `#${link.heading}` : ''
-  const fragment = anchor ? encodeTarget(anchor) : ''
+  const fragment = link.block
+    ? `#^${encodeTarget(link.block)}`
+    : link.heading
+      ? `#${encodeTarget(link.heading)}`
+      : ''
 
   return `[${shownText(link)}](${encodeTarget(target)}${fragment})`
 }
@@ -158,7 +161,7 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
       }
       if (!options.link) continue
 
-      const target = options.link(found)
+      const target = found.target ? options.link(found) : found.heading || found.block ? '' : null
       edits.push({
         from: found.from,
         to: found.to,

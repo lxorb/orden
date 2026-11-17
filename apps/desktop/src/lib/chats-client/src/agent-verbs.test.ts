@@ -47,6 +47,7 @@ vi.mock('./view/open', () => ({
 vi.mock('../../sharing/src/api', () => ({ isShared: () => false }))
 
 const verbs = await import('./agent-verbs')
+const { protection } = await import('../../protect/src/api')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../../gates/src/api')
 const { answerOf } = await import('../../agent-verbs/src/api')
 
@@ -232,6 +233,28 @@ describe('the chats an agent sees', () => {
     expect(said(await call('list_chats', {}, agent('confirm', 'all')))).toContain('#plans')
     expect(await call('read_chat', { chat: 'plans' })).toMatchObject({ ok: false })
     expect(await call('read_chat', { chat: hidden })).toMatchObject({ ok: false })
+  })
+
+  test('in a folder kept from agents, are neither listed, read, searched nor posted in', async () => {
+    const diary = store.add('diary', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      path: '/spaces/Team/Private/diary.chat',
+    })
+    store.speak(diary, LUCILE, 'the secret words')
+    protection.set('/spaces/Team', '/spaces/Team/Private', 'password')
+    try {
+      expect(said(await call('list_chats', {}))).not.toContain('#diary')
+      expect(said(await call('list_chats', {}))).toContain('#thesis')
+      expect(await call('read_chat', { chat: 'diary' })).toMatchObject({ ok: false })
+      expect(await call('read_chat', { chat: diary })).toMatchObject({ ok: false })
+      expect(said(await call('search_chats', { query: 'secret' }))).toBe('Nothing found.')
+      expect(
+        await call('post_message', { chat: diary, text: 'sneaked in' }, agent('autonomous')),
+      ).toMatchObject({
+        ok: false,
+      })
+    } finally {
+      protection.set('/spaces/Team', '/spaces/Team/Private', null)
+    }
   })
 
   test('read with somebody else’s words inside a mark and the reader’s own outside one', async () => {

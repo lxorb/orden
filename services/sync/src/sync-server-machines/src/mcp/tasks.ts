@@ -1,4 +1,5 @@
 import type { Context, Row } from '@orden/bases'
+import { linkContext } from '@orden/bases/links'
 import {
   PROTECTED,
   shutFor,
@@ -17,16 +18,33 @@ import {
 import {
   AgentError,
   clockOf,
+  filledTemplate,
   noteName,
   queryBase,
   readBase,
   rowPlace,
-  withProperties,
+  rowWords,
 } from '@orden/bases/agent'
-import { rowsOfText } from '@orden/bases/rows'
-import { type InboxChange, inboxFits, inboxStamp, mergedInbox, newer } from '@orden/sync-core'
+import { noteRowsOf } from '@orden/scan/rows'
+import {
+  type InboxChange,
+  inboxFits,
+  inboxStamp,
+  mergedInbox,
+  metaFromText,
+  newer,
+} from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
-import { askedSpace, marked, noteBody, putNote, type Space, spaceSource } from './tools'
+import {
+  askedSpace,
+  HIDDEN,
+  hiddenPath,
+  marked,
+  noteBody,
+  putNote,
+  type Space,
+  spaceSource,
+} from './tools'
 import type { TokenRow } from './tokens'
 import { zoneOf } from './zone'
 
@@ -131,14 +149,16 @@ interface Held {
   id: string
   path: string
   meta: string | null
+  size: number
+  updated_at: number
 }
 
 async function notesOf(env: Env, space: Space): Promise<Held[]> {
   const { results } = await env.DB.prepare(
-    `select id, path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
+    `select id, path, meta, size, updated_at from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
-    .bind(space.id, MOST_READ)
+    .bind(space.id, MOST_READ + 1)
     .all<Held>()
   return results
 }
@@ -152,17 +172,21 @@ async function rowsOf(
   let left = MOST_READ
   let partial = false
   for (const space of spaces) {
-    const held = (await notesOf(env, space)).filter(
-      (one) => MARKDOWN.test(one.path) && !shut(space.id, one.path),
-    )
-    if (held.length > left) partial = true
+    const listed = await notesOf(env, space)
+    const held = listed
+      .slice(0, MOST_READ)
+      .filter((one) => MARKDOWN.test(one.path) && !shut(space.id, one.path))
+    if (listed.length > MOST_READ || held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
     for (let at = 0; at < reading.length; at += AT_ONCE) {
       const batch = reading.slice(at, at + AT_ONCE)
       const bodies = await Promise.all(batch.map((one) => noteBody(env, space.id, one.id)))
       batch.forEach((one, index) => {
-        const read = rowsOfText(space.name, one.path, bodies[index] ?? '')
+        const read = noteRowsOf(space.name, one.path, bodies[index] ?? '', {
+          stamp: { size: one.size, mtime: one.updated_at, ctime: 0 },
+          meta: metaFromText(one.meta) ?? null,
+        })
         rows.push(...read.filter((row) => row.kind !== 'task'))
       })
     }
@@ -184,6 +208,25 @@ async function wordsAt(env: Env, space: Writable, path: string): Promise<string 
     .bind(space.id, path)
     .first<{ id: string }>()
   return note ? noteBody(env, space.id, note.id) : null
+}
+
+async function templateAt(env: Env, space: Writable, link: string): Promise<string | null> {
+  const path = notePath(link)
+  const named = await wordsAt(env, space, path)
+  if (named !== null) return named
+  const fold = (one: string) => one.normalize('NFC').toLowerCase()
+  const wanted = fold(path)
+  const { results } = await env.DB.prepare(
+    "select path from notes where space_id = ? and deleted = 0 and kind != 'file' order by path",
+  )
+    .bind(space.id)
+    .all<{ path: string }>()
+  const found = results.find(
+    (one) =>
+      (fold(one.path) === wanted || fold(one.path).endsWith(`/${wanted}`)) &&
+      !space.shut?.(space.id, one.path),
+  )
+  return found ? wordsAt(env, space, found.path) : null
 }
 
 function notePath(asked: string): string {
@@ -349,9 +392,9 @@ async function patchOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   const patch: Fields = {}
   const title = words(args, 'title') ?? words(args, 'text')
   if (title !== undefined) patch.title = title.slice(0, 500)
-  else if (args.title !== undefined) throw new Said('A todo needs a title.')
+  else if (args.title !== undefined && args.title !== null) throw new Said('A todo needs a title.')
   if (typeof args.description === 'string') patch.description = args.description.slice(0, 8000)
-  if (args.labels !== undefined) {
+  if (Array.isArray(args.labels)) {
     patch.labels = [
       ...new Set(
         texts(args.labels)
@@ -491,7 +534,10 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
     throw new Said('Say the path of a .base file, or the base as yaml.')
   }
   const { rows, partial } = await rowsOf(env, [space], space.shut)
-  const answer = queryBase(base, words(args, 'view'), rows, contextNow(space.zone))
+  const answer = queryBase(base, words(args, 'view'), rows, {
+    ...contextNow(space.zone),
+    ...linkContext(rows),
+  })
   return partial ? { ...answer, partial } : answer
 }
 
@@ -505,17 +551,16 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const where = rowPlace(base, words(args, 'view'))
   const folder = where.folder ?? basePath.slice(0, Math.max(0, basePath.lastIndexOf('/')))
 
-  const link = base.orden.template
-    ?.replace(/^\[\[|\]\]$/g, '')
-    .split('|')[0]
-    ?.trim()
-  const template = link ? ((await wordsAt(env, space, notePath(link))) ?? '') : ''
+  const template = where.template ? ((await templateAt(env, space, where.template)) ?? '') : ''
+  const clock = contextNow(space.zone)
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {
-    const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
+    const title = counter === 1 ? name : `${name} ${counter}`
+    const file = `${title}.md`
     const asked = folder ? `${folder}/${file}` : file
     const path = cleanPath(asked)
     if (!path) throw new Said(`${asked} is not a note path.`)
+    if (hiddenPath(path)) throw new Said(HIDDEN(path))
     if ((await wordsAt(env, space, path)) !== null) continue
     let landed
     try {
@@ -523,7 +568,7 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
         env,
         space,
         path,
-        withProperties(template, { ...where.properties, ...(properties as Args) }),
+        rowWords(filledTemplate(template, title, clock), where.properties, properties as Args),
         null,
       )
     } catch (error) {

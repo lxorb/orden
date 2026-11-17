@@ -1,5 +1,6 @@
 import { readBase } from '@orden/bases'
 import { renderMarkdown } from '@orden/markdown'
+import { scanNote } from '@orden/scan/note'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -165,6 +166,17 @@ describe('what a spreadsheet holds that a database does not', () => {
       'note.status-2',
       'note.column-6',
     ])
+  })
+
+  test('a column of tags is a list of tags, each kept whole', async () => {
+    const plan = await readTable(
+      [file('Books.csv', 'Name,Tags,Labels\nDune,"sci-fi, Science Fiction",classic\n')],
+      'notes',
+    )
+
+    const text = noteAt(plan, 'Books/Dune.md')
+    expect(scanNote('Books/Dune.md', text).tags).toEqual(['sci-fi', 'science-fiction', 'classic'])
+    expect(readBase(noteAt(plan, 'Books.base')).views[0]?.order).toEqual(['file.name', 'note.tags'])
   })
 
   test('a date column holding less than a day is not made into one', () => {

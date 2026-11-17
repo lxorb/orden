@@ -1,4 +1,4 @@
-import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
+import { type EditorState, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { TextEdit } from '@orden/markdown/edits'
 import type { TaskChange } from '@orden/markdown/task-edits'
 import type { TaskFields } from '@orden/markdown/task-line'
@@ -127,6 +127,8 @@ export interface LinkWrite {
   path?: string | null
   from?: string | null
   fragment?: string | null
+  shown?: string | null
+  file?: string | null
 }
 
 export const linkWriter = Facet.define<
@@ -135,7 +137,8 @@ export const linkWriter = Facet.define<
 >({ combine: (values) => values[0] ?? wikilinkFor })
 
 function wikilinkFor(target: LinkWrite): string {
-  return `[[${target.fragment ? `${target.name}#${target.fragment}` : target.name}]]`
+  const inner = target.fragment ? `${target.name}#${target.fragment}` : target.name
+  return `[[${inner}${target.shown ? `|${target.shown}` : ''}]]`
 }
 
 export function fuzzy(text: string, needle: string): boolean {
@@ -169,10 +172,10 @@ function targetOf(folded: string): { wanted: string; anchored: boolean } {
   return { wanted: anchored ? folded.slice(1) : folded, anchored }
 }
 
-function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef | null {
+function nearest<T extends { path: string }>(candidates: readonly T[], from: string | null) {
   const here = from === null ? null : folderOf(from)
   const depth = (path: string) => path.split('/').length
-  const beside = (note: NoteRef) => (folderOf(note.path) === here ? 0 : 1)
+  const beside = (note: T) => (folderOf(note.path) === here ? 0 : 1)
 
   return (
     [...candidates].sort(
@@ -207,8 +210,13 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   const parts = relativeParts(index, target)
   if (!parts.length) return null
   const whole = resolveNote(index, `/${parts.join('/')}`)
-  if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
-  return resolveNote(index, parts.join('/'))
+  const written = target.replace(/\\/g, '/')
+  if (whole || written.startsWith('/')) return whole
+  if (/^\.\.?\//.test(written)) return resolveNote(index, parts.join('/'))
+  const top = relativeParts(index, `/${target}`).join('/')
+  return (
+    resolveNote(index, `/${top}`) ?? resolveNote(index, parts.join('/')) ?? resolveNote(index, top)
+  )
 }
 
 function relativeParts(index: NoteIndex, target: string): string[] {
@@ -228,26 +236,24 @@ function relativeParts(index: NoteIndex, target: string): string[] {
 }
 
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const { wanted, anchored } = targetOf(
-    foldName(
-      kind === 'markdown'
-        ? relativeParts(index, target).join('/')
-        : target.trim().replace(/\\/g, '/'),
-    ),
+  const written = target.trim().replace(/\\/g, '/')
+  if (kind !== 'markdown') return fileAt(index, written)
+  return (
+    fileAt(index, `/${relativeParts(index, target).join('/')}`) ??
+    (/^\.{0,2}\//.test(written) ? null : (fileAt(index, `/${written}`) ?? fileAt(index, written)))
   )
+}
+
+function fileAt(index: NoteIndex, target: string) {
+  const { wanted, anchored } = targetOf(foldName(target))
   if (!wanted) return null
 
-  const whole = kind === 'markdown' || anchored
-  const found = index.files.filter((path) => {
+  const found = index.files.flatMap((path) => {
     const held = foldName(path)
-    return held === wanted || (!whole && held.endsWith(`/${wanted}`))
+    return held === wanted || (!anchored && held.endsWith(`/${wanted}`)) ? [{ path }] : []
   })
 
-  return (
-    [...found].sort(
-      (one, other) => one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
-    )[0] ?? null
-  )
+  return nearest(found, index.path)?.path ?? null
 }
 
 export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteRef | null {
@@ -285,4 +291,22 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     block: link.block,
     page: null,
   }
+}
+
+const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i
+
+export function nameFor(index: NoteIndex, note: NoteRef): string {
+  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
+  if (same.length < 2) return note.name.normalize('NFC')
+  return fromTheTop(note.path.replace(MARKDOWN_NAME, '')).normalize('NFC')
+}
+
+export function fromTheTop(path: string): string {
+  return path.includes('/') ? path : `/${path}`
+}
+
+export function linkNameAt(state: EditorState, path: string): string | null {
+  const index = state.facet(noteIndex)
+  const note = index.notes.find((one) => one.path === path)
+  return note ? nameFor(index, note) : null
 }

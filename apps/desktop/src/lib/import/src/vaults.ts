@@ -1,6 +1,6 @@
 import { fromBase64, invoke, isDesktop } from '../../platform/src/api'
 import type { Source } from './sources'
-import { tooMuch } from './sources'
+import { decoded, tooMuch } from './sources'
 
 export interface Vault {
   name: string
@@ -38,7 +38,7 @@ export async function vaultSources(vault: Vault): Promise<Source[]> {
 
     return {
       path: file.path,
-      text: async () => new TextDecoder().decode(await once()),
+      text: async () => decoded(await once()),
       bytes: once,
     }
   })

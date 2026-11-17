@@ -15,6 +15,20 @@ function steps(path: string): string[] {
   return out
 }
 
+function caseless(name: string): string {
+  let out = ''
+  for (const one of name) {
+    const upper = one.toUpperCase()
+    if (Array.from(upper).length !== 1) {
+      out += one
+      continue
+    }
+    const lower = upper.toLowerCase()
+    out += Array.from(lower).length === 1 ? lower : upper
+  }
+  return out
+}
+
 function win32Name(name: string, last: boolean): string {
   if (/^\.*$/.test(name)) return name
   return last ? name.replace(/[. ]+$/, '') : name.replace(/\.$/, '')
@@ -32,7 +46,7 @@ function sameName(one: string, other: string, folds: () => boolean, last: boolea
 
   const a = spelled(one, last)
   const b = spelled(other, last)
-  return a === b || (a.toLowerCase() === b.toLowerCase() && folds())
+  return a === b || (caseless(a) === caseless(b) && folds())
 }
 
 function foldsAt(path: string): boolean {
@@ -76,7 +90,7 @@ export function rootedAt<T extends { readonly root: string }>(
 export function pathKeyAs(path: string, folds: boolean): string {
   const parts = steps(path)
   const key = parts.map((one, at) => spelled(one, at === parts.length - 1)).join('/')
-  return folds ? key.toLowerCase() : key
+  return folds ? caseless(key) : key
 }
 
 export function pathKey(path: string, root?: string): string {

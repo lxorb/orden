@@ -191,10 +191,9 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         return Err(not_found());
     }
     if let Caller::Agent(grant) = caller {
-        if !matches!(grant.spaces, Spaces::All(_))
-            && !super::reader::tabs(app, &grant.spaces)
-                .iter()
-                .any(|one| one.id == tab)
+        if !super::reader::tabs(app, &grant.spaces)
+            .iter()
+            .any(|one| one.id == tab)
         {
             return Err(not_found());
         }

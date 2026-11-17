@@ -13,6 +13,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import {
   blockIdOf,
   blockIds,
+  decodeTarget,
   foldName,
   type FoundLink,
   freeBlockId,
@@ -165,7 +166,11 @@ interface FilesNamed {
   last: ReadonlyMap<string, readonly string[]>
 }
 
+const byFiles = new WeakMap<readonly string[], FilesNamed>()
+
 function filesByName(files: readonly string[]): FilesNamed {
+  const known = byFiles.get(files)
+  if (known) return known
   const whole = new Map<string, string[]>()
   const last = new Map<string, string[]>()
   const add = (map: Map<string, string[]>, key: string, path: string) => {
@@ -177,28 +182,32 @@ function filesByName(files: readonly string[]): FilesNamed {
     add(whole, foldName(path), path)
     add(last, foldName(nameOf(path)), path)
   }
+  byFiles.set(files, { whole, last })
   return { whole, last }
 }
 
 function fileNamed(
-  named: FilesNamed,
-  source: string,
+  all: readonly string[],
+  source: string | null,
   link: { kind: LinkKind; target: string },
 ): string | null {
-  let files: readonly string[] | undefined
-  if (link.kind === 'markdown') {
-    const target = link.target.replace(/\\/g, '/')
-    const parts = target.startsWith('/') ? [] : folderOf(source).split('/').filter(Boolean)
-    for (const part of target.split('/')) {
-      if (part === '' || part === '.') continue
+  const named = filesByName(all)
+  const slashed = link.target.replace(/\\/g, '/')
+  const written = slashed.trim()
+  const whole = (from: string) => {
+    const parts = from.split('/').filter(Boolean)
+    for (const part of slashed.split('/')) {
       if (part === '..') parts.pop()
-      else parts.push(part)
+      else if (!/^\.?$/.test(part)) parts.push(part)
     }
-    files = named.whole.get(foldName(parts.join('/')))
-  } else {
-    const last = link.target.trim().replace(/\\/g, '/').split('/').pop() ?? ''
-    files = named.last.get(foldName(last))
+    return named.whole.get(foldName(parts.join('/')))
   }
+  const last = named.last.get(foldName(written.split('/').pop() ?? ''))
+  const files =
+    link.kind !== 'markdown'
+      ? last
+      : (whole(slashed.startsWith('/') ? '' : folderOf(source ?? '')) ??
+        (/^\.{0,2}\//.test(written) ? undefined : (whole('') ?? last)))
   if (!files) return null
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }
@@ -910,8 +919,6 @@ class Links {
     () => new Map(this.notes.map((one) => [one.path, one])),
   )
 
-  private readonly filesNamed = $derived.by(() => filesByName(this.files))
-
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
     const other = from === null ? null : this.otherHolding(from)
     if (from !== null && other !== null) return this.otherTarget(other, from, link)
@@ -971,8 +978,11 @@ class Links {
   }
 
   private noteFrom(source: string | null, link: { kind: LinkKind; target: string }): string | null {
-    const last = comparable(link.target).split('/').pop() ?? ''
-    const candidates = this.byName.get(last) ?? []
+    const whole = comparable(link.target)
+    const last = whole.split('/').pop() ?? ''
+    const byLast = this.byName.get(last) ?? []
+    const byWhole = whole === last ? [] : (this.byName.get(whole) ?? [])
+    const candidates = byWhole.length ? [...new Set([...byLast, ...byWhole])] : byLast
     this.examined += candidates.length
 
     const index: NoteIndex = {
@@ -995,8 +1005,8 @@ class Links {
 
   private couldName(link: { target: string }, names: ReadonlySet<string>): boolean {
     if (!link.target) return false
-    const last = comparable(link.target).split('/').pop() ?? ''
-    return names.has(last)
+    const whole = comparable(link.target)
+    return names.has(whole.split('/').pop() ?? '') || names.has(whole)
   }
 
   private namesFor(relative: string): ReadonlySet<string> {
@@ -1113,8 +1123,7 @@ class Links {
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(
         this.notes,
-        (source, link) =>
-          this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
+        (source, link) => this.resolveFrom(source, link) ?? fileNamed(this.files, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
         {
           was,
@@ -1150,11 +1159,10 @@ class Links {
       path: null,
       read: nothing,
     }
-    const named = filesByName(index.files)
     const touched = await this.retargetIn(
       notes,
       (source, link) =>
-        resolvedIn({ ...index, path: source }, link) ?? fileNamed(named, source, link),
+        resolvedIn({ ...index, path: source }, link) ?? fileNamed(index.files, source, link),
       () => undefined,
       { was, now, root, open, how, files: index.files },
     )
@@ -1179,31 +1187,37 @@ class Links {
     const { was, now, root, open, how, files, listed } = asked
     const { moved = false, only, touched: told } = how
 
-    const name = comparable(nameOf(was))
-    const named = (link: { target: string }) =>
-      !!link.target && comparable(link.target).split('/').includes(name)
     const moving = (path: string) =>
       path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
+    const names = new Set(
+      [was, ...notes.map((one) => one.path), ...files]
+        .filter((path) => moving(path) !== null)
+        .map((path) => comparable(nameOf(path))),
+    )
+    const named = (link: { target: string }) =>
+      !!link.target &&
+      comparable(link.target)
+        .split('/')
+        .some((part) => names.has(part))
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
     const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
+    const calledAs = (path: string): { notes: NoteRef[]; files: string[] } => {
+      const key = comparable(nameOf(path))
+      const held = calledAfter.get(key) ?? { notes: [], files: [] }
+      calledAfter.set(key, held)
+      return held
+    }
     const reaching =
       (source: string, there: string) =>
       (written: string): boolean => {
-        const key = comparable(nameOf(there))
-        let called = calledAfter.get(key)
-        if (!called) {
-          called = {
-            notes: notes.flatMap((one) => {
-              const path = moving(one.path) ?? one.path
-              return comparable(nameOf(path)) === key ? [{ ...refOf(one), path }] : []
-            }),
-            files: files
-              .map((path) => moving(path) ?? path)
-              .filter((path) => comparable(nameOf(path)) === key),
+        if (!calledAfter.size) {
+          for (const one of notes) {
+            const path = moving(one.path) ?? one.path
+            calledAs(path).notes.push({ ...refOf(one), path })
           }
-          calledAfter.set(key, called)
+          for (const one of files) calledAs(moving(one) ?? one).files.push(moving(one) ?? one)
         }
-        const index: NoteIndex = { ...called, path: source, read: nothing }
+        const index: NoteIndex = { ...calledAs(there), path: source, read: nothing }
         const found = isTabFile(written)
           ? resolveFile(index, written, 'wikilink')
           : (resolveNote(index, written)?.path ?? resolveFile(index, written, 'wikilink'))
@@ -1219,6 +1233,8 @@ class Links {
       const went = moved ? moving(note.path) : null
       const source = went ?? note.path
       const shifted = went !== null && folderOf(went) !== folderOf(note.path)
+      const relooked = (link: { kind: LinkKind }) =>
+        link.kind === 'markdown' ? shifted : went !== null
 
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one note's answers, thrown away after it
       const answered = new Map<string, string | Placed | null>()
@@ -1236,10 +1252,16 @@ class Links {
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
         if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) return null
         const there = moving(found) ?? found
-        if (there === found && !(shifted && link.kind === 'markdown')) return null
+        if (there === found && !relooked(link)) return null
         const kept = nameOf(there) === nameOf(found)
-        if (stillReaches(source, link, found, there, !shifted, kept)) return null
-        return link.kind === 'wikilink' ? { path: there, reaches: reaching(source, there) } : there
+        const reaches = reaching(source, there)
+        const wikilink = link.kind === 'wikilink'
+        if (
+          stillReaches(source, link, found, there, !shifted, kept) &&
+          (!wikilink || reaches(link.target))
+        )
+          return null
+        return wikilink ? { path: there, reaches } : there
       }
 
       const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
@@ -1247,9 +1269,7 @@ class Links {
       const card = rewrite?.cardsMoving(note.path, moving) ?? null
       const worth = card
         ? note.links.some((link) => card(link.target) !== null)
-        : note.links.some(
-            (link) => (named(link) || (shifted && link.kind === 'markdown')) && to(link) !== null,
-          )
+        : note.links.some((link) => (named(link) || relooked(link)) && to(link) !== null)
       if (!worth) continue
 
       const absolute = insideSpace(root, note.path)
@@ -1470,10 +1490,11 @@ class Links {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null
-    const found =
-      other !== null && notePath !== null
-        ? resolveFile(this.otherIndex(other, notePath), name, 'wikilink')
-        : this.fileNamed(name)
+    const { files, path } = this.index(notePath)
+    const found = fileNamed(files, path, {
+      kind: 'markdown',
+      target: decodeTarget(name),
+    })
     return found === null ? null : insideSpace(root, found)
   }
 

@@ -83,7 +83,7 @@ export function callGlobal(name: string, args: readonly Arg[], scope: Scope): Va
       const value = first()
       if (typeof value === 'number') return value
       if (typeof value === 'boolean') return value ? 1 : 0
-      if (isDate(value)) return msOf(value)
+      if (isDate(value)) return msOf(value, scope.context.zone)
       if (isDuration(value)) return value.ms
       const read = Number(text(value).trim())
       if (text(value).trim() === '' || Number.isNaN(read)) {
@@ -121,7 +121,7 @@ export function callGlobal(name: string, args: readonly Arg[], scope: Scope): Va
     case 'min': {
       const values = args.map((arg) => arg()).filter((one) => one !== null)
       if (!values.length) return null
-      const sorted = values.sort(sortCompare)
+      const sorted = values.sort((a, b) => sortCompare(a, b, scope.context.zone))
       return (name === 'min' ? sorted[0] : sorted.at(-1)) ?? null
     }
     case 'random':

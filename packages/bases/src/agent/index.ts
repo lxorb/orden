@@ -1,5 +1,5 @@
 export { readBase, writeBase } from '../base-file'
-export { editedBase, noteName, rowPlace, withProperties } from './bases'
+export { editedBase, filledTemplate, noteName, rowPlace, rowWords, withProperties } from './bases'
 export { clockOf, wallClock } from './clock'
 export { editedTask, type Edited, movedTask, taskIn } from './edit'
 export { type Entry, linesOf, placedEdit, placeIn, type Placed, taskOf } from './entry'

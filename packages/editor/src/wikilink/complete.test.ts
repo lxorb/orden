@@ -3,10 +3,12 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
+import { namedBlock } from '@orden/markdown/block-names'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer } from './block-namer'
 import { wikilinkCompletions } from './complete'
 import {
+  linkNameAt,
   type LinkWrite,
   linkWriter,
   type NoteIndex,
@@ -314,6 +316,15 @@ describe('every row writes the link the app spells', () => {
     )
   })
 
+  test('an alias row whose alias reaches another note links the note it belongs to', async () => {
+    const asked = space(
+      [{ ...note('Projects/Project.md'), aliases: ['Roadmap'] }, note('Roadmap.md')],
+      { path: 'Journal.md' },
+    )
+
+    expect((await picked('[[Road', asked, 'Roadmap')).doc).toBe('[[Project|Roadmap]]')
+  })
+
   test('a heading row of one note carries the heading', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })
 
@@ -417,5 +428,196 @@ describe('a note the space has archived', () => {
 
     expect(details(await rowsFor('[[##Summ', asked))).toEqual(['New'])
     expect(labels(await rowsFor('[[^^ab', asked))).toEqual(['^abd'])
+  })
+})
+
+describe('a row after an alias and a hash', () => {
+  test('carries the name that says which file, for the shortest markdown link', async () => {
+    const asked = space(
+      [
+        { ...note('A/Project.md', ['Goals']) },
+        { ...note('B/Project.md', ['Goals']), aliases: ['Roadmap'] },
+      ],
+      { path: 'A/Journal.md' },
+    )
+    const carried = (target: LinkWrite) => `${target.name}|${target.file ?? ''}`
+
+    expect((await picked('[[Roadmap#Go', asked, 'Goals', carried)).doc).toBe('Roadmap|B/Project')
+  })
+})
+
+describe('the name a copied link to a note is written with', () => {
+  test('is enough of the path to say which, when another note shares the name', () => {
+    const asked = space([note('Plan.md'), note('Work/Plan.md'), note('Ideas.md')])
+    const built = state('', asked.index)
+    expect(linkNameAt(built, 'Work/Plan.md')).toBe('Work/Plan')
+    expect(linkNameAt(built, 'Ideas.md')).toBe('Ideas')
+    expect(linkNameAt(built, 'Gone.md')).toBeNull()
+  })
+})
+
+test('naming a block above, in the note being written, links it where the link was typed', async () => {
+  const doc = 'first block\n\n[[#^'
+  const index: NoteIndex = {
+    notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }],
+    files: [],
+    path: 'Plan.md',
+    read: () => Promise.resolve('first block\n\n'),
+  }
+  let built: EditorState
+  const view = {
+    get state() {
+      return built
+    },
+    dispatch: (spec: TransactionSpec) => {
+      built = built.update(spec).state
+    },
+  } as unknown as EditorView
+  built = parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(doc.length),
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+        noteIndex.of(index),
+        blockNamer.of((_path, line) => {
+          view.dispatch({ changes: { from: built.doc.line(line + 1).to, insert: ' ^abc' } })
+          return Promise.resolve('abc')
+        }),
+      ],
+    }),
+  )
+  const found = await wikilinkCompletions(new CompletionContext(built, doc.length, false))
+  const row = found?.options.find((one) => one.label === 'first block')
+  if (!found || !row || typeof row.apply !== 'function') throw new Error('no row for the block')
+  row.apply(view, row, found.from, doc.length)
+  await new Promise((settle) => setTimeout(settle, 0))
+  expect(built.doc.toString()).toBe('first block ^abc\n\n[[#^abc]]')
+})
+
+describe('naming a block in the note being written, as the note is written', () => {
+  const changed = (was: string, now: string) => {
+    let start = 0
+    while (start < was.length && was[start] === now[start]) start++
+    let end = 0
+    while (end < was.length - start && was[was.length - 1 - end] === now[now.length - 1 - end])
+      end++
+    return { from: start, to: was.length - end, insert: now.slice(start, now.length - end) }
+  }
+
+  const picked = async (doc: string, label: string, at = doc.length, typed = '') => {
+    const index: NoteIndex = {
+      notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }],
+      files: [],
+      path: 'Plan.md',
+      read: () => Promise.resolve(doc),
+    }
+    let built: EditorState
+    const view = {
+      get state() {
+        return built
+      },
+      dispatch: (spec: TransactionSpec) => {
+        built = built.update(spec).state
+      },
+    } as unknown as EditorView
+    built = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(at),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          noteIndex.of(index),
+          blockNamer.of((_path, line) => {
+            const was = built.doc.toString()
+            const named = namedBlock(was, line, () => 'abc')
+            if (!named) return Promise.resolve(null)
+            if (named.source !== was) view.dispatch({ changes: changed(was, named.source) })
+            if (typed) view.dispatch({ changes: { from: built.doc.length, insert: typed } })
+            return Promise.resolve(named.id)
+          }),
+        ],
+      }),
+    )
+    const found = await wikilinkCompletions(new CompletionContext(built, at, false))
+    const row = found?.options.find((one) => one.label === label)
+    if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
+    row.apply(view, row, found.from, at)
+    await new Promise((settle) => setTimeout(settle, 0))
+    return built.doc.toString()
+  }
+
+  test('links a block that runs onto the line being typed', async () => {
+    expect(await picked('first block\n[[#^', 'first block')).toBe('first block\n[[#^abc]] ^abc')
+  })
+
+  test('links a block the link sits inside', async () => {
+    expect(await picked('one\ntwo [[#^\nthree', 'one', 'one\ntwo [[#^'.length)).toBe(
+      'one\ntwo [[#^abc]]\nthree ^abc',
+    )
+  })
+
+  test('links the block from the second of two links to blocks on one line', async () => {
+    expect(await picked('second block\n\n[[#^a]] [[#^', 'second block')).toBe(
+      'second block ^abc\n\n[[#^a]] [[#^abc]]',
+    )
+  })
+
+  test('keeps what the reader typed while the block was named', async () => {
+    expect(await picked('first block\n\n[[#^', 'first block', undefined, ' and')).toBe(
+      'first block ^abc\n\n[[#^abc]] and',
+    )
+  })
+})
+
+describe('picking a row while mending a link already written', () => {
+  const mended = async (doc: string, at: number, label: string) => {
+    const index: NoteIndex = {
+      notes: [note('Plan.md', ['Head']), note('Planet.md')],
+      files: [],
+      path: 'Notes.md',
+      read: () => Promise.resolve(null),
+    }
+    let built = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(at),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          noteIndex.of(index),
+        ],
+      }),
+    )
+    const view = {
+      get state() {
+        return built
+      },
+      dispatch: (spec: TransactionSpec) => {
+        built = built.update(spec).state
+      },
+    } as unknown as EditorView
+    const found = await wikilinkCompletions(new CompletionContext(built, at, false))
+    const row = found?.options.find((one) => one.label === label)
+    if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
+    row.apply(view, row, found.from, at)
+    return built.doc.toString()
+  }
+
+  test('keeps the words the link shows', async () => {
+    expect(await mended('see [[Plan|the plan]] now', 10, 'Plan')).toBe('see [[Plan|the plan]] now')
+  })
+
+  test('keeps the heading it reaches', async () => {
+    expect(await mended('see [[Plan#Head]] now', 10, 'Plan')).toBe('see [[Plan#Head]] now')
+  })
+
+  test('a heading row keeps the words the link shows', async () => {
+    expect(await mended('see [[Plan#Hea|the plan]] now', 14, 'Head')).toBe(
+      'see [[Plan#Head|the plan]] now',
+    )
+  })
+
+  test('leaves the next link on the line alone', async () => {
+    expect(await mended('see [[Pla and [[Planet]]', 9, 'Plan')).toBe('see [[Plan]] and [[Planet]]')
   })
 })

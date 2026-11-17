@@ -60,7 +60,7 @@ function front(tab: Tab): boolean {
 }
 
 function addressOf(tab: Tab): string | null {
-  if (tab.kind !== 'web') return null
+  if (tab.kind !== 'web' || (tab.path !== null && !seen(tab.path))) return null
   return webPages().addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
@@ -172,6 +172,10 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
 
 function namedOutside(call: Call): boolean {
   return tabsInReach(call).some((one) => TAB_KINDS[one.kind].outsideTitle)
+}
+
+function tabsAnswer(call: Call): AgentAnswer {
+  return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
 }
 
 function tabNamed(call: Call): Tab {
@@ -380,7 +384,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
         if (!list) throw new Refused('unsupported_on_this_engine', `there are no ${kind} tabs here`)
         return list(call.args, call.caller)
       }
-      return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
+      return tabsAnswer(call)
 
     case 'open':
       return openSomething(call)
@@ -404,7 +408,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
     case 'split': {
       view.splitBeside(call, tabNamed(call))
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     case 'focus': {
@@ -424,13 +428,13 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       }
       const at = 'at' in call.args ? Number(call.args.at) : null
       view.moveTabTo(call, tab, pane, at !== null && Number.isInteger(at) && at >= 0 ? at : null)
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     case 'arrange': {
       const named = maybe(call, 'tab') === null ? null : tabNamed(call)
       view.arrangePanes(call, need(call, 'layout'), named)
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     default:
@@ -443,7 +447,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
 export function readerTabs(): ReaderTab[] {
   return workspace.tabs
-    .filter((tab) => tab.kind === 'web')
+    .filter((tab) => tab.kind === 'web' && (tab.path === null || seen(tab.path)))
     .map((tab) => {
       const shown = workspace.panes.at(tab.paneId) !== null && front(tab)
       const home = workspace.spaceOf(tab.note)
@@ -463,7 +467,7 @@ const LENT_UNMARKED = ACTIVE_FOR + 5_000
 
 export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
-  if (!tab) return null
+  if (!tab || (tab.path !== null && !seen(tab.path))) return null
 
   const lending = portOf('web.lending')
   if (!lending.ok) return null

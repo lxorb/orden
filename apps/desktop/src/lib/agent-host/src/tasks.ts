@@ -1,17 +1,20 @@
 import type { Base, Context, Row } from '@orden/bases'
+import { linkContext } from '@orden/bases/links'
 import { readable, seen } from './guarded'
 import {
   AgentError,
   clockOf,
   editedBase,
+  filledTemplate,
   noteName,
   queryBase as queried,
   readBase,
   rowPlace,
+  rowWords,
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
-import type { AgentAnswer } from '../../automation/src/api'
+import { type AgentAnswer, threadSpaceOf } from '../../automation/src/api'
 import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
 import { reachedByOthersIn } from '../../sharing/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -21,6 +24,7 @@ import {
   asked,
   stopWatch,
   type Call,
+  count,
   done,
   flag,
   maybe,
@@ -127,7 +131,8 @@ function namedSpace(call: Call): TodoSpace | null {
 }
 
 function openSpace(call: Call): TodoSpace | null {
-  const open = workspace.activeSpace ?? null
+  const thread = threadSpaceOf(call.caller)
+  const open = workspace.spaces.find((one) => one.id === thread) ?? workspace.activeSpace ?? null
   if (!reachesSpace(call, open?.id ?? null)) {
     throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
   }
@@ -157,8 +162,9 @@ function dayArg(call: Call, name: string): string | null | undefined {
 }
 
 function priorityArg(call: Call): Priority | undefined {
-  const value = call.args.priority
-  if (value === undefined) return undefined
+  const sent = call.args.priority
+  if (sent === undefined) return undefined
+  const value = typeof sent === 'string' && /^\s*\d+\s*$/.test(sent) ? Number(sent) : sent
   if (!isPriority(value)) throw new Refused('bad_arguments', 'priority is 0, 1, 2 or 3')
   return value
 }
@@ -169,36 +175,41 @@ function patchOf(call: Call): TodoPatch {
   const patch: Mutable<TodoPatch> = {}
   const title = maybe(call, 'title') ?? maybe(call, 'text')
   if (title !== null) patch.title = title
-  const description = maybe(call, 'description')
-  if (description !== null) patch.description = description
+  const description = call.args.description
+  if (typeof description === 'string') patch.description = description
   const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
   if (labels !== undefined) patch.labels = labels
   if ('space' in call.args) patch.space = namedSpace(call)?.id ?? null
   const start = dayArg(call, 'start')
   if (start !== undefined) patch.start = start
-  const deadline = dayArg(call, 'deadline') ?? dayArg(call, 'due')
+  const deadline = dayArg(call, 'deadline' in call.args ? 'deadline' : 'due')
   if (deadline !== undefined) patch.deadline = deadline
   const priority = priorityArg(call)
   if (priority !== undefined) patch.priority = priority
-  if ('done' in call.args) patch.done = flag(call, 'done')
+  if (call.args.done !== undefined && call.args.done !== null) patch.done = flag(call, 'done')
   return patch
 }
 
 export async function listTasks(call: Call): Promise<AgentAnswer> {
-  const { todos, shownTodos, sortedTodos, dayOf } = await model()
+  const { todos, sortedTodos } = await model()
   const space = namedSpace(call)
   const label = maybe(call, 'label')
-  const limit = typeof call.args.limit === 'number' ? Math.max(1, call.args.limit) : 50
+  const withDone = flag(call, 'done')
+  const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
+  const inSpace = (one: Todo) =>
+    space === null ||
+    one.space === space.id ||
+    (one.space !== null && (space.also?.includes(one.space) ?? false))
   const shown = sortedTodos(
-    shownTodos(todos.todos, {
-      onlySpace: space !== null,
-      space: space?.id ?? null,
-      spaceAlso: space?.also ?? [],
-      label,
-      today: dayOf(),
-    }),
+    todos.todos.filter(
+      (one) =>
+        inSpace(one) &&
+        (label === null || one.labels.includes(label)) &&
+        (withDone || !one.done) &&
+        reachesTodoSpace(call, one.space),
+    ),
     'deadline',
-  ).filter((one) => (flag(call, 'done') || !one.done) && reachesTodoSpace(call, one.space))
+  )
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
 
@@ -212,7 +223,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   if (!reachesTodoSpace(call, space)) {
     throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
   }
-  const made = await todos.add({ ...patch, title, space })
+  const made = await todos.add({ ...patch, title, space, done: false })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
@@ -248,7 +259,7 @@ async function rewritten<T>(
     const { text, said } = work(read.text ?? '')
     if (text === read.text) return said
     try {
-      await notes.writeNote(writerOf(call), at(note), text, read.rev)
+      await notes.writeNote(writerOf(call), at(note), text, read.rev, call.deadline)
       return said
     } catch (error) {
       if (!(error instanceof DocError && error.code === 'rev_changed') || tries > 2) throw error
@@ -269,13 +280,12 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
           }
         })()
   const rows = await rowsStore()
+  const seenRows = rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path)))
   try {
-    const answer = queried(
-      base,
-      maybe(call, 'view') ?? undefined,
-      rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path))),
-      await contextOf(),
-    )
+    const answer = queried(base, maybe(call, 'view') ?? undefined, seenRows, {
+      ...(await contextOf()),
+      ...linkContext(seenRows),
+    })
     return done(answer, sourceOf([place]))
   } catch (error) {
     refused(error)
@@ -292,11 +302,11 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
 
-async function templateOf(place: Place, base: Base, rows: readonly Row[]): Promise<string> {
-  const link = base.orden.template
-    ?.replace(/^\[\[|\]\]$/g, '')
-    .split('|')[0]
-    ?.trim()
+async function templateOf(
+  place: Place,
+  link: string | undefined,
+  rows: readonly Row[],
+): Promise<string> {
   if (!link) return ''
   const wanted = link.toLowerCase().replace(/\.md$/i, '')
   const found = rows.find(
@@ -317,11 +327,11 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
-  const looksIn = (where.folder ?? folderOf(relative)).trim()
+  const looksIn = (where.folder ?? folderOf(relative)).trim().replace(/^\/+/, '')
   const folder = looksIn === '' || looksIn === '.' ? '' : judgedForWriting(looksIn)
   const rows = await rowsStore()
-  const template = await templateOf(place, base, rows.of(place.space.name))
-  const name = noteName(maybe(call, 'title') ?? 'Untitled')
+  const template = await templateOf(place, where.template, rows.of(place.space.name))
+  const name = judgedForWriting(noteName(maybe(call, 'title') ?? 'Untitled'))
   const path = await freePath(place, folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
@@ -330,10 +340,11 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   try {
-    const words = withProperties(template, {
-      ...where.properties,
-      ...(properties as Record<string, unknown>),
-    })
+    const words = rowWords(
+      filledTemplate(template, nameOf(path).replace(/\.md$/i, ''), clockOf(new Date())),
+      where.properties,
+      properties as Record<string, unknown>,
+    )
     return done(await made(place, path, words, null))
   } catch (error) {
     refused(error)

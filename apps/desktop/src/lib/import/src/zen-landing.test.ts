@@ -68,6 +68,9 @@ vi.mock('../../workspace/src/api', () => {
   return {
     workspace: {
       spaces,
+      get files() {
+        return [...disk.keys()].map((path) => ({ path, name: path.split('/').pop() ?? path }))
+      },
       get activeSpaceId() {
         return active
       },
@@ -165,6 +168,22 @@ describe('Zen brought into Orden', () => {
     ])
     expect(done.filter((one) => one.startsWith('order') || one.startsWith('icon'))).toEqual([])
     expect(marks).toHaveLength(1)
+  })
+
+  test('does not bring a tab again whose title changed, beside the shortcut it made of it', async () => {
+    await landZen(PROFILE)
+    const board = disk.get('/spaces/Work/Board.url') ?? ''
+    disk.delete('/spaces/Work/Board.url')
+    disk.set('/spaces/Work/Board (3).url', board)
+    disk.set(
+      '/spaces/Work/Docs/Board.url',
+      writeShortcut('https://elsewhere.example.com/', 'B', new Date()),
+    )
+    written.length = 0
+
+    await landZen(PROFILE)
+
+    expect(written).toEqual([])
   })
 
   test('finds the space it made again where the name it asked for was not a folder name', async () => {

@@ -102,7 +102,7 @@ function placed(text: string, place: Place, doing: Doing): Replacement {
 
     case 'before':
     case 'after': {
-      const at = doing.kind === 'before' ? place.from : place.to
+      const at = doing.kind === 'before' ? place.from : (place.under ?? place.to)
       const edge = place.shape === 'edge'
       const atEnd = edge ? at === text.length : doing.kind === 'after'
       const words = atEnd
@@ -118,8 +118,9 @@ function placed(text: string, place: Place, doing: Doing): Replacement {
       }
       if (!gap) return { from: place.from, to: place.to, insert: '' }
 
-      let to = place.to
-      while (to < text.length && text[to] === '\n' && to - place.to < gap) to++
+      const end = place.under ?? place.to
+      let to = end
+      while (to < text.length && text[to] === '\n' && to - end < gap) to++
       let from = place.from
       if (to === text.length) {
         while (from > 0 && text[from - 1] === '\n') from--

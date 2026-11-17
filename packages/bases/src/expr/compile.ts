@@ -28,7 +28,7 @@ type Fn = (scope: Scope) => Val
 
 const BOUND = new Set(['value', 'index', 'acc', 'values'])
 
-const READS_OTHERS = new Set(['asFile', 'linksTo', 'backlinks'])
+const READS_OTHERS = new Set(['asFile', 'linksTo', 'backlinks', 'hasLink', 'link'])
 
 export interface Compiled {
   source: string
@@ -120,7 +120,7 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
   if (callee.type === 'name') {
     const name = callee.name
     if (!GLOBALS.has(name)) throw new BasesError(`There is no function ${name}()`, callee.at)
-    if (name === 'file' || name === 'random') facts.local = false
+    if (name === 'file' || name === 'random' || READS_OTHERS.has(name)) facts.local = false
     if (name === 'today' && !args.length)
       return (scope) => ({ kind: 'date', iso: scope.context.today })
     return (scope) => callGlobal(name, thunks(args, scope), scope)
@@ -167,6 +167,7 @@ function compileNode(node: Node, facts: Facts): Fn {
         Object.fromEntries(entries.map(([key, value]) => [key, settled(value(scope))]))
     }
     case 'name':
+      if (node.name === 'this') facts.local = false
       return compileName(node.name)
     case 'member':
       return compileMember(node, facts)
@@ -222,17 +223,17 @@ function compileNode(node: Node, facts: Facts): Fn {
         case '!=':
           return (scope) => !equal(left(scope), right(scope), scope)
         case '<':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) < 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) < 0
         case '>':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) > 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) > 0
         case '<=':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) <= 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) <= 0
         case '>=':
-          return (scope) => (compare(left(scope), right(scope)) ?? NaN) >= 0
+          return (scope) => (compare(left(scope), right(scope), scope.context.zone) ?? NaN) >= 0
         case '+':
           return (scope) => add(left(scope), right(scope))
         case '-':
-          return (scope) => subtract(left(scope), right(scope))
+          return (scope) => subtract(left(scope), right(scope), scope.context.zone)
         case '*':
         case '/':
         case '%': {

@@ -338,7 +338,12 @@ function noteRuns(span: Span, writer: Writer): ParagraphChild[] {
 function runsOf(spans: readonly Span[], writer: Writer): ParagraphChild[] {
   return spans.flatMap((span) => {
     if (span.picture !== undefined) {
-      return [pictureRun(span, drawnPicture(span.picture, writer))]
+      const drawn = pictureRun(span, drawnPicture(span.picture, writer))
+      return [
+        span.href === undefined
+          ? drawn
+          : new ExternalHyperlink({ children: [drawn], link: span.href }),
+      ]
     }
     if (span.note !== undefined) return noteRuns(span, writer)
     if (span.maths === true) return mathsRuns(span)
