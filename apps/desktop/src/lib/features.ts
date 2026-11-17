@@ -76,6 +76,21 @@ serveLinks({
 })
 providePort('search', { panel: search, show: showSearch, fromView: searchFrom })
 providePort('settings.window', settings)
+providePort('settings.ask', {
+  ask: async (system, said) => {
+    const { ai, complete } = await import('./ai-providers/src/api')
+    const provider = ai.providerFor('ask')
+    if (!provider) return null
+    return await complete({
+      provider,
+      model: provider.model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: said },
+      ],
+    })
+  },
+})
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
 providePort('quick-add.show', {

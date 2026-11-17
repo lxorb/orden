@@ -51,6 +51,7 @@
   import { globalKeys, noteFor } from './global-keys.svelte'
   import { landing } from './landing.svelte'
   import { places as paneRows } from './places'
+  import { offers } from './ask-settings'
   import { ICONS, sectionGroups } from './sections'
   import { type Place, search } from './settings-search'
   import { sync } from '../../sync-store/src/api'
@@ -168,6 +169,13 @@
     query = ''
     settings.section = section
     settings.listing = false
+  }
+
+  const offered = () => offers(panes, places, titleOf)
+
+  function goTo(section: SettingsSectionId, label: string) {
+    go(section)
+    landing.label = label || null
   }
 
   async function rename(name: string) {
@@ -379,6 +387,8 @@
     <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
       {#if !stacked}
         <h1>Settings</h1>
+      {:else}
+        {@render asker()}
       {/if}
 
       <label class="orden-field search">
@@ -427,6 +437,9 @@
       use:scrollbar={settings.section}
       in:fly={enter(24)}
     >
+      {#if !stacked}
+        {@render asker()}
+      {/if}
       {#if query && !stacked}
         <div class="pane">
           <h2>Search settings</h2>
@@ -451,6 +464,14 @@
 </div>
 
 <ThemeStore />
+
+{#snippet asker()}
+  {#if !__EVEN_PLUGIN__}
+    {#await import('./AskSettings.svelte') then { default: AskSettings }}
+      <AskSettings offers={offered} ongo={goTo} />
+    {/await}
+  {/if}
+{/snippet}
 
 {#snippet results()}
   {#if found.length}
