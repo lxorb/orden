@@ -256,10 +256,10 @@ class Themes {
     this.hearOthers()
   }
 
-  private hearing = false
+  private heardOn: Window | null = null
   private hearOthers() {
-    if (this.hearing) return
-    this.hearing = true
+    if (this.heardOn === window) return
+    this.heardOn = window
     window.addEventListener('storage', (event) => {
       if (event.key === STORAGE_KEY || event.key === SCHEME_KEY) this.heardChoice()
       else if (event.key === SETTINGS_KEY) {
