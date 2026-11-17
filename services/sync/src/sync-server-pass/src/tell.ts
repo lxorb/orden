@@ -1,4 +1,5 @@
-import { DEVICE, tellHubs, type Env } from '../../sync-server/src/api'
+import { tellHubs, type Env } from '../../sync-server/src/api'
+import { DEVICE } from '../../sync-server-engine/src/api'
 export function fromOf(query: string | undefined): string {
   return query !== undefined && DEVICE.test(query) ? query : ''
 }

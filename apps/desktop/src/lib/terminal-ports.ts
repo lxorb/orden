@@ -7,6 +7,25 @@ providePort('terminal.previews', {
   scrollback: (tab) => import('./terminal/src/api').then((one) => one.scrollbackOf(tab)),
 })
 
+const terminal = () => import('./terminal/src/api')
+
+providePort('terminal.making', {
+  open: async (shell) => {
+    await (await terminal()).openTerminal(shell)
+  },
+  shells: async (open) => (await terminal()).shellRows((shell) => open(shell.id)),
+  warm: async () => {
+    await (await terminal()).shells.ask()
+  },
+  pickHost: async (pane) => {
+    const { hostPicker } = await (await terminal()).hostPicking()
+    hostPicker.show(pane)
+  },
+  online: async () => {
+    await (await terminal()).openOnline()
+  },
+})
+
 providePort('terminal.lines', {
   typeIn: async (line, pick) => {
     const [{ openTerminal, shells, ptyOf }, { workspace }] = await Promise.all([

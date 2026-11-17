@@ -3,7 +3,6 @@ import 'fake-indexeddb/auto'
 import { describe, expect, test } from 'vitest'
 import { carryDatabase } from '../../web-backend/src/web/carry-database'
 import { deviceWeb, forgetWeb, openWeb } from './browser-store'
-import { leadSync } from './lead'
 import { get, put } from './store'
 
 async function names(): Promise<string[]> {
@@ -32,14 +31,5 @@ describe('what an older version kept in this browser under nib', () => {
     await forgetWeb('former')
     expect(await names()).not.toContain('nib-sync:former')
     expect(await names()).not.toContain('orden-sync:former')
-  })
-
-  test('leaves no tab of an older version leading beside a new one', async () => {
-    const locks = (globalThis.navigator as Navigator | undefined)?.locks
-    expect(locks, 'Web Locks need Node 24').toBeDefined()
-    const leading = await leadSync(undefined, 'acct')
-    const older = await locks?.request('nib-sync:acct', { ifAvailable: true }, (lock) => lock)
-    expect(older).toBeNull()
-    leading?.release()
   })
 })

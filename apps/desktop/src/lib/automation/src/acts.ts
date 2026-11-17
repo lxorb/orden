@@ -3,7 +3,7 @@ import type { TextEdit } from '@orden/markdown/edits'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
-import { commandRowsLoaded } from '@orden/contracts'
+import { commandRowsLoaded, searching } from '@orden/contracts'
 import { appCommands } from '../../commands/src/api'
 import { links } from '../../link-index/src/api'
 import {
@@ -14,9 +14,8 @@ import {
   relativeTo,
   waited,
 } from '../../platform/src/api'
-import { search } from '../../search.svelte'
-import { OWN_KEYS } from '../../own-keys'
-import { views } from '../../views.svelte'
+import { ownKeys } from '../../web-backend/src/api'
+import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
@@ -145,6 +144,8 @@ export async function searchSpace(args: Said): Promise<unknown> {
   if (!query) throw new Error('say what to search for')
 
   await runCommand({ id: 'search-space' })
+  const search = searching()?.panel
+  if (!search) throw new Error('search is not here')
   search.ask(query)
 
   const until = Date.now() + SEARCH_PATIENCE
@@ -270,6 +271,7 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!key) throw new Error('say which key')
 
   const value = said(args, 'value')
+  const { OWN_KEYS } = await ownKeys()
   const own = OWN_KEYS.find((one) => one === key.toLowerCase())
   if (own) {
     workspace.itemMeta.set(note.path, { [own]: value ? value.slice(0, LONGEST_META_VALUE) : null })

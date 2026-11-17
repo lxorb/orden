@@ -1,4 +1,4 @@
-import { askSheet } from '@orden/contracts'
+import { askSheet, type CommandExtension } from '@orden/contracts'
 import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
 import { systemLocale } from '../../platform/src/api'
 import { message } from '../../ui-kit/src/api'
@@ -109,3 +109,9 @@ class Rewriting {
 }
 
 export const rewriting = new Rewriting()
+
+export function rewriteRows(view?: object): CommandExtension[] {
+  return view
+    ? [{ id: 'rewrite', label: 'Rewrite…', run: () => rewriting.show(view as EditorView) }]
+    : []
+}

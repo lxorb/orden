@@ -7,10 +7,10 @@
   import { links } from '../../link-index/src/api'
   import { longPaste } from '../../ui-controls/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { views } from '../../views.svelte'
+  import { views } from '../../panes/src/api'
   import { workspace } from '../../workspace/src/api'
   import { estimateText } from './chat-parts'
-  import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
+  import { DictateButton, canDictate, dictating, showsDictateButton } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
   import { noteInFront, SELECTION_CHIP, selectionHere } from './chat-parts'
   import { chat } from './chat-parts'
@@ -655,7 +655,7 @@
         <span class="gap"></span>
         <Ring {next} />
         <ModelPicker />
-        {#if canDictate()}
+        {#if showsDictateButton()}
           <DictateButton owner={voiceField} />
         {/if}
         {#if button === 'stop'}

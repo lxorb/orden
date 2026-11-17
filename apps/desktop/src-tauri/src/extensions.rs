@@ -36,6 +36,10 @@ static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
 
+const PREINSTALLED: &str = "ublock-origin-lite";
+
+const DECIDED: &str = ".preinstalled";
+
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = crate::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
@@ -169,6 +173,28 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
                 base64::engine::general_purpose::STANDARD.encode(bytes)
             )
         })
+}
+
+pub fn preinstall(app: &AppHandle) {
+    let Ok(decided) = root(app).map(|root| root.join(DECIDED)) else {
+        return;
+    };
+    if decided.exists() {
+        return;
+    }
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let listed = {
+            let app = app.clone();
+            tauri::async_runtime::spawn_blocking(move || listed(&app).len())
+                .await
+                .unwrap_or(0)
+        };
+        if listed == 0 && from_amo(app, PREINSTALLED, true).await.is_err() {
+            return;
+        }
+        let _ = std::fs::write(&decided, PREINSTALLED);
+    });
 }
 
 fn changed(app: &AppHandle) {

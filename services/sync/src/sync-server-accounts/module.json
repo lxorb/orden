@@ -1,5 +1,5 @@
 {
   "name": "sync-server-accounts",
   "layer": "foundation",
-  "dependsOn": ["sync-server"]
+  "dependsOn": ["sync-server", "sync-server-engine"]
 }

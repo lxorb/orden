@@ -1,7 +1,7 @@
 export { alwaysOffered, crateAnswers, sayAlways } from './chat/approvals'
 export { ordered } from './chat/effort'
 export { compactsAt, estimate, estimateText, filled } from './chat/usage'
-export { quick } from './quick.svelte'
+export { quick, side } from './quick.svelte'
 export { citationLinks, citedIn, linkedAnswer } from './retrieve'
 export { forkAt, switchBranch } from './review/branches'
 export { checkpoints } from './review/changes'

@@ -3,8 +3,8 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, sep } from 'node:path'
 
-const API = process.env.ORDEN_API ?? process.env.NIB_API ?? 'https://orden.so'
-const TOKEN = process.env.ORDEN_TOKEN ?? process.env.NIB_TOKEN ?? ''
+const API = process.env.ORDEN_API ?? 'https://orden.so'
+const TOKEN = process.env.ORDEN_TOKEN ?? ''
 
 const NOTES = /\.(md|markdown|mdown|mkd|canvas)$/i
 
@@ -21,7 +21,7 @@ async function ask(path, options = {}) {
     method: options.method ?? (options.body === undefined ? 'GET' : 'POST'),
     headers: {
       authorization: `Bearer ${TOKEN}`,
-      'x-nib-device': 'CI',
+      'x-orden-device': 'CI',
       ...(options.body === undefined ? {} : { 'content-type': 'application/json' }),
     },
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),

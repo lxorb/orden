@@ -15,8 +15,9 @@ vi.mock('../../src/lib/tab-strip/src/letters.svelte', () => ({
     pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null),
   },
 }))
-vi.mock('../../src/lib/essentials.svelte', () => ({
-  openEssential: (path: string) => void opened.push(path),
+vi.mock('../../src/lib/workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/workspace/src/api')>()),
+  essentials: () => Promise.resolve({ openEssential: (path: string) => void opened.push(path) }),
 }))
 
 Element.prototype.animate = () =>

@@ -1,8 +1,7 @@
 import { settingFieldsIn } from '@orden/contracts'
 import { glassesGroups, wordFields } from '../../glasses-choices/src/api'
-import { setWord } from '../../kind-choice'
-import { prompt } from '../../ui-kit/src/api'
 import {
+  setWord,
   APPS_WORD,
   appsOn,
   BASES_WORD,
@@ -17,6 +16,7 @@ import {
   PASS_WORD,
   TIME_WORD,
 } from '../../gates/src/api'
+import { prompt } from '../../ui-kit/src/api'
 import { isDesktop, isMobile } from '../../platform/src/api'
 import { clipboardSharing } from './apps-clipboard.svelte'
 import type { Field, Group, Pane } from './fields'

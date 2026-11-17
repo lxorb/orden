@@ -19,15 +19,15 @@
     fileUrl,
     keptByAccount,
     pageOfFile,
+    shownColour,
   } from '../../plane/src/api'
   import { account } from '../../accounts/src/api'
   import CanvasPdf from './CanvasPdf.svelte'
   import { type Box, isLineShape, shapeLine, shapePath } from '../../plane/src/api'
-  import { shownColour } from '../../plane/src/api'
-  import { pickedLink } from '../../composer'
+  import { pickedLink } from '../../link-format/src/api'
   import { links } from '../../link-index/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { followHref } from '../../open-link'
+  import { followHref } from '../../workspace/src/api'
 
   const {
     node,

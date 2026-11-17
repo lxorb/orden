@@ -1,0 +1,57 @@
+<script lang="ts">
+  import { cubicOut } from 'svelte/easing'
+  import { closeOnBack, roving } from '../../ui-kit/src/api'
+  import { fade, LAYER, scale } from '../../platform/src/api'
+  import { overlays } from '../../ui-kit/src/api'
+  import SpaceList from './SpaceList.svelte'
+  import { spacePicker } from './space-picker.svelte'
+  import { SpaceTyping } from '../../space-pick/src/api'
+  import { trap } from '../../ui-controls/src/api'
+  import { type Space, workspace } from '../../workspace/src/api'
+
+  $effect(() => (spacePicker.open ? overlays.show(() => spacePicker.dismiss()) : undefined))
+  $effect(() => closeOnBack(spacePicker.open, () => spacePicker.dismiss()))
+
+  const typing = $derived(
+    spacePicker.open ? new SpaceTyping((space) => spacePicker.choose(space)) : null,
+  )
+  $effect(() => {
+    const one = typing
+    return () => one?.stop()
+  })
+</script>
+
+{#if typing}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div
+    class="orden-scrim"
+    transition:fade={{ duration: LAYER.fade }}
+    onclick={() => spacePicker.dismiss()}
+  ></div>
+
+  <div
+    class="orden-screen is-centred is-steady picker"
+    style:--rows={workspace.shownSpaces.length}
+    data-spaces-open
+    role="menu"
+    aria-label="Spaces"
+    use:trap
+    use:roving={{ current: '.is-on', wrap: true, held: true }}
+    onkeydowncapture={typing.press}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
+  >
+    <SpaceList {typing} choose={(space: Space) => spacePicker.choose(space)} />
+  </div>
+{/if}
+
+<style>
+  .picker {
+    --screen-width: var(--screen-sheet);
+    --screen-height: calc(var(--rows) * var(--row-height) + 2 * var(--space-1) + 2px);
+    z-index: var(--z-sheet);
+    padding: var(--space-1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    outline: none;
+  }
+</style>

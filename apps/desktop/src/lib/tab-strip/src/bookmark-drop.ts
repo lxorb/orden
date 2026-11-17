@@ -1,6 +1,8 @@
 import type { Bookmark } from '@orden/contracts'
-import { landing, place } from '../../essentials.svelte'
-import { workspace } from '../../workspace/src/api'
+import { essentials, workspace } from '../../workspace/src/api'
+
+let hands: Awaited<ReturnType<typeof essentials>> | null = null
+void essentials().then((one) => (hands = one))
 
 const ATTRIBUTE = 'data-bookmark-drop'
 
@@ -12,6 +14,8 @@ function markOf(tabId: string): Bookmark | null {
 export function overBookmarks(tabId: string, point: { x: number; y: number } | null): void {
   const under = point ? document.elementFromPoint(point.x, point.y) : null
   const zone = under?.closest<HTMLElement>(`[${ATTRIBUTE}]`)
+  const landing = hands?.landing
+  if (!landing) return
   if (!point || !zone || !markOf(tabId)) {
     landing.clear()
     return
@@ -21,6 +25,8 @@ export function overBookmarks(tabId: string, point: { x: number; y: number } | n
 }
 
 export function droppedOnBookmarks(tabId: string): boolean {
+  if (!hands) return false
+  const { landing, place } = hands
   const at = landing.at
   const after = landing.after
   landing.clear()

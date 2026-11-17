@@ -1,5 +1,14 @@
 <script lang="ts">
-  import { keyElsewhere } from '../../layer-keys'
+  import {
+    keyElsewhere,
+    carriedFiles,
+    carriesFiles,
+    dragged as draggedPaths,
+    dropOver,
+    isTreeDrag,
+    viewport,
+    menu,
+  } from '../../ui-kit/src/api'
   import { untrack } from 'svelte'
   import { wordsBesidePicture } from '@orden/editor'
   import CanvasBar from './CanvasBar.svelte'
@@ -34,6 +43,21 @@
     subset,
     turnedInk,
     withText,
+    Contacts,
+    hovering,
+    penKind,
+    Stylus,
+    assisted,
+    leadPoint,
+    penFelt,
+    tidyShape,
+    transformed,
+    inkColour,
+    readPalette,
+    isPicture,
+    facingSide,
+    SIDES,
+    sidePoint,
   } from '../../plane/src/api'
   import {
     type Canvas as Plane,
@@ -57,15 +81,11 @@
     rectBetween,
     shapePath,
   } from '../../plane/src/api'
-  import { Contacts, hovering, penKind, Stylus } from '../../plane/src/api'
   import { cursorFor, type Over } from './cursor'
   import { hand } from './hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './lattice'
   import { drawnWidth, pens, shownWidth } from './pens.svelte'
   import { hitAt, HANDLE, PORT, roomFor } from './hit'
-  import { assisted, leadPoint, penFelt, tidyShape, transformed } from '../../plane/src/api'
-  import { inkColour } from '../../plane/src/api'
-  import { readPalette } from '../../plane/src/api'
   import {
     drives,
     type Effect,
@@ -79,28 +99,15 @@
   } from './pointer'
   import { NO_SNAP, snapMove, snapPoint, snapResize } from './snap'
   import { Trace } from './trace'
-  import { isPicture } from '../../plane/src/api'
-  import { facingSide, SIDES, sidePoint } from '../../plane/src/api'
   import { CanvasStore } from './store.svelte'
   import { tools } from './tools.svelte'
-  import {
-    carriedFiles,
-    carriesFiles,
-    dragged as draggedPaths,
-    dropOver,
-    isTreeDrag,
-    viewport,
-    menu,
-  } from '../../ui-kit/src/api'
-  import { followNote } from '../../open-link'
+  import { followNote, workspace } from '../../workspace/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { rooms } from '../../collab/src/api'
-  import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
-  import { pastesMarkup } from '../../sharing/src/api'
+  import { canWriteIn, trustsHtmlIn, pastesMarkup } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { modes } from '../../modes/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { RightPan } from './right-pan'
   import { freeScroll, holdFreeScroll } from './free-scroll'
 
@@ -112,7 +119,6 @@
 
   const QUANTUM = 400
 
-  const FAR_SCALE = 0.35
   const MOST_CARDS = 300
   const MADE_A_FRAME = 60
 
@@ -390,9 +396,7 @@
   })
 
   const far = $derived(
-    camera.scale < FAR_SCALE ||
-      cards.length > MOST_CARDS ||
-      (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
+    cards.length > MOST_CARDS || (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
   )
 
   const wanted = $derived(

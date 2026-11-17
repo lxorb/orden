@@ -51,7 +51,7 @@ import { tools } from './tools.svelte'
 import { NOTCH, turned, turnOf, zoomed } from '../../camera/src/api'
 import { type Keystroke, DIVIDER, type MenuEntry, prompt, busy } from '../../ui-kit/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
-import { accountAddress, storeImage } from '../../assets'
+import { accountAddress, storeImage, openHref, workspace } from '../../workspace/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import {
   folderOf,
@@ -62,8 +62,6 @@ import {
   fileBytes,
   spaceRelative,
 } from '../../platform/src/api'
-import { openHref } from '../../open-link'
-import { workspace } from '../../workspace/src/api'
 import { drawScale, loading, PDF_TO_CSS, pdfjs } from '../../pdf/src/api'
 
 const NUDGE = 1

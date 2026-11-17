@@ -1,9 +1,8 @@
 import type { PickedFile } from '@orden/contracts'
 import { freePath } from '@orden/markdown/paths'
 import { message, prompt } from '../../ui-kit/src/api'
-import { fileClipboard } from '../../list-landing.svelte'
+import { fileClipboard, workspace } from '../../workspace/src/api'
 import { folderOf, nameOf, invoke, joinPath } from '../../platform/src/api'
-import { workspace } from '../../workspace/src/api'
 import type { OutsideStep } from '../../file-undo/src/api'
 import {
   type Clash,

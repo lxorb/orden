@@ -17,25 +17,24 @@ import {
   whenPortProvided,
 } from '@orden/contracts'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
-import { askPart, loadRewriteSheet } from './ai-chat/src/api'
+import { askPart, loadRewriteSheet, rewritingStore } from './ai-chat/src/api'
 import { outlinePart } from './pages/src/api'
 import { scratchpadPart } from './scratchpad/src/api'
 import { serveLinks } from './link-index/src/api'
-import { searchSpace } from './search/src/api'
+import { loadSearchPanel, search, searchFrom, searchSpace, showSearch } from './search/src/api'
 import { partView, reloadWhen } from './ui-kit/src/api'
-import { samePath } from './platform/src/api'
+import { samePath, breathe } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
 import { loadSettingsPanel, settings } from './settings/src/api'
 import { paletteDoor } from './palette/src/api'
 import { loadGraph } from './graph-view/src/api'
-import { loadArchive, loadArchivedStrip } from './archive/src/api'
-import { loadPrivateMark, loadWebTab } from './web-tab/src/api'
+import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from './archive/src/api'
+import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
-import { breathe } from './platform/src/api'
-import { focusEditor } from './focus'
+import { focusEditor, noteCovers, paneMoves } from './workspace/src/api'
+import { previewCards } from './pane-tree/src/api'
 import { startup } from './launch/src/api'
 import {
-  appMenuRows,
   contextMenu,
   fillBar,
   findBar,
@@ -75,7 +74,23 @@ serveLinks({
   },
   search: searchSpace,
 })
+providePort('search', { panel: search, show: showSearch, fromView: searchFrom })
 providePort('settings.window', settings)
+providePort('settings.ask', {
+  ask: async (system, said) => {
+    const { ai, complete } = await import('./ai-providers/src/api')
+    const provider = ai.providerFor('ask')
+    if (!provider) return null
+    return await complete({
+      provider,
+      model: provider.model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: said },
+      ],
+    })
+  },
+})
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
 providePort('quick-add.show', {
@@ -101,6 +116,8 @@ registerSurfaces({
   'terminal-mark': () => import('./terminal/src/api').then((one) => one.loadTerminalMark()),
   'quick-add': () => import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
   'private-mark': loadPrivateMark,
+  'search-panel': loadSearchPanel,
+  links: () => import('./links-panel/src/api').then((one) => one.loadLinksPanel()),
 })
 registerSidebarPart(askPart)
 registerSidebarPart(outlinePart)
@@ -139,8 +156,17 @@ registerSettingsPart({
 })
 registerCommands('import.', async () => (await import('./import/src/api')).importCommands)
 registerCommands('views.', async () => (await import('./views/src/api')).viewCommands)
+registerCommands('export.', async () => (await import('./export/src/api')).exportRuns)
+providePort('commands.app', {
+  rows: async (view) => {
+    const { appCommands } = await import('./commands/src/api')
+    return appCommands(view as Parameters<typeof appCommands>[0])
+  },
+})
 registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
+registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)
+registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
 
 if (__EVEN_PLUGIN__) {
   const waits = () => new Promise<never>(() => undefined)
@@ -148,6 +174,7 @@ if (__EVEN_PLUGIN__) {
     tasks: waits,
     todos: waits,
     channel: waits,
+    'chat-links': waits,
     chats: waits,
     'time-panel': waits,
     'pass-fill': waits,
@@ -166,6 +193,7 @@ if (!__EVEN_PLUGIN__) {
     tasks: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
     todos: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
     channel: () => import('./chats-client/src/api').then((one) => one.loadChatTab()),
+    'chat-links': () => import('./chats-client/src/api').then((one) => one.loadChatLinks()),
     chats: () => import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
     'time-panel': () => import('./time/src/api').then((one) => one.loadTimePanel()),
     time: () => import('./time/src/api').then((one) => one.loadTimeTab()),
@@ -215,15 +243,41 @@ if (!__EVEN_PLUGIN__) {
     async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
   )
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  registerCommand('app.handwriting', async () => {
+    const { handwrite } = await (await import('./canvas/src/api')).handwriting()
+    return () => void handwrite()
+  })
   providePort('explorer.show', {
     offered: () => hiddenKinds.offers('explorer'),
     show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
+  })
+  providePort('explorer.carry', {
+    carry: async (paths, into, how) =>
+      (await import('./explorer/src/api')).carry(null, paths, into, how),
+  })
+  providePort('web.sites', {
+    dropped: async (folder, list, html) => {
+      const [{ siteDropped }, { workspace }] = await Promise.all([
+        siteDropping(),
+        import('./workspace/src/api'),
+      ])
+      return siteDropped(workspace, folder, list, html)
+    },
+    showData: async (path) => (await webDataSheet()).showWebData(path),
+  })
+  providePort('archive', { archive, unarchive, show: showArchive })
+  providePort('publishing', {
+    show: async (space) => (await import('./publishing/src/api')).publish.show(space),
   })
   providePort('web.siteIcons', {
     held: async () => (await (await import('./web-tab/src/api')).siteIconSet()).siteIcons,
   })
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+  registerCommand(
+    'ai.tab',
+    async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab,
+  )
   registerCommand('ai.threads', async () => {
     const { chat } = await (await import('./ai-chat/src/api')).chatStore()
     return () => chat.showThreads()
@@ -269,7 +323,9 @@ export async function warmDoors(): Promise<void> {
     () => findBar(),
     () => searchPanel(),
     () => linksPanel(),
-    () => appMenuRows(),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./native-menu/src/api').then((one) => one.appMenuRows()),
     () => readingSurface(),
     () => loadFind(),
     () => loadLineCommands(),
@@ -292,16 +348,16 @@ export async function warmDoors(): Promise<void> {
     () => import('./ai-providers/src/api'),
     () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
-    () => import('./row-menu'),
-    () => import('./editor-menu'),
+    () => import('./row-menu/src/api').then((one) => one.rowMenus()),
+    () => import('./editor-menu/src/api'),
     () => import('./tab-cycle/src/api'),
     __EVEN_PLUGIN__
       ? undefined
       : () => import('./tab-strip/src/api').then((one) => one.tabNumbers()),
-    __EVEN_PLUGIN__ ? undefined : () => import('./pane-moves').then((one) => one.followPointer()),
+    __EVEN_PLUGIN__ ? undefined : () => paneMoves().then((one) => one.followPointer()),
     __EVEN_PLUGIN__ ? undefined : () => fillBar(),
-    () => import('./preview-card'),
-    () => import('./note-cover'),
+    previewCards,
+    noteCovers,
     () => warmCalls(),
     __EVEN_PLUGIN__
       ? undefined

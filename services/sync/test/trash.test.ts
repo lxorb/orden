@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { AT_ONCE, freeName, purgeExpired } from '../src/sync-server/src/trash'
+import { AT_ONCE, freeName, purgeExpired } from '../src/sync-server-engine/src/trash'
 import { call, signIn, testEnv, type TestEnv, type TrashView } from './harness'
 
 let env: TestEnv

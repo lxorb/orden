@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Door from '../../src/lib/Door.svelte'
+  import { Door } from '../../src/lib/ui-kit/src/api'
   import Dropping from './Dropping.svelte'
 
   const { fetched }: { fetched: () => void } = $props()

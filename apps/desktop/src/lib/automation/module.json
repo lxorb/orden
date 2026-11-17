@@ -16,11 +16,7 @@
     "link-index",
     "workspace",
     "sync-store",
-    "documents"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/own-keys.ts",
-    "apps/desktop/src/lib/search.svelte.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
+    "documents",
+    "panes"
   ]
 }

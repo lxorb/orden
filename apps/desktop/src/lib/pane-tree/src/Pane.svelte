@@ -18,8 +18,8 @@
     setReadOnlyMode,
   } from '@orden/editor'
   import { untrack } from 'svelte'
-  import Door from '../../Door.svelte'
   import {
+    Door,
     dragged,
     dropOver,
     isTreeDrag,
@@ -29,11 +29,21 @@
     viewport,
     paneCorners,
   } from '../../ui-kit/src/api'
-  import { alone } from '../../alone.svelte'
+  import {
+    alone,
+    followHref,
+    followNote,
+    tabOverview,
+    workspace,
+    pull,
+    storeAttachment,
+    storeImage,
+  } from '../../workspace/src/api'
   import type { Tab } from '../../documents/src/api'
   import {
     type Pane,
     panesIn,
+    paneToward,
     topRow,
     type Landing,
     EDGE,
@@ -42,6 +52,7 @@
     zoneAt,
     keepsScroll,
     scrollKeyOf,
+    views,
   } from '../../panes/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
@@ -52,10 +63,9 @@
   import { without } from '../../graph/src/api'
   import { links, notePicture } from '../../link-index/src/api'
   import { modes } from '../../modes/src/api'
-  import { pull } from '../../pull.svelte'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { settingsWindow } from '@orden/contracts'
+  import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -78,16 +88,11 @@
     viewSurface,
     webSurface,
   } from '../../surfaces/src/api'
-  import { tabOverview, workspace } from '../../workspace/src/api'
   import { canWriteIn } from '../../sharing/src/api'
   import { noteBehind, protection } from '../../protect/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { storeAttachment, storeImage } from '../../assets'
   import { flushFirst, Tabs } from '../../tab-strip/src/api'
-  import { followHref, followNote } from '../../open-link'
-  import type { OpenHow } from '../../new-tab'
-  import { usage } from '../../usage.svelte'
-  import { views } from '../../views.svelte'
+  import { usage } from '../../accounts/src/api'
 
   const { pane }: { pane: Pane } = $props()
 
@@ -113,6 +118,9 @@
       !alone.on &&
       !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
   )
+  const atLeft = $derived(!paneToward(workspace.panes.frame, pane.id, 'left'))
+  const atRight = $derived(!paneToward(workspace.panes.frame, pane.id, 'right'))
+  const atFoot = $derived(!paneToward(workspace.panes.frame, pane.id, 'down'))
   const ownSurface = $derived(
     !!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')),
   )
@@ -272,9 +280,10 @@
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
-    void here(import('../../editor-menu')).then(({ showEditorMenu }) =>
-      showEditorMenu(event, on, path),
-    )
+    void here(import('../../editor-menu/src/api')).then(async ({ showEditorMenu }) => {
+      await commandRowsLoaded()
+      showEditorMenu(event, on, path)
+    })
   }
 
   async function saveImage(file: File, into: Tab): Promise<string | null> {
@@ -359,6 +368,9 @@
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
   class:straight={!stripped && flushFirst(pane.id)}
+  class:at-left={atLeft}
+  class:at-right={atRight}
+  class:at-foot={atFoot}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   use:dropOver={over}
@@ -481,11 +493,13 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'chat'}
-    {#await askPanel() then ChatPanel}
-      <ChatPanel wide />
-    {:catch}
-      {@render unreachable()}
-    {/await}
+    {#key tab.id}
+      {#await askPanel() then ChatPanel}
+        <ChatPanel wide {tab} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
   {:else if tab?.kind === 'terminal'}
     {#key tab.id}
       {#await terminalSurface() then TerminalTab}
@@ -663,6 +677,22 @@
     box-shadow:
       var(--card-shadow),
       0 0 0 1px var(--card-edge);
+    transition: border-radius var(--dur-base) var(--ease-out);
+  }
+
+  .pane.at-left {
+    border-top-left-radius: var(--left-edge, var(--card-radius));
+    border-bottom-left-radius: var(--left-edge, var(--card-radius));
+  }
+
+  .pane.at-right {
+    border-top-right-radius: var(--right-edge, var(--card-radius));
+    border-bottom-right-radius: var(--right-edge, var(--card-radius));
+  }
+
+  .pane.at-foot {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .pane.straight {

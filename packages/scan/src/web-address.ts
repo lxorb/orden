@@ -13,13 +13,9 @@ export function isWebAddress(url: string): boolean {
 
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
 
-  return ![
-    'tauri.localhost',
-    'ipc.localhost',
-    'asset.localhost',
-    'orden.localhost',
-    'nib.localhost',
-  ].includes(parsed.hostname.toLowerCase().replace(/\.+$/, ''))
+  return !['tauri.localhost', 'ipc.localhost', 'asset.localhost', 'orden.localhost'].includes(
+    parsed.hostname.toLowerCase().replace(/\.+$/, ''),
+  )
 }
 
 export function isExtensionPage(url: string): boolean {

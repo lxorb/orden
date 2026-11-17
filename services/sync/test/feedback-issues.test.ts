@@ -8,7 +8,7 @@ import {
   platformLabel,
   type Report,
 } from '../src/sync-server-feedback/src/feedback-issues'
-import { sweepLeftovers } from '../src/sync-server/src/leftovers'
+import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const REPO = 'lxorb/orden-feedback'

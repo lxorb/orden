@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { EditorState, type EditorView } from '@orden/editor'
-import FormatBar from '../../src/lib/FormatBar.svelte'
+import FormatBar from '../../src/lib/surfaces/src/FormatBar.svelte'
 import { reactive } from './runes.svelte'
 
 class NoLayout {

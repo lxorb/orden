@@ -178,7 +178,7 @@ async function greet(server: Server, socket: InstanceType<typeof sockets.FakeSoc
 }
 
 describe('a room carrying the engine’s document', () => {
-  test('offers nib.v2 and the device, and with nothing pending meets the room as v1 does', async () => {
+  test('offers orden.v2 and the device, and with nothing pending meets the room as v1 does', async () => {
     const account = seeded('We ship on Monday.')
     const server = new Server()
     Y.applyUpdate(server.doc, account)
@@ -186,7 +186,7 @@ describe('a room carrying the engine’s document', () => {
     const one = device(account)
     const { socket } = join(one)
 
-    expect(socket.offers).toEqual(['nib.v2', 'nib.device.laptop-device'])
+    expect(socket.offers).toEqual(['orden.v2', 'orden.device.laptop-device'])
     socket.arrive()
     await greet(server, socket)
 
@@ -379,7 +379,7 @@ describe('a room carrying the engine’s document', () => {
     })
     const socket = sockets.opened.at(-1)
     if (!socket) throw new Error('no socket')
-    expect(socket.offers).toEqual(['nib.v2', 'nib.device.laptop-device'])
+    expect(socket.offers).toEqual(['orden.v2', 'orden.device.laptop-device'])
     socket.arrive()
     await greet(server, socket)
     expect(room.settled).toBe(true)

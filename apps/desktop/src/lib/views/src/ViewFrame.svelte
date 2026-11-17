@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { keyElsewhere } from '../../layer-keys'
+  import { keyElsewhere, arrive } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { arrive } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
   import AddRow from './AddRow.svelte'
   import BoardLayout from './BoardLayout.svelte'

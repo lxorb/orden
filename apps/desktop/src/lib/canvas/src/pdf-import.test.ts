@@ -38,7 +38,8 @@ const paper = {
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: { choose: () => Promise.resolve('all') },
 }))
-vi.mock('../../assets', () => ({
+vi.mock('../../workspace/src/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../workspace/src/api')>()),
   accountAddress: () => null,
   storeImage: () => {
     if (world.full && world.stored >= world.full)

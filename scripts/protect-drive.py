@@ -221,9 +221,9 @@ def main() -> int:
         )
         where = step(FIND % {"space": json.dumps(SPACE), "note": json.dumps(NOTE)}, "the note", 60)
 
-        app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
+        app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         step(
-            "nib.pages.each().some(([, page]) => page.live)",
+            "orden.pages.each().some(([, page]) => page.live)",
             "a web page in the window beside the app's own webview",
             60,
         )
@@ -247,7 +247,7 @@ def main() -> int:
         )
         step(PRESS % {"where": json.dumps(".orden-screen button[type=submit]"), "label": json.dumps("Protect")}, "the password's Protect")
         step(
-            f"nib.workspace.protection.own({json.dumps(where['root'])}, {json.dumps(where['path'])})?.way === 'password'",
+            f"orden.workspace.protection.own({json.dumps(where['root'])}, {json.dumps(where['path'])})?.way === 'password'",
             "the note protected with the password",
             60,
         )

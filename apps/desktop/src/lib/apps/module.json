@@ -20,6 +20,5 @@
     "pdf",
     "workspace",
     "gates"
-  ],
-  "pending": ["apps/desktop/src/lib/new-tab.ts"]
+  ]
 }

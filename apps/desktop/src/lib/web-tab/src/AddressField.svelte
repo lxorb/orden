@@ -1,6 +1,7 @@
 <script module lang="ts">
   let pressing = false
   let pressedOn: Element | null = null
+  const afterPresses: (() => void)[] = []
   if (typeof window !== 'undefined') {
     window.addEventListener(
       'pointerdown',
@@ -11,21 +12,25 @@
       true,
     )
     for (const ends of ['pointerup', 'pointercancel'])
-      window.addEventListener(ends, () => (pressing = false), true)
+      window.addEventListener(
+        ends,
+        () => {
+          pressing = false
+          for (const run of afterPresses.splice(0)) setTimeout(run, 0)
+        },
+        true,
+      )
   }
 
   function afterPress(run: () => void) {
-    if (!pressing) {
-      run()
-      return
-    }
-    window.addEventListener('pointerup', () => setTimeout(run, 0), { once: true, capture: true })
+    if (pressing) afterPresses.push(run)
+    else run()
   }
 </script>
 
 <script lang="ts">
   import { onMount, untrack } from 'svelte'
-  import FileMark from '../../FileMark.svelte'
+  import { FileMark } from '../../marks/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { Suggest } from '../../matching/src/api'
   import { links } from '../../link-index/src/api'

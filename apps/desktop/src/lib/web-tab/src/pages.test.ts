@@ -962,7 +962,7 @@ describe('a page out of sight', () => {
   })
 
   test('is never frozen while an agent is acting in it', async () => {
-    const { agentMarks } = await import('../../agent-marks.svelte')
+    const { agentMarks } = await import('../../workspace/src/api')
     await built('t0')
     await built('t1')
     agentMarks.on = { t0: { agent: 'claude', colour: '#000', stopped: false } }
@@ -1264,20 +1264,22 @@ describe("the card's corner a page is placed with", () => {
     )
   })
 
-  test("is its own pane's corner, as that pane's card says it", () => {
+  test("is its own pane's foot, square where that card's foot is square", () => {
     const card = {}
     const hole = { closest: (selector: string) => (selector === '[data-pane]' ? card : null) }
-    const foot = (radius: string) =>
+    const foot = (left: string, right: string) =>
       Object.assign(globalThis, {
         document: { querySelector: () => null },
-        getComputedStyle: (of: object) => ({
-          getPropertyValue: (token: string) =>
-            of === card && token === '--card-radius' ? radius : '10px',
-        }),
+        getComputedStyle: (of: object) =>
+          of === card
+            ? { borderBottomLeftRadius: left, borderBottomRightRadius: right }
+            : { getPropertyValue: () => '10px' },
       })
-    foot('10px')
+    foot('10px', '10px')
     expect(cardCorner(hole as unknown as Element)).toBe(10)
-    foot('0px')
+    foot('0px', '0px')
+    expect(cardCorner(hole as unknown as Element)).toBe(0)
+    foot('10px', '0px')
     expect(cardCorner(hole as unknown as Element)).toBe(0)
   })
 

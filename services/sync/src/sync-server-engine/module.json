@@ -1,0 +1,5 @@
+{
+  "name": "sync-server-engine",
+  "layer": "foundation",
+  "dependsOn": ["chats", "markdown", "rooms", "scan", "sync-core", "sync-server"]
+}

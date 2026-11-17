@@ -41,7 +41,7 @@ export function outputIn(value: unknown): ToolOutput {
   const result = record(value)
   const content = Array.isArray(result.content) ? result.content.map(record) : []
   const given = record(result._meta)
-  const meta = record(given['so.orden.Orden/answer'] ?? given['ch.emilvinu.nib/answer'])
+  const meta = record(given['so.orden.Orden/answer'])
   const approval = meta.status === 'needs_approval' ? text(meta.approval) : ''
   return {
     text: content

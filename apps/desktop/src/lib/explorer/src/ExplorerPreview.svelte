@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { identifier } from '../../platform/src/api'
-  import { readableSize } from '../../usage.svelte'
+  import { readableSize } from '../../accounts/src/api'
   import { when } from '../../ui-controls/src/api'
   import {
     cancelJob,

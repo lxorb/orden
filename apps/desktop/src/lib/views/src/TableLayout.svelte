@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { keyElsewhere } from '../../layer-keys'
+  import { keyElsewhere, menu, viewport } from '../../ui-kit/src/api'
   import { type Group, groupName, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
-  import { menu, viewport } from '../../ui-kit/src/api'
-  import { windowFor } from '../../windows/src/api'
-  import { ListView, tokenRow } from '../../windows/src/api'
+  import { windowFor, ListView, tokenRow } from '../../windows/src/api'
   import Cell from './Cell.svelte'
   import { valueText } from './chips'
   import { columnMenu } from './column-menu'
@@ -119,18 +117,25 @@
     const start = event.clientX
     const was = widthOf(column)
     const cell = (event.currentTarget as HTMLElement).parentElement
+    const drawn = cell?.style.width ?? ''
     const move = (one: PointerEvent) => {
       if (cell) cell.style.width = `${Math.max(60, was + one.clientX - start)}px`
     }
     const up = (one: PointerEvent) => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      if (one.type === 'pointercancel') {
+        if (cell) cell.style.width = drawn
+        return
+      }
       const width = Math.max(60, Math.round(was + one.clientX - start))
       if (width !== was)
         kit.change((b, i) => setViewOption(b, i, 'columnSize', { ...widths, [column]: width }))
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }
 
   function reorder(event: PointerEvent, column: string) {
@@ -148,7 +153,8 @@
     const up = (one: PointerEvent) => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
-      if (!moved) return
+      window.removeEventListener('pointercancel', up)
+      if (!moved || one.type === 'pointercancel') return
       const target = heads.findIndex((head) => {
         const box = head.getBoundingClientRect()
         return one.clientX >= box.left && one.clientX < box.right
@@ -165,6 +171,7 @@
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }
 
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {

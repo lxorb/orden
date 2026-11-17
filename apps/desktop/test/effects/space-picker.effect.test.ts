@@ -7,8 +7,8 @@ vi.mock('../../src/lib/sharing/src/api', async (original) => ({
   isShared: (root: string) => root === '/spaces/Lab',
 }))
 
-const { default: SpacePicker } = await import('../../src/lib/SpacePicker.svelte')
-const { spacePicker } = await import('../../src/lib/space-picker.svelte')
+const { default: SpacePicker } = await import('../../src/lib/spaces/src/SpacePicker.svelte')
+const { spacePicker } = await import('../../src/lib/spaces/src/space-picker.svelte')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')

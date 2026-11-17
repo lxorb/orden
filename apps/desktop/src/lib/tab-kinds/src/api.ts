@@ -181,7 +181,7 @@ export const TAB_KINDS = {
     preview: 'drawn',
     panels: [],
     asksToMove: true,
-    single: true,
+    single: false,
   },
   channel: {
     words: false,

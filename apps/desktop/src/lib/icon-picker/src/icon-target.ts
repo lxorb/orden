@@ -1,6 +1,6 @@
-import { chosenIcon, chosenTint } from '../../chosen-icon'
-import { setFileIcon } from '../../file-icon'
-import type { IconTarget } from '../../icon-choice.svelte'
+import { chosenIcon, chosenTint } from '../../marks/src/api'
+import { setFileIcon } from './file-icon'
+import type { IconTarget } from './icon-choice.svelte'
 import { tabKindParts } from '@orden/contracts'
 import { workspace } from '../../workspace/src/api'
 
