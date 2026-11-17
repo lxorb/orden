@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
 use super::bin::{self, Ticket};
+use super::jobs::Failed;
 use super::listing::asked;
 use super::reach::Use;
 
@@ -129,23 +130,40 @@ pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn explorer_trash(app: AppHandle, paths: Vec<String>) -> Result<Vec<Ticket>, Trashing> {
-    crate::lane::off_the_runtime(move || -> Result<Vec<Ticket>, Trashing> {
-        let mut went = Vec::new();
-        for one in &paths {
-            match asked(&app, one, Use::Change).and_then(|path| bin::trash(&path)) {
-                Ok(ticket) => went.push(ticket),
-                Err(why) => return Err(Trashing { why, went }),
-            }
-        }
-        Ok(went)
+    crate::lane::off_the_runtime(move || {
+        trashed_each(&paths, |one| {
+            asked(&app, one, Use::Change).and_then(|path| bin::trash(&path))
+        })
     })
     .await
 }
 
+fn trashed_each(
+    paths: &[String],
+    trash: impl Fn(&str) -> Result<Ticket, String>,
+) -> Result<Vec<Ticket>, Trashing> {
+    let mut went = Vec::new();
+    let mut failed = Vec::new();
+    for one in paths {
+        match trash(one) {
+            Ok(ticket) => went.push(ticket),
+            Err(why) => failed.push(Failed {
+                path: one.clone(),
+                why,
+            }),
+        }
+    }
+    if failed.is_empty() {
+        Ok(went)
+    } else {
+        Err(Trashing { went, failed })
+    }
+}
+
 #[derive(serde::Serialize, Debug)]
 pub struct Trashing {
-    pub why: String,
     pub went: Vec<Ticket>,
+    pub failed: Vec<Failed>,
 }
 
 #[tauri::command]
@@ -162,18 +180,39 @@ pub async fn explorer_untrash(app: AppHandle, tickets: Vec<Ticket>) -> Vec<Strin
 }
 
 #[tauri::command]
-pub async fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
+pub async fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), Vec<Failed>> {
+    crate::lane::off_the_runtime(move || -> Result<(), Vec<Failed>> {
         let judged: Vec<PathBuf> = paths
             .iter()
-            .map(|one| asked(&app, one, Use::Change))
+            .map(|one| {
+                asked(&app, one, Use::Change).map_err(|why| {
+                    vec![Failed {
+                        path: one.clone(),
+                        why,
+                    }]
+                })
+            })
             .collect::<Result<_, _>>()?;
-        for path in judged {
-            gone(&path)?;
+        let failed = gone_each(&judged);
+        if failed.is_empty() {
+            Ok(())
+        } else {
+            Err(failed)
         }
-        Ok(())
     })
     .await
+}
+
+fn gone_each(paths: &[PathBuf]) -> Vec<Failed> {
+    paths
+        .iter()
+        .filter_map(|path| {
+            gone(path).err().map(|why| Failed {
+                path: path.display().to_string(),
+                why,
+            })
+        })
+        .collect()
 }
 
 pub(super) fn gone(path: &Path) -> Result<(), String> {
@@ -188,8 +227,62 @@ pub(super) fn gone(path: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{bad_name, renamed, wrote, Written};
+    use super::{bad_name, gone_each, renamed, trashed_each, wrote, Ticket, Written};
     use std::fs;
+
+    #[test]
+    fn trashing_several_goes_past_one_that_will_not_go_and_names_it() {
+        let paths: Vec<String> = ["/a/one.txt", "/a/locked.txt", "/a/two.txt"]
+            .map(str::to_owned)
+            .to_vec();
+        let stopped = trashed_each(&paths, |one| {
+            if one.ends_with("locked.txt") {
+                Err(format!("{one}: in use"))
+            } else {
+                Ok(Ticket {
+                    path: one.to_owned(),
+                    back: one.to_owned(),
+                    at: 1,
+                })
+            }
+        })
+        .expect_err("one stayed");
+        let went: Vec<&str> = stopped.went.iter().map(|one| one.path.as_str()).collect();
+        assert_eq!(went, ["/a/one.txt", "/a/two.txt"]);
+        assert_eq!(stopped.failed.len(), 1);
+        assert_eq!(stopped.failed[0].path, "/a/locked.txt");
+        assert_eq!(stopped.failed[0].why, "/a/locked.txt: in use");
+
+        let all = trashed_each(&paths, |one| {
+            Ok(Ticket {
+                path: one.to_owned(),
+                back: one.to_owned(),
+                at: 1,
+            })
+        })
+        .expect("all went");
+        assert_eq!(all.len(), 3);
+    }
+
+    #[test]
+    fn deleting_several_goes_past_one_that_will_not_go_and_names_it() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let one = dir.path().join("one.txt");
+        let missing = dir.path().join("missing.txt");
+        let folder = dir.path().join("folder");
+        fs::write(&one, "1").expect("one");
+        fs::create_dir(&folder).expect("a folder");
+        fs::write(folder.join("inside.txt"), "in").expect("inside");
+
+        let failed = gone_each(&[one.clone(), missing.clone(), folder.clone()]);
+
+        assert!(fs::symlink_metadata(&one).is_err());
+        assert!(fs::symlink_metadata(&folder).is_err());
+        assert_eq!(failed.len(), 1);
+        assert_eq!(failed[0].path, missing.display().to_string());
+        assert!(failed[0].why.starts_with(&missing.display().to_string()));
+        assert!(gone_each(&[]).is_empty());
+    }
 
     #[test]
     fn a_dropped_folder_is_made_new_and_never_written_into_one_already_there() {
