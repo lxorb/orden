@@ -19,7 +19,7 @@
   import { scrollbar } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import { grow } from './grow'
-  import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
+  import { DictateButton, dictating, showsDictateButton } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
 
   let talk = $state<HTMLElement>()
@@ -161,7 +161,7 @@
           onpaste={onPaste}
           onkeydown={onKey}></textarea>
 
-        {#if canDictate()}
+        {#if showsDictateButton()}
           <span class="voice"><DictateButton owner={voiceField} below /></span>
         {/if}
 
