@@ -356,6 +356,12 @@ esac
       expect(draft).toContain('gh release view "$TAG"')
       expect(draft).toContain("startsWith(github.ref, 'refs/tags/v')")
       expect(draft).toMatch(/needs: \[?version\]?/)
+      expect(draft).toContain('NOTES: ${{ needs.version.outputs.notes }}')
+      expect(draft).toContain('--notes "$NOTES"')
+      expect(job(workflow, 'version')).toContain(
+        'node scripts/release-notes.mjs "$GITHUB_REF_NAME"',
+      )
+      expect(job(workflow, 'version')).toContain('notes: ${{ steps.notes.outputs.notes }}')
       expect(job(workflow, 'publish')).not.toContain('gh release create "$TAG"')
       expect(job(workflow, 'publish')).toMatch(/needs: \[.*draft.*\]/)
       expect(job(workflow, 'publish')).toContain("needs.draft.result != 'failure'")
