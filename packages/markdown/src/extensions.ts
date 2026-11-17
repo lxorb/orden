@@ -78,13 +78,16 @@ export const highlight: MarkedExtension = remembering({
 })
 
 export const scripts: MarkedExtension = remembering({
+  tokenizer: {
+    del: (src: string) => (src.startsWith('~~') ? false : undefined),
+  },
   extensions: [
     {
       name: 'subscript',
       level: 'inline',
       start: (src: string) => src.indexOf('~'),
       tokenizer(src: string) {
-        const inner = /^~(?!~)([^~\s][^~]*)~/.exec(src)
+        const inner = /^~(?!~)((?:\\[\s\S]|[^~\s\\])+)~/.exec(src)
         if (!inner?.[1]) return undefined
         return {
           type: 'subscript',
@@ -102,7 +105,7 @@ export const scripts: MarkedExtension = remembering({
       level: 'inline',
       start: (src: string) => src.indexOf('^'),
       tokenizer(src: string) {
-        const inner = /^\^([^^\s][^^]*)\^/.exec(src)
+        const inner = /^\^(?!\^)((?:\\[\s\S]|[^^\s\\])+)\^/.exec(src)
         if (!inner?.[1]) return undefined
         return {
           type: 'superscript',
