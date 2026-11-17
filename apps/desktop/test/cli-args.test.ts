@@ -115,7 +115,7 @@ test.skipIf(process.platform !== 'linux')(
       JSON.stringify({ port, secret: 's', pid: 1 }),
     )
     const env = Object.fromEntries(
-      Object.entries(process.env).filter(([name]) => !/^(ORDEN|NIB)_/.test(name)),
+      Object.entries(process.env).filter(([name]) => !name.startsWith('ORDEN_')),
     )
 
     const codes: (number | null)[] = []
