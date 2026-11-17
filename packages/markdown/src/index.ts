@@ -180,6 +180,10 @@ function addressToken(
   return { type: 'link', raw, text: raw, href, tokens: [{ type: 'text', raw, text: raw }] }
 }
 
+function doubledTilde(src: string): false | undefined {
+  return src.startsWith('~~') ? false : undefined
+}
+
 function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Link | undefined {
   const token = addressToken.call(this, src, tokens)
   if (!token) return undefined
@@ -217,7 +221,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
     }),
   )
   marked.use(hashtags(options.tagHref))
-  marked.use({ tokenizer: { url: bareAddress } })
+  marked.use({ tokenizer: { url: bareAddress, del: doubledTilde } })
 
   const taken = new Map<string, number>()
 

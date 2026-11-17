@@ -1448,6 +1448,9 @@ first.
 | EC324 | Medium | A heading ending in a comment (`# Plans %%draft%%`) was offered, linked and listed in the table of contents with its comment, so links to the name the reading view shows found nothing (forty-sixth re-audit) | Fixed | `links.ts` `headingText` read the raw line | Heading names drop inline comments, as the reading view does | `heading-trailing-comment.test.ts` (fails before) |
 | EC325 | Medium | A code block inside a `%%` or HTML comment was offered in the `[[Note#^` block list (forty-sixth re-audit, gap in EC320) | Fixed | `hiddenLines` skipped code rows before checking whether a comment was open | Rows inside an open comment are hidden, code or not | `wikilink/comment-code-blocks.test.ts` (fails before) |
 | EC326 | Medium | Move, Delete, drag and Turn into left a list's own-line id behind or turned it into an item, so the link then named another block (forty-sixth re-audit, gaps in EC314, EC321 and EC322 for lists) | Fixed | List item spans never took the id, `blockAt` on a list's id line found no owner, and a picked id line was shaped as prose | Picking a whole list takes its id along, the id line resolves to the whole list, and it is never listed as a block of its own | `block-list-own-id.test.ts` (fails before) |
+| EC327 | Medium | Move down on the item above a named list's last item did nothing, or pulled a nested item above its parent (forty-seventh re-audit, regression from EC326) | Fixed | `block/commands.ts` `beside` took the list's id line as the whole list, which holds the moving item | When the block found below is an owner holding the moving block, the id line is used as the neighbour | `block-list-id-moves.test.ts` (fails before) |
+| EC328 | Medium | Duplicate on a whole picked named list split it in two, each with the same id (forty-seventh re-audit, regression from EC326) | Fixed | Duplicate used the list-id-stretched spans | Duplicate copies the items as they are, and the drag handle and Turn into inside quotes handle own-line ids too | `block-list-id-moves.test.ts` (fails before) |
+| EC329 | Medium | In the reading view, `~5 min, or ~10 min`, `~/notes and ~/work` and `2^10 is 1024 and 2^20` turned into subscript, superscript or strikethrough across words, while the editor showed plain text (forty-seventh re-audit) | Fixed | `@orden/markdown` `extensions.ts` let a sub or superscript span run across spaces, and marked's strikethrough took a single `~` | Sub and superscript end at an unescaped space, as in the editor, and strikethrough needs `~~` | `reading-scripts-spaces.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1630,6 +1633,12 @@ Seen, judged minor, left as they are:
 - `#a/b/` keeps the trailing slash in the tag; a callout title keeps `**bold**` as typed in the reading view (forty-sixth re-audit).
 - An indented code block whose first line looks like a folded callout is folded on load (forty-sixth re-audit).
 - In right-to-left notes, a line led by a footnote definition or an English image alt is drawn left to right (forty-sixth re-audit).
+- Shift+Enter in an item or quote starts the new line at column 0; Mod-Enter on a `* item` writes `- [ ]`; Indent block on a whole named list indents its id line too (forty-seventh re-audit).
+- Duplicate heading slugs can collide in the reading view (`# A`, `# A`, `# A-1`) (forty-seventh re-audit).
+- An empty task `- [ ] ` is a box in the editor but literal in the reading view (forty-seventh re-audit).
+- `- a\n<!-- c -->\n- b` reads as one loose list in the reading view; indented or empty `$$` blocks differ between the views (forty-seventh re-audit).
+- A quote with `[!word]` in the middle of its first line is drawn as a callout; `a:b:c` draws an emoji (forty-seventh re-audit).
+- `paste.ts` `readClipboard` holds a comment that came in from `unstable` (forty-seventh re-audit; outside this PR).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

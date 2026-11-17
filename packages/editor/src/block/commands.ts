@@ -11,18 +11,19 @@ import { verbatimLines } from './verbatim'
 import { type BlockShape, shaped, wordsOf } from './shape'
 import { blockAt, type BlockKind, blocksIn, type BlockSpan, withListIds, writtenLine } from './span'
 
-export function blocksFor(view: EditorView, pos: number): BlockSpan[] {
+export function blocksFor(view: EditorView, pos: number, named = true): BlockSpan[] {
   const range = view.state.selection.main
   const pressed = blockAt(view.state, pos)
+  const owned = (spans: BlockSpan[]) => (named ? withListIds(view.state, spans) : spans)
 
   const picked = pressed ? [pressed] : []
-  if (range.empty || pos < range.from || pos > range.to) return withListIds(view.state, picked)
+  if (range.empty || pos < range.from || pos > range.to) return owned(picked)
 
   const covered = blocksIn(view.state, range.from, range.to).filter(
     (span) => span.to >= range.from && span.from <= range.to,
   )
 
-  return withListIds(view.state, covered.length ? covered : picked)
+  return owned(covered.length ? covered : picked)
 }
 
 function runOf(spans: BlockSpan[]): BlockSpan | null {
@@ -44,7 +45,7 @@ function outermost(spans: readonly BlockSpan[]): BlockSpan[] {
 }
 
 export function duplicateBlocks(view: EditorView, pos: number): boolean {
-  const spans = outermost(blocksFor(view, pos))
+  const spans = outermost(blocksFor(view, pos, false))
   const last = spans.at(-1)
   if (!last) return false
 
@@ -260,7 +261,8 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       if (seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
-      if (!line.text.trim() || (number > first && ownLine(line.text))) continue
+      if (!line.text.trim() || (number > first && ownLine(line.text.replace(QUOTE_MARKS, ''))))
+        continue
 
       const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
       if (items[0] !== number || (itemwise && number > first && !LISTED.has(shape))) {
@@ -337,7 +339,10 @@ function beside(state: EditorState, run: BlockSpan, delta: -1 | 1): BlockSpan | 
   if (at === null) return null
   const text = state.doc.lineAt(at).text
   const lead = /^(?:[ \t]*>)+[ \t]*/.exec(text)?.[0].length ?? 0
-  return blockAt(state, lead ? at + lead + 1 : at)
+  const found = blockAt(state, lead ? at + lead + 1 : at)
+  if (!found || found.from > run.from || found.to < run.to || !ownLine(text)) return found
+  const line = state.doc.lineAt(at)
+  return { from: line.from, to: line.to, kind: 'paragraph' }
 }
 
 function levelAt(state: EditorState, pos: number): number | null {

@@ -14,7 +14,7 @@ import {
 } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { landing, moveBlock } from './move'
-import { blockAt, blocksIn, type BlockSpan, writtenLine } from './span'
+import { blockAt, blocksIn, type BlockSpan, withListIds, writtenLine } from './span'
 
 interface Carrying {
   span: BlockSpan
@@ -139,7 +139,8 @@ class BlockHandleWidget extends OrdenWidget {
       event.stopPropagation()
       if (event.button !== 0) return
 
-      const span = blockAt(view.state, view.posAtDOM(mark))
+      const found = blockAt(view.state, view.posAtDOM(mark))
+      const [span] = found ? withListIds(view.state, [found]) : []
       if (span) carry(view, mark, span, event)
     })
 
