@@ -1,4 +1,4 @@
-export type ContextKind = 'selection' | 'note' | 'page'
+export type ContextKind = 'selection' | 'note' | 'page' | 'thread'
 
 export function insertion(
   doc: string,

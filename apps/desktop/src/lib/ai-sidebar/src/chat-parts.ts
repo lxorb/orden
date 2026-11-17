@@ -45,6 +45,7 @@ export const {
   noteInFront,
   ordered,
   quick,
+  side,
   railOpen,
   ranked,
   rememberRail,
