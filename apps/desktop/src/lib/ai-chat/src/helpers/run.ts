@@ -4,6 +4,7 @@ import type { Effort, Mode, Thread } from '../../../ai-providers/src/api'
 import { usable, ai } from '../../../ai-providers/src/api'
 import { answerFor, type Helper, helpers } from './helpers.svelte'
 import type { Offered } from './route'
+import { agentsOf } from '../review/changes'
 
 export const HELPER_TOOLS: ReadonlySet<string> = new Set(['run_agent', 'agent_result'])
 
@@ -40,9 +41,9 @@ async function grants(): Promise<Held[] | null> {
 }
 
 const grantOf = (all: readonly Held[], provider: string) =>
-  all.find((one) => one.id === `orden-${provider}`) ??
-  all.find((one) => one.id === `nib-${provider}`) ??
-  null
+  agentsOf(provider)
+    .map((id) => all.find((one) => one.id === id))
+    .find(Boolean) ?? null
 
 const SUPERVISION: Readonly<Record<string, number>> = { autonomous: 0, unsupervised: 1, confirm: 2 }
 
