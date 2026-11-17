@@ -13,7 +13,7 @@ export function commentStateAt(input: Input, at: number): string | null {
     }
     commentReaders.set(input, held)
   }
-  if (at <= held.at) return null
+  if (at <= held.at) return held.reader.inside
 
   const lines = input.read(held.at, at).split('\n')
   lines.pop()

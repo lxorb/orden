@@ -34,19 +34,15 @@ export async function readingHtml(
   trusted: boolean,
   tagHref?: TagHref,
 ): Promise<string> {
-  const { prepareEmbeds, prepareFences } = await import('../../fences/src/api')
+  const { prepareNote } = await import('../../fences/src/api')
   const root = note.path === null ? null : links.spaceOf(note.path)
 
-  const embedded: string[] = []
-  const embed = await prepareEmbeds(note.text, async (target) => {
-    const body = await links.embedNote(target, note.path)
-    if (body !== null) embedded.push(typeof body === 'string' ? body : body.text)
-    return body
-  })
-  const fence = await prepareFences([note.text, ...embedded].join('\n\n'), scheme, {
-    query: (code) => queryRowsHtml(code, 'Nothing found', root),
-    base: true,
-  })
+  const { fence, embed } = await prepareNote(
+    note.text,
+    scheme,
+    (target) => links.embedNote(target, note.path),
+    { query: (code) => queryRowsHtml(code, 'Nothing found', root), base: true },
+  )
 
   const at = performance.now()
   const html = withPictures(
@@ -58,7 +54,7 @@ export async function readingHtml(
       escapeHtml: !trusted,
       code: fence,
       resolveLink: pointer(note),
-      resolveEmbed: embed,
+      ...(embed ? { resolveEmbed: embed } : {}),
       ...(tagHref ? { tagHref } : {}),
     }),
     note,

@@ -10,7 +10,10 @@ import { remembering, WORTH_REMEMBERING } from './tags'
 
 const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
 
-function math(tex: string, display: boolean): string {
+const TEX_LABEL = /\\label\s*\{[^}]*\}/g
+
+function math(written: string, display: boolean): string {
+  const tex = written.replace(TEX_LABEL, '')
   const engine = mathsEngine()
   const escaped = () => tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
 

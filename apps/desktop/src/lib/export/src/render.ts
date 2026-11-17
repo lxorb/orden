@@ -5,7 +5,7 @@ import { exportCss, themeCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../../theme/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
-import { type Fence, prepareEmbeds, prepareFences } from '../../fences/src/api'
+import { type Fence, prepareNote } from '../../fences/src/api'
 import { titleOf } from './document'
 import { inlinePictures, type Picture } from './pictures'
 import {
@@ -128,9 +128,10 @@ export async function renderNote(
   options: HtmlOptions = {},
   pictures?: readonly Picture[],
 ): Promise<string> {
-  const fence = await prepareFences(source, options.scheme ?? 'light', { highlight: !options.bare })
-  const embed = options.readNote ? await prepareEmbeds(source, options.readNote) : undefined
-  const html = buildHtml(source, name, { ...options, fence, ...(embed ? { embed } : {}) })
+  const prepared = await prepareNote(source, options.scheme ?? 'light', options.readNote, {
+    highlight: !options.bare,
+  })
+  const html = buildHtml(source, name, { ...options, ...prepared })
 
   if (options.bare) return html
   if (pictures) return inlinePictures(html, pictures)
