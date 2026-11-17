@@ -350,7 +350,11 @@ describe('the host’s socket', () => {
     const link = new HostLink('app-1', linkWorld, () => undefined)
     link.open()
     await tick()
-    expect(offered[0]).toEqual(['nib.token.token', 'nib.device.device-laptop', 'nib.role.host'])
+    expect(offered[0]).toEqual([
+      'orden.token.token',
+      'orden.device.device-laptop',
+      'orden.role.host',
+    ])
     link.close()
   })
 })

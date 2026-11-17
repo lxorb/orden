@@ -14,14 +14,15 @@ import { workspace } from '../../../workspace/src/api'
 import { openTerminal } from '../open'
 import { shellRunning } from '../running'
 import { shells } from '../shells.svelte'
+import { heldCall, listHeld } from './held'
 import { listOnline, newOnline } from './online'
 import { runTerminal } from './run'
 import { readTerminal, terminalSelection, typeTerminal } from './tab'
 
 export const terminalVerbs = verbsOf({
   run_terminal: runTerminal,
-  read_terminal: readTerminal,
-  type_terminal: typeTerminal,
+  read_terminal: async (call) => readTerminal(await heldCall(call)),
+  type_terminal: async (call) => typeTerminal(await heldCall(call)),
 })
 
 function callOf(args: AgentSaid, caller: AgentCaller): Call {
@@ -54,6 +55,7 @@ async function newTerminal(call: Call): Promise<string | null> {
 
 export const terminalTabs: AgentTabKind = {
   open: (args, caller) => newTerminal(callOf(args, caller)),
+  list: (args, caller) => listHeld(callOf(args, caller)),
   running: (tab) => shellRunning(tab),
   selection: async (id, most) => {
     const tab = workspace.tabs.find((one) => one.id === id)

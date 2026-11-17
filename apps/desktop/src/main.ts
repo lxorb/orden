@@ -8,7 +8,7 @@ import {
   markPainted,
   watchFirstInput,
 } from './lib/platform/src/api'
-import './lib/renamed.svelte'
+import './lib/launch/src/renamed.svelte'
 import './lib/sync-ports'
 import './lib/theme-ports'
 import './lib/sharing-ports'

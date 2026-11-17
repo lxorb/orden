@@ -8,9 +8,9 @@ import type {
   Submenu,
 } from '@tauri-apps/api/menu'
 import { account } from '../../accounts/src/api'
-import { fullscreen } from '../../fullscreen.svelte'
+import { takeKeyboard, currentWindow, invoke, afterQuiet } from '../../platform/src/api'
 import { hiddenKinds } from '../../gates/src/api'
-import type { MenuItem } from '../../ui-kit/src/api'
+import { type MenuItem, fullscreen } from '../../ui-kit/src/api'
 import { modes } from '../../modes/src/api'
 import {
   type Change,
@@ -32,9 +32,7 @@ import {
 } from './native-menu'
 import { shortcuts } from '../../shortcuts/src/api'
 import { type AppContext, BY_ID, runEntry } from '../../shortcuts/src/api'
-import { appMenuRows } from '../../surfaces/src/api'
-import { takeKeyboard } from '../../platform/src/api'
-import { currentWindow, invoke, afterQuiet } from '../../platform/src/api'
+import { appMenuRows } from './api'
 import { viewport } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 

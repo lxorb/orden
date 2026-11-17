@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import {
   type Env,
-  eraseAccount,
   leavingMessage,
   machineOf,
   mayLeave,
@@ -15,6 +14,8 @@ import {
   type Variables,
   WRONG_CODE,
 } from '../../sync-server/src/api'
+import { eraseAccount } from '../../sync-server-engine/src/api'
+import { addresses } from './addresses'
 import { checkCode, sendCode, spendCode } from './auth'
 import { accepted, asksForSecond } from './second'
 
@@ -27,6 +28,8 @@ const LEFT = 'left'
 const LEFT_FOR = 24 * 60 * 60 * 1000
 
 export const account = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+account.route('/addresses', addresses)
 
 account.post('/delete/code', async (context) => {
   const user = context.get('user')

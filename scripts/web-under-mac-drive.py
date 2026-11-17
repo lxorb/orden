@@ -381,15 +381,15 @@ def main() -> int:
         ratio = shot().width / screen.size.width
         shot().save(args.out / "start.png")
 
-        app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
+        app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         until = time.monotonic() + 40
         while time.monotonic() < until:
-            if app.eval("nib.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is True:
+            if app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is True:
                 break
             time.sleep(0.5)
         time.sleep(3)
         shot().save(args.out / "built.png")
-        under = app.eval("nib.pages.under")
+        under = app.eval("orden.pages.under")
         print(f"under: {under}", flush=True)
         if under is not True:
             wrong.append(f"the crate did not say the page is drawn under the app: {under}")

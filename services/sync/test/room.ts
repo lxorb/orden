@@ -1,5 +1,5 @@
-import type { RoomKind } from '../src/sync-server/src/rooms/kind'
-import { NoteRoom } from '../src/sync-server/src/rooms/room'
+import type { RoomKind } from '../src/sync-server-engine/src/rooms/kind'
+import { NoteRoom } from '../src/sync-server-engine/src/rooms/room'
 import type { Env } from '../src/sync-server/src/types'
 
 class Pair {

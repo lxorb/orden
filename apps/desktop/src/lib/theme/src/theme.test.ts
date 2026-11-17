@@ -30,6 +30,12 @@ let dataset: Record<string, string> = {}
 let resolves: Record<string, string> = {}
 let painted: Record<string, string> = {}
 let style: { id: string; textContent: string; remove: () => void } | null = null
+let hearing: ((event: { key: string | null }) => void)[] = []
+
+function writtenElsewhere(values: Record<string, string>) {
+  for (const [key, value] of Object.entries(values)) kept.setItem(key, value)
+  for (const heard of hearing) heard({ key: Object.keys(values)[0] ?? null })
+}
 
 function systemPrefers(light: boolean) {
   media.light = light
@@ -45,9 +51,13 @@ function stubs() {
   resolves = {}
   painted = {}
   style = null
+  hearing = []
 
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
+    addEventListener: (name: string, listener: (event: { key: string | null }) => void) => {
+      if (name === 'storage') hearing.push(listener)
+    },
     matchMedia: (query: string) => ({
       get matches() {
         return query.includes('contrast') ? media.contrast : media.light
@@ -71,6 +81,7 @@ function stubs() {
         },
       },
     },
+    addEventListener: () => undefined,
     querySelector: () => null,
     getElementById: () => null,
     createElement: () => {
@@ -1487,5 +1498,48 @@ describe('a theme’s own faces', () => {
   test('and touch nothing else a theme says', () => {
     const css = ':root { --bg: #fff; --text: #111; }\n#write h1 { color: red; }'
     expect(chosenFirst(css)).toBe(css)
+  })
+})
+
+describe('another window of the app', () => {
+  const chosen = (accent: string) => JSON.stringify({ '*': { accent } })
+
+  test('quick add wears the look the app chose and follows each change, keeping nothing', async () => {
+    writtenElsewhere({
+      'orden:theme': 'contrast',
+      'orden:theme-scheme': 'light',
+      'orden:theme-settings': chosen('red'),
+    })
+
+    theme.init(false)
+    await vi.waitFor(() => expect(injected()).toContain('--text: #'))
+
+    expect(theme.id).toBe('contrast')
+    expect(dataset.theme).toBe('light')
+
+    writtenElsewhere({
+      'orden:theme': 'default',
+      'orden:theme-scheme': 'dark',
+      'orden:theme-settings': chosen('teal'),
+    })
+    await vi.waitFor(() => expect(dataset.theme).toBe('dark'))
+
+    expect(theme.id).toBe('default')
+    expect(theme.accent).toBe('teal')
+    expect(painted['--accent']).toBe('#33c7ba')
+    expect(host.asked).toEqual([])
+    expect(kept.getItem('orden:theme')).toBe('default')
+    expect(kept.getItem('orden:theme-settings')).toBe(chosen('teal'))
+    expect(kept.getItem('orden:theme-sheet')).toBeNull()
+  })
+
+  test('a second window of notes follows a scheme and accent chosen in the first', async () => {
+    theme.init()
+    writtenElsewhere({ 'orden:theme-scheme': 'light', 'orden:theme-settings': chosen('orange') })
+    await vi.waitFor(() => expect(painted['--accent']).toBe('#c44500'))
+
+    expect(theme.scheme).toBe('light')
+    expect(dataset.theme).toBe('light')
+    expect(theme.accent).toBe('orange')
   })
 })

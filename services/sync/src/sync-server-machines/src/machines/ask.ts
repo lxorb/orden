@@ -11,6 +11,7 @@ export type MachineAsk =
   | 'erase'
   | 'restart'
   | 'reboot'
+  | 'resize'
   | 'host'
   | 'sessions'
 

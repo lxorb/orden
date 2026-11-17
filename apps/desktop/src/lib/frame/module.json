@@ -1,0 +1,22 @@
+{
+  "name": "frame",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "documents",
+    "editor",
+    "first-screen",
+    "launch",
+    "modes",
+    "pages",
+    "panes",
+    "platform",
+    "scratchpad",
+    "shortcuts",
+    "surfaces",
+    "theme",
+    "ui-kit",
+    "workspace"
+  ]
+}

@@ -62,7 +62,7 @@ import {
   steers,
 } from '../../../ai-providers/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
-import { agentMarks } from '../../../agent-marks.svelte'
+import { agentMarks } from '../../../workspace/src/api'
 import { tasks } from '../commands/tasks.svelte'
 import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
@@ -118,7 +118,7 @@ export interface Head {
   kept: boolean
 }
 
-export type ChatHost = 'side' | 'tab'
+export type ChatHost = string
 
 export interface Around {
   front: Front | null
@@ -490,18 +490,23 @@ class Chat implements Panel {
     })
   }
 
-  watched = $state.raw<{ id: string; turns: readonly Turn[] } | null>(null)
-  private watching: Thread | null = null
+  watched = $state.raw<Readonly<Record<string, readonly Turn[]>>>({})
+  private readonly watching = new Set<Thread>()
   private readonly drawWatched = onceAFrame(() => {
-    const thread = this.watching
-    this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
+    this.watched = Object.fromEntries([...this.watching].map((one) => [one.id, [...one.turns]]))
   })
 
-  watch(thread: Thread | null): void {
-    const before = this.watching
-    this.watching = thread
-    if (before && before !== thread) this.spare(before)
-    this.watched = thread ? { id: thread.id, turns: [...thread.turns] } : null
+  watch(thread: Thread): void {
+    this.watching.add(thread)
+    this.watched = { ...this.watched, [thread.id]: [...thread.turns] }
+  }
+
+  unwatch(thread: Thread): void {
+    if (!this.watching.delete(thread)) return
+    this.watched = Object.fromEntries(
+      Object.entries(this.watched).filter(([id]) => id !== thread.id),
+    )
+    this.spare(thread)
   }
 
   adopt(thread: Thread, open = false): void {
@@ -605,7 +610,7 @@ class Chat implements Panel {
       this.everything = true
     }
     if (thread === this.open) this.draw()
-    if (thread === this.watching) this.drawWatched()
+    if (this.watching.has(thread)) this.drawWatched()
   }
 
   get answeredElsewhere(): boolean {
@@ -991,7 +996,7 @@ class Chat implements Panel {
     const followed = this.following.delete(thread.id)
     this.everything = true
     if (thread === this.open) this.redraw()
-    if (thread === this.watching) this.drawWatched()
+    if (this.watching.has(thread)) this.drawWatched()
     if (!thread.turns.length) {
       if (thread === this.open) {
         this.here(this.space)
@@ -1011,7 +1016,7 @@ class Chat implements Panel {
     if (
       this.live.get(id) !== thread ||
       thread === this.open ||
-      thread === this.watching ||
+      this.watching.has(thread) ||
       this.running.includes(id) ||
       this.stoppers.has(id) ||
       this.unkept.has(thread) ||

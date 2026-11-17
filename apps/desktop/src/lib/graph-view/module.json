@@ -13,7 +13,7 @@
     "ui-kit",
     "space-kept",
     "ui-controls",
-    "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/hints.svelte.ts", "apps/desktop/src/lib/new-tab.ts"]
+    "workspace",
+    "hints"
+  ]
 }

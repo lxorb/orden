@@ -1,7 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import '../src/wiring'
-import { erased, eraseAccount, finishErasing } from '../src/sync-server/src/erase'
+import { erased, eraseAccount, finishErasing } from '../src/sync-server-engine/src/erase'
 import { type TestEnv, testEnv } from './harness'
 import { hubs } from './hub-fakes'
 
@@ -550,7 +550,7 @@ describe('deleting one of two accounts', () => {
     for (let n = 1; n <= 200; n++) stuck.run(`issues/${String(n)}`)
     env.db.prepare("insert into leftovers (what, since) values ('hubs/gone-user', 1)").run()
 
-    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
+    const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await sweepLeftovers(env)
     await sweepLeftovers(env)
 
@@ -577,7 +577,7 @@ describe('deleting one of two accounts', () => {
     expect(listed.many).toBeGreaterThan(0)
 
     bucket.delete = real
-    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
+    const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await sweepLeftovers(env)
 
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })

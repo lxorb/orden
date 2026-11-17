@@ -23,10 +23,10 @@ describe('the foot of the sidebar', () => {
     }
   })
 
-  test('in a desktop browser offers the app to download and the themes, not a light and dark switch', () => {
+  test('in a desktop browser offers the app to download, and leaves the themes to the account menu (#2063)', () => {
     const html = drawn('desktop')
     expect(html).toContain('aria-label="Download the app"')
-    expect(html).toContain('aria-label="Themes"')
+    expect(html).not.toContain('aria-label="Themes"')
     expect(html).not.toMatch(/aria-label="(Light|Dark)"/)
   })
 

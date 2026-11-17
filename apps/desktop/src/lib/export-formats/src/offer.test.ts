@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { registerCommandRows } from '@orden/contracts'
 import type { MenuItem } from '../../ui-kit/src/menu-item'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
@@ -157,7 +158,8 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { exportCommands } = await import('../../export/src/api')
-const { appMenu } = await import('../../app-menu')
+registerCommandRows('export', () => Promise.resolve(exportCommands))
+const appMenu = await (await import('../../native-menu/src/api')).appMenuRows()
 const { isSubmenu } = await import('../../ui-kit/src/menu-item')
 const { SHORTCUTS } = await import('../../shortcuts/src/registry')
 

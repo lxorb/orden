@@ -57,7 +57,7 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       for (const step of action.steps) await again(ws, step)
       break
     case 'keep': {
-      const { moving } = await import('../../list-landing.svelte')
+      const { moving } = await import('./list-landing.svelte')
       moving(() => ws.bookmarks.put(action.root, action.after))
       ws.undone.record(action)
       break

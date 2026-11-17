@@ -1,6 +1,6 @@
 import { askSheet } from '@orden/contracts'
 import { documentOf, type EditorView, type SharedDoc, type Text } from '@orden/editor'
-import { views } from '../../views.svelte'
+import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { carried, type ContextKind, insertion } from './quick'
 import type { Thread, Turn } from '../../ai-providers/src/api'
@@ -35,6 +35,7 @@ const chatStore = () => (store ??= import('./store/chat.svelte').then((one) => o
 
 class Quick {
   open = $state(false)
+  of = $state<string | null>(null)
   question = $state('')
   context = $state<Context | null>(null)
   texts = $state<Mention[]>([])
@@ -46,13 +47,15 @@ class Quick {
 
   private target: { view: EditorView; at: number; doc: Text; shows: SharedDoc | null } | null = null
 
+  constructor(readonly docked = false) {}
+
   get ready(): boolean {
     return ai.providerFor('ask') !== null
   }
 
   private get drawn(): readonly Turn[] {
-    const watched = this.chat?.watched
-    return watched && watched.id === this.thread?.id ? watched.turns : []
+    const thread = this.thread
+    return thread ? (this.chat?.watched[thread.id] ?? []) : []
   }
 
   get turns(): Said[] {
@@ -94,10 +97,30 @@ class Quick {
 
   close() {
     this.open = false
+    if (!this.docked) this.reset()
+  }
+
+  aside(main: Thread) {
+    if (this.of !== main.id) {
+      this.reset()
+      this.of = main.id
+      const label = main.title || 'This chat'
+      if (main.turns.length) {
+        const chip: Mention = { kind: 'thread', id: main.id, label, space: main.space }
+        this.context = { kind: 'thread', name: label, around: nothing(), chips: [chip] }
+      }
+    }
+    this.open = true
+  }
+
+  end() {
+    this.open = false
+    this.of = null
     this.reset()
   }
 
   private reset() {
+    if (this.thread) this.chat?.unwatch(this.thread)
     this.session += 1
     this.question = ''
     this.context = null
@@ -105,7 +128,6 @@ class Quick {
     this.target = null
     this.thread = null
     this.failed = null
-    this.chat?.watch(null)
   }
 
   private gather() {
@@ -201,7 +223,7 @@ class Quick {
   async continueInPanel() {
     const thread = this.thread
     if (!thread || !workspace.offers('ask')) return
-    this.close()
+    this.end()
     const [chat, { revealChat }] = await Promise.all([chatStore(), import('./store/reveal')])
     revealChat()
     await chat.openThread(thread.id)
@@ -242,3 +264,5 @@ function nothing(): Around {
 }
 
 export const quick = new Quick()
+
+export const side = new Quick(true)

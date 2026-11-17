@@ -1,7 +1,7 @@
 import type { AgentReaderPort } from '@orden/contracts'
 import type { AgentAnswer } from '../../automation/src/api'
 import { show } from '../../notify/src/api'
-import { openAgentSession } from '../../focus'
+import { openAgentSession } from '../../workspace/src/api'
 import {
   type Call,
   count,

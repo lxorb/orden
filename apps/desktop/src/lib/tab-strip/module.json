@@ -23,22 +23,10 @@
     "markdown",
     "modes",
     "double-tap",
-    "surfaces"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/Door.svelte",
-    "apps/desktop/src/lib/SpaceMark.svelte",
-    "apps/desktop/src/lib/TabMark.svelte",
-    "apps/desktop/src/lib/agent-marks.svelte.ts",
-    "apps/desktop/src/lib/caret.ts",
-    "apps/desktop/src/lib/chosen-icon.ts",
-    "apps/desktop/src/lib/essentials.svelte.ts",
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/menu-entries.ts",
-    "apps/desktop/src/lib/new-tab.ts",
-    "apps/desktop/src/lib/note-menu.ts",
-    "apps/desktop/src/lib/row-menu.ts",
-    "apps/desktop/src/lib/usage.svelte.ts",
-    "apps/desktop/src/lib/views.svelte.ts"
+    "surfaces",
+    "row-menu",
+    "accounts",
+    "spaces",
+    "marks"
   ]
 }

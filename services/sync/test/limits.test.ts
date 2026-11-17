@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { expireGuests } from '../src/sync-server/src/guests'
-import { expireRequests } from '../src/sync-server/src/spaces/share'
+import { expireRequests } from '../src/sync-server-engine/src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
 let env: TestEnv

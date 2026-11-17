@@ -1,6 +1,4 @@
-import type { presentOwnProfile } from './people/profile'
-import type { SpaceFile } from './spaces/files'
-import type { Env, Note, Space, User, Whoever } from './types'
+import type { Env, Note, Space, SpaceFile, User, Whoever } from './types'
 
 export interface Ended {
   machine: string
@@ -12,9 +10,7 @@ type RevokedRole = 'none' | 'read'
 
 export interface Session {
   token: string
-  user: { id: string; email: string; name: string | null } & Partial<
-    ReturnType<typeof presentOwnProfile>
-  >
+  user: { id: string; email: string; name: string | null; [more: string]: unknown }
 }
 
 interface AccountHooks {

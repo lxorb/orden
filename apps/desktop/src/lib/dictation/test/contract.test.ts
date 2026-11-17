@@ -49,11 +49,10 @@ describe('the module stands on its own', () => {
       api.canDictate,
       api.dictating,
       api.loadRecordingPill,
-      api.recordingAt,
       api.recordRows,
       api.recordVoice,
-      api.transcribeEmbed,
       api.transcriber,
+      api.transcribeRows,
     ]) {
       expect(typeof one).toBe('function')
     }

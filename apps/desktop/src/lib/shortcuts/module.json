@@ -17,14 +17,7 @@
     "modes",
     "double-tap",
     "tab-cycle",
-    "gates"
-  ],
-  "pending": [
-    "apps/desktop/src/lib/focus.ts",
-    "apps/desktop/src/lib/pane-moves.ts",
-    "apps/desktop/src/lib/refresh.ts",
-    "apps/desktop/src/lib/search.svelte.ts",
-    "apps/desktop/src/lib/space-actions.ts",
-    "apps/desktop/src/lib/space-picker.svelte.ts"
+    "gates",
+    "spaces"
   ]
 }

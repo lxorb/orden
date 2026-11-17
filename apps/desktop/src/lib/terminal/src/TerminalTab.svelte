@@ -49,7 +49,12 @@
     <OnlineStatus status={session.status} onretry={() => session.retry()} />
   {/if}
 
-  {#if session.offline}
+  {#if !session.writer}
+    <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+      <span class="words note">Typing in another window</span>
+      <button type="button" class="take" onclick={() => session.takeOver()}>Take over</button>
+    </div>
+  {:else if session.offline}
     <div class="bar offline" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
       <button type="button" onclick={() => session.reconnect()}>Reconnect</button>
     </div>
@@ -134,6 +139,19 @@
 
   .bar .words {
     display: block;
+  }
+
+  .bar .take {
+    white-space: nowrap;
+  }
+
+  .bar .note {
+    white-space: nowrap;
+    align-self: center;
+    padding: 0 var(--space-2) 0 var(--space-3);
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
   }
 
   @media (hover: hover) {

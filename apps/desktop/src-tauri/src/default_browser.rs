@@ -750,7 +750,7 @@ mod tests {
     fn a_mac_bundle_asks_for_the_two_web_schemes() {
         let config = source("tauri.macos.conf.json");
         assert!(config.contains(r#""schemes": ["http", "https"]"#));
-        assert!(config.contains(r#""schemes": ["orden", "nib"]"#));
+        assert!(config.contains(r#""schemes": ["orden"]"#));
         assert!(!config.contains("public.html"));
         assert!(!config.contains("fileAssociations"));
     }

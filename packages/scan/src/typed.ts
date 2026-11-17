@@ -95,7 +95,6 @@ const KNOWN_SCHEMES = new Set([
   'filesystem',
   'view-source',
   'orden',
-  'nib',
 ])
 
 function hasScheme(said: string): boolean {

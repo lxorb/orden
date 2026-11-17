@@ -675,8 +675,8 @@ describe('a writer who deletes their account', () => {
       id: string
       email: string
     }
-    const { eraseAccount } = await import('../src/sync-server/src/erase')
-    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
+    const { eraseAccount } = await import('../src/sync-server-engine/src/erase')
+    const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await eraseAccount(env, { id: writer.id, email: writer.email, name: null, created_at: 1 })
     await sweepLeftovers(env)
 

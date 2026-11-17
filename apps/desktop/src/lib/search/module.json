@@ -11,6 +11,13 @@
     "web-backend",
     "windows",
     "protect",
-    "launch"
+    "launch",
+    "documents",
+    "markdown",
+    "matching",
+    "scratchpad",
+    "sharing",
+    "ui-kit",
+    "workspace"
   ]
 }

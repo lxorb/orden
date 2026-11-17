@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import FileMark from '../../../FileMark.svelte'
+  import { FileMark } from '../../../marks/src/api'
   import { dur, fly } from '../../../platform/src/api'
   import { webPages } from '@orden/contracts'
   import { workspace } from '../../../workspace/src/api'

@@ -48,3 +48,9 @@ class QuitAsk {
 }
 
 export const quitAsk = new QuitAsk()
+
+class Holding {
+  shown = $state(false)
+}
+
+export const holding = new Holding()

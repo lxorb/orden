@@ -28,7 +28,8 @@ def fresh(browser: Browser) -> Page:
 
 
 def opened(page: Page) -> None:
-    page.locator("[data-region=foot] [aria-label=Themes]").click()
+    page.locator("[data-region=foot] [aria-haspopup=menu]").click()
+    page.locator("[role=menu] [role=menuitem]", has_text="Themes").first.click()
     wait_for(page, f"!!document.querySelector({PICKER!r})", "the theme picker")
     wait_for(page, f"!!document.activeElement?.closest({PICKER!r})", "the picker to take the keys")
     page.wait_for_timeout(300)
@@ -41,8 +42,13 @@ def card(page: Page, name: str) -> object:
 def drive(browser: Browser) -> None:
     page = fresh(browser)
     foot = page.locator("[data-region=foot]")
-    if foot.locator("[aria-label=Light], [aria-label=Dark]").count():
-        wrong("the light and dark switch is still in the foot")
+    if foot.locator("[aria-label=Light], [aria-label=Dark], [aria-label=Themes]").count():
+        wrong("a theme switch is still in the foot, beside the settings")
+    foot.locator("[aria-haspopup=menu]").click()
+    wait_for(page, "!!document.querySelector('[role=menu]')", "the account menu")
+    shot(page, "chromium-account-menu")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
 
     for side in ("light", "dark"):
         page.evaluate(f"() => window.ordenApp.theme.setScheme({side!r})")
@@ -108,4 +114,4 @@ def drive(browser: Browser) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the themes button opens a picker that tries a theme see-through and keeps it"))
+    raise SystemExit(DRIVE.run(drive, "Themes in the account menu opens a picker that tries a theme see-through and keeps it"))

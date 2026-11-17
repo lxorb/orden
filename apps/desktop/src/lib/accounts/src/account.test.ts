@@ -110,12 +110,12 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 let account: typeof import('./account.svelte').account
-let connectors: typeof import('../../connectors.svelte').connectors
-let usage: typeof import('../../usage.svelte').usage
+let connectors: typeof import('./connectors.svelte').connectors
+let usage: typeof import('./usage.svelte').usage
 
 await import('./account.svelte')
-await import('../../connectors.svelte')
-await import('../../usage.svelte')
+await import('./connectors.svelte')
+await import('./usage.svelte')
 
 const REEVALUATING = 120_000
 
@@ -137,8 +137,9 @@ beforeEach(async () => {
 
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
-  ;({ connectors } = await import('../../connectors.svelte'))
-  ;({ usage } = await import('../../usage.svelte'))
+  ;({ connectors } = await import('./connectors.svelte'))
+  connectors.restore()
+  ;({ usage } = await import('./usage.svelte'))
   account.email = 'me@example.com'
 }, REEVALUATING)
 

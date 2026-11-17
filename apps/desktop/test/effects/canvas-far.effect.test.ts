@@ -115,3 +115,24 @@ test('near, draws them as cards, and an undo makes none of them again', () => {
   expect(after).toHaveLength(6)
   for (const [at, card] of after.entries()) expect(card).toBe(before[at])
 })
+
+test('zoomed far out, a board of a few cards still shows their words, not boxes', () => {
+  const { target, host } = opened(6)
+  for (let step = 0; step < 16; step += 1) {
+    host.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '-',
+        code: 'Minus',
+        ctrlKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    flushSync()
+  }
+
+  expect(target.querySelector('canvas[data-far]')).toBeNull()
+  expect(target.querySelectorAll('.node')).toHaveLength(6)
+  expect(target.querySelector('.node')?.textContent).toContain('card')
+})

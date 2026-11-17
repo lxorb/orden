@@ -1,0 +1,10 @@
+<script lang="ts">
+  import { SpaceMark } from '../../marks/src/api'
+  import type { Space } from '../../workspace/src/api'
+
+  const { space, on = false }: { space: Space; on?: boolean } = $props()
+</script>
+
+<span class="orden-badge" class:is-on={on} aria-hidden="true">
+  <SpaceMark id={space.id} name={space.name} />
+</span>

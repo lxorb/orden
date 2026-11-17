@@ -197,7 +197,7 @@ export interface SnapshotPage {
   next: string | null
 }
 
-export const ROOM_V2 = 'nib.v2'
+export const ROOM_V2 = 'orden.v2'
 
 export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
 
@@ -221,9 +221,9 @@ export const BEAT_ANSWER = 'ok'
 
 export const FENCE_HEADER = 'x-orden-fence'
 
-export const TOKEN_PROTOCOL = 'nib.token.'
+export const TOKEN_PROTOCOL = 'orden.token.'
 
-export const DEVICE_PROTOCOL = 'nib.device.'
+export const DEVICE_PROTOCOL = 'orden.device.'
 
 const DEVICE_PROTOCOLS = ['orden.device.', 'nib.device.']
 

@@ -15,7 +15,7 @@
   import Trash from 'lucide/dist/esm/icons/trash-2.mjs'
   import UsersRound from 'lucide/dist/esm/icons/users-round.mjs'
   import { account } from '../../accounts/src/api'
-  import Icon from '../../Icon.svelte'
+  import { Icon } from '../../glyphs/src/api'
   import { readIcon, SharedMark, menu } from '../../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
   import type { Scope } from '../../pass-sync/src/api'

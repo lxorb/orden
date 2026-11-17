@@ -1,5 +1,3 @@
-use portable_pty::MasterPty;
-
 #[cfg_attr(
     not(windows),
     allow(
@@ -136,40 +134,72 @@ fn program_name(file: &str) -> String {
 }
 
 #[cfg(windows)]
-pub fn busy(shell: Option<u32>, _master: &dyn MasterPty) -> bool {
+pub fn busy(shell: Option<u32>) -> bool {
     shell.is_some_and(|root| busy_below(root, &processes(), &started()))
 }
 
 #[cfg(unix)]
-pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
-    let (Some(shell), Some(front)) = (shell, master.process_group_leader()) else {
-        return false;
-    };
-    i64::from(front) != i64::from(shell)
+pub fn busy(shell: Option<u32>) -> bool {
+    shell.is_some_and(|shell| front_group(shell).is_some_and(|front| front != shell))
 }
 
 #[cfg(windows)]
-fn front(shell: Option<u32>, _master: &dyn MasterPty) -> Option<(u32, String)> {
+fn front(shell: Option<u32>) -> Option<(u32, String)> {
     let processes = processes();
     front_below(shell?, &processes, &started()).map(|one| (one.id, program_name(&one.name)))
 }
 
 #[cfg(unix)]
-fn front(shell: Option<u32>, master: &dyn MasterPty) -> Option<(u32, String)> {
-    let front = master.process_group_leader()?;
-    if i64::from(front) == i64::from(shell?) {
+fn front(shell: Option<u32>) -> Option<(u32, String)> {
+    let shell = shell?;
+    let front = front_group(shell).filter(|front| *front != shell)?;
+    name_of(front).map(|name| (front, program_name(&name)))
+}
+
+#[cfg(target_os = "linux")]
+fn front_group(shell: u32) -> Option<u32> {
+    let stat = std::fs::read_to_string(format!("/proc/{shell}/stat")).ok()?;
+    let after = &stat[stat.rfind(')')? + 1..];
+    let group = after.split_whitespace().nth(5)?.parse::<i64>().ok()?;
+    u32::try_from(group).ok().filter(|one| *one > 0)
+}
+
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "proc_pidinfo is the kernel's own call and has no safe wrapper"
+)]
+fn front_group(shell: u32) -> Option<u32> {
+    let pid = libc::c_int::try_from(shell).ok()?;
+    let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_bsdinfo>()).ok()?;
+    let mut info = std::mem::MaybeUninit::<libc::proc_bsdinfo>::zeroed();
+    let written = unsafe {
+        libc::proc_pidinfo(
+            pid,
+            libc::PROC_PIDTBSDINFO,
+            0,
+            info.as_mut_ptr().cast(),
+            size,
+        )
+    };
+    if written != size {
         return None;
     }
-    let pid = u32::try_from(front).ok()?;
-    name_of(pid).map(|name| (pid, program_name(&name)))
+    let info = unsafe { info.assume_init() };
+    Some(info.e_tpgid).filter(|one| *one > 0)
 }
 
-pub fn program(shell: Option<u32>, master: &dyn MasterPty) -> Option<String> {
-    front(shell, master).map(|(_, name)| name)
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+fn front_group(_shell: u32) -> Option<u32> {
+    None
 }
 
-pub fn command(shell: Option<u32>, master: &dyn MasterPty) -> Option<(String, Vec<String>)> {
-    let (pid, name) = front(shell, master)?;
+pub fn program(shell: Option<u32>) -> Option<String> {
+    front(shell).map(|(_, name)| name)
+}
+
+pub fn command(shell: Option<u32>) -> Option<(String, Vec<String>)> {
+    let (pid, name) = front(shell)?;
     Some((name, arguments_of(pid)?))
 }
 

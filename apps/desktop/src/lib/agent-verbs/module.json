@@ -10,6 +10,5 @@
     "platform",
     "sharing",
     "workspace"
-  ],
-  "pending": ["apps/desktop/src/lib/agent-marks.svelte.ts"]
+  ]
 }

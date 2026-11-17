@@ -201,6 +201,21 @@ describe('the time a person records', () => {
     expect(new Set(store.activities.map((one) => one.tint)).size).toBe(2)
   })
 
+  test('a name longer than an activity keeps finds the same activity on every start', async () => {
+    const store = await opened(owner(), null)
+    const long = `  ${'Reading the whole long book '.repeat(5)}`
+    store.startNamed(long, M)
+    store.startNamed(long, 2 * M)
+    store.startNamed(long.toUpperCase(), 3 * M)
+    expect(store.activities).toHaveLength(1)
+    const [made] = store.activities
+    expect(made?.name).toBe(long.trim().slice(0, 80).trim())
+    expect(new Set(store.spans.map((one) => one.activity))).toEqual(new Set([made?.id]))
+    store.changeActivity(made?.id ?? '', { name: `${long}renamed` })
+    expect(store.activities.map((one) => one.name)).toEqual([made?.name])
+    expect(store.named(long)?.id).toBe(made?.id)
+  })
+
   test('keeps the minutes on the device, and only the last ninety days of them', async () => {
     const store = await opened(owner(), null)
     const day = 24 * 3_600_000

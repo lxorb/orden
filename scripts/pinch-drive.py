@@ -255,7 +255,7 @@ def main() -> int:
             time.sleep(1)
         app.eval("await window.__TAURI_INTERNALS__.invoke('plugin:window|set_focus', { label: 'main' }); return true")
         time.sleep(2)
-        app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
+        app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         first = waited(lambda now: "scale" in now, 40)
         if not first:
             raise SystemExit("the page never said how it is drawn")

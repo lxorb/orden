@@ -90,7 +90,7 @@ class Migrating {
   }
 
   async folder(): Promise<boolean> {
-    const { pickFolder } = await import('../../picking')
+    const { pickFolder } = await import('../../ui-controls/src/api')
     const picked = await pickFolder()
     const name = pickedFolder(picked)
     if (!name) return false
@@ -100,7 +100,7 @@ class Migrating {
   }
 
   async files(): Promise<boolean> {
-    const { pickFiles } = await import('../../picking')
+    const { pickFiles } = await import('../../ui-controls/src/api')
     const picked = await pickFiles()
     if (!picked.length) return false
 

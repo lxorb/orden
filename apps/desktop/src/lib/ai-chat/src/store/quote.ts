@@ -1,4 +1,4 @@
-import { views } from '../../../views.svelte'
+import { views } from '../../../panes/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { chat } from './chat.svelte'
 import { sameMention } from './mentions'

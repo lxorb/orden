@@ -1,11 +1,10 @@
 import type { EditorView } from '@orden/editor'
 import { encodeTarget } from '@orden/markdown/links'
-import { storeImage } from '../../assets'
+import { storeImage, workspace } from '../../workspace/src/api'
 import { busy, message, viewport } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import { settingsWindow } from '@orden/contracts'
-import { usage } from '../../usage.svelte'
-import { workspace } from '../../workspace/src/api'
+import { usage } from '../../accounts/src/api'
 
 export function canInsertPicture(view?: EditorView): boolean {
   return !!view && !view.state.readOnly && !!workspace.active

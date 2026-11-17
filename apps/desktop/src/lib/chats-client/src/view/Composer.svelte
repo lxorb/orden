@@ -5,17 +5,20 @@
   import { onMount, untrack } from 'svelte'
   import { chatReplies } from '../../../ai-chat/src/api'
   import { chooseFiles } from '../../../ui-controls/src/api'
-  import { pickedLink } from '../../../composer'
-  import { localDate, localNumber } from '../../../platform/src/api'
+  import { pickedLink } from '../../../link-format/src/api'
+  import {
+    localDate,
+    localNumber,
+    dur,
+    fade,
+    insideSpace,
+    afterQuiet,
+  } from '../../../platform/src/api'
   import { links } from '../../../link-index/src/api'
   import { DIVIDER, menu } from '../../../ui-kit/src/api'
   import { modes } from '../../../modes/src/api'
-  import { dur, fade } from '../../../platform/src/api'
-  import { followHref, followNoteFrom } from '../../../open-link'
+  import { followHref, followNoteFrom, workspace } from '../../../workspace/src/api'
   import { shortcuts } from '../../../shortcuts/src/api'
-  import { insideSpace } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace/src/api'
-  import { afterQuiet } from '../../../platform/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { Attachments } from './attachments.svelte'
   import type { Scheduled } from '../shapes'

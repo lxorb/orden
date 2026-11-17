@@ -127,7 +127,7 @@ describe('the socket to an online session', () => {
 
     const socket = opened(found)
     expect(socket.url).toBe('wss://orden.test/v2/online/t1/socket')
-    expect(socket.protocols).toEqual(['nib.token.tok', 'nib.device.dev1'])
+    expect(socket.protocols).toEqual(['orden.token.tok', 'orden.device.dev1'])
     expect(socket.sent).toEqual([text({ t: 'hello', cols: 100, rows: 30, hold: true })])
     expect(heard).toEqual([{ t: 'open' }])
   })

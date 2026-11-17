@@ -20,7 +20,6 @@ import {
   readAs,
   safeName,
   sourcesFrom,
-  tidyPath,
   titleFrom,
   todoistAccount,
   tooMuch,
@@ -105,11 +104,6 @@ describe('what was picked', () => {
     const files = [picked('Notes/a.md', '# A'), picked('Notes/sub/b.md', 'b')]
     expect(pickedFolder(files)).toBe('Notes')
     expect(insideFolder(files).map((one) => one.webkitRelativePath)).toEqual(['a.md', 'sub/b.md'])
-  })
-
-  test('paths are tidied to forward slashes with nothing in front', () => {
-    expect(tidyPath('.\\Notes\\a.md')).toBe('Notes/a.md')
-    expect(tidyPath('//a/b')).toBe('a/b')
   })
 
   test('a folder of markdown is read as markdown', async () => {

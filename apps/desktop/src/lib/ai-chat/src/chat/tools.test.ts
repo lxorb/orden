@@ -148,13 +148,4 @@ describe('an answer, as orden mcp writes it', () => {
       }),
     ).toMatchObject({ approval: 'a17', error: false })
   })
-
-  test('an answer under the name it had before the rename still reads, for one release', () => {
-    expect(
-      outputIn({
-        content: [],
-        _meta: { 'ch.emilvinu.nib/answer': { status: 'needs_approval', approval: 'a18' } },
-      }),
-    ).toMatchObject({ approval: 'a18' })
-  })
 })

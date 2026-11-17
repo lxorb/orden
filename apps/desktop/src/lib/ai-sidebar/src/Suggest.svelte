@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { keepFocus } from '../../focus'
+  import { keepFocus } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
   import MentionMark from './MentionMark.svelte'
   import type { Row } from './chat-parts'

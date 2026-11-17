@@ -7,13 +7,11 @@ import {
   registerSettingsPart,
   registerTabKind,
 } from '@orden/contracts'
-import { isDesktop, platform } from '../../platform/src/api'
+import { isDesktop } from '../../platform/src/api'
 import { partView } from '../../ui-kit/src/api'
 import { pages } from './pages.svelte'
 
 providePort('web.scripts', { pages })
-
-export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
 
 if (!__EVEN_PLUGIN__) {
   registerPaletteKind('visits', () => import('./palette-visits').then((one) => one.visits))
@@ -34,7 +32,7 @@ if (!__EVEN_PLUGIN__) {
     section: 'general',
     title: 'Extensions',
     card: true,
-    shown: () => runsExtensions,
+    shown: () => isDesktop,
     load: async () => partView((await import('./ExtensionRows.svelte')).default, () => ({})),
   })
 }

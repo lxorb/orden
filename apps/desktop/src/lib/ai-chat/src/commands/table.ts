@@ -27,7 +27,7 @@ export const ROWS: readonly Row[] = [
   row('conversation', 'compact', [], 'Summarize the older turns', '[focus]'),
   row('conversation', 'autocompact', [], 'When it compacts', '[auto|<tokens>|off]'),
   row('conversation', 'context', [], 'What fills the window', '[all]'),
-  row('conversation', 'btw', ['side'], 'A side question', '[question]'),
+  row('conversation', 'btw', ['side'], 'A side chat beside this one', '[question]'),
   row('conversation', 'copy', [], 'Copy an answer', '[n]'),
   row('conversation', 'export', ['save'], 'Save as a note', '[note]'),
   row('conversation', 'archive', [], 'Archive the thread'),

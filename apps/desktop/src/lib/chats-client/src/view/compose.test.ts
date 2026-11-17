@@ -75,7 +75,8 @@ describe('mentions', () => {
 
   test('@orden first is a question to the reader’s agent, not a message', () => {
     expect(ordenAsked('@orden what did we decide?')).toBe('what did we decide?')
-    expect(ordenAsked(' @NIB\nsum it up ')).toBe('sum it up')
+    expect(ordenAsked(' @ORDEN\nsum it up ')).toBe('sum it up')
+    expect(ordenAsked('@nib sum it up')).toBeNull()
     expect(ordenAsked('@orden')).toBe('')
     expect(ordenAsked('thanks @orden')).toBeNull()
     expect(ordenAsked('@nibble')).toBeNull()

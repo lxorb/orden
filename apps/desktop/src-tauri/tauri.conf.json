@@ -33,8 +33,8 @@
   },
   "plugins": {
     "deep-link": {
-      "desktop": { "schemes": ["orden", "nib"] },
-      "mobile": [{ "scheme": ["orden", "nib"], "appLink": false }]
+      "desktop": { "schemes": ["orden"] },
+      "mobile": [{ "scheme": ["orden"], "appLink": false }]
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJGQUM4NjVBMDQ2QTcxMTAKUldRUWNXb0VXb2FzTDQyVlJYWmxKdkFvMXc5MERZeVVOTmttMExMSFlEbW9lMlA0OUY5R3M5ZW8K",
@@ -99,9 +99,7 @@
         "desktopTemplate": "linux/main.desktop",
         "postInstallScript": "linux/postinst",
         "files": {
-          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy",
-          "/usr/bin/nib": "linux/nib",
-          "/usr/share/Orden/nib": "linux/nib"
+          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy"
         }
       },
       "rpm": {
@@ -127,9 +125,7 @@
         "obsoletes": ["nib", "nibeditor"],
         "desktopTemplate": "linux/main.desktop",
         "files": {
-          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy",
-          "/usr/bin/nib": "linux/nib",
-          "/usr/share/Orden/nib": "linux/nib"
+          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy"
         }
       }
     },

@@ -89,9 +89,6 @@ describe('the rule', () => {
 describe('every layer in the middle of the window', () => {
   test('is found', () => {
     expect(layers.map((one) => one.name).sort()).toEqual([
-      'lib/FeedbackSheet.svelte',
-      'lib/PromptSheet.svelte',
-      'lib/SpacePicker.svelte',
       'lib/accounts-ui/src/SignIn.svelte',
       'lib/ai-sidebar/src/QuickQuestion.svelte',
       'lib/crash-reports/src/CrashAsk.svelte',
@@ -102,6 +99,9 @@ describe('every layer in the middle of the window', () => {
       'lib/quitting/src/QuitSheet.svelte',
       'lib/settings/src/ThemeStore.svelte',
       'lib/sharing/src/JoinSheet.svelte',
+      'lib/spaces/src/SpacePicker.svelte',
+      'lib/surfaces/src/FeedbackSheet.svelte',
+      'lib/surfaces/src/PromptSheet.svelte',
       'lib/terminal/src/remote/HostPicker.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
       'lib/ui-controls/src/Sheet.svelte',
