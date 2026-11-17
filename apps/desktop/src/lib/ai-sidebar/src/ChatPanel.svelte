@@ -9,9 +9,10 @@
   import { agentMarks, type Tab, workspace } from '../../workspace/src/api'
   import { agentSession } from '../../surfaces/src/api'
   import { following, toggleFollow } from './chat-parts'
-  import { chat } from './chat-parts'
+  import { chat, side } from './chat-parts'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
+  import QuickQuestion from './QuickQuestion.svelte'
   import { dropRows } from './drop'
   import { setHost } from './host'
   import { railOpen, rememberRail } from './chat-parts'
@@ -231,6 +232,9 @@
       {/await}
     {:else}
       <Conversation {ongoto} {ready} />
+      {#if ready && side.of !== null && side.of === head?.id && chat.host === host}
+        <QuickQuestion quick={side} docked />
+      {/if}
       {#if ready}
         <Composer />
       {/if}
