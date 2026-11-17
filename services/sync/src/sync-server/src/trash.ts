@@ -13,7 +13,7 @@ import { forgetWords } from './site/words'
 import { forgetReminders } from './push/reminders'
 import { forgetPictures, htmlIsLive, picturesOf } from './pictures'
 import { forgetBodies, forgetVersions } from './versions'
-import { noteChatFiles, noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
+import { noteChatFiles, noteUnused, RESTAMP, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
 import { readSpaceFiles } from './spaces/files'
 import { readSite } from './site/site'
 import { FRONT_REV } from './site/front'
@@ -245,7 +245,7 @@ async function purgeSpace(
     const list = places(chunk.length)
     await env.DB.batch([
       env.DB.prepare(
-        `insert or ignore into unused_blobs (user_id, hash, since)
+        `insert into unused_blobs (user_id, hash, since)
            select sp.user_id, used.hash, ?2 from (
              select space_id, hash from notes
               where id in (select value from json_each(?1)) and kind = 'file' and hash != ''
@@ -255,7 +255,7 @@ async function purgeSpace(
              union
              select n.space_id, p.hash from note_pictures p join notes n on n.id = p.note_id
               where p.note_id in (select value from json_each(?1))
-           ) used join spaces sp on sp.id = used.space_id`,
+           ) used join spaces sp on sp.id = used.space_id where true ${RESTAMP}`,
       ).bind(JSON.stringify(chunk), at),
       env.DB.prepare(
         `insert or ignore into leftovers (what, since)
@@ -339,7 +339,7 @@ export async function purgeExpired(
     emptied++
   }
 
-  await sweepUnused(env, NIGHTLY)
+  await sweepUnused(env, NIGHTLY, at)
 
   return { notes: notes.results.length, spaces: emptied }
 }
@@ -432,12 +432,15 @@ trash.delete('/notes/:id', async (context) => {
   const note = await deletedNote(context.env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
 
+  const started = now()
   if (!(await purgeNote(context.env, note, user.id))) {
     return context.json({ error: 'nothing to delete' }, 404)
   }
-  await sweepUnused(context.env, RIGHT_AFTER, user.id).catch((error: unknown) => {
-    noted('purge sweep', error, null)
-  })
+  await sweepUnused(context.env, RIGHT_AFTER, now(), { user: user.id, since: started }).catch(
+    (error: unknown) => {
+      noted('purge sweep', error, null)
+    },
+  )
   return context.json({ ok: true })
 })
 
@@ -446,8 +449,9 @@ trash.delete('/spaces/:id', async (context) => {
   const space = await deletedSpace(context.env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'nothing to delete' }, 404)
 
+  const started = now()
   await purgeSpace(context.env, space, user.id)
-  await sweepUnused(context.env, RIGHT_AFTER, user.id)
+  await sweepUnused(context.env, RIGHT_AFTER, now(), { user: user.id, since: started })
   return context.json({ ok: true })
 })
 
@@ -455,6 +459,7 @@ trash.delete('/', async (context) => {
   const user = context.get('user')
   const env = context.env
 
+  const started = now()
   const notes = await deletedNotes(env, user.id)
   const failures: unknown[] = []
   for (const note of notes) {
@@ -466,7 +471,7 @@ trash.delete('/', async (context) => {
     if (budget <= 0) break
     budget -= await purgeSpace(env, space, user.id, budget)
   }
-  await sweepUnused(env, RIGHT_AFTER, user.id)
+  await sweepUnused(env, RIGHT_AFTER, now(), { user: user.id, since: started })
 
   if (failures.length) throw failures[0]
   return context.json({ ok: true })
